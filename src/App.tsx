@@ -1,29 +1,35 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
+import * as Y from "yjs";
+import { newShapeStore } from "./stores/shapes.ts";
+import { generateUuid } from "./utils/random.ts";
+import { Entity } from "./models/index.ts";
+
+const ydoc = new Y.Doc();
+const store = newShapeStore(ydoc);
 
 function App() {
-  const [count, setCount] = useState(0);
+  const onClick = useCallback(() => {
+    const id = generateUuid();
+    store.addEntity({ id, findex: id });
+  }, []);
+
+  const [shapes, setShapes] = useState<Entity[]>([]);
+
+  useEffect(() => {
+    ydoc.on("update", () => {
+      setShapes(() => store.getEntities());
+    });
+  }, []);
+
+  const list = shapes.map((s) => <div>{s.id}</div>);
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <button onClick={onClick}>Add</button>
+        {list}
       </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </>
   );
 }
