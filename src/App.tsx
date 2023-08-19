@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import "./App.css";
 import * as Y from "yjs";
 import { newShapeStore } from "./stores/shapes.ts";
 import { generateUuid } from "./utils/random.ts";
@@ -26,7 +25,8 @@ function App() {
 
   return (
     <>
-      <div className="card">
+      <div>
+        <h1 className="text-3xl font-bold underline">Hello world!</h1>
         <button onClick={onClick}>Add</button>
         {list}
       </div>
