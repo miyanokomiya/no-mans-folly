@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { AppCanvasContext } from "../composables/appCanvasContext";
 import { Shape } from "../models";
+import { getCommonStruct, renderShape } from "../shapes";
 
 export function AppCanvas() {
   const [size] = useState({ width: 400, height: 400 });
@@ -20,13 +21,12 @@ export function AppCanvas() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.fillStyle = "#000000";
-    shapes.forEach((s, i) => {
-      context.fillRect(10 * i, 10 * i, 5, 5);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    shapes.forEach((shape) => {
+      renderShape(getCommonStruct, ctx, shape);
     });
   }, [shapes]);
 

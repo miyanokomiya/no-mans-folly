@@ -60,6 +60,10 @@ export function newEntityStore<T extends Entity>(option: Option) {
     watchFns.forEach((f) => f());
   });
 
+  function getScope(): Y.AbstractType<any> {
+    return entityMap;
+  }
+
   return {
     getEntities,
     addEntity,
@@ -67,5 +71,6 @@ export function newEntityStore<T extends Entity>(option: Option) {
     patchEntity,
     transact,
     watch,
+    getScope,
   };
 }
