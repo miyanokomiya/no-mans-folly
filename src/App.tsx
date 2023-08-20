@@ -5,7 +5,7 @@ import { generateUuid } from "./utils/random.ts";
 import { Entity } from "./models/index.ts";
 
 const ydoc = new Y.Doc();
-const store = newShapeStore(ydoc);
+const store = newShapeStore({ ydoc });
 
 function App() {
   const onClick = useCallback(() => {
