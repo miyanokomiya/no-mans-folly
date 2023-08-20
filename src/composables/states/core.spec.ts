@@ -92,7 +92,7 @@ describe("newStateMachine", () => {
   });
 });
 
-describe("useObjectGroupState", () => {
+describe("newObjectGroupState", () => {
   test("should create group state", async () => {
     const eventCalled: string[] = [];
     const childAB = getMockState({ getLabel: () => "ab" });

@@ -1,23 +1,5 @@
 import { IVec2 } from "okageo";
-
-type ModifierOptions = {
-  ctrl?: boolean;
-  shift?: boolean;
-};
-
-type EditMovement = {
-  current: IVec2;
-  start: IVec2;
-  scale: number;
-} & ModifierOptions;
-
-type KeyOptions = {
-  key: string;
-} & ModifierOptions;
-
-type MouseOptions = {
-  button: number;
-} & ModifierOptions;
+import { EditMovement, KeyOptions, MouseOptions } from "./types";
 
 type TransitionType = "break" | "stack-restart" | "stack-resume";
 
@@ -153,7 +135,7 @@ export type ModeStateEvent =
   | PointerUpEvent
   | KeyDownEvent
   | ChangeStateEvent
-  | PopupMenuEvent
+  | ContextMenuEvent
   | CopyEvent
   | PasteEvent;
 
@@ -212,8 +194,8 @@ export interface ChangeStateEvent extends ModeStateEventBase {
   };
 }
 
-export interface PopupMenuEvent extends ModeStateEventBase {
-  type: "popupmenu";
+export interface ContextMenuEvent extends ModeStateEventBase {
+  type: "contextmenu";
   data: { key: string } & { [key: string]: string };
 }
 
