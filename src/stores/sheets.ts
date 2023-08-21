@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { Layer } from "../models";
+import { Sheet } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newValueStore } from "./core/values";
 
@@ -7,25 +7,25 @@ type Option = {
   ydoc: Y.Doc;
 };
 
-export function newLayerStore(option: Option) {
-  const entityStore = newEntityStore<Layer>({
-    name: "layer_store",
+export function newSheetStore(option: Option) {
+  const entityStore = newEntityStore<Sheet>({
+    name: "sheet_store",
     ydoc: option.ydoc,
   });
 
   const selectedIdStore = newValueStore(entityStore.getEntities()[0]?.id ?? "");
-  function getSelectedLayer(): Layer | undefined {
+  function getSelectedSheet(): Sheet | undefined {
     return entityStore.getEntity(selectedIdStore.value);
   }
-  function selectLayer(id: string) {
+  function selectSheet(id: string) {
     selectedIdStore.setValue(id);
   }
   const watchSelected = selectedIdStore.watch;
 
   return {
     ...entityStore,
-    getSelectedLayer,
-    selectLayer,
+    getSelectedSheet,
+    selectSheet,
     watchSelected,
   };
 }

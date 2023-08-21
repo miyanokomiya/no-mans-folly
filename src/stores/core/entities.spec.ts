@@ -18,6 +18,17 @@ describe("newEntityStore", () => {
     });
   });
 
+  describe("getEntity", () => {
+    test("should return an array of entities", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      store.addEntity({ id: "a", findex: "0" });
+      store.addEntity({ id: "b", findex: "1" });
+      expect(store.getEntity("a")).toEqual({ id: "a", findex: "0" });
+      expect(store.getEntity("c")).toBe(undefined);
+    });
+  });
+
   describe("addEntity", () => {
     test("should add an entity", () => {
       const ydoc = new Y.Doc();

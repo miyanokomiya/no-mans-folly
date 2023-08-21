@@ -1,18 +1,36 @@
 import { useCallback } from "react";
 import * as Y from "yjs";
-import { newShapeStore } from "./stores/shapes.ts";
-import { generateUuid } from "./utils/random.ts";
-import { AppCanvas } from "./components/AppCanvas.tsx";
-import { AppCanvasContext } from "./composables/appCanvasContext.ts";
-import { createShape, getCommonStruct } from "./shapes/index.ts";
+import { generateUuid } from "./utils/random";
+import { AppCanvas } from "./components/AppCanvas";
+import { AppCanvasContext, createInitialEntities } from "./contexts/AppCanvasContext";
+import { createShape, getCommonStruct } from "./shapes/index";
+import { newShapeStore } from "./stores/shapes";
+import { newLayerStore } from "./stores/layers";
+import { newDiagramStore } from "./stores/diagram";
+import { newSheetStore } from "./stores/sheets";
 
-// const yDiagramDoc = new Y.Doc();
+const yDiagramDoc = new Y.Doc();
+const diagramStore = newDiagramStore({ ydoc: yDiagramDoc });
+const sheetStore = newSheetStore({ ydoc: yDiagramDoc });
 const ySheetDoc = new Y.Doc();
+const layerStore = newLayerStore({ ydoc: ySheetDoc });
 const shapeStore = newShapeStore({ ydoc: ySheetDoc });
-const acctx = { shapeStore };
-const undoManager = new Y.UndoManager([shapeStore.getScope()], {
-  captureTimeout: 0,
-});
+
+const acctx = {
+  diagramStore,
+  sheetStore,
+  layerStore,
+  shapeStore,
+};
+createInitialEntities(acctx);
+
+const undoManager = new Y.UndoManager(
+  [diagramStore.getScope(), sheetStore.getScope(), layerStore.getScope(), shapeStore.getScope()],
+  {
+    captureTimeout: 0,
+  }
+);
+undoManager.clear();
 
 function App() {
   const onClick = useCallback(() => {

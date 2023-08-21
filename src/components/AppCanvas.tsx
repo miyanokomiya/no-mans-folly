@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { AppCanvasContext } from "../composables/appCanvasContext";
+import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Shape } from "../models";
 import { getCommonStruct, renderShape } from "../shapes";
 

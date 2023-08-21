@@ -14,6 +14,11 @@ export function newEntityStore<T extends Entity>(option: Option) {
     return Array.from(entityMap.values()).map((ye) => toEntity(ye));
   }
 
+  function getEntity(id: string): T | undefined {
+    const ye = entityMap.get(id);
+    return ye ? toEntity(ye) : undefined;
+  }
+
   function toYEntity(entity: T): Y.Map<any> {
     const yEntity = new Y.Map<any>(Object.entries(entity));
     return yEntity;
@@ -60,6 +65,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   return {
     getEntities,
+    getEntity,
     addEntity,
     removeEntity,
     patchEntity,
