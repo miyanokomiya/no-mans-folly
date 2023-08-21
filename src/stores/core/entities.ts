@@ -1,5 +1,6 @@
 import * as Y from "yjs";
-import { Entity } from "../../models";
+import type { Entity } from "../../models";
+import { newCallback } from "../../composables/reactives";
 
 type Option = {
   name: string;
@@ -14,7 +15,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
   }
 
   function toYEntity(entity: T): Y.Map<any> {
-    const yEntity = new Y.Map<T>(Object.entries(entity));
+    const yEntity = new Y.Map<any>(Object.entries(entity));
     return yEntity;
   }
 
@@ -49,16 +50,9 @@ export function newEntityStore<T extends Entity>(option: Option) {
     option.ydoc.transact(fn);
   }
 
-  let watchFns: Array<() => void> = [];
-  function watch(fn: () => void): () => void {
-    watchFns.push(fn);
-    return () => {
-      watchFns = watchFns.filter((f) => f !== fn);
-    };
-  }
-  entityMap.observeDeep(() => {
-    watchFns.forEach((f) => f());
-  });
+  const callback = newCallback();
+  const watch = callback.bind;
+  entityMap.observeDeep(callback.dispatch);
 
   function getScope(): Y.AbstractType<any> {
     return entityMap;
@@ -68,6 +62,48 @@ export function newEntityStore<T extends Entity>(option: Option) {
     getEntities,
     addEntity,
     removeEntity,
+    patchEntity,
+    transact,
+    watch,
+    getScope,
+  };
+}
+
+export function newSingleEntityStore<T extends Entity>(option: Option) {
+  const entity: Y.Map<any> = option.ydoc.getMap(option.name);
+
+  function getEntity(): T {
+    return toEntity(entity);
+  }
+
+  function toEntity(yEntity: Y.Map<any>): T {
+    const ret: any = {};
+    for (const [key, value] of yEntity.entries()) {
+      ret[key] = value;
+    }
+    return ret;
+  }
+
+  function patchEntity(attrs: Partial<T>) {
+    Object.entries(attrs).forEach(([key, value]) => {
+      entity.set(key, value);
+    });
+  }
+
+  function transact(fn: () => void) {
+    option.ydoc.transact(fn);
+  }
+
+  const callback = newCallback();
+  const watch = callback.bind;
+  entity.observe(callback.dispatch);
+
+  function getScope(): Y.AbstractType<any> {
+    return entity;
+  }
+
+  return {
+    getEntity,
     patchEntity,
     transact,
     watch,

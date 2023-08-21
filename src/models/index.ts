@@ -5,9 +5,17 @@ export interface Entity {
   findex: string;
 }
 
-export type Sheet = Entity;
+export interface Diagram extends Entity {
+  name: string;
+}
 
-export type Layer = Entity;
+export interface Sheet extends Entity {
+  name: string;
+}
+
+export interface Layer extends Entity {
+  name: string;
+}
 
 export interface Shape extends Entity {
   type: string;

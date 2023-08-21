@@ -1,6 +1,10 @@
 import { createContext } from "react";
-import type { newShapeStore } from "../stores/shapes.ts";
+import { newShapeStore } from "../stores/shapes";
+import { newLayerStore } from "../stores/layers";
 
-export const AppCanvasContext = createContext<{
+interface IAppCanvasContext {
+  layerStore: ReturnType<typeof newLayerStore>;
   shapeStore: ReturnType<typeof newShapeStore>;
-}>(undefined as any);
+}
+
+export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);

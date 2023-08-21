@@ -6,8 +6,9 @@ import { AppCanvas } from "./components/AppCanvas.tsx";
 import { AppCanvasContext } from "./composables/appCanvasContext.ts";
 import { createShape, getCommonStruct } from "./shapes/index.ts";
 
-const ydoc = new Y.Doc();
-const shapeStore = newShapeStore({ ydoc });
+// const yDiagramDoc = new Y.Doc();
+const ySheetDoc = new Y.Doc();
+const shapeStore = newShapeStore({ ydoc: ySheetDoc });
 const acctx = { shapeStore };
 const undoManager = new Y.UndoManager([shapeStore.getScope()], {
   captureTimeout: 0,

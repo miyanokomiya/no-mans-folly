@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newEntityStore } from "./entities";
+import { newEntityStore, newSingleEntityStore } from "./entities";
 import * as Y from "yjs";
 
 describe("newEntityStore", () => {
@@ -99,6 +99,63 @@ describe("newEntityStore", () => {
 
       unwatch();
       store.patchEntity("a", { findex: "0" });
+      expect(count).toBe(2);
+    });
+  });
+});
+
+describe("newSingleEntityStore", () => {
+  describe("getEntity", () => {
+    test("should return the entity", () => {
+      const ydoc = new Y.Doc();
+      const store = newSingleEntityStore({ name: "test", ydoc });
+      expect(store.getEntity()).toBeTypeOf("object");
+    });
+  });
+
+  describe("patchEntity", () => {
+    test("should patch the entity", () => {
+      const ydoc = new Y.Doc();
+      let count = 0;
+      const onChanged = () => count++;
+      const store = newSingleEntityStore({ name: "test", ydoc });
+      store.watch(onChanged);
+      store.patchEntity({ findex: "10" });
+      expect(store.getEntity().findex).toBe("10");
+      expect(count).toBe(1);
+    });
+  });
+
+  describe("transact", () => {
+    test("should commit operations in the transaction", () => {
+      const ydoc = new Y.Doc();
+      let count = 0;
+      const onChanged = () => count++;
+      const store = newSingleEntityStore({ name: "test", ydoc });
+      store.watch(onChanged);
+      store.transact(() => {
+        store.patchEntity({ findex: "10" });
+        store.patchEntity({ findex: "20" });
+        store.patchEntity({ findex: "30" });
+      });
+      expect(store.getEntity().findex).toBe("30");
+      expect(count).toBe(1);
+    });
+  });
+
+  describe("watch", () => {
+    test("should watch entities and return a function to unwatch", () => {
+      const ydoc = new Y.Doc();
+      let count = 0;
+      const onChanged = () => count++;
+      const store = newSingleEntityStore({ name: "test", ydoc });
+      const unwatch = store.watch(onChanged);
+      store.patchEntity({ findex: "10" });
+      store.patchEntity({ findex: "20" });
+      expect(count).toBe(2);
+
+      unwatch();
+      store.patchEntity({ findex: "30" });
       expect(count).toBe(2);
     });
   });
