@@ -3,13 +3,9 @@ import { useCallback, useMemo, useState } from "react";
 import { EditMovement } from "./states/types";
 import { expandRect } from "../utils/geometry";
 import { useGlobalResizeEffect } from "./window";
+import { Size } from "../models";
 
-export const scaleRate = 1.1;
-
-interface Size {
-  width: number;
-  height: number;
-}
+const scaleRate = 1.1;
 
 export interface MoveInfo {
   origin: IVec2;
@@ -54,13 +50,8 @@ export function useCanvas(
 
   const [scale, setScale] = useState(1);
   const [viewOrigin, setViewOrigin] = useState<IVec2>({ x: 0, y: 0 });
-
   const [viewSize, setViewSize] = useState<Size>({ width: 600, height: 100 });
-
   const [moveType, setMoveType] = useState<"move" | "drag" | undefined>();
-  const dragged = moveType === "drag";
-  const moving = !!moveType;
-
   const [editStartPoint, setEditStartPoint] = useState<IVec2>();
   const [editStartViewOrigin, setEditStartViewOrigin] = useState<IVec2>();
   const [mousePoint, setMousePoint] = useState<IVec2>({ x: 0, y: 0 });
@@ -95,6 +86,11 @@ export function useCanvas(
     return add(viewOrigin, multi(v, scale));
   }
 
+  function viewMove(editMovement: EditMovement) {
+    if (!editStartViewOrigin) return;
+    setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
+  }
+
   function canvasToView(v: IVec2): IVec2 {
     return multi(sub(v, viewOrigin), 1 / scale);
   }
@@ -104,14 +100,6 @@ export function useCanvas(
     setViewOrigin(ret.viewOrigin);
     setScale(ret.scale);
   }
-
-  const onResize = useCallback(() => {
-    const wrapperElm = getWrapper();
-    if (!wrapperElm) return;
-    const rect = wrapperElm.getBoundingClientRect();
-    setViewSize({ width: rect.width, height: rect.height });
-  }, [getWrapper]);
-  useGlobalResizeEffect(onResize);
 
   function removeRootPosition(p: IVec2): IVec2 {
     const wrapperElm = getWrapper();
@@ -127,6 +115,25 @@ export function useCanvas(
     return add(p, { x: rect.x, y: rect.y });
   }
 
+  function setViewport(rect?: IRectangle, margin = 0) {
+    if (!rect) {
+      adjustToCenter();
+      return;
+    }
+
+    const ret = centerizeView(expandRect(rect, margin / scale), viewSize, (v) => clamp(1, scaleMax, v));
+    setScale(ret.scale);
+    setViewOrigin(ret.viewOrigin);
+  }
+
+  const onResize = useCallback(() => {
+    const wrapperElm = getWrapper();
+    if (!wrapperElm) return;
+    const rect = wrapperElm.getBoundingClientRect();
+    setViewSize({ width: rect.width, height: rect.height });
+  }, [getWrapper]);
+  useGlobalResizeEffect(onResize);
+
   return {
     viewSize,
     setViewSize,
@@ -136,8 +143,7 @@ export function useCanvas(
     scale,
     viewOrigin,
 
-    moving,
-    dragged,
+    moveType,
     endMoving,
     startMoving,
     startDragging,
@@ -152,21 +158,9 @@ export function useCanvas(
       setScale(Math.min(Math.max(scale * Math.pow(scaleRate, e.deltaY > 0 ? 1 : -1), scaleMin), scaleMax));
       setViewOrigin(add(viewOrigin, sub(beforeOrigin, viewToCanvas(origin))));
     },
-    viewMove(editMovement: EditMovement) {
-      if (!editStartViewOrigin) return;
-      setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
-    },
+    viewMove,
     adjustToCenter,
-    setViewport(rect?: IRectangle) {
-      if (!rect) {
-        adjustToCenter();
-        return;
-      }
-
-      const ret = centerizeView(expandRect(rect, 10 / scale), viewSize, (v) => clamp(1, scaleMax, v));
-      setScale(ret.scale);
-      setViewOrigin(ret.viewOrigin);
-    },
+    setViewport,
 
     removeRootPosition,
     addRootPosition,

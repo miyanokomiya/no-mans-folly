@@ -22,3 +22,8 @@ export interface Shape extends Entity {
   type: string;
   p: IVec2;
 }
+
+export interface Size {
+  width: number;
+  height: number;
+}
