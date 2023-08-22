@@ -63,13 +63,16 @@ function App() {
   return (
     <AppCanvasContext.Provider value={acctx}>
       <AppStateMachineContext.Provider value={smctx}>
-        <div>
-          <h1 className="text-3xl font-bold underline">Hello world!</h1>
-          <button onClick={onClick}>Add</button>
-          <button onClick={onUndo}>Undo</button>
-          <button onClick={onRedo}>Redo</button>
+        <div className="relative">
+          <div className="w-screen h-screen">
+            <AppCanvas />
+          </div>
+          <div className="absolute top-0 left-0">
+            <button onClick={onClick}>Add</button>
+            <button onClick={onUndo}>Undo</button>
+            <button onClick={onRedo}>Redo</button>
+          </div>
         </div>
-        <AppCanvas />
       </AppStateMachineContext.Provider>
     </AppCanvasContext.Provider>
   );

@@ -71,6 +71,7 @@ export function AppCanvas() {
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      e.preventDefault();
       smctx.stateMachine.handleEvent({
         type: "pointerdown",
         data: {
@@ -84,6 +85,7 @@ export function AppCanvas() {
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent) => {
+      e.preventDefault();
       canvas.setMousePoint(canvas.removeRootPosition({ x: e.pageX, y: e.pageY }));
       if (!canvas.editStartPoint) return;
 
@@ -116,6 +118,7 @@ export function AppCanvas() {
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
+      e.preventDefault();
       smctx.stateMachine.handleEvent({
         type: "wheel",
         data: {
@@ -130,8 +133,7 @@ export function AppCanvas() {
   return (
     <div
       ref={wrapperRef}
-      className="border border-black relative"
-      style={{ width: 400, height: 400 }}
+      className="box-border border border-black relative w-full h-full"
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
