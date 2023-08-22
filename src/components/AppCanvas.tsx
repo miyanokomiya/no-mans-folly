@@ -1,10 +1,10 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Shape } from "../models";
 import { getCommonStruct, renderShape } from "../shapes";
+import { useCanvas } from "../composables/canvas";
 
 export function AppCanvas() {
-  const [size] = useState({ width: 400, height: 400 });
   const acctx = useContext(AppCanvasContext);
 
   const [shapes, setShapes] = useState<Shape[]>([]);
@@ -15,13 +15,31 @@ export function AppCanvas() {
     });
   }, [acctx.shapeStore]);
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const getWrapper = useCallback(() => wrapperRef.current, []);
+  const canvas = useCanvas(getWrapper);
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      canvas.setMousePoint(canvas.removeRootPosition({ x: e.pageX, y: e.pageY }));
+    },
+    [canvas]
+  );
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctlCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const canvasAttrs = useMemo(
+    () => ({
+      className: "w-max h-max absolute top-0 left-0",
+      width: canvas.viewSize.width,
+      height: canvas.viewSize.height,
+    }),
+    [canvas.viewSize.width, canvas.viewSize.height]
+  );
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
+    const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -30,12 +48,26 @@ export function AppCanvas() {
     });
   }, [shapes]);
 
-  const list = shapes.map((s) => <div key={s.id}>{s.id}</div>);
+  useEffect(() => {
+    const ctx = ctlCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.arc(canvas.mousePoint.x, canvas.mousePoint.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }, [canvas.mousePoint]);
 
   return (
-    <div className="border border-black" style={{ width: `${size.width}px`, height: `${size.height}px` }}>
-      <canvas ref={canvasRef} className="w-max h-max" width={size.width} height={size.height}></canvas>
-      {list}
+    <div
+      ref={wrapperRef}
+      className="border border-black relative"
+      style={{ width: 400, height: 400 }}
+      onMouseDown={onMouseDown}
+    >
+      <canvas ref={canvasRef} {...canvasAttrs}></canvas>
+      <canvas ref={ctlCanvasRef} {...canvasAttrs}></canvas>
     </div>
   );
 }

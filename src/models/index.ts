@@ -18,6 +18,7 @@ export interface Layer extends Entity {
 }
 
 export interface Shape extends Entity {
+  layerId?: string;
   type: string;
   p: IVec2;
 }
