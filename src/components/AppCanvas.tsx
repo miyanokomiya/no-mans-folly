@@ -4,6 +4,7 @@ import { Shape } from "../models";
 import { getCommonStruct, renderShape } from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getMouseOptions } from "../utils/devices";
+import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables/window";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -66,6 +67,8 @@ export function AppCanvas() {
       panView: canvas.panView,
       startDragging: canvas.startDragging,
       stopDragging: canvas.endMoving,
+      setContextMenuList() {},
+      setCommandExams() {},
     });
   }, [canvas, smctx]);
 
@@ -84,8 +87,7 @@ export function AppCanvas() {
   );
 
   const onMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
+    (e: MouseEvent) => {
       canvas.setMousePoint(canvas.removeRootPosition({ x: e.pageX, y: e.pageY }));
       if (!canvas.editStartPoint) return;
 
@@ -102,9 +104,10 @@ export function AppCanvas() {
     },
     [canvas, smctx]
   );
+  useGlobalMousemoveEffect(onMouseMove);
 
   const onMouseUp = useCallback(
-    (e: React.MouseEvent) => {
+    (e: MouseEvent) => {
       smctx.stateMachine.handleEvent({
         type: "pointerup",
         data: {
@@ -115,6 +118,7 @@ export function AppCanvas() {
     },
     [canvas, smctx]
   );
+  useGlobalMouseupEffect(onMouseUp);
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
@@ -135,8 +139,6 @@ export function AppCanvas() {
       ref={wrapperRef}
       className="box-border border border-black relative w-full h-full"
       onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
       onWheel={onWheel}
     >
       <canvas ref={canvasRef} {...canvasAttrs}></canvas>
