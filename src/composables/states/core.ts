@@ -127,6 +127,7 @@ export type ModeStateEvent =
   | PointerDownEvent
   | PointerUpEvent
   | KeyDownEvent
+  | WheelEvent
   | ChangeStateEvent
   | ContextMenuEvent
   | CopyEvent
@@ -165,6 +166,14 @@ export interface KeyDownEvent extends ModeStateEventBase {
   type: "keydown";
   data: KeyOptions;
   point?: IVec2;
+}
+
+export interface WheelEvent extends ModeStateEventBase {
+  type: "wheel";
+  data: {
+    delta: IVec2;
+    options: MouseOptions;
+  };
 }
 
 export interface ChangeStateEvent extends ModeStateEventBase {

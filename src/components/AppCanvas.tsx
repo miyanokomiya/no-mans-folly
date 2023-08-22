@@ -38,7 +38,8 @@ export function AppCanvas() {
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.resetTransform();
-    ctx.transform(canvas.scale, 0, 0, canvas.scale, -canvas.viewOrigin.x, -canvas.viewOrigin.y);
+    ctx.scale(1 / canvas.scale, 1 / canvas.scale);
+    ctx.translate(-canvas.viewOrigin.x, -canvas.viewOrigin.y);
 
     shapes.forEach((shape) => {
       renderShape(getCommonStruct, ctx, shape);
@@ -61,6 +62,7 @@ export function AppCanvas() {
   useEffect(() => {
     smctx.setCtx({
       setViewport: canvas.setViewport,
+      zoomView: canvas.zoomView,
       panView: canvas.panView,
       startDragging: canvas.startDragging,
       stopDragging: canvas.endMoving,
@@ -112,6 +114,19 @@ export function AppCanvas() {
     [canvas, smctx]
   );
 
+  const onWheel = useCallback(
+    (e: React.WheelEvent) => {
+      smctx.stateMachine.handleEvent({
+        type: "wheel",
+        data: {
+          delta: { x: e.deltaX, y: e.deltaY },
+          options: getMouseOptions(e),
+        },
+      });
+    },
+    [smctx]
+  );
+
   return (
     <div
       ref={wrapperRef}
@@ -120,6 +135,7 @@ export function AppCanvas() {
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
+      onWheel={onWheel}
     >
       <canvas ref={canvasRef} {...canvasAttrs}></canvas>
       <canvas ref={ctlCanvasRef} {...canvasAttrs}></canvas>

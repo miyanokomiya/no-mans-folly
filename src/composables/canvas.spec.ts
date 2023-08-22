@@ -77,5 +77,23 @@ describe("useCanvas", () => {
       expect(rendered.result.current.viewOrigin).toEqual({ x: -60, y: -120 });
       expect(rendered.result.current.scale).toBe(1.2);
     });
+
+    test("should zoom in and out the viewport", () => {
+      const rendered = renderHook(() => useCanvas(getWrapper));
+      act(() => {
+        rendered.result.current.zoomView(1);
+      });
+      expect(rendered.result.current.scale).toBeCloseTo(1.1);
+
+      act(() => {
+        rendered.result.current.zoomView(-1);
+      });
+      expect(rendered.result.current.scale).toBeCloseTo(1);
+
+      act(() => {
+        rendered.result.current.zoomView(-1);
+      });
+      expect(rendered.result.current.scale).toBeCloseTo(1 / 1.1);
+    });
   });
 });

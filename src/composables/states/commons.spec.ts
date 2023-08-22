@@ -10,6 +10,24 @@ function getMockCtx() {
 }
 
 describe("newPanningState", () => {
+  describe("onStart", () => {
+    test('should execute "startDragging"', async () => {
+      const ctx = getMockCtx();
+      const target = newPanningState();
+      await target.onStart?.(ctx);
+      expect(ctx.startDragging).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("onEnd", () => {
+    test('should execute "stopDragging"', async () => {
+      const ctx = getMockCtx();
+      const target = newPanningState();
+      await target.onEnd?.(ctx);
+      expect(ctx.stopDragging).toHaveBeenCalledOnce();
+    });
+  });
+
   describe("handle pointermove", () => {
     test('should execute "panView"', async () => {
       const ctx = getMockCtx();
@@ -32,7 +50,6 @@ describe("newPanningState", () => {
         type: "pointerup",
         data: { point: { x: 1, y: 2 }, options: { button: 0 } },
       });
-      expect(ctx.stopDragging).toHaveBeenCalledOnce();
       expect(result).toEqual({ type: "break" });
     });
   });

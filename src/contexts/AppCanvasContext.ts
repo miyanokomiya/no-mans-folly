@@ -28,7 +28,9 @@ export function createInitialEntities(acctx: IAppCanvasContext, generateId = gen
 }
 
 interface IAppStateMachineContext {
-  setCtx: (c: Pick<CanvasStateContext, "setViewport" | "panView" | "startDragging" | "stopDragging">) => void;
+  setCtx: (
+    c: Pick<CanvasStateContext, "setViewport" | "zoomView" | "panView" | "startDragging" | "stopDragging">
+  ) => void;
   getCtx: () => CanvasStateContext;
   stateMachine: ReturnType<typeof newStateMachine<CanvasStateContext, CanvasStateEvent>>;
 }
@@ -41,6 +43,7 @@ export function createStateMachineContext(arg: { getTimestamp: () => number; gen
     generateUuid: arg.generateUuid,
 
     setViewport() {},
+    zoomView() {},
     panView() {},
     startDragging() {},
     stopDragging() {},

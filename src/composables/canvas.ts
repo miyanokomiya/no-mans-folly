@@ -85,7 +85,7 @@ export function useCanvas(
   const viewCenter = useMemo(() => getRectCenter({ x: 0, y: 0, ...viewSize }), [viewSize]);
 
   function viewToCanvas(v: IVec2): IVec2 {
-    return add(viewOrigin, multi(v, scale));
+    return _viewToCanvas(scale, viewOrigin, v);
   }
 
   function panView(editMovement: EditMovement) {
@@ -128,6 +128,15 @@ export function useCanvas(
     setViewOrigin(ret.viewOrigin);
   }
 
+  function zoomView(step: number, center = false) {
+    const origin = !center && mousePoint ? mousePoint : viewCenter;
+    const beforeOrigin = viewToCanvas(origin);
+    const nextScale = Math.min(Math.max(scale * Math.pow(scaleRate, step > 0 ? 1 : -1), scaleMin), scaleMax);
+    const nextViewOrigin = add(viewOrigin, sub(beforeOrigin, _viewToCanvas(nextScale, viewOrigin, origin)));
+    setScale(nextScale);
+    setViewOrigin(nextViewOrigin);
+  }
+
   const onResize = useCallback(() => {
     const wrapperElm = getWrapper();
     if (!wrapperElm) return;
@@ -154,12 +163,7 @@ export function useCanvas(
     viewCanvasRect,
     viewToCanvas,
     canvasToView,
-    wheel(e: WheelEvent, center = false) {
-      const origin = !center && mousePoint ? mousePoint : viewCenter;
-      const beforeOrigin = viewToCanvas(origin);
-      setScale(Math.min(Math.max(scale * Math.pow(scaleRate, e.deltaY > 0 ? 1 : -1), scaleMin), scaleMax));
-      setViewOrigin(add(viewOrigin, sub(beforeOrigin, viewToCanvas(origin))));
-    },
+    zoomView,
     panView,
     adjustToCenter,
     setViewport,
@@ -167,4 +171,8 @@ export function useCanvas(
     removeRootPosition,
     addRootPosition,
   };
+}
+
+function _viewToCanvas(scale: number, viewOrigin: IVec2, v: IVec2): IVec2 {
+  return add(viewOrigin, multi(v, scale));
 }

@@ -19,6 +19,9 @@ const state: AppCanvasState = {
           default:
             return;
         }
+      case "wheel":
+        ctx.zoomView(event.data.delta.y);
+        return;
       default:
         return;
     }

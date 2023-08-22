@@ -6,6 +6,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
 
   setViewport: (rect?: IRectangle, margin?: number) => void;
+  zoomView: (step: number, center?: boolean) => void;
   panView: (val: EditMovement) => void;
   startDragging: () => void;
   stopDragging: () => void;
@@ -27,13 +28,15 @@ const panningState: CanvasState = {
   onStart: async (ctx) => {
     ctx.startDragging();
   },
+  onEnd: async (ctx) => {
+    ctx.stopDragging();
+  },
   handleEvent: async (ctx, event) => {
     switch (event.type) {
       case "pointermove":
         ctx.panView(event.data);
         return;
       case "pointerup":
-        ctx.stopDragging();
         return { type: "break" };
     }
   },
