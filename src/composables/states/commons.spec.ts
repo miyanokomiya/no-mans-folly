@@ -4,6 +4,8 @@ import { newPanningState } from "./commons";
 function getMockCtx() {
   return {
     panView: vi.fn(),
+    startDragging: vi.fn(),
+    stopDragging: vi.fn(),
   } as any;
 }
 
@@ -26,7 +28,11 @@ describe("newPanningState", () => {
     test("should break the state", async () => {
       const ctx = getMockCtx();
       const target = newPanningState();
-      const result = await target.handleEvent(ctx, { type: "pointerup" });
+      const result = await target.handleEvent(ctx, {
+        type: "pointerup",
+        data: { point: { x: 1, y: 2 }, options: { button: 0 } },
+      });
+      expect(ctx.stopDragging).toHaveBeenCalledOnce();
       expect(result).toEqual({ type: "break" });
     });
   });

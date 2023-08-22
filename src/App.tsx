@@ -2,7 +2,12 @@ import { useCallback } from "react";
 import * as Y from "yjs";
 import { generateUuid } from "./utils/random";
 import { AppCanvas } from "./components/AppCanvas";
-import { AppCanvasContext, createInitialEntities } from "./contexts/AppCanvasContext";
+import {
+  AppCanvasContext,
+  AppStateMachineContext,
+  createInitialEntities,
+  createStateMachineContext,
+} from "./contexts/AppCanvasContext";
 import { createShape, getCommonStruct } from "./shapes/index";
 import { newShapeStore } from "./stores/shapes";
 import { newLayerStore } from "./stores/layers";
@@ -32,6 +37,11 @@ const undoManager = new Y.UndoManager(
 );
 undoManager.clear();
 
+const smctx = createStateMachineContext({
+  getTimestamp: Date.now,
+  generateUuid,
+});
+
 function App() {
   const onClick = useCallback(() => {
     const id = generateUuid();
@@ -52,13 +62,15 @@ function App() {
 
   return (
     <AppCanvasContext.Provider value={acctx}>
-      <div>
-        <h1 className="text-3xl font-bold underline">Hello world!</h1>
-        <button onClick={onClick}>Add</button>
-        <button onClick={onUndo}>Undo</button>
-        <button onClick={onRedo}>Redo</button>
-      </div>
-      <AppCanvas />
+      <AppStateMachineContext.Provider value={smctx}>
+        <div>
+          <h1 className="text-3xl font-bold underline">Hello world!</h1>
+          <button onClick={onClick}>Add</button>
+          <button onClick={onUndo}>Undo</button>
+          <button onClick={onRedo}>Redo</button>
+        </div>
+        <AppCanvas />
+      </AppStateMachineContext.Provider>
     </AppCanvasContext.Provider>
   );
 }

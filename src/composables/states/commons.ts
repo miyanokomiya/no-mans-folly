@@ -1,35 +1,39 @@
 import { IVec2, IRectangle } from "okageo";
-import type { ModeStateBase, ModeStateContextBase } from "./core";
+import type { ModeStateBase, ModeStateContextBase, ModeStateEvent } from "./core";
 import type { CommandExam, ContextMenuItem, EditMovement } from "./types";
 
 export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
 
-  setViewport: (rect?: IRectangle) => void;
+  setViewport: (rect?: IRectangle, margin?: number) => void;
   panView: (val: EditMovement) => void;
   startDragging: () => void;
-  setRectangleDragging: (val?: boolean) => void;
-  getDraggedRectangle: () => IRectangle | undefined;
+  stopDragging: () => void;
 
   setContextMenuList: (val?: { items: ContextMenuItem[]; point: IVec2 }) => void;
   setCommandExams: (exams?: CommandExam[]) => void;
 }
 
-export type CanvasState = ModeStateBase<CanvasStateContext>;
+export type CanvasStateEvent = ModeStateEvent;
 
-export function newPanningState(): ModeStateBase<CanvasStateContext, any> {
+export type CanvasState = ModeStateBase<CanvasStateContext, CanvasStateEvent>;
+
+export function newPanningState(): CanvasState {
   return panningState;
 }
 
 const panningState: CanvasState = {
   getLabel: () => "Panning",
-  shouldRequestPointerLock: true,
+  onStart: async (ctx) => {
+    ctx.startDragging();
+  },
   handleEvent: async (ctx, event) => {
     switch (event.type) {
       case "pointermove":
         ctx.panView(event.data);
         return;
       case "pointerup":
+        ctx.stopDragging();
         return { type: "break" };
     }
   },

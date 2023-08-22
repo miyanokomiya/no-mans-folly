@@ -11,10 +11,9 @@ export type TransitionValue<C, E = ModeStateEvent> =
 
 export interface ModeStateBase<C, E = ModeStateEvent> {
   getLabel: () => string;
-  shouldRequestPointerLock?: boolean;
   onStart?: (ctx: ModeStateContextBase & C) => Promise<void>;
   onEnd?: (ctx: C) => Promise<void>;
-  handleEvent: (ctx: C, e: E) => Promise<TransitionValue<C, E>>;
+  handleEvent: (ctx: C, e: E) => Promise<TransitionValue<C, ModeStateEvent>>;
 }
 
 type StateStackItem<C, E = ModeStateEvent> = {
@@ -31,14 +30,14 @@ interface StateMachine<E = ModeStateEvent> {
 }
 
 export function newStateMachine<C, E = ModeStateEvent>(
-  ctx: ModeStateContextBase & C,
+  getCtx: () => ModeStateContextBase & C,
   getInitialState: () => ModeStateBase<C, E>
 ): StateMachine<E> {
   const stateStack: StateStackItem<C, E>[] = [{ state: getInitialState() }];
   function getCurrentState(): StateStackItem<C, E> {
     return stateStack[stateStack.length - 1];
   }
-  const ready = getCurrentState().state.onStart?.(ctx) ?? Promise.resolve();
+  const ready = getCurrentState().state.onStart?.(getCtx()) ?? Promise.resolve();
 
   function getStateSummary() {
     return {
@@ -47,12 +46,13 @@ export function newStateMachine<C, E = ModeStateEvent>(
   }
 
   async function handleEvent(event: E): Promise<void> {
+    const ctx = getCtx();
     const ret = await getCurrentState().state.handleEvent(ctx, event);
     if (ret) {
       if (typeof ret === "function") {
-        await switchState(ctx, ret());
+        await switchState(ctx, ret() as any);
       } else if (ret.type !== "break") {
-        await switchState(ctx, ret.getState(), ret.type);
+        await switchState(ctx, ret.getState() as any, ret.type);
       } else {
         await breakState(ctx);
       }
@@ -83,12 +83,6 @@ export function newStateMachine<C, E = ModeStateEvent>(
     // console.log('switch', nextState.getLabel(), type)
     const current = getCurrentState();
 
-    if (current.state.shouldRequestPointerLock && !nextState.shouldRequestPointerLock) {
-      ctx.exitPointerLock();
-    } else if (!current.state.shouldRequestPointerLock && nextState.shouldRequestPointerLock) {
-      ctx.requestPointerLock();
-    }
-
     const nextItem = { state: nextState, type };
 
     switch (type) {
@@ -109,6 +103,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
   }
 
   async function dispose() {
+    const ctx = getCtx();
     const current = getCurrentState();
     await current.state.onEnd?.(ctx);
     stateStack.length = 0;
@@ -123,8 +118,6 @@ export function newStateMachine<C, E = ModeStateEvent>(
 }
 
 export interface ModeStateContextBase {
-  requestPointerLock: () => void;
-  exitPointerLock: () => void;
   getTimestamp: () => number;
 }
 
@@ -142,16 +135,6 @@ export type ModeStateEvent =
 export interface ModeStateEventBase {
   type: string;
 }
-export interface ModeStateEventWithTarget extends ModeStateEventBase {
-  target: ModeEventTarget;
-}
-
-export interface ModeEventTarget {
-  type: string;
-  id: string;
-  data?: { [key: string]: string };
-}
-
 export interface PointerMoveEvent extends ModeStateEventBase {
   type: "pointermove";
   data: EditMovement;
@@ -162,18 +145,16 @@ export interface PointerDragEvent extends ModeStateEventBase {
   data: EditMovement;
 }
 
-export interface PointerDownEvent extends ModeStateEventWithTarget {
+export interface PointerDownEvent extends ModeStateEventBase {
   type: "pointerdown";
-  target: ModeEventTarget;
   data: {
     point: IVec2;
     options: MouseOptions;
   };
 }
 
-export interface PointerUpEvent extends ModeStateEventWithTarget {
+export interface PointerUpEvent extends ModeStateEventBase {
   type: "pointerup";
-  target: ModeEventTarget;
   data: {
     point: IVec2;
     options: MouseOptions;
@@ -220,7 +201,7 @@ export function newGroupState<C, K, E = ModeStateEvent>(
     getLabel: () => state.getLabel() + (sm ? `:${sm.getStateSummary().label}` : ""),
     onStart: async (ctx) => {
       await state.onStart?.(ctx);
-      sm = newStateMachine({ ...ctx, ...deriveCtx(ctx) }, getInitialState);
+      sm = newStateMachine(() => ({ ...ctx, ...deriveCtx(ctx) }), getInitialState);
       await sm.ready;
     },
     onEnd: async (ctx) => {

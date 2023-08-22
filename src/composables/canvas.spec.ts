@@ -21,7 +21,7 @@ describe("useCanvas", () => {
         rendered.result.current.startMoving();
       });
       act(() => {
-        rendered.result.current.viewMove({
+        rendered.result.current.panView({
           start: { x: 0, y: 0 },
           current: { x: -10, y: -20 },
           scale: 1,

@@ -58,6 +58,8 @@ export function useCanvas(
 
   function endMoving() {
     setMoveType(undefined);
+    setEditStartPoint(undefined);
+    setEditStartViewOrigin(undefined);
   }
   function startMoving() {
     setMoveType("move");
@@ -86,7 +88,7 @@ export function useCanvas(
     return add(viewOrigin, multi(v, scale));
   }
 
-  function viewMove(editMovement: EditMovement) {
+  function panView(editMovement: EditMovement) {
     if (!editStartViewOrigin) return;
     setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
   }
@@ -158,7 +160,7 @@ export function useCanvas(
       setScale(Math.min(Math.max(scale * Math.pow(scaleRate, e.deltaY > 0 ? 1 : -1), scaleMin), scaleMax));
       setViewOrigin(add(viewOrigin, sub(beforeOrigin, viewToCanvas(origin))));
     },
-    viewMove,
+    panView,
     adjustToCenter,
     setViewport,
 

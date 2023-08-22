@@ -11,11 +11,15 @@ function getMockState(arg: Partial<ModeStateBase<any>> = {}): ModeStateBase<any>
   };
 }
 
+function getCtx() {
+  return {};
+}
+
 describe("newStateMachine", () => {
   describe("handleEvent", () => {
     test("should handle the event via current state", async () => {
       const current = getMockState({ getLabel: () => "current" });
-      const sm = newStateMachine({}, () => current);
+      const sm = newStateMachine(getCtx, () => current);
 
       expect(sm.getStateSummary().label).toBe("current");
       await sm.handleEvent({ type: "test" } as any);
@@ -27,7 +31,7 @@ describe("newStateMachine", () => {
         getLabel: () => "current",
         handleEvent: vi.fn().mockResolvedValue(() => getMockState({ getLabel: () => "next" })),
       });
-      const sm = newStateMachine({}, () => current);
+      const sm = newStateMachine(getCtx, () => current);
 
       expect(sm.getStateSummary().label).toBe("current");
       await sm.handleEvent({ type: "test" } as any);
@@ -50,7 +54,7 @@ describe("newStateMachine", () => {
           type: "stack-restart",
         }),
       });
-      const sm = newStateMachine({}, () => current);
+      const sm = newStateMachine(getCtx, () => current);
 
       expect(current.onStart).toHaveBeenCalledTimes(1);
       expect(sm.getStateSummary().label).toBe("0");
@@ -78,7 +82,7 @@ describe("newStateMachine", () => {
           type: "stack-resume",
         }),
       });
-      const sm = newStateMachine({}, () => current);
+      const sm = newStateMachine(getCtx, () => current);
 
       expect(current.onStart).toHaveBeenCalledTimes(1);
       expect(sm.getStateSummary().label).toBe("0");
@@ -115,7 +119,7 @@ describe("newObjectGroupState", () => {
       (ctx) => ctx
     );
 
-    const sm = newStateMachine({}, () => groupA);
+    const sm = newStateMachine(getCtx, () => groupA);
     await sm.ready;
     expect(sm.getStateSummary().label).toBe("a:aa");
     expect(groupASrc.onStart).toHaveBeenCalledTimes(1);
