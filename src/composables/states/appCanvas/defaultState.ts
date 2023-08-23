@@ -23,6 +23,7 @@ const state: AppCanvasState = {
             } else {
               ctx.clearAllSelected();
             }
+            onChangeSelection(ctx);
             return;
           }
           case 1:
