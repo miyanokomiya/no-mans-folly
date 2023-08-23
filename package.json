@@ -17,6 +17,7 @@
   "dependencies": {
     "nanoid": "^4.0.2",
     "okageo": "^3.0.8",
+    "okaselect": "^0.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.3.3",

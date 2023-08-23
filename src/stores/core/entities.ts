@@ -1,6 +1,7 @@
 import * as Y from "yjs";
 import type { Entity } from "../../models";
 import { newCallback } from "../../composables/reactives";
+import { toMap } from "../../utils/commons";
 
 type Option = {
   name: string;
@@ -12,6 +13,10 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   function getEntities(): T[] {
     return Array.from(entityMap.values()).map((ye) => toEntity(ye));
+  }
+
+  function getEntityMap(): { [id: string]: T } {
+    return toMap(getEntities());
   }
 
   function getEntity(id: string): T | undefined {
@@ -65,6 +70,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   return {
     getEntities,
+    getEntityMap,
     getEntity,
     addEntity,
     removeEntity,

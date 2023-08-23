@@ -1,9 +1,9 @@
-import { expect, test, describe } from "vitest";
+import { expect, test, describe, vi } from "vitest";
 import { newDefaultState } from "./defaultState";
 import { newPanningState } from "../commons";
 
 function getMockCtx() {
-  return {} as any;
+  return { getShapeAt: vi.fn() } as any;
 }
 
 describe("newDefaultState", () => {

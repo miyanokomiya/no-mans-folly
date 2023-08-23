@@ -1,10 +1,11 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { Shape } from "../models";
-import { getCommonStruct, renderShape } from "../shapes";
+import { getCommonStruct, isPointOn, renderShape } from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getMouseOptions } from "../utils/devices";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables/window";
+import { findBackward } from "../utils/commons";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -69,8 +70,14 @@ export function AppCanvas() {
       stopDragging: canvas.endMoving,
       setContextMenuList() {},
       setCommandExams() {},
+
+      getShapeAt(p) {
+        return findBackward(shapes, (s) => isPointOn(getCommonStruct, s, p));
+      },
+      selectShape: acctx.shapeStore.select,
+      clearAllSelected: acctx.shapeStore.clearAllSelected,
     });
-  }, [canvas, smctx]);
+  }, [canvas, acctx, smctx, shapes]);
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {

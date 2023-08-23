@@ -18,6 +18,19 @@ describe("newEntityStore", () => {
     });
   });
 
+  describe("getEntityMap", () => {
+    test("should return a key map of entities", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      store.addEntity({ id: "a", findex: "0" });
+      store.addEntity({ id: "b", findex: "1" });
+      expect(store.getEntityMap()).toEqual({
+        a: { id: "a", findex: "0" },
+        b: { id: "b", findex: "1" },
+      });
+    });
+  });
+
   describe("getEntity", () => {
     test("should return an array of entities", () => {
       const ydoc = new Y.Doc();

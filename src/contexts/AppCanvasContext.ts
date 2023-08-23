@@ -47,6 +47,10 @@ export function createStateMachineContext(arg: { getTimestamp: () => number; gen
     stopDragging() {},
     setContextMenuList() {},
     setCommandExams() {},
+
+    getShapeAt: () => undefined,
+    selectShape() {},
+    clearAllSelected() {},
   };
 
   const setCtx: IAppStateMachineContext["setCtx"] = (c) => {
