@@ -1,7 +1,6 @@
 import { IVec2, IRectangle } from "okageo";
 import type { ModeStateBase, ModeStateContextBase, ModeStateEvent } from "./core";
 import type { CommandExam, ContextMenuItem, EditMovement } from "./types";
-import { Shape } from "../../models";
 
 export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
@@ -14,10 +13,6 @@ export interface CanvasStateContext extends ModeStateContextBase {
 
   setContextMenuList: (val?: { items: ContextMenuItem[]; point: IVec2 }) => void;
   setCommandExams: (exams?: CommandExam[]) => void;
-
-  getShapeAt: (p: IVec2) => Shape | undefined;
-  selectShape: (id: string, ctrl?: boolean) => void;
-  clearAllSelected: () => void;
 }
 
 export type CanvasStateEvent = ModeStateEvent;

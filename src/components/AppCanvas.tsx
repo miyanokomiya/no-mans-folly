@@ -9,12 +9,26 @@ import { findBackward } from "../utils/commons";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
+  const smctx = useContext(AppStateMachineContext);
 
+  const [canvasState, setCanvasState] = useState({});
   const [shapes, setShapes] = useState<Shape[]>([]);
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
       setShapes(acctx.shapeStore.getEntities());
+    });
+  }, [acctx.shapeStore]);
+
+  useEffect(() => {
+    return smctx.stateMachine.watch(() => {
+      setCanvasState({});
+    });
+  }, [smctx.stateMachine]);
+
+  useEffect(() => {
+    return acctx.shapeStore.watchSelected(() => {
+      setCanvasState({});
     });
   }, [acctx.shapeStore]);
 
@@ -35,6 +49,7 @@ export function AppCanvas() {
   );
 
   useEffect(() => {
+    console.log("Rendered: Shape");
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
@@ -46,7 +61,18 @@ export function AppCanvas() {
     shapes.forEach((shape) => {
       renderShape(getCommonStruct, ctx, shape);
     });
-  }, [shapes, canvas.viewSize.width, canvas.viewSize.height, canvas.scale, canvas.viewOrigin.x, canvas.viewOrigin.y]);
+
+    smctx.stateMachine.render(ctx);
+  }, [
+    shapes,
+    canvas.viewSize.width,
+    canvas.viewSize.height,
+    canvas.scale,
+    canvas.viewOrigin.x,
+    canvas.viewOrigin.y,
+    canvasState,
+    smctx.stateMachine,
+  ]);
 
   useEffect(() => {
     const ctx = ctlCanvasRef.current?.getContext("2d");
@@ -60,7 +86,6 @@ export function AppCanvas() {
     ctx.fill();
   }, [canvas.mousePoint.x, canvas.mousePoint.y]);
 
-  const smctx = useContext(AppStateMachineContext);
   useEffect(() => {
     smctx.setCtx({
       setViewport: canvas.setViewport,
@@ -71,6 +96,8 @@ export function AppCanvas() {
       setContextMenuList() {},
       setCommandExams() {},
 
+      getShapeMap: acctx.shapeStore.getEntityMap,
+      getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getShapeAt(p) {
         return findBackward(shapes, (s) => isPointOn(getCommonStruct, s, p));
       },

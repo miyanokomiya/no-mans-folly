@@ -23,7 +23,7 @@ export function newShapeStore(option: Option) {
     ...entityStore,
 
     watchSelected: selectedCallback.bind,
-    selectIdMap: shapeSelectable.getSelected,
+    getSelected: shapeSelectable.getSelected,
     select: shapeSelectable.select,
     multiSelect: shapeSelectable.multiSelect,
     selectAll: shapeSelectable.selectAll,

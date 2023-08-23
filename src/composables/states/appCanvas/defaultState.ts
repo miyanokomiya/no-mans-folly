@@ -1,5 +1,7 @@
 import type { AppCanvasState, AppCanvasStateContext } from "./core";
 import { newPanningState } from "../commons";
+import { getRect } from "../../../shapes";
+import { getWrapperRect } from "../../../utils/geometry";
 
 export function newDefaultState(): AppCanvasState {
   return state;
@@ -34,6 +36,16 @@ const state: AppCanvasState = {
       default:
         return;
     }
+  },
+  render: (ctx, renderCtx) => {
+    const selected = ctx.getSelectedShapeIdMap();
+    const shapes = Object.entries(ctx.getShapeMap())
+      .filter(([id]) => selected[id])
+      .map(([, s]) => s);
+    const rect = getWrapperRect(shapes.map((s) => getRect(ctx.getShapeStruct, s)));
+    renderCtx.strokeStyle = "red";
+    renderCtx.lineWidth = 2;
+    renderCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
   },
 };
 

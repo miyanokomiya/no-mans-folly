@@ -18,3 +18,13 @@ export function isPointOnEllipse(c: IVec2, rx: number, ry: number, p: IVec2): bo
   const dy = c.y - p.y;
   return (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1;
 }
+
+export function getWrapperRect(rects: IRectangle[]): IRectangle {
+  const xList = rects.flatMap((r) => [r.x, r.x + r.width]);
+  const yList = rects.flatMap((r) => [r.y, r.y + r.height]);
+  const xMin = Math.min(...xList);
+  const xMax = Math.max(...xList);
+  const yMin = Math.min(...yList);
+  const yMax = Math.max(...yList);
+  return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+}

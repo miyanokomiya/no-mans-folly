@@ -3,7 +3,7 @@ import { newDefaultState } from "./defaultState";
 import { newPanningState } from "../commons";
 
 function getMockCtx() {
-  return { getShapeAt: vi.fn() } as any;
+  return { getShapeAt: vi.fn(), clearAllSelected: vi.fn() } as any;
 }
 
 describe("newDefaultState", () => {

@@ -1,5 +1,6 @@
 import { IVec2 } from "okageo";
 import { EditMovement, KeyOptions, MouseOptions } from "./types";
+import { newCallback } from "../reactives";
 
 type TransitionType = "break" | "stack-restart" | "stack-resume";
 
@@ -14,6 +15,7 @@ export interface ModeStateBase<C, E = ModeStateEvent> {
   onStart?: (ctx: ModeStateContextBase & C) => Promise<void>;
   onEnd?: (ctx: C) => Promise<void>;
   handleEvent: (ctx: C, e: E) => Promise<TransitionValue<C, ModeStateEvent>>;
+  render?: (ctx: C, renderCtx: CanvasRenderingContext2D) => void;
 }
 
 type StateStackItem<C, E = ModeStateEvent> = {
@@ -24,9 +26,11 @@ type StateStackItem<C, E = ModeStateEvent> = {
 interface StateMachine<E = ModeStateEvent> {
   getStateSummary: () => { label: string };
   handleEvent: (event: E) => Promise<void>;
+  render: (ctx: CanvasRenderingContext2D) => void;
   dispose: () => Promise<void>;
   // This will be resolved when "onStart" of the initial state finishes
   ready: Promise<void>;
+  watch: (fn: () => void) => () => void;
 }
 
 export function newStateMachine<C, E = ModeStateEvent>(
@@ -34,6 +38,8 @@ export function newStateMachine<C, E = ModeStateEvent>(
   getInitialState: () => ModeStateBase<C, E>
 ): StateMachine<E> {
   const stateStack: StateStackItem<C, E>[] = [{ state: getInitialState() }];
+  const callback = newCallback();
+
   function getCurrentState(): StateStackItem<C, E> {
     return stateStack[stateStack.length - 1];
   }
@@ -72,7 +78,8 @@ export function newStateMachine<C, E = ModeStateEvent>(
     if (current.type !== "stack-resume") {
       await next.state.onStart?.(ctx);
     }
-    // console.log('break', next.state.getLabel())
+
+    callback.dispatch();
   }
 
   async function switchState(
@@ -80,7 +87,6 @@ export function newStateMachine<C, E = ModeStateEvent>(
     nextState: ModeStateBase<C, E>,
     type?: Exclude<TransitionType, "break">
   ): Promise<void> {
-    // console.log('switch', nextState.getLabel(), type)
     const current = getCurrentState();
 
     const nextItem = { state: nextState, type };
@@ -100,6 +106,13 @@ export function newStateMachine<C, E = ModeStateEvent>(
     }
 
     await nextState.onStart?.(ctx);
+    callback.dispatch();
+  }
+
+  function render(renderCtx: CanvasRenderingContext2D) {
+    const ctx = getCtx();
+    const current = getCurrentState();
+    current.state.render?.(ctx, renderCtx);
   }
 
   async function dispose() {
@@ -112,8 +125,10 @@ export function newStateMachine<C, E = ModeStateEvent>(
   return {
     getStateSummary,
     handleEvent,
+    render,
     dispose,
     ready,
+    watch: callback.bind,
   };
 }
 

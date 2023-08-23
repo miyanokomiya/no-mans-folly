@@ -6,7 +6,8 @@ import type { newSheetStore } from "../stores/sheets";
 import { generateUuid } from "../utils/random";
 import { newStateMachine } from "../composables/states/core";
 import { newDefaultState } from "../composables/states/appCanvas/defaultState";
-import { CanvasStateContext, CanvasStateEvent } from "../composables/states/commons";
+import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
+import { getCommonStruct } from "../shapes";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
@@ -28,15 +29,15 @@ export function createInitialEntities(acctx: IAppCanvasContext, generateId = gen
 }
 
 interface IAppStateMachineContext {
-  setCtx: (c: Omit<CanvasStateContext, "getTimestamp" | "generateUuid">) => void;
-  getCtx: () => CanvasStateContext;
-  stateMachine: ReturnType<typeof newStateMachine<CanvasStateContext, CanvasStateEvent>>;
+  setCtx: (c: Omit<AppCanvasStateContext, "getTimestamp" | "generateUuid" | "getShapeStruct">) => void;
+  getCtx: () => AppCanvasStateContext;
+  stateMachine: ReturnType<typeof newStateMachine<AppCanvasStateContext, AppCanvasEvent>>;
 }
 
 export const AppStateMachineContext = createContext<IAppStateMachineContext>(undefined as any);
 
 export function createStateMachineContext(arg: { getTimestamp: () => number; generateUuid: () => string }) {
-  let ctx: CanvasStateContext = {
+  let ctx: AppCanvasStateContext = {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
 
@@ -48,9 +49,13 @@ export function createStateMachineContext(arg: { getTimestamp: () => number; gen
     setContextMenuList() {},
     setCommandExams() {},
 
+    getShapeMap: () => ({}),
+    getSelectedShapeIdMap: () => ({}),
     getShapeAt: () => undefined,
     selectShape() {},
     clearAllSelected() {},
+
+    getShapeStruct: getCommonStruct,
   };
 
   const setCtx: IAppStateMachineContext["setCtx"] = (c) => {

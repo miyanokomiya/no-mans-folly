@@ -11,7 +11,7 @@ describe("createStrokeStyle", () => {
 
 describe("applyStrokeStyle", () => {
   test("should apply StrokeStyle", () => {
-    const ctx = { strokeStyle: "" };
+    const ctx = { strokeStyle: "", lineWidth: 0 };
     applyStrokeStyle(
       ctx as any,
       createStrokeStyle({
@@ -19,5 +19,6 @@ describe("applyStrokeStyle", () => {
       })
     );
     expect(ctx.strokeStyle).toBe("rgba(1,2,3,0.5)");
+    expect(ctx.lineWidth).toBe(1);
   });
 });
