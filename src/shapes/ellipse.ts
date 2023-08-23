@@ -1,5 +1,6 @@
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { isPointOnEllipse } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -33,5 +34,16 @@ export const struct: ShapeStruct<EllipseShape> = {
     ctx.ellipse(shape.p.x, shape.p.y, shape.rx, shape.ry, 0, shape.from, shape.to);
     ctx.fill();
     ctx.stroke();
+  },
+  getRect(shape) {
+    return {
+      x: shape.p.x - shape.rx,
+      y: shape.p.y - shape.ry,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+  },
+  isPointOn(shape, p) {
+    return isPointOnEllipse(shape.p, shape.rx, shape.ry, p);
   },
 };

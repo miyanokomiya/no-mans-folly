@@ -1,5 +1,6 @@
 import { expect, describe, test, vi } from "vitest";
-import { createShape, getCommonStruct, renderShape } from ".";
+import { createShape, getCommonStruct, getRect, isPointOn, renderShape } from ".";
+import { RectangleShape } from "./rectangle";
 
 describe("createShape", () => {
   test("should return new shape", () => {
@@ -19,5 +20,20 @@ describe("renderShape", () => {
     renderShape(getCommonStruct, ctx as any, shape);
     expect(ctx.fillRect).toHaveBeenCalled();
     expect(ctx.strokeRect).toHaveBeenCalled();
+  });
+});
+
+describe("getRect", () => {
+  test("should return rectangle", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
+    expect(getRect(getCommonStruct, shape)).toEqual({ x: 0, y: 0, width: 10, height: 20 });
+  });
+});
+
+describe("isPointOn", () => {
+  test("should return true if the point is on the shape", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
+    expect(isPointOn(getCommonStruct, shape, { x: -3, y: 3 })).toBe(false);
+    expect(isPointOn(getCommonStruct, shape, { x: 3, y: 3 })).toBe(true);
   });
 });

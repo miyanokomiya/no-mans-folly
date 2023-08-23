@@ -21,4 +21,19 @@ describe("struct", () => {
       expect(ctx.strokeRect).toHaveBeenCalled();
     });
   });
+
+  describe("getRect", () => {
+    test("should return the rectangle", () => {
+      const shape = struct.create({ p: { x: 1, y: 2 }, width: 3, height: 4 });
+      expect(struct.getRect(shape)).toEqual({ x: 1, y: 2, width: 3, height: 4 });
+    });
+  });
+
+  describe("isPointOn", () => {
+    test("should return true if the point is on the shape", () => {
+      const shape = struct.create({ width: 10, height: 10 });
+      expect(struct.isPointOn(shape, { x: 5, y: 5 })).toBe(true);
+      expect(struct.isPointOn(shape, { x: 15, y: 5 })).toBe(false);
+    });
+  });
 });

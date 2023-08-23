@@ -25,4 +25,19 @@ describe("struct", () => {
       expect(ctx.stroke).toHaveBeenCalled();
     });
   });
+
+  describe("getRect", () => {
+    test("should return the rectangle", () => {
+      const shape = struct.create({ p: { x: 1, y: 2 }, rx: 3, ry: 4 });
+      expect(struct.getRect(shape)).toEqual({ x: -2, y: -2, width: 6, height: 8 });
+    });
+  });
+
+  describe("isPointOn", () => {
+    test("should return true if the point is on the shape", () => {
+      const shape = struct.create({ rx: 3, ry: 3 });
+      expect(struct.isPointOn(shape, { x: 2, y: 2 })).toBe(true);
+      expect(struct.isPointOn(shape, { x: 15, y: 5 })).toBe(false);
+    });
+  });
 });

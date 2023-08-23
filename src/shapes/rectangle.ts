@@ -1,5 +1,6 @@
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { isPointOnRectangle } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -27,5 +28,11 @@ export const struct: ShapeStruct<RectangleShape> = {
     ctx.fillRect(shape.p.x, shape.p.y, shape.width, shape.height);
     applyStrokeStyle(ctx, shape.stroke);
     ctx.strokeRect(shape.p.x, shape.p.y, shape.width, shape.height);
+  },
+  getRect(shape) {
+    return { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  },
+  isPointOn(shape, p) {
+    return isPointOnRectangle({ x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, p);
   },
 };
