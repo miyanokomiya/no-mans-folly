@@ -3,29 +3,35 @@ import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
-export interface RectangleShape extends Shape {
+export interface EllipseShape extends Shape {
   fill: FillStyle;
   stroke: StrokeStyle;
-  width: number;
-  height: number;
+  rx: number;
+  ry: number;
+  from: number;
+  to: number;
 }
 
-export const struct: ShapeStruct<RectangleShape> = {
-  label: "Rectangle",
+export const struct: ShapeStruct<EllipseShape> = {
+  label: "Ellipse",
   create(arg = {}) {
     return {
       ...createBaseShape(arg),
-      type: "rectangle",
+      type: "ellipse",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      width: arg.width ?? 100,
-      height: arg.height ?? 100,
+      rx: arg.rx ?? 50,
+      ry: arg.ry ?? 50,
+      from: arg.from ?? 0,
+      to: arg.to ?? Math.PI * 2,
     };
   },
   render(ctx, shape) {
     applyFillStyle(ctx, shape.fill);
-    ctx.fillRect(shape.p.x, shape.p.y, shape.width, shape.height);
     applyStrokeStyle(ctx, shape.stroke);
-    ctx.strokeRect(shape.p.x, shape.p.y, shape.width, shape.height);
+    ctx.beginPath();
+    ctx.ellipse(shape.p.x, shape.p.y, shape.rx, shape.ry, 0, shape.from, shape.to);
+    ctx.fill();
+    ctx.stroke();
   },
 };

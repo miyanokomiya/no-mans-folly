@@ -21,9 +21,25 @@ export interface Shape extends Entity {
   layerId?: string;
   type: string;
   p: IVec2;
+  rotation: number;
 }
 
 export interface Size {
   width: number;
   height: number;
+}
+
+export interface Color {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+export interface FillStyle {
+  color: Color;
+}
+
+export interface StrokeStyle {
+  color: Color;
 }
