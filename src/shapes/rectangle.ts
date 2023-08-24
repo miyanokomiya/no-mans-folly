@@ -1,6 +1,7 @@
+import { IVec2, getRectCenter, rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { isPointOnRectangle } from "../utils/geometry";
+import { getRectPoints, getRotatedWrapperRect, isPointOnRectangle } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -25,14 +26,31 @@ export const struct: ShapeStruct<RectangleShape> = {
   },
   render(ctx, shape) {
     applyFillStyle(ctx, shape.fill);
-    ctx.fillRect(shape.p.x, shape.p.y, shape.width, shape.height);
     applyStrokeStyle(ctx, shape.stroke);
-    ctx.strokeRect(shape.p.x, shape.p.y, shape.width, shape.height);
+
+    const rectPolygon = getLocalRectPolygon(shape);
+    ctx.beginPath();
+    rectPolygon.forEach((p) => {
+      ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   },
-  getRect(shape) {
-    return { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  getWrapperRect(shape) {
+    return getRotatedWrapperRect(
+      { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
+      shape.rotation
+    );
   },
+  getLocalRectPolygon,
   isPointOn(shape, p) {
     return isPointOnRectangle({ x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, p);
   },
 };
+
+function getLocalRectPolygon(shape: RectangleShape): IVec2[] {
+  const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  const c = getRectCenter(rect);
+  return getRectPoints(rect).map((p) => rotate(p, shape.rotation, c));
+}

@@ -29,6 +29,11 @@ export interface Size {
   height: number;
 }
 
+export interface StyleScheme {
+  selectionPrimary: Color;
+  selectionSecondaly: Color;
+}
+
 export interface Color {
   r: number;
   g: number;

@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { expandRect, getWrapperRect, isPointOnEllipse, isPointOnRectangle } from "./geometry";
+import {
+  expandRect,
+  getRectPoints,
+  getRotatedWrapperRect,
+  getWrapperRect,
+  isPointOnEllipse,
+  isPointOnRectangle,
+} from "./geometry";
 
 describe("expandRect", () => {
   test("should return expanded rectangle", () => {
@@ -51,5 +58,33 @@ describe("getWrapperRect", () => {
         { x: 6, y: 7, width: 4, height: 6 },
       ])
     ).toEqual({ x: 1, y: 2, width: 10, height: 20 });
+  });
+});
+
+describe("getRectPoints", () => {
+  test("should return a rectangle to wrap rotated rectangle", () => {
+    expect(getRectPoints({ x: 1, y: 2, width: 10, height: 20 })).toEqual([
+      { x: 1, y: 2 },
+      { x: 11, y: 2 },
+      { x: 11, y: 22 },
+      { x: 1, y: 22 },
+    ]);
+  });
+});
+
+describe("getRotatedWrapperRect", () => {
+  test("should return a rectangle to wrap rotated rectangle", () => {
+    expect(getRotatedWrapperRect({ x: 1, y: 2, width: 10, height: 20 }, 0)).toEqual({
+      x: 1,
+      y: 2,
+      width: 10,
+      height: 20,
+    });
+
+    const res1 = getRotatedWrapperRect({ x: 0, y: 0, width: 10, height: 20 }, Math.PI / 2);
+    expect(res1.x).toBeCloseTo(-5);
+    expect(res1.y).toBeCloseTo(5);
+    expect(res1.width).toBeCloseTo(20);
+    expect(res1.height).toBeCloseTo(10);
   });
 });

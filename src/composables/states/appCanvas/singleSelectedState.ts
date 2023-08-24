@@ -1,7 +1,8 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { getRect } from "../../../shapes";
+import { getLocalRectPolygon } from "../../../shapes";
 import { translateOnSelection } from "./commons";
+import { applyStrokeStyle } from "../../../utils/strokeStyle";
 
 export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
@@ -53,10 +54,15 @@ export function newSingleSelectedState(): AppCanvasState {
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
 
-      const rect = getRect(ctx.getShapeStruct, shape);
-      renderCtx.strokeStyle = "red";
+      const style = ctx.getStyleScheme();
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.lineWidth = 2;
-      renderCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      renderCtx.beginPath();
+      getLocalRectPolygon(ctx.getShapeStruct, shape).forEach((p) => {
+        renderCtx.lineTo(p.x, p.y);
+      });
+      renderCtx.closePath();
+      renderCtx.stroke();
     },
   };
 }

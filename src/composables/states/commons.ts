@@ -1,9 +1,11 @@
 import { IVec2, IRectangle } from "okageo";
 import type { ModeStateBase, ModeStateContextBase, ModeStateEvent } from "./core";
 import type { CommandExam, ContextMenuItem, EditMovement } from "./types";
+import { StyleScheme } from "../../models";
 
 export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
+  getStyleScheme: () => StyleScheme;
 
   setViewport: (rect?: IRectangle, margin?: number) => void;
   zoomView: (step: number, center?: boolean) => void;

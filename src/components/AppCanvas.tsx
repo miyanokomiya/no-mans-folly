@@ -58,8 +58,8 @@ export function AppCanvas() {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.resetTransform();
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.scale(1 / canvas.scale, 1 / canvas.scale);
     ctx.translate(-canvas.viewOrigin.x, -canvas.viewOrigin.y);
 
@@ -177,7 +177,6 @@ export function AppCanvas() {
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
-      e.preventDefault();
       smctx.stateMachine.handleEvent({
         type: "wheel",
         data: {

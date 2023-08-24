@@ -1,6 +1,7 @@
+import { rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { isPointOnEllipse } from "../utils/geometry";
+import { getRectPoints, getRotatedWrapperRect, isPointOnEllipse } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -31,17 +32,28 @@ export const struct: ShapeStruct<EllipseShape> = {
     applyFillStyle(ctx, shape.fill);
     applyStrokeStyle(ctx, shape.stroke);
     ctx.beginPath();
-    ctx.ellipse(shape.p.x, shape.p.y, shape.rx, shape.ry, 0, shape.from, shape.to);
+    ctx.ellipse(shape.p.x, shape.p.y, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
     ctx.fill();
     ctx.stroke();
   },
-  getRect(shape) {
-    return {
+  getWrapperRect(shape) {
+    return getRotatedWrapperRect(
+      {
+        x: shape.p.x - shape.rx,
+        y: shape.p.y - shape.ry,
+        width: 2 * shape.rx,
+        height: 2 * shape.ry,
+      },
+      shape.rotation
+    );
+  },
+  getLocalRectPolygon(shape) {
+    return getRectPoints({
       x: shape.p.x - shape.rx,
       y: shape.p.y - shape.ry,
       width: 2 * shape.rx,
       height: 2 * shape.ry,
-    };
+    }).map((p) => rotate(p, shape.rotation, shape.p));
   },
   isPointOn(shape, p) {
     return isPointOnEllipse(shape.p, shape.rx, shape.ry, p);

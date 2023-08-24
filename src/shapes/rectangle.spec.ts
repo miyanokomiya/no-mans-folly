@@ -25,7 +25,7 @@ describe("struct", () => {
   describe("getRect", () => {
     test("should return the rectangle", () => {
       const shape = struct.create({ p: { x: 1, y: 2 }, width: 3, height: 4 });
-      expect(struct.getRect(shape)).toEqual({ x: 1, y: 2, width: 3, height: 4 });
+      expect(struct.getWrapperRect(shape)).toEqual({ x: 1, y: 2, width: 3, height: 4 });
     });
   });
 

@@ -2,11 +2,13 @@ import { IRectangle, IVec2 } from "okageo";
 import { Shape } from "../models";
 import { ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
+import { struct as ellipseStruct } from "./ellipse";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
 } = {
   rectangle: rectangleStruct,
+  ellipse: ellipseStruct,
 };
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
@@ -25,9 +27,14 @@ export function renderShape(getStruct: GetShapeStruct, ctx: CanvasRenderingConte
   struct.render(ctx, shape);
 }
 
-export function getRect(getStruct: GetShapeStruct, shape: Shape): IRectangle {
+export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape): IRectangle {
   const struct = getStruct(shape.type);
-  return struct.getRect(shape);
+  return struct.getWrapperRect(shape);
+}
+
+export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape): IVec2[] {
+  const struct = getStruct(shape.type);
+  return struct.getLocalRectPolygon(shape);
 }
 
 export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2): boolean {

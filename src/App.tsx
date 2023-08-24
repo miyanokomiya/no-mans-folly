@@ -26,6 +26,10 @@ const acctx = {
   sheetStore,
   layerStore,
   shapeStore,
+  getStyleScheme: () => ({
+    selectionPrimary: { r: 200, g: 0, b: 0, a: 1 },
+    selectionSecondaly: { r: 0, g: 0, b: 200, a: 1 },
+  }),
 };
 createInitialEntities(acctx);
 
@@ -41,15 +45,26 @@ undoManager.clear();
 const smctx = createStateMachineContext({
   getTimestamp: Date.now,
   generateUuid,
+  getStyleScheme: acctx.getStyleScheme,
 });
 
 function App() {
   const onClick = useCallback(() => {
     const id = generateUuid();
-    const shape = createShape(getCommonStruct, "rectangle", {
-      id,
-      p: { x: Math.random() * 200, y: Math.random() * 200 },
-    });
+    const rand = Math.random();
+    const v = 600;
+    const shape =
+      rand < 0.5
+        ? createShape(getCommonStruct, "rectangle", {
+            id,
+            p: { x: Math.random() * v, y: Math.random() * v },
+            rotation: Math.random() * Math.PI * 2,
+          })
+        : createShape(getCommonStruct, "ellipse", {
+            id,
+            p: { x: Math.random() * v, y: Math.random() * v },
+            rotation: Math.random() * Math.PI * 2,
+          });
     shapeStore.addEntity(shape);
   }, []);
 

@@ -1,5 +1,5 @@
 import { expect, describe, test, vi } from "vitest";
-import { createShape, getCommonStruct, getRect, isPointOn, renderShape } from ".";
+import { createShape, getCommonStruct, getWrapperRect, isPointOn, renderShape } from ".";
 import { RectangleShape } from "./rectangle";
 
 describe("createShape", () => {
@@ -26,7 +26,7 @@ describe("renderShape", () => {
 describe("getRect", () => {
   test("should return rectangle", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
-    expect(getRect(getCommonStruct, shape)).toEqual({ x: 0, y: 0, width: 10, height: 20 });
+    expect(getWrapperRect(getCommonStruct, shape)).toEqual({ x: 0, y: 0, width: 10, height: 20 });
   });
 });
 

@@ -1,8 +1,10 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { getRect } from "../../../shapes";
+import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import { translateOnSelection } from "./commons";
-import { getWrapperRect } from "../../../utils/geometry";
+import * as geometry from "../../../utils/geometry";
+import { applyStrokeStyle } from "../../../utils/strokeStyle";
+import { applyPath } from "../../../utils/renderer";
 
 export function newMultipleSelectedState(): AppCanvasState {
   let selectedIds: { [id: string]: true };
@@ -51,12 +53,21 @@ export function newMultipleSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      const style = ctx.getStyleScheme();
       const shapes = Object.entries(ctx.getShapeMap())
         .filter(([id]) => selectedIds[id])
         .map(([, s]) => s);
-      const rect = getWrapperRect(shapes.map((s) => getRect(ctx.getShapeStruct, s)));
-      renderCtx.strokeStyle = "red";
+
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly });
+      renderCtx.lineWidth = 1;
+      renderCtx.beginPath();
+      shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
+      renderCtx.stroke();
+
+      const rect = geometry.getWrapperRect(shapes.map((s) => getWrapperRect(ctx.getShapeStruct, s)));
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.lineWidth = 2;
+      renderCtx.beginPath();
       renderCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
     },
   };

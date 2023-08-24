@@ -8,12 +8,14 @@ import { newStateMachine } from "../composables/states/core";
 import { newDefaultState } from "../composables/states/appCanvas/defaultState";
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { getCommonStruct } from "../shapes";
+import { StyleScheme } from "../models";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
   sheetStore: ReturnType<typeof newSheetStore>;
   layerStore: ReturnType<typeof newLayerStore>;
   shapeStore: ReturnType<typeof newShapeStore>;
+  getStyleScheme: () => StyleScheme;
 }
 
 export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);
@@ -36,10 +38,15 @@ interface IAppStateMachineContext {
 
 export const AppStateMachineContext = createContext<IAppStateMachineContext>(undefined as any);
 
-export function createStateMachineContext(arg: { getTimestamp: () => number; generateUuid: () => string }) {
+export function createStateMachineContext(arg: {
+  getTimestamp: () => number;
+  generateUuid: () => string;
+  getStyleScheme: () => StyleScheme;
+}) {
   let ctx: AppCanvasStateContext = {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
+    getStyleScheme: arg.getStyleScheme,
 
     setViewport() {},
     zoomView() {},

@@ -1,4 +1,4 @@
-import { IRectangle, IVec2 } from "okageo";
+import { IRectangle, IVec2, getOuterRectangle, getRectCenter, rotate } from "okageo";
 
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
@@ -27,4 +27,24 @@ export function getWrapperRect(rects: IRectangle[]): IRectangle {
   const yMin = Math.min(...yList);
   const yMax = Math.max(...yList);
   return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+}
+
+export function getRectPoints(rect: IRectangle): IVec2[] {
+  const x0 = rect.x;
+  const x1 = rect.x + rect.width;
+  const y0 = rect.y;
+  const y1 = rect.y + rect.height;
+  return [
+    { x: x0, y: y0 },
+    { x: x1, y: y0 },
+    { x: x1, y: y1 },
+    { x: x0, y: y1 },
+  ];
+}
+
+export function getRotatedWrapperRect(rect: IRectangle, rotation: number): IRectangle {
+  if (rotation === 0) return rect;
+
+  const c = getRectCenter(rect);
+  return getOuterRectangle([getRectPoints(rect).map((p) => rotate(p, rotation, c))]);
 }
