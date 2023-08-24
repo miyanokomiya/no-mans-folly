@@ -13,12 +13,15 @@ describe("struct", () => {
     test("should render the shape", () => {
       const shape = struct.create();
       const ctx = {
-        fillRect: vi.fn(),
-        strokeRect: vi.fn(),
+        beginPath: vi.fn(),
+        closePath: vi.fn(),
+        lineTo: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
       };
       struct.render(ctx as any, shape);
-      expect(ctx.fillRect).toHaveBeenCalled();
-      expect(ctx.strokeRect).toHaveBeenCalled();
+      expect(ctx.fill).toHaveBeenCalled();
+      expect(ctx.stroke).toHaveBeenCalled();
     });
   });
 
