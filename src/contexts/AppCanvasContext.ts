@@ -51,9 +51,11 @@ export function createStateMachineContext(arg: { getTimestamp: () => number; gen
 
     getShapeMap: () => ({}),
     getSelectedShapeIdMap: () => ({}),
+    getLastSelectedShapeId: () => undefined,
     getShapeAt: () => undefined,
     selectShape() {},
     clearAllSelected() {},
+    deleteShapes() {},
 
     getShapeStruct: getCommonStruct,
   };

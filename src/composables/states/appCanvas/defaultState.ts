@@ -1,7 +1,6 @@
-import type { AppCanvasState, AppCanvasStateContext } from "./core";
+import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { getRect } from "../../../shapes";
-import { getWrapperRect } from "../../../utils/geometry";
+import { translateOnSelection } from "./commons";
 
 export function newDefaultState(): AppCanvasState {
   return state;
@@ -9,9 +8,6 @@ export function newDefaultState(): AppCanvasState {
 
 const state: AppCanvasState = {
   getLabel: () => "Default",
-  onStart: async (ctx) => {
-    onChangeSelection(ctx);
-  },
   handleEvent: async (ctx, event) => {
     switch (event.type) {
       case "pointerdown":
@@ -23,7 +19,6 @@ const state: AppCanvasState = {
             } else {
               ctx.clearAllSelected();
             }
-            onChangeSelection(ctx);
             return;
           }
           case 1:
@@ -34,22 +29,11 @@ const state: AppCanvasState = {
       case "wheel":
         ctx.zoomView(event.data.delta.y);
         return;
+      case "selection": {
+        return translateOnSelection(ctx);
+      }
       default:
         return;
     }
   },
-  render: (ctx, renderCtx) => {
-    const selected = ctx.getSelectedShapeIdMap();
-    const shapes = Object.entries(ctx.getShapeMap())
-      .filter(([id]) => selected[id])
-      .map(([, s]) => s);
-    const rect = getWrapperRect(shapes.map((s) => getRect(ctx.getShapeStruct, s)));
-    renderCtx.strokeStyle = "red";
-    renderCtx.lineWidth = 2;
-    renderCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
-  },
 };
-
-function onChangeSelection(_ctx: AppCanvasStateContext) {
-  return;
-}

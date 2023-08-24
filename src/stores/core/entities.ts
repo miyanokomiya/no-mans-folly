@@ -41,8 +41,12 @@ export function newEntityStore<T extends Entity>(option: Option) {
     entityMap.set(entity.id, toYEntity(entity));
   }
 
-  function removeEntity(entityId: string) {
-    entityMap.delete(entityId);
+  function deleteEntities(ids: string[]) {
+    transact(() => {
+      ids.forEach((id) => {
+        entityMap.delete(id);
+      });
+    });
   }
 
   function patchEntity(entityId: string, attrs: Partial<T>) {
@@ -73,7 +77,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
     getEntityMap,
     getEntity,
     addEntity,
-    removeEntity,
+    deleteEntities,
     patchEntity,
     transact,
     watch,

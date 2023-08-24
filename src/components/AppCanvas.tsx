@@ -16,9 +16,12 @@ export function AppCanvas() {
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
+      smctx.stateMachine.handleEvent({
+        type: "shape-updated",
+      });
       setShapes(acctx.shapeStore.getEntities());
     });
-  }, [acctx.shapeStore]);
+  }, [acctx.shapeStore, smctx.stateMachine]);
 
   useEffect(() => {
     return smctx.stateMachine.watch(() => {
@@ -28,9 +31,11 @@ export function AppCanvas() {
 
   useEffect(() => {
     return acctx.shapeStore.watchSelected(() => {
-      setCanvasState({});
+      smctx.stateMachine.handleEvent({
+        type: "selection",
+      });
     });
-  }, [acctx.shapeStore]);
+  }, [acctx.shapeStore, smctx.stateMachine]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
@@ -98,11 +103,13 @@ export function AppCanvas() {
 
       getShapeMap: acctx.shapeStore.getEntityMap,
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
+      getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
       getShapeAt(p) {
         return findBackward(shapes, (s) => isPointOn(getCommonStruct, s, p));
       },
       selectShape: acctx.shapeStore.select,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
+      deleteShapes: acctx.shapeStore.deleteEntities,
     });
   }, [canvas, acctx, smctx, shapes]);
 
@@ -140,6 +147,10 @@ export function AppCanvas() {
   );
   useGlobalMousemoveEffect(onMouseMove);
 
+  const onMouseEnter = useCallback(() => {
+    wrapperRef.current?.focus();
+  }, []);
+
   const onMouseUp = useCallback(
     (e: MouseEvent) => {
       smctx.stateMachine.handleEvent({
@@ -153,6 +164,16 @@ export function AppCanvas() {
     [canvas, smctx]
   );
   useGlobalMouseupEffect(onMouseUp);
+
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      smctx.stateMachine.handleEvent({
+        type: "keydown",
+        data: { key: e.key },
+      });
+    },
+    [smctx]
+  );
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
@@ -173,10 +194,14 @@ export function AppCanvas() {
       ref={wrapperRef}
       className="box-border border border-black relative w-full h-full"
       onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
+      onKeyDown={onKeyDown}
       onWheel={onWheel}
+      tabIndex={-1}
     >
       <canvas ref={canvasRef} {...canvasAttrs}></canvas>
       <canvas ref={ctlCanvasRef} {...canvasAttrs}></canvas>
+      <div className="absolute left-0 bottom-0">{smctx.stateMachine.getStateSummary().label}</div>
     </div>
   );
 }

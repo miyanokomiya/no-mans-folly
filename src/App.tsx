@@ -30,7 +30,8 @@ const acctx = {
 createInitialEntities(acctx);
 
 const undoManager = new Y.UndoManager(
-  [diagramStore.getScope(), sheetStore.getScope(), layerStore.getScope(), shapeStore.getScope()],
+  // Must be ones in the same Y.Doc
+  [layerStore.getScope(), shapeStore.getScope()],
   {
     captureTimeout: 0,
   }

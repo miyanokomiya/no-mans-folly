@@ -57,13 +57,13 @@ describe("newEntityStore", () => {
     });
   });
 
-  describe("removeEntity", () => {
+  describe("removeEntities", () => {
     test("should remove the entity", () => {
       const ydoc = new Y.Doc();
       const store = newEntityStore({ name: "test", ydoc });
       store.addEntity({ id: "a", findex: "0" });
       store.addEntity({ id: "b", findex: "1" });
-      store.removeEntity("a");
+      store.deleteEntities(["a"]);
       expect(store.getEntities()).toEqual([{ id: "b", findex: "1" }]);
     });
   });
