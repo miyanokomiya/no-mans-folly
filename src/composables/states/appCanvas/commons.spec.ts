@@ -2,7 +2,7 @@ import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
-import { translateOnSelection } from "./commons";
+import { handleStateEvent, translateOnSelection } from "./commons";
 
 function getMockCtx() {
   return {
@@ -30,5 +30,15 @@ describe("translateOnSelection", () => {
     ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
     const result = translateOnSelection(ctx);
     expect(result).toEqual(newMultipleSelectedState);
+  });
+});
+
+describe("handleStateEvent", () => {
+  describe("DroppingNewShape", () => {
+    test("should move to DroppingNewShape state", async () => {
+      const event = { type: "state", data: { name: "DroppingNewShape", options: {} } } as const;
+      expect(handleStateEvent(event, [])).toBe(undefined);
+      expect(handleStateEvent(event, ["DroppingNewShape"])?.().getLabel()).toEqual("DroppingNewShape");
+    });
   });
 });

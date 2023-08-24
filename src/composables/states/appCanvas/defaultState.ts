@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { translateOnSelection } from "./commons";
+import { handleStateEvent, translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 
 export function newDefaultState(): AppCanvasState {
@@ -23,6 +23,7 @@ const state: AppCanvasState = {
             } else {
               ctx.clearAllSelected();
             }
+            return;
           }
           case 1:
             return newPanningState;
@@ -35,6 +36,8 @@ const state: AppCanvasState = {
       case "selection": {
         return translateOnSelection(ctx);
       }
+      case "state":
+        return handleStateEvent(event, ["DroppingNewShape"]);
       default:
         return;
     }

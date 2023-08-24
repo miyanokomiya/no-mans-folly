@@ -116,6 +116,7 @@ export function AppCanvas() {
       },
       selectShape: acctx.shapeStore.select,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
+      addShapes: acctx.shapeStore.addEntities,
       deleteShapes: acctx.shapeStore.deleteEntities,
       patchShapes: acctx.shapeStore.patchEntities,
       getTmpShapeMap: () => tmpShapeMap,

@@ -1,4 +1,5 @@
-import { TransitionValue } from "../core";
+import { ChangeStateEvent, TransitionValue } from "../core";
+import { newDroppingNewShapeState } from "./DroppingNewShapeState";
 import { AppCanvasStateContext } from "./core";
 import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
@@ -15,4 +16,17 @@ export function translateOnSelection(
   } else {
     return newMultipleSelectedState;
   }
+}
+
+type AcceptableEvent = "DroppingNewShape";
+
+export function handleStateEvent(event: ChangeStateEvent, acceptable: AcceptableEvent[]) {
+  const name = event.data.name;
+  if (!acceptable.includes(name as AcceptableEvent)) return;
+
+  if (event.data.name === "DroppingNewShape") {
+    return () => newDroppingNewShapeState(event.data.options);
+  }
+
+  return;
 }

@@ -195,7 +195,7 @@ export interface ChangeStateEvent extends ModeStateEventBase {
   type: "state";
   data: {
     name: string;
-    options?: unknown;
+    options?: any;
   };
 }
 

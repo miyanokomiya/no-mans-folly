@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon } from "../../../shapes";
-import { translateOnSelection } from "./commons";
+import { handleStateEvent, translateOnSelection } from "./commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
@@ -60,6 +60,8 @@ export function newSingleSelectedState(): AppCanvasState {
         case "selection": {
           return translateOnSelection(ctx);
         }
+        case "state":
+          return handleStateEvent(event, ["DroppingNewShape"]);
         default:
           return;
       }

@@ -64,6 +64,7 @@ export function createStateMachineContext(arg: {
     getShapeAt: () => undefined,
     selectShape() {},
     clearAllSelected() {},
+    addShapes() {},
     deleteShapes() {},
     patchShapes() {},
     getTmpShapeMap: () => ({}),

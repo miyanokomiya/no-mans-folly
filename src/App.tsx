@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import * as Y from "yjs";
 import { generateUuid } from "./utils/random";
 import { AppCanvas } from "./components/AppCanvas";
+import { AppToolbar } from "./components/AppToolbar";
 import {
   AppCanvasContext,
   AppStateMachineContext,
@@ -87,6 +88,9 @@ function App() {
             <button onClick={onClick}>Add</button>
             <button onClick={onUndo}>Undo</button>
             <button onClick={onRedo}>Redo</button>
+          </div>
+          <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
+            <AppToolbar />
           </div>
         </div>
       </AppStateMachineContext.Provider>

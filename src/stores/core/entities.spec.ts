@@ -57,6 +57,21 @@ describe("newEntityStore", () => {
     });
   });
 
+  describe("addEntities", () => {
+    test("should add an entity", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      store.addEntities([
+        { id: "a", findex: "0" },
+        { id: "b", findex: "1" },
+      ]);
+      expect(store.getEntities()).toEqual([
+        { id: "a", findex: "0" },
+        { id: "b", findex: "1" },
+      ]);
+    });
+  });
+
   describe("removeEntities", () => {
     test("should remove the entity", () => {
       const ydoc = new Y.Doc();

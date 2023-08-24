@@ -41,6 +41,12 @@ export function newEntityStore<T extends Entity>(option: Option) {
     entityMap.set(entity.id, toYEntity(entity));
   }
 
+  function addEntities(entities: T[]) {
+    transact(() => {
+      entities.forEach((entity) => addEntity(entity));
+    });
+  }
+
   function deleteEntities(ids: string[]) {
     transact(() => {
       ids.forEach((id) => {
@@ -85,6 +91,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
     getEntityMap,
     getEntity,
     addEntity,
+    addEntities,
     deleteEntities,
     patchEntity,
     patchEntities,
