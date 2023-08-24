@@ -1,5 +1,5 @@
 import { expect, test, describe, vi } from "vitest";
-import { newDefaultState } from "./defaultState";
+import { newMultipleSelectedState } from "./multipleSelectedState";
 import { newPanningState } from "../commons";
 import { translateOnSelection } from "./commons";
 
@@ -13,31 +13,33 @@ function getMockCtx() {
   };
 }
 
-describe("newDefaultState", () => {
+describe("newMultipleSelectedState", () => {
   describe("handle pointerdown: left", () => {
     test("should select a shape at the point if it exists", async () => {
       const ctx = getMockCtx();
-      const target = newDefaultState();
+      const target = newMultipleSelectedState();
+      await target.onStart?.(ctx as any);
 
-      ctx.getShapeAt.mockReturnValue({ id: "a" });
+      ctx.getShapeAt.mockReturnValue({ id: "b" });
       await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
       });
-      expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "a", false);
+      expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
 
       await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
       });
-      expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "a", true);
+      expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "b", true);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
     });
 
     test("should deselect if there's no shape at the point", async () => {
       const ctx = getMockCtx();
-      const target = newDefaultState();
+      const target = newMultipleSelectedState();
+      await target.onStart?.(ctx as any);
       ctx.getShapeAt.mockReturnValue(undefined);
       await target.handleEvent(ctx as any, {
         type: "pointerdown",
@@ -51,19 +53,20 @@ describe("newDefaultState", () => {
   describe("handle pointerdown: middle", () => {
     test("should move to panning state", async () => {
       const ctx = getMockCtx();
-      const target = newDefaultState();
+      const target = newMultipleSelectedState();
+      await target.onStart?.(ctx as any);
       const result = await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 1, ctrl: false } },
       });
-      expect(result).toBe(newPanningState);
+      expect(result).toEqual({ type: "stack-restart", getState: newPanningState });
     });
   });
 
   describe("handle selection", () => {
     test("should move to next state", async () => {
       const ctx = getMockCtx();
-      const target = newDefaultState();
+      const target = newMultipleSelectedState();
       await target.onStart?.(ctx as any);
       const result = await target.handleEvent(ctx as any, {
         type: "selection",

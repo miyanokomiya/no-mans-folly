@@ -4,7 +4,9 @@ import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
 import { newSingleSelectedState } from "./singleSelectedState";
 
-export function translateOnSelection(ctx: AppCanvasStateContext): TransitionValue<AppCanvasStateContext> {
+export function translateOnSelection(
+  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap">
+): TransitionValue<AppCanvasStateContext> {
   const count = Object.keys(ctx.getSelectedShapeIdMap()).length;
   if (count === 0) {
     return newDefaultState;
