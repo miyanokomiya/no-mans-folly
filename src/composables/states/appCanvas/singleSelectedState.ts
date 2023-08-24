@@ -3,6 +3,8 @@ import { newPanningState } from "../commons";
 import { getLocalRectPolygon } from "../../../shapes";
 import { translateOnSelection } from "./commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
+import { newMovingShapeState } from "./movingShapeState";
+import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 
 export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
@@ -20,11 +22,21 @@ export function newSingleSelectedState(): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const shape = ctx.getShapeAt(event.data.point);
-              if (shape) {
-                ctx.selectShape(shape.id, event.data.options.ctrl);
-              } else {
+              if (!shape) {
                 ctx.clearAllSelected();
+                return;
               }
+
+              if (!event.data.options.ctrl) {
+                if (shape.id === selectedId) {
+                  return newMovingShapeState;
+                } else {
+                  ctx.selectShape(shape.id, false);
+                  return newSingleSelectedByPointerOnState;
+                }
+              }
+
+              ctx.selectShape(shape.id, true);
               return;
             }
             case 1:
@@ -32,6 +44,8 @@ export function newSingleSelectedState(): AppCanvasState {
             default:
               return;
           }
+        case "pointermove":
+          return { type: "stack-restart", getState: newMovingShapeState };
         case "keydown":
           switch (event.data.key) {
             case "Delete":

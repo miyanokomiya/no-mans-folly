@@ -31,7 +31,9 @@ export function createInitialEntities(acctx: IAppCanvasContext, generateId = gen
 }
 
 interface IAppStateMachineContext {
-  setCtx: (c: Omit<AppCanvasStateContext, "getTimestamp" | "generateUuid" | "getShapeStruct">) => void;
+  setCtx: (
+    c: Omit<AppCanvasStateContext, "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme">
+  ) => void;
   getCtx: () => AppCanvasStateContext;
   stateMachine: ReturnType<typeof newStateMachine<AppCanvasStateContext, AppCanvasEvent>>;
 }
@@ -63,8 +65,11 @@ export function createStateMachineContext(arg: {
     selectShape() {},
     clearAllSelected() {},
     deleteShapes() {},
+    patchShapes() {},
+    getTmpShapeMap: () => ({}),
 
     getShapeStruct: getCommonStruct,
+    setTmpShapeMap() {},
   };
 
   const setCtx: IAppStateMachineContext["setCtx"] = (c) => {

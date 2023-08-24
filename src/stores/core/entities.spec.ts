@@ -86,6 +86,24 @@ describe("newEntityStore", () => {
     });
   });
 
+  describe("patchEntities", () => {
+    test("should patch the entities", () => {
+      const ydoc = new Y.Doc();
+      let count = 0;
+      const onChanged = () => count++;
+      const store = newEntityStore({ name: "test", ydoc });
+      store.watch(onChanged);
+      store.addEntity({ id: "a", findex: "0" });
+      store.addEntity({ id: "b", findex: "1" });
+      store.patchEntities({ a: { findex: "10" }, b: { findex: "20" } });
+      expect(store.getEntities()).toEqual([
+        { id: "a", findex: "10" },
+        { id: "b", findex: "20" },
+      ]);
+      expect(count).toBe(3);
+    });
+  });
+
   describe("transact", () => {
     test("should commit operations in the transaction", () => {
       const ydoc = new Y.Doc();

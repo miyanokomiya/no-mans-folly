@@ -1,6 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { translateOnSelection } from "./commons";
+import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 
 export function newDefaultState(): AppCanvasState {
   return state;
@@ -16,10 +17,12 @@ const state: AppCanvasState = {
             const shape = ctx.getShapeAt(event.data.point);
             if (shape) {
               ctx.selectShape(shape.id, event.data.options.ctrl);
+              if (!event.data.options.ctrl) {
+                return newSingleSelectedByPointerOnState;
+              }
             } else {
               ctx.clearAllSelected();
             }
-            return;
           }
           case 1:
             return newPanningState;

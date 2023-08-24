@@ -5,6 +5,8 @@ import { translateOnSelection } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
+import { newMovingShapeState } from "./movingShapeState";
+import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 
 export function newMultipleSelectedState(): AppCanvasState {
   let selectedIds: { [id: string]: true };
@@ -22,11 +24,21 @@ export function newMultipleSelectedState(): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const shape = ctx.getShapeAt(event.data.point);
-              if (shape) {
-                ctx.selectShape(shape.id, event.data.options.ctrl);
-              } else {
+              if (!shape) {
                 ctx.clearAllSelected();
+                return;
               }
+
+              if (!event.data.options.ctrl) {
+                if (selectedIds[shape.id]) {
+                  return newMovingShapeState;
+                } else {
+                  ctx.selectShape(shape.id, false);
+                  return newSingleSelectedByPointerOnState;
+                }
+              }
+
+              ctx.selectShape(shape.id, true);
               return;
             }
             case 1:

@@ -13,6 +13,7 @@ export function AppCanvas() {
 
   const [canvasState, setCanvasState] = useState({});
   const [shapes, setShapes] = useState<Shape[]>([]);
+  const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
@@ -64,12 +65,18 @@ export function AppCanvas() {
     ctx.translate(-canvas.viewOrigin.x, -canvas.viewOrigin.y);
 
     shapes.forEach((shape) => {
-      renderShape(getCommonStruct, ctx, shape);
+      const tmpShape = tmpShapeMap[shape.id];
+      if (tmpShape) {
+        renderShape(getCommonStruct, ctx, { ...shape, ...tmpShape });
+      } else {
+        renderShape(getCommonStruct, ctx, shape);
+      }
     });
 
     smctx.stateMachine.render(ctx);
   }, [
     shapes,
+    tmpShapeMap,
     canvas.viewSize.width,
     canvas.viewSize.height,
     canvas.scale,
@@ -110,8 +117,11 @@ export function AppCanvas() {
       selectShape: acctx.shapeStore.select,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
       deleteShapes: acctx.shapeStore.deleteEntities,
+      patchShapes: acctx.shapeStore.patchEntities,
+      getTmpShapeMap: () => tmpShapeMap,
+      setTmpShapeMap: setTmpShapeMap,
     });
-  }, [canvas, acctx, smctx, shapes]);
+  }, [canvas, acctx, smctx, shapes, tmpShapeMap]);
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {

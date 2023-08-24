@@ -60,6 +60,14 @@ export function newEntityStore<T extends Entity>(option: Option) {
     });
   }
 
+  function patchEntities(val: { [id: string]: Partial<T> }) {
+    transact(() => {
+      Object.entries(val).forEach(([id, attrs]) => {
+        patchEntity(id, attrs);
+      });
+    });
+  }
+
   function transact(fn: () => void) {
     option.ydoc.transact(fn);
   }
@@ -79,6 +87,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
     addEntity,
     deleteEntities,
     patchEntity,
+    patchEntities,
     transact,
     watch,
     getScope,

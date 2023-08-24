@@ -2,6 +2,7 @@ import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { newPanningState } from "../commons";
 import { translateOnSelection } from "./commons";
+import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 
 function getMockCtx() {
   return {
@@ -21,19 +22,21 @@ describe("newSingleSelectedState", () => {
       await target.onStart?.(ctx as any);
 
       ctx.getShapeAt.mockReturnValue({ id: "b" });
-      await target.handleEvent(ctx as any, {
+      const result1 = await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
+      expect(result1).toBe(newSingleSelectedByPointerOnState);
 
-      await target.handleEvent(ctx as any, {
+      const result2 = await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "b", true);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
+      expect(result2).toBe(undefined);
     });
 
     test("should deselect if there's no shape at the point", async () => {
