@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
-import { handleStateEvent, translateOnSelection } from "./commons";
+import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -60,6 +60,8 @@ export function newMultipleSelectedState(): AppCanvasState {
         case "selection": {
           return translateOnSelection(ctx);
         }
+        case "history":
+          return handleHistoryEvent(ctx, event);
         case "state":
           return handleStateEvent(event, ["DroppingNewShape"]);
         default:

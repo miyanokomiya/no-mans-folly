@@ -44,12 +44,13 @@ export const AppToolbar: React.FC = () => {
       case "shapes":
         return (
           <div
-            className="absolute left-0 border border-1 p-1 rounded"
+            className="absolute left-0 border p-1 rounded"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             {shapeList.map((shape) => (
               <div
-                className="w-10 h-10 border border-1 p-1 rounded"
+                key={shape.type}
+                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0"
                 data-type={shape.type}
                 onMouseDown={onDownShapeElm}
               >

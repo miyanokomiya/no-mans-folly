@@ -1,3 +1,4 @@
+import { HistoryEvent } from "../commons";
 import { ChangeStateEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./DroppingNewShapeState";
 import { AppCanvasStateContext } from "./core";
@@ -27,6 +28,12 @@ export function handleStateEvent(event: ChangeStateEvent, acceptable: Acceptable
   if (event.data.name === "DroppingNewShape") {
     return () => newDroppingNewShapeState(event.data.options);
   }
+}
 
-  return;
+export function handleHistoryEvent(ctx: AppCanvasStateContext, event: HistoryEvent) {
+  if (event.data === "redo") {
+    ctx.redo();
+  } else {
+    ctx.undo();
+  }
 }

@@ -15,6 +15,7 @@ interface IAppCanvasContext {
   sheetStore: ReturnType<typeof newSheetStore>;
   layerStore: ReturnType<typeof newLayerStore>;
   shapeStore: ReturnType<typeof newShapeStore>;
+  undoManager: { undo: () => void; redo: () => void };
   getStyleScheme: () => StyleScheme;
 }
 
@@ -57,6 +58,9 @@ export function createStateMachineContext(arg: {
     stopDragging() {},
     setContextMenuList() {},
     setCommandExams() {},
+
+    undo() {},
+    redo() {},
 
     getShapeMap: () => ({}),
     getSelectedShapeIdMap: () => ({}),

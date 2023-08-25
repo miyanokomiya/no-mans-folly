@@ -1,5 +1,5 @@
-import type { ModeStateBase, ModeStateEvent, ModeStateEventBase } from "../core";
-import type { CanvasStateContext } from "../commons";
+import type { ModeStateBase, ModeStateEventBase } from "../core";
+import type { CanvasStateContext, CanvasStateEvent } from "../commons";
 import { Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
@@ -22,7 +22,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;
 
-export type AppCanvasEvent = ModeStateEvent | ChangeSelectionEvent | UpdateShapeEvent;
+export type AppCanvasEvent = CanvasStateEvent | ChangeSelectionEvent | UpdateShapeEvent;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";

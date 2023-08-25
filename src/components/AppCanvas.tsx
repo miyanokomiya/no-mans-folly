@@ -108,6 +108,9 @@ export function AppCanvas() {
       setContextMenuList() {},
       setCommandExams() {},
 
+      undo: acctx.undoManager.undo,
+      redo: acctx.undoManager.redo,
+
       getShapeMap: acctx.shapeStore.getEntityMap,
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
