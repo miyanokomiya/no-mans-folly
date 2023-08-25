@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, getOuterRectangle, getRectCenter, rotate } from "okageo";
+import { IRectangle, IVec2, getDistance, getOuterRectangle, getPedal, getRectCenter, isOnSeg, rotate } from "okageo";
 
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
@@ -47,4 +47,13 @@ export function getRotatedWrapperRect(rect: IRectangle, rotation: number): IRect
 
   const c = getRectCenter(rect);
   return getOuterRectangle([getRectPoints(rect).map((p) => rotate(p, rotation, c))]);
+}
+
+// When the pedal point isn't on the segment, this always returns false.
+export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number): boolean {
+  const pedal = getPedal(p, seg);
+  const d = getDistance(p, pedal);
+  if (d > threshold) return false;
+
+  return isOnSeg(pedal, seg);
 }

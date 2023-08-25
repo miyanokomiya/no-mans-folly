@@ -13,6 +13,7 @@ import { newLayerStore } from "./stores/layers";
 import { newDiagramStore } from "./stores/diagram";
 import { newSheetStore } from "./stores/sheets";
 import { AppFootbar } from "./components/AppFootbar";
+import { createStyleScheme } from "./models/factories";
 
 const yDiagramDoc = new Y.Doc();
 const diagramStore = newDiagramStore({ ydoc: yDiagramDoc });
@@ -33,10 +34,7 @@ const acctx = {
   sheetStore,
   layerStore,
   shapeStore,
-  getStyleScheme: () => ({
-    selectionPrimary: { r: 200, g: 0, b: 0, a: 1 },
-    selectionSecondaly: { r: 0, g: 0, b: 200, a: 1 },
-  }),
+  getStyleScheme: () => createStyleScheme(),
   undoManager: {
     undo: () => undoManager.undo(),
     redo: () => undoManager.redo(),

@@ -2,20 +2,28 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon } from "../../../shapes";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
-import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newBoundingBox } from "../../boundingBox";
 
 export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
+  let boundingBox: ReturnType<typeof newBoundingBox>;
 
   return {
     getLabel: () => "SingleSelected",
     onStart: async (ctx) => {
       selectedId = ctx.getLastSelectedShapeId();
+      const shape = ctx.getShapeMap()[selectedId ?? ""];
+      if (!shape) return;
+
+      boundingBox = newBoundingBox({
+        path: getLocalRectPolygon(ctx.getShapeStruct, shape),
+        styleScheme: ctx.getStyleScheme(),
+      });
     },
     handleEvent: async (ctx, event) => {
-      if (!selectedId) return;
+      if (!selectedId) return translateOnSelection(ctx);
 
       switch (event.type) {
         case "pointerdown":
@@ -47,8 +55,17 @@ export function newSingleSelectedState(): AppCanvasState {
         case "pointermove":
           return { type: "stack-restart", getState: newMovingShapeState };
         case "pointerhover": {
-          const shape = ctx.getShapeAt(event.data.current);
-          ctx.setCursor(shape ? "pointer" : undefined);
+          const hitBounding = boundingBox.hitTest(event.data.current);
+          if (hitBounding && hitBounding.type !== "area") {
+            if (hitBounding.type === "corner") {
+              ctx.setCursor(hitBounding.index % 2 === 0 ? "nwse-resize" : "nesw-resize");
+            } else if (hitBounding.type === "segment") {
+              ctx.setCursor(hitBounding.index % 2 === 0 ? "ns-resize" : "ew-resize");
+            }
+          } else {
+            const shape = ctx.getShapeAt(event.data.current);
+            ctx.setCursor(shape ? "pointer" : undefined);
+          }
           return;
         }
         case "keydown":
@@ -77,15 +94,7 @@ export function newSingleSelectedState(): AppCanvasState {
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
 
-      const style = ctx.getStyleScheme();
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary });
-      renderCtx.lineWidth = 2;
-      renderCtx.beginPath();
-      getLocalRectPolygon(ctx.getShapeStruct, shape).forEach((p) => {
-        renderCtx.lineTo(p.x, p.y);
-      });
-      renderCtx.closePath();
-      renderCtx.stroke();
+      boundingBox.render(renderCtx);
     },
   };
 }

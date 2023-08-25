@@ -4,6 +4,7 @@ import {
   getRectPoints,
   getRotatedWrapperRect,
   getWrapperRect,
+  isPointCloseToSegment,
   isPointOnEllipse,
   isPointOnRectangle,
 } from "./geometry";
@@ -86,5 +87,17 @@ describe("getRotatedWrapperRect", () => {
     expect(res1.y).toBeCloseTo(5);
     expect(res1.width).toBeCloseTo(20);
     expect(res1.height).toBeCloseTo(10);
+  });
+});
+
+describe("isPointCloseToSegment", () => {
+  test("should return true if the point is close to the segment", () => {
+    const seg = [
+      { x: 0, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    expect(isPointCloseToSegment(seg, { x: 3, y: 1 }, 1)).toBe(false);
+    expect(isPointCloseToSegment(seg, { x: 2, y: 1 }, 1)).toBe(true);
+    expect(isPointCloseToSegment(seg, { x: -0.1, y: -0.1 }, 1)).toBe(false);
   });
 });
