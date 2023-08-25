@@ -4,6 +4,7 @@ import {
   add,
   applyAffine,
   getCenter,
+  getPedal,
   getRadian,
   isOnPolygon,
   multiAffines,
@@ -181,16 +182,25 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const cos = Math.cos(option.rotation);
   const rotatedBaseDirection = rotate(option.resizingBase.direction, -option.rotation);
 
-  function getResizingAffine(diff: IVec2): AffineMatrix {
-    const rotatedDiff = rotate(diff, -option.rotation);
+  function getResizingAffine(diff: IVec2, modifire?: { keepAspect?: boolean }): AffineMatrix {
+    const keepAspect = modifire?.keepAspect;
+    const adjustedDiff = keepAspect ? getPedal(diff, [option.resizingBase.direction, { x: 0, y: 0 }]) : diff;
+    const rotatedDiff = rotate(adjustedDiff, -option.rotation);
     const rotatedScale = {
       x: xResizable ? 1 + rotatedDiff.x / rotatedBaseDirection.x : 1,
       y: yResizable ? 1 + rotatedDiff.y / rotatedBaseDirection.y : 1,
     };
+
+    const adjustedRotatedScale = !keepAspect
+      ? rotatedScale
+      : xResizable
+      ? { x: rotatedScale.x, y: rotatedScale.x }
+      : { x: rotatedScale.y, y: rotatedScale.y };
+
     return multiAffines([
       [1, 0, 0, 1, option.resizingBase.origin.x, option.resizingBase.origin.y],
       [cos, sin, -sin, cos, 0, 0],
-      [rotatedScale.x, 0, 0, rotatedScale.y, 0, 0],
+      [adjustedRotatedScale.x, 0, 0, adjustedRotatedScale.y, 0, 0],
       [cos, -sin, sin, cos, 0, 0],
       [1, 0, 0, 1, -option.resizingBase.origin.x, -option.resizingBase.origin.y],
     ]);
