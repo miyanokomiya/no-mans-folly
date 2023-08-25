@@ -17,9 +17,11 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
     getLabel: () => "DroppingNewShape",
     onStart: async (ctx) => {
       ctx.startDragging();
+      ctx.setCursor("move");
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
+      ctx.setCursor();
     },
     handleEvent: async (ctx, event) => {
       switch (event.type) {

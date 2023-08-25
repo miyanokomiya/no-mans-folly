@@ -46,6 +46,11 @@ export function newSingleSelectedState(): AppCanvasState {
           }
         case "pointermove":
           return { type: "stack-restart", getState: newMovingShapeState };
+        case "pointerhover": {
+          const shape = ctx.getShapeAt(event.data.current);
+          ctx.setCursor(shape ? "pointer" : undefined);
+          return;
+        }
         case "keydown":
           switch (event.data.key) {
             case "Delete":

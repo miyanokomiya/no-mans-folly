@@ -9,6 +9,7 @@ function getMockCtx() {
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
+    setCursor: vi.fn(),
   };
 }
 

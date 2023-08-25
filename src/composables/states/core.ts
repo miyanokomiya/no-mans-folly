@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { EditMovement, KeyOptions, MouseOptions } from "./types";
+import { EditMovement, HoverMovement, KeyOptions, MouseOptions } from "./types";
 import { newCallback } from "../reactives";
 
 type TransitionType = "break" | "stack-restart" | "stack-resume";
@@ -138,6 +138,7 @@ export interface ModeStateContextBase {
 
 export type ModeStateEvent =
   | PointerMoveEvent
+  | PointerHoverEvent
   | PointerDragEvent
   | PointerDownEvent
   | PointerUpEvent
@@ -151,9 +152,17 @@ export type ModeStateEvent =
 export interface ModeStateEventBase {
   type: string;
 }
+
+// Called only when the movement is intendedly tracked
 export interface PointerMoveEvent extends ModeStateEventBase {
   type: "pointermove";
   data: EditMovement;
+}
+
+// Called when the movement is detected
+export interface PointerHoverEvent extends ModeStateEventBase {
+  type: "pointerhover";
+  data: HoverMovement;
 }
 
 export interface PointerDragEvent extends ModeStateEventBase {

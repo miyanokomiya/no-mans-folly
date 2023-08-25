@@ -15,6 +15,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
 
   setContextMenuList: (val?: { items: ContextMenuItem[]; point: IVec2 }) => void;
   setCommandExams: (exams?: CommandExam[]) => void;
+  setCursor: (val?: string) => void;
 
   undo: () => void;
   redo: () => void;

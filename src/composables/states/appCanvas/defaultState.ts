@@ -30,6 +30,11 @@ const state: AppCanvasState = {
           default:
             return;
         }
+      case "pointerhover": {
+        const shape = ctx.getShapeAt(event.data.current);
+        ctx.setCursor(shape ? "pointer" : undefined);
+        return;
+      }
       case "wheel":
         ctx.zoomView(event.data.delta.y);
         return;

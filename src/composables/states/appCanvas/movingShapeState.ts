@@ -8,10 +8,12 @@ export function newMovingShapeState(): AppCanvasState {
     getLabel: () => "MovingShape",
     onStart: async (ctx) => {
       ctx.startDragging();
+      ctx.setCursor("move");
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
+      ctx.setCursor();
     },
     handleEvent: async (ctx, event) => {
       switch (event.type) {

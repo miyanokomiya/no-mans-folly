@@ -14,6 +14,7 @@ export function AppCanvas() {
   const [canvasState, setCanvasState] = useState({});
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
+  const [cursor, setCursor] = useState<string | undefined>();
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
@@ -43,7 +44,6 @@ export function AppCanvas() {
   const canvas = useCanvas(getWrapper);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ctlCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const canvasAttrs = useMemo(
     () => ({
@@ -87,18 +87,6 @@ export function AppCanvas() {
   ]);
 
   useEffect(() => {
-    const ctx = ctlCanvasRef.current?.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    ctx.fillStyle = "green";
-    ctx.beginPath();
-    ctx.arc(canvas.mousePoint.x, canvas.mousePoint.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-  }, [canvas.mousePoint.x, canvas.mousePoint.y]);
-
-  useEffect(() => {
     smctx.setCtx({
       setViewport: canvas.setViewport,
       zoomView: canvas.zoomView,
@@ -107,6 +95,7 @@ export function AppCanvas() {
       stopDragging: canvas.endMoving,
       setContextMenuList() {},
       setCommandExams() {},
+      setCursor,
 
       undo: acctx.undoManager.undo,
       redo: acctx.undoManager.redo,
@@ -161,6 +150,21 @@ export function AppCanvas() {
   );
   useGlobalMousemoveEffect(onMouseMove);
 
+  const onMouseHover = useCallback(
+    (e: React.MouseEvent) => {
+      smctx.stateMachine.handleEvent({
+        type: "pointerhover",
+        data: {
+          current: canvas.viewToCanvas(canvas.mousePoint),
+          ctrl: e.ctrlKey,
+          shift: e.shiftKey,
+          scale: canvas.scale,
+        },
+      });
+    },
+    [canvas, smctx]
+  );
+
   const onMouseEnter = useCallback(() => {
     wrapperRef.current?.focus();
   }, []);
@@ -206,14 +210,15 @@ export function AppCanvas() {
     <div
       ref={wrapperRef}
       className="box-border border border-black relative w-full h-full"
+      style={{ cursor }}
       onMouseDown={onMouseDown}
+      onMouseMove={onMouseHover}
       onMouseEnter={onMouseEnter}
       onKeyDown={onKeyDown}
       onWheel={onWheel}
       tabIndex={-1}
     >
       <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-      <canvas ref={ctlCanvasRef} {...canvasAttrs}></canvas>
       <div className="absolute left-0 bottom-0">{smctx.stateMachine.getStateSummary().label}</div>
     </div>
   );

@@ -58,6 +58,7 @@ export function createStateMachineContext(arg: {
     stopDragging() {},
     setContextMenuList() {},
     setCommandExams() {},
+    setCursor() {},
 
     undo() {},
     redo() {},

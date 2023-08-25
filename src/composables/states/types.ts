@@ -11,6 +11,8 @@ export type EditMovement = {
   scale: number;
 } & ModifierOptions;
 
+export type HoverMovement = Omit<EditMovement, "start">;
+
 export type KeyOptions = {
   key: string;
 } & ModifierOptions;

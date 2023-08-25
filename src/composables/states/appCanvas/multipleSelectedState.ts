@@ -46,6 +46,11 @@ export function newMultipleSelectedState(): AppCanvasState {
             default:
               return;
           }
+        case "pointerhover": {
+          const shape = ctx.getShapeAt(event.data.current);
+          ctx.setCursor(shape ? "pointer" : undefined);
+          return;
+        }
         case "keydown":
           switch (event.data.key) {
             case "Delete":

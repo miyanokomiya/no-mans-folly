@@ -30,7 +30,7 @@ export function handleStateEvent(event: ChangeStateEvent, acceptable: Acceptable
   }
 }
 
-export function handleHistoryEvent(ctx: AppCanvasStateContext, event: HistoryEvent) {
+export function handleHistoryEvent(ctx: Pick<AppCanvasStateContext, "undo" | "redo">, event: HistoryEvent) {
   if (event.data === "redo") {
     ctx.redo();
   } else {
