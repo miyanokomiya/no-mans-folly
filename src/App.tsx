@@ -9,7 +9,6 @@ import {
   createInitialEntities,
   createStateMachineContext,
 } from "./contexts/AppCanvasContext";
-import { createShape, getCommonStruct } from "./shapes/index";
 import { newShapeStore } from "./stores/shapes";
 import { newLayerStore } from "./stores/layers";
 import { newDiagramStore } from "./stores/diagram";
@@ -50,25 +49,6 @@ const smctx = createStateMachineContext({
 });
 
 function App() {
-  const onClick = useCallback(() => {
-    const id = generateUuid();
-    const rand = Math.random();
-    const v = 600;
-    const shape =
-      rand < 0.5
-        ? createShape(getCommonStruct, "rectangle", {
-            id,
-            p: { x: Math.random() * v, y: Math.random() * v },
-            rotation: Math.random() * Math.PI * 2,
-          })
-        : createShape(getCommonStruct, "ellipse", {
-            id,
-            p: { x: Math.random() * v, y: Math.random() * v },
-            rotation: Math.random() * Math.PI * 2,
-          });
-    shapeStore.addEntity(shape);
-  }, []);
-
   const onUndo = useCallback(() => {
     undoManager.undo();
   }, []);
@@ -85,7 +65,6 @@ function App() {
             <AppCanvas />
           </div>
           <div className="absolute top-0 left-0">
-            <button onClick={onClick}>Add</button>
             <button onClick={onUndo}>Undo</button>
             <button onClick={onRedo}>Redo</button>
           </div>
