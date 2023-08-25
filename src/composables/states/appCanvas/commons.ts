@@ -1,6 +1,6 @@
 import { HistoryEvent } from "../commons";
 import { ChangeStateEvent, TransitionValue } from "../core";
-import { newDroppingNewShapeState } from "./DroppingNewShapeState";
+import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext } from "./core";
 import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";

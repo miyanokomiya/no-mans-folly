@@ -1,5 +1,5 @@
 import { expect, test, describe, vi } from "vitest";
-import { newDroppingNewShapeState } from "./DroppingNewShapeState";
+import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { translateOnSelection } from "./commons";
