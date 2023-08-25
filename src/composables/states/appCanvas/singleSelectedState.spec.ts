@@ -5,6 +5,7 @@ import { translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
+import { RectangleShape } from "../../../shapes/rectangle";
 
 function getMockCtx() {
   return {
@@ -14,7 +15,9 @@ function getMockCtx() {
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     setCursor: vi.fn(),
-    getShapeMap: vi.fn().mockReturnValue({ a: createShape(getCommonStruct, "rectangle", { id: "a" }) }),
+    getShapeMap: vi.fn().mockReturnValue({
+      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+    }),
     getShapeStruct: getCommonStruct,
     getStyleScheme: createStyleScheme,
   };
@@ -22,6 +25,24 @@ function getMockCtx() {
 
 describe("newSingleSelectedState", () => {
   describe("handle pointerdown: left", () => {
+    test("should move to SingleResizing if the point is at the resizing control", async () => {
+      const ctx = getMockCtx();
+      const target = newSingleSelectedState();
+      await target.onStart?.(ctx as any);
+
+      const result1 = (await target.handleEvent(ctx as any, {
+        type: "pointerdown",
+        data: { point: { x: 0, y: 0 }, options: { button: 0, ctrl: false } },
+      })) as any;
+      expect(result1().getLabel()).toBe("SingleResizing");
+
+      const result2 = (await target.handleEvent(ctx as any, {
+        type: "pointerdown",
+        data: { point: { x: 25, y: 0 }, options: { button: 0, ctrl: false } },
+      })) as any;
+      expect(result2().getLabel()).toBe("SingleResizing");
+    });
+
     test("should select a shape at the point if it exists", async () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedState();
@@ -30,7 +51,7 @@ describe("newSingleSelectedState", () => {
       ctx.getShapeAt.mockReturnValue({ id: "b" });
       const result1 = await target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
+        data: { point: { x: -100, y: -200 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
@@ -38,7 +59,7 @@ describe("newSingleSelectedState", () => {
 
       const result2 = await target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
+        data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: true } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "b", true);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
@@ -52,7 +73,7 @@ describe("newSingleSelectedState", () => {
       ctx.getShapeAt.mockReturnValue(undefined);
       await target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
+        data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).not.toHaveBeenCalled();
       expect(ctx.clearAllSelected).toHaveBeenCalled();
@@ -66,7 +87,7 @@ describe("newSingleSelectedState", () => {
       await target.onStart?.(ctx as any);
       const result = await target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: 1, y: 2 }, options: { button: 1, ctrl: false } },
+        data: { point: { x: -10, y: -20 }, options: { button: 1, ctrl: false } },
       });
       expect(result).toEqual({ type: "stack-restart", getState: newPanningState });
     });

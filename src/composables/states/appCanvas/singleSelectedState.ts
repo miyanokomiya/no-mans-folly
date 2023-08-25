@@ -5,6 +5,7 @@ import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./co
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newBoundingBox } from "../../boundingBox";
+import { newSingleResizingState } from "./singleResizingState";
 
 export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
@@ -29,6 +30,11 @@ export function newSingleSelectedState(): AppCanvasState {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
+              const hitResult = boundingBox.hitTest(event.data.point);
+              if (hitResult && hitResult.type !== "area") {
+                return () => newSingleResizingState({ boundingBox, hitResult });
+              }
+
               const shape = ctx.getShapeAt(event.data.point);
               if (!shape) {
                 ctx.clearAllSelected();

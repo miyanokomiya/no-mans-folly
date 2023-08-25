@@ -1,4 +1,4 @@
-import { rotate } from "okageo";
+import { IVec2, applyAffine, getCenter, getDistance, rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { getRectPoints, getRotatedWrapperRect, isPointOnEllipse } from "../utils/geometry";
@@ -47,15 +47,24 @@ export const struct: ShapeStruct<EllipseShape> = {
       shape.rotation
     );
   },
-  getLocalRectPolygon(shape) {
-    return getRectPoints({
-      x: shape.p.x - shape.rx,
-      y: shape.p.y - shape.ry,
-      width: 2 * shape.rx,
-      height: 2 * shape.ry,
-    }).map((p) => rotate(p, shape.rotation, shape.p));
-  },
+  getLocalRectPolygon,
   isPointOn(shape, p) {
     return isPointOnEllipse(shape.p, shape.rx, shape.ry, p);
   },
+  resizeLocal(shape, resizingAffine) {
+    const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
+    const center = getCenter(rectPolygon[0], rectPolygon[2]);
+    const width = getDistance(rectPolygon[0], rectPolygon[1]);
+    const height = getDistance(rectPolygon[0], rectPolygon[3]);
+    return { p: center, rx: width / 2, ry: height / 2 };
+  },
 };
+
+function getLocalRectPolygon(shape: EllipseShape): IVec2[] {
+  return getRectPoints({
+    x: shape.p.x - shape.rx,
+    y: shape.p.y - shape.ry,
+    width: 2 * shape.rx,
+    height: 2 * shape.ry,
+  }).map((p) => rotate(p, shape.rotation, shape.p));
+}

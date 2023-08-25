@@ -1,4 +1,4 @@
-import { IRectangle, IVec2 } from "okageo";
+import { AffineMatrix, IRectangle, IVec2 } from "okageo";
 import { Shape } from "../models";
 
 export interface ShapeStruct<T extends Shape> {
@@ -8,6 +8,7 @@ export interface ShapeStruct<T extends Shape> {
   getWrapperRect: (shape: T) => IRectangle;
   getLocalRectPolygon: (shape: T) => IVec2[];
   isPointOn: (shape: T, p: IVec2) => boolean;
+  resizeLocal: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
 }
 
 export function createBaseShape(arg: Partial<Shape> = {}): Shape {

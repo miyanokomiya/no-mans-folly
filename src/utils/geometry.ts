@@ -1,5 +1,10 @@
 import { IRectangle, IVec2, getDistance, getOuterRectangle, getPedal, getRectCenter, isOnSeg, rotate } from "okageo";
 
+export interface esizingData {
+  scale: IVec2;
+  origin: IVec2;
+}
+
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
     x: rect.x - padding,

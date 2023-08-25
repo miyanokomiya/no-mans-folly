@@ -1,4 +1,4 @@
-import { IRectangle, IVec2 } from "okageo";
+import { AffineMatrix, IRectangle, IVec2 } from "okageo";
 import { Shape } from "../models";
 import { ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
@@ -40,4 +40,9 @@ export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape): IV
 export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2): boolean {
   const struct = getStruct(shape.type);
   return struct.isPointOn(shape, p);
+}
+
+export function resizeLocal(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
+  const struct = getStruct(shape.type);
+  return struct.resizeLocal(shape, resizingAffine);
 }
