@@ -151,7 +151,7 @@ export function newBoundingBox(option: Option) {
         };
       }
     } else {
-      throw new Error("Invalid");
+      throw new Error("Not implemented");
     }
   }
 
