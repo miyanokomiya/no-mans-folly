@@ -3,6 +3,8 @@ import { newSingleSelectedState } from "./singleSelectedState";
 import { newPanningState } from "../commons";
 import { translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { createShape, getCommonStruct } from "../../../shapes";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
@@ -12,6 +14,9 @@ function getMockCtx() {
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     setCursor: vi.fn(),
+    getShapeMap: vi.fn().mockReturnValue({ a: createShape(getCommonStruct, "rectangle", { id: "a" }) }),
+    getShapeStruct: getCommonStruct,
+    getStyleScheme: createStyleScheme,
   };
 }
 
