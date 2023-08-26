@@ -1,16 +1,15 @@
 import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
-import { IRectangle, IVec2, add, moveRect, sub } from "okageo";
+import { IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
-import { ShapeSnapping, newShapeSnapping } from "../../shapeSnapping";
+import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { getSnappingLines, getWrapperRect } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
-import { applyStrokeStyle } from "../../../utils/strokeStyle";
 
 export function newMovingShapeState(): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
-  let snappingLines: [IVec2, IVec2][];
+  let snappingResult: SnappingResult | undefined;
 
   return {
     getLabel: () => "MovingShape",
@@ -37,9 +36,8 @@ export function newMovingShapeState(): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
-          const snappingResult = shapeSnapping.test(moveRect(movingRect, d));
+          snappingResult = shapeSnapping.test(moveRect(movingRect, d));
           const adjustedD = snappingResult ? add(d, snappingResult.diff) : d;
-          snappingLines = snappingResult?.targets.map((t) => t.line) ?? [];
 
           const shapeMap = ctx.getShapeMap();
           ctx.setTmpShapeMap(
@@ -68,17 +66,12 @@ export function newMovingShapeState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      if (snappingLines) {
-        const style = ctx.getStyleScheme();
-        applyStrokeStyle(renderCtx, { color: style.selectionPrimary });
-        renderCtx.lineWidth = 3 * ctx.getScale();
-
-        renderCtx.beginPath();
-        snappingLines.forEach(([a, b]) => {
-          renderCtx.moveTo(a.x, a.y);
-          renderCtx.lineTo(b.x, b.y);
+      if (snappingResult) {
+        renderSnappingResult(renderCtx, {
+          style: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
+          result: snappingResult,
         });
-        renderCtx.stroke();
       }
     },
   };

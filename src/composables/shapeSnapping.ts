@@ -1,9 +1,11 @@
 import { IRectangle, IVec2, moveRect } from "okageo";
 import { getRectLines } from "../utils/geometry";
+import { applyStrokeStyle } from "../utils/strokeStyle";
+import { StyleScheme } from "../models";
 
 const SNAP_THRESHOLD = 20;
 
-interface SnappingResult {
+export interface SnappingResult {
   diff: IVec2;
   targets: SnappingResultTarget[];
 }
@@ -147,3 +149,19 @@ export function newShapeSnapping(option: Option) {
   return { test };
 }
 export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
+
+export function renderSnappingResult(
+  ctx: CanvasRenderingContext2D,
+  option: { result: SnappingResult; style: StyleScheme; scale: number }
+) {
+  applyStrokeStyle(ctx, { color: option.style.selectionPrimary });
+  ctx.lineWidth = 3 * option.scale;
+
+  const snappingLines = option.result.targets.map((t) => t.line) ?? [];
+  ctx.beginPath();
+  snappingLines.forEach(([a, b]) => {
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+  });
+  ctx.stroke();
+}
