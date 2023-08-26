@@ -29,6 +29,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         newBoundingBox({
           path: getLocalRectPolygon(ctx.getShapeStruct, shape),
           styleScheme: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
         });
     },
     handleEvent: async (ctx, event) => {
@@ -96,8 +97,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               return;
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
-          boundingBox.updateScale(ctx.getScale());
+          boundingBox.updateScale(ctx.zoomView(event.data.delta.y));
           return;
         case "selection": {
           return translateOnSelection(ctx);

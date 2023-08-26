@@ -128,13 +128,14 @@ export function useCanvas(
     setViewOrigin(ret.viewOrigin);
   }
 
-  function zoomView(step: number, center = false) {
+  function zoomView(step: number, center = false): number {
     const origin = !center && mousePoint ? mousePoint : viewCenter;
     const beforeOrigin = viewToCanvas(origin);
     const nextScale = Math.min(Math.max(scale * Math.pow(scaleRate, step > 0 ? 1 : -1), scaleMin), scaleMax);
     const nextViewOrigin = add(viewOrigin, sub(beforeOrigin, _viewToCanvas(nextScale, viewOrigin, origin)));
     setScale(nextScale);
     setViewOrigin(nextViewOrigin);
+    return nextScale;
   }
 
   const onResize = useCallback(() => {

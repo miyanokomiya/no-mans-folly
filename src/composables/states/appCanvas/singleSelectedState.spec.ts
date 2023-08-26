@@ -9,6 +9,7 @@ import { RectangleShape } from "../../../shapes/rectangle";
 
 function getMockCtx() {
   return {
+    getScale: () => 1,
     getShapeAt: vi.fn(),
     clearAllSelected: vi.fn(),
     selectShape: vi.fn(),

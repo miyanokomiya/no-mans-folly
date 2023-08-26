@@ -9,6 +9,7 @@ import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
+    getScale: () => 1,
     getShapeAt: vi.fn(),
     clearAllSelected: vi.fn(),
     selectShape: vi.fn(),

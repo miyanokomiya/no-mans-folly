@@ -8,7 +8,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   getStyleScheme: () => StyleScheme;
 
   setViewport: (rect?: IRectangle, margin?: number) => void;
-  zoomView: (step: number, center?: boolean) => void;
+  zoomView: (step: number, center?: boolean) => number;
   getScale: () => number;
   panView: (val: EditMovement) => void;
   startDragging: () => void;

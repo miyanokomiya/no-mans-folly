@@ -83,7 +83,7 @@ export function newBoundingBox(option: Option) {
 
   function getRotationAnchor(): { c: IVec2; r: number } {
     return {
-      c: multi(add(tr, rotate({ x: 20, y: -20 }, rotation)), scale),
+      c: add(tr, multi(rotate({ x: 20, y: -20 }, rotation), scale)),
       r: scaledAnchorSize * 2,
     };
   }
@@ -112,7 +112,7 @@ export function newBoundingBox(option: Option) {
   function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix) {
     const style = option.styleScheme;
     applyStrokeStyle(ctx, { color: style.selectionPrimary });
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.fillStyle = "#fff";
 
     function resize(p: IVec2): IVec2 {
@@ -124,6 +124,7 @@ export function newBoundingBox(option: Option) {
     ctx.stroke();
 
     if (!resizingAffine) {
+      ctx.lineWidth = 2 * scale;
       anchors.forEach((anchor, i) => {
         const diff = sub(resize(option.path[i]), option.path[i]);
         ctx.beginPath();

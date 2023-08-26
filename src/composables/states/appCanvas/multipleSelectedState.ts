@@ -36,6 +36,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
           styleScheme: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
         });
       }
     },

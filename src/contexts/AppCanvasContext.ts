@@ -52,7 +52,7 @@ export function createStateMachineContext(arg: {
     getStyleScheme: arg.getStyleScheme,
 
     setViewport() {},
-    zoomView() {},
+    zoomView: () => 1,
     getScale: () => 1,
     panView() {},
     startDragging() {},
