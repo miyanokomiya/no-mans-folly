@@ -108,6 +108,7 @@ export function AppCanvas() {
         return findBackward(shapes, (s) => isPointOn(getCommonStruct, s, p));
       },
       selectShape: acctx.shapeStore.select,
+      multiSelectShapes: acctx.shapeStore.multiSelect,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
       addShapes: acctx.shapeStore.addEntities,
       deleteShapes: acctx.shapeStore.deleteEntities,

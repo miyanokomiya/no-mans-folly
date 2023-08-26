@@ -7,6 +7,7 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
+import { newRectangleSelectingState } from "./ractangleSelectingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -50,8 +51,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
 
               const shape = ctx.getShapeAt(event.data.point);
               if (!shape) {
-                ctx.clearAllSelected();
-                return;
+                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
 
               if (!event.data.options.ctrl) {

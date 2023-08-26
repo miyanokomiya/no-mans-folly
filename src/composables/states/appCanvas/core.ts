@@ -10,6 +10,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   getLastSelectedShapeId: () => string | undefined;
   getShapeAt: (p: IVec2) => Shape | undefined;
   selectShape: (id: string, ctrl?: boolean) => void;
+  multiSelectShapes: (ids: string[], ctrl?: boolean) => void;
   clearAllSelected: () => void;
   addShapes: (shapes: Shape[]) => void;
   deleteShapes: (ids: string[]) => void;

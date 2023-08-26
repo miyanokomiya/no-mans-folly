@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newRectangleSelectingState } from "./ractangleSelectingState";
 
 export function newDefaultState(): AppCanvasState {
   return state;
@@ -21,7 +22,7 @@ const state: AppCanvasState = {
                 return newSingleSelectedByPointerOnState;
               }
             } else {
-              ctx.clearAllSelected();
+              return newRectangleSelectingState;
             }
             return;
           }

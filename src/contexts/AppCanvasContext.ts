@@ -69,6 +69,7 @@ export function createStateMachineContext(arg: {
     getLastSelectedShapeId: () => undefined,
     getShapeAt: () => undefined,
     selectShape() {},
+    multiSelectShapes() {},
     clearAllSelected() {},
     addShapes() {},
     deleteShapes() {},

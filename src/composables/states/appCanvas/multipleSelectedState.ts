@@ -10,6 +10,7 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
+import { newRectangleSelectingState } from "./ractangleSelectingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -58,8 +59,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
               const shape = ctx.getShapeAt(event.data.point);
               if (!shape) {
-                ctx.clearAllSelected();
-                return;
+                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
 
               if (!event.data.options.ctrl) {
@@ -124,7 +124,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         .map(([, s]) => s);
 
       applyStrokeStyle(renderCtx, { color: style.selectionSecondaly });
-      renderCtx.lineWidth = 1;
+      renderCtx.lineWidth = 2;
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
       renderCtx.stroke();

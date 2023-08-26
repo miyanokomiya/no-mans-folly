@@ -66,17 +66,17 @@ describe("newMultipleSelectedState", () => {
       expect(result2).toBe(undefined);
     });
 
-    test("should deselect if there's no shape at the point", async () => {
+    test("should move to RectangleSelecting state if there's no shape at the point", async () => {
       const ctx = getMockCtx();
       const target = newMultipleSelectedState();
       await target.onStart?.(ctx as any);
       ctx.getShapeAt.mockReturnValue(undefined);
-      await target.handleEvent(ctx as any, {
+      const result = (await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: false } },
-      });
+      })) as any;
       expect(ctx.selectShape).not.toHaveBeenCalled();
-      expect(ctx.clearAllSelected).toHaveBeenCalled();
+      expect(result().getLabel()).toBe("RectangleSelecting");
     });
   });
 
