@@ -203,7 +203,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const centralizedOrigin = add(option.resizingBase.origin, multi(option.resizingBase.direction, 1 / 2));
   const centralizedrotatedBaseDirection = multi(rotatedBaseDirection, 1 / 2);
 
-  function getResizingAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
+  function getAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
     const keepAspect = modifire?.keepAspect;
     const centralize = modifire?.centralize;
 
@@ -232,7 +232,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     ]);
   }
 
-  return { getResizingAffine };
+  return { getAffine };
 }
 
 interface BoundingBoxRotatingOption {
@@ -243,6 +243,14 @@ interface BoundingBoxRotatingOption {
 export function newBoundingBoxRotating(option: BoundingBoxRotatingOption) {
   const sin = Math.sin(option.rotation);
   const cos = Math.cos(option.rotation);
+  const m0 = multiAffines([
+    [1, 0, 0, 1, option.origin.x, option.origin.y],
+    [cos, sin, -sin, cos, 0, 0],
+  ]);
+  const m1 = multiAffines([
+    [cos, -sin, sin, cos, 0, 0],
+    [1, 0, 0, 1, -option.origin.x, -option.origin.y],
+  ]);
 
   function getAffine(start: IVec2, current: IVec2): AffineMatrix {
     const startR = getRadian(start, option.origin);
@@ -251,13 +259,7 @@ export function newBoundingBoxRotating(option: BoundingBoxRotatingOption) {
     const dsin = Math.sin(dr);
     const dcos = Math.cos(dr);
 
-    return multiAffines([
-      [1, 0, 0, 1, option.origin.x, option.origin.y],
-      [cos, sin, -sin, cos, 0, 0],
-      [dcos, dsin, -dsin, dcos, 0, 0],
-      [cos, -sin, sin, cos, 0, 0],
-      [1, 0, 0, 1, -option.origin.x, -option.origin.y],
-    ]);
+    return multiAffines([m0, [dcos, dsin, -dsin, dcos, 0, 0], m1]);
   }
 
   return { getAffine };

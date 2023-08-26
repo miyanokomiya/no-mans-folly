@@ -1,7 +1,8 @@
 import { expect, describe, test } from "vitest";
-import { newBoundingBox, newBoundingBoxResizing } from "./boundingBox";
+import { newBoundingBox, newBoundingBoxResizing, newBoundingBoxRotating } from "./boundingBox";
 import { getRectPoints } from "../utils/geometry";
 import { createStyleScheme } from "../models/factories";
+import { applyAffine } from "okageo";
 
 describe("newBoundingBox", () => {
   describe("hitTest", () => {
@@ -72,7 +73,7 @@ describe("newBoundingBox", () => {
 });
 
 describe("newBoundingBoxResizing", () => {
-  describe("getResizingAffine", () => {
+  describe("getAffine", () => {
     test("should return resizing affine matrix: at a corner", () => {
       const corner0 = newBoundingBoxResizing({
         rotation: 0,
@@ -82,7 +83,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 100, y: 100 },
         },
       });
-      const affine0 = corner0.getResizingAffine({ x: -10, y: -20 });
+      const affine0 = corner0.getAffine({ x: -10, y: -20 });
       expect(affine0[0]).toBeCloseTo(1.1);
       expect(affine0[1]).toBeCloseTo(0);
       expect(affine0[2]).toBeCloseTo(0);
@@ -100,7 +101,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 100, y: 100 },
         },
       });
-      const affine0 = corner0.getResizingAffine({ x: -30, y: -50 }, { keepAspect: true });
+      const affine0 = corner0.getAffine({ x: -30, y: -50 }, { keepAspect: true });
       expect(affine0[0]).toBeCloseTo(1.4);
       expect(affine0[1]).toBeCloseTo(0);
       expect(affine0[2]).toBeCloseTo(0);
@@ -118,7 +119,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 100, y: 100 },
         },
       });
-      const affine0 = corner0.getResizingAffine({ x: -10, y: -20 }, { centralize: true });
+      const affine0 = corner0.getAffine({ x: -10, y: -20 }, { centralize: true });
       expect(affine0[0]).toBeCloseTo(1.2);
       expect(affine0[1]).toBeCloseTo(0);
       expect(affine0[2]).toBeCloseTo(0);
@@ -136,7 +137,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 50, y: 100 },
         },
       });
-      const affine0 = corner0.getResizingAffine({ x: -10, y: -20 });
+      const affine0 = corner0.getAffine({ x: -10, y: -20 });
       expect(affine0[0]).toBeCloseTo(1);
       expect(affine0[1]).toBeCloseTo(0);
       expect(affine0[2]).toBeCloseTo(0);
@@ -152,7 +153,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 0, y: 50 },
         },
       });
-      const affine1 = corner1.getResizingAffine({ x: -10, y: -20 });
+      const affine1 = corner1.getAffine({ x: -10, y: -20 });
       expect(affine1[0]).toBeCloseTo(0.9);
       expect(affine1[1]).toBeCloseTo(0);
       expect(affine1[2]).toBeCloseTo(0);
@@ -170,7 +171,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 50, y: 100 },
         },
       });
-      const affine0 = corner0.getResizingAffine({ x: -10, y: -20 }, { keepAspect: true });
+      const affine0 = corner0.getAffine({ x: -10, y: -20 }, { keepAspect: true });
       expect(affine0[0]).toBeCloseTo(1.2);
       expect(affine0[1]).toBeCloseTo(0);
       expect(affine0[2]).toBeCloseTo(0);
@@ -186,7 +187,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 0, y: 50 },
         },
       });
-      const affine1 = corner1.getResizingAffine({ x: -10, y: -20 }, { keepAspect: true });
+      const affine1 = corner1.getAffine({ x: -10, y: -20 }, { keepAspect: true });
       expect(affine1[0]).toBeCloseTo(0.9);
       expect(affine1[1]).toBeCloseTo(0);
       expect(affine1[2]).toBeCloseTo(0);
@@ -204,7 +205,7 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 50, y: 100 },
         },
       });
-      const affine0 = corner0.getResizingAffine({ x: -10, y: -20 }, { centralize: true });
+      const affine0 = corner0.getAffine({ x: -10, y: -20 }, { centralize: true });
       expect(affine0[0]).toBeCloseTo(1);
       expect(affine0[1]).toBeCloseTo(0);
       expect(affine0[2]).toBeCloseTo(0);
@@ -220,13 +221,31 @@ describe("newBoundingBoxResizing", () => {
           origin: { x: 0, y: 50 },
         },
       });
-      const affine1 = corner1.getResizingAffine({ x: -10, y: -20 }, { centralize: true });
+      const affine1 = corner1.getAffine({ x: -10, y: -20 }, { centralize: true });
       expect(affine1[0]).toBeCloseTo(0.8);
       expect(affine1[1]).toBeCloseTo(0);
       expect(affine1[2]).toBeCloseTo(0);
       expect(affine1[3]).toBeCloseTo(1);
       expect(affine1[4]).toBeCloseTo(10);
       expect(affine1[5]).toBeCloseTo(0);
+    });
+  });
+});
+
+describe("newBoundingBoxRotating", () => {
+  describe("getAffine", () => {
+    test("should return rotating affine matrix", () => {
+      const result0 = newBoundingBoxRotating({
+        rotation: 0,
+        origin: { x: 10, y: 10 },
+      });
+      const p0 = applyAffine(result0.getAffine({ x: 20, y: 10 }, { x: 10, y: 20 }), { x: 20, y: 10 });
+      expect(p0.x).toBeCloseTo(10);
+      expect(p0.y).toBeCloseTo(20);
+
+      const p1 = applyAffine(result0.getAffine({ x: 10, y: 0 }, { x: 0, y: 10 }), { x: 20, y: 10 });
+      expect(p1.x).toBeCloseTo(10);
+      expect(p1.y).toBeCloseTo(0);
     });
   });
 });
