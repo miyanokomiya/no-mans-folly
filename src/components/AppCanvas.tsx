@@ -55,7 +55,6 @@ export function AppCanvas() {
   );
 
   useEffect(() => {
-    console.log("Rendered: Shape");
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 

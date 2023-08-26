@@ -3,6 +3,7 @@ import { Shape } from "../models";
 import { ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
+import { getRectLines } from "../utils/geometry";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -45,4 +46,10 @@ export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2): bo
 export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
   const struct = getStruct(shape.type);
   return struct.resize(shape, resizingAffine);
+}
+
+export function getSnappingLines(getStruct: GetShapeStruct, shape: Shape): [IVec2, IVec2][] {
+  const struct = getStruct(shape.type);
+  if (struct.getSnappingLines) return struct.getSnappingLines(shape);
+  return getRectLines(struct.getWrapperRect(shape));
 }

@@ -52,6 +52,16 @@ export function getRectPoints(rect: IRectangle): IVec2[] {
   ];
 }
 
+export function getRectLines(rect: IRectangle): [IVec2, IVec2][] {
+  const [tl, tr, br, bl] = getRectPoints(rect);
+  return [
+    [tl, tr],
+    [tr, br],
+    [br, bl],
+    [bl, tl],
+  ];
+}
+
 export function getRotatedWrapperRect(rect: IRectangle, rotation: number): IRectangle {
   if (rotation === 0) return rect;
 

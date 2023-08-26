@@ -1,13 +1,18 @@
 import { expect, test, describe, vi } from "vitest";
 import { translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
+import { createShape, getCommonStruct } from "../../../shapes";
+import { RectangleShape } from "../../../shapes/rectangle";
 
 function getMockCtx() {
   return {
+    getShapeMap: vi.fn().mockReturnValue({
+      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+    }),
+    getShapeStruct: getCommonStruct,
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
-    getShapeMap: vi.fn(),
     setTmpShapeMap: vi.fn(),
     getTmpShapeMap: vi.fn(),
     patchShapes: vi.fn(),
@@ -31,8 +36,8 @@ describe("newMovingShapeState", () => {
   describe("handle pointermove", () => {
     test("should call setTmpShapeMap with moved shapes", async () => {
       const ctx = getMockCtx();
-      ctx.getShapeMap.mockReturnValue({ a: { p: { x: 0, y: 0 } } });
       const target = newMovingShapeState();
+      await target.onStart?.(ctx as any);
       const result = await target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
@@ -47,6 +52,7 @@ describe("newMovingShapeState", () => {
       const ctx = getMockCtx();
       ctx.getTmpShapeMap.mockReturnValue({ a: { value: 1 } });
       const target = newMovingShapeState();
+      await target.onStart?.(ctx as any);
       const result = await target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.patchShapes).toHaveBeenNthCalledWith(1, { a: { value: 1 } });
       expect(result).toEqual(translateOnSelection(ctx));
