@@ -2,7 +2,7 @@ import { expect, test, describe, vi } from "vitest";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
-import { newResizingState } from "./resizingState";
+import { newRotatingState } from "./rotatingState";
 import { newBoundingBox } from "../../boundingBox";
 import { getRectPoints } from "../../../utils/geometry";
 
@@ -21,32 +21,24 @@ function getMockCtx() {
   };
 }
 
-describe("newResizingState", () => {
+describe("newRotatingState", () => {
   describe("handle pointermove", () => {
-    test("should call setTmpShapeMap with resized shapes", async () => {
+    test("should call setTmpShapeMap with rotated shapes", async () => {
       const ctx = getMockCtx();
       const boundingBox = newBoundingBox({
         path: getRectPoints({ x: 0, y: 0, width: 50, height: 50 }),
         styleScheme: ctx.getStyleScheme(),
       });
-      const hitResult = boundingBox.hitTest({ x: 0, y: 0 })!;
-      const target = newResizingState({
+      const target = newRotatingState({
         boundingBox,
-        hitResult,
       });
 
       await target.onStart?.(ctx as any);
       await target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 10 }, scale: 1 },
+        data: { start: { x: 10, y: 0 }, current: { x: 0, y: 10 }, scale: 1 },
       });
-      expect(ctx.setTmpShapeMap).toHaveBeenCalledWith({
-        a: {
-          p: { x: 10, y: 10 },
-          width: 40,
-          height: 40,
-        },
-      });
+      expect(ctx.setTmpShapeMap).toHaveBeenCalled();
     });
   });
 });
