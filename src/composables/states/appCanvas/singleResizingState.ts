@@ -35,7 +35,10 @@ export function newSingleResizingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
-          resizingAffine = boundingBoxResizing.getResizingAffine(diff, { keepAspect: event.data.shift });
+          resizingAffine = boundingBoxResizing.getResizingAffine(diff, {
+            keepAspect: event.data.shift,
+            centralize: event.data.alt,
+          });
 
           const resizedShape = resizeLocal(ctx.getShapeStruct, ctx.getShapeMap()[selectedId], resizingAffine);
           ctx.setTmpShapeMap({ [selectedId]: resizedShape });

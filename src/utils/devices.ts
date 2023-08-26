@@ -8,6 +8,7 @@ interface ModifiedEvent {
   ctrlKey?: boolean;
   metaKey?: boolean;
   shiftKey?: boolean;
+  altKey?: boolean;
 }
 
 interface ModifiedMouseEvent extends ModifiedEvent {
@@ -20,6 +21,10 @@ interface ModifiedKeyboardEvent extends ModifiedEvent {
 
 export function isCtrlOrMeta(e: ModifiedEvent): boolean {
   return !!e.ctrlKey || !!e.metaKey;
+}
+
+export function isAltOrOpt(e: ModifiedEvent): boolean {
+  return !!e.altKey;
 }
 
 export function getCtrlOrMetaStr(): string {

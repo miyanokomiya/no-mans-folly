@@ -3,7 +3,7 @@ import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasC
 import { Shape } from "../models";
 import { getCommonStruct, isPointOn, renderShape } from "../shapes";
 import { useCanvas } from "../composables/canvas";
-import { getMouseOptions } from "../utils/devices";
+import { getMouseOptions, isAltOrOpt, isCtrlOrMeta } from "../utils/devices";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables/window";
 import { findBackward } from "../utils/commons";
 
@@ -140,7 +140,8 @@ export function AppCanvas() {
         data: {
           start: canvas.viewToCanvas(canvas.editStartPoint),
           current: canvas.viewToCanvas(canvas.mousePoint),
-          ctrl: e.ctrlKey,
+          ctrl: isCtrlOrMeta(e),
+          alt: isAltOrOpt(e),
           shift: e.shiftKey,
           scale: canvas.scale,
         },
@@ -156,7 +157,8 @@ export function AppCanvas() {
         type: "pointerhover",
         data: {
           current: canvas.viewToCanvas(canvas.mousePoint),
-          ctrl: e.ctrlKey,
+          ctrl: isCtrlOrMeta(e),
+          alt: isAltOrOpt(e),
           shift: e.shiftKey,
           scale: canvas.scale,
         },

@@ -3,6 +3,7 @@ import type { IVec2 } from "okageo";
 type ModifierOptions = {
   ctrl?: boolean;
   shift?: boolean;
+  alt?: boolean;
 };
 
 export type EditMovement = {
