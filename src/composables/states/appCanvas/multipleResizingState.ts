@@ -3,14 +3,15 @@ import { translateOnSelection } from "./commons";
 import { BoundingBox, HitResult, newBoundingBoxResizing } from "../../boundingBox";
 import { IDENTITY_AFFINE, sub } from "okageo";
 import { resizeShape } from "../../../shapes";
+import { Shape } from "../../../models";
 
 interface Option {
   boundingBox: BoundingBox;
   hitResult: HitResult;
 }
 
-export function newSingleResizingState(option: Option): AppCanvasState {
-  let selectedId: string | undefined;
+export function newMultipleResizingState(option: Option): AppCanvasState {
+  let selectedIds: { [id: string]: true };
   let resizingAffine = IDENTITY_AFFINE;
 
   const boundingBoxResizing = newBoundingBoxResizing({
@@ -20,9 +21,9 @@ export function newSingleResizingState(option: Option): AppCanvasState {
   });
 
   return {
-    getLabel: () => "SingleResizing",
+    getLabel: () => "MultipleResizing",
     onStart: async (ctx) => {
-      selectedId = ctx.getLastSelectedShapeId();
+      selectedIds = ctx.getSelectedShapeIdMap();
       ctx.startDragging();
     },
     onEnd: async (ctx) => {
@@ -30,8 +31,6 @@ export function newSingleResizingState(option: Option): AppCanvasState {
       ctx.setTmpShapeMap({});
     },
     handleEvent: async (ctx, event) => {
-      if (!selectedId) return translateOnSelection(ctx);
-
       switch (event.type) {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
@@ -40,12 +39,19 @@ export function newSingleResizingState(option: Option): AppCanvasState {
             centralize: event.data.alt,
           });
 
-          const resizedShape = resizeShape(ctx.getShapeStruct, ctx.getShapeMap()[selectedId], resizingAffine);
-          ctx.setTmpShapeMap({ [selectedId]: resizedShape });
+          const shapeMap = ctx.getShapeMap();
+          const patchMap = Object.keys(selectedIds).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
+            const shape = shapeMap[id];
+            if (shape) {
+              m[id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
+            }
+            return m;
+          }, {});
+          ctx.setTmpShapeMap(patchMap);
           return;
         }
         case "pointerup": {
-          ctx.patchShapes({ [selectedId]: ctx.getTmpShapeMap()[selectedId] });
+          ctx.patchShapes(ctx.getTmpShapeMap());
           return translateOnSelection(ctx);
         }
         case "wheel":

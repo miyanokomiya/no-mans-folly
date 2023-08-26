@@ -8,7 +8,7 @@ export interface ShapeStruct<T extends Shape> {
   getWrapperRect: (shape: T) => IRectangle;
   getLocalRectPolygon: (shape: T) => IVec2[];
   isPointOn: (shape: T, p: IVec2) => boolean;
-  resizeLocal: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
+  resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
 }
 
 export function createBaseShape(arg: Partial<Shape> = {}): Shape {

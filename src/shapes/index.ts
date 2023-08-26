@@ -42,7 +42,7 @@ export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2): bo
   return struct.isPointOn(shape, p);
 }
 
-export function resizeLocal(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
+export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
   const struct = getStruct(shape.type);
-  return struct.resizeLocal(shape, resizingAffine);
+  return struct.resize(shape, resizingAffine);
 }

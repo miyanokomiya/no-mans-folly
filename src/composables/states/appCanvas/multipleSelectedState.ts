@@ -7,14 +7,26 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { BoundingBox, newBoundingBox } from "../../boundingBox";
+import { newMultipleResizingState } from "./multipleResizingState";
 
 export function newMultipleSelectedState(): AppCanvasState {
   let selectedIds: { [id: string]: true };
+  let boundingBox: BoundingBox;
 
   return {
     getLabel: () => "MultipleSelected",
     onStart: async (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
+      const shapeMap = ctx.getShapeMap();
+      const shapeRects = Object.keys(selectedIds)
+        .map((id) => shapeMap[id])
+        .map((s) => getWrapperRect(ctx.getShapeStruct, s));
+
+      boundingBox = newBoundingBox({
+        path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
+        styleScheme: ctx.getStyleScheme(),
+      });
     },
     handleEvent: async (ctx, event) => {
       if (!selectedIds) return;
@@ -23,6 +35,11 @@ export function newMultipleSelectedState(): AppCanvasState {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
+              const hitResult = boundingBox.hitTest(event.data.point);
+              if (hitResult && hitResult.type !== "area") {
+                return () => newMultipleResizingState({ boundingBox, hitResult });
+              }
+
               const shape = ctx.getShapeAt(event.data.point);
               if (!shape) {
                 ctx.clearAllSelected();
@@ -47,8 +64,17 @@ export function newMultipleSelectedState(): AppCanvasState {
               return;
           }
         case "pointerhover": {
-          const shape = ctx.getShapeAt(event.data.current);
-          ctx.setCursor(shape ? "pointer" : undefined);
+          const hitBounding = boundingBox.hitTest(event.data.current);
+          if (hitBounding && hitBounding.type !== "area") {
+            if (hitBounding.type === "corner") {
+              ctx.setCursor(hitBounding.index % 2 === 0 ? "nwse-resize" : "nesw-resize");
+            } else if (hitBounding.type === "segment") {
+              ctx.setCursor(hitBounding.index % 2 === 0 ? "ns-resize" : "ew-resize");
+            }
+          } else {
+            const shape = ctx.getShapeAt(event.data.current);
+            ctx.setCursor(shape ? "pointer" : undefined);
+          }
           return;
         }
         case "keydown":
@@ -66,7 +92,8 @@ export function newMultipleSelectedState(): AppCanvasState {
           return translateOnSelection(ctx);
         }
         case "history":
-          return handleHistoryEvent(ctx, event);
+          handleHistoryEvent(ctx, event);
+          return newMultipleSelectedState;
         case "state":
           return handleStateEvent(event, ["DroppingNewShape"]);
         default:
@@ -85,11 +112,7 @@ export function newMultipleSelectedState(): AppCanvasState {
       shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
       renderCtx.stroke();
 
-      const rect = geometry.getWrapperRect(shapes.map((s) => getWrapperRect(ctx.getShapeStruct, s)));
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary });
-      renderCtx.lineWidth = 2;
-      renderCtx.beginPath();
-      renderCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      boundingBox.render(renderCtx);
     },
   };
 }

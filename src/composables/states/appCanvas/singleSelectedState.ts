@@ -4,12 +4,12 @@ import { getLocalRectPolygon } from "../../../shapes";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { newBoundingBox } from "../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newSingleResizingState } from "./singleResizingState";
 
 export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
-  let boundingBox: ReturnType<typeof newBoundingBox>;
+  let boundingBox: BoundingBox;
 
   return {
     getLabel: () => "SingleSelected",
@@ -89,7 +89,8 @@ export function newSingleSelectedState(): AppCanvasState {
           return translateOnSelection(ctx);
         }
         case "history":
-          return handleHistoryEvent(ctx, event);
+          handleHistoryEvent(ctx, event);
+          return newSingleSelectedState;
         case "state":
           return handleStateEvent(event, ["DroppingNewShape"]);
         default:

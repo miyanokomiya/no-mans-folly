@@ -51,7 +51,7 @@ export const struct: ShapeStruct<EllipseShape> = {
   isPointOn(shape, p) {
     return isPointOnEllipse(shape.p, shape.rx, shape.ry, p);
   },
-  resizeLocal(shape, resizingAffine) {
+  resize(shape, resizingAffine) {
     const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
     const center = getCenter(rectPolygon[0], rectPolygon[2]);
     const width = getDistance(rectPolygon[0], rectPolygon[1]);

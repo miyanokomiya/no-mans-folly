@@ -47,7 +47,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   isPointOn(shape, p) {
     return isPointOnRectangle({ x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, p);
   },
-  resizeLocal(shape, resizingAffine) {
+  resize(shape, resizingAffine) {
     const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
     const center = getCenter(rectPolygon[0], rectPolygon[2]);
     const width = getDistance(rectPolygon[0], rectPolygon[1]);
