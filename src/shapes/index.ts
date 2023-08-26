@@ -1,9 +1,9 @@
 import { AffineMatrix, IRectangle, IVec2 } from "okageo";
 import { Shape } from "../models";
-import { ShapeStruct } from "./core";
+import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
-import { getRectLines } from "../utils/geometry";
+import { getRectCenterLines, getRectLines } from "../utils/geometry";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -48,8 +48,15 @@ export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAff
   return struct.resize(shape, resizingAffine);
 }
 
-export function getSnappingLines(getStruct: GetShapeStruct, shape: Shape): [IVec2, IVec2][] {
+export function getSnappingLines(getStruct: GetShapeStruct, shape: Shape): ShapeSnappingLines {
   const struct = getStruct(shape.type);
   if (struct.getSnappingLines) return struct.getSnappingLines(shape);
-  return getRectLines(struct.getWrapperRect(shape));
+
+  const rect = struct.getWrapperRect(shape);
+  const [t, r, b, l] = getRectLines(rect);
+  const [cv, ch] = getRectCenterLines(rect);
+  return {
+    v: [l, cv, r],
+    h: [t, ch, b],
+  };
 }

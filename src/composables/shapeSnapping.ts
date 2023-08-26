@@ -2,6 +2,7 @@ import { IRectangle, IVec2, moveRect } from "okageo";
 import { getRectLines } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme } from "../models";
+import { ShapeSnappingLines } from "../shapes/core";
 
 const SNAP_THRESHOLD = 20;
 
@@ -17,12 +18,12 @@ interface SnappingResultTarget {
 
 interface SnappingTmpResult {
   d: number;
-  lineIndex: number;
+  ad: number;
   line: [IVec2, IVec2];
 }
 
 interface Option {
-  shapeSnappingList: [string, [IVec2, IVec2][]][];
+  shapeSnappingList: [string, ShapeSnappingLines][];
 }
 
 export function newShapeSnapping(option: Option) {
@@ -31,87 +32,55 @@ export function newShapeSnapping(option: Option) {
   function test(rect: IRectangle): SnappingResult | undefined {
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
 
-    const testResultList: [string, SnappingTmpResult][] = [];
+    let xClosest: [string, SnappingTmpResult] | undefined;
+    let yClosest: [string, SnappingTmpResult] | undefined;
     shapeSnappingList.map(([id, lines]) => {
       // x snapping
       {
-        const [, right, , left] = lines;
-        const dll = left[0].x - rectLeft[0].x;
-        const dlr = left[0].x - rectRight[0].x;
-        const drl = right[0].x - rectLeft[0].x;
-        const drr = right[0].x - rectRight[0].x;
-        const adll = Math.abs(dll);
-        const adlr = Math.abs(dlr);
-        const adrl = Math.abs(drl);
-        const adrr = Math.abs(drr);
-        const closest = [adll, adlr, adrl, adrr].filter((v) => v < SNAP_THRESHOLD).sort((a, b) => a - b)[0];
-
-        let result: SnappingTmpResult | undefined = undefined;
-        if (closest === adll) {
-          result = { d: dll, lineIndex: 3, line: left };
-        } else if (closest === adlr) {
-          result = { d: dlr, lineIndex: 1, line: left };
-        } else if (closest === adrl) {
-          result = { d: drl, lineIndex: 3, line: right };
-        } else if (closest === adrr) {
-          result = { d: drr, lineIndex: 1, line: right };
-        }
-
-        if (result) {
-          testResultList.push([id, result]);
+        const vList = lines.v.map<SnappingTmpResult>((line) => {
+          const dl = line[0].x - rectLeft[0].x;
+          const dr = line[0].x - rectRight[0].x;
+          const dc = line[0].x - (rectLeft[0].x + rectRight[0].x) / 2;
+          const adl = Math.abs(dl);
+          const adr = Math.abs(dr);
+          const adc = Math.abs(dc);
+          return [
+            { d: dl, ad: adl, line },
+            { d: dr, ad: adr, line },
+            { d: dc, ad: adc, line },
+          ].sort((a, b) => a.ad - b.ad)[0];
+        });
+        const closest = vList.filter((v) => v.ad < SNAP_THRESHOLD).sort((a, b) => a.ad - b.ad)[0];
+        if (closest) {
+          xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
         }
       }
 
       // y snapping
       {
-        const [top, , bottom] = lines;
-        const dtt = top[0].y - rectTop[0].y;
-        const dtb = top[0].y - rectBottom[0].y;
-        const dbt = bottom[0].y - rectTop[0].y;
-        const dbb = bottom[0].y - rectBottom[0].y;
-        const adtt = Math.abs(dtt);
-        const adtb = Math.abs(dtb);
-        const adbt = Math.abs(dbt);
-        const adbb = Math.abs(dbb);
-        const closest = [adtt, adtb, adbt, adbb].filter((v) => v < SNAP_THRESHOLD).sort((a, b) => a - b)[0];
-
-        let result: SnappingTmpResult | undefined = undefined;
-        if (closest === adtt) {
-          result = { d: dtt, lineIndex: 0, line: top };
-        } else if (closest === adtb) {
-          result = { d: dtb, lineIndex: 2, line: top };
-        } else if (closest === adbt) {
-          result = { d: dbt, lineIndex: 0, line: bottom };
-        } else if (closest === adbb) {
-          result = { d: dbb, lineIndex: 2, line: bottom };
-        }
-
-        if (result) {
-          testResultList.push([id, result]);
+        const hList = lines.h.map<SnappingTmpResult>((line) => {
+          const dt = line[0].y - rectTop[0].y;
+          const db = line[0].y - rectBottom[0].y;
+          const dc = line[0].y - (rectTop[0].y + rectBottom[0].y) / 2;
+          const adt = Math.abs(dt);
+          const adb = Math.abs(db);
+          const adc = Math.abs(dc);
+          return [
+            { d: dt, ad: adt, line },
+            { d: db, ad: adb, line },
+            { d: dc, ad: adc, line },
+          ].sort((a, b) => a.ad - b.ad)[0];
+        });
+        const closest = hList.filter((v) => v.ad < SNAP_THRESHOLD).sort((a, b) => a.ad - b.ad)[0];
+        if (closest) {
+          yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
         }
       }
     });
 
-    const xList: [string, SnappingTmpResult][] = [];
-    const yList: [string, SnappingTmpResult][] = [];
-    testResultList.forEach((item) => {
-      switch (item[1].lineIndex) {
-        case 0:
-        case 2:
-          yList.push(item);
-          break;
-        case 1:
-        case 3:
-          xList.push(item);
-          break;
-      }
-    });
-
-    if (yList.length === 0 && xList.length === 0) return;
+    if (!xClosest && !yClosest) return;
 
     const targets: SnappingResultTarget[] = [];
-    const xClosest = xList.sort(([, a], [, b]) => a.d - b.d)[0];
-    const yClosest = yList.sort(([, a], [, b]) => a.d - b.d)[0];
     const diff = { x: xClosest?.[1].d ?? 0, y: yClosest?.[1].d ?? 0 };
     const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   expandRect,
+  getRectCenterLines,
   getRectLines,
   getRectPoints,
   getRotatedWrapperRect,
@@ -93,7 +94,7 @@ describe("getWrapperRect", () => {
 });
 
 describe("getRectPoints", () => {
-  test("should return a rectangle to wrap rotated rectangle", () => {
+  test("should return the path of the rectangle", () => {
     expect(getRectPoints({ x: 1, y: 2, width: 10, height: 20 })).toEqual([
       { x: 1, y: 2 },
       { x: 11, y: 2 },
@@ -104,7 +105,7 @@ describe("getRectPoints", () => {
 });
 
 describe("getRectLines", () => {
-  test("should return a rectangle to wrap rotated rectangle", () => {
+  test("should return the lines of the rectangle", () => {
     const p0 = { x: 1, y: 2 };
     const p1 = { x: 11, y: 2 };
     const p2 = { x: 11, y: 22 };
@@ -114,6 +115,21 @@ describe("getRectLines", () => {
       [p1, p2],
       [p2, p3],
       [p3, p0],
+    ]);
+  });
+});
+
+describe("getRectCenterLines", () => {
+  test("should return the center lines of the rectangle", () => {
+    expect(getRectCenterLines({ x: 1, y: 2, width: 10, height: 20 })).toEqual([
+      [
+        { x: 6, y: 2 },
+        { x: 6, y: 22 },
+      ],
+      [
+        { x: 1, y: 12 },
+        { x: 11, y: 12 },
+      ],
     ]);
   });
 });

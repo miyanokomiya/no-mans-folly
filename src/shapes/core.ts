@@ -9,7 +9,12 @@ export interface ShapeStruct<T extends Shape> {
   getLocalRectPolygon: (shape: T) => IVec2[];
   isPointOn: (shape: T, p: IVec2) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
-  getSnappingLines?: (shape: T) => [IVec2, IVec2][];
+  getSnappingLines?: (shape: T) => ShapeSnappingLines;
+}
+
+export interface ShapeSnappingLines {
+  v: [IVec2, IVec2][];
+  h: [IVec2, IVec2][];
 }
 
 export function createBaseShape(arg: Partial<Shape> = {}): Shape {

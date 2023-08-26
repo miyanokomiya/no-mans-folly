@@ -1,31 +1,35 @@
 import { describe, expect, test } from "vitest";
 import { newShapeSnapping } from "./shapeSnapping";
-import { IVec2 } from "okageo";
+import { ShapeSnappingLines } from "../shapes/core";
 
 describe("newShapeSnapping", () => {
   const shapeSnappingList = [
     [
       "a",
-      [
-        [
-          { x: 0, y: 0 },
-          { x: 100, y: 0 },
+      {
+        v: [
+          [
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+          [
+            { x: 0, y: 100 },
+            { x: 0, y: 0 },
+          ],
         ],
-        [
-          { x: 100, y: 0 },
-          { x: 100, y: 100 },
+        h: [
+          [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+          [
+            { x: 100, y: 100 },
+            { x: 0, y: 100 },
+          ],
         ],
-        [
-          { x: 100, y: 100 },
-          { x: 0, y: 100 },
-        ],
-        [
-          { x: 0, y: 100 },
-          { x: 0, y: 0 },
-        ],
-      ],
-    ] as [string, [IVec2, IVec2][]],
-  ];
+      },
+    ],
+  ] as [string, ShapeSnappingLines][];
   const target = newShapeSnapping({ shapeSnappingList });
 
   test("x snapping: should return expanded rectangle", () => {
@@ -55,7 +59,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 95, y: 40, width: 10, height: 10 })).toEqual({
+    expect(target.test({ x: 95, y: 40, width: 20, height: 20 })).toEqual({
       diff: { x: 5, y: 0 },
       targets: [
         {
@@ -76,6 +80,19 @@ describe("newShapeSnapping", () => {
           line: [
             { x: 100, y: 0 },
             { x: 100, y: 100 },
+          ],
+        },
+      ],
+    });
+
+    expect(target.test({ x: -7, y: 40, width: 10, height: 10 }), "at center").toEqual({
+      diff: { x: 2, y: 0 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 0, y: 100 },
           ],
         },
       ],
@@ -109,7 +126,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 40, y: 95, width: 10, height: 10 })).toEqual({
+    expect(target.test({ x: 40, y: 95, width: 20, height: 20 })).toEqual({
       diff: { x: 0, y: 5 },
       targets: [
         {
@@ -130,6 +147,19 @@ describe("newShapeSnapping", () => {
           line: [
             { x: 0, y: 100 },
             { x: 100, y: 100 },
+          ],
+        },
+      ],
+    });
+
+    expect(target.test({ x: 40, y: -7, width: 10, height: 10 }), "at center").toEqual({
+      diff: { x: 0, y: 2 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
           ],
         },
       ],
@@ -157,7 +187,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: -5, y: -5, width: 10, height: 10 })).toEqual({
+    expect(target.test({ x: -5, y: -5, width: 20, height: 20 })).toEqual({
       diff: { x: 5, y: 5 },
       targets: [
         {
