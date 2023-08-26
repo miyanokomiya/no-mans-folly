@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
-import { IRectangle, IVec2, add, sub } from "okageo";
+import { IRectangle, IVec2, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, newShapeSnapping } from "../../shapeSnapping";
 import { getSnappingLines, getWrapperRect } from "../../../shapes";
@@ -37,21 +37,8 @@ export function newMovingShapeState(): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
-          const movedRect = {
-            x: movingRect.x + d.x,
-            y: movingRect.y + d.y,
-            width: movingRect.width,
-            height: movingRect.height,
-          };
-
-          const snappingResult = shapeSnapping.test(movedRect);
-          const adjustedD = snappingResult
-            ? add(d, {
-                x: snappingResult.dx ?? 0,
-                y: snappingResult.dy ?? 0,
-              })
-            : d;
-
+          const snappingResult = shapeSnapping.test(moveRect(movingRect, d));
+          const adjustedD = snappingResult ? add(d, snappingResult.diff) : d;
           snappingLines = snappingResult?.targets.map((t) => t.line) ?? [];
 
           const shapeMap = ctx.getShapeMap();

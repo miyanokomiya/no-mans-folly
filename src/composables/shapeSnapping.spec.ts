@@ -30,33 +30,33 @@ describe("newShapeSnapping", () => {
 
   test("x snapping: should return expanded rectangle", () => {
     expect(target.test({ x: -15, y: 40, width: 10, height: 10 })).toEqual({
-      dx: 5,
+      diff: { x: 5, y: 0 },
       targets: [
         {
           id: "a",
           line: [
-            { x: 0, y: 100 },
             { x: 0, y: 0 },
+            { x: 0, y: 100 },
           ],
         },
       ],
     });
 
     expect(target.test({ x: 5, y: 40, width: 10, height: 10 })).toEqual({
-      dx: -5,
+      diff: { x: -5, y: 0 },
       targets: [
         {
           id: "a",
           line: [
-            { x: 0, y: 100 },
             { x: 0, y: 0 },
+            { x: 0, y: 100 },
           ],
         },
       ],
     });
 
     expect(target.test({ x: 95, y: 40, width: 10, height: 10 })).toEqual({
-      dx: 5,
+      diff: { x: 5, y: 0 },
       targets: [
         {
           id: "a",
@@ -69,7 +69,7 @@ describe("newShapeSnapping", () => {
     });
 
     expect(target.test({ x: 105, y: 40, width: 10, height: 10 })).toEqual({
-      dx: -5,
+      diff: { x: -5, y: 0 },
       targets: [
         {
           id: "a",
@@ -84,7 +84,7 @@ describe("newShapeSnapping", () => {
 
   test("y snapping: should return expanded rectangle", () => {
     expect(target.test({ x: 40, y: -15, width: 10, height: 10 })).toEqual({
-      dy: 5,
+      diff: { x: 0, y: 5 },
       targets: [
         {
           id: "a",
@@ -97,7 +97,7 @@ describe("newShapeSnapping", () => {
     });
 
     expect(target.test({ x: 40, y: 5, width: 10, height: 10 })).toEqual({
-      dy: -5,
+      diff: { x: 0, y: -5 },
       targets: [
         {
           id: "a",
@@ -110,26 +110,26 @@ describe("newShapeSnapping", () => {
     });
 
     expect(target.test({ x: 40, y: 95, width: 10, height: 10 })).toEqual({
-      dy: 5,
+      diff: { x: 0, y: 5 },
       targets: [
         {
           id: "a",
           line: [
-            { x: 100, y: 100 },
             { x: 0, y: 100 },
+            { x: 100, y: 100 },
           ],
         },
       ],
     });
 
     expect(target.test({ x: 40, y: 105, width: 10, height: 10 })).toEqual({
-      dy: -5,
+      diff: { x: 0, y: -5 },
       targets: [
         {
           id: "a",
           line: [
-            { x: 100, y: 100 },
             { x: 0, y: 100 },
+            { x: 100, y: 100 },
           ],
         },
       ],
@@ -138,14 +138,33 @@ describe("newShapeSnapping", () => {
 
   test("x y snapping: should return expanded rectangle", () => {
     expect(target.test({ x: -15, y: -15, width: 10, height: 10 })).toEqual({
-      dx: 5,
-      dy: 5,
+      diff: { x: 5, y: 5 },
       targets: [
         {
           id: "a",
           line: [
+            { x: 0, y: -10 },
             { x: 0, y: 100 },
+          ],
+        },
+        {
+          id: "a",
+          line: [
+            { x: -10, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        },
+      ],
+    });
+
+    expect(target.test({ x: -5, y: -5, width: 10, height: 10 })).toEqual({
+      diff: { x: 5, y: 5 },
+      targets: [
+        {
+          id: "a",
+          line: [
             { x: 0, y: 0 },
+            { x: 0, y: 100 },
           ],
         },
         {

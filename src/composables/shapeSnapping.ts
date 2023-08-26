@@ -1,15 +1,16 @@
-import { IRectangle, IVec2 } from "okageo";
+import { IRectangle, IVec2, moveRect } from "okageo";
 import { getRectLines } from "../utils/geometry";
 
 const SNAP_THRESHOLD = 20;
 
 interface SnappingResult {
-  dx?: number;
-  dy?: number;
-  targets: {
-    id: string;
-    line: [IVec2, IVec2];
-  }[];
+  diff: IVec2;
+  targets: SnappingResultTarget[];
+}
+
+interface SnappingResultTarget {
+  id: string;
+  line: [IVec2, IVec2];
 }
 
 interface SnappingTmpResult {
@@ -47,9 +48,9 @@ export function newShapeSnapping(option: Option) {
         if (closest === adll) {
           result = { d: dll, lineIndex: 3, line: left };
         } else if (closest === adlr) {
-          result = { d: dlr, lineIndex: 3, line: left };
+          result = { d: dlr, lineIndex: 1, line: left };
         } else if (closest === adrl) {
-          result = { d: drl, lineIndex: 1, line: right };
+          result = { d: drl, lineIndex: 3, line: right };
         } else if (closest === adrr) {
           result = { d: drr, lineIndex: 1, line: right };
         }
@@ -76,9 +77,9 @@ export function newShapeSnapping(option: Option) {
         if (closest === adtt) {
           result = { d: dtt, lineIndex: 0, line: top };
         } else if (closest === adtb) {
-          result = { d: dtb, lineIndex: 0, line: top };
+          result = { d: dtb, lineIndex: 2, line: top };
         } else if (closest === adbt) {
-          result = { d: dbt, lineIndex: 2, line: bottom };
+          result = { d: dbt, lineIndex: 0, line: bottom };
         } else if (closest === adbb) {
           result = { d: dbb, lineIndex: 2, line: bottom };
         }
@@ -106,21 +107,41 @@ export function newShapeSnapping(option: Option) {
 
     if (yList.length === 0 && xList.length === 0) return;
 
-    const ret: SnappingResult = { targets: [] };
+    const targets: SnappingResultTarget[] = [];
+    const xClosest = xList.sort(([, a], [, b]) => a.d - b.d)[0];
+    const yClosest = yList.sort(([, a], [, b]) => a.d - b.d)[0];
+    const diff = { x: xClosest?.[1].d ?? 0, y: yClosest?.[1].d ?? 0 };
+    const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
 
-    if (xList.length > 0) {
-      const closest = xList.sort(([, a], [, b]) => a.d - b.d)[0];
-      ret.dx = closest[1].d;
-      ret.targets.push({ id: closest[0], line: closest[1].line });
+    if (xClosest) {
+      const [id, result] = xClosest;
+      const [y0, , , y1] = [adjustedLeft[0].y, adjustedLeft[1].y, result.line[0].y, result.line[1].y].sort(
+        (a, b) => a - b
+      );
+      targets.push({
+        id,
+        line: [
+          { x: result.line[0].x, y: y0 },
+          { x: result.line[0].x, y: y1 },
+        ],
+      });
     }
 
-    if (yList.length > 0) {
-      const closest = yList.sort(([, a], [, b]) => a.d - b.d)[0];
-      ret.dy = closest[1].d;
-      ret.targets.push({ id: closest[0], line: closest[1].line });
+    if (yClosest) {
+      const [id, result] = yClosest;
+      const [x0, , , x1] = [adjustedTop[0].x, adjustedTop[1].x, result.line[0].x, result.line[1].x].sort(
+        (a, b) => a - b
+      );
+      targets.push({
+        id,
+        line: [
+          { x: x0, y: result.line[0].y },
+          { x: x1, y: result.line[0].y },
+        ],
+      });
     }
 
-    return ret;
+    return { targets, diff };
   }
 
   return { test };
