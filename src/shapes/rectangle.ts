@@ -1,7 +1,7 @@
 import { IVec2, applyAffine, getCenter, getDistance, getRadian, getRectCenter, isSame, rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { getRectPoints, getRotatedWrapperRect, isPointOnRectangle } from "../utils/geometry";
+import { getRectPoints, getRotatedWrapperRect, isPointOnRectangleRotated } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -45,7 +45,11 @@ export const struct: ShapeStruct<RectangleShape> = {
   },
   getLocalRectPolygon,
   isPointOn(shape, p) {
-    return isPointOnRectangle({ x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, p);
+    return isPointOnRectangleRotated(
+      { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
+      shape.rotation,
+      p
+    );
   },
   resize(shape, resizingAffine) {
     const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));

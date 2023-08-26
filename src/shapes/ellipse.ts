@@ -1,7 +1,7 @@
 import { IVec2, applyAffine, getCenter, getDistance, getRadian, isSame, rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { getRectPoints, getRotatedWrapperRect, isPointOnEllipse } from "../utils/geometry";
+import { getRectPoints, getRotatedWrapperRect, isPointOnEllipseRotated } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -49,7 +49,7 @@ export const struct: ShapeStruct<EllipseShape> = {
   },
   getLocalRectPolygon,
   isPointOn(shape, p) {
-    return isPointOnEllipse(shape.p, shape.rx, shape.ry, p);
+    return isPointOnEllipseRotated(shape.p, shape.rx, shape.ry, shape.rotation, p);
   },
   resize(shape, resizingAffine) {
     const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
