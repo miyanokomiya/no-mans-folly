@@ -2,7 +2,7 @@ import { expect, test, describe, vi } from "vitest";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
-import { newMultipleResizingState } from "./multipleResizingState";
+import { newResizingState } from "./resizingState";
 import { newBoundingBox } from "../../boundingBox";
 import { getRectPoints } from "../../../utils/geometry";
 
@@ -21,7 +21,7 @@ function getMockCtx() {
   };
 }
 
-describe("newMultipleResizingState", () => {
+describe("newResizingState", () => {
   describe("handle pointermove", () => {
     test("should call setTmpShapeMap with resizing affine matrix", async () => {
       const ctx = getMockCtx();
@@ -30,7 +30,7 @@ describe("newMultipleResizingState", () => {
         styleScheme: ctx.getStyleScheme(),
       });
       const hitResult = boundingBox.hitTest({ x: 0, y: 0 })!;
-      const target = newMultipleResizingState({
+      const target = newResizingState({
         boundingBox,
         hitResult,
       });

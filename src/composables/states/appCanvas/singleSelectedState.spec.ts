@@ -25,7 +25,7 @@ function getMockCtx() {
 
 describe("newSingleSelectedState", () => {
   describe("handle pointerdown: left", () => {
-    test("should move to SingleResizing if the point is at the resizing control", async () => {
+    test("should move to Resizing if the point is at the resizing control", async () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedState();
       await target.onStart?.(ctx as any);
@@ -34,13 +34,13 @@ describe("newSingleSelectedState", () => {
         type: "pointerdown",
         data: { point: { x: 0, y: 0 }, options: { button: 0, ctrl: false } },
       })) as any;
-      expect(result1().getLabel()).toBe("SingleResizing");
+      expect(result1().getLabel()).toBe("Resizing");
 
       const result2 = (await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 25, y: 0 }, options: { button: 0, ctrl: false } },
       })) as any;
-      expect(result2().getLabel()).toBe("SingleResizing");
+      expect(result2().getLabel()).toBe("Resizing");
     });
 
     test("should select a shape at the point if it exists", async () => {

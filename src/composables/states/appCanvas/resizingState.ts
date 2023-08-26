@@ -10,7 +10,7 @@ interface Option {
   hitResult: HitResult;
 }
 
-export function newMultipleResizingState(option: Option): AppCanvasState {
+export function newResizingState(option: Option): AppCanvasState {
   let selectedIds: { [id: string]: true };
   let resizingAffine = IDENTITY_AFFINE;
 
@@ -21,7 +21,7 @@ export function newMultipleResizingState(option: Option): AppCanvasState {
   });
 
   return {
-    getLabel: () => "MultipleResizing",
+    getLabel: () => "Resizing",
     onStart: async (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
       ctx.startDragging();

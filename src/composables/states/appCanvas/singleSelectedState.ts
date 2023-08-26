@@ -5,8 +5,8 @@ import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./co
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
-import { newSingleResizingState } from "./singleResizingState";
 import { newRotatingState } from "./rotatingState";
+import { newResizingState } from "./resizingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -42,7 +42,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                 switch (hitResult.type) {
                   case "corner":
                   case "segment":
-                    return () => newSingleResizingState({ boundingBox, hitResult });
+                    return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
                 }

@@ -8,7 +8,7 @@ import { applyPath } from "../../../utils/renderer";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
-import { newMultipleResizingState } from "./multipleResizingState";
+import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 
 interface Option {
@@ -50,7 +50,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
                 switch (hitResult.type) {
                   case "corner":
                   case "segment":
-                    return () => newMultipleResizingState({ boundingBox, hitResult });
+                    return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
                 }
