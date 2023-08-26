@@ -17,6 +17,7 @@ import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { isPointCloseToSegment } from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
+import { getResizingCursorStyle } from "../utils/styleHelper";
 
 const ANCHOR_SIZE = 5;
 
@@ -148,10 +149,14 @@ export function newBoundingBox(option: Option) {
     if (!hitBounding) return;
 
     switch (hitBounding.type) {
-      case "corner":
-        return hitBounding.index % 2 === 0 ? "nwse-resize" : "nesw-resize";
-      case "segment":
-        return hitBounding.index % 2 === 0 ? "ns-resize" : "ew-resize";
+      case "corner": {
+        const r = hitBounding.index % 2 === 0 ? Math.PI / 4 : -Math.PI / 4;
+        return getResizingCursorStyle(r + rotation);
+      }
+      case "segment": {
+        const r = hitBounding.index % 2 === 0 ? Math.PI / 2 : 0;
+        return getResizingCursorStyle(r + rotation);
+      }
       case "rotation":
         return "grab";
       default:

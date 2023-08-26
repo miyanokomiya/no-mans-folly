@@ -1,10 +1,5 @@
 import { IRectangle, IVec2, getDistance, getOuterRectangle, getPedal, getRectCenter, isOnSeg, rotate } from "okageo";
 
-export interface esizingData {
-  scale: IVec2;
-  origin: IVec2;
-}
-
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
     x: rect.x - padding,
@@ -61,4 +56,19 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
   if (d > threshold) return false;
 
   return isOnSeg(pedal, seg);
+}
+
+export function snapAngle(rotate: number, angle = 15): number {
+  return snapNumber(rotate, angle);
+}
+
+export function snapScale(scale: IVec2, step = 0.1): IVec2 {
+  return {
+    x: snapNumber(scale.x, step),
+    y: snapNumber(scale.y, step),
+  };
+}
+
+export function snapNumber(value: number, step = 1): number {
+  return Math.round(value / step) * step;
 }
