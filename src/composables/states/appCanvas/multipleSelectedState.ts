@@ -11,7 +11,11 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newMultipleResizingState } from "./multipleResizingState";
 import { newRotatingState } from "./rotatingState";
 
-export function newMultipleSelectedState(): AppCanvasState {
+interface Option {
+  boundingBox?: BoundingBox;
+}
+
+export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIds: { [id: string]: true };
   let boundingBox: BoundingBox;
 
@@ -20,14 +24,19 @@ export function newMultipleSelectedState(): AppCanvasState {
     onStart: async (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
-      const shapeRects = Object.keys(selectedIds)
-        .map((id) => shapeMap[id])
-        .map((s) => getWrapperRect(ctx.getShapeStruct, s));
 
-      boundingBox = newBoundingBox({
-        path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
-        styleScheme: ctx.getStyleScheme(),
-      });
+      if (option?.boundingBox) {
+        boundingBox = option.boundingBox;
+      } else {
+        const shapeRects = Object.keys(selectedIds)
+          .map((id) => shapeMap[id])
+          .map((s) => getWrapperRect(ctx.getShapeStruct, s));
+
+        boundingBox = newBoundingBox({
+          path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
+          styleScheme: ctx.getStyleScheme(),
+        });
+      }
     },
     handleEvent: async (ctx, event) => {
       if (!selectedIds) return;

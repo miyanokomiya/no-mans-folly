@@ -162,6 +162,14 @@ export function newBoundingBox(option: Option) {
     return _getResizingBase(option.path, hitResult);
   }
 
+  function getTransformedBoundingBox(affine: AffineMatrix): BoundingBox {
+    return newBoundingBox({
+      path: option.path.map((p) => applyAffine(affine, p)),
+      styleScheme: option.styleScheme,
+      scale,
+    });
+  }
+
   return {
     updateScale,
     path: option.path,
@@ -171,6 +179,7 @@ export function newBoundingBox(option: Option) {
     render,
     getCursorStyle,
     getResizingBase,
+    getTransformedBoundingBox,
   };
 }
 export type BoundingBox = ReturnType<typeof newBoundingBox>;

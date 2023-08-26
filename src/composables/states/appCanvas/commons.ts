@@ -5,17 +5,19 @@ import { AppCanvasStateContext } from "./core";
 import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
 import { newSingleSelectedState } from "./singleSelectedState";
+import { BoundingBox } from "../../boundingBox";
 
 export function translateOnSelection(
-  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap">
+  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap">,
+  boundingBox?: BoundingBox
 ): TransitionValue<AppCanvasStateContext> {
   const count = Object.keys(ctx.getSelectedShapeIdMap()).length;
   if (count === 0) {
     return newDefaultState;
   } else if (count === 1) {
-    return newSingleSelectedState;
+    return boundingBox ? () => newSingleSelectedState({ boundingBox }) : newSingleSelectedState;
   } else {
-    return newMultipleSelectedState;
+    return boundingBox ? () => newMultipleSelectedState({ boundingBox }) : newMultipleSelectedState;
   }
 }
 

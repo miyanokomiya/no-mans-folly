@@ -8,7 +8,11 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newSingleResizingState } from "./singleResizingState";
 import { newRotatingState } from "./rotatingState";
 
-export function newSingleSelectedState(): AppCanvasState {
+interface Option {
+  boundingBox?: BoundingBox;
+}
+
+export function newSingleSelectedState(option?: Option): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
 
@@ -19,10 +23,12 @@ export function newSingleSelectedState(): AppCanvasState {
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
 
-      boundingBox = newBoundingBox({
-        path: getLocalRectPolygon(ctx.getShapeStruct, shape),
-        styleScheme: ctx.getStyleScheme(),
-      });
+      boundingBox =
+        option?.boundingBox ??
+        newBoundingBox({
+          path: getLocalRectPolygon(ctx.getShapeStruct, shape),
+          styleScheme: ctx.getStyleScheme(),
+        });
     },
     handleEvent: async (ctx, event) => {
       if (!selectedId) return translateOnSelection(ctx);

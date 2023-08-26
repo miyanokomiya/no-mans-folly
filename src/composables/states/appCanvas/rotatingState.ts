@@ -45,7 +45,7 @@ export function newRotatingState(option: Option): AppCanvasState {
         }
         case "pointerup": {
           ctx.patchShapes(ctx.getTmpShapeMap());
-          return translateOnSelection(ctx);
+          return translateOnSelection(ctx, option.boundingBox.getTransformedBoundingBox(resizingAffine));
         }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
