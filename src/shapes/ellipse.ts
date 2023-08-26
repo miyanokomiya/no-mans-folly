@@ -1,4 +1,4 @@
-import { IVec2, applyAffine, getCenter, getDistance, rotate } from "okageo";
+import { IVec2, applyAffine, getCenter, getDistance, getRadian, isSame, rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { getRectPoints, getRotatedWrapperRect, isPointOnEllipse } from "../utils/geometry";
@@ -53,10 +53,18 @@ export const struct: ShapeStruct<EllipseShape> = {
   },
   resize(shape, resizingAffine) {
     const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
-    const center = getCenter(rectPolygon[0], rectPolygon[2]);
-    const width = getDistance(rectPolygon[0], rectPolygon[1]);
-    const height = getDistance(rectPolygon[0], rectPolygon[3]);
-    return { p: center, rx: width / 2, ry: height / 2 };
+    const p = getCenter(rectPolygon[0], rectPolygon[2]);
+    const rx = getDistance(rectPolygon[0], rectPolygon[1]) / 2;
+    const ry = getDistance(rectPolygon[0], rectPolygon[3]) / 2;
+    const rotation = getRadian(rectPolygon[1], rectPolygon[0]);
+
+    const ret: Partial<EllipseShape> = {};
+    if (!isSame(p, shape.p)) ret.p = p;
+    if (rx !== shape.rx) ret.rx = rx;
+    if (ry !== shape.ry) ret.ry = ry;
+    if (rotation !== shape.rotation) ret.rotation = rotation;
+
+    return ret;
   },
 };
 

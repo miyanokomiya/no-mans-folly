@@ -9,6 +9,7 @@ import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newMultipleResizingState } from "./multipleResizingState";
+import { newRotatingState } from "./rotatingState";
 
 export function newMultipleSelectedState(): AppCanvasState {
   let selectedIds: { [id: string]: true };
@@ -36,8 +37,14 @@ export function newMultipleSelectedState(): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const hitResult = boundingBox.hitTest(event.data.point);
-              if (hitResult && hitResult.type !== "area") {
-                return () => newMultipleResizingState({ boundingBox, hitResult });
+              if (hitResult) {
+                switch (hitResult.type) {
+                  case "corner":
+                  case "segment":
+                    return () => newMultipleResizingState({ boundingBox, hitResult });
+                  case "rotation":
+                    return () => newRotatingState({ boundingBox });
+                }
               }
 
               const shape = ctx.getShapeAt(event.data.point);
@@ -65,16 +72,16 @@ export function newMultipleSelectedState(): AppCanvasState {
           }
         case "pointerhover": {
           const hitBounding = boundingBox.hitTest(event.data.current);
-          if (hitBounding && hitBounding.type !== "area") {
-            if (hitBounding.type === "corner") {
-              ctx.setCursor(hitBounding.index % 2 === 0 ? "nwse-resize" : "nesw-resize");
-            } else if (hitBounding.type === "segment") {
-              ctx.setCursor(hitBounding.index % 2 === 0 ? "ns-resize" : "ew-resize");
+          if (hitBounding) {
+            const style = boundingBox.getCursorStyle(hitBounding);
+            if (style) {
+              ctx.setCursor(style);
+              return;
             }
-          } else {
-            const shape = ctx.getShapeAt(event.data.current);
-            ctx.setCursor(shape ? "pointer" : undefined);
           }
+
+          const shape = ctx.getShapeAt(event.data.current);
+          ctx.setCursor(shape ? "pointer" : undefined);
           return;
         }
         case "keydown":
@@ -87,6 +94,7 @@ export function newMultipleSelectedState(): AppCanvasState {
           }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
+          boundingBox.updateScale(ctx.getScale());
           return;
         case "selection": {
           return translateOnSelection(ctx);

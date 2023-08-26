@@ -53,6 +53,7 @@ export function createStateMachineContext(arg: {
 
     setViewport() {},
     zoomView() {},
+    getScale: () => 1,
     panView() {},
     startDragging() {},
     stopDragging() {},

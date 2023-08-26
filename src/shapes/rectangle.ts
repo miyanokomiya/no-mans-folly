@@ -1,4 +1,4 @@
-import { IVec2, applyAffine, getCenter, getDistance, getRectCenter, rotate } from "okageo";
+import { IVec2, applyAffine, getCenter, getDistance, getRadian, getRectCenter, isSame, rotate } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { getRectPoints, getRotatedWrapperRect, isPointOnRectangle } from "../utils/geometry";
@@ -53,7 +53,15 @@ export const struct: ShapeStruct<RectangleShape> = {
     const width = getDistance(rectPolygon[0], rectPolygon[1]);
     const height = getDistance(rectPolygon[0], rectPolygon[3]);
     const p = { x: center.x - width / 2, y: center.y - height / 2 };
-    return { p, width, height };
+    const rotation = getRadian(rectPolygon[1], rectPolygon[0]);
+
+    const ret: Partial<RectangleShape> = {};
+    if (!isSame(p, shape.p)) ret.p = p;
+    if (width !== shape.width) ret.width = width;
+    if (height !== shape.height) ret.height = height;
+    if (rotation !== shape.rotation) ret.rotation = rotation;
+
+    return ret;
   },
 };
 

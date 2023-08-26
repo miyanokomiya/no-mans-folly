@@ -90,6 +90,7 @@ export function AppCanvas() {
     smctx.setCtx({
       setViewport: canvas.setViewport,
       zoomView: canvas.zoomView,
+      getScale: () => canvas.scale,
       panView: canvas.panView,
       startDragging: canvas.startDragging,
       stopDragging: canvas.endMoving,
