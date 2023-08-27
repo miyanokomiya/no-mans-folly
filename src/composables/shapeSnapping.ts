@@ -175,33 +175,17 @@ export function newShapeSnapping(option: Option) {
       }
     });
 
-    // const intervalResult = shapeIntervalSnapping.test(rect);
-    const intervalResult: any = undefined;
+    if (!xClosest && !yClosest) return;
 
-    if (!xClosest && !yClosest && !intervalResult) return;
-
-    const isVInterval =
-      (xClosest && intervalResult?.v && intervalResult.v.ad < xClosest[1].ad) || (!xClosest && intervalResult?.v);
-    const isHInterval =
-      (yClosest && intervalResult?.h && intervalResult.h.ad < yClosest[1].ad) || (!yClosest && intervalResult?.h);
-    const dx = isVInterval ? intervalResult.v!.d : xClosest?.[1].d ?? 0;
-    const dy = isHInterval ? intervalResult.h!.d : yClosest?.[1].d ?? 0;
+    const dx = xClosest?.[1].d ?? 0;
+    const dy = yClosest?.[1].d ?? 0;
 
     const targets: SnappingResultTarget[] = [];
     const diff = { x: dx, y: dy };
     const adjustedP = add(p, diff);
     const intervalTargets: IntervalSnappingResultTarget[] = [];
 
-    if (isVInterval) {
-      const y = adjustedP.y;
-      intervalTargets.push({
-        ...intervalResult.v!.target,
-        lines: intervalResult.v!.target.lines.map<[IVec2, IVec2]>((l) => [
-          { x: l[0].x, y },
-          { x: l[1].x, y },
-        ]),
-      });
-    } else if (xClosest) {
+    if (xClosest) {
       const [id, result] = xClosest;
       const [y0, , y1] = [adjustedP.y, result.line[0].y, result.line[1].y].sort((a, b) => a - b);
       targets.push({
@@ -213,16 +197,7 @@ export function newShapeSnapping(option: Option) {
       });
     }
 
-    if (isHInterval) {
-      const x = adjustedP.x;
-      intervalTargets.push({
-        ...intervalResult.h!.target,
-        lines: intervalResult.h!.target.lines.map<[IVec2, IVec2]>((l) => [
-          { x, y: l[0].y },
-          { x, y: l[1].y },
-        ]),
-      });
-    } else if (yClosest) {
+    if (yClosest) {
       const [id, result] = yClosest;
       const [x0, , x1] = [adjustedP.x, result.line[0].x, result.line[1].x].sort((a, b) => a - b);
       targets.push({

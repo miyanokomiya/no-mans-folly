@@ -50,7 +50,8 @@ export function newResizingState(option: Option): AppCanvasState {
             centralize: event.data.alt,
           });
 
-          const results = getMovingBoundingBoxPoints(option.boundingBox.path, option.hitResult)
+          const boundingBoxPath = getMovingBoundingBoxPoints(option.boundingBox.path, option.hitResult);
+          const results = boundingBoxPath
             .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
             .filter((r): r is SnappingResult => !!r);
           if (results.length > 0) {
@@ -66,6 +67,17 @@ export function newResizingState(option: Option): AppCanvasState {
               keepAspect: event.data.shift,
               centralize: event.data.alt,
             });
+
+            // "keepAspect" mode needs recalculation to render control lines properly.
+            // FIXME: It's not the optimal way.
+            if (event.data.shift) {
+              const results = boundingBoxPath
+                .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+                .filter((r): r is SnappingResult => !!r);
+              if (results.length > 0) {
+                snappingResult = results[0];
+              }
+            }
           }
 
           const shapeMap = ctx.getShapeMap();
