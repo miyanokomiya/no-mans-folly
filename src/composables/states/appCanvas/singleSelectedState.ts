@@ -57,7 +57,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
 
               if (!event.data.options.ctrl) {
                 if (shape.id === selectedId) {
-                  return newMovingShapeState;
+                  return () => newMovingShapeState({ boundingBox });
                 } else {
                   ctx.selectShape(shape.id, false);
                   return newSingleSelectedByPointerOnState;
@@ -72,8 +72,6 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             default:
               return;
           }
-        case "pointermove":
-          return { type: "stack-restart", getState: newMovingShapeState };
         case "pointerhover": {
           const hitBounding = boundingBox.hitTest(event.data.current);
           if (hitBounding) {

@@ -3,6 +3,7 @@ import { translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
@@ -18,6 +19,7 @@ function getMockCtx() {
     patchShapes: vi.fn(),
     setCursor: vi.fn(),
     getScale: () => 1,
+    getStyleScheme: createStyleScheme,
   };
 }
 

@@ -65,7 +65,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
               if (!event.data.options.ctrl) {
                 if (selectedIds[shape.id]) {
-                  return newMovingShapeState;
+                  return () => newMovingShapeState({ boundingBox });
                 } else {
                   ctx.selectShape(shape.id, false);
                   return newSingleSelectedByPointerOnState;

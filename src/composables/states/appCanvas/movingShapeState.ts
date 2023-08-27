@@ -5,11 +5,18 @@ import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { getSnappingLines, getWrapperRect } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
+import { BoundingBox, newBoundingBox } from "../../boundingBox";
 
-export function newMovingShapeState(): AppCanvasState {
+interface Option {
+  boundingBox?: BoundingBox;
+}
+
+export function newMovingShapeState(option?: Option): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
+  let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
+  let translate = { x: 0, y: 0 };
 
   return {
     getLabel: () => "MovingShape",
@@ -18,15 +25,29 @@ export function newMovingShapeState(): AppCanvasState {
       ctx.setCursor("move");
 
       const shapeMap = ctx.getShapeMap();
-      const selectedIdMap = ctx.getSelectedShapeIdMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIdMap[s.id]);
+      const selectedIds = ctx.getSelectedShapeIdMap();
+      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id]);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
       });
       movingRect = geometry.getWrapperRect(
-        Object.keys(selectedIdMap).map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]))
+        Object.keys(selectedIds).map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]))
       );
+
+      if (option?.boundingBox) {
+        boundingBox = option.boundingBox;
+      } else {
+        const shapeRects = Object.keys(selectedIds)
+          .map((id) => shapeMap[id])
+          .map((s) => getWrapperRect(ctx.getShapeStruct, s));
+
+        boundingBox = newBoundingBox({
+          path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
+          styleScheme: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
+        });
+      }
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
@@ -38,14 +59,14 @@ export function newMovingShapeState(): AppCanvasState {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
           snappingResult = shapeSnapping.test(moveRect(movingRect, d));
-          const adjustedD = snappingResult ? add(d, snappingResult.diff) : d;
+          translate = snappingResult ? add(d, snappingResult.diff) : d;
 
           const shapeMap = ctx.getShapeMap();
           ctx.setTmpShapeMap(
             Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
               const s = shapeMap[id];
               if (s) {
-                m[id] = { p: add(s.p, adjustedD) };
+                m[id] = { p: add(s.p, translate) };
               }
               return m;
             }, {})
@@ -67,6 +88,7 @@ export function newMovingShapeState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      boundingBox.render(renderCtx, [1, 0, 0, 1, translate.x, translate.y]);
       if (snappingResult) {
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),

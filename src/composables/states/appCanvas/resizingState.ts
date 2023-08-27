@@ -95,9 +95,6 @@ export function newResizingState(option: Option): AppCanvasState {
           ctx.patchShapes(ctx.getTmpShapeMap());
           return translateOnSelection(ctx, option.boundingBox.getTransformedBoundingBox(resizingAffine));
         }
-        case "wheel":
-          ctx.zoomView(event.data.delta.y);
-          return;
         case "selection": {
           return translateOnSelection(ctx);
         }
