@@ -17,6 +17,7 @@ function getMockCtx() {
     getTmpShapeMap: vi.fn(),
     patchShapes: vi.fn(),
     setCursor: vi.fn(),
+    getScale: () => 1,
   };
 }
 
