@@ -6,6 +6,7 @@ import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { BoundingBox } from "../../boundingBox";
+import { newLineReadyState } from "./lines/lineReadyState";
 
 export function translateOnSelection(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap">,
@@ -21,7 +22,7 @@ export function translateOnSelection(
   }
 }
 
-type AcceptableEvent = "DroppingNewShape";
+type AcceptableEvent = "DroppingNewShape" | "LineReady";
 
 export function handleStateEvent(event: ChangeStateEvent, acceptable: AcceptableEvent[]) {
   const name = event.data.name;
@@ -29,6 +30,10 @@ export function handleStateEvent(event: ChangeStateEvent, acceptable: Acceptable
 
   if (event.data.name === "DroppingNewShape") {
     return () => newDroppingNewShapeState(event.data.options);
+  }
+
+  if (event.data.name === "LineReady") {
+    return () => newLineReadyState(event.data.options);
   }
 }
 

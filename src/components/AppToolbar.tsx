@@ -3,11 +3,14 @@ import { AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { createShape } from "../shapes";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
+import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
   { type: "ellipse", icon: iconEllipse },
 ];
+
+const lineList = [{ type: "straight", icon: iconLineStraight }];
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
@@ -33,11 +36,39 @@ export const AppToolbar: React.FC = () => {
     [smctx]
   );
 
-  const [popup, setPopup] = useState<"" | "shapes">("");
+  const onDownLineElm = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const type = e.currentTarget.getAttribute("data-type")!;
+      smctx.stateMachine.handleEvent({
+        type: "state",
+        data: {
+          name: "LineReady",
+          options: { type },
+        },
+      });
+      setLineType(type);
+    },
+    [smctx]
+  );
+
+  const [popup, setPopup] = useState<"" | "shapes" | "lines">("");
+  const [lineType, setLineType] = useState<string>("straight");
 
   const onClickShapeButton = useCallback(() => {
     setPopup(popup === "shapes" ? "" : "shapes");
   }, [popup]);
+
+  const onClickLineButton = useCallback(() => {
+    setPopup(popup === "lines" ? "" : "lines");
+    smctx.stateMachine.handleEvent({
+      type: "state",
+      data: {
+        name: "LineReady",
+        options: { type: lineType },
+      },
+    });
+  }, [popup, lineType, smctx.stateMachine]);
 
   function renderPopup() {
     switch (popup) {
@@ -50,9 +81,27 @@ export const AppToolbar: React.FC = () => {
             {shapeList.map((shape) => (
               <div
                 key={shape.type}
-                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0"
+                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-grab"
                 data-type={shape.type}
                 onMouseDown={onDownShapeElm}
+              >
+                <img src={shape.icon} alt={shape.type} />
+              </div>
+            ))}
+          </div>
+        );
+      case "lines":
+        return (
+          <div
+            className="absolute left-0 border p-1 rounded"
+            style={{ top: "50%", transform: "translate(-100%, -50%)" }}
+          >
+            {lineList.map((shape) => (
+              <div
+                key={shape.type}
+                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-pointer"
+                data-type={shape.type}
+                onMouseDown={onDownLineElm}
               >
                 <img src={shape.icon} alt={shape.type} />
               </div>
@@ -65,9 +114,12 @@ export const AppToolbar: React.FC = () => {
   }
 
   return (
-    <div className="relative border border-1 p-1 rounded">
+    <div className="relative border border-1 p-1 rounded flex flex-col">
       <button type="button" className={getButtonClass(popup === "shapes")} onClick={onClickShapeButton}>
         <img src={iconRectangle} alt="shapes" />
+      </button>
+      <button type="button" className={getButtonClass(popup === "lines")} onClick={onClickLineButton}>
+        <img src={iconLineStraight} alt="lines" />
       </button>
       {renderPopup()}
     </div>

@@ -3,6 +3,7 @@ import { Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
+import { struct as lineStruct } from "./line";
 import { getRectCenterLines, getRectLines } from "../utils/geometry";
 
 const SHAPE_STRUCTS: {
@@ -10,6 +11,7 @@ const SHAPE_STRUCTS: {
 } = {
   rectangle: rectangleStruct,
   ellipse: ellipseStruct,
+  line: lineStruct,
 };
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
@@ -23,7 +25,7 @@ export function createShape<T extends Shape>(getStruct: GetShapeStruct, type: st
   return struct.create(arg);
 }
 
-export function renderShape(getStruct: GetShapeStruct, ctx: CanvasRenderingContext2D, shape: Shape) {
+export function renderShape<T extends Shape>(getStruct: GetShapeStruct, ctx: CanvasRenderingContext2D, shape: T) {
   const struct = getStruct(shape.type);
   struct.render(ctx, shape);
 }

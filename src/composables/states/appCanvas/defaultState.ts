@@ -45,7 +45,7 @@ const state: AppCanvasState = {
       case "history":
         return handleHistoryEvent(ctx, event);
       case "state":
-        return handleStateEvent(event, ["DroppingNewShape"]);
+        return handleStateEvent(event, ["DroppingNewShape", "LineReady"]);
       default:
         return;
     }

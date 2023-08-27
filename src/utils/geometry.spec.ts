@@ -12,6 +12,7 @@ import {
   isPointOnEllipseRotated,
   isPointOnRectangle,
   isPointOnRectangleRotated,
+  isPointOnSegment,
   isSegmentOverlappedH,
   isSegmentOverlappedV,
 } from "./geometry";
@@ -167,7 +168,7 @@ describe("isPointCloseToSegment", () => {
 });
 
 describe("isSegmentOverlappedV", () => {
-  test("should return true if the point is close to the segment", () => {
+  test("should return true if segments overlap vertically", () => {
     const seg: ISegment = [
       { x: 0, y: 0 },
       { x: 10, y: 0 },
@@ -213,7 +214,7 @@ describe("isSegmentOverlappedV", () => {
 });
 
 describe("isSegmentOverlappedH", () => {
-  test("should return true if the point is close to the segment", () => {
+  test("should return true if segments overlap horizontally", () => {
     const seg: ISegment = [
       { y: 0, x: 0 },
       { y: 10, x: 0 },

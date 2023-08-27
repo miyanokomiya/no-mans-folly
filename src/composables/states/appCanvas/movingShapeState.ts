@@ -1,9 +1,9 @@
 import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
-import { IRectangle, add, moveRect, sub } from "okageo";
+import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { getSnappingLines, getWrapperRect } from "../../../shapes";
+import { getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 
@@ -16,7 +16,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let movingRect: IRectangle;
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
-  let translate = { x: 0, y: 0 };
+  let affine = IDENTITY_AFFINE;
 
   return {
     getLabel: () => "MovingShape",
@@ -59,14 +59,15 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
           snappingResult = shapeSnapping.test(moveRect(movingRect, d));
-          translate = snappingResult ? add(d, snappingResult.diff) : d;
+          const translate = snappingResult ? add(d, snappingResult.diff) : d;
+          affine = [1, 0, 0, 1, translate.x, translate.y];
 
           const shapeMap = ctx.getShapeMap();
           ctx.setTmpShapeMap(
             Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
               const s = shapeMap[id];
               if (s) {
-                m[id] = { p: add(s.p, translate) };
+                m[id] = resizeShape(ctx.getShapeStruct, s, affine);
               }
               return m;
             }, {})
@@ -88,7 +89,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, [1, 0, 0, 1, translate.x, translate.y]);
+      boundingBox.render(renderCtx, affine);
       if (snappingResult) {
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
