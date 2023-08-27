@@ -38,17 +38,11 @@ export function newShapeSnapping(option: Option) {
       // x snapping
       {
         const vList = lines.v.map<SnappingTmpResult>((line) => {
-          const dl = line[0].x - rectLeft[0].x;
-          const dr = line[0].x - rectRight[0].x;
-          const dc = line[0].x - (rectLeft[0].x + rectRight[0].x) / 2;
-          const adl = Math.abs(dl);
-          const adr = Math.abs(dr);
-          const adc = Math.abs(dc);
-          return [
-            { d: dl, ad: adl, line },
-            { d: dr, ad: adr, line },
-            { d: dc, ad: adc, line },
-          ].sort((a, b) => a.ad - b.ad)[0];
+          return getSnappingTmpResult(line, line[0].x, [
+            (rectLeft[0].x + rectRight[0].x) / 2,
+            rectLeft[0].x,
+            rectRight[0].x,
+          ]);
         });
         const closest = vList.filter((v) => v.ad < SNAP_THRESHOLD).sort((a, b) => a.ad - b.ad)[0];
         if (closest) {
@@ -59,17 +53,11 @@ export function newShapeSnapping(option: Option) {
       // y snapping
       {
         const hList = lines.h.map<SnappingTmpResult>((line) => {
-          const dt = line[0].y - rectTop[0].y;
-          const db = line[0].y - rectBottom[0].y;
-          const dc = line[0].y - (rectTop[0].y + rectBottom[0].y) / 2;
-          const adt = Math.abs(dt);
-          const adb = Math.abs(db);
-          const adc = Math.abs(dc);
-          return [
-            { d: dt, ad: adt, line },
-            { d: db, ad: adb, line },
-            { d: dc, ad: adc, line },
-          ].sort((a, b) => a.ad - b.ad)[0];
+          return getSnappingTmpResult(line, line[0].y, [
+            (rectTop[0].y + rectBottom[0].y) / 2,
+            rectTop[0].y,
+            rectBottom[0].y,
+          ]);
         });
         const closest = hList.filter((v) => v.ad < SNAP_THRESHOLD).sort((a, b) => a.ad - b.ad)[0];
         if (closest) {
@@ -133,4 +121,14 @@ export function renderSnappingResult(
     ctx.lineTo(b.x, b.y);
   });
   ctx.stroke();
+}
+
+function getSnappingTmpResult(line: [IVec2, IVec2], target: number, clients: number[]): SnappingTmpResult {
+  return clients
+    .map((v) => {
+      const d = target - v;
+      const ad = Math.abs(d);
+      return { d, ad, line };
+    })
+    .sort((a, b) => a.ad - b.ad)[0];
 }

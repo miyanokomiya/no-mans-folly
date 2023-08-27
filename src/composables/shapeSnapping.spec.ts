@@ -59,7 +59,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 95, y: 40, width: 20, height: 20 })).toEqual({
+    expect(target.test({ x: 95, y: 40, width: 30, height: 30 })).toEqual({
       diff: { x: 5, y: 0 },
       targets: [
         {
@@ -126,7 +126,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 40, y: 95, width: 20, height: 20 })).toEqual({
+    expect(target.test({ x: 40, y: 95, width: 30, height: 30 })).toEqual({
       diff: { x: 0, y: 5 },
       targets: [
         {
@@ -187,7 +187,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: -5, y: -5, width: 20, height: 20 })).toEqual({
+    expect(target.test({ x: -5, y: -5, width: 30, height: 30 })).toEqual({
       diff: { x: 5, y: 5 },
       targets: [
         {
