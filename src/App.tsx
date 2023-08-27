@@ -1,4 +1,5 @@
 import * as Y from "yjs";
+import { IndexeddbPersistence } from "y-indexeddb";
 import { generateUuid } from "./utils/random";
 import { AppCanvas } from "./components/AppCanvas";
 import { AppToolbar } from "./components/AppToolbar";
@@ -16,9 +17,18 @@ import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 
 const yDiagramDoc = new Y.Doc();
+const dbProviderDiagram = new IndexeddbPersistence("test-project-diagram", yDiagramDoc);
+dbProviderDiagram.on("synced", () => {
+  console.log("content from the database is loaded: diagram");
+});
 const diagramStore = newDiagramStore({ ydoc: yDiagramDoc });
 const sheetStore = newSheetStore({ ydoc: yDiagramDoc });
+
 const ySheetDoc = new Y.Doc();
+const dbProviderSheet = new IndexeddbPersistence("test-project-sheet", ySheetDoc);
+dbProviderSheet.on("synced", () => {
+  console.log("content from the database is loaded: sheet");
+});
 const layerStore = newLayerStore({ ydoc: ySheetDoc });
 const shapeStore = newShapeStore({ ydoc: ySheetDoc });
 const undoManager = new Y.UndoManager(
