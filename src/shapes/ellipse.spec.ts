@@ -17,6 +17,7 @@ describe("struct", () => {
         ellipse: vi.fn(),
         fill: vi.fn(),
         stroke: vi.fn(),
+        setLineDash: vi.fn(),
       };
       struct.render(ctx as any, shape);
       expect(ctx.beginPath).toHaveBeenCalled();

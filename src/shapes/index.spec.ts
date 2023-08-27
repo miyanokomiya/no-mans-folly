@@ -19,6 +19,7 @@ describe("renderShape", () => {
       lineTo: vi.fn(),
       fill: vi.fn(),
       stroke: vi.fn(),
+      setLineDash: vi.fn(),
     };
     renderShape(getCommonStruct, ctx as any, shape);
     expect(ctx.fill).toHaveBeenCalled();

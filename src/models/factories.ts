@@ -6,7 +6,7 @@ export function createColor(r: number, g: number, b: number, a = 1): Color {
 
 export function createStyleScheme(): StyleScheme {
   return {
-    selectionPrimary: createColor(200, 0, 0),
-    selectionSecondaly: createColor(0, 0, 200),
+    selectionPrimary: createColor(65, 105, 225),
+    selectionSecondaly: createColor(64, 224, 208),
   };
 }

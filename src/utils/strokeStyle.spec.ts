@@ -1,4 +1,4 @@
-import { expect, describe, test } from "vitest";
+import { expect, describe, test, vi } from "vitest";
 import { applyStrokeStyle, createStrokeStyle } from "./strokeStyle";
 
 describe("createStrokeStyle", () => {
@@ -11,7 +11,7 @@ describe("createStrokeStyle", () => {
 
 describe("applyStrokeStyle", () => {
   test("should apply StrokeStyle", () => {
-    const ctx = { strokeStyle: "", lineWidth: 0 };
+    const ctx = { strokeStyle: "", lineWidth: 0, setLineDash: vi.fn() };
     applyStrokeStyle(
       ctx as any,
       createStrokeStyle({
@@ -20,5 +20,6 @@ describe("applyStrokeStyle", () => {
     );
     expect(ctx.strokeStyle).toBe("rgba(1,2,3,0.5)");
     expect(ctx.lineWidth).toBe(1);
+    expect(ctx.setLineDash).toHaveBeenCalledWith([]);
   });
 });

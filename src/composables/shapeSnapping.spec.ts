@@ -308,6 +308,7 @@ describe("newShapeIntervalSnapping", () => {
         d: 10,
         ad: 10,
         target: {
+          direction: "v",
           beforeId: "a",
           afterId: "b",
           lines: [
@@ -329,6 +330,7 @@ describe("newShapeIntervalSnapping", () => {
         d: -10,
         ad: 10,
         target: {
+          direction: "v",
           beforeId: "a",
           afterId: "b",
           lines: [
@@ -350,6 +352,7 @@ describe("newShapeIntervalSnapping", () => {
         d: 10,
         ad: 10,
         target: {
+          direction: "v",
           beforeId: "a",
           afterId: "b",
           lines: [
@@ -371,6 +374,7 @@ describe("newShapeIntervalSnapping", () => {
         d: -10,
         ad: 10,
         target: {
+          direction: "v",
           beforeId: "a",
           afterId: "b",
           lines: [
@@ -396,6 +400,7 @@ describe("newShapeIntervalSnapping", () => {
         d: 10,
         ad: 10,
         target: {
+          direction: "h",
           beforeId: "a",
           afterId: "c",
           lines: [
@@ -417,6 +422,7 @@ describe("newShapeIntervalSnapping", () => {
         d: -10,
         ad: 10,
         target: {
+          direction: "h",
           beforeId: "a",
           afterId: "c",
           lines: [
@@ -438,6 +444,7 @@ describe("newShapeIntervalSnapping", () => {
         d: 10,
         ad: 10,
         target: {
+          direction: "h",
           beforeId: "a",
           afterId: "c",
           lines: [
@@ -459,6 +466,7 @@ describe("newShapeIntervalSnapping", () => {
         d: -10,
         ad: 10,
         target: {
+          direction: "h",
           beforeId: "a",
           afterId: "c",
           lines: [

@@ -166,94 +166,94 @@ describe("isPointCloseToSegment", () => {
   });
 });
 
-describe("isSegmentOverlappedH", () => {
+describe("isSegmentOverlappedV", () => {
   test("should return true if the point is close to the segment", () => {
     const seg: ISegment = [
       { x: 0, y: 0 },
       { x: 10, y: 0 },
     ];
-    expect(isSegmentOverlappedH(seg, seg)).toBe(true);
+    expect(isSegmentOverlappedV(seg, seg)).toBe(true);
     expect(
-      isSegmentOverlappedH(seg, [
+      isSegmentOverlappedV(seg, [
         { x: -10, y: 0 },
         { x: -1, y: 0 },
       ])
     ).toBe(false);
     expect(
-      isSegmentOverlappedH(seg, [
+      isSegmentOverlappedV(seg, [
         { x: -10, y: 0 },
         { x: 1, y: 0 },
       ])
     ).toBe(true);
     expect(
-      isSegmentOverlappedH(seg, [
+      isSegmentOverlappedV(seg, [
         { x: 1, y: 0 },
         { x: 9, y: 0 },
       ])
     ).toBe(true);
     expect(
-      isSegmentOverlappedH(seg, [
+      isSegmentOverlappedV(seg, [
         { x: 9, y: 0 },
         { x: 11, y: 0 },
       ])
     ).toBe(true);
     expect(
-      isSegmentOverlappedH(seg, [
+      isSegmentOverlappedV(seg, [
         { x: 11, y: 0 },
         { x: 12, y: 0 },
       ])
     ).toBe(false);
     expect(
-      isSegmentOverlappedH(seg, [
+      isSegmentOverlappedV(seg, [
         { x: 11, y: 0 },
         { x: 9, y: 0 },
       ])
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 
-describe("isSegmentOverlappedV", () => {
+describe("isSegmentOverlappedH", () => {
   test("should return true if the point is close to the segment", () => {
     const seg: ISegment = [
       { y: 0, x: 0 },
       { y: 10, x: 0 },
     ];
-    expect(isSegmentOverlappedV(seg, seg)).toBe(true);
+    expect(isSegmentOverlappedH(seg, seg)).toBe(true);
     expect(
-      isSegmentOverlappedV(seg, [
+      isSegmentOverlappedH(seg, [
         { y: -10, x: 0 },
         { y: -1, x: 0 },
       ])
     ).toBe(false);
     expect(
-      isSegmentOverlappedV(seg, [
+      isSegmentOverlappedH(seg, [
         { y: -10, x: 0 },
         { y: 1, x: 0 },
       ])
     ).toBe(true);
     expect(
-      isSegmentOverlappedV(seg, [
+      isSegmentOverlappedH(seg, [
         { y: 1, x: 0 },
         { y: 9, x: 0 },
       ])
     ).toBe(true);
     expect(
-      isSegmentOverlappedV(seg, [
+      isSegmentOverlappedH(seg, [
         { y: 9, x: 0 },
         { y: 11, x: 0 },
       ])
     ).toBe(true);
     expect(
-      isSegmentOverlappedV(seg, [
+      isSegmentOverlappedH(seg, [
         { y: 11, x: 0 },
         { y: 12, x: 0 },
       ])
     ).toBe(false);
     expect(
-      isSegmentOverlappedV(seg, [
+      isSegmentOverlappedH(seg, [
         { y: 11, x: 0 },
         { y: 9, x: 0 },
       ])
-    ).toBe(false);
+    ).toBe(true);
   });
 });

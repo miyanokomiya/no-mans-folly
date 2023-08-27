@@ -3,6 +3,8 @@ import { getRectLines, isRangeOverlapped } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
+import { renderArrow } from "../utils/renderer";
+import { applyFillStyle } from "../utils/fillStyle";
 
 const SNAP_THRESHOLD = 20;
 
@@ -139,10 +141,16 @@ export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
 
 export function renderSnappingResult(
   ctx: CanvasRenderingContext2D,
-  option: { result: SnappingResult; style: StyleScheme; scale: number }
+  option: {
+    result: SnappingResult;
+    style: StyleScheme;
+    scale: number;
+    getTargetRect?: (id: string) => IRectangle;
+  }
 ) {
   applyStrokeStyle(ctx, { color: option.style.selectionPrimary });
-  ctx.lineWidth = 3 * option.scale;
+  applyFillStyle(ctx, { color: option.style.selectionPrimary });
+  ctx.lineWidth = 2 * option.scale;
 
   const snappingLines = option.result.targets.map((t) => t.line) ?? [];
   ctx.beginPath();
@@ -152,8 +160,79 @@ export function renderSnappingResult(
   });
   ctx.stroke();
 
+  if (!option.getTargetRect) return;
+
+  const arrowSize = 10 * option.scale;
+
   option.result.intervalTargets?.forEach((t) => {
+    const before = option.getTargetRect!(t.beforeId);
+    const after = option.getTargetRect!(t.afterId);
+
+    const isV = t.direction === "v";
+    const min = !isV ? Math.min(before.x, after.x) : Math.min(before.y, after.y);
+    const max = !isV
+      ? Math.max(before.x + before.width, after.x + after.width)
+      : Math.max(before.y + before.height, after.y + after.height);
+
     t.lines.forEach(([a, b]) => {
+      if (isV) {
+        const mi = Math.min(min, a.y, b.y);
+        const ma = Math.max(max, a.y, b.y);
+        ctx.setLineDash([ctx.lineWidth, ctx.lineWidth]);
+        ctx.beginPath();
+        ctx.moveTo(a.x, mi);
+        ctx.lineTo(a.x, ma);
+        ctx.moveTo(b.x, mi);
+        ctx.lineTo(b.x, ma);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        renderArrow(
+          ctx,
+          [
+            { x: a.x, y: mi },
+            { x: b.x, y: mi },
+          ],
+          arrowSize
+        );
+        renderArrow(
+          ctx,
+          [
+            { x: a.x, y: ma },
+            { x: b.x, y: ma },
+          ],
+          arrowSize
+        );
+      } else {
+        const mi = Math.min(min, a.x, b.x);
+        const ma = Math.max(max, a.x, b.x);
+        ctx.setLineDash([ctx.lineWidth, ctx.lineWidth]);
+        ctx.beginPath();
+        ctx.moveTo(mi, a.y);
+        ctx.lineTo(ma, a.y);
+        ctx.moveTo(mi, b.y);
+        ctx.lineTo(ma, b.y);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        renderArrow(
+          ctx,
+          [
+            { x: mi, y: a.y },
+            { x: mi, y: b.y },
+          ],
+          arrowSize
+        );
+        renderArrow(
+          ctx,
+          [
+            { x: ma, y: a.y },
+            { x: ma, y: b.y },
+          ],
+          arrowSize
+        );
+      }
+
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -213,6 +292,7 @@ interface IntervalSnappingResultTarget {
   beforeId: string;
   afterId: string;
   lines: [IVec2, IVec2][];
+  direction: "v" | "h";
 }
 
 export function newShapeIntervalSnapping(option: Option) {
@@ -282,6 +362,7 @@ export function newShapeIntervalSnapping(option: Option) {
               { x: info.after.vv[1], y },
             ],
           ],
+          direction: "v",
         },
       };
     }
@@ -305,6 +386,7 @@ export function newShapeIntervalSnapping(option: Option) {
               { x, y: info.after.vv[1] },
             ],
           ],
+          direction: "h",
         },
       };
     }

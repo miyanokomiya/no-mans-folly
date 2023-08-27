@@ -71,6 +71,7 @@ export function newMovingShapeState(): AppCanvasState {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, ctx.getShapeMap()[id]),
         });
       }
     },

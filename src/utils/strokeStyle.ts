@@ -11,4 +11,5 @@ export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
 export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeStyle) {
   ctx.strokeStyle = rednerRGBA(stroke.color);
   ctx.lineWidth = 1;
+  ctx.setLineDash([]);
 }
