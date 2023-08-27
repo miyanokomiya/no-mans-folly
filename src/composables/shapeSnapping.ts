@@ -6,7 +6,7 @@ import { ShapeSnappingLines } from "../shapes/core";
 import { renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 
-const SNAP_THRESHOLD = 20;
+const SNAP_THRESHOLD = 10;
 
 export interface SnappingResult {
   diff: IVec2;
@@ -27,11 +27,13 @@ interface SnappingTmpResult {
 
 interface Option {
   shapeSnappingList: [string, ShapeSnappingLines][];
+  scale?: number;
 }
 
 export function newShapeSnapping(option: Option) {
   const shapeSnappingList = option.shapeSnappingList;
   const shapeIntervalSnapping = newShapeIntervalSnapping(option);
+  const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
 
   function test(rect: IRectangle): SnappingResult | undefined {
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
@@ -48,7 +50,7 @@ export function newShapeSnapping(option: Option) {
             rectRight[0].x,
           ]);
         });
-        const closest = vList.filter((v) => v.ad < SNAP_THRESHOLD).sort((a, b) => a.ad - b.ad)[0];
+        const closest = vList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
         if (closest) {
           xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
         }
@@ -63,7 +65,7 @@ export function newShapeSnapping(option: Option) {
             rectBottom[0].y,
           ]);
         });
-        const closest = hList.filter((v) => v.ad < SNAP_THRESHOLD).sort((a, b) => a.ad - b.ad)[0];
+        const closest = hList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
         if (closest) {
           yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
         }
@@ -145,7 +147,7 @@ export function renderSnappingResult(
     result: SnappingResult;
     style: StyleScheme;
     scale: number;
-    getTargetRect?: (id: string) => IRectangle;
+    getTargetRect?: (id: string) => IRectangle | undefined;
   }
 ) {
   applyStrokeStyle(ctx, { color: option.style.selectionPrimary });
@@ -165,8 +167,9 @@ export function renderSnappingResult(
   const arrowSize = 10 * option.scale;
 
   option.result.intervalTargets?.forEach((t) => {
-    const before = option.getTargetRect!(t.beforeId);
-    const after = option.getTargetRect!(t.afterId);
+    const before = option.getTargetRect?.(t.beforeId);
+    const after = option.getTargetRect?.(t.afterId);
+    if (!before || !after) return;
 
     const isV = t.direction === "v";
     const min = !isV ? Math.min(before.x, after.x) : Math.min(before.y, after.y);
@@ -297,6 +300,7 @@ interface IntervalSnappingResultTarget {
 
 export function newShapeIntervalSnapping(option: Option) {
   const info = getIntervalSnappingInfo(option.shapeSnappingList);
+  const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
 
   function test(rect: IRectangle): InvervalSnappingResult | undefined {
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
@@ -307,7 +311,7 @@ export function newShapeIntervalSnapping(option: Option) {
 
     info.v.targets.forEach((target) => {
       const closest = getIntervalSnappingTmpResult(target.v, [rectLeft[0].x, rectRight[0].x]);
-      if (!closest || SNAP_THRESHOLD < closest.ad) return;
+      if (!closest || snapThreshold < closest.ad) return;
       xClosest = xClosest && xClosest[2] <= closest.ad ? xClosest : [target, closest.d, closest.ad];
     });
     info.v.targetFns
@@ -315,7 +319,7 @@ export function newShapeIntervalSnapping(option: Option) {
       .forEach((target) => {
         if (!target) return;
         const closest = getIntervalSnappingTmpResult(target.v, [rectLeft[0].x]);
-        if (!closest || SNAP_THRESHOLD < closest.ad) return;
+        if (!closest || snapThreshold < closest.ad) return;
         xClosest = xClosest && xClosest[2] <= closest.ad ? xClosest : [target, closest.d, closest.ad];
       });
 
@@ -323,7 +327,7 @@ export function newShapeIntervalSnapping(option: Option) {
 
     info.h.targets.forEach((target) => {
       const closest = getIntervalSnappingTmpResult(target.v, [rectTop[0].y, rectBottom[0].y]);
-      if (!closest || SNAP_THRESHOLD < closest.ad) return;
+      if (!closest || snapThreshold < closest.ad) return;
       yClosest = yClosest && yClosest[2] <= closest.ad ? yClosest : [target, closest.d, closest.ad];
     });
     info.h.targetFns
@@ -331,7 +335,7 @@ export function newShapeIntervalSnapping(option: Option) {
       .forEach((target) => {
         if (!target) return;
         const closest = getIntervalSnappingTmpResult(target.v, [rectTop[0].y]);
-        if (!closest || SNAP_THRESHOLD < closest.ad) return;
+        if (!closest || snapThreshold < closest.ad) return;
         yClosest = yClosest && yClosest[2] <= closest.ad ? yClosest : [target, closest.d, closest.ad];
       });
 

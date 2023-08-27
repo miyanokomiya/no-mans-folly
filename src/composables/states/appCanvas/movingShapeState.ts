@@ -22,6 +22,7 @@ export function newMovingShapeState(): AppCanvasState {
       const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIdMap[s.id]);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        scale: ctx.getScale(),
       });
       movingRect = geometry.getWrapperRect(
         Object.keys(selectedIdMap).map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]))
