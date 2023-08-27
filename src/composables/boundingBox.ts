@@ -1,9 +1,11 @@
 import {
   AffineMatrix,
+  IDENTITY_AFFINE,
   IVec2,
   add,
   applyAffine,
   getCenter,
+  getNorm,
   getPedal,
   getRadian,
   isOnPolygon,
@@ -15,7 +17,7 @@ import {
 import { applyPath } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { isPointCloseToSegment } from "../utils/geometry";
+import { ISegment, getCrossLineAndLine, isPointCloseToSegment } from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
 import { getResizingCursorStyle } from "../utils/styleHelper";
 
@@ -238,7 +240,33 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     ]);
   }
 
-  return { getAffine };
+  function getAffineAfterSnapping(
+    diff: IVec2,
+    snappedSegment: ISegment,
+    modifire?: { keepAspect?: boolean; centralize?: boolean }
+  ): AffineMatrix {
+    const keepAspect = modifire?.keepAspect;
+    const centralize = modifire?.centralize;
+    if (!(keepAspect && isCorner)) return getAffine(diff, modifire);
+
+    const rotatedSegment = snappedSegment.map((p) => rotate(p, -option.rotation));
+    const adjustedRotatedDirection = centralize ? centralizedrotatedBaseDirection : rotatedBaseDirection;
+    const adjustedOrigin = centralize ? centralizedOrigin : option.resizingBase.origin;
+
+    const cross = getCrossLineAndLine(rotatedSegment, [adjustedOrigin, add(adjustedRotatedDirection, adjustedOrigin)]);
+    if (!cross) return IDENTITY_AFFINE;
+
+    const rate = getNorm(sub(cross, adjustedOrigin)) / getNorm(adjustedRotatedDirection);
+    return multiAffines([
+      [1, 0, 0, 1, adjustedOrigin.x, adjustedOrigin.y],
+      [cos, sin, -sin, cos, 0, 0],
+      [rate, 0, 0, rate, 0, 0],
+      [cos, -sin, sin, cos, 0, 0],
+      [1, 0, 0, 1, -adjustedOrigin.x, -adjustedOrigin.y],
+    ]);
+  }
+
+  return { getAffine, getAffineAfterSnapping };
 }
 
 interface BoundingBoxRotatingOption {
@@ -269,6 +297,14 @@ export function newBoundingBoxRotating(option: BoundingBoxRotatingOption) {
   }
 
   return { getAffine };
+}
+
+export function getMovingBoundingBoxPoints(boundingBoxPath: IVec2[], hitResult: HitResult): IVec2[] {
+  return hitResult.type === "corner"
+    ? [boundingBoxPath[hitResult.index]]
+    : hitResult.type === "segment"
+    ? [boundingBoxPath[hitResult.index], boundingBoxPath[(hitResult.index + 1) % 4]]
+    : [];
 }
 
 function _getResizingBase([tl, tr, br, bl]: IVec2[], hitResult: HitResult): ResizingBase {

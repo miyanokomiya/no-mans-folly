@@ -1,4 +1,16 @@
-import { IRectangle, IVec2, getDistance, getOuterRectangle, getPedal, getRectCenter, isOnSeg, rotate } from "okageo";
+import {
+  IRectangle,
+  IVec2,
+  getDistance,
+  getOuterRectangle,
+  getPedal,
+  getRectCenter,
+  isOnSeg,
+  isParallel,
+  rotate,
+  sub,
+  vec,
+} from "okageo";
 
 export type ISegment = [IVec2, IVec2];
 
@@ -128,4 +140,15 @@ export function isSegmentOverlappedH(a: ISegment, b: ISegment): boolean {
 
 export function isSegmentOverlappedV(a: ISegment, b: ISegment): boolean {
   return isRangeOverlapped([a[0].x, a[1].x], [b[0].x, b[1].x]);
+}
+
+export function getCrossLineAndLine(line0: IVec2[], line1: IVec2[]): IVec2 | undefined {
+  if (isParallel(sub(line0[0], line0[1]), sub(line1[0], line1[1]))) return;
+
+  const s1 =
+    ((line1[1].x - line1[0].x) * (line0[0].y - line1[0].y) - (line1[1].y - line1[0].y) * (line0[0].x - line1[0].x)) / 2;
+  const s2 =
+    ((line1[1].x - line1[0].x) * (line1[0].y - line0[1].y) - (line1[1].y - line1[0].y) * (line1[0].x - line0[1].x)) / 2;
+  const rate = s1 / (s1 + s2);
+  return vec(line0[0].x + (line0[1].x - line0[0].x) * rate, line0[0].y + (line0[1].y - line0[0].y) * rate);
 }

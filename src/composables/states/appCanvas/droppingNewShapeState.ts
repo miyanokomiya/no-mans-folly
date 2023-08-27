@@ -3,7 +3,7 @@ import { translateOnSelection } from "./commons";
 import { Shape } from "../../../models";
 import { getSnappingLines, getWrapperRect, renderShape } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { IRectangle, IVec2, add, getRectCenter, sub } from "okageo";
+import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 
 interface Option {
@@ -38,15 +38,16 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
     handleEvent: async (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const rectSize = { width: movingRect.width / 2, height: movingRect.height / 2 };
+
           snappingResult = shapeSnapping.test({
             ...movingRect,
-            x: event.data.current.x - movingRect.width / 2,
-            y: event.data.current.y - movingRect.height / 2,
+            x: event.data.current.x - rectSize.width,
+            y: event.data.current.y - rectSize.height,
           });
           const adjustedCurrent = snappingResult ? add(event.data.current, snappingResult.diff) : event.data.current;
 
-          p = sub(adjustedCurrent, getRectCenter(movingRect));
-          // p = adjustedCurrent;
+          p = sub(adjustedCurrent, { x: rectSize.width, y: rectSize.height });
           ctx.setTmpShapeMap({});
           return;
         }

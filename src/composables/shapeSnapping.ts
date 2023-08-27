@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, moveRect } from "okageo";
+import { IRectangle, IVec2, add, moveRect } from "okageo";
 import { getRectLines, isRangeOverlapped } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme } from "../models";
@@ -30,12 +30,21 @@ interface Option {
   scale?: number;
 }
 
+interface TestOption {
+  disabledEdges: {
+    top?: boolean;
+    right?: boolean;
+    bottom?: boolean;
+    left?: boolean;
+  };
+}
+
 export function newShapeSnapping(option: Option) {
   const shapeSnappingList = option.shapeSnappingList;
   const shapeIntervalSnapping = newShapeIntervalSnapping(option);
   const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
 
-  function test(rect: IRectangle): SnappingResult | undefined {
+  function test(rect: IRectangle, option?: TestOption): SnappingResult | undefined {
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
 
     let xClosest: [string, SnappingTmpResult] | undefined;
@@ -59,11 +68,13 @@ export function newShapeSnapping(option: Option) {
       // y snapping
       {
         const hList = lines.h.map<SnappingTmpResult>((line) => {
-          return getSnappingTmpResult(line, line[0].y, [
-            (rectTop[0].y + rectBottom[0].y) / 2,
-            rectTop[0].y,
-            rectBottom[0].y,
-          ]);
+          const values: number[] = [];
+          if (!option?.disabledEdges.top && !option?.disabledEdges.bottom)
+            values.push((rectTop[0].y + rectBottom[0].y) / 2);
+          if (!option?.disabledEdges.top) values.push(rectTop[0].y);
+          if (!option?.disabledEdges.bottom) values.push(rectBottom[0].y);
+
+          return getSnappingTmpResult(line, line[0].y, values);
         });
         const closest = hList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
         if (closest) {
@@ -137,7 +148,96 @@ export function newShapeSnapping(option: Option) {
     return { targets, intervalTargets, diff };
   }
 
-  return { test };
+  function testPoint(p: IVec2): SnappingResult | undefined {
+    let xClosest: [string, SnappingTmpResult] | undefined;
+    let yClosest: [string, SnappingTmpResult] | undefined;
+    shapeSnappingList.map(([id, lines]) => {
+      // x snapping
+      {
+        const vList = lines.v.map<SnappingTmpResult>((line) => {
+          return getSnappingTmpResult(line, line[0].x, [p.x]);
+        });
+        const closest = vList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
+        if (closest) {
+          xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
+        }
+      }
+
+      // y snapping
+      {
+        const hList = lines.h.map<SnappingTmpResult>((line) => {
+          return getSnappingTmpResult(line, line[0].y, [p.y]);
+        });
+        const closest = hList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
+        if (closest) {
+          yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
+        }
+      }
+    });
+
+    // const intervalResult = shapeIntervalSnapping.test(rect);
+    const intervalResult: any = undefined;
+
+    if (!xClosest && !yClosest && !intervalResult) return;
+
+    const isVInterval =
+      (xClosest && intervalResult?.v && intervalResult.v.ad < xClosest[1].ad) || (!xClosest && intervalResult?.v);
+    const isHInterval =
+      (yClosest && intervalResult?.h && intervalResult.h.ad < yClosest[1].ad) || (!yClosest && intervalResult?.h);
+    const dx = isVInterval ? intervalResult.v!.d : xClosest?.[1].d ?? 0;
+    const dy = isHInterval ? intervalResult.h!.d : yClosest?.[1].d ?? 0;
+
+    const targets: SnappingResultTarget[] = [];
+    const diff = { x: dx, y: dy };
+    const adjustedP = add(p, diff);
+    const intervalTargets: IntervalSnappingResultTarget[] = [];
+
+    if (isVInterval) {
+      const y = adjustedP.y;
+      intervalTargets.push({
+        ...intervalResult.v!.target,
+        lines: intervalResult.v!.target.lines.map<[IVec2, IVec2]>((l) => [
+          { x: l[0].x, y },
+          { x: l[1].x, y },
+        ]),
+      });
+    } else if (xClosest) {
+      const [id, result] = xClosest;
+      const [y0, , y1] = [adjustedP.y, result.line[0].y, result.line[1].y].sort((a, b) => a - b);
+      targets.push({
+        id,
+        line: [
+          { x: result.line[0].x, y: y0 },
+          { x: result.line[0].x, y: y1 },
+        ],
+      });
+    }
+
+    if (isHInterval) {
+      const x = adjustedP.x;
+      intervalTargets.push({
+        ...intervalResult.h!.target,
+        lines: intervalResult.h!.target.lines.map<[IVec2, IVec2]>((l) => [
+          { x, y: l[0].y },
+          { x, y: l[1].y },
+        ]),
+      });
+    } else if (yClosest) {
+      const [id, result] = yClosest;
+      const [x0, , x1] = [adjustedP.x, result.line[0].x, result.line[1].x].sort((a, b) => a - b);
+      targets.push({
+        id,
+        line: [
+          { x: x0, y: result.line[0].y },
+          { x: x1, y: result.line[0].y },
+        ],
+      });
+    }
+
+    return { targets, intervalTargets, diff };
+  }
+
+  return { test, testPoint };
 }
 export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
 
