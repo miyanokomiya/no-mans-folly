@@ -341,6 +341,7 @@ interface IntervalSnappingTarget {
   before: IntervalSnappingItem;
   after: IntervalSnappingItem;
   v: number;
+  for: 0 | 1 | 2; // top/left | middle | button/right
 }
 
 interface IntervalSnappingItem {
@@ -380,7 +381,7 @@ export function newShapeIntervalSnapping(option: Option) {
     let xClosest: [target: IntervalSnappingTarget, d: number, ad: number] | undefined;
 
     info.v.targets.forEach((target) => {
-      const closest = getIntervalSnappingTmpResult(target.v, [rectLeft[0].x, rectRight[0].x]);
+      const closest = getIntervalSnappingTmpResult(target.v, target.for === 0 ? rectLeft[0].x : rectRight[0].x);
       if (!closest || snapThreshold < closest.ad) return;
       xClosest = xClosest && xClosest[2] <= closest.ad ? xClosest : [target, closest.d, closest.ad];
     });
@@ -388,7 +389,7 @@ export function newShapeIntervalSnapping(option: Option) {
       .map((fn) => fn(rectW))
       .forEach((target) => {
         if (!target) return;
-        const closest = getIntervalSnappingTmpResult(target.v, [rectLeft[0].x]);
+        const closest = getIntervalSnappingTmpResult(target.v, rectLeft[0].x);
         if (!closest || snapThreshold < closest.ad) return;
         xClosest = xClosest && xClosest[2] <= closest.ad ? xClosest : [target, closest.d, closest.ad];
       });
@@ -396,7 +397,7 @@ export function newShapeIntervalSnapping(option: Option) {
     let yClosest: [target: IntervalSnappingTarget, d: number, ad: number] | undefined;
 
     info.h.targets.forEach((target) => {
-      const closest = getIntervalSnappingTmpResult(target.v, [rectTop[0].y, rectBottom[0].y]);
+      const closest = getIntervalSnappingTmpResult(target.v, target.for === 0 ? rectTop[0].y : rectBottom[0].y);
       if (!closest || snapThreshold < closest.ad) return;
       yClosest = yClosest && yClosest[2] <= closest.ad ? yClosest : [target, closest.d, closest.ad];
     });
@@ -404,7 +405,7 @@ export function newShapeIntervalSnapping(option: Option) {
       .map((fn) => fn(rectH))
       .forEach((target) => {
         if (!target) return;
-        const closest = getIntervalSnappingTmpResult(target.v, [rectTop[0].y]);
+        const closest = getIntervalSnappingTmpResult(target.v, rectTop[0].y);
         if (!closest || snapThreshold < closest.ad) return;
         yClosest = yClosest && yClosest[2] <= closest.ad ? yClosest : [target, closest.d, closest.ad];
       });
@@ -506,6 +507,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
             v,
             before: { id: s0[0], vv: [v, l0[0].x] },
             after: { id: s1[0], vv: [r0[0].x, l1[0].x] },
+            for: 2,
           };
           vList.push(a);
         }
@@ -516,6 +518,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
             v,
             before: { id: s0[0], vv: [r0[0].x, l1[0].x] },
             after: { id: s1[0], vv: [r1[0].x, v] },
+            for: 0,
           };
           vList.push(a);
         }
@@ -530,6 +533,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
               v,
               before: { id: s0[0], vv: [r0[0].x, v] },
               after: { id: s1[0], vv: [v + size, l1[0].x] },
+              for: 1,
             };
           });
         }
@@ -544,6 +548,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
             v,
             before: { id: s0[0], vv: [v, t0[0].y] },
             after: { id: s1[0], vv: [b0[0].y, t1[0].y] },
+            for: 2,
           };
           hList.push(a);
         }
@@ -554,6 +559,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
             v,
             before: { id: s0[0], vv: [b0[0].y, t1[0].y] },
             after: { id: s1[0], vv: [b1[0].y, v] },
+            for: 0,
           };
           hList.push(a);
         }
@@ -568,6 +574,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
               v,
               before: { id: s0[0], vv: [b0[0].y, v] },
               after: { id: s1[0], vv: [v + size, t1[0].y] },
+              for: 1,
             };
           });
         }
@@ -589,12 +596,8 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
 
 type IntervalSnappingTmpResult = Omit<SnappingTmpResult, "line">;
 
-function getIntervalSnappingTmpResult(target: number, clients: number[]): IntervalSnappingTmpResult {
-  return clients
-    .map((v) => {
-      const d = target - v;
-      const ad = Math.abs(d);
-      return { d, ad };
-    })
-    .sort((a, b) => a.ad - b.ad)[0];
+function getIntervalSnappingTmpResult(target: number, client: number): IntervalSnappingTmpResult {
+  const d = target - client;
+  const ad = Math.abs(d);
+  return { d, ad };
 }
