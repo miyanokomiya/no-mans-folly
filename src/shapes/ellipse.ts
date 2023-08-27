@@ -1,4 +1,4 @@
-import { IVec2, applyAffine, getCenter, getDistance, getRadian, isSame, rotate } from "okageo";
+import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rotate, sub } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { getRectPoints, getRotatedWrapperRect, isPointOnEllipseRotated } from "../utils/geometry";
@@ -32,15 +32,15 @@ export const struct: ShapeStruct<EllipseShape> = {
     applyFillStyle(ctx, shape.fill);
     applyStrokeStyle(ctx, shape.stroke);
     ctx.beginPath();
-    ctx.ellipse(shape.p.x, shape.p.y, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
+    ctx.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
     ctx.fill();
     ctx.stroke();
   },
   getWrapperRect(shape) {
     return getRotatedWrapperRect(
       {
-        x: shape.p.x - shape.rx,
-        y: shape.p.y - shape.ry,
+        x: shape.p.x,
+        y: shape.p.y,
         width: 2 * shape.rx,
         height: 2 * shape.ry,
       },
@@ -49,13 +49,15 @@ export const struct: ShapeStruct<EllipseShape> = {
   },
   getLocalRectPolygon,
   isPointOn(shape, p) {
-    return isPointOnEllipseRotated(shape.p, shape.rx, shape.ry, shape.rotation, p);
+    const c = add(shape.p, { x: shape.rx, y: shape.ry });
+    return isPointOnEllipseRotated(c, shape.rx, shape.ry, shape.rotation, p);
   },
   resize(shape, resizingAffine) {
     const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
-    const p = getCenter(rectPolygon[0], rectPolygon[2]);
+    const c = getCenter(rectPolygon[0], rectPolygon[2]);
     const rx = getDistance(rectPolygon[0], rectPolygon[1]) / 2;
     const ry = getDistance(rectPolygon[0], rectPolygon[3]) / 2;
+    const p = sub(c, { x: rx, y: ry });
     const rotation = getRadian(rectPolygon[1], rectPolygon[0]);
 
     const ret: Partial<EllipseShape> = {};
@@ -69,10 +71,11 @@ export const struct: ShapeStruct<EllipseShape> = {
 };
 
 function getLocalRectPolygon(shape: EllipseShape): IVec2[] {
+  const c = add(shape.p, { x: shape.rx, y: shape.ry });
   return getRectPoints({
-    x: shape.p.x - shape.rx,
-    y: shape.p.y - shape.ry,
+    x: shape.p.x,
+    y: shape.p.y,
     width: 2 * shape.rx,
     height: 2 * shape.ry,
-  }).map((p) => rotate(p, shape.rotation, shape.p));
+  }).map((p) => rotate(p, shape.rotation, c));
 }
