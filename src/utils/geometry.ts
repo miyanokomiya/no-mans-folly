@@ -1,14 +1,6 @@
-import {
-  IRectangle,
-  IVec2,
-  add,
-  getDistance,
-  getOuterRectangle,
-  getPedal,
-  getRectCenter,
-  isOnSeg,
-  rotate,
-} from "okageo";
+import { IRectangle, IVec2, getDistance, getOuterRectangle, getPedal, getRectCenter, isOnSeg, rotate } from "okageo";
+
+export type ISegment = [IVec2, IVec2];
 
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
@@ -117,4 +109,23 @@ export function snapScale(scale: IVec2, step = 0.1): IVec2 {
 
 export function snapNumber(value: number, step = 1): number {
   return Math.round(value / step) * step;
+}
+
+export function sortNumFn(a: number, b: number): number {
+  return a - b;
+}
+
+export function isRangeOverlapped(a: [number, number], b: [number, number]): boolean {
+  const [a0, a1] = [a[0], a[1]].sort(sortNumFn);
+  const [b0, b1] = [b[0], b[1]].sort(sortNumFn);
+
+  return !(a1 < b0 || b1 < a0);
+}
+
+export function isSegmentOverlappedH(a: ISegment, b: ISegment): boolean {
+  return isRangeOverlapped([a[0].y, a[1].y], [b[0].y, b[1].y]);
+}
+
+export function isSegmentOverlappedV(a: ISegment, b: ISegment): boolean {
+  return isRangeOverlapped([a[0].x, a[1].x], [b[0].x, b[1].x]);
 }

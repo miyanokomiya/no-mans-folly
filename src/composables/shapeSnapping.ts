@@ -1,5 +1,5 @@
 import { IRectangle, IVec2, moveRect } from "okageo";
-import { getRectLines } from "../utils/geometry";
+import { getRectLines, isRangeOverlapped } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -329,14 +329,19 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
     const t0 = s0[1].h[0];
     const b0 = s0[1].h[s0[1].v.length - 1];
 
+    const hRange: [number, number] = [l0[0].x, r0[0].x];
+    const vRange: [number, number] = [t0[0].y, b0[0].y];
+
     for (let j = 0; j < shapeSnappingList.length; j++) {
       if (i === j) continue;
 
       const s1 = shapeSnappingList[j];
       const l1 = s1[1].v[0];
       const r1 = s1[1].v[s1[1].v.length - 1];
+      const t1 = s1[1].h[0];
+      const b1 = s1[1].h[s1[1].h.length - 1];
 
-      if (r0[0].x < l1[0].x) {
+      if (r0[0].x < l1[0].x && isRangeOverlapped(vRange, [t1[0].y, b1[0].y])) {
         const d = l1[0].x - r0[0].x;
 
         {
@@ -374,10 +379,7 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
         }
       }
 
-      const t1 = s1[1].h[0];
-      const b1 = s1[1].h[s1[1].h.length - 1];
-
-      if (b0[0].y < t1[0].y) {
+      if (b0[0].y < t1[0].y && isRangeOverlapped(hRange, [l1[0].x, r1[0].x])) {
         const d = t1[0].y - b0[0].y;
 
         {
