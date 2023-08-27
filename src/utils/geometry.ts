@@ -1,4 +1,14 @@
-import { IRectangle, IVec2, getDistance, getOuterRectangle, getPedal, getRectCenter, isOnSeg, rotate } from "okageo";
+import {
+  IRectangle,
+  IVec2,
+  add,
+  getDistance,
+  getOuterRectangle,
+  getPedal,
+  getRectCenter,
+  isOnSeg,
+  rotate,
+} from "okageo";
 
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
