@@ -1,11 +1,14 @@
 import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
-import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
+import { IDENTITY_AFFINE, IRectangle, IVec2, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
+import { getLocalRectPolygon, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
+import { newConnectedLineHandler } from "../../connectedLineHandler";
+import { LineShape } from "../../../shapes/line";
+import { mergeMap } from "../../../utils/commons";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -63,15 +66,30 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           affine = [1, 0, 0, 1, translate.x, translate.y];
 
           const shapeMap = ctx.getShapeMap();
-          ctx.setTmpShapeMap(
-            Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
+          const updatedMap = Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>(
+            (m, id) => {
               const s = shapeMap[id];
               if (s) {
                 m[id] = resizeShape(ctx.getShapeStruct, s, affine);
               }
               return m;
-            }, {})
+            },
+            {}
           );
+
+          const lineHandler = newConnectedLineHandler({
+            lineShapes: Object.values(shapeMap).filter((s): s is LineShape => s.type === "line"),
+          });
+          const modifiedMap: { [id: string]: [path: IVec2[], rotation: number] } = {};
+          Object.entries(updatedMap).forEach(([id, shape]) => {
+            modifiedMap[id] = [
+              getLocalRectPolygon(ctx.getShapeStruct, { ...shapeMap[id], ...shape }),
+              shapeMap[id].rotation,
+            ];
+          });
+          const linePatchedMap = lineHandler.onModified(modifiedMap);
+
+          ctx.setTmpShapeMap(mergeMap(updatedMap, linePatchedMap));
           return;
         }
         case "pointerup": {

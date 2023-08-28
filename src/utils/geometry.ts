@@ -1,6 +1,7 @@
 import {
   IRectangle,
   IVec2,
+  getCenter,
   getDistance,
   getOuterRectangle,
   getPedal,
@@ -8,7 +9,6 @@ import {
   getRectCenter,
   isOnSeg,
   isParallel,
-  multi,
   rotate,
   sub,
   vec,
@@ -216,4 +216,23 @@ export function sortPointFrom(p: IVec2, points: IVec2[]): IVec2[] {
     })
     .sort((a, b) => a[0] - b[0])
     .map((v) => v[1]);
+}
+
+export function getLocationRateOnRectPath(rectPath: IVec2[], rotation: number, p: IVec2): IVec2 {
+  const center = getCenter(rectPath[0], rectPath[2]);
+  const rotatedP = rotate(p, -rotation, center);
+  const rotatedPath = rectPath.map((v) => rotate(v, -rotation, center));
+  return {
+    x: (rotatedP.x - rotatedPath[0].x) / (rotatedPath[1].x - rotatedPath[0].x),
+    y: (rotatedP.y - rotatedPath[0].y) / (rotatedPath[3].y - rotatedPath[0].y),
+  };
+}
+
+export function getLocationFromRateOnRectPath(rectPath: IVec2[], rotation: number, rate: IVec2): IVec2 {
+  const center = getCenter(rectPath[0], rectPath[2]);
+  const rotatedPath = rectPath.map((v) => rotate(v, -rotation, center));
+  const width = rotatedPath[1].x - rotatedPath[0].x;
+  const height = rotatedPath[3].y - rotatedPath[0].y;
+  const rotatedP = { x: rotatedPath[0].x + width * rate.x, y: rotatedPath[0].y + height * rate.y };
+  return rotate(rotatedP, rotation, center);
 }

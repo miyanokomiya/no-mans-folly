@@ -4,6 +4,7 @@ import {
   expandRect,
   getClosestOutlineOnEllipse,
   getClosestOutlineOnRectangle,
+  getLocationFromRateOnRectPath,
   getRectCenterLines,
   getRectLines,
   getRectPoints,
@@ -322,5 +323,32 @@ describe("sortPointFrom", () => {
       { x: 0, y: 10 },
       { x: 11, y: 0 },
     ]);
+  });
+});
+
+describe("getLocationFromRateOnRectPath", () => {
+  test("should return the point at the rate", () => {
+    const rect0 = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+      { x: 0, y: 100 },
+    ];
+    expect(getLocationFromRateOnRectPath(rect0, 0, { x: 0, y: 0 })).toEqual({ x: 0, y: 0 });
+    expect(getLocationFromRateOnRectPath(rect0, 0, { x: 1, y: 0 })).toEqual({ x: 100, y: 0 });
+    expect(getLocationFromRateOnRectPath(rect0, 0, { x: 0.3, y: 0.8 })).toEqual({ x: 30, y: 80 });
+
+    const rect1 = [
+      { x: 50, y: -50 * Math.SQRT2 },
+      { x: 50 + 50 * Math.SQRT2, y: 50 },
+      { x: 50, y: 50 + 50 * Math.SQRT2 },
+      { x: 50 - 50 * Math.SQRT2, y: 50 },
+    ];
+    const rotated0 = getLocationFromRateOnRectPath(rect1, Math.PI / 4, { x: 0, y: 0 });
+    expect(rotated0.x).toBeCloseTo(50);
+    expect(rotated0.y).toBeCloseTo(-50 * Math.SQRT2);
+    const rotated1 = getLocationFromRateOnRectPath(rect1, Math.PI / 4, { x: 1, y: 1 });
+    expect(rotated1.x).toBeCloseTo(50);
+    expect(rotated1.y).toBeCloseTo(50 + 50 * Math.SQRT2);
   });
 });

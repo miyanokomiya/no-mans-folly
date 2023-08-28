@@ -61,3 +61,17 @@ describe("findBackward", () => {
     ).toEqual({ id: "c", v: 0 });
   });
 });
+
+describe("mergeMap", () => {
+  test("should merge two maps", () => {
+    expect(target.mergeMap<any>({ a: { aa: 1 }, b: { ba: 10, bb: 20 } }, { b: { bb: 21 } })).toEqual({
+      a: { aa: 1 },
+      b: { ba: 10, bb: 21 },
+    });
+  });
+  test("override nested props", () => {
+    expect(target.mergeMap<any>({ a: { aa: { aaa: 1, aab: 2 } } }, { a: { aa: { aab: 20 } } })).toEqual({
+      a: { aa: { aab: 20 } },
+    });
+  });
+});
