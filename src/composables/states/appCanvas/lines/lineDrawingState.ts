@@ -2,7 +2,7 @@ import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
 import { renderShape } from "../../../../shapes";
 import { LineShape } from "../../../../shapes/line";
-import { newSingleSelectedState } from "../singleSelectedState";
+import { newLineSelectedState } from "./lineSelectedState";
 
 interface Option {
   shape: LineShape;
@@ -32,7 +32,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           if (!q) return;
           ctx.addShapes([{ ...shape, q } as LineShape]);
           ctx.selectShape(shape.id);
-          return newSingleSelectedState;
+          return newLineSelectedState;
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;

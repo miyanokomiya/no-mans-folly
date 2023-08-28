@@ -1,17 +1,20 @@
 import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { translateOnSelection } from "./commons";
-import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
     }),
+    getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
+    getShapeStruct: getCommonStruct,
+    getStyleScheme: createStyleScheme,
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
     setCursor: vi.fn(),
@@ -35,11 +38,11 @@ describe("newSingleSelectedByPointerOnState", () => {
     test("should move to MovingShape state", async () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedByPointerOnState();
-      const result = await target.handleEvent(ctx as any, {
+      const result = (await target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
-      });
-      expect(result).toBe(newMovingShapeState);
+      })) as any;
+      expect(result?.().getLabel()).toBe("MovingShape");
     });
   });
 

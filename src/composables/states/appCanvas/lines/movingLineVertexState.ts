@@ -40,7 +40,10 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           } else {
             vertex = add(origin, sub(point, event.data.start));
             ctx.setTmpShapeMap({
-              [option.lineShape.id]: { ...patchVertex(option.lineShape, option.index, vertex) },
+              [option.lineShape.id]: {
+                ...patchVertex(option.lineShape, option.index, vertex),
+                ...patchConnection(option.lineShape, option.index),
+              },
             });
           }
           return;
