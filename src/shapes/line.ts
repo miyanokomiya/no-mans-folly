@@ -1,5 +1,5 @@
 import { IVec2, applyAffine, getOuterRectangle, isSame } from "okageo";
-import { FillStyle, Shape, StrokeStyle } from "../models";
+import { ConnectionPoint, FillStyle, Shape, StrokeStyle } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { getRectPoints, isPointCloseToSegment } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
@@ -9,6 +9,8 @@ export interface LineShape extends Shape {
   fill: FillStyle;
   stroke: StrokeStyle;
   q: IVec2;
+  pConnection?: ConnectionPoint;
+  qConnection?: ConnectionPoint;
 }
 
 export const struct: ShapeStruct<LineShape> = {
@@ -20,29 +22,29 @@ export const struct: ShapeStruct<LineShape> = {
       rotation: 0, // should always be "0" or just ignored
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      q: { x: 100, y: 0 },
+      q: arg.q ?? { x: 100, y: 0 },
     };
   },
   render(ctx, shape) {
     applyStrokeStyle(ctx, shape.stroke);
 
     ctx.beginPath();
-    getPath(shape).forEach((p) => {
+    getLinePath(shape).forEach((p) => {
       ctx.lineTo(p.x, p.y);
     });
     ctx.stroke();
   },
   getWrapperRect(shape) {
-    return getOuterRectangle([getPath(shape)]);
+    return getOuterRectangle([getLinePath(shape)]);
   },
   getLocalRectPolygon(shape) {
-    return getRectPoints(getOuterRectangle([getPath(shape)]));
+    return getRectPoints(getOuterRectangle([getLinePath(shape)]));
   },
   isPointOn(shape, p) {
-    return isPointCloseToSegment(getPath(shape), p, 10);
+    return isPointCloseToSegment(getLinePath(shape), p, 10);
   },
   resize(shape, resizingAffine) {
-    const [p, q] = getPath(shape).map((p) => applyAffine(resizingAffine, p));
+    const [p, q] = getLinePath(shape).map((p) => applyAffine(resizingAffine, p));
 
     const ret: Partial<LineShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
@@ -52,6 +54,18 @@ export const struct: ShapeStruct<LineShape> = {
   },
 };
 
-function getPath(shape: LineShape): IVec2[] {
+export function getLinePath(shape: LineShape): IVec2[] {
   return [shape.p, shape.q];
+}
+
+export function patchVertex(shape: LineShape, index: number, p: IVec2): Partial<LineShape> {
+  const vertices = getLinePath(shape);
+  switch (index) {
+    case 0:
+      return { p };
+    case vertices.length - 1:
+      return { q: p };
+    default:
+      return {};
+  }
 }

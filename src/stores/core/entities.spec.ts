@@ -99,6 +99,19 @@ describe("newEntityStore", () => {
       ]);
       expect(count).toBe(3);
     });
+
+    test("should delete an attribute if the value is undefined", () => {
+      const ydoc = new Y.Doc();
+      let count = 0;
+      const onChanged = () => count++;
+      const store = newEntityStore({ name: "test", ydoc });
+      store.watch(onChanged);
+      store.addEntity({ id: "a", findex: "0" });
+      store.patchEntity("a", { findex: undefined });
+      expect(store.getEntities()).toEqual([{ id: "a" }]);
+      expect(store.getEntities()[0]).not.toHaveProperty("findex");
+      expect(count).toBe(2);
+    });
   });
 
   describe("patchEntities", () => {

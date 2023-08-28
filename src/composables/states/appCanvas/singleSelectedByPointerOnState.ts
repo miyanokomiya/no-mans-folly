@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
-import { newSingleSelectedState } from "./singleSelectedState";
+import { getDistance } from "okageo";
 
 export function newSingleSelectedByPointerOnState(): AppCanvasState {
   return {
@@ -15,9 +15,10 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
     handleEvent: async (ctx, event) => {
       switch (event.type) {
         case "pointermove":
+          if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;
           return newMovingShapeState;
         case "pointerup":
-          return newSingleSelectedState;
+          return translateOnSelection(ctx);
         case "selection": {
           return translateOnSelection(ctx);
         }

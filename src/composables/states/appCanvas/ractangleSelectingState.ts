@@ -19,7 +19,6 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
     getLabel: () => "RectangleSelecting",
     onStart: async (ctx) => {
       ctx.startDragging();
-      ctx.setCursor("crosshair");
       if (!keepSelection) {
         ctx.clearAllSelected();
       }
@@ -31,6 +30,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
     handleEvent: async (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          ctx.setCursor("crosshair");
           rectangle = getOuterRectangle([[event.data.start, event.data.current]]);
           const hitTest = newRectInRectHitTest(rectangle);
           targetIdSet = new Set(

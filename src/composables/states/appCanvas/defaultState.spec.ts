@@ -4,9 +4,14 @@ import { newPanningState } from "../commons";
 import { translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { createShape, getCommonStruct } from "../../../shapes";
+import { RectangleShape } from "../../../shapes/rectangle";
 
 function getMockCtx() {
   return {
+    getShapeMap: vi.fn().mockReturnValue({
+      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+    }),
     getShapeAt: vi.fn(),
     clearAllSelected: vi.fn(),
     selectShape: vi.fn(),

@@ -12,7 +12,6 @@ import {
   isPointOnEllipseRotated,
   isPointOnRectangle,
   isPointOnRectangleRotated,
-  isPointOnSegment,
   isSegmentOverlappedH,
   isSegmentOverlappedV,
 } from "./geometry";

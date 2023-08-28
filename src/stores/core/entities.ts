@@ -62,7 +62,11 @@ export function newEntityStore<T extends Entity>(option: Option) {
     }
 
     Object.entries(attrs).forEach(([key, value]) => {
-      yEntity.set(key, value);
+      if (value === undefined) {
+        yEntity.delete(key);
+      } else {
+        yEntity.set(key, value);
+      }
     });
   }
 

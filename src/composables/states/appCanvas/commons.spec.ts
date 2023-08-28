@@ -3,10 +3,15 @@ import { newSingleSelectedState } from "./singleSelectedState";
 import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
+import { createShape, getCommonStruct } from "../../../shapes";
+import { RectangleShape } from "../../../shapes/rectangle";
 
 function getMockCtx() {
   return {
     getSelectedShapeIdMap: vi.fn().mockReturnValue({}),
+    getShapeMap: vi.fn().mockReturnValue({
+      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+    }),
   };
 }
 

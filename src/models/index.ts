@@ -48,3 +48,8 @@ export interface FillStyle {
 export interface StrokeStyle {
   color: Color;
 }
+
+export interface ConnectionPoint {
+  id: string;
+  rate: IVec2; // relative position in the target rectangle
+}
