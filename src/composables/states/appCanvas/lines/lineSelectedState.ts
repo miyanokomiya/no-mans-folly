@@ -6,6 +6,7 @@ import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
+import { newMovingShapeState } from "../movingShapeState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -32,6 +33,8 @@ export function newLineSelectedState(): AppCanvasState {
                 switch (hitResult.type) {
                   case "vertex":
                     return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
+                  case "edge":
+                    return newMovingShapeState;
                 }
               }
 
@@ -59,12 +62,12 @@ export function newLineSelectedState(): AppCanvasState {
           }
         case "pointerhover": {
           const hitResult = lineBounding.hitTest(event.data.current);
+          if (lineBounding.saveHitResult(hitResult)) {
+            ctx.setTmpShapeMap({});
+          }
           if (hitResult) {
-            const style = lineBounding.getCursorStyle(hitResult);
-            if (style) {
-              ctx.setCursor(style);
-              return;
-            }
+            ctx.setCursor();
+            return;
           }
 
           const shape = ctx.getShapeAt(event.data.current);

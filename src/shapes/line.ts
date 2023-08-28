@@ -1,7 +1,7 @@
 import { IVec2, applyAffine, getOuterRectangle, isSame } from "okageo";
 import { ConnectionPoint, FillStyle, Shape, StrokeStyle } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
-import { getRectPoints, isPointCloseToSegment } from "../utils/geometry";
+import { ISegment, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -56,6 +56,16 @@ export const struct: ShapeStruct<LineShape> = {
 
 export function getLinePath(shape: LineShape): IVec2[] {
   return [shape.p, shape.q];
+}
+
+export function getEdges(shape: LineShape): ISegment[] {
+  const path = getLinePath(shape);
+  const ret: ISegment[] = [];
+  path.map((v, i) => {
+    if (i === path.length - 1) return;
+    ret.push([v, path[i + 1]]);
+  });
+  return ret;
 }
 
 export function patchVertex(shape: LineShape, index: number, p: IVec2): Partial<LineShape> {
