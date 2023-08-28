@@ -1,5 +1,5 @@
 import { expect, describe, test, vi } from "vitest";
-import { createShape, getCommonStruct, getWrapperRect, isPointOn, renderShape } from ".";
+import { createShape, getCommonStruct, getLocationRateOnShape, getWrapperRect, isPointOn, renderShape } from ".";
 import { RectangleShape } from "./rectangle";
 
 describe("createShape", () => {
@@ -39,5 +39,22 @@ describe("isPointOn", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
     expect(isPointOn(getCommonStruct, shape, { x: -3, y: 3 })).toBe(false);
     expect(isPointOn(getCommonStruct, shape, { x: 3, y: 3 })).toBe(true);
+  });
+});
+
+describe("getLocationRateOnShape", () => {
+  test("should return location rate on the shape", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
+    const result0 = getLocationRateOnShape(getCommonStruct, shape, { x: 0, y: 0 });
+    expect(result0.x).toBeCloseTo(0);
+    expect(result0.y).toBeCloseTo(0);
+
+    const result1 = getLocationRateOnShape(getCommonStruct, shape, { x: 2, y: 15 });
+    expect(result1.x).toBeCloseTo(0.2);
+    expect(result1.y).toBeCloseTo(3 / 4);
+
+    const result2 = getLocationRateOnShape(getCommonStruct, { ...shape, rotation: Math.PI / 2 }, { x: 5, y: 14 });
+    expect(result2.x).toBeCloseTo(0.9);
+    expect(result2.y).toBeCloseTo(0.5);
   });
 });

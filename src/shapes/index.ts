@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2 } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getCenter, rotate } from "okageo";
 import { Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
@@ -60,5 +60,26 @@ export function getSnappingLines(getStruct: GetShapeStruct, shape: Shape): Shape
   return {
     v: [l, cv, r],
     h: [t, ch, b],
+  };
+}
+
+export function getClosestOutline(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  p: IVec2,
+  threshold: number
+): IVec2 | undefined {
+  const struct = getStruct(shape.type);
+  if (struct.getClosestOutline) return struct.getClosestOutline(shape, p, threshold);
+}
+
+export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {
+  const rectPath = getLocalRectPolygon(getStruct, shape);
+  const center = getCenter(rectPath[0], rectPath[2]);
+  const rotatedP = rotate(p, -shape.rotation, center);
+  const rotatedPath = rectPath.map((v) => rotate(v, -shape.rotation, center));
+  return {
+    x: (rotatedP.x - rotatedPath[0].x) / (rotatedPath[1].x - rotatedPath[0].x),
+    y: (rotatedP.y - rotatedPath[0].y) / (rotatedPath[3].y - rotatedPath[0].y),
   };
 }

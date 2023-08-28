@@ -10,6 +10,7 @@ export interface ShapeStruct<T extends Shape> {
   isPointOn: (shape: T, p: IVec2) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
+  getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
 }
 
 export interface ShapeSnappingLines {

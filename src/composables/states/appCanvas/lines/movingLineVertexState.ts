@@ -1,8 +1,9 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent, translateOnSelection } from "../commons";
-import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
+import { LineShape, getLinePath, patchConnection, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
+import { getClosestConnection } from "../../../lineSnapping";
 
 interface Option {
   lineShape: LineShape;
@@ -25,11 +26,23 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
     handleEvent: async (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          const d = sub(event.data.current, event.data.start);
-          vertex = add(origin, d);
-          ctx.setTmpShapeMap({
-            [option.lineShape.id]: patchVertex(option.lineShape, option.index, vertex),
-          });
+          const point = event.data.current;
+          const connectionInfo = getClosestConnection(point, ctx);
+
+          if (connectionInfo) {
+            vertex = connectionInfo.p;
+            ctx.setTmpShapeMap({
+              [option.lineShape.id]: {
+                ...patchVertex(option.lineShape, option.index, vertex),
+                ...patchConnection(option.lineShape, option.index, connectionInfo.connection),
+              },
+            });
+          } else {
+            vertex = add(origin, sub(point, event.data.start));
+            ctx.setTmpShapeMap({
+              [option.lineShape.id]: { ...patchVertex(option.lineShape, option.index, vertex) },
+            });
+          }
           return;
         }
         case "pointerup": {

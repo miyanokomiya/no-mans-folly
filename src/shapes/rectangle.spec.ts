@@ -40,4 +40,12 @@ describe("struct", () => {
       expect(struct.isPointOn(shape, { x: 15, y: 5 })).toBe(false);
     });
   });
+
+  describe("getClosestOutline", () => {
+    test("should return the closest outline point", () => {
+      const shape = struct.create({ width: 10, height: 10 });
+      expect(struct.getClosestOutline?.(shape, { x: -3, y: 1 }, 2)).toEqual(undefined);
+      expect(struct.getClosestOutline?.(shape, { x: -1, y: 1 }, 2)).toEqual({ x: 0, y: 1 });
+    });
+  });
 });

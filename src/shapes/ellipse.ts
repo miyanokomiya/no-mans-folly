@@ -1,7 +1,12 @@
 import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rotate, sub } from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { getRectPoints, getRotatedWrapperRect, isPointOnEllipseRotated } from "../utils/geometry";
+import {
+  getClosestOutlineOnEllipse,
+  getRectPoints,
+  getRotatedWrapperRect,
+  isPointOnEllipseRotated,
+} from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 
@@ -67,6 +72,14 @@ export const struct: ShapeStruct<EllipseShape> = {
     if (rotation !== shape.rotation) ret.rotation = rotation;
 
     return ret;
+  },
+  getClosestOutline(shape, p, threshold) {
+    const center = add(shape.p, { x: shape.rx, y: shape.ry });
+    const rotatedP = shape.rotation === 0 ? p : rotate(p, -shape.rotation, center);
+    const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedP, threshold);
+    if (!rotatedClosest) return;
+
+    return shape.rotation === 0 ? rotatedClosest : rotate(rotatedClosest, shape.rotation, center);
   },
 };
 

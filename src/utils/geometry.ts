@@ -4,9 +4,11 @@ import {
   getDistance,
   getOuterRectangle,
   getPedal,
+  getRadian,
   getRectCenter,
   isOnSeg,
   isParallel,
+  multi,
   rotate,
   sub,
   vec,
@@ -30,6 +32,58 @@ export function isPointOnRectangle(rect: IRectangle, p: IVec2): boolean {
 export function isPointOnRectangleRotated(rect: IRectangle, rotation: number, p: IVec2): boolean {
   const rotatedP = rotation === 0 ? p : rotate(p, -rotation, getRectCenter(rect));
   return isPointOnRectangle(rect, rotatedP);
+}
+
+export function getClosestOutlineOnRectangle(rect: IRectangle, p: IVec2, threshold: number): IVec2 | undefined {
+  const right = rect.x + rect.width;
+  const bottom = rect.y + rect.height;
+  let candidate: IVec2 | undefined = undefined;
+  let d = Math.max(rect.width, rect.height);
+
+  if (rect.y <= p.y && p.y <= bottom) {
+    const dxl = Math.abs(p.x - rect.x);
+    if (dxl <= threshold && dxl < d) {
+      candidate = { x: rect.x, y: p.y };
+      d = dxl;
+    }
+
+    const dxr = Math.abs(p.x - right);
+    if (dxr <= threshold && dxr < d) {
+      candidate = { x: right, y: p.y };
+      d = dxr;
+    }
+  }
+
+  if (rect.x <= p.x && p.x <= right) {
+    const dyt = Math.abs(p.y - rect.y);
+    if (dyt <= threshold && dyt < d) {
+      candidate = { x: p.x, y: rect.y };
+      d = dyt;
+    }
+
+    const dyb = Math.abs(p.y - bottom);
+    if (dyb <= threshold && dyb < d) {
+      candidate = { x: p.x, y: bottom };
+      d = dyb;
+    }
+  }
+
+  return candidate;
+}
+
+export function getClosestOutlineOnEllipse(
+  c: IVec2,
+  rx: number,
+  ry: number,
+  p: IVec2,
+  threshold: number
+): IVec2 | undefined {
+  const np = sub(p, c);
+  const r = getRadian({ x: np.x / rx, y: np.y / ry });
+  const x = c.x + Math.cos(r) * rx;
+  const y = c.y + Math.sin(r) * ry;
+  const ep = { x, y };
+  return getDistance(ep, p) <= threshold ? ep : undefined;
 }
 
 export function isPointOnEllipse(c: IVec2, rx: number, ry: number, p: IVec2): boolean {
@@ -151,4 +205,15 @@ export function getCrossLineAndLine(line0: IVec2[], line1: IVec2[]): IVec2 | und
     ((line1[1].x - line1[0].x) * (line1[0].y - line0[1].y) - (line1[1].y - line1[0].y) * (line1[0].x - line0[1].x)) / 2;
   const rate = s1 / (s1 + s2);
   return vec(line0[0].x + (line0[1].x - line0[0].x) * rate, line0[0].y + (line0[1].y - line0[0].y) * rate);
+}
+
+export function sortPointFrom(p: IVec2, points: IVec2[]): IVec2[] {
+  return points
+    .map<[number, IVec2]>((v) => {
+      const dx = v.x - p.x;
+      const dy = v.y - p.y;
+      return [dx * dx + dy * dy, v];
+    })
+    .sort((a, b) => a[0] - b[0])
+    .map((v) => v[1]);
 }

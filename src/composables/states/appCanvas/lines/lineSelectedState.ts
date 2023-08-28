@@ -62,9 +62,7 @@ export function newLineSelectedState(): AppCanvasState {
           }
         case "pointerhover": {
           const hitResult = lineBounding.hitTest(event.data.current);
-          if (lineBounding.saveHitResult(hitResult)) {
-            ctx.setTmpShapeMap({});
-          }
+          if (lineBounding.saveHitResult(hitResult)) ctx.setTmpShapeMap({});
           if (hitResult) {
             ctx.setCursor();
             return;

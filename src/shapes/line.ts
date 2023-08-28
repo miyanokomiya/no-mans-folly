@@ -79,3 +79,15 @@ export function patchVertex(shape: LineShape, index: number, p: IVec2): Partial<
       return {};
   }
 }
+
+export function patchConnection(shape: LineShape, index: number, connection: ConnectionPoint): Partial<LineShape> {
+  const vertices = getLinePath(shape);
+  switch (index) {
+    case 0:
+      return { pConnection: connection };
+    case vertices.length - 1:
+      return { qConnection: connection };
+    default:
+      return {};
+  }
+}

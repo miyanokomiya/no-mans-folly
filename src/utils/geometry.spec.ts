@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   ISegment,
   expandRect,
+  getClosestOutlineOnEllipse,
+  getClosestOutlineOnRectangle,
   getRectCenterLines,
   getRectLines,
   getRectPoints,
@@ -14,6 +16,7 @@ import {
   isPointOnRectangleRotated,
   isSegmentOverlappedH,
   isSegmentOverlappedV,
+  sortPointFrom,
 } from "./geometry";
 
 describe("expandRect", () => {
@@ -49,6 +52,54 @@ describe("isPointOnRectangleRotated", () => {
 
     expect(isPointOnRectangleRotated(rect, 0, { x: 12, y: 10 })).toBe(false);
     expect(isPointOnRectangleRotated(rect, Math.PI / 4, { x: 12, y: 10 })).toBe(true);
+  });
+});
+
+describe("getClosestOutlineOnRectangle", () => {
+  test("should return the closest point on the rectangle outline", () => {
+    const rect = { x: 0, y: 0, width: 10, height: 10 };
+    expect(getClosestOutlineOnRectangle(rect, { x: -3, y: 4 }, 2)).toEqual(undefined);
+    expect(getClosestOutlineOnRectangle(rect, { x: -1, y: 4 }, 2)).toEqual({ x: 0, y: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { x: 1, y: 4 }, 2)).toEqual({ x: 0, y: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { x: 3, y: 4 }, 2)).toEqual(undefined);
+
+    expect(getClosestOutlineOnRectangle(rect, { x: 7, y: 4 }, 2)).toEqual(undefined);
+    expect(getClosestOutlineOnRectangle(rect, { x: 9, y: 4 }, 2)).toEqual({ x: 10, y: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { x: 11, y: 4 }, 2)).toEqual({ x: 10, y: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { x: 13, y: 4 }, 2)).toEqual(undefined);
+
+    expect(getClosestOutlineOnRectangle(rect, { y: -3, x: 4 }, 2)).toEqual(undefined);
+    expect(getClosestOutlineOnRectangle(rect, { y: -1, x: 4 }, 2)).toEqual({ y: 0, x: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { y: 1, x: 4 }, 2)).toEqual({ y: 0, x: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { y: 3, x: 4 }, 2)).toEqual(undefined);
+
+    expect(getClosestOutlineOnRectangle(rect, { y: 7, x: 4 }, 2)).toEqual(undefined);
+    expect(getClosestOutlineOnRectangle(rect, { y: 9, x: 4 }, 2)).toEqual({ y: 10, x: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { y: 11, x: 4 }, 2)).toEqual({ y: 10, x: 4 });
+    expect(getClosestOutlineOnRectangle(rect, { y: 13, x: 4 }, 2)).toEqual(undefined);
+
+    expect(getClosestOutlineOnRectangle(rect, { x: 0.8, y: 1 }, 2)).toEqual({ x: 0, y: 1 });
+    expect(getClosestOutlineOnRectangle(rect, { x: 1, y: 0.8 }, 2)).toEqual({ x: 1, y: 0 });
+  });
+});
+
+describe("getClosestOutlineOnEllipse", () => {
+  test("should return the closest outline point on the ellipse", () => {
+    const r0 = getClosestOutlineOnEllipse({ x: 0, y: 0 }, 3, 4, { x: 4, y: 0 }, 2);
+    expect(r0?.x).toBeCloseTo(3);
+    expect(r0?.y).toBeCloseTo(0);
+
+    const r1 = getClosestOutlineOnEllipse({ x: 0, y: 0 }, 3, 4, { x: 0, y: 3 }, 2);
+    expect(r1?.x).toBeCloseTo(0);
+    expect(r1?.y).toBeCloseTo(4);
+
+    const r2 = getClosestOutlineOnEllipse({ x: 1, y: 1 }, 3, 3, { x: 4, y: 4 }, 2);
+    expect(r2?.x).toBeCloseTo(1 + 3 / Math.SQRT2);
+    expect(r2?.y).toBeCloseTo(1 + 3 / Math.SQRT2);
+
+    const r3 = getClosestOutlineOnEllipse({ x: 0, y: 0 }, 3, 4, { x: 3, y: 3 }, 2);
+    expect(r3?.x).toBeLessThan(3);
+    expect(r3?.y).toBeLessThan(3);
   });
 });
 
@@ -255,5 +306,21 @@ describe("isSegmentOverlappedH", () => {
         { y: 9, x: 0 },
       ])
     ).toBe(true);
+  });
+});
+
+describe("sortPointFrom", () => {
+  test("should return sorted points", () => {
+    expect(
+      sortPointFrom({ x: 10, y: 10 }, [
+        { x: 11, y: 0 },
+        { x: 12, y: 12 },
+        { x: 0, y: 10 },
+      ])
+    ).toEqual([
+      { x: 12, y: 12 },
+      { x: 0, y: 10 },
+      { x: 11, y: 0 },
+    ]);
   });
 });
