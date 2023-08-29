@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 
@@ -36,6 +36,8 @@ const state: AppCanvasState = {
         ctx.setCursor(shape ? "pointer" : undefined);
         return;
       }
+      case "keydown":
+        return handleCommonShortcut(ctx, event);
       case "wheel":
         ctx.zoomView(event.data.delta.y);
         return;
@@ -45,7 +47,7 @@ const state: AppCanvasState = {
       case "history":
         return handleHistoryEvent(ctx, event);
       case "state":
-        return handleStateEvent(event, ["DroppingNewShape", "LineReady"]);
+        return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
       default:
         return;
     }

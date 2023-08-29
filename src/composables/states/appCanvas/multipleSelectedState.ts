@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
-import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -100,7 +100,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               ctx.deleteShapes(Object.keys(selectedIds));
               return;
             default:
-              return;
+              return handleCommonShortcut(ctx, event);
           }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
@@ -113,7 +113,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return newMultipleSelectedState;
         case "state":
-          return handleStateEvent(event, ["DroppingNewShape"]);
+          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
         default:
           return;
       }

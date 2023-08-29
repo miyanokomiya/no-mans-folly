@@ -60,15 +60,23 @@ export const AppToolbar: React.FC = () => {
   }, [popup]);
 
   const onClickLineButton = useCallback(() => {
-    setPopup(popup === "lines" ? "" : "lines");
-    smctx.stateMachine.handleEvent({
-      type: "state",
-      data: {
-        name: "LineReady",
-        options: { type: lineType },
-      },
-    });
-  }, [popup, lineType, smctx.stateMachine]);
+    if (smctx.stateMachine.getStateSummary().label === "LineReady") {
+      smctx.stateMachine.handleEvent({
+        type: "state",
+        data: { name: "Break" },
+      });
+      setPopup("");
+    } else {
+      smctx.stateMachine.handleEvent({
+        type: "state",
+        data: {
+          name: "LineReady",
+          options: { type: lineType },
+        },
+      });
+      setPopup("lines");
+    }
+  }, [lineType, smctx.stateMachine]);
 
   function renderPopup() {
     switch (popup) {

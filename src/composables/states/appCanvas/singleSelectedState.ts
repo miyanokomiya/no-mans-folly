@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon } from "../../../shapes";
-import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
@@ -92,7 +92,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               ctx.deleteShapes([selectedId]);
               return;
             default:
-              return;
+              return handleCommonShortcut(ctx, event);
           }
         case "wheel":
           boundingBox.updateScale(ctx.zoomView(event.data.delta.y));
@@ -104,7 +104,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return newSingleSelectedState;
         case "state":
-          return handleStateEvent(event, ["DroppingNewShape"]);
+          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
         default:
           return;
       }

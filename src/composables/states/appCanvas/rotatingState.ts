@@ -4,6 +4,15 @@ import { BoundingBox, newBoundingBoxRotating } from "../../boundingBox";
 import { IDENTITY_AFFINE } from "okageo";
 import { resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
+import {
+  ConnectedLineHandler,
+  getConnectedLineInfoMap,
+  getRotatedRectPathMap,
+  newConnectedLineHandler,
+  renderPatchedVertices,
+} from "../../connectedLineHandler";
+import { mergeMap } from "../../../utils/commons";
+import { LineShape } from "../../../shapes/line";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -12,6 +21,8 @@ interface Option {
 export function newRotatingState(option: Option): AppCanvasState {
   let selectedIds: { [id: string]: true };
   let resizingAffine = IDENTITY_AFFINE;
+  let lineHandler: ConnectedLineHandler;
+  let linePatchedMap: { [id: string]: Partial<LineShape> };
 
   const boundingBoxRotatingRotating = newBoundingBoxRotating({
     rotation: option.boundingBox.getRotation(),
@@ -22,6 +33,10 @@ export function newRotatingState(option: Option): AppCanvasState {
     onStart: async (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
       ctx.startDragging();
+
+      lineHandler = newConnectedLineHandler({
+        connectedLinesMap: getConnectedLineInfoMap(ctx),
+      });
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
@@ -40,7 +55,9 @@ export function newRotatingState(option: Option): AppCanvasState {
             }
             return m;
           }, {});
-          ctx.setTmpShapeMap(patchMap);
+
+          linePatchedMap = lineHandler.onModified(getRotatedRectPathMap(ctx, patchMap));
+          ctx.setTmpShapeMap(mergeMap(patchMap, linePatchedMap));
           return;
         }
         case "pointerup": {
@@ -57,8 +74,16 @@ export function newRotatingState(option: Option): AppCanvasState {
           return;
       }
     },
-    render: (_ctx, renderCtx) => {
+    render: (ctx, renderCtx) => {
       option.boundingBox.render(renderCtx, resizingAffine);
+
+      if (linePatchedMap) {
+        renderPatchedVertices(renderCtx, {
+          lines: Object.values(linePatchedMap),
+          scale: ctx.getScale(),
+          style: ctx.getStyleScheme(),
+        });
+      }
     },
   };
 }

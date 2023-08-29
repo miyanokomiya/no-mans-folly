@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleStateEvent } from "../commons";
+import { handleStateEvent, translateOnSelection } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
@@ -36,13 +36,20 @@ export function newLineReadyState(_option: Option): AppCanvasState {
             default:
               return;
           }
+        case "keydown":
+          switch (event.data.key) {
+            case "Escape":
+              return translateOnSelection(ctx);
+            default:
+              return;
+          }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(event, ["DroppingNewShape"]);
+          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape"]);
         default:
           return;
       }

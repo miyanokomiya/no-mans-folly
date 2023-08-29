@@ -190,7 +190,7 @@ export function AppCanvas() {
     (e: React.KeyboardEvent) => {
       smctx.stateMachine.handleEvent({
         type: "keydown",
-        data: { key: e.key },
+        data: { key: e.key, ctrl: isCtrlOrMeta(e), alt: isAltOrOpt(e), shift: e.shiftKey },
       });
     },
     [smctx]

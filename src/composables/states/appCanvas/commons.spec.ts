@@ -41,9 +41,10 @@ describe("translateOnSelection", () => {
 describe("handleStateEvent", () => {
   describe("DroppingNewShape", () => {
     test("should move to DroppingNewShape state", async () => {
+      const ctx = getMockCtx();
       const event = { type: "state", data: { name: "DroppingNewShape", options: {} } } as const;
-      expect(handleStateEvent(event, [])).toBe(undefined);
-      expect(handleStateEvent(event, ["DroppingNewShape"])?.().getLabel()).toEqual("DroppingNewShape");
+      expect(handleStateEvent(ctx, event, [])).toBe(undefined);
+      expect((handleStateEvent(ctx, event, ["DroppingNewShape"]) as any)?.().getLabel()).toEqual("DroppingNewShape");
     });
   });
 });

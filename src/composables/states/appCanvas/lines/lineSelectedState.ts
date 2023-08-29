@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape } from "../../../../shapes/line";
@@ -78,7 +78,7 @@ export function newLineSelectedState(): AppCanvasState {
               ctx.deleteShapes([lineShape.id]);
               return;
             default:
-              return;
+              return handleCommonShortcut(ctx, event);
           }
         case "wheel":
           lineBounding.updateScale(ctx.zoomView(event.data.delta.y));
@@ -90,7 +90,7 @@ export function newLineSelectedState(): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return translateOnSelection(ctx);
         case "state":
-          return handleStateEvent(event, ["DroppingNewShape", "LineReady"]);
+          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
         default:
           return;
       }

@@ -5,6 +5,15 @@ import { IDENTITY_AFFINE, add, applyAffine, sub } from "okageo";
 import { getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
+import {
+  ConnectedLineHandler,
+  getConnectedLineInfoMap,
+  getRotatedRectPathMap,
+  newConnectedLineHandler,
+  renderPatchedVertices,
+} from "../../connectedLineHandler";
+import { mergeMap } from "../../../utils/commons";
+import { LineShape } from "../../../shapes/line";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -16,6 +25,8 @@ export function newResizingState(option: Option): AppCanvasState {
   let resizingAffine = IDENTITY_AFFINE;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  let lineHandler: ConnectedLineHandler;
+  let linePatchedMap: { [id: string]: Partial<LineShape> };
 
   const boundingBoxResizing = newBoundingBoxResizing({
     rotation: option.boundingBox.getRotation(),
@@ -35,6 +46,10 @@ export function newResizingState(option: Option): AppCanvasState {
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
+      });
+
+      lineHandler = newConnectedLineHandler({
+        connectedLinesMap: getConnectedLineInfoMap(ctx),
       });
     },
     onEnd: async (ctx) => {
@@ -88,7 +103,9 @@ export function newResizingState(option: Option): AppCanvasState {
             }
             return m;
           }, {});
-          ctx.setTmpShapeMap(patchMap);
+
+          linePatchedMap = lineHandler.onModified(getRotatedRectPathMap(ctx, patchMap));
+          ctx.setTmpShapeMap(mergeMap(patchMap, linePatchedMap));
           return;
         }
         case "pointerup": {
@@ -110,6 +127,14 @@ export function newResizingState(option: Option): AppCanvasState {
           scale: ctx.getScale(),
           result: snappingResult,
           getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, ctx.getShapeMap()[id]),
+        });
+      }
+
+      if (linePatchedMap) {
+        renderPatchedVertices(renderCtx, {
+          lines: Object.values(linePatchedMap),
+          scale: ctx.getScale(),
+          style: ctx.getStyleScheme(),
         });
       }
     },

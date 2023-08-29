@@ -11,8 +11,10 @@ import {
   getConnectedLineInfoMap,
   getRotatedRectPathMap,
   newConnectedLineHandler,
+  renderPatchedVertices,
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
+import { LineShape } from "../../../shapes/line";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -25,6 +27,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineHandler;
+  let linePatchedMap: { [id: string]: Partial<LineShape> };
 
   return {
     getLabel: () => "MovingShape",
@@ -75,7 +78,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           affine = [1, 0, 0, 1, translate.x, translate.y];
 
           const shapeMap = ctx.getShapeMap();
-          const updatedMap = Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>(
+          const patchMap = Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>(
             (m, id) => {
               const s = shapeMap[id];
               if (s) m[id] = resizeShape(ctx.getShapeStruct, s, affine);
@@ -84,9 +87,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
             {}
           );
 
-          const linePatchedMap = lineHandler.onModified(getRotatedRectPathMap(ctx, updatedMap));
-
-          ctx.setTmpShapeMap(mergeMap(updatedMap, linePatchedMap));
+          linePatchedMap = lineHandler.onModified(getRotatedRectPathMap(ctx, patchMap));
+          ctx.setTmpShapeMap(mergeMap(patchMap, linePatchedMap));
           return;
         }
         case "pointerup": {
@@ -111,6 +113,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           scale: ctx.getScale(),
           result: snappingResult,
           getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, ctx.getShapeMap()[id]),
+        });
+      }
+
+      if (linePatchedMap) {
+        renderPatchedVertices(renderCtx, {
+          lines: Object.values(linePatchedMap),
+          scale: ctx.getScale(),
+          style: ctx.getStyleScheme(),
         });
       }
     },

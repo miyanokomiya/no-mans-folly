@@ -11,33 +11,43 @@ describe("newConnectedLineHandler", () => {
         qConnection: { rate: { x: 0.2, y: 0.8 }, id: "b" },
       });
 
-      const result = newConnectedLineHandler({
+      const target = newConnectedLineHandler({
         connectedLinesMap: {
           a: [l0],
           b: [l0],
         },
       });
+
+      const pathA = [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 50, y: 100 },
+        { x: 0, y: 100 },
+      ];
+      const pathB = [
+        { x: 100, y: 0 },
+        { x: 150, y: 0 },
+        { x: 150, y: 100 },
+        { x: 100, y: 100 },
+      ];
       expect(
-        result.onModified({
-          a: [
-            [
-              { x: 0, y: 0 },
-              { x: 50, y: 0 },
-              { x: 50, y: 100 },
-              { x: 0, y: 100 },
-            ],
-            0,
-          ],
-          b: [
-            [
-              { x: 100, y: 0 },
-              { x: 150, y: 0 },
-              { x: 150, y: 100 },
-              { x: 100, y: 100 },
-            ],
-            0,
-          ],
+        target.onModified({
+          a: [pathA, 0],
+          b: [pathB, 0],
         })
+      ).toEqual({
+        l0: {
+          p: { x: 25, y: 50 },
+          q: { x: 110, y: 80 },
+        },
+      });
+
+      expect(
+        target.onModified({
+          b: [pathB, 0],
+          a: [pathA, 0],
+        }),
+        "order insensitive"
       ).toEqual({
         l0: {
           p: { x: 25, y: 50 },

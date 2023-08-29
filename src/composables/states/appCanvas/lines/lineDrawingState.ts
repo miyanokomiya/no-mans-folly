@@ -3,6 +3,7 @@ import { newDefaultState } from "../defaultState";
 import { renderShape } from "../../../../shapes";
 import { LineShape } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
+import { translateOnSelection } from "../commons";
 
 interface Option {
   shape: LineShape;
@@ -33,6 +34,13 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           ctx.addShapes([{ ...shape, q } as LineShape]);
           ctx.selectShape(shape.id);
           return newLineSelectedState;
+        case "keydown":
+          switch (event.data.key) {
+            case "Escape":
+              return translateOnSelection(ctx);
+            default:
+              return;
+          }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;

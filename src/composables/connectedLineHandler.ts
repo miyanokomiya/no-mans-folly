@@ -1,8 +1,9 @@
 import { LineShape } from "../shapes/line";
 import { RotatedRectPath, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { Shape } from "../models";
+import { Shape, StyleScheme } from "../models";
 import { getLocalRectPolygon } from "../shapes";
+import { applyFillStyle } from "../utils/fillStyle";
 
 interface Option {
   connectedLinesMap: {
@@ -21,7 +22,8 @@ export function newConnectedLineHandler(option: Option) {
       infos.forEach((line) => {
         if (line.pConnection?.id === id) {
           const p = getLocationFromRateOnRectPath(rectPath, rotation, line.pConnection.rate);
-          ret[line.id] = { p };
+          ret[line.id] ??= {};
+          ret[line.id].p = p;
         }
         if (line.qConnection?.id === id) {
           const q = getLocationFromRateOnRectPath(rectPath, rotation, line.qConnection.rate);
@@ -71,7 +73,31 @@ export function getRotatedRectPathMap(
   const modifiedMap: { [id: string]: RotatedRectPath } = {};
   Object.entries(updatedMap).forEach(([id, shape]) => {
     const s = shapeMap[id];
-    if (s) modifiedMap[id] = [getLocalRectPolygon(ctx.getShapeStruct, { ...s, ...shape }), s.rotation];
+    if (s) {
+      const merged = { ...s, ...shape };
+      modifiedMap[id] = [getLocalRectPolygon(ctx.getShapeStruct, merged), merged.rotation];
+    }
   });
   return modifiedMap;
+}
+
+export function renderPatchedVertices(
+  ctx: CanvasRenderingContext2D,
+  option: { lines: Partial<LineShape>[]; scale: number; style: StyleScheme }
+) {
+  applyFillStyle(ctx, { color: option.style.selectionSecondaly });
+  const size = 5 * option.scale;
+
+  option.lines.forEach((l) => {
+    if (l.p) {
+      ctx.beginPath();
+      ctx.arc(l.p.x, l.p.y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (l.q) {
+      ctx.beginPath();
+      ctx.arc(l.q.x, l.q.y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
 }

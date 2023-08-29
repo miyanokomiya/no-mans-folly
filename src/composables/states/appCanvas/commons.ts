@@ -1,5 +1,5 @@
 import { HistoryEvent } from "../commons";
-import { ChangeStateEvent, TransitionValue } from "../core";
+import { ChangeStateEvent, KeyDownEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext } from "./core";
 import { newDefaultState } from "./defaultState";
@@ -30,11 +30,19 @@ export function translateOnSelection(
   }
 }
 
-type AcceptableEvent = "DroppingNewShape" | "LineReady";
+type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady";
 
-export function handleStateEvent(event: ChangeStateEvent, acceptable: AcceptableEvent[]) {
+export function handleStateEvent(
+  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
+  event: ChangeStateEvent,
+  acceptable: AcceptableEvent[]
+): TransitionValue<AppCanvasStateContext> {
   const name = event.data.name;
   if (!acceptable.includes(name as AcceptableEvent)) return;
+
+  if (event.data.name === "Break") {
+    return translateOnSelection(ctx);
+  }
 
   if (event.data.name === "DroppingNewShape") {
     return () => newDroppingNewShapeState(event.data.options);
@@ -50,5 +58,19 @@ export function handleHistoryEvent(ctx: Pick<AppCanvasStateContext, "undo" | "re
     ctx.redo();
   } else {
     ctx.undo();
+  }
+}
+
+export function handleCommonShortcut(
+  ctx: AppCanvasStateContext,
+  event: KeyDownEvent
+): TransitionValue<AppCanvasStateContext> {
+  switch (event.data.key) {
+    case "z":
+      if (event.data.ctrl) ctx.undo();
+      return translateOnSelection(ctx);
+    case "Z":
+      if (event.data.ctrl) ctx.redo();
+      return translateOnSelection(ctx);
   }
 }
