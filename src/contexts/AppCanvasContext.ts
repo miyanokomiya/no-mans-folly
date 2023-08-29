@@ -9,12 +9,14 @@ import { newDefaultState } from "../composables/states/appCanvas/defaultState";
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
+import { newDocumentStore } from "../stores/documents";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
   sheetStore: ReturnType<typeof newSheetStore>;
   layerStore: ReturnType<typeof newLayerStore>;
   shapeStore: ReturnType<typeof newShapeStore>;
+  documentStore: ReturnType<typeof newDocumentStore>;
   undoManager: { undo: () => void; redo: () => void };
   getStyleScheme: () => StyleScheme;
 }
@@ -74,10 +76,15 @@ export function createStateMachineContext(arg: {
     addShapes() {},
     deleteShapes() {},
     patchShapes() {},
+    setTmpShapeMap() {},
     getTmpShapeMap: () => ({}),
 
     getShapeStruct: getCommonStruct,
-    setTmpShapeMap() {},
+
+    startTextEditing() {},
+    stopTextEditing() {},
+    getDocumentMap: () => ({}),
+    patchDocument() {},
   };
 
   const setCtx: IAppStateMachineContext["setCtx"] = (c) => {

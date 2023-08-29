@@ -15,6 +15,7 @@ import { newDiagramStore } from "./stores/diagram";
 import { newSheetStore } from "./stores/sheets";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
+import { newDocumentStore } from "./stores/documents";
 
 const yDiagramDoc = new Y.Doc();
 const dbProviderDiagram = new IndexeddbPersistence("test-project-diagram", yDiagramDoc);
@@ -31,9 +32,10 @@ dbProviderSheet.on("synced", () => {
 });
 const layerStore = newLayerStore({ ydoc: ySheetDoc });
 const shapeStore = newShapeStore({ ydoc: ySheetDoc });
+const documentStore = newDocumentStore({ ydoc: ySheetDoc });
 const undoManager = new Y.UndoManager(
   // Must be ones in the same Y.Doc
-  [layerStore.getScope(), shapeStore.getScope()],
+  [layerStore.getScope(), shapeStore.getScope(), documentStore.getScope()],
   {
     captureTimeout: 0,
   }
@@ -44,6 +46,7 @@ const acctx = {
   sheetStore,
   layerStore,
   shapeStore,
+  documentStore,
   getStyleScheme: () => createStyleScheme(),
   undoManager: {
     undo: () => undoManager.undo(),

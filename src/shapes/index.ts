@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2 } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getRectCenter, multiAffines } from "okageo";
 import { Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
@@ -75,4 +75,19 @@ export function getClosestOutline(
 
 export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {
   return getLocationRateOnRectPath(getLocalRectPolygon(getStruct, shape), shape.rotation, p);
+}
+
+export function getShapeAffine(getStruct: GetShapeStruct, shape: Shape) {
+  const path = getLocalRectPolygon(getStruct, shape);
+  const width = getDistance(path[0], path[1]);
+  const height = getDistance(path[0], path[3]);
+  const center = getCenter(path[0], path[2]);
+  const sin = Math.sin(shape.rotation);
+  const cos = Math.cos(shape.rotation);
+
+  return multiAffines([
+    [1, 0, 0, 1, center.x, center.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, 1, -width / 2, -height / 2],
+  ]);
 }

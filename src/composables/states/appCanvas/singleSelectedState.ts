@@ -8,6 +8,7 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newTextEditingState } from "./text/textEditingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -91,6 +92,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             case "Delete":
               ctx.deleteShapes([selectedId]);
               return;
+            case "t":
+              return () => newTextEditingState({ id: selectedId! });
             default:
               return handleCommonShortcut(ctx, event);
           }
@@ -102,7 +105,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return newSingleSelectedState;
+          return translateOnSelection(ctx);
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
         default:
