@@ -40,5 +40,14 @@ describe("struct", () => {
       expect(struct.isPointOn(shape, { x: 2, y: 2 })).toBe(true);
       expect(struct.isPointOn(shape, { x: 15, y: 5 })).toBe(false);
     });
+
+    test("should prioritize the marker points", () => {
+      const shape = struct.create({ rx: 10, ry: 10 });
+      expect(struct.getClosestOutline?.(shape, { x: 11, y: 1 }, 2)).toEqual({ x: 10, y: 0 });
+      expect(struct.getClosestOutline?.(shape, { x: 21, y: 9 }, 2)).toEqual({ x: 20, y: 10 });
+      expect(struct.getClosestOutline?.(shape, { x: 11, y: 9 }, 2)).toEqual({ x: 10, y: 10 });
+      expect(struct.getClosestOutline?.(shape, { x: 1, y: 11 }, 2)).toEqual({ x: 0, y: 10 });
+      expect(struct.getClosestOutline?.(shape, { x: 9, y: 21 }, 2)).toEqual({ x: 10, y: 20 });
+    });
   });
 });

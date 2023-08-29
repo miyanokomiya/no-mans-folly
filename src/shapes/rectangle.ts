@@ -1,9 +1,20 @@
-import { IVec2, applyAffine, getCenter, getDistance, getRadian, getRectCenter, isSame, rotate } from "okageo";
+import {
+  IRectangle,
+  IVec2,
+  applyAffine,
+  getCenter,
+  getDistance,
+  getRadian,
+  getRectCenter,
+  isSame,
+  rotate,
+} from "okageo";
 import { FillStyle, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   getClosestOutlineOnRectangle,
   getRectPoints,
+  getRotateFn,
   getRotatedWrapperRect,
   isPointOnRectangleRotated,
 } from "../utils/geometry";
@@ -75,11 +86,19 @@ export const struct: ShapeStruct<RectangleShape> = {
   getClosestOutline(shape, p, threshold) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const center = getRectCenter(rect);
-    const rotatedP = shape.rotation === 0 ? p : rotate(p, -shape.rotation, center);
-    const rotatedClosest = getClosestOutlineOnRectangle(rect, rotatedP, threshold);
-    if (!rotatedClosest) return;
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const rotatedP = rotateFn(p, true);
 
-    return shape.rotation === 0 ? rotatedClosest : rotate(rotatedClosest, shape.rotation, center);
+    {
+      const markers = getMarkers(rect, center);
+      const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+      if (rotatedClosest) return rotateFn(rotatedClosest);
+    }
+
+    {
+      const rotatedClosest = getClosestOutlineOnRectangle(rect, rotatedP, threshold);
+      if (rotatedClosest) return rotateFn(rotatedClosest);
+    }
   },
 };
 
@@ -87,4 +106,18 @@ function getLocalRectPolygon(shape: RectangleShape): IVec2[] {
   const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const c = getRectCenter(rect);
   return getRectPoints(rect).map((p) => rotate(p, shape.rotation, c));
+}
+
+function getMarkers(rect: IRectangle, center: IVec2): IVec2[] {
+  return [
+    { x: rect.x, y: rect.y },
+    { x: center.x, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y },
+    { x: rect.x + rect.width, y: center.y },
+    { x: rect.x + rect.width, y: rect.y + rect.height },
+    { x: center.x, y: rect.y + rect.height },
+    { x: rect.x, y: rect.y + rect.height },
+    { x: rect.x, y: center.y },
+    center,
+  ];
 }

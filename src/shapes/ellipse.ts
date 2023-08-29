@@ -4,6 +4,7 @@ import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   getClosestOutlineOnEllipse,
   getRectPoints,
+  getRotateFn,
   getRotatedWrapperRect,
   isPointOnEllipseRotated,
 } from "../utils/geometry";
@@ -75,11 +76,19 @@ export const struct: ShapeStruct<EllipseShape> = {
   },
   getClosestOutline(shape, p, threshold) {
     const center = add(shape.p, { x: shape.rx, y: shape.ry });
-    const rotatedP = shape.rotation === 0 ? p : rotate(p, -shape.rotation, center);
-    const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedP, threshold);
-    if (!rotatedClosest) return;
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const rotatedP = rotateFn(p, true);
 
-    return shape.rotation === 0 ? rotatedClosest : rotate(rotatedClosest, shape.rotation, center);
+    {
+      const markers = getMarkers(center, shape.rx, shape.ry);
+      const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+      if (rotatedClosest) return rotateFn(rotatedClosest);
+    }
+
+    {
+      const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedP, threshold);
+      if (rotatedClosest) return rotateFn(rotatedClosest);
+    }
   },
 };
 
@@ -91,4 +100,14 @@ function getLocalRectPolygon(shape: EllipseShape): IVec2[] {
     width: 2 * shape.rx,
     height: 2 * shape.ry,
   }).map((p) => rotate(p, shape.rotation, c));
+}
+
+function getMarkers(center: IVec2, rx: number, ry: number): IVec2[] {
+  return [
+    { x: center.x, y: center.y - ry },
+    { x: center.x + rx, y: center.y },
+    { x: center.x, y: center.y + ry },
+    { x: center.x - rx, y: center.y },
+    center,
+  ];
 }

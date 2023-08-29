@@ -1,6 +1,7 @@
 import {
   IRectangle,
   IVec2,
+  add,
   getCenter,
   getDistance,
   getOuterRectangle,
@@ -17,6 +18,20 @@ import {
 export type ISegment = [IVec2, IVec2];
 
 export type RotatedRectPath = [path: IVec2[], rotation: number];
+
+export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?: boolean) => IVec2 {
+  if (radian === 0) return (p) => p;
+
+  const sin = Math.sin(radian);
+  const cos = Math.cos(radian);
+  return (p: IVec2, reverse = false) => {
+    const v = origin ? sub(p, origin) : p;
+    const rotatedV = reverse
+      ? { x: v.x * cos + v.y * sin, y: -v.x * sin + v.y * cos }
+      : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
+    return origin ? add(rotatedV, origin) : rotatedV;
+  };
+}
 
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {

@@ -3,7 +3,7 @@ import { handleHistoryEvent, translateOnSelection } from "../commons";
 import { LineShape, getLinePath, patchConnection, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { getClosestConnection } from "../../../lineSnapping";
+import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 
 interface Option {
   lineShape: LineShape;
@@ -13,11 +13,20 @@ interface Option {
 export function newMovingLineVertexState(option: Option): AppCanvasState {
   const origin = getLinePath(option.lineShape)[option.index];
   let vertex = origin;
+  let lineSnapping: LineSnapping;
+  let connectionResult: ConnectionResult | undefined;
 
   return {
     getLabel: () => "MovingLineVertex",
     onStart: async (ctx) => {
       ctx.startDragging();
+
+      const shapeMap = ctx.getShapeMap();
+      const selectedIds = ctx.getSelectedShapeIdMap();
+      lineSnapping = newLineSnapping({
+        snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
+        getShapeStruct: ctx.getShapeStruct,
+      });
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
@@ -27,14 +36,14 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          const connectionInfo = getClosestConnection(point, ctx);
+          connectionResult = lineSnapping.testConnection(point, ctx.getScale());
 
-          if (connectionInfo) {
-            vertex = connectionInfo.p;
+          if (connectionResult) {
+            vertex = connectionResult.p;
             ctx.setTmpShapeMap({
               [option.lineShape.id]: {
                 ...patchVertex(option.lineShape, option.index, vertex),
-                ...patchConnection(option.lineShape, option.index, connectionInfo.connection),
+                ...patchConnection(option.lineShape, option.index, connectionResult.connection),
               },
             });
           } else {
@@ -73,6 +82,14 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       renderCtx.beginPath();
       renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
       renderCtx.fill();
+
+      if (connectionResult) {
+        renderConnectionResult(renderCtx, {
+          result: connectionResult,
+          scale: ctx.getScale(),
+          style: ctx.getStyleScheme(),
+        });
+      }
     },
   };
 }

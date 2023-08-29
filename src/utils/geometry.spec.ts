@@ -8,6 +8,7 @@ import {
   getRectCenterLines,
   getRectLines,
   getRectPoints,
+  getRotateFn,
   getRotatedWrapperRect,
   getWrapperRect,
   isPointCloseToSegment,
@@ -19,6 +20,20 @@ import {
   isSegmentOverlappedV,
   sortPointFrom,
 } from "./geometry";
+
+describe("getRotateFn", () => {
+  test("should return function to rotate", () => {
+    const fn = getRotateFn(Math.PI / 2, { x: 10, y: 20 });
+    expect(fn({ x: 20, y: 20 })).toEqual({
+      x: 10,
+      y: 30,
+    });
+    expect(fn({ x: 20, y: 20 }, true)).toEqual({
+      x: 10,
+      y: 10,
+    });
+  });
+});
 
 describe("expandRect", () => {
   test("should return expanded rectangle", () => {
