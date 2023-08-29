@@ -1,13 +1,17 @@
 import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
-import { IDENTITY_AFFINE, IRectangle, IVec2, add, moveRect, sub } from "okageo";
+import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { getLocalRectPolygon, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
+import { getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
-import { newConnectedLineHandler } from "../../connectedLineHandler";
-import { LineShape } from "../../../shapes/line";
+import {
+  ConnectedLineHandler,
+  getConnectedLineInfoMap,
+  getRotatedRectPathMap,
+  newConnectedLineHandler,
+} from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 
 interface Option {
@@ -20,6 +24,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
+  let lineHandler: ConnectedLineHandler;
 
   return {
     getLabel: () => "MovingShape",
@@ -51,6 +56,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           scale: ctx.getScale(),
         });
       }
+
+      lineHandler = newConnectedLineHandler({
+        connectedLinesMap: getConnectedLineInfoMap(ctx),
+      });
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
@@ -69,25 +78,13 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const updatedMap = Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>(
             (m, id) => {
               const s = shapeMap[id];
-              if (s) {
-                m[id] = resizeShape(ctx.getShapeStruct, s, affine);
-              }
+              if (s) m[id] = resizeShape(ctx.getShapeStruct, s, affine);
               return m;
             },
             {}
           );
 
-          const lineHandler = newConnectedLineHandler({
-            lineShapes: Object.values(shapeMap).filter((s): s is LineShape => s.type === "line"),
-          });
-          const modifiedMap: { [id: string]: [path: IVec2[], rotation: number] } = {};
-          Object.entries(updatedMap).forEach(([id, shape]) => {
-            modifiedMap[id] = [
-              getLocalRectPolygon(ctx.getShapeStruct, { ...shapeMap[id], ...shape }),
-              shapeMap[id].rotation,
-            ];
-          });
-          const linePatchedMap = lineHandler.onModified(modifiedMap);
+          const linePatchedMap = lineHandler.onModified(getRotatedRectPathMap(ctx, updatedMap));
 
           ctx.setTmpShapeMap(mergeMap(updatedMap, linePatchedMap));
           return;

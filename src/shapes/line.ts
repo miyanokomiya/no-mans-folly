@@ -16,7 +16,7 @@ export interface LineShape extends Shape {
 export const struct: ShapeStruct<LineShape> = {
   label: "Line",
   create(arg = {}) {
-    return {
+    const obj: LineShape = {
       ...createBaseShape(arg),
       type: "line",
       rotation: 0, // should always be "0" or just ignored
@@ -24,6 +24,9 @@ export const struct: ShapeStruct<LineShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       q: arg.q ?? { x: 100, y: 0 },
     };
+    if (arg.pConnection) obj.pConnection = arg.pConnection;
+    if (arg.qConnection) obj.qConnection = arg.qConnection;
+    return obj;
   },
   render(ctx, shape) {
     applyStrokeStyle(ctx, shape.stroke);

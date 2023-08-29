@@ -16,6 +16,8 @@ import {
 
 export type ISegment = [IVec2, IVec2];
 
+export type RotatedRectPath = [path: IVec2[], rotation: number];
+
 export function expandRect(rect: IRectangle, padding: number): IRectangle {
   return {
     x: rect.x - padding,
