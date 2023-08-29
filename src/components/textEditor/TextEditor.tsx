@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   onInput?: (val: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export const TextEditor: React.FC<Props> = (props) => {
@@ -39,9 +40,9 @@ export const TextEditor: React.FC<Props> = (props) => {
     <div className="fixed top-0 left-0">
       <textarea
         ref={inputRef}
-        type="text"
         value={draft}
         onChange={onChange}
+        onKeyDown={props.onKeyDown}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
       />

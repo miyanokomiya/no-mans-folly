@@ -23,18 +23,12 @@ export function AppCanvas() {
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
-      smctx.stateMachine.handleEvent({
-        type: "shape-updated",
-      });
       setShapes(acctx.shapeStore.getEntities());
     });
   }, [acctx.shapeStore, smctx.stateMachine]);
 
   useEffect(() => {
     return acctx.documentStore.watch(() => {
-      smctx.stateMachine.handleEvent({
-        type: "shape-updated",
-      });
       setDocMap(acctx.documentStore.getDocMap());
     });
   }, [acctx.documentStore, smctx.stateMachine]);
@@ -44,14 +38,6 @@ export function AppCanvas() {
       setCanvasState({});
     });
   }, [smctx.stateMachine]);
-
-  useEffect(() => {
-    return acctx.shapeStore.watchSelected(() => {
-      smctx.stateMachine.handleEvent({
-        type: "selection",
-      });
-    });
-  }, [acctx.shapeStore, smctx.stateMachine]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
@@ -97,6 +83,20 @@ export function AppCanvas() {
       patchDocument: acctx.documentStore.patchDoc,
     });
   }, [canvas, acctx, smctx, shapes, tmpShapeMap, docMap]);
+
+  useEffect(() => {
+    smctx.stateMachine.handleEvent({
+      type: "shape-updated",
+    });
+  }, [acctx.documentStore, smctx.stateMachine, shapes, docMap]);
+
+  useEffect(() => {
+    return acctx.shapeStore.watchSelected(() => {
+      smctx.stateMachine.handleEvent({
+        type: "selection",
+      });
+    });
+  }, [acctx.shapeStore, smctx.stateMachine]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -255,7 +255,7 @@ export function AppCanvas() {
     [smctx.stateMachine]
   );
 
-  const textEditor = textEditing ? <TextEditor onInput={onTextInput} /> : undefined;
+  const textEditor = textEditing ? <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} /> : undefined;
 
   return (
     <>
