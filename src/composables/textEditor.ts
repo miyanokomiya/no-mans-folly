@@ -120,9 +120,13 @@ export function newTextEditorController() {
     }
   }
 
-  function getBoundsAtCursor(): IRectangle | undefined {
+  function getBoundsAtIME(): IRectangle | undefined {
     if (!_composition || !_compositionLines) return;
-    return getBoundsAtLocation(_composition, _compositionLines, getCursorLocation(_compositionLines, getCursor()));
+    return getBoundsAtLocation(
+      _composition,
+      _compositionLines,
+      getCursorLocation(_compositionLines, getCursor() + getSelection())
+    );
   }
 
   function startIME(length: number) {
@@ -158,6 +162,7 @@ export function newTextEditorController() {
     renderDocByComposition(ctx, _composition, _compositionLines);
     renderCursor(ctx, {
       composition: _composition,
+      compositionLines: _compositionLines,
       cursor,
       selection,
       isIME,
@@ -179,7 +184,7 @@ export function newTextEditorController() {
     getDeltaByInput,
     getLocationIndex,
     getLocationAt,
-    getBoundsAtCursor,
+    getBoundsAtIME,
     startIME,
     stopIME,
     render,
@@ -216,11 +221,13 @@ function renderCursor(
   ctx: CanvasRenderingContext2D,
   {
     composition,
+    compositionLines,
     cursor,
     selection,
     isIME,
   }: {
     composition: DocCompositionItem[];
+    compositionLines: DocCompositionLine[];
     cursor: number;
     selection: number;
     isIME: boolean;
@@ -239,13 +246,20 @@ function renderCursor(
     const c = composition[cursor];
 
     if (isIME) {
-      const cs = composition[cursor + selection - 1];
+      const range = getRangeLines(composition, compositionLines, [cursor, selection]);
       ctx.beginPath();
-      ctx.moveTo(c.bounds.x, c.bounds.y + c.bounds.height);
-      ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
 
-      ctx.moveTo(cs.bounds.x + cs.bounds.width, c.bounds.y);
-      ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
+      range.forEach((line) => {
+        if (line.length === 0) return;
+        const head = line[0];
+        const tail = line[line.length - 1];
+        ctx.moveTo(head.bounds.x, head.bounds.y + head.bounds.height);
+        ctx.lineTo(tail.bounds.x + tail.bounds.width, tail.bounds.y + tail.bounds.height);
+      });
+
+      const cs = composition[cursor + selection - 1];
+      ctx.moveTo(cs.bounds.x + cs.bounds.width, cs.bounds.y);
+      ctx.lineTo(cs.bounds.x + cs.bounds.width, cs.bounds.y + cs.bounds.height);
       ctx.stroke();
     } else {
       ctx.beginPath();

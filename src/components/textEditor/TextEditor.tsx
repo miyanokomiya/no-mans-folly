@@ -41,12 +41,9 @@ export const TextEditor: React.FC<Props> = (props) => {
 
   return (
     <div
-      className="fixed opacity-0 pointer-events-none"
+      className="fixed top-0 left-0 w-0 h-0 opacity-0 pointer-events-none"
       style={{
-        top: props.position.y,
-        bottom: props.position.y + 1,
-        left: props.position.x,
-        right: props.position.x + 1,
+        transform: `translate(${props.position.x}px, ${props.position.y}px)`,
       }}
     >
       <textarea

@@ -4,6 +4,7 @@ import { TextEditorController, newTextEditorController } from "../../../textEdit
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 interface Option {
   id: string;
@@ -17,10 +18,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
   function updateEditorPosition(ctx: AppCanvasStateContext) {
     if (!textEditorController || !applyAffine) return;
 
-    const bounds = textEditorController.getBoundsAtCursor();
+    const bounds = textEditorController.getBoundsAtIME();
     if (!bounds) return;
 
-    const p = { x: bounds.x, y: bounds.y + bounds.height };
+    const p = { x: bounds.x, y: bounds.y };
     ctx.setTextEditorPosition(applyAffine(textBounds.affine, p));
   }
 
@@ -157,6 +158,14 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
       renderCtx.save();
       renderCtx.transform(...textBounds.affine);
+
+      const style = ctx.getStyleScheme();
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly });
+      renderCtx.lineWidth = 2 * ctx.getScale();
+      renderCtx.beginPath();
+      renderCtx.strokeRect(textBounds.range.x, textBounds.range.x, textBounds.range.width, textBounds.range.height);
+      renderCtx.stroke();
+
       textEditorController.render(renderCtx);
       renderCtx.restore();
     },
