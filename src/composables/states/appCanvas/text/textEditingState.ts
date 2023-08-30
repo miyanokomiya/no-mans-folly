@@ -2,7 +2,7 @@ import { applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
-import { AppCanvasState } from "../core";
+import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 
 interface Option {
@@ -13,6 +13,16 @@ interface Option {
 export function newTextEditingState(option: Option): AppCanvasState {
   let textEditorController: TextEditorController;
   let textBounds: ReturnType<typeof getShapeTextBounds>;
+
+  function updateEditorPosition(ctx: AppCanvasStateContext) {
+    if (!textEditorController || !applyAffine) return;
+
+    const bounds = textEditorController.getBoundsAtCursor();
+    if (!bounds) return;
+
+    const p = { x: bounds.x, y: bounds.y + bounds.height };
+    ctx.setTextEditorPosition(applyAffine(textBounds.affine, p));
+  }
 
   return {
     getLabel: () => "TextEditing",
@@ -29,6 +39,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
         textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
         textEditorController.moveCursorToTail();
       }
+
+      updateEditorPosition(ctx);
 
       ctx.setCaptureTimeout(1000);
     },
@@ -53,9 +65,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
           const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.point));
           textEditorController.setCursor(textEditorController.getLocationIndex(location));
+          updateEditorPosition(ctx);
           return () => newTextSelectingState({ id: option.id, textEditorController });
         }
         case "keydown":
+          updateEditorPosition(ctx);
           switch (event.data.key) {
             case "ArrowLeft":
               if (event.data.shift) {

@@ -37,11 +37,12 @@ export function renderDocByComposition(
     });
   });
 
-  composition.forEach((c) => {
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(c.bounds.x, c.bounds.y, c.bounds.width, c.bounds.height);
-  });
+  // For debug
+  // composition.forEach((c) => {
+  //   ctx.strokeStyle = "red";
+  //   ctx.lineWidth = 1;
+  //   ctx.strokeRect(c.bounds.x, c.bounds.y, c.bounds.width, c.bounds.height);
+  // });
 }
 
 export function getCursorLocation(compositionLines: DocCompositionLine[], cursor: number): IVec2 {
@@ -241,6 +242,8 @@ export function getBoundsAtLocation(
   compositionLines: DocCompositionLine[],
   location: IVec2
 ): IRectangle {
+  if (composition.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+
   const charIndex =
     compositionLines.slice(0, location.y).reduce((n, line) => {
       return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);

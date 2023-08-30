@@ -117,6 +117,11 @@ export function newTextEditorController() {
     }
   }
 
+  function getBoundsAtCursor(): IRectangle | undefined {
+    if (!_composition || !_compositionLines) return;
+    return getBoundsAtLocation(_composition, _compositionLines, getCursorLocation(_compositionLines, getCursor()));
+  }
+
   function render(ctx: CanvasRenderingContext2D) {
     if (!_ctx) {
       setRenderingContext(ctx);
@@ -177,6 +182,7 @@ export function newTextEditorController() {
     getDeltaByInput,
     getLocationIndex,
     getLocationAt,
+    getBoundsAtCursor,
     render,
   };
 }

@@ -23,6 +23,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
 
   startTextEditing: () => void;
   stopTextEditing: () => void;
+  setTextEditorPosition: (p: IVec2) => void;
   getDocumentMap: () => { [id: string]: DocOutput };
   patchDocument: (id: string, delta: DocDelta) => void;
 }

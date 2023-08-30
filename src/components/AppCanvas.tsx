@@ -9,6 +9,7 @@ import { findBackward } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
 import { DocOutput } from "../models/document";
 import { renderDoc } from "../utils/textEditor";
+import { IVec2 } from "okageo";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -20,6 +21,7 @@ export function AppCanvas() {
   const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
   const [cursor, setCursor] = useState<string | undefined>();
   const [textEditing, setTextEditing] = useState(false);
+  const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
@@ -84,6 +86,9 @@ export function AppCanvas() {
       },
       stopTextEditing() {
         setTextEditing(false);
+      },
+      setTextEditorPosition: (p) => {
+        setTextEditorPosition(canvas.canvasToView(p));
       },
       getDocumentMap: () => docMap,
       patchDocument: acctx.documentStore.patchDoc,
@@ -265,7 +270,9 @@ export function AppCanvas() {
     [smctx.stateMachine]
   );
 
-  const textEditor = textEditing ? <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} /> : undefined;
+  const textEditor = textEditing ? (
+    <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
+  ) : undefined;
 
   return (
     <>

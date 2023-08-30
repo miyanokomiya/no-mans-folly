@@ -84,6 +84,7 @@ export function createStateMachineContext(arg: {
 
     startTextEditing() {},
     stopTextEditing() {},
+    setTextEditorPosition() {},
     getDocumentMap: () => ({}),
     patchDocument() {},
   };

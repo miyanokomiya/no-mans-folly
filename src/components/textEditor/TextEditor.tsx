@@ -1,8 +1,10 @@
+import { IVec2 } from "okageo";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   onInput?: (val: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  position: IVec2;
 }
 
 export const TextEditor: React.FC<Props> = (props) => {
@@ -37,7 +39,15 @@ export const TextEditor: React.FC<Props> = (props) => {
   }, [draft, props]);
 
   return (
-    <div className="fixed top-0 left-0">
+    <div
+      className="fixed opacity-0 pointer-events-none"
+      style={{
+        top: props.position.y,
+        bottom: props.position.y + 1,
+        left: props.position.x,
+        right: props.position.x + 1,
+      }}
+    >
       <textarea
         ref={inputRef}
         value={draft}
