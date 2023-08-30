@@ -11,6 +11,7 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newTextEditingState } from "./text/textEditingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -19,6 +20,7 @@ interface Option {
 export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIds: { [id: string]: true };
   let boundingBox: BoundingBox;
+  let timestamp = 0;
 
   return {
     getLabel: () => "MultipleSelected",
@@ -39,6 +41,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           scale: ctx.getScale(),
         });
       }
+
+      timestamp = ctx.getTimestamp();
     },
     handleEvent: async (ctx, event) => {
       if (!selectedIds) return;
@@ -65,7 +69,11 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
               if (!event.data.options.ctrl) {
                 if (selectedIds[shape.id]) {
-                  return () => newMovingShapeState({ boundingBox });
+                  if (ctx.getTimestamp() - timestamp < 300) {
+                    return () => newTextEditingState({ id: shape.id });
+                  } else {
+                    return () => newMovingShapeState({ boundingBox });
+                  }
                 } else {
                   ctx.selectShape(shape.id, false);
                   return newSingleSelectedByPointerOnState;
@@ -73,6 +81,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               }
 
               ctx.selectShape(shape.id, true);
+
               return;
             }
             case 1:

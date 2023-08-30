@@ -17,6 +17,7 @@ interface Option {
 export function newSingleSelectedState(option?: Option): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
+  let timestamp = 0;
 
   return {
     getLabel: () => "SingleSelected",
@@ -32,6 +33,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           styleScheme: ctx.getStyleScheme(),
           scale: ctx.getScale(),
         });
+
+      timestamp = ctx.getTimestamp();
     },
     handleEvent: async (ctx, event) => {
       if (!selectedId) return translateOnSelection(ctx);
@@ -48,6 +51,10 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                  case "area":
+                    if (ctx.getTimestamp() - timestamp < 300) {
+                      return () => newTextEditingState({ id: selectedId! });
+                    }
                 }
               }
 
