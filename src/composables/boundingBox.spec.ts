@@ -247,5 +247,28 @@ describe("newBoundingBoxRotating", () => {
       expect(p1.x).toBeCloseTo(10);
       expect(p1.y).toBeCloseTo(0);
     });
+
+    test("should snap loosely", () => {
+      const result0 = newBoundingBoxRotating({
+        rotation: Math.PI / 2,
+        origin: { x: 0, y: 0 },
+      });
+      const a0 = result0.getAffine({ x: 0, y: 10 }, { x: 9.9, y: 0.1 });
+      expect(a0[0]).toBeCloseTo(Math.cos(-Math.PI / 2));
+      expect(a0[1]).toBeCloseTo(Math.sin(-Math.PI / 2));
+
+      const a1 = result0.getAffine({ x: 0, y: 10 }, { x: 9, y: 1 });
+      expect(a1[0]).not.toBeCloseTo(Math.cos(-Math.PI / 2));
+    });
+
+    test("should snap when the flag is supplied", () => {
+      const result0 = newBoundingBoxRotating({
+        rotation: Math.PI / 2,
+        origin: { x: 0, y: 0 },
+      });
+      const a0 = result0.getAffine({ x: 0, y: 10 }, { x: 9, y: 1 }, true);
+      expect(a0[0]).toBeCloseTo(Math.cos(-Math.PI / 2));
+      expect(a0[1]).toBeCloseTo(Math.sin(-Math.PI / 2));
+    });
   });
 });

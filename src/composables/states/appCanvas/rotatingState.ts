@@ -45,7 +45,7 @@ export function newRotatingState(option: Option): AppCanvasState {
     handleEvent: async (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current);
+          resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);
 
           const shapeMap = ctx.getShapeMap();
           const patchMap = Object.keys(selectedIds).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {

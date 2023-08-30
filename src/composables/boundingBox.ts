@@ -17,7 +17,7 @@ import {
 import { applyPath } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { ISegment, getCrossLineAndLine, isPointCloseToSegment } from "../utils/geometry";
+import { ISegment, getCrossLineAndLine, isPointCloseToSegment, snapAngle } from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
 import { getResizingCursorStyle } from "../utils/styleHelper";
 
@@ -286,12 +286,23 @@ export function newBoundingBoxRotating(option: BoundingBoxRotatingOption) {
     [1, 0, 0, 1, -option.origin.x, -option.origin.y],
   ]);
 
-  function getAffine(start: IVec2, current: IVec2): AffineMatrix {
+  function getAffine(start: IVec2, current: IVec2, snap = false): AffineMatrix {
     const startR = getRadian(start, option.origin);
     const targetR = getRadian(current, option.origin);
     const dr = targetR - startR;
-    const dsin = Math.sin(dr);
-    const dcos = Math.cos(dr);
+
+    if (snap) {
+      const r = (snapAngle(((dr + option.rotation) * 180) / Math.PI, 15) * Math.PI) / 180 - option.rotation;
+      const dsin = Math.sin(r);
+      const dcos = Math.cos(r);
+      return multiAffines([m0, [dcos, dsin, -dsin, dcos, 0, 0], m1]);
+    }
+
+    const adjusted0 = (snapAngle(((dr + option.rotation) * 180) / Math.PI, 5) * Math.PI) / 180 - option.rotation;
+    const adjusted1 = (snapAngle(((dr + option.rotation) * 180) / Math.PI, 45) * Math.PI) / 180 - option.rotation;
+    const r = Math.abs(adjusted0 - adjusted1) < 0.0001 ? adjusted0 : dr;
+    const dsin = Math.sin(r);
+    const dcos = Math.cos(r);
 
     return multiAffines([m0, [dcos, dsin, -dsin, dcos, 0, 0], m1]);
   }
