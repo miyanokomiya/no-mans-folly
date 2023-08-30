@@ -1,7 +1,7 @@
 import { IRectangle, IVec2 } from "okageo";
 import { DocAttributes, DocDeltaInsert, DocOutput } from "../models/document";
 
-const DEFAULT_FONT_SIZE = 18;
+export const DEFAULT_FONT_SIZE = 18;
 
 export function getTextLines(doc: DocOutput): string[] {
   return doc

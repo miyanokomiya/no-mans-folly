@@ -129,6 +129,7 @@ export function AppCanvas() {
     ctx.scale(1 / canvas.scale, 1 / canvas.scale);
     ctx.translate(-canvas.viewOrigin.x, -canvas.viewOrigin.y);
 
+    const selectedMap = smctx.getCtx().getSelectedShapeIdMap();
     shapes.forEach((shape) => {
       const tmpShape = tmpShapeMap[shape.id];
       const latestShape = tmpShape ? { ...shape, ...tmpShape } : shape;
@@ -136,6 +137,8 @@ export function AppCanvas() {
 
       const doc = docMap[latestShape.id];
       if (doc) {
+        if (textEditing && selectedMap[shape.id]) return;
+
         ctx.save();
         const bounds = getShapeTextBounds(getCommonStruct, latestShape);
         ctx.transform(...bounds.affine);
@@ -154,8 +157,9 @@ export function AppCanvas() {
     canvas.viewOrigin.x,
     canvas.viewOrigin.y,
     canvasState,
-    smctx.stateMachine,
+    smctx,
     docMap,
+    textEditing,
   ]);
 
   const onMouseDown = useCallback(

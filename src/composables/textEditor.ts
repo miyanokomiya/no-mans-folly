@@ -1,6 +1,7 @@
 import { IRectangle, IVec2 } from "okageo";
 import { DocDelta, DocOutput } from "../models/document";
 import {
+  DEFAULT_FONT_SIZE,
   DocCompositionItem,
   DocCompositionLine,
   getBoundsAtLocation,
@@ -140,59 +141,27 @@ export function newTextEditorController() {
       updateComposition();
     }
 
-    if (!_composition || !_compositionLines || _composition.length === 0) return;
+    if (!_composition || !_compositionLines) return;
 
     const cursor = getCursor();
     const selection = getSelection();
 
     if (!isIME) {
-      const range = getRangeLines(_composition, _compositionLines, [cursor, selection]);
-      range.forEach((line) => {
-        if (line.length === 0) return;
-        const a0 = line[0];
-        const a1 = line[line.length - 1];
-        ctx.fillStyle = "#0000ff";
-        ctx.beginPath();
-        ctx.fillRect(a0.bounds.x, a0.bounds.y, a1.bounds.x + a1.bounds.width - a0.bounds.x, a1.bounds.height);
+      renderSelection(ctx, {
+        composition: _composition,
+        compositionLines: _compositionLines,
+        cursor,
+        selection,
       });
     }
 
     renderDocByComposition(ctx, _composition, _compositionLines);
-
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([]);
-    if (cursor < _composition.length) {
-      const c = _composition[cursor];
-
-      if (isIME) {
-        const cs = _composition[cursor + selection - 1];
-        ctx.beginPath();
-        ctx.moveTo(c.bounds.x, c.bounds.y + c.bounds.height);
-        ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
-
-        ctx.moveTo(cs.bounds.x + cs.bounds.width, c.bounds.y);
-        ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
-        ctx.stroke();
-      } else {
-        ctx.beginPath();
-        ctx.moveTo(c.bounds.x, c.bounds.y);
-        ctx.lineTo(c.bounds.x, c.bounds.y + c.bounds.height);
-        ctx.stroke();
-      }
-    } else {
-      const c = _composition[_composition.length - 1];
-      ctx.beginPath();
-      // When the last character is line break, the cursor should be in new line.
-      if (c.char === "\n") {
-        ctx.moveTo(0, c.bounds.y + c.bounds.height);
-        ctx.lineTo(0, c.bounds.y + c.bounds.height * 2);
-      } else {
-        ctx.moveTo(c.bounds.x + c.bounds.width, c.bounds.y);
-        ctx.lineTo(c.bounds.x + c.bounds.width, c.bounds.y + c.bounds.height);
-      }
-      ctx.stroke();
-    }
+    renderCursor(ctx, {
+      composition: _composition,
+      cursor,
+      selection,
+      isIME,
+    });
   }
 
   return {
@@ -217,3 +186,84 @@ export function newTextEditorController() {
   };
 }
 export type TextEditorController = ReturnType<typeof newTextEditorController>;
+
+function renderSelection(
+  ctx: CanvasRenderingContext2D,
+  {
+    composition,
+    compositionLines,
+    cursor,
+    selection,
+  }: {
+    composition: DocCompositionItem[];
+    compositionLines: DocCompositionLine[];
+    cursor: number;
+    selection: number;
+  }
+) {
+  const range = getRangeLines(composition, compositionLines, [cursor, selection]);
+  range.forEach((line) => {
+    if (line.length === 0) return;
+    const a0 = line[0];
+    const a1 = line[line.length - 1];
+    ctx.fillStyle = "#0000ff";
+    ctx.beginPath();
+    ctx.fillRect(a0.bounds.x, a0.bounds.y, a1.bounds.x + a1.bounds.width - a0.bounds.x, a1.bounds.height);
+  });
+}
+
+function renderCursor(
+  ctx: CanvasRenderingContext2D,
+  {
+    composition,
+    cursor,
+    selection,
+    isIME,
+  }: {
+    composition: DocCompositionItem[];
+    cursor: number;
+    selection: number;
+    isIME: boolean;
+  }
+) {
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+
+  if (composition.length === 0) {
+    ctx.beginPath();
+    ctx.moveTo(1, 0);
+    ctx.lineTo(1, DEFAULT_FONT_SIZE);
+    ctx.stroke();
+  } else if (cursor < composition.length) {
+    const c = composition[cursor];
+
+    if (isIME) {
+      const cs = composition[cursor + selection - 1];
+      ctx.beginPath();
+      ctx.moveTo(c.bounds.x, c.bounds.y + c.bounds.height);
+      ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
+
+      ctx.moveTo(cs.bounds.x + cs.bounds.width, c.bounds.y);
+      ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(c.bounds.x, c.bounds.y);
+      ctx.lineTo(c.bounds.x, c.bounds.y + c.bounds.height);
+      ctx.stroke();
+    }
+  } else {
+    const c = composition[composition.length - 1];
+    ctx.beginPath();
+    // When the last character is line break, the cursor should be in new line.
+    if (c.char === "\n") {
+      ctx.moveTo(1, c.bounds.y + c.bounds.height);
+      ctx.lineTo(1, c.bounds.y + c.bounds.height * 2);
+    } else {
+      ctx.moveTo(c.bounds.x + c.bounds.width, c.bounds.y);
+      ctx.lineTo(c.bounds.x + c.bounds.width, c.bounds.y + c.bounds.height);
+    }
+    ctx.stroke();
+  }
+}
