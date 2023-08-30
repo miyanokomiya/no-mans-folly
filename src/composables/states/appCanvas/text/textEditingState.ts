@@ -3,15 +3,16 @@ import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
 import { AppCanvasState } from "../core";
+import { newTextSelectingState } from "./textSelectingState";
 
 interface Option {
   id: string;
+  textEditorController?: TextEditorController;
 }
 
 export function newTextEditingState(option: Option): AppCanvasState {
   let textEditorController: TextEditorController;
   let textBounds: ReturnType<typeof getShapeTextBounds>;
-  let selecting = false;
 
   return {
     getLabel: () => "TextEditing",
@@ -20,9 +21,14 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
       const shape = ctx.getShapeMap()[option.id];
       textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
-      textEditorController = newTextEditorController();
-      textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
-      textEditorController.moveCursorToTail();
+
+      if (option.textEditorController) {
+        textEditorController = option.textEditorController;
+      } else {
+        textEditorController = newTextEditorController();
+        textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
+        textEditorController.moveCursorToTail();
+      }
 
       ctx.setCaptureTimeout(1000);
     },
@@ -34,7 +40,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "text-input": {
           const cursor = textEditorController.getCursor();
-          ctx.patchDocument(option.id, [{ retain: cursor }, { insert: event.data.value }]);
+          ctx.patchDocument(option.id, textEditorController.getDeltaByInput(event.data.value));
           textEditorController.setCursor(cursor + event.data.value.length);
           return;
         }
@@ -45,28 +51,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
             return translateOnSelection(ctx);
           }
 
-          selecting = true;
-          ctx.startDragging();
           const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.point));
           textEditorController.setCursor(textEditorController.getLocationIndex(location));
-          ctx.setTmpShapeMap({});
-          return;
-        }
-        case "pointermove": {
-          if (!selecting) return;
-
-          const location = textEditorController.getLocationAt(
-            applyAffine(textBounds.affineReverse, event.data.current)
-          );
-          const cursor = textEditorController.getCursor();
-          textEditorController.setCursor(cursor, textEditorController.getLocationIndex(location) - cursor);
-          ctx.setTmpShapeMap({});
-          return;
-        }
-        case "pointerup": {
-          selecting = false;
-          ctx.stopDragging();
-          return;
+          return () => newTextSelectingState({ id: option.id, textEditorController });
         }
         case "keydown":
           switch (event.data.key) {

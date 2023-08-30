@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocOutput } from "../models/document";
+import { DocDelta, DocOutput } from "../models/document";
 import {
   DocCompositionItem,
   DocCompositionLine,
@@ -54,6 +54,10 @@ export function newTextEditorController() {
     return Math.min(_cursor, docLength);
   }
 
+  function getSelection(): number {
+    return Math.min(_selection, docLength - getCursor());
+  }
+
   function getLocationIndex(location: IVec2): number {
     const charIndex = _compositionLines.slice(0, location.y).reduce((n, line) => {
       return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);
@@ -92,6 +96,17 @@ export function newTextEditorController() {
     );
     const p = { x: location.x, y: location.y + location.height * 1.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
+  }
+
+  function getDeltaByInput(text: string): DocDelta {
+    const cursor = getCursor();
+    const selection = getSelection();
+
+    if (selection === 0) {
+      return [{ retain: cursor }, { insert: text }];
+    } else {
+      return [{ retain: cursor }, { delete: selection }, { insert: text }];
+    }
   }
 
   function render(ctx: CanvasRenderingContext2D) {
@@ -147,9 +162,10 @@ export function newTextEditorController() {
     moveCursorToTail,
     moveCursorUp,
     moveCursorDown,
-    render,
+    getDeltaByInput,
     getLocationIndex,
     getLocationAt,
+    render,
   };
 }
 export type TextEditorController = ReturnType<typeof newTextEditorController>;
