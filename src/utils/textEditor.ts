@@ -110,6 +110,32 @@ export function getBreakLineIndexWord(
   return;
 }
 
+export function getBreakIndicesForWord(
+  ctx: CanvasRenderingContext2D,
+  word: string,
+  marginToTail: number,
+  lineWidth: number
+): number[] | undefined {
+  const indexForTop = getBreakLineIndexWord(ctx, word, marginToTail);
+  if (!indexForTop) return;
+
+  const ret = [indexForTop];
+  let remainWord = word.slice(indexForTop);
+  let sum = indexForTop;
+  while (remainWord) {
+    const index = getBreakLineIndexWord(ctx, remainWord, lineWidth);
+    if (index) {
+      ret.push(sum + index);
+      remainWord = remainWord.slice(index);
+      sum += index;
+    } else {
+      remainWord = "";
+    }
+  }
+
+  return ret;
+}
+
 export interface DocCompositionItem {
   char: string; // A character
   bounds: IRectangle;
@@ -168,18 +194,22 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
 
       line.split(" ").forEach((word, c) => {
         const wordWithSpace = (c === 0 ? "" : " ") + word;
-        const index = getBreakLineIndexWord(ctx, wordWithSpace, range.width - left);
-        if (index !== undefined) {
-          const headText = wordWithSpace.slice(0, index);
-          const tailText = wordWithSpace.slice(index);
-          pushItem({ insert: headText });
-          row += 1;
-          left = ctx.measureText(tailText).width;
-          pushItem({ insert: tailText });
-          // TODO Recur "tailText"
-        } else {
-          left += ctx.measureText(wordWithSpace).width;
+        const breaks = getBreakIndicesForWord(ctx, wordWithSpace, range.width - left, range.width);
+        if (!breaks || breaks.length === 0) {
           pushItem({ insert: wordWithSpace });
+          left += ctx.measureText(wordWithSpace).width;
+        } else {
+          let prev = 0;
+          breaks.forEach((index) => {
+            const insert = wordWithSpace.slice(prev, index);
+            pushItem({ insert });
+            row += 1;
+            prev = index;
+          });
+
+          const remain = wordWithSpace.slice(breaks[breaks.length - 1]);
+          pushItem({ insert: remain });
+          left = ctx.measureText(remain).width;
         }
       });
       row += 1;
