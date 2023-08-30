@@ -27,6 +27,8 @@ export function renderDocByComposition(
 ) {
   let index = 0;
   compositionLines.forEach((line) => {
+    if (index === composition.length) return;
+
     const lineComposition = composition[index];
     line.outputs.forEach((op) => {
       applyDocAttributesToCtx(ctx, op.attributes);
@@ -42,25 +44,30 @@ export function renderDocByComposition(
   });
 }
 
-// Returns { x: column index in the line, y: row index of the line }
-export function getCharacterPosition(textLines: string[], cursor: number): IVec2 {
+export function getCursorLocation(compositionLines: DocCompositionLine[], cursor: number): IVec2 {
   let x = 0;
   let y = 0;
   let count = 0;
 
-  textLines.some((text) => {
-    if (count + text.length < cursor - 1) {
-      count += text.length + 1; // +1 is for line break
-      y += 1;
-      return;
-    } else if (count + text.length === cursor - 1) {
-      y = Math.min(y + 1, textLines.length - 1);
+  compositionLines.some((line, i) => {
+    const length = getLineLength(line);
+    if (count + length === cursor) {
+      if (i === compositionLines.length - 1) {
+        x = length;
+      } else {
+        x = 0;
+        y += 1;
+      }
+      return true;
+    } else if (count + length < cursor) {
       x = 0;
+      y += 1;
+      count += length;
+      return;
     } else {
-      x = Math.min(cursor - count, text.length);
+      x = cursor - count;
+      return true;
     }
-
-    return true;
   });
 
   return { x, y };
@@ -108,7 +115,7 @@ export interface DocCompositionItem {
 }
 
 export interface DocCompositionLine {
-  height: number; // A character
+  height: number;
   outputs: DocOutput;
 }
 
@@ -153,9 +160,13 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
   doc.forEach((op) => {
     applyDocAttributesToCtx(ctx, op.attributes);
 
-    op.insert.split("\n").forEach((line) => {
-      line.split(" ").forEach((word, i) => {
-        const wordWithSpace = (i === 0 ? "" : " ") + word;
+    op.insert.split("\n").forEach((line, r) => {
+      if (r !== 0) {
+        lines[row - 1].push({ insert: "\n" });
+      }
+
+      line.split(" ").forEach((word, c) => {
+        const wordWithSpace = (c === 0 ? "" : " ") + word;
         const index = getBreakLineIndexWord(ctx, wordWithSpace, range.width - left);
         if (index !== undefined) {
           const headText = wordWithSpace.slice(0, index);
@@ -181,4 +192,98 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
       outputs: line,
     };
   });
+}
+
+export function getCursorLocationAt(
+  composition: DocCompositionItem[],
+  compositionLines: DocCompositionLine[],
+  p: IVec2
+): IVec2 {
+  let lineIndex = -1;
+
+  if (0 <= p.y) {
+    let top = 0;
+    lineIndex += 1;
+    compositionLines.some((line) => {
+      const next = top + line.height;
+      if (top <= p.y && p.y < next) return true;
+      top = next;
+      lineIndex += 1;
+    });
+  }
+
+  lineIndex = Math.min(Math.max(lineIndex, 0), compositionLines.length - 1);
+  const charIndex = compositionLines.slice(0, lineIndex).reduce((n, line) => {
+    return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);
+  }, 0);
+  const lengthInLine = compositionLines[lineIndex].outputs.reduce((m, o) => m + o.insert.length, 0);
+  const compositionInLine = composition.slice(charIndex, charIndex + lengthInLine);
+
+  let xIndex = 0;
+  if (0 <= p.x) {
+    for (let i = 0; i < compositionInLine.length; i++) {
+      const c = compositionInLine[i];
+      const next = c.bounds.x + c.bounds.width;
+      if (c.bounds.x <= p.x && p.x < next) {
+        if (c.bounds.x + c.bounds.width / 2 < p.x) xIndex += 1;
+        break;
+      }
+      xIndex += 1;
+    }
+  }
+
+  xIndex = Math.min(Math.max(xIndex, 0), compositionInLine.length);
+  return { x: xIndex, y: lineIndex };
+}
+
+export function getBoundsAtLocation(
+  composition: DocCompositionItem[],
+  compositionLines: DocCompositionLine[],
+  location: IVec2
+): IRectangle {
+  const charIndex =
+    compositionLines.slice(0, location.y).reduce((n, line) => {
+      return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);
+    }, 0) + location.x;
+
+  if (charIndex < composition.length) {
+    const com = composition[charIndex];
+    return com.bounds;
+  } else {
+    const com = composition[composition.length - 1];
+    return {
+      x: com.bounds.x + com.bounds.width,
+      y: com.bounds.y,
+      width: 0,
+      height: com.bounds.height,
+    };
+  }
+}
+
+export function getRangeLines(
+  composition: DocCompositionItem[],
+  compositionLines: DocCompositionLine[],
+  [cursor, length]: [cursor: number, length: number]
+): DocCompositionItem[][] {
+  const cursorTo = Math.min(cursor + length, composition.length);
+  const from = getCursorLocation(compositionLines, cursor);
+  const to = getCursorLocation(compositionLines, cursorTo);
+
+  if (from.y === to.y) {
+    return from.x === to.x ? [] : [composition.slice(cursor, cursorTo)];
+  }
+
+  const ret: [number, number][] = [[cursor, getLineLength(compositionLines[from.y]) - from.x]];
+  let count = ret[0][0] + ret[0][1];
+  for (let i = from.y + 1; i < to.y; i++) {
+    const l = getLineLength(compositionLines[i]);
+    ret.push([count, l]);
+    count += l;
+  }
+  ret.push([count, to.x]);
+  return ret.map((val) => composition.slice(val[0], val[0] + val[1]));
+}
+
+function getLineLength(line: DocCompositionLine): number {
+  return line.outputs.reduce((n, o) => n + o.insert.length, 0);
 }

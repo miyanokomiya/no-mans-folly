@@ -1,3 +1,4 @@
+import { applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
@@ -10,6 +11,7 @@ interface Option {
 export function newTextEditingState(option: Option): AppCanvasState {
   let textEditorController: TextEditorController;
   let textBounds: ReturnType<typeof getShapeTextBounds>;
+  let selecting = false;
 
   return {
     getLabel: () => "TextEditing",
@@ -36,8 +38,36 @@ export function newTextEditingState(option: Option): AppCanvasState {
           textEditorController.setCursor(cursor + event.data.value.length);
           return;
         }
-        case "pointerdown":
-          return translateOnSelection(ctx);
+        case "pointerdown": {
+          const shape = ctx.getShapeAt(event.data.point);
+          if (shape?.id !== option.id) {
+            shape ? ctx.selectShape(shape.id, event.data.options.ctrl) : ctx.clearAllSelected();
+            return translateOnSelection(ctx);
+          }
+
+          selecting = true;
+          ctx.startDragging();
+          const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.point));
+          textEditorController.setCursor(textEditorController.getLocationIndex(location));
+          ctx.setTmpShapeMap({});
+          return;
+        }
+        case "pointermove": {
+          if (!selecting) return;
+
+          const location = textEditorController.getLocationAt(
+            applyAffine(textBounds.affineReverse, event.data.current)
+          );
+          const cursor = textEditorController.getCursor();
+          textEditorController.setCursor(cursor, textEditorController.getLocationIndex(location) - cursor);
+          ctx.setTmpShapeMap({});
+          return;
+        }
+        case "pointerup": {
+          selecting = false;
+          ctx.stopDragging();
+          return;
+        }
         case "keydown":
           switch (event.data.key) {
             case "ArrowLeft":
@@ -49,7 +79,13 @@ export function newTextEditingState(option: Option): AppCanvasState {
               ctx.setTmpShapeMap({});
               return;
             }
-            case "ArrowTop":
+            case "ArrowUp":
+              textEditorController.moveCursorUp();
+              ctx.setTmpShapeMap({});
+              return;
+            case "ArrowDown":
+              textEditorController.moveCursorDown();
+              ctx.setTmpShapeMap({});
               return;
             case "Backspace": {
               const cursor = textEditorController.getCursor();

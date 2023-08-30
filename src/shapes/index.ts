@@ -97,6 +97,7 @@ export function getShapeTextBounds(
   shape: Shape
 ): {
   affine: AffineMatrix;
+  affineReverse: AffineMatrix;
   range: IRectangle;
 } {
   const path = getLocalRectPolygon(getStruct, shape);
@@ -114,6 +115,11 @@ export function getShapeTextBounds(
       [1, 0, 0, 1, center.x, center.y],
       [cos, sin, -sin, cos, 0, 0],
       [1, 0, 0, 1, -width / 2, -height / 2],
+    ]),
+    affineReverse: multiAffines([
+      [1, 0, 0, 1, width / 2, height / 2],
+      [cos, -sin, sin, cos, 0, 0],
+      [1, 0, 0, 1, -center.x, -center.y],
     ]),
     range: { x: 0, y: 0, width, height },
   };
