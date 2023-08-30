@@ -47,15 +47,23 @@ export function newTextEditorController() {
 
   function setCursor(c: number, selection = 0) {
     _cursor = Math.max(c, 0);
-    _selection = Math.max(selection, 0);
+    _selection = selection;
+  }
+
+  function shiftCursorBy(diff: number) {
+    setCursor(getCursor() + diff);
+  }
+
+  function shiftSelectionBy(diff: number) {
+    _selection += diff;
   }
 
   function getCursor(): number {
-    return Math.min(_cursor, docLength);
+    return _selection < 0 ? Math.max(_cursor + _selection) : Math.min(_cursor, docLength);
   }
 
   function getSelection(): number {
-    return Math.min(_selection, docLength - getCursor());
+    return Math.min(Math.abs(_selection), docLength - getCursor());
   }
 
   function getLocationIndex(location: IVec2): number {
@@ -71,18 +79,18 @@ export function newTextEditorController() {
   }
 
   function moveCursorToHead() {
-    _cursor = 0;
+    setCursor(0);
   }
 
   function moveCursorToTail() {
-    _cursor = docLength;
+    setCursor(docLength);
   }
 
   function moveCursorUp() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, _cursor)
+      getCursorLocation(_compositionLines, getCursor())
     );
     const p = { x: location.x, y: location.y - location.height * 0.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
@@ -92,7 +100,7 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, _cursor)
+      getCursorLocation(_compositionLines, getCursor())
     );
     const p = { x: location.x, y: location.y + location.height * 1.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
@@ -118,8 +126,9 @@ export function newTextEditorController() {
     if (!_composition || !_compositionLines || _composition.length === 0) return;
 
     const cursor = getCursor();
+    const selection = getSelection();
 
-    const range = getRangeLines(_composition, _compositionLines, [cursor, _selection]);
+    const range = getRangeLines(_composition, _compositionLines, [cursor, selection]);
     range.forEach((line) => {
       if (line.length === 0) return;
       const a0 = line[0];
@@ -157,7 +166,10 @@ export function newTextEditorController() {
     setRenderingContext,
     setDoc,
     setCursor,
+    shiftCursorBy,
+    shiftSelectionBy,
     getCursor,
+    getSelection,
     moveCursorToHead,
     moveCursorToTail,
     moveCursorUp,

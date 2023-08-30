@@ -58,11 +58,19 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "ArrowLeft":
-              textEditorController.setCursor(textEditorController.getCursor() - 1);
+              if (event.data.shift) {
+                textEditorController.shiftSelectionBy(-1);
+              } else {
+                textEditorController.shiftCursorBy(-1);
+              }
               ctx.setTmpShapeMap({});
               return;
             case "ArrowRight": {
-              textEditorController.setCursor(textEditorController.getCursor() + 1);
+              if (event.data.shift) {
+                textEditorController.shiftSelectionBy(1);
+              } else {
+                textEditorController.shiftCursorBy(1);
+              }
               ctx.setTmpShapeMap({});
               return;
             }
@@ -76,8 +84,26 @@ export function newTextEditingState(option: Option): AppCanvasState {
               return;
             case "Backspace": {
               const cursor = textEditorController.getCursor();
-              ctx.patchDocument(option.id, [{ retain: cursor - 1 }, { delete: 1 }]);
-              textEditorController.setCursor(cursor - 1);
+              const selection = textEditorController.getSelection();
+              if (selection > 0) {
+                ctx.patchDocument(option.id, [{ retain: cursor }, { delete: Math.max(1, selection) }]);
+                textEditorController.setCursor(cursor);
+              } else {
+                ctx.patchDocument(option.id, [{ retain: cursor - 1 }, { delete: 1 }]);
+                textEditorController.setCursor(cursor - 1);
+              }
+              return;
+            }
+            case "Delete": {
+              const cursor = textEditorController.getCursor();
+              const selection = textEditorController.getSelection();
+              if (selection > 0) {
+                ctx.patchDocument(option.id, [{ retain: cursor }, { delete: Math.max(1, selection) }]);
+                textEditorController.setCursor(cursor);
+              } else {
+                ctx.patchDocument(option.id, [{ retain: cursor }, { delete: 1 }]);
+                textEditorController.setCursor(cursor);
+              }
               return;
             }
           }
