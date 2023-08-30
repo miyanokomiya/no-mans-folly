@@ -41,8 +41,7 @@ export function newResizingState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeMap = ctx.getShapeMap();
-      const selectedIdMap = ctx.getSelectedShapeIdMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIdMap[s.id]);
+      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && s.type !== "line");
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

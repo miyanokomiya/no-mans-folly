@@ -24,7 +24,8 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       ctx.setCursor("move");
 
       const shapeMap = ctx.getShapeMap();
-      const snappableShapes = Object.values(shapeMap);
+      const selectedIds = ctx.getSelectedShapeIdMap();
+      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && s.type !== "line");
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

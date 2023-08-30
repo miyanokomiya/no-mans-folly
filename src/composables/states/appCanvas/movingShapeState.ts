@@ -37,7 +37,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id]);
+      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && s.type !== "line");
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
