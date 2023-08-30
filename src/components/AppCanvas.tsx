@@ -69,7 +69,12 @@ export function AppCanvas() {
       multiSelectShapes: acctx.shapeStore.multiSelect,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
       addShapes: acctx.shapeStore.addEntities,
-      deleteShapes: acctx.shapeStore.deleteEntities,
+      deleteShapes: (ids: string[]) => {
+        acctx.shapeStore.transact(() => {
+          acctx.shapeStore.deleteEntities(ids);
+          acctx.documentStore.deleteDocs(ids);
+        });
+      },
       patchShapes: acctx.shapeStore.patchEntities,
       getTmpShapeMap: () => tmpShapeMap,
       setTmpShapeMap: setTmpShapeMap,
@@ -121,16 +126,13 @@ export function AppCanvas() {
 
     shapes.forEach((shape) => {
       const tmpShape = tmpShapeMap[shape.id];
-      if (tmpShape) {
-        renderShape(getCommonStruct, ctx, { ...shape, ...tmpShape });
-      } else {
-        renderShape(getCommonStruct, ctx, shape);
-      }
+      const latestShape = tmpShape ? { ...shape, ...tmpShape } : shape;
+      renderShape(getCommonStruct, ctx, latestShape);
 
-      const doc = docMap[shape.id];
+      const doc = docMap[latestShape.id];
       if (doc) {
         ctx.save();
-        const bounds = getShapeTextBounds(getCommonStruct, shape);
+        const bounds = getShapeTextBounds(getCommonStruct, latestShape);
         ctx.transform(...bounds.affine);
         renderDoc(ctx, doc, bounds.range);
         ctx.restore();

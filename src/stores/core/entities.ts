@@ -47,12 +47,18 @@ export function newEntityStore<T extends Entity>(option: Option) {
     });
   }
 
-  function deleteEntities(ids: string[]) {
-    transact(() => {
+  function deleteEntities(ids: string[], noTransact = false) {
+    if (noTransact) {
       ids.forEach((id) => {
         entityMap.delete(id);
       });
-    });
+    } else {
+      transact(() => {
+        ids.forEach((id) => {
+          entityMap.delete(id);
+        });
+      });
+    }
   }
 
   function patchEntity(entityId: string, attrs: Partial<T>) {

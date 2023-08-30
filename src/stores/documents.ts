@@ -27,6 +27,16 @@ export function newDocumentStore(option: Option) {
     entityMap.delete(id);
   }
 
+  function deleteDocs(ids: string[], noTransact = false) {
+    if (noTransact) {
+      ids.forEach(deleteDoc);
+    } else {
+      transact(() => {
+        ids.forEach(deleteDoc);
+      });
+    }
+  }
+
   function patchDoc(id: string, delta: DocDelta) {
     const text = entityMap.get(id);
     if (!text) return addDoc(id, delta);
@@ -50,6 +60,7 @@ export function newDocumentStore(option: Option) {
     getDocMap,
     addDoc,
     deleteDoc,
+    deleteDocs,
     patchDoc,
     transact,
     getScope,
