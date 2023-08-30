@@ -40,6 +40,7 @@ const undoManager = new Y.UndoManager(
     captureTimeout: 0,
   }
 );
+// undoManager.captureTimeout = 0;
 
 const acctx = {
   diagramStore,
@@ -51,6 +52,9 @@ const acctx = {
   undoManager: {
     undo: () => undoManager.undo(),
     redo: () => undoManager.redo(),
+    setCaptureTimeout: (timeout = 0) => {
+      undoManager.captureTimeout = timeout;
+    },
   },
 };
 undoManager.clear();

@@ -1,4 +1,4 @@
-import { getShapeAffine } from "../../../../shapes";
+import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
 import { AppCanvasState } from "../core";
@@ -9,17 +9,24 @@ interface Option {
 
 export function newTextEditingState(option: Option): AppCanvasState {
   let textEditorController: TextEditorController;
+  let textBounds: ReturnType<typeof getShapeTextBounds>;
 
   return {
     getLabel: () => "TextEditing",
     onStart: async (ctx) => {
       ctx.startTextEditing();
-      textEditorController = newTextEditorController({});
-      textEditorController.setDoc(ctx.getDocumentMap()[option.id]);
+
+      const shape = ctx.getShapeMap()[option.id];
+      textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
+      textEditorController = newTextEditorController();
+      textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
       textEditorController.moveCursorToTail();
+
+      ctx.setCaptureTimeout(1000);
     },
     onEnd: async (ctx) => {
       ctx.stopTextEditing();
+      ctx.setCaptureTimeout();
     },
     handleEvent: async (ctx, event) => {
       switch (event.type) {
@@ -52,9 +59,14 @@ export function newTextEditingState(option: Option): AppCanvasState {
             }
           }
           return;
-        case "shape-updated":
-          textEditorController.setDoc(ctx.getDocumentMap()[option.id]);
+        case "shape-updated": {
+          const shape = ctx.getShapeMap()[option.id];
+          if (!shape) return translateOnSelection(ctx);
+
+          textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
+          textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
           return;
+        }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;
@@ -72,11 +84,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
     },
     render(ctx, renderCtx) {
       const shape = ctx.getShapeMap()[option.id];
-      const doc = ctx.getDocumentMap()[option.id];
-      if (!shape || !doc || !textEditorController) return;
+      if (!shape || !textEditorController) return;
 
       renderCtx.save();
-      renderCtx.transform(...getShapeAffine(ctx.getShapeStruct, shape));
+      renderCtx.transform(...textBounds.affine);
       textEditorController.render(renderCtx);
       renderCtx.restore();
     },

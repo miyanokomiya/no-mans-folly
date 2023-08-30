@@ -1,73 +1,85 @@
-import { DocOutput } from "../models/document";
-import { getDocLength, getTextLines } from "../utils/textEditor";
+import { IRectangle } from "okageo";
+import { DocAttributes, DocOutput } from "../models/document";
+import {
+  DocCompositionItem,
+  DocCompositionLine,
+  getDocComposition,
+  getDocLength,
+  getLineOutputs,
+  renderDocByComposition,
+} from "../utils/textEditor";
 
-interface Option {}
-
-export function newTextEditorController(option: Option) {
-  let ctx: CanvasRenderingContext2D;
-  let doc: DocOutput;
+export function newTextEditorController() {
+  let _ctx: CanvasRenderingContext2D;
+  let _doc: DocOutput;
   let docLength = 0;
-  let cursor = 0;
-  let textLines: string[] = [];
+  let _cursor = 0;
+  let _range: IRectangle;
+  let _compositionLines: DocCompositionLine[];
+  let _composition: DocCompositionItem[];
 
-  function setRenderingContext(context: CanvasRenderingContext2D) {
-    ctx = context;
+  function setRenderingContext(ctx: CanvasRenderingContext2D) {
+    if (_ctx) {
+      _ctx = ctx;
+      updateComposition();
+    } else {
+      _ctx = ctx;
+    }
   }
 
-  function setDoc(argDoc: DocOutput = []) {
-    doc = argDoc;
-    docLength = getDocLength(doc);
-    textLines = getTextLines(doc);
-    console.log("setDoc", textLines);
+  function setDoc(doc: DocOutput = [], range: IRectangle) {
+    _doc = doc;
+    _range = range;
+    docLength = getDocLength(_doc);
+    updateComposition();
+  }
+
+  function updateComposition() {
+    if (!_ctx) return;
+    _compositionLines = getLineOutputs(_ctx, _doc, _range);
+    _composition = getDocComposition(_ctx, _compositionLines);
   }
 
   function setCursor(c: number) {
-    cursor = Math.max(c, 0);
+    _cursor = Math.max(c, 0);
   }
 
   function getCursor(): number {
-    return Math.min(cursor, docLength + 1);
+    return Math.min(_cursor, docLength);
   }
 
   function moveCursorToHead() {
-    cursor = 0;
+    _cursor = 0;
   }
 
   function moveCursorToTail() {
-    cursor = docLength;
+    _cursor = docLength;
   }
 
-  function render(context: CanvasRenderingContext2D) {
-    ctx = context;
+  function render(ctx: CanvasRenderingContext2D) {
+    if (!_ctx) {
+      setRenderingContext(ctx);
+      updateComposition();
+    }
 
-    const fontSize = 18;
-    ctx.font = `${18}px Arial`;
-    ctx.strokeStyle = "#000";
-    ctx.setLineDash([]);
-    ctx.lineWidth = 2;
+    if (!_composition || !_compositionLines) return;
+    renderDocByComposition(ctx, _composition, _compositionLines);
 
     const cursor = getCursor();
-    let top = 0;
-    let count = 0;
-    textLines.some((text) => {
-      let length = 0;
-      if (count + text.length < cursor - 1) {
-        count += text.length + 1; // 1 is for line break
-        top += fontSize;
-        return;
-      } else if (count + text.length === cursor - 1) {
-        top += fontSize;
-      } else {
-        length = cursor - count;
-      }
-
-      const left = ctx.measureText(text.slice(0, length)).width;
-      ctx.beginPath();
-      ctx.moveTo(left, top);
-      ctx.lineTo(left, top + fontSize);
-      ctx.stroke();
-      return true;
-    });
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    if (cursor < _composition.length) {
+      const c = _composition[cursor];
+      ctx.moveTo(c.bounds.x, c.bounds.y);
+      ctx.lineTo(c.bounds.x, c.bounds.y + c.bounds.height);
+    } else {
+      const c = _composition[cursor - 1];
+      ctx.moveTo(c.bounds.x + c.bounds.width, c.bounds.y);
+      ctx.lineTo(c.bounds.x + c.bounds.width, c.bounds.y + c.bounds.height);
+    }
+    ctx.stroke();
   }
 
   return { setRenderingContext, setDoc, setCursor, getCursor, moveCursorToHead, moveCursorToTail, render };

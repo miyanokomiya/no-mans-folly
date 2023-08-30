@@ -17,4 +17,9 @@ export interface DocDeltaRetain {
   attributes?: DocAttributes;
 }
 
-export type DocAttributes = { [key: string]: string | number | boolean };
+export type DocAttributes = {
+  color?: string;
+  bold?: boolean;
+  fontSize?: number;
+  fontFamily?: string;
+};

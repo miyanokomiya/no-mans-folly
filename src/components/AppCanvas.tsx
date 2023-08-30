@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { Shape } from "../models";
-import { getCommonStruct, getShapeAffine, isPointOn, renderShape } from "../shapes";
+import { getCommonStruct, getShapeTextBounds, isPointOn, renderShape } from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getMouseOptions, isAltOrOpt, isCtrlOrMeta } from "../utils/devices";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables/window";
@@ -57,6 +57,7 @@ export function AppCanvas() {
 
       undo: acctx.undoManager.undo,
       redo: acctx.undoManager.redo,
+      setCaptureTimeout: acctx.undoManager.setCaptureTimeout,
 
       getShapeMap: acctx.shapeStore.getEntityMap,
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
@@ -129,8 +130,9 @@ export function AppCanvas() {
       const doc = docMap[shape.id];
       if (doc) {
         ctx.save();
-        ctx.transform(...getShapeAffine(getCommonStruct, shape));
-        renderDoc(ctx, doc);
+        const bounds = getShapeTextBounds(getCommonStruct, shape);
+        ctx.transform(...bounds.affine);
+        renderDoc(ctx, doc, bounds.range);
         ctx.restore();
       }
     });
@@ -224,7 +226,13 @@ export function AppCanvas() {
     (e: React.KeyboardEvent) => {
       smctx.stateMachine.handleEvent({
         type: "keydown",
-        data: { key: e.key, ctrl: isCtrlOrMeta(e), alt: isAltOrOpt(e), shift: e.shiftKey },
+        data: {
+          key: e.key,
+          ctrl: isCtrlOrMeta(e),
+          alt: isAltOrOpt(e),
+          shift: e.shiftKey,
+          prevent: () => e.preventDefault(),
+        },
       });
     },
     [smctx]

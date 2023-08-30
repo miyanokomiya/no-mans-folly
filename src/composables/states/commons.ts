@@ -20,6 +20,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
 
   undo: () => void;
   redo: () => void;
+  setCaptureTimeout: (timeout?: number) => void;
 }
 
 export interface HistoryEvent extends ModeStateEventBase {

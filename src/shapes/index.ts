@@ -1,10 +1,10 @@
-import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getRectCenter, multiAffines } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getOuterRectangle, multiAffines } from "okageo";
 import { Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
-import { getLocationRateOnRectPath, getRectCenterLines, getRectLines } from "../utils/geometry";
+import { getLocationRateOnRectPath, getRectCenterLines, getRectLines, getRotateFn } from "../utils/geometry";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -90,4 +90,31 @@ export function getShapeAffine(getStruct: GetShapeStruct, shape: Shape) {
     [cos, sin, -sin, cos, 0, 0],
     [1, 0, 0, 1, -width / 2, -height / 2],
   ]);
+}
+
+export function getShapeTextBounds(
+  getStruct: GetShapeStruct,
+  shape: Shape
+): {
+  affine: AffineMatrix;
+  range: IRectangle;
+} {
+  const path = getLocalRectPolygon(getStruct, shape);
+  const center = getCenter(path[0], path[2]);
+  const rotateFn = getRotateFn(shape.rotation, center);
+  const range = getOuterRectangle([path.map((p) => rotateFn(p, true))]);
+
+  const width = range.width;
+  const height = range.height;
+  const sin = Math.sin(shape.rotation);
+  const cos = Math.cos(shape.rotation);
+
+  return {
+    affine: multiAffines([
+      [1, 0, 0, 1, center.x, center.y],
+      [cos, sin, -sin, cos, 0, 0],
+      [1, 0, 0, 1, -width / 2, -height / 2],
+    ]),
+    range: { x: 0, y: 0, width, height },
+  };
 }

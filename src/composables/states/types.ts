@@ -16,6 +16,7 @@ export type HoverMovement = Omit<EditMovement, "start">;
 
 export type KeyOptions = {
   key: string;
+  prevent?: () => void;
 } & ModifierOptions;
 
 export type MouseOptions = {

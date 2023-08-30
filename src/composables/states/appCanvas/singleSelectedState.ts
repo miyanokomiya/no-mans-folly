@@ -92,7 +92,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             case "Delete":
               ctx.deleteShapes([selectedId]);
               return;
-            case "t":
+            case "Enter":
+              event.data.prevent?.();
               return () => newTextEditingState({ id: selectedId! });
             default:
               return handleCommonShortcut(ctx, event);
