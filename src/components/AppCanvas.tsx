@@ -259,11 +259,12 @@ export function AppCanvas() {
   );
 
   const onTextInput = useCallback(
-    (val: string) => {
+    (val: string, composition = false) => {
       smctx.stateMachine.handleEvent({
         type: "text-input",
         data: {
           value: val,
+          composition,
         },
       });
     },

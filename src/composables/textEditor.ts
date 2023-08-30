@@ -23,6 +23,8 @@ export function newTextEditorController() {
   let _compositionLines: DocCompositionLine[];
   let _composition: DocCompositionItem[];
 
+  let isIME = false;
+
   function setRenderingContext(ctx: CanvasRenderingContext2D) {
     if (_ctx) {
       _ctx = ctx;
@@ -59,7 +61,7 @@ export function newTextEditorController() {
   }
 
   function getCursor(): number {
-    return _selection < 0 ? Math.max(_cursor + _selection) : Math.min(_cursor, docLength);
+    return _selection < 0 ? Math.max(_cursor + _selection, 0) : Math.min(_cursor, docLength);
   }
 
   function getSelection(): number {
@@ -122,6 +124,16 @@ export function newTextEditorController() {
     return getBoundsAtLocation(_composition, _compositionLines, getCursorLocation(_compositionLines, getCursor()));
   }
 
+  function startIME(length: number) {
+    isIME = true;
+    shiftSelectionBy(-length);
+  }
+
+  function stopIME() {
+    isIME = false;
+    _selection = 0;
+  }
+
   function render(ctx: CanvasRenderingContext2D) {
     if (!_ctx) {
       setRenderingContext(ctx);
@@ -133,28 +145,44 @@ export function newTextEditorController() {
     const cursor = getCursor();
     const selection = getSelection();
 
-    const range = getRangeLines(_composition, _compositionLines, [cursor, selection]);
-    range.forEach((line) => {
-      if (line.length === 0) return;
-      const a0 = line[0];
-      const a1 = line[line.length - 1];
-      ctx.fillStyle = "#0000ff";
-      ctx.beginPath();
-      ctx.fillRect(a0.bounds.x, a0.bounds.y, a1.bounds.x + a1.bounds.width - a0.bounds.x, a1.bounds.height);
-    });
+    if (!isIME) {
+      const range = getRangeLines(_composition, _compositionLines, [cursor, selection]);
+      range.forEach((line) => {
+        if (line.length === 0) return;
+        const a0 = line[0];
+        const a1 = line[line.length - 1];
+        ctx.fillStyle = "#0000ff";
+        ctx.beginPath();
+        ctx.fillRect(a0.bounds.x, a0.bounds.y, a1.bounds.x + a1.bounds.width - a0.bounds.x, a1.bounds.height);
+      });
+    }
 
     renderDocByComposition(ctx, _composition, _compositionLines);
 
-    ctx.strokeStyle = "#00ff00";
+    ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
-    ctx.beginPath();
     if (cursor < _composition.length) {
       const c = _composition[cursor];
-      ctx.moveTo(c.bounds.x, c.bounds.y);
-      ctx.lineTo(c.bounds.x, c.bounds.y + c.bounds.height);
+
+      if (isIME) {
+        const cs = _composition[cursor + selection - 1];
+        ctx.beginPath();
+        ctx.moveTo(c.bounds.x, c.bounds.y + c.bounds.height);
+        ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
+
+        ctx.moveTo(cs.bounds.x + cs.bounds.width, c.bounds.y);
+        ctx.lineTo(cs.bounds.x + cs.bounds.width, c.bounds.y + c.bounds.height);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(c.bounds.x, c.bounds.y);
+        ctx.lineTo(c.bounds.x, c.bounds.y + c.bounds.height);
+        ctx.stroke();
+      }
     } else {
       const c = _composition[_composition.length - 1];
+      ctx.beginPath();
       // When the last character is line break, the cursor should be in new line.
       if (c.char === "\n") {
         ctx.moveTo(0, c.bounds.y + c.bounds.height);
@@ -163,8 +191,8 @@ export function newTextEditorController() {
         ctx.moveTo(c.bounds.x + c.bounds.width, c.bounds.y);
         ctx.lineTo(c.bounds.x + c.bounds.width, c.bounds.y + c.bounds.height);
       }
+      ctx.stroke();
     }
-    ctx.stroke();
   }
 
   return {
@@ -183,6 +211,8 @@ export function newTextEditorController() {
     getLocationIndex,
     getLocationAt,
     getBoundsAtCursor,
+    startIME,
+    stopIME,
     render,
   };
 }

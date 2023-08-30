@@ -2,7 +2,7 @@ import { IVec2 } from "okageo";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
-  onInput?: (val: string) => void;
+  onInput?: (val: string, composition?: boolean) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   position: IVec2;
 }
@@ -19,6 +19,7 @@ export const TextEditor: React.FC<Props> = (props) => {
   const onChange = useCallback(
     (e: any) => {
       if (composition) {
+        props.onInput?.(e.target.value, true);
         setDraft(e.target.value);
       } else {
         props.onInput?.(e.target.value);
@@ -34,7 +35,7 @@ export const TextEditor: React.FC<Props> = (props) => {
 
   const onCompositionEnd = useCallback(() => {
     setComposition(false);
-    props.onInput?.(draft);
+    props.onInput?.(draft, false);
     setDraft("");
   }, [draft, props]);
 

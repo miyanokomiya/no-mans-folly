@@ -44,5 +44,6 @@ interface TextInputEvent extends ModeStateEventBase {
   type: "text-input";
   data: {
     value: string;
+    composition?: boolean;
   };
 }

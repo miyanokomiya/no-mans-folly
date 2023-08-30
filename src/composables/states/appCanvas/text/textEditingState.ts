@@ -54,6 +54,12 @@ export function newTextEditingState(option: Option): AppCanvasState {
           const cursor = textEditorController.getCursor();
           ctx.patchDocument(option.id, textEditorController.getDeltaByInput(event.data.value));
           textEditorController.setCursor(cursor + event.data.value.length);
+
+          if (event.data.composition) {
+            textEditorController.startIME(event.data.value.length);
+          } else {
+            textEditorController.stopIME();
+          }
           return;
         }
         case "pointerdown": {
