@@ -9,11 +9,11 @@ export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
 }
 
 export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
-  return isSameColor(a?.color, b?.color);
+  return isSameColor(a?.color, b?.color) && a?.width === b?.width;
 }
 
 export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeStyle) {
   ctx.strokeStyle = rednerRGBA(stroke.color);
-  ctx.lineWidth = 1;
+  ctx.lineWidth = stroke.width ?? 1;
   ctx.setLineDash([]);
 }

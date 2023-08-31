@@ -3,41 +3,43 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
 import { getCommonStyle, getWrapperRect, updateCommonStyle } from "../../shapes";
 import * as geometry from "../../utils/geometry";
-import { Color, CommonStyle, FillStyle, Shape } from "../../models";
-import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
+import { CommonStyle, FillStyle, Shape, StrokeStyle } from "../../models";
 import { CanvasComposable } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
+import { StrokePanel } from "./StrokePanel";
 
 interface Option {
   canvas: CanvasComposable;
+  tmpShapeMap: { [id: string]: Partial<Shape> };
 }
 
-export const FloatMenu: React.FC<Option> = ({ canvas }) => {
+export const FloatMenu: React.FC<Option> = ({ canvas, tmpShapeMap }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
-  const ctx = smctx.getCtx();
 
   const [selectedShapes, setSelectedShapes] = useState<Shape[]>([]);
 
   const indexShape = useMemo<Shape | undefined>(() => {
+    const ctx = smctx.getCtx();
     const id = ctx.getLastSelectedShapeId();
     if (!id) return;
     const shape = ctx.getShapeMap()[id] ?? {};
-    const tmp = ctx.getTmpShapeMap()[id] ?? {};
+    const tmp = tmpShapeMap[id] ?? {};
     return tmp ? { ...shape, ...tmp } : shape;
-  }, [ctx]);
+  }, [smctx, tmpShapeMap]);
 
   const targetRect = useMemo<IRectangle | undefined>(() => {
     if (selectedShapes.length === 0) return;
 
+    const ctx = smctx.getCtx();
     const rect = geometry.getWrapperRect(selectedShapes.map((s) => getWrapperRect(ctx.getShapeStruct, s)));
     const p = canvas.canvasToView(rect);
     const width = rect.width / canvas.scale;
     const height = rect.height / canvas.scale;
     return { x: p.x, y: p.y, width, height };
-  }, [canvas, ctx, selectedShapes]);
+  }, [canvas, smctx, selectedShapes]);
 
   const position = useMemo<IVec2 | undefined>(() => {
     if (!targetRect) return;
@@ -47,10 +49,11 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
   }, [targetRect]);
 
   const updateSelectedShapes = useCallback(() => {
+    const ctx = smctx.getCtx();
     const shapeMap = ctx.getShapeMap();
     const selected = Object.keys(ctx.getSelectedShapeIdMap());
     setSelectedShapes(selected.map((id) => shapeMap[id]));
-  }, [ctx]);
+  }, [smctx]);
 
   useEffect(() => {
     updateSelectedShapes();
@@ -83,11 +86,13 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
 
   const indexCommonStyle = useMemo<CommonStyle | undefined>(() => {
     if (!indexShape) return;
+    const ctx = smctx.getCtx();
     return getCommonStyle(ctx.getShapeStruct, indexShape);
-  }, [indexShape, ctx]);
+  }, [indexShape, smctx]);
 
   const onFillChanged = useCallback(
     (fill: FillStyle, draft = false) => {
+      const ctx = smctx.getCtx();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
       const shapeMap = ctx.getShapeMap();
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
@@ -102,21 +107,27 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
         ctx.patchShapes(patch);
       }
     },
-    [ctx]
+    [smctx]
   );
 
   const onStrokeChanged = useCallback(
-    (color: Color) => {
+    (stroke: StrokeStyle, draft = false) => {
+      const ctx = smctx.getCtx();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
       const shapeMap = ctx.getShapeMap();
-      ctx.patchShapes(
-        ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-          p[id] = updateCommonStyle(ctx.getShapeStruct, shapeMap[id], { stroke: { color } });
-          return p;
-        }, {})
-      );
+      const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+        p[id] = updateCommonStyle(ctx.getShapeStruct, shapeMap[id], { stroke });
+        return p;
+      }, {});
+
+      if (draft) {
+        ctx.setTmpShapeMap(patch);
+      } else {
+        ctx.setTmpShapeMap({});
+        ctx.patchShapes(patch);
+      }
     },
-    [ctx]
+    [smctx]
   );
 
   return position ? (
@@ -144,7 +155,7 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
           <PopupButton
             name="stroke"
             opened={popupedKey === "stroke"}
-            popup={<ColorPickerPanel onClick={onStrokeChanged} />}
+            popup={<StrokePanel stroke={indexCommonStyle.stroke} onChanged={onStrokeChanged} />}
             onClick={onClickPopupButton}
           >
             <div

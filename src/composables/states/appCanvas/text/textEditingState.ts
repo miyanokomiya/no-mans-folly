@@ -160,8 +160,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       renderCtx.transform(...textBounds.affine);
 
       const style = ctx.getStyleScheme();
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly });
-      renderCtx.lineWidth = 2 * ctx.getScale();
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
       renderCtx.beginPath();
       renderCtx.strokeRect(textBounds.range.x, textBounds.range.x, textBounds.range.width, textBounds.range.height);
       renderCtx.stroke();

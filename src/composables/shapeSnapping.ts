@@ -225,9 +225,8 @@ export function renderSnappingResult(
     getTargetRect?: (id: string) => IRectangle | undefined;
   }
 ) {
-  applyStrokeStyle(ctx, { color: option.style.selectionPrimary });
+  applyStrokeStyle(ctx, { color: option.style.selectionPrimary, width: 2 * option.scale });
   applyFillStyle(ctx, { color: option.style.selectionPrimary });
-  ctx.lineWidth = 2 * option.scale;
 
   const snappingLines = option.result.targets.map((t) => t.line) ?? [];
   ctx.beginPath();

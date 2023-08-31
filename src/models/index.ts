@@ -47,6 +47,7 @@ export interface FillStyle {
 
 export interface StrokeStyle {
   color: Color;
+  width?: number;
 }
 
 export interface CommonStyle {

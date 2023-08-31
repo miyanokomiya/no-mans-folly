@@ -285,7 +285,7 @@ export function AppCanvas() {
     <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
   ) : undefined;
 
-  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} /> : undefined;
+  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} tmpShapeMap={tmpShapeMap} /> : undefined;
 
   return (
     <>

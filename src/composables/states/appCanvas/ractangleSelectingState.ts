@@ -61,8 +61,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         .filter(([id]) => selectedIds[id] || targetIdSet.has(id))
         .map(([, s]) => s);
 
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly });
-      renderCtx.lineWidth = 3;
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 });
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
       renderCtx.stroke();

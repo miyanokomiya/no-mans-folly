@@ -4,7 +4,7 @@ import { rednerRGBA } from "../../utils/color";
 
 const v = 51;
 const getV = (i: number) => Math.min(Math.max(v * i, 0), 255);
-const base = [...Array(8)].map((_, i) => i - 3);
+const base = [...Array(5)].map((_, i) => i - 2);
 const COLOR_TABLE: Color[][] = [
   base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i), a: 1 })),
   base.map((i) => ({ r: getV(i + 5), g: getV(i + 5), b: getV(i), a: 1 })),
@@ -50,7 +50,7 @@ export const ColorPickerPanel: React.FC<Option> = ({ onClick }) => {
 
   return (
     <div className="">
-      <div className="grid grid-rows-8 grid-flow-col gap-1">{table}</div>
+      <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
     </div>
   );
 };

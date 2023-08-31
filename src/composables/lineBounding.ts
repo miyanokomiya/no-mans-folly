@@ -77,8 +77,7 @@ export function newLineBounding(option: Option) {
   function render(ctx: CanvasRenderingContext2D) {
     const vertexSize = VERTEX_R * scale;
     const style = option.styleScheme;
-    applyStrokeStyle(ctx, { color: style.selectionPrimary });
-    ctx.lineWidth = 3 * scale;
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
     ctx.fillStyle = "#fff";
 
     const points = [lineShape.p, lineShape.q];

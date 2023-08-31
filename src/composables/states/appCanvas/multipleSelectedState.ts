@@ -138,8 +138,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         .filter(([id]) => selectedIds[id])
         .map(([, s]) => s);
 
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly });
-      renderCtx.lineWidth = 2;
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 });
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
       renderCtx.stroke();

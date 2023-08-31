@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../../../composables/window";
 import { snapNumber } from "../../../utils/geometry";
 
@@ -11,26 +11,19 @@ interface Props {
 }
 
 export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged }) => {
-  const length = max - min;
-  const [draft, _setDraft] = useState(value / length);
   const [down, setDown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    _setDraft(value);
-  }, [value]);
-
-  const setDraft = useCallback(
+  const updateValue = useCallback(
     (rate: number, tmp = false) => {
-      const v = Math.min(Math.max(rate, 0), 1);
+      const v = Math.min(Math.max(rate, 0), 1) * (max - min) + min;
       const val = step ? snapNumber(v, step) : v;
-      _setDraft(val);
 
       if (tmp) {
         onChanged?.(val, true);
       }
     },
-    [step, onChanged]
+    [step, max, min, onChanged]
   );
 
   const onDown = useCallback(
@@ -40,17 +33,17 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
       e.preventDefault();
       setDown(true);
       const bounds = ref.current.getBoundingClientRect();
-      setDraft((e.pageX - bounds.x) / bounds.width, true);
+      updateValue((e.pageX - bounds.x) / bounds.width, true);
     },
-    [setDraft]
+    [updateValue]
   );
 
   const onUp = useCallback(() => {
-    if (!ref.current) return;
+    if (!ref.current || !down) return;
 
     setDown(false);
-    onChanged?.(draft);
-  }, [onChanged, draft]);
+    onChanged?.(value);
+  }, [onChanged, value, down]);
   useGlobalMouseupEffect(onUp);
 
   const onMove = useCallback(
@@ -58,9 +51,9 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
       if (!ref.current || !down) return;
 
       const bounds = ref.current.getBoundingClientRect();
-      setDraft((e.pageX - bounds.x) / bounds.width, true);
+      updateValue((e.pageX - bounds.x) / bounds.width, true);
     },
-    [down, setDraft]
+    [down, updateValue]
   );
   useGlobalMousemoveEffect(onMove);
 
@@ -74,7 +67,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
         <div
           className="absolute top-0 left-0 h-4 bg-sky-400 pointer-events-none"
           style={{
-            right: `${(1 - draft) * 100}%`,
+            right: `${(1 - (value - min) / (max - min)) * 100}%`,
           }}
         ></div>
       </div>
