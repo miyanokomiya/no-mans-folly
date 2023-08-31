@@ -9,7 +9,7 @@ export function createFillStyle(arg: Partial<FillStyle> = {}): FillStyle {
 }
 
 export function isSameFillStyle(a?: FillStyle, b?: FillStyle): boolean {
-  return isSameColor(a?.color, b?.color)
+  return isSameColor(a?.color, b?.color);
 }
 
 export function applyFillStyle(ctx: CanvasRenderingContext2D, fill: FillStyle) {

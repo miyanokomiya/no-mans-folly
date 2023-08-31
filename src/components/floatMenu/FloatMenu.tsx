@@ -3,11 +3,12 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
 import { getCommonStyle, getWrapperRect, updateCommonStyle } from "../../shapes";
 import * as geometry from "../../utils/geometry";
-import { Color, CommonStyle, Shape } from "../../models";
+import { Color, CommonStyle, FillStyle, Shape } from "../../models";
 import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { CanvasComposable } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
+import { FillPanel } from "./FillPanel";
 
 interface Option {
   canvas: CanvasComposable;
@@ -23,7 +24,9 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
   const indexShape = useMemo<Shape | undefined>(() => {
     const id = ctx.getLastSelectedShapeId();
     if (!id) return;
-    return ctx.getShapeMap()[id];
+    const shape = ctx.getShapeMap()[id] ?? {};
+    const tmp = ctx.getTmpShapeMap()[id] ?? {};
+    return tmp ? { ...shape, ...tmp } : shape;
   }, [ctx]);
 
   const targetRect = useMemo<IRectangle | undefined>(() => {
@@ -84,15 +87,20 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
   }, [indexShape, ctx]);
 
   const onFillChanged = useCallback(
-    (color: Color) => {
+    (fill: FillStyle, draft = false) => {
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
       const shapeMap = ctx.getShapeMap();
-      ctx.patchShapes(
-        ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-          p[id] = updateCommonStyle(ctx.getShapeStruct, shapeMap[id], { fill: { color } });
-          return p;
-        }, {})
-      );
+      const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+        p[id] = updateCommonStyle(ctx.getShapeStruct, shapeMap[id], { fill });
+        return p;
+      }, {});
+
+      if (draft) {
+        ctx.setTmpShapeMap(patch);
+      } else {
+        ctx.setTmpShapeMap({});
+        ctx.patchShapes(patch);
+      }
     },
     [ctx]
   );
@@ -123,7 +131,7 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
           <PopupButton
             name="fill"
             opened={popupedKey === "fill"}
-            popup={<ColorPickerPanel onClick={onFillChanged} />}
+            popup={<FillPanel fill={indexCommonStyle.fill} onChanged={onFillChanged} />}
             onClick={onClickPopupButton}
           >
             <div
