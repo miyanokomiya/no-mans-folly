@@ -59,6 +59,10 @@ export function createStateMachineContext(arg: {
     panView() {},
     startDragging() {},
     stopDragging() {},
+
+    toView: (p) => p,
+    showFloatMenu() {},
+    hideFloatMenu() {},
     setContextMenuList() {},
     setCommandExams() {},
     setCursor() {},

@@ -22,6 +22,8 @@ function getMockCtx() {
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     setCursor: vi.fn(),
     getTimestamp: vi.fn().mockReturnValue(1000),
+    showFloatMenu: vi.fn(),
+    hideFloatMenu: vi.fn(),
   };
 }
 

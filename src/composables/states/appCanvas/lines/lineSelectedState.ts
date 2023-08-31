@@ -15,10 +15,12 @@ export function newLineSelectedState(): AppCanvasState {
   return {
     getLabel: () => "LineSelected",
     onStart: async (ctx) => {
+      ctx.showFloatMenu();
       lineShape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
     },
     onEnd: async (ctx) => {
+      ctx.hideFloatMenu();
       ctx.setCursor();
     },
     handleEvent: async (ctx, event) => {

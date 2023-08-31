@@ -26,6 +26,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
 
+      ctx.showFloatMenu();
+
       boundingBox =
         option?.boundingBox ??
         newBoundingBox({
@@ -35,6 +37,9 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         });
 
       timestamp = ctx.getTimestamp();
+    },
+    onEnd: async (ctx) => {
+      ctx.hideFloatMenu();
     },
     handleEvent: async (ctx, event) => {
       if (!selectedId) return translateOnSelection(ctx);

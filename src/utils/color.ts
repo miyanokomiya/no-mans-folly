@@ -1,11 +1,7 @@
 import { circleClamp, clamp } from "okageo";
+import { Color } from "../models";
 
-export interface RGBA {
-  r: number; // 0 ~ 255
-  g: number; // 0 ~ 255
-  b: number; // 0 ~ 255
-  a: number; // 0 ~ 1
-}
+type RGBA = Color;
 
 export interface HSLA {
   h: number; // 0 ~ 360
@@ -128,4 +124,9 @@ function slToSv(s: number, l: number): { s: number; v: number } {
   const v = l + s * Math.min(l, 1 - l);
   const ss = v === 0 ? 0 : 2 * (1 - l / v);
   return { s: ss, v };
+}
+
+export function isSameColor(a?: RGBA, b?: RGBA): boolean {
+  if (a && b) return a.r === b.r && a.g === b.g && a.b === b.b && a.a === b.a;
+  return a === b;
 }

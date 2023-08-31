@@ -9,7 +9,7 @@ import {
   isSame,
   rotate,
 } from "okageo";
-import { FillStyle, Shape, StrokeStyle } from "../models";
+import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   getClosestOutlineOnRectangle,
@@ -19,14 +19,13 @@ import {
   isPointOnRectangleRotated,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape } from "./core";
+import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 
-export interface RectangleShape extends Shape {
-  fill: FillStyle;
-  stroke: StrokeStyle;
-  width: number;
-  height: number;
-}
+export type RectangleShape = Shape &
+  CommonStyle & {
+    width: number;
+    height: number;
+  };
 
 export const struct: ShapeStruct<RectangleShape> = {
   label: "Rectangle",
@@ -100,6 +99,8 @@ export const struct: ShapeStruct<RectangleShape> = {
       if (rotatedClosest) return rotateFn(rotatedClosest);
     }
   },
+  getCommonStyle,
+  updateCommonStyle,
 };
 
 function getLocalRectPolygon(shape: RectangleShape): IVec2[] {

@@ -1,5 +1,5 @@
 import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rotate, sub } from "okageo";
-import { FillStyle, Shape, StrokeStyle } from "../models";
+import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   getClosestOutlineOnEllipse,
@@ -9,16 +9,15 @@ import {
   isPointOnEllipseRotated,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape } from "./core";
+import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 
-export interface EllipseShape extends Shape {
-  fill: FillStyle;
-  stroke: StrokeStyle;
-  rx: number;
-  ry: number;
-  from: number;
-  to: number;
-}
+export type EllipseShape = Shape &
+  CommonStyle & {
+    rx: number;
+    ry: number;
+    from: number;
+    to: number;
+  };
 
 export const struct: ShapeStruct<EllipseShape> = {
   label: "Ellipse",
@@ -90,6 +89,8 @@ export const struct: ShapeStruct<EllipseShape> = {
       if (rotatedClosest) return rotateFn(rotatedClosest);
     }
   },
+  getCommonStyle,
+  updateCommonStyle,
 };
 
 function getLocalRectPolygon(shape: EllipseShape): IVec2[] {

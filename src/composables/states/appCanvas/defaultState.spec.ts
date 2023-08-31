@@ -1,7 +1,6 @@
 import { expect, test, describe, vi } from "vitest";
 import { newDefaultState } from "./defaultState";
 import { newPanningState } from "../commons";
-import { translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
@@ -36,13 +35,12 @@ describe("newDefaultState", () => {
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
       expect(result1).toBe(newSingleSelectedByPointerOnState);
 
+      ctx.getSelectedShapeIdMap.mockReturnValue({});
       const result2 = await target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
       });
-      expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "a", true);
-      expect(ctx.clearAllSelected).not.toHaveBeenCalled();
-      expect(result2).toBe(undefined);
+      expect(result2).toBe(newDefaultState);
     });
 
     test("should move to RectangleSelecting state if there's no shape at the point", async () => {
@@ -67,18 +65,6 @@ describe("newDefaultState", () => {
         data: { point: { x: 1, y: 2 }, options: { button: 1, ctrl: false } },
       });
       expect(result).toBe(newPanningState);
-    });
-  });
-
-  describe("handle selection", () => {
-    test("should move to next state", async () => {
-      const ctx = getMockCtx();
-      const target = newDefaultState();
-      await target.onStart?.(ctx as any);
-      const result = await target.handleEvent(ctx as any, {
-        type: "selection",
-      });
-      expect(result).toEqual(translateOnSelection(ctx));
     });
   });
 });

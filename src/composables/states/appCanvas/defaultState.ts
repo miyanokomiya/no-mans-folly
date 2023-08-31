@@ -21,10 +21,10 @@ const state: AppCanvasState = {
               if (!event.data.options.ctrl) {
                 return newSingleSelectedByPointerOnState;
               }
-            } else {
-              return newRectangleSelectingState;
+              return translateOnSelection(ctx);
             }
-            return;
+
+            return newRectangleSelectingState;
           }
           case 1:
             return newPanningState;
@@ -41,9 +41,6 @@ const state: AppCanvasState = {
       case "wheel":
         ctx.zoomView(event.data.delta.y);
         return;
-      case "selection": {
-        return translateOnSelection(ctx);
-      }
       case "history":
         return handleHistoryEvent(ctx, event);
       case "state":

@@ -49,6 +49,11 @@ export interface StrokeStyle {
   color: Color;
 }
 
+export interface CommonStyle {
+  fill: FillStyle;
+  stroke: StrokeStyle;
+}
+
 export interface ConnectionPoint {
   id: string;
   rate: IVec2; // relative position in the target rectangle

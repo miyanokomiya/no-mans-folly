@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getOuterRectangle, multiAffines } from "okageo";
-import { Shape } from "../models";
+import { CommonStyle, Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
@@ -123,4 +123,14 @@ export function getShapeTextBounds(
     ]),
     range: { x: 0, y: 0, width, height },
   };
+}
+
+export function getCommonStyle(getStruct: GetShapeStruct, shape: Shape): CommonStyle | undefined {
+  const struct = getStruct(shape.type);
+  return struct.getCommonStyle?.(shape);
+}
+
+export function updateCommonStyle(getStruct: GetShapeStruct, shape: Shape, val: Partial<CommonStyle>): Partial<Shape> {
+  const struct = getStruct(shape.type);
+  return struct.updateCommonStyle?.(shape, val) ?? {};
 }

@@ -173,6 +173,7 @@ export function useCanvas(
     addRootPosition,
   };
 }
+export type CanvasComposable = ReturnType<typeof useCanvas>;
 
 function _viewToCanvas(scale: number, viewOrigin: IVec2, v: IVec2): IVec2 {
   return add(viewOrigin, multi(v, scale));

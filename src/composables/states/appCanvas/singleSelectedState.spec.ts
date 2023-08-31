@@ -22,6 +22,8 @@ function getMockCtx() {
     getShapeStruct: getCommonStruct,
     getStyleScheme: createStyleScheme,
     getTimestamp: vi.fn().mockReturnValue(1000),
+    showFloatMenu: vi.fn(),
+    hideFloatMenu: vi.fn(),
   };
 }
 

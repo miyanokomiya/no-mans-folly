@@ -14,6 +14,9 @@ export interface CanvasStateContext extends ModeStateContextBase {
   startDragging: () => void;
   stopDragging: () => void;
 
+  toView: (p: IVec2) => IVec2;
+  showFloatMenu: () => void;
+  hideFloatMenu: () => void;
   setContextMenuList: (val?: { items: ContextMenuItem[]; point: IVec2 }) => void;
   setCommandExams: (exams?: CommandExam[]) => void;
   setCursor: (val?: string) => void;

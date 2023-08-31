@@ -1,5 +1,7 @@
 import { AffineMatrix, IRectangle, IVec2 } from "okageo";
-import { Shape } from "../models";
+import { CommonStyle, FillStyle, Shape, StrokeStyle } from "../models";
+import { isSameFillStyle } from "../utils/fillStyle";
+import { isSameStrokeStyle } from "../utils/strokeStyle";
 
 export interface ShapeStruct<T extends Shape> {
   label: string;
@@ -11,6 +13,8 @@ export interface ShapeStruct<T extends Shape> {
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
+  getCommonStyle?: (shape: T) => CommonStyle | undefined;
+  updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
 }
 
 export interface ShapeSnappingLines {
@@ -26,4 +30,22 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     p: arg.p ?? { x: 0, y: 0 },
     rotation: arg.rotation ?? 0,
   };
+}
+
+export function getCommonStyle<T extends Shape & CommonStyle>(shape: T): CommonStyle {
+  return { fill: shape.fill, stroke: shape.stroke };
+}
+
+export function updateCommonStyle<T extends Shape & CommonStyle>(
+  shape: T,
+  val: { fill?: FillStyle; stroke?: StrokeStyle }
+): Partial<T> {
+  const ret: Partial<T> = {};
+  if (val.fill && !isSameFillStyle(shape.fill, val.fill)) {
+    ret.fill = val.fill;
+  }
+  if (val.stroke && !isSameStrokeStyle(shape.stroke, val.stroke)) {
+    ret.stroke = val.stroke;
+  }
+  return ret;
 }

@@ -10,6 +10,7 @@ import { TextEditor } from "./textEditor/TextEditor";
 import { DocOutput } from "../models/document";
 import { renderDoc } from "../utils/textEditor";
 import { IVec2 } from "okageo";
+import { FloatMenu } from "./floatMenu/FloatMenu";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -22,6 +23,7 @@ export function AppCanvas() {
   const [cursor, setCursor] = useState<string | undefined>();
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
+  const [floatMenuAvailable, setFloatMenuAvailable] = useState(false);
 
   useEffect(() => {
     return acctx.shapeStore.watch(() => {
@@ -53,6 +55,10 @@ export function AppCanvas() {
       panView: canvas.panView,
       startDragging: canvas.startDragging,
       stopDragging: canvas.endMoving,
+
+      toView: canvas.canvasToView,
+      showFloatMenu: () => setFloatMenuAvailable(true),
+      hideFloatMenu: () => setFloatMenuAvailable(false),
       setContextMenuList() {},
       setCommandExams() {},
       setCursor,
@@ -93,7 +99,7 @@ export function AppCanvas() {
       getDocumentMap: () => docMap,
       patchDocument: acctx.documentStore.patchDoc,
     });
-  }, [canvas, acctx, smctx, shapes, tmpShapeMap, docMap]);
+  }, [canvas, canvas.scale, acctx, smctx, shapes, tmpShapeMap, docMap]);
 
   useEffect(() => {
     smctx.stateMachine.handleEvent({
@@ -279,6 +285,8 @@ export function AppCanvas() {
     <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
   ) : undefined;
 
+  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} /> : undefined;
+
   return (
     <>
       <div
@@ -294,6 +302,7 @@ export function AppCanvas() {
         <canvas ref={canvasRef} {...canvasAttrs}></canvas>
         <div className="absolute left-0 bottom-0">{smctx.stateMachine.getStateSummary().label}</div>
       </div>
+      {floatMenu}
       {textEditor}
     </>
   );

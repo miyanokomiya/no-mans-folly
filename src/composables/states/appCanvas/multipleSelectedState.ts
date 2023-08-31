@@ -28,6 +28,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       selectedIds = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
 
+      ctx.showFloatMenu();
+
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
@@ -43,6 +45,9 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       }
 
       timestamp = ctx.getTimestamp();
+    },
+    onEnd: async (ctx) => {
+      ctx.hideFloatMenu();
     },
     handleEvent: async (ctx, event) => {
       if (!selectedIds) return;
