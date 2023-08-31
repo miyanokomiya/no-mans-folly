@@ -11,6 +11,7 @@ interface Props {
 }
 
 export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged }) => {
+  const [draftValue, setDraftValue] = useState(value);
   const [down, setDown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -18,6 +19,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
     (rate: number, tmp = false) => {
       const v = Math.min(Math.max(rate, 0), 1) * (max - min) + min;
       const val = step ? snapNumber(v, step) : v;
+      setDraftValue(val);
 
       if (tmp) {
         onChanged?.(val, true);
@@ -42,8 +44,9 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
     if (!ref.current || !down) return;
 
     setDown(false);
-    onChanged?.(value);
-  }, [onChanged, value, down]);
+    // Use "draftValue", because "value" in this scope can be outdated.
+    onChanged?.(draftValue);
+  }, [onChanged, draftValue, down]);
   useGlobalMouseupEffect(onUp);
 
   const onMove = useCallback(

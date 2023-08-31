@@ -12,23 +12,56 @@ import { StrokePanel } from "./StrokePanel";
 
 interface Option {
   canvas: CanvasComposable;
-  tmpShapeMap: { [id: string]: Partial<Shape> };
 }
 
-export const FloatMenu: React.FC<Option> = ({ canvas, tmpShapeMap }) => {
+export const FloatMenu: React.FC<Option> = ({ canvas }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
   const [selectedShapes, setSelectedShapes] = useState<Shape[]>([]);
+  const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
+
+  const updateSelectedShapes = useCallback(() => {
+    const ctx = smctx.getCtx();
+    const shapeMap = ctx.getShapeMap();
+    const selected = Object.keys(ctx.getSelectedShapeIdMap());
+    setSelectedShapes(selected.map((id) => shapeMap[id]));
+    setTmpShapeMap(ctx.getTmpShapeMap());
+  }, [smctx]);
+
+  useEffect(() => {
+    updateSelectedShapes();
+  }, [updateSelectedShapes]);
+
+  useEffect(() => {
+    return acctx.shapeStore.watch(() => {
+      updateSelectedShapes();
+    });
+  }, [acctx.shapeStore, updateSelectedShapes]);
+
+  useEffect(() => {
+    return acctx.shapeStore.watchTmpShapeMap(() => {
+      setTmpShapeMap(acctx.shapeStore.getTmpShapeMap());
+    });
+  }, [acctx.shapeStore]);
+
+  useEffect(() => {
+    return acctx.shapeStore.watchSelected(() => {
+      updateSelectedShapes();
+    });
+  }, [acctx.shapeStore, updateSelectedShapes]);
 
   const indexShape = useMemo<Shape | undefined>(() => {
     const ctx = smctx.getCtx();
     const id = ctx.getLastSelectedShapeId();
     if (!id) return;
-    const shape = ctx.getShapeMap()[id] ?? {};
+
+    const shape = selectedShapes.find((s) => s.id === id);
+    if (!shape) return;
+
     const tmp = tmpShapeMap[id] ?? {};
     return tmp ? { ...shape, ...tmp } : shape;
-  }, [smctx, tmpShapeMap]);
+  }, [smctx, selectedShapes, tmpShapeMap]);
 
   const targetRect = useMemo<IRectangle | undefined>(() => {
     if (selectedShapes.length === 0) return;
@@ -47,29 +80,6 @@ export const FloatMenu: React.FC<Option> = ({ canvas, tmpShapeMap }) => {
     const center = getRectCenter(targetRect);
     return { x: center.x, y: targetRect.y + targetRect.height + 10 };
   }, [targetRect]);
-
-  const updateSelectedShapes = useCallback(() => {
-    const ctx = smctx.getCtx();
-    const shapeMap = ctx.getShapeMap();
-    const selected = Object.keys(ctx.getSelectedShapeIdMap());
-    setSelectedShapes(selected.map((id) => shapeMap[id]));
-  }, [smctx]);
-
-  useEffect(() => {
-    updateSelectedShapes();
-  }, [updateSelectedShapes]);
-
-  useEffect(() => {
-    return acctx.shapeStore.watch(() => {
-      updateSelectedShapes();
-    });
-  }, [acctx.shapeStore, updateSelectedShapes]);
-
-  useEffect(() => {
-    return acctx.shapeStore.watchSelected(() => {
-      updateSelectedShapes();
-    });
-  }, [acctx.shapeStore, updateSelectedShapes]);
 
   const [popupedKey, setPopupedKey] = useState("");
 

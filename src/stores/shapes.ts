@@ -2,6 +2,7 @@ import * as Y from "yjs";
 import { Shape } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newEntitySelectable } from "./core/entitySelectable";
+import { newCallback } from "../composables/reactives";
 
 type Option = {
   ydoc: Y.Doc;
@@ -18,6 +19,19 @@ export function newShapeStore(option: Option) {
     watchEntities: entityStore.watch,
   });
 
+  let tmpShapeMap: { [id: string]: Partial<Shape> } = {};
+
+  function setTmpShapeMap(val: { [id: string]: Partial<Shape> }) {
+    tmpShapeMap = val;
+    tmpShapeMapCallback.dispatch();
+  }
+
+  function getTmpShapeMap(): { [id: string]: Partial<Shape> } {
+    return tmpShapeMap;
+  }
+
+  const tmpShapeMapCallback = newCallback();
+
   return {
     ...entityStore,
 
@@ -28,5 +42,9 @@ export function newShapeStore(option: Option) {
     multiSelect: shapeSelectable.multiSelect,
     selectAll: shapeSelectable.selectAll,
     clearAllSelected: shapeSelectable.clearAllSelected,
+
+    setTmpShapeMap,
+    getTmpShapeMap,
+    watchTmpShapeMap: tmpShapeMapCallback.bind,
   };
 }

@@ -32,6 +32,12 @@ export function AppCanvas() {
   }, [acctx.shapeStore, smctx.stateMachine]);
 
   useEffect(() => {
+    return acctx.shapeStore.watchTmpShapeMap(() => {
+      setTmpShapeMap(acctx.shapeStore.getTmpShapeMap());
+    });
+  }, [acctx.shapeStore, smctx.stateMachine]);
+
+  useEffect(() => {
     return acctx.documentStore.watch(() => {
       setDocMap(acctx.documentStore.getDocMap());
     });
@@ -85,7 +91,7 @@ export function AppCanvas() {
       },
       patchShapes: acctx.shapeStore.patchEntities,
       getTmpShapeMap: () => tmpShapeMap,
-      setTmpShapeMap: setTmpShapeMap,
+      setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
 
       startTextEditing() {
         setTextEditing(true);
@@ -285,7 +291,7 @@ export function AppCanvas() {
     <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
   ) : undefined;
 
-  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} tmpShapeMap={tmpShapeMap} /> : undefined;
+  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} /> : undefined;
 
   return (
     <>
