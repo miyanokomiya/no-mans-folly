@@ -3,7 +3,6 @@ import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController } from "../../../textEditor";
 import { translateOnSelection } from "../commons";
 import { AppCanvasState } from "../core";
-import { newTextEditingState } from "./textEditingState";
 
 interface Option {
   id: string;
@@ -39,7 +38,7 @@ export function newTextSelectingState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
-          return () => newTextEditingState(option);
+          return { type: "break" };
         }
         case "shape-updated": {
           const shape = ctx.getShapeMap()[option.id];

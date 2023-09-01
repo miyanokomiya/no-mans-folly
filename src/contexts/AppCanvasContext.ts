@@ -53,6 +53,7 @@ export function createStateMachineContext(arg: {
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
 
+    getRenderCtx: () => undefined,
     setViewport() {},
     zoomView: () => 1,
     getScale: () => 1,

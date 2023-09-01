@@ -205,9 +205,10 @@ export const FloatMenu: React.FC<Option> = ({ canvas, currentDocAttrInfo }) => {
         {indexDocAttributes ? (
           <TextItems
             popupedKey={popupedKey}
-            setPopupedKey={setPopupedKey}
+            setPopupedKey={onClickPopupButton}
             onChanged={onDocAttributesChanged}
             onBlockChanged={onDocBlockAttributesChanged}
+            docAttrInfo={currentDocAttrInfo}
           />
         ) : undefined}
       </div>

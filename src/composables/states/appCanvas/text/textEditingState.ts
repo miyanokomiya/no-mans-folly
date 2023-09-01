@@ -45,11 +45,13 @@ export function newTextEditingState(option: Option): AppCanvasState {
         textEditorController = option.textEditorController;
       } else {
         textEditorController = newTextEditorController();
+        textEditorController.setRenderingContext(ctx.getRenderCtx()!);
         textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
         textEditorController.moveCursorToTail();
       }
 
       updateEditorPosition(ctx);
+      onCursorUpdated(ctx);
 
       ctx.setCaptureTimeout(1000);
     },
@@ -82,26 +84,16 @@ export function newTextEditingState(option: Option): AppCanvasState {
           const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.point));
           textEditorController.setCursor(textEditorController.getLocationIndex(location));
           updateEditorPosition(ctx);
-          return () => newTextSelectingState({ id: option.id, textEditorController });
+          onCursorUpdated(ctx);
+          return {
+            type: "stack-resume",
+            getState: () => newTextSelectingState({ id: option.id, textEditorController }),
+          };
         }
         case "keydown":
           updateEditorPosition(ctx);
+
           switch (event.data.key) {
-            case "Home": {
-              const ops = textEditorController.getDeltaByApplyBlockStyle({ align: "left" });
-              ctx.patchDocument(option.id, ops);
-              return;
-            }
-            case "PageUp": {
-              const ops = textEditorController.getDeltaByApplyBlockStyle({ align: "center" });
-              ctx.patchDocument(option.id, ops);
-              return;
-            }
-            case "PageDown": {
-              const ops = textEditorController.getDeltaByApplyBlockStyle({ align: "right" });
-              ctx.patchDocument(option.id, ops);
-              return;
-            }
             case "ArrowLeft":
               if (event.data.shift) {
                 textEditorController.shiftSelectionBy(-1);

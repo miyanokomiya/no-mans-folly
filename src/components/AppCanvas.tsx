@@ -56,6 +56,7 @@ export function AppCanvas() {
 
   useEffect(() => {
     smctx.setCtx({
+      getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
       setViewport: canvas.setViewport,
       zoomView: canvas.zoomView,
       getScale: () => canvas.scale,
