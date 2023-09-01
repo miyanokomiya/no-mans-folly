@@ -40,6 +40,16 @@ export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape): IV
   return struct.getLocalRectPolygon(shape);
 }
 
+export function getTextRangeRect(getStruct: GetShapeStruct, shape: Shape): IRectangle | undefined {
+  const struct = getStruct(shape.type);
+  return struct.getTextRangeRect?.(shape);
+}
+
+export function canHaveText(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.getTextRangeRect;
+}
+
 export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2): boolean {
   const struct = getStruct(shape.type);
   return struct.isPointOn(shape, p);
@@ -103,7 +113,7 @@ export function getShapeTextBounds(
   const path = getLocalRectPolygon(getStruct, shape);
   const center = getCenter(path[0], path[2]);
   const rotateFn = getRotateFn(shape.rotation, center);
-  const range = getOuterRectangle([path.map((p) => rotateFn(p, true))]);
+  const range = getTextRangeRect(getStruct, shape) ?? getOuterRectangle([path.map((p) => rotateFn(p, true))]);
 
   const width = range.width;
   const height = range.height;

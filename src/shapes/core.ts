@@ -9,6 +9,7 @@ export interface ShapeStruct<T extends Shape> {
   render: (ctx: CanvasRenderingContext2D, shape: T) => void;
   getWrapperRect: (shape: T) => IRectangle;
   getLocalRectPolygon: (shape: T) => IVec2[];
+  getTextRangeRect?: (shape: T) => IRectangle | undefined;
   isPointOn: (shape: T, p: IVec2) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;

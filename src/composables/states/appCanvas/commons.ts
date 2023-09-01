@@ -14,6 +14,8 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyle,
 } from "../../../utils/textEditor";
+import { canHaveText } from "../../../shapes";
+import { newTextEditingState } from "./text/textEditingState";
 
 export function translateOnSelection(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
@@ -101,4 +103,14 @@ export function handleCommonTextStyle(
   }, {});
 
   ctx.patchDocuments(patch);
+}
+
+export function startTextEditingIfPossible(
+  ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">,
+  selectedId?: string
+): TransitionValue<AppCanvasStateContext> {
+  const shape = ctx.getShapeMap()[selectedId ?? ""];
+  if (shape && canHaveText(ctx.getShapeStruct, shape)) {
+    return () => newTextEditingState({ id: selectedId! });
+  }
 }

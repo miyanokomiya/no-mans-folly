@@ -59,6 +59,9 @@ export const struct: ShapeStruct<RectangleShape> = {
     );
   },
   getLocalRectPolygon,
+  getTextRangeRect(shape) {
+    return { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  },
   isPointOn(shape, p) {
     return isPointOnRectangleRotated(
       { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },

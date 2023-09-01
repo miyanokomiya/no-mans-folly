@@ -53,6 +53,13 @@ export const struct: ShapeStruct<EllipseShape> = {
     );
   },
   getLocalRectPolygon,
+  getTextRangeRect(shape) {
+    const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+    const r = Math.PI / 4;
+    const dx = Math.cos(r) * shape.rx;
+    const dy = Math.sin(r) * shape.ry;
+    return { x: c.x - dx, y: c.y - dy, width: dx * 2, height: dy * 2 };
+  },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
     return isPointOnEllipseRotated(c, shape.rx, shape.ry, shape.rotation, p);

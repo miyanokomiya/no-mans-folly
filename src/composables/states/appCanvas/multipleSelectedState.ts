@@ -6,6 +6,7 @@ import {
   handleCommonTextStyle,
   handleHistoryEvent,
   handleStateEvent,
+  startTextEditingIfPossible,
   translateOnSelection,
 } from "./commons";
 import * as geometry from "../../../utils/geometry";
@@ -17,7 +18,6 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
-import { newTextEditingState } from "./text/textEditingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -81,7 +81,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               if (!event.data.options.ctrl) {
                 if (selectedIds[shape.id]) {
                   if (ctx.getTimestamp() - timestamp < 300) {
-                    return () => newTextEditingState({ id: shape.id });
+                    return startTextEditingIfPossible(ctx, shape.id);
                   } else {
                     return () => newMovingShapeState({ boundingBox });
                   }

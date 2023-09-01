@@ -6,6 +6,7 @@ import {
   handleCommonTextStyle,
   handleHistoryEvent,
   handleStateEvent,
+  startTextEditingIfPossible,
   translateOnSelection,
 } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
@@ -14,7 +15,6 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
-import { newTextEditingState } from "./text/textEditingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -64,7 +64,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                     return () => newRotatingState({ boundingBox });
                   case "area":
                     if (ctx.getTimestamp() - timestamp < 300) {
-                      return () => newTextEditingState({ id: selectedId! });
+                      return startTextEditingIfPossible(ctx, selectedId);
                     }
                 }
               }
@@ -112,7 +112,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               return;
             case "Enter":
               event.data.prevent?.();
-              return () => newTextEditingState({ id: selectedId! });
+              return startTextEditingIfPossible(ctx, selectedId);
             default:
               return handleCommonShortcut(ctx, event);
           }
