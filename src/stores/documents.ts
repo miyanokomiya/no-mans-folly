@@ -44,6 +44,12 @@ export function newDocumentStore(option: Option) {
     text.applyDelta(delta);
   }
 
+  function patchDocs(val: { [id: string]: DocDelta }) {
+    transact(() => {
+      Object.entries(val).forEach(([id, val]) => patchDoc(id, val));
+    });
+  }
+
   function transact(fn: () => void) {
     option.ydoc.transact(fn);
   }
@@ -62,6 +68,7 @@ export function newDocumentStore(option: Option) {
     deleteDoc,
     deleteDocs,
     patchDoc,
+    patchDocs,
     transact,
     getScope,
     watch,

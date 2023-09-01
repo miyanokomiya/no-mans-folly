@@ -25,7 +25,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   stopTextEditing: () => void;
   setTextEditorPosition: (p: IVec2) => void;
   getDocumentMap: () => { [id: string]: DocOutput };
-  patchDocument: (id: string, delta: DocDelta) => void;
+  patchDocuments: (val: { [id: string]: DocDelta }) => void;
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
 }
 
@@ -54,10 +54,11 @@ interface TextInputEvent extends ModeStateEventBase {
   };
 }
 
-interface TextStyleEvent extends ModeStateEventBase {
+export interface TextStyleEvent extends ModeStateEventBase {
   type: "text-style";
   data: {
     value: DocAttributes;
     block?: boolean;
+    doc?: boolean;
   };
 }

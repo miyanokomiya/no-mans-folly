@@ -1,7 +1,13 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
-import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
+import {
+  handleCommonShortcut,
+  handleCommonTextStyle,
+  handleHistoryEvent,
+  handleStateEvent,
+  translateOnSelection,
+} from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -116,6 +122,9 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             default:
               return handleCommonShortcut(ctx, event);
           }
+        case "text-style": {
+          return handleCommonTextStyle(ctx, event);
+        }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           boundingBox.updateScale(ctx.getScale());

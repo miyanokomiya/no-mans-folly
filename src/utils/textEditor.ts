@@ -368,16 +368,55 @@ export function getDeltaByApplyBlockStyle(
       if (cursor + selection <= i) break;
     }
   }
-  if (breakIndexList.length === 0) return [];
 
+  return getDeltaByApplyAttrsTo(breakIndexList, attrs);
+}
+
+export function getDeltaByApplyBlockStyleToDoc(doc: DocOutput, attrs: DocAttributes): DocDelta {
+  if (doc.length === 0) return getInitialOutput(attrs);
+
+  const breakIndexList: number[] = [];
+
+  let cursor = 0;
+  doc.forEach((o) => {
+    for (let i = 0; i < o.insert.length; i++) {
+      if (o.insert[i] === "\n") {
+        breakIndexList.push(cursor);
+      }
+      cursor += 1;
+    }
+  });
+
+  return getDeltaByApplyAttrsTo(breakIndexList, attrs);
+}
+
+function getDeltaByApplyAttrsTo(targetIndexList: number[], attrs: DocAttributes): DocDelta {
+  if (targetIndexList.length === 0) return [];
   const ret: DocDelta = [];
   let tmp = 0;
-  for (let i = 0; i < breakIndexList.length; i++) {
-    const breakIndex = breakIndexList[i];
-    ret.push({ retain: breakIndex - tmp }, { retain: 1, attributes: attrs });
+  for (let i = 0; i < targetIndexList.length; i++) {
+    const breakIndex = targetIndexList[i];
+    if (breakIndex - tmp > 0) {
+      ret.push({ retain: breakIndex - tmp });
+    }
+    ret.push({ retain: 1, attributes: attrs });
     tmp = breakIndex + 1;
   }
   return ret;
+}
+
+export function getDeltaByApplyDocStyle(doc: DocOutput, attrs: DocAttributes): DocDelta {
+  if (doc.length === 0) return getInitialOutput(attrs);
+
+  const retain = doc.reduce((n, o) => n + o.insert.length, 0) - 1;
+  return [{ retain }, { retain: 1, attributes: attrs }];
+}
+
+export function getDeltaByApplyInlineStyle(doc: DocOutput, attrs: DocAttributes): DocDelta {
+  if (doc.length === 0) return getInitialOutput(attrs);
+
+  const retain = doc.reduce((n, o) => n + o.insert.length, 0);
+  return [{ retain, attributes: attrs }];
 }
 
 export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert {
@@ -391,4 +430,13 @@ export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert
     }
   });
   return ret;
+}
+
+export function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
+  return [{ insert: "\n", attributes: { direction: "middle", align: "center", ...attrs } }];
+}
+
+// The last output represents a doc's attributes
+export function getDocAttributes(doc: DocOutput): DocAttributes | undefined {
+  return doc.length === 0 ? getInitialOutput()[0].attributes : doc[doc.length - 1].attributes;
 }

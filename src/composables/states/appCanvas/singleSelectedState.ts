@@ -1,7 +1,13 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon } from "../../../shapes";
-import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "./commons";
+import {
+  handleCommonShortcut,
+  handleCommonTextStyle,
+  handleHistoryEvent,
+  handleStateEvent,
+  translateOnSelection,
+} from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
@@ -110,6 +116,9 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             default:
               return handleCommonShortcut(ctx, event);
           }
+        case "text-style": {
+          return handleCommonTextStyle(ctx, event);
+        }
         case "wheel":
           boundingBox.updateScale(ctx.zoomView(event.data.delta.y));
           return;

@@ -4,6 +4,9 @@ import { DocAttrInfo, DocAttributes } from "../../models/document";
 import iconAlignLeft from "../../assets/icons/align_left.svg";
 import iconAlignCenter from "../../assets/icons/align_center.svg";
 import iconAlignRight from "../../assets/icons/align_right.svg";
+import iconDirectionTop from "../../assets/icons/direction_top.svg";
+import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
+import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
 
 interface AlignPanelProps {
   onClick?: (value: string) => void;
@@ -33,15 +36,47 @@ const AlignPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
   );
 };
 
+const DirectionPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
+  const onClickButton = useCallback(
+    (e: React.MouseEvent) => {
+      const type = e.currentTarget.getAttribute("data-type")!;
+      onClick?.(type);
+    },
+    [onClick]
+  );
+
+  return (
+    <div className="flex gap-1">
+      <button type="button" className="w-8 p-1 rounded border" data-type="top" onClick={onClickButton}>
+        <img src={iconDirectionTop} alt="Direction Top" />
+      </button>
+      <button type="button" className="w-8 p-1 rounded border" data-type="middle" onClick={onClickButton}>
+        <img src={iconDirectionMiddle} alt="Direction Middle" />
+      </button>
+      <button type="button" className="w-8 p-1 rounded border" data-type="bottom" onClick={onClickButton}>
+        <img src={iconDirectionBottom} alt="Direction Bottom" />
+      </button>
+    </div>
+  );
+};
+
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
-  onChanged?: (val: DocAttributes) => void;
+  onInlineChanged?: (val: DocAttributes) => void;
   onBlockChanged?: (val: DocAttributes) => void;
+  onDocChanged?: (val: DocAttributes) => void;
   docAttrInfo: DocAttrInfo;
 }
 
-export const TextItems: React.FC<Props> = ({ popupedKey, setPopupedKey, onChanged, onBlockChanged, docAttrInfo }) => {
+export const TextItems: React.FC<Props> = ({
+  popupedKey,
+  setPopupedKey,
+  onInlineChanged,
+  onBlockChanged,
+  onDocChanged,
+  docAttrInfo,
+}) => {
   const onAlignClick = useCallback(() => {
     setPopupedKey("align");
   }, [setPopupedKey]);
@@ -64,6 +99,28 @@ export const TextItems: React.FC<Props> = ({ popupedKey, setPopupedKey, onChange
     }
   }, [docAttrInfo]);
 
+  const onDirectionClick = useCallback(() => {
+    setPopupedKey("direction");
+  }, [setPopupedKey]);
+
+  const onDirectionChanged = useCallback(
+    (value: string) => {
+      onDocChanged?.({ direction: value as any });
+    },
+    [onDocChanged]
+  );
+
+  const directionIcon = useMemo(() => {
+    switch (docAttrInfo.doc?.direction) {
+      case "middle":
+        return iconDirectionMiddle;
+      case "bottom":
+        return iconDirectionBottom;
+      default:
+        return iconDirectionTop;
+    }
+  }, [docAttrInfo]);
+
   return (
     <div className="flex gap-1">
       <PopupButton
@@ -74,6 +131,16 @@ export const TextItems: React.FC<Props> = ({ popupedKey, setPopupedKey, onChange
       >
         <div className="w-8 h-8 p-1 border rounded">
           <img src={alignIcon} alt="Align" />
+        </div>
+      </PopupButton>
+      <PopupButton
+        name="direction"
+        opened={popupedKey === "direction"}
+        popup={<DirectionPanel onClick={onDirectionChanged} />}
+        onClick={onDirectionClick}
+      >
+        <div className="w-8 h-8 p-1 border rounded">
+          <img src={directionIcon} alt="Direction" />
         </div>
       </PopupButton>
     </div>

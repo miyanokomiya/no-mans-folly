@@ -8,7 +8,7 @@ import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables
 import { findBackward } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
 import { DocAttrInfo, DocOutput } from "../models/document";
-import { renderDoc } from "../utils/textEditor";
+import { getDocAttributes, renderDoc } from "../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 
@@ -20,6 +20,7 @@ export function AppCanvas() {
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [docMap, setDocMap] = useState<{ [id: string]: DocOutput }>({});
   const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
+  const [selectedInfo, setSelectedInfo] = useState<[last: string, map: { [id: string]: true }] | undefined>();
   const [cursor, setCursor] = useState<string | undefined>();
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
@@ -37,6 +38,17 @@ export function AppCanvas() {
       setTmpShapeMap(acctx.shapeStore.getTmpShapeMap());
     });
   }, [acctx.shapeStore, smctx.stateMachine]);
+
+  useEffect(() => {
+    return acctx.shapeStore.watchSelected(() => {
+      const last = acctx.shapeStore.getLastSelected();
+      if (last) {
+        setSelectedInfo([last, acctx.shapeStore.getSelected()]);
+      } else {
+        setSelectedInfo(undefined);
+      }
+    });
+  }, [acctx.shapeStore]);
 
   useEffect(() => {
     return acctx.documentStore.watch(() => {
@@ -105,7 +117,7 @@ export function AppCanvas() {
         setTextEditorPosition(canvas.canvasToView(p));
       },
       getDocumentMap: () => docMap,
-      patchDocument: acctx.documentStore.patchDoc,
+      patchDocuments: acctx.documentStore.patchDocs,
       setCurrentDocAttrInfo,
     });
   }, [canvas, canvas.scale, acctx, smctx, shapes, tmpShapeMap, docMap]);
@@ -290,13 +302,25 @@ export function AppCanvas() {
     [smctx.stateMachine]
   );
 
+  const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
+    if (!selectedInfo) return;
+    if (textEditing) return currentDocAttrInfo;
+
+    const id = selectedInfo[0];
+    if (!id) return;
+
+    const doc = docMap[id];
+    if (!doc) return;
+
+    const attrs = getDocAttributes(doc);
+    return { cursor: attrs, block: attrs, doc: attrs };
+  }, [currentDocAttrInfo, textEditing, selectedInfo, docMap]);
+
   const textEditor = textEditing ? (
     <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
   ) : undefined;
 
-  const floatMenu = floatMenuAvailable ? (
-    <FloatMenu canvas={canvas} currentDocAttrInfo={currentDocAttrInfo} />
-  ) : undefined;
+  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} indexDocAttrInfo={indexDocAttrInfo} /> : undefined;
 
   return (
     <>

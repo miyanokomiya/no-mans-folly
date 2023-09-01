@@ -59,12 +59,13 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.hideFloatMenu();
       ctx.stopTextEditing();
       ctx.setCaptureTimeout();
+      ctx.setCurrentDocAttrInfo({});
     },
     handleEvent: async (ctx, event) => {
       switch (event.type) {
         case "text-input": {
           const cursor = textEditorController.getCursor();
-          ctx.patchDocument(option.id, textEditorController.getDeltaByInput(event.data.value));
+          ctx.patchDocuments({ [option.id]: textEditorController.getDeltaByInput(event.data.value) });
           textEditorController.setCursor(cursor + event.data.value.length);
 
           if (event.data.composition) {
@@ -123,10 +124,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
               const cursor = textEditorController.getCursor();
               const selection = textEditorController.getSelection();
               if (selection > 0) {
-                ctx.patchDocument(option.id, [{ retain: cursor }, { delete: Math.max(1, selection) }]);
+                ctx.patchDocuments({ [option.id]: [{ retain: cursor }, { delete: Math.max(1, selection) }] });
                 textEditorController.setCursor(cursor);
               } else {
-                ctx.patchDocument(option.id, [{ retain: cursor - 1 }, { delete: 1 }]);
+                ctx.patchDocuments({ [option.id]: [{ retain: cursor - 1 }, { delete: 1 }] });
                 textEditorController.setCursor(cursor - 1);
               }
               return;
@@ -135,10 +136,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
               const cursor = textEditorController.getCursor();
               const selection = textEditorController.getSelection();
               if (selection > 0) {
-                ctx.patchDocument(option.id, [{ retain: cursor }, { delete: Math.max(1, selection) }]);
+                ctx.patchDocuments({ [option.id]: [{ retain: cursor }, { delete: Math.max(1, selection) }] });
                 textEditorController.setCursor(cursor);
               } else {
-                ctx.patchDocument(option.id, [{ retain: cursor }, { delete: 1 }]);
+                ctx.patchDocuments({ [option.id]: [{ retain: cursor }, { delete: 1 }] });
                 textEditorController.setCursor(cursor);
               }
               return;
@@ -154,9 +155,12 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return;
         }
         case "text-style": {
-          if (event.data.block) {
+          if (event.data.doc) {
+            const ops = textEditorController.getDeltaByApplyDocStyle(event.data.value);
+            ctx.patchDocuments({ [option.id]: ops });
+          } else if (event.data.block) {
             const ops = textEditorController.getDeltaByApplyBlockStyle(event.data.value);
-            ctx.patchDocument(option.id, ops);
+            ctx.patchDocuments({ [option.id]: ops });
           }
           return;
         }

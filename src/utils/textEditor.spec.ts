@@ -1,5 +1,12 @@
 import { expect, describe, test } from "vitest";
-import { DocCompositionItem, DocCompositionLine, getCursorLocationAt } from "./textEditor";
+import {
+  DocCompositionItem,
+  DocCompositionLine,
+  getCursorLocationAt,
+  getDeltaByApplyBlockStyleToDoc,
+  getDeltaByApplyDocStyle,
+  getDeltaByApplyInlineStyle,
+} from "./textEditor";
 
 describe("getCursorLocationAt", () => {
   test("align left: should return appropriate cursor location", () => {
@@ -98,5 +105,55 @@ describe("getCursorLocationAt", () => {
       x: 1,
       y: 0,
     });
+  });
+});
+
+describe("getDeltaByApplyBlockStyleToDoc", () => {
+  test("should return doc delta to apply the block attributes", () => {
+    expect(
+      getDeltaByApplyBlockStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+    ).toEqual([
+      { retain: 2 },
+      { retain: 1, attributes: { align: "right" } },
+      { retain: 2 },
+      { retain: 1, attributes: { align: "right" } },
+      { retain: 1, attributes: { align: "right" } },
+      { retain: 1 },
+      { retain: 1, attributes: { align: "right" } },
+    ]);
+  });
+
+  test("should return doc delta for empty doc", () => {
+    expect(getDeltaByApplyBlockStyleToDoc([], { align: "right" })).toEqual([
+      { insert: "\n", attributes: { align: "right", direction: "middle" } },
+    ]);
+  });
+});
+
+describe("getDeltaByApplyDocStyle", () => {
+  test("should return doc delta to apply the doc attributes", () => {
+    expect(
+      getDeltaByApplyDocStyle([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+    ).toEqual([{ retain: 8 }, { retain: 1, attributes: { align: "right" } }]);
+  });
+
+  test("should return doc delta for empty doc", () => {
+    expect(getDeltaByApplyDocStyle([], { align: "right" })).toEqual([
+      { insert: "\n", attributes: { align: "right", direction: "middle" } },
+    ]);
+  });
+});
+
+describe("getDeltaByApplyInlineStyle", () => {
+  test("should return doc delta to apply the doc attributes", () => {
+    expect(
+      getDeltaByApplyInlineStyle([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+    ).toEqual([{ retain: 9, attributes: { align: "right" } }]);
+  });
+
+  test("should return doc delta for empty doc", () => {
+    expect(getDeltaByApplyInlineStyle([], { align: "right" })).toEqual([
+      { insert: "\n", attributes: { align: "right", direction: "middle" } },
+    ]);
   });
 });

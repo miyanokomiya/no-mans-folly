@@ -14,10 +14,10 @@ import { DocAttrInfo, DocAttributes } from "../../models/document";
 
 interface Option {
   canvas: CanvasComposable;
-  currentDocAttrInfo: DocAttrInfo;
+  indexDocAttrInfo?: DocAttrInfo;
 }
 
-export const FloatMenu: React.FC<Option> = ({ canvas, currentDocAttrInfo }) => {
+export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
@@ -143,12 +143,7 @@ export const FloatMenu: React.FC<Option> = ({ canvas, currentDocAttrInfo }) => {
     [smctx]
   );
 
-  const indexDocAttributes = useMemo<DocAttrInfo | undefined>(() => {
-    if (!indexShape) return;
-    return currentDocAttrInfo;
-  }, [indexShape, currentDocAttrInfo]);
-
-  const onDocAttributesChanged = useCallback(
+  const onDocInlineAttributesChanged = useCallback(
     (attrs: DocAttributes) => {
       smctx.stateMachine.handleEvent({
         type: "text-style",
@@ -163,6 +158,16 @@ export const FloatMenu: React.FC<Option> = ({ canvas, currentDocAttrInfo }) => {
       smctx.stateMachine.handleEvent({
         type: "text-style",
         data: { value: attrs, block: true },
+      });
+    },
+    [smctx]
+  );
+
+  const onDocAttributesChanged = useCallback(
+    (attrs: DocAttributes) => {
+      smctx.stateMachine.handleEvent({
+        type: "text-style",
+        data: { value: attrs, doc: true },
       });
     },
     [smctx]
@@ -202,13 +207,14 @@ export const FloatMenu: React.FC<Option> = ({ canvas, currentDocAttrInfo }) => {
             ></div>
           </PopupButton>
         ) : undefined}
-        {indexDocAttributes ? (
+        {indexDocAttrInfo ? (
           <TextItems
             popupedKey={popupedKey}
             setPopupedKey={onClickPopupButton}
-            onChanged={onDocAttributesChanged}
+            onInlineChanged={onDocInlineAttributesChanged}
             onBlockChanged={onDocBlockAttributesChanged}
-            docAttrInfo={currentDocAttrInfo}
+            onDocChanged={onDocAttributesChanged}
+            docAttrInfo={indexDocAttrInfo}
           />
         ) : undefined}
       </div>

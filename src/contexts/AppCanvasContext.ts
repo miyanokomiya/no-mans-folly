@@ -91,7 +91,7 @@ export function createStateMachineContext(arg: {
     stopTextEditing() {},
     setTextEditorPosition() {},
     getDocumentMap: () => ({}),
-    patchDocument() {},
+    patchDocuments() {},
     setCurrentDocAttrInfo() {},
   };
 

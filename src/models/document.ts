@@ -31,4 +31,5 @@ export type DocDirection = "top" | "middle" | "bottom";
 export interface DocAttrInfo {
   cursor?: DocAttributes;
   block?: DocAttributes;
+  doc?: DocAttributes;
 }

@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttributes, DocDelta, DocOutput } from "../models/document";
+import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../models/document";
 import {
   DEFAULT_FONT_SIZE,
   DocCompositionItem,
@@ -10,6 +10,7 @@ import {
   getDeltaByApplyBlockStyle,
   getDocComposition,
   getDocLength,
+  getInitialOutput,
   getLineOutputs,
   getOutputAt,
   getRangeLines,
@@ -118,12 +119,13 @@ export function newTextEditorController() {
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
   }
 
-  function getCurrentAttributeInfo(): { cursor: DocAttributes | undefined; block: DocAttributes | undefined } {
+  function getCurrentAttributeInfo(): DocAttrInfo {
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
     const line = _compositionLines[location.y];
     const lineEnd = line.outputs[line.outputs.length - 1];
-    return { cursor: getOutputAt(line, location.x).attributes, block: lineEnd.attributes };
+    const docEnd = _doc[_doc.length - 1];
+    return { cursor: getOutputAt(line, location.x).attributes, block: lineEnd.attributes, doc: docEnd.attributes };
   }
 
   function getDeltaByInput(text: string): DocDelta {
@@ -162,6 +164,11 @@ export function newTextEditorController() {
     const cursor = getCursor();
     const selection = getSelection();
     return getDeltaByApplyBlockStyle(_composition, cursor, selection, attrs);
+  }
+
+  function getDeltaByApplyDocStyle(attrs: DocAttributes): DocDelta {
+    if (_isDocEmpty) return getInitialOutput(attrs);
+    return [{ retain: docLength - 1 }, { retain: 1, attributes: attrs }];
   }
 
   function getBoundsAtIME(): IRectangle | undefined {
@@ -231,6 +238,7 @@ export function newTextEditorController() {
     getDeltaByInput,
     getCurrentAttributeInfo,
     getDeltaByApplyBlockStyle: _getDeltaByApplyBlockStyle,
+    getDeltaByApplyDocStyle,
 
     getLocationAt,
     getBoundsAtIME,
@@ -329,8 +337,4 @@ function renderCursor(
     }
     ctx.stroke();
   }
-}
-
-function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
-  return [{ insert: "\n", attributes: { direction: "middle", align: "center", ...attrs } }];
 }
