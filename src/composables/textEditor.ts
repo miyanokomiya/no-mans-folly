@@ -11,6 +11,7 @@ import {
   getDocComposition,
   getDocLength,
   getLineOutputs,
+  getOutputAt,
   getRangeLines,
   renderDocByComposition,
 } from "../utils/textEditor";
@@ -117,12 +118,12 @@ export function newTextEditorController() {
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
   }
 
-  function getCurrentBlockAttributes(): DocAttributes | undefined {
+  function getCurrentAttributeInfo(): { cursor: DocAttributes | undefined; block: DocAttributes | undefined } {
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
     const line = _compositionLines[location.y];
     const lineEnd = line.outputs[line.outputs.length - 1];
-    return lineEnd.attributes;
+    return { cursor: getOutputAt(line, location.x).attributes, block: lineEnd.attributes };
   }
 
   function getDeltaByInput(text: string): DocDelta {
@@ -134,17 +135,18 @@ export function newTextEditorController() {
       ret.push({ delete: selection });
     }
 
-    const blockAttributes = getCurrentBlockAttributes();
-    if (blockAttributes) {
+    const attrInfo = getCurrentAttributeInfo();
+    if (attrInfo.block) {
+      const blockAttrs = { ...(attrInfo.cursor ?? {}), ...(attrInfo.block ?? {}) };
       const list = text.split("\n");
       list.forEach((block, i) => {
-        if (block) ret.push({ insert: block });
+        if (block) ret.push({ insert: block, attributes: attrInfo.cursor });
         if (i !== list.length - 1) {
-          ret.push({ insert: "\n", attributes: blockAttributes });
+          ret.push({ insert: "\n", attributes: blockAttrs });
         }
       });
     } else {
-      ret.push({ insert: text });
+      ret.push({ insert: text, attributes: attrInfo.cursor });
     }
 
     if (_isDocEmpty) {
@@ -214,18 +216,20 @@ export function newTextEditorController() {
   return {
     setRenderingContext,
     setDoc,
+
     setCursor,
-    shiftCursorBy,
-    shiftSelectionBy,
     getCursor,
     getSelection,
+    shiftCursorBy,
+    shiftSelectionBy,
     moveCursorToHead,
     moveCursorToTail,
     moveCursorUp,
     moveCursorDown,
-    getDeltaByInput,
-
     getLocationIndex,
+
+    getDeltaByInput,
+    getCurrentAttributeInfo,
     getDeltaByApplyBlockStyle: _getDeltaByApplyBlockStyle,
 
     getLocationAt,

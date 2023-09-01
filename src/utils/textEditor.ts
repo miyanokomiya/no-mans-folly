@@ -374,3 +374,16 @@ export function getDeltaByApplyBlockStyle(
   }
   return ret;
 }
+
+export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert {
+  let count = 0;
+  let ret = line.outputs[line.outputs.length - 1];
+  line.outputs.some((o) => {
+    count += o.insert.length;
+    if (x <= count) {
+      ret = o;
+      return true;
+    }
+  });
+  return ret;
+}

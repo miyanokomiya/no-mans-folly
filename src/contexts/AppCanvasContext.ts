@@ -91,6 +91,7 @@ export function createStateMachineContext(arg: {
     setTextEditorPosition() {},
     getDocumentMap: () => ({}),
     patchDocument() {},
+    setCurrentDocAttrInfo() {},
   };
 
   const setCtx: IAppStateMachineContext["setCtx"] = (c) => {

@@ -9,12 +9,15 @@ import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
+import { TextItems } from "./TextItems";
+import { DocAttrInfo, DocAttributes } from "../../models/document";
 
 interface Option {
   canvas: CanvasComposable;
+  currentDocAttrInfo: DocAttrInfo;
 }
 
-export const FloatMenu: React.FC<Option> = ({ canvas }) => {
+export const FloatMenu: React.FC<Option> = ({ canvas, currentDocAttrInfo }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
@@ -140,6 +143,31 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
     [smctx]
   );
 
+  const indexDocAttributes = useMemo<DocAttrInfo | undefined>(() => {
+    if (!indexShape) return;
+    return currentDocAttrInfo;
+  }, [indexShape, currentDocAttrInfo]);
+
+  const onDocAttributesChanged = useCallback(
+    (attrs: DocAttributes) => {
+      smctx.stateMachine.handleEvent({
+        type: "text-style",
+        data: { value: attrs },
+      });
+    },
+    [smctx]
+  );
+
+  const onDocBlockAttributesChanged = useCallback(
+    (attrs: DocAttributes) => {
+      smctx.stateMachine.handleEvent({
+        type: "text-style",
+        data: { value: attrs, block: true },
+      });
+    },
+    [smctx]
+  );
+
   return position ? (
     <div
       className="fixed top-0 left-0 border rounded bg-white p-1"
@@ -173,6 +201,14 @@ export const FloatMenu: React.FC<Option> = ({ canvas }) => {
               style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
             ></div>
           </PopupButton>
+        ) : undefined}
+        {indexDocAttributes ? (
+          <TextItems
+            popupedKey={popupedKey}
+            setPopupedKey={setPopupedKey}
+            onChanged={onDocAttributesChanged}
+            onBlockChanged={onDocBlockAttributesChanged}
+          />
         ) : undefined}
       </div>
     </div>

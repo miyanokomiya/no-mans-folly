@@ -7,7 +7,7 @@ import { getMouseOptions, isAltOrOpt, isCtrlOrMeta } from "../utils/devices";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables/window";
 import { findBackward } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
-import { DocOutput } from "../models/document";
+import { DocAttrInfo, DocOutput } from "../models/document";
 import { renderDoc } from "../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
@@ -23,6 +23,7 @@ export function AppCanvas() {
   const [cursor, setCursor] = useState<string | undefined>();
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
+  const [currentDocAttrInfo, setCurrentDocAttrInfo] = useState<DocAttrInfo>({});
   const [floatMenuAvailable, setFloatMenuAvailable] = useState(false);
 
   useEffect(() => {
@@ -104,6 +105,7 @@ export function AppCanvas() {
       },
       getDocumentMap: () => docMap,
       patchDocument: acctx.documentStore.patchDoc,
+      setCurrentDocAttrInfo,
     });
   }, [canvas, canvas.scale, acctx, smctx, shapes, tmpShapeMap, docMap]);
 
@@ -291,7 +293,9 @@ export function AppCanvas() {
     <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
   ) : undefined;
 
-  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} /> : undefined;
+  const floatMenu = floatMenuAvailable ? (
+    <FloatMenu canvas={canvas} currentDocAttrInfo={currentDocAttrInfo} />
+  ) : undefined;
 
   return (
     <>

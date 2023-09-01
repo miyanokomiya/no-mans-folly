@@ -3,7 +3,7 @@ import type { CanvasStateContext, CanvasStateEvent } from "../commons";
 import { Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
-import { DocAttributes, DocDelta, DocOutput } from "../../../models/document";
+import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models/document";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeMap: () => { [id: string]: Shape };
@@ -26,6 +26,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   setTextEditorPosition: (p: IVec2) => void;
   getDocumentMap: () => { [id: string]: DocOutput };
   patchDocument: (id: string, delta: DocDelta) => void;
+  setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
 }
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;
@@ -57,5 +58,6 @@ interface TextStyleEvent extends ModeStateEventBase {
   type: "text-style";
   data: {
     value: DocAttributes;
+    block?: boolean;
   };
 }

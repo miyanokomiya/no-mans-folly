@@ -24,3 +24,8 @@ export type DocAttributes = {
   fontFamily?: string;
   align?: "left" | "center" | "right";
 };
+
+export interface DocAttrInfo {
+  cursor?: DocAttributes;
+  block?: DocAttributes;
+}

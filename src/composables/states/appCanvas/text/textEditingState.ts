@@ -25,9 +25,17 @@ export function newTextEditingState(option: Option): AppCanvasState {
     ctx.setTextEditorPosition(applyAffine(textBounds.affine, p));
   }
 
+  function onCursorUpdated(ctx: AppCanvasStateContext) {
+    if (!textEditorController) return;
+
+    ctx.setCurrentDocAttrInfo(textEditorController.getCurrentAttributeInfo());
+    ctx.setTmpShapeMap({});
+  }
+
   return {
     getLabel: () => "TextEditing",
     onStart: async (ctx) => {
+      ctx.showFloatMenu();
       ctx.startTextEditing();
 
       const shape = ctx.getShapeMap()[option.id];
@@ -46,6 +54,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.setCaptureTimeout(1000);
     },
     onEnd: async (ctx) => {
+      ctx.hideFloatMenu();
       ctx.stopTextEditing();
       ctx.setCaptureTimeout();
     },
@@ -99,7 +108,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
               } else {
                 textEditorController.shiftCursorBy(-1);
               }
-              ctx.setTmpShapeMap({});
+              onCursorUpdated(ctx);
               return;
             case "ArrowRight": {
               if (event.data.shift) {
@@ -107,16 +116,16 @@ export function newTextEditingState(option: Option): AppCanvasState {
               } else {
                 textEditorController.shiftCursorBy(1);
               }
-              ctx.setTmpShapeMap({});
+              onCursorUpdated(ctx);
               return;
             }
             case "ArrowUp":
               textEditorController.moveCursorUp();
-              ctx.setTmpShapeMap({});
+              onCursorUpdated(ctx);
               return;
             case "ArrowDown":
               textEditorController.moveCursorDown();
-              ctx.setTmpShapeMap({});
+              onCursorUpdated(ctx);
               return;
             case "Backspace": {
               const cursor = textEditorController.getCursor();
@@ -150,6 +159,13 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
           textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
           textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
+          return;
+        }
+        case "text-style": {
+          if (event.data.block) {
+            const ops = textEditorController.getDeltaByApplyBlockStyle(event.data.value);
+            ctx.patchDocument(option.id, ops);
+          }
           return;
         }
         case "wheel":
