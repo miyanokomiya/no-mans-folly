@@ -23,6 +23,7 @@ export function newTextEditorController() {
   let _range: IRectangle;
   let _compositionLines: DocCompositionLine[];
   let _composition: DocCompositionItem[];
+  let _isDocEmpty = false; // Even if the doc is empty, line break must exist at the end.
 
   let isIME = false;
 
@@ -36,7 +37,9 @@ export function newTextEditorController() {
   }
 
   function setDoc(doc: DocOutput = [], range: IRectangle) {
-    _doc = doc;
+    console.log(doc);
+    _isDocEmpty = doc.length === 0;
+    _doc = _isDocEmpty ? [{ insert: "\n" }] : doc;
     _range = range;
     docLength = getDocLength(_doc);
     updateComposition();
@@ -62,11 +65,15 @@ export function newTextEditorController() {
   }
 
   function getCursor(): number {
-    return _selection < 0 ? Math.max(_cursor + _selection, 0) : Math.min(_cursor, docLength);
+    const c = _selection < 0 ? _cursor + _selection : _cursor;
+    // The last character must be line break, and it can't be selected.
+    return Math.min(Math.max(c, 0), docLength - 1);
   }
 
   function getSelection(): number {
-    return Math.min(Math.abs(_selection), docLength - getCursor());
+    const c = getCursor();
+    const s = Math.min(Math.abs(_selection), docLength - getCursor());
+    return c + s < docLength ? s : docLength - c - 1;
   }
 
   function getLocationIndex(location: IVec2): number {
@@ -112,12 +119,19 @@ export function newTextEditorController() {
   function getDeltaByInput(text: string): DocDelta {
     const cursor = getCursor();
     const selection = getSelection();
+    const ret: DocDelta = [{ retain: cursor }];
 
-    if (selection === 0) {
-      return [{ retain: cursor }, { insert: text }];
-    } else {
-      return [{ retain: cursor }, { delete: selection }, { insert: text }];
+    if (selection > 0) {
+      ret.push({ delete: selection });
     }
+
+    ret.push({ insert: text });
+
+    if (_isDocEmpty) {
+      ret.push({ insert: "\n" });
+    }
+
+    return ret;
   }
 
   function getBoundsAtIME(): IRectangle | undefined {
