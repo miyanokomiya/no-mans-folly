@@ -142,6 +142,7 @@ export interface DocCompositionItem {
 }
 
 export interface DocCompositionLine {
+  y: number;
   height: number;
   outputs: DocOutput;
 }
@@ -152,7 +153,6 @@ export function getDocComposition(
   lineWidth: number
 ): DocCompositionItem[] {
   let ret: DocCompositionItem[] = [];
-  let top = 0;
 
   lines.forEach((line) => {
     const lineHeight = line.height;
@@ -168,7 +168,7 @@ export function getDocComposition(
         const width = char === "\n" ? 0 : ctx.measureText(char).width;
         items.push({
           char,
-          bounds: { x: left, width, y: top, height: lineHeight },
+          bounds: { x: left, width, y: line.y, height: lineHeight },
         });
         left += width;
       }
@@ -191,7 +191,6 @@ export function getDocComposition(
     }
 
     ret = ret.concat(items);
-    top += lineHeight;
     left = 0;
   });
 
@@ -199,6 +198,8 @@ export function getDocComposition(
 }
 
 export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, range: IRectangle): DocCompositionLine[] {
+  if (doc.length === 0) return [];
+
   let row = 0;
   let left = 0;
 
@@ -245,12 +246,27 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
     });
   });
 
-  return lines.map((line) => {
-    return {
-      height: Math.max(...line.map((unit) => getLineHeight(unit.attributes))),
-      outputs: line,
-    };
+  let top = 0;
+  const ret = lines.map((line) => {
+    const y = top;
+    const height = Math.max(...line.map((unit) => getLineHeight(unit.attributes)));
+    top += height;
+    return { y, height, outputs: line };
   });
+
+  const lastBlock = doc[doc.length - 1].attributes;
+  switch (lastBlock?.direction) {
+    case "middle": {
+      const margin = (range.height - top) / 2;
+      return ret.map((line) => ({ ...line, y: line.y + margin }));
+    }
+    case "bottom": {
+      const margin = range.height - top;
+      return ret.map((line) => ({ ...line, y: line.y + margin }));
+    }
+    default:
+      return ret;
+  }
 }
 
 export function getCursorLocationAt(
@@ -259,10 +275,8 @@ export function getCursorLocationAt(
   p: IVec2
 ): IVec2 {
   let lineIndex = 0;
-  let top = 0;
   compositionLines.some((line) => {
-    top += line.height;
-    if (p.y < top) return true;
+    if (p.y < line.y + line.height) return true;
     lineIndex += 1;
   });
 

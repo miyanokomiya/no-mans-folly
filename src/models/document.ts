@@ -20,10 +20,13 @@ export interface DocDeltaRetain {
 export type DocAttributes = {
   color?: string;
   bold?: boolean;
-  fontSize?: number;
-  fontFamily?: string;
+  size?: number;
+  font?: string;
   align?: "left" | "center" | "right";
+  direction?: DocDirection;
 };
+
+export type DocDirection = "top" | "middle" | "bottom";
 
 export interface DocAttrInfo {
   cursor?: DocAttributes;

@@ -40,7 +40,7 @@ export function newTextEditorController() {
 
   function setDoc(doc: DocOutput = [], range: IRectangle) {
     _isDocEmpty = doc.length === 0;
-    _doc = _isDocEmpty ? [{ insert: "\n" }] : doc;
+    _doc = _isDocEmpty ? getInitialOutput() : doc;
     _range = range;
     docLength = getDocLength(_doc);
     updateComposition();
@@ -150,14 +150,14 @@ export function newTextEditorController() {
     }
 
     if (_isDocEmpty) {
-      ret.push({ insert: "\n" });
+      ret.push(getInitialOutput()[0]);
     }
 
     return ret;
   }
 
   function _getDeltaByApplyBlockStyle(attrs: DocAttributes): DocDelta {
-    if (_isDocEmpty) return [{ insert: "\n", attributes: attrs }];
+    if (_isDocEmpty) return getInitialOutput(attrs);
 
     const cursor = getCursor();
     const selection = getSelection();
@@ -329,4 +329,8 @@ function renderCursor(
     }
     ctx.stroke();
   }
+}
+
+function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
+  return [{ insert: "\n", attributes: { direction: "middle", align: "center", ...attrs } }];
 }
