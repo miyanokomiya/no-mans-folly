@@ -3,7 +3,7 @@ import type { CanvasStateContext, CanvasStateEvent } from "../commons";
 import { Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
-import { DocDelta, DocOutput } from "../../../models/document";
+import { DocAttributes, DocDelta, DocOutput } from "../../../models/document";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeMap: () => { [id: string]: Shape };
@@ -30,7 +30,12 @@ export interface AppCanvasStateContext extends CanvasStateContext {
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;
 
-export type AppCanvasEvent = CanvasStateEvent | ChangeSelectionEvent | UpdateShapeEvent | TextInputEvent;
+export type AppCanvasEvent =
+  | CanvasStateEvent
+  | ChangeSelectionEvent
+  | UpdateShapeEvent
+  | TextInputEvent
+  | TextStyleEvent;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";
@@ -45,5 +50,12 @@ interface TextInputEvent extends ModeStateEventBase {
   data: {
     value: string;
     composition?: boolean;
+  };
+}
+
+interface TextStyleEvent extends ModeStateEventBase {
+  type: "text-style";
+  data: {
+    value: DocAttributes;
   };
 }

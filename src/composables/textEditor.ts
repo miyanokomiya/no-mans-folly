@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocDelta, DocOutput } from "../models/document";
+import { DocAttributes, DocDelta, DocOutput } from "../models/document";
 import {
   DEFAULT_FONT_SIZE,
   DocCompositionItem,
@@ -7,6 +7,7 @@ import {
   getBoundsAtLocation,
   getCursorLocation,
   getCursorLocationAt,
+  getDeltaByApplyBlockStyle,
   getDocComposition,
   getDocLength,
   getLineOutputs,
@@ -37,7 +38,6 @@ export function newTextEditorController() {
   }
 
   function setDoc(doc: DocOutput = [], range: IRectangle) {
-    console.log(doc);
     _isDocEmpty = doc.length === 0;
     _doc = _isDocEmpty ? [{ insert: "\n" }] : doc;
     _range = range;
@@ -48,7 +48,7 @@ export function newTextEditorController() {
   function updateComposition() {
     if (!_ctx) return;
     _compositionLines = getLineOutputs(_ctx, _doc, _range);
-    _composition = getDocComposition(_ctx, _compositionLines);
+    _composition = getDocComposition(_ctx, _compositionLines, _range.width);
   }
 
   function setCursor(c: number, selection = 0) {
@@ -73,6 +73,7 @@ export function newTextEditorController() {
   function getSelection(): number {
     const c = getCursor();
     const s = Math.min(Math.abs(_selection), docLength - getCursor());
+    // The last character must be line break, and it can't be selected.
     return c + s < docLength ? s : docLength - c - 1;
   }
 
@@ -116,6 +117,14 @@ export function newTextEditorController() {
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
   }
 
+  function getCurrentBlockAttributes(): DocAttributes | undefined {
+    const cursor = getCursor();
+    const location = getCursorLocation(_compositionLines, cursor);
+    const line = _compositionLines[location.y];
+    const lineEnd = line.outputs[line.outputs.length - 1];
+    return lineEnd.attributes;
+  }
+
   function getDeltaByInput(text: string): DocDelta {
     const cursor = getCursor();
     const selection = getSelection();
@@ -125,13 +134,32 @@ export function newTextEditorController() {
       ret.push({ delete: selection });
     }
 
-    ret.push({ insert: text });
+    const blockAttributes = getCurrentBlockAttributes();
+    if (blockAttributes) {
+      const list = text.split("\n");
+      list.forEach((block, i) => {
+        if (block) ret.push({ insert: block });
+        if (i !== list.length - 1) {
+          ret.push({ insert: "\n", attributes: blockAttributes });
+        }
+      });
+    } else {
+      ret.push({ insert: text });
+    }
 
     if (_isDocEmpty) {
       ret.push({ insert: "\n" });
     }
 
     return ret;
+  }
+
+  function _getDeltaByApplyBlockStyle(attrs: DocAttributes): DocDelta {
+    if (_isDocEmpty) return [{ insert: "\n", attributes: attrs }];
+
+    const cursor = getCursor();
+    const selection = getSelection();
+    return getDeltaByApplyBlockStyle(_composition, cursor, selection, attrs);
   }
 
   function getBoundsAtIME(): IRectangle | undefined {
@@ -196,7 +224,10 @@ export function newTextEditorController() {
     moveCursorUp,
     moveCursorDown,
     getDeltaByInput,
+
     getLocationIndex,
+    getDeltaByApplyBlockStyle: _getDeltaByApplyBlockStyle,
+
     getLocationAt,
     getBoundsAtIME,
     startIME,

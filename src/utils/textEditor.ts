@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttributes, DocDeltaInsert, DocOutput } from "../models/document";
+import { DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
 
 export const DEFAULT_FONT_SIZE = 18;
 
@@ -16,7 +16,7 @@ export function getDocLength(doc: DocOutput): number {
 
 export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: IRectangle) {
   const lines = getLineOutputs(ctx, doc, range);
-  const composition = getDocComposition(ctx, lines);
+  const composition = getDocComposition(ctx, lines, range.width);
   renderDocByComposition(ctx, composition, lines);
 }
 
@@ -146,20 +146,27 @@ export interface DocCompositionLine {
   outputs: DocOutput;
 }
 
-export function getDocComposition(ctx: CanvasRenderingContext2D, lines: DocCompositionLine[]): DocCompositionItem[] {
-  const ret: DocCompositionItem[] = [];
+export function getDocComposition(
+  ctx: CanvasRenderingContext2D,
+  lines: DocCompositionLine[],
+  lineWidth: number
+): DocCompositionItem[] {
+  let ret: DocCompositionItem[] = [];
   let top = 0;
-  let left = 0;
+
   lines.forEach((line) => {
     const lineHeight = line.height;
+    let left = 0;
+    let items: DocCompositionItem[] = [];
 
     line.outputs.forEach((unit) => {
       applyDocAttributesToCtx(ctx, unit.attributes);
 
       for (let i = 0; i < unit.insert.length; i++) {
         const char = unit.insert[i];
-        const width = ctx.measureText(char).width;
-        ret.push({
+        // Ignore line break's width for block alignment
+        const width = char === "\n" ? 0 : ctx.measureText(char).width;
+        items.push({
           char,
           bounds: { x: left, width, y: top, height: lineHeight },
         });
@@ -167,6 +174,23 @@ export function getDocComposition(ctx: CanvasRenderingContext2D, lines: DocCompo
       }
     });
 
+    // left can represent content width here.
+    const gap = lineWidth - left;
+
+    const block = line.outputs[line.outputs.length - 1];
+    if (block.attributes?.align === "right") {
+      items = items.map((item) => ({
+        ...item,
+        bounds: { ...item.bounds, x: item.bounds.x + gap },
+      }));
+    } else if (block.attributes?.align === "center") {
+      items = items.map((item) => ({
+        ...item,
+        bounds: { ...item.bounds, x: item.bounds.x + gap / 2 },
+      }));
+    }
+
+    ret = ret.concat(items);
     top += lineHeight;
     left = 0;
   });
@@ -189,31 +213,35 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
 
     op.insert.split("\n").forEach((line, r) => {
       if (r !== 0) {
-        lines[row - 1].push({ insert: "\n" });
+        // The last part of the previous line
+        pushItem({ insert: "\n", attributes: op.attributes });
+        row += 1;
+        left = 0;
       }
+
+      if (line === "") return;
 
       line.split(" ").forEach((word, c) => {
         const wordWithSpace = (c === 0 ? "" : " ") + word;
         const breaks = getBreakIndicesForWord(ctx, wordWithSpace, range.width - left, range.width);
         if (!breaks || breaks.length === 0) {
-          pushItem({ insert: wordWithSpace });
+          pushItem({ insert: wordWithSpace, attributes: op.attributes });
           left += ctx.measureText(wordWithSpace).width;
         } else {
           let prev = 0;
           breaks.forEach((index) => {
             const insert = wordWithSpace.slice(prev, index);
-            pushItem({ insert });
+            pushItem({ insert, attributes: op.attributes });
             row += 1;
+            left = 0;
             prev = index;
           });
 
           const remain = wordWithSpace.slice(breaks[breaks.length - 1]);
-          pushItem({ insert: remain });
+          pushItem({ insert: remain, attributes: op.attributes });
           left = ctx.measureText(remain).width;
         }
       });
-      row += 1;
-      left = 0;
     });
   });
 
@@ -319,4 +347,30 @@ export function getRangeLines(
 
 function getLineLength(line: DocCompositionLine): number {
   return line.outputs.reduce((n, o) => n + o.insert.length, 0);
+}
+
+export function getDeltaByApplyBlockStyle(
+  composition: DocCompositionItem[],
+  cursor: number,
+  selection: number,
+  attrs: DocAttributes
+): DocDelta {
+  const breakIndexList: number[] = [];
+  for (let i = cursor; i < composition.length; i++) {
+    const c = composition[i];
+    if (c.char === "\n") {
+      breakIndexList.push(i);
+      if (cursor + selection <= i) break;
+    }
+  }
+  if (breakIndexList.length === 0) return [];
+
+  const ret: DocDelta = [];
+  let tmp = 0;
+  for (let i = 0; i < breakIndexList.length; i++) {
+    const breakIndex = breakIndexList[i];
+    ret.push({ retain: breakIndex - tmp }, { retain: 1, attributes: attrs });
+    tmp = breakIndex + 1;
+  }
+  return ret;
 }

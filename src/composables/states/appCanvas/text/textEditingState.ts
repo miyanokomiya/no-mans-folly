@@ -78,6 +78,21 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "keydown":
           updateEditorPosition(ctx);
           switch (event.data.key) {
+            case "Home": {
+              const ops = textEditorController.getDeltaByApplyBlockStyle({ align: "left" });
+              ctx.patchDocument(option.id, ops);
+              return;
+            }
+            case "PageUp": {
+              const ops = textEditorController.getDeltaByApplyBlockStyle({ align: "center" });
+              ctx.patchDocument(option.id, ops);
+              return;
+            }
+            case "PageDown": {
+              const ops = textEditorController.getDeltaByApplyBlockStyle({ align: "right" });
+              ctx.patchDocument(option.id, ops);
+              return;
+            }
             case "ArrowLeft":
               if (event.data.shift) {
                 textEditorController.shiftSelectionBy(-1);

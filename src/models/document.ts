@@ -22,4 +22,5 @@ export type DocAttributes = {
   bold?: boolean;
   fontSize?: number;
   fontFamily?: string;
+  align?: "left" | "center" | "right";
 };
