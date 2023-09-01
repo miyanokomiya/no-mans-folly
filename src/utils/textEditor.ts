@@ -258,37 +258,28 @@ export function getCursorLocationAt(
   compositionLines: DocCompositionLine[],
   p: IVec2
 ): IVec2 {
-  let lineIndex = -1;
-
-  if (0 <= p.y) {
-    let top = 0;
+  let lineIndex = 0;
+  let top = 0;
+  compositionLines.some((line) => {
+    top += line.height;
+    if (p.y < top) return true;
     lineIndex += 1;
-    compositionLines.some((line) => {
-      const next = top + line.height;
-      if (top <= p.y && p.y < next) return true;
-      top = next;
-      lineIndex += 1;
-    });
-  }
+  });
 
   lineIndex = Math.min(Math.max(lineIndex, 0), compositionLines.length - 1);
   const charIndex = compositionLines.slice(0, lineIndex).reduce((n, line) => {
-    return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);
+    return n + getLineLength(line);
   }, 0);
   const lengthInLine = compositionLines[lineIndex].outputs.reduce((m, o) => m + o.insert.length, 0);
   const compositionInLine = composition.slice(charIndex, charIndex + lengthInLine);
 
   let xIndex = 0;
-  if (0 <= p.x) {
-    for (let i = 0; i < compositionInLine.length; i++) {
-      const c = compositionInLine[i];
-      const next = c.bounds.x + c.bounds.width;
-      if (c.bounds.x <= p.x && p.x < next) {
-        if (c.bounds.x + c.bounds.width / 2 < p.x) xIndex += 1;
-        break;
-      }
-      xIndex += 1;
-    }
+  // Omit the line break to keep the cursor in the line.
+  // => When the cursor is after line break, it means the cursor is in the next line.
+  for (let i = 0; i < compositionInLine.length - 1; i++) {
+    const c = compositionInLine[i];
+    if (p.x < c.bounds.x + c.bounds.width / 2) break;
+    xIndex += 1;
   }
 
   xIndex = Math.min(Math.max(xIndex, 0), compositionInLine.length);
