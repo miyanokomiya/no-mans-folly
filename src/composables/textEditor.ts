@@ -158,6 +158,16 @@ export function newTextEditorController() {
     return ret;
   }
 
+  function getDeltaByApplyInlineStyle(attrs: DocAttributes): DocDelta {
+    if (_isDocEmpty) return getInitialOutput(attrs);
+
+    const cursor = getCursor();
+    const selection = getSelection();
+    if (selection === 0) return [];
+
+    return [{ retain: cursor }, { retain: selection, attributes: attrs }];
+  }
+
   function _getDeltaByApplyBlockStyle(attrs: DocAttributes): DocDelta {
     if (_isDocEmpty) return getInitialOutput(attrs);
 
@@ -237,6 +247,7 @@ export function newTextEditorController() {
 
     getDeltaByInput,
     getCurrentAttributeInfo,
+    getDeltaByApplyInlineStyle,
     getDeltaByApplyBlockStyle: _getDeltaByApplyBlockStyle,
     getDeltaByApplyDocStyle,
 

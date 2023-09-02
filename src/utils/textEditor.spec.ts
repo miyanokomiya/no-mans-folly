@@ -5,7 +5,7 @@ import {
   getCursorLocationAt,
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
-  getDeltaByApplyInlineStyle,
+  getDeltaByApplyInlineStyleToDoc,
 } from "./textEditor";
 
 describe("getCursorLocationAt", () => {
@@ -147,12 +147,12 @@ describe("getDeltaByApplyDocStyle", () => {
 describe("getDeltaByApplyInlineStyle", () => {
   test("should return doc delta to apply the doc attributes", () => {
     expect(
-      getDeltaByApplyInlineStyle([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+      getDeltaByApplyInlineStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
     ).toEqual([{ retain: 9, attributes: { align: "right" } }]);
   });
 
   test("should return doc delta for empty doc", () => {
-    expect(getDeltaByApplyInlineStyle([], { align: "right" })).toEqual([
+    expect(getDeltaByApplyInlineStyleToDoc([], { align: "right" })).toEqual([
       { insert: "\n", attributes: { align: "right", direction: "middle" } },
     ]);
   });

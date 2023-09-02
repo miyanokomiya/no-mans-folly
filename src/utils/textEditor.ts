@@ -29,10 +29,11 @@ export function renderDocByComposition(
   compositionLines.forEach((line) => {
     if (index === composition.length) return;
 
-    const lineComposition = composition[index];
     line.outputs.forEach((op) => {
       applyDocAttributesToCtx(ctx, op.attributes);
-      ctx.fillText(op.insert, lineComposition.bounds.x, lineComposition.bounds.y);
+      const lineComposition = composition[index];
+      // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
+      ctx.fillText(op.insert, lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.8);
       index += op.insert.length;
     });
   });
@@ -75,20 +76,20 @@ export function getCursorLocation(compositionLines: DocCompositionLine[], cursor
 }
 
 export function applyDocAttributesToCtx(ctx: CanvasRenderingContext2D, attrs: DocAttributes = {}): void {
-  const fontSize = attrs.fontSize ?? DEFAULT_FONT_SIZE;
-  const fontFamily = attrs.fontFamily ?? "Arial";
+  const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
+  const fontFamily = attrs.font ?? "Arial";
   const color = attrs.color ?? "#000";
 
   ctx.font = `${fontSize}px ${fontFamily}`;
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.setLineDash([]);
-  ctx.textBaseline = "top";
+  ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
 }
 
 export function getLineHeight(attrs: DocAttributes = {}): number {
-  const fontSize = attrs.fontSize ?? DEFAULT_FONT_SIZE;
+  const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
   return fontSize * 1;
 }
 
@@ -249,7 +250,10 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
   let top = 0;
   const ret = lines.map((line) => {
     const y = top;
-    const height = Math.max(...line.map((unit) => getLineHeight(unit.attributes)));
+
+    const height = Math.max(
+      ...line.filter((unit) => unit.insert !== "\n").map((unit) => getLineHeight(unit.attributes))
+    );
     top += height;
     return { y, height, outputs: line };
   });
@@ -412,7 +416,7 @@ export function getDeltaByApplyDocStyle(doc: DocOutput, attrs: DocAttributes): D
   return [{ retain }, { retain: 1, attributes: attrs }];
 }
 
-export function getDeltaByApplyInlineStyle(doc: DocOutput, attrs: DocAttributes): DocDelta {
+export function getDeltaByApplyInlineStyleToDoc(doc: DocOutput, attrs: DocAttributes): DocDelta {
   if (doc.length === 0) return getInitialOutput(attrs);
 
   const retain = doc.reduce((n, o) => n + o.insert.length, 0);

@@ -7,6 +7,9 @@ import iconAlignRight from "../../assets/icons/align_right.svg";
 import iconDirectionTop from "../../assets/icons/direction_top.svg";
 import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
 import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
+import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
+
+const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 32].map((v) => ({ value: v, label: `${v}px` }));
 
 interface AlignPanelProps {
   onClick?: (value: string) => void;
@@ -88,16 +91,7 @@ export const TextItems: React.FC<Props> = ({
     [onBlockChanged]
   );
 
-  const alignIcon = useMemo(() => {
-    switch (docAttrInfo.block?.align) {
-      case "center":
-        return iconAlignCenter;
-      case "right":
-        return iconAlignRight;
-      default:
-        return iconAlignLeft;
-    }
-  }, [docAttrInfo]);
+  const alignIcon = useMemo(() => getAlignIcon(docAttrInfo), [docAttrInfo]);
 
   const onDirectionClick = useCallback(() => {
     setPopupedKey("direction");
@@ -110,16 +104,15 @@ export const TextItems: React.FC<Props> = ({
     [onDocChanged]
   );
 
-  const directionIcon = useMemo(() => {
-    switch (docAttrInfo.doc?.direction) {
-      case "middle":
-        return iconDirectionMiddle;
-      case "bottom":
-        return iconDirectionBottom;
-      default:
-        return iconDirectionTop;
-    }
-  }, [docAttrInfo]);
+  const directionIcon = useMemo(() => getDirectionIcon(docAttrInfo), [docAttrInfo]);
+
+  const onSizeChanged = useCallback(
+    (value: number, draft = false) => {
+      if (draft) return;
+      onInlineChanged?.({ size: value });
+    },
+    [onInlineChanged]
+  );
 
   return (
     <div className="flex gap-1">
@@ -143,6 +136,36 @@ export const TextItems: React.FC<Props> = ({
           <img src={directionIcon} alt="Direction" />
         </div>
       </PopupButton>
+      <div className="w-12 h-full flex items-center">
+        <NumberCombobox
+          value={docAttrInfo.cursor?.size ?? 18}
+          options={FONT_SIZE_OPTIONS}
+          min={1}
+          onChanged={onSizeChanged}
+        />
+      </div>
     </div>
   );
 };
+
+function getAlignIcon(docAttrInfo: DocAttrInfo) {
+  switch (docAttrInfo.block?.align) {
+    case "center":
+      return iconAlignCenter;
+    case "right":
+      return iconAlignRight;
+    default:
+      return iconAlignLeft;
+  }
+}
+
+function getDirectionIcon(docAttrInfo: DocAttrInfo) {
+  switch (docAttrInfo.doc?.direction) {
+    case "middle":
+      return iconDirectionMiddle;
+    case "bottom":
+      return iconDirectionBottom;
+    default:
+      return iconDirectionTop;
+  }
+}

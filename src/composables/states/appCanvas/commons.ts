@@ -12,7 +12,7 @@ import { DocDelta } from "../../../models/document";
 import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
-  getDeltaByApplyInlineStyle,
+  getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
 import { canHaveText } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
@@ -98,7 +98,7 @@ export function handleCommonTextStyle(
     } else if (event.data.block) {
       m[id] = getDeltaByApplyBlockStyleToDoc(doc, event.data.value);
     } else {
-      m[id] = getDeltaByApplyInlineStyle(doc, event.data.value);
+      m[id] = getDeltaByApplyInlineStyleToDoc(doc, event.data.value);
     }
     return m;
   }, {});

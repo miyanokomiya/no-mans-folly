@@ -171,6 +171,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
           } else if (event.data.block) {
             const ops = textEditorController.getDeltaByApplyBlockStyle(event.data.value);
             ctx.patchDocuments({ [option.id]: ops });
+          } else {
+            const ops = textEditorController.getDeltaByApplyInlineStyle(event.data.value);
+            ctx.patchDocuments({ [option.id]: ops });
           }
           return;
         }
