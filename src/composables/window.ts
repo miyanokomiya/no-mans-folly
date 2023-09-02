@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Size } from "../models";
 
 export function useWindow() {
   const [size, setSize] = useState<Size>({ width: window.innerWidth, height: window.innerHeight });
 
-  window.addEventListener("resize", () => {
-    setSize({ width: window.innerWidth, height: window.innerHeight });
-  });
+  useEffect(() => {
+    const fn = () => {
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", fn);
+
+    return () => {
+      window.removeEventListener("resize", fn);
+    };
+  }, []);
 
   return { size };
 }
@@ -66,4 +73,27 @@ export function useGlobalKeydownEffect(fn: (e: KeyboardEvent) => void) {
       window.removeEventListener("keydown", fn);
     };
   }, [fn]);
+}
+
+export function useElementLocation<T extends HTMLElement>(dep: any) {
+  const ref = useRef<T>(null);
+  const windowSize = useWindow();
+
+  const [overflow, setOverflow] = useState<{ top?: boolean; bottom?: boolean; left?: boolean; right?: boolean }>({});
+
+  const check = useCallback(() => {
+    if (!ref.current) return;
+
+    const bounds = ref.current.getBoundingClientRect();
+    setOverflow({
+      left: bounds.x < 0,
+      right: bounds.x + bounds.width > windowSize.size.width,
+      top: bounds.y < 0,
+      bottom: bounds.y + bounds.height > windowSize.size.height,
+    });
+  }, [windowSize.size]);
+
+  useEffect(check, [check, dep]);
+
+  return { ref, overflow };
 }

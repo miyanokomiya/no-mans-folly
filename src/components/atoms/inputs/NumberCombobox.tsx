@@ -50,6 +50,7 @@ export const NumberCombobox: React.FC<Props> = ({ value, options, min = -Infinit
       <form action="" className="w-full" onSubmit={onSubmit}>
         <input
           type="number"
+          data-keep-focus
           className="border rounded w-full text-right px-2 py-1"
           value={value}
           onFocus={onFocused}
@@ -59,14 +60,14 @@ export const NumberCombobox: React.FC<Props> = ({ value, options, min = -Infinit
       </form>
       {opened ? (
         <div
-          className="absolute bottom-0 left-0 right-0 bg-white text-right border rounded shadow-md"
-          style={{ transform: "translateY(100%)" }}
+          className="absolute left-1/2 bottom-0 bg-white text-right border rounded shadow-md"
+          style={{ transform: "translate(-50%, 100%)" }}
         >
-          <div className="flex flex-col gap-1 py-1">
+          <div className="flex gap-1 p-1">
             {options.map((o) => (
               <button
                 type="button"
-                className="hover:bg-gray-200 p-1"
+                className="hover:bg-gray-200 px-2 py-1 rounded"
                 key={o.value}
                 data-value={o.value}
                 onClick={onSelected}

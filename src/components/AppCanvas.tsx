@@ -233,7 +233,7 @@ export function AppCanvas() {
   useGlobalMousemoveEffect(onMouseMove);
 
   const focus = useCallback(() => {
-    if (textEditing) return;
+    if (textEditing || document.activeElement?.getAttribute("data-keep-focus")) return;
     wrapperRef.current?.focus();
   }, [textEditing]);
 
