@@ -6,14 +6,27 @@ interface Props {
   min?: number;
   max?: number;
   onChanged?: (value: number, draft?: boolean) => void;
+  onActivate?: () => void;
 }
 
-export const NumberCombobox: React.FC<Props> = ({ value, options, min = -Infinity, max = Infinity, onChanged }) => {
+export const NumberCombobox: React.FC<Props> = ({
+  value,
+  options,
+  min = -Infinity,
+  max = Infinity,
+  onChanged,
+  onActivate,
+}) => {
   const [draftValue, setDraftValue] = useState(value);
   const [opened, setOpened] = useState(false);
 
   const onFocused = useCallback(() => {
     setOpened(true);
+    onActivate?.();
+  }, [onActivate]);
+
+  const onBlured = useCallback(() => {
+    setOpened(false);
   }, []);
 
   const onSelected = useCallback(
@@ -54,6 +67,7 @@ export const NumberCombobox: React.FC<Props> = ({ value, options, min = -Infinit
           className="border rounded w-full text-right px-2 py-1"
           value={value}
           onFocus={onFocused}
+          onBlur={onBlured}
           onInput={onInput}
         />
         <button type="submit" className="hidden"></button>

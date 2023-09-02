@@ -114,6 +114,10 @@ export const TextItems: React.FC<Props> = ({
     [onInlineChanged]
   );
 
+  const onActivateCombobox = useCallback(() => {
+    setPopupedKey("");
+  }, [setPopupedKey]);
+
   return (
     <div className="flex gap-1">
       <PopupButton
@@ -142,6 +146,7 @@ export const TextItems: React.FC<Props> = ({
           options={FONT_SIZE_OPTIONS}
           min={1}
           onChanged={onSizeChanged}
+          onActivate={onActivateCombobox}
         />
       </div>
     </div>
