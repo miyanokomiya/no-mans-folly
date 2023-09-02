@@ -5,6 +5,7 @@ import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../c
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { newPanningState } from "../../commons";
 
 interface Option {
   id: string;
@@ -83,20 +84,30 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return;
         }
         case "pointerdown": {
-          const shape = ctx.getShapeAt(event.data.point);
-          if (shape?.id !== option.id) {
-            shape ? ctx.selectShape(shape.id, event.data.options.ctrl) : ctx.clearAllSelected();
-            return translateOnSelection(ctx);
-          }
+          switch (event.data.options.button) {
+            case 0: {
+              const shape = ctx.getShapeAt(event.data.point);
+              if (shape?.id !== option.id) {
+                shape ? ctx.selectShape(shape.id, event.data.options.ctrl) : ctx.clearAllSelected();
+                return translateOnSelection(ctx);
+              }
 
-          const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.point));
-          textEditorController.setCursor(textEditorController.getLocationIndex(location));
-          updateEditorPosition(ctx);
-          onCursorUpdated(ctx);
-          return {
-            type: "stack-resume",
-            getState: () => newTextSelectingState({ id: option.id, textEditorController }),
-          };
+              const location = textEditorController.getLocationAt(
+                applyAffine(textBounds.affineReverse, event.data.point)
+              );
+              textEditorController.setCursor(textEditorController.getLocationIndex(location));
+              updateEditorPosition(ctx);
+              onCursorUpdated(ctx);
+              return {
+                type: "stack-resume",
+                getState: () => newTextSelectingState({ id: option.id, textEditorController }),
+              };
+            }
+            case 1:
+              return { type: "stack-restart", getState: newPanningState };
+            default:
+              return;
+          }
         }
         case "keydown":
           updateEditorPosition(ctx);
