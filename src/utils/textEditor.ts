@@ -252,6 +252,7 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
     const y = top;
 
     const height = Math.max(
+      0,
       ...line.filter((unit) => unit.insert !== "\n").map((unit) => getLineHeight(unit.attributes))
     );
     top += height;
