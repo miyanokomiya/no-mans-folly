@@ -165,15 +165,20 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return;
         }
         case "text-style": {
+          const attrs = event.data.value;
+          const currentInfo = textEditorController.getCurrentAttributeInfo();
           if (event.data.doc) {
-            const ops = textEditorController.getDeltaByApplyDocStyle(event.data.value);
+            const ops = textEditorController.getDeltaByApplyDocStyle(attrs);
             ctx.patchDocuments({ [option.id]: ops });
+            ctx.setCurrentDocAttrInfo({ ...currentInfo, doc: { ...currentInfo.doc, ...attrs } });
           } else if (event.data.block) {
-            const ops = textEditorController.getDeltaByApplyBlockStyle(event.data.value);
+            const ops = textEditorController.getDeltaByApplyBlockStyle(attrs);
             ctx.patchDocuments({ [option.id]: ops });
+            ctx.setCurrentDocAttrInfo({ ...currentInfo, block: { ...currentInfo.block, ...attrs } });
           } else {
-            const ops = textEditorController.getDeltaByApplyInlineStyle(event.data.value);
+            const ops = textEditorController.getDeltaByApplyInlineStyle(attrs);
             ctx.patchDocuments({ [option.id]: ops });
+            ctx.setCurrentDocAttrInfo({ ...currentInfo, cursor: { ...currentInfo.cursor, ...attrs } });
           }
           return;
         }
