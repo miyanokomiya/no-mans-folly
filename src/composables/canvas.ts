@@ -178,3 +178,7 @@ export type CanvasComposable = ReturnType<typeof useCanvas>;
 function _viewToCanvas(scale: number, viewOrigin: IVec2, v: IVec2): IVec2 {
   return add(viewOrigin, multi(v, scale));
 }
+
+export function canvasToView(scale: number, origin: IVec2, v: IVec2): IVec2 {
+  return multi(sub(v, origin), 1 / scale);
+}

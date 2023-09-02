@@ -1,16 +1,17 @@
-import { IRectangle, IVec2, getRectCenter } from "okageo";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { IRectangle, getRectCenter } from "okageo";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
 import { getCommonStyle, getWrapperRect, updateCommonStyle } from "../../shapes";
 import * as geometry from "../../utils/geometry";
-import { CommonStyle, FillStyle, Shape, StrokeStyle } from "../../models";
-import { CanvasComposable } from "../../composables/canvas";
+import { CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../../models";
+import { CanvasComposable, canvasToView } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
 import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
+import { useWindow } from "../../composables/window";
 
 interface Option {
   canvas: CanvasComposable;
@@ -20,6 +21,9 @@ interface Option {
 export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [rootSize, setRootSize] = useState<Size>({ width: 0, height: 0 });
 
   const [selectedShapes, setSelectedShapes] = useState<Shape[]>([]);
   const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
@@ -71,18 +75,24 @@ export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
 
     const ctx = smctx.getCtx();
     const rect = geometry.getWrapperRect(selectedShapes.map((s) => getWrapperRect(ctx.getShapeStruct, s)));
-    const p = canvas.canvasToView(rect);
+    const p = canvasToView(canvas.scale, canvas.viewOrigin, rect);
     const width = rect.width / canvas.scale;
     const height = rect.height / canvas.scale;
     return { x: p.x, y: p.y, width, height };
-  }, [canvas, smctx, selectedShapes]);
+  }, [canvas.viewOrigin, canvas.scale, smctx, selectedShapes]);
 
-  const position = useMemo<IVec2 | undefined>(() => {
-    if (!targetRect) return;
-
-    const center = getRectCenter(targetRect);
-    return { x: center.x, y: targetRect.y + targetRect.height + 10 };
+  useEffect(() => {
+    if (!rootRef.current) return;
+    const bounds = rootRef.current.getBoundingClientRect();
+    setRootSize({ width: bounds.width, height: bounds.height });
   }, [targetRect]);
+
+  const { size: windowSize } = useWindow();
+
+  const rootAttrs = useMemo(() => {
+    if (!targetRect) return;
+    return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height);
+  }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height]);
 
   const [popupedKey, setPopupedKey] = useState("");
 
@@ -173,13 +183,8 @@ export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
     [smctx]
   );
 
-  return position ? (
-    <div
-      className="fixed top-0 left-0 border rounded bg-white p-1"
-      style={{
-        transform: `translate(calc(${position.x}px - 50%), ${position.y}px)`,
-      }}
-    >
+  return targetRect ? (
+    <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1">
         {indexCommonStyle?.fill ? (
           <PopupButton
@@ -221,3 +226,31 @@ export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
     </div>
   ) : undefined;
 };
+
+function getRootAttrs(
+  targetRect: IRectangle,
+  rootWidth: number,
+  rootHeight: number,
+  windowWidth: number,
+  windowHeight: number
+) {
+  const yMargin = 10;
+  const center = getRectCenter(targetRect);
+  const bottomY = targetRect.y + targetRect.height + yMargin;
+  const p = {
+    x: center.x,
+    y: windowHeight - 160 < bottomY ? targetRect.y - rootHeight - yMargin : bottomY,
+  };
+  const baseClass = "fixed border rounded bg-white p-1 ";
+
+  const dx = Math.min(windowWidth - (p.x + rootWidth / 2), 0);
+  const tx = p.x - rootWidth / 2 < 0 ? "0" : `calc(${p.x + dx}px - 50%)`;
+  const dy = Math.min(windowHeight - (p.y + rootHeight), 0);
+  const ty = p.y < 0 ? "0" : `calc(${p.y + dy}px)`;
+  return {
+    className: baseClass + "top-0 left-0",
+    style: {
+      transform: `translate(${tx}, ${ty})`,
+    },
+  };
+}
