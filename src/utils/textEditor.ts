@@ -251,10 +251,10 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
   const ret = lines.map((line) => {
     const y = top;
 
-    const height = Math.max(
-      0,
-      ...line.filter((unit) => unit.insert !== "\n").map((unit) => getLineHeight(unit.attributes))
-    );
+    // Ignore the line break when any other item exists
+    const filtered = line.filter((unit) => unit.insert !== "\n");
+    const adjusted = filtered.length === 0 ? line : filtered;
+    const height = Math.max(...adjusted.map((unit) => getLineHeight(unit.attributes)));
     top += height;
     return { y, height, outputs: line };
   });
