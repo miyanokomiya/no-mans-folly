@@ -46,4 +46,33 @@ describe("newDocumentStore", () => {
       });
     });
   });
+
+  describe("Delta format spec", () => {
+    test("remain: should inherit current attributes", () => {
+      const ydoc = new Y.Doc();
+      const store = newDocumentStore({ ydoc });
+      store.addDoc("a", [{ insert: "abc\n", attributes: { color: "#000000" } }]);
+      store.patchDoc("a", [{ retain: 3 }, { retain: 1, attributes: { align: "right" } }]);
+      expect(store.getDocMap()).toEqual({
+        a: [
+          { insert: "abc", attributes: { color: "#000000" } },
+          { insert: "\n", attributes: { color: "#000000", align: "right" } },
+        ],
+      });
+    });
+
+    test("insert: should not inherit previous attributes", () => {
+      const ydoc = new Y.Doc();
+      const store = newDocumentStore({ ydoc });
+      store.addDoc("a", [{ insert: "abc\n", attributes: { color: "#000000" } }]);
+      store.patchDoc("a", [{ retain: 2 }, { insert: "\n" }]);
+      expect(store.getDocMap()).toEqual({
+        a: [
+          { insert: "ab", attributes: { color: "#000000" } },
+          { insert: "\n" },
+          { insert: "c\n", attributes: { color: "#000000" } },
+        ],
+      });
+    });
+  });
 });

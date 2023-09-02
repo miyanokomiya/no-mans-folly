@@ -6,6 +6,7 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  mergeDocAttrInfo,
 } from "./textEditor";
 
 describe("getCursorLocationAt", () => {
@@ -155,5 +156,17 @@ describe("getDeltaByApplyInlineStyle", () => {
     expect(getDeltaByApplyInlineStyleToDoc([], { align: "right" })).toEqual([
       { insert: "\n", attributes: { align: "right", direction: "middle" } },
     ]);
+  });
+});
+
+describe("mergeDocAttrInfo", () => {
+  test("should return merge attribute info with certain priority", () => {
+    expect(
+      mergeDocAttrInfo({
+        cursor: { size: 1, align: "left", direction: "top" },
+        block: { size: 2, align: "center", direction: "middle" },
+        doc: { size: 3, align: "right", direction: "bottom" },
+      })
+    ).toEqual({ size: 1, align: "center", direction: "bottom" });
   });
 });

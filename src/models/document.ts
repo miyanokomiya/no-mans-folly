@@ -18,11 +18,16 @@ export interface DocDeltaRetain {
 }
 
 export type DocAttributes = {
+  // inline
   color?: string;
   bold?: boolean;
   size?: number;
   font?: string;
+
+  // block
   align?: "left" | "center" | "right";
+
+  // doc
   direction?: DocDirection;
 };
 

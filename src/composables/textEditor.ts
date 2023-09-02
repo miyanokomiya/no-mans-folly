@@ -14,6 +14,7 @@ import {
   getLineOutputs,
   getOutputAt,
   getRangeLines,
+  mergeDocAttrInfo,
   renderDocByComposition,
 } from "../utils/textEditor";
 
@@ -137,9 +138,13 @@ export function newTextEditorController() {
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
     const line = _compositionLines[location.y];
+
+    // Cursor attributes should be picked from the left side of the cursor.
+    // When there's no left side item in the line, pick the right side item.
+    const cursorLeft = getOutputAt(line, Math.max(location.x, 0)).attributes;
     const lineEnd = line.outputs[line.outputs.length - 1];
     const docEnd = _doc[_doc.length - 1];
-    return { cursor: getOutputAt(line, location.x).attributes, block: lineEnd.attributes, doc: docEnd.attributes };
+    return { cursor: cursorLeft, block: lineEnd.attributes, doc: docEnd.attributes };
   }
 
   function getDeltaByInput(text: string): DocDelta {
@@ -151,19 +156,14 @@ export function newTextEditorController() {
       ret.push({ delete: selection });
     }
 
-    const attrInfo = getCurrentAttributeInfo();
-    if (attrInfo.block) {
-      const blockAttrs = { ...(attrInfo.cursor ?? {}), ...(attrInfo.block ?? {}) };
-      const list = text.split("\n");
-      list.forEach((block, i) => {
-        if (block) ret.push({ insert: block, attributes: attrInfo.cursor });
-        if (i !== list.length - 1) {
-          ret.push({ insert: "\n", attributes: blockAttrs });
-        }
-      });
-    } else {
-      ret.push({ insert: text, attributes: attrInfo.cursor });
-    }
+    const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
+    const list = text.split("\n");
+    list.forEach((block, i) => {
+      if (block) ret.push({ insert: block, attributes: attrs });
+      if (i !== list.length - 1) {
+        ret.push({ insert: "\n", attributes: attrs });
+      }
+    });
 
     if (_isDocEmpty) {
       ret.push(getInitialOutput()[0]);

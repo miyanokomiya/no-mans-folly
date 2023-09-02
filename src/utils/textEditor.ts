@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
+import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
 
 export const DEFAULT_FONT_SIZE = 18;
 
@@ -444,4 +444,19 @@ export function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
 // The last output represents a doc's attributes
 export function getDocAttributes(doc: DocOutput): DocAttributes | undefined {
   return doc.length === 0 ? getInitialOutput()[0].attributes : doc[doc.length - 1].attributes;
+}
+
+export function mergeDocAttrInfo(info: DocAttrInfo): DocAttributes | undefined {
+  if (!info.cursor && !info.block && !info.doc) return;
+
+  // priority: doc < block < inline
+  const ret = { ...(info.doc ?? {}), ...(info.block ?? {}), ...(info.cursor ?? {}) };
+
+  // block specific
+  if (info?.block?.align) ret.align = info.block.align;
+
+  // doc specific
+  if (info?.doc?.direction) ret.direction = info.doc.direction;
+
+  return ret;
 }
