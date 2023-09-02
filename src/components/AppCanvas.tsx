@@ -354,12 +354,27 @@ export function AppCanvas() {
     return { cursor: attrs, block: attrs, doc: attrs };
   }, [currentDocAttrInfo, textEditing, selectedInfo, docMap]);
 
+  const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
+  const focusBackTextEditor = useCallback(() => {
+    setTextEditorFocusKey({});
+  }, []);
+
   const textEditor = textEditing ? (
-    <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
+    <TextEditor
+      onInput={onTextInput}
+      onKeyDown={onKeyDown}
+      position={textEditorPosition}
+      focusKey={textEditorFocusKey}
+    />
   ) : undefined;
 
   const floatMenu = floatMenuAvailable ? (
-    <FloatMenu scale={scale} viewOrigin={viewOrigin} indexDocAttrInfo={indexDocAttrInfo} />
+    <FloatMenu
+      scale={scale}
+      viewOrigin={viewOrigin}
+      indexDocAttrInfo={indexDocAttrInfo}
+      focusBack={focusBackTextEditor}
+    />
   ) : undefined;
 
   return (

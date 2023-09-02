@@ -17,9 +17,10 @@ interface Option {
   scale: number;
   viewOrigin: IVec2;
   indexDocAttrInfo?: DocAttrInfo;
+  focusBack?: () => void;
 }
 
-export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInfo }) => {
+export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInfo, focusBack }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
@@ -104,8 +105,9 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
       } else {
         setPopupedKey(name);
       }
+      focusBack?.();
     },
-    [popupedKey]
+    [popupedKey, focusBack]
   );
 
   const indexCommonStyle = useMemo<CommonStyle | undefined>(() => {
@@ -129,9 +131,10 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
       } else {
         ctx.setTmpShapeMap({});
         ctx.patchShapes(patch);
+        focusBack?.();
       }
     },
-    [smctx]
+    [smctx, focusBack]
   );
 
   const onStrokeChanged = useCallback(
@@ -149,9 +152,10 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
       } else {
         ctx.setTmpShapeMap({});
         ctx.patchShapes(patch);
+        focusBack?.();
       }
     },
-    [smctx]
+    [smctx, focusBack]
   );
 
   const onDocInlineAttributesChanged = useCallback(
@@ -160,8 +164,9 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
         type: "text-style",
         data: { value: attrs },
       });
+      focusBack?.();
     },
-    [smctx]
+    [smctx, focusBack]
   );
 
   const onDocBlockAttributesChanged = useCallback(
@@ -170,8 +175,9 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
         type: "text-style",
         data: { value: attrs, block: true },
       });
+      focusBack?.();
     },
-    [smctx]
+    [smctx, focusBack]
   );
 
   const onDocAttributesChanged = useCallback(
@@ -180,8 +186,9 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
         type: "text-style",
         data: { value: attrs, doc: true },
       });
+      focusBack?.();
     },
-    [smctx]
+    [smctx, focusBack]
   );
 
   return targetRect ? (

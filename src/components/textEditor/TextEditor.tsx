@@ -5,6 +5,7 @@ interface Props {
   onInput?: (val: string, composition?: boolean) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   position: IVec2;
+  focusKey?: any;
 }
 
 export const TextEditor: React.FC<Props> = (props) => {
@@ -14,7 +15,7 @@ export const TextEditor: React.FC<Props> = (props) => {
 
   useEffect(() => {
     inputRef.current?.focus?.();
-  }, []);
+  }, [props.focusKey]);
 
   const onChange = useCallback(
     (e: any) => {
