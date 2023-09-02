@@ -8,6 +8,7 @@ import iconDirectionTop from "../../assets/icons/direction_top.svg";
 import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
 import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
 import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
+import { TextColorPanel } from "./TextColorPanel";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -118,6 +119,13 @@ export const TextItems: React.FC<Props> = ({
     setPopupedKey("");
   }, [setPopupedKey]);
 
+  const onColorChanged = useCallback(
+    (value: string) => {
+      onInlineChanged?.({ color: value });
+    },
+    [onInlineChanged]
+  );
+
   return (
     <div className="flex gap-1">
       <PopupButton
@@ -149,6 +157,17 @@ export const TextItems: React.FC<Props> = ({
           onActivate={onActivateCombobox}
         />
       </div>
+      <PopupButton
+        name="color"
+        opened={popupedKey === "color"}
+        popup={<TextColorPanel onChanged={onColorChanged} />}
+        onClick={setPopupedKey}
+      >
+        <div
+          className="w-8 h-8 border rounded-full"
+          style={{ backgroundColor: docAttrInfo.cursor?.color ?? "#000000" }}
+        ></div>
+      </PopupButton>
     </div>
   );
 };

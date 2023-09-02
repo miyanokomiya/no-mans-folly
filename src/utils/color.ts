@@ -130,3 +130,24 @@ export function isSameColor(a?: RGBA, b?: RGBA): boolean {
   if (a && b) return a.r === b.r && a.g === b.g && a.b === b.b && a.a === b.a;
   return a === b;
 }
+
+function componentToHex(c: number) {
+  const hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+export function colorToHex(color: Color): string {
+  return "#" + componentToHex(color.r) + componentToHex(color.g) + componentToHex(color.b);
+}
+
+export function hexToColor(hex: string): Color {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+        a: 1,
+      }
+    : { r: 0, g: 0, b: 0, a: 1 };
+}
