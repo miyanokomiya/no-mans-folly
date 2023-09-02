@@ -141,6 +141,7 @@ export type ModeStateEvent =
   | PointerHoverEvent
   | PointerDragEvent
   | PointerDownEvent
+  | PointerDoubleDownEvent
   | PointerUpEvent
   | KeyDownEvent
   | WheelEvent
@@ -172,6 +173,14 @@ export interface PointerDragEvent extends ModeStateEventBase {
 
 export interface PointerDownEvent extends ModeStateEventBase {
   type: "pointerdown";
+  data: {
+    point: IVec2;
+    options: MouseOptions;
+  };
+}
+
+export interface PointerDoubleDownEvent extends ModeStateEventBase {
+  type: "pointerdoubledown";
   data: {
     point: IVec2;
     options: MouseOptions;

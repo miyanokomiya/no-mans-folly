@@ -26,7 +26,6 @@ interface Option {
 export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIds: { [id: string]: true };
   let boundingBox: BoundingBox;
-  let timestamp = 0;
 
   return {
     getLabel: () => "MultipleSelected",
@@ -49,8 +48,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           scale: ctx.getScale(),
         });
       }
-
-      timestamp = ctx.getTimestamp();
     },
     onEnd: async (ctx) => {
       ctx.hideFloatMenu();
@@ -80,11 +77,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
               if (!event.data.options.ctrl) {
                 if (selectedIds[shape.id]) {
-                  if (ctx.getTimestamp() - timestamp < 300) {
-                    return startTextEditingIfPossible(ctx, shape.id);
-                  } else {
-                    return () => newMovingShapeState({ boundingBox });
-                  }
+                  return () => newMovingShapeState({ boundingBox });
                 } else {
                   ctx.selectShape(shape.id, false);
                   return newSingleSelectedByPointerOnState;
@@ -100,6 +93,13 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             default:
               return;
           }
+        case "pointerdoubledown": {
+          const shape = ctx.getShapeAt(event.data.point);
+          if (shape && selectedIds[shape.id]) {
+            return startTextEditingIfPossible(ctx, shape.id);
+          }
+          return;
+        }
         case "pointerhover": {
           const hitBounding = boundingBox.hitTest(event.data.current);
           if (hitBounding) {

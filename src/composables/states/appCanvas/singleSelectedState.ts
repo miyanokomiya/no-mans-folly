@@ -23,7 +23,6 @@ interface Option {
 export function newSingleSelectedState(option?: Option): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
-  let timestamp = 0;
 
   return {
     getLabel: () => "SingleSelected",
@@ -41,8 +40,6 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           styleScheme: ctx.getStyleScheme(),
           scale: ctx.getScale(),
         });
-
-      timestamp = ctx.getTimestamp();
     },
     onEnd: async (ctx) => {
       ctx.hideFloatMenu();
@@ -62,10 +59,6 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
-                  case "area":
-                    if (ctx.getTimestamp() - timestamp < 300) {
-                      return startTextEditingIfPossible(ctx, selectedId);
-                    }
                 }
               }
 
@@ -91,6 +84,13 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             default:
               return;
           }
+        case "pointerdoubledown": {
+          const hitResult = boundingBox.hitTest(event.data.point);
+          if (hitResult) {
+            return startTextEditingIfPossible(ctx, selectedId);
+          }
+          return;
+        }
         case "pointerhover": {
           const hitBounding = boundingBox.hitTest(event.data.current);
           if (hitBounding) {

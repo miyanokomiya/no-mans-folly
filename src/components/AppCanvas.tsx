@@ -189,18 +189,25 @@ export function AppCanvas() {
     textEditing,
   ]);
 
+  const [downTimestamp, setDownTimestamp] = useState(0);
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      smctx.stateMachine.handleEvent({
-        type: "pointerdown",
-        data: {
-          point: canvas.viewToCanvas(canvas.mousePoint),
-          options: getMouseOptions(e),
-        },
-      });
+
+      const data = {
+        point: canvas.viewToCanvas(canvas.mousePoint),
+        options: getMouseOptions(e),
+      };
+
+      const timestamp = Date.now();
+      if (timestamp - downTimestamp < 300) {
+        smctx.stateMachine.handleEvent({ type: "pointerdoubledown", data });
+      } else {
+        smctx.stateMachine.handleEvent({ type: "pointerdown", data });
+      }
+      setDownTimestamp(timestamp);
     },
-    [canvas, smctx]
+    [canvas, smctx, downTimestamp]
   );
 
   const onMouseMove = useCallback(

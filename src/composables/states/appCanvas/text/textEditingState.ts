@@ -144,6 +144,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
               }
               return;
             }
+            case "Escape": {
+              return translateOnSelection(ctx);
+            }
           }
           return;
         case "shape-updated": {
