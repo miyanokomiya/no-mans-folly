@@ -1,7 +1,8 @@
 const ua = window.navigator.userAgent.toLowerCase();
 
-function isMac(): boolean {
-  return ua.indexOf("mac os x") !== -1;
+const _isMac = ua.indexOf("mac os x") !== -1;
+export function isMac(): boolean {
+  return _isMac;
 }
 
 interface ModifiedEvent {

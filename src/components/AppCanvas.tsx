@@ -221,6 +221,7 @@ export function AppCanvas() {
           start: canvas.viewToCanvas(canvas.editStartPoint),
           current: canvas.viewToCanvas(canvas.mousePoint),
           ctrl: isCtrlOrMeta(e),
+          command: e.metaKey,
           alt: isAltOrOpt(e),
           shift: e.shiftKey,
           scale: canvas.scale,
@@ -244,6 +245,7 @@ export function AppCanvas() {
         data: {
           current: canvas.viewToCanvas(canvas.mousePoint),
           ctrl: isCtrlOrMeta(e),
+          command: e.metaKey,
           alt: isAltOrOpt(e),
           shift: e.shiftKey,
           scale: canvas.scale,
@@ -274,6 +276,7 @@ export function AppCanvas() {
         data: {
           key: e.key,
           ctrl: isCtrlOrMeta(e),
+          command: e.metaKey,
           alt: isAltOrOpt(e),
           shift: e.shiftKey,
           prevent: () => e.preventDefault(),

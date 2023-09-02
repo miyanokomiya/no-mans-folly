@@ -119,6 +119,20 @@ export function newTextEditorController() {
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
   }
 
+  function selectAll() {
+    setCursor(0, docLength);
+  }
+
+  function moveCursorLineHead() {
+    const location = getCursorLocation(_compositionLines, getCursor());
+    setCursor(getLocationIndex({ x: 0, y: location.y }));
+  }
+
+  function moveCursorLineTail() {
+    const location = getCursorLocation(_compositionLines, getCursor());
+    setCursor(getLocationIndex({ x: getDocLength(_compositionLines[location.y].outputs) - 1, y: location.y }));
+  }
+
   function getCurrentAttributeInfo(): DocAttrInfo {
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
@@ -156,6 +170,30 @@ export function newTextEditorController() {
     }
 
     return ret;
+  }
+
+  function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
+    if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
+
+    const cursor = getCursor();
+    const selection = getSelection();
+    if (selection > 0) {
+      return { cursor, delta: [{ retain: cursor }, { delete: Math.max(1, selection) }] };
+    } else {
+      return { cursor: cursor - 1, delta: [{ retain: cursor - 1 }, { delete: 1 }] };
+    }
+  }
+
+  function getDeltaAndCursorByDelete(): { delta: DocDelta; cursor: number } {
+    if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
+
+    const cursor = getCursor();
+    const selection = getSelection();
+    if (selection > 0) {
+      return { cursor, delta: [{ retain: cursor }, { delete: Math.max(1, selection) }] };
+    } else {
+      return { cursor, delta: [{ retain: cursor }, { delete: 1 }] };
+    }
   }
 
   function getDeltaByApplyInlineStyle(attrs: DocAttributes): DocDelta {
@@ -243,9 +281,14 @@ export function newTextEditorController() {
     moveCursorToTail,
     moveCursorUp,
     moveCursorDown,
+    selectAll,
+    moveCursorLineHead,
+    moveCursorLineTail,
     getLocationIndex,
 
     getDeltaByInput,
+    getDeltaAndCursorByBackspace,
+    getDeltaAndCursorByDelete,
     getCurrentAttributeInfo,
     getDeltaByApplyInlineStyle,
     getDeltaByApplyBlockStyle: _getDeltaByApplyBlockStyle,
@@ -280,8 +323,10 @@ function renderSelection(
     const a0 = line[0];
     const a1 = line[line.length - 1];
     ctx.fillStyle = "#0000ff";
+    ctx.globalAlpha = 0.3;
     ctx.beginPath();
     ctx.fillRect(a0.bounds.x, a0.bounds.y, a1.bounds.x + a1.bounds.width - a0.bounds.x, a1.bounds.height);
+    ctx.globalAlpha = 1;
   });
 }
 

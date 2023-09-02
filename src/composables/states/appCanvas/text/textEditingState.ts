@@ -6,6 +6,8 @@ import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { newPanningState } from "../../commons";
+import { isMac } from "../../../../utils/devices";
+import { KeyDownEvent, TransitionValue } from "../../core";
 
 interface Option {
   id: string;
@@ -111,62 +113,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "keydown":
           updateEditorPosition(ctx);
-
-          switch (event.data.key) {
-            case "ArrowLeft":
-              if (event.data.shift) {
-                textEditorController.shiftSelectionBy(-1);
-              } else {
-                textEditorController.shiftCursorBy(-1);
-              }
-              onCursorUpdated(ctx);
-              return;
-            case "ArrowRight": {
-              if (event.data.shift) {
-                textEditorController.shiftSelectionBy(1);
-              } else {
-                textEditorController.shiftCursorBy(1);
-              }
-              onCursorUpdated(ctx);
-              return;
-            }
-            case "ArrowUp":
-              textEditorController.moveCursorUp();
-              onCursorUpdated(ctx);
-              return;
-            case "ArrowDown":
-              textEditorController.moveCursorDown();
-              onCursorUpdated(ctx);
-              return;
-            case "Backspace": {
-              const cursor = textEditorController.getCursor();
-              const selection = textEditorController.getSelection();
-              if (selection > 0) {
-                ctx.patchDocuments({ [option.id]: [{ retain: cursor }, { delete: Math.max(1, selection) }] });
-                textEditorController.setCursor(cursor);
-              } else {
-                ctx.patchDocuments({ [option.id]: [{ retain: cursor - 1 }, { delete: 1 }] });
-                textEditorController.setCursor(cursor - 1);
-              }
-              return;
-            }
-            case "Delete": {
-              const cursor = textEditorController.getCursor();
-              const selection = textEditorController.getSelection();
-              if (selection > 0) {
-                ctx.patchDocuments({ [option.id]: [{ retain: cursor }, { delete: Math.max(1, selection) }] });
-                textEditorController.setCursor(cursor);
-              } else {
-                ctx.patchDocuments({ [option.id]: [{ retain: cursor }, { delete: 1 }] });
-                textEditorController.setCursor(cursor);
-              }
-              return;
-            }
-            case "Escape": {
-              return translateOnSelection(ctx);
-            }
-          }
-          return;
+          return handleKeydown(ctx, option, textEditorController, onCursorUpdated, event);
         case "shape-updated": {
           const shape = ctx.getShapeMap()[option.id];
           if (!shape) return translateOnSelection(ctx);
@@ -225,4 +172,129 @@ export function newTextEditingState(option: Option): AppCanvasState {
       renderCtx.restore();
     },
   };
+}
+
+function handleKeydown(
+  ctx: AppCanvasStateContext,
+  option: Option,
+  textEditorController: TextEditorController,
+  onCursorUpdated: (ctx: AppCanvasStateContext) => void,
+  event: KeyDownEvent
+): TransitionValue<AppCanvasStateContext> {
+  switch (event.data.key) {
+    case "a":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        if (event.data.command) {
+          textEditorController.selectAll();
+        } else if (isMac()) {
+          textEditorController.moveCursorLineHead();
+        } else {
+          textEditorController.selectAll();
+        }
+        onCursorUpdated(ctx);
+      }
+      return;
+    case "Home":
+      event.data.prevent?.();
+      textEditorController.moveCursorLineHead();
+      onCursorUpdated(ctx);
+      return;
+    case "End":
+      event.data.prevent?.();
+      textEditorController.moveCursorLineTail();
+      onCursorUpdated(ctx);
+      return;
+    case "e":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        textEditorController.moveCursorLineTail();
+        onCursorUpdated(ctx);
+      }
+      return;
+    case "f":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        textEditorController.shiftCursorBy(1);
+        onCursorUpdated(ctx);
+      }
+      return;
+    case "b":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        textEditorController.shiftCursorBy(-1);
+        onCursorUpdated(ctx);
+      }
+      return;
+    case "n":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        textEditorController.moveCursorDown();
+        onCursorUpdated(ctx);
+      }
+      return;
+    case "p":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        textEditorController.moveCursorUp();
+        onCursorUpdated(ctx);
+      }
+      return;
+    case "h":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        const info = textEditorController.getDeltaAndCursorByBackspace();
+        ctx.patchDocuments({ [option.id]: info.delta });
+        textEditorController.setCursor(info.cursor);
+      }
+      return;
+    case "d":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        const info = textEditorController.getDeltaAndCursorByDelete();
+        ctx.patchDocuments({ [option.id]: info.delta });
+        textEditorController.setCursor(info.cursor);
+      }
+      return;
+    case "ArrowLeft":
+      if (event.data.shift) {
+        textEditorController.shiftSelectionBy(-1);
+      } else {
+        textEditorController.shiftCursorBy(-1);
+      }
+      onCursorUpdated(ctx);
+      return;
+    case "ArrowRight": {
+      if (event.data.shift) {
+        textEditorController.shiftSelectionBy(1);
+      } else {
+        textEditorController.shiftCursorBy(1);
+      }
+      onCursorUpdated(ctx);
+      return;
+    }
+    case "ArrowUp":
+      textEditorController.moveCursorUp();
+      onCursorUpdated(ctx);
+      return;
+    case "ArrowDown":
+      textEditorController.moveCursorDown();
+      onCursorUpdated(ctx);
+      return;
+    case "Backspace": {
+      const info = textEditorController.getDeltaAndCursorByBackspace();
+      ctx.patchDocuments({ [option.id]: info.delta });
+      textEditorController.setCursor(info.cursor);
+      return;
+    }
+    case "Delete": {
+      const info = textEditorController.getDeltaAndCursorByDelete();
+      ctx.patchDocuments({ [option.id]: info.delta });
+      textEditorController.setCursor(info.cursor);
+      return;
+    }
+    case "Escape": {
+      return translateOnSelection(ctx);
+    }
+  }
 }
