@@ -96,7 +96,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         case "pointerdoubledown": {
           const shape = ctx.getShapeAt(event.data.point);
           if (shape && selectedIds[shape.id]) {
-            return startTextEditingIfPossible(ctx, shape.id);
+            return startTextEditingIfPossible(ctx, shape.id, event.data.point);
           }
           return;
         }

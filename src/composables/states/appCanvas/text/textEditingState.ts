@@ -1,4 +1,4 @@
-import { applyAffine } from "okageo";
+import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
@@ -9,6 +9,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 interface Option {
   id: string;
   textEditorController?: TextEditorController;
+  point?: IVec2;
 }
 
 export function newTextEditingState(option: Option): AppCanvasState {
@@ -47,7 +48,13 @@ export function newTextEditingState(option: Option): AppCanvasState {
         textEditorController = newTextEditorController();
         textEditorController.setRenderingContext(ctx.getRenderCtx()!);
         textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
-        textEditorController.moveCursorToTail();
+
+        if (option.point) {
+          const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, option.point));
+          textEditorController.setCursor(textEditorController.getLocationIndex(location));
+        } else {
+          textEditorController.moveCursorToTail();
+        }
       }
 
       updateEditorPosition(ctx);

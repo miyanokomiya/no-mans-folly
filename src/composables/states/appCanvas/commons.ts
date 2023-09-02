@@ -16,6 +16,7 @@ import {
 } from "../../../utils/textEditor";
 import { canHaveText } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
+import { IVec2 } from "okageo";
 
 export function translateOnSelection(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
@@ -107,10 +108,11 @@ export function handleCommonTextStyle(
 
 export function startTextEditingIfPossible(
   ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">,
-  selectedId?: string
+  selectedId?: string,
+  point?: IVec2
 ): TransitionValue<AppCanvasStateContext> {
   const shape = ctx.getShapeMap()[selectedId ?? ""];
   if (shape && canHaveText(ctx.getShapeStruct, shape)) {
-    return () => newTextEditingState({ id: selectedId! });
+    return () => newTextEditingState({ id: selectedId!, point });
   }
 }

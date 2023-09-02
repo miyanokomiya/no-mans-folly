@@ -87,7 +87,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         case "pointerdoubledown": {
           const hitResult = boundingBox.hitTest(event.data.point);
           if (hitResult) {
-            return startTextEditingIfPossible(ctx, selectedId);
+            return startTextEditingIfPossible(ctx, selectedId, event.data.point);
           }
           return;
         }
