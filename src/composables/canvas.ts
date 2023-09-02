@@ -1,5 +1,5 @@
 import { IVec2, multi, sub, add, getRectCenter, IRectangle, clamp } from "okageo";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { EditMovement } from "./states/types";
 import { expandRect } from "../utils/geometry";
 import { useGlobalResizeEffect } from "./window";
@@ -54,23 +54,35 @@ export function useCanvas(
   const [moveType, setMoveType] = useState<"move" | "drag" | undefined>();
   const [editStartPoint, setEditStartPoint] = useState<IVec2>();
   const [editStartViewOrigin, setEditStartViewOrigin] = useState<IVec2>();
-  const [mousePoint, setMousePoint] = useState<IVec2>({ x: 0, y: 0 });
 
-  function endMoving() {
+  // Prepare ref for mouse point to reduce recalculation.
+  const mousePoint = useRef<IVec2>({ x: 0, y: 0 });
+
+  function setMousePoint(value: IVec2) {
+    mousePoint.current = value;
+  }
+
+  const getMousePoint = useCallback((): IVec2 => {
+    return mousePoint.current;
+  }, []);
+
+  const endMoving = useCallback(() => {
     setMoveType(undefined);
     setEditStartPoint(undefined);
     setEditStartViewOrigin(undefined);
-  }
-  function startMoving() {
+  }, []);
+
+  const startMoving = useCallback(() => {
     setMoveType("move");
-    setEditStartPoint(mousePoint);
+    setEditStartPoint(getMousePoint());
     setEditStartViewOrigin(viewOrigin);
-  }
-  function startDragging() {
+  }, [viewOrigin, getMousePoint]);
+
+  const startDragging = useCallback(() => {
     setMoveType("drag");
-    setEditStartPoint(mousePoint);
+    setEditStartPoint(getMousePoint());
     setEditStartViewOrigin(viewOrigin);
-  }
+  }, [viewOrigin, getMousePoint]);
 
   const viewCanvasRect = useMemo<IRectangle>(
     () => ({
@@ -84,59 +96,80 @@ export function useCanvas(
 
   const viewCenter = useMemo(() => getRectCenter({ x: 0, y: 0, ...viewSize }), [viewSize]);
 
-  function viewToCanvas(v: IVec2): IVec2 {
-    return _viewToCanvas(scale, viewOrigin, v);
-  }
+  const viewToCanvas = useCallback(
+    (v: IVec2): IVec2 => {
+      return _viewToCanvas(scale, viewOrigin, v);
+    },
+    [scale, viewOrigin]
+  );
 
-  function panView(editMovement: EditMovement) {
-    if (!editStartViewOrigin) return;
-    setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
-  }
+  const panView = useCallback(
+    (editMovement: EditMovement) => {
+      if (!editStartViewOrigin) return;
+      setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
+    },
+    [editStartViewOrigin]
+  );
 
-  function canvasToView(v: IVec2): IVec2 {
-    return multi(sub(v, viewOrigin), 1 / scale);
-  }
+  const canvasToView = useCallback(
+    (v: IVec2): IVec2 => {
+      return multi(sub(v, viewOrigin), 1 / scale);
+    },
+    [viewOrigin, scale]
+  );
 
-  function adjustToCenter() {
+  const adjustToCenter = useCallback(() => {
     const ret = centerizeView({ x: -viewSize.width / 2, y: -viewSize.height / 2, ...viewSize }, viewSize);
     setViewOrigin(ret.viewOrigin);
     setScale(ret.scale);
-  }
+  }, [viewSize]);
 
-  function removeRootPosition(p: IVec2): IVec2 {
-    const wrapperElm = getWrapper();
-    if (!wrapperElm) return p;
-    const rect = wrapperElm.getBoundingClientRect();
-    return sub(p, { x: rect.x, y: rect.y });
-  }
+  const removeRootPosition = useCallback(
+    (p: IVec2): IVec2 => {
+      const wrapperElm = getWrapper();
+      if (!wrapperElm) return p;
+      const rect = wrapperElm.getBoundingClientRect();
+      return sub(p, { x: rect.x, y: rect.y });
+    },
+    [getWrapper]
+  );
 
-  function addRootPosition(p: IVec2): IVec2 {
-    const wrapperElm = getWrapper();
-    if (!wrapperElm) return p;
-    const rect = wrapperElm.getBoundingClientRect();
-    return add(p, { x: rect.x, y: rect.y });
-  }
+  const addRootPosition = useCallback(
+    (p: IVec2): IVec2 => {
+      const wrapperElm = getWrapper();
+      if (!wrapperElm) return p;
+      const rect = wrapperElm.getBoundingClientRect();
+      return add(p, { x: rect.x, y: rect.y });
+    },
+    [getWrapper]
+  );
 
-  function setViewport(rect?: IRectangle, margin = 0) {
-    if (!rect) {
-      adjustToCenter();
-      return;
-    }
+  const setViewport = useCallback(
+    (rect?: IRectangle, margin = 0) => {
+      if (!rect) {
+        adjustToCenter();
+        return;
+      }
 
-    const ret = centerizeView(expandRect(rect, margin / scale), viewSize, (v) => clamp(1, scaleMax, v));
-    setScale(ret.scale);
-    setViewOrigin(ret.viewOrigin);
-  }
+      const ret = centerizeView(expandRect(rect, margin / scale), viewSize, (v) => clamp(1, scaleMax, v));
+      setScale(ret.scale);
+      setViewOrigin(ret.viewOrigin);
+    },
+    [scale, scaleMax, adjustToCenter, viewSize]
+  );
 
-  function zoomView(step: number, center = false): number {
-    const origin = !center && mousePoint ? mousePoint : viewCenter;
-    const beforeOrigin = viewToCanvas(origin);
-    const nextScale = Math.min(Math.max(scale * Math.pow(scaleRate, step > 0 ? 1 : -1), scaleMin), scaleMax);
-    const nextViewOrigin = add(viewOrigin, sub(beforeOrigin, _viewToCanvas(nextScale, viewOrigin, origin)));
-    setScale(nextScale);
-    setViewOrigin(nextViewOrigin);
-    return nextScale;
-  }
+  const zoomView = useCallback(
+    (step: number, center = false): number => {
+      const origin = !center ? getMousePoint() : viewCenter;
+      const beforeOrigin = viewToCanvas(origin);
+      const nextScale = Math.min(Math.max(scale * Math.pow(scaleRate, step > 0 ? 1 : -1), scaleMin), scaleMax);
+      const nextViewOrigin = add(viewOrigin, sub(beforeOrigin, _viewToCanvas(nextScale, viewOrigin, origin)));
+      setScale(nextScale);
+      setViewOrigin(nextViewOrigin);
+      return nextScale;
+    },
+    [viewCenter, scale, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint]
+  );
 
   const onResize = useCallback(() => {
     const wrapperElm = getWrapper();
@@ -150,7 +183,7 @@ export function useCanvas(
     viewSize,
     setViewSize,
     editStartPoint,
-    mousePoint,
+    getMousePoint,
     setMousePoint,
     scale,
     viewOrigin,

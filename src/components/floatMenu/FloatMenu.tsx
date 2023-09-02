@@ -1,10 +1,10 @@
-import { IRectangle, getRectCenter } from "okageo";
+import { IRectangle, IVec2, getRectCenter } from "okageo";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
 import { getCommonStyle, getWrapperRect, updateCommonStyle } from "../../shapes";
 import * as geometry from "../../utils/geometry";
 import { CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../../models";
-import { CanvasComposable, canvasToView } from "../../composables/canvas";
+import { canvasToView } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
@@ -14,11 +14,12 @@ import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { useWindow } from "../../composables/window";
 
 interface Option {
-  canvas: CanvasComposable;
+  scale: number;
+  viewOrigin: IVec2;
   indexDocAttrInfo?: DocAttrInfo;
 }
 
-export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
+export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInfo }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
@@ -75,11 +76,11 @@ export const FloatMenu: React.FC<Option> = ({ canvas, indexDocAttrInfo }) => {
 
     const ctx = smctx.getCtx();
     const rect = geometry.getWrapperRect(selectedShapes.map((s) => getWrapperRect(ctx.getShapeStruct, s)));
-    const p = canvasToView(canvas.scale, canvas.viewOrigin, rect);
-    const width = rect.width / canvas.scale;
-    const height = rect.height / canvas.scale;
+    const p = canvasToView(scale, viewOrigin, rect);
+    const width = rect.width / scale;
+    const height = rect.height / scale;
     return { x: p.x, y: p.y, width, height };
-  }, [canvas.viewOrigin, canvas.scale, smctx, selectedShapes]);
+  }, [viewOrigin, scale, smctx, selectedShapes]);
 
   useEffect(() => {
     if (!rootRef.current) return;

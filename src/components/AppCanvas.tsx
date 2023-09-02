@@ -64,19 +64,34 @@ export function AppCanvas() {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
-  const canvas = useCanvas(getWrapper);
+  const {
+    setViewport,
+    zoomView,
+    panView,
+    startDragging,
+    endMoving,
+    scale,
+    canvasToView,
+    viewSize,
+    viewOrigin,
+    viewToCanvas,
+    getMousePoint,
+    setMousePoint,
+    removeRootPosition,
+    editStartPoint,
+  } = useCanvas(getWrapper);
 
   useEffect(() => {
     smctx.setCtx({
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
-      setViewport: canvas.setViewport,
-      zoomView: canvas.zoomView,
-      getScale: () => canvas.scale,
-      panView: canvas.panView,
-      startDragging: canvas.startDragging,
-      stopDragging: canvas.endMoving,
+      setViewport: setViewport,
+      zoomView: zoomView,
+      getScale: () => scale,
+      panView: panView,
+      startDragging: startDragging,
+      stopDragging: endMoving,
 
-      toView: canvas.canvasToView,
+      toView: canvasToView,
       showFloatMenu: () => setFloatMenuAvailable(true),
       hideFloatMenu: () => setFloatMenuAvailable(false),
       setContextMenuList() {},
@@ -114,13 +129,26 @@ export function AppCanvas() {
         setTextEditing(false);
       },
       setTextEditorPosition: (p) => {
-        setTextEditorPosition(canvas.canvasToView(p));
+        setTextEditorPosition(canvasToView(p));
       },
       getDocumentMap: () => docMap,
       patchDocuments: acctx.documentStore.patchDocs,
       setCurrentDocAttrInfo,
     });
-  }, [canvas, canvas.scale, acctx, smctx, shapes, tmpShapeMap, docMap]);
+  }, [
+    setViewport,
+    zoomView,
+    panView,
+    startDragging,
+    endMoving,
+    canvasToView,
+    scale,
+    acctx,
+    smctx,
+    shapes,
+    tmpShapeMap,
+    docMap,
+  ]);
 
   useEffect(() => {
     smctx.stateMachine.handleEvent({
@@ -141,10 +169,10 @@ export function AppCanvas() {
   const canvasAttrs = useMemo(
     () => ({
       className: "w-max h-max absolute top-0 left-0",
-      width: canvas.viewSize.width,
-      height: canvas.viewSize.height,
+      width: viewSize.width,
+      height: viewSize.height,
     }),
-    [canvas.viewSize.width, canvas.viewSize.height]
+    [viewSize.width, viewSize.height]
   );
 
   useEffect(() => {
@@ -153,8 +181,8 @@ export function AppCanvas() {
 
     ctx.resetTransform();
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.scale(1 / canvas.scale, 1 / canvas.scale);
-    ctx.translate(-canvas.viewOrigin.x, -canvas.viewOrigin.y);
+    ctx.scale(1 / scale, 1 / scale);
+    ctx.translate(-viewOrigin.x, -viewOrigin.y);
 
     const selectedMap = smctx.getCtx().getSelectedShapeIdMap();
     shapes.forEach((shape) => {
@@ -178,11 +206,11 @@ export function AppCanvas() {
   }, [
     shapes,
     tmpShapeMap,
-    canvas.viewSize.width,
-    canvas.viewSize.height,
-    canvas.scale,
-    canvas.viewOrigin.x,
-    canvas.viewOrigin.y,
+    viewSize.width,
+    viewSize.height,
+    scale,
+    viewOrigin.x,
+    viewOrigin.y,
     canvasState,
     smctx,
     docMap,
@@ -195,7 +223,7 @@ export function AppCanvas() {
       e.preventDefault();
 
       const data = {
-        point: canvas.viewToCanvas(canvas.mousePoint),
+        point: viewToCanvas(getMousePoint()),
         options: getMouseOptions(e),
       };
 
@@ -207,28 +235,28 @@ export function AppCanvas() {
       }
       setDownTimestamp(timestamp);
     },
-    [canvas, smctx, downTimestamp]
+    [getMousePoint, viewToCanvas, smctx, downTimestamp]
   );
 
   const onMouseMove = useCallback(
     (e: MouseEvent) => {
-      canvas.setMousePoint(canvas.removeRootPosition({ x: e.pageX, y: e.pageY }));
-      if (!canvas.editStartPoint) return;
+      setMousePoint(removeRootPosition({ x: e.pageX, y: e.pageY }));
+      if (!editStartPoint) return;
 
       smctx.stateMachine.handleEvent({
         type: "pointermove",
         data: {
-          start: canvas.viewToCanvas(canvas.editStartPoint),
-          current: canvas.viewToCanvas(canvas.mousePoint),
+          start: viewToCanvas(editStartPoint),
+          current: viewToCanvas(getMousePoint()),
           ctrl: isCtrlOrMeta(e),
           command: e.metaKey,
           alt: isAltOrOpt(e),
           shift: e.shiftKey,
-          scale: canvas.scale,
+          scale: scale,
         },
       });
     },
-    [canvas, smctx]
+    [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, smctx]
   );
   useGlobalMousemoveEffect(onMouseMove);
 
@@ -243,16 +271,16 @@ export function AppCanvas() {
       smctx.stateMachine.handleEvent({
         type: "pointerhover",
         data: {
-          current: canvas.viewToCanvas(canvas.mousePoint),
+          current: viewToCanvas(getMousePoint()),
           ctrl: isCtrlOrMeta(e),
           command: e.metaKey,
           alt: isAltOrOpt(e),
           shift: e.shiftKey,
-          scale: canvas.scale,
+          scale: scale,
         },
       });
     },
-    [canvas, smctx, focus]
+    [getMousePoint, scale, viewToCanvas, smctx, focus]
   );
 
   const onMouseUp = useCallback(
@@ -260,12 +288,12 @@ export function AppCanvas() {
       smctx.stateMachine.handleEvent({
         type: "pointerup",
         data: {
-          point: canvas.viewToCanvas(canvas.mousePoint),
+          point: viewToCanvas(getMousePoint()),
           options: getMouseOptions(e),
         },
       });
     },
-    [canvas, smctx]
+    [viewToCanvas, getMousePoint, smctx]
   );
   useGlobalMouseupEffect(onMouseUp);
 
@@ -330,7 +358,9 @@ export function AppCanvas() {
     <TextEditor onInput={onTextInput} onKeyDown={onKeyDown} position={textEditorPosition} />
   ) : undefined;
 
-  const floatMenu = floatMenuAvailable ? <FloatMenu canvas={canvas} indexDocAttrInfo={indexDocAttrInfo} /> : undefined;
+  const floatMenu = floatMenuAvailable ? (
+    <FloatMenu scale={scale} viewOrigin={viewOrigin} indexDocAttrInfo={indexDocAttrInfo} />
+  ) : undefined;
 
   return (
     <>
