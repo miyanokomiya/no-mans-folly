@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { LineHead } from "../../models";
 import { PopupButton } from "../atoms/PopupButton";
+import iconHeadSwap from "../../assets/icons/head_swap.svg";
 import iconHeadNone from "../../assets/icons/head_none.svg";
 import iconHeadOpen from "../../assets/icons/head_open.svg";
 import iconHeadClosedFilled from "../../assets/icons/head_closed_filled.svg";
@@ -54,8 +55,12 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
     [onChange]
   );
 
+  const onHeadSwapClick = useCallback(() => {
+    onChange?.({ pHead: qHead, qHead: pHead });
+  }, [onChange, pHead, qHead]);
+
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 items-center">
       <PopupButton
         name="line-p-head"
         opened={popupedKey === "line-p-head"}
@@ -66,6 +71,9 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
           <img src={getHeadIcon(pHead?.type)} alt="Closed Filled" />
         </div>
       </PopupButton>
+      <button type="button" className="w-7 h-7 p-1 border rounded" onClick={onHeadSwapClick}>
+        <img src={iconHeadSwap} alt="Swap heads" />
+      </button>
       <PopupButton
         name="line-q-head"
         opened={popupedKey === "line-q-head"}
