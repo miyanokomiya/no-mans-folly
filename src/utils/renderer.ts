@@ -1,7 +1,7 @@
 import { IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
 import { ISegment } from "./geometry";
 
-export function applyPath(ctx: CanvasRenderingContext2D, path: IVec2[], closed = false) {
+export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
   path.forEach((p, i) => {
     i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
   });

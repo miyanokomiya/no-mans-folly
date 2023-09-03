@@ -59,3 +59,7 @@ export interface ConnectionPoint {
   id: string;
   rate: IVec2; // relative position in the target rectangle
 }
+
+export interface LineHead {
+  type: string;
+}

@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
 import { getCommonStyle, getWrapperRect, updateCommonStyle } from "../../shapes";
 import * as geometry from "../../utils/geometry";
-import { CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../../models";
+import { CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
@@ -12,6 +12,8 @@ import { StrokePanel } from "./StrokePanel";
 import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { useWindow } from "../../composables/window";
+import { LineHeadItems } from "./LineHeadItems";
+import { LineShape } from "../../shapes/line";
 
 interface Option {
   scale: number;
@@ -191,6 +193,29 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
     [smctx, focusBack]
   );
 
+  const indexLineShape = useMemo(() => {
+    return indexShape?.type === "line" ? (indexShape as LineShape) : undefined;
+  }, [indexShape]);
+
+  const onLineHeadChanged = useCallback(
+    (val: { pHead?: LineHead; qHead?: LineHead }) => {
+      const ctx = smctx.getCtx();
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      const shapeMap = ctx.getShapeMap();
+      const patch = ids.reduce<{ [id: string]: Partial<LineShape> }>((p, id) => {
+        const shape = shapeMap[id];
+        if (shape.type === "line") {
+          p[id] = val;
+        }
+        return p;
+      }, {});
+
+      ctx.patchShapes(patch);
+      focusBack?.();
+    },
+    [focusBack, smctx]
+  );
+
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1">
@@ -228,6 +253,15 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
             onBlockChanged={onDocBlockAttributesChanged}
             onDocChanged={onDocAttributesChanged}
             docAttrInfo={indexDocAttrInfo}
+          />
+        ) : undefined}
+        {indexLineShape ? (
+          <LineHeadItems
+            popupedKey={popupedKey}
+            setPopupedKey={onClickPopupButton}
+            pHead={indexLineShape.pHead}
+            qHead={indexLineShape.qHead}
+            onChange={onLineHeadChanged}
           />
         ) : undefined}
       </div>

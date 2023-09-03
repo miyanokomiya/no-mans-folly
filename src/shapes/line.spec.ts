@@ -16,6 +16,7 @@ describe("struct", () => {
         beginPath: vi.fn(),
         closePath: vi.fn(),
         lineTo: vi.fn(),
+        moveTo: vi.fn(),
         fill: vi.fn(),
         stroke: vi.fn(),
         setLineDash: vi.fn(),

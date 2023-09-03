@@ -1,9 +1,11 @@
-import { IVec2, applyAffine, getOuterRectangle, isSame } from "okageo";
-import { ConnectionPoint, FillStyle, Shape, StrokeStyle } from "../models";
+import { AffineMatrix, IVec2, applyAffine, getOuterRectangle, getRadian, isSame, multiAffines } from "okageo";
+import { ConnectionPoint, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
-import { ISegment, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
+import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape } from "./core";
+import { ShapeStruct, createBaseShape, getCommonStyle } from "./core";
+import { clipLineHead, renderLineHead } from "./lineHeads";
+import { applyPath } from "../utils/renderer";
 
 export interface LineShape extends Shape {
   fill: FillStyle;
@@ -11,6 +13,8 @@ export interface LineShape extends Shape {
   q: IVec2;
   pConnection?: ConnectionPoint;
   qConnection?: ConnectionPoint;
+  pHead?: LineHead;
+  qHead?: LineHead;
 }
 
 export const struct: ShapeStruct<LineShape> = {
@@ -31,11 +35,70 @@ export const struct: ShapeStruct<LineShape> = {
   render(ctx, shape) {
     applyStrokeStyle(ctx, shape.stroke);
 
+    const linePath = getLinePath(shape);
+
+    let pAffine: AffineMatrix | undefined;
+    if (shape.pHead) {
+      const p = linePath[0];
+      const r = getRadian(p, linePath[1]);
+      const sin = Math.sin(r);
+      const cos = Math.cos(r);
+      pAffine = multiAffines([
+        [1, 0, 0, 1, p.x, p.y],
+        [cos, sin, -sin, cos, 0, 0],
+      ]);
+    }
+
+    let qAffine: AffineMatrix | undefined;
+    if (shape.qHead) {
+      const q = linePath[linePath.length - 1];
+      const r = getRadian(q, linePath[linePath.length - 2]);
+      const sin = Math.sin(r);
+      const cos = Math.cos(r);
+      qAffine = multiAffines([
+        [1, 0, 0, 1, q.x, q.y],
+        [cos, sin, -sin, cos, 0, 0],
+      ]);
+    }
+
+    let region: Path2D | undefined;
+
+    if (pAffine || qAffine) {
+      const wrapper = getOuterRectangle([getLinePath(shape)]);
+      const outline = expandRect(wrapper, (shape.stroke.width ?? 1) * 4 + 40);
+      region = new Path2D();
+      region.rect(outline.x, outline.y, outline.width, outline.height);
+    }
+
+    if (region && pAffine) {
+      clipLineHead(region, shape.pHead!, pAffine);
+    }
+
+    if (region && qAffine) {
+      clipLineHead(region, shape.qHead!, qAffine);
+    }
+
+    if (region) {
+      ctx.save();
+      ctx.clip(region, "evenodd");
+    }
+
     ctx.beginPath();
-    getLinePath(shape).forEach((p) => {
-      ctx.lineTo(p.x, p.y);
-    });
+    applyPath(ctx, linePath);
     ctx.stroke();
+
+    if (region) {
+      ctx.restore();
+    }
+
+    ctx.fillStyle = ctx.strokeStyle;
+    if (region && pAffine) {
+      renderLineHead(ctx, shape.pHead!, pAffine);
+    }
+
+    if (region && qAffine) {
+      renderLineHead(ctx, shape.qHead!, qAffine);
+    }
   },
   getWrapperRect(shape) {
     return getOuterRectangle([getLinePath(shape)]);
@@ -55,6 +118,7 @@ export const struct: ShapeStruct<LineShape> = {
 
     return ret;
   },
+  getCommonStyle,
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {

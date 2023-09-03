@@ -24,8 +24,8 @@ export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, o
       </button>
       {opened ? (
         <div
-          className="absolute left-0 bottom-0 bg-white border rounded p-2 drop-shadow-md"
-          style={{ transform: "translateY(100%)" }}
+          className="absolute left-1/2 bottom-0 bg-white border rounded p-2 drop-shadow-md"
+          style={{ transform: "translate(-50%, 100%)" }}
         >
           {popup}
         </div>
