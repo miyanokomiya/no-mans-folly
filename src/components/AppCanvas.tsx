@@ -138,7 +138,7 @@ export function AppCanvas() {
       pasteShapes: (shapes, docs, p) => {
         const remapInfo = remapShapeIds(getCommonStruct, shapes, generateUuid, true);
         const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
-        const targetP = p ?? getMousePoint();
+        const targetP = p ?? viewToCanvas(getMousePoint());
         const moved = shiftShapesAtTopLeft(remapInfo.shapes, targetP);
 
         acctx.shapeStore.transact(() => {
@@ -168,6 +168,7 @@ export function AppCanvas() {
     startDragging,
     endMoving,
     canvasToView,
+    viewToCanvas,
     scale,
     acctx,
     smctx,
