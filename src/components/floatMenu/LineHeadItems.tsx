@@ -67,7 +67,7 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
         popup={<LineHeadPanel type={pHead?.type} onClick={onPHeadChanged} flip />}
         onClick={onPHeadClick}
       >
-        <div className="w-8 h-8 p-1 border rounded" style={{ transform: "scaleX(-1)" }}>
+        <div className="w-8 h-8 p-1" style={{ transform: "scaleX(-1)" }}>
           <img src={getHeadIcon(pHead?.type)} alt="Closed Filled" />
         </div>
       </PopupButton>
@@ -80,7 +80,7 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
         popup={<LineHeadPanel type={qHead?.type} onClick={onQHeadChanged} />}
         onClick={onQHeadClick}
       >
-        <div className="w-8 h-8 p-1 border rounded">
+        <div className="w-8 h-8 p-1">
           <img src={getHeadIcon(qHead?.type)} alt="Closed Filled" />
         </div>
       </PopupButton>

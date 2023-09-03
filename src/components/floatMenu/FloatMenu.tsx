@@ -218,7 +218,7 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
 
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
-      <div className="flex gap-1">
+      <div className="flex gap-1 items-center">
         {indexCommonStyle?.fill ? (
           <PopupButton
             name="fill"
@@ -227,7 +227,7 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
             onClick={onClickPopupButton}
           >
             <div
-              className="w-8 h-8 border rounded-full"
+              className="w-8 h-8 border-2 rounded-full"
               style={{ backgroundColor: rednerRGBA(indexCommonStyle.fill.color) }}
             ></div>
           </PopupButton>
@@ -239,30 +239,38 @@ export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInf
             popup={<StrokePanel stroke={indexCommonStyle.stroke} onChanged={onStrokeChanged} />}
             onClick={onClickPopupButton}
           >
-            <div
-              className="w-8 h-8 border rounded-full"
-              style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
-            ></div>
+            <div className="w-8 h-8 flex justify-center items-center">
+              <div
+                className="w-1.5 h-9 border rounded-sm rotate-45"
+                style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
+              ></div>
+            </div>
           </PopupButton>
         ) : undefined}
         {indexDocAttrInfo ? (
-          <TextItems
-            popupedKey={popupedKey}
-            setPopupedKey={onClickPopupButton}
-            onInlineChanged={onDocInlineAttributesChanged}
-            onBlockChanged={onDocBlockAttributesChanged}
-            onDocChanged={onDocAttributesChanged}
-            docAttrInfo={indexDocAttrInfo}
-          />
+          <>
+            <div className="h-8 mx-0.5 border"></div>
+            <TextItems
+              popupedKey={popupedKey}
+              setPopupedKey={onClickPopupButton}
+              onInlineChanged={onDocInlineAttributesChanged}
+              onBlockChanged={onDocBlockAttributesChanged}
+              onDocChanged={onDocAttributesChanged}
+              docAttrInfo={indexDocAttrInfo}
+            />
+          </>
         ) : undefined}
         {indexLineShape ? (
-          <LineHeadItems
-            popupedKey={popupedKey}
-            setPopupedKey={onClickPopupButton}
-            pHead={indexLineShape.pHead}
-            qHead={indexLineShape.qHead}
-            onChange={onLineHeadChanged}
-          />
+          <>
+            <div className="h-8 mx-0.5 border"></div>
+            <LineHeadItems
+              popupedKey={popupedKey}
+              setPopupedKey={onClickPopupButton}
+              pHead={indexLineShape.pHead}
+              qHead={indexLineShape.qHead}
+              onChange={onLineHeadChanged}
+            />
+          </>
         ) : undefined}
       </div>
     </div>

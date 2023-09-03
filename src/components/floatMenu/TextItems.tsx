@@ -127,27 +127,7 @@ export const TextItems: React.FC<Props> = ({
   );
 
   return (
-    <div className="flex gap-1">
-      <PopupButton
-        name="align"
-        opened={popupedKey === "align"}
-        popup={<AlignPanel onClick={onAlignChanged} />}
-        onClick={onAlignClick}
-      >
-        <div className="w-8 h-8 p-1 border rounded">
-          <img src={alignIcon} alt="Align" />
-        </div>
-      </PopupButton>
-      <PopupButton
-        name="direction"
-        opened={popupedKey === "direction"}
-        popup={<DirectionPanel onClick={onDirectionChanged} />}
-        onClick={onDirectionClick}
-      >
-        <div className="w-8 h-8 p-1 border rounded">
-          <img src={directionIcon} alt="Direction" />
-        </div>
-      </PopupButton>
+    <div className="flex gap-1 items-center">
       <div className="w-12 h-full flex items-center">
         <NumberCombobox
           value={docAttrInfo.cursor?.size ?? 18}
@@ -163,10 +143,31 @@ export const TextItems: React.FC<Props> = ({
         popup={<TextColorPanel onChanged={onColorChanged} />}
         onClick={setPopupedKey}
       >
-        <div
-          className="w-8 h-8 border rounded-full"
-          style={{ backgroundColor: docAttrInfo.cursor?.color ?? "#000000" }}
-        ></div>
+        <div className="w-8 h-8 flex justify-center items-center">
+          <div className="text-2xl underline pb-1" style={{ color: docAttrInfo.cursor?.color ?? "#000000" }}>
+            A
+          </div>
+        </div>
+      </PopupButton>
+      <PopupButton
+        name="align"
+        opened={popupedKey === "align"}
+        popup={<AlignPanel onClick={onAlignChanged} />}
+        onClick={onAlignClick}
+      >
+        <div className="w-8 h-8 p-1">
+          <img src={alignIcon} alt="Align" />
+        </div>
+      </PopupButton>
+      <PopupButton
+        name="direction"
+        opened={popupedKey === "direction"}
+        popup={<DirectionPanel onClick={onDirectionChanged} />}
+        onClick={onDirectionClick}
+      >
+        <div className="w-8 h-8 p-1">
+          <img src={directionIcon} alt="Direction" />
+        </div>
       </PopupButton>
     </div>
   );
