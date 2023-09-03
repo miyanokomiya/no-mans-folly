@@ -6,9 +6,11 @@ import {
   getWrapperRect,
   getWrapperRectForShapes,
   isPointOn,
+  remapShapeIds,
   renderShape,
 } from ".";
 import { RectangleShape } from "./rectangle";
+import { LineShape } from "./line";
 
 describe("createShape", () => {
   test("should return new shape", () => {
@@ -67,11 +69,63 @@ describe("getLocationRateOnShape", () => {
   });
 });
 
+describe("remapShapeIds", () => {
+  test("should return remapped information", () => {
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0" });
+    const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test1",
+    });
+    let count = -1;
+    const result = remapShapeIds(getCommonStruct, [shape0, shape1], () => {
+      count++;
+      return `new_${count}`;
+    });
+
+    expect(result.shapes[0].id).toBe("new_0");
+    expect(result.shapes[1].id).toBe("new_1");
+  });
+
+  test("should return remap shape properties related to ids", () => {
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0" });
+    const shape1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "test1",
+      pConnection: { id: "test0", rate: { x: 0, y: 0 } },
+    });
+    let count = -1;
+    const result = remapShapeIds(getCommonStruct, [shape0, shape1], () => {
+      count++;
+      return `new_${count}`;
+    });
+
+    expect((result.shapes[1] as LineShape).pConnection?.id).toBe("new_0");
+  });
+
+  test("should remove relation that aren't found in the new ids when removeNotFound is true", () => {
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0" });
+    const shape1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "test1",
+      pConnection: { id: "unknown", rate: { x: 0, y: 0 } },
+    });
+    let count = -1;
+    const result = remapShapeIds(
+      getCommonStruct,
+      [shape0, shape1],
+      () => {
+        count++;
+        return `new_${count}`;
+      },
+      true
+    );
+
+    expect((result.shapes[1] as LineShape).pConnection).toBe(undefined);
+  });
+});
+
 describe("getWrapperRectForShapes", () => {
   test("should return wrapper rectangle for shapes", () => {
-    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", width: 10, height: 20 });
     const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "test",
+      id: "test1",
       p: {
         x: 10,
         y: 20,

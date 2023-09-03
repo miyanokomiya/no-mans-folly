@@ -16,6 +16,7 @@ export interface ShapeStruct<T extends Shape> {
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
+  immigrateShapeIds?: (shape: T, oldToNewIdMap: { [newId: string]: string }, removeNotFound?: boolean) => Partial<T>;
 }
 
 export interface ShapeSnappingLines {

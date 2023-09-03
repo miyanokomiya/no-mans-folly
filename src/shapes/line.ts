@@ -120,6 +120,27 @@ export const struct: ShapeStruct<LineShape> = {
   },
   getCommonStyle,
   updateCommonStyle,
+  immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
+    const ret: Partial<LineShape> = {};
+
+    if (shape.pConnection) {
+      if (oldToNewIdMap[shape.pConnection.id]) {
+        ret.pConnection = { ...shape.pConnection, id: oldToNewIdMap[shape.pConnection.id] };
+      } else if (removeNotFound) {
+        ret.pConnection = undefined;
+      }
+    }
+
+    if (shape.qConnection) {
+      if (oldToNewIdMap[shape.qConnection.id]) {
+        ret.qConnection = { ...shape.qConnection, id: oldToNewIdMap[shape.qConnection.id] };
+      } else if (removeNotFound) {
+        ret.qConnection = undefined;
+      }
+    }
+
+    return ret;
+  },
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {

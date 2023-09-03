@@ -146,17 +146,30 @@ export function updateCommonStyle(getStruct: GetShapeStruct, shape: Shape, val: 
 }
 
 export function remapShapeIds(
+  getStruct: GetShapeStruct,
   shapes: Shape[],
-  generateId: () => string
-): { shapes: Shape[]; idMap: { [newId: string]: string } } {
-  const idMap: { [id: string]: string } = {};
+  generateId: () => string,
+  removeNotFound = false
+): { shapes: Shape[]; newToOldMap: { [newId: string]: string }; oldToNewMap: { [newId: string]: string } } {
+  const newToOldMap: { [id: string]: string } = {};
+  const oldToNewMap: { [id: string]: string } = {};
+
   const newShapes = shapes.map((s) => {
     const id = generateId();
-    idMap[id] = s.id;
+    newToOldMap[id] = s.id;
+    oldToNewMap[s.id] = id;
     return { ...s, id };
   });
 
-  return { shapes: newShapes, idMap };
+  const immigratedShapes = newShapes.map((s) => {
+    const struct = getStruct(s.type);
+    if (!struct.immigrateShapeIds) return s;
+
+    const patch = struct.immigrateShapeIds(s, oldToNewMap, removeNotFound);
+    return { ...s, ...patch };
+  });
+
+  return { shapes: immigratedShapes, newToOldMap, oldToNewMap };
 }
 
 export function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {

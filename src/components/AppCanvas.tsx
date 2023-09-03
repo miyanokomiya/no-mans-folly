@@ -136,8 +136,8 @@ export function AppCanvas() {
       getTmpShapeMap: () => tmpShapeMap,
       setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
       pasteShapes: (shapes, docs, p) => {
-        const remapInfo = remapShapeIds(shapes, generateUuid);
-        const remapDocs = remap(mapDataToObj(docs), remapInfo.idMap);
+        const remapInfo = remapShapeIds(getCommonStruct, shapes, generateUuid, true);
+        const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
         const targetP = p ?? getMousePoint();
         const moved = shiftShapesAtTopLeft(remapInfo.shapes, targetP);
 
@@ -145,6 +145,7 @@ export function AppCanvas() {
           acctx.shapeStore.addEntities(moved);
           acctx.documentStore.patchDocs(remapDocs);
         });
+        acctx.shapeStore.multiSelect(moved.map((s) => s.id));
       },
 
       startTextEditing() {

@@ -40,6 +40,29 @@ describe("struct", () => {
       expect(struct.isPointOn(shape, { x: 1, y: 0 })).toBe(true);
     });
   });
+
+  describe("immigrateShapeIds", () => {
+    test("should return patched object immigrating ids", () => {
+      const shape = struct.create({
+        pConnection: { id: "x", rate: { x: 0, y: 0 } },
+        qConnection: { id: "y", rate: { x: 0, y: 0 } },
+      });
+      expect(struct.immigrateShapeIds?.(shape, { y: "b" })).toEqual({
+        qConnection: { id: "b", rate: { x: 0, y: 0 } },
+      });
+    });
+
+    test("should return patched object removing ids that aren't found in the new ids when removeNotFound is true", () => {
+      const shape = struct.create({
+        pConnection: { id: "x", rate: { x: 0, y: 0 } },
+        qConnection: { id: "y", rate: { x: 0, y: 0 } },
+      });
+      expect(struct.immigrateShapeIds?.(shape, { y: "b" })).toEqual({
+        pConnection: undefined,
+        qConnection: { id: "b", rate: { x: 0, y: 0 } },
+      });
+    });
+  });
 });
 
 describe("getLinePath", () => {

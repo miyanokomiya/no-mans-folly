@@ -1,6 +1,12 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
+import {
+  handleCommonShortcut,
+  handleHistoryEvent,
+  handleStateEvent,
+  newShapeClipboard,
+  translateOnSelection,
+} from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape } from "../../../../shapes/line";
@@ -93,6 +99,16 @@ export function newLineSelectedState(): AppCanvasState {
           return translateOnSelection(ctx);
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
+        case "copy": {
+          const clipboard = newShapeClipboard(ctx);
+          clipboard.onCopy(event.nativeEvent);
+          return;
+        }
+        case "paste": {
+          const clipboard = newShapeClipboard(ctx);
+          clipboard.onPaste(event.nativeEvent);
+          return;
+        }
         default:
           return;
       }
