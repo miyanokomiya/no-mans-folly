@@ -8,7 +8,7 @@ import { newSingleSelectedState } from "./singleSelectedState";
 import { BoundingBox } from "../../boundingBox";
 import { newLineReadyState } from "./lines/lineReadyState";
 import { newLineSelectedState } from "./lines/lineSelectedState";
-import { DocDelta } from "../../../models/document";
+import { DocDelta, DocOutput } from "../../../models/document";
 import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
@@ -17,6 +17,8 @@ import {
 import { canHaveText } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2 } from "okageo";
+import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
+import { Shape } from "../../../models";
 
 export function translateOnSelection(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
@@ -115,4 +117,38 @@ export function startTextEditingIfPossible(
   if (shape && canHaveText(ctx.getShapeStruct, shape)) {
     return () => newTextEditingState({ id: selectedId!, point });
   }
+}
+
+const clipboardSerializer = newClipboardSerializer<
+  "shapes",
+  {
+    shapes: Shape[];
+    docs: [id: string, doc: DocOutput][];
+  }
+>("shapes");
+export function newShapeClipboard(ctx: AppCanvasStateContext) {
+  return newClipboard(
+    () => {
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      const shapeMap = ctx.getShapeMap();
+      const docMap = ctx.getDocumentMap();
+      const shapes = ids.map((id) => shapeMap[id]).filter((s) => !!s);
+      const docs: [string, DocOutput][] = ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]);
+
+      return {
+        "text/plain": clipboardSerializer.serialize({ shapes, docs }),
+      };
+    },
+    async (items) => {
+      const item = items.find((i) => i.kind === "string") as StringItem | undefined;
+      if (!item) return;
+
+      const text: any = await item.getAsString();
+      const restored = clipboardSerializer.deserialize(text);
+
+      if (restored.shapes.length > 0) {
+        ctx.pasteShapes(restored.shapes, restored.docs);
+      }
+    }
+  );
 }

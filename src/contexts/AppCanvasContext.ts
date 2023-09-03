@@ -84,6 +84,7 @@ export function createStateMachineContext(arg: {
     patchShapes() {},
     setTmpShapeMap() {},
     getTmpShapeMap: () => ({}),
+    pasteShapes() {},
 
     getShapeStruct: getCommonStruct,
 

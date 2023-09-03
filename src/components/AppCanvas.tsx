@@ -1,16 +1,30 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { Shape } from "../models";
-import { getCommonStruct, getShapeTextBounds, isPointOn, renderShape } from "../shapes";
+import {
+  getCommonStruct,
+  getShapeTextBounds,
+  getWrapperRectForShapes,
+  isPointOn,
+  remapShapeIds,
+  renderShape,
+  resizeShape,
+} from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getMouseOptions, isAltOrOpt, isCtrlOrMeta } from "../utils/devices";
-import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../composables/window";
-import { findBackward } from "../utils/commons";
+import {
+  useGlobalCopyEffect,
+  useGlobalMousemoveEffect,
+  useGlobalMouseupEffect,
+  useGlobalPasteEffect,
+} from "../composables/window";
+import { findBackward, mapDataToObj, remap } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
 import { DocAttrInfo, DocOutput } from "../models/document";
 import { getDocAttributes, renderDoc } from "../utils/textEditor";
-import { IVec2 } from "okageo";
+import { AffineMatrix, IVec2, sub } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
+import { generateUuid } from "../utils/random";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -121,6 +135,17 @@ export function AppCanvas() {
       patchShapes: acctx.shapeStore.patchEntities,
       getTmpShapeMap: () => tmpShapeMap,
       setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
+      pasteShapes: (shapes, docs, p) => {
+        const remapInfo = remapShapeIds(shapes, generateUuid);
+        const remapDocs = remap(mapDataToObj(docs), remapInfo.idMap);
+        const targetP = p ?? getMousePoint();
+        const moved = shiftShapesAtTopLeft(remapInfo.shapes, targetP);
+
+        acctx.shapeStore.transact(() => {
+          acctx.shapeStore.addEntities(moved);
+          acctx.documentStore.patchDocs(remapDocs);
+        });
+      },
 
       startTextEditing() {
         setTextEditing(true);
@@ -148,6 +173,7 @@ export function AppCanvas() {
     shapes,
     tmpShapeMap,
     docMap,
+    getMousePoint,
   ]);
 
   useEffect(() => {
@@ -260,10 +286,43 @@ export function AppCanvas() {
   );
   useGlobalMousemoveEffect(onMouseMove);
 
+  const [focused, setFocused] = useState(false);
   const focus = useCallback(() => {
     if (textEditing || document.activeElement?.getAttribute("data-keep-focus")) return;
     wrapperRef.current?.focus();
   }, [textEditing]);
+
+  const onFocus = useCallback(() => {
+    setFocused(true);
+  }, []);
+
+  const onBlur = useCallback(() => {
+    setFocused(false);
+  }, []);
+
+  const onCopy = useCallback(
+    (e: ClipboardEvent) => {
+      if (!focused) return;
+      smctx.stateMachine.handleEvent({
+        type: "copy",
+        nativeEvent: e,
+      });
+    },
+    [focused, smctx]
+  );
+  useGlobalCopyEffect(onCopy);
+
+  const onPaste = useCallback(
+    (e: ClipboardEvent) => {
+      if (!focused) return;
+      smctx.stateMachine.handleEvent({
+        type: "paste",
+        nativeEvent: e,
+      });
+    },
+    [focused, smctx]
+  );
+  useGlobalPasteEffect(onPaste);
 
   const onMouseHover = useCallback(
     (e: React.MouseEvent) => {
@@ -387,6 +446,8 @@ export function AppCanvas() {
         onMouseMove={onMouseHover}
         onKeyDown={onKeyDown}
         onWheel={onWheel}
+        onFocus={onFocus}
+        onBlur={onBlur}
         tabIndex={-1}
       >
         <canvas ref={canvasRef} {...canvasAttrs}></canvas>
@@ -396,4 +457,17 @@ export function AppCanvas() {
       {textEditor}
     </>
   );
+}
+
+function shiftShapesAtTopLeft(shapes: Shape[], targetP: IVec2): Shape[] {
+  const rect = getWrapperRectForShapes(getCommonStruct, shapes);
+  const d = sub(targetP, rect);
+
+  const affine: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
+  const moved = shapes.map((s) => {
+    const patch = resizeShape(getCommonStruct, s, affine);
+    return { ...s, ...patch };
+  });
+
+  return moved;
 }

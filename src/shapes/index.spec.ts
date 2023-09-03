@@ -1,5 +1,13 @@
 import { expect, describe, test, vi } from "vitest";
-import { createShape, getCommonStruct, getLocationRateOnShape, getWrapperRect, isPointOn, renderShape } from ".";
+import {
+  createShape,
+  getCommonStruct,
+  getLocationRateOnShape,
+  getWrapperRect,
+  getWrapperRectForShapes,
+  isPointOn,
+  renderShape,
+} from ".";
 import { RectangleShape } from "./rectangle";
 
 describe("createShape", () => {
@@ -56,5 +64,25 @@ describe("getLocationRateOnShape", () => {
     const result2 = getLocationRateOnShape(getCommonStruct, { ...shape, rotation: Math.PI / 2 }, { x: 5, y: 14 });
     expect(result2.x).toBeCloseTo(0.9);
     expect(result2.y).toBeCloseTo(0.5);
+  });
+});
+
+describe("getWrapperRectForShapes", () => {
+  test("should return wrapper rectangle for shapes", () => {
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
+    const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test",
+      p: {
+        x: 10,
+        y: 20,
+      },
+      width: 10,
+      height: 20,
+    });
+    const result0 = getWrapperRectForShapes(getCommonStruct, [shape0, shape1]);
+    expect(result0.x).toBeCloseTo(0);
+    expect(result0.y).toBeCloseTo(0);
+    expect(result0.width).toBeCloseTo(20);
+    expect(result0.height).toBeCloseTo(40);
   });
 });

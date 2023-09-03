@@ -75,3 +75,26 @@ describe("mergeMap", () => {
     });
   });
 });
+
+describe("remap", () => {
+  test("should remap by new ids", () => {
+    expect(target.remap<any>({ a: { v: 1 }, b: { v: 2 } }, { x: "a", y: "b" })).toEqual({
+      x: { v: 1 },
+      y: { v: 2 },
+    });
+  });
+});
+
+describe("mapDataToObj", () => {
+  test("should return object format", () => {
+    expect(
+      target.mapDataToObj<any>([
+        ["a", { v: 1 }],
+        ["b", { v: 2 }],
+      ])
+    ).toEqual({
+      a: { v: 1 },
+      b: { v: 2 },
+    });
+  });
+});

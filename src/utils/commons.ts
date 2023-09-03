@@ -34,3 +34,21 @@ export function mergeMap<T>(src: { [key: string]: T }, override: { [key: string]
     return p;
   }, {});
 }
+
+export function remap<T>(src: { [id: string]: T }, newToOldMap: { [newId: string]: string }): { [id: string]: T } {
+  return Object.keys(newToOldMap).reduce<{ [id: string]: T }>((m, newId) => {
+    const oldId = newToOldMap[newId];
+    const doc = src[oldId];
+    if (doc) {
+      m[newId] = doc;
+    }
+    return m;
+  }, {});
+}
+
+export function mapDataToObj<T>(src: [string, T][]): { [id: string]: T } {
+  return src.reduce<{ [id: string]: T }>((m, [id, v]) => {
+    m[id] = v;
+    return m;
+  }, {});
+}

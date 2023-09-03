@@ -18,6 +18,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   patchShapes: (val: { [id: string]: Partial<Shape> }) => void;
   getTmpShapeMap: () => { [id: string]: Partial<Shape> };
   setTmpShapeMap: (val: { [id: string]: Partial<Shape> }) => void;
+  // Argument shapes have concurrent ids.
+  pasteShapes: (shapes: Shape[], docs: [id: string, doc: DocOutput][], p?: IVec2) => void;
 
   getShapeStruct: GetShapeStruct;
 

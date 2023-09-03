@@ -4,7 +4,7 @@ import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
-import { getLocationRateOnRectPath, getRectCenterLines, getRectLines, getRotateFn } from "../utils/geometry";
+import * as geometry from "../utils/geometry";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -65,8 +65,8 @@ export function getSnappingLines(getStruct: GetShapeStruct, shape: Shape): Shape
   if (struct.getSnappingLines) return struct.getSnappingLines(shape);
 
   const rect = struct.getWrapperRect(shape);
-  const [t, r, b, l] = getRectLines(rect);
-  const [cv, ch] = getRectCenterLines(rect);
+  const [t, r, b, l] = geometry.getRectLines(rect);
+  const [cv, ch] = geometry.getRectCenterLines(rect);
   return {
     v: [l, cv, r],
     h: [t, ch, b],
@@ -84,7 +84,7 @@ export function getClosestOutline(
 }
 
 export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {
-  return getLocationRateOnRectPath(getLocalRectPolygon(getStruct, shape), shape.rotation, p);
+  return geometry.getLocationRateOnRectPath(getLocalRectPolygon(getStruct, shape), shape.rotation, p);
 }
 
 export function getShapeAffine(getStruct: GetShapeStruct, shape: Shape) {
@@ -112,7 +112,7 @@ export function getShapeTextBounds(
 } {
   const path = getLocalRectPolygon(getStruct, shape);
   const center = getCenter(path[0], path[2]);
-  const rotateFn = getRotateFn(shape.rotation, center);
+  const rotateFn = geometry.getRotateFn(shape.rotation, center);
   const range = getTextRangeRect(getStruct, shape) ?? getOuterRectangle([path.map((p) => rotateFn(p, true))]);
 
   const width = range.width;
@@ -143,4 +143,23 @@ export function getCommonStyle(getStruct: GetShapeStruct, shape: Shape): CommonS
 export function updateCommonStyle(getStruct: GetShapeStruct, shape: Shape, val: Partial<CommonStyle>): Partial<Shape> {
   const struct = getStruct(shape.type);
   return struct.updateCommonStyle?.(shape, val) ?? {};
+}
+
+export function remapShapeIds(
+  shapes: Shape[],
+  generateId: () => string
+): { shapes: Shape[]; idMap: { [newId: string]: string } } {
+  const idMap: { [id: string]: string } = {};
+  const newShapes = shapes.map((s) => {
+    const id = generateId();
+    idMap[id] = s.id;
+    return { ...s, id };
+  });
+
+  return { shapes: newShapes, idMap };
+}
+
+export function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {
+  const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s));
+  return geometry.getWrapperRect(shapeRects);
 }

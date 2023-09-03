@@ -75,6 +75,24 @@ export function useGlobalKeydownEffect(fn: (e: KeyboardEvent) => void) {
   }, [fn]);
 }
 
+export function useGlobalCopyEffect(fn: (e: ClipboardEvent) => void) {
+  useEffect(() => {
+    window.addEventListener("copy", fn);
+    return () => {
+      window.removeEventListener("copy", fn);
+    };
+  }, [fn]);
+}
+
+export function useGlobalPasteEffect(fn: (e: ClipboardEvent) => void) {
+  useEffect(() => {
+    window.addEventListener("paste", fn);
+    return () => {
+      window.removeEventListener("paste", fn);
+    };
+  }, [fn]);
+}
+
 export function useElementLocation<T extends HTMLElement>(dep: any) {
   const ref = useRef<T>(null);
   const windowSize = useWindow();

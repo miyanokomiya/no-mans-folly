@@ -6,6 +6,7 @@ import {
   handleCommonTextStyle,
   handleHistoryEvent,
   handleStateEvent,
+  newShapeClipboard,
   startTextEditingIfPossible,
   translateOnSelection,
 } from "./commons";
@@ -130,6 +131,16 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           return translateOnSelection(ctx);
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
+        case "copy": {
+          const clipboard = newShapeClipboard(ctx);
+          clipboard.onCopy(event.nativeEvent);
+          return;
+        }
+        case "paste": {
+          const clipboard = newShapeClipboard(ctx);
+          clipboard.onPaste(event.nativeEvent);
+          return;
+        }
         default:
           return;
       }
