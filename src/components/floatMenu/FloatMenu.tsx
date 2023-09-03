@@ -291,7 +291,7 @@ function getRootAttrs(
     x: center.x,
     y: windowHeight - 160 < bottomY ? targetRect.y - rootHeight - yMargin : bottomY,
   };
-  const baseClass = "fixed border rounded bg-white p-1 ";
+  const baseClass = "fixed border rounded shadow bg-white p-1 ";
 
   const dx = Math.min(windowWidth - (p.x + rootWidth / 2), 0);
   const tx = p.x - rootWidth / 2 < 0 ? "0" : `calc(${p.x + dx}px - 50%)`;
