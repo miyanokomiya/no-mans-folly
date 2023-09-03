@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useOutsideClickCallback } from "../../../composables/window";
 
 interface Props {
   value: number;
@@ -25,27 +26,28 @@ export const NumberCombobox: React.FC<Props> = ({
     onActivate?.();
   }, [onActivate]);
 
-  const onBlured = useCallback(() => {
+  const close = useCallback(() => {
     setOpened(false);
   }, []);
+  const { ref } = useOutsideClickCallback<HTMLDivElement>(close);
 
   const onSelected = useCallback(
     (e: React.MouseEvent) => {
-      setOpened(false);
+      close();
       const v = parseFloat(e.currentTarget.getAttribute("data-value")!);
       onChanged?.(v);
     },
-    [onChanged]
+    [close, onChanged]
   );
 
   const onSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      setOpened(false);
+      close();
       const val = Math.min(Math.max(draftValue, min), max);
       onChanged?.(val);
     },
-    [onChanged, draftValue, min, max]
+    [close, onChanged, draftValue, min, max]
   );
 
   const onInput = useCallback(
@@ -59,7 +61,7 @@ export const NumberCombobox: React.FC<Props> = ({
   );
 
   return (
-    <div className="relative w-full">
+    <div ref={ref} className="relative w-full">
       <form action="" className="w-full" onSubmit={onSubmit}>
         <input
           type="number"
@@ -67,7 +69,6 @@ export const NumberCombobox: React.FC<Props> = ({
           className="border rounded w-full text-right px-2 py-1"
           value={value}
           onFocus={onFocused}
-          onBlur={onBlured}
           onInput={onInput}
         />
         <button type="submit" className="hidden"></button>

@@ -115,3 +115,18 @@ export function useElementLocation<T extends HTMLElement>(dep: any) {
 
   return { ref, overflow };
 }
+
+export function useOutsideClickCallback<T extends HTMLElement>(fn: () => void) {
+  const ref = useRef<T>(null);
+
+  const callback = useCallback(
+    (e: MouseEvent) => {
+      if (!ref.current || !e.target || ref.current.contains(e.target as Node)) return;
+      fn();
+    },
+    [fn]
+  );
+  useGlobalClickEffect(callback);
+
+  return { ref };
+}
