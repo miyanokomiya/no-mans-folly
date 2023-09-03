@@ -2,13 +2,21 @@ import { useCallback, useMemo } from "react";
 import { LineHead } from "../../models";
 import { PopupButton } from "../atoms/PopupButton";
 import iconHeadNone from "../../assets/icons/head_none.svg";
+import iconHeadOpen from "../../assets/icons/head_open.svg";
 import iconHeadClosedFilled from "../../assets/icons/head_closed_filled.svg";
 import iconHeadClosedBlank from "../../assets/icons/head_closed_blank.svg";
+import iconHeadDotFilled from "../../assets/icons/head_dot_filled.svg";
+import iconHeadDotBlank from "../../assets/icons/head_dot_blank.svg";
+
+const HEAD_TYPES = ["none", "open", "closed_filled", "closed_blank", "dot_filled", "dot_blank"];
 
 const HEAD_ICONS = {
   none: iconHeadNone,
+  open: iconHeadOpen,
   closed_filled: iconHeadClosedFilled,
   closed_blank: iconHeadClosedBlank,
+  dot_blank: iconHeadDotBlank,
+  dot_filled: iconHeadDotFilled,
 };
 
 function getHeadIcon(type = "none"): string {
@@ -96,7 +104,7 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
   }, [flip]);
 
   const items = useMemo(() => {
-    return ["none", "closed_filled"].map((t) => {
+    return HEAD_TYPES.map((t) => {
       const selected = type ? type === t : t === "none";
       return (
         <button
