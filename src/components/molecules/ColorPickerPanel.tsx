@@ -6,6 +6,13 @@ const v = 51;
 const getV = (i: number) => Math.min(Math.max(v * i, 0), 255);
 const base = [...Array(5)].map((_, i) => i - 2);
 const COLOR_TABLE: Color[][] = [
+  [
+    { r: 0, g: 0, b: 0, a: 1 },
+    { r: 64, g: 64, b: 64, a: 1 },
+    { r: 127, g: 127, b: 127, a: 1 },
+    { r: 191, g: 191, b: 191, a: 1 },
+    { r: 255, g: 255, b: 255, a: 1 },
+  ],
   base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i), a: 1 })),
   base.map((i) => ({ r: getV(i + 5), g: getV(i + 5), b: getV(i), a: 1 })),
   base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i), a: 1 })),

@@ -25,6 +25,7 @@ export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
       ].map((p) => applyAffine(transform, p)),
       true
     );
+    ctx.fill();
     ctx.stroke();
   },
   clip(region, _head, transform, lineWidth) {

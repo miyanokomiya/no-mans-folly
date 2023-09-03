@@ -15,6 +15,7 @@ export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
     const radius = 6 + lineWidth / 2;
     ctx.beginPath();
     ctx.arc(transform[4], transform[5], radius, 0, Math.PI * 2, true);
+    ctx.fill();
     ctx.stroke();
   },
   clip(region, _head, transform, lineWidth) {
