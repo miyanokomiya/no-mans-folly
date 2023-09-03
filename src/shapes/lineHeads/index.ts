@@ -23,10 +23,15 @@ export function createLineHead<T extends LineHead>(type: string, arg?: Partial<T
   return getLineHeadStruct(type).create(arg) as T;
 }
 
-export function renderLineHead<T extends LineHead>(ctx: CanvasRenderingContext2D, head: T, transform: AffineMatrix) {
-  getLineHeadStruct(head.type).render(ctx, head, transform);
+export function renderLineHead<T extends LineHead>(
+  ctx: CanvasRenderingContext2D,
+  head: T,
+  transform: AffineMatrix,
+  lineWidth: number
+) {
+  getLineHeadStruct(head.type).render(ctx, head, transform, lineWidth);
 }
 
-export function clipLineHead<T extends LineHead>(region: Path2D, head: T, transform: AffineMatrix) {
-  getLineHeadStruct(head.type).clip(region, head, transform);
+export function clipLineHead<T extends LineHead>(region: Path2D, head: T, transform: AffineMatrix, lineWidth: number) {
+  getLineHeadStruct(head.type).clip(region, head, transform, lineWidth);
 }

@@ -11,9 +11,9 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
       type: "open",
     };
   },
-  render(ctx, _head, transform) {
-    const height = 16;
-    const width = 20;
+  render(ctx, _head, transform, lineWidth) {
+    const height = 16 + lineWidth;
+    const width = 20 + lineWidth;
 
     ctx.beginPath();
     applyPath(
@@ -26,9 +26,9 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
     );
     ctx.stroke();
   },
-  clip(region, _head, transform) {
-    const height = 16;
-    const width = 20;
+  clip(region, _head, transform, lineWidth) {
+    const height = 12 + lineWidth;
+    const width = 12 + lineWidth;
 
     applyPath(
       region,

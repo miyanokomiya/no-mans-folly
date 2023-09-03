@@ -11,9 +11,9 @@ export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
       type: "closed_blank",
     };
   },
-  render(ctx, _head, transform) {
-    const height = 16;
-    const width = 20;
+  render(ctx, _head, transform, lineWidth) {
+    const height = 12 + lineWidth;
+    const width = 12 + lineWidth;
 
     ctx.beginPath();
     applyPath(
@@ -27,9 +27,9 @@ export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
     );
     ctx.stroke();
   },
-  clip(region, _head, transform) {
-    const height = 16;
-    const width = 20;
+  clip(region, _head, transform, lineWidth) {
+    const height = 12 + lineWidth;
+    const width = 12 + lineWidth;
 
     applyPath(
       region,

@@ -276,7 +276,7 @@ function getRootAttrs(
   windowWidth: number,
   windowHeight: number
 ) {
-  const yMargin = 10;
+  const yMargin = 14;
   const center = getRectCenter(targetRect);
   const bottomY = targetRect.y + targetRect.height + yMargin;
   const p = {

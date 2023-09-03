@@ -11,9 +11,9 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
       type: "closed_filled",
     };
   },
-  render(ctx, _head, transform) {
-    const height = 16;
-    const width = 20;
+  render(ctx, _head, transform, lineWidth) {
+    const height = 12 + lineWidth;
+    const width = 12 + lineWidth;
 
     ctx.beginPath();
     applyPath(
@@ -25,11 +25,16 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
       ].map((p) => applyAffine(transform, p)),
       true
     );
+
+    const tmp = ctx.strokeStyle;
+    ctx.fillStyle = ctx.strokeStyle;
     ctx.fill();
+    ctx.fillStyle = tmp;
+    ctx.stroke();
   },
-  clip(region, _head, transform) {
-    const height = 16;
-    const width = 20;
+  clip(region, _head, transform, lineWidth) {
+    const height = 12 + lineWidth;
+    const width = 12 + lineWidth;
 
     applyPath(
       region,

@@ -11,14 +11,19 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
       type: "dot_filled",
     };
   },
-  render(ctx, _head, transform) {
-    const radius = 10;
+  render(ctx, _head, transform, lineWidth) {
+    const radius = 6 + lineWidth / 2;
     ctx.beginPath();
     ctx.arc(transform[4], transform[5], radius, 0, Math.PI * 2, true);
+
+    const tmp = ctx.strokeStyle;
+    ctx.fillStyle = ctx.strokeStyle;
     ctx.fill();
+    ctx.fillStyle = tmp;
+    ctx.stroke();
   },
-  clip(region, _head, transform) {
-    const radius = 10;
+  clip(region, _head, transform, lineWidth) {
+    const radius = 6 + lineWidth / 2;
 
     // "arc" doesn't work well when other clipping are exists
     applyPath(

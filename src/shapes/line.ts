@@ -1,9 +1,9 @@
 import { AffineMatrix, IVec2, applyAffine, getOuterRectangle, getRadian, isSame, multiAffines } from "okageo";
 import { ConnectionPoint, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
-import { createFillStyle } from "../utils/fillStyle";
+import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape, getCommonStyle } from "./core";
+import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, renderLineHead } from "./lineHeads";
 import { applyPath } from "../utils/renderer";
 
@@ -25,7 +25,7 @@ export const struct: ShapeStruct<LineShape> = {
       type: "line",
       rotation: 0, // should always be "0" or just ignored
       fill: arg.fill ?? createFillStyle(),
-      stroke: arg.stroke ?? createStrokeStyle(),
+      stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
       q: arg.q ?? { x: 100, y: 0 },
     };
     if (arg.pConnection) obj.pConnection = arg.pConnection;
@@ -34,6 +34,7 @@ export const struct: ShapeStruct<LineShape> = {
   },
   render(ctx, shape) {
     applyStrokeStyle(ctx, shape.stroke);
+    applyFillStyle(ctx, shape.fill);
 
     const linePath = getLinePath(shape);
 
@@ -71,11 +72,11 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     if (region && pAffine) {
-      clipLineHead(region, shape.pHead!, pAffine);
+      clipLineHead(region, shape.pHead!, pAffine, ctx.lineWidth);
     }
 
     if (region && qAffine) {
-      clipLineHead(region, shape.qHead!, qAffine);
+      clipLineHead(region, shape.qHead!, qAffine, ctx.lineWidth);
     }
 
     if (region) {
@@ -91,13 +92,12 @@ export const struct: ShapeStruct<LineShape> = {
       ctx.restore();
     }
 
-    ctx.fillStyle = ctx.strokeStyle;
     if (region && pAffine) {
-      renderLineHead(ctx, shape.pHead!, pAffine);
+      renderLineHead(ctx, shape.pHead!, pAffine, ctx.lineWidth);
     }
 
     if (region && qAffine) {
-      renderLineHead(ctx, shape.qHead!, qAffine);
+      renderLineHead(ctx, shape.qHead!, qAffine, ctx.lineWidth);
     }
   },
   getWrapperRect(shape) {
@@ -119,6 +119,7 @@ export const struct: ShapeStruct<LineShape> = {
     return ret;
   },
   getCommonStyle,
+  updateCommonStyle,
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {
