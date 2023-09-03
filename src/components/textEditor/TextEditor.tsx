@@ -8,26 +8,26 @@ interface Props {
   focusKey?: any;
 }
 
-export const TextEditor: React.FC<Props> = (props) => {
+export const TextEditor: React.FC<Props> = ({ onInput, onKeyDown, position, focusKey }) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
   const [composition, setComposition] = useState(false);
 
   useEffect(() => {
     inputRef.current?.focus?.();
-  }, [props.focusKey]);
+  }, [focusKey]);
 
   const onChange = useCallback(
     (e: any) => {
       if (composition) {
-        props.onInput?.(e.target.value, true);
+        onInput?.(e.target.value, true);
         setDraft(e.target.value);
       } else {
-        props.onInput?.(e.target.value);
+        onInput?.(e.target.value);
         setDraft("");
       }
     },
-    [composition, props]
+    [composition, onInput]
   );
 
   const onCompositionStart = useCallback(() => {
@@ -36,22 +36,22 @@ export const TextEditor: React.FC<Props> = (props) => {
 
   const onCompositionEnd = useCallback(() => {
     setComposition(false);
-    props.onInput?.(draft, false);
+    onInput?.(draft, false);
     setDraft("");
-  }, [draft, props]);
+  }, [draft, onInput]);
 
   return (
     <div
       className="fixed top-0 left-0 w-0 h-0 opacity-0 pointer-events-none"
       style={{
-        transform: `translate(${props.position.x}px, ${props.position.y}px)`,
+        transform: `translate(${position.x}px, ${position.y}px)`,
       }}
     >
       <textarea
         ref={inputRef}
         value={draft}
         onChange={onChange}
-        onKeyDown={props.onKeyDown}
+        onKeyDown={onKeyDown}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
       />

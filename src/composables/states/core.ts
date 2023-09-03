@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { EditMovement, HoverMovement, KeyOptions, MouseOptions } from "./types";
+import { EditMovement, HoverMovement, KeyOptions, ModifierOptions, MouseOptions } from "./types";
 import { newCallback } from "../reactives";
 
 type TransitionType = "break" | "stack-restart" | "stack-resume";
@@ -230,6 +230,7 @@ export interface CopyEvent extends ModeStateEventBase {
 export interface PasteEvent extends ModeStateEventBase {
   type: "paste";
   nativeEvent: ClipboardEvent;
+  data: ModifierOptions;
 }
 
 export function newGroupState<C, K, E = ModeStateEvent>(

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Size } from "../models";
+import { ModifierOptions } from "./states/types";
 
 export function useWindow() {
   const [size, setSize] = useState<Size>({ width: window.innerWidth, height: window.innerHeight });
@@ -84,13 +85,33 @@ export function useGlobalCopyEffect(fn: (e: ClipboardEvent) => void) {
   }, [fn]);
 }
 
-export function useGlobalPasteEffect(fn: (e: ClipboardEvent) => void) {
+export function useGlobalPasteEffect(fn: (e: ClipboardEvent, option: ModifierOptions) => void) {
+  const [shift, setShift] = useState(false);
+
+  const _fn = useCallback(
+    (e: ClipboardEvent) => {
+      fn(e, { shift });
+    },
+    [fn, shift]
+  );
+
+  const trackKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.shiftKey) setShift(true);
+  }, []);
+  const trackKeyUp = useCallback((e: KeyboardEvent) => {
+    if (!e.shiftKey) setShift(false);
+  }, []);
+
   useEffect(() => {
-    window.addEventListener("paste", fn);
+    window.addEventListener("paste", _fn);
+    window.addEventListener("keydown", trackKeyDown);
+    window.addEventListener("keyup", trackKeyUp);
     return () => {
-      window.removeEventListener("paste", fn);
+      window.removeEventListener("paste", _fn);
+      window.removeEventListener("keydown", trackKeyDown);
+      window.removeEventListener("keyup", trackKeyUp);
     };
-  }, [fn]);
+  }, [trackKeyDown, trackKeyUp, _fn]);
 }
 
 export function useElementLocation<T extends HTMLElement>(dep: any) {

@@ -119,7 +119,7 @@ export function startTextEditingIfPossible(
   }
 }
 
-const clipboardSerializer = newClipboardSerializer<
+const clipboardShapeSerializer = newClipboardSerializer<
   "shapes",
   {
     shapes: Shape[];
@@ -136,7 +136,7 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
       const docs: [string, DocOutput][] = ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]);
 
       return {
-        "text/plain": clipboardSerializer.serialize({ shapes, docs }),
+        "text/plain": clipboardShapeSerializer.serialize({ shapes, docs }),
       };
     },
     async (items) => {
@@ -144,11 +144,39 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
       if (!item) return;
 
       const text: any = await item.getAsString();
-      const restored = clipboardSerializer.deserialize(text);
+      const restored = clipboardShapeSerializer.deserialize(text);
 
       if (restored.shapes.length > 0) {
         ctx.pasteShapes(restored.shapes, restored.docs);
       }
+    }
+  );
+}
+
+const APP_DOC_TYPE = "application/no-mans-folly-doc";
+const clipboardDocSerializer = newClipboardSerializer<"doc", { doc: DocOutput }>("doc");
+export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => void) {
+  return newClipboard(
+    () => {
+      return {
+        "text/plain": doc.map((o) => o.insert).join(""),
+        [APP_DOC_TYPE]: clipboardDocSerializer.serialize({ doc }),
+      };
+    },
+    async (items) => {
+      const appItem = items.find((i) => i.kind === "string" && i.type === APP_DOC_TYPE) as StringItem | undefined;
+      if (appItem) {
+        const text: any = await appItem.getAsString();
+        const restored = clipboardDocSerializer.deserialize(text);
+        onPaste?.(restored.doc);
+        return;
+      }
+
+      const item = items.find((i) => i.kind === "string") as StringItem | undefined;
+      if (!item) return;
+
+      const text: any = await item.getAsString();
+      onPaste?.([{ insert: text }]);
     }
   );
 }

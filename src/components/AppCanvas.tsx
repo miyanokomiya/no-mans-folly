@@ -25,6 +25,7 @@ import { getDocAttributes, renderDoc } from "../utils/textEditor";
 import { AffineMatrix, IVec2, sub } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
+import { ModifierOptions } from "../composables/states/types";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -304,25 +305,26 @@ export function AppCanvas() {
 
   const onCopy = useCallback(
     (e: ClipboardEvent) => {
-      if (!focused) return;
+      if (!focused && !textEditing) return;
       smctx.stateMachine.handleEvent({
         type: "copy",
         nativeEvent: e,
       });
     },
-    [focused, smctx]
+    [focused, textEditing, smctx]
   );
   useGlobalCopyEffect(onCopy);
 
   const onPaste = useCallback(
-    (e: ClipboardEvent) => {
-      if (!focused) return;
+    (e: ClipboardEvent, option: ModifierOptions) => {
+      if (!focused && !textEditing) return;
       smctx.stateMachine.handleEvent({
         type: "paste",
         nativeEvent: e,
+        data: option,
       });
     },
-    [focused, smctx]
+    [focused, textEditing, smctx]
   );
   useGlobalPasteEffect(onPaste);
 

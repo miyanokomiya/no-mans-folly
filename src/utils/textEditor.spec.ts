@@ -2,11 +2,14 @@ import { expect, describe, test } from "vitest";
 import {
   DocCompositionItem,
   DocCompositionLine,
+  applyAttrInfoToDocOutput,
   getCursorLocationAt,
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
   mergeDocAttrInfo,
+  sliceDocOutput,
+  sliptDocOutputByLineBreak,
 } from "./textEditor";
 
 describe("getCursorLocationAt", () => {
@@ -168,5 +171,52 @@ describe("mergeDocAttrInfo", () => {
         doc: { size: 3, align: "right", direction: "bottom" },
       })
     ).toEqual({ size: 1, align: "center", direction: "bottom" });
+  });
+});
+
+describe("sliceDocOutput", () => {
+  test("should return sliced output", () => {
+    const doc = [{ insert: "abc" }, { insert: "def" }, { insert: "ghi" }];
+    expect(sliceDocOutput(doc, 0, 0)).toEqual([{ insert: "" }]);
+    expect(sliceDocOutput(doc, 0, 1)).toEqual([{ insert: "a" }]);
+    expect(sliceDocOutput(doc, 0, 2)).toEqual([{ insert: "ab" }]);
+    expect(sliceDocOutput(doc, 0, 3)).toEqual([{ insert: "abc" }]);
+    expect(sliceDocOutput(doc, 0, 4)).toEqual([{ insert: "abc" }, { insert: "d" }]);
+    expect(sliceDocOutput(doc, 0, 8)).toEqual([{ insert: "abc" }, { insert: "def" }, { insert: "gh" }]);
+    expect(sliceDocOutput(doc, 0, 9)).toEqual([{ insert: "abc" }, { insert: "def" }, { insert: "ghi" }]);
+
+    expect(sliceDocOutput(doc, 1, 4)).toEqual([{ insert: "bc" }, { insert: "d" }]);
+    expect(sliceDocOutput(doc, 2, 8)).toEqual([{ insert: "c" }, { insert: "def" }, { insert: "gh" }]);
+    expect(sliceDocOutput(doc, 3, 9)).toEqual([{ insert: "def" }, { insert: "ghi" }]);
+
+    expect(sliceDocOutput(doc, 4, 5)).toEqual([{ insert: "e" }]);
+    expect(sliceDocOutput(doc, 4, 6)).toEqual([{ insert: "ef" }]);
+  });
+});
+
+describe("sliptDocOutputByLineBreak", () => {
+  test("should return splited doc output", () => {
+    expect(sliptDocOutputByLineBreak([{ insert: "ab\ncd\nef\n" }])).toEqual([
+      { insert: "ab" },
+      { insert: "\n" },
+      { insert: "cd" },
+      { insert: "\n" },
+      { insert: "ef" },
+      { insert: "\n" },
+    ]);
+  });
+});
+
+describe("applyAttrInfoToDocOutput", () => {
+  test("should return doc output applied attrs", () => {
+    const attrs = { size: 1, align: "right" } as const;
+    expect(applyAttrInfoToDocOutput([{ insert: "ab\ncd\nef\n" }], attrs)).toEqual([
+      { insert: "ab", attributes: attrs },
+      { insert: "\n", attributes: attrs },
+      { insert: "cd", attributes: attrs },
+      { insert: "\n", attributes: attrs },
+      { insert: "ef", attributes: attrs },
+      { insert: "\n", attributes: attrs },
+    ]);
   });
 });

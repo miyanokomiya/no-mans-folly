@@ -4,6 +4,7 @@ import {
   DEFAULT_FONT_SIZE,
   DocCompositionItem,
   DocCompositionLine,
+  applyAttrInfoToDocOutput,
   getBoundsAtLocation,
   getCursorLocation,
   getCursorLocationAt,
@@ -16,6 +17,7 @@ import {
   getRangeLines,
   mergeDocAttrInfo,
   renderDocByComposition,
+  sliceDocOutput,
 } from "../utils/textEditor";
 
 export function newTextEditorController() {
@@ -145,6 +147,37 @@ export function newTextEditorController() {
     const lineEnd = line.outputs[line.outputs.length - 1];
     const docEnd = _doc[_doc.length - 1];
     return { cursor: cursorLeft, block: lineEnd.attributes, doc: docEnd.attributes };
+  }
+
+  function getSelectedDocOutput(): DocOutput {
+    const cursor = getCursor();
+    const selection = getSelection();
+    return sliceDocOutput(_doc, cursor, cursor + selection);
+  }
+
+  function getDeltaByPaste(pasted: DocOutput, plain = false): DocDelta {
+    if (plain) {
+      const text = pasted.flatMap((p) => p.insert).join("");
+      return getDeltaByInput(text);
+    }
+
+    const cursor = getCursor();
+    const selection = getSelection();
+    const ret: DocDelta = [{ retain: cursor }];
+
+    if (selection > 0) {
+      ret.push({ delete: selection });
+    }
+
+    const attrInfo = mergeDocAttrInfo(getCurrentAttributeInfo());
+    const outputs = applyAttrInfoToDocOutput(pasted, attrInfo);
+    ret.push(...outputs);
+
+    if (_isDocEmpty) {
+      ret.push(getInitialOutput()[0]);
+    }
+
+    return ret;
   }
 
   function getDeltaByInput(text: string): DocDelta {
@@ -285,6 +318,9 @@ export function newTextEditorController() {
     moveCursorLineHead,
     moveCursorLineTail,
     getLocationIndex,
+
+    getSelectedDocOutput,
+    getDeltaByPaste,
 
     getDeltaByInput,
     getDeltaAndCursorByBackspace,

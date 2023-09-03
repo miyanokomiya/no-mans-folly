@@ -1,7 +1,7 @@
 import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
-import { handleHistoryEvent, handleStateEvent, translateOnSelection } from "../commons";
+import { handleHistoryEvent, handleStateEvent, newDocClipboard, translateOnSelection } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -151,6 +151,20 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return translateOnSelection(ctx);
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
+        case "copy": {
+          const clipboard = newDocClipboard(textEditorController.getSelectedDocOutput());
+          clipboard.onCopy(event.nativeEvent);
+          return;
+        }
+        case "paste": {
+          const clipboard = newDocClipboard([], (doc) => {
+            const count = doc.flatMap((p) => p.insert).join("").length;
+            ctx.patchDocuments({ [option.id]: textEditorController.getDeltaByPaste(doc, event.data.shift) });
+            textEditorController.setCursor(textEditorController.getCursor() + count);
+          });
+          clipboard.onPaste(event.nativeEvent);
+          return;
+        }
         default:
           return;
       }
@@ -254,6 +268,18 @@ function handleKeydown(
         const info = textEditorController.getDeltaAndCursorByDelete();
         ctx.patchDocuments({ [option.id]: info.delta });
         textEditorController.setCursor(info.cursor);
+      }
+      return;
+    case "z":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        ctx.undo();
+      }
+      return;
+    case "Z":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        ctx.redo();
       }
       return;
     case "ArrowLeft":

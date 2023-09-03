@@ -460,3 +460,61 @@ export function mergeDocAttrInfo(info: DocAttrInfo): DocAttributes | undefined {
 
   return ret;
 }
+
+export function sliceDocOutput(doc: DocOutput, from: number, to: number): DocOutput {
+  const ret: DocOutput = [];
+
+  let count = 0;
+  for (let i = 0; i < doc.length; i++) {
+    const o = doc[i];
+    const nextCount = count + o.insert.length;
+
+    if (nextCount <= from) {
+      count = nextCount;
+      continue;
+    }
+
+    if (count <= from && from < nextCount) {
+      if (nextCount < to) {
+        ret.push({ ...o, insert: o.insert.slice(from - count, o.insert.length) });
+        count = nextCount;
+        continue;
+      } else {
+        ret.push({ ...o, insert: o.insert.slice(from - count, to - count) });
+        break;
+      }
+    } else {
+      if (nextCount < to) {
+        ret.push({ ...o, insert: o.insert.slice(0, o.insert.length) });
+        count = nextCount;
+        continue;
+      } else {
+        ret.push({ ...o, insert: o.insert.slice(0, to - count) });
+        break;
+      }
+    }
+  }
+
+  return ret;
+}
+
+export function sliptDocOutputByLineBreak(doc: DocOutput): DocOutput {
+  const splited: DocOutput = [];
+
+  doc.forEach((p) => {
+    const create = () => (p.attributes ? { attributes: p.attributes } : {});
+    const [head, ...body] = p.insert.split("\n");
+    if (head) splited.push({ insert: head, ...create() });
+    body.forEach((l) => {
+      splited.push({ insert: "\n", ...create() });
+      if (l) splited.push({ insert: l, ...create() });
+    });
+  });
+
+  return splited;
+}
+
+export function applyAttrInfoToDocOutput(pasted: DocOutput, attrs?: DocAttributes): DocOutput {
+  const splited = sliptDocOutputByLineBreak(pasted);
+  return attrs ? splited.map((d) => ({ ...d, attributes: { ...attrs, ...(d.attributes ?? {}) } })) : splited;
+}
