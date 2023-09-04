@@ -421,6 +421,8 @@ function isMultiByte(c: string) {
 }
 
 type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
+type LineItem = WordItem[];
+type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
 
 export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, number>): WordItem[][] {
   const lines: WordItem[][] = [];
@@ -460,9 +462,10 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
   return lines;
 }
 
-export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: number): WordItem[][] {
-  const lines: WordItem[][] = [];
-  let line: WordItem[] = [];
+export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: number): BlockItem[] {
+  const blocks: BlockItem[] = [];
+  let lines: LineItem[] = [];
+  let line: LineItem = [];
   let word: WordItem = [];
 
   lineWord.forEach((lineUnit) => {
@@ -472,6 +475,17 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
       let broken = false;
 
       wordUnit.forEach((unit) => {
+        if (unit[0] === "\n") {
+          if (word.length > 0) line.push(word);
+          line.push([unit]);
+          lines.push(line);
+          blocks.push([lines, unit[2]]);
+          word = [];
+          line = [];
+          lines = [];
+          return;
+        }
+
         if (left + unit[1] < rangeWidth) {
           word.push(unit);
           left += unit[1];
@@ -505,66 +519,81 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
     word = [];
   });
 
-  return lines;
+  return blocks;
 }
 
 export function convertLineWordToComposition(
-  lineWord: WordItem[][],
+  blockLineWord: BlockItem[],
   rangeWidth: number,
   rangeHeight: number
 ): {
   composition: DocCompositionItem[];
   lines: DocCompositionLine[];
 } {
-  const lastLine = lineWord[lineWord.length - 1];
-  const lastWord = lastLine[lastLine.length - 1];
-  const docAttrs = lastWord[lastWord.length - 1][2];
+  const lastBlock = blockLineWord[blockLineWord.length - 1];
+  const docAttrs = lastBlock[1];
 
+  const heightList: number[] = [];
   let docHeight = 0;
-  const heightList = lineWord.map((lineUnit) => {
-    let height = 0;
-    lineUnit.forEach((wordUnit) =>
-      wordUnit.forEach((unit) => {
-        height = Math.max(height, getLineHeight(unit[2]));
-      })
-    );
-    docHeight += height;
-    return height;
-  });
+  {
+    blockLineWord.forEach(([lineWord]) => {
+      lineWord.forEach((lineUnit) => {
+        let height = 0;
+        lineUnit.forEach((wordUnit) =>
+          wordUnit.forEach((unit) => {
+            height = Math.max(height, getLineHeight(unit[2]));
+          })
+        );
+        docHeight += height;
+        heightList.push(height);
+      });
+    });
+  }
+
   const yMargin = (rangeHeight - docHeight) * getDirectionGapRate(docAttrs);
+  const lines: DocCompositionLine[] = [];
+  {
+    let y = yMargin;
+    let lineIndex = 0;
+    blockLineWord.forEach(([lineWord]) => {
+      lineWord.forEach((lineUnit) => {
+        const outputs: DocOutput = [];
+        const height = heightList[lineIndex];
+        lineUnit.forEach((wordUnit) =>
+          wordUnit.forEach((unit) => {
+            outputs.push({ insert: unit[0], attributes: unit[2] });
+          })
+        );
 
-  let y = yMargin;
-  const lines = lineWord.map((lineUnit, i) => {
-    const outputs: DocOutput = [];
-    const height = heightList[i];
-    lineUnit.forEach((wordUnit) =>
-      wordUnit.forEach((unit) => {
-        outputs.push({ insert: unit[0], attributes: unit[2] });
-      })
-    );
-
-    const item = { y, height, outputs };
-    y += height;
-    return item;
-  });
+        lines.push({ y, height, outputs });
+        y += height;
+        lineIndex += 1;
+      });
+    });
+  }
 
   const composition: DocCompositionItem[] = [];
-  lineWord.forEach((lineUnit, i) => {
-    const line = lines[i];
-    const y = line.y;
-    const height = line.height;
-    const lineWidth = lineUnit.reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0);
-    const block = line.outputs[line.outputs.length - 1];
-    const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(block.attributes);
+  {
+    let lineIndex = 0;
+    blockLineWord.forEach(([lineWord, blockAttrs]) => {
+      lineWord.forEach((lineUnit) => {
+        const line = lines[lineIndex];
+        const y = line.y;
+        const height = line.height;
+        const lineWidth = lineUnit.reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0);
+        const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(blockAttrs);
 
-    let x = xMargin;
-    lineUnit.forEach((wordUnit) =>
-      wordUnit.forEach((unit) => {
-        composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
-        x += unit[1];
-      })
-    );
-  });
+        let x = xMargin;
+        lineUnit.forEach((wordUnit) =>
+          wordUnit.forEach((unit) => {
+            composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
+            x += unit[1];
+          })
+        );
+        lineIndex += 1;
+      });
+    });
+  }
 
   return { lines, composition };
 }
