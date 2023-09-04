@@ -16,6 +16,7 @@ import { newSheetStore } from "./stores/sheets";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { newDocumentStore } from "./stores/documents";
+import { SheetList } from "./components/sheets/SheetList";
 
 const yDiagramDoc = new Y.Doc();
 const dbProviderDiagram = new IndexeddbPersistence("test-project-diagram", yDiagramDoc);
@@ -79,6 +80,9 @@ function App() {
           </div>
           <div className="absolute right-4 bottom-2">
             <AppFootbar />
+          </div>
+          <div className="absolute left-4 top-2">
+            <SheetList />
           </div>
         </div>
       </AppStateMachineContext.Provider>

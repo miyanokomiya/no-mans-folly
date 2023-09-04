@@ -12,7 +12,7 @@ export function newValueStore<T>(initialValue: T) {
 
   return {
     watch,
-    value,
+    getValue: () => value,
     setValue,
   };
 }

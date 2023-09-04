@@ -15,7 +15,7 @@ export function newSheetStore(option: Option) {
 
   const selectedIdStore = newValueStore(entityStore.getEntities()[0]?.id ?? "");
   function getSelectedSheet(): Sheet | undefined {
-    return entityStore.getEntity(selectedIdStore.value);
+    return entityStore.getEntity(selectedIdStore.getValue());
   }
   function selectSheet(id: string) {
     selectedIdStore.setValue(id);
