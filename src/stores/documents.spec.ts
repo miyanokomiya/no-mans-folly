@@ -47,6 +47,41 @@ describe("newDocumentStore", () => {
     });
   });
 
+  describe("watch", () => {
+    test("should watch entities and return a function to unwatch", () => {
+      const ydoc = new Y.Doc();
+      let count = 0;
+      const onChanged = () => count++;
+      const store = newDocumentStore({ ydoc });
+      const unwatch = store.watch(onChanged);
+      store.addDoc("a", [{ insert: "a" }]);
+      store.addDoc("b", [{ insert: "b" }]);
+      expect(count).toBe(2);
+
+      unwatch();
+      store.patchDoc("a", [{ retain: 1 }, { insert: "x" }]);
+      expect(count).toBe(2);
+    });
+
+    test("should dispatch related entities' ids", () => {
+      const ydoc = new Y.Doc();
+      let arg: any;
+      const onChanged = (_arg: any) => {
+        arg = _arg;
+      };
+      const store = newDocumentStore({ ydoc });
+      store.watch(onChanged);
+      store.addDoc("a", [{ insert: "a" }]);
+      expect(arg).toEqual(new Set(["a"]));
+      store.addDoc("b", [{ insert: "b" }]);
+      expect(arg).toEqual(new Set(["b"]));
+      store.patchDoc("a", [{ retain: 1 }, { insert: "x" }]);
+      expect(arg).toEqual(new Set(["a"]));
+      store.deleteDocs(["a"]);
+      expect(arg).toEqual(new Set(["a"]));
+    });
+  });
+
   describe("Delta format spec", () => {
     test("remain: should inherit current attributes", () => {
       const ydoc = new Y.Doc();

@@ -171,6 +171,24 @@ describe("newEntityStore", () => {
       store.patchEntity("a", { findex: "0" });
       expect(count).toBe(2);
     });
+
+    test("should dispatch related entities' ids", () => {
+      const ydoc = new Y.Doc();
+      let arg: any;
+      const onChanged = (_arg: any) => {
+        arg = _arg;
+      };
+      const store = newEntityStore({ name: "test", ydoc });
+      store.watch(onChanged);
+      store.addEntity({ id: "a", findex: "0" });
+      expect(arg).toEqual(new Set(["a"]));
+      store.addEntity({ id: "b", findex: "1" });
+      expect(arg).toEqual(new Set(["b"]));
+      store.patchEntity("a", { findex: "1" });
+      expect(arg).toEqual(new Set(["a"]));
+      store.deleteEntities(["a"]);
+      expect(arg).toEqual(new Set(["a"]));
+    });
   });
 });
 

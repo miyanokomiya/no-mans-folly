@@ -90,10 +90,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
-  entityMap.observeDeep((arg) => {
-    const ids = new Set<string>(arg.map((a) => a.path[a.path.length - 1] as string));
-    callback.dispatch(ids);
-  });
+  observeEntityMap(entityMap, callback.dispatch);
 
   function getScope(): Y.AbstractType<any> {
     return entityMap;
@@ -154,4 +151,20 @@ export function newSingleEntityStore<T extends Entity>(option: Option) {
     watch,
     getScope,
   };
+}
+
+export function observeEntityMap(entityMap: Y.Map<any>, fn: (ids: Set<string>) => void) {
+  entityMap.observeDeep((arg) => {
+    const ids = new Set<string>();
+    arg.forEach((a) => {
+      if (a.target === entityMap) {
+        for (const k of a.keys.keys()) {
+          ids.add(k);
+        }
+      } else {
+        ids.add(a.path[a.path.length - 1] as string);
+      }
+    });
+    fn(ids);
+  });
 }

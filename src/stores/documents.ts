@@ -1,6 +1,7 @@
 import * as Y from "yjs";
 import { DocDelta, DocOutput } from "../models/document";
 import { newCallback } from "../composables/reactives";
+import { observeEntityMap } from "./core/entities";
 
 export type CursorPositionInfo = Y.RelativePosition;
 
@@ -73,10 +74,7 @@ export function newDocumentStore(option: Option) {
 
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
-  entityMap.observeDeep((arg) => {
-    const ids = new Set<string>(arg.map((a) => a.path[a.path.length - 1] as string));
-    callback.dispatch(ids);
-  });
+  observeEntityMap(entityMap, callback.dispatch);
 
   return {
     getDocMap,
