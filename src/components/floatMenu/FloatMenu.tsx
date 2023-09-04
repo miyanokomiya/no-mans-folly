@@ -16,74 +16,44 @@ import { LineHeadItems } from "./LineHeadItems";
 import { LineShape } from "../../shapes/line";
 
 interface Option {
+  canvasState: any;
   scale: number;
   viewOrigin: IVec2;
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
 }
 
-export const FloatMenu: React.FC<Option> = ({ scale, viewOrigin, indexDocAttrInfo, focusBack }) => {
+export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, indexDocAttrInfo, focusBack }) => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [rootSize, setRootSize] = useState<Size>({ width: 0, height: 0 });
 
-  const [selectedShapes, setSelectedShapes] = useState<Shape[]>([]);
-  const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
-
-  const updateSelectedShapes = useCallback(() => {
-    const ctx = smctx.getCtx();
-    const shapeMap = ctx.getShapeMap();
-    const selected = Object.keys(ctx.getSelectedShapeIdMap());
-    setSelectedShapes(selected.map((id) => shapeMap[id]));
-    setTmpShapeMap(ctx.getTmpShapeMap());
-  }, [smctx]);
-
-  useEffect(() => {
-    updateSelectedShapes();
-  }, [updateSelectedShapes]);
-
-  useEffect(() => {
-    return acctx.shapeStore.watch(() => {
-      updateSelectedShapes();
-    });
-  }, [acctx.shapeStore, updateSelectedShapes]);
-
-  useEffect(() => {
-    return acctx.shapeStore.watchTmpShapeMap(() => {
-      setTmpShapeMap(acctx.shapeStore.getTmpShapeMap());
-    });
-  }, [acctx.shapeStore]);
-
-  useEffect(() => {
-    return acctx.shapeStore.watchSelected(() => {
-      updateSelectedShapes();
-    });
-  }, [acctx.shapeStore, updateSelectedShapes]);
-
   const indexShape = useMemo<Shape | undefined>(() => {
     const ctx = smctx.getCtx();
     const id = ctx.getLastSelectedShapeId();
     if (!id) return;
 
-    const shape = selectedShapes.find((s) => s.id === id);
+    const shape = acctx.shapeStore.getEntityMap()[id];
     if (!shape) return;
 
-    const tmp = tmpShapeMap[id] ?? {};
+    const tmp = acctx.shapeStore.getTmpShapeMap()[id] ?? {};
     return tmp ? { ...shape, ...tmp } : shape;
-  }, [smctx, selectedShapes, tmpShapeMap]);
+  }, [canvasState, smctx, acctx.shapeStore]);
 
   const targetRect = useMemo<IRectangle | undefined>(() => {
-    if (selectedShapes.length === 0) return;
+    const ids = Object.keys(acctx.shapeStore.getSelected());
+    if (ids.length === 0) return;
 
     const ctx = smctx.getCtx();
-    const rect = geometry.getWrapperRect(selectedShapes.map((s) => getWrapperRect(ctx.getShapeStruct, s)));
+    const shapeMap = acctx.shapeStore.getEntityMap();
+    const rect = geometry.getWrapperRect(ids.map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id])));
     const p = canvasToView(scale, viewOrigin, rect);
     const width = rect.width / scale;
     const height = rect.height / scale;
     return { x: p.x, y: p.y, width, height };
-  }, [viewOrigin, scale, smctx, selectedShapes]);
+  }, [canvasState, viewOrigin, scale, smctx, acctx.shapeStore]);
 
   useEffect(() => {
     if (!rootRef.current) return;

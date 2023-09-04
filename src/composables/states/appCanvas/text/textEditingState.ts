@@ -8,6 +8,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { newPanningState } from "../../commons";
 import { isMac } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
+import { CursorPositionInfo } from "../../../../stores/documents";
 
 interface Option {
   id: string;
@@ -18,6 +19,7 @@ interface Option {
 export function newTextEditingState(option: Option): AppCanvasState {
   let textEditorController: TextEditorController;
   let textBounds: ReturnType<typeof getShapeTextBounds>;
+  let cursorInfo: CursorPositionInfo | undefined;
 
   function updateEditorPosition(ctx: AppCanvasStateContext) {
     if (!textEditorController || !applyAffine) return;
@@ -32,6 +34,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
   function onCursorUpdated(ctx: AppCanvasStateContext) {
     if (!textEditorController) return;
 
+    cursorInfo = ctx.createCursorPosition(option.id, textEditorController.getCursor());
     ctx.setCurrentDocAttrInfo(textEditorController.getCurrentAttributeInfo());
     ctx.setTmpShapeMap({});
   }
@@ -118,8 +121,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
           const shape = ctx.getShapeMap()[option.id];
           if (!shape) return translateOnSelection(ctx);
 
-          textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
-          textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
+          if (event.data.keys.has(option.id)) {
+            textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
+            textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
+            textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo));
+          }
           return;
         }
         case "text-style": {

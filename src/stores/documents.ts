@@ -2,6 +2,8 @@ import * as Y from "yjs";
 import { DocDelta, DocOutput } from "../models/document";
 import { newCallback } from "../composables/reactives";
 
+export type CursorPositionInfo = Y.RelativePosition;
+
 type Option = {
   ydoc: Y.Doc;
 };
@@ -50,6 +52,17 @@ export function newDocumentStore(option: Option) {
     });
   }
 
+  function createCursorPosition(id: string, index: number): CursorPositionInfo | undefined {
+    const text = entityMap.get(id);
+    if (!text) return;
+    return Y.createRelativePositionFromTypeIndex(text, index);
+  }
+
+  function retrieveCursorPosition(relPos?: CursorPositionInfo): number {
+    if (!relPos) return 0;
+    return Y.createAbsolutePositionFromRelativePosition(relPos, option.ydoc)?.index ?? 0;
+  }
+
   function transact(fn: () => void) {
     option.ydoc.transact(fn);
   }
@@ -58,9 +71,12 @@ export function newDocumentStore(option: Option) {
     return entityMap;
   }
 
-  const callback = newCallback();
+  const callback = newCallback<Set<string>>();
   const watch = callback.bind;
-  entityMap.observeDeep(callback.dispatch);
+  entityMap.observeDeep((arg) => {
+    const ids = new Set<string>(arg.map((a) => a.path[a.path.length - 1] as string));
+    callback.dispatch(ids);
+  });
 
   return {
     getDocMap,
@@ -69,6 +85,8 @@ export function newDocumentStore(option: Option) {
     deleteDocs,
     patchDoc,
     patchDocs,
+    createCursorPosition,
+    retrieveCursorPosition,
     transact,
     getScope,
     watch,

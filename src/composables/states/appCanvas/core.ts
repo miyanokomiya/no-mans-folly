@@ -4,6 +4,7 @@ import { Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
 import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models/document";
+import { CursorPositionInfo } from "../../../stores/documents";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeMap: () => { [id: string]: Shape };
@@ -29,6 +30,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   getDocumentMap: () => { [id: string]: DocOutput };
   patchDocuments: (val: { [id: string]: DocDelta }) => void;
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
+  createCursorPosition: (id: string, index: number) => CursorPositionInfo | undefined;
+  retrieveCursorPosition: (info?: CursorPositionInfo) => number;
 }
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;
@@ -46,6 +49,9 @@ interface ChangeSelectionEvent extends ModeStateEventBase {
 
 interface UpdateShapeEvent extends ModeStateEventBase {
   type: "shape-updated";
+  data: {
+    keys: Set<string>;
+  };
 }
 
 interface TextInputEvent extends ModeStateEventBase {

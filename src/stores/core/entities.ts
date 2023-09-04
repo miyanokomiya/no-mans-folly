@@ -88,9 +88,12 @@ export function newEntityStore<T extends Entity>(option: Option) {
     option.ydoc.transact(fn);
   }
 
-  const callback = newCallback();
+  const callback = newCallback<Set<string>>();
   const watch = callback.bind;
-  entityMap.observeDeep(callback.dispatch);
+  entityMap.observeDeep((arg) => {
+    const ids = new Set<string>(arg.map((a) => a.path[a.path.length - 1] as string));
+    callback.dispatch(ids);
+  });
 
   function getScope(): Y.AbstractType<any> {
     return entityMap;

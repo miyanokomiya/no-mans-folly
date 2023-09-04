@@ -20,7 +20,7 @@ import {
 } from "../composables/window";
 import { findBackward, mapDataToObj, remap } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
-import { DocAttrInfo, DocOutput } from "../models/document";
+import { DocAttrInfo } from "../models/document";
 import { getDocAttributes, renderDoc } from "../utils/textEditor";
 import { AffineMatrix, IVec2, sub } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
@@ -31,43 +31,42 @@ export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
-  const [canvasState, setCanvasState] = useState({});
-  const [shapes, setShapes] = useState<Shape[]>([]);
-  const [docMap, setDocMap] = useState<{ [id: string]: DocOutput }>({});
-  const [tmpShapeMap, setTmpShapeMap] = useState<{ [id: string]: Partial<Shape> }>({});
-  const [selectedInfo, setSelectedInfo] = useState<[last: string, map: { [id: string]: true }] | undefined>();
+  const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
+  const [floatMenuAvailable, setFloatMenuAvailable] = useState(false);
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
   const [currentDocAttrInfo, setCurrentDocAttrInfo] = useState<DocAttrInfo>({});
-  const [floatMenuAvailable, setFloatMenuAvailable] = useState(false);
 
   useEffect(() => {
-    return acctx.shapeStore.watch(() => {
-      setShapes(acctx.shapeStore.getEntities());
+    return acctx.shapeStore.watch((keys) => {
+      smctx.stateMachine.handleEvent({
+        type: "shape-updated",
+        data: { keys },
+      });
+      setCanvasState({});
     });
   }, [acctx.shapeStore, smctx.stateMachine]);
 
   useEffect(() => {
     return acctx.shapeStore.watchTmpShapeMap(() => {
-      setTmpShapeMap(acctx.shapeStore.getTmpShapeMap());
+      setCanvasState({});
     });
   }, [acctx.shapeStore, smctx.stateMachine]);
 
   useEffect(() => {
     return acctx.shapeStore.watchSelected(() => {
-      const last = acctx.shapeStore.getLastSelected();
-      if (last) {
-        setSelectedInfo([last, acctx.shapeStore.getSelected()]);
-      } else {
-        setSelectedInfo(undefined);
-      }
+      setCanvasState({});
     });
   }, [acctx.shapeStore]);
 
   useEffect(() => {
-    return acctx.documentStore.watch(() => {
-      setDocMap(acctx.documentStore.getDocMap());
+    return acctx.documentStore.watch((keys) => {
+      smctx.stateMachine.handleEvent({
+        type: "shape-updated",
+        data: { keys },
+      });
+      setCanvasState({});
     });
   }, [acctx.documentStore, smctx.stateMachine]);
 
@@ -121,7 +120,7 @@ export function AppCanvas() {
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
       getShapeAt(p) {
-        return findBackward(shapes, (s) => isPointOn(getCommonStruct, s, p));
+        return findBackward(acctx.shapeStore.getEntities(), (s) => isPointOn(getCommonStruct, s, p));
       },
       selectShape: acctx.shapeStore.select,
       multiSelectShapes: acctx.shapeStore.multiSelect,
@@ -134,7 +133,7 @@ export function AppCanvas() {
         });
       },
       patchShapes: acctx.shapeStore.patchEntities,
-      getTmpShapeMap: () => tmpShapeMap,
+      getTmpShapeMap: acctx.shapeStore.getTmpShapeMap,
       setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
       pasteShapes: (shapes, docs, p) => {
         const remapInfo = remapShapeIds(getCommonStruct, shapes, generateUuid, true);
@@ -158,9 +157,11 @@ export function AppCanvas() {
       setTextEditorPosition: (p) => {
         setTextEditorPosition(canvasToView(p));
       },
-      getDocumentMap: () => docMap,
+      getDocumentMap: acctx.documentStore.getDocMap,
       patchDocuments: acctx.documentStore.patchDocs,
       setCurrentDocAttrInfo,
+      createCursorPosition: acctx.documentStore.createCursorPosition,
+      retrieveCursorPosition: acctx.documentStore.retrieveCursorPosition,
     });
   }, [
     setViewport,
@@ -173,17 +174,8 @@ export function AppCanvas() {
     scale,
     acctx,
     smctx,
-    shapes,
-    tmpShapeMap,
-    docMap,
     getMousePoint,
   ]);
-
-  useEffect(() => {
-    smctx.stateMachine.handleEvent({
-      type: "shape-updated",
-    });
-  }, [acctx.documentStore, smctx.stateMachine, shapes, docMap]);
 
   useEffect(() => {
     return acctx.shapeStore.watchSelected(() => {
@@ -214,12 +206,12 @@ export function AppCanvas() {
     ctx.translate(-viewOrigin.x, -viewOrigin.y);
 
     const selectedMap = smctx.getCtx().getSelectedShapeIdMap();
-    shapes.forEach((shape) => {
-      const tmpShape = tmpShapeMap[shape.id];
+    acctx.shapeStore.getEntities().forEach((shape) => {
+      const tmpShape = acctx.shapeStore.getTmpShapeMap()[shape.id];
       const latestShape = tmpShape ? { ...shape, ...tmpShape } : shape;
       renderShape(getCommonStruct, ctx, latestShape);
 
-      const doc = docMap[latestShape.id];
+      const doc = acctx.documentStore.getDocMap()[latestShape.id];
       if (doc) {
         if (textEditing && selectedMap[shape.id]) return;
 
@@ -233,8 +225,7 @@ export function AppCanvas() {
 
     smctx.stateMachine.render(ctx);
   }, [
-    shapes,
-    tmpShapeMap,
+    acctx.shapeStore,
     viewSize.width,
     viewSize.height,
     scale,
@@ -242,7 +233,7 @@ export function AppCanvas() {
     viewOrigin.y,
     canvasState,
     smctx,
-    docMap,
+    acctx.documentStore,
     textEditing,
   ]);
 
@@ -404,18 +395,16 @@ export function AppCanvas() {
   );
 
   const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
-    if (!selectedInfo) return;
+    const lastSelected = acctx.shapeStore.getLastSelected();
+    if (!lastSelected) return;
     if (textEditing) return currentDocAttrInfo;
 
-    const id = selectedInfo[0];
-    if (!id) return;
-
-    const doc = docMap[id];
+    const doc = acctx.documentStore.getDocMap()[lastSelected];
     if (!doc) return;
 
     const attrs = getDocAttributes(doc);
     return { cursor: attrs, block: attrs, doc: attrs };
-  }, [currentDocAttrInfo, textEditing, selectedInfo, docMap]);
+  }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, acctx.documentStore]);
 
   const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
   const focusBackTextEditor = useCallback(() => {
@@ -433,6 +422,7 @@ export function AppCanvas() {
 
   const floatMenu = floatMenuAvailable ? (
     <FloatMenu
+      canvasState={canvasState}
       scale={scale}
       viewOrigin={viewOrigin}
       indexDocAttrInfo={indexDocAttrInfo}
