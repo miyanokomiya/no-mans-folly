@@ -52,7 +52,7 @@ export function newTextEditorController() {
   function updateComposition() {
     if (!_ctx) return;
 
-    const result = getDocCompositionInfo(_doc, _ctx, _range.width);
+    const result = getDocCompositionInfo(_doc, _ctx, _range.width, _range.height);
     _compositionLines = result.lines;
     _composition = result.composition;
   }

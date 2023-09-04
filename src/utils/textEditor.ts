@@ -15,7 +15,7 @@ export function getDocLength(doc: DocOutput): number {
 }
 
 export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: IRectangle) {
-  const info = getDocCompositionInfo(doc, ctx, range.width);
+  const info = getDocCompositionInfo(doc, ctx, range.width, range.height);
   const lines = info.lines;
   const composition = info.composition;
   renderDocByComposition(ctx, composition, lines);
@@ -508,17 +508,37 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
   return lines;
 }
 
-export function convertLineWordToComposition(lineWord: WordItem[][]): {
+export function convertLineWordToComposition(
+  lineWord: WordItem[][],
+  rangeWidth: number,
+  rangeHeight: number
+): {
   composition: DocCompositionItem[];
   lines: DocCompositionLine[];
 } {
-  let y = 0;
-  const lines = lineWord.map((lineUnit) => {
-    const outputs: DocOutput = [];
+  const lastLine = lineWord[lineWord.length - 1];
+  const lastWord = lastLine[lastLine.length - 1];
+  const docAttrs = lastWord[lastWord.length - 1][2];
+
+  let docHeight = 0;
+  const heightList = lineWord.map((lineUnit) => {
     let height = 0;
     lineUnit.forEach((wordUnit) =>
       wordUnit.forEach((unit) => {
         height = Math.max(height, getLineHeight(unit[2]));
+      })
+    );
+    docHeight += height;
+    return height;
+  });
+  const yMargin = (rangeHeight - docHeight) * getDirectionGapRate(docAttrs);
+
+  let y = yMargin;
+  const lines = lineWord.map((lineUnit, i) => {
+    const outputs: DocOutput = [];
+    const height = heightList[i];
+    lineUnit.forEach((wordUnit) =>
+      wordUnit.forEach((unit) => {
         outputs.push({ insert: unit[0], attributes: unit[2] });
       })
     );
@@ -530,9 +550,14 @@ export function convertLineWordToComposition(lineWord: WordItem[][]): {
 
   const composition: DocCompositionItem[] = [];
   lineWord.forEach((lineUnit, i) => {
-    const y = lines[i].y;
-    const height = lines[i].height;
-    let x = 0;
+    const line = lines[i];
+    const y = line.y;
+    const height = line.height;
+    const lineWidth = lineUnit.reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0);
+    const block = line.outputs[line.outputs.length - 1];
+    const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(block.attributes);
+
+    let x = xMargin;
     lineUnit.forEach((wordUnit) =>
       wordUnit.forEach((unit) => {
         composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
@@ -544,8 +569,37 @@ export function convertLineWordToComposition(lineWord: WordItem[][]): {
   return { lines, composition };
 }
 
-export function getDocCompositionInfo(doc: DocOutput, ctx: CanvasRenderingContext2D, rangeWidth: number) {
+function getAlignGapRate(attrs?: DocAttributes): number {
+  switch (attrs?.align) {
+    case "right":
+      return 1;
+    case "center":
+      return 0.5;
+    default:
+      return 0;
+  }
+}
+
+function getDirectionGapRate(attrs?: DocAttributes): number {
+  switch (attrs?.direction) {
+    case "bottom":
+      return 1;
+    case "middle":
+      return 0.5;
+    default:
+      return 0;
+  }
+}
+
+export function getDocCompositionInfo(
+  doc: DocOutput,
+  ctx: CanvasRenderingContext2D,
+  rangeWidth: number,
+  rangeHeight: number
+) {
   return convertLineWordToComposition(
-    applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth)
+    applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth),
+    rangeWidth,
+    rangeHeight
   );
 }
