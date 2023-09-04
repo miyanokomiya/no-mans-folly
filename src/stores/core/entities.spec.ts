@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { newEntityStore, newSingleEntityStore } from "./entities";
 import * as Y from "yjs";
+import { generateKeyBetween } from "fractional-indexing";
 
 describe("newEntityStore", () => {
   describe("getEntities", () => {
@@ -94,8 +95,8 @@ describe("newEntityStore", () => {
       store.addEntity({ id: "b", findex: "1" });
       store.patchEntity("a", { findex: "10" });
       expect(store.getEntities()).toEqual([
-        { id: "a", findex: "10" },
         { id: "b", findex: "1" },
+        { id: "a", findex: "10" },
       ]);
       expect(count).toBe(3);
     });
@@ -132,6 +133,34 @@ describe("newEntityStore", () => {
     });
   });
 
+  describe("createFirstIndex", () => {
+    test("should return the new first index", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      const i0 = generateKeyBetween(null, null);
+      const i1 = generateKeyBetween(i0, null);
+
+      expect(store.createFirstIndex()).toEqual(generateKeyBetween(null, null));
+      store.addEntity({ id: "a", findex: i1 });
+      store.addEntity({ id: "b", findex: i0 });
+      expect(store.createFirstIndex()).toEqual(generateKeyBetween(null, i0));
+    });
+  });
+
+  describe("createLastIndex", () => {
+    test("should return the new last index", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      const i0 = generateKeyBetween(null, null);
+      const i1 = generateKeyBetween(i0, null);
+
+      expect(store.createLastIndex()).toEqual(generateKeyBetween(null, null));
+      store.addEntity({ id: "a", findex: i1 });
+      store.addEntity({ id: "b", findex: i0 });
+      expect(store.createLastIndex()).toEqual(generateKeyBetween(i1, null));
+    });
+  });
+
   describe("transact", () => {
     test("should commit operations in the transaction", () => {
       const ydoc = new Y.Doc();
@@ -145,8 +174,8 @@ describe("newEntityStore", () => {
         store.patchEntity("a", { findex: "10" });
       });
       expect(store.getEntities()).toEqual([
-        { id: "a", findex: "10" },
         { id: "b", findex: "1" },
+        { id: "a", findex: "10" },
       ]);
       expect(count).toBe(1);
     });

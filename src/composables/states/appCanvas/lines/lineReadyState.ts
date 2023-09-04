@@ -28,6 +28,7 @@ export function newLineReadyState(_option: Option): AppCanvasState {
                 id: ctx.generateUuid(),
                 p: event.data.point,
                 q: event.data.point,
+                findex: ctx.createLastIndex(),
               });
               return () => newLineDrawingState({ shape: lineshape });
             }

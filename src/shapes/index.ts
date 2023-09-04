@@ -5,6 +5,7 @@ import { struct as rectangleStruct } from "./rectangle";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
 import * as geometry from "../utils/geometry";
+import { generateKeyBetween } from "fractional-indexing";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -175,4 +176,22 @@ export function remapShapeIds(
 export function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {
   const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s));
   return geometry.getWrapperRect(shapeRects);
+}
+
+export function patchShapesOrderToLast(shapeIds: string[], lastIndex: string): { [id: string]: Partial<Shape> } {
+  let findex = lastIndex;
+  return shapeIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+    findex = generateKeyBetween(findex, null);
+    p[id] = { findex };
+    return p;
+  }, {});
+}
+
+export function patchShapesOrderToFirst(shapeIds: string[], firstIndex: string): { [id: string]: Partial<Shape> } {
+  let findex = firstIndex;
+  return shapeIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+    findex = generateKeyBetween(null, findex);
+    p[id] = { findex };
+    return p;
+  }, {});
 }

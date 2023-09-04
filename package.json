@@ -15,6 +15,7 @@
     "lint:fix": "yarn lint --fix && yarn lint-json -w && yarn lint-style -w"
   },
   "dependencies": {
+    "fractional-indexing": "^3.2.0",
     "nanoid": "^4.0.2",
     "okageo": "^3.0.8",
     "okaselect": "^0.1.0",

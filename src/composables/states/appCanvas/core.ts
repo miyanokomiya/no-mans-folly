@@ -23,6 +23,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   pasteShapes: (shapes: Shape[], docs: [id: string, doc: DocOutput][], p?: IVec2) => void;
 
   getShapeStruct: GetShapeStruct;
+  createFirstIndex: () => string;
+  createLastIndex: () => string;
 
   startTextEditing: () => void;
   stopTextEditing: () => void;

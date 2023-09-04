@@ -1,5 +1,5 @@
 import { useCallback, useContext, useState } from "react";
-import { AppStateMachineContext } from "../contexts/AppCanvasContext";
+import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { createShape } from "../shapes";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
@@ -17,6 +17,7 @@ function getButtonClass(highlight = false) {
 }
 
 export const AppToolbar: React.FC = () => {
+  const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
 
   const onDownShapeElm = useCallback(
@@ -24,7 +25,10 @@ export const AppToolbar: React.FC = () => {
       e.preventDefault();
       const ctx = smctx.getCtx();
       const type = e.currentTarget.getAttribute("data-type")!;
-      const shape = createShape(ctx.getShapeStruct, type, { id: ctx.generateUuid() });
+      const shape = createShape(ctx.getShapeStruct, type, {
+        id: ctx.generateUuid(),
+        findex: acctx.shapeStore.createLastIndex(),
+      });
       smctx.stateMachine.handleEvent({
         type: "state",
         data: {
@@ -33,7 +37,7 @@ export const AppToolbar: React.FC = () => {
         },
       });
     },
-    [smctx]
+    [smctx, acctx]
   );
 
   const onDownLineElm = useCallback(

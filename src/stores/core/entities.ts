@@ -1,4 +1,5 @@
 import * as Y from "yjs";
+import { generateKeyBetween } from "fractional-indexing";
 import type { Entity } from "../../models";
 import { newCallback } from "../../composables/reactives";
 import { toMap } from "../../utils/commons";
@@ -11,8 +12,15 @@ type Option = {
 export function newEntityStore<T extends Entity>(option: Option) {
   const entityMap: Y.Map<Y.Map<any>> = option.ydoc.getMap(option.name);
 
+  let entries: T[] = [];
+  function cacheEntities() {
+    const list = Array.from(entityMap.values()).map((ye) => toEntity(ye));
+    list.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
+    entries = list;
+  }
+
   function getEntities(): T[] {
-    return Array.from(entityMap.values()).map((ye) => toEntity(ye));
+    return entries;
   }
 
   function getEntityMap(): { [id: string]: T } {
@@ -84,13 +92,26 @@ export function newEntityStore<T extends Entity>(option: Option) {
     });
   }
 
+  function createFirstIndex(): string {
+    const entries = getEntities().filter((s) => s.findex);
+    return generateKeyBetween(null, entries[0]?.findex);
+  }
+
+  function createLastIndex(): string {
+    const entries = getEntities().filter((s) => s.findex);
+    return generateKeyBetween(entries[entries.length - 1]?.findex, null);
+  }
+
   function transact(fn: () => void) {
     option.ydoc.transact(fn);
   }
 
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
-  observeEntityMap(entityMap, callback.dispatch);
+  observeEntityMap(entityMap, (ids: Set<string>) => {
+    cacheEntities();
+    callback.dispatch(ids);
+  });
 
   function getScope(): Y.AbstractType<any> {
     return entityMap;
@@ -105,6 +126,8 @@ export function newEntityStore<T extends Entity>(option: Option) {
     deleteEntities,
     patchEntity,
     patchEntities,
+    createFirstIndex,
+    createLastIndex,
     transact,
     watch,
     getScope,

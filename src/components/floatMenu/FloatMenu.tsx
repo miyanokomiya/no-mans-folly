@@ -1,7 +1,13 @@
 import { IRectangle, IVec2, getRectCenter } from "okageo";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
-import { getCommonStyle, getWrapperRect, updateCommonStyle } from "../../shapes";
+import {
+  getCommonStyle,
+  getWrapperRect,
+  patchShapesOrderToFirst,
+  patchShapesOrderToLast,
+  updateCommonStyle,
+} from "../../shapes";
 import * as geometry from "../../utils/geometry";
 import { CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
@@ -14,6 +20,7 @@ import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { useWindow } from "../../composables/window";
 import { LineHeadItems } from "./LineHeadItems";
 import { LineShape } from "../../shapes/line";
+import { StackButton } from "./StackButton";
 
 interface Option {
   canvasState: any;
@@ -186,6 +193,28 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     [focusBack, smctx]
   );
 
+  const onClickStackLast = useCallback(() => {
+    const ctx = smctx.getCtx();
+    const selected = ctx.getSelectedShapeIdMap();
+    const ids = acctx.shapeStore
+      .getEntities()
+      .filter((s) => selected[s.id])
+      .map((s) => s.id);
+    ctx.patchShapes(patchShapesOrderToLast(ids, ctx.createLastIndex()));
+    focusBack?.();
+  }, [focusBack, smctx, acctx]);
+
+  const onClickStackFirst = useCallback(() => {
+    const ctx = smctx.getCtx();
+    const selected = ctx.getSelectedShapeIdMap();
+    const ids = acctx.shapeStore
+      .getEntities()
+      .filter((s) => selected[s.id])
+      .map((s) => s.id);
+    ctx.patchShapes(patchShapesOrderToFirst(ids, ctx.createFirstIndex()));
+    focusBack?.();
+  }, [focusBack, smctx, acctx]);
+
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
@@ -242,6 +271,12 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
             />
           </>
         ) : undefined}
+        <StackButton
+          popupedKey={popupedKey}
+          setPopupedKey={onClickPopupButton}
+          onClickLast={onClickStackLast}
+          onClickFirst={onClickStackFirst}
+        />
       </div>
     </div>
   ) : undefined;

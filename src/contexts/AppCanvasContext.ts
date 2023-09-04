@@ -23,12 +23,12 @@ interface IAppCanvasContext {
 
 export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);
 
-export function createInitialEntities(acctx: IAppCanvasContext, generateId = generateUuid) {
-  acctx.diagramStore.patchEntity({ id: generateId(), findex: "0" });
-  const sheetId = generateId();
+export function createInitialEntities(acctx: IAppCanvasContext, _generateId = generateUuid) {
+  acctx.diagramStore.patchEntity({ id: "default", findex: "0" });
+  const sheetId = "default";
   acctx.sheetStore.addEntity({ id: sheetId, findex: "0", name: "New Sheet" });
   acctx.sheetStore.selectSheet(sheetId);
-  const layerId = generateId();
+  const layerId = "default";
   acctx.layerStore.addEntity({ id: layerId, findex: "0", name: "New Layer" });
   acctx.layerStore.selectLayer(layerId);
 }
@@ -87,6 +87,8 @@ export function createStateMachineContext(arg: {
     pasteShapes() {},
 
     getShapeStruct: getCommonStruct,
+    createFirstIndex: () => "",
+    createLastIndex: () => "",
 
     startTextEditing() {},
     stopTextEditing() {},
@@ -94,7 +96,7 @@ export function createStateMachineContext(arg: {
     getDocumentMap: () => ({}),
     patchDocuments() {},
     setCurrentDocAttrInfo() {},
-    createCursorPosition() {},
+    createCursorPosition: () => undefined,
     retrieveCursorPosition: () => 0,
   };
 

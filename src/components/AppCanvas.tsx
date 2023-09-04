@@ -6,6 +6,7 @@ import {
   getShapeTextBounds,
   getWrapperRectForShapes,
   isPointOn,
+  patchShapesOrderToLast,
   remapShapeIds,
   renderShape,
   resizeShape,
@@ -140,13 +141,21 @@ export function AppCanvas() {
         const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
         const targetP = p ?? viewToCanvas(getMousePoint());
         const moved = shiftShapesAtTopLeft(remapInfo.shapes, targetP);
+        const patch = patchShapesOrderToLast(
+          moved.map((s) => s.id),
+          acctx.shapeStore.createLastIndex()
+        );
+        const ordered = moved.map((s) => ({ ...s, ...patch[s.id] }));
 
         acctx.shapeStore.transact(() => {
-          acctx.shapeStore.addEntities(moved);
+          acctx.shapeStore.addEntities(ordered);
           acctx.documentStore.patchDocs(remapDocs);
         });
-        acctx.shapeStore.multiSelect(moved.map((s) => s.id));
+        acctx.shapeStore.multiSelect(ordered.map((s) => s.id));
       },
+
+      createFirstIndex: acctx.shapeStore.createFirstIndex,
+      createLastIndex: acctx.shapeStore.createLastIndex,
 
       startTextEditing() {
         setTextEditing(true);
