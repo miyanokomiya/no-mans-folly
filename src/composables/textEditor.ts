@@ -9,10 +9,9 @@ import {
   getCursorLocation,
   getCursorLocationAt,
   getDeltaByApplyBlockStyle,
-  getDocComposition,
+  getDocCompositionInfo,
   getDocLength,
   getInitialOutput,
-  getLineOutputs,
   getOutputAt,
   getRangeLines,
   mergeDocAttrInfo,
@@ -52,8 +51,10 @@ export function newTextEditorController() {
 
   function updateComposition() {
     if (!_ctx) return;
-    _compositionLines = getLineOutputs(_ctx, _doc, _range);
-    _composition = getDocComposition(_ctx, _compositionLines, _range.width);
+
+    const result = getDocCompositionInfo(_doc, _ctx, _range.width);
+    _compositionLines = result.lines;
+    _composition = result.composition;
   }
 
   function setCursor(c: number, selection = 0) {

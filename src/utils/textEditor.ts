@@ -15,8 +15,9 @@ export function getDocLength(doc: DocOutput): number {
 }
 
 export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: IRectangle) {
-  const lines = getLineOutputs(ctx, doc, range);
-  const composition = getDocComposition(ctx, lines, range.width);
+  const info = getDocCompositionInfo(doc, ctx, range.width);
+  const lines = info.lines;
+  const composition = info.composition;
   renderDocByComposition(ctx, composition, lines);
 }
 
@@ -118,7 +119,7 @@ export function getBreakIndicesForWord(
   lineWidth: number
 ): number[] | undefined {
   const indexForTop = getBreakLineIndexWord(ctx, word, marginToTail);
-  if (!indexForTop) return;
+  if (indexForTop === undefined) return;
 
   const ret = [indexForTop];
   let remainWord = word.slice(indexForTop);
@@ -223,6 +224,7 @@ export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, ra
 
       if (line === "") return;
 
+      // TODO: a word can be across operations, so this spliting hierarchy isn't correct.
       line.split(" ").forEach((word, c) => {
         const wordWithSpace = (c === 0 ? "" : " ") + word;
         const breaks = getBreakIndicesForWord(ctx, wordWithSpace, range.width - left, range.width);
@@ -498,7 +500,7 @@ export function sliceDocOutput(doc: DocOutput, from: number, to: number): DocOut
   return ret;
 }
 
-export function sliptDocOutputByLineBreak(doc: DocOutput): DocOutput {
+export function splitDocOutputByLineBreak(doc: DocOutput): DocOutput {
   const splited: DocOutput = [];
 
   doc.forEach((p) => {
@@ -515,6 +517,153 @@ export function sliptDocOutputByLineBreak(doc: DocOutput): DocOutput {
 }
 
 export function applyAttrInfoToDocOutput(pasted: DocOutput, attrs?: DocAttributes): DocOutput {
-  const splited = sliptDocOutputByLineBreak(pasted);
+  const splited = splitDocOutputByLineBreak(pasted);
   return attrs ? splited.map((d) => ({ ...d, attributes: { ...attrs, ...(d.attributes ?? {}) } })) : splited;
+}
+
+export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext2D): Map<number, number> {
+  const ret = new Map<number, number>();
+
+  let cursor = 0;
+  doc.forEach((op) => {
+    applyDocAttributesToCtx(ctx, op.attributes);
+
+    for (let i = 0; i < op.insert.length; i++) {
+      const c = op.insert[i];
+      if (c === "\n") {
+        ret.set(cursor, 0);
+      } else {
+        ret.set(cursor, ctx.measureText(c).width);
+      }
+      cursor += 1;
+    }
+  });
+
+  return ret;
+}
+
+type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
+
+export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, number>): WordItem[][] {
+  const lines: WordItem[][] = [];
+  let line: WordItem[] = [];
+  let word: WordItem = [];
+  let cursor = 0;
+
+  const getW = () => {
+    return widthMap?.get(cursor) ?? 0;
+  };
+
+  doc.forEach((op) => {
+    for (let i = 0; i < op.insert.length; i++) {
+      const c = op.insert[i];
+      if (c === "\n") {
+        if (word.length > 0) line.push(word);
+        line.push([[c, getW(), op.attributes]]);
+        lines.push(line);
+        word = [];
+        line = [];
+      } else if (c === " ") {
+        if (word.length > 0) line.push(word);
+        line.push([[c, getW(), op.attributes]]);
+        word = [];
+      } else {
+        word.push([c, getW(), op.attributes]);
+      }
+
+      cursor += 1;
+    }
+  });
+
+  return lines;
+}
+
+export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: number): WordItem[][] {
+  const lines: WordItem[][] = [];
+  let line: WordItem[] = [];
+  let word: WordItem = [];
+
+  lineWord.forEach((lineUnit) => {
+    let left = 0;
+
+    lineUnit.forEach((wordUnit, wordIndex) => {
+      let broken = false;
+
+      wordUnit.forEach((unit) => {
+        if (left + unit[1] < rangeWidth) {
+          word.push(unit);
+          left += unit[1];
+        } else {
+          if (broken || wordIndex === 0) {
+            // This word must be longer than the range width
+            // => Break it into some parts
+            line.push(word);
+            lines.push(line);
+            line = [];
+            word = [unit];
+            left = unit[1];
+          } else {
+            // Place the word in the next line
+            lines.push(line);
+            line = [];
+            word.push(unit);
+            left = word.reduce((p, u) => p + u[1], 0);
+          }
+
+          broken = true;
+        }
+      });
+
+      line.push(word);
+      word = [];
+    });
+
+    lines.push(line);
+    line = [];
+    word = [];
+  });
+
+  return lines;
+}
+
+export function convertLineWordToComposition(lineWord: WordItem[][]): {
+  composition: DocCompositionItem[];
+  lines: DocCompositionLine[];
+} {
+  let y = 0;
+  const lines = lineWord.map((lineUnit) => {
+    const outputs: DocOutput = [];
+    let height = 0;
+    lineUnit.forEach((wordUnit) =>
+      wordUnit.forEach((unit) => {
+        height = Math.max(height, getLineHeight(unit[2]));
+        outputs.push({ insert: unit[0], attributes: unit[2] });
+      })
+    );
+
+    const item = { y, height, outputs };
+    y += height;
+    return item;
+  });
+
+  const composition: DocCompositionItem[] = [];
+  lineWord.forEach((lineUnit, i) => {
+    const y = lines[i].y;
+    const height = lines[i].height;
+    let x = 0;
+    lineUnit.forEach((wordUnit) =>
+      wordUnit.forEach((unit) => {
+        composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
+        x += unit[1];
+      })
+    );
+  });
+
+  return { lines, composition };
+}
+
+export function getDocCompositionInfo(doc: DocOutput, ctx: CanvasRenderingContext2D, rangeWidth: number) {
+  return convertLineWordToComposition(
+    applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth)
+  );
 }

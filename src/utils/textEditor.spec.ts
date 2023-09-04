@@ -3,13 +3,15 @@ import {
   DocCompositionItem,
   DocCompositionLine,
   applyAttrInfoToDocOutput,
+  applyRangeWidthToLineWord,
   getCursorLocationAt,
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
   mergeDocAttrInfo,
   sliceDocOutput,
-  sliptDocOutputByLineBreak,
+  splitDocOutputByLineBreak,
+  splitOutputsIntoLineWord,
 } from "./textEditor";
 
 describe("getCursorLocationAt", () => {
@@ -196,7 +198,7 @@ describe("sliceDocOutput", () => {
 
 describe("sliptDocOutputByLineBreak", () => {
   test("should return splited doc output", () => {
-    expect(sliptDocOutputByLineBreak([{ insert: "ab\ncd\nef\n" }])).toEqual([
+    expect(splitDocOutputByLineBreak([{ insert: "ab\ncd\nef\n" }])).toEqual([
       { insert: "ab" },
       { insert: "\n" },
       { insert: "cd" },
@@ -217,6 +219,371 @@ describe("applyAttrInfoToDocOutput", () => {
       { insert: "\n", attributes: attrs },
       { insert: "ef", attributes: attrs },
       { insert: "\n", attributes: attrs },
+    ]);
+  });
+});
+
+describe("splitOutputsIntoLineWord", () => {
+  test("should return splitted doc information", () => {
+    const attrs0 = { size: 1 } as const;
+    const attrs1 = { size: 3 } as const;
+    expect(
+      splitOutputsIntoLineWord([
+        { insert: "ab c\nd", attributes: attrs0 },
+        { insert: "e f\n", attributes: attrs1 },
+      ])
+    ).toEqual([
+      [
+        [
+          ["a", 0, attrs0],
+          ["b", 0, attrs0],
+        ],
+        [[" ", 0, attrs0]],
+        [["c", 0, attrs0]],
+        [["\n", 0, attrs0]],
+      ],
+      [
+        [
+          ["d", 0, attrs0],
+          ["e", 0, attrs1],
+        ],
+        [[" ", 0, attrs1]],
+        [["f", 0, attrs1]],
+        [["\n", 0, attrs1]],
+      ],
+    ]);
+
+    expect(
+      splitOutputsIntoLineWord(
+        [
+          { insert: "ab c", attributes: attrs0 },
+          { insert: "e f\n", attributes: attrs1 },
+        ],
+        new Map([
+          [0, 0],
+          [1, 1],
+          [2, 2],
+          [3, 3],
+          [4, 4],
+          [5, 5],
+          [6, 6],
+          [7, 7],
+        ])
+      )
+    ).toEqual([
+      [
+        [
+          ["a", 0, attrs0],
+          ["b", 1, attrs0],
+        ],
+        [[" ", 2, attrs0]],
+        [
+          ["c", 3, attrs0],
+          ["e", 4, attrs1],
+        ],
+        [[" ", 5, attrs1]],
+        [["f", 6, attrs1]],
+        [["\n", 7, attrs1]],
+      ],
+    ]);
+
+    expect(splitOutputsIntoLineWord([{ insert: "  ab c nd\n", attributes: attrs1 }])).toEqual([
+      [
+        [[" ", 0, attrs1]],
+        [[" ", 0, attrs1]],
+        [
+          ["a", 0, attrs1],
+          ["b", 0, attrs1],
+        ],
+        [[" ", 0, attrs1]],
+        [["c", 0, attrs1]],
+        [[" ", 0, attrs1]],
+        [
+          ["n", 0, attrs1],
+          ["d", 0, attrs1],
+        ],
+        [["\n", 0, attrs1]],
+      ],
+    ]);
+  });
+});
+
+describe("applyRangeWidthToLineWord", () => {
+  test("should return splitted doc information redargind the range width", () => {
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+              ["c", 3],
+              ["d", 3],
+              ["e", 3],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        10
+      )
+    ).toEqual([
+      [
+        [
+          ["a", 3],
+          ["b", 3],
+          ["c", 3],
+        ],
+      ],
+      [
+        [
+          ["d", 3],
+          ["e", 3],
+        ],
+        [["\n", 0]],
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [["a", 3]],
+            [[" ", 3]],
+            [
+              ["c", 3],
+              ["d", 3],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        10
+      )
+    ).toEqual([
+      [[["a", 3]], [[" ", 3]]],
+      [
+        [
+          ["c", 3],
+          ["d", 3],
+        ],
+        [["\n", 0]],
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+            ],
+            [[" ", 3]],
+            [
+              ["d", 1],
+              ["e", 3],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        10
+      )
+    ).toEqual([
+      [
+        [
+          ["a", 3],
+          ["b", 3],
+        ],
+        [[" ", 3]],
+      ],
+      [
+        [
+          ["d", 1],
+          ["e", 3],
+        ],
+        [["\n", 0]],
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+            ],
+            [[" ", 7]],
+            [
+              ["d", 1],
+              ["e", 3],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        10
+      )
+    ).toEqual([
+      [
+        [
+          ["a", 3],
+          ["b", 3],
+        ],
+      ],
+      [[[" ", 7]]],
+      [
+        [
+          ["d", 1],
+          ["e", 3],
+        ],
+        [["\n", 0]],
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+              ["c", 3],
+              ["d", 3],
+              ["e", 3],
+              ["f", 3],
+              ["g", 3],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        10
+      )
+    ).toEqual([
+      [
+        [
+          ["a", 3],
+          ["b", 3],
+          ["c", 3],
+        ],
+      ],
+      [
+        [
+          ["d", 3],
+          ["e", 3],
+          ["f", 3],
+        ],
+      ],
+      [[["g", 3]], [["\n", 0]]],
+    ]);
+  });
+
+  test("practical case 1", () => {
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["c", 1],
+              ["r", 1],
+              ["e", 1],
+              ["a", 1],
+              ["t", 1],
+              ["e", 1],
+            ],
+            [[" ", 1]],
+            [["a", 1]],
+            [[" ", 1]],
+            [
+              ["r", 1],
+              ["e", 1],
+              ["l", 1],
+              ["a", 1],
+              ["t", 1],
+              ["i", 1],
+              ["v", 1],
+              ["e", 1],
+            ],
+            [[" ", 1]],
+            [
+              ["p", 1],
+              ["o", 1],
+              ["s", 1],
+              ["i", 1],
+              ["t", 1],
+            ],
+            [[" ", 1]],
+            [
+              ["f", 1],
+              ["i", 1],
+              ["x", 1],
+              ["a", 1],
+              ["t", 1],
+              ["e", 1],
+              ["d", 1],
+            ],
+            [[" ", 1]],
+            [
+              ["t", 1],
+              ["o", 1],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        12
+      )
+    ).toEqual([
+      [
+        [
+          ["c", 1],
+          ["r", 1],
+          ["e", 1],
+          ["a", 1],
+          ["t", 1],
+          ["e", 1],
+        ],
+        [[" ", 1]],
+        [["a", 1]],
+        [[" ", 1]],
+      ],
+      [
+        [
+          ["r", 1],
+          ["e", 1],
+          ["l", 1],
+          ["a", 1],
+          ["t", 1],
+          ["i", 1],
+          ["v", 1],
+          ["e", 1],
+        ],
+        [[" ", 1]],
+      ],
+      [
+        [
+          ["p", 1],
+          ["o", 1],
+          ["s", 1],
+          ["i", 1],
+          ["t", 1],
+        ],
+        [[" ", 1]],
+      ],
+      [
+        [
+          ["f", 1],
+          ["i", 1],
+          ["x", 1],
+          ["a", 1],
+          ["t", 1],
+          ["e", 1],
+          ["d", 1],
+        ],
+        [[" ", 1]],
+        [
+          ["t", 1],
+          ["o", 1],
+        ],
+        [["\n", 0]],
+      ],
     ]);
   });
 });
