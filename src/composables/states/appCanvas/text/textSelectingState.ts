@@ -3,6 +3,7 @@ import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController } from "../../../textEditor";
 import { translateOnSelection } from "../commons";
 import { AppCanvasState } from "../core";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 interface Option {
   id: string;
@@ -61,6 +62,13 @@ export function newTextSelectingState(option: Option): AppCanvasState {
 
       renderCtx.save();
       renderCtx.transform(...textBounds.affine);
+
+      const style = ctx.getStyleScheme();
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
+      renderCtx.beginPath();
+      renderCtx.strokeRect(textBounds.range.x, textBounds.range.x, textBounds.range.width, textBounds.range.height);
+      renderCtx.stroke();
+
       textEditorController.render(renderCtx);
       renderCtx.restore();
     },
