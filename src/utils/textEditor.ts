@@ -149,133 +149,6 @@ export interface DocCompositionLine {
   outputs: DocOutput;
 }
 
-export function getDocComposition(
-  ctx: CanvasRenderingContext2D,
-  lines: DocCompositionLine[],
-  lineWidth: number
-): DocCompositionItem[] {
-  let ret: DocCompositionItem[] = [];
-
-  lines.forEach((line) => {
-    const lineHeight = line.height;
-    let left = 0;
-    let items: DocCompositionItem[] = [];
-
-    line.outputs.forEach((unit) => {
-      applyDocAttributesToCtx(ctx, unit.attributes);
-
-      for (let i = 0; i < unit.insert.length; i++) {
-        const char = unit.insert[i];
-        // Ignore line break's width for block alignment
-        const width = char === "\n" ? 0 : ctx.measureText(char).width;
-        items.push({
-          char,
-          bounds: { x: left, width, y: line.y, height: lineHeight },
-        });
-        left += width;
-      }
-    });
-
-    // left can represent content width here.
-    const gap = lineWidth - left;
-
-    const block = line.outputs[line.outputs.length - 1];
-    if (block.attributes?.align === "right") {
-      items = items.map((item) => ({
-        ...item,
-        bounds: { ...item.bounds, x: item.bounds.x + gap },
-      }));
-    } else if (block.attributes?.align === "center") {
-      items = items.map((item) => ({
-        ...item,
-        bounds: { ...item.bounds, x: item.bounds.x + gap / 2 },
-      }));
-    }
-
-    ret = ret.concat(items);
-    left = 0;
-  });
-
-  return ret;
-}
-
-export function getLineOutputs(ctx: CanvasRenderingContext2D, doc: DocOutput, range: IRectangle): DocCompositionLine[] {
-  if (doc.length === 0) return [];
-
-  let row = 0;
-  let left = 0;
-
-  const lines: DocOutput[] = [];
-  function pushItem(item: DocDeltaInsert) {
-    lines[row] ??= [];
-    lines[row].push(item);
-  }
-
-  doc.forEach((op) => {
-    applyDocAttributesToCtx(ctx, op.attributes);
-
-    op.insert.split("\n").forEach((line, r) => {
-      if (r !== 0) {
-        // The last part of the previous line
-        pushItem({ insert: "\n", attributes: op.attributes });
-        row += 1;
-        left = 0;
-      }
-
-      if (line === "") return;
-
-      // TODO: a word can be across operations, so this spliting hierarchy isn't correct.
-      line.split(" ").forEach((word, c) => {
-        const wordWithSpace = (c === 0 ? "" : " ") + word;
-        const breaks = getBreakIndicesForWord(ctx, wordWithSpace, range.width - left, range.width);
-        if (!breaks || breaks.length === 0) {
-          pushItem({ insert: wordWithSpace, attributes: op.attributes });
-          left += ctx.measureText(wordWithSpace).width;
-        } else {
-          let prev = 0;
-          breaks.forEach((index) => {
-            const insert = wordWithSpace.slice(prev, index);
-            pushItem({ insert, attributes: op.attributes });
-            row += 1;
-            left = 0;
-            prev = index;
-          });
-
-          const remain = wordWithSpace.slice(breaks[breaks.length - 1]);
-          pushItem({ insert: remain, attributes: op.attributes });
-          left = ctx.measureText(remain).width;
-        }
-      });
-    });
-  });
-
-  let top = 0;
-  const ret = lines.map((line) => {
-    const y = top;
-
-    // Ignore the line break when any other item exists
-    const filtered = line.filter((unit) => unit.insert !== "\n");
-    const adjusted = filtered.length === 0 ? line : filtered;
-    const height = Math.max(...adjusted.map((unit) => getLineHeight(unit.attributes)));
-    top += height;
-    return { y, height, outputs: line };
-  });
-
-  const lastBlock = doc[doc.length - 1].attributes;
-  switch (lastBlock?.direction) {
-    case "middle": {
-      const margin = (range.height - top) / 2;
-      return ret.map((line) => ({ ...line, y: line.y + margin }));
-    }
-    case "bottom": {
-      const margin = range.height - top;
-      return ret.map((line) => ({ ...line, y: line.y + margin }));
-    }
-    default:
-      return ret;
-  }
-}
-
 export function getCursorLocationAt(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
@@ -542,6 +415,11 @@ export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext
   return ret;
 }
 
+function isMultiByte(c: string) {
+  const p = c.codePointAt(0);
+  return p ? p > 255 : true;
+}
+
 type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
 
 export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, number>): WordItem[][] {
@@ -557,6 +435,7 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
   doc.forEach((op) => {
     for (let i = 0; i < op.insert.length; i++) {
       const c = op.insert[i];
+
       if (c === "\n") {
         if (word.length > 0) line.push(word);
         line.push([[c, getW(), op.attributes]]);
@@ -567,6 +446,9 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
         if (word.length > 0) line.push(word);
         line.push([[c, getW(), op.attributes]]);
         word = [];
+      } else if (isMultiByte(c)) {
+        if (word.length > 0) line.push(word);
+        word = [[c, getW(), op.attributes]];
       } else {
         word.push([c, getW(), op.attributes]);
       }

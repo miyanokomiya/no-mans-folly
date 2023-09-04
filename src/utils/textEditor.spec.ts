@@ -306,6 +306,21 @@ describe("splitOutputsIntoLineWord", () => {
       ],
     ]);
   });
+
+  test("should split multiple byte words into individual words", () => {
+    const attrs0 = { size: 1 } as const;
+    expect(splitOutputsIntoLineWord([{ insert: "abここ\n", attributes: attrs0 }])).toEqual([
+      [
+        [
+          ["a", 0, attrs0],
+          ["b", 0, attrs0],
+        ],
+        [["こ", 0, attrs0]],
+        [["こ", 0, attrs0]],
+        [["\n", 0, attrs0]],
+      ],
+    ]);
+  });
 });
 
 describe("applyRangeWidthToLineWord", () => {
