@@ -32,8 +32,15 @@ export function newShapeStore(option: Option) {
 
   const tmpShapeMapCallback = newCallback();
 
+  function refresh(_ydoc: Y.Doc) {
+    shapeSelectable.clearAllSelected();
+    setTmpShapeMap({});
+    entityStore.refresh(_ydoc);
+  }
+
   return {
     ...entityStore,
+    refresh,
 
     watchSelected: shapeSelectable.watchSelected,
     getSelected: shapeSelectable.getSelected,

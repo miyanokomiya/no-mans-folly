@@ -10,7 +10,12 @@ type Option = {
 };
 
 export function newEntityStore<T extends Entity>(option: Option) {
-  const entityMap: Y.Map<Y.Map<any>> = option.ydoc.getMap(option.name);
+  let ydoc: Y.Doc;
+  let entityMap: Y.Map<Y.Map<any>>;
+  let unobserve: () => void;
+
+  const callback = newCallback<Set<string>>();
+  const watch = callback.bind;
 
   let entries: T[] = [];
   function cacheEntities() {
@@ -18,6 +23,18 @@ export function newEntityStore<T extends Entity>(option: Option) {
     list.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
     entries = list;
   }
+
+  function refresh(_ydoc: Y.Doc) {
+    unobserve?.();
+    ydoc = _ydoc;
+    entityMap = ydoc.getMap(option.name);
+    unobserve = observeEntityMap(entityMap, (ids: Set<string>) => {
+      cacheEntities();
+      callback.dispatch(ids);
+    });
+    cacheEntities();
+  }
+  refresh(option.ydoc);
 
   function getEntities(): T[] {
     return entries;
@@ -103,21 +120,15 @@ export function newEntityStore<T extends Entity>(option: Option) {
   }
 
   function transact(fn: () => void) {
-    option.ydoc.transact(fn);
+    ydoc.transact(fn);
   }
-
-  const callback = newCallback<Set<string>>();
-  const watch = callback.bind;
-  observeEntityMap(entityMap, (ids: Set<string>) => {
-    cacheEntities();
-    callback.dispatch(ids);
-  });
 
   function getScope(): Y.AbstractType<any> {
     return entityMap;
   }
 
   return {
+    refresh,
     getEntities,
     getEntityMap,
     getEntity,
@@ -176,8 +187,8 @@ export function newSingleEntityStore<T extends Entity>(option: Option) {
   };
 }
 
-export function observeEntityMap(entityMap: Y.Map<any>, fn: (ids: Set<string>) => void) {
-  entityMap.observeDeep((arg) => {
+export function observeEntityMap(entityMap: Y.Map<any>, fn: (ids: Set<string>) => void): () => void {
+  const callback = (arg: Array<Y.YEvent<any>>) => {
     const ids = new Set<string>();
     arg.forEach((a) => {
       if (a.target === entityMap) {
@@ -189,5 +200,7 @@ export function observeEntityMap(entityMap: Y.Map<any>, fn: (ids: Set<string>) =
       }
     });
     fn(ids);
-  });
+  };
+  entityMap.observeDeep(callback);
+  return () => entityMap.unobserveDeep(callback);
 }

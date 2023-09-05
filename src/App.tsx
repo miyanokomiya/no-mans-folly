@@ -26,22 +26,40 @@ dbProviderDiagram.on("synced", () => {
 const diagramStore = newDiagramStore({ ydoc: yDiagramDoc });
 const sheetStore = newSheetStore({ ydoc: yDiagramDoc });
 
-const ySheetDoc = new Y.Doc();
-const dbProviderSheet = new IndexeddbPersistence("test-project-sheet", ySheetDoc);
-dbProviderSheet.on("synced", () => {
-  console.log("content from the database is loaded: sheet");
-});
+let ySheetDoc = new Y.Doc();
 const layerStore = newLayerStore({ ydoc: ySheetDoc });
 const shapeStore = newShapeStore({ ydoc: ySheetDoc });
 const documentStore = newDocumentStore({ ydoc: ySheetDoc });
-const undoManager = new Y.UndoManager(
-  // Must be ones in the same Y.Doc
-  [layerStore.getScope(), shapeStore.getScope(), documentStore.getScope()],
-  {
-    captureTimeout: 0,
+
+function createUndoManager() {
+  return new Y.UndoManager(
+    // Must be ones in the same Y.Doc
+    [layerStore.getScope(), shapeStore.getScope(), documentStore.getScope()],
+    {
+      captureTimeout: 0,
+    }
+  );
+}
+let undoManager = createUndoManager();
+
+sheetStore.watchSelected(() => {
+  const sheet = sheetStore.getSelectedSheet();
+  if (sheet) {
+    undoManager.destroy();
+    ySheetDoc.destroy();
+    ySheetDoc = new Y.Doc();
+    const dbProviderSheet = new IndexeddbPersistence(sheet.id, ySheetDoc);
+    dbProviderSheet.on("synced", () => {
+      console.log("content from the database is loaded: sheet ", sheet.id);
+    });
+
+    layerStore.refresh(ySheetDoc);
+    shapeStore.refresh(ySheetDoc);
+    documentStore.refresh(ySheetDoc);
+    undoManager = createUndoManager();
+    undoManager.clear();
   }
-);
-// undoManager.captureTimeout = 0;
+});
 
 const acctx = {
   diagramStore,
@@ -58,7 +76,6 @@ const acctx = {
     },
   },
 };
-undoManager.clear();
 createInitialEntities(acctx);
 
 const smctx = createStateMachineContext({

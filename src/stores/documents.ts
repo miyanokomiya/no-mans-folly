@@ -10,7 +10,12 @@ type Option = {
 };
 
 export function newDocumentStore(option: Option) {
-  const entityMap: Y.Map<Y.Text> = option.ydoc.getMap("document_store");
+  let ydoc: Y.Doc;
+  let entityMap: Y.Map<Y.Text>;
+  let unobserve: () => void;
+
+  const callback = newCallback<Set<string>>();
+  const watch = callback.bind;
 
   function getDocMap(): { [id: string]: DocOutput } {
     const ret: { [id: string]: DocOutput } = {};
@@ -19,6 +24,16 @@ export function newDocumentStore(option: Option) {
     });
     return ret;
   }
+
+  function refresh(_ydoc: Y.Doc) {
+    unobserve?.();
+    ydoc = _ydoc;
+    entityMap = ydoc.getMap("document_store");
+    unobserve = observeEntityMap(entityMap, (ids: Set<string>) => {
+      callback.dispatch(ids);
+    });
+  }
+  refresh(option.ydoc);
 
   function addDoc(id: string, delta: DocDelta) {
     const text = new Y.Text();
@@ -72,11 +87,8 @@ export function newDocumentStore(option: Option) {
     return entityMap;
   }
 
-  const callback = newCallback<Set<string>>();
-  const watch = callback.bind;
-  observeEntityMap(entityMap, callback.dispatch);
-
   return {
+    refresh,
     getDocMap,
     addDoc,
     deleteDoc,

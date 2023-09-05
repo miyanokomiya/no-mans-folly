@@ -22,8 +22,13 @@ export function newLayerStore(option: Option) {
   }
   const watchSelected = selectedIdStore.watch;
 
+  function refresh(_ydoc: Y.Doc) {
+    entityStore.refresh(_ydoc);
+  }
+
   return {
     ...entityStore,
+    refresh,
     getSelectedLayer,
     selectLayer,
     watchSelected,

@@ -10,6 +10,7 @@ import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/app
 import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
 import { newDocumentStore } from "../stores/documents";
+import { generateKeyBetween } from "fractional-indexing";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
@@ -24,12 +25,12 @@ interface IAppCanvasContext {
 export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);
 
 export function createInitialEntities(acctx: IAppCanvasContext, _generateId = generateUuid) {
-  acctx.diagramStore.patchEntity({ id: "default", findex: "0" });
+  acctx.diagramStore.patchEntity({ id: "default", findex: generateKeyBetween(null, null) });
   const sheetId = "default";
-  acctx.sheetStore.addEntity({ id: sheetId, findex: "0", name: "New Sheet" });
+  acctx.sheetStore.addEntity({ id: sheetId, findex: generateKeyBetween(null, null), name: "New Sheet" });
   acctx.sheetStore.selectSheet(sheetId);
   const layerId = "default";
-  acctx.layerStore.addEntity({ id: layerId, findex: "0", name: "New Layer" });
+  acctx.layerStore.addEntity({ id: layerId, findex: generateKeyBetween(null, null), name: "New Layer" });
   acctx.layerStore.selectLayer(layerId);
 }
 
