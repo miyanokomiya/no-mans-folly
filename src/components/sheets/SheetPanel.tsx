@@ -1,14 +1,23 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Sheet } from "../../models";
+import { PopupButton } from "../atoms/PopupButton";
+import { useOutsideClickCallback } from "../../composables/window";
+import iconDots from "../../assets/icons/three_dots_v.svg";
+import { TextInput } from "../atoms/inputs/TextInput";
 
 interface Props {
   sheet: Sheet;
   onClickSheet?: (id: string) => void;
   selected?: boolean;
-  index?: number;
+  index: number;
+  onChangeName?: (id: string, name: string) => void;
 }
 
-export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, index }) => {
+export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, index, onChangeName }) => {
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+
   const _onClickSheet = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -17,19 +26,86 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
     [onClickSheet]
   );
 
-  const rootClass = "border rounded flex p-1 bg-white relative" + (selected ? " border-sky-400" : "");
+  const rootClass = "border rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
+
+  const closePopup = useCallback(() => {
+    setPopupOpen(false);
+  }, []);
+
+  const { ref } = useOutsideClickCallback<HTMLDivElement>(closePopup);
+
+  const _onClickRename = useCallback(() => {
+    setPopupOpen(false);
+    setDraftName(sheet.name);
+    setRenaming(true);
+  }, [sheet]);
+
+  const _onChangeName = useCallback((val: string) => {
+    setDraftName(val);
+  }, []);
+
+  const onSubmitName = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      onChangeName?.(sheet.id, draftName);
+      setRenaming(false);
+    },
+    [sheet, draftName]
+  );
+
+  const cancelRename = useCallback(() => {
+    setRenaming(false);
+  }, []);
+
+  const popupMenu = useMemo(() => {
+    return (
+      <div className="flex flex-col bg-white">
+        <button type="button" className="hover:bg-gray-200 p-1" onClick={_onClickRename}>
+          Rename
+        </button>
+      </div>
+    );
+  }, []);
+
+  const content = useMemo(() => {
+    if (renaming) {
+      return (
+        <form className="w-full h-full flex items-center" onSubmit={onSubmitName}>
+          <TextInput value={draftName} onChange={_onChangeName} onBlur={cancelRename} autofocus keepFocus />
+        </form>
+      );
+    } else {
+      return (
+        <a href={`TODO`} onClick={_onClickSheet} className="w-full h-full flex items-center" data-anchor>
+          <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
+        </a>
+      );
+    }
+  }, [renaming, draftName]);
+
+  const onClickMenuButton = useCallback(() => {
+    setPopupOpen(!popupOpen);
+  }, [popupOpen]);
 
   return (
     <div className={rootClass}>
-      <a href={`TODO`} onClick={_onClickSheet} className="w-20 h-20">
-        <div className="text-ellipsis overflow-hidden">{sheet.id}</div>
-        <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
-      </a>
-      {index ? (
-        <div className="absolute right-0.5 bottom-0.5 rounded-full h-5 px-1 bg-white border text-sm flex items-center justify-center pointer-events-none">
+      <div className="flex justify-between">
+        <div className="rounded-full h-5 px-1 bg-white border text-sm flex items-center justify-center pointer-events-none">
           {index}
         </div>
-      ) : undefined}
+        <div ref={ref} className="">
+          <PopupButton
+            name="sheet"
+            popupPosition="left"
+            popup={popupMenu}
+            opened={popupOpen}
+            onClick={onClickMenuButton}
+          >
+            <img src={iconDots} alt="Menu" className="w-4 h-4" />
+          </PopupButton>
+        </div>
+      </div>
+      <div className="w-24 h-8 text-sm whitespace-nowrap">{content}</div>
     </div>
   );
 };

@@ -60,13 +60,20 @@ export const SheetList: React.FC = () => {
     acctx.sheetStore.deleteEntities([selectedSheet.id]);
   }, [acctx.sheetStore, selectedSheet]);
 
+  const onChangeName = useCallback(
+    (id: string, name: string) => {
+      acctx.sheetStore.patchEntity(id, { name });
+    },
+    [acctx.sheetStore]
+  );
+
   const sheetItems = useMemo<[string, React.ReactNode][]>(() => {
     const sheets = acctx.sheetStore.getEntities();
     return sheets.map((s, i) => {
       return [
         s.id,
         <div key={s.id}>
-          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} index={i + 1} />{" "}
+          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} index={i + 1} onChangeName={onChangeName} />{" "}
         </div>,
       ];
     });
@@ -97,7 +104,7 @@ export const SheetList: React.FC = () => {
         </button>
       </div>
       <div className="overflow-y-scroll" style={{ maxHeight: "calc(100vh - 100px)" }}>
-        <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} />
+        <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
       </div>
     </div>
   );

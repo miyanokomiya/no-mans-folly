@@ -4,11 +4,12 @@ import { IVec2, getDistance } from "okageo";
 
 interface Props {
   items: [id: string, element: React.ReactNode][];
+  anchor?: string;
   onClick?: (id: string) => void;
   onChange?: (insertion: [from: number, to: number]) => void;
 }
 
-export const SortableListV: React.FC<Props> = ({ items, onClick, onChange }) => {
+export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, anchor }) => {
   const [targetId, setTargetId] = useState("");
   const [startP, setStartP] = useState<IVec2 | undefined>();
   const [movingP, setMovingP] = useState<IVec2 | undefined>();
@@ -16,14 +17,18 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange }) => 
   const [insertion, setInsertion] = useState<[from: number, to: number] | undefined>();
   const containerRed = useRef<HTMLDivElement>(null);
 
-  const onDown = useCallback((e: React.MouseEvent) => {
-    const id = e.currentTarget.getAttribute("data-id");
-    if (!id) return;
+  const onDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (anchor && !(e.target as HTMLElement).closest(anchor)) return;
+      const id = e.currentTarget.getAttribute("data-id");
+      if (!id) return;
 
-    e.preventDefault();
-    setTargetId(id);
-    setStartP({ x: e.pageX, y: e.pageY });
-  }, []);
+      e.preventDefault();
+      setTargetId(id);
+      setStartP({ x: e.pageX, y: e.pageY });
+    },
+    [anchor]
+  );
 
   const onMove = useCallback(
     (e: MouseEvent) => {

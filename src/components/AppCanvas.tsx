@@ -246,10 +246,25 @@ export function AppCanvas() {
     textEditing,
   ]);
 
+  const [focused, setFocused] = useState(false);
+  const focus = useCallback(
+    (force = false) => {
+      if (textEditing || (!force && document.activeElement?.getAttribute("data-keep-focus"))) return;
+      wrapperRef.current?.focus();
+    },
+    [textEditing]
+  );
+
+  const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
+  const focusBackTextEditor = useCallback(() => {
+    setTextEditorFocusKey({});
+  }, []);
+
   const [downTimestamp, setDownTimestamp] = useState(0);
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
+      focus(true);
 
       const data = {
         point: viewToCanvas(getMousePoint()),
@@ -264,7 +279,7 @@ export function AppCanvas() {
       }
       setDownTimestamp(timestamp);
     },
-    [getMousePoint, viewToCanvas, smctx, downTimestamp]
+    [getMousePoint, viewToCanvas, smctx, downTimestamp, focus]
   );
 
   const onMouseMove = useCallback(
@@ -288,12 +303,6 @@ export function AppCanvas() {
     [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, smctx]
   );
   useGlobalMousemoveEffect(onMouseMove);
-
-  const [focused, setFocused] = useState(false);
-  const focus = useCallback(() => {
-    if (textEditing || document.activeElement?.getAttribute("data-keep-focus")) return;
-    wrapperRef.current?.focus();
-  }, [textEditing]);
 
   const onFocus = useCallback(() => {
     setFocused(true);
@@ -414,11 +423,6 @@ export function AppCanvas() {
     const attrs = getDocAttributes(doc);
     return { cursor: attrs, block: attrs, doc: attrs };
   }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, acctx.documentStore]);
-
-  const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
-  const focusBackTextEditor = useCallback(() => {
-    setTextEditorFocusKey({});
-  }, []);
 
   const textEditor = textEditing ? (
     <TextEditor
