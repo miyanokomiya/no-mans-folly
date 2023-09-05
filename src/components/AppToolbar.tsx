@@ -87,7 +87,7 @@ export const AppToolbar: React.FC = () => {
       case "shapes":
         return (
           <div
-            className="absolute left-0 border p-1 rounded shadow"
+            className="bg-white absolute left-0 border p-1 rounded shadow"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             {shapeList.map((shape) => (
@@ -105,7 +105,7 @@ export const AppToolbar: React.FC = () => {
       case "lines":
         return (
           <div
-            className="absolute left-0 border p-1 rounded shadow"
+            className="bg-white absolute left-0 border p-1 rounded shadow"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             {lineList.map((shape) => (
@@ -126,7 +126,7 @@ export const AppToolbar: React.FC = () => {
   }
 
   return (
-    <div className="relative border border-1 p-1 rounded shadow flex flex-col">
+    <div className="bg-white relative border border-1 p-1 rounded shadow flex flex-col">
       <button type="button" className={getButtonClass(popup === "shapes")} onClick={onClickShapeButton}>
         <img src={iconRectangle} alt="shapes" />
       </button>

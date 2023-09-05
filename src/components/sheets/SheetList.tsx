@@ -5,6 +5,7 @@ import { generateUuid } from "../../utils/random";
 import { generateKeyBetween } from "fractional-indexing";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDelete from "../../assets/icons/delete_filled.svg";
+import { SortableListV } from "../atoms/SortableListV";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -59,19 +60,34 @@ export const SheetList: React.FC = () => {
     acctx.sheetStore.deleteEntities([selectedSheet.id]);
   }, [acctx.sheetStore, selectedSheet]);
 
-  const sheetPanels = useMemo(() => {
+  const sheetItems = useMemo<[string, React.ReactNode][]>(() => {
     const sheets = acctx.sheetStore.getEntities();
-    return sheets.map((s) => {
-      return (
-        <div key={s.id} className="">
-          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} onClickSheet={onClickSheet} />{" "}
-        </div>
-      );
+    return sheets.map((s, i) => {
+      return [
+        s.id,
+        <div key={s.id}>
+          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} index={i + 1} />{" "}
+        </div>,
+      ];
     });
   }, [acctx.sheetStore, sheetState, onClickSheet]);
 
+  const onChangeOrder = useCallback(
+    ([from, to]: [number, number]) => {
+      const sheets = acctx.sheetStore.getEntities();
+      const target = sheets[from];
+      const beforeFindex = sheets[to - 1]?.findex ?? null;
+      const nextFindex = sheets[to]?.findex ?? null;
+
+      acctx.sheetStore.patchEntity(target.id, {
+        findex: generateKeyBetween(beforeFindex, nextFindex),
+      });
+    },
+    [acctx.sheetStore]
+  );
+
   return (
-    <div className="border rounded flex flex-col p-1 gap-1">
+    <div className="bg-white border rounded flex flex-col p-1 gap-1">
       <div className="flex justify-between gap-1">
         <button type="button" className="w-6 h-6 p-1 border rounded" onClick={onClickDelete}>
           <img src={iconDelete} alt="Delete Sheet" />
@@ -80,7 +96,9 @@ export const SheetList: React.FC = () => {
           <img src={iconAdd} alt="Add Sheet" />
         </button>
       </div>
-      <div className="flex flex-col items-center gap-1">{sheetPanels}</div>
+      <div className="overflow-y-scroll" style={{ maxHeight: "calc(100vh - 100px)" }}>
+        <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} />
+      </div>
     </div>
   );
 };
