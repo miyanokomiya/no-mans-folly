@@ -103,7 +103,7 @@ export const SheetList: React.FC = () => {
           <img src={iconAdd} alt="Add Sheet" />
         </button>
       </div>
-      <div className="overflow-y-scroll" style={{ maxHeight: "calc(100vh - 100px)" }}>
+      <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
         <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
       </div>
     </div>

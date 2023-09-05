@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Sheet } from "../../models";
-import { PopupButton } from "../atoms/PopupButton";
+import { FixedPopupButton } from "../atoms/PopupButton";
 import { useOutsideClickCallback } from "../../composables/window";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
@@ -94,15 +94,15 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
           {index}
         </div>
         <div ref={ref} className="">
-          <PopupButton
+          <FixedPopupButton
             name="sheet"
-            popupPosition="left"
+            popupPosition="right"
             popup={popupMenu}
             opened={popupOpen}
             onClick={onClickMenuButton}
           >
             <img src={iconDots} alt="Menu" className="w-4 h-4" />
-          </PopupButton>
+          </FixedPopupButton>
         </div>
       </div>
       <div className="w-24 h-8 text-sm whitespace-nowrap">{content}</div>

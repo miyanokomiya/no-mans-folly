@@ -114,6 +114,15 @@ export function useGlobalPasteEffect(fn: (e: ClipboardEvent, option: ModifierOpt
   }, [trackKeyDown, trackKeyUp, _fn]);
 }
 
+export function useGlobalScroll(fn: (e: Event) => void) {
+  useEffect(() => {
+    window.addEventListener("scroll", fn, true);
+    return () => {
+      window.removeEventListener("scroll", fn, true);
+    };
+  }, [fn]);
+}
+
 export function useElementLocation<T extends HTMLElement>(dep: any) {
   const ref = useRef<T>(null);
   const windowSize = useWindow();
