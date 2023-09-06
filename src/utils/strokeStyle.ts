@@ -16,4 +16,6 @@ export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeSt
   ctx.strokeStyle = rednerRGBA(stroke.color);
   ctx.lineWidth = stroke.width ?? 1;
   ctx.setLineDash([]);
+  ctx.lineCap = "butt";
+  ctx.lineJoin = "miter";
 }
