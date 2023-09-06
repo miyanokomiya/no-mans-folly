@@ -13,6 +13,7 @@ import { LineShape } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingShapeState } from "../movingShapeState";
+import { newMovingNewVertexState } from "./movingNewVertexState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -43,6 +44,9 @@ export function newLineSelectedState(): AppCanvasState {
                     return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                   case "edge":
                     return newMovingShapeState;
+                  case "new-vertex-anchor":
+                    return () =>
+                      newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });
                 }
               }
 

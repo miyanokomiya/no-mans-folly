@@ -30,6 +30,17 @@ export function newConnectedLineHandler(option: Option) {
           ret[line.id] ??= {};
           ret[line.id].q = q;
         }
+
+        if (line.body) {
+          line.body.forEach((b, i) => {
+            if (b.c?.id === id) {
+              const next = { ...b, p: getLocationFromRateOnRectPath(rectPath, rotation, b.c.rate) };
+              ret[line.id] ??= {};
+              ret[line.id].body ??= line.body!.concat();
+              ret[line.id].body![i] = next;
+            }
+          });
+        }
       });
     });
 
@@ -53,11 +64,21 @@ export function getConnectedLineInfoMap(ctx: Pick<AppCanvasStateContext, "getSha
       if (line.pConnection && selectedIdMap[line.pConnection.id]) {
         connectedLineInfoMap[line.pConnection.id] ??= [];
         connectedLineInfoMap[line.pConnection.id].push(line);
+        return;
       }
       if (line.qConnection && selectedIdMap[line.qConnection.id]) {
         connectedLineInfoMap[line.qConnection.id] ??= [];
         connectedLineInfoMap[line.qConnection.id].push(line);
+        return;
       }
+
+      line.body?.some((b) => {
+        if (b.c && selectedIdMap[b.c.id]) {
+          connectedLineInfoMap[b.c.id] ??= [];
+          connectedLineInfoMap[b.c.id].push(line);
+          return true;
+        }
+      });
     });
 
   return connectedLineInfoMap;

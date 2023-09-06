@@ -7,6 +7,8 @@ import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from 
 import { clipLineHead, renderLineHead } from "./lineHeads";
 import { applyPath } from "../utils/renderer";
 
+export type LineType = undefined | "elbow";
+
 export interface LineShape extends Shape {
   fill: FillStyle;
   stroke: StrokeStyle;
@@ -15,6 +17,8 @@ export interface LineShape extends Shape {
   qConnection?: ConnectionPoint;
   pHead?: LineHead;
   qHead?: LineHead;
+  body?: { p: IVec2; c?: ConnectionPoint }[];
+  lineType?: LineType;
 }
 
 export const struct: ShapeStruct<LineShape> = {
@@ -27,6 +31,8 @@ export const struct: ShapeStruct<LineShape> = {
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
       q: arg.q ?? { x: 100, y: 0 },
+      body: arg.body,
+      lineType: arg.lineType,
     };
     if (arg.pConnection) obj.pConnection = arg.pConnection;
     if (arg.qConnection) obj.qConnection = arg.qConnection;
@@ -107,7 +113,7 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(getOuterRectangle([getLinePath(shape)]));
   },
   isPointOn(shape, p) {
-    return isPointCloseToSegment(getLinePath(shape), p, 10);
+    return getEdges(shape).some((seg) => isPointCloseToSegment(seg, p, 10));
   },
   resize(shape, resizingAffine) {
     const [p, q] = getLinePath(shape).map((p) => applyAffine(resizingAffine, p));
@@ -144,7 +150,7 @@ export const struct: ShapeStruct<LineShape> = {
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {
-  return [shape.p, shape.q];
+  return [shape.p, ...(shape.body?.map((b) => b.p) ?? []), shape.q];
 }
 
 export function getEdges(shape: LineShape): ISegment[] {
@@ -157,30 +163,73 @@ export function getEdges(shape: LineShape): ISegment[] {
   return ret;
 }
 
-export function patchVertex(shape: LineShape, index: number, p: IVec2): Partial<LineShape> {
+// When "c" is "undefined", the connection will be deleted.
+export function patchVertex(
+  shape: LineShape,
+  index: number,
+  p: IVec2,
+  c: ConnectionPoint | undefined
+): Partial<LineShape> {
   const vertices = getLinePath(shape);
   switch (index) {
     case 0:
-      return { p };
+      return { p, pConnection: c };
     case vertices.length - 1:
-      return { q: p };
+      return { q: p, qConnection: c };
     default:
-      return {};
+      return shape.body ? { body: shape.body.map((b, i) => (i + 1 === index ? { ...b, p, c } : b)) } : {};
   }
 }
 
 export function patchConnection(shape: LineShape, index: number, connection?: ConnectionPoint): Partial<LineShape> {
-  if (index === 0) {
-    if (!shape.pConnection && !connection) return {};
-    if (shape.pConnection && !connection) return { pConnection: undefined };
-    return { pConnection: connection };
-  } else {
-    if (!shape.qConnection && !connection) return {};
-    if (shape.qConnection && !connection) return { qConnection: undefined };
-    return { qConnection: connection };
+  const vertices = getLinePath(shape);
+  switch (index) {
+    case 0: {
+      if (!shape.pConnection && !connection) return {};
+      if (shape.pConnection && !connection) return { pConnection: undefined };
+      return { pConnection: connection };
+    }
+    case vertices.length - 1: {
+      if (!shape.qConnection && !connection) return {};
+      if (shape.qConnection && !connection) return { qConnection: undefined };
+      return { qConnection: connection };
+    }
+    default: {
+      if (!shape.body) {
+        return {};
+      } else {
+        const next = shape.body.concat();
+        if (!next[index - 1]) return {};
+
+        next[index - 1] = { ...next[index - 1], c: connection };
+        return { body: next };
+      }
+    }
   }
 }
 
 export function getConnection(shape: LineShape, index: number): ConnectionPoint | undefined {
-  return index === 0 ? shape.pConnection : shape.qConnection;
+  const vertices = getLinePath(shape);
+  switch (index) {
+    case 0:
+      return shape.pConnection;
+    case vertices.length - 1:
+      return shape.qConnection;
+    default:
+      return shape.body?.[index - 1].c;
+  }
+}
+
+export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: ConnectionPoint): Partial<LineShape> {
+  switch (index) {
+    case 0:
+      return {};
+    default:
+      if (shape.body) {
+        const body = [...shape.body.slice(0, index - 1), { p, c }, ...shape.body.slice(index - 1)];
+        return { body };
+      } else {
+        return { body: [{ p, c }] };
+      }
+  }
 }

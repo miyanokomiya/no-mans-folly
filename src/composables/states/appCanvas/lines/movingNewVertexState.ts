@@ -1,23 +1,23 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent, translateOnSelection } from "../commons";
-import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
-import { add, sub } from "okageo";
+import { LineShape, addNewVertex } from "../../../../shapes/line";
+import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 
 interface Option {
   lineShape: LineShape;
   index: number;
+  p: IVec2;
 }
 
-export function newMovingLineVertexState(option: Option): AppCanvasState {
-  const origin = getLinePath(option.lineShape)[option.index];
-  let vertex = origin;
+export function newMovingNewVertexState(option: Option): AppCanvasState {
+  let vertex = option.p;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
 
   return {
-    getLabel: () => "MovingLineVertex",
+    getLabel: () => "MovingNewVertex",
     onStart: async (ctx) => {
       ctx.startDragging();
 
@@ -40,15 +40,15 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
           if (connectionResult) {
             vertex = connectionResult.p;
-            ctx.setTmpShapeMap({
-              [option.lineShape.id]: patchVertex(option.lineShape, option.index, vertex, connectionResult.connection),
-            });
           } else {
-            vertex = add(origin, sub(point, event.data.start));
-            ctx.setTmpShapeMap({
-              [option.lineShape.id]: patchVertex(option.lineShape, option.index, vertex, undefined),
-            });
+            vertex = event.data.current;
           }
+
+          ctx.setTmpShapeMap({
+            [option.lineShape.id]: {
+              ...addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection),
+            },
+          });
           return;
         }
         case "pointerup": {
