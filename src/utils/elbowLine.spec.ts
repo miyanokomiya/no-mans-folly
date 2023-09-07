@@ -95,14 +95,14 @@ describe("getOptimalElbowBody", () => {
       expect(
         getOptimalElbowBody(
           { x: 2, y: 10 },
-          { x: 20, y: 8 },
+          { x: 30, y: 8 },
           { x: 0, y: 0, width: 10, height: 10 },
-          { x: 20, y: 5, width: 10, height: 10 }
+          { x: 30, y: 5, width: 10, height: 10 }
         )
       ).toEqual([
         { x: 2, y: 20 },
-        { x: 15, y: 20 },
-        { x: 15, y: 8 },
+        { x: 20, y: 20 },
+        { x: 20, y: 8 },
       ]);
     });
 
@@ -155,12 +155,12 @@ describe("getOptimalElbowBody", () => {
           { x: 2, y: 10 },
           { x: -10, y: 8 },
           { x: 0, y: 0, width: 10, height: 10 },
-          { x: -20, y: 5, width: 10, height: 10 }
+          { x: -30, y: 5, width: 10, height: 10 }
         )
       ).toEqual([
         { x: 2, y: 20 },
-        { x: -5, y: 20 },
-        { x: -5, y: 8 },
+        { x: -10, y: 20 },
+        { x: -10, y: 8 },
       ]);
     });
 
@@ -536,16 +536,16 @@ describe("getOptimalElbowBody", () => {
     test("should be rotated version of 2 - 4", () => {
       const result = getOptimalElbowBody(
         { x: 0, y: 3 },
-        { x: 24, y: 20 },
+        { x: 24, y: 30 },
         { x: 0, y: 0, width: 10, height: 10 },
-        { x: 20, y: 20, width: 10, height: 10 }
+        { x: 20, y: 30, width: 10, height: 10 }
       );
       expect(result[0].x).toBeCloseTo(-10);
       expect(result[0].y).toBeCloseTo(3);
       expect(result[1].x).toBeCloseTo(-10);
-      expect(result[1].y).toBeCloseTo(15);
+      expect(result[1].y).toBeCloseTo(20);
       expect(result[2].x).toBeCloseTo(24);
-      expect(result[2].y).toBeCloseTo(15);
+      expect(result[2].y).toBeCloseTo(20);
     });
   });
 

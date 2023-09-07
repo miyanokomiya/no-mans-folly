@@ -100,7 +100,6 @@ export function getConnectedLineInfoMap(ctx: Pick<AppCanvasStateContext, "getSha
   Object.values(shapeMap)
     .filter((s): s is LineShape => s.type === "line")
     .forEach((line) => {
-      if (selectedIdMap[line.id]) return false;
       if (line.pConnection && selectedIdMap[line.pConnection.id]) {
         connectedLineInfoMap[line.pConnection.id] ??= [];
         connectedLineInfoMap[line.pConnection.id].push(line);

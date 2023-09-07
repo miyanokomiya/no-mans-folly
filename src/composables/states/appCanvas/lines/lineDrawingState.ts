@@ -1,37 +1,62 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
 import { renderShape } from "../../../../shapes";
-import { LineShape } from "../../../../shapes/line";
+import { LineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import { translateOnSelection } from "../commons";
+import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
+import { applyFillStyle } from "../../../../utils/fillStyle";
 
 interface Option {
   shape: LineShape;
 }
 
 export function newLineDrawingState(option: Option): AppCanvasState {
-  const shape = option.shape;
-  let q = option.shape.p;
+  let shape = option.shape;
+  let vertex = option.shape.p;
+  let lineSnapping: LineSnapping;
+  let connectionResult: ConnectionResult | undefined;
+  let elbowHandler: ElbowLineHandler | undefined;
 
   return {
     getLabel: () => "LineDrawing",
     onStart: async (ctx) => {
       ctx.startDragging();
-      ctx.setCursor("crosshair");
+
+      const shapeMap = ctx.getShapeMap();
+      const selectedIds = ctx.getSelectedShapeIdMap();
+      lineSnapping = newLineSnapping({
+        snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
+        getShapeStruct: ctx.getShapeStruct,
+      });
+
+      elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
-      ctx.setCursor();
     },
     handleEvent: async (ctx, event) => {
       switch (event.type) {
-        case "pointermove":
-          q = event.data.current;
+        case "pointermove": {
+          const point = event.data.current;
+          connectionResult = lineSnapping.testConnection(point, ctx.getScale());
+          vertex = connectionResult?.p ?? point;
+          const patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
+
+          if (elbowHandler) {
+            const body = elbowHandler.optimizeElbow({ ...option.shape, ...patch });
+            shape = { ...option.shape, ...patch, body };
+          } else {
+            shape = { ...option.shape, ...patch };
+          }
+
           ctx.setTmpShapeMap({});
           return;
+        }
         case "pointerup":
-          if (!q) return;
-          ctx.addShapes([{ ...shape, q } as LineShape]);
+          if (!vertex) return;
+          ctx.addShapes([shape]);
           ctx.selectShape(shape.id);
           return newLineSelectedState;
         case "keydown":
@@ -51,8 +76,25 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      if (!q) return;
-      renderShape(ctx.getShapeStruct, renderCtx, { ...shape, q });
+      if (!vertex) return;
+
+      renderShape(ctx.getShapeStruct, renderCtx, shape);
+
+      const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+      const vertexSize = 8 * scale;
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
+      renderCtx.beginPath();
+      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
+      renderCtx.fill();
+
+      if (connectionResult) {
+        renderConnectionResult(renderCtx, {
+          result: connectionResult,
+          scale: ctx.getScale(),
+          style: ctx.getStyleScheme(),
+        });
+      }
     },
   };
 }
