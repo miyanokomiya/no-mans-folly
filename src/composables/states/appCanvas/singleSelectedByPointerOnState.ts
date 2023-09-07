@@ -9,6 +9,7 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
   return {
     getLabel: () => "SingleSelectedByPointerOn",
     onStart: async (ctx) => {
+      ctx.hideFloatMenu();
       ctx.startDragging();
     },
     onEnd: async (ctx) => {

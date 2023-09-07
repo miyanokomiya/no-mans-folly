@@ -21,10 +21,11 @@ export function newElbowLineHandler(option: Option) {
 export type ElbowLineHandler = ReturnType<typeof newElbowLineHandler>;
 
 function getTargetRects(option: Option, line: LineShape): [IRectangle, IRectangle] {
+  const shapeMap = option.getShapeMap();
+
   let pRect: IRectangle;
-  if (line.pConnection) {
-    const target = option.getShapeMap()[line.pConnection.id];
-    pRect = getWrapperRect(option.getShapeStruct, target);
+  if (line.pConnection && shapeMap[line.pConnection.id]) {
+    pRect = getWrapperRect(option.getShapeStruct, shapeMap[line.pConnection.id]);
   } else {
     if (line.p.x < line.q.x) {
       pRect = { x: line.p.x - 40, y: line.p.y - 20, width: 40, height: 40 };
@@ -34,9 +35,8 @@ function getTargetRects(option: Option, line: LineShape): [IRectangle, IRectangl
   }
 
   let qRect: IRectangle;
-  if (line.qConnection) {
-    const target = option.getShapeMap()[line.qConnection.id];
-    qRect = getWrapperRect(option.getShapeStruct, target);
+  if (line.qConnection && shapeMap[line.qConnection.id]) {
+    qRect = getWrapperRect(option.getShapeStruct, shapeMap[line.qConnection.id]);
   } else {
     if (line.q.x < line.p.x) {
       qRect = { x: line.q.x - 40, y: line.q.y - 20, width: 40, height: 40 };

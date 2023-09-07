@@ -67,7 +67,9 @@ export function newConnectedLineHandler(option: Option) {
       const nextShapeMap: { [id: string]: Shape } = {};
       const elbowConnectedIds = getElbowConnectedShapeIds(patchedLines);
       elbowConnectedIds.forEach((id) => {
-        nextShapeMap[id] = { ...shapeMap[id], ...(updatedMap[id] ?? {}) };
+        if (shapeMap[id]) {
+          nextShapeMap[id] = { ...shapeMap[id], ...(updatedMap[id] ?? {}) };
+        }
       });
       patchedLines.forEach((line) => {
         nextShapeMap[line.id] = line;

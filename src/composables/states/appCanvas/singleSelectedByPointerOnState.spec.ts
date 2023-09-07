@@ -19,6 +19,7 @@ function getMockCtx() {
     stopDragging: vi.fn(),
     setCursor: vi.fn(),
     getScale: () => 1,
+    hideFloatMenu: vi.fn(),
   };
 }
 
