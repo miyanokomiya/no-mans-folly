@@ -8,7 +8,6 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import {
   ConnectedLineHandler,
   getConnectedLineInfoMap,
-  getRotatedRectPathMap,
   newConnectedLineHandler,
   renderPatchedVertices,
 } from "../../connectedLineHandler";
@@ -49,6 +48,7 @@ export function newResizingState(option: Option): AppCanvasState {
 
       lineHandler = newConnectedLineHandler({
         connectedLinesMap: getConnectedLineInfoMap(ctx),
+        ctx,
       });
     },
     onEnd: async (ctx) => {
@@ -103,7 +103,7 @@ export function newResizingState(option: Option): AppCanvasState {
             return m;
           }, {});
 
-          linePatchedMap = lineHandler.onModified(getRotatedRectPathMap(ctx, patchMap));
+          linePatchedMap = lineHandler.onModified(patchMap);
           ctx.setTmpShapeMap(mergeMap(patchMap, linePatchedMap));
           return;
         }

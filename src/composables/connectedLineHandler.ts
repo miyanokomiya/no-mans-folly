@@ -4,22 +4,34 @@ import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { Shape, StyleScheme } from "../models";
 import { getLocalRectPolygon } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
+import { newElbowLineHandler } from "./elbowLineHandler";
 
 interface Option {
   connectedLinesMap: {
     [id: string]: LineShape[];
   };
+  ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">;
 }
 
 export function newConnectedLineHandler(option: Option) {
-  function getModifiedMap(modifiedRectPathMap: { [id: string]: RotatedRectPath }): {
+  function getModifiedMap(updatedMap: { [id: string]: Partial<Shape> }): {
     [id: string]: Partial<LineShape>;
   } {
     const ret: { [id: string]: Partial<LineShape> } = {};
 
-    Object.entries(modifiedRectPathMap).forEach(([id, [rectPath, rotation]]) => {
-      const infos = option.connectedLinesMap[id] ?? [];
-      infos.forEach((line) => {
+    const shapeMap = option.ctx.getShapeMap();
+    const updatedShapeMap: { [id: string]: Shape } = {};
+    Object.entries(updatedMap).forEach(([id, patch]) => {
+      updatedShapeMap[id] = { ...shapeMap[id], ...patch };
+    });
+
+    // Update connections
+    Object.entries(updatedShapeMap).forEach(([id, shape]) => {
+      const rectPath = getLocalRectPolygon(option.ctx.getShapeStruct, shape);
+      const rotation = shape.rotation;
+
+      const lines = option.connectedLinesMap[id] ?? [];
+      lines.forEach((line) => {
         if (line.pConnection?.id === id) {
           const p = getLocationFromRateOnRectPath(rectPath, rotation, line.pConnection.rate);
           ret[line.id] ??= {};
@@ -44,6 +56,34 @@ export function newConnectedLineHandler(option: Option) {
       });
     });
 
+    // Update elbow bodies
+    {
+      const patchedLines = Object.entries(ret)
+        .map<LineShape>(([id, patch]) => {
+          const original = shapeMap[id] as LineShape;
+          return { ...original, ...patch };
+        })
+        .filter((l) => l.lineType === "elbow");
+      const nextShapeMap: { [id: string]: Shape } = {};
+      const elbowConnectedIds = getElbowConnectedShapeIds(patchedLines);
+      elbowConnectedIds.forEach((id) => {
+        nextShapeMap[id] = { ...shapeMap[id], ...(updatedMap[id] ?? {}) };
+      });
+      patchedLines.forEach((line) => {
+        nextShapeMap[line.id] = line;
+      });
+
+      const elbowHandler = newElbowLineHandler({
+        getShapeStruct: option.ctx.getShapeStruct,
+        getShapeMap: () => nextShapeMap,
+      });
+
+      patchedLines.forEach((lineShape) => {
+        const body = elbowHandler.optimizeElbow(lineShape);
+        ret[lineShape.id] = { ...ret[lineShape.id], body };
+      });
+    }
+
     return ret;
   }
 
@@ -64,12 +104,10 @@ export function getConnectedLineInfoMap(ctx: Pick<AppCanvasStateContext, "getSha
       if (line.pConnection && selectedIdMap[line.pConnection.id]) {
         connectedLineInfoMap[line.pConnection.id] ??= [];
         connectedLineInfoMap[line.pConnection.id].push(line);
-        return;
       }
       if (line.qConnection && selectedIdMap[line.qConnection.id]) {
         connectedLineInfoMap[line.qConnection.id] ??= [];
         connectedLineInfoMap[line.qConnection.id].push(line);
-        return;
       }
 
       line.body?.some((b) => {
@@ -121,4 +159,22 @@ export function renderPatchedVertices(
       ctx.fill();
     }
   });
+}
+
+function getElbowConnectedShapeIds(lines: LineShape[]): string[] {
+  const ret = new Set<string>();
+
+  lines.forEach((line) => {
+    if (line.lineType !== "elbow") return;
+
+    if (line.pConnection) {
+      ret.add(line.pConnection.id);
+    }
+
+    if (line.qConnection) {
+      ret.add(line.qConnection.id);
+    }
+  });
+
+  return Array.from(ret.keys());
 }

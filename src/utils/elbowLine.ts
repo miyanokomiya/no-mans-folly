@@ -151,7 +151,7 @@ function getOptimalElbowBody_2_4(
   const [, pr, pb] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
   const [qt, , , ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
 
-  if (pb < q.y) {
+  if (pb < qt) {
     if (p.x < ql) {
       return [{ x: p.x, y: q.y }];
     } else {
