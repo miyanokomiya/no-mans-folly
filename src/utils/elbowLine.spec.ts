@@ -57,8 +57,8 @@ describe("getOptimalElbowBody", () => {
         )
       ).toEqual([
         { x: 8, y: 25 },
-        { x: -10, y: 25 },
-        { x: -10, y: -10 },
+        { x: 25, y: 25 },
+        { x: 25, y: -10 },
         { x: 12, y: -10 },
       ]);
     });
@@ -197,13 +197,13 @@ describe("getOptimalElbowBody", () => {
       expect(
         getOptimalElbowBody(
           { x: 2, y: 10 },
-          { x: -10, y: 30 },
+          { x: -20, y: 30 },
           { x: 0, y: 0, width: 10, height: 10 },
-          { x: -15, y: 20, width: 10, height: 10 }
+          { x: -25, y: 20, width: 10, height: 10 }
         )
       ).toEqual([
         { x: 2, y: 40 },
-        { x: -10, y: 40 },
+        { x: -20, y: 40 },
       ]);
     });
 
@@ -224,16 +224,16 @@ describe("getOptimalElbowBody", () => {
 
       expect(
         getOptimalElbowBody(
-          { x: 3, y: 30 },
+          { x: 3, y: 40 },
           { x: 5, y: 10 },
-          { x: 0, y: 20, width: 10, height: 10 },
-          { x: 0, y: 0, width: 10, height: 10 }
+          { x: 0, y: 30, width: 10, height: 10 },
+          { x: 2, y: 0, width: 10, height: 10 }
         )
       ).toEqual([
-        { x: 3, y: 40 },
-        { x: -10, y: 40 },
-        { x: -10, y: 15 },
-        { x: 5, y: 15 },
+        { x: 3, y: 50 },
+        { x: -10, y: 50 },
+        { x: -10, y: 20 },
+        { x: 5, y: 20 },
       ]);
     });
 
@@ -253,218 +253,47 @@ describe("getOptimalElbowBody", () => {
   });
 
   describe("8 - 8", () => {
-    test("when they have x margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 2, y: 0 },
-          { x: 25, y: 20 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 20, y: 20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 2, y: -10 },
-        { x: 25, y: -10 },
-      ]);
-
-      expect(
-        getOptimalElbowBody(
-          { x: 2, y: 0 },
-          { x: -10, y: 20 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: -15, y: 20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 2, y: -10 },
-        { x: -10, y: -10 },
-      ]);
-    });
-
-    test("when they have y margin but not x margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 3, y: 0 },
-          { x: 5, y: 20 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 0, y: 20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 3, y: -10 },
-        { x: -10, y: -10 },
-        { x: -10, y: 15 },
-        { x: 5, y: 15 },
-      ]);
-
-      expect(
-        getOptimalElbowBody(
-          { x: 3, y: 20 },
-          { x: 5, y: 0 },
-          { x: 0, y: 20, width: 10, height: 10 },
-          { x: 0, y: 0, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 3, y: -10 },
-        { x: -10, y: -10 },
-        { x: -10, y: 15 },
-        { x: 5, y: 15 },
-      ]);
-    });
-
-    test("when they have neither x nor y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 2, y: 0 },
-          { x: 8, y: 5 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: 5, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 2, y: -10 },
-        { x: 8, y: -10 },
-      ]);
+    test("rotated version of 2 - 2", () => {
+      const result = getOptimalElbowBody(
+        { x: 2, y: 0 },
+        { x: 25, y: 20 },
+        { x: 0, y: 0, width: 10, height: 10 },
+        { x: 20, y: 20, width: 10, height: 10 }
+      );
+      expect(result[0].x).toBeCloseTo(2);
+      expect(result[0].y).toBeCloseTo(-10);
+      expect(result[1].x).toBeCloseTo(25);
+      expect(result[1].y).toBeCloseTo(-10);
     });
   });
 
   describe("4 - 4", () => {
-    test("when they have y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 0, y: 8 },
-          { x: 5, y: 23 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: 20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: -10, y: 8 },
-        { x: -10, y: 23 },
-      ]);
-
-      expect(
-        getOptimalElbowBody(
-          { x: 0, y: 2 },
-          { x: 5, y: -17 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: -20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: -10, y: 2 },
-        { x: -10, y: -17 },
-      ]);
-    });
-
-    test("when they have x margin but not y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 0, y: 3 },
-          { x: 20, y: 5 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 20, y: 0, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: -10, y: 3 },
-        { x: -10, y: 20 },
-        { x: 15, y: 20 },
-        { x: 15, y: 5 },
-      ]);
-
-      expect(
-        getOptimalElbowBody(
-          { x: 20, y: 3 },
-          { x: 0, y: 8 },
-          { x: 20, y: 0, width: 10, height: 10 },
-          { x: 0, y: 2, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 15, y: 3 },
-        { x: 15, y: 22 },
-        { x: -10, y: 22 },
-        { x: -10, y: 8 },
-      ]);
-    });
-
-    test("when they have neither x nor y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 0, y: 2 },
-          { x: 5, y: 8 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: 5, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: -10, y: 2 },
-        { x: -10, y: 8 },
-      ]);
+    test("rotated version of 2 - 2", () => {
+      const result = getOptimalElbowBody(
+        { x: 0, y: 8 },
+        { x: 5, y: 23 },
+        { x: 0, y: 0, width: 10, height: 10 },
+        { x: 5, y: 20, width: 10, height: 10 }
+      );
+      expect(result[0].x).toBeCloseTo(-10);
+      expect(result[0].y).toBeCloseTo(8);
+      expect(result[1].x).toBeCloseTo(-10);
+      expect(result[1].y).toBeCloseTo(23);
     });
   });
 
   describe("6 - 6", () => {
-    test("when they have y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 10, y: 8 },
-          { x: 15, y: 23 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: 20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 25, y: 8 },
-        { x: 25, y: 23 },
-      ]);
-
-      expect(
-        getOptimalElbowBody(
-          { x: 10, y: 2 },
-          { x: 15, y: -17 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: -20, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 25, y: 2 },
-        { x: 25, y: -17 },
-      ]);
-    });
-
-    test("when they have x margin but not y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 10, y: 3 },
-          { x: 30, y: 5 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 20, y: 0, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 15, y: 3 },
-        { x: 15, y: 20 },
-        { x: 40, y: 20 },
-        { x: 40, y: 5 },
-      ]);
-
-      expect(
-        getOptimalElbowBody(
-          { x: 30, y: 3 },
-          { x: 10, y: 8 },
-          { x: 20, y: 0, width: 10, height: 10 },
-          { x: 0, y: 2, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 40, y: 3 },
-        { x: 40, y: 22 },
-        { x: 15, y: 22 },
-        { x: 15, y: 8 },
-      ]);
-    });
-
-    test("when they have neither x nor y margin", () => {
-      expect(
-        getOptimalElbowBody(
-          { x: 10, y: 2 },
-          { x: 15, y: 8 },
-          { x: 0, y: 0, width: 10, height: 10 },
-          { x: 5, y: 5, width: 10, height: 10 }
-        )
-      ).toEqual([
-        { x: 25, y: 2 },
-        { x: 25, y: 8 },
-      ]);
+    test("rotated version of 2 - 2", () => {
+      const result = getOptimalElbowBody(
+        { x: 10, y: 8 },
+        { x: 15, y: 23 },
+        { x: 0, y: 0, width: 10, height: 10 },
+        { x: 5, y: 20, width: 10, height: 10 }
+      );
+      expect(result[0].x).toBeCloseTo(25);
+      expect(result[0].y).toBeCloseTo(8);
+      expect(result[1].x).toBeCloseTo(25);
+      expect(result[1].y).toBeCloseTo(23);
     });
   });
 

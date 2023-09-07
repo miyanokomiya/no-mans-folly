@@ -131,10 +131,11 @@ function getOptimalElbowBody_2_8(
       ];
     } else {
       const whole = expandRect(getWrapperRect([pBounds, qBounds]), margin);
+      const x = p.x - whole.x < whole.x + whole.width - p.x ? whole.x : whole.x + whole.width;
       return [
         { x: p.x, y: whole.y + whole.height },
-        { x: whole.x, y: whole.y + whole.height },
-        { x: whole.x, y: whole.y },
+        { x, y: whole.y + whole.height },
+        { x, y: whole.y },
         { x: q.x, y: whole.y },
       ];
     }
@@ -152,7 +153,7 @@ function getOptimalElbowBody_2_4(
   const [qt, , , ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
 
   if (p.y < q.y) {
-    if (p.x < ql) {
+    if (p.x < ql - margin) {
       return [{ x: p.x, y: q.y }];
     }
 
@@ -199,16 +200,16 @@ function getOptimalElbowBody_2_6(
   qBounds: IRectangle,
   margin: number
 ): IVec2[] {
-  const [, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
-  const [qt, qr, , ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
+  const [, , pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
+  const [qt, qr] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
 
   if (p.y < q.y) {
-    if (qr < p.x) {
+    if (qr < p.x - margin) {
       return [{ x: p.x, y: q.y }];
     }
 
     if (p.y < qt) {
-      if (qr < p.x) {
+      if (qr < p.x - margin) {
         return [{ x: p.x, y: q.y }];
       } else {
         return [
@@ -229,8 +230,8 @@ function getOptimalElbowBody_2_6(
     if (qr < pl - margin) {
       return [
         { x: p.x, y: pb + margin },
-        { x: (pr + ql) / 2, y: pb + margin },
-        { x: (pr + ql) / 2, y: q.y },
+        { x: (qr + pl) / 2, y: pb + margin },
+        { x: (qr + pl) / 2, y: q.y },
       ];
     } else {
       const whole = expandRect(getWrapperRect([pBounds, qBounds]), margin);
@@ -302,35 +303,44 @@ function getOptimalElbowBody_2_2(
   margin: number
 ): IVec2[] {
   const [pt, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
-  const [qt, , qb, ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
+  const [qt, qr, qb, ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
   const whole = expandRect(getWrapperRect([pBounds, qBounds]), margin);
 
-  if (pr < q.x || q.x < pl) {
-    return [
-      { x: p.x, y: whole.y + whole.height },
-      { x: q.x, y: whole.y + whole.height },
-    ];
-  } else {
-    if (pb < qt) {
-      return [
-        { x: p.x, y: (pb + qt) / 2 },
-        { x: ql - margin, y: (pb + qt) / 2 },
-        { x: ql - margin, y: qb + margin },
-        { x: q.x, y: qb + margin },
-      ];
-    } else if (qb < pt) {
-      return [
-        { x: p.x, y: pb + margin },
-        { x: ql - margin, y: pb + margin },
-        { x: ql - margin, y: (qb + pt) / 2 },
-        { x: q.x, y: (qb + pt) / 2 },
-      ];
-    } else {
+  if (pb < qt) {
+    if (p.x < ql - margin || qr < p.x - margin) {
       return [
         { x: p.x, y: whole.y + whole.height },
         { x: q.x, y: whole.y + whole.height },
       ];
+    } else {
+      const x = p.x - ql < qr - p.x ? ql - margin : qr + margin;
+      return [
+        { x: p.x, y: (pb + qt) / 2 },
+        { x, y: (pb + qt) / 2 },
+        { x, y: qb + margin },
+        { x: q.x, y: qb + margin },
+      ];
     }
+  } else if (qb < pt) {
+    if (q.x < pl - margin || pr < q.x - margin) {
+      return [
+        { x: p.x, y: whole.y + whole.height },
+        { x: q.x, y: whole.y + whole.height },
+      ];
+    } else {
+      const x = p.x - pl < pr - p.x ? pl - margin : pr + margin;
+      return [
+        { x: p.x, y: pb + margin },
+        { x, y: pb + margin },
+        { x, y: (qb + pt) / 2 },
+        { x: q.x, y: (qb + pt) / 2 },
+      ];
+    }
+  } else {
+    return [
+      { x: p.x, y: whole.y + whole.height },
+      { x: q.x, y: whole.y + whole.height },
+    ];
   }
 }
 
@@ -341,37 +351,14 @@ function getOptimalElbowBody_8_8(
   qBounds: IRectangle,
   margin: number
 ): IVec2[] {
-  const [pt, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
-  const [qt, , qb, ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
-  const whole = expandRect(getWrapperRect([pBounds, qBounds]), margin);
-
-  if (pr < q.x || q.x < pl) {
-    return [
-      { x: p.x, y: whole.y },
-      { x: q.x, y: whole.y },
-    ];
-  } else {
-    if (pb < qt) {
-      return [
-        { x: p.x, y: pt - margin },
-        { x: ql - margin, y: pt - margin },
-        { x: ql - margin, y: (pb + qt) / 2 },
-        { x: q.x, y: (pb + qt) / 2 },
-      ];
-    } else if (qb < pt) {
-      return [
-        { x: p.x, y: qt - margin },
-        { x: ql - margin, y: qt - margin },
-        { x: ql - margin, y: (qb + pt) / 2 },
-        { x: q.x, y: (qb + pt) / 2 },
-      ];
-    } else {
-      return [
-        { x: p.x, y: whole.y },
-        { x: q.x, y: whole.y },
-      ];
-    }
-  }
+  const rotateFn = getRotateFn(Math.PI);
+  const rp = rotateFn(p);
+  const rq = rotateFn(q);
+  const a = rotateFn(pBounds);
+  const rpb = { x: a.x - pBounds.width, y: a.y - pBounds.height, width: pBounds.width, height: pBounds.height };
+  const b = rotateFn(qBounds);
+  const rqb = { x: b.x - qBounds.width, y: b.y - qBounds.height, width: qBounds.width, height: qBounds.height };
+  return getOptimalElbowBody_2_2(rp, rq, rpb, rqb, margin).map((v) => rotateFn(v, true));
 }
 
 function getOptimalElbowBody_4_4(
@@ -381,37 +368,14 @@ function getOptimalElbowBody_4_4(
   qBounds: IRectangle,
   margin: number
 ): IVec2[] {
-  const [pt, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
-  const [, qr, qb, ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
-  const whole = expandRect(getWrapperRect([pBounds, qBounds]), margin);
-
-  if (pb < q.y || q.y < pt) {
-    return [
-      { x: whole.x, y: p.y },
-      { x: whole.x, y: q.y },
-    ];
-  } else {
-    if (pr < ql) {
-      return [
-        { x: pl - margin, y: p.y },
-        { x: pl - margin, y: pb + margin },
-        { x: (pr + ql) / 2, y: pb + margin },
-        { x: (pr + ql) / 2, y: q.y },
-      ];
-    } else if (qr < pl) {
-      return [
-        { x: (qr + pl) / 2, y: p.y },
-        { x: (qr + pl) / 2, y: qb + margin },
-        { x: ql - margin, y: qb + margin },
-        { x: ql - margin, y: q.y },
-      ];
-    } else {
-      return [
-        { x: whole.x, y: p.y },
-        { x: whole.x, y: q.y },
-      ];
-    }
-  }
+  const rotateFn = getRotateFn(-Math.PI / 2);
+  const rp = rotateFn(p);
+  const rq = rotateFn(q);
+  const a = rotateFn(pBounds);
+  const rpb = { x: a.x, y: a.y - pBounds.width, width: pBounds.height, height: pBounds.width };
+  const b = rotateFn(qBounds);
+  const rqb = { x: b.x, y: b.y - qBounds.width, width: qBounds.height, height: qBounds.width };
+  return getOptimalElbowBody_2_2(rp, rq, rpb, rqb, margin).map((v) => rotateFn(v, true));
 }
 
 function getOptimalElbowBody_6_6(
@@ -421,35 +385,12 @@ function getOptimalElbowBody_6_6(
   qBounds: IRectangle,
   margin: number
 ): IVec2[] {
-  const [pt, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
-  const [, qr, qb, ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
-  const whole = expandRect(getWrapperRect([pBounds, qBounds]), margin);
-
-  if (pb < q.y || q.y < pt) {
-    return [
-      { x: whole.x + whole.width, y: p.y },
-      { x: whole.x + whole.width, y: q.y },
-    ];
-  } else {
-    if (pr < ql) {
-      return [
-        { x: (pr + ql) / 2, y: p.y },
-        { x: (pr + ql) / 2, y: pb + margin },
-        { x: qr + margin, y: pb + margin },
-        { x: qr + margin, y: q.y },
-      ];
-    } else if (qr < pl) {
-      return [
-        { x: pr + margin, y: p.y },
-        { x: pr + margin, y: qb + margin },
-        { x: (qr + pl) / 2, y: qb + margin },
-        { x: (qr + pl) / 2, y: q.y },
-      ];
-    } else {
-      return [
-        { x: whole.x + whole.width, y: p.y },
-        { x: whole.x + whole.width, y: q.y },
-      ];
-    }
-  }
+  const rotateFn = getRotateFn(Math.PI / 2);
+  const rp = rotateFn(p);
+  const rq = rotateFn(q);
+  const a = rotateFn(pBounds);
+  const rpb = { x: a.x - pBounds.height, y: a.y, width: pBounds.height, height: pBounds.width };
+  const b = rotateFn(qBounds);
+  const rqb = { x: b.x - qBounds.height, y: b.y, width: qBounds.height, height: qBounds.width };
+  return getOptimalElbowBody_2_2(rp, rq, rpb, rqb, margin).map((v) => rotateFn(v, true));
 }
