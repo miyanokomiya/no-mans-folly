@@ -4,6 +4,7 @@ import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -15,6 +16,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
   let vertex = origin;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
+  let elbowHandler: ElbowLineHandler | undefined;
 
   return {
     getLabel: () => "MovingLineVertex",
@@ -27,6 +29,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
         getShapeStruct: ctx.getShapeStruct,
       });
+
+      elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
@@ -37,17 +41,14 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         case "pointermove": {
           const point = event.data.current;
           connectionResult = lineSnapping.testConnection(point, ctx.getScale());
+          vertex = connectionResult?.p ?? add(origin, sub(point, event.data.start));
+          const patch = patchVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
 
-          if (connectionResult) {
-            vertex = connectionResult.p;
-            ctx.setTmpShapeMap({
-              [option.lineShape.id]: patchVertex(option.lineShape, option.index, vertex, connectionResult.connection),
-            });
+          if (elbowHandler) {
+            const body = elbowHandler.optimizeElbow({ ...option.lineShape, ...patch });
+            ctx.setTmpShapeMap({ [option.lineShape.id]: { ...patch, body } as Partial<LineShape> });
           } else {
-            vertex = add(origin, sub(point, event.data.start));
-            ctx.setTmpShapeMap({
-              [option.lineShape.id]: patchVertex(option.lineShape, option.index, vertex, undefined),
-            });
+            ctx.setTmpShapeMap({ [option.lineShape.id]: patch });
           }
           return;
         }

@@ -10,7 +10,10 @@ const shapeList = [
   { type: "ellipse", icon: iconEllipse },
 ];
 
-const lineList = [{ type: "straight", icon: iconLineStraight }];
+const lineList = [
+  { type: "straight", icon: iconLineStraight },
+  { type: "elbow", icon: iconLineStraight },
+];
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");

@@ -10,7 +10,7 @@ interface Option {
   type: string;
 }
 
-export function newLineReadyState(_option: Option): AppCanvasState {
+export function newLineReadyState(option: Option): AppCanvasState {
   return {
     getLabel: () => "LineReady",
     onStart: async (ctx) => {
@@ -29,6 +29,7 @@ export function newLineReadyState(_option: Option): AppCanvasState {
                 p: event.data.point,
                 q: event.data.point,
                 findex: ctx.createLastIndex(),
+                lineType: option.type === "elbow" ? "elbow" : undefined,
               });
               return () => newLineDrawingState({ shape: lineshape });
             }
@@ -50,7 +51,7 @@ export function newLineReadyState(_option: Option): AppCanvasState {
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape"]);
+          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape", "LineReady"]);
         default:
           return;
       }

@@ -29,6 +29,9 @@ export function newLineBounding(option: Option) {
   let scale = option.scale ?? 1;
   let hitResult: LineHitResult | undefined;
 
+  const elbow = isElbow(lineShape);
+  const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
+
   function updateScale(val: number) {
     scale = val;
   }
@@ -53,12 +56,12 @@ export function newLineBounding(option: Option) {
         const testFn = newCircleHitTest(v, vertexSize);
         return testFn.test(p);
       });
-      if (vertexIndex !== -1) {
+      if (availableVertexIndex.has(vertexIndex)) {
         return { type: "vertex", index: vertexIndex };
       }
     }
 
-    {
+    if (!elbow) {
       const edgeCenterIndex = edgeCenters.findIndex((v) => {
         const testFn = newCircleHitTest(v, addAnchorSize);
         return testFn.test(p);
@@ -98,28 +101,32 @@ export function newLineBounding(option: Option) {
     ctx.fillStyle = "#fff";
 
     const points = vertices;
-    points.forEach((p) => {
+    points.forEach((p, i) => {
+      if (!availableVertexIndex.has(i)) return;
+
       ctx.beginPath();
       ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     });
 
-    applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
-    edgeCenters.forEach((c) => {
-      ctx.beginPath();
-      ctx.ellipse(
-        c.x,
-        c.y,
-        vertexSize * ADD_VERTEX_ANCHOR_RATE,
-        vertexSize * ADD_VERTEX_ANCHOR_RATE,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      ctx.stroke();
-    });
+    if (!elbow) {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
+      edgeCenters.forEach((c) => {
+        ctx.beginPath();
+        ctx.ellipse(
+          c.x,
+          c.y,
+          vertexSize * ADD_VERTEX_ANCHOR_RATE,
+          vertexSize * ADD_VERTEX_ANCHOR_RATE,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
 
     if (hitResult) {
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
@@ -133,11 +140,12 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "edge": {
-          const [a, b] = edges[hitResult.index];
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
+          edges.forEach(([a, b]) => {
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          });
           break;
         }
         case "new-vertex-anchor": {
@@ -155,3 +163,7 @@ export function newLineBounding(option: Option) {
   return { updateScale, saveHitResult, hitTest, getCursorStyle, render };
 }
 export type LineBounding = ReturnType<typeof newLineBounding>;
+
+function isElbow(lineShape: LineShape): boolean {
+  return lineShape.lineType === "elbow";
+}
