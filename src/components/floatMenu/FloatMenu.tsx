@@ -19,7 +19,7 @@ import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { useWindow } from "../../composables/window";
 import { LineHeadItems } from "./LineHeadItems";
-import { LineShape } from "../../shapes/line";
+import { LineShape, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
 
 interface Option {
@@ -171,7 +171,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   );
 
   const indexLineShape = useMemo(() => {
-    return indexShape?.type === "line" ? (indexShape as LineShape) : undefined;
+    return indexShape && isLineShape(indexShape) ? indexShape : undefined;
   }, [indexShape]);
 
   const onLineHeadChanged = useCallback(
@@ -181,7 +181,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       const shapeMap = ctx.getShapeMap();
       const patch = ids.reduce<{ [id: string]: Partial<LineShape> }>((p, id) => {
         const shape = shapeMap[id];
-        if (shape.type === "line") {
+        if (isLineShape(shape)) {
           p[id] = val;
         }
         return p;

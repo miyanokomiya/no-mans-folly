@@ -12,7 +12,7 @@ import {
   renderPatchedVertices,
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
-import { LineShape } from "../../../shapes/line";
+import { LineShape, isLineShape } from "../../../shapes/line";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -40,7 +40,7 @@ export function newResizingState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeMap = ctx.getShapeMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && s.type !== "line");
+      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s));
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

@@ -1,5 +1,5 @@
 import { expect, describe, test, vi } from "vitest";
-import { addNewVertex, getLinePath, patchConnection, patchVertex, struct } from "./line";
+import { addNewVertex, getLinePath, isLineShape, patchConnection, patchVertex, struct } from "./line";
 
 describe("struct", () => {
   describe("create", () => {
@@ -38,6 +38,25 @@ describe("struct", () => {
       const shape = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
       expect(struct.isPointOn(shape, { x: -1, y: 0 })).toBe(false);
       expect(struct.isPointOn(shape, { x: 1, y: 0 })).toBe(true);
+    });
+  });
+
+  describe("resize", () => {
+    test("should return resized properties", () => {
+      expect(
+        struct.resize(
+          struct.create({
+            p: { x: 1, y: 2 },
+            q: { x: 10, y: -20 },
+            body: [{ p: { x: 1, y: 2 }, c: { id: "a", rate: { x: 1, y: 0 } } }],
+          }),
+          [1, 0, 0, 1, 100, 0]
+        )
+      ).toEqual({
+        p: { x: 101, y: 2 },
+        q: { x: 110, y: -20 },
+        body: [{ p: { x: 101, y: 2 }, c: { id: "a", rate: { x: 1, y: 0 } } }],
+      });
     });
   });
 
@@ -247,5 +266,13 @@ describe("addNewVertex", () => {
     expect(addNewVertex(shape1, 3, v)).toEqual({
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
     });
+  });
+});
+
+describe("isLineShape", () => {
+  test("should return true if the shale is line shape", () => {
+    const line = struct.create();
+    expect(isLineShape(line)).toBe(true);
+    expect(isLineShape({ ...line, type: "unknown" })).toBe(false);
   });
 });

@@ -116,11 +116,13 @@ export const struct: ShapeStruct<LineShape> = {
     return getEdges(shape).some((seg) => isPointCloseToSegment(seg, p, 10));
   },
   resize(shape, resizingAffine) {
-    const [p, q] = getLinePath(shape).map((p) => applyAffine(resizingAffine, p));
+    const [p, q] = [shape.p, shape.q].map((p) => applyAffine(resizingAffine, p));
+    const body = shape.body?.map((b) => ({ ...b, p: applyAffine(resizingAffine, b.p) }));
 
     const ret: Partial<LineShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
     if (!isSame(q, shape.q)) ret.q = q;
+    if (body?.some((b, i) => !isSame(b.p, shape.body![i].p))) ret.body = body;
 
     return ret;
   },
@@ -232,4 +234,8 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
         return { body: [{ p, c }] };
       }
   }
+}
+
+export function isLineShape(shape: Shape): shape is LineShape {
+  return shape.type === "line";
 }

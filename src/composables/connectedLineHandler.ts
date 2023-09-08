@@ -1,4 +1,4 @@
-import { LineShape } from "../shapes/line";
+import { LineShape, isLineShape } from "../shapes/line";
 import { RotatedRectPath, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { Shape, StyleScheme } from "../models";
@@ -14,6 +14,9 @@ interface Option {
 }
 
 export function newConnectedLineHandler(option: Option) {
+  /** Returns patched properties that are updated in this function.
+   * => Returned value doesn't inherit the content of "updatedMap".
+   */
   function getModifiedMap(updatedMap: { [id: string]: Partial<Shape> }): {
     [id: string]: Partial<LineShape>;
   } {
@@ -27,6 +30,32 @@ export function newConnectedLineHandler(option: Option) {
 
     // Update connections
     Object.entries(updatedShapeMap).forEach(([id, shape]) => {
+      // When a line is modified but connected shapes doesn't, the connections should be deleted.
+      if (isLineShape(shape)) {
+        if (shape.pConnection && !updatedShapeMap[shape.pConnection.id]) {
+          ret[shape.id] ??= {};
+          ret[shape.id].pConnection = undefined;
+        }
+        if (shape.qConnection && !updatedShapeMap[shape.qConnection.id]) {
+          ret[shape.id] ??= {};
+          ret[shape.id].qConnection = undefined;
+        }
+        if (shape.body) {
+          shape.body.forEach((b, i) => {
+            if (b.c && !updatedShapeMap[b.c.id]) {
+              ret[shape.id] ??= {};
+              if (!ret[shape.id].body) {
+                ret[shape.id].body = shape.body!.concat();
+              }
+              const next = { ...ret[shape.id].body![i] };
+              delete next.c;
+              ret[shape.id].body![i] = next;
+            }
+          });
+        }
+        return;
+      }
+
       const rectPath = getLocalRectPolygon(option.ctx.getShapeStruct, shape);
       const rotation = shape.rotation;
 
@@ -58,20 +87,21 @@ export function newConnectedLineHandler(option: Option) {
 
     // Update elbow bodies
     {
-      const patchedLines = Object.entries(ret)
+      const patchedElbows = Object.entries(ret)
         .map<LineShape>(([id, patch]) => {
           const original = shapeMap[id] as LineShape;
-          return { ...original, ...patch };
+          const updated = updatedMap[id] ?? {};
+          return { ...original, ...updated, ...patch };
         })
         .filter((l) => l.lineType === "elbow");
       const nextShapeMap: { [id: string]: Shape } = {};
-      const elbowConnectedIds = getElbowConnectedShapeIds(patchedLines);
+      const elbowConnectedIds = getElbowConnectedShapeIds(patchedElbows);
       elbowConnectedIds.forEach((id) => {
         if (shapeMap[id]) {
           nextShapeMap[id] = { ...shapeMap[id], ...(updatedMap[id] ?? {}) };
         }
       });
-      patchedLines.forEach((line) => {
+      patchedElbows.forEach((line) => {
         nextShapeMap[line.id] = line;
       });
 
@@ -80,7 +110,7 @@ export function newConnectedLineHandler(option: Option) {
         getShapeMap: () => nextShapeMap,
       });
 
-      patchedLines.forEach((lineShape) => {
+      patchedElbows.forEach((lineShape) => {
         const body = elbowHandler.optimizeElbow(lineShape);
         ret[lineShape.id] = { ...ret[lineShape.id], body };
       });
@@ -100,7 +130,7 @@ export function getConnectedLineInfoMap(ctx: Pick<AppCanvasStateContext, "getSha
   const selectedIdMap = ctx.getSelectedShapeIdMap();
   const connectedLineInfoMap: { [id: string]: LineShape[] } = {};
   Object.values(shapeMap)
-    .filter((s): s is LineShape => s.type === "line")
+    .filter(isLineShape)
     .forEach((line) => {
       if (line.pConnection && selectedIdMap[line.pConnection.id]) {
         connectedLineInfoMap[line.pConnection.id] ??= [];
@@ -158,6 +188,15 @@ export function renderPatchedVertices(
       ctx.beginPath();
       ctx.arc(l.q.x, l.q.y, size, 0, Math.PI * 2);
       ctx.fill();
+    }
+    if (l.body) {
+      l.body.forEach((b) => {
+        if (b.c) {
+          ctx.beginPath();
+          ctx.arc(b.p.x, b.p.y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
     }
   });
 }
