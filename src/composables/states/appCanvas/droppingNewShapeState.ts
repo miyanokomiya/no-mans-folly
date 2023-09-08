@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "./core";
-import { translateOnSelection } from "./commons";
 import { Shape } from "../../../models";
 import { getSnappingLines, getWrapperRect, renderShape } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
@@ -13,16 +12,21 @@ interface Option {
 
 export function newDroppingNewShapeState(option: Option): AppCanvasState {
   const shape = option.shape;
-  let p: IVec2 | undefined; // represents the center of the shape
+  let p: IVec2; // represents the center of the shape
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
   let snappingResult: SnappingResult | undefined;
+
+  function updateP(topLeft: IVec2) {
+    const rectSize = { width: movingRect.width / 2, height: movingRect.height / 2 };
+    p = sub(topLeft, { x: rectSize.width, y: rectSize.height });
+  }
 
   return {
     getLabel: () => "DroppingNewShape",
     onStart: async (ctx) => {
       ctx.startDragging();
-      ctx.setCursor("move");
+      ctx.setCursor("grabbing");
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
@@ -32,6 +36,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
       });
       movingRect = getWrapperRect(ctx.getShapeStruct, shape);
+      updateP(ctx.getCursorPoint());
     },
     onEnd: async (ctx) => {
       ctx.stopDragging();
@@ -49,13 +54,11 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           });
           const adjustedCurrent = snappingResult ? add(event.data.current, snappingResult.diff) : event.data.current;
 
-          p = sub(adjustedCurrent, { x: rectSize.width, y: rectSize.height });
+          updateP(adjustedCurrent);
           ctx.setTmpShapeMap({});
           return;
         }
         case "pointerup":
-          if (!p) return translateOnSelection(ctx);
-
           ctx.addShapes([{ ...shape, p }]);
           ctx.selectShape(shape.id);
           return newSingleSelectedState;
@@ -67,7 +70,6 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      if (!p) return;
       renderShape(ctx.getShapeStruct, renderCtx, { ...shape, p });
 
       if (snappingResult) {

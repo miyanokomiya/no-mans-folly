@@ -14,6 +14,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   panView: (val: EditMovement) => void;
   startDragging: () => void;
   stopDragging: () => void;
+  getCursorPoint: () => IVec2; // must be canvas space
 
   toView: (p: IVec2) => IVec2;
   showFloatMenu: () => void;

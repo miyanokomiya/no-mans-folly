@@ -105,6 +105,7 @@ export function AppCanvas() {
       panView: panView,
       startDragging: startDragging,
       stopDragging: endMoving,
+      getCursorPoint: () => viewToCanvas(getMousePoint()),
 
       toView: canvasToView,
       showFloatMenu: () => setFloatMenuAvailable(true),

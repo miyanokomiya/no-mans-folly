@@ -4,6 +4,7 @@ import { createShape } from "../shapes";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
+import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
@@ -12,7 +13,7 @@ const shapeList = [
 
 const lineList = [
   { type: "straight", icon: iconLineStraight },
-  { type: "elbow", icon: iconLineStraight },
+  { type: "elbow", icon: iconLineElbow },
 ];
 
 function getButtonClass(highlight = false) {
@@ -39,6 +40,7 @@ export const AppToolbar: React.FC = () => {
           options: { shape },
         },
       });
+      setPopup("");
     },
     [smctx, acctx]
   );
@@ -67,7 +69,7 @@ export const AppToolbar: React.FC = () => {
   }, [popup]);
 
   const onClickLineButton = useCallback(() => {
-    if (smctx.stateMachine.getStateSummary().label === "LineReady") {
+    if (popup === "lines" && smctx.stateMachine.getStateSummary().label === "LineReady") {
       smctx.stateMachine.handleEvent({
         type: "state",
         data: { name: "Break" },
@@ -83,7 +85,7 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("lines");
     }
-  }, [lineType, smctx.stateMachine]);
+  }, [popup, lineType, smctx.stateMachine]);
 
   function renderPopup() {
     switch (popup) {
@@ -114,7 +116,10 @@ export const AppToolbar: React.FC = () => {
             {lineList.map((shape) => (
               <div
                 key={shape.type}
-                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-pointer"
+                className={
+                  "w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-pointer" +
+                  (lineType === shape.type ? " border-2 border-cyan-400" : "")
+                }
                 data-type={shape.type}
                 onMouseDown={onDownLineElm}
               >

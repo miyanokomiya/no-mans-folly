@@ -2,7 +2,6 @@ import { expect, test, describe, vi } from "vitest";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { translateOnSelection } from "./commons";
 import { RectangleShape } from "../../../shapes/rectangle";
 
 function getMockCtx() {
@@ -19,6 +18,7 @@ function getMockCtx() {
     getSelectedShapeIdMap: vi.fn().mockReturnValue({}),
     setCursor: vi.fn(),
     getScale: () => 1,
+    getCursorPoint: () => ({ x: 0, y: 0 }),
   };
 }
 
@@ -57,11 +57,6 @@ describe("newDroppingNewShapeState", () => {
       const ctx = getMockCtx();
       const target = newDroppingNewShapeState(getOption());
       await target.onStart?.(ctx as any);
-
-      const result1 = await target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.addShapes).not.toHaveBeenCalled();
-      expect(ctx.selectShape).not.toHaveBeenCalled();
-      expect(result1).toEqual(translateOnSelection(ctx));
 
       await target.handleEvent(ctx as any, {
         type: "pointermove",
