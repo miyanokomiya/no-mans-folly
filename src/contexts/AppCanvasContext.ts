@@ -61,7 +61,7 @@ export function createStateMachineContext(arg: {
     panView() {},
     startDragging() {},
     stopDragging() {},
-    getCursorPoint: () => ({ x: 0, y: 0}),
+    getCursorPoint: () => ({ x: 0, y: 0 }),
 
     toView: (p) => p,
     showFloatMenu() {},

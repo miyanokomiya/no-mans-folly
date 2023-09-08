@@ -14,11 +14,12 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
-import { canHaveText } from "../../../shapes";
+import { canHaveText, getWrapperRect } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2 } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
+import * as geometry from "../../../utils/geometry";
 
 export function translateOnSelection(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
@@ -83,6 +84,13 @@ export function handleCommonShortcut(
     case "Z":
       if (event.data.ctrl) ctx.redo();
       return translateOnSelection(ctx);
+    case "!":
+    case "Home":
+      ctx.setViewport(
+        geometry.getWrapperRect(Object.values(ctx.getShapeMap()).map((s) => getWrapperRect(ctx.getShapeStruct, s))),
+        80
+      );
+      return;
   }
 }
 
