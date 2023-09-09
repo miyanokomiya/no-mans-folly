@@ -18,6 +18,7 @@ import { newResizingState } from "./resizingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
 import { getOuterRectangle } from "okageo";
+import { newDuplicatingShapesState } from "./duplicatingShapesState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -87,10 +88,13 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               }
 
               if (!event.data.options.ctrl) {
-                if (shapeAtPointer.id === selectedId) {
+                if (event.data.options.alt) {
+                  ctx.selectShape(shapeAtPointer.id);
+                  return newDuplicatingShapesState;
+                } else if (shapeAtPointer.id === selectedId) {
                   return () => newMovingShapeState({ boundingBox });
                 } else {
-                  ctx.selectShape(shapeAtPointer.id, false);
+                  ctx.selectShape(shapeAtPointer.id);
                   return newSingleSelectedByPointerOnState;
                 }
               }

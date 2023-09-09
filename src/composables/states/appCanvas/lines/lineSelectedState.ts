@@ -14,6 +14,7 @@ import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingShapeState } from "../movingShapeState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
+import { newDuplicatingShapesState } from "../duplicatingShapesState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -56,7 +57,10 @@ export function newLineSelectedState(): AppCanvasState {
               }
 
               if (!event.data.options.ctrl) {
-                if (shape.id === lineShape.id) {
+                if (event.data.options.alt) {
+                  ctx.selectShape(shape.id);
+                  return newDuplicatingShapesState;
+                } else if (shape.id === lineShape.id) {
                   return;
                 } else {
                   ctx.selectShape(shape.id, false);

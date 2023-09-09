@@ -1,8 +1,8 @@
 import { expect, test, describe, vi } from "vitest";
-import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { RectangleShape } from "../../../shapes/rectangle";
+import { newDuplicatingShapesState } from "./duplicatingShapesState";
 
 function getMockCtx() {
   return {
@@ -13,25 +13,22 @@ function getMockCtx() {
     stopDragging: vi.fn(),
     setTmpShapeMap: vi.fn(),
     addShapes: vi.fn(),
-    selectShape: vi.fn(),
+    multiSelectShapes: vi.fn(),
     getShapeStruct: getCommonStruct,
-    getSelectedShapeIdMap: vi.fn().mockReturnValue({}),
+    getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     setCursor: vi.fn(),
     getScale: () => 1,
     getCursorPoint: () => ({ x: 0, y: 0 }),
     clearAllSelected: vi.fn(),
+    generateUuid: () => "duplicated",
   };
 }
 
-describe("newDroppingNewShapeState", () => {
-  const getOption = () => ({
-    shape: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 }),
-  });
-
+describe("newDuplicatingShapesState", () => {
   describe("lifecycle", () => {
     test("should setup and clean the state", async () => {
       const ctx = getMockCtx();
-      const target = newDroppingNewShapeState(getOption());
+      const target = newDuplicatingShapesState();
       await target.onStart?.(ctx as any);
       expect(ctx.startDragging).toHaveBeenCalled();
       await target.onEnd?.(ctx as any);
@@ -42,7 +39,7 @@ describe("newDroppingNewShapeState", () => {
   describe("handle pointermove", () => {
     test("should call setTmpShapeMap", async () => {
       const ctx = getMockCtx();
-      const target = newDroppingNewShapeState(getOption());
+      const target = newDuplicatingShapesState();
       await target.onStart?.(ctx as any);
       const result = await target.handleEvent(ctx as any, {
         type: "pointermove",
@@ -54,17 +51,24 @@ describe("newDroppingNewShapeState", () => {
   });
 
   describe("handle pointerup", () => {
-    test("should call addShapes and selectShape if pointermove has been called", async () => {
+    test("should call addShapes and multiSelectShapes", async () => {
       const ctx = getMockCtx();
-      const target = newDroppingNewShapeState(getOption());
+      const target = newDuplicatingShapesState();
       await target.onStart?.(ctx as any);
 
       await target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, current: { x: 200, y: 0 }, scale: 1 },
       });
       const result2 = await target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shape, p: { x: -40, y: -50 } }]);
+      const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "duplicated",
+        width: 50,
+        height: 50,
+        p: { x: 210, y: 10 },
+      });
+      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [rect]);
+      expect(ctx.multiSelectShapes).toHaveBeenNthCalledWith(1, [rect.id]);
       expect(result2).toEqual(newSingleSelectedState);
     });
   });

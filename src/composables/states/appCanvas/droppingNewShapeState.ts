@@ -25,12 +25,12 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
   return {
     getLabel: () => "DroppingNewShape",
     onStart: async (ctx) => {
+      ctx.clearAllSelected();
       ctx.startDragging();
       ctx.setCursor("grabbing");
 
       const shapeMap = ctx.getShapeMap();
-      const selectedIds = ctx.getSelectedShapeIdMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s));
+      const snappableShapes = Object.values(shapeMap).filter((s) => !isLineShape(s));
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

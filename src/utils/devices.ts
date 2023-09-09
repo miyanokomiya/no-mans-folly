@@ -1,3 +1,5 @@
+import { ModifierOptions } from "../composables/states/types";
+
 const ua = window.navigator.userAgent.toLowerCase();
 
 const _isMac = ua.indexOf("mac os x") !== -1;
@@ -45,12 +47,14 @@ export function switchClick(
   }
 }
 
-export type MouseOptions = { shift?: boolean; ctrl?: boolean; button: number };
+export type MouseOptions = ModifierOptions & { button: number };
 
 export function getMouseOptions(e: ModifiedMouseEvent): MouseOptions {
   return {
     shift: e.shiftKey,
     ctrl: isCtrlOrMeta(e),
+    alt: isAltOrOpt(e),
+    command: e.metaKey,
     button: e.button,
   };
 }
@@ -58,13 +62,15 @@ export function getMouseOptions(e: ModifiedMouseEvent): MouseOptions {
 /**
  * When "key" is capital case, "shift" is true
  */
-export type KeyOptions = { shift?: boolean; ctrl?: boolean; key: string };
+export type KeyOptions = ModifierOptions & { key: string };
 
 export function getKeyOptions(e: ModifiedKeyboardEvent): KeyOptions {
   return {
     key: e.key,
     shift: e.shiftKey,
+    alt: isAltOrOpt(e),
     ctrl: isCtrlOrMeta(e),
+    command: e.metaKey,
   };
 }
 

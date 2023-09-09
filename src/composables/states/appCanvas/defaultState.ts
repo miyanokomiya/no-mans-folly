@@ -9,6 +9,7 @@ import {
 } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newDuplicatingShapesState } from "./duplicatingShapesState";
 
 export function newDefaultState(): AppCanvasState {
   return state;
@@ -25,7 +26,11 @@ const state: AppCanvasState = {
             if (shape) {
               ctx.selectShape(shape.id, event.data.options.ctrl);
               if (!event.data.options.ctrl) {
-                return newSingleSelectedByPointerOnState;
+                if (event.data.options.alt) {
+                  return newDuplicatingShapesState;
+                } else {
+                  return newSingleSelectedByPointerOnState;
+                }
               }
               return translateOnSelection(ctx);
             }

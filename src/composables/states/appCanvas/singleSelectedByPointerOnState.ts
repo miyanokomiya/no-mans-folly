@@ -21,6 +21,7 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
           if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;
 
           const shape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""];
+
           const boundingBox = newBoundingBox({
             path: getLocalRectPolygon(ctx.getShapeStruct, shape),
             styleScheme: ctx.getStyleScheme(),

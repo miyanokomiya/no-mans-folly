@@ -12,7 +12,7 @@ import {
   resizeShape,
 } from "../shapes";
 import { useCanvas } from "../composables/canvas";
-import { getMouseOptions, isAltOrOpt, isCtrlOrMeta } from "../utils/devices";
+import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import {
   useGlobalCopyEffect,
   useGlobalMousemoveEffect,
@@ -293,11 +293,8 @@ export function AppCanvas() {
         data: {
           start: viewToCanvas(editStartPoint),
           current: viewToCanvas(getMousePoint()),
-          ctrl: isCtrlOrMeta(e),
-          command: e.metaKey,
-          alt: isAltOrOpt(e),
-          shift: e.shiftKey,
           scale: scale,
+          ...getMouseOptions(e),
         },
       });
     },
@@ -345,11 +342,8 @@ export function AppCanvas() {
         type: "pointerhover",
         data: {
           current: viewToCanvas(getMousePoint()),
-          ctrl: isCtrlOrMeta(e),
-          command: e.metaKey,
-          alt: isAltOrOpt(e),
-          shift: e.shiftKey,
           scale: scale,
+          ...getMouseOptions(e),
         },
       });
     },
@@ -375,11 +369,7 @@ export function AppCanvas() {
       smctx.stateMachine.handleEvent({
         type: "keydown",
         data: {
-          key: e.key,
-          ctrl: isCtrlOrMeta(e),
-          command: e.metaKey,
-          alt: isAltOrOpt(e),
-          shift: e.shiftKey,
+          ...getKeyOptions(e),
           prevent: () => e.preventDefault(),
         },
       });

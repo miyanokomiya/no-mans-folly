@@ -19,6 +19,7 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newDuplicatingShapesState } from "./duplicatingShapesState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -78,10 +79,18 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
               if (!event.data.options.ctrl) {
                 if (selectedIds[shape.id]) {
-                  return () => newMovingShapeState({ boundingBox });
+                  if (event.data.options.alt) {
+                    return newDuplicatingShapesState;
+                  } else {
+                    return () => newMovingShapeState({ boundingBox });
+                  }
                 } else {
                   ctx.selectShape(shape.id, false);
-                  return newSingleSelectedByPointerOnState;
+                  if (event.data.options.alt) {
+                    return newDuplicatingShapesState;
+                  } else {
+                    return newSingleSelectedByPointerOnState;
+                  }
                 }
               }
 
