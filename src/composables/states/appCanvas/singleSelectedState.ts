@@ -75,7 +75,9 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               const shape = ctx.getShapeMap()[selectedId];
               smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, shape, ctx.getScale());
               if (smartBranchHitResult) {
-                ctx.addShapes(smartBranchHandler.createBranch(smartBranchHitResult, shape, ctx.generateUuid));
+                const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, shape, ctx.generateUuid);
+                ctx.addShapes(branchShapes);
+                ctx.selectShape(branchShapes[0].id);
                 return;
               }
 

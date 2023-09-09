@@ -23,7 +23,7 @@ const ANCHOR_MARGIN = 24;
 
 export interface SmartBranchHitResult {
   index: number; // index of anchor array: [top, right, bottom, left]
-  previewShapes: Shape[];
+  previewShapes: [Shape, LineShape];
 }
 
 interface Option {
@@ -53,7 +53,11 @@ export function newSmartBranchHandler(option: Option) {
     return { index, previewShapes };
   }
 
-  function createBranch(hitResult: Pick<SmartBranchHitResult, "index">, src: Shape, generateId: () => string): Shape[] {
+  function createBranch(
+    hitResult: Pick<SmartBranchHitResult, "index">,
+    src: Shape,
+    generateId: () => string
+  ): [Shape, LineShape] {
     const getShapeStruct = option.getShapeStruct;
     const shape = cloneShapes(getShapeStruct, [src], generateId)[0];
 

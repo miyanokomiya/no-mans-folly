@@ -78,6 +78,16 @@ export function handleCommonShortcut(
   event: KeyDownEvent
 ): TransitionValue<AppCanvasStateContext> {
   switch (event.data.key) {
+    case "a": {
+      event.data.prevent?.();
+      const allIds = Object.keys(ctx.getShapeMap());
+      if (Object.keys(ctx.getSelectedShapeIdMap()).length === allIds.length) {
+        ctx.clearAllSelected();
+      } else {
+        ctx.multiSelectShapes(allIds);
+      }
+      return translateOnSelection(ctx);
+    }
     case "z":
       if (event.data.ctrl) ctx.undo();
       return translateOnSelection(ctx);
