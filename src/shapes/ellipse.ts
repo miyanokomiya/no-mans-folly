@@ -80,22 +80,16 @@ export const struct: ShapeStruct<EllipseShape> = {
 
     return ret;
   },
-  getClosestOutline(shape, p, threshold) {
-    const center = add(shape.p, { x: shape.rx, y: shape.ry });
-    const rotateFn = getRotateFn(shape.rotation, center);
-    const rotatedP = rotateFn(p, true);
+  getClosestOutline,
+  // TODO
+  // getClosestIntersectedOutline(shape, from, to) {
+  //   const center = add(shape.p, { x: shape.rx, y: shape.ry });
+  //   const rotateFn = getRotateFn(shape.rotation, center);
+  //   const rotatedFrom = rotateFn(from, true);
 
-    {
-      const markers = getMarkers(center, shape.rx, shape.ry);
-      const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
-      if (rotatedClosest) return rotateFn(rotatedClosest);
-    }
-
-    {
-      const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedP, threshold);
-      if (rotatedClosest) return rotateFn(rotatedClosest);
-    }
-  },
+  //   const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedFrom);
+  //   if (rotatedClosest) return rotateFn(rotatedClosest);
+  // },
   getCommonStyle,
   updateCommonStyle,
 };
@@ -118,4 +112,21 @@ function getMarkers(center: IVec2, rx: number, ry: number): IVec2[] {
     { x: center.x - rx, y: center.y },
     center,
   ];
+}
+
+function getClosestOutline(shape: EllipseShape, p: IVec2, threshold: number): IVec2 | undefined {
+  const center = add(shape.p, { x: shape.rx, y: shape.ry });
+  const rotateFn = getRotateFn(shape.rotation, center);
+  const rotatedP = rotateFn(p, true);
+
+  {
+    const markers = getMarkers(center, shape.rx, shape.ry);
+    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+    if (rotatedClosest) return rotateFn(rotatedClosest);
+  }
+
+  {
+    const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedP, threshold);
+    if (rotatedClosest) return rotateFn(rotatedClosest);
+  }
 }

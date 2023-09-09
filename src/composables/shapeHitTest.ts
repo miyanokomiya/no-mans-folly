@@ -34,3 +34,14 @@ export function newRectInRectHitTest(range: IRectangle): RectHitTest {
 
   return { test };
 }
+
+export function newRectHitRectHitTest(range: IRectangle): RectHitTest {
+  const r = range.x + range.width;
+  const b = range.y + range.height;
+
+  function test(target: IRectangle): boolean {
+    return !(r < target.x || b < target.y || target.x + target.width < range.x || target.y + target.height < range.y);
+  }
+
+  return { test };
+}

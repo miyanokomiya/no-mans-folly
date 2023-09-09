@@ -16,6 +16,8 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
+import { getOuterRectangle } from "okageo";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -24,6 +26,8 @@ interface Option {
 export function newSingleSelectedState(option?: Option): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
+  let smartBranchHandler: SmartBranchHandler;
+  let smartBranchHitResult: SmartBranchHitResult | undefined;
 
   return {
     getLabel: () => "SingleSelected",
@@ -41,6 +45,11 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           styleScheme: ctx.getStyleScheme(),
           scale: ctx.getScale(),
         });
+
+      smartBranchHandler = newSmartBranchHandler({
+        ...ctx,
+        bounds: getOuterRectangle([boundingBox.path]),
+      });
     },
     onEnd: async (ctx) => {
       ctx.hideFloatMenu();
@@ -63,21 +72,28 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                 }
               }
 
-              const shape = ctx.getShapeAt(event.data.point);
-              if (!shape) {
+              const shape = ctx.getShapeMap()[selectedId];
+              smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, shape, ctx.getScale());
+              if (smartBranchHitResult) {
+                ctx.addShapes(smartBranchHandler.createBranch(smartBranchHitResult, shape, ctx.generateUuid));
+                return;
+              }
+
+              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              if (!shapeAtPointer) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
 
               if (!event.data.options.ctrl) {
-                if (shape.id === selectedId) {
+                if (shapeAtPointer.id === selectedId) {
                   return () => newMovingShapeState({ boundingBox });
                 } else {
-                  ctx.selectShape(shape.id, false);
+                  ctx.selectShape(shapeAtPointer.id, false);
                   return newSingleSelectedByPointerOnState;
                 }
               }
 
-              ctx.selectShape(shape.id, true);
+              ctx.selectShape(shapeAtPointer.id, true);
               return;
             }
             case 1:
@@ -98,6 +114,15 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             const style = boundingBox.getCursorStyle(hitBounding);
             if (style) {
               ctx.setCursor(style);
+              return;
+            }
+          } else {
+            const shape = ctx.getShapeMap()[selectedId];
+            const current = smartBranchHitResult?.index;
+            smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, shape, ctx.getScale());
+            if (current !== smartBranchHitResult?.index) {
+              ctx.setTmpShapeMap({});
+              ctx.setCursor();
               return;
             }
           }
@@ -150,6 +175,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       if (!shape) return;
 
       boundingBox.render(renderCtx);
+      smartBranchHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
     },
   };
 }

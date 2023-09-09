@@ -4,6 +4,7 @@ import {
   expandRect,
   getClosestOutlineOnEllipse,
   getClosestOutlineOnRectangle,
+  getCrossSegAndSeg,
   getLocationFromRateOnRectPath,
   getRectCenterLines,
   getRectLines,
@@ -16,10 +17,13 @@ import {
   isPointOnEllipseRotated,
   isPointOnRectangle,
   isPointOnRectangleRotated,
+  isRectOverlappedH,
+  isRectOverlappedV,
   isSegmentOverlappedH,
   isSegmentOverlappedV,
   sortPointFrom,
 } from "./geometry";
+import { IRectangle } from "okageo";
 
 describe("getRotateFn", () => {
   test("should return function to rotate", () => {
@@ -322,6 +326,59 @@ describe("isSegmentOverlappedH", () => {
         { y: 9, x: 0 },
       ])
     ).toBe(true);
+  });
+});
+
+describe("isRectOverlappedH", () => {
+  test("should return true if rectangles overlap horizontally", () => {
+    const rect: IRectangle = { x: 0, y: 0, width: 100, height: 100 };
+    expect(isRectOverlappedH(rect, rect)).toBe(true);
+    expect(isRectOverlappedH(rect, { x: 0, y: 10, width: 100, height: 100 })).toBe(true);
+    expect(isRectOverlappedH(rect, { x: 0, y: -10, width: 100, height: 100 })).toBe(true);
+    expect(isRectOverlappedH(rect, { x: 0, y: 10, width: 100, height: 80 })).toBe(true);
+    expect(isRectOverlappedH(rect, { x: 0, y: 110, width: 100, height: 100 })).toBe(false);
+    expect(isRectOverlappedH(rect, { x: 0, y: -110, width: 100, height: 100 })).toBe(false);
+  });
+});
+
+describe("isRectOverlappedV", () => {
+  test("should return true if rectangles overlap vertically", () => {
+    const rect: IRectangle = { x: 0, y: 0, width: 100, height: 100 };
+    expect(isRectOverlappedV(rect, rect)).toBe(true);
+    expect(isRectOverlappedV(rect, { x: 10, y: 0, width: 100, height: 100 })).toBe(true);
+    expect(isRectOverlappedV(rect, { x: -10, y: 0, width: 100, height: 100 })).toBe(true);
+    expect(isRectOverlappedV(rect, { x: 10, y: 0, width: 80, height: 100 })).toBe(true);
+    expect(isRectOverlappedV(rect, { x: 110, y: 0, width: 100, height: 100 })).toBe(false);
+    expect(isRectOverlappedV(rect, { x: -110, y: 0, width: 100, height: 100 })).toBe(false);
+  });
+});
+
+describe("getCrossSegAndSeg", () => {
+  test("should return intersection of two segments", () => {
+    expect(
+      getCrossSegAndSeg(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+        ],
+        [
+          { x: 3, y: -3 },
+          { x: 3, y: 5 },
+        ]
+      )
+    ).toEqual({ x: 3, y: 0 });
+    expect(
+      getCrossSegAndSeg(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+        ],
+        [
+          { x: 3, y: 3 },
+          { x: 3, y: 5 },
+        ]
+      )
+    ).toEqual(undefined);
   });
 });
 

@@ -17,6 +17,8 @@ import {
   getRotateFn,
   getRotatedWrapperRect,
   isPointOnRectangleRotated,
+  getCrossSegAndSeg,
+  ISegment,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -101,6 +103,25 @@ export const struct: ShapeStruct<RectangleShape> = {
       const rotatedClosest = getClosestOutlineOnRectangle(rect, rotatedP, threshold);
       if (rotatedClosest) return rotateFn(rotatedClosest);
     }
+  },
+  getClosestIntersectedOutline(shape, from, to) {
+    const polygon = getLocalRectPolygon(shape);
+    const seg: ISegment = [from, to];
+    let ret: IVec2 | undefined;
+    let d = Infinity;
+
+    polygon.forEach((p, i) => {
+      const s = getCrossSegAndSeg([p, polygon[(i + 1) % polygon.length]], seg);
+      if (!s) return;
+
+      const sd = getDistance(from, s);
+      if (sd < d) {
+        ret = s;
+        d = sd;
+      }
+    });
+
+    return ret;
   },
   getCommonStyle,
   updateCommonStyle,

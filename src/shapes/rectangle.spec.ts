@@ -57,4 +57,13 @@ describe("struct", () => {
       expect(struct.getClosestOutline?.(shape, { x: -1, y: 11 }, 2)).toEqual({ x: 0, y: 10 });
     });
   });
+
+  describe("getClosestIntersectedOutline", () => {
+    test("should return the closest intersected outline point", () => {
+      const shape = struct.create({ width: 10, height: 10 });
+      expect(struct.getClosestIntersectedOutline?.(shape, { x: -3, y: 3 }, { x: -3, y: 13 })).toEqual(undefined);
+      expect(struct.getClosestIntersectedOutline?.(shape, { x: 3, y: -3 }, { x: 3, y: 13 })).toEqual({ x: 3, y: 0 });
+      expect(struct.getClosestIntersectedOutline?.(shape, { x: 3, y: 3 }, { x: 3, y: 13 })).toEqual({ x: 3, y: 10 });
+    });
+  });
 });

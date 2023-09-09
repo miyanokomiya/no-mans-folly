@@ -84,6 +84,19 @@ export function getClosestOutline(
   if (struct.getClosestOutline) return struct.getClosestOutline(shape, p, threshold);
 }
 
+/**
+ * [from, to] is treated as a segment.
+ */
+export function getClosestIntersectedOutline(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  from: IVec2,
+  to: IVec2
+): IVec2 | undefined {
+  const struct = getStruct(shape.type);
+  if (struct.getClosestIntersectedOutline) return struct.getClosestIntersectedOutline(shape, from, to);
+}
+
 export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {
   return geometry.getLocationRateOnRectPath(getLocalRectPolygon(getStruct, shape), shape.rotation, p);
 }
@@ -194,4 +207,9 @@ export function patchShapesOrderToFirst(shapeIds: string[], firstIndex: string):
     p[id] = { findex };
     return p;
   }, {});
+}
+
+export function cloneShapes(getStruct: GetShapeStruct, shapes: Shape[], generateId: () => string): Shape[] {
+  const cloned = JSON.parse(JSON.stringify(shapes)) as Shape[];
+  return remapShapeIds(getStruct, cloned, generateId, true).shapes;
 }

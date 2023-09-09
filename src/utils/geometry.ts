@@ -3,6 +3,7 @@ import {
   IVec2,
   add,
   getCenter,
+  getCrossSegAndLine,
   getDistance,
   getOuterRectangle,
   getPedal,
@@ -93,13 +94,15 @@ export function getClosestOutlineOnEllipse(
   rx: number,
   ry: number,
   p: IVec2,
-  threshold: number
+  threshold?: number
 ): IVec2 | undefined {
   const np = sub(p, c);
   const r = getRadian({ x: np.x / rx, y: np.y / ry });
   const x = c.x + Math.cos(r) * rx;
   const y = c.y + Math.sin(r) * ry;
   const ep = { x, y };
+  if (threshold === undefined) return ep;
+
   return getDistance(ep, p) <= threshold ? ep : undefined;
 }
 
@@ -213,6 +216,14 @@ export function isSegmentOverlappedV(a: ISegment, b: ISegment): boolean {
   return isRangeOverlapped([a[0].x, a[1].x], [b[0].x, b[1].x]);
 }
 
+export function isRectOverlappedH(a: IRectangle, b: IRectangle): boolean {
+  return isRangeOverlapped([a.y, a.y + a.height], [b.y, b.y + b.height]);
+}
+
+export function isRectOverlappedV(a: IRectangle, b: IRectangle): boolean {
+  return isRangeOverlapped([a.x, a.x + a.width], [b.x, b.x + b.width]);
+}
+
 export function getCrossLineAndLine(line0: IVec2[], line1: IVec2[]): IVec2 | undefined {
   if (isParallel(sub(line0[0], line0[1]), sub(line1[0], line1[1]))) return;
 
@@ -222,6 +233,13 @@ export function getCrossLineAndLine(line0: IVec2[], line1: IVec2[]): IVec2 | und
     ((line1[1].x - line1[0].x) * (line1[0].y - line0[1].y) - (line1[1].y - line1[0].y) * (line1[0].x - line0[1].x)) / 2;
   const rate = s1 / (s1 + s2);
   return vec(line0[0].x + (line0[1].x - line0[0].x) * rate, line0[0].y + (line0[1].y - line0[0].y) * rate);
+}
+
+export function getCrossSegAndSeg(seg0: ISegment, seg1: ISegment): IVec2 | undefined {
+  const s = getCrossSegAndLine(seg0, seg1);
+  if (!s) return;
+  if (!isOnSeg(s, seg1)) return;
+  return s;
 }
 
 export function sortPointFrom(p: IVec2, points: IVec2[]): IVec2[] {
