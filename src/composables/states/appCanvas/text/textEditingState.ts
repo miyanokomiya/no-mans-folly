@@ -124,7 +124,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           if (event.data.keys.has(option.id)) {
             textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
             textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
-            textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo));
+            textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
           }
           return;
         }
