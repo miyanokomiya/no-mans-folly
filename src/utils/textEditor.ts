@@ -3,7 +3,7 @@ import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from 
 
 export const DEFAULT_FONT_SIZE = 18;
 
-const WHITE_SPACE = / |\t/;
+const WHITE_SPACE = / |\t|\.|,/;
 export const LINEBREAK = /\n/;
 
 function isWhiteSpace(char: string): boolean {
@@ -635,4 +635,31 @@ export function getDocCompositionInfo(
     rangeWidth,
     rangeHeight
   );
+}
+
+export function getWordRangeAtCursor(
+  composition: Pick<DocCompositionItem, "char">[],
+  cursor: number
+): [cursor: number, selection: number] {
+  if (isWhiteSpace(composition[cursor].char)) return [cursor, 1];
+
+  let from = 0;
+  for (let i = cursor - 1; 0 <= i; i--) {
+    const c = composition[i];
+    if (isWhiteSpace(c.char)) {
+      from = i + 1;
+      break;
+    }
+  }
+
+  let to = composition.length;
+  for (let i = cursor + 1; i < composition.length; i++) {
+    const c = composition[i];
+    if (isWhiteSpace(c.char)) {
+      to = i;
+      break;
+    }
+  }
+
+  return [from, to - from];
 }

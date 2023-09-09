@@ -8,6 +8,7 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  getWordRangeAtCursor,
   mergeDocAttrInfo,
   sliceDocOutput,
   splitDocOutputByLineBreak,
@@ -630,5 +631,26 @@ describe("applyRangeWidthToLineWord", () => {
         { align: "right" },
       ],
     ]);
+  });
+});
+
+describe("getWordRangeAtCursor", () => {
+  test("should return word range", () => {
+    const comp = [
+      { char: "a" },
+      { char: " " },
+      { char: "w" },
+      { char: "o" },
+      { char: "r" },
+      { char: "d" },
+      { char: "." },
+    ];
+    expect(getWordRangeAtCursor(comp, 0)).toEqual([0, 1]);
+    expect(getWordRangeAtCursor(comp, 1)).toEqual([1, 1]);
+    expect(getWordRangeAtCursor(comp, 2)).toEqual([2, 4]);
+    expect(getWordRangeAtCursor(comp, 3)).toEqual([2, 4]);
+    expect(getWordRangeAtCursor(comp, 4)).toEqual([2, 4]);
+    expect(getWordRangeAtCursor(comp, 5)).toEqual([2, 4]);
+    expect(getWordRangeAtCursor(comp, 6)).toEqual([6, 1]);
   });
 });

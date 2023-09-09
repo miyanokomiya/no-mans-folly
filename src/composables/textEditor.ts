@@ -15,6 +15,7 @@ import {
   getInitialOutput,
   getOutputAt,
   getRangeLines,
+  getWordRangeAtCursor,
   isLinebreak,
   mergeDocAttrInfo,
   renderDocByComposition,
@@ -137,6 +138,10 @@ export function newTextEditorController() {
   function moveCursorLineTail() {
     const location = getCursorLocation(_compositionLines, getCursor());
     setCursor(getLocationIndex({ x: getDocLength(_compositionLines[location.y].outputs) - 1, y: location.y }));
+  }
+
+  function selectWordAtCursor() {
+    setCursor(...getWordRangeAtCursor(_composition, getCursor()));
   }
 
   function getCurrentAttributeInfo(): DocAttrInfo {
@@ -320,6 +325,7 @@ export function newTextEditorController() {
     selectAll,
     moveCursorLineHead,
     moveCursorLineTail,
+    selectWordAtCursor,
     getLocationIndex,
 
     getSelectedDocOutput,

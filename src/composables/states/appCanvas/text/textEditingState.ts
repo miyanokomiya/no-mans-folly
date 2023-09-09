@@ -42,6 +42,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "TextEditing",
     onStart: async (ctx) => {
+      ctx.setCursor();
       ctx.showFloatMenu();
       ctx.startTextEditing();
 
@@ -113,6 +114,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
             default:
               return;
           }
+        }
+        case "pointerdoubledown": {
+          textEditorController.selectWordAtCursor();
+          onCursorUpdated(ctx);
+          return;
         }
         case "keydown":
           updateEditorPosition(ctx);
