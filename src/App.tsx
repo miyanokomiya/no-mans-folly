@@ -113,6 +113,8 @@ function App() {
       const sheetId = queryParameters.get("sheet");
       if (sheetId) {
         sheetStore.selectSheet(sheetId);
+      } else {
+        sheetStore.selectSheet(sheetStore.getEntities()[0].id);
       }
     };
     dbProviderDiagram.on("synced", onLoadDiagram);
