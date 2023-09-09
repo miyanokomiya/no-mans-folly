@@ -73,7 +73,7 @@ export const SheetList: React.FC = () => {
       return [
         s.id,
         <div key={s.id}>
-          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} index={i + 1} onChangeName={onChangeName} />{" "}
+          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} index={i + 1} onChangeName={onChangeName} />
         </div>,
       ];
     });

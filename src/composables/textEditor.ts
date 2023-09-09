@@ -4,6 +4,7 @@ import {
   DEFAULT_FONT_SIZE,
   DocCompositionItem,
   DocCompositionLine,
+  LINEBREAK,
   applyAttrInfoToDocOutput,
   getBoundsAtLocation,
   getCursorLocation,
@@ -14,6 +15,7 @@ import {
   getInitialOutput,
   getOutputAt,
   getRangeLines,
+  isLinebreak,
   mergeDocAttrInfo,
   renderDocByComposition,
   sliceDocOutput,
@@ -191,7 +193,7 @@ export function newTextEditorController() {
     }
 
     const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
-    const list = text.split("\n");
+    const list = text.split(LINEBREAK);
     list.forEach((block, i) => {
       if (block) ret.push({ insert: block, attributes: attrs });
       if (i !== list.length - 1) {
@@ -421,7 +423,7 @@ function renderCursor(
     const c = composition[composition.length - 1];
     ctx.beginPath();
     // When the last character is line break, the cursor should be in new line.
-    if (c.char === "\n") {
+    if (isLinebreak(c.char)) {
       ctx.moveTo(1, c.bounds.y + c.bounds.height);
       ctx.lineTo(1, c.bounds.y + c.bounds.height * 2);
     } else {

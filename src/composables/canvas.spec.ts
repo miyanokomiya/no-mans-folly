@@ -9,6 +9,7 @@ describe("useCanvas", () => {
 
   beforeEach(() => {
     cleanup();
+    localStorage.clear();
   });
 
   describe("view transition", () => {

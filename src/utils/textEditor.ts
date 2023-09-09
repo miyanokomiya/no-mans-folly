@@ -3,11 +3,15 @@ import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from 
 
 export const DEFAULT_FONT_SIZE = 18;
 
-export function getTextLines(doc: DocOutput): string[] {
-  return doc
-    .map((d) => d.insert)
-    .join("")
-    .split("\n");
+const WHITE_SPACE = / |\t/;
+export const LINEBREAK = /\n/;
+
+function isWhiteSpace(char: string): boolean {
+  return WHITE_SPACE.test(char);
+}
+
+export function isLinebreak(char: string): boolean {
+  return LINEBREAK.test(char);
 }
 
 export function getDocLength(doc: DocOutput): number {
@@ -243,7 +247,7 @@ export function getDeltaByApplyBlockStyle(
   const breakIndexList: number[] = [];
   for (let i = cursor; i < composition.length; i++) {
     const c = composition[i];
-    if (c.char === "\n") {
+    if (isLinebreak(c.char)) {
       breakIndexList.push(i);
       if (cursor + selection <= i) break;
     }
@@ -260,7 +264,7 @@ export function getDeltaByApplyBlockStyleToDoc(doc: DocOutput, attrs: DocAttribu
   let cursor = 0;
   doc.forEach((o) => {
     for (let i = 0; i < o.insert.length; i++) {
-      if (o.insert[i] === "\n") {
+      if (isLinebreak(o.insert[i])) {
         breakIndexList.push(cursor);
       }
       cursor += 1;
@@ -378,7 +382,7 @@ export function splitDocOutputByLineBreak(doc: DocOutput): DocOutput {
 
   doc.forEach((p) => {
     const create = () => (p.attributes ? { attributes: p.attributes } : {});
-    const [head, ...body] = p.insert.split("\n");
+    const [head, ...body] = p.insert.split(LINEBREAK);
     if (head) splited.push({ insert: head, ...create() });
     body.forEach((l) => {
       splited.push({ insert: "\n", ...create() });
@@ -403,7 +407,7 @@ export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext
 
     for (let i = 0; i < op.insert.length; i++) {
       const c = op.insert[i];
-      if (c === "\n") {
+      if (isLinebreak(c)) {
         ret.set(cursor, 0);
       } else {
         ret.set(cursor, ctx.measureText(c).width);
@@ -438,13 +442,13 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
     for (let i = 0; i < op.insert.length; i++) {
       const c = op.insert[i];
 
-      if (c === "\n") {
+      if (isLinebreak(c)) {
         if (word.length > 0) line.push(word);
         line.push([[c, getW(), op.attributes]]);
         lines.push(line);
         word = [];
         line = [];
-      } else if (c === " ") {
+      } else if (isWhiteSpace(c)) {
         if (word.length > 0) line.push(word);
         line.push([[c, getW(), op.attributes]]);
         word = [];
@@ -475,7 +479,7 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
       let broken = false;
 
       wordUnit.forEach((unit) => {
-        if (unit[0] === "\n") {
+        if (isLinebreak(unit[0])) {
           if (word.length > 0) line.push(word);
           line.push([unit]);
           lines.push(line);
