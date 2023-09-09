@@ -4,6 +4,7 @@ import { EditMovement } from "./states/types";
 import { expandRect } from "../utils/geometry";
 import { useGlobalResizeEffect } from "./window";
 import { Size } from "../models";
+import { useLocalStorageAdopter } from "./localStorage";
 
 const scaleRate = 1.1;
 
@@ -48,8 +49,6 @@ export function useCanvas(
   const scaleMin = options.scaleMin ?? 0.1;
   const scaleMax = options.scaleMax ?? 10;
 
-  const [scale, setScale] = useState(1);
-  const [viewOrigin, setViewOrigin] = useState<IVec2>({ x: 0, y: 0 });
   const [viewSize, setViewSize] = useState<Size>({ width: 600, height: 100 });
   const [moveType, setMoveType] = useState<"move" | "drag" | undefined>();
   const [editStartPoint, setEditStartPoint] = useState<IVec2>();
@@ -57,6 +56,25 @@ export function useCanvas(
 
   // Prepare ref for mouse point to reduce recalculation.
   const mousePoint = useRef<IVec2>({ x: 0, y: 0 });
+
+  const viewState = useLocalStorageAdopter({
+    key: "view_state",
+    version: "1",
+    initialValue: { scale: 1, viewOrigin: { x: 0, y: 0 } },
+  });
+  const { scale, viewOrigin } = viewState.state;
+  const setScale = useCallback(
+    (val: number) => {
+      viewState.setState((state) => ({ scale: val, viewOrigin: state.viewOrigin }));
+    },
+    [viewState.setState]
+  );
+  const setViewOrigin = useCallback(
+    (val: IVec2) => {
+      viewState.setState((state) => ({ scale: state.scale, viewOrigin: val }));
+    },
+    [viewState.setState]
+  );
 
   function setMousePoint(value: IVec2) {
     mousePoint.current = value;
