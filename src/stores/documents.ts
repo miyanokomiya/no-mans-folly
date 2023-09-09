@@ -76,11 +76,11 @@ export function newDocumentStore(option: Option) {
 
   function retrieveCursorPosition(relPos?: CursorPositionInfo): number {
     if (!relPos) return 0;
-    return Y.createAbsolutePositionFromRelativePosition(relPos, option.ydoc)?.index ?? 0;
+    return Y.createAbsolutePositionFromRelativePosition(relPos, ydoc)?.index ?? 0;
   }
 
   function transact(fn: () => void) {
-    option.ydoc.transact(fn);
+    ydoc.transact(fn);
   }
 
   function getScope(): Y.AbstractType<any> {
