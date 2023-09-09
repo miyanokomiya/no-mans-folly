@@ -19,6 +19,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
 
   const onDown = useCallback(
     (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
       if (anchor && !(e.target as HTMLElement).closest(anchor)) return;
       const id = e.currentTarget.getAttribute("data-id");
       if (!id) return;

@@ -17,12 +17,10 @@ import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { newDocumentStore } from "./stores/documents";
 import { SheetList } from "./components/sheets/SheetList";
+import { useEffect, useState } from "react";
+import { getSheetURL } from "./utils/route";
 
 const yDiagramDoc = new Y.Doc();
-const dbProviderDiagram = new IndexeddbPersistence("test-project-diagram", yDiagramDoc);
-dbProviderDiagram.on("synced", () => {
-  console.log("content from the database is loaded: diagram");
-});
 const diagramStore = newDiagramStore({ ydoc: yDiagramDoc });
 const sheetStore = newSheetStore({ ydoc: yDiagramDoc });
 
@@ -41,25 +39,6 @@ function createUndoManager() {
   );
 }
 let undoManager = createUndoManager();
-
-sheetStore.watchSelected(() => {
-  const sheet = sheetStore.getSelectedSheet();
-  if (sheet) {
-    undoManager.destroy();
-    ySheetDoc.destroy();
-    ySheetDoc = new Y.Doc();
-    const dbProviderSheet = new IndexeddbPersistence(sheet.id, ySheetDoc);
-    dbProviderSheet.on("synced", () => {
-      console.log("content from the database is loaded: sheet ", sheet.id);
-    });
-
-    layerStore.refresh(ySheetDoc);
-    shapeStore.refresh(ySheetDoc);
-    documentStore.refresh(ySheetDoc);
-    undoManager = createUndoManager();
-    undoManager.clear();
-  }
-});
 
 const acctx = {
   diagramStore,
@@ -84,14 +63,67 @@ const smctx = createStateMachineContext({
   getStyleScheme: acctx.getStyleScheme,
 });
 
+const dbProviderDiagram = new IndexeddbPersistence("test-project-diagram", yDiagramDoc);
+
 function App() {
+  const [ready, setReady] = useState(false);
+  const [dbProviderSheet, setDbProviderSheet] = useState<IndexeddbPersistence | undefined>();
+
+  useEffect(() => {
+    return sheetStore.watchSelected(() => {
+      setReady(false);
+
+      const sheet = sheetStore.getSelectedSheet();
+      if (!sheet) return;
+
+      undoManager.destroy();
+      ySheetDoc.destroy();
+      ySheetDoc = new Y.Doc();
+      const dbProviderSheet = new IndexeddbPersistence(sheet.id, ySheetDoc);
+      setDbProviderSheet(dbProviderSheet);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!dbProviderSheet) return;
+
+    const onSheetLoaded = () => {
+      const sheet = sheetStore.getSelectedSheet();
+      if (!sheet) return;
+
+      console.log("content from the database is loaded: sheet ", sheet.id);
+      layerStore.refresh(ySheetDoc);
+      shapeStore.refresh(ySheetDoc);
+      documentStore.refresh(ySheetDoc);
+      undoManager = createUndoManager();
+      undoManager.clear();
+      smctx.stateMachine.reset();
+      history.replaceState(null, "", getSheetURL(sheet.id));
+
+      setReady(true);
+    };
+    dbProviderSheet.on("synced", onSheetLoaded);
+    return () => dbProviderSheet.off("synced", onSheetLoaded);
+  }, [dbProviderSheet]);
+
+  useEffect(() => {
+    const onLoadDiagram = () => {
+      console.log("content from the database is loaded: diagram");
+      const queryParameters = new URLSearchParams(window.location.search);
+      const sheetId = queryParameters.get("sheet");
+      if (sheetId) {
+        sheetStore.selectSheet(sheetId);
+      }
+    };
+    dbProviderDiagram.on("synced", onLoadDiagram);
+    return () => dbProviderDiagram.off("synced", onLoadDiagram);
+  }, []);
+
   return (
     <AppCanvasContext.Provider value={acctx}>
       <AppStateMachineContext.Provider value={smctx}>
         <div className="relative">
-          <div className="w-screen h-screen">
-            <AppCanvas />
-          </div>
+          <div className="w-screen h-screen">{ready ? <AppCanvas /> : undefined}</div>
           <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
             <AppToolbar />
           </div>

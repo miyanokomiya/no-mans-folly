@@ -4,6 +4,7 @@ import { FixedPopupButton } from "../atoms/PopupButton";
 import { useOutsideClickCallback } from "../../composables/window";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
+import { getSheetURL } from "../../utils/route";
 
 interface Props {
   sheet: Sheet;
@@ -20,6 +21,8 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
 
   const _onClickSheet = useCallback(
     (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+
       e.preventDefault();
       onClickSheet?.(sheet.id);
     },
@@ -76,7 +79,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
       );
     } else {
       return (
-        <a href={`TODO`} onClick={_onClickSheet} className="w-full h-full flex items-center" data-anchor>
+        <a href={getSheetURL(sheet.id)} onClick={_onClickSheet} className="w-full h-full flex items-center" data-anchor>
           <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
         </a>
       );

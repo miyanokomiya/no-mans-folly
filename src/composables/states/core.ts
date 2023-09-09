@@ -27,6 +27,7 @@ interface StateMachine<E = ModeStateEvent> {
   getStateSummary: () => { label: string };
   handleEvent: (event: E) => Promise<void>;
   render: (ctx: CanvasRenderingContext2D) => void;
+  reset: () => Promise<void>;
   dispose: () => Promise<void>;
   // This will be resolved when "onStart" of the initial state finishes
   ready: Promise<void>;
@@ -49,6 +50,10 @@ export function newStateMachine<C, E = ModeStateEvent>(
     return {
       label: getCurrentState().state.getLabel(),
     };
+  }
+
+  async function reset(): Promise<void> {
+    await switchState(getCtx(), getInitialState());
   }
 
   async function handleEvent(event: E): Promise<void> {
@@ -126,6 +131,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
     getStateSummary,
     handleEvent,
     render,
+    reset,
     dispose,
     ready,
     watch: callback.bind,

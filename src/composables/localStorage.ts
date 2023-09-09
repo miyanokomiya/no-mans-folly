@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type StoredData<T> = {
   version: string;
@@ -6,28 +6,30 @@ type StoredData<T> = {
 };
 
 export function useLocalStorageAdopter<T>(option: { key: string; version: string; initialValue: T }) {
-  const [state, setState] = useState(option.initialValue);
+  const initialRef = useRef<T>();
+
+  // Restore the value at the first occation without delay.
+  if (!initialRef.current) {
+    initialRef.current = getFromLocalStorage<T>(option.key, option.version) ?? option.initialValue;
+  }
+
+  const [state, setState] = useState<T>(initialRef.current);
 
   const save = useCallback(() => {
-    if (state === option.initialValue) return;
     localStorage.setItem(option.key, JSON.stringify({ value: state, version: option.version } as StoredData<T>));
   }, [state, option.key, option.version, option.initialValue]);
-
-  const restore = useCallback(() => {
-    const str = localStorage.getItem(option.key);
-    if (str) {
-      const data = JSON.parse(str) as StoredData<T>;
-      if (data.version === option.version) setState(data.value);
-    }
-  }, [option.key, option.version]);
-
-  useEffect(() => {
-    restore();
-  }, [restore, option.key, option.version]);
 
   useEffect(() => {
     save();
   }, [save]);
 
   return { state, setState };
+}
+
+function getFromLocalStorage<T>(key: string, version: string): T | undefined {
+  const str = localStorage.getItem(key);
+  if (str) {
+    const data = JSON.parse(str) as StoredData<T>;
+    if (data.version === version) return data.value;
+  }
 }
