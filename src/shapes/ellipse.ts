@@ -3,10 +3,12 @@ import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   getClosestOutlineOnEllipse,
+  getCrossLineAndEllipseRotated,
   getRectPoints,
   getRotateFn,
   getRotatedWrapperRect,
   isPointOnEllipseRotated,
+  sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -81,15 +83,13 @@ export const struct: ShapeStruct<EllipseShape> = {
     return ret;
   },
   getClosestOutline,
-  // TODO
-  // getClosestIntersectedOutline(shape, from, to) {
-  //   const center = add(shape.p, { x: shape.rx, y: shape.ry });
-  //   const rotateFn = getRotateFn(shape.rotation, center);
-  //   const rotatedFrom = rotateFn(from, true);
+  getClosestIntersectedOutline(shape, from, to) {
+    const center = add(shape.p, { x: shape.rx, y: shape.ry });
+    const points = getCrossLineAndEllipseRotated([from, to], center, shape.rx, shape.ry, shape.rotation);
+    if (!points) return;
 
-  //   const rotatedClosest = getClosestOutlineOnEllipse(center, shape.rx, shape.ry, rotatedFrom);
-  //   if (rotatedClosest) return rotateFn(rotatedClosest);
-  // },
+    return sortPointFrom(from, points)[0];
+  },
   getCommonStyle,
   updateCommonStyle,
 };

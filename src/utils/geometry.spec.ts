@@ -4,6 +4,7 @@ import {
   expandRect,
   getClosestOutlineOnEllipse,
   getClosestOutlineOnRectangle,
+  getCrossLineAndEllipse,
   getCrossSegAndSeg,
   getLocationFromRateOnRectPath,
   getRectCenterLines,
@@ -147,6 +148,81 @@ describe("isPointOnEllipseRotated", () => {
 
     expect(isPointOnEllipseRotated({ x: 0, y: 0 }, 3, 4, 0, { x: 3, y: -2 })).toBe(false);
     expect(isPointOnEllipseRotated({ x: 0, y: 0 }, 3, 4, Math.PI / 4, { x: 3, y: -2 })).toBe(true);
+  });
+});
+
+describe("getCrossLineAndEllipse", () => {
+  test("should return intersections if exist: when the line is vertical", () => {
+    const res0 = getCrossLineAndEllipse(
+      [
+        { x: -1, y: 11 },
+        { x: -1, y: 1 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4
+    );
+    expect(res0?.[0].x).toBeCloseTo(-1);
+    expect(res0?.[0].y).toBeGreaterThanOrEqual(-3);
+    expect(res0?.[0].y).toBeLessThanOrEqual(5);
+    expect(res0?.[1].x).toBeCloseTo(-1);
+    expect(res0?.[1].y).toBeGreaterThanOrEqual(-3);
+    expect(res0?.[1].y).toBeLessThanOrEqual(5);
+
+    const res1 = getCrossLineAndEllipse(
+      [
+        { x: -4, y: 10 },
+        { x: -4, y: 0 },
+      ],
+      { x: 0, y: 0 },
+      3,
+      4
+    );
+    expect(res1).toBe(undefined);
+
+    const res2 = getCrossLineAndEllipse(
+      [
+        { x: -3, y: 10 },
+        { x: -3, y: 0 },
+      ],
+      { x: 0, y: 0 },
+      3,
+      4
+    );
+    expect(res2).toHaveLength(1);
+    expect(res2?.[0].x).toBeCloseTo(-3);
+    expect(res2?.[0].y).toBeCloseTo(0);
+  });
+
+  test("should return intersections if exist: when the line isn't vertical", () => {
+    const res0 = getCrossLineAndEllipse(
+      [
+        { x: -2, y: -3 },
+        { x: 4, y: 5 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4
+    );
+    expect(res0?.[0].x).toBeGreaterThanOrEqual(1.5);
+    expect(res0?.[0].x).toBeLessThanOrEqual(4);
+    expect(res0?.[0].y).toBeGreaterThanOrEqual(3);
+    expect(res0?.[0].y).toBeLessThanOrEqual(5);
+    expect(res0?.[1].x).toBeGreaterThanOrEqual(-2);
+    expect(res0?.[1].x).toBeLessThanOrEqual(-0.5);
+    expect(res0?.[1].y).toBeGreaterThanOrEqual(-3);
+    expect(res0?.[1].y).toBeLessThanOrEqual(-1);
+
+    const res1 = getCrossLineAndEllipse(
+      [
+        { x: 10, y: -3 },
+        { x: 14, y: 5 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4
+    );
+    expect(res1).toBe(undefined);
   });
 });
 

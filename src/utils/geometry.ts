@@ -1,6 +1,7 @@
 import {
   IRectangle,
   IVec2,
+  MINVALUE,
   add,
   getCenter,
   getCrossSegAndLine,
@@ -12,6 +13,7 @@ import {
   isOnSeg,
   isParallel,
   rotate,
+  solveEquationOrder2,
   sub,
   vec,
 } from "okageo";
@@ -115,6 +117,51 @@ export function isPointOnEllipse(c: IVec2, rx: number, ry: number, p: IVec2): bo
 export function isPointOnEllipseRotated(c: IVec2, rx: number, ry: number, rotation: number, p: IVec2): boolean {
   const rotatedP = rotation === 0 ? p : rotate(p, -rotation, c);
   return isPointOnEllipse(c, rx, ry, rotatedP);
+}
+
+export function getCrossLineAndEllipse(line: ISegment, c: IVec2, rx: number, ry: number): IVec2[] | undefined {
+  const centeredLine = [sub(line[0], c), sub(line[1], c)];
+
+  if (Math.abs(centeredLine[0].x - centeredLine[1].x) < MINVALUE) {
+    const x = centeredLine[0].x;
+    if (x < -rx || rx < x) return;
+
+    const y = ry * Math.sqrt(1 - (x * x) / (rx * rx));
+    return (
+      y === 0
+        ? [{ x, y }]
+        : [
+            { x, y },
+            { x, y: -y },
+          ]
+    ).map((p) => add(p, c));
+  }
+
+  const m = (centeredLine[1].y - centeredLine[0].y) / (centeredLine[1].x - centeredLine[0].x);
+  const m2 = m * m;
+  const k = centeredLine[0].y - m * centeredLine[0].x;
+  const k2 = k * k;
+  const rx2 = rx * rx;
+  const ry2 = ry * ry;
+  const A = rx2 * m2 + ry2;
+  const B = 2 * rx2 * m * k;
+  const C = rx2 * (k2 - ry2);
+  const res = solveEquationOrder2(A, B, C);
+  if (res.length === 0) return;
+
+  return res.map((x) => ({ x, y: x * m + k })).map((p) => add(p, c));
+}
+
+export function getCrossLineAndEllipseRotated(
+  line: ISegment,
+  c: IVec2,
+  rx: number,
+  ry: number,
+  rotation: number
+): IVec2[] | undefined {
+  const rotateFn = getRotateFn(-rotation, c);
+  const rotatedLine: ISegment = [rotateFn(line[0]), rotateFn(line[1])];
+  return getCrossLineAndEllipse(rotatedLine, c, rx, ry)?.map((p) => rotateFn(p, true));
 }
 
 export function getWrapperRect(rects: IRectangle[]): IRectangle {
