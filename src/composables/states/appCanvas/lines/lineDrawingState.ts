@@ -29,6 +29,8 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       lineSnapping = newLineSnapping({
         snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
         getShapeStruct: ctx.getShapeStruct,
+        movingLine: shape,
+        movingIndex: 1,
       });
 
       elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;

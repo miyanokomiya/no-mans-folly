@@ -23,9 +23,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
+      const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
+
       lineSnapping = newLineSnapping({
         snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
         getShapeStruct: ctx.getShapeStruct,
+        movingLine: mockMovingLine,
+        movingIndex: option.index,
       });
     },
     onEnd: async (ctx) => {

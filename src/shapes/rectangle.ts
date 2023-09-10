@@ -19,6 +19,7 @@ import {
   isPointOnRectangleRotated,
   getCrossSegAndSeg,
   ISegment,
+  sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -104,24 +105,18 @@ export const struct: ShapeStruct<RectangleShape> = {
       if (rotatedClosest) return rotateFn(rotatedClosest);
     }
   },
-  getClosestIntersectedOutline(shape, from, to) {
+  getIntersectedOutlines(shape, from, to) {
     const polygon = getLocalRectPolygon(shape);
     const seg: ISegment = [from, to];
-    let ret: IVec2 | undefined;
-    let d = Infinity;
+    const ret: IVec2[] = [];
 
     polygon.forEach((p, i) => {
       const s = getCrossSegAndSeg([p, polygon[(i + 1) % polygon.length]], seg);
       if (!s) return;
-
-      const sd = getDistance(from, s);
-      if (sd < d) {
-        ret = s;
-        d = sd;
-      }
+      ret.push(s);
     });
 
-    return ret;
+    return ret.length === 0 ? undefined : sortPointFrom(from, ret);
   },
   getCommonStyle,
   updateCommonStyle,

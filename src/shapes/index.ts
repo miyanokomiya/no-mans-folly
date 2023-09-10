@@ -87,14 +87,14 @@ export function getClosestOutline(
 /**
  * [from, to] is treated as a segment.
  */
-export function getClosestIntersectedOutline(
+export function getIntersectedOutlines(
   getStruct: GetShapeStruct,
   shape: Shape,
   from: IVec2,
   to: IVec2
-): IVec2 | undefined {
+): IVec2[] | undefined {
   const struct = getStruct(shape.type);
-  if (struct.getClosestIntersectedOutline) return struct.getClosestIntersectedOutline(shape, from, to);
+  if (struct.getIntersectedOutlines) return struct.getIntersectedOutlines(shape, from, to);
 }
 
 export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {

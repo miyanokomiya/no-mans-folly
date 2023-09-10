@@ -4,7 +4,7 @@ import {
   GetShapeStruct,
   cloneShapes,
   createShape,
-  getClosestIntersectedOutline,
+  getIntersectedOutlines,
   getLocationRateOnShape,
   getWrapperRect,
   renderShape,
@@ -75,10 +75,10 @@ export function newSmartBranchHandler(option: Option) {
     const pCenter = getRectCenter(pRect);
     const qCenter = getRectCenter(qRect);
     const p =
-      getClosestIntersectedOutline(getShapeStruct, src, getPBasePoint(hitResult.index, pCenter, qCenter), pCenter) ??
+      getIntersectedOutlines(getShapeStruct, src, getPBasePoint(hitResult.index, pCenter, qCenter), pCenter)?.[0] ??
       pCenter;
     const q =
-      getClosestIntersectedOutline(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter) ??
+      getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter)?.[0] ??
       qCenter;
 
     getLocationRateOnShape(getShapeStruct, src, p);

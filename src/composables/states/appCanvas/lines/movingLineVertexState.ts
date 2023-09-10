@@ -26,6 +26,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
       lineSnapping = newLineSnapping({
+        movingLine: option.lineShape,
+        movingIndex: option.index,
         snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
         getShapeStruct: ctx.getShapeStruct,
       });

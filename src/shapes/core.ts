@@ -14,7 +14,7 @@ export interface ShapeStruct<T extends Shape> {
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
-  getClosestIntersectedOutline?: (shape: T, from: IVec2, to: IVec2) => IVec2 | undefined;
+  getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
   immigrateShapeIds?: (shape: T, oldToNewIdMap: { [newId: string]: string }, removeNotFound?: boolean) => Partial<T>;

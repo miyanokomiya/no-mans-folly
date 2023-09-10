@@ -83,12 +83,12 @@ export const struct: ShapeStruct<EllipseShape> = {
     return ret;
   },
   getClosestOutline,
-  getClosestIntersectedOutline(shape, from, to) {
+  getIntersectedOutlines(shape, from, to) {
     const center = add(shape.p, { x: shape.rx, y: shape.ry });
     const points = getCrossLineAndEllipseRotated([from, to], center, shape.rx, shape.ry, shape.rotation);
     if (!points) return;
 
-    return sortPointFrom(from, points)[0];
+    return points.length === 0 ? undefined : sortPointFrom(from, points);
   },
   getCommonStyle,
   updateCommonStyle,
