@@ -4,7 +4,13 @@ import { renderShape } from "../../../../shapes";
 import { LineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import { translateOnSelection } from "../commons";
-import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import {
+  ConnectionResult,
+  LineSnapping,
+  newLineSnapping,
+  optimizeLinePath,
+  renderConnectionResult,
+} from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 
@@ -44,7 +50,10 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = lineSnapping.testConnection(point, ctx.getScale());
           vertex = connectionResult?.p ?? point;
-          const patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
+          let patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
+
+          const optimized = optimizeLinePath(ctx, { ...option.shape, ...patch });
+          patch = optimized ? { ...patch, ...optimized } : patch;
 
           if (elbowHandler) {
             const body = elbowHandler.optimizeElbow({ ...option.shape, ...patch });

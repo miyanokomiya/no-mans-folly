@@ -26,6 +26,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
       lineSnapping = newLineSnapping({
         snappableShapes: Object.values(shapeMap),
         getShapeStruct: ctx.getShapeStruct,
+        movingIndex: 0,
       });
     },
     handleEvent: async (ctx, event) => {

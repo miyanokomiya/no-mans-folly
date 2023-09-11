@@ -30,7 +30,7 @@ export function newLineSnapping(option: Option) {
   const vertices = option.movingLine ? getLinePath(option.movingLine) : [];
   const isEndVertex = option.movingIndex === 0 || option.movingIndex === vertices.length - 1;
   const adjacentVertices =
-    option.movingIndex === undefined
+    vertices.length === 0 || option.movingIndex === undefined
       ? []
       : option.movingIndex === 0
       ? [vertices[1]]
