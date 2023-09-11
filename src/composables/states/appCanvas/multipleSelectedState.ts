@@ -31,7 +31,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
   return {
     getLabel: () => "MultipleSelected",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
 
@@ -51,10 +51,10 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         });
       }
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.hideFloatMenu();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       if (!selectedIds) return;
 
       switch (event.type) {

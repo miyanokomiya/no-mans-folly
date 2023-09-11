@@ -22,16 +22,16 @@ export function newLineSelectedState(): AppCanvasState {
 
   return {
     getLabel: () => "LineSelected",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.setCursor();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       if (!lineShape) return translateOnSelection(ctx);
 
       switch (event.type) {

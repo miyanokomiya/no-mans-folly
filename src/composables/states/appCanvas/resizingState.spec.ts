@@ -25,7 +25,7 @@ function getMockCtx() {
 
 describe("newResizingState", () => {
   describe("handle pointermove", () => {
-    test("should call setTmpShapeMap with resized shapes", async () => {
+    test("should call setTmpShapeMap with resized shapes", () => {
       const ctx = getMockCtx();
       const boundingBox = newBoundingBox({
         path: getRectPoints({ x: 0, y: 0, width: 50, height: 50 }),
@@ -37,8 +37,8 @@ describe("newResizingState", () => {
         hitResult,
       });
 
-      await target.onStart?.(ctx as any);
-      await target.handleEvent(ctx as any, {
+      target.onStart?.(ctx as any);
+      target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 10 }, scale: 1 },
       });

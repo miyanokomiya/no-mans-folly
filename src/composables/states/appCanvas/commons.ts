@@ -157,11 +157,11 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
         "text/plain": clipboardShapeSerializer.serialize({ shapes, docs }),
       };
     },
-    async (items) => {
+    (items) => {
       const item = items.find((i) => i.kind === "string") as StringItem | undefined;
       if (!item) return;
 
-      const text: any = await item.getAsString();
+      const text: any = item.getAsString();
       const restored = clipboardShapeSerializer.deserialize(text);
 
       if (restored.shapes.length > 0) {
@@ -181,10 +181,10 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
         [APP_DOC_TYPE]: clipboardDocSerializer.serialize({ doc }),
       };
     },
-    async (items) => {
+    (items) => {
       const appItem = items.find((i) => i.kind === "string" && i.type === APP_DOC_TYPE) as StringItem | undefined;
       if (appItem) {
-        const text: any = await appItem.getAsString();
+        const text: any = appItem.getAsString();
         const restored = clipboardDocSerializer.deserialize(text);
         onPaste?.(restored.doc);
         return;
@@ -193,7 +193,7 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
       const item = items.find((i) => i.kind === "string") as StringItem | undefined;
       if (!item) return;
 
-      const text: any = await item.getAsString();
+      const text: any = item.getAsString();
       onPaste?.([{ insert: text }]);
     }
   );

@@ -17,7 +17,7 @@ export function newDefaultState(): AppCanvasState {
 
 const state: AppCanvasState = {
   getLabel: () => "Default",
-  handleEvent: async (ctx, event) => {
+  handleEvent: (ctx, event) => {
     switch (event.type) {
       case "pointerdown":
         switch (event.data.options.button) {

@@ -16,15 +16,15 @@ export function newTextSelectingState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "TextEditing",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.startDragging();
       const shape = ctx.getShapeMap()[option.id];
       textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const start = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.start));

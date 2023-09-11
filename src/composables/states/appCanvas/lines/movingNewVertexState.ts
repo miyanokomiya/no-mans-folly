@@ -19,7 +19,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "MovingNewVertex",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.startDragging();
 
       const shapeMap = ctx.getShapeMap();
@@ -38,11 +38,11 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         movingIndex: option.index,
       });
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;

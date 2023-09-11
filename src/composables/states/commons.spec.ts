@@ -11,29 +11,29 @@ function getMockCtx() {
 
 describe("newPanningState", () => {
   describe("onStart", () => {
-    test('should execute "startDragging"', async () => {
+    test('should execute "startDragging"', () => {
       const ctx = getMockCtx();
       const target = newPanningState();
-      await target.onStart?.(ctx);
+      target.onStart?.(ctx);
       expect(ctx.startDragging).toHaveBeenCalledOnce();
     });
   });
 
   describe("onEnd", () => {
-    test('should execute "stopDragging"', async () => {
+    test('should execute "stopDragging"', () => {
       const ctx = getMockCtx();
       const target = newPanningState();
-      await target.onEnd?.(ctx);
+      target.onEnd?.(ctx);
       expect(ctx.stopDragging).toHaveBeenCalledOnce();
     });
   });
 
   describe("handle pointermove", () => {
-    test('should execute "panView"', async () => {
+    test('should execute "panView"', () => {
       const ctx = getMockCtx();
       const target = newPanningState();
       const data = { current: { x: 1, y: 2 }, start: { x: 10, y: 20 }, scale: 1 };
-      const result = await target.handleEvent(ctx, {
+      const result = target.handleEvent(ctx, {
         type: "pointermove",
         data,
       });
@@ -43,10 +43,10 @@ describe("newPanningState", () => {
   });
 
   describe("handle pointerup", () => {
-    test("should break the state", async () => {
+    test("should break the state", () => {
       const ctx = getMockCtx();
       const target = newPanningState();
-      const result = await target.handleEvent(ctx, {
+      const result = target.handleEvent(ctx, {
         type: "pointerup",
         data: { point: { x: 1, y: 2 }, options: { button: 0 } },
       });

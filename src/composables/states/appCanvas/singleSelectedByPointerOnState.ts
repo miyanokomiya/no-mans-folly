@@ -8,14 +8,14 @@ import { getLocalRectPolygon } from "../../../shapes";
 export function newSingleSelectedByPointerOnState(): AppCanvasState {
   return {
     getLabel: () => "SingleSelectedByPointerOn",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.hideFloatMenu();
       ctx.startDragging();
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;

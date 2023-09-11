@@ -35,7 +35,7 @@ export function newResizingState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "Resizing",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
       ctx.startDragging();
 
@@ -55,11 +55,11 @@ export function newResizingState(option: Option): AppCanvasState {
         ctx,
       });
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);

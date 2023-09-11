@@ -30,7 +30,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
   return {
     getLabel: () => "MovingShape",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.startDragging();
       ctx.setCursor("move");
 
@@ -68,12 +68,12 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         ctx,
       });
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
       ctx.setCursor();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);

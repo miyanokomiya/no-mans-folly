@@ -41,7 +41,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "TextEditing",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.setCursor();
       ctx.showFloatMenu();
       ctx.startTextEditing();
@@ -69,13 +69,13 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
       ctx.setCaptureTimeout(1000);
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.stopTextEditing();
       ctx.setCaptureTimeout();
       ctx.setCurrentDocAttrInfo({});
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "text-input": {
           const cursor = textEditorController.getCursor();

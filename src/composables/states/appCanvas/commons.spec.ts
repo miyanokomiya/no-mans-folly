@@ -16,21 +16,21 @@ function getMockCtx() {
 }
 
 describe("translateOnSelection", () => {
-  test("should move to Default state if no shape is selected", async () => {
+  test("should move to Default state if no shape is selected", () => {
     const ctx = getMockCtx();
     ctx.getSelectedShapeIdMap.mockReturnValue({});
     const result = translateOnSelection(ctx);
     expect(result).toEqual(newDefaultState);
   });
 
-  test("should move to MultipleSelected state if no shape is selected", async () => {
+  test("should move to MultipleSelected state if no shape is selected", () => {
     const ctx = getMockCtx();
     ctx.getSelectedShapeIdMap.mockReturnValue({ a: true });
     const result = translateOnSelection(ctx);
     expect(result).toEqual(newSingleSelectedState);
   });
 
-  test("should move to MultipleSelected state if no shape is selected", async () => {
+  test("should move to MultipleSelected state if no shape is selected", () => {
     const ctx = getMockCtx();
     ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
     const result = translateOnSelection(ctx);
@@ -40,7 +40,7 @@ describe("translateOnSelection", () => {
 
 describe("handleStateEvent", () => {
   describe("DroppingNewShape", () => {
-    test("should move to DroppingNewShape state", async () => {
+    test("should move to DroppingNewShape state", () => {
       const ctx = getMockCtx();
       const event = { type: "state", data: { name: "DroppingNewShape", options: {} } } as const;
       expect(handleStateEvent(ctx, event, [])).toBe(undefined);
@@ -51,7 +51,7 @@ describe("handleStateEvent", () => {
 
 describe("handleHistoryEvent", () => {
   describe("DroppingNewShape", () => {
-    test("should move to DroppingNewShape state", async () => {
+    test("should move to DroppingNewShape state", () => {
       const ctx = {
         undo: vi.fn(),
         redo: vi.fn(),

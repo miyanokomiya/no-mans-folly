@@ -28,22 +28,22 @@ function getMockCtx() {
 
 describe("newDuplicatingShapesState", () => {
   describe("lifecycle", () => {
-    test("should setup and clean the state", async () => {
+    test("should setup and clean the state", () => {
       const ctx = getMockCtx();
       const target = newDuplicatingShapesState();
-      await target.onStart?.(ctx as any);
+      target.onStart?.(ctx as any);
       expect(ctx.startDragging).toHaveBeenCalled();
-      await target.onEnd?.(ctx as any);
+      target.onEnd?.(ctx as any);
       expect(ctx.stopDragging).toHaveBeenCalled();
     });
   });
 
   describe("handle pointermove", () => {
-    test("should call setTmpShapeMap", async () => {
+    test("should call setTmpShapeMap", () => {
       const ctx = getMockCtx();
       const target = newDuplicatingShapesState();
-      await target.onStart?.(ctx as any);
-      const result = await target.handleEvent(ctx as any, {
+      target.onStart?.(ctx as any);
+      const result = target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
@@ -53,16 +53,16 @@ describe("newDuplicatingShapesState", () => {
   });
 
   describe("handle pointerup", () => {
-    test("should call addShapes and multiSelectShapes", async () => {
+    test("should call addShapes and multiSelectShapes", () => {
       const ctx = getMockCtx();
       const target = newDuplicatingShapesState();
-      await target.onStart?.(ctx as any);
+      target.onStart?.(ctx as any);
 
-      await target.handleEvent(ctx as any, {
+      target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 200, y: 0 }, scale: 1 },
       });
-      const result2 = await target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      const result2 = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
         id: "duplicated",
         width: 50,

@@ -32,7 +32,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
 
   return {
     getLabel: () => "SingleSelected",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       selectedId = ctx.getLastSelectedShapeId();
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
@@ -52,10 +52,10 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         bounds: getOuterRectangle([boundingBox.path]),
       });
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.hideFloatMenu();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       if (!selectedId) return translateOnSelection(ctx);
 
       switch (event.type) {

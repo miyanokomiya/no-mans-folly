@@ -27,7 +27,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "LineDrawing",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.startDragging();
 
       const shapeMap = ctx.getShapeMap();
@@ -41,10 +41,10 @@ export function newLineDrawingState(option: Option): AppCanvasState {
 
       elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;

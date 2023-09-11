@@ -29,7 +29,7 @@ export function newRotatingState(option: Option): AppCanvasState {
   });
   return {
     getLabel: () => "Rotating",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       selectedIds = ctx.getSelectedShapeIdMap();
       ctx.startDragging();
 
@@ -38,11 +38,11 @@ export function newRotatingState(option: Option): AppCanvasState {
         ctx,
       });
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);

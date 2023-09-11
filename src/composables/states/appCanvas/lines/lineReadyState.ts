@@ -20,7 +20,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "LineReady",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.setCursor();
       const shapeMap = ctx.getShapeMap();
       lineSnapping = newLineSnapping({
@@ -29,7 +29,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
         movingIndex: 0,
       });
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointerdown":
           switch (event.data.options.button) {

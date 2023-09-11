@@ -44,13 +44,13 @@ export function newPanningState(): CanvasState {
 
 const panningState: CanvasState = {
   getLabel: () => "Panning",
-  onStart: async (ctx) => {
+  onStart: (ctx) => {
     ctx.startDragging();
   },
-  onEnd: async (ctx) => {
+  onEnd: (ctx) => {
     ctx.stopDragging();
   },
-  handleEvent: async (ctx, event) => {
+  handleEvent: (ctx, event) => {
     switch (event.type) {
       case "pointermove":
         ctx.panView(event.data);

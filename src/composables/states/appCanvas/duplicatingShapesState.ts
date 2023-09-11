@@ -27,7 +27,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
 
   return {
     getLabel: () => "DuplicatingShapes",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.startDragging();
       ctx.setCursor("grabbing");
 
@@ -51,11 +51,11 @@ export function newDuplicatingShapesState(): AppCanvasState {
       );
       ctx.clearAllSelected();
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setCursor();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const d = sub(

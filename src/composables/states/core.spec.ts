@@ -17,39 +17,39 @@ function getCtx() {
 
 describe("newStateMachine", () => {
   describe("handleEvent", () => {
-    test("should handle the event via current state", async () => {
+    test("should handle the event via current state", () => {
       const current = getMockState({ getLabel: () => "current" });
       const sm = newStateMachine(getCtx, () => current);
 
       expect(sm.getStateSummary().label).toBe("current");
-      await sm.handleEvent({ type: "test" } as any);
+      sm.handleEvent({ type: "test" } as any);
       expect(current.handleEvent).toHaveBeenNthCalledWith(1, expect.anything(), { type: "test" });
       expect(sm.getStateSummary().label).toBe("current");
     });
-    test("should switch next state if current state returns it", async () => {
+    test("should switch next state if current state returns it", () => {
       const current = getMockState({
         getLabel: () => "current",
-        handleEvent: vi.fn().mockResolvedValue(() => getMockState({ getLabel: () => "next" })),
+        handleEvent: vi.fn().mockReturnValue(() => getMockState({ getLabel: () => "next" })),
       });
       const sm = newStateMachine(getCtx, () => current);
 
       expect(sm.getStateSummary().label).toBe("current");
-      await sm.handleEvent({ type: "test" } as any);
+      sm.handleEvent({ type: "test" } as any);
       expect(current.handleEvent).toHaveBeenNthCalledWith(1, expect.anything(), { type: "test" });
       expect(sm.getStateSummary().label).toBe("next");
     });
   });
 
   describe("transition: stack-restart", () => {
-    test("should stack and restart previous state", async () => {
+    test("should stack and restart previous state", () => {
       const current = getMockState({
         getLabel: () => "0",
-        onStart: vi.fn().mockResolvedValue(undefined),
-        handleEvent: vi.fn().mockResolvedValue({
+        onStart: vi.fn().mockReturnValue(undefined),
+        handleEvent: vi.fn().mockReturnValue({
           getState: () =>
             getMockState({
               getLabel: () => "1",
-              handleEvent: vi.fn().mockResolvedValue({ type: "break" }),
+              handleEvent: vi.fn().mockReturnValue({ type: "break" }),
             }),
           type: "stack-restart",
         }),
@@ -58,26 +58,26 @@ describe("newStateMachine", () => {
 
       expect(current.onStart).toHaveBeenCalledTimes(1);
       expect(sm.getStateSummary().label).toBe("0");
-      await sm.handleEvent({ type: "test" } as any);
+      sm.handleEvent({ type: "test" } as any);
       expect(current.onEnd).toHaveBeenCalledTimes(1);
       expect(sm.getStateSummary().label).toBe("1");
-      await sm.handleEvent({ type: "test" } as any);
+      sm.handleEvent({ type: "test" } as any);
       expect(current.onStart).toHaveBeenCalledTimes(2);
       expect(sm.getStateSummary().label).toBe("0");
     });
   });
 
   describe("transition: stack-resume", () => {
-    test("should stack and resume previous state", async () => {
+    test("should stack and resume previous state", () => {
       const current = getMockState({
         getLabel: () => "0",
-        onStart: vi.fn().mockResolvedValue(undefined),
-        onEnd: vi.fn().mockResolvedValue(undefined),
-        handleEvent: vi.fn().mockResolvedValue({
+        onStart: vi.fn().mockReturnValue(undefined),
+        onEnd: vi.fn().mockReturnValue(undefined),
+        handleEvent: vi.fn().mockReturnValue({
           getState: () =>
             getMockState({
               getLabel: () => "1",
-              handleEvent: vi.fn().mockResolvedValue({ type: "break" }),
+              handleEvent: vi.fn().mockReturnValue({ type: "break" }),
             }),
           type: "stack-resume",
         }),
@@ -86,10 +86,10 @@ describe("newStateMachine", () => {
 
       expect(current.onStart).toHaveBeenCalledTimes(1);
       expect(sm.getStateSummary().label).toBe("0");
-      await sm.handleEvent({ type: "test" } as any);
+      sm.handleEvent({ type: "test" } as any);
       expect(current.onEnd).toHaveBeenCalledTimes(0);
       expect(sm.getStateSummary().label).toBe("1");
-      await sm.handleEvent({ type: "test" } as any);
+      sm.handleEvent({ type: "test" } as any);
       expect(current.onStart).toHaveBeenCalledTimes(1);
       expect(sm.getStateSummary().label).toBe("0");
     });
@@ -97,19 +97,19 @@ describe("newStateMachine", () => {
 });
 
 describe("newObjectGroupState", () => {
-  test("should create group state", async () => {
+  test("should create group state", () => {
     const eventCalled: string[] = [];
     const childAB = getMockState({ getLabel: () => "ab" });
     const childAA = getMockState({
       getLabel: () => "aa",
-      handleEvent: async () => {
+      handleEvent: () => {
         eventCalled.push("aa");
         return () => childAB;
       },
     });
     const groupASrc = getMockState({
       getLabel: () => "a",
-      handleEvent: async () => {
+      handleEvent: () => {
         eventCalled.push("a");
       },
     });
@@ -120,12 +120,11 @@ describe("newObjectGroupState", () => {
     );
 
     const sm = newStateMachine(getCtx, () => groupA);
-    await sm.ready;
     expect(sm.getStateSummary().label).toBe("a:aa");
     expect(groupASrc.onStart).toHaveBeenCalledTimes(1);
     expect(childAA.onStart).toHaveBeenCalledTimes(1);
 
-    await sm.handleEvent({ type: "keydown", data: { key: "a" } });
+    sm.handleEvent({ type: "keydown", data: { key: "a" } });
     expect(sm.getStateSummary().label).toBe("a:ab");
     expect(groupASrc.onStart).toHaveBeenCalledTimes(1);
     expect(groupASrc.onEnd).toHaveBeenCalledTimes(0);
@@ -133,7 +132,7 @@ describe("newObjectGroupState", () => {
     expect(childAB.onStart).toHaveBeenCalledTimes(1);
     expect(eventCalled).toEqual(["aa", "a"]);
 
-    await sm.dispose();
+    sm.dispose();
     expect(groupASrc.onEnd).toHaveBeenCalledTimes(1);
     expect(childAB.onEnd).toHaveBeenCalledTimes(1);
   });

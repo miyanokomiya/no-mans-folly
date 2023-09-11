@@ -27,23 +27,23 @@ function getMockCtx() {
 
 describe("newMovingShapeState", () => {
   describe("lifecycle", () => {
-    test("should setup and clean the state", async () => {
+    test("should setup and clean the state", () => {
       const ctx = getMockCtx();
       const target = newMovingShapeState();
-      await target.onStart?.(ctx as any);
+      target.onStart?.(ctx as any);
       expect(ctx.startDragging).toHaveBeenCalled();
-      await target.onEnd?.(ctx as any);
+      target.onEnd?.(ctx as any);
       expect(ctx.stopDragging).toHaveBeenCalled();
       expect(ctx.setTmpShapeMap).toHaveBeenCalledWith({});
     });
   });
 
   describe("handle pointermove", () => {
-    test("should call setTmpShapeMap with moved shapes", async () => {
+    test("should call setTmpShapeMap with moved shapes", () => {
       const ctx = getMockCtx();
       const target = newMovingShapeState();
-      await target.onStart?.(ctx as any);
-      const result = await target.handleEvent(ctx as any, {
+      target.onStart?.(ctx as any);
+      const result = target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
@@ -53,23 +53,23 @@ describe("newMovingShapeState", () => {
   });
 
   describe("handle pointerup", () => {
-    test("should call patchShapes with moved shapes", async () => {
+    test("should call patchShapes with moved shapes", () => {
       const ctx = getMockCtx();
       ctx.getTmpShapeMap.mockReturnValue({ a: { value: 1 } });
       const target = newMovingShapeState();
-      await target.onStart?.(ctx as any);
-      const result = await target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      target.onStart?.(ctx as any);
+      const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.patchShapes).toHaveBeenNthCalledWith(1, { a: { value: 1 } });
       expect(result).toEqual(translateOnSelection(ctx));
     });
   });
 
   describe("handle selection", () => {
-    test("should move to next state", async () => {
+    test("should move to next state", () => {
       const ctx = getMockCtx();
       const target = newMovingShapeState();
-      await target.onStart?.(ctx as any);
-      const result = await target.handleEvent(ctx as any, {
+      target.onStart?.(ctx as any);
+      const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
       expect(result).toEqual(translateOnSelection(ctx));

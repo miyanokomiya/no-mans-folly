@@ -24,7 +24,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
 
   return {
     getLabel: () => "DroppingNewShape",
-    onStart: async (ctx) => {
+    onStart: (ctx) => {
       ctx.clearAllSelected();
       ctx.startDragging();
       ctx.setCursor("grabbing");
@@ -42,11 +42,11 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       movingRect = getWrapperRect(ctx.getShapeStruct, shape);
       updateP(ctx.getCursorPoint());
     },
-    onEnd: async (ctx) => {
+    onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setCursor();
     },
-    handleEvent: async (ctx, event) => {
+    handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const rectSize = { width: movingRect.width / 2, height: movingRect.height / 2 };

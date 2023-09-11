@@ -22,12 +22,12 @@ function getMockCtx() {
 
 describe("newDefaultState", () => {
   describe("handle pointerdown: left", () => {
-    test("should select a shape at the point if it exists", async () => {
+    test("should select a shape at the point if it exists", () => {
       const ctx = getMockCtx();
       const target = newDefaultState();
 
       ctx.getShapeAt.mockReturnValue({ id: "a" });
-      const result1 = await target.handleEvent(ctx as any, {
+      const result1 = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
       });
@@ -36,18 +36,18 @@ describe("newDefaultState", () => {
       expect(result1).toBe(newSingleSelectedByPointerOnState);
 
       ctx.getSelectedShapeIdMap.mockReturnValue({});
-      const result2 = await target.handleEvent(ctx as any, {
+      const result2 = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
       });
       expect(result2).toBe(newDefaultState);
     });
 
-    test("should move to RectangleSelecting state if there's no shape at the point", async () => {
+    test("should move to RectangleSelecting state if there's no shape at the point", () => {
       const ctx = getMockCtx();
       const target = newDefaultState();
       ctx.getShapeAt.mockReturnValue(undefined);
-      const result = await target.handleEvent(ctx as any, {
+      const result = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
       });
@@ -57,10 +57,10 @@ describe("newDefaultState", () => {
   });
 
   describe("handle pointerdown: middle", () => {
-    test("should move to panning state", async () => {
+    test("should move to panning state", () => {
       const ctx = getMockCtx();
       const target = newDefaultState();
-      const result = await target.handleEvent(ctx as any, {
+      const result = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 1, ctrl: false } },
       });
