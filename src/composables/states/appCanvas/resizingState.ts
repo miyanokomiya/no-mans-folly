@@ -2,7 +2,7 @@ import type { AppCanvasState } from "./core";
 import { translateOnSelection } from "./commons";
 import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
 import { IDENTITY_AFFINE, add, applyAffine, sub } from "okageo";
-import { getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
+import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import {
@@ -40,7 +40,11 @@ export function newResizingState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeMap = ctx.getShapeMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s));
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        ctx.getViewRect()
+      );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

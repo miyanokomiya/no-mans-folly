@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { getSnappingLines, getWrapperRect, renderShape } from "../../../shapes";
+import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, renderShape } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -30,7 +30,11 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       ctx.setCursor("grabbing");
 
       const shapeMap = ctx.getShapeMap();
-      const snappableShapes = Object.values(shapeMap).filter((s) => !isLineShape(s));
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !isLineShape(s)),
+        ctx.getViewRect()
+      );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

@@ -7,6 +7,7 @@ import {
   getClosestOutlineOnRectangle,
   getCrossLineAndEllipse,
   getCrossSegAndSeg,
+  getIsRectHitRectFn,
   getLocationFromRateOnRectPath,
   getRectCenterLines,
   getRectLines,
@@ -516,5 +517,24 @@ describe("getLocationFromRateOnRectPath", () => {
     const rotated1 = getLocationFromRateOnRectPath(rect1, Math.PI / 4, { x: 1, y: 1 });
     expect(rotated1.x).toBeCloseTo(50);
     expect(rotated1.y).toBeCloseTo(50 + 50 * Math.SQRT2);
+  });
+});
+
+describe("getIsRectHitRectFn", () => {
+  const isRectHitRect = getIsRectHitRectFn({
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 20,
+  });
+  test("should return true if target hits the range", () => {
+    expect(isRectHitRect({ x: -1, y: -1, width: 2, height: 40 })).toBe(true);
+    expect(isRectHitRect({ x: 1, y: -1, width: 40, height: 40 })).toBe(true);
+  });
+  test("should return false if target does not hit the range", () => {
+    expect(isRectHitRect({ x: -2, y: 1, width: 1, height: 20 })).toBe(false);
+    expect(isRectHitRect({ x: 11, y: 1, width: 1, height: 20 })).toBe(false);
+    expect(isRectHitRect({ x: 1, y: -2, width: 20, height: 1 })).toBe(false);
+    expect(isRectHitRect({ x: 1, y: 21, width: 20, height: 1 })).toBe(false);
   });
 });

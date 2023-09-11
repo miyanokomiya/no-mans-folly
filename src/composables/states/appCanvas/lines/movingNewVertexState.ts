@@ -1,9 +1,10 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent, translateOnSelection } from "../commons";
-import { LineShape, addNewVertex } from "../../../../shapes/line";
+import { LineShape, addNewVertex, isLineShape } from "../../../../shapes/line";
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import { filterShapesOverlappingRect } from "../../../../shapes";
 
 interface Option {
   lineShape: LineShape;
@@ -23,10 +24,15 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        ctx.getViewRect()
+      );
       const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
 
       lineSnapping = newLineSnapping({
-        snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
+        snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
         movingLine: mockMovingLine,
         movingIndex: option.index,

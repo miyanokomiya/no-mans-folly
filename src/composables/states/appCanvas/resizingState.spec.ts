@@ -5,20 +5,21 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { newResizingState } from "./resizingState";
 import { newBoundingBox } from "../../boundingBox";
 import { getRectPoints } from "../../../utils/geometry";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
     }),
-    getShapeStruct: getCommonStruct,
-    getStyleScheme: createStyleScheme,
     setTmpShapeMap: vi.fn(),
-    startDragging: vi.fn(),
-    stopDragging: vi.fn(),
-    getScale: () => 1,
   };
 }
 

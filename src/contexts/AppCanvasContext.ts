@@ -49,7 +49,27 @@ export function createStateMachineContext(arg: {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
 }) {
-  let ctx: AppCanvasStateContext = {
+  let ctx = createInitialAppCanvasStateContext(arg);
+
+  const setCtx: IAppStateMachineContext["setCtx"] = (c) => {
+    ctx = { ...ctx, ...c };
+  };
+
+  const getCtx: IAppStateMachineContext["getCtx"] = () => ctx;
+
+  return {
+    setCtx,
+    getCtx,
+    stateMachine: newStateMachine(getCtx, newDefaultState),
+  };
+}
+
+export function createInitialAppCanvasStateContext(arg: {
+  getTimestamp: () => number;
+  generateUuid: () => string;
+  getStyleScheme: () => StyleScheme;
+}): AppCanvasStateContext {
+  return {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
@@ -58,6 +78,7 @@ export function createStateMachineContext(arg: {
     setViewport() {},
     zoomView: () => 1,
     getScale: () => 1,
+    getViewRect: () => ({ x: 0, y: 0, width: 100, height: 100 }),
     panView() {},
     startDragging() {},
     stopDragging() {},
@@ -100,17 +121,5 @@ export function createStateMachineContext(arg: {
     setCurrentDocAttrInfo() {},
     createCursorPosition: () => undefined,
     retrieveCursorPosition: () => 0,
-  };
-
-  const setCtx: IAppStateMachineContext["setCtx"] = (c) => {
-    ctx = { ...ctx, ...c };
-  };
-
-  const getCtx: IAppStateMachineContext["getCtx"] = () => ctx;
-
-  return {
-    setCtx,
-    getCtx,
-    stateMachine: newStateMachine(getCtx, newDefaultState),
   };
 }

@@ -324,3 +324,10 @@ export function getLocationFromRateOnRectPath(rectPath: IVec2[], rotation: numbe
   const rotatedP = { x: rotatedPath[0].x + width * rate.x, y: rotatedPath[0].y + height * rate.y };
   return rotate(rotatedP, rotation, center);
 }
+
+export function getIsRectHitRectFn(range: IRectangle): (target: IRectangle) => boolean {
+  const r = range.x + range.width;
+  const b = range.y + range.height;
+  return (target) =>
+    !(r < target.x || b < target.y || target.x + target.width < range.x || target.y + target.height < range.y);
+}

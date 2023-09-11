@@ -4,22 +4,24 @@ import { newMovingShapeState } from "./movingShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
     }),
-    getShapeStruct: getCommonStruct,
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
     setTmpShapeMap: vi.fn(),
     getTmpShapeMap: vi.fn(),
     patchShapes: vi.fn(),
-    setCursor: vi.fn(),
-    getScale: () => 1,
-    getStyleScheme: createStyleScheme,
   };
 }
 

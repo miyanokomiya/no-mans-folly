@@ -213,3 +213,8 @@ export function cloneShapes(getStruct: GetShapeStruct, shapes: Shape[], generate
   const cloned = JSON.parse(JSON.stringify(shapes)) as Shape[];
   return remapShapeIds(getStruct, cloned, generateId, true).shapes;
 }
+
+export function filterShapesOverlappingRect(getStruct: GetShapeStruct, shapes: Shape[], rect: IRectangle): Shape[] {
+  const checkFn = geometry.getIsRectHitRectFn(rect);
+  return shapes.filter((s) => checkFn(getWrapperRect(getStruct, s)));
+}

@@ -1,6 +1,13 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { cloneShapes, getSnappingLines, getWrapperRect, renderShape, resizeShape } from "../../../shapes";
+import {
+  cloneShapes,
+  filterShapesOverlappingRect,
+  getSnappingLines,
+  getWrapperRect,
+  renderShape,
+  resizeShape,
+} from "../../../shapes";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
@@ -26,7 +33,11 @@ export function newDuplicatingShapesState(): AppCanvasState {
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-      const snappableShapes = Object.values(shapeMap).filter((s) => !isLineShape(s));
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !isLineShape(s)),
+        ctx.getViewRect()
+      );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),

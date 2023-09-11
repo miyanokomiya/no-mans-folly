@@ -3,9 +3,16 @@ import { createShape, getCommonStruct } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
     }),
@@ -14,12 +21,7 @@ function getMockCtx() {
     setTmpShapeMap: vi.fn(),
     addShapes: vi.fn(),
     multiSelectShapes: vi.fn(),
-    getShapeStruct: getCommonStruct,
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
-    setCursor: vi.fn(),
-    getScale: () => 1,
-    getCursorPoint: () => ({ x: 0, y: 0 }),
-    clearAllSelected: vi.fn(),
     generateUuid: () => "duplicated",
   };
 }

@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent, translateOnSelection } from "../commons";
-import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
+import { LineShape, getLinePath, isLineShape, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
@@ -11,6 +11,7 @@ import {
   renderConnectionResult,
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
+import { filterShapesOverlappingRect } from "../../../../shapes";
 
 interface Option {
   lineShape: LineShape;
@@ -31,10 +32,15 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        ctx.getViewRect()
+      );
       lineSnapping = newLineSnapping({
         movingLine: option.lineShape,
         movingIndex: option.index,
-        snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
+        snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
       });
 

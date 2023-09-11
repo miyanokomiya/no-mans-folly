@@ -11,6 +11,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   setViewport: (rect?: IRectangle, margin?: number) => void;
   zoomView: (step: number, center?: boolean) => number;
   getScale: () => number;
+  getViewRect: () => IRectangle;
   panView: (val: EditMovement) => void;
   startDragging: () => void;
   stopDragging: () => void;
