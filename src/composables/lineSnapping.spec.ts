@@ -177,6 +177,24 @@ describe("getOptimizedSegment", () => {
         { x: 150, y: -100 },
       ]);
     });
+
+    test("rotated case", () => {
+      const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+
+      const shapeBottomRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "b",
+        p: { x: 150, y: -200 },
+        width: 100,
+        height: 100,
+        rotation: Math.PI / 4,
+      });
+      const res0 = getOptimizedSegment(getCommonStruct, shapeA, shapeBottomRight);
+      expect(res0?.[0]).toEqual({ x: 100, y: 0 });
+      expect(res0?.[1].x).toBeGreaterThan(50);
+      expect(res0?.[1].x).toBeLessThan(150);
+      expect(res0?.[1].y).toBeGreaterThan(-150);
+      expect(res0?.[1].y).toBeLessThan(-100);
+    });
   });
 });
 

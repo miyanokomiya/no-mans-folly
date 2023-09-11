@@ -12,6 +12,7 @@ import {
   getRectCenter,
   isOnSeg,
   isParallel,
+  multi,
   rotate,
   solveEquationOrder2,
   sub,
@@ -34,6 +35,11 @@ export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?
       : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     return origin ? add(rotatedV, origin) : rotatedV;
   };
+}
+
+export function extendSegment(seg: ISegment, rate: number): ISegment {
+  const v = sub(seg[1], seg[0]);
+  return [seg[0], add(seg[0], multi(v, rate))];
 }
 
 export function expandRect(rect: IRectangle, padding: number): IRectangle {

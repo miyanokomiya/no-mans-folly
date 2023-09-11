@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, add, getDistance, getRectCenter, getUnit, isSame, multi, sub } from "okageo";
+import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
 import {
   GetShapeStruct,
   getIntersectedOutlines,
@@ -9,7 +9,7 @@ import {
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, getLinePath } from "../shapes/line";
-import { ISegment, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
+import { ISegment, extendSegment, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
@@ -62,8 +62,8 @@ export function newLineSnapping(option: Option) {
       selfSnapped?.guidLines?.map((guide) => {
         if (isSame(selfSnapped!.p, guide[0])) return guide;
 
-        const v = multi(getUnit(sub(selfSnapped!.p, guide[0])), threshold);
-        return [guide[0], add(selfSnapped!.p, v)];
+        const seg: ISegment = [guide[0], selfSnapped!.p];
+        return extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
       }) ?? [];
 
     // Try snapping to other shapes' outline
@@ -163,8 +163,14 @@ export function getOptimizedSegment(
   const rectA = getWrapperRect(getShapeStruct, shapeA);
   const rectB = getWrapperRect(getShapeStruct, shapeB);
   const [baseA, baseB] = getMimumSegmentBetweenRecs(rectA, rectB);
-  const pA = getIntersectedOutlines(getShapeStruct, shapeA, baseB, baseA)?.[0];
-  const pB = getIntersectedOutlines(getShapeStruct, shapeB, baseA, baseB)?.[0];
+
+  // extend lines to seek intersections
+  const d = getDistance(baseB, baseA);
+  const segForA = extendSegment([baseB, baseA], 1 + (rectA.width + rectA.height) / d);
+  const segForB = extendSegment([baseA, baseB], 1 + (rectB.width + rectB.height) / d);
+
+  const pA = getIntersectedOutlines(getShapeStruct, shapeA, segForA[0], segForA[1])?.[0];
+  const pB = getIntersectedOutlines(getShapeStruct, shapeB, segForB[0], segForB[1])?.[0];
   return pA && pB ? [pA, pB] : undefined;
 }
 

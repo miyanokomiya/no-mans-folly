@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   ISegment,
   expandRect,
+  extendSegment,
   getClosestOutlineOnEllipse,
   getClosestOutlineOnRectangle,
   getCrossLineAndEllipse,
@@ -37,6 +38,23 @@ describe("getRotateFn", () => {
       x: 10,
       y: 10,
     });
+  });
+});
+
+describe("extendSegment", () => {
+  test("should return extended segment", () => {
+    expect(
+      extendSegment(
+        [
+          { x: 10, y: 10 },
+          { x: 20, y: 10 },
+        ],
+        2
+      )
+    ).toEqual([
+      { x: 10, y: 10 },
+      { x: 30, y: 10 },
+    ]);
   });
 });
 
