@@ -10,6 +10,7 @@ import { translateOnSelection } from "./commons";
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = 10;
 
+// TODO: Duplicate documents
 export function newDuplicatingShapesState(): AppCanvasState {
   let shapes: Shape[] = [];
   let shapeSnapping: ShapeSnapping;

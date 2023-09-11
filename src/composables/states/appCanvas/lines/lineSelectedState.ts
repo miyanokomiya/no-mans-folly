@@ -40,6 +40,10 @@ export function newLineSelectedState(): AppCanvasState {
             case 0: {
               const hitResult = lineBounding.hitTest(event.data.point);
               if (hitResult) {
+                if (event.data.options.alt) {
+                  return newDuplicatingShapesState;
+                }
+
                 switch (hitResult.type) {
                   case "vertex":
                     return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
