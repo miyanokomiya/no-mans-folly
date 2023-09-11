@@ -11,6 +11,7 @@ export interface Diagram extends Entity {
 
 export interface Sheet extends Entity {
   name: string;
+  bgcolor?: Color;
 }
 
 export interface Layer extends Entity {

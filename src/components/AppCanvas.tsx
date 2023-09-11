@@ -28,6 +28,8 @@ import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
 import { CommandExam, ModifierOptions } from "../composables/states/types";
 import { CommandExamPanel } from "./molecules/CommandExamPanel";
+import { rednerRGBA } from "../utils/color";
+import { useSelectedTmpSheet } from "../composables/storeHooks";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -439,12 +441,17 @@ export function AppCanvas() {
     />
   ) : undefined;
 
+  const sheet = useSelectedTmpSheet();
+  const wrapperStyle = useMemo<React.CSSProperties>(() => {
+    return { cursor, backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" };
+  }, [cursor, sheet]);
+
   return (
     <>
       <div
         ref={wrapperRef}
         className="box-border border border-black relative w-full h-full"
-        style={{ cursor }}
+        style={wrapperStyle}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseHover}
         onKeyDown={onKeyDown}

@@ -19,6 +19,7 @@ import { newDocumentStore } from "./stores/documents";
 import { SheetList } from "./components/sheets/SheetList";
 import { useEffect, useState } from "react";
 import { getSheetURL } from "./utils/route";
+import { SheetConfigPanel } from "./components/SheetConfigPanel";
 
 const yDiagramDoc = new Y.Doc();
 const diagramStore = newDiagramStore({ ydoc: yDiagramDoc });
@@ -121,19 +122,21 @@ function App() {
     return () => dbProviderDiagram.off("synced", onLoadDiagram);
   }, []);
 
+  // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasContext.Provider value={acctx}>
       <AppStateMachineContext.Provider value={smctx}>
         <div className="relative">
-          <div className="w-screen h-screen">{ready ? <AppCanvas /> : undefined}</div>
+          <div className="w-screen h-screen bg-black">{ready ? <AppCanvas /> : undefined}</div>
           <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
             <AppToolbar />
           </div>
           <div className="absolute right-4 bottom-2">
             <AppFootbar />
           </div>
-          <div className="absolute left-4 top-2">
+          <div className="absolute left-4 top-2 flex">
             <SheetList />
+            <SheetConfigPanel />
           </div>
         </div>
       </AppStateMachineContext.Provider>

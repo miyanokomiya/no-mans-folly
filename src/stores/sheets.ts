@@ -2,6 +2,7 @@ import * as Y from "yjs";
 import { Sheet } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newValueStore } from "./core/values";
+import { newCallback } from "../composables/reactives";
 
 type Option = {
   ydoc: Y.Doc;
@@ -22,7 +23,6 @@ export function newSheetStore(option: Option) {
       selectedIdStore.setValue(id);
     }
   }
-  const watchSelected = selectedIdStore.watch;
 
   entityStore.watch(() => {
     if (!entityStore.getEntityMap()[selectedIdStore.getValue()]) {
@@ -30,10 +30,34 @@ export function newSheetStore(option: Option) {
     }
   });
 
+  let tmpSheetMap: { [id: string]: Partial<Sheet> } = {};
+
+  function setTmpSheetMap(val: { [id: string]: Partial<Sheet> }) {
+    tmpSheetMap = val;
+    tmpSheetMapCallback.dispatch();
+  }
+
+  function getTmpSheetMap(): { [id: string]: Partial<Sheet> } {
+    return tmpSheetMap;
+  }
+
+  const tmpSheetMapCallback = newCallback();
+
+  function refresh(_ydoc: Y.Doc) {
+    selectedIdStore.setValue("");
+    setTmpSheetMap({});
+    entityStore.refresh(_ydoc);
+  }
+
   return {
     ...entityStore,
+    refresh,
     getSelectedSheet,
     selectSheet,
-    watchSelected,
+    watchSelected: selectedIdStore.watch,
+
+    setTmpSheetMap,
+    getTmpSheetMap,
+    watchTmpSheetMap: tmpSheetMapCallback.bind,
   };
 }

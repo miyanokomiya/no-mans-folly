@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { SheetPanel } from "./SheetPanel";
 import { generateUuid } from "../../utils/random";
@@ -6,27 +6,12 @@ import { generateKeyBetween } from "fractional-indexing";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDelete from "../../assets/icons/delete_filled.svg";
 import { SortableListV } from "../atoms/SortableListV";
+import { useSelectedSheet, useSheets } from "../../composables/storeHooks";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
-
-  const [sheetState, setSheetState] = useState<any>({});
-
-  useEffect(() => {
-    return acctx.sheetStore.watch(() => {
-      setSheetState({});
-    });
-  }, []);
-
-  useEffect(() => {
-    return acctx.sheetStore.watchSelected(() => {
-      setSheetState({});
-    });
-  }, [acctx.sheetStore]);
-
-  const selectedSheet = useMemo(() => {
-    return acctx.sheetStore.getSelectedSheet();
-  }, [acctx.sheetStore, sheetState]);
+  const selectedSheet = useSelectedSheet();
+  const sheets = useSheets();
 
   const onClickSheet = useCallback(
     (id: string) => {
@@ -46,6 +31,7 @@ export const SheetList: React.FC = () => {
       id,
       findex: generateKeyBetween(beforeFindex, afterFindex),
       name: "New Sheet",
+      bgcolor: selectedSheet?.bgcolor,
     });
     acctx.sheetStore.selectSheet(id);
   }, [acctx.sheetStore, selectedSheet]);
@@ -68,7 +54,6 @@ export const SheetList: React.FC = () => {
   );
 
   const sheetItems = useMemo<[string, React.ReactNode][]>(() => {
-    const sheets = acctx.sheetStore.getEntities();
     return sheets.map((s, i) => {
       return [
         s.id,
@@ -77,11 +62,10 @@ export const SheetList: React.FC = () => {
         </div>,
       ];
     });
-  }, [acctx.sheetStore, sheetState, onClickSheet]);
+  }, [selectedSheet, sheets, onClickSheet]);
 
   const onChangeOrder = useCallback(
     ([from, to]: [number, number]) => {
-      const sheets = acctx.sheetStore.getEntities();
       const target = sheets[from];
       const beforeFindex = sheets[to - 1]?.findex ?? null;
       const nextFindex = sheets[to]?.findex ?? null;
@@ -90,7 +74,7 @@ export const SheetList: React.FC = () => {
         findex: generateKeyBetween(beforeFindex, nextFindex),
       });
     },
-    [acctx.sheetStore]
+    [sheets]
   );
 
   return (

@@ -19,7 +19,7 @@ export const AppFootbar: React.FC = () => {
   }, [smctx.stateMachine]);
 
   return (
-    <div className="p-1 border rounded">
+    <div className="p-1 border rounded bg-white">
       <button type="button" className="w-8 h-8 border p-1 rounded mr-1" onClick={onUndo}>
         Un
       </button>
