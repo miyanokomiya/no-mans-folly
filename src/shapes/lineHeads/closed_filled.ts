@@ -26,7 +26,7 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
       true
     );
 
-    const tmp = ctx.strokeStyle;
+    const tmp = ctx.fillStyle;
     ctx.fillStyle = ctx.strokeStyle;
     ctx.fill();
     ctx.fillStyle = tmp;

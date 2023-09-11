@@ -16,7 +16,7 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
     ctx.beginPath();
     ctx.arc(transform[4], transform[5], radius, 0, Math.PI * 2, true);
 
-    const tmp = ctx.strokeStyle;
+    const tmp = ctx.fillStyle;
     ctx.fillStyle = ctx.strokeStyle;
     ctx.fill();
     ctx.fillStyle = tmp;
