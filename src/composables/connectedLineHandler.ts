@@ -5,6 +5,7 @@ import { Shape, StyleScheme } from "../models";
 import { getLocalRectPolygon } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { newElbowLineHandler } from "./elbowLineHandler";
+import { optimizeLinePath } from "./lineSnapping";
 
 interface Option {
   connectedLinesMap: {
@@ -85,6 +86,21 @@ export function newConnectedLineHandler(option: Option) {
       });
     });
 
+    // Optimize line connections
+    Object.entries(ret).forEach(([id, patch]) => {
+      const updated = { ...shapeMap[id], ...(updatedShapeMap[id] ?? {}), ...patch } as LineShape;
+      const optimized = optimizeLinePath(
+        {
+          getShapeStruct: option.ctx.getShapeStruct,
+          getShapeMap: () => ({ ...shapeMap, ...updatedShapeMap }),
+        },
+        updated
+      );
+      if (optimized) {
+        ret[id] = { ...patch, ...optimized };
+      }
+    });
+
     // Update elbow bodies
     {
       const patchedElbows = Object.entries(ret)
@@ -98,7 +114,7 @@ export function newConnectedLineHandler(option: Option) {
       const elbowConnectedIds = getElbowConnectedShapeIds(patchedElbows);
       elbowConnectedIds.forEach((id) => {
         if (shapeMap[id]) {
-          nextShapeMap[id] = { ...shapeMap[id], ...(updatedMap[id] ?? {}) };
+          nextShapeMap[id] = updatedShapeMap[id] ?? shapeMap[id];
         }
       });
       patchedElbows.forEach((line) => {

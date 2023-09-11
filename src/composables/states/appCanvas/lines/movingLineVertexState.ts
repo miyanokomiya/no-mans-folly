@@ -3,7 +3,13 @@ import { handleHistoryEvent, translateOnSelection } from "../commons";
 import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import {
+  ConnectionResult,
+  LineSnapping,
+  newLineSnapping,
+  optimizeLinePath,
+  renderConnectionResult,
+} from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 
 interface Option {
@@ -44,7 +50,10 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = lineSnapping.testConnection(point, ctx.getScale());
           vertex = connectionResult?.p ?? add(origin, sub(point, event.data.start));
-          const patch = patchVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
+          let patch = patchVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
+
+          const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
+          patch = optimized ? { ...patch, ...optimized } : patch;
 
           if (elbowHandler) {
             const body = elbowHandler.optimizeElbow({ ...option.lineShape, ...patch });

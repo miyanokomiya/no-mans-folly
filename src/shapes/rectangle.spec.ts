@@ -52,7 +52,6 @@ describe("struct", () => {
       const shape = struct.create({ width: 10, height: 10 });
       expect(struct.getClosestOutline?.(shape, { x: 1, y: 1 }, 2)).toEqual({ x: 0, y: 0 });
       expect(struct.getClosestOutline?.(shape, { x: 9, y: 1 }, 2)).toEqual({ x: 10, y: 0 });
-      expect(struct.getClosestOutline?.(shape, { x: 4, y: 6 }, 2)).toEqual({ x: 5, y: 5 });
       expect(struct.getClosestOutline?.(shape, { x: 11, y: 11 }, 2)).toEqual({ x: 10, y: 10 });
       expect(struct.getClosestOutline?.(shape, { x: -1, y: 11 }, 2)).toEqual({ x: 0, y: 10 });
     });

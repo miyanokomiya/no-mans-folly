@@ -45,7 +45,6 @@ describe("struct", () => {
       const shape = struct.create({ rx: 10, ry: 10 });
       expect(struct.getClosestOutline?.(shape, { x: 11, y: 1 }, 2)).toEqual({ x: 10, y: 0 });
       expect(struct.getClosestOutline?.(shape, { x: 21, y: 9 }, 2)).toEqual({ x: 20, y: 10 });
-      expect(struct.getClosestOutline?.(shape, { x: 11, y: 9 }, 2)).toEqual({ x: 10, y: 10 });
       expect(struct.getClosestOutline?.(shape, { x: 1, y: 11 }, 2)).toEqual({ x: 0, y: 10 });
       expect(struct.getClosestOutline?.(shape, { x: 9, y: 21 }, 2)).toEqual({ x: 10, y: 20 });
     });

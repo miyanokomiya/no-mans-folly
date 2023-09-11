@@ -138,6 +138,5 @@ function getMarkers(rect: IRectangle, center: IVec2): IVec2[] {
     { x: center.x, y: rect.y + rect.height },
     { x: rect.x, y: rect.y + rect.height },
     { x: rect.x, y: center.y },
-    center,
   ];
 }

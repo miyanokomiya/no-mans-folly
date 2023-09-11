@@ -110,7 +110,6 @@ function getMarkers(center: IVec2, rx: number, ry: number): IVec2[] {
     { x: center.x + rx, y: center.y },
     { x: center.x, y: center.y + ry },
     { x: center.x - rx, y: center.y },
-    center,
   ];
 }
 

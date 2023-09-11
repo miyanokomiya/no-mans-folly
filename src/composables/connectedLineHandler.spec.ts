@@ -24,6 +24,11 @@ describe("newConnectedLineHandler", () => {
         { p: { x: 10, y: 10 }, c: { rate: { x: 1, y: 0.5 }, id: "b" } },
       ],
     });
+    const l2 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "l2",
+      pConnection: { rate: { x: 0.5, y: 0.5 }, id: "a", optimized: true },
+      qConnection: { rate: { x: 0.2, y: 0.8 }, id: "b", optimized: true },
+    });
     const a = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
     const b = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
 
@@ -140,6 +145,33 @@ describe("newConnectedLineHandler", () => {
       });
       expect(result.l0).not.toHaveProperty("pConnection");
       expect(result.l0).toHaveProperty("qConnection");
+    });
+
+    test("should regard optimized connections", () => {
+      const target = newConnectedLineHandler({
+        connectedLinesMap: {
+          a: [l2],
+          b: [l2],
+        },
+        ctx: {
+          getShapeStruct: getCommonStruct,
+          getShapeMap: () => ({ l2, a, b }),
+        },
+      });
+
+      expect(
+        target.onModified({
+          a: { width: 100, height: 100 } as Partial<RectangleShape>,
+          b: { p: { x: 200, y: 200 }, width: 100, height: 100 } as Partial<RectangleShape>,
+        })
+      ).toEqual({
+        l2: {
+          p: { x: 100, y: 100 },
+          q: { x: 200, y: 200 },
+          pConnection: { rate: { x: 1, y: 1 }, id: "a", optimized: true },
+          qConnection: { rate: { x: 0, y: 0 }, id: "b", optimized: true },
+        },
+      });
     });
   });
 });

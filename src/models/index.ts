@@ -58,6 +58,7 @@ export interface CommonStyle {
 export interface ConnectionPoint {
   id: string;
   rate: IVec2; // relative position in the target rectangle
+  optimized?: boolean;
 }
 
 export interface LineHead {
