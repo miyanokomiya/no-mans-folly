@@ -26,7 +26,8 @@ import { getDocAttributes, renderDoc } from "../utils/textEditor";
 import { AffineMatrix, IVec2, sub } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
-import { ModifierOptions } from "../composables/states/types";
+import { CommandExam, ModifierOptions } from "../composables/states/types";
+import { CommandExamPanel } from "./molecules/CommandExamPanel";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -38,6 +39,7 @@ export function AppCanvas() {
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
   const [currentDocAttrInfo, setCurrentDocAttrInfo] = useState<DocAttrInfo>({});
+  const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
 
   useEffect(() => {
     return acctx.shapeStore.watch((keys) => {
@@ -113,7 +115,7 @@ export function AppCanvas() {
       showFloatMenu: () => setFloatMenuAvailable(true),
       hideFloatMenu: () => setFloatMenuAvailable(false),
       setContextMenuList() {},
-      setCommandExams() {},
+      setCommandExams: (val) => setCommandExams(val ?? []),
       setCursor,
 
       undo: acctx.undoManager.undo,
@@ -452,7 +454,10 @@ export function AppCanvas() {
         tabIndex={-1}
       >
         <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-        <div className="absolute left-0 bottom-0">{smctx.stateMachine.getStateSummary().label}</div>
+        <div className="absolute right-2 top-0">{smctx.stateMachine.getStateSummary().label}</div>
+        <div className="absolute bottom-2 left-2 pointer-events-none">
+          {<CommandExamPanel commandExams={commandExams} />}
+        </div>
       </div>
       {floatMenu}
       {textEditor}

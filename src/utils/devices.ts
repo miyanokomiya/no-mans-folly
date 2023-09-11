@@ -34,6 +34,10 @@ export function getCtrlOrMetaStr(): string {
   return isMac() ? "Command" : "Ctrl";
 }
 
+export function getAltOrOptionStr(): string {
+  return isMac() ? "Option" : "Alt";
+}
+
 export function switchClick(
   e: ModifiedEvent,
   callbacks: { plain?: () => void; shift?: () => void; ctrl?: () => void }

@@ -6,8 +6,8 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { isPointCloseToSegment } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 
-const VERTEX_R = 8;
-const ADD_VERTEX_ANCHOR_RATE = 0.6;
+const VERTEX_R = 7;
+const ADD_VERTEX_ANCHOR_RATE = 0.8;
 
 type LineHitType = "vertex" | "edge" | "new-vertex-anchor";
 export interface LineHitResult {

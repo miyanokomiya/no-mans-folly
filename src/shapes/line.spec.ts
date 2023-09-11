@@ -1,5 +1,5 @@
 import { expect, describe, test, vi } from "vitest";
-import { addNewVertex, getLinePath, isLineShape, patchConnection, patchVertex, struct } from "./line";
+import { addNewVertex, deleteVertex, getLinePath, isLineShape, patchConnection, patchVertex, struct } from "./line";
 
 describe("struct", () => {
   describe("create", () => {
@@ -266,6 +266,27 @@ describe("addNewVertex", () => {
     expect(addNewVertex(shape1, 3, v)).toEqual({
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
     });
+  });
+});
+
+describe("deleteVertex", () => {
+  test("should return patched object to delete the vertex", () => {
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+    });
+    expect(deleteVertex(shape0, 0)).toEqual({});
+    expect(deleteVertex(shape0, 1)).toEqual({
+      body: [{ p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+    });
+    expect(deleteVertex(shape0, 2)).toEqual({
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 3, y: 3 } }],
+    });
+    expect(deleteVertex(shape0, 3)).toEqual({
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 4)).toEqual({});
   });
 });
 

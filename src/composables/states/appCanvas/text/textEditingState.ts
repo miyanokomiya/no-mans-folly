@@ -68,12 +68,18 @@ export function newTextEditingState(option: Option): AppCanvasState {
       onCursorUpdated(ctx);
 
       ctx.setCaptureTimeout(1000);
+      ctx.setCommandExams([
+        { command: "Ctrl + p, n, b, f", title: "Move cursor" },
+        { command: "Ctrl + h", title: "Backspace" },
+        { command: "Ctrl + d", title: "Delete" },
+      ]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.stopTextEditing();
       ctx.setCaptureTimeout();
       ctx.setCurrentDocAttrInfo({});
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {

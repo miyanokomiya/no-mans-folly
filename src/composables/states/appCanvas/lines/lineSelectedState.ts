@@ -9,7 +9,7 @@ import {
 } from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
-import { LineShape } from "../../../../shapes/line";
+import { LineShape, deleteVertex } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingShapeState } from "../movingShapeState";
@@ -26,10 +26,12 @@ export function newLineSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
+      ctx.setCommandExams([{ command: "Shift + Click", title: "Delete inner vertex" }]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.setCursor();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       if (!lineShape) return translateOnSelection(ctx);
@@ -46,7 +48,15 @@ export function newLineSelectedState(): AppCanvasState {
 
                 switch (hitResult.type) {
                   case "vertex":
-                    return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
+                    if (event.data.options.shift) {
+                      const patch = deleteVertex(lineShape, hitResult.index);
+                      if (Object.keys(patch).length > 0) {
+                        ctx.patchShapes({ [lineShape.id]: patch });
+                      }
+                      return translateOnSelection(ctx);
+                    } else {
+                      return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
+                    }
                   case "edge":
                     return newMovingShapeState;
                   case "new-vertex-anchor":

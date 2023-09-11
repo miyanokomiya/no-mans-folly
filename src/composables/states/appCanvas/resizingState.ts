@@ -13,6 +13,7 @@ import {
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
+import { getAltOrOptionStr } from "../../../utils/devices";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -54,10 +55,16 @@ export function newResizingState(option: Option): AppCanvasState {
         connectedLinesMap: getConnectedLineInfoMap(ctx),
         ctx,
       });
+
+      ctx.setCommandExams([
+        { command: "Shift", title: "Proportionally" },
+        { command: getAltOrOptionStr(), title: "Based on center" },
+      ]);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {

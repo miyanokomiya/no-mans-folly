@@ -236,6 +236,18 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
   }
 }
 
+/**
+ * Only inner vertices can be deleted.
+ */
+export function deleteVertex(shape: LineShape, index: number): Partial<LineShape> {
+  if (!shape.body) return {};
+
+  const vertices = getLinePath(shape);
+  if (0 === index || index === vertices.length - 1) return {};
+
+  return { body: shape.body.filter((_, i) => i !== index - 1) };
+}
+
 export function isLineShape(shape: Shape): shape is LineShape {
   return shape.type === "line";
 }
