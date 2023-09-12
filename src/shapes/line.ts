@@ -41,7 +41,6 @@ export const struct: ShapeStruct<LineShape> = {
   render(ctx, shape) {
     applyStrokeStyle(ctx, shape.stroke);
     applyFillStyle(ctx, shape.fill);
-
     const linePath = getLinePath(shape);
 
     let pAffine: AffineMatrix | undefined;
@@ -92,6 +91,9 @@ export const struct: ShapeStruct<LineShape> = {
 
     ctx.beginPath();
     applyPath(ctx, linePath);
+    applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color });
+    ctx.stroke();
+    applyStrokeStyle(ctx, { ...shape.stroke, width: ctx.lineWidth * 0.8 });
     ctx.stroke();
 
     if (region) {
