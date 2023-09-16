@@ -16,7 +16,7 @@ export const TextColorPanel: React.FC<Props> = ({ onChanged }) => {
   );
 
   return (
-    <div>
+    <div className="p-2">
       <ColorPickerPanel onClick={onColorClick} />
     </div>
   );

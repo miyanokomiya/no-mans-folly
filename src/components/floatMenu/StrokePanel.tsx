@@ -31,7 +31,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
   );
 
   return (
-    <div>
+    <div className="p-2">
       <div className="mb-2">
         <SliderInput min={1} max={10} step={1} value={stroke.width ?? 1} onChanged={onWidthChanged} />
       </div>

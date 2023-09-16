@@ -24,7 +24,7 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
   );
 
   return (
-    <div>
+    <div className="p-2">
       <div className="mb-2">
         <SliderInput min={0} max={1} value={fill.color.a} onChanged={onAlphaChanged} />
       </div>

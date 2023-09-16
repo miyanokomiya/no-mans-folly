@@ -118,7 +118,7 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
         <button
           key={t}
           type="button"
-          className={"w-8 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
+          className={"w-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
           data-type={t}
           onClick={onClickButton}
         >

@@ -41,10 +41,10 @@ interface StackPanelProps {
 const StackPanel: React.FC<StackPanelProps> = ({ onClickFirst, onClickLast }) => {
   return (
     <div className="flex gap-1">
-      <button type="button" className="w-8 p-1 rounded border" onClick={onClickFirst}>
+      <button type="button" className="w-10 h-10 p-1 rounded border" onClick={onClickFirst}>
         <span>F</span>
       </button>
-      <button type="button" className="w-8 p-1 rounded border" onClick={onClickLast}>
+      <button type="button" className="w-10 h-10 p-1 rounded border" onClick={onClickLast}>
         <span>L</span>
       </button>
     </div>

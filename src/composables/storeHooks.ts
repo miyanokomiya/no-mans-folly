@@ -17,6 +17,9 @@ export function useSelectedSheet(): Sheet | undefined {
       setSheetState({});
     });
   }, [acctx.sheetStore]);
+  useEffect(() => {
+    setSheetState({});
+  }, [acctx.sheetStore]);
 
   return useMemo<Sheet | undefined>(() => {
     return acctx.sheetStore.getSelectedSheet();

@@ -62,18 +62,24 @@ export const SheetConfigPanel: React.FC = () => {
     if (!sheet) return;
 
     return (
-      <div>
+      <div className="p-2">
         <div className="mb-2">
           <SliderInput min={0} max={1} value={bgColor.a} onChanged={onAlphaChanged} />
         </div>
         <ColorPickerPanel onClick={onColorClick} />
       </div>
     );
-  }, [bgColor]);
+  }, [bgColor, sheet]);
 
   return (
     <div ref={outside.ref}>
-      <PopupButton name="bgColor" opened={popupedKey === "bgColor"} popup={bgColorPanel} onClick={onClickPopupButton}>
+      <PopupButton
+        name="bgColor"
+        opened={popupedKey === "bgColor"}
+        popup={bgColorPanel}
+        onClick={onClickPopupButton}
+        popupPosition="right"
+      >
         <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
       </PopupButton>
     </div>

@@ -75,7 +75,7 @@ export const NumberCombobox: React.FC<Props> = ({
       </form>
       {opened ? (
         <div
-          className="absolute left-1/2 bottom-0 bg-white text-right border rounded shadow-md"
+          className="absolute left-1/2 bottom-0 bg-white text-right border rounded shadow-md z-10"
           style={{ transform: "translate(-50%, 100%)" }}
         >
           <div className="flex gap-1 p-1">
