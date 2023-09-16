@@ -57,4 +57,34 @@ describe("newThrottle", () => {
       expect(mock).toHaveBeenNthCalledWith(2, 20, 200);
     });
   });
+
+  describe("flush", () => {
+    test("should flush current throttled item", async () => {
+      const mock = vi.fn();
+      const fn = (val1: number) => mock(val1);
+      const t = newThrottle(fn, 10);
+      t(10);
+      t.flush();
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenNthCalledWith(1, 10);
+      await sleep(15);
+      expect(mock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("clear", () => {
+    test("should clear current throttled item", async () => {
+      const mock = vi.fn();
+      const fn = (val1: number) => mock(val1);
+      const t = newThrottle(fn, 10);
+      t(10);
+      t.clear();
+      await sleep(15);
+      t(20);
+      await sleep(15);
+
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenNthCalledWith(1, 20);
+    });
+  });
 });

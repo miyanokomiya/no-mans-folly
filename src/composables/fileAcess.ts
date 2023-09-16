@@ -23,10 +23,14 @@ export function newFileAccess() {
     for await (const [name, h] of handle as any) {
       if (h.kind === "file" && name === DIAGRAM_FILE_NAME) {
         const update = await readFileAsUnit8Array(h);
-        Y.applyUpdate(diagramDoc, update);
+        if (update) {
+          Y.applyUpdate(diagramDoc, update);
+        }
         return true;
       }
     }
+
+    return true;
   }
 
   async function openSheet(sheetDoc: Y.Doc, sheetId: string): Promise<true | undefined> {
@@ -34,8 +38,10 @@ export function newFileAccess() {
 
     const h = await handle.getFileHandle(sheetId, { create: true });
     const update = await readFileAsUnit8Array(h);
-    Y.applyUpdate(sheetDoc, update);
-    console.log("file sheet: ", sheetId);
+    if (update) {
+      Y.applyUpdate(sheetDoc, update);
+      console.log("file sheet: ", sheetId);
+    }
     return true;
   }
 
@@ -103,9 +109,11 @@ async function overrideFile(handle: FileSystemFileHandle, content: FileSystemWri
   }
 }
 
-async function readFileAsUnit8Array(handle: FileSystemFileHandle): Promise<Uint8Array> {
+async function readFileAsUnit8Array(handle: FileSystemFileHandle): Promise<Uint8Array | undefined> {
   const file = await handle.getFile();
   const buffer = await file.arrayBuffer();
+  if (buffer.byteLength === 0) return;
+
   const array = new Uint8Array(buffer);
   return array;
 }

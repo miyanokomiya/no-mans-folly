@@ -27,9 +27,18 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoL
   }, []);
   const { ref } = useOutsideClickCallback<HTMLDivElement>(closePopup);
 
-  const lastAutoSaved = useMemo(() => {
-    return autoSaved === 0 ? "-" : new Date(autoSaved).toLocaleString();
-  }, [autoSaved]);
+  const storageMessage = useMemo(() => {
+    if (!canSyncoLocal) {
+      return (
+        <button type="button" onClick={() => onClickPopupButton("file")}>
+          Open/Save workspace for persistence
+        </button>
+      );
+    }
+
+    const lastSaved = autoSaved === 0 ? "-" : new Date(autoSaved).toLocaleString();
+    return <span>Sync local. Last saved: {lastSaved}</span>;
+  }, [autoSaved, canSyncoLocal, onClickPopupButton]);
 
   const _onClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -65,11 +74,9 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoL
       >
         <div className="px-2">File</div>
       </PopupButton>
-      {canSyncoLocal ? (
-        <div className="px-2 text-sm">
-          <span>Sync local. Last saved: {lastAutoSaved}</span>
-        </div>
-      ) : undefined}
+      <div className="px-2 text-sm">
+        <span>{storageMessage}</span>
+      </div>
     </div>
   );
 };

@@ -54,6 +54,9 @@ export function usePersistence() {
   const initSheet = useCallback(
     async (sheetId: string) => {
       const nextSheetDoc = new Y.Doc();
+      // Attach sheet id
+      // => the doc doens't always refer to selected sheet in the store during swiching sheets.
+      nextSheetDoc.meta = { sheetId };
 
       if (fileAcess.hasHnadle()) {
         try {
@@ -138,13 +141,11 @@ export function usePersistence() {
   }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
 
   const saveSheetToLocal = useCallback(async () => {
-    const sheet = diagramStores.sheetStore.getSelectedSheet();
-    if (!sheet) return;
-
-    const result = await fileAcess.saveSheet(sheetDoc, sheet.id);
+    const sheetId = sheetDoc.meta.sheetId as string;
+    const result = await fileAcess.saveSheet(sheetDoc, sheetId);
     setCanSyncToLocal(fileAcess.hasHnadle());
     if (result) {
-      console.log("Saved: ", sheet.id);
+      console.log("Saved: ", sheetId);
     }
   }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
 
@@ -244,13 +245,17 @@ export function useAutoSave({
   saveDiagramToLocal,
   onSave,
 }: AutoSaveOption) {
+  const [wait, setWait] = useState(false);
+
   const saveDiagram = useCallback(async () => {
     if (!enable) return;
     await saveDiagramToLocal();
+    setWait(false);
     onSave?.();
   }, [enable, saveDiagramToLocal, onSave]);
 
   const saveDiagramThrottled = useMemo(() => {
+    setWait(true);
     return newThrottle(saveDiagram, 5000);
   }, [saveDiagram]);
 
@@ -269,10 +274,12 @@ export function useAutoSave({
   const saveSheet = useCallback(async () => {
     if (!enable) return;
     await saveSheetToLocal();
+    setWait(false);
     onSave?.();
   }, [enable, saveSheetToLocal, onSave]);
 
   const saveSheetThrottled = useMemo(() => {
+    setWait(true);
     return newThrottle(saveSheet, 5000);
   }, [saveSheet]);
 
@@ -293,4 +300,17 @@ export function useAutoSave({
       saveSheetThrottled();
     });
   }, [documentStore, saveSheetThrottled]);
+
+  const flush = useCallback(async () => {
+    const shouldSaveDiagram = saveDiagramThrottled.clear();
+    const shouldSaveSheet = saveSheetThrottled.clear();
+    if (shouldSaveDiagram) {
+      await saveDiagram();
+    }
+    if (shouldSaveSheet) {
+      await saveSheet();
+    }
+  }, [saveDiagramThrottled, saveSheetThrottled, saveDiagram, saveSheet]);
+
+  return { wait, flush };
 }

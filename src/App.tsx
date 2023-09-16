@@ -28,21 +28,15 @@ function App() {
     canSyncoLocal,
   } = usePersistence();
 
-  useEffect(() => {
-    return sheetStore.watchSelected(() => {
-      const sheet = sheetStore.getSelectedSheet();
-      if (!ready || !sheet) return;
-      initSheet(sheet.id);
-      history.replaceState(null, "", getSheetURL(sheet.id));
-    });
-  }, [sheetStore, ready]);
-
   const [autoSaved, setAutoSaved] = useState(0);
   const onAutoSaved = useCallback(() => {
     setAutoSaved(Date.now());
   }, []);
+  const resetAutoSaved = useCallback(() => {
+    setAutoSaved(0);
+  }, []);
 
-  useAutoSave({
+  const autoSave = useAutoSave({
     diagramStore,
     sheetStore,
     layerStore,
@@ -53,6 +47,18 @@ function App() {
     saveSheetToLocal,
     onSave: onAutoSaved,
   });
+
+  useEffect(() => {
+    return sheetStore.watchSelected(async () => {
+      const sheet = sheetStore.getSelectedSheet();
+      if (!ready || !sheet) return;
+
+      await autoSave.flush();
+      resetAutoSaved();
+      await initSheet(sheet.id);
+      history.replaceState(null, "", getSheetURL(sheet.id));
+    });
+  }, [sheetStore, ready, autoSave.flush, resetAutoSaved]);
 
   const acctx = useMemo(() => {
     const context = {
