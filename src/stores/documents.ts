@@ -102,3 +102,4 @@ export function newDocumentStore(option: Option) {
     watch,
   };
 }
+export type DocumentStore = ReturnType<typeof newDocumentStore>;

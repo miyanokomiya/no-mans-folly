@@ -61,3 +61,4 @@ export function newSheetStore(option: Option) {
     watchTmpSheetMap: tmpSheetMapCallback.bind,
   };
 }
+export type SheetStore = ReturnType<typeof newSheetStore>;

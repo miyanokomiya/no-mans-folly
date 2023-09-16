@@ -44,6 +44,13 @@ export function AppCanvas() {
   const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
 
   useEffect(() => {
+    return acctx.sheetStore.watchSelected(() => {
+      smctx.stateMachine.reset();
+      setCanvasState({});
+    });
+  }, [acctx.shapeStore, smctx.stateMachine]);
+
+  useEffect(() => {
     return acctx.shapeStore.watch((keys) => {
       smctx.stateMachine.handleEvent({
         type: "shape-updated",

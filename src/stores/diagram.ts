@@ -16,3 +16,4 @@ export function newDiagramStore(option: Option) {
     ...signleEntityStore,
   };
 }
+export type DiagramStore = ReturnType<typeof newDiagramStore>;

@@ -34,3 +34,4 @@ export function newLayerStore(option: Option) {
     watchSelected,
   };
 }
+export type LayerStore = ReturnType<typeof newLayerStore>;

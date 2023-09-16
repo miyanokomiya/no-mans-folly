@@ -55,3 +55,4 @@ export function newShapeStore(option: Option) {
     watchTmpShapeMap: tmpShapeMapCallback.bind,
   };
 }
+export type ShapeStore = ReturnType<typeof newShapeStore>;
