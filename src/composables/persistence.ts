@@ -13,17 +13,11 @@ import { newThrottle } from "./throttle";
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
 
-function createInitialDiagram(diagramStore: ReturnType<typeof newDiagramStore>) {
-  diagramStore.patchEntity({ id: "default", findex: generateKeyBetween(null, null) });
+interface PersistenceOption {
+  generateUuid: () => string;
 }
 
-function createInitialSheet(sheetStore: ReturnType<typeof newSheetStore>) {
-  const sheetId = "default";
-  sheetStore.addEntity({ id: sheetId, findex: generateKeyBetween(null, null), name: "New Sheet" });
-  sheetStore.selectSheet(sheetId);
-}
-
-export function usePersistence() {
+export function usePersistence(option: PersistenceOption) {
   const fileAcess = useMemo(() => newFileAccess(), []);
   const [canSyncoLocal, setCanSyncToLocal] = useState(false);
 
@@ -86,13 +80,13 @@ export function usePersistence() {
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-    createInitialDiagram(diagramStore);
+    createInitialDiagram(diagramStore, option.generateUuid);
     const provider = new IndexeddbPersistence("test-project-diagram", nextDiagramDoc);
     await provider.whenSynced;
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore);
+      createInitialSheet(sheetStore, option.generateUuid);
     }
 
     const sheet = sheetStore.getEntityMap()[initialSheetIdByQuery] ?? sheetStore.getSelectedSheet()!;
@@ -120,7 +114,7 @@ export function usePersistence() {
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore);
+      createInitialSheet(sheetStore, option.generateUuid);
     }
 
     const sheet = sheetStore.getSelectedSheet()!;
@@ -150,6 +144,9 @@ export function usePersistence() {
   }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
 
   const saveAllToLocal = useCallback(async () => {
+    const result = await fileAcess.openDirectory();
+    if (!result) return;
+
     const sheets = diagramStores.sheetStore.getEntities();
     for (const sheet of sheets) {
       const sheetDoc = new Y.Doc();
@@ -313,4 +310,14 @@ export function useAutoSave({
   }, [saveDiagramThrottled, saveSheetThrottled, saveDiagram, saveSheet]);
 
   return { wait, flush };
+}
+
+function createInitialDiagram(diagramStore: DiagramStore, generateUuid: () => string) {
+  diagramStore.patchEntity({ id: generateUuid(), findex: generateKeyBetween(null, null) });
+}
+
+function createInitialSheet(sheetStore: SheetStore, generateUuid: () => string) {
+  const sheetId = generateUuid();
+  sheetStore.addEntity({ id: sheetId, findex: generateKeyBetween(null, null), name: "New Sheet" });
+  sheetStore.selectSheet(sheetId);
 }

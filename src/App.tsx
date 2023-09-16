@@ -26,7 +26,7 @@ function App() {
     saveDiagramToLocal,
     saveSheetToLocal,
     canSyncoLocal,
-  } = usePersistence();
+  } = usePersistence({ generateUuid });
 
   const [autoSaved, setAutoSaved] = useState(0);
   const onAutoSaved = useCallback(() => {

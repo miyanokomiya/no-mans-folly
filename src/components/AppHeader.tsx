@@ -51,13 +51,14 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoL
   }, [onClickSave]);
 
   const fileItems = useMemo(() => {
+    const className = "p-2 border hover:bg-gray-200";
     return (
       <div className="flex flex-col w-max">
-        <button type="button" className="py-1 px-2 border" onClick={_onClickOpen}>
-          Open workspace
+        <button type="button" className={className} onClick={_onClickOpen}>
+          Open & Sync workspace
         </button>
-        <button type="button" className="py-1 px-2 border" onClick={_onClickSave}>
-          Save workspace
+        <button type="button" className={className} onClick={_onClickSave}>
+          Save & Sync workspace
         </button>
       </div>
     );

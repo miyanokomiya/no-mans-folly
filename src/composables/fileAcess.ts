@@ -9,10 +9,11 @@ export function newFileAccess() {
     return !!handle;
   }
 
-  async function openDirectory() {
+  async function openDirectory(): Promise<true | undefined> {
     const _handle = await getDirectoryHandle();
     if (_handle) {
       handle = _handle;
+      return true;
     }
   }
 
@@ -80,7 +81,7 @@ export function newFileAccess() {
     return true;
   }
 
-  return { openDiagram, openSheet, save, hasHnadle, saveDoc, saveSheet };
+  return { openDirectory, openDiagram, openSheet, save, hasHnadle, saveDoc, saveSheet };
 }
 
 async function getDirectoryHandle(): Promise<FileSystemDirectoryHandle | undefined> {
