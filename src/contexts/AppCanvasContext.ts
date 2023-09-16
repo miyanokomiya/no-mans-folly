@@ -3,14 +3,12 @@ import type { newShapeStore } from "../stores/shapes";
 import type { newLayerStore } from "../stores/layers";
 import type { newDiagramStore } from "../stores/diagram";
 import type { newSheetStore } from "../stores/sheets";
-import { generateUuid } from "../utils/random";
 import { newStateMachine } from "../composables/states/core";
 import { newDefaultState } from "../composables/states/appCanvas/defaultState";
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
 import { newDocumentStore } from "../stores/documents";
-import { generateKeyBetween } from "fractional-indexing";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
