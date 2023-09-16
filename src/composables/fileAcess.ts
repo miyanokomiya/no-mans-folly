@@ -10,7 +10,10 @@ export function newFileAccess() {
   }
 
   async function openDirectory() {
-    handle = await getDirectoryHandle();
+    const _handle = await getDirectoryHandle();
+    if (_handle) {
+      handle = _handle;
+    }
   }
 
   async function openDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {

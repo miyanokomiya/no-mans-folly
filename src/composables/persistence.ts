@@ -230,6 +230,7 @@ interface AutoSaveOption {
   enable: boolean;
   saveSheetToLocal: () => Promise<void>;
   saveDiagramToLocal: () => Promise<void>;
+  onSave?: () => void;
 }
 
 export function useAutoSave({
@@ -241,11 +242,13 @@ export function useAutoSave({
   enable,
   saveSheetToLocal,
   saveDiagramToLocal,
+  onSave,
 }: AutoSaveOption) {
   const saveDiagram = useCallback(async () => {
     if (!enable) return;
     await saveDiagramToLocal();
-  }, [enable, saveDiagramToLocal]);
+    onSave?.();
+  }, [enable, saveDiagramToLocal, onSave]);
 
   const saveDiagramThrottled = useMemo(() => {
     return newThrottle(saveDiagram, 5000);
@@ -266,7 +269,8 @@ export function useAutoSave({
   const saveSheet = useCallback(async () => {
     if (!enable) return;
     await saveSheetToLocal();
-  }, [enable, saveSheetToLocal]);
+    onSave?.();
+  }, [enable, saveSheetToLocal, onSave]);
 
   const saveSheetThrottled = useMemo(() => {
     return newThrottle(saveSheet, 5000);

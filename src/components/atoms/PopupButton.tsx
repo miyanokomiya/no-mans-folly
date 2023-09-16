@@ -20,7 +20,7 @@ export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, o
   );
 
   const popupAttrs = useMemo(() => {
-    const classBase = "z-10 absolute bg-white border rounded p-2 drop-shadow-md ";
+    const classBase = "z-10 absolute bg-white border rounded drop-shadow-md ";
     switch (popupPosition) {
       case "right":
         return {

@@ -5,10 +5,11 @@ import { AppCanvasContext, AppStateMachineContext, createStateMachineContext } f
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SheetConfigPanel } from "./components/SheetConfigPanel";
 import { useAutoSave, usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
+import { AppHeader } from "./components/AppHeader";
 
 function App() {
   const {
@@ -36,6 +37,11 @@ function App() {
     });
   }, [sheetStore, ready]);
 
+  const [autoSaved, setAutoSaved] = useState(0);
+  const onAutoSaved = useCallback(() => {
+    setAutoSaved(Date.now());
+  }, []);
+
   useAutoSave({
     diagramStore,
     sheetStore,
@@ -45,6 +51,7 @@ function App() {
     enable: canSyncoLocal,
     saveDiagramToLocal,
     saveSheetToLocal,
+    onSave: onAutoSaved,
   });
 
   const acctx = useMemo(() => {
@@ -94,19 +101,17 @@ function App() {
           <div className="absolute right-4 bottom-2">
             <AppFootbar />
           </div>
-          <div className="absolute left-0 top-0 flex">
-            <div>
-              <button type="button" onClick={onClickOpen}>
-                Open
-              </button>
-              <button type="button" onClick={onClickSave}>
-                Save
-              </button>
-            </div>
-          </div>
-          <div className="absolute left-4 top-8 flex">
+          <div className="absolute top-8 flex">
             <SheetList />
             <SheetConfigPanel />
+          </div>
+          <div className="absolute left-0 top-0 flex">
+            <AppHeader
+              onClickOpen={onClickOpen}
+              onClickSave={onClickSave}
+              canSyncoLocal={canSyncoLocal}
+              autoSaved={autoSaved}
+            />
           </div>
         </div>
       </AppStateMachineContext.Provider>
