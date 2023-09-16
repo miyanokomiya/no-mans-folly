@@ -7,7 +7,7 @@ import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
 import { useCallback, useEffect, useMemo } from "react";
 import { SheetConfigPanel } from "./components/SheetConfigPanel";
-import { usePersistence } from "./composables/persistence";
+import { useAutoSave, usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
 
 function App() {
@@ -22,6 +22,9 @@ function App() {
     initSheet,
     openDiagramFromLocal,
     saveAllToLocal,
+    saveDiagramToLocal,
+    saveSheetToLocal,
+    canSyncoLocal,
   } = usePersistence();
 
   useEffect(() => {
@@ -32,6 +35,17 @@ function App() {
       history.replaceState(null, "", getSheetURL(sheet.id));
     });
   }, [sheetStore, ready]);
+
+  useAutoSave({
+    diagramStore,
+    sheetStore,
+    layerStore,
+    shapeStore,
+    documentStore,
+    enable: canSyncoLocal,
+    saveDiagramToLocal,
+    saveSheetToLocal,
+  });
 
   const acctx = useMemo(() => {
     const context = {
@@ -80,9 +94,7 @@ function App() {
           <div className="absolute right-4 bottom-2">
             <AppFootbar />
           </div>
-          <div className="absolute left-4 top-2 flex">
-            <SheetList />
-            <SheetConfigPanel />
+          <div className="absolute left-0 top-0 flex">
             <div>
               <button type="button" onClick={onClickOpen}>
                 Open
@@ -91,6 +103,10 @@ function App() {
                 Save
               </button>
             </div>
+          </div>
+          <div className="absolute left-4 top-8 flex">
+            <SheetList />
+            <SheetConfigPanel />
           </div>
         </div>
       </AppStateMachineContext.Provider>

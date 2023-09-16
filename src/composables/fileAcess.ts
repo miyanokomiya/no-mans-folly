@@ -26,16 +26,17 @@ export function newFileAccess() {
     }
   }
 
-  async function openSheet(sheetDoc: Y.Doc, sheetId: string) {
+  async function openSheet(sheetDoc: Y.Doc, sheetId: string): Promise<true | undefined> {
     if (!handle) return;
 
     const h = await handle.getFileHandle(sheetId, { create: true });
     const update = await readFileAsUnit8Array(h);
     Y.applyUpdate(sheetDoc, update);
     console.log("file sheet: ", sheetId);
+    return true;
   }
 
-  async function save(diagramDoc: Y.Doc, sheetDoc: Y.Doc, sheetId: string) {
+  async function save(diagramDoc: Y.Doc, sheetDoc: Y.Doc, sheetId: string): Promise<true | undefined> {
     if (!handle) {
       await openDirectory();
     }
@@ -43,9 +44,10 @@ export function newFileAccess() {
 
     await saveDoc(diagramDoc);
     await saveSheet(sheetDoc, sheetId);
+    return true;
   }
 
-  async function saveDoc(diagramDoc: Y.Doc) {
+  async function saveDoc(diagramDoc: Y.Doc): Promise<true | undefined> {
     if (!handle) {
       await openDirectory();
     }
@@ -54,9 +56,10 @@ export function newFileAccess() {
     const diagramUpdate = Y.encodeStateAsUpdate(diagramDoc);
     const diagramFileHnadle = await handle.getFileHandle(DIAGRAM_FILE_NAME, { create: true });
     await overrideFile(diagramFileHnadle, diagramUpdate);
+    return true;
   }
 
-  async function saveSheet(sheetDoc: Y.Doc, sheetId: string) {
+  async function saveSheet(sheetDoc: Y.Doc, sheetId: string): Promise<true | undefined> {
     if (!handle) {
       await openDirectory();
     }
@@ -65,6 +68,7 @@ export function newFileAccess() {
     const sheetUpdate = Y.encodeStateAsUpdate(sheetDoc);
     const sheetFileHnadle = await handle.getFileHandle(sheetId, { create: true });
     await overrideFile(sheetFileHnadle, sheetUpdate);
+    return true;
   }
 
   return { openDiagram, openSheet, save, hasHnadle, saveDoc, saveSheet };

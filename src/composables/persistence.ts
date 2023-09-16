@@ -8,6 +8,7 @@ import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
 import { newFileAccess } from "./fileAcess";
+import { newThrottle } from "./throttle";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
@@ -24,6 +25,8 @@ function createInitialSheet(sheetStore: ReturnType<typeof newSheetStore>) {
 
 export function usePersistence() {
   const fileAcess = useMemo(() => newFileAccess(), []);
+  const [canSyncoLocal, setCanSyncToLocal] = useState(false);
+
   const [diagramDoc, setDiagramDoc] = useState(new Y.Doc());
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
   const [sheetDoc, setSheetDoc] = useState(new Y.Doc());
@@ -56,6 +59,7 @@ export function usePersistence() {
         try {
           await fileAcess.openSheet(nextSheetDoc, sheetId);
           await clearIndexeddbPersistence(sheetId);
+          setCanSyncToLocal(fileAcess.hasHnadle());
         } catch (e) {
           console.log("Failed to load local sheet: ", sheetId, e);
         }
@@ -101,6 +105,7 @@ export function usePersistence() {
   const openDiagramFromLocal = useCallback(async () => {
     const nextDiagramDoc = new Y.Doc();
     const result = await fileAcess.openDiagram(nextDiagramDoc);
+    setCanSyncToLocal(fileAcess.hasHnadle());
     if (!result) return;
 
     setReady(false);
@@ -124,11 +129,23 @@ export function usePersistence() {
     setReady(true);
   }, [fileAcess]);
 
-  const saveToLocal = useCallback(async () => {
+  const saveDiagramToLocal = useCallback(async () => {
+    const result = await fileAcess.saveDoc(diagramDoc);
+    setCanSyncToLocal(fileAcess.hasHnadle());
+    if (result) {
+      console.log("Saved: Diagram");
+    }
+  }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
+
+  const saveSheetToLocal = useCallback(async () => {
     const sheet = diagramStores.sheetStore.getSelectedSheet();
     if (!sheet) return;
 
-    fileAcess.save(diagramDoc, sheetDoc, sheet.id);
+    const result = await fileAcess.saveSheet(sheetDoc, sheet.id);
+    setCanSyncToLocal(fileAcess.hasHnadle());
+    if (result) {
+      console.log("Saved: ", sheet.id);
+    }
   }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
 
   const saveAllToLocal = useCallback(async () => {
@@ -140,6 +157,7 @@ export function usePersistence() {
       await fileAcess.saveSheet(sheetDoc, sheet.id);
     }
     await fileAcess.saveDoc(diagramDoc);
+    setCanSyncToLocal(fileAcess.hasHnadle());
   }, [fileAcess, diagramDoc, diagramStores]);
 
   const undoManager = useMemo(() => {
@@ -186,8 +204,10 @@ export function usePersistence() {
     openDiagramFromLocal,
     undoManager,
     ready,
-    saveToLocal,
+    saveDiagramToLocal,
+    saveSheetToLocal,
     saveAllToLocal,
+    canSyncoLocal,
     ...diagramStores,
     ...sheetStores,
   };
@@ -199,4 +219,74 @@ async function clearIndexeddbPersistence(name: string) {
   await tmpProvider.clearData();
   await tmpProvider.destroy();
   tmpDoc.destroy();
+}
+
+interface AutoSaveOption {
+  diagramStore: DiagramStore;
+  sheetStore: SheetStore;
+  layerStore: LayerStore;
+  shapeStore: ShapeStore;
+  documentStore: DocumentStore;
+  enable: boolean;
+  saveSheetToLocal: () => Promise<void>;
+  saveDiagramToLocal: () => Promise<void>;
+}
+
+export function useAutoSave({
+  diagramStore,
+  sheetStore,
+  layerStore,
+  shapeStore,
+  documentStore,
+  enable,
+  saveSheetToLocal,
+  saveDiagramToLocal,
+}: AutoSaveOption) {
+  const saveDiagram = useCallback(async () => {
+    if (!enable) return;
+    await saveDiagramToLocal();
+  }, [enable, saveDiagramToLocal]);
+
+  const saveDiagramThrottled = useMemo(() => {
+    return newThrottle(saveDiagram, 5000);
+  }, [saveDiagram]);
+
+  useEffect(() => {
+    return diagramStore.watch(() => {
+      saveDiagramThrottled();
+    });
+  }, [diagramStore, saveDiagramThrottled]);
+
+  useEffect(() => {
+    return sheetStore.watch(() => {
+      saveDiagramThrottled();
+    });
+  }, [sheetStore, saveDiagramThrottled]);
+
+  const saveSheet = useCallback(async () => {
+    if (!enable) return;
+    await saveSheetToLocal();
+  }, [enable, saveSheetToLocal]);
+
+  const saveSheetThrottled = useMemo(() => {
+    return newThrottle(saveSheet, 5000);
+  }, [saveSheet]);
+
+  useEffect(() => {
+    return layerStore.watch(() => {
+      saveSheetThrottled();
+    });
+  }, [layerStore, saveSheetThrottled]);
+
+  useEffect(() => {
+    return shapeStore.watch(() => {
+      saveSheetThrottled();
+    });
+  }, [shapeStore, saveSheetThrottled]);
+
+  useEffect(() => {
+    return documentStore.watch(() => {
+      saveSheetThrottled();
+    });
+  }, [documentStore, saveSheetThrottled]);
 }
