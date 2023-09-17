@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { SheetPanel } from "./SheetPanel";
 import { generateUuid } from "../../utils/random";
@@ -7,6 +7,7 @@ import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDelete from "../../assets/icons/delete_filled.svg";
 import { SortableListV } from "../atoms/SortableListV";
 import { useSelectedSheet, useSheets } from "../../composables/storeHooks";
+import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -37,6 +38,11 @@ export const SheetList: React.FC = () => {
   }, [acctx.sheetStore, selectedSheet]);
 
   const onClickDelete = useCallback(() => {
+    setOpenDeleteConfirm(true);
+  }, []);
+
+  const deleteSheet = useCallback(() => {
+    setOpenDeleteConfirm(false);
     const currentSheets = acctx.sheetStore.getEntities();
     if (!selectedSheet || currentSheets.length <= 1) return;
 
@@ -77,6 +83,11 @@ export const SheetList: React.FC = () => {
     [sheets]
   );
 
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const closeDeleteConfirm = useCallback(() => {
+    setOpenDeleteConfirm(false);
+  }, []);
+
   return (
     <div className="bg-white border rounded flex flex-col p-1 gap-1">
       <div className="flex justify-between gap-1">
@@ -90,6 +101,21 @@ export const SheetList: React.FC = () => {
       <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
         <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
       </div>
+      <Dialog
+        open={openDeleteConfirm}
+        onClose={closeDeleteConfirm}
+        title="Delete sheet"
+        actions={
+          <>
+            <DialogButtonPlain onClick={closeDeleteConfirm}>Cancel</DialogButtonPlain>
+            <DialogButtonAlert onClick={deleteSheet}>Delete</DialogButtonAlert>
+          </>
+        }
+      >
+        <div>
+          <p>This action cannot be undone</p>
+        </div>
+      </Dialog>
     </div>
   );
 };
