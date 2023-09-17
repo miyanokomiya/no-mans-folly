@@ -7,9 +7,21 @@ interface Props {
   onClose: () => void;
   title?: string;
   actions?: React.ReactNode;
+  className?: string;
+  hideClose?: boolean;
+  required?: boolean;
 }
 
-export const Dialog: React.FC<Props> = ({ open, children, onClose, title, actions }) => {
+export const Dialog: React.FC<Props> = ({
+  open,
+  children,
+  onClose,
+  title,
+  actions,
+  className,
+  hideClose,
+  required,
+}) => {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -26,6 +38,11 @@ export const Dialog: React.FC<Props> = ({ open, children, onClose, title, action
     onClose();
   }, [onClose]);
 
+  const onClickBackdrop = useCallback(() => {
+    if (required) return;
+    onClose();
+  }, [onClose, required]);
+
   const onClickContent = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -34,10 +51,12 @@ export const Dialog: React.FC<Props> = ({ open, children, onClose, title, action
   );
 
   return (
-    <dialog ref={ref} onClick={closeDialog}>
-      <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={closeDialog}>
-        <img src={iconDelete} alt="Delete Sheet" />
-      </button>
+    <dialog ref={ref} onClick={onClickBackdrop} className={className}>
+      {hideClose ? undefined : (
+        <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={closeDialog}>
+          <img src={iconDelete} alt="Delete Sheet" />
+        </button>
+      )}
       <div onClick={onClickContent} className="p-4">
         {title ? <div className="mb-1 text-lg font-medium">{title}</div> : undefined}
         <div>{children}</div>
