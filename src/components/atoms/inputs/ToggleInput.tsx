@@ -13,7 +13,7 @@ export const ToggleInput: React.FC<Props> = ({ value, onChange, children }) => {
 
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-2">
-      <input type="checkbox" checked={value} readOnly />
+      <input type="checkbox" checked={value} value="checked" readOnly />
       {children}
     </button>
   );
