@@ -9,12 +9,16 @@ import {
 } from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
-import { LineShape, deleteVertex } from "../../../../shapes/line";
+import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingShapeState } from "../movingShapeState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
+import { createShape } from "../../../../shapes";
+import { TextShape } from "../../../../shapes/text";
+import { getRelativePointOnPath } from "../../../../utils/geometry";
+import { newTextEditingState } from "../text/textEditingState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -120,7 +124,24 @@ export function newLineSelectedState(): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return translateOnSelection(ctx);
         case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
+          switch (event.data.name) {
+            case "AddingLineLabel": {
+              const textshape = createShape<TextShape>(ctx.getShapeStruct, "text", {
+                id: ctx.generateUuid(),
+                p: getRelativePointOnPath(getLinePath(lineShape), 0.5),
+                findex: ctx.createLastIndex(),
+                parentId: lineShape.id,
+                vAlign: "center",
+                hAlign: "center",
+                lineAttached: 0.5,
+              });
+              ctx.addShapes([textshape]);
+              ctx.selectShape(textshape.id);
+              return () => newTextEditingState({ id: textshape.id });
+            }
+            default:
+              return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+          }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onCopy(event.nativeEvent);

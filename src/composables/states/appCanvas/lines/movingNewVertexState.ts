@@ -5,6 +5,8 @@ import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 import { filterShapesOverlappingRect } from "../../../../shapes";
+import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
+import { mergeMap } from "../../../../utils/commons";
 
 interface Option {
   lineShape: LineShape;
@@ -16,6 +18,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
   let vertex = option.p;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
+  let lineLabelHandler: LineLabelHandler;
 
   return {
     getLabel: () => "MovingNewVertex",
@@ -37,6 +40,8 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         movingLine: mockMovingLine,
         movingIndex: option.index,
       });
+
+      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -54,11 +59,14 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
             vertex = event.data.current;
           }
 
-          ctx.setTmpShapeMap({
+          const patchMap = {
             [option.lineShape.id]: {
               ...addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection),
             },
-          });
+          };
+
+          const labelPatch = lineLabelHandler.onModified(patchMap);
+          ctx.setTmpShapeMap(mergeMap(patchMap, labelPatch));
           return;
         }
         case "pointerup": {

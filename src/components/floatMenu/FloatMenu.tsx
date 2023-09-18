@@ -193,6 +193,13 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     [focusBack, smctx]
   );
 
+  const onClickLineLabel = useCallback(() => {
+    smctx.stateMachine.handleEvent({
+      type: "state",
+      data: { name: "AddingLineLabel" },
+    });
+  }, [smctx]);
+
   const onClickStackLast = useCallback(() => {
     const ctx = smctx.getCtx();
     const selected = ctx.getSelectedShapeIdMap();
@@ -269,6 +276,9 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
               qHead={indexLineShape.qHead}
               onChange={onLineHeadChanged}
             />
+            <button type="button" className="w-8 h-8 flex justify-center items-center" onClick={onClickLineLabel}>
+              T
+            </button>
           </>
         ) : undefined}
         <StackButton

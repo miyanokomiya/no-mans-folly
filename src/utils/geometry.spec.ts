@@ -12,6 +12,7 @@ import {
   getRectCenterLines,
   getRectLines,
   getRectPoints,
+  getRelativePointOnPath,
   getRotateFn,
   getRotatedWrapperRect,
   getWrapperRect,
@@ -536,5 +537,21 @@ describe("getIsRectHitRectFn", () => {
     expect(isRectHitRect({ x: 11, y: 1, width: 1, height: 20 })).toBe(false);
     expect(isRectHitRect({ x: 1, y: -2, width: 20, height: 1 })).toBe(false);
     expect(isRectHitRect({ x: 1, y: 21, width: 20, height: 1 })).toBe(false);
+  });
+});
+
+describe("getRelativePointOnPath", () => {
+  test("should return relative point on the path", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+    ];
+    expect(getRelativePointOnPath(path, 0)).toEqual({ x: 0, y: 0 });
+    expect(getRelativePointOnPath(path, 0.2)).toEqual({ x: 6, y: 0 });
+    expect(getRelativePointOnPath(path, 0.5)).toEqual({ x: 10, y: 5 });
+    expect(getRelativePointOnPath(path, 0.8)).toEqual({ x: 6, y: 10 });
+    expect(getRelativePointOnPath(path, 1)).toEqual({ x: 0, y: 10 });
   });
 });

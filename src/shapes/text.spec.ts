@@ -1,5 +1,5 @@
 import { expect, describe, test } from "vitest";
-import { struct, isTextShape, patchSize } from "./text";
+import { struct, isTextShape, patchSize, patchPosition } from "./text";
 
 describe("resize", () => {
   test("should update maxWidth when width changes", () => {
@@ -25,5 +25,19 @@ describe("patchSize", () => {
     expect(patchSize(shape, { width: 200, height: 100 })).toEqual({ width: 200 });
     expect(patchSize(shape, { width: 100, height: 200 })).toEqual({ height: 200 });
     expect(patchSize(shape, { width: 200, height: 200 })).toEqual({ width: 200, height: 200 });
+  });
+});
+
+describe("patchPosition", () => {
+  test("should return patched position based on alignment", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, width: 100, height: 200 });
+    expect(patchPosition(shape, { x: 0, y: 0 })).toEqual(undefined);
+    expect(patchPosition({ ...shape, hAlign: "center" }, { x: 0, y: 0 })).toEqual({ p: { x: -50, y: 0 } });
+    expect(patchPosition({ ...shape, hAlign: "right" }, { x: 0, y: 0 })).toEqual({ p: { x: -100, y: 0 } });
+    expect(patchPosition({ ...shape, vAlign: "center" }, { x: 0, y: 0 })).toEqual({ p: { x: 0, y: -100 } });
+    expect(patchPosition({ ...shape, vAlign: "bottom" }, { x: 0, y: 0 })).toEqual({ p: { x: 0, y: -200 } });
+    expect(patchPosition({ ...shape, hAlign: "center", vAlign: "bottom" }, { x: 0, y: 0 })).toEqual({
+      p: { x: -50, y: -200 },
+    });
   });
 });

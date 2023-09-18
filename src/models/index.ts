@@ -20,6 +20,7 @@ export interface Layer extends Entity {
 
 export interface Shape extends Entity {
   layerId?: string;
+  parentId?: string;
   type: string;
   p: IVec2; // should always represent the top left position
   rotation: number;

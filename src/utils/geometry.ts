@@ -3,6 +3,7 @@ import {
   IVec2,
   MINVALUE,
   add,
+  clamp,
   getCenter,
   getCrossSegAndLine,
   getDistance,
@@ -10,6 +11,7 @@ import {
   getPedal,
   getRadian,
   getRectCenter,
+  interpolateVector,
   isOnSeg,
   isParallel,
   multi,
@@ -330,4 +332,31 @@ export function getIsRectHitRectFn(range: IRectangle): (target: IRectangle) => b
   const b = range.y + range.height;
   return (target) =>
     !(r < target.x || b < target.y || target.x + target.width < range.x || target.y + target.height < range.y);
+}
+
+export function getRelativePointOnPath(path: IVec2[], rate: number): IVec2 {
+  if (path.length <= 1) return path[0];
+
+  const edges: ISegment[] = [];
+  path.map((v, i) => {
+    if (i < path.length - 1) edges.push([v, path[i + 1]]);
+  });
+  const list = edges.map((s) => getDistance(s[0], s[1]));
+  const total = list.reduce((p, d) => p + d, 0);
+  const targetRate = clamp(0, 1, rate);
+  const targetLength = total * targetRate;
+
+  let targetIndex = 0;
+  let stack = 0;
+  list.some((d, i) => {
+    targetIndex = i;
+    if (stack + d < targetLength) {
+      stack += d;
+    } else {
+      return true;
+    }
+  });
+
+  const remain = targetLength - stack;
+  return interpolateVector(edges[targetIndex][0], edges[targetIndex][1], remain / list[targetIndex]);
 }

@@ -14,6 +14,7 @@ import {
 import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { getAltOrOptionStr } from "../../../utils/devices";
+import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -26,6 +27,7 @@ export function newResizingState(option: Option): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let lineHandler: ConnectedLineHandler;
+  let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
 
   const boundingBoxResizing = newBoundingBoxResizing({
@@ -55,6 +57,8 @@ export function newResizingState(option: Option): AppCanvasState {
         connectedLinesMap: getConnectedLineInfoMap(ctx),
         ctx,
       });
+
+      lineLabelHandler = newLineLabelHandler({ ctx });
 
       ctx.setCommandExams([
         { command: "Shift", title: "Proportionally" },
@@ -115,7 +119,9 @@ export function newResizingState(option: Option): AppCanvasState {
           }, {});
 
           linePatchedMap = lineHandler.onModified(patchMap);
-          ctx.setTmpShapeMap(mergeMap(patchMap, linePatchedMap));
+          const merged = mergeMap(patchMap, linePatchedMap);
+          const labelPatch = lineLabelHandler.onModified(merged);
+          ctx.setTmpShapeMap(mergeMap(merged, labelPatch));
           return;
         }
         case "pointerup": {

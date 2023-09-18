@@ -12,6 +12,7 @@ import {
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 import { LineShape } from "../../../shapes/line";
+import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -21,6 +22,7 @@ export function newRotatingState(option: Option): AppCanvasState {
   let selectedIds: { [id: string]: true };
   let resizingAffine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineHandler;
+  let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
 
   const boundingBoxRotatingRotating = newBoundingBoxRotating({
@@ -37,6 +39,8 @@ export function newRotatingState(option: Option): AppCanvasState {
         connectedLinesMap: getConnectedLineInfoMap(ctx),
         ctx,
       });
+
+      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -57,7 +61,9 @@ export function newRotatingState(option: Option): AppCanvasState {
           }, {});
 
           linePatchedMap = lineHandler.onModified(patchMap);
-          ctx.setTmpShapeMap(mergeMap(patchMap, linePatchedMap));
+          const merged = mergeMap(patchMap, linePatchedMap);
+          const labelPatch = lineLabelHandler.onModified(merged);
+          ctx.setTmpShapeMap(mergeMap(merged, labelPatch));
           return;
         }
         case "pointerup": {

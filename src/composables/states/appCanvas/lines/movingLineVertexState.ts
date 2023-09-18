@@ -12,6 +12,8 @@ import {
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { filterShapesOverlappingRect } from "../../../../shapes";
+import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
+import { mergeMap } from "../../../../utils/commons";
 
 interface Option {
   lineShape: LineShape;
@@ -24,6 +26,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
+  let lineLabelHandler: LineLabelHandler;
 
   return {
     getLabel: () => "MovingLineVertex",
@@ -45,6 +48,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       });
 
       elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
+
+      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -63,10 +68,12 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
           if (elbowHandler) {
             const body = elbowHandler.optimizeElbow({ ...option.lineShape, ...patch });
-            ctx.setTmpShapeMap({ [option.lineShape.id]: { ...patch, body } as Partial<LineShape> });
-          } else {
-            ctx.setTmpShapeMap({ [option.lineShape.id]: patch });
+            patch = { ...patch, body };
           }
+
+          const patchMap = { [option.lineShape.id]: patch };
+          const labelPatch = lineLabelHandler.onModified(patchMap);
+          ctx.setTmpShapeMap(mergeMap(patchMap, labelPatch));
           return;
         }
         case "pointerup": {

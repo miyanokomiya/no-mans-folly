@@ -15,7 +15,8 @@ interface Option {
 }
 
 export function newConnectedLineHandler(option: Option) {
-  /** Returns patched properties that are updated in this function.
+  /**
+   * Returns patched properties that are updated in this function.
    * => Returned value doesn't inherit the content of "updatedMap".
    */
   function getModifiedMap(updatedMap: { [id: string]: Partial<Shape> }): {
