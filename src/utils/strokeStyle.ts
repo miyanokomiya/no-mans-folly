@@ -9,7 +9,7 @@ export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
 }
 
 export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
-  return isSameColor(a?.color, b?.color) && a?.width === b?.width;
+  return a?.disabled === b?.disabled && isSameColor(a?.color, b?.color) && a?.width === b?.width;
 }
 
 export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeStyle) {

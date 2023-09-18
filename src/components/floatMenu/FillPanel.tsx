@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { Color, FillStyle } from "../../models";
 import { SliderInput } from "../atoms/inputs/SliderInput";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 interface Props {
   fill: FillStyle;
@@ -23,12 +24,28 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
     [onChanged, fill]
   );
 
+  const onDisabledChanged = useCallback(
+    (val: boolean) => {
+      onChanged?.({ ...fill, disabled: val });
+    },
+    [onChanged, fill]
+  );
+
   return (
     <div className="p-2">
-      <div className="mb-2">
-        <SliderInput min={0} max={1} value={fill.color.a} onChanged={onAlphaChanged} />
+      <div className="flex justify-end">
+        <ToggleInput value={fill.disabled} onChange={onDisabledChanged}>
+          Disabled
+        </ToggleInput>
       </div>
-      <ColorPickerPanel onClick={onColorClick} />
+      <div className={fill.disabled ? "opacity-50 pointer-events-none" : ""}>
+        <div className="mt-2">
+          <SliderInput min={0} max={1} value={fill.color.a} onChanged={onAlphaChanged} />
+        </div>
+        <div className="mt-2">
+          <ColorPickerPanel onClick={onColorClick} />
+        </div>
+      </div>
     </div>
   );
 };

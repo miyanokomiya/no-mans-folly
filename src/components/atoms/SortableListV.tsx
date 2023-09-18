@@ -78,7 +78,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
 
     return (
       <div
-        className="fixed opacity-0.5 pointer-events-none"
+        className="fixed opacity-50 pointer-events-none"
         style={{
           left: movingP.x,
           top: movingP.y,
