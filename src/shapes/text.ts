@@ -29,6 +29,7 @@ export const struct: ShapeStruct<TextShape> = {
     }
     return ret;
   },
+  canAttachSmartBranch: false,
 };
 
 export function isTextShape(shape: Shape): shape is TextShape {

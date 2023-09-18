@@ -18,6 +18,7 @@ export interface ShapeStruct<T extends Shape> {
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
   immigrateShapeIds?: (shape: T, oldToNewIdMap: { [newId: string]: string }, removeNotFound?: boolean) => Partial<T>;
+  canAttachSmartBranch?: boolean;
 }
 
 export interface ShapeSnappingLines {

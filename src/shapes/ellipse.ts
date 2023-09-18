@@ -92,6 +92,7 @@ export const struct: ShapeStruct<EllipseShape> = {
   },
   getCommonStyle,
   updateCommonStyle,
+  canAttachSmartBranch: true,
 };
 
 function getLocalRectPolygon(shape: EllipseShape): IVec2[] {

@@ -220,3 +220,8 @@ export function filterShapesOverlappingRect(getStruct: GetShapeStruct, shapes: S
   const checkFn = geometry.getIsRectHitRectFn(rect);
   return shapes.filter((s) => checkFn(getWrapperRect(getStruct, s)));
 }
+
+export function canAttachSmartBranch(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.canAttachSmartBranch;
+}

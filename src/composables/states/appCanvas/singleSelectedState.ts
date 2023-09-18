@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { getLocalRectPolygon } from "../../../shapes";
+import { canAttachSmartBranch, getLocalRectPolygon } from "../../../shapes";
 import {
   handleCommonShortcut,
   handleCommonTextStyle,
@@ -27,7 +27,7 @@ interface Option {
 export function newSingleSelectedState(option?: Option): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
-  let smartBranchHandler: SmartBranchHandler;
+  let smartBranchHandler: SmartBranchHandler | undefined;
   let smartBranchHitResult: SmartBranchHitResult | undefined;
 
   return {
@@ -47,10 +47,12 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           scale: ctx.getScale(),
         });
 
-      smartBranchHandler = newSmartBranchHandler({
-        ...ctx,
-        bounds: getOuterRectangle([boundingBox.path]),
-      });
+      if (canAttachSmartBranch(ctx.getShapeStruct, shape)) {
+        smartBranchHandler = newSmartBranchHandler({
+          ...ctx,
+          bounds: getOuterRectangle([boundingBox.path]),
+        });
+      }
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -74,12 +76,15 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               }
 
               const shape = ctx.getShapeMap()[selectedId];
-              smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, shape, ctx.getScale());
-              if (smartBranchHitResult) {
-                const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, shape, ctx.generateUuid);
-                ctx.addShapes(branchShapes);
-                ctx.selectShape(branchShapes[0].id);
-                return;
+
+              if (smartBranchHandler) {
+                smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, shape, ctx.getScale());
+                if (smartBranchHitResult) {
+                  const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, shape, ctx.generateUuid);
+                  ctx.addShapes(branchShapes);
+                  ctx.selectShape(branchShapes[0].id);
+                  return;
+                }
               }
 
               const shapeAtPointer = ctx.getShapeAt(event.data.point);
@@ -125,11 +130,14 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           } else {
             const shape = ctx.getShapeMap()[selectedId];
             const current = smartBranchHitResult?.index;
-            smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, shape, ctx.getScale());
-            if (current !== smartBranchHitResult?.index) {
-              ctx.setTmpShapeMap({});
-              ctx.setCursor();
-              return;
+
+            if (smartBranchHandler) {
+              smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, shape, ctx.getScale());
+              if (current !== smartBranchHitResult?.index) {
+                ctx.setTmpShapeMap({});
+                ctx.setCursor();
+                return;
+              }
             }
           }
 
@@ -187,7 +195,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       if (!shape) return;
 
       boundingBox.render(renderCtx);
-      smartBranchHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
+      smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
     },
   };
 }

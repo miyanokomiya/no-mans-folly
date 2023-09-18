@@ -125,6 +125,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   },
   getCommonStyle,
   updateCommonStyle,
+  canAttachSmartBranch: true,
 };
 
 function getLocalRectPolygon(shape: RectangleShape): IVec2[] {
