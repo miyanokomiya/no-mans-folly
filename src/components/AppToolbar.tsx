@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { createShape } from "../shapes";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
@@ -23,6 +23,13 @@ function getButtonClass(highlight = false) {
 export const AppToolbar: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
+
+  const [stateLabel, setStateLabel] = useState("");
+  useEffect(() => {
+    return smctx.stateMachine.watch(() => {
+      setStateLabel(smctx.stateMachine.getStateSummary().label);
+    });
+  }, [smctx.stateMachine]);
 
   const onDownShapeElm = useCallback(
     (e: React.MouseEvent) => {
@@ -69,7 +76,7 @@ export const AppToolbar: React.FC = () => {
   }, [popup]);
 
   const onClickLineButton = useCallback(() => {
-    if (popup === "lines" && smctx.stateMachine.getStateSummary().label === "LineReady") {
+    if (popup === "lines" && stateLabel === "LineReady") {
       smctx.stateMachine.handleEvent({
         type: "state",
         data: { name: "Break" },
@@ -85,7 +92,22 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("lines");
     }
-  }, [popup, lineType, smctx.stateMachine]);
+  }, [stateLabel, popup, lineType, smctx.stateMachine]);
+
+  const onClickTextButton = useCallback(() => {
+    setPopup("");
+    if (stateLabel === "TextReady") {
+      smctx.stateMachine.handleEvent({
+        type: "state",
+        data: { name: "Break" },
+      });
+    } else {
+      smctx.stateMachine.handleEvent({
+        type: "state",
+        data: { name: "TextReady" },
+      });
+    }
+  }, [stateLabel, smctx.stateMachine]);
 
   function renderPopup() {
     switch (popup) {
@@ -140,6 +162,9 @@ export const AppToolbar: React.FC = () => {
       </button>
       <button type="button" className={getButtonClass(popup === "lines")} onClick={onClickLineButton}>
         <img src={iconLineStraight} alt="lines" />
+      </button>
+      <button type="button" className={getButtonClass(stateLabel === "TextReady")} onClick={onClickTextButton}>
+        <span className="text-2xl">T</span>
       </button>
       {renderPopup()}
     </div>

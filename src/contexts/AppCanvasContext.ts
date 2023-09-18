@@ -106,6 +106,7 @@ export function createInitialAppCanvasStateContext(arg: {
     setTextEditorPosition() {},
     getDocumentMap: () => ({}),
     patchDocuments() {},
+    patchDocDryRun: () => [],
     setCurrentDocAttrInfo() {},
     createCursorPosition: () => undefined,
     retrieveCursorPosition: () => 0,

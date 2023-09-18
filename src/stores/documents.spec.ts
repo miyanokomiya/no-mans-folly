@@ -47,6 +47,27 @@ describe("newDocumentStore", () => {
     });
   });
 
+  describe("patchDocDryRun", () => {
+    test("should return patched doc without updating the store", () => {
+      const ydoc = new Y.Doc();
+      const store = newDocumentStore({ ydoc });
+      store.addDoc("a", [{ insert: "a" }]);
+      const result = store.patchDocDryRun("a", [{ retain: 1 }, { insert: "b" }]);
+      expect(result).toEqual([{ insert: "ab" }]);
+      expect(store.getDocMap()).toEqual({
+        a: [{ insert: "a" }],
+      });
+    });
+
+    test("should return patched doc even if the original doesn't yet exist", () => {
+      const ydoc = new Y.Doc();
+      const store = newDocumentStore({ ydoc });
+      const result = store.patchDocDryRun("a", [{ insert: "b" }]);
+      expect(result).toEqual([{ insert: "b" }]);
+      expect(store.getDocMap()).toEqual({});
+    });
+  });
+
   describe("watch", () => {
     test("should watch entities and return a function to unwatch", () => {
       const ydoc = new Y.Doc();

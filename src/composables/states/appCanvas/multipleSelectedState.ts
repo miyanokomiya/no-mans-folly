@@ -132,6 +132,12 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             default:
               return handleCommonShortcut(ctx, event);
           }
+        case "shape-updated": {
+          if (Object.keys(selectedIds).some((id) => event.data.keys.has(id))) {
+            return translateOnSelection(ctx);
+          }
+          return;
+        }
         case "text-style": {
           return handleCommonTextStyle(ctx, event);
         }

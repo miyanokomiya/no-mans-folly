@@ -21,6 +21,7 @@ import {
   renderDocByComposition,
   sliceDocOutput,
 } from "../utils/textEditor";
+import { Size } from "../models";
 
 export function newTextEditorController() {
   let _ctx: CanvasRenderingContext2D;
@@ -157,6 +158,11 @@ export function newTextEditorController() {
     return { cursor: cursorLeft, block: lineEnd.attributes, doc: docEnd.attributes };
   }
 
+  function getContentSize(): Size {
+    const height = _compositionLines.reduce((p, l) => p + l.height, 0);
+    return { width: _range.width, height };
+  }
+
   function getSelectedDocOutput(): DocOutput {
     const cursor = getCursor();
     const selection = getSelection();
@@ -215,6 +221,7 @@ export function newTextEditorController() {
 
   function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
+    if (_composition.length === 1) return { delta: [], cursor: 0 };
 
     const cursor = getCursor();
     const selection = getSelection();
@@ -227,6 +234,7 @@ export function newTextEditorController() {
 
   function getDeltaAndCursorByDelete(): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
+    if (_composition.length === 1) return { delta: [], cursor: 0 };
 
     const cursor = getCursor();
     const selection = getSelection();
@@ -328,6 +336,7 @@ export function newTextEditorController() {
     selectWordAtCursor,
     getLocationIndex,
 
+    getContentSize,
     getSelectedDocOutput,
     getDeltaByPaste,
 

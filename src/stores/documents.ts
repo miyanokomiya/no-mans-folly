@@ -62,6 +62,22 @@ export function newDocumentStore(option: Option) {
     text.applyDelta(delta);
   }
 
+  function patchDocDryRun(id: string, delta: DocDelta): DocOutput {
+    const text = entityMap.get(id);
+    const currentDelta = text?.toDelta();
+
+    // Create temprorary doc and bind cloned text to it.
+    const doc = new Y.Doc();
+    const cloned = doc.getText();
+    if (currentDelta) {
+      cloned.applyDelta(currentDelta);
+    }
+    cloned.applyDelta(delta);
+    const ret = cloned.toDelta();
+    doc.destroy();
+    return ret;
+  }
+
   function patchDocs(val: { [id: string]: DocDelta }) {
     transact(() => {
       Object.entries(val).forEach(([id, val]) => patchDoc(id, val));
@@ -94,6 +110,7 @@ export function newDocumentStore(option: Option) {
     deleteDoc,
     deleteDocs,
     patchDoc,
+    patchDocDryRun,
     patchDocs,
     createCursorPosition,
     retrieveCursorPosition,

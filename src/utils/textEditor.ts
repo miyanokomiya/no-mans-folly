@@ -1,5 +1,6 @@
 import { IRectangle, IVec2 } from "okageo";
 import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
+import { Size } from "../models";
 
 export const DEFAULT_FONT_SIZE = 18;
 
@@ -534,6 +535,13 @@ export function convertLineWordToComposition(
   composition: DocCompositionItem[];
   lines: DocCompositionLine[];
 } {
+  if (blockLineWord.length === 0) {
+    return {
+      composition: [],
+      lines: [],
+    };
+  }
+
   const lastBlock = blockLineWord[blockLineWord.length - 1];
   const docAttrs = lastBlock[1];
 
@@ -629,7 +637,10 @@ export function getDocCompositionInfo(
   ctx: CanvasRenderingContext2D,
   rangeWidth: number,
   rangeHeight: number
-) {
+): {
+  composition: DocCompositionItem[];
+  lines: DocCompositionLine[];
+} {
   return convertLineWordToComposition(
     applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth),
     rangeWidth,
@@ -662,4 +673,27 @@ export function getWordRangeAtCursor(
   }
 
   return [from, to - from];
+}
+
+export function calcOriginalDocSize(doc: DocOutput, ctx: CanvasRenderingContext2D, rangeWidth: number): Size {
+  const adjustedDoc = doc.length === 0 ? getInitialOutput() : doc;
+  const blocks = applyRangeWidthToLineWord(
+    splitOutputsIntoLineWord(adjustedDoc, getDocLetterWidthMap(adjustedDoc, ctx)),
+    rangeWidth
+  );
+  const info = convertLineWordToComposition(blocks, rangeWidth, 1);
+  const height = info.lines.reduce((p, l) => p + l.height, 0);
+
+  let width = 1;
+  blocks.some(([lines]) => {
+    lines.some((line) => {
+      const lineWidth = line.reduce((p, words) => p + words.reduce((q, [, w]) => q + w, 0), 0);
+      width = Math.max(width, Math.ceil(lineWidth));
+
+      return width >= rangeWidth;
+    });
+
+    return width >= rangeWidth;
+  });
+  return { width, height };
 }

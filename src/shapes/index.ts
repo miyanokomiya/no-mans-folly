@@ -2,6 +2,7 @@ import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getOuterRectan
 import { CommonStyle, Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
+import { struct as textStruct } from "./text";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
 import * as geometry from "../utils/geometry";
@@ -11,6 +12,7 @@ const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
 } = {
   rectangle: rectangleStruct,
+  text: textStruct,
   ellipse: ellipseStruct,
   line: lineStruct,
 };

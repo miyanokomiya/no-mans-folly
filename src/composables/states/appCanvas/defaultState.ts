@@ -55,7 +55,7 @@ const state: AppCanvasState = {
       case "history":
         return handleHistoryEvent(ctx, event);
       case "state":
-        return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
+        return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
       case "paste": {
         const clipboard = newShapeClipboard(ctx);
         clipboard.onPaste(event.nativeEvent);

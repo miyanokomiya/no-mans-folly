@@ -76,7 +76,7 @@ export function AppCanvas() {
     return acctx.documentStore.watch((keys) => {
       smctx.stateMachine.handleEvent({
         type: "shape-updated",
-        data: { keys },
+        data: { keys, text: true },
       });
       setCanvasState({});
     });
@@ -181,7 +181,17 @@ export function AppCanvas() {
         setTextEditorPosition(canvasToView(p));
       },
       getDocumentMap: acctx.documentStore.getDocMap,
-      patchDocuments: acctx.documentStore.patchDocs,
+      patchDocuments: (val, shapes) => {
+        if (shapes) {
+          acctx.shapeStore.transact(() => {
+            acctx.shapeStore.patchEntities(shapes);
+            acctx.documentStore.patchDocs(val);
+          });
+        } else {
+          acctx.documentStore.patchDocs(val);
+        }
+      },
+      patchDocDryRun: acctx.documentStore.patchDocDryRun,
       setCurrentDocAttrInfo,
       createCursorPosition: acctx.documentStore.createCursorPosition,
       retrieveCursorPosition: acctx.documentStore.retrieveCursorPosition,

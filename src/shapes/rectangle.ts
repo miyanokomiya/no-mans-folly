@@ -43,8 +43,7 @@ export const struct: ShapeStruct<RectangleShape> = {
     };
   },
   render(ctx, shape) {
-    applyFillStyle(ctx, shape.fill);
-    applyStrokeStyle(ctx, shape.stroke);
+    if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const rectPolygon = getLocalRectPolygon(shape);
     ctx.beginPath();
@@ -52,8 +51,14 @@ export const struct: ShapeStruct<RectangleShape> = {
       ctx.lineTo(p.x, p.y);
     });
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    if (!shape.fill.disabled) {
+      applyFillStyle(ctx, shape.fill);
+      ctx.fill();
+    }
+    if (!shape.stroke.disabled) {
+      applyStrokeStyle(ctx, shape.stroke);
+      ctx.stroke();
+    }
   },
   getWrapperRect(shape) {
     return getRotatedWrapperRect(

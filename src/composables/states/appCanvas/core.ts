@@ -30,7 +30,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   stopTextEditing: () => void;
   setTextEditorPosition: (p: IVec2) => void;
   getDocumentMap: () => { [id: string]: DocOutput };
-  patchDocuments: (val: { [id: string]: DocDelta }) => void;
+  patchDocuments: (val: { [id: string]: DocDelta }, shapes?: { [id: string]: Partial<Shape> }) => void;
+  patchDocDryRun: (id: string, val: DocDelta) => DocOutput;
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
   createCursorPosition: (id: string, index: number) => CursorPositionInfo | undefined;
   retrieveCursorPosition: (info?: CursorPositionInfo) => number;
@@ -53,6 +54,7 @@ interface UpdateShapeEvent extends ModeStateEventBase {
   type: "shape-updated";
   data: {
     keys: Set<string>;
+    text?: boolean;
   };
 }
 

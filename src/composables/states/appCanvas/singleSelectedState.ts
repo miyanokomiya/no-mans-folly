@@ -148,6 +148,12 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             default:
               return handleCommonShortcut(ctx, event);
           }
+        case "shape-updated": {
+          if (event.data.keys.has(selectedId)) {
+            return translateOnSelection(ctx);
+          }
+          return;
+        }
         case "text-style": {
           return handleCommonTextStyle(ctx, event);
         }

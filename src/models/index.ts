@@ -43,10 +43,12 @@ export interface Color {
 }
 
 export interface FillStyle {
+  disabled?: boolean;
   color: Color;
 }
 
 export interface StrokeStyle {
+  disabled?: boolean;
   color: Color;
   width?: number;
 }

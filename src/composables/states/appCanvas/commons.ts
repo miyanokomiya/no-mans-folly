@@ -10,6 +10,7 @@ import { newLineReadyState } from "./lines/lineReadyState";
 import { newLineSelectedState } from "./lines/lineSelectedState";
 import { DocDelta, DocOutput } from "../../../models/document";
 import {
+  calcOriginalDocSize,
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
@@ -20,6 +21,8 @@ import { IVec2 } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
+import { newTextReadyState } from "./text/textReadyState";
+import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
 
 export function translateOnSelection(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
@@ -42,7 +45,7 @@ export function translateOnSelection(
   }
 }
 
-type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady";
+type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
 export function handleStateEvent(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
@@ -62,6 +65,10 @@ export function handleStateEvent(
 
   if (event.data.name === "LineReady") {
     return () => newLineReadyState(event.data.options);
+  }
+
+  if (event.data.name === "TextReady") {
+    return () => newTextReadyState();
   }
 }
 
@@ -123,7 +130,24 @@ export function handleCommonTextStyle(
     return m;
   }, {});
 
-  ctx.patchDocuments(patch);
+  const shapePatch: { [id: string]: Partial<TextShape> } = {};
+  const renderCtx = ctx.getRenderCtx();
+  if (renderCtx) {
+    const shapeMap = ctx.getShapeMap();
+    Object.entries(patch).forEach(([id, p]) => {
+      const shape = shapeMap[id];
+      if (isTextShape(shape)) {
+        const patched = ctx.patchDocDryRun(id, p);
+        const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
+        const update = patchSize(shape, size);
+        if (update) {
+          shapePatch[id] = update;
+        }
+      }
+    });
+  }
+
+  ctx.patchDocuments(patch, shapePatch);
 }
 
 export function startTextEditingIfPossible(

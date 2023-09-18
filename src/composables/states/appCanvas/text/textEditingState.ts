@@ -9,6 +9,9 @@ import { newPanningState } from "../../commons";
 import { isMac } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
+import { TextShape, isTextShape, patchSize } from "../../../../shapes/text";
+import { DocAttrInfo, DocDelta } from "../../../../models/document";
+import { calcOriginalDocSize } from "../../../../utils/textEditor";
 
 interface Option {
   id: string;
@@ -37,6 +40,23 @@ export function newTextEditingState(option: Option): AppCanvasState {
     cursorInfo = ctx.createCursorPosition(option.id, textEditorController.getCursor());
     ctx.setCurrentDocAttrInfo(textEditorController.getCurrentAttributeInfo());
     ctx.setTmpShapeMap({});
+  }
+
+  function patchDocument(ctx: AppCanvasStateContext, delta: DocDelta) {
+    const shape = ctx.getShapeMap()[option.id];
+    const renderCtx = ctx.getRenderCtx();
+    let shapePatch: Partial<TextShape> | undefined = undefined;
+    if (renderCtx && isTextShape(shape)) {
+      const patched = ctx.patchDocDryRun(option.id, delta);
+      const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
+      shapePatch = patchSize(shape, size);
+    }
+
+    if (shapePatch) {
+      ctx.patchDocuments({ [option.id]: delta }, { [option.id]: shapePatch });
+    } else {
+      ctx.patchDocuments({ [option.id]: delta });
+    }
   }
 
   return {
@@ -85,7 +105,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "text-input": {
           const cursor = textEditorController.getCursor();
-          ctx.patchDocuments({ [option.id]: textEditorController.getDeltaByInput(event.data.value) });
+          patchDocument(ctx, textEditorController.getDeltaByInput(event.data.value));
           textEditorController.setCursor(cursor + event.data.value.length);
 
           if (event.data.composition) {
@@ -128,7 +148,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "keydown":
           updateEditorPosition(ctx);
-          return handleKeydown(ctx, option, textEditorController, onCursorUpdated, event);
+          return handleKeydown(ctx, option, textEditorController, onCursorUpdated, patchDocument, event);
         case "shape-updated": {
           const shape = ctx.getShapeMap()[option.id];
           if (!shape) return translateOnSelection(ctx);
@@ -143,19 +163,22 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "text-style": {
           const attrs = event.data.value;
           const currentInfo = textEditorController.getCurrentAttributeInfo();
+          let ops: DocDelta;
+          let nextInfo: DocAttrInfo;
+
           if (event.data.doc) {
-            const ops = textEditorController.getDeltaByApplyDocStyle(attrs);
-            ctx.patchDocuments({ [option.id]: ops });
-            ctx.setCurrentDocAttrInfo({ ...currentInfo, doc: { ...currentInfo.doc, ...attrs } });
+            ops = textEditorController.getDeltaByApplyDocStyle(attrs);
+            nextInfo = { ...currentInfo, doc: { ...currentInfo.doc, ...attrs } };
           } else if (event.data.block) {
-            const ops = textEditorController.getDeltaByApplyBlockStyle(attrs);
-            ctx.patchDocuments({ [option.id]: ops });
-            ctx.setCurrentDocAttrInfo({ ...currentInfo, block: { ...currentInfo.block, ...attrs } });
+            ops = textEditorController.getDeltaByApplyBlockStyle(attrs);
+            nextInfo = { ...currentInfo, block: { ...currentInfo.block, ...attrs } };
           } else {
-            const ops = textEditorController.getDeltaByApplyInlineStyle(attrs);
-            ctx.patchDocuments({ [option.id]: ops });
-            ctx.setCurrentDocAttrInfo({ ...currentInfo, cursor: { ...currentInfo.cursor, ...attrs } });
+            ops = textEditorController.getDeltaByApplyInlineStyle(attrs);
+            nextInfo = { ...currentInfo, cursor: { ...currentInfo.cursor, ...attrs } };
           }
+
+          patchDocument(ctx, ops);
+          ctx.setCurrentDocAttrInfo(nextInfo);
           return;
         }
         case "wheel":
@@ -177,7 +200,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "paste": {
           const clipboard = newDocClipboard([], (doc) => {
             const count = doc.flatMap((p) => p.insert).join("").length;
-            ctx.patchDocuments({ [option.id]: textEditorController.getDeltaByPaste(doc, event.data.shift) });
+            patchDocument(ctx, textEditorController.getDeltaByPaste(doc, event.data.shift));
             textEditorController.setCursor(textEditorController.getCursor() + count);
           });
           clipboard.onPaste(event.nativeEvent);
@@ -211,6 +234,7 @@ function handleKeydown(
   option: Option,
   textEditorController: TextEditorController,
   onCursorUpdated: (ctx: AppCanvasStateContext) => void,
+  patchDocument: (ctx: AppCanvasStateContext, delta: DocDelta) => void,
   event: KeyDownEvent
 ): TransitionValue<AppCanvasStateContext> {
   switch (event.data.key) {
@@ -276,7 +300,7 @@ function handleKeydown(
       if (event.data.ctrl) {
         event.data.prevent?.();
         const info = textEditorController.getDeltaAndCursorByBackspace();
-        ctx.patchDocuments({ [option.id]: info.delta });
+        patchDocument(ctx, info.delta);
         textEditorController.setCursor(info.cursor);
       }
       return;
@@ -284,7 +308,7 @@ function handleKeydown(
       if (event.data.ctrl) {
         event.data.prevent?.();
         const info = textEditorController.getDeltaAndCursorByDelete();
-        ctx.patchDocuments({ [option.id]: info.delta });
+        patchDocument(ctx, info.delta);
         textEditorController.setCursor(info.cursor);
       }
       return;
@@ -327,13 +351,13 @@ function handleKeydown(
       return;
     case "Backspace": {
       const info = textEditorController.getDeltaAndCursorByBackspace();
-      ctx.patchDocuments({ [option.id]: info.delta });
+      patchDocument(ctx, info.delta);
       textEditorController.setCursor(info.cursor);
       return;
     }
     case "Delete": {
       const info = textEditorController.getDeltaAndCursorByDelete();
-      ctx.patchDocuments({ [option.id]: info.delta });
+      patchDocument(ctx, info.delta);
       textEditorController.setCursor(info.cursor);
       return;
     }
