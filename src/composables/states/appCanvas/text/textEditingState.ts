@@ -150,7 +150,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "keydown":
           updateEditorPosition(ctx);
-          return handleKeydown(ctx, option, textEditorController, onCursorUpdated, patchDocument, event);
+          return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         case "shape-updated": {
           const shape = ctx.getShapeMap()[option.id];
           if (!shape) return translateOnSelection(ctx);
@@ -233,7 +233,6 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
 function handleKeydown(
   ctx: AppCanvasStateContext,
-  option: Option,
   textEditorController: TextEditorController,
   onCursorUpdated: (ctx: AppCanvasStateContext) => void,
   patchDocument: (ctx: AppCanvasStateContext, delta: DocDelta) => void,
