@@ -3,12 +3,10 @@ import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasC
 import { Shape } from "../models";
 import {
   getCommonStruct,
-  getShapeTextBounds,
   getWrapperRectForShapes,
   isPointOn,
   patchShapesOrderToLast,
   remapShapeIds,
-  renderShape,
   resizeShape,
 } from "../shapes";
 import { useCanvas } from "../composables/canvas";
@@ -22,7 +20,7 @@ import {
 import { findBackward, mapDataToObj, remap } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
 import { DocAttrInfo } from "../models/document";
-import { getDocAttributes, renderDoc } from "../utils/textEditor";
+import { getDocAttributes } from "../utils/textEditor";
 import { AffineMatrix, IVec2, sub } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
@@ -30,6 +28,7 @@ import { CommandExam, ModifierOptions } from "../composables/states/types";
 import { CommandExamPanel } from "./molecules/CommandExamPanel";
 import { rednerRGBA } from "../utils/color";
 import { useSelectedTmpSheet } from "../composables/storeHooks";
+import { newShapeRenderer } from "../composables/shapeRenderer";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -239,35 +238,29 @@ export function AppCanvas() {
     ctx.scale(1 / scale, 1 / scale);
     ctx.translate(-viewOrigin.x, -viewOrigin.y);
 
-    const selectedMap = smctx.getCtx().getSelectedShapeIdMap();
-    acctx.shapeStore.getEntities().forEach((shape) => {
-      const tmpShape = acctx.shapeStore.getTmpShapeMap()[shape.id];
-      const latestShape = tmpShape ? { ...shape, ...tmpShape } : shape;
-      renderShape(getCommonStruct, ctx, latestShape);
-
-      const doc = acctx.documentStore.getDocMap()[latestShape.id];
-      if (doc) {
-        if (textEditing && selectedMap[shape.id]) return;
-
-        ctx.save();
-        const bounds = getShapeTextBounds(getCommonStruct, latestShape);
-        ctx.transform(...bounds.affine);
-        renderDoc(ctx, doc, bounds.range);
-        ctx.restore();
-      }
+    const canvasContext = smctx.getCtx();
+    const selectedMap = canvasContext.getSelectedShapeIdMap();
+    const renderer = newShapeRenderer({
+      getShapeIds: () => acctx.shapeStore.getEntities().map((s) => s.id),
+      getShapeMap: canvasContext.getShapeMap,
+      getTmpShapeMap: canvasContext.getTmpShapeMap,
+      getDocumentMap: canvasContext.getDocumentMap,
+      getShapeStruct: canvasContext.getShapeStruct,
+      ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
     });
+    renderer.render(ctx);
 
     smctx.stateMachine.render(ctx);
   }, [
     acctx.shapeStore,
+    acctx.documentStore,
+    smctx,
     viewSize.width,
     viewSize.height,
     scale,
     viewOrigin.x,
     viewOrigin.y,
     canvasState,
-    smctx,
-    acctx.documentStore,
     textEditing,
   ]);
 
