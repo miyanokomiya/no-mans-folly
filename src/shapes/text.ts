@@ -45,12 +45,40 @@ export function isTextShape(shape: Shape): shape is TextShape {
 
 export function patchSize(shape: TextShape, size: Size): Partial<TextShape> | undefined {
   const ret: Partial<TextShape> = {};
+  let x = shape.p.x;
+  let y = shape.p.y;
+
   if (shape.width !== size.width) {
+    const diff = size.width - shape.width;
     ret.width = size.width;
+    switch (shape.hAlign) {
+      case "center":
+        x -= diff / 2;
+        break;
+      case "right":
+        x -= diff;
+        break;
+    }
   }
+
   if (shape.height !== size.height) {
+    const diff = size.height - shape.height;
     ret.height = size.height;
+    switch (shape.vAlign) {
+      case "center":
+        y -= diff / 2;
+        break;
+      case "bottom":
+        y -= diff;
+        break;
+    }
   }
+
+  const p = { x, y };
+  if (!isSame(p, shape.p)) {
+    ret.p = p;
+  }
+
   return Object.keys(ret).length > 0 ? ret : undefined;
 }
 

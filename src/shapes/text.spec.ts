@@ -26,6 +26,31 @@ describe("patchSize", () => {
     expect(patchSize(shape, { width: 100, height: 200 })).toEqual({ height: 200 });
     expect(patchSize(shape, { width: 200, height: 200 })).toEqual({ width: 200, height: 200 });
   });
+
+  test("should patch position due to the alignment", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, width: 100, height: 200 });
+    expect(patchSize({ ...shape, hAlign: "center" }, { width: 200, height: 200 })).toEqual({
+      width: 200,
+      p: { x: -50, y: 0 },
+    });
+    expect(patchSize({ ...shape, hAlign: "right" }, { width: 200, height: 200 })).toEqual({
+      width: 200,
+      p: { x: -100, y: 0 },
+    });
+    expect(patchSize({ ...shape, vAlign: "center" }, { width: 100, height: 300 })).toEqual({
+      height: 300,
+      p: { x: 0, y: -50 },
+    });
+    expect(patchSize({ ...shape, vAlign: "bottom" }, { width: 100, height: 300 })).toEqual({
+      height: 300,
+      p: { x: 0, y: -100 },
+    });
+    expect(patchSize({ ...shape, hAlign: "center", vAlign: "bottom" }, { width: 200, height: 300 })).toEqual({
+      width: 200,
+      height: 300,
+      p: { x: -50, y: -100 },
+    });
+  });
 });
 
 describe("patchPosition", () => {
