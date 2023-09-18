@@ -152,7 +152,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return newMultipleSelectedState;
         case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady"]);
+          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "copy": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onCopy(event.nativeEvent);
