@@ -6,6 +6,8 @@ import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, renderLineHead } from "./lineHeads";
 import { applyPath } from "../utils/renderer";
+import { isTextShape } from "./text";
+import { struct as textStruct } from "./text";
 
 export type LineType = undefined | "elbow";
 
@@ -38,10 +40,11 @@ export const struct: ShapeStruct<LineShape> = {
     if (arg.qConnection) obj.qConnection = arg.qConnection;
     return obj;
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeMap, treeNode) {
     applyStrokeStyle(ctx, shape.stroke);
     applyFillStyle(ctx, shape.fill);
     const linePath = getLinePath(shape);
+    const hasLabels = treeNode && treeNode.children.length > 0;
 
     let pAffine: AffineMatrix | undefined;
     if (shape.pHead) {
@@ -69,7 +72,7 @@ export const struct: ShapeStruct<LineShape> = {
 
     let region: Path2D | undefined;
 
-    if (pAffine || qAffine) {
+    if (pAffine || qAffine || hasLabels) {
       const wrapper = getOuterRectangle([getLinePath(shape)]);
       const outline = expandRect(wrapper, (shape.stroke.width ?? 1) * 4 + 40);
       region = new Path2D();
@@ -82,6 +85,15 @@ export const struct: ShapeStruct<LineShape> = {
 
     if (region && qAffine) {
       clipLineHead(region, shape.qHead!, qAffine, ctx.lineWidth);
+    }
+
+    if (region && hasLabels) {
+      treeNode.children.forEach((n) => {
+        const label = shapeMap[n.id];
+        if (label && isTextShape(label)) {
+          applyPath(region!, textStruct.getLocalRectPolygon(label));
+        }
+      });
     }
 
     if (region) {

@@ -3,7 +3,7 @@ interface TreeFlatNode {
   parentId?: string;
 }
 
-interface TreeNode {
+export interface TreeNode {
   id: string;
   parentId?: string;
   children: TreeNode[];

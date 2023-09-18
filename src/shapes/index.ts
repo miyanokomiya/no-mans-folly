@@ -7,6 +7,7 @@ import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
+import { TreeNode } from "../utils/tree";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -28,9 +29,15 @@ export function createShape<T extends Shape>(getStruct: GetShapeStruct, type: st
   return struct.create(arg);
 }
 
-export function renderShape<T extends Shape>(getStruct: GetShapeStruct, ctx: CanvasRenderingContext2D, shape: T) {
+export function renderShape<T extends Shape>(
+  getStruct: GetShapeStruct,
+  ctx: CanvasRenderingContext2D,
+  shape: T,
+  shapeMap: { [id: string]: T } = {},
+  treeNode?: TreeNode
+) {
   const struct = getStruct(shape.type);
-  struct.render(ctx, shape);
+  struct.render(ctx, shape, shapeMap, treeNode);
 }
 
 export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape): IRectangle {
