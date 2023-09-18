@@ -104,5 +104,5 @@ export function patchPosition(shape: TextShape, p: IVec2): Partial<TextShape> | 
   }
 
   const ret = { x, y };
-  return isSame(p, ret) ? undefined : { p: ret };
+  return isSame(shape.p, ret) ? undefined : { p: ret };
 }

@@ -64,5 +64,8 @@ describe("patchPosition", () => {
     expect(patchPosition({ ...shape, hAlign: "center", vAlign: "bottom" }, { x: 0, y: 0 })).toEqual({
       p: { x: -50, y: -200 },
     });
+    expect(patchPosition({ ...shape, hAlign: "left", vAlign: "top" }, { x: 10, y: 20 })).toEqual({
+      p: { x: 10, y: 20 },
+    });
   });
 });
