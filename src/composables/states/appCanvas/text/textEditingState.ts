@@ -43,20 +43,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
   }
 
   function patchDocument(ctx: AppCanvasStateContext, delta: DocDelta) {
-    const shape = ctx.getShapeMap()[option.id];
-    const renderCtx = ctx.getRenderCtx();
-    let shapePatch: Partial<TextShape> | undefined = undefined;
-    if (renderCtx && isTextShape(shape)) {
-      const patched = ctx.patchDocDryRun(option.id, delta);
-      const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
-      shapePatch = patchSize(shape, size);
-    }
-
-    if (shapePatch) {
-      ctx.patchDocuments({ [option.id]: delta }, { [option.id]: shapePatch });
-    } else {
-      ctx.patchDocuments({ [option.id]: delta });
-    }
+    _patchDocument(ctx, delta, option.id);
   }
 
   return {
@@ -100,6 +87,21 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.setCaptureTimeout();
       ctx.setCurrentDocAttrInfo({});
       ctx.setCommandExams();
+
+      // Delete text shape when it has no content.
+      const shape = ctx.getShapeMap()[option.id];
+      if (shape && isTextShape(shape)) {
+        if (textEditorController.getDocLength() <= 1) {
+          // Create extra history in case this deletion is undone.
+          // => Because, restoring the content right before deletion isn't always feasible.
+          ctx.patchDocuments(
+            { [option.id]: [{ insert: "---" }] },
+            { [option.id]: { width: 40 } as Partial<TextShape> }
+          );
+          ctx.deleteShapes([option.id]);
+          ctx.createLastIndex();
+        }
+      }
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
@@ -364,5 +366,22 @@ function handleKeydown(
     case "Escape": {
       return translateOnSelection(ctx);
     }
+  }
+}
+
+function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string) {
+  const shape = ctx.getShapeMap()[id];
+  const renderCtx = ctx.getRenderCtx();
+  let shapePatch: Partial<TextShape> | undefined = undefined;
+  if (renderCtx && isTextShape(shape)) {
+    const patched = ctx.patchDocDryRun(id, delta);
+    const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
+    shapePatch = patchSize(shape, size);
+  }
+
+  if (shapePatch) {
+    ctx.patchDocuments({ [id]: delta }, { [id]: shapePatch });
+  } else {
+    ctx.patchDocuments({ [id]: delta });
   }
 }

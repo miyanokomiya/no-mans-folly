@@ -336,6 +336,7 @@ export function newTextEditorController() {
     selectWordAtCursor,
     getLocationIndex,
 
+    getDocLength: () => docLength,
     getContentSize,
     getSelectedDocOutput,
     getDeltaByPaste,
