@@ -42,7 +42,7 @@ interface Option {
 
 export function newBoundingBox(option: Option) {
   const [tl, tr, br, bl] = option.path;
-  const rotation = tl.x === tr.x ? 0 : getRadian(tr, tl);
+  const rotation = getRadian(tr, tl);
   const center = getCenter(tl, br);
 
   const segments = [
