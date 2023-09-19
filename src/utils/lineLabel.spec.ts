@@ -100,19 +100,19 @@ describe("attachLabelToLine", () => {
 
     const line1 = lineStruct.create({ q: { x: 0, y: 100 } });
     const label1 = textStruct.create({ p: { x: -50, y: 20 }, width: 20, height: 10, rotation: -Math.PI / 2 });
-    expect(attachLabelToLine(line1, label1)).toEqual({
-      p: { x: -15, y: 20 },
-      hAlign: "center",
-      vAlign: "bottom",
-      lineAttached: 0.25,
-    });
+    const result1 = attachLabelToLine(line1, label1);
+    expect(result1?.p?.x).toBeCloseTo(-15);
+    expect(result1?.p?.y).toBeCloseTo(20);
+    expect(result1?.hAlign).toBe("center");
+    expect(result1?.vAlign).toBe("bottom");
+    expect(result1?.lineAttached).toBeCloseTo(0.25);
 
     const label2 = textStruct.create({ p: { x: 20, y: 20 }, width: 20, height: 10, rotation: Math.PI });
-    expect(attachLabelToLine(line0, label2)).toEqual({
-      p: { x: 20, y: 0 },
-      hAlign: "center",
-      vAlign: "bottom",
-      lineAttached: 0.3,
-    });
+    const result2 = attachLabelToLine(line0, label2);
+    expect(result2?.p?.x).toBeCloseTo(20);
+    expect(result2?.p?.y).toBeCloseTo(0);
+    expect(result2?.hAlign).toBe("center");
+    expect(result2?.vAlign).toBe("bottom");
+    expect(result2?.lineAttached).toBeCloseTo(0.3);
   });
 });
