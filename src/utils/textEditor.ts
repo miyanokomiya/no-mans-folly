@@ -515,11 +515,11 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
         }
       });
 
-      line.push(word);
+      if (word.length > 0) line.push(word);
       word = [];
     });
 
-    lines.push(line);
+    if (line.length > 0) lines.push(line);
     line = [];
     word = [];
   });

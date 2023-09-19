@@ -306,6 +306,22 @@ describe("splitOutputsIntoLineWord", () => {
         [["\n", 0, attrs1]],
       ],
     ]);
+
+    expect(
+      splitOutputsIntoLineWord([
+        { insert: "ab\n", attributes: attrs1 },
+        { insert: "\n", attributes: attrs1 },
+      ])
+    ).toEqual([
+      [
+        [
+          ["a", 0, attrs1],
+          ["b", 0, attrs1],
+        ],
+        [["\n", 0, attrs1]],
+      ],
+      [[["\n", 0, attrs1]]],
+    ]);
   });
 
   test("should split multiple byte words into individual words", () => {
@@ -630,6 +646,66 @@ describe("applyRangeWidthToLineWord", () => {
         ],
         { align: "right" },
       ],
+    ]);
+  });
+
+  test("practical case 2", () => {
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+            ],
+            [["\n", 0, { align: "right" }]],
+          ],
+        ],
+        10
+      )
+    ).toEqual([
+      [
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+            ],
+            [["\n", 0, { align: "right" }]],
+          ],
+        ],
+        { align: "right" },
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+            ],
+            [["\n", 0, { align: "right" }]],
+          ],
+          [[["\n", 0, { align: "right" }]]],
+        ],
+        10
+      )
+    ).toEqual([
+      [
+        [
+          [
+            [
+              ["a", 3],
+              ["b", 3],
+            ],
+            [["\n", 0, { align: "right" }]],
+          ],
+        ],
+        { align: "right" },
+      ],
+      [[[[["\n", 0, { align: "right" }]]]], { align: "right" }],
     ]);
   });
 });
