@@ -1,9 +1,10 @@
-import { IVec2, isSame } from "okageo";
+import { IVec2, add, getCenter, isSame, rotate, sub } from "okageo";
 import { Shape, Size } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
+import { getRotateFn } from "../utils/geometry";
 
 export type TextShape = RectangleShape & {
   maxWidth: number;
@@ -87,26 +88,32 @@ export function patchSize(shape: TextShape, size: Size): Partial<TextShape> | un
 }
 
 export function patchPosition(shape: TextShape, p: IVec2): Partial<TextShape> | undefined {
-  let x = p.x;
+  const rectPolygon = struct.getLocalRectPolygon(shape);
+  const center = getCenter(rectPolygon[0], rectPolygon[2]);
+  const rotateFn = getRotateFn(shape.rotation, center);
+
+  let x = shape.p.x;
   switch (shape.hAlign) {
     case "center":
-      x = p.x - shape.width / 2;
+      x += shape.width / 2;
       break;
     case "right":
-      x = p.x - shape.width;
+      x += shape.width;
       break;
   }
 
-  let y = p.y;
+  let y = shape.p.y;
   switch (shape.vAlign) {
     case "center":
-      y = p.y - shape.height / 2;
+      y += shape.height / 2;
       break;
     case "bottom":
-      y = p.y - shape.height;
+      y += shape.height;
       break;
   }
 
-  const ret = { x, y };
+  const rotatedBase = rotateFn({ x, y });
+  const diff = sub(shape.p, rotatedBase);
+  const ret = add(p, diff);
   return isSame(shape.p, ret) ? undefined : { p: ret };
 }

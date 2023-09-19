@@ -68,4 +68,23 @@ describe("patchPosition", () => {
       p: { x: 10, y: 20 },
     });
   });
+
+  test("should deal with rotation", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, width: 10, height: 20, rotation: Math.PI / 2 });
+    const result = patchPosition(shape, { x: 0, y: 0 });
+    expect(result?.p?.x).toBeCloseTo(-15);
+    expect(result?.p?.y).toBeCloseTo(-5);
+
+    const shape1 = struct.create({
+      p: { x: 20, y: 20 },
+      width: 20,
+      height: 10,
+      rotation: Math.PI / 2,
+      hAlign: "left",
+      vAlign: "center",
+    });
+    const result1 = patchPosition(shape1, { x: 30, y: 0 });
+    expect(result1?.p?.x).toBeCloseTo(20);
+    expect(result1?.p?.y).toBeCloseTo(5);
+  });
 });

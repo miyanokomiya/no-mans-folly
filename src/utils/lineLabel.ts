@@ -1,6 +1,7 @@
 import { IVec2, getCenter, getDistance, getPedal, isOnSeg } from "okageo";
 import { LineShape, getEdges } from "../shapes/line";
 import { TextShape, patchPosition, struct as textStruct } from "../shapes/text";
+import { snapAngle } from "./geometry";
 
 export function attachLabelToLine(line: LineShape, label: TextShape): Partial<TextShape> {
   const edges = getEdges(line);
@@ -19,7 +20,7 @@ export function attachLabelToLine(line: LineShape, label: TextShape): Partial<Te
   const closestEdgeIndex = closestValue[0];
   const closestPedal = closestValue[2];
 
-  const patch: Partial<TextShape> = {};
+  let patch: Partial<TextShape> = {};
 
   if (closestPedal.x <= labelBounds.x) {
     patch.hAlign = "left";
@@ -46,9 +47,10 @@ export function attachLabelToLine(line: LineShape, label: TextShape): Partial<Te
   d += getDistance(edges[closestEdgeIndex][0], closestPedal);
   patch.lineAttached = d / totalD;
 
-  const patch2 = patchPosition({ ...label, ...patch }, closestPedal);
+  patch = { ...patch, ...applyRotationToAlign(patch.hAlign, patch.vAlign, label.rotation) };
+  patch = { ...patch, ...patchPosition({ ...label, ...patch }, closestPedal) };
 
-  const ret = { ...patch, ...(patch2 ?? {}) };
+  const ret = { ...patch };
   if (ret.hAlign === label.hAlign) {
     delete ret.hAlign;
   }
@@ -60,4 +62,41 @@ export function attachLabelToLine(line: LineShape, label: TextShape): Partial<Te
   }
 
   return ret;
+}
+
+type AlignInfo = { hAlign: TextShape["hAlign"]; vAlign: TextShape["vAlign"] };
+
+function applyRotationToAlign(
+  hAlign: TextShape["hAlign"] = "left",
+  vAlign: TextShape["vAlign"] = "top",
+  rotation: number
+): AlignInfo {
+  const snappedRotation = snapAngle((rotation * 180) / Math.PI, 90);
+  const index = Math.round(((snappedRotation + 360) % 360) / 90);
+  if (index === 1) {
+    const ret: AlignInfo = { hAlign: "center", vAlign: "center" };
+    if (hAlign === "center") {
+      ret.hAlign = vAlign === "top" ? "left" : vAlign === "bottom" ? "right" : "center";
+    }
+    if (vAlign === "center") {
+      ret.vAlign = hAlign === "left" ? "top" : hAlign === "right" ? "bottom" : "center";
+    }
+    return ret;
+  } else if (index === 2) {
+    return {
+      hAlign: hAlign === "left" ? "right" : hAlign === "right" ? "left" : "center",
+      vAlign: vAlign === "top" ? "bottom" : vAlign === "bottom" ? "top" : "center",
+    };
+  } else if (index === 3) {
+    const ret: AlignInfo = { hAlign: "center", vAlign: "center" };
+    if (hAlign === "center") {
+      ret.hAlign = vAlign === "top" ? "right" : vAlign === "bottom" ? "left" : "center";
+    }
+    if (vAlign === "center") {
+      ret.vAlign = hAlign === "left" ? "top" : hAlign === "right" ? "bottom" : "center";
+    }
+    return ret;
+  }
+
+  return { hAlign, vAlign };
 }
