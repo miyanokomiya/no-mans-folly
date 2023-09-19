@@ -43,6 +43,10 @@ export function isTextShape(shape: Shape): shape is TextShape {
   return shape.type === "text";
 }
 
+export function isLineLabelShape(shape: Shape): shape is TextShape {
+  return isTextShape(shape) && shape.lineAttached !== undefined;
+}
+
 export function patchSize(shape: TextShape, size: Size): Partial<TextShape> | undefined {
   const ret: Partial<TextShape> = {};
   let x = shape.p.x;

@@ -26,21 +26,40 @@ interface Option {
 }
 
 export function newMultipleSelectedState(option?: Option): AppCanvasState {
-  let selectedIds: { [id: string]: true };
+  let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
 
   return {
     getLabel: () => "MultipleSelected",
     onStart: (ctx) => {
-      selectedIds = ctx.getSelectedShapeIdMap();
+      selectedIdMap = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
+
+      // Prevent selecting shapes that have different parents
+      {
+        const parentIdSet = new Set<string | undefined>();
+        Object.keys(selectedIdMap).forEach((id) => {
+          const shape = shapeMap[id];
+          parentIdSet.add(shape.parentId);
+        });
+
+        if (parentIdSet.size >= 2) {
+          const first: string = parentIdSet.keys().next()!.value;
+          const nextSelected = Object.keys(selectedIdMap).filter((id) => {
+            const shape = shapeMap[id];
+            return shape.parentId === first;
+          });
+          ctx.multiSelectShapes(nextSelected);
+          return translateOnSelection(ctx);
+        }
+      }
 
       ctx.showFloatMenu();
 
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
-        const shapeRects = Object.keys(selectedIds)
+        const shapeRects = Object.keys(selectedIdMap)
           .map((id) => shapeMap[id])
           .map((s) => getWrapperRect(ctx.getShapeStruct, s));
 
@@ -55,7 +74,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       ctx.hideFloatMenu();
     },
     handleEvent: (ctx, event) => {
-      if (!selectedIds) return;
+      if (!selectedIdMap) return;
 
       switch (event.type) {
         case "pointerdown":
@@ -78,7 +97,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               }
 
               if (!event.data.options.ctrl) {
-                if (selectedIds[shape.id]) {
+                if (selectedIdMap[shape.id]) {
                   if (event.data.options.alt) {
                     return newDuplicatingShapesState;
                   } else {
@@ -105,7 +124,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           }
         case "pointerdoubledown": {
           const shape = ctx.getShapeAt(event.data.point);
-          if (shape && selectedIds[shape.id]) {
+          if (shape && selectedIdMap[shape.id]) {
             return startTextEditingIfPossible(ctx, shape.id, event.data.point);
           }
           return;
@@ -127,13 +146,13 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Delete":
-              ctx.deleteShapes(Object.keys(selectedIds));
+              ctx.deleteShapes(Object.keys(selectedIdMap));
               return;
             default:
               return handleCommonShortcut(ctx, event);
           }
         case "shape-updated": {
-          if (Object.keys(selectedIds).some((id) => event.data.keys.has(id))) {
+          if (Object.keys(selectedIdMap).some((id) => event.data.keys.has(id))) {
             return translateOnSelection(ctx);
           }
           return;
@@ -170,7 +189,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const shapes = Object.entries(ctx.getShapeMap())
-        .filter(([id]) => selectedIds[id])
+        .filter(([id]) => selectedIdMap[id])
         .map(([, s]) => s);
 
       applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 });

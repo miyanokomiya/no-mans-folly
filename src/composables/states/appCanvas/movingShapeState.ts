@@ -15,6 +15,8 @@ import {
 import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
+import { isLineLabelShape } from "../../../shapes/text";
+import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -29,15 +31,34 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let lineHandler: ConnectedLineHandler;
   let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
+  let targetIds: string[];
 
   return {
     getLabel: () => "MovingShape",
     onStart: (ctx) => {
+      const shapeMap = ctx.getShapeMap();
+      const selectedIds = ctx.getSelectedShapeIdMap();
+      targetIds = Object.keys(selectedIds);
+
+      // Line labels should be moved via dedicated state
+      {
+        if (targetIds.length === 1) {
+          const id = targetIds[0];
+          const shape = shapeMap[id];
+          if (isLineLabelShape(shape)) {
+            return () => newMovingLineLabelState({ id });
+          }
+        } else {
+          targetIds = targetIds.filter((id) => {
+            const shape = shapeMap[id];
+            return !isLineLabelShape(shape);
+          });
+        }
+      }
+
       ctx.startDragging();
       ctx.setCursor("move");
 
-      const shapeMap = ctx.getShapeMap();
-      const selectedIds = ctx.getSelectedShapeIdMap();
       const snappableShapes = filterShapesOverlappingRect(
         ctx.getShapeStruct,
         Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
@@ -47,16 +68,12 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
       });
-      movingRect = geometry.getWrapperRect(
-        Object.keys(selectedIds).map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]))
-      );
+      movingRect = geometry.getWrapperRect(targetIds.map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id])));
 
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
-        const shapeRects = Object.keys(selectedIds)
-          .map((id) => shapeMap[id])
-          .map((s) => getWrapperRect(ctx.getShapeStruct, s));
+        const shapeRects = targetIds.map((id) => shapeMap[id]).map((s) => getWrapperRect(ctx.getShapeStruct, s));
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
@@ -86,14 +103,11 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           affine = [1, 0, 0, 1, translate.x, translate.y];
 
           const shapeMap = ctx.getShapeMap();
-          const patchMap = Object.keys(ctx.getSelectedShapeIdMap()).reduce<{ [id: string]: Partial<Shape> }>(
-            (m, id) => {
-              const s = shapeMap[id];
-              if (s) m[id] = resizeShape(ctx.getShapeStruct, s, affine);
-              return m;
-            },
-            {}
-          );
+          const patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
+            const s = shapeMap[id];
+            if (s) m[id] = resizeShape(ctx.getShapeStruct, s, affine);
+            return m;
+          }, {});
 
           linePatchedMap = lineHandler.onModified(patchMap);
           const merged = mergeMap(patchMap, linePatchedMap);

@@ -5,6 +5,7 @@ import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { TextShape } from "../../../shapes/text";
 
 function getMockCtx() {
   return {
@@ -15,6 +16,8 @@ function getMockCtx() {
     }),
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+      label: createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
+      label2: createShape<TextShape>(getCommonStruct, "text", { id: "label2", lineAttached: 0.5 }),
     }),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     startDragging: vi.fn(),
@@ -36,11 +39,32 @@ describe("newMovingShapeState", () => {
       expect(ctx.stopDragging).toHaveBeenCalled();
       expect(ctx.setTmpShapeMap).toHaveBeenCalledWith({});
     });
+
+    test("should translate to MovingLineLabelState when a line label is selected", () => {
+      const ctx = getMockCtx();
+      ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ label: true });
+      const target = newMovingShapeState();
+      const result = target.onStart?.(ctx as any) as any;
+      expect(result().getLabel()).toBe("MovingLineLabel");
+    });
   });
 
   describe("handle pointermove", () => {
     test("should call setTmpShapeMap with moved shapes", () => {
       const ctx = getMockCtx();
+      const target = newMovingShapeState();
+      target.onStart?.(ctx as any);
+      const result = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      });
+      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
+      expect(result).toBe(undefined);
+    });
+
+    test("should not move line labels even when they are selected", () => {
+      const ctx = getMockCtx();
+      ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ a: true, label: true, label2: true });
       const target = newMovingShapeState();
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {

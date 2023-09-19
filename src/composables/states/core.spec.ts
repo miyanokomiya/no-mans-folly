@@ -40,6 +40,21 @@ describe("newStateMachine", () => {
     });
   });
 
+  describe("onStart", () => {
+    test("should handle state transition when it's returned", () => {
+      const current = getMockState({ getLabel: () => "current" });
+      const next1 = getMockState({ getLabel: () => "next1" });
+      const next2 = getMockState({ getLabel: () => "next2" });
+      next1.onStart = () => () => next2;
+      current.handleEvent = () => () => next1;
+      const sm = newStateMachine(getCtx, () => current);
+
+      expect(sm.getStateSummary().label).toBe("current");
+      sm.handleEvent({ type: "test" } as any);
+      expect(sm.getStateSummary().label).toBe("next2");
+    });
+  });
+
   describe("transition: stack-restart", () => {
     test("should stack and restart previous state", () => {
       const current = getMockState({

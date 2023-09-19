@@ -12,7 +12,7 @@ export type TransitionValue<C, E = ModeStateEvent> =
 
 export interface ModeStateBase<C, E = ModeStateEvent> {
   getLabel: () => string;
-  onStart?: (ctx: ModeStateContextBase & C) => void;
+  onStart?: (ctx: ModeStateContextBase & C) => TransitionValue<C, ModeStateEvent>;
   onEnd?: (ctx: C) => void;
   handleEvent: (ctx: C, e: E) => TransitionValue<C, ModeStateEvent>;
   render?: (ctx: C, renderCtx: CanvasRenderingContext2D) => void;
@@ -58,11 +58,16 @@ export function newStateMachine<C, E = ModeStateEvent>(
   function handleEvent(event: E): void {
     const ctx = getCtx();
     const ret = getCurrentState().state.handleEvent(ctx, event);
-    if (ret) {
-      if (typeof ret === "function") {
-        switchState(ctx, ret() as any);
-      } else if (ret.type !== "break") {
-        switchState(ctx, ret.getState() as any, ret.type);
+    handleTransition(ret);
+  }
+
+  function handleTransition(transition: TransitionValue<C, ModeStateEvent>): void {
+    if (transition) {
+      const ctx = getCtx();
+      if (typeof transition === "function") {
+        switchState(ctx, transition() as any);
+      } else if (transition.type !== "break") {
+        switchState(ctx, transition.getState() as any, transition.type);
       } else {
         breakState(ctx);
       }
@@ -80,7 +85,11 @@ export function newStateMachine<C, E = ModeStateEvent>(
 
     const next = getCurrentState();
     if (current.type !== "stack-resume") {
-      next.state.onStart?.(ctx);
+      const result = next.state.onStart?.(ctx);
+      if (result) {
+        handleTransition(result);
+        return;
+      }
     }
 
     callback.dispatch();
@@ -109,7 +118,12 @@ export function newStateMachine<C, E = ModeStateEvent>(
         break;
     }
 
-    nextState.onStart?.(ctx);
+    const result = nextState.onStart?.(ctx);
+    if (result) {
+      handleTransition(result);
+      return;
+    }
+
     callback.dispatch();
   }
 

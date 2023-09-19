@@ -52,3 +52,15 @@ export function mapDataToObj<T>(src: [string, T][]): { [id: string]: T } {
     return m;
   }, {});
 }
+
+export function mapFilter<T>(
+  origin: { [key: string]: T },
+  checkFn: (t: T, key: string) => boolean
+): { [key: string]: T } {
+  return Object.keys(origin).reduce<{ [key: string]: T }>((p, c) => {
+    if (checkFn(origin[c], c)) {
+      p[c] = origin[c];
+    }
+    return p;
+  }, {});
+}
