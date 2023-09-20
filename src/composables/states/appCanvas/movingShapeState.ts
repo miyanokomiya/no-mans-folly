@@ -15,7 +15,6 @@ import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { isLineLabelShape } from "../../../shapes/text";
-import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
@@ -41,20 +40,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       targetIds = Object.keys(selectedIds);
 
       // Line labels should be moved via dedicated state
-      {
-        if (targetIds.length === 1) {
-          const id = targetIds[0];
-          const shape = shapeMap[id];
-          if (isLineLabelShape(shape)) {
-            return () => newMovingLineLabelState({ id });
-          }
-        } else {
-          targetIds = targetIds.filter((id) => {
-            const shape = shapeMap[id];
-            return !isLineLabelShape(shape);
-          });
-        }
-      }
+      targetIds = targetIds.filter((id) => {
+        const shape = shapeMap[id];
+        return !isLineLabelShape(shape);
+      });
 
       ctx.startDragging();
       ctx.setCursor("move");

@@ -39,14 +39,6 @@ describe("newMovingShapeState", () => {
       expect(ctx.stopDragging).toHaveBeenCalled();
       expect(ctx.setTmpShapeMap).toHaveBeenCalledWith({});
     });
-
-    test("should translate to MovingLineLabelState when a line label is selected", () => {
-      const ctx = getMockCtx();
-      ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ label: true });
-      const target = newMovingShapeState();
-      const result = target.onStart?.(ctx as any) as any;
-      expect(result().getLabel()).toBe("MovingLineLabel");
-    });
   });
 
   describe("handle pointermove", () => {
