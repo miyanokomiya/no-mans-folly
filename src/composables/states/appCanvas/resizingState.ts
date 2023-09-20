@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "./core";
-import { translateOnSelection } from "./commons";
 import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
 import { IDENTITY_AFFINE, add, applyAffine, sub } from "okageo";
 import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
@@ -15,6 +14,7 @@ import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { getAltOrOptionStr } from "../../../utils/devices";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -126,10 +126,11 @@ export function newResizingState(option: Option): AppCanvasState {
         }
         case "pointerup": {
           ctx.patchShapes(ctx.getTmpShapeMap());
-          return translateOnSelection(ctx, option.boundingBox.getTransformedBoundingBox(resizingAffine));
+          return () =>
+            newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
         }
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         default:
           return;

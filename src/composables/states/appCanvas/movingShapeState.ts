@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "./core";
-import { translateOnSelection } from "./commons";
 import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -17,6 +16,7 @@ import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -120,10 +120,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           if (Object.keys(val).length > 0) {
             ctx.patchShapes(val);
           }
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         default:
           return;

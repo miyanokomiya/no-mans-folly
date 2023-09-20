@@ -1,11 +1,11 @@
 import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { newPanningState } from "../commons";
-import { translateOnSelection } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
+import { newSelectionHubState } from "./selectionHubState";
 
 function getMockCtx() {
   return {
@@ -105,7 +105,7 @@ describe("newSingleSelectedState", () => {
       const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
-      expect(result).toEqual(translateOnSelection(ctx));
+      expect(result).toEqual(newSelectionHubState);
     });
   });
 });

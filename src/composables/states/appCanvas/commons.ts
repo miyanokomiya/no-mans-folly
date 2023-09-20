@@ -2,12 +2,7 @@ import { HistoryEvent } from "../commons";
 import { ChangeStateEvent, KeyDownEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext, TextStyleEvent } from "./core";
-import { newDefaultState } from "./defaultState";
-import { newMultipleSelectedState } from "./multipleSelectedState";
-import { newSingleSelectedState } from "./singleSelectedState";
-import { BoundingBox } from "../../boundingBox";
 import { newLineReadyState } from "./lines/lineReadyState";
-import { newLineSelectedState } from "./lines/lineSelectedState";
 import { DocDelta, DocOutput } from "../../../models/document";
 import {
   calcOriginalDocSize,
@@ -23,32 +18,12 @@ import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
 import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
-
-export function translateOnSelection(
-  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
-  boundingBox?: BoundingBox
-): TransitionValue<AppCanvasStateContext> {
-  const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-  const count = selectedIds.length;
-  if (count === 0) {
-    return newDefaultState;
-  } else if (count === 1) {
-    const shape = ctx.getShapeMap()[selectedIds[0]];
-    switch (shape.type) {
-      case "line":
-        return newLineSelectedState;
-      default:
-        return boundingBox ? () => newSingleSelectedState({ boundingBox }) : newSingleSelectedState;
-    }
-  } else {
-    return boundingBox ? () => newMultipleSelectedState({ boundingBox }) : newMultipleSelectedState;
-  }
-}
+import { newSelectionHubState } from "./selectionHubState";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
 export function handleStateEvent(
-  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
+  _ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
   event: ChangeStateEvent,
   acceptable: AcceptableEvent[]
 ): TransitionValue<AppCanvasStateContext> {
@@ -56,7 +31,7 @@ export function handleStateEvent(
   if (!acceptable.includes(name as AcceptableEvent)) return;
 
   if (event.data.name === "Break") {
-    return translateOnSelection(ctx);
+    return newSelectionHubState;
   }
 
   if (event.data.name === "DroppingNewShape") {
@@ -93,14 +68,14 @@ export function handleCommonShortcut(
       } else {
         ctx.multiSelectShapes(allIds);
       }
-      return translateOnSelection(ctx);
+      return newSelectionHubState;
     }
     case "z":
       if (event.data.ctrl) ctx.undo();
-      return translateOnSelection(ctx);
+      return newSelectionHubState;
     case "Z":
       if (event.data.ctrl) ctx.redo();
-      return translateOnSelection(ctx);
+      return newSelectionHubState;
     case "!":
     case "Home":
       ctx.setViewport(

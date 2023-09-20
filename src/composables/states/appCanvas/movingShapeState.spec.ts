@@ -1,11 +1,11 @@
 import { expect, test, describe, vi } from "vitest";
-import { translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { TextShape } from "../../../shapes/text";
+import { newSelectionHubState } from "./selectionHubState";
 
 function getMockCtx() {
   return {
@@ -84,7 +84,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.patchShapes).toHaveBeenNthCalledWith(1, { a: { value: 1 } });
-      expect(result).toEqual(translateOnSelection(ctx));
+      expect(result).toEqual(newSelectionHubState);
     });
   });
 
@@ -96,7 +96,7 @@ describe("newMovingShapeState", () => {
       const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
-      expect(result).toEqual(translateOnSelection(ctx));
+      expect(result).toEqual(newSelectionHubState);
     });
   });
 });

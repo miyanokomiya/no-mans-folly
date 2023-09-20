@@ -5,6 +5,7 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
+import { newSelectionHubState } from "./selectionHubState";
 
 function getMockCtx() {
   return {
@@ -40,7 +41,7 @@ describe("newDefaultState", () => {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
       });
-      expect(result2).toBe(newDefaultState);
+      expect(result2).toBe(newSelectionHubState);
     });
 
     test("should move to RectangleSelecting state if there's no shape at the point", () => {

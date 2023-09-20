@@ -1,12 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import {
-  handleCommonShortcut,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
-  translateOnSelection,
-} from "../commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, newShapeClipboard } from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
@@ -19,6 +13,7 @@ import { createShape } from "../../../../shapes";
 import { TextShape } from "../../../../shapes/text";
 import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
+import { newSelectionHubState } from "../selectionHubState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -38,7 +33,7 @@ export function newLineSelectedState(): AppCanvasState {
       ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
-      if (!lineShape) return translateOnSelection(ctx);
+      if (!lineShape) return newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
@@ -57,7 +52,7 @@ export function newLineSelectedState(): AppCanvasState {
                       if (Object.keys(patch).length > 0) {
                         ctx.patchShapes({ [lineShape.id]: patch });
                       }
-                      return translateOnSelection(ctx);
+                      return newSelectionHubState;
                     } else {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
@@ -118,11 +113,11 @@ export function newLineSelectedState(): AppCanvasState {
           lineBounding.updateScale(ctx.zoomView(event.data.delta.y));
           return;
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         case "state":
           switch (event.data.name) {
             case "AddingLineLabel": {

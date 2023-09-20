@@ -1,9 +1,9 @@
 import type { AppCanvasState } from "./core";
-import { translateOnSelection } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { getDistance } from "okageo";
 import { newBoundingBox } from "../../boundingBox";
 import { getLocalRectPolygon } from "../../../shapes";
+import { newSelectionHubState } from "./selectionHubState";
 
 export function newSingleSelectedByPointerOnState(): AppCanvasState {
   return {
@@ -30,9 +30,9 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
           return () => newMovingShapeState({ boundingBox });
         }
         case "pointerup":
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         default:
           return;

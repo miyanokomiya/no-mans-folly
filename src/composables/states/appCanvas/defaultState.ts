@@ -1,15 +1,10 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import {
-  handleCommonShortcut,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
-  translateOnSelection,
-} from "./commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, newShapeClipboard } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
+import { newSelectionHubState } from "./selectionHubState";
 
 export function newDefaultState(): AppCanvasState {
   return state;
@@ -32,7 +27,7 @@ const state: AppCanvasState = {
                   return newSingleSelectedByPointerOnState;
                 }
               }
-              return translateOnSelection(ctx);
+              return newSelectionHubState;
             }
 
             return newRectangleSelectingState;

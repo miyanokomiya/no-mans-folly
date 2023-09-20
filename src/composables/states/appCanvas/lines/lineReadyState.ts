@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleStateEvent, translateOnSelection } from "../commons";
+import { handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
@@ -8,6 +8,7 @@ import { LineShape } from "../../../../shapes/line";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
+import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   type: string;
@@ -63,7 +64,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return translateOnSelection(ctx);
+              return newSelectionHubState;
             default:
               return;
           }

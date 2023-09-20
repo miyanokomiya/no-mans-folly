@@ -3,8 +3,8 @@ import type { AppCanvasState } from "./core";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
-import { translateOnSelection } from "./commons";
 import { applyPath } from "../../../utils/renderer";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   keepSelection?: boolean;
@@ -44,7 +44,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           if (rectangle && targetIdSet.size > 0) {
             ctx.multiSelectShapes(Array.from(targetIdSet), keepSelection);
           }
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;

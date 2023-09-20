@@ -1,10 +1,10 @@
 import { expect, test, describe, vi } from "vitest";
 import { createShape, getCommonStruct } from "../../../shapes";
-import { newSingleSelectedState } from "./singleSelectedState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
+import { newSelectionHubState } from "./selectionHubState";
 
 function getMockCtx() {
   return {
@@ -71,7 +71,7 @@ describe("newDuplicatingShapesState", () => {
       });
       expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [rect]);
       expect(ctx.multiSelectShapes).toHaveBeenNthCalledWith(1, [rect.id]);
-      expect(result2).toEqual(newSingleSelectedState);
+      expect(result2).toEqual(newSelectionHubState);
     });
   });
 });

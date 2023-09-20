@@ -1,10 +1,10 @@
 import type { AppCanvasState } from "../core";
-import { translateOnSelection } from "../commons";
 import { AffineMatrix, sub } from "okageo";
 import { Shape } from "../../../../models";
 import { mergeMap } from "../../../../utils/commons";
 import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
 import { resizeShape } from "../../../../shapes";
+import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   id: string;
@@ -46,10 +46,10 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
           if (Object.keys(val).length > 0) {
             ctx.patchShapes(val);
           }
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         default:
           return;

@@ -1,9 +1,9 @@
 import { applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController } from "../../../textEditor";
-import { translateOnSelection } from "../commons";
 import { AppCanvasState } from "../core";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   id: string;
@@ -43,14 +43,14 @@ export function newTextSelectingState(option: Option): AppCanvasState {
         }
         case "shape-updated": {
           const shape = ctx.getShapeMap()[option.id];
-          if (!shape) return translateOnSelection(ctx);
+          if (!shape) return newSelectionHubState;
 
           textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
           textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
           return;
         }
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         default:
           return;

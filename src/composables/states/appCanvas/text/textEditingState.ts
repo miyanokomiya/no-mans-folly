@@ -1,7 +1,7 @@
 import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
-import { handleHistoryEvent, handleStateEvent, newDocClipboard, translateOnSelection } from "../commons";
+import { handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -12,6 +12,7 @@ import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape, patchSize } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
 import { calcOriginalDocSize } from "../../../../utils/textEditor";
+import {newSelectionHubState} from "../selectionHubState";
 
 interface Option {
   id: string;
@@ -123,7 +124,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
               const shape = ctx.getShapeAt(event.data.point);
               if (shape?.id !== option.id) {
                 shape ? ctx.selectShape(shape.id, event.data.options.ctrl) : ctx.clearAllSelected();
-                return translateOnSelection(ctx);
+                return newSelectionHubState;
               }
 
               const location = textEditorController.getLocationAt(
@@ -153,7 +154,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         case "shape-updated": {
           const shape = ctx.getShapeMap()[option.id];
-          if (!shape) return translateOnSelection(ctx);
+          if (!shape) return newSelectionHubState;
 
           if (event.data.keys.has(option.id)) {
             textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
@@ -187,11 +188,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
           ctx.zoomView(event.data.delta.y);
           return;
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "copy": {
@@ -363,7 +364,7 @@ function handleKeydown(
       return;
     }
     case "Escape": {
-      return translateOnSelection(ctx);
+      return newSelectionHubState;
     }
   }
 }

@@ -3,7 +3,6 @@ import { newDefaultState } from "../defaultState";
 import { renderShape } from "../../../../shapes";
 import { LineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
-import { translateOnSelection } from "../commons";
 import {
   ConnectionResult,
   LineSnapping,
@@ -13,6 +12,7 @@ import {
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { applyFillStyle } from "../../../../utils/fillStyle";
+import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   shape: LineShape;
@@ -73,7 +73,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return translateOnSelection(ctx);
+              return newSelectionHubState;
             default:
               return;
           }

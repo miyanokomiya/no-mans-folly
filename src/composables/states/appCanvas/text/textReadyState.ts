@@ -1,12 +1,13 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleStateEvent, translateOnSelection } from "../commons";
+import { handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { createShape } from "../../../../shapes";
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TextShape } from "../../../../shapes/text";
 import { newTextEditingState } from "./textEditingState";
+import { newSelectionHubState } from "../selectionHubState";
 
 export function newTextReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -47,7 +48,7 @@ export function newTextReadyState(): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return translateOnSelection(ctx);
+              return newSelectionHubState;
             default:
               return;
           }

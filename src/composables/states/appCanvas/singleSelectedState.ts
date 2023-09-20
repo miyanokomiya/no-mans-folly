@@ -8,7 +8,6 @@ import {
   handleStateEvent,
   newShapeClipboard,
   startTextEditingIfPossible,
-  translateOnSelection,
 } from "./commons";
 import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
@@ -19,6 +18,7 @@ import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
 import { getOuterRectangle } from "okageo";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -58,7 +58,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       ctx.hideFloatMenu();
     },
     handleEvent: (ctx, event) => {
-      if (!selectedId) return translateOnSelection(ctx);
+      if (!selectedId) return newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
@@ -158,7 +158,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           }
         case "shape-updated": {
           if (event.data.keys.has(selectedId)) {
-            return translateOnSelection(ctx);
+            return newSelectionHubState;
           }
           return;
         }
@@ -169,11 +169,11 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           boundingBox.updateScale(ctx.zoomView(event.data.delta.y));
           return;
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "copy": {

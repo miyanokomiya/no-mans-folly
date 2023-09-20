@@ -8,7 +8,6 @@ import {
   handleStateEvent,
   newShapeClipboard,
   startTextEditingIfPossible,
-  translateOnSelection,
 } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
@@ -20,6 +19,7 @@ import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -50,7 +50,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             return shape.parentId === first;
           });
           ctx.multiSelectShapes(nextSelected);
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
       }
 
@@ -153,7 +153,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           }
         case "shape-updated": {
           if (Object.keys(selectedIdMap).some((id) => event.data.keys.has(id))) {
-            return translateOnSelection(ctx);
+            return newSelectionHubState;
           }
           return;
         }
@@ -165,7 +165,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           boundingBox.updateScale(ctx.getScale());
           return;
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);

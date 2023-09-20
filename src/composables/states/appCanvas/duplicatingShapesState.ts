@@ -12,7 +12,7 @@ import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import * as geometry from "../../../utils/geometry";
-import { translateOnSelection } from "./commons";
+import { newSelectionHubState } from "./selectionHubState";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = 10;
@@ -72,7 +72,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
           const moved = shapes.map((s) => ({ ...s, ...resizeShape(ctx.getShapeStruct, s, affine) }));
           ctx.addShapes(moved);
           ctx.multiSelectShapes(moved.map((s) => s.id));
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "wheel":
           ctx.zoomView(event.data.delta.y);

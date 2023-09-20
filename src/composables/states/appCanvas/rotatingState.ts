@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "./core";
-import { translateOnSelection } from "./commons";
 import { BoundingBox, newBoundingBoxRotating } from "../../boundingBox";
 import { IDENTITY_AFFINE } from "okageo";
 import { resizeShape } from "../../../shapes";
@@ -13,6 +12,7 @@ import {
 import { mergeMap } from "../../../utils/commons";
 import { LineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -68,13 +68,14 @@ export function newRotatingState(option: Option): AppCanvasState {
         }
         case "pointerup": {
           ctx.patchShapes(ctx.getTmpShapeMap());
-          return translateOnSelection(ctx, option.boundingBox.getTransformedBoundingBox(resizingAffine));
+          return () =>
+            newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
         }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         default:
           return;

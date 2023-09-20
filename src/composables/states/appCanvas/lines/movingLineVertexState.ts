@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { handleHistoryEvent, translateOnSelection } from "../commons";
+import { handleHistoryEvent } from "../commons";
 import { LineShape, getLinePath, isLineShape, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
@@ -14,6 +14,7 @@ import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler
 import { filterShapesOverlappingRect } from "../../../../shapes";
 import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
 import { mergeMap } from "../../../../utils/commons";
+import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   lineShape: LineShape;
@@ -81,14 +82,14 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           if (Object.keys(tmpMap).length > 0) {
             ctx.patchShapes(tmpMap);
           }
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "selection": {
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return translateOnSelection(ctx);
+          return newSelectionHubState;
         default:
           return;
       }
