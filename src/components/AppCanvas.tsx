@@ -29,6 +29,7 @@ import { CommandExamPanel } from "./molecules/CommandExamPanel";
 import { rednerRGBA } from "../utils/color";
 import { useSelectedTmpSheet } from "../composables/storeHooks";
 import { newShapeRenderer } from "../composables/shapeRenderer";
+import { getAllBranchIds, getTree } from "../utils/tree";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -141,9 +142,10 @@ export function AppCanvas() {
       clearAllSelected: acctx.shapeStore.clearAllSelected,
       addShapes: acctx.shapeStore.addEntities,
       deleteShapes: (ids: string[]) => {
+        const targetIds = getAllBranchIds(getTree(acctx.shapeStore.getEntities()), ids);
         acctx.shapeStore.transact(() => {
-          acctx.shapeStore.deleteEntities(ids);
-          acctx.documentStore.deleteDocs(ids);
+          acctx.shapeStore.deleteEntities(targetIds);
+          acctx.documentStore.deleteDocs(targetIds);
         });
       },
       patchShapes: acctx.shapeStore.patchEntities,

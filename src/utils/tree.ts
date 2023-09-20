@@ -45,3 +45,16 @@ function walkTreeStep(node: TreeNode, fn: (node: TreeNode) => void) {
   fn(node);
   node.children.forEach((c) => walkTreeStep(c, fn));
 }
+
+export function flatTree(nodes: TreeNode[]): TreeNode[] {
+  return nodes.concat(nodes.flatMap((c) => flatTree(c.children)));
+}
+
+export function getAllBranchIds(allNodes: TreeNode[], targetIds: string[]): string[] {
+  const idSet = new Set(targetIds);
+  const retIdSet = new Set<string>();
+  flatTree(flatTree(allNodes).filter((t) => idSet.has(t.id))).forEach((t) => {
+    retIdSet.add(t.id);
+  });
+  return Array.from(retIdSet);
+}
