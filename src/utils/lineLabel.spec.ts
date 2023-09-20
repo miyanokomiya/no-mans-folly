@@ -115,4 +115,15 @@ describe("attachLabelToLine", () => {
     expect(result2?.vAlign).toBe("bottom");
     expect(result2?.lineAttached).toBeCloseTo(0.3);
   });
+
+  test("should add margin when it's supplied", () => {
+    const line0 = lineStruct.create({ q: { x: 100, y: 0 } });
+    const label0 = textStruct.create({ p: { x: 20, y: 20 }, width: 20, height: 10 });
+    expect(attachLabelToLine(line0, label0, 10)).toEqual({
+      p: { x: 20, y: 10 },
+      hAlign: "center",
+      vAlign: "top",
+      lineAttached: 0.3,
+    });
+  });
 });

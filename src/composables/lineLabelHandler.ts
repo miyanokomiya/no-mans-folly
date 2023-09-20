@@ -37,7 +37,7 @@ export function newLineLabelHandler(option: Option) {
 
       const label = { ...shape, ...patch } as TextShape;
       const line = { ...shapeMap[shape.parentId], ...(ret[shape.parentId] ?? {}) } as LineShape;
-      ret[id] = attachLabelToLine(line, label);
+      ret[id] = attachLabelToLine(line, label, (line.stroke.width ?? 1) / 2 + 6);
     });
 
     return ret;

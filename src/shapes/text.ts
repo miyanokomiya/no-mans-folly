@@ -1,4 +1,4 @@
-import { IVec2, add, getCenter, isSame, rotate, sub } from "okageo";
+import { IVec2, add, getCenter, isSame, sub } from "okageo";
 import { Shape, Size } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
