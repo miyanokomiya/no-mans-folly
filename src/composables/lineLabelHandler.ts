@@ -27,7 +27,7 @@ export function newLineLabelHandler(option: Option) {
       const labels = shapeList.filter((s): s is TextShape => isTextShape(s) && s.parentId === lineId);
       labels.forEach((label) => {
         const origin = getRelativePointOnPath(getLinePath(patchedLine), label.lineAttached ?? 0.5);
-        const labelPatch = patchPosition(label, origin);
+        const labelPatch = patchPosition(label, origin, getLabelMargin(patchedLine));
         if (labelPatch) {
           ret[label.id] = labelPatch;
         }
@@ -40,7 +40,7 @@ export function newLineLabelHandler(option: Option) {
 
       const label = { ...shape, ...patch } as TextShape;
       const line = { ...shapeMap[shape.parentId], ...(ret[shape.parentId] ?? {}) } as LineShape;
-      ret[id] = attachLabelToLine(line, label, (line.stroke.width ?? 1) / 2 + 6);
+      ret[id] = attachLabelToLine(line, label, getLabelMargin(line));
     });
 
     return ret;
@@ -66,4 +66,8 @@ export function renderParentLineRelation(
   renderCtx.beginPath();
   renderCtx.arc(origin.x, origin.y, 3 * ctx.getScale(), 0, Math.PI * 2);
   renderCtx.fill();
+}
+
+function getLabelMargin(line: LineShape): number {
+  return (line.stroke.width ?? 1) / 2 + 6;
 }

@@ -100,4 +100,10 @@ describe("patchPosition", () => {
     expect(result1?.p?.x).toBeCloseTo(20);
     expect(result1?.p?.y).toBeCloseTo(5);
   });
+
+  test("should deal with extra margin", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, width: 100, height: 200 });
+    expect(patchPosition({ ...shape, hAlign: "center" }, { x: 0, y: 0 }, 10)).toEqual({ p: { x: -50, y: 10 } });
+    expect(patchPosition({ ...shape, vAlign: "center" }, { x: 0, y: 0 }, 10)).toEqual({ p: { x: 10, y: -100 } });
+  });
 });

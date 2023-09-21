@@ -1,4 +1,4 @@
-import { IVec2, add, getDistance, getPedal, getRectCenter, getUnit, isOnSeg, isSame, multi } from "okageo";
+import { IVec2, getDistance, getPedal, getRectCenter, isOnSeg } from "okageo";
 import { LineShape, getEdges } from "../shapes/line";
 import { TextShape, patchPosition } from "../shapes/text";
 import { getRotateFn } from "./geometry";
@@ -47,18 +47,7 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
   d += getDistance(edges[closestEdgeIndex][0], closestPedal);
   patch.lineAttached = d / totalD;
 
-  let originP = closestPedal;
-  if (margin > 0) {
-    const v = {
-      x: patch.hAlign !== "center" ? labelCenter.x - closestPedal.x : 0,
-      y: patch.vAlign !== "center" ? labelCenter.y - closestPedal.y : 0,
-    };
-    if (!isSame(v, { x: 0, y: 0 })) {
-      originP = add(closestPedal, multi(getUnit(v), margin));
-    }
-  }
-
-  patch = { ...patch, ...patchPosition({ ...label, ...patch }, rotateFn(originP, true)) };
+  patch = { ...patch, ...patchPosition({ ...label, ...patch }, rotateFn(closestPedal, true), margin) };
 
   const ret = { ...patch };
   if (ret.hAlign === label.hAlign) {

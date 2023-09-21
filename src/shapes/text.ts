@@ -1,4 +1,4 @@
-import { IVec2, add, getCenter, isSame, sub } from "okageo";
+import { IVec2, add, getCenter, getUnit, isSame, isZero, multi, sub } from "okageo";
 import { Shape, Size } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
@@ -96,32 +96,41 @@ export function patchSize(shape: TextShape, size: Size): Partial<TextShape> | un
   return Object.keys(ret).length > 0 ? ret : undefined;
 }
 
-export function patchPosition(shape: TextShape, p: IVec2): Partial<TextShape> | undefined {
+export function patchPosition(shape: TextShape, p: IVec2, margin = 0): Partial<TextShape> | undefined {
   const rectPolygon = struct.getLocalRectPolygon(shape);
   const center = getCenter(rectPolygon[0], rectPolygon[2]);
   const rotateFn = getRotateFn(shape.rotation, center);
 
   let x = shape.p.x;
+  let ux = -1;
   switch (shape.hAlign) {
     case "center":
       x += shape.width / 2;
+      ux = 0;
       break;
     case "right":
       x += shape.width;
+      ux = 1;
       break;
   }
 
   let y = shape.p.y;
+  let uy = -1;
   switch (shape.vAlign) {
     case "center":
       y += shape.height / 2;
+      uy = 0;
       break;
     case "bottom":
       y += shape.height;
+      uy = 1;
       break;
   }
 
-  const rotatedBase = rotateFn({ x, y });
+  const u = { x: ux, y: uy };
+  const m = !isZero(u) ? multi(getUnit(u), margin) : { x: 0, y: 0 };
+
+  const rotatedBase = rotateFn(add({ x, y }, m));
   const diff = sub(shape.p, rotatedBase);
   const ret = add(p, diff);
   return isSame(shape.p, ret) ? undefined : { p: ret };
