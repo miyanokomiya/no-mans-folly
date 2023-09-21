@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
-import { mergeMap } from "../../../../utils/commons";
+import { mapReduce, patchPipe } from "../../../../utils/commons";
 import { LineLabelHandler, newLineLabelHandler, renderParentLineRelation } from "../../../lineLabelHandler";
 import { resizeShape } from "../../../../shapes";
 import { newSelectionHubState } from "../selectionHubState";
@@ -44,15 +44,18 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
-          const translate = d;
-          const affineSrc: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
-          const patch = { [labelShape.id]: resizeShape(ctx.getShapeStruct, labelShape, affineSrc) };
-          const labelPatch = lineLabelHandler.onModified(patch);
-          const mergedPatch = mergeMap(patch, labelPatch);
-          ctx.setTmpShapeMap(mergedPatch);
+          const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
+          const patched = patchPipe(
+            [
+              (src) => mapReduce(src, (s) => resizeShape(ctx.getShapeStruct, s, affineSrc)),
+              (_src, patch) => lineLabelHandler.onModified(patch),
+            ],
+            { [labelShape.id]: labelShape }
+          );
+          ctx.setTmpShapeMap(patched.patch);
 
           // Save final transition as current affine
-          const updated = mergedPatch[labelShape.id];
+          const updated = patched.patch[labelShape.id];
           affine = updated.p
             ? [1, 0, 0, 1, updated.p.x - labelShape.p.x, updated.p.y - labelShape.p.y]
             : IDENTITY_AFFINE;

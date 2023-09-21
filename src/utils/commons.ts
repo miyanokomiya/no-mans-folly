@@ -64,3 +64,26 @@ export function mapFilter<T>(
     return p;
   }, {});
 }
+
+export function mapReduce<T, R, K extends string>(map: { [key in K]?: T }, fn: (t: T, key: K) => R): { [key in K]: R } {
+  return Object.keys(map).reduce<any>((p, c) => {
+    p[c] = fn((map as any)[c], c as K);
+    return p;
+  }, {});
+}
+
+export function patchPipe<T extends { id: string }>(
+  patchFns: Array<
+    (itemMap: { [id: string]: T }, patchMap: { [id: string]: Partial<T> }) => { [id: string]: Partial<T> }
+  >,
+  src: { [id: string]: T }
+): { patch: { [id: string]: Partial<T> }; result: { [id: string]: T } } {
+  let currentResult = src;
+  let currentPatch = {};
+  patchFns.forEach((fn) => {
+    const patch = fn(currentResult, currentPatch);
+    currentPatch = mergeMap(currentPatch, patch);
+    currentResult = mergeMap(currentResult, currentPatch);
+  });
+  return { patch: currentPatch, result: currentResult };
+}
