@@ -163,6 +163,31 @@ export const struct: ShapeStruct<LineShape> = {
 
     return ret;
   },
+  refreshRelation(shape, availableIdSet) {
+    const ret: Partial<LineShape> = {};
+
+    if (shape.pConnection && !availableIdSet.has(shape.pConnection.id)) {
+      ret.pConnection = undefined;
+    }
+
+    if (shape.qConnection && !availableIdSet.has(shape.qConnection.id)) {
+      ret.qConnection = undefined;
+    }
+
+    let bodyChanged = false;
+    const body = shape.body?.map((b) => {
+      if (b.c?.id && !availableIdSet.has(b.c.id)) {
+        bodyChanged = true;
+        return { p: b.p };
+      }
+      return b;
+    });
+    if (bodyChanged) {
+      ret.body = body;
+    }
+
+    return Object.keys(ret).length > 0 ? ret : undefined;
+  },
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {

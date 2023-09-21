@@ -40,7 +40,11 @@ export const struct: ShapeStruct<TextShape> = {
   refreshRelation(shape, availableIdSet) {
     if (!shape.parentId || availableIdSet.has(shape.parentId)) return;
 
-    return { lineAttached: undefined };
+    const ret: Partial<TextShape> = { lineAttached: undefined };
+    if (shape.hAlign && shape.hAlign !== "left") ret.hAlign = undefined;
+    if (shape.vAlign && shape.vAlign !== "top") ret.vAlign = undefined;
+
+    return ret;
   },
   canAttachSmartBranch: false,
 };

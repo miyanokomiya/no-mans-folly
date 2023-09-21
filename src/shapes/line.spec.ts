@@ -82,6 +82,38 @@ describe("struct", () => {
       });
     });
   });
+
+  describe("refreshRelation", () => {
+    test("should patch object to refresh line connection", () => {
+      const shape = struct.create({
+        parentId: "a",
+        pConnection: { id: "c", rate: { x: 1, y: 1 } },
+        qConnection: { id: "d", rate: { x: 1, y: 1 } },
+        body: [
+          { p: { x: 0, y: 0 }, c: { id: "e", rate: { x: 1, y: 1 } } },
+          { p: { x: 0, y: 0 }, c: { id: "f", rate: { x: 1, y: 1 } } },
+        ],
+      });
+      expect(struct.refreshRelation?.(shape, new Set(["c", "d", "e", "f"]))).toEqual(undefined);
+
+      const result0 = struct.refreshRelation?.(shape, new Set([]));
+      expect(result0).toEqual({
+        pConnection: undefined,
+        qConnection: undefined,
+        body: [{ p: { x: 0, y: 0 } }, { p: { x: 0, y: 0 } }],
+      });
+      expect(result0).toHaveProperty("pConnection");
+      expect(result0).toHaveProperty("qConnection");
+
+      const result1 = struct.refreshRelation?.(shape, new Set(["c", "e"]));
+      expect(result1).toEqual({
+        qConnection: undefined,
+        body: [{ p: { x: 0, y: 0 }, c: { id: "e", rate: { x: 1, y: 1 } } }, { p: { x: 0, y: 0 } }],
+      });
+      expect(result1).not.toHaveProperty("pConnection");
+      expect(result1).toHaveProperty("qConnection");
+    });
+  });
 });
 
 describe("getLinePath", () => {
