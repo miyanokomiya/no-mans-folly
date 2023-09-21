@@ -161,6 +161,22 @@ export const struct: ShapeStruct<LineShape> = {
       }
     }
 
+    let bodyChanged = false;
+    const body = shape.body?.map((b) => {
+      if (b.c?.id) {
+        bodyChanged = true;
+        if (oldToNewIdMap[b.c.id]) {
+          return { p: b.p, c: { ...b.c, id: oldToNewIdMap[b.c.id] } };
+        } else {
+          return { p: b.p };
+        }
+      }
+      return b;
+    });
+    if (bodyChanged) {
+      ret.body = body;
+    }
+
     return ret;
   },
   refreshRelation(shape, availableIdSet) {

@@ -187,10 +187,20 @@ export function remapShapeIds(
   });
 
   const immigratedShapes = newShapes.map((s) => {
-    const struct = getStruct(s.type);
-    if (!struct.immigrateShapeIds) return s;
+    let patch: Partial<Shape> = {};
+    if (s.parentId) {
+      if (oldToNewMap[s.parentId]) {
+        patch = { parentId: oldToNewMap[s.parentId] };
+      } else {
+        patch = { parentId: undefined };
+      }
+    }
 
-    const patch = struct.immigrateShapeIds(s, oldToNewMap, removeNotFound);
+    const struct = getStruct(s.type);
+    if (struct.immigrateShapeIds) {
+      patch = { ...patch, ...struct.immigrateShapeIds(s, oldToNewMap, removeNotFound) };
+    }
+
     return { ...s, ...patch };
   });
 

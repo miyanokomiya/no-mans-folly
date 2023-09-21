@@ -23,6 +23,9 @@ export interface ShapeStruct<T extends Shape> {
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
+  /**
+   * Needless to care "parentId" that is immigrated outside this function.
+   */
   immigrateShapeIds?: (shape: T, oldToNewIdMap: { [newId: string]: string }, removeNotFound?: boolean) => Partial<T>;
   /**
    * Needless to care "parentId" that is refreshed outside this function.

@@ -15,6 +15,7 @@ import { newSelectionHubState } from "./selectionHubState";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { toMap } from "../../../utils/commons";
+import { getAllBranchIds, getTree } from "../../../utils/tree";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;
@@ -33,7 +34,6 @@ export function newDuplicatingShapesState(): AppCanvasState {
       ctx.setCursor("grabbing");
 
       const shapeMap = ctx.getShapeMap();
-      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
       const snappableShapes = filterShapesOverlappingRect(
         ctx.getShapeStruct,
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
@@ -44,12 +44,17 @@ export function newDuplicatingShapesState(): AppCanvasState {
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
       });
+
+      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
       movingRect = geometry.getWrapperRect(selectedIds.map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id])));
+
+      // Collect all related shape ids
+      const targetIds = getAllBranchIds(getTree(Object.values(shapeMap)), selectedIds);
 
       const docMap = ctx.getDocumentMap();
       duplicated = duplicateShapes(
-        selectedIds.map((id) => shapeMap[id]),
-        selectedIds.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
+        targetIds.map((id) => shapeMap[id]),
+        targetIds.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
         ctx.generateUuid,
         ctx.createLastIndex(),
         new Set(Object.keys(shapeMap))

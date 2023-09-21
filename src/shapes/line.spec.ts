@@ -71,6 +71,18 @@ describe("struct", () => {
       });
     });
 
+    test("should immigrate body", () => {
+      const shape = struct.create({
+        body: [
+          { p: { x: 0, y: 0 }, c: { id: "x", rate: { x: 0, y: 0 } } },
+          { p: { x: 0, y: 0 }, c: { id: "y", rate: { x: 0, y: 0 } } },
+        ],
+      });
+      expect(struct.immigrateShapeIds?.(shape, { y: "b" })).toEqual({
+        body: [{ p: { x: 0, y: 0 } }, { p: { x: 0, y: 0 }, c: { id: "b", rate: { x: 0, y: 0 } } }],
+      });
+    });
+
     test("should return patched object removing ids that aren't found in the new ids when removeNotFound is true", () => {
       const shape = struct.create({
         pConnection: { id: "x", rate: { x: 0, y: 0 } },

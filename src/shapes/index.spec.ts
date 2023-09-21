@@ -121,6 +121,24 @@ describe("remapShapeIds", () => {
 
     expect((result.shapes[1] as LineShape).pConnection).toBe(undefined);
   });
+
+  test("should remap parent ids", () => {
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", parentId: "unknown" });
+    const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test1",
+      parentId: "test0",
+    });
+    let count = -1;
+    const result = remapShapeIds(getCommonStruct, [shape0, shape1], () => {
+      count++;
+      return `new_${count}`;
+    });
+
+    expect(result.shapes[0].id).toBe("new_0");
+    expect(result.shapes[0].parentId).toBe(undefined);
+    expect(result.shapes[1].id).toBe("new_1");
+    expect(result.shapes[1].parentId).toBe("new_0");
+  });
 });
 
 describe("refreshShapeRelations", () => {

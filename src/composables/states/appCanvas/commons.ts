@@ -19,6 +19,7 @@ import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
 import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
+import { getAllBranchIds, getTree } from "../../../utils/tree";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -146,11 +147,13 @@ const clipboardShapeSerializer = newClipboardSerializer<
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
   return newClipboard(
     () => {
-      const ids = Object.keys(ctx.getSelectedShapeIdMap());
       const shapeMap = ctx.getShapeMap();
+      // Collect all related shape ids
+      const targetIds = getAllBranchIds(getTree(Object.values(shapeMap)), Object.keys(ctx.getSelectedShapeIdMap()));
+
       const docMap = ctx.getDocumentMap();
-      const shapes = ids.map((id) => shapeMap[id]).filter((s) => !!s);
-      const docs: [string, DocOutput][] = ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]);
+      const shapes = targetIds.map((id) => shapeMap[id]).filter((s) => !!s);
+      const docs: [string, DocOutput][] = targetIds.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]);
 
       return {
         "text/plain": clipboardShapeSerializer.serialize({ shapes, docs }),
