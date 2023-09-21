@@ -16,6 +16,7 @@ function getMockCtx() {
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
     }),
+    getDocumentMap: () => ({ a: [{ insert: "text" }] }),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
     setTmpShapeMap: vi.fn(),
@@ -23,6 +24,7 @@ function getMockCtx() {
     multiSelectShapes: vi.fn(),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     generateUuid: () => "duplicated",
+    createLastIndex: () => "aa",
   };
 }
 
@@ -65,11 +67,12 @@ describe("newDuplicatingShapesState", () => {
       const result2 = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
         id: "duplicated",
+        findex: "ab",
         width: 50,
         height: 50,
-        p: { x: 210, y: 10 },
+        p: { x: 190, y: -10 },
       });
-      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [rect]);
+      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [rect], { [rect.id]: [{ insert: "text" }] });
       expect(ctx.multiSelectShapes).toHaveBeenNthCalledWith(1, [rect.id]);
       expect(result2).toEqual(newSelectionHubState);
     });

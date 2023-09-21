@@ -1,11 +1,10 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
 import {
-  cloneShapes,
+  duplicateShapes,
   filterShapesOverlappingRect,
   getSnappingLines,
   getWrapperRect,
-  renderShape,
   resizeShape,
 } from "../../../shapes";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
@@ -13,17 +12,19 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { isLineShape } from "../../../shapes/line";
 import * as geometry from "../../../utils/geometry";
 import { newSelectionHubState } from "./selectionHubState";
+import { DocOutput } from "../../../models/document";
+import { newShapeRenderer } from "../../shapeRenderer";
+import { toMap } from "../../../utils/commons";
 
 // Add extra distance to make duplicated shapes' existence clear.
-const EXTRA_DISTANCE = 10;
+const EXTRA_DISTANCE = -10;
 
-// TODO: Duplicate documents
 export function newDuplicatingShapesState(): AppCanvasState {
-  let shapes: Shape[] = [];
+  let duplicated: { shapes: Shape[]; docMap: { [id: string]: DocOutput } };
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
   let snappingResult: SnappingResult | undefined;
-  let affine: AffineMatrix = [1, 0, 0, 1, EXTRA_DISTANCE, EXTRA_DISTANCE];
+  let tmpShapeMap: { [id: string]: Partial<Shape> } = {};
 
   return {
     getLabel: () => "DuplicatingShapes",
@@ -38,17 +39,22 @@ export function newDuplicatingShapesState(): AppCanvasState {
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
         ctx.getViewRect()
       );
+
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
       });
       movingRect = geometry.getWrapperRect(selectedIds.map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id])));
 
-      shapes = cloneShapes(
-        ctx.getShapeStruct,
+      const docMap = ctx.getDocumentMap();
+      duplicated = duplicateShapes(
         selectedIds.map((id) => shapeMap[id]),
-        ctx.generateUuid
+        selectedIds.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
+        ctx.generateUuid,
+        ctx.createLastIndex(),
+        new Set(Object.keys(shapeMap))
       );
+
       ctx.clearAllSelected();
     },
     onEnd: (ctx) => {
@@ -64,13 +70,17 @@ export function newDuplicatingShapesState(): AppCanvasState {
           );
           snappingResult = shapeSnapping.test(moveRect(movingRect, d));
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
-          affine = [1, 0, 0, 1, translate.x, translate.y];
+          const affine: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
+          tmpShapeMap = {};
+          duplicated.shapes.forEach((s) => {
+            tmpShapeMap[s.id] = resizeShape(ctx.getShapeStruct, s, affine);
+          });
           ctx.setTmpShapeMap({});
           return;
         }
         case "pointerup": {
-          const moved = shapes.map((s) => ({ ...s, ...resizeShape(ctx.getShapeStruct, s, affine) }));
-          ctx.addShapes(moved);
+          const moved = duplicated.shapes.map((s) => ({ ...s, ...(tmpShapeMap[s.id] ?? {}) }));
+          ctx.addShapes(moved, duplicated.docMap);
           ctx.multiSelectShapes(moved.map((s) => s.id));
           return newSelectionHubState;
         }
@@ -82,10 +92,17 @@ export function newDuplicatingShapesState(): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      renderCtx.globalAlpha = 0.5;
-      shapes.forEach((s) => {
-        renderShape(ctx.getShapeStruct, renderCtx, { ...s, ...resizeShape(ctx.getShapeStruct, s, affine) });
+      const duplicatedIds = duplicated.shapes.map((s) => s.id);
+      const duplicatedMap = toMap(duplicated.shapes);
+      const renderer = newShapeRenderer({
+        getShapeIds: () => duplicatedIds,
+        getShapeMap: () => duplicatedMap,
+        getTmpShapeMap: () => tmpShapeMap,
+        getDocumentMap: () => duplicated.docMap,
+        getShapeStruct: ctx.getShapeStruct,
       });
+      renderCtx.globalAlpha = 0.5;
+      renderer.render(renderCtx);
       renderCtx.globalAlpha = 1;
 
       if (snappingResult) {

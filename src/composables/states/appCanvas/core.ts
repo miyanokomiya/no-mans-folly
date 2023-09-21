@@ -14,7 +14,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   selectShape: (id: string, ctrl?: boolean) => void;
   multiSelectShapes: (ids: string[], ctrl?: boolean) => void;
   clearAllSelected: () => void;
-  addShapes: (shapes: Shape[]) => void;
+  addShapes: (shapes: Shape[], docMap?: { [id: string]: DocDelta }) => void;
   deleteShapes: (ids: string[]) => void;
   patchShapes: (val: { [id: string]: Partial<Shape> }) => void;
   getTmpShapeMap: () => { [id: string]: Partial<Shape> };

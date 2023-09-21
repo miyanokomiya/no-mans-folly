@@ -1,15 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
-import { Shape } from "../models";
-import {
-  getCommonStruct,
-  getWrapperRectForShapes,
-  isPointOn,
-  patchShapesOrderToLast,
-  refreshShapeRelations,
-  remapShapeIds,
-  resizeShape,
-} from "../shapes";
+import { duplicateShapes, getCommonStruct, isPointOn } from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import {
@@ -18,11 +9,11 @@ import {
   useGlobalMouseupEffect,
   useGlobalPasteEffect,
 } from "../composables/window";
-import { findBackward, mapDataToObj, remap } from "../utils/commons";
+import { findBackward } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
 import { DocAttrInfo } from "../models/document";
 import { getDocAttributes } from "../utils/textEditor";
-import { AffineMatrix, IVec2, sub } from "okageo";
+import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
 import { CommandExam, ModifierOptions } from "../composables/states/types";
@@ -141,7 +132,16 @@ export function AppCanvas() {
       selectShape: acctx.shapeStore.select,
       multiSelectShapes: acctx.shapeStore.multiSelect,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
-      addShapes: acctx.shapeStore.addEntities,
+      addShapes: (shapes, docMap) => {
+        if (docMap) {
+          acctx.shapeStore.transact(() => {
+            acctx.shapeStore.addEntities(shapes);
+            acctx.documentStore.patchDocs(docMap);
+          });
+        } else {
+          acctx.shapeStore.addEntities(shapes);
+        }
+      },
       deleteShapes: (ids: string[]) => {
         const targetIds = getAllBranchIds(getTree(acctx.shapeStore.getEntities()), ids);
         acctx.shapeStore.transact(() => {
@@ -153,31 +153,22 @@ export function AppCanvas() {
       getTmpShapeMap: acctx.shapeStore.getTmpShapeMap,
       setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
       pasteShapes: (shapes, docs, p) => {
-        const remapInfo = remapShapeIds(getCommonStruct, shapes, generateUuid, true);
-        const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
         const targetP = p ?? viewToCanvas(getMousePoint());
-        const moved = shiftShapesAtTopLeft(remapInfo.shapes, targetP);
-        const patch = patchShapesOrderToLast(
-          moved.map((s) => s.id),
-          acctx.shapeStore.createLastIndex()
+        const availableIdSet = new Set(acctx.shapeStore.getEntities().map((s) => s.id));
+        const result = duplicateShapes(
+          shapes,
+          docs,
+          generateUuid,
+          acctx.shapeStore.createLastIndex(),
+          availableIdSet,
+          targetP
         );
-
-        let result: Shape[] = moved.map((s) => ({ ...s, ...patch[s.id] }));
-
-        const availableIdSet = new Set(
-          acctx.shapeStore
-            .getEntities()
-            .map((s) => s.id)
-            .concat(result.map((s) => s.id))
-        );
-        const refreshed = refreshShapeRelations(getCommonStruct, result, availableIdSet);
-        result = result.map((s) => ({ ...s, ...(refreshed[s.id] ?? {}) }));
 
         acctx.shapeStore.transact(() => {
-          acctx.shapeStore.addEntities(result);
-          acctx.documentStore.patchDocs(remapDocs);
+          acctx.shapeStore.addEntities(result.shapes);
+          acctx.documentStore.patchDocs(result.docMap);
         });
-        acctx.shapeStore.multiSelect(result.map((s) => s.id));
+        acctx.shapeStore.multiSelect(result.shapes.map((s) => s.id));
       },
 
       createFirstIndex: acctx.shapeStore.createFirstIndex,
@@ -493,17 +484,4 @@ export function AppCanvas() {
       {textEditor}
     </>
   );
-}
-
-function shiftShapesAtTopLeft(shapes: Shape[], targetP: IVec2): Shape[] {
-  const rect = getWrapperRectForShapes(getCommonStruct, shapes);
-  const d = sub(targetP, rect);
-
-  const affine: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
-  const moved = shapes.map((s) => {
-    const patch = resizeShape(getCommonStruct, s, affine);
-    return { ...s, ...patch };
-  });
-
-  return moved;
 }

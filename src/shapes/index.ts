@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getOuterRectangle, multiAffines } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getOuterRectangle, multiAffines, sub } from "okageo";
 import { CommonStyle, Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
@@ -8,6 +8,8 @@ import { struct as lineStruct } from "./line";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { TreeNode } from "../utils/tree";
+import { DocOutput } from "../models/document";
+import { mapDataToObj, remap } from "../utils/commons";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -255,4 +257,47 @@ export function filterShapesOverlappingRect(getStruct: GetShapeStruct, shapes: S
 export function canAttachSmartBranch(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.canAttachSmartBranch;
+}
+
+export function duplicateShapes(
+  shapes: Shape[],
+  docs: [id: string, doc: DocOutput][],
+  generateUuid: () => string,
+  lastFIndex: string,
+  availableIdSet: Set<string>,
+  p?: IVec2
+): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
+  const remapInfo = remapShapeIds(getCommonStruct, shapes, generateUuid, true);
+  const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
+  const moved = p ? shiftShapesAtTopLeft(remapInfo.shapes, p) : remapInfo.shapes;
+  const patch = patchShapesOrderToLast(
+    moved.map((s) => s.id),
+    lastFIndex
+  );
+
+  let result: Shape[] = moved.map((s) => ({ ...s, ...patch[s.id] }));
+
+  const nextAvailableIdSet = new Set(availableIdSet);
+  result.forEach((s) => nextAvailableIdSet.add(s.id));
+
+  const refreshed = refreshShapeRelations(getCommonStruct, result, nextAvailableIdSet);
+  result = result.map((s) => ({ ...s, ...(refreshed[s.id] ?? {}) }));
+
+  return {
+    shapes: result,
+    docMap: remapDocs,
+  };
+}
+
+function shiftShapesAtTopLeft(shapes: Shape[], targetP: IVec2): Shape[] {
+  const rect = getWrapperRectForShapes(getCommonStruct, shapes);
+  const d = sub(targetP, rect);
+
+  const affine: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
+  const moved = shapes.map((s) => {
+    const patch = resizeShape(getCommonStruct, s, affine);
+    return { ...s, ...patch };
+  });
+
+  return moved;
 }
