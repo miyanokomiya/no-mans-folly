@@ -6,6 +6,7 @@ import {
   getWrapperRectForShapes,
   isPointOn,
   patchShapesOrderToLast,
+  refreshShapeRelations,
   remapShapeIds,
   resizeShape,
 } from "../shapes";
@@ -160,13 +161,23 @@ export function AppCanvas() {
           moved.map((s) => s.id),
           acctx.shapeStore.createLastIndex()
         );
-        const ordered = moved.map((s) => ({ ...s, ...patch[s.id] }));
+
+        let result: Shape[] = moved.map((s) => ({ ...s, ...patch[s.id] }));
+
+        const availableIdSet = new Set(
+          acctx.shapeStore
+            .getEntities()
+            .map((s) => s.id)
+            .concat(result.map((s) => s.id))
+        );
+        const refreshed = refreshShapeRelations(getCommonStruct, result, availableIdSet);
+        result = result.map((s) => ({ ...s, ...(refreshed[s.id] ?? {}) }));
 
         acctx.shapeStore.transact(() => {
-          acctx.shapeStore.addEntities(ordered);
+          acctx.shapeStore.addEntities(result);
           acctx.documentStore.patchDocs(remapDocs);
         });
-        acctx.shapeStore.multiSelect(ordered.map((s) => s.id));
+        acctx.shapeStore.multiSelect(result.map((s) => s.id));
       },
 
       createFirstIndex: acctx.shapeStore.createFirstIndex,

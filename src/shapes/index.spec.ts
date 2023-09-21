@@ -6,11 +6,13 @@ import {
   getWrapperRect,
   getWrapperRectForShapes,
   isPointOn,
+  refreshShapeRelations,
   remapShapeIds,
   renderShape,
 } from ".";
 import { RectangleShape } from "./rectangle";
 import { LineShape } from "./line";
+import { TextShape } from "./text";
 
 describe("createShape", () => {
   test("should return new shape", () => {
@@ -118,6 +120,22 @@ describe("remapShapeIds", () => {
     );
 
     expect((result.shapes[1] as LineShape).pConnection).toBe(undefined);
+  });
+});
+
+describe("refreshShapeRelations", () => {
+  test("should return patch map to refresh shape relations", () => {
+    const text = createShape<TextShape>(getCommonStruct, "text", { id: "text", parentId: "line", lineAttached: 0.5 });
+
+    const result0 = refreshShapeRelations(getCommonStruct, [text], new Set([]));
+    expect(result0).toEqual({
+      text: { parentId: undefined, lineAttached: undefined },
+    });
+    expect(result0.text).toHaveProperty("parentId");
+    expect(result0.text).toHaveProperty("lineAttached");
+
+    const result1 = refreshShapeRelations(getCommonStruct, [text], new Set(["line"]));
+    expect(result1).toEqual({});
   });
 });
 

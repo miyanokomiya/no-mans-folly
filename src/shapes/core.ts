@@ -24,6 +24,10 @@ export interface ShapeStruct<T extends Shape> {
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
   immigrateShapeIds?: (shape: T, oldToNewIdMap: { [newId: string]: string }, removeNotFound?: boolean) => Partial<T>;
+  /**
+   * Needless to care "parentId" that is refreshed outside this function.
+   */
+  refreshRelation?: (shape: T, availableIdSet: Set<string>) => Partial<T> | undefined;
   canAttachSmartBranch?: boolean;
 }
 

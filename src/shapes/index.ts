@@ -195,6 +195,30 @@ export function remapShapeIds(
   return { shapes: immigratedShapes, newToOldMap, oldToNewMap };
 }
 
+export function refreshShapeRelations(
+  getStruct: GetShapeStruct,
+  shapes: Shape[],
+  availableIdSet: Set<string>
+): { [id: string]: Partial<Shape> } {
+  const ret: { [id: string]: Partial<Shape> } = {};
+
+  shapes.forEach((s) => {
+    if (s.parentId && !availableIdSet.has(s.parentId)) {
+      ret[s.id] = { parentId: undefined };
+    }
+
+    const struct = getStruct(s.type);
+    if (!struct.refreshRelation) return;
+
+    const patch = struct.refreshRelation(s, availableIdSet);
+    if (patch) {
+      ret[s.id] = ret[s.id] ? { ...ret[s.id], ...patch } : patch;
+    }
+  });
+
+  return ret;
+}
+
 export function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {
   const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s));
   return geometry.getWrapperRect(shapeRects);

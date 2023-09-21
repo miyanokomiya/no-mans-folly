@@ -37,6 +37,11 @@ export const struct: ShapeStruct<TextShape> = {
     }
     return ret;
   },
+  refreshRelation(shape, availableIdSet) {
+    if (!shape.parentId || availableIdSet.has(shape.parentId)) return;
+
+    return { lineAttached: undefined };
+  },
   canAttachSmartBranch: false,
 };
 

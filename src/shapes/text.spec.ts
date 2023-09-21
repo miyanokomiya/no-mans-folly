@@ -10,6 +10,17 @@ describe("resize", () => {
   });
 });
 
+describe("refreshRelation", () => {
+  test("should patch object to refresh line connection", () => {
+    const shape = struct.create({ parentId: "a", lineAttached: 0.5 });
+    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual(undefined);
+
+    const result = struct.refreshRelation?.(shape, new Set([]));
+    expect(result).toEqual({ lineAttached: undefined });
+    expect(result).toHaveProperty("lineAttached");
+  });
+});
+
 describe("isTextShape", () => {
   test("should return true if the shale is text shape", () => {
     const shape = struct.create();
