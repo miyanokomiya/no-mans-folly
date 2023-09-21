@@ -308,6 +308,7 @@ export function newBoundingBoxRotating(option: BoundingBoxRotatingOption) {
 
   return { getAffine };
 }
+export type BoundingBoxRotating = ReturnType<typeof newBoundingBoxRotating>;
 
 export function getMovingBoundingBoxPoints(boundingBoxPath: IVec2[], hitResult: HitResult): IVec2[] {
   return hitResult.type === "corner"

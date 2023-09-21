@@ -15,11 +15,11 @@ import { TextShape } from "../../../../shapes/text";
 import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
-import { newRotatingState } from "../rotatingState";
 import { getLocalRectPolygon } from "../../../../shapes";
 import { newMovingLineLabelState } from "./movingLineLabelState";
 import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
+import { newRotatingLineLabelState } from "./rotatingLineLabelState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -67,7 +67,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
                   case "segment":
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
-                    return () => newRotatingState({ boundingBox });
+                    return () => newRotatingLineLabelState({ boundingBox });
                 }
               }
 
@@ -81,7 +81,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
                   ctx.selectShape(shapeAtPointer.id);
                   return newDuplicatingShapesState;
                 } else if (shapeAtPointer.id === shape.id) {
-                  return () => newMovingLineLabelState({ id: shape.id });
+                  return () => newMovingLineLabelState({ boundingBox });
                 } else {
                   ctx.selectShape(shapeAtPointer.id);
                   return newSingleSelectedByPointerOnState;

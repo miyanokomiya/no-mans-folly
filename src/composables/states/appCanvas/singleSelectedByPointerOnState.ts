@@ -23,9 +23,8 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
           if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;
 
           const shape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""];
-
-          if (isLineLabelShape(shape)) {
-            return () => newMovingLineLabelState({ id: shape.id });
+          if (!shape) {
+            return newSelectionHubState;
           }
 
           const boundingBox = newBoundingBox({
@@ -33,6 +32,11 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
             styleScheme: ctx.getStyleScheme(),
             scale: ctx.getScale(),
           });
+
+          if (isLineLabelShape(shape)) {
+            return () => newMovingLineLabelState({ boundingBox });
+          }
+
           return () => newMovingShapeState({ boundingBox });
         }
         case "pointerup":
