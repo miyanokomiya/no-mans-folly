@@ -19,11 +19,12 @@ export function newLineLabelHandler(option: Option) {
     const updatedEntries = Object.entries(updatedMap);
 
     const ret: { [id: string]: Partial<Shape> } = {};
-    updatedEntries.forEach(([lineId, linePatch]) => {
+
+    updatedEntries.forEach(([lineId, patch]) => {
       const src = shapeMap[lineId];
       if (!isLineShape(src)) return;
 
-      const patchedLine: LineShape = { ...src, ...linePatch };
+      const patchedLine: LineShape = { ...src, ...patch };
       const labels = shapeList.filter((s): s is TextShape => isTextShape(s) && s.parentId === lineId);
       labels.forEach((label) => {
         const origin = getRelativePointOnPath(getLinePath(patchedLine), label.lineAttached ?? 0.5);
@@ -34,13 +35,13 @@ export function newLineLabelHandler(option: Option) {
       });
     });
 
-    updatedEntries.forEach(([id, patch]) => {
-      const shape = shapeMap[id];
+    updatedEntries.forEach(([labelId, patch]) => {
+      const shape = shapeMap[labelId];
       if (!isTextShape(shape) || !shape.parentId) return;
 
       const label = { ...shape, ...patch } as TextShape;
-      const line = { ...shapeMap[shape.parentId], ...(ret[shape.parentId] ?? {}) } as LineShape;
-      ret[id] = attachLabelToLine(line, label, getLabelMargin(line));
+      const line = { ...shapeMap[shape.parentId], ...(updatedMap[shape.parentId] ?? {}) } as LineShape;
+      ret[labelId] = attachLabelToLine(line, label, getLabelMargin(line));
     });
 
     return ret;
