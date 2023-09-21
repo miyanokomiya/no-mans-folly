@@ -4,11 +4,13 @@ import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { newSelectionHubState } from "./selectionHubState";
+import { TextShape } from "../../../shapes/text";
 
 function getMockCtx() {
   return {
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+      label: createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
     }),
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
@@ -44,10 +46,22 @@ describe("newSingleSelectedByPointerOnState", () => {
       }) as any;
       expect(result?.().getLabel()).toBe("MovingShape");
     });
+
+    test("should move to MovingLineLabel state when a line label is selected", () => {
+      const ctx = getMockCtx();
+      ctx.getLastSelectedShapeId = vi.fn().mockReturnValue("label");
+      ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ label: true });
+      const target = newSingleSelectedByPointerOnState();
+      const result = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      }) as any;
+      expect(result?.().getLabel()).toBe("MovingLineLabel");
+    });
   });
 
   describe("handle pointerup", () => {
-    test("should move to SingleSelected state", () => {
+    test("should move to SelectionHub state", () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedByPointerOnState();
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
@@ -56,7 +70,7 @@ describe("newSingleSelectedByPointerOnState", () => {
   });
 
   describe("handle selection", () => {
-    test("should move to next state", () => {
+    test("should move to SelectionHub state", () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedByPointerOnState();
       target.onStart?.(ctx as any);

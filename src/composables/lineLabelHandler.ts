@@ -1,8 +1,11 @@
 import { Shape } from "../models";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
 import { TextShape, isTextShape, patchPosition } from "../shapes/text";
+import { applyFillStyle } from "../utils/fillStyle";
 import { getRelativePointOnPath } from "../utils/geometry";
 import { attachLabelToLine } from "../utils/lineLabel";
+import { applyPath } from "../utils/renderer";
+import { applyStrokeStyle } from "../utils/strokeStyle";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 
 interface Option {
@@ -46,3 +49,21 @@ export function newLineLabelHandler(option: Option) {
   return { onModified };
 }
 export type LineLabelHandler = ReturnType<typeof newLineLabelHandler>;
+
+export function renderParentLineRelation(
+  ctx: Pick<AppCanvasStateContext, "getStyleScheme" | "getScale">,
+  renderCtx: CanvasRenderingContext2D,
+  textShape: TextShape,
+  parentLineShape: LineShape
+) {
+  const path = getLinePath(parentLineShape);
+  applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: 2 * ctx.getScale() });
+  renderCtx.beginPath();
+  applyPath(renderCtx, path);
+  renderCtx.stroke();
+  const origin = getRelativePointOnPath(path, textShape.lineAttached ?? 0);
+  applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
+  renderCtx.beginPath();
+  renderCtx.arc(origin.x, origin.y, 3 * ctx.getScale(), 0, Math.PI * 2);
+  renderCtx.fill();
+}

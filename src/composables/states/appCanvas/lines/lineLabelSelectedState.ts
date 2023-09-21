@@ -18,6 +18,8 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { getLocalRectPolygon } from "../../../../shapes";
 import { newMovingLineLabelState } from "./movingLineLabelState";
+import { LineShape } from "../../../../shapes/line";
+import { renderParentLineRelation } from "../../../lineLabelHandler";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -25,14 +27,19 @@ interface Option {
 
 export function newLineLabelSelectedState(option?: Option): AppCanvasState {
   let shape: TextShape;
+  let parentLineShape: LineShape;
   let boundingBox: BoundingBox;
 
   return {
     getLabel: () => "LineLabelSelected",
     onStart: (ctx) => {
+      const shapeMap = ctx.getShapeMap();
       const selectedId = ctx.getLastSelectedShapeId();
-      shape = ctx.getShapeMap()[selectedId ?? ""] as TextShape;
+      shape = shapeMap[selectedId ?? ""] as TextShape;
       if (!shape) return newSelectionHubState;
+
+      parentLineShape = shapeMap[shape.parentId ?? ""] as LineShape;
+      if (!parentLineShape) return newSelectionHubState;
 
       ctx.showFloatMenu();
 
@@ -155,7 +162,8 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           return;
       }
     },
-    render: (_ctx, renderCtx) => {
+    render: (ctx, renderCtx) => {
+      renderParentLineRelation(ctx, renderCtx, shape, parentLineShape);
       boundingBox.render(renderCtx);
     },
   };

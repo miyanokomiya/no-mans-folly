@@ -4,6 +4,8 @@ import { getDistance } from "okageo";
 import { newBoundingBox } from "../../boundingBox";
 import { getLocalRectPolygon } from "../../../shapes";
 import { newSelectionHubState } from "./selectionHubState";
+import { isLineLabelShape } from "../../../shapes/text";
+import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 
 export function newSingleSelectedByPointerOnState(): AppCanvasState {
   return {
@@ -21,6 +23,10 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
           if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;
 
           const shape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""];
+
+          if (isLineLabelShape(shape)) {
+            return () => newMovingLineLabelState({ id: shape.id });
+          }
 
           const boundingBox = newBoundingBox({
             path: getLocalRectPolygon(ctx.getShapeStruct, shape),

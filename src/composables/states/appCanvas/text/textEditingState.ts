@@ -12,7 +12,7 @@ import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape, patchSize } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
 import { calcOriginalDocSize } from "../../../../utils/textEditor";
-import {newSelectionHubState} from "../selectionHubState";
+import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   id: string;
