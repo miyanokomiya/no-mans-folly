@@ -37,6 +37,9 @@ function getChildNodes<T extends TreeFlatNode>(parentMap: { [id: string]: T[] },
   );
 }
 
+/**
+ * Depth first ordered
+ */
 export function walkTree(treeNodes: TreeNode[], fn: (node: TreeNode) => void) {
   treeNodes.forEach((n) => walkTreeStep(n, fn));
 }
@@ -46,10 +49,25 @@ function walkTreeStep(node: TreeNode, fn: (node: TreeNode) => void) {
   node.children.forEach((c) => walkTreeStep(c, fn));
 }
 
+/**
+ * Depth first ordered
+ */
 export function flatTree(nodes: TreeNode[]): TreeNode[] {
-  return nodes.concat(nodes.flatMap((c) => flatTree(c.children)));
+  const ret = new Set<TreeNode>();
+  _flatTreeByDepth(nodes, ret);
+  return Array.from(ret);
 }
 
+function _flatTreeByDepth(nodes: TreeNode[], ret: Set<TreeNode>) {
+  nodes.forEach((n) => {
+    ret.add(n);
+    _flatTreeByDepth(n.children, ret);
+  });
+}
+
+/**
+ * Depth first ordered
+ */
 export function getAllBranchIds(allNodes: TreeNode[], targetIds: string[]): string[] {
   const idSet = new Set(targetIds);
   const retIdSet = new Set<string>();

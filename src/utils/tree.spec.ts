@@ -75,23 +75,24 @@ describe("walkTree", () => {
 describe("flatTree", () => {
   test("should flat all nodes", () => {
     const tree = target.getTree([
-      { id: "a", parentId: "" },
       { id: "aa", parentId: "a" },
-      { id: "aaa", parentId: "aa" },
+      { id: "a", parentId: "" },
       { id: "b", parentId: "" },
+      { id: "aaa", parentId: "aa" },
     ]);
-    expect(target.flatTree(tree).map((n) => n.id)).toEqual(["a", "b", "aa", "aaa"]);
+    expect(target.flatTree(tree).map((n) => n.id)).toEqual(["a", "aa", "aaa", "b"]);
   });
 });
 
 describe("getAllBranchIds", () => {
   test("should get all branch ids: targets and all nodes under them", () => {
     const tree = target.getTree([
+      { id: "aaa", parentId: "aa" },
       { id: "a", parentId: "" },
       { id: "aa", parentId: "a" },
-      { id: "aaa", parentId: "aa" },
+      { id: "bb", parentId: "b" },
       { id: "b", parentId: "" },
     ]);
-    expect(target.getAllBranchIds(tree, ["a"])).toEqual(["a", "aa", "aaa"]);
+    expect(target.getAllBranchIds(tree, ["a", "b"])).toEqual(["a", "aa", "aaa", "b", "bb"]);
   });
 });
