@@ -77,7 +77,7 @@ export interface TextStyleEvent extends ModeStateEventBase {
   };
 }
 
-interface ContextMenuItemEvent extends ModeStateEventBase {
+export interface ContextMenuItemEvent extends ModeStateEventBase {
   type: "contextmenu-item";
   data: {
     key: string;

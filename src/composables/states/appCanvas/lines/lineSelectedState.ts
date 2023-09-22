@@ -1,12 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import {
-  copyShapesAsPNG,
-  handleCommonShortcut,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
-} from "../commons";
+import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, newShapeClipboard } from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
@@ -21,7 +15,7 @@ import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -162,13 +156,7 @@ export function newLineSelectedState(): AppCanvasState {
           });
           return;
         case "contextmenu-item": {
-          ctx.setContextMenuList();
-          switch (event.data.key) {
-            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
-              copyShapesAsPNG(ctx);
-              return;
-          }
-          return;
+          return handleContextItemEvent(ctx, event);
         }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);

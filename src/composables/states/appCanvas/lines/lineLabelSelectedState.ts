@@ -1,7 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
-  copyShapesAsPNG,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleHistoryEvent,
@@ -21,7 +20,7 @@ import { newMovingLineLabelState } from "./movingLineLabelState";
 import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
-import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -167,13 +166,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           });
           return;
         case "contextmenu-item": {
-          ctx.setContextMenuList();
-          switch (event.data.key) {
-            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
-              copyShapesAsPNG(ctx);
-              return;
-          }
-          return;
+          return handleContextItemEvent(ctx, event);
         }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);

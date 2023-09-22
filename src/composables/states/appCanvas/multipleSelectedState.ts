@@ -2,7 +2,6 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import {
-  copyShapesAsPNG,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleHistoryEvent,
@@ -21,7 +20,7 @@ import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -190,13 +189,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           });
           return;
         case "contextmenu-item": {
-          ctx.setContextMenuList();
-          switch (event.data.key) {
-            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
-              copyShapesAsPNG(ctx);
-              return;
-          }
-          return;
+          return handleContextItemEvent(ctx, event);
         }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);

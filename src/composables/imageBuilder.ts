@@ -26,7 +26,11 @@ export function newImageBuilder({ render, range }: Option) {
     });
   }
 
-  return { toBlob };
+  function toDataURL(): string {
+    return canvas.toDataURL("image/png");
+  }
+
+  return { toBlob, toDataURL };
 }
 export type ImageBuilder = ReturnType<typeof newImageBuilder>;
 

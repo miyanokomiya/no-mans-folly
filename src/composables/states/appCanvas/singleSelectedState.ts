@@ -2,7 +2,6 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { canAttachSmartBranch, getLocalRectPolygon } from "../../../shapes";
 import {
-  copyShapesAsPNG,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleHistoryEvent,
@@ -20,7 +19,7 @@ import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from 
 import { getOuterRectangle } from "okageo";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -195,13 +194,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           });
           return;
         case "contextmenu-item": {
-          ctx.setContextMenuList();
-          switch (event.data.key) {
-            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
-              copyShapesAsPNG(ctx);
-              return;
-          }
-          return;
+          return handleContextItemEvent(ctx, event);
         }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);
