@@ -28,10 +28,13 @@ export type MouseOptions = {
 
 export interface ContextMenuItem {
   label: string;
-  key?: string;
-  exec?: () => void;
-  data?: { [key: string]: string };
+  key: string;
   children?: ContextMenuItem[];
 }
 
 export type CommandExam = { command?: string; title: string };
+
+export type ToastMessage = {
+  text: string;
+  type: "info" | "warn" | "error";
+};
