@@ -97,6 +97,13 @@ export function newLineSelectedState(): AppCanvasState {
             }
             case 1:
               return { type: "stack-restart", getState: newPanningState };
+            case 2: {
+              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              if (!shapeAtPointer || shapeAtPointer.id === lineShape.id) return;
+
+              ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
+              return;
+            }
             default:
               return;
           }

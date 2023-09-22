@@ -34,6 +34,13 @@ const state: AppCanvasState = {
           }
           case 1:
             return newPanningState;
+          case 2: {
+            const shape = ctx.getShapeAt(event.data.point);
+            if (!shape) return;
+
+            ctx.selectShape(shape.id);
+            return newSelectionHubState;
+          }
           default:
             return;
         }
