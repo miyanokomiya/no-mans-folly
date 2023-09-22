@@ -429,7 +429,7 @@ export function AppCanvas() {
       e.preventDefault();
       smctx.stateMachine.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(getMousePoint()) } });
     },
-    [smctx]
+    [smctx, getMousePoint, viewToCanvas]
   );
 
   const onClickContextMenuItem = useCallback(
