@@ -218,7 +218,7 @@ export async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void>
     getShapeStruct: ctx.getShapeStruct,
   });
 
-  const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes);
+  const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes, true);
   const builder = newImageBuilder({ render: renderer.render, range });
   try {
     const blob = await builder.toBlob();

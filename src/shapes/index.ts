@@ -42,9 +42,9 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeMap, treeNode);
 }
 
-export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape): IRectangle {
+export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape, includeBounds?: boolean): IRectangle {
   const struct = getStruct(shape.type);
-  return struct.getWrapperRect(shape);
+  return struct.getWrapperRect(shape, includeBounds);
 }
 
 export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape): IVec2[] {
@@ -231,8 +231,12 @@ export function refreshShapeRelations(
   return ret;
 }
 
-export function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {
-  const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s));
+export function getWrapperRectForShapes(
+  getStruct: GetShapeStruct,
+  shapes: Shape[],
+  includeBounds?: boolean
+): IRectangle {
+  const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s, includeBounds));
   return geometry.getWrapperRect(shapeRects);
 }
 

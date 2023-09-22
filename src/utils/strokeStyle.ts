@@ -14,8 +14,13 @@ export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
 
 export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeStyle) {
   ctx.strokeStyle = rednerRGBA(stroke.color);
-  ctx.lineWidth = stroke.width ?? 1;
+  ctx.lineWidth = getStrokeWidth(stroke);
   ctx.setLineDash([]);
   ctx.lineCap = "butt";
   ctx.lineJoin = "miter";
+}
+
+export function getStrokeWidth(stroke: StrokeStyle): number {
+  if (stroke.disabled) return 0;
+  return stroke.width ?? 1;
 }

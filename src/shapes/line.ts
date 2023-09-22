@@ -2,7 +2,7 @@ import { AffineMatrix, IVec2, applyAffine, getOuterRectangle, getRadian, isSame,
 import { ConnectionPoint, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, renderLineHead } from "./lineHeads";
 import { applyPath } from "../utils/renderer";
@@ -120,8 +120,13 @@ export const struct: ShapeStruct<LineShape> = {
       renderLineHead(ctx, shape.qHead!, qAffine, ctx.lineWidth);
     }
   },
-  getWrapperRect(shape) {
-    return getOuterRectangle([getLinePath(shape)]);
+  getWrapperRect(shape, includeBounds) {
+    let rect = getOuterRectangle([getLinePath(shape)]);
+    if (includeBounds) {
+      // FIXME: This expanding isn't perfect nor deals with heads.
+      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
+    }
+    return rect;
   },
   getLocalRectPolygon(shape) {
     return getRectPoints(getOuterRectangle([getLinePath(shape)]));

@@ -13,6 +13,7 @@ import {
 import { RectangleShape } from "./rectangle";
 import { LineShape } from "./line";
 import { TextShape } from "./text";
+import { createStrokeStyle } from "../utils/strokeStyle";
 
 describe("createShape", () => {
   test("should return new shape", () => {
@@ -43,6 +44,16 @@ describe("getRect", () => {
   test("should return rectangle", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
     expect(getWrapperRect(getCommonStruct, shape)).toEqual({ x: 0, y: 0, width: 10, height: 20 });
+  });
+
+  test("should include bounds when the flag is supplied", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test",
+      width: 10,
+      height: 20,
+      stroke: createStrokeStyle({ width: 100 }),
+    });
+    expect(getWrapperRect(getCommonStruct, shape, true)).toEqual({ x: -50, y: -50, width: 110, height: 120 });
   });
 });
 

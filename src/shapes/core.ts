@@ -13,7 +13,7 @@ export interface ShapeStruct<T extends Shape> {
    * "shapeMap" and "treeNode" are used for such purpose.
    */
   render: (ctx: CanvasRenderingContext2D, shape: T, shapeMap: { [id: string]: Shape }, treeNode?: TreeNode) => void;
-  getWrapperRect: (shape: T) => IRectangle;
+  getWrapperRect: (shape: T, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle | undefined;
   isPointOn: (shape: T, p: IVec2) => boolean;

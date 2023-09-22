@@ -2,6 +2,7 @@ import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rot
 import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
+  expandRect,
   getClosestOutlineOnEllipse,
   getCrossLineAndEllipseRotated,
   getRectPoints,
@@ -10,7 +11,7 @@ import {
   isPointOnEllipseRotated,
   sortPointFrom,
 } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 
 export type EllipseShape = Shape &
@@ -43,16 +44,17 @@ export const struct: ShapeStruct<EllipseShape> = {
     ctx.fill();
     ctx.stroke();
   },
-  getWrapperRect(shape) {
-    return getRotatedWrapperRect(
-      {
-        x: shape.p.x,
-        y: shape.p.y,
-        width: 2 * shape.rx,
-        height: 2 * shape.ry,
-      },
-      shape.rotation
-    );
+  getWrapperRect(shape, includeBounds) {
+    let rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    if (includeBounds) {
+      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
+    }
+    return getRotatedWrapperRect(rect, shape.rotation);
   },
   getLocalRectPolygon,
   getTextRangeRect(shape) {

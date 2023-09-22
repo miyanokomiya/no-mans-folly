@@ -20,8 +20,9 @@ import {
   getCrossSegAndSeg,
   ISegment,
   sortPointFrom,
+  expandRect,
 } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 
 export type RectangleShape = Shape &
@@ -60,11 +61,12 @@ export const struct: ShapeStruct<RectangleShape> = {
       ctx.stroke();
     }
   },
-  getWrapperRect(shape) {
-    return getRotatedWrapperRect(
-      { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
-      shape.rotation
-    );
+  getWrapperRect(shape, includeBounds) {
+    let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    if (includeBounds) {
+      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
+    }
+    return getRotatedWrapperRect(rect, shape.rotation);
   },
   getLocalRectPolygon,
   getTextRangeRect(shape) {
