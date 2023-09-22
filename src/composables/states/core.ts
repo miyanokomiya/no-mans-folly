@@ -237,7 +237,7 @@ export interface ChangeStateEvent extends ModeStateEventBase {
 
 export interface ContextMenuEvent extends ModeStateEventBase {
   type: "contextmenu";
-  data: { key: string } & { [key: string]: string };
+  data: { point: IVec2 };
 }
 
 export interface CopyEvent extends ModeStateEventBase {

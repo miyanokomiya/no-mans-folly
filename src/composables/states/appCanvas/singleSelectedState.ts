@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { canAttachSmartBranch, getLocalRectPolygon } from "../../../shapes";
 import {
+  copyShapesAsPNG,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleHistoryEvent,
@@ -19,6 +20,7 @@ import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from 
 import { getOuterRectangle } from "okageo";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
+import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -56,12 +58,15 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
+      ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
       if (!selectedId) return newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
+          ctx.setContextMenuList();
+
           switch (event.data.options.button) {
             case 0: {
               const hitResult = boundingBox.hitTest(event.data.point);
@@ -176,6 +181,21 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
           return newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+        case "contextmenu":
+          ctx.setContextMenuList({
+            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            point: event.data.point,
+          });
+          return;
+        case "contextmenu-item": {
+          ctx.setContextMenuList();
+          switch (event.data.key) {
+            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
+              copyShapesAsPNG(ctx);
+              return;
+          }
+          return;
+        }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onCopy(event.nativeEvent);

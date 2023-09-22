@@ -1,6 +1,12 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, newShapeClipboard } from "../commons";
+import {
+  copyShapesAsPNG,
+  handleCommonShortcut,
+  handleHistoryEvent,
+  handleStateEvent,
+  newShapeClipboard,
+} from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
@@ -15,6 +21,7 @@ import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -32,12 +39,15 @@ export function newLineSelectedState(): AppCanvasState {
       ctx.hideFloatMenu();
       ctx.setCursor();
       ctx.setCommandExams();
+      ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
       if (!lineShape) return newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
+          ctx.setContextMenuList();
+
           switch (event.data.options.button) {
             case 0: {
               const hitResult = lineBounding.hitTest(event.data.point);
@@ -138,6 +148,21 @@ export function newLineSelectedState(): AppCanvasState {
             default:
               return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
           }
+        case "contextmenu":
+          ctx.setContextMenuList({
+            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            point: event.data.point,
+          });
+          return;
+        case "contextmenu-item": {
+          ctx.setContextMenuList();
+          switch (event.data.key) {
+            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
+              copyShapesAsPNG(ctx);
+              return;
+          }
+          return;
+        }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onCopy(event.nativeEvent);

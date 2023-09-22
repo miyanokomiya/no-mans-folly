@@ -10,7 +10,7 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
-import { canHaveText, getWrapperRect } from "../../../shapes";
+import { canHaveText, getWrapperRect, getWrapperRectForShapes } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2 } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
@@ -20,6 +20,9 @@ import { newTextReadyState } from "./text/textReadyState";
 import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
+import { newShapeRenderer } from "../../shapeRenderer";
+import { newImageBuilder } from "../../imageBuilder";
+import { toMap } from "../../../utils/commons";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -199,4 +202,37 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
       onPaste?.([{ insert: text }]);
     }
   );
+}
+
+export async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
+  const shapeMap = ctx.getShapeMap();
+  const selected = ctx.getSelectedShapeIdMap();
+  const targetIds = getAllBranchIds(getTree(ctx.getShapes()), Object.keys(selected));
+  const targetShapes = targetIds.map((id) => shapeMap[id]);
+
+  const renderer = newShapeRenderer({
+    getShapeIds: () => targetIds,
+    getShapeMap: () => toMap(targetShapes),
+    getTmpShapeMap: () => ({}),
+    getDocumentMap: ctx.getDocumentMap,
+    getShapeStruct: ctx.getShapeStruct,
+  });
+
+  const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes);
+  const builder = newImageBuilder({ render: renderer.render, range });
+  try {
+    const blob = await builder.toBlob();
+    const item = new ClipboardItem({ "image/png": blob });
+    navigator.clipboard.write([item]);
+    ctx.showToastMessage({
+      text: "Copied to clipboard",
+      type: "info",
+    });
+  } catch (e) {
+    ctx.showToastMessage({
+      text: "Failed to create image",
+      type: "error",
+    });
+    console.error(e);
+  }
 }

@@ -7,6 +7,7 @@ import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models
 import { CursorPositionInfo } from "../../../stores/documents";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
+  getShapes: () => Shape[];
   getShapeMap: () => { [id: string]: Shape };
   getSelectedShapeIdMap: () => { [id: string]: true };
   getLastSelectedShapeId: () => string | undefined;
@@ -44,7 +45,8 @@ export type AppCanvasEvent =
   | ChangeSelectionEvent
   | UpdateShapeEvent
   | TextInputEvent
-  | TextStyleEvent;
+  | TextStyleEvent
+  | ContextMenuItemEvent;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";
@@ -72,5 +74,12 @@ export interface TextStyleEvent extends ModeStateEventBase {
     value: DocAttributes;
     block?: boolean;
     doc?: boolean;
+  };
+}
+
+interface ContextMenuItemEvent extends ModeStateEventBase {
+  type: "contextmenu-item";
+  data: {
+    key: string;
   };
 }

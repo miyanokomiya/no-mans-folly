@@ -77,12 +77,14 @@ export function createInitialAppCanvasStateContext(arg: {
     hideFloatMenu() {},
     setContextMenuList() {},
     setCommandExams() {},
+    showToastMessage() {},
     setCursor() {},
 
     undo() {},
     redo() {},
     setCaptureTimeout() {},
 
+    getShapes: () => [],
     getShapeMap: () => ({}),
     getSelectedShapeIdMap: () => ({}),
     getLastSelectedShapeId: () => undefined,

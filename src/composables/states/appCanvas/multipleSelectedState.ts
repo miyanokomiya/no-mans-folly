@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import {
+  copyShapesAsPNG,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleHistoryEvent,
@@ -20,6 +21,7 @@ import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
+import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -32,6 +34,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "MultipleSelected",
     onStart: (ctx) => {
+      ctx.showFloatMenu();
+
       selectedIdMap = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
 
@@ -54,8 +58,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         }
       }
 
-      ctx.showFloatMenu();
-
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
@@ -72,12 +74,15 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
+      ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
       if (!selectedIdMap) return;
 
       switch (event.type) {
         case "pointerdown":
+          ctx.setContextMenuList();
+
           switch (event.data.options.button) {
             case 0: {
               const hitResult = boundingBox.hitTest(event.data.point);
@@ -172,6 +177,21 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           return newMultipleSelectedState;
         case "state":
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+        case "contextmenu":
+          ctx.setContextMenuList({
+            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            point: event.data.point,
+          });
+          return;
+        case "contextmenu-item": {
+          ctx.setContextMenuList();
+          switch (event.data.key) {
+            case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
+              copyShapesAsPNG(ctx);
+              return;
+          }
+          return;
+        }
         case "copy": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onCopy(event.nativeEvent);

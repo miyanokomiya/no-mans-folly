@@ -1,6 +1,6 @@
 import { IVec2, IRectangle } from "okageo";
 import type { ModeStateBase, ModeStateContextBase, ModeStateEvent, ModeStateEventBase } from "./core";
-import type { CommandExam, ContextMenuItem, EditMovement } from "./types";
+import type { CommandExam, ContextMenuItem, EditMovement, ToastMessage } from "./types";
 import { StyleScheme } from "../../models";
 
 export interface CanvasStateContext extends ModeStateContextBase {
@@ -22,6 +22,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   hideFloatMenu: () => void;
   setContextMenuList: (val?: { items: ContextMenuItem[]; point: IVec2 }) => void;
   setCommandExams: (exams?: CommandExam[]) => void;
+  showToastMessage: (val: ToastMessage) => void;
   setCursor: (val?: string) => void;
 
   undo: () => void;

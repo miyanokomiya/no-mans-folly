@@ -24,6 +24,7 @@ function getMockCtx() {
     getTimestamp: vi.fn().mockReturnValue(1000),
     showFloatMenu: vi.fn(),
     hideFloatMenu: vi.fn(),
+    setContextMenuList: vi.fn(),
   };
 }
 

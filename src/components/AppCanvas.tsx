@@ -16,12 +16,15 @@ import { getDocAttributes } from "../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
-import { CommandExam, ModifierOptions } from "../composables/states/types";
+import { CommandExam, ContextMenuItem, ModifierOptions } from "../composables/states/types";
 import { CommandExamPanel } from "./molecules/CommandExamPanel";
 import { rednerRGBA } from "../utils/color";
 import { useSelectedTmpSheet } from "../composables/storeHooks";
 import { newShapeRenderer } from "../composables/shapeRenderer";
 import { getAllBranchIds, getTree } from "../utils/tree";
+import { ContextMenu } from "./ContextMenu";
+import { ToastMessages } from "./ToastMessages";
+import { useToastMessages } from "../composables/toastMessage";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -34,6 +37,8 @@ export function AppCanvas() {
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
   const [currentDocAttrInfo, setCurrentDocAttrInfo] = useState<DocAttrInfo>({});
   const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
+  const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
+  const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; point: IVec2 } | undefined>();
 
   useEffect(() => {
     return acctx.sheetStore.watchSelected(() => {
@@ -115,14 +120,22 @@ export function AppCanvas() {
       toView: canvasToView,
       showFloatMenu: () => setFloatMenuAvailable(true),
       hideFloatMenu: () => setFloatMenuAvailable(false),
-      setContextMenuList() {},
+      setContextMenuList(val) {
+        if (val) {
+          setContextMenu({ items: val.items, point: canvasToView(val.point) });
+        } else {
+          setContextMenu(undefined);
+        }
+      },
       setCommandExams: (val) => setCommandExams(val ?? []),
+      showToastMessage: pushToastMessage,
       setCursor,
 
       undo: acctx.undoManager.undo,
       redo: acctx.undoManager.redo,
       setCaptureTimeout: acctx.undoManager.setCaptureTimeout,
 
+      getShapes: acctx.shapeStore.getEntities,
       getShapeMap: acctx.shapeStore.getEntityMap,
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
@@ -411,6 +424,21 @@ export function AppCanvas() {
     [smctx]
   );
 
+  const onContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      smctx.stateMachine.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(getMousePoint()) } });
+    },
+    [smctx]
+  );
+
+  const onClickContextMenuItem = useCallback(
+    (key: string) => {
+      smctx.stateMachine.handleEvent({ type: "contextmenu-item", data: { key } });
+    },
+    [smctx]
+  );
+
   const onTextInput = useCallback(
     (val: string, composition = false) => {
       smctx.stateMachine.handleEvent({
@@ -472,6 +500,7 @@ export function AppCanvas() {
         onWheel={onWheel}
         onFocus={onFocus}
         onBlur={onBlur}
+        onContextMenu={onContextMenu}
         tabIndex={-1}
       >
         <canvas ref={canvasRef} {...canvasAttrs}></canvas>
@@ -482,6 +511,10 @@ export function AppCanvas() {
       </div>
       {floatMenu}
       {textEditor}
+      {contextMenu ? (
+        <ContextMenu items={contextMenu.items} point={contextMenu.point} onClickItem={onClickContextMenuItem} />
+      ) : undefined}
+      <ToastMessages messages={toastMessages} closeToastMessage={closeToastMessage} />
     </>
   );
 }
