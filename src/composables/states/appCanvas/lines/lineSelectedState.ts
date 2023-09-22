@@ -14,6 +14,7 @@ import { TextShape } from "../../../../shapes/text";
 import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -25,7 +26,7 @@ export function newLineSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
-      ctx.setCommandExams([{ command: "Shift + Click", title: "Delete inner vertex" }]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();

@@ -16,6 +16,7 @@ import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -47,6 +48,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       ctx.startDragging();
       ctx.setCursor("move");
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       const snappableShapes = filterShapesOverlappingRect(
         ctx.getShapeStruct,
@@ -82,12 +84,13 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
       ctx.setCursor();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
-          snappingResult = shapeSnapping.test(moveRect(movingRect, d));
+          snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
 

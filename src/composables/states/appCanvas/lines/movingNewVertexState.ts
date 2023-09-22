@@ -8,6 +8,7 @@ import { filterShapesOverlappingRect } from "../../../../shapes";
 import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
 import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   lineShape: LineShape;
@@ -25,6 +26,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     getLabel: () => "MovingNewVertex",
     onStart: (ctx) => {
       ctx.startDragging();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
@@ -47,12 +49,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          connectionResult = lineSnapping.testConnection(point, ctx.getScale());
+          connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
           if (connectionResult) {
             vertex = connectionResult.p;

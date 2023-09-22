@@ -12,9 +12,9 @@ import {
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
-import { getAltOrOptionStr } from "../../../utils/devices";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -61,8 +61,9 @@ export function newResizingState(option: Option): AppCanvasState {
       lineLabelHandler = newLineLabelHandler({ ctx });
 
       ctx.setCommandExams([
-        { command: "Shift", title: "Proportionally" },
-        { command: getAltOrOptionStr(), title: "Based on center" },
+        COMMAND_EXAM_SRC.DISABLE_SNAP,
+        COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY,
+        COMMAND_EXAM_SRC.RESIZE_AT_CENTER,
       ]);
     },
     onEnd: (ctx) => {
@@ -80,9 +81,11 @@ export function newResizingState(option: Option): AppCanvasState {
           });
 
           const boundingBoxPath = getMovingBoundingBoxPoints(option.boundingBox.path, option.hitResult);
-          const results = boundingBoxPath
-            .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-            .filter((r): r is SnappingResult => !!r);
+          const results = event.data.ctrl
+            ? []
+            : boundingBoxPath
+                .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+                .filter((r): r is SnappingResult => !!r);
           if (results.length > 0) {
             snappingResult = results[0];
           } else {

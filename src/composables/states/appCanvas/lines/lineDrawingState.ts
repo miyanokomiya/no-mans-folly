@@ -13,6 +13,7 @@ import {
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { newSelectionHubState } from "../selectionHubState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   shape: LineShape;
@@ -29,6 +30,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     getLabel: () => "LineDrawing",
     onStart: (ctx) => {
       ctx.startDragging();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
@@ -43,12 +45,13 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          connectionResult = lineSnapping.testConnection(point, ctx.getScale());
+          connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
           vertex = connectionResult?.p ?? point;
           let patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
 

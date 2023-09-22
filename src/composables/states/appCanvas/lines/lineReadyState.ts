@@ -9,6 +9,7 @@ import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { newSelectionHubState } from "../selectionHubState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   type: string;
@@ -23,6 +24,8 @@ export function newLineReadyState(option: Option): AppCanvasState {
     getLabel: () => "LineReady",
     onStart: (ctx) => {
       ctx.setCursor();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+
       const shapeMap = ctx.getShapeMap();
       lineSnapping = newLineSnapping({
         snappableShapes: Object.values(shapeMap),
@@ -30,13 +33,18 @@ export function newLineReadyState(option: Option): AppCanvasState {
         movingIndex: 0,
       });
     },
+    onEnd: (ctx) => {
+      ctx.setCommandExams();
+    },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
               const point = event.data.point;
-              connectionResult = lineSnapping.testConnection(point, ctx.getScale());
+              connectionResult = event.data.options.ctrl
+                ? undefined
+                : lineSnapping.testConnection(point, ctx.getScale());
               vertex = connectionResult?.p ?? point;
 
               const lineshape = createShape<LineShape>(ctx.getShapeStruct, "line", {
@@ -56,7 +64,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
           }
         case "pointerhover": {
           const point = event.data.current;
-          connectionResult = lineSnapping.testConnection(point, ctx.getScale());
+          connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
           vertex = connectionResult?.p ?? point;
           ctx.setTmpShapeMap({});
           return;

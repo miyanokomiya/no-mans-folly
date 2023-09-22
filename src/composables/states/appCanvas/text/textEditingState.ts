@@ -13,6 +13,7 @@ import { TextShape, isTextShape, patchSize } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
 import { calcOriginalDocSize } from "../../../../utils/textEditor";
 import { newSelectionHubState } from "../selectionHubState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   id: string;
@@ -77,9 +78,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
       ctx.setCaptureTimeout(1000);
       ctx.setCommandExams([
-        { command: "Ctrl + p, n, b, f", title: "Move cursor" },
-        { command: "Ctrl + h", title: "Backspace" },
-        { command: "Ctrl + d", title: "Delete" },
+        COMMAND_EXAM_SRC.TEXT_MOVE_CURSOR,
+        COMMAND_EXAM_SRC.TEXT_BACKSPACE,
+        COMMAND_EXAM_SRC.TEXT_DELETE,
       ]);
     },
     onEnd: (ctx) => {
