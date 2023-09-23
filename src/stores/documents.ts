@@ -2,6 +2,7 @@ import * as Y from "yjs";
 import { DocDelta, DocOutput } from "../models/document";
 import { newCallback } from "../composables/reactives";
 import { observeEntityMap } from "./core/entities";
+import { newCache } from "../composables/cache";
 
 export type CursorPositionInfo = Y.RelativePosition;
 
@@ -17,12 +18,16 @@ export function newDocumentStore(option: Option) {
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
 
-  function getDocMap(): { [id: string]: DocOutput } {
+  const _entitiesCache = newCache(() => {
     const ret: { [id: string]: DocOutput } = {};
     Array.from(entityMap.entries()).map(([id, ye]: [string, Y.Text]) => {
       ret[id] = ye.toDelta();
     });
     return ret;
+  });
+
+  function getDocMap(): { [id: string]: DocOutput } {
+    return _entitiesCache.getValue();
   }
 
   function refresh(_ydoc: Y.Doc) {
@@ -32,8 +37,11 @@ export function newDocumentStore(option: Option) {
     ydoc = _ydoc;
     entityMap = ydoc.getMap("document_store");
     unobserve = observeEntityMap(entityMap, (ids: Set<string>) => {
+      _entitiesCache.update();
       callback.dispatch(ids);
     });
+    _entitiesCache.update();
+    callback.dispatch(new Set(Object.keys(getDocMap())));
   }
   refresh(option.ydoc);
 
