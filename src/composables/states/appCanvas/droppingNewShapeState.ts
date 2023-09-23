@@ -1,10 +1,17 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, renderShape } from "../../../shapes";
+import {
+  canHaveText,
+  filterShapesOverlappingRect,
+  getSnappingLines,
+  getWrapperRect,
+  renderShape,
+} from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
+import { getInitialOutput } from "../../../utils/textEditor";
 
 interface Option {
   shape: Shape;
@@ -63,7 +70,12 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup":
-          ctx.addShapes([{ ...shape, p }]);
+          ctx.addShapes(
+            [{ ...shape, p }],
+            // Newly created shape should have doc by default.
+            // => It useful to apply text style even it has no content.
+            canHaveText(ctx.getShapeStruct, shape) ? { [shape.id]: getInitialOutput() } : undefined
+          );
           ctx.selectShape(shape.id);
           return newSingleSelectedState;
         case "wheel":
