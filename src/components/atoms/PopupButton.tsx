@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useGlobalScroll } from "../../composables/window";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useGlobalScroll, useWindow } from "../../composables/window";
+import { IRectangle } from "okageo";
 
 interface Option {
   children: React.ReactNode;
@@ -19,26 +20,22 @@ export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, o
     [name, onClick]
   );
 
-  const popupAttrs = useMemo(() => {
-    const classBase = "z-10 absolute bg-white border rounded drop-shadow-md ";
-    switch (popupPosition) {
-      case "right":
-        return {
-          className: classBase + "left-0 top-full",
-          style: {},
-        };
-      case "left":
-        return {
-          className: classBase + "right-0 top-full",
-          style: {},
-        };
-      default:
-        return {
-          className: classBase + "left-1/2 bottom-0",
-          style: { transform: "translate(-50%, 100%)" },
-        };
+  const { size: windowSize } = useWindow();
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [popupBounds, setPopupBounds] = useState<IRectangle>();
+
+  useEffect(() => {
+    if (!popupRef.current || !opened) {
+      setPopupBounds(undefined);
+    } else {
+      const bounds = popupRef.current.getBoundingClientRect();
+      setPopupBounds(bounds);
     }
-  }, [popupPosition]);
+  }, [opened]);
+
+  const popupAttrs = useMemo(() => {
+    return getPopupAttrs(windowSize.height, popupBounds, popupPosition);
+  }, [popupPosition, popupBounds, windowSize.height]);
 
   return (
     <div className="relative">
@@ -49,7 +46,11 @@ export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, o
       >
         {children}
       </button>
-      {opened ? <div {...popupAttrs}>{popup}</div> : undefined}
+      {opened ? (
+        <div ref={popupRef} {...popupAttrs}>
+          {popup}
+        </div>
+      ) : undefined}
     </div>
   );
 };
@@ -109,3 +110,41 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
     </div>
   );
 };
+
+function getPopupAttrs(windowHeight: number, popupBounds?: IRectangle, popupPosition?: "bottom" | "right" | "left") {
+  const classBase = "z-10 absolute bg-white border rounded drop-shadow-md ";
+  if (!popupBounds) {
+    // Make invisbile until "popupBounds" is determined.
+    return { className: classBase + "invisible" };
+  }
+
+  const toBottom = popupBounds.y + popupBounds.height < windowHeight;
+  switch (popupPosition) {
+    case "right":
+      return toBottom
+        ? {
+            className: classBase + "left-0 top-full",
+          }
+        : {
+            className: classBase + "left-0 bottom-full",
+          };
+    case "left":
+      return toBottom
+        ? {
+            className: classBase + "right-0 top-full",
+          }
+        : {
+            className: classBase + "right-0 bottom-full",
+          };
+    default:
+      return toBottom
+        ? {
+            className: classBase + "left-1/2 bottom-0",
+            style: { transform: "translate(-50%, 100%)" },
+          }
+        : {
+            className: classBase + "left-1/2 top-0",
+            style: { transform: "translate(-50%, -100%)" },
+          };
+  }
+}
