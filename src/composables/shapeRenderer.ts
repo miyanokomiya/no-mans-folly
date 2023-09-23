@@ -1,32 +1,23 @@
-import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { GetShapeStruct, getShapeTextBounds, renderShape } from "../shapes";
-import { mergeMap } from "../utils/commons";
 import { renderDoc } from "../utils/textEditor";
-import { getTree, walkTree } from "../utils/tree";
+import { walkTree } from "../utils/tree";
+import { ShapeComposite } from "./shapeComposite";
 
 interface Option {
-  getShapeIds: () => string[]; // represents shapes' order
-  getShapeMap: () => { [id: string]: Shape };
-  getTmpShapeMap: () => { [id: string]: Partial<Shape> };
+  shapeComposite: ShapeComposite;
   getDocumentMap: () => { [id: string]: DocOutput };
   getShapeStruct: GetShapeStruct;
   ignoreDocIds?: string[];
 }
 
 export function newShapeRenderer(option: Option) {
-  const shapeMap = option.getShapeMap();
-  const tmpShapeMap = option.getTmpShapeMap();
+  const { mergedShapeMap, mergedShapeTree } = option.shapeComposite;
   const docMap = option.getDocumentMap();
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
 
-  const ids = option.getShapeIds();
-  const mergedShapeMap = mergeMap(shapeMap, tmpShapeMap) as { [id: string]: Shape };
-  const mergedShapes = ids.map((id) => mergedShapeMap[id]);
-  const shapeTree = getTree(mergedShapes);
-
   function render(ctx: CanvasRenderingContext2D) {
-    walkTree(shapeTree, (node) => {
+    walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];
       renderShape(option.getShapeStruct, ctx, shape, mergedShapeMap, node);
 

@@ -12,7 +12,6 @@ describe("getTree", () => {
     expect(target.getTree(items)).toEqual([
       {
         id: "a",
-        parentId: "",
         children: [
           {
             id: "aa",
@@ -21,7 +20,7 @@ describe("getTree", () => {
           },
         ],
       },
-      { id: "b", children: [], parentId: "" },
+      { id: "b", children: [] },
     ]);
   });
   test("get nodes tree: multi children", () => {
@@ -33,7 +32,6 @@ describe("getTree", () => {
     expect(target.getTree(items)).toEqual([
       {
         id: "a",
-        parentId: "",
         children: [
           { id: "aa", children: [], parentId: "a" },
           { id: "ab", children: [], parentId: "a" },
@@ -50,10 +48,9 @@ describe("getTree", () => {
     expect(target.getTree(items)).toEqual([
       {
         id: "a",
-        parentId: "",
         children: [{ id: "aa", children: [], parentId: "a" }],
       },
-      { id: "ab", children: [], parentId: "b" },
+      { id: "ab", children: [] },
     ]);
   });
 });

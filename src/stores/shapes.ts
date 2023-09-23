@@ -3,6 +3,8 @@ import { Shape } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newEntitySelectable } from "./core/entitySelectable";
 import { newCallback } from "../composables/reactives";
+import { newShapeComposite } from "../composables/shapeComposite";
+import { newCache } from "../composables/cache";
 
 type Option = {
   ydoc: Y.Doc;
@@ -38,6 +40,12 @@ export function newShapeStore(option: Option) {
     entityStore.refresh(_ydoc);
   }
 
+  const shapeCompositeCache = newCache(() => {
+    return newShapeComposite({ shapes: entityStore.getEntities(), tmpShapeMap });
+  });
+  entityStore.watch(shapeCompositeCache.update);
+  tmpShapeMapCallback.bind(shapeCompositeCache.update);
+
   return {
     ...entityStore,
     refresh,
@@ -53,6 +61,10 @@ export function newShapeStore(option: Option) {
     setTmpShapeMap,
     getTmpShapeMap,
     watchTmpShapeMap: tmpShapeMapCallback.bind,
+
+    get shapeComposite() {
+      return shapeCompositeCache.getValue();
+    },
   };
 }
 export type ShapeStore = ReturnType<typeof newShapeStore>;

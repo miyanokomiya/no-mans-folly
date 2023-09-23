@@ -25,14 +25,14 @@ export function getTree<T extends TreeFlatNode>(items: T[]): TreeNode[] {
   }, {});
 
   return noParents.map((b) => {
-    return { ...b, children: getChildNodes(parentMap, b.id) };
+    return { id: b.id, children: getChildNodes(parentMap, b.id) };
   });
 }
 
 function getChildNodes<T extends TreeFlatNode>(parentMap: { [id: string]: T[] }, parentId: string): TreeNode[] {
   return (
     parentMap[parentId]?.map((b) => {
-      return { ...b, children: getChildNodes(parentMap, b.id) };
+      return { id: b.id, parentId: b.parentId, children: getChildNodes(parentMap, b.id) };
     }) ?? []
   );
 }

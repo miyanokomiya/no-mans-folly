@@ -3,6 +3,7 @@ import { generateKeyBetween } from "fractional-indexing";
 import type { Entity } from "../../models";
 import { newCallback } from "../../composables/reactives";
 import { toMap } from "../../utils/commons";
+import { newCache } from "../../composables/cache";
 
 type Option = {
   name: string;
@@ -17,12 +18,11 @@ export function newEntityStore<T extends Entity>(option: Option) {
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
 
-  let entries: T[] = [];
-  function cacheEntities() {
+  const _entitiesCache = newCache(() => {
     const list = Array.from(entityMap.values()).map((ye) => toEntity(ye));
     list.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
-    entries = list;
-  }
+    return list;
+  });
 
   function refresh(_ydoc: Y.Doc) {
     unobserve?.();
@@ -31,11 +31,11 @@ export function newEntityStore<T extends Entity>(option: Option) {
     ydoc = _ydoc;
     entityMap = ydoc.getMap(option.name);
     unobserve = observeEntityMap(entityMap, (ids: Set<string>) => {
-      cacheEntities();
+      _entitiesCache.update();
       callback.dispatch(ids);
     });
-    cacheEntities();
-    callback.dispatch(new Set(entries.map((e) => e.id)));
+    _entitiesCache.update();
+    callback.dispatch(new Set(getEntities().map((e) => e.id)));
   }
   refresh(option.ydoc);
 
@@ -49,7 +49,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
   }
 
   function getEntities(): T[] {
-    return entries;
+    return _entitiesCache.getValue();
   }
 
   function getEntityMap(): { [id: string]: T } {

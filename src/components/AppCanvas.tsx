@@ -135,8 +135,13 @@ export function AppCanvas() {
       redo: acctx.undoManager.redo,
       setCaptureTimeout: acctx.undoManager.setCaptureTimeout,
 
-      getShapes: acctx.shapeStore.getEntities,
-      getShapeMap: acctx.shapeStore.getEntityMap,
+      getShapeComposite: () => acctx.shapeStore.shapeComposite,
+      getShapes: () => acctx.shapeStore.shapeComposite.shapes,
+      getShapeMap: () => acctx.shapeStore.shapeComposite.shapeMap,
+
+      getTmpShapeMap: () => acctx.shapeStore.shapeComposite.tmpShapeMap,
+      setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
+
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
       getShapeAt(p) {
@@ -163,8 +168,6 @@ export function AppCanvas() {
         });
       },
       patchShapes: acctx.shapeStore.patchEntities,
-      getTmpShapeMap: acctx.shapeStore.getTmpShapeMap,
-      setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
       pasteShapes: (shapes, docs, p) => {
         const targetP = p ?? viewToCanvas(getMousePoint());
         const availableIdSet = new Set(acctx.shapeStore.getEntities().map((s) => s.id));
@@ -258,9 +261,7 @@ export function AppCanvas() {
     const canvasContext = smctx.getCtx();
     const selectedMap = canvasContext.getSelectedShapeIdMap();
     const renderer = newShapeRenderer({
-      getShapeIds: () => acctx.shapeStore.getEntities().map((s) => s.id),
-      getShapeMap: canvasContext.getShapeMap,
-      getTmpShapeMap: canvasContext.getTmpShapeMap,
+      shapeComposite: acctx.shapeStore.shapeComposite,
       getDocumentMap: canvasContext.getDocumentMap,
       getShapeStruct: canvasContext.getShapeStruct,
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
@@ -269,7 +270,7 @@ export function AppCanvas() {
 
     smctx.stateMachine.render(ctx);
   }, [
-    acctx.shapeStore,
+    acctx.shapeStore.shapeComposite,
     acctx.documentStore,
     smctx,
     viewSize.width,

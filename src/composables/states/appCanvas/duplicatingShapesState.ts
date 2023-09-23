@@ -14,8 +14,8 @@ import * as geometry from "../../../utils/geometry";
 import { newSelectionHubState } from "./selectionHubState";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
-import { toMap } from "../../../utils/commons";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
+import { newShapeComposite } from "../../shapeComposite";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;
@@ -97,12 +97,8 @@ export function newDuplicatingShapesState(): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      const duplicatedIds = duplicated.shapes.map((s) => s.id);
-      const duplicatedMap = toMap(duplicated.shapes);
       const renderer = newShapeRenderer({
-        getShapeIds: () => duplicatedIds,
-        getShapeMap: () => duplicatedMap,
-        getTmpShapeMap: () => tmpShapeMap,
+        shapeComposite: newShapeComposite({ shapes: duplicated.shapes, tmpShapeMap }),
         getDocumentMap: () => duplicated.docMap,
         getShapeStruct: ctx.getShapeStruct,
       });

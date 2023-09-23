@@ -9,6 +9,7 @@ import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/app
 import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
 import { newDocumentStore } from "../stores/documents";
+import { newShapeComposite } from "../composables/shapeComposite";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
@@ -84,6 +85,7 @@ export function createInitialAppCanvasStateContext(arg: {
     redo() {},
     setCaptureTimeout() {},
 
+    getShapeComposite: () => newShapeComposite({ shapes: [] }),
     getShapes: () => [],
     getShapeMap: () => ({}),
     getSelectedShapeIdMap: () => ({}),

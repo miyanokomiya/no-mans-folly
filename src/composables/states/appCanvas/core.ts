@@ -5,8 +5,10 @@ import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
 import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models/document";
 import { CursorPositionInfo } from "../../../stores/documents";
+import { ShapeComposite } from "../../shapeComposite";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
+  getShapeComposite: () => ShapeComposite;
   getShapes: () => Shape[];
   getShapeMap: () => { [id: string]: Shape };
   getSelectedShapeIdMap: () => { [id: string]: true };

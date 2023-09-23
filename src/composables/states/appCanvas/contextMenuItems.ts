@@ -1,5 +1,4 @@
 import { getWrapperRectForShapes } from "../../../shapes";
-import { toMap } from "../../../utils/commons";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { newImageBuilder } from "../../imageBuilder";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -40,9 +39,7 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
   const targetShapes = targetIds.map((id) => shapeMap[id]);
 
   const renderer = newShapeRenderer({
-    getShapeIds: () => targetIds,
-    getShapeMap: () => toMap(targetShapes),
-    getTmpShapeMap: () => ({}),
+    shapeComposite: ctx.getShapeComposite(),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
   });
@@ -73,9 +70,7 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
   const targetShapes = targetIds.map((id) => shapeMap[id]);
 
   const renderer = newShapeRenderer({
-    getShapeIds: () => targetIds,
-    getShapeMap: () => toMap(targetShapes),
-    getTmpShapeMap: () => ({}),
+    shapeComposite: ctx.getShapeComposite(),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
   });
