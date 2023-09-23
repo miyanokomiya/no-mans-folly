@@ -121,7 +121,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               return;
             }
             case 1:
-              return { type: "stack-restart", getState: newPanningState };
+              return { type: "stack-resume", getState: newPanningState };
             case 2: {
               const shapeAtPointer = ctx.getShapeAt(event.data.point);
               if (!shapeAtPointer || selectedIdMap[shapeAtPointer.id]) return;

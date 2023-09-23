@@ -140,7 +140,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
               };
             }
             case 1:
-              return { type: "stack-restart", getState: newPanningState };
+              return { type: "stack-resume", getState: newPanningState };
             default:
               return;
           }

@@ -94,7 +94,7 @@ describe("newSingleSelectedState", () => {
         type: "pointerdown",
         data: { point: { x: -10, y: -20 }, options: { button: 1, ctrl: false } },
       });
-      expect(result).toEqual({ type: "stack-restart", getState: newPanningState });
+      expect(result).toEqual({ type: "stack-resume", getState: newPanningState });
     });
   });
 

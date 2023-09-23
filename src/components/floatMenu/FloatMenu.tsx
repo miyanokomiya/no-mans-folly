@@ -21,6 +21,7 @@ import { useWindow } from "../../composables/window";
 import { LineHeadItems } from "./LineHeadItems";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
+import { useDraggable } from "../../composables/draggable";
 
 interface Option {
   canvasState: any;
@@ -36,6 +37,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [rootSize, setRootSize] = useState<Size>({ width: 0, height: 0 });
+  const draggable = useDraggable();
 
   const indexShape = useMemo<Shape | undefined>(() => {
     const ctx = smctx.getCtx();
@@ -70,10 +72,24 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
 
   const { size: windowSize } = useWindow();
 
+  // Once the menu was dragged, stick it to the current location.
+  const [rootAttrsFixed, setRootAttrsFixed] = useState<ReturnType<typeof getRootAttrs>>();
   const rootAttrs = useMemo(() => {
     if (!targetRect) return;
-    return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height);
-  }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height]);
+    if (rootAttrsFixed && draggable.v) {
+      return {
+        ...rootAttrsFixed,
+        style: {
+          transform: rootAttrsFixed.style.transform + ` translate(${draggable.v.x}px, ${draggable.v.y}px)`,
+        },
+      };
+    }
+    return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height, draggable.v);
+  }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height, draggable.v, rootAttrsFixed]);
+  useEffect(() => {
+    if (rootAttrsFixed || !draggable.v) return;
+    setRootAttrsFixed(rootAttrs);
+  }, [draggable.v, rootAttrsFixed]);
 
   const [popupedKey, setPopupedKey] = useState("");
 
@@ -225,6 +241,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
+        <div className="w-2 h-8 border rounded bg-gray-300" onMouseDown={draggable.startDrag}></div>
         {indexCommonStyle?.fill ? (
           <PopupButton
             name="fill"
@@ -297,14 +314,15 @@ function getRootAttrs(
   rootWidth: number,
   rootHeight: number,
   windowWidth: number,
-  windowHeight: number
+  windowHeight: number,
+  translate: IVec2 = { x: 0, y: 0 }
 ) {
   const yMargin = 60;
   const center = getRectCenter(targetRect);
-  const bottomY = targetRect.y + targetRect.height + yMargin;
+  const topY = targetRect.y - yMargin - rootHeight + translate.y;
   const p = {
-    x: center.x,
-    y: windowHeight - 160 < bottomY ? targetRect.y - rootHeight - yMargin : bottomY,
+    x: center.x + translate.x,
+    y: topY < 0 ? targetRect.y + targetRect.height + yMargin + translate.y : topY,
   };
   const baseClass = "fixed border rounded shadow bg-white px-1 ";
 
