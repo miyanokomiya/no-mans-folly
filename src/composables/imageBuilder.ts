@@ -7,10 +7,10 @@ interface Option {
 
 export function newImageBuilder({ render, range }: Option) {
   const canvas = createCanvas();
-  canvas.width = range.width;
-  canvas.height = range.height;
+  canvas.width = Math.ceil(range.width);
+  canvas.height = Math.ceil(range.height);
   const renderCtx = canvas.getContext("2d")!;
-  renderCtx.translate(-range.x, -range.y);
+  renderCtx.translate(-Math.floor(range.x), -Math.floor(range.y));
   render(renderCtx);
 
   async function toBlob(): Promise<Blob> {
