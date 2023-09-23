@@ -5,6 +5,7 @@ import { newSingleSelectedState } from "./singleSelectedState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
+import { getInitialOutput } from "../../../utils/textEditor";
 
 function getMockCtx() {
   return {
@@ -65,7 +66,9 @@ describe("newDroppingNewShapeState", () => {
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       const result2 = target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shape, p: { x: -40, y: -50 } }]);
+      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shape, p: { x: -40, y: -50 } }], {
+        [getOption().shape.id]: getInitialOutput(),
+      });
       expect(result2).toEqual(newSingleSelectedState);
     });
   });

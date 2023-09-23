@@ -10,7 +10,7 @@ import { newMovingShapeState } from "../movingShapeState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { createShape } from "../../../../shapes";
-import { TextShape } from "../../../../shapes/text";
+import { TextShape, patchPosition } from "../../../../shapes/text";
 import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
@@ -133,15 +133,18 @@ export function newLineSelectedState(): AppCanvasState {
         case "state":
           switch (event.data.name) {
             case "AddingLineLabel": {
-              const textshape = createShape<TextShape>(ctx.getShapeStruct, "text", {
+              const textshapeSrc = createShape<TextShape>(ctx.getShapeStruct, "text", {
                 id: ctx.generateUuid(),
-                p: getRelativePointOnPath(getLinePath(lineShape), 0.5),
                 findex: ctx.createLastIndex(),
                 parentId: lineShape.id,
                 vAlign: "center",
                 hAlign: "center",
                 lineAttached: 0.5,
               });
+              const textshape = {
+                ...textshapeSrc,
+                ...patchPosition(textshapeSrc, getRelativePointOnPath(getLinePath(lineShape), 0.5)),
+              };
               ctx.addShapes([textshape]);
               ctx.selectShape(textshape.id);
               return () => newTextEditingState({ id: textshape.id });
