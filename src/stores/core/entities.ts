@@ -12,7 +12,7 @@ type Option = {
 export function newEntityStore<T extends Entity>(option: Option) {
   let ydoc: Y.Doc;
   let entityMap: Y.Map<Y.Map<any>>;
-  let unobserve: () => void;
+  let unobserve: (() => void) | undefined;
 
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
@@ -26,6 +26,8 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   function refresh(_ydoc: Y.Doc) {
     unobserve?.();
+    unobserve = undefined;
+
     ydoc = _ydoc;
     entityMap = ydoc.getMap(option.name);
     unobserve = observeEntityMap(entityMap, (ids: Set<string>) => {
@@ -33,8 +35,18 @@ export function newEntityStore<T extends Entity>(option: Option) {
       callback.dispatch(ids);
     });
     cacheEntities();
+    callback.dispatch(new Set(entries.map((e) => e.id)));
   }
   refresh(option.ydoc);
+
+  let disposed = false;
+  function dispose() {
+    if (disposed) return;
+
+    unobserve?.();
+    unobserve = undefined;
+    disposed = true;
+  }
 
   function getEntities(): T[] {
     return entries;
@@ -129,6 +141,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   return {
     refresh,
+    dispose,
     getEntities,
     getEntityMap,
     getEntity,
@@ -178,12 +191,21 @@ export function newSingleEntityStore<T extends Entity>(option: Option) {
     return entity;
   }
 
+  let disposed = false;
+  function dispose() {
+    if (disposed) return;
+
+    entity.unobserve(callback.dispatch);
+    disposed = true;
+  }
+
   return {
     getEntity,
     patchEntity,
     transact,
     watch,
     getScope,
+    dispose,
   };
 }
 
@@ -202,5 +224,7 @@ export function observeEntityMap(entityMap: Y.Map<any>, fn: (ids: Set<string>) =
     fn(ids);
   };
   entityMap.observeDeep(callback);
-  return () => entityMap.unobserveDeep(callback);
+  return () => {
+    entityMap.unobserveDeep(callback);
+  };
 }

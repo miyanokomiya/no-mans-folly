@@ -13,6 +13,18 @@ import { newThrottle } from "./throttle";
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
 
+const defaultDiagramDoc = new Y.Doc();
+const defaultSheetDoc = new Y.Doc();
+const defaultDiagramStores = {
+  diagramStore: newDiagramStore({ ydoc: defaultDiagramDoc }),
+  sheetStore: newSheetStore({ ydoc: defaultDiagramDoc }),
+};
+const defaultSheetStores = {
+  layerStore: newLayerStore({ ydoc: defaultSheetDoc }),
+  shapeStore: newShapeStore({ ydoc: defaultSheetDoc }),
+  documentStore: newDocumentStore({ ydoc: defaultSheetDoc }),
+};
+
 interface PersistenceOption {
   generateUuid: () => string;
 }
@@ -21,29 +33,22 @@ export function usePersistence(option: PersistenceOption) {
   const fileAcess = useMemo(() => newFileAccess(), []);
   const [canSyncoLocal, setCanSyncToLocal] = useState(false);
 
-  const [diagramDoc, setDiagramDoc] = useState(new Y.Doc());
+  const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
-  const [sheetDoc, setSheetDoc] = useState(new Y.Doc());
+  const [sheetDoc, setSheetDoc] = useState(defaultSheetDoc);
   const [dbProviderSheet, setDbProviderSheet] = useState<IndexeddbPersistence | undefined>();
   const [ready, setReady] = useState(false);
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
     sheetStore: SheetStore;
-  }>({
-    diagramStore: newDiagramStore({ ydoc: diagramDoc }),
-    sheetStore: newSheetStore({ ydoc: diagramDoc }),
-  });
+  }>(defaultDiagramStores);
 
   const [sheetStores, setSheetStores] = useState<{
     layerStore: LayerStore;
     shapeStore: ShapeStore;
     documentStore: DocumentStore;
-  }>({
-    layerStore: newLayerStore({ ydoc: sheetDoc }),
-    shapeStore: newShapeStore({ ydoc: sheetDoc }),
-    documentStore: newDocumentStore({ ydoc: sheetDoc }),
-  });
+  }>(defaultSheetStores);
 
   const initSheet = useCallback(
     async (sheetId: string) => {
@@ -65,6 +70,10 @@ export function usePersistence(option: PersistenceOption) {
       const sheetProvider = new IndexeddbPersistence(sheetId, nextSheetDoc);
       await sheetProvider.whenSynced;
 
+      sheetStores.layerStore.dispose();
+      sheetStores.shapeStore.dispose();
+      sheetStores.documentStore.dispose();
+
       setDbProviderSheet(sheetProvider);
       setSheetDoc(nextSheetDoc);
       setSheetStores({
@@ -73,7 +82,7 @@ export function usePersistence(option: PersistenceOption) {
         documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
       });
     },
-    [fileAcess]
+    [fileAcess, sheetStores]
   );
 
   const initDiagram = useCallback(async () => {
@@ -93,11 +102,14 @@ export function usePersistence(option: PersistenceOption) {
     sheetStore.selectSheet(sheet.id);
     await initSheet(sheet.id);
 
+    diagramStores.diagramStore.dispose();
+    diagramStores.sheetStore.dispose();
+
     setDbProviderDiagram(provider);
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [fileAcess, initSheet]);
+  }, [fileAcess, diagramStores, initSheet]);
 
   const openDiagramFromLocal = useCallback(async () => {
     const nextDiagramDoc = new Y.Doc();
@@ -119,6 +131,11 @@ export function usePersistence(option: PersistenceOption) {
 
     const sheet = sheetStore.getSelectedSheet()!;
     await initSheet(sheet.id);
+
+    if (diagramStores) {
+      diagramStores.diagramStore.dispose();
+      diagramStores.sheetStore.dispose();
+    }
 
     setDbProviderDiagram(provider);
     setDiagramDoc(nextDiagramDoc);
@@ -144,6 +161,8 @@ export function usePersistence(option: PersistenceOption) {
   }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
 
   const saveAllToLocal = useCallback(async () => {
+    if (!diagramStores) return;
+
     const result = await fileAcess.openDirectory();
     if (!result) return;
 
