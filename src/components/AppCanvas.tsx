@@ -25,6 +25,7 @@ import { getAllBranchIds, getTree } from "../utils/tree";
 import { ContextMenu } from "./ContextMenu";
 import { ToastMessages } from "./ToastMessages";
 import { useToastMessages } from "../composables/toastMessage";
+import { getGridSize, newGrid } from "../composables/grid";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -104,6 +105,10 @@ export function AppCanvas() {
     removeRootPosition,
     editStartPoint,
   } = useCanvas(getWrapper);
+
+  const grid = useMemo(() => {
+    return newGrid({ size: getGridSize(scale), range: viewCanvasRect });
+  }, [scale, viewCanvasRect]);
 
   useEffect(() => {
     smctx.setCtx({
@@ -257,6 +262,7 @@ export function AppCanvas() {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.scale(1 / scale, 1 / scale);
     ctx.translate(-viewOrigin.x, -viewOrigin.y);
+    grid.render(ctx, scale);
 
     const canvasContext = smctx.getCtx();
     const selectedMap = canvasContext.getSelectedShapeIdMap();
@@ -280,6 +286,7 @@ export function AppCanvas() {
     viewOrigin.y,
     canvasState,
     textEditing,
+    grid,
   ]);
 
   const [focused, setFocused] = useState(false);
