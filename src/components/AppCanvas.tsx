@@ -194,6 +194,7 @@ export function AppCanvas() {
 
       createFirstIndex: acctx.shapeStore.createFirstIndex,
       createLastIndex: acctx.shapeStore.createLastIndex,
+      getGrid: () => grid,
 
       startTextEditing() {
         setTextEditing(true);
@@ -233,6 +234,7 @@ export function AppCanvas() {
     acctx,
     smctx,
     getMousePoint,
+    grid,
   ]);
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
 import { newDocumentStore } from "../stores/documents";
 import { newShapeComposite } from "../composables/shapeComposite";
+import { newGrid } from "../composables/grid";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
@@ -104,6 +105,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getShapeStruct: getCommonStruct,
     createFirstIndex: () => "",
     createLastIndex: () => "",
+    getGrid: () => newGrid({ size: 100, range: { x: 0, y: 0, width: 100, height: 100 } }),
 
     startTextEditing() {},
     stopTextEditing() {},

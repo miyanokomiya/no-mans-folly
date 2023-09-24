@@ -1,8 +1,9 @@
 import { IRectangle } from "okageo";
-import { snapNumber } from "../utils/geometry";
+import { ISegment, snapNumber } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
+import { ShapeSnappingLines } from "../shapes/core";
 
 interface Option {
   size: number;
@@ -13,7 +14,7 @@ export function newGrid({ size, range }: Option) {
   const countV = Math.ceil(range.width / size);
   const countH = Math.ceil(range.height / size);
 
-  const segmentsV = [...Array(countV)].map((_, i) => {
+  const segmentsV: ISegment[] = [...Array(countV)].map((_, i) => {
     const x = snapNumber(range.x + i * size, size);
     return [
       { x, y: range.y },
@@ -21,7 +22,7 @@ export function newGrid({ size, range }: Option) {
     ];
   });
 
-  const segmentsH = [...Array(countH)].map((_, i) => {
+  const segmentsH: ISegment[] = [...Array(countH)].map((_, i) => {
     const y = snapNumber(range.y + i * size, size);
     return [
       { x: range.x, y },
@@ -35,6 +36,10 @@ export function newGrid({ size, range }: Option) {
 
   function getSegmentsH() {
     return segmentsH;
+  }
+
+  function getSnappingLines(): ShapeSnappingLines {
+    return { v: segmentsV, h: segmentsH };
   }
 
   function render(ctx: CanvasRenderingContext2D, scale = 1) {
@@ -73,9 +78,9 @@ export function newGrid({ size, range }: Option) {
     ctx.restore();
   }
 
-  return { getSegmentsV, getSegmentsH, render };
+  return { getSegmentsV, getSegmentsH, getSnappingLines, render };
 }
-export type newGrid = ReturnType<typeof newGrid>;
+export type Grid = ReturnType<typeof newGrid>;
 
 export function getGridSize(scale: number): number {
   // Should be scaled by same rate

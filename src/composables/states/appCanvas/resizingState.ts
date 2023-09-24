@@ -51,6 +51,7 @@ export function newResizingState(option: Option): AppCanvasState {
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
         scale: ctx.getScale(),
+        gridSnapping: ctx.getGrid().getSnappingLines(),
       });
 
       lineHandler = newConnectedLineHandler({

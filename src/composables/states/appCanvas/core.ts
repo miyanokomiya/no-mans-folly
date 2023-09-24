@@ -6,6 +6,7 @@ import { GetShapeStruct } from "../../../shapes";
 import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models/document";
 import { CursorPositionInfo } from "../../../stores/documents";
 import { ShapeComposite } from "../../shapeComposite";
+import { Grid } from "../../grid";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeComposite: () => ShapeComposite;
@@ -28,6 +29,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeStruct: GetShapeStruct;
   createFirstIndex: () => string;
   createLastIndex: () => string;
+  getGrid: () => Grid;
 
   startTextEditing: () => void;
   stopTextEditing: () => void;

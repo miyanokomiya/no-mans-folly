@@ -219,6 +219,34 @@ describe("newShapeSnapping", () => {
       intervalTargets: [],
     });
   });
+
+  test("grid snapping: should dealt with grid lines as well as shapes", () => {
+    const targetGrid = newShapeSnapping({
+      shapeSnappingList: [],
+      gridSnapping: shapeSnappingList[0][1],
+    });
+
+    expect(targetGrid.test({ x: -15, y: -15, width: 10, height: 10 })).toEqual({
+      diff: { x: 5, y: 5 },
+      targets: [
+        {
+          id: "GRID",
+          line: [
+            { x: 0, y: -10 },
+            { x: 0, y: 100 },
+          ],
+        },
+        {
+          id: "GRID",
+          line: [
+            { x: -10, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
 });
 
 describe("newShapeIntervalSnapping", () => {

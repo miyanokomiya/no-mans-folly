@@ -7,6 +7,7 @@ import { renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 
 const SNAP_THRESHOLD = 10;
+const GRID_ID = "GRID";
 
 export interface SnappingResult {
   diff: IVec2;
@@ -27,6 +28,7 @@ interface SnappingTmpResult {
 
 interface Option {
   shapeSnappingList: [string, ShapeSnappingLines][];
+  gridSnapping?: ShapeSnappingLines;
   scale?: number;
 }
 
@@ -41,15 +43,19 @@ interface TestOption {
 
 export function newShapeSnapping(option: Option) {
   const shapeSnappingList = option.shapeSnappingList;
+  const gridSnapping = option.gridSnapping;
   const shapeIntervalSnapping = newShapeIntervalSnapping(option);
   const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
+  const shapeAndGridSnappingList: [string, ShapeSnappingLines][] = gridSnapping
+    ? [[GRID_ID, gridSnapping], ...shapeSnappingList]
+    : shapeSnappingList;
 
   function test(rect: IRectangle, option?: TestOption): SnappingResult | undefined {
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
 
     let xClosest: [string, SnappingTmpResult] | undefined;
     let yClosest: [string, SnappingTmpResult] | undefined;
-    shapeSnappingList.map(([id, lines]) => {
+    shapeAndGridSnappingList.map(([id, lines]) => {
       // x snapping
       {
         const vList = lines.v.map<SnappingTmpResult>((line) => {
@@ -151,7 +157,7 @@ export function newShapeSnapping(option: Option) {
   function testPoint(p: IVec2): SnappingResult | undefined {
     let xClosest: [string, SnappingTmpResult] | undefined;
     let yClosest: [string, SnappingTmpResult] | undefined;
-    shapeSnappingList.map(([id, lines]) => {
+    shapeAndGridSnappingList.map(([id, lines]) => {
       // x snapping
       {
         const vList = lines.v.map<SnappingTmpResult>((line) => {
