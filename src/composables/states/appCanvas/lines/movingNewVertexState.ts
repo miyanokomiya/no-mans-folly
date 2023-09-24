@@ -29,7 +29,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     getLabel: () => "MovingNewVertex",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_CONNECT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
@@ -71,12 +71,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
-          if (connectionResult) {
+          if (connectionResult?.connection) {
             vertex = connectionResult.p;
             snappingResult = undefined;
           } else {
-            snappingResult = event.data.shift ? undefined : shapeSnapping.testPoint(point);
+            snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
             vertex = snappingResult ? add(point, snappingResult.diff) : point;
+            connectionResult = undefined;
           }
 
           const patchMap = {

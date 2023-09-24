@@ -27,7 +27,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
     getLabel: () => "LineReady",
     onStart: (ctx) => {
       ctx.setCursor();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_CONNECT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
       const snappableShapes = filterShapesOverlappingRect(
@@ -69,7 +69,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
                 vertex = connectionResult?.p ?? point;
                 snappingResult = undefined;
               } else {
-                snappingResult = event.data.options.shift ? undefined : shapeSnapping.testPoint(point);
+                snappingResult = event.data.options.ctrl ? undefined : shapeSnapping.testPoint(point);
                 vertex = snappingResult ? add(point, snappingResult.diff) : point;
               }
 
@@ -96,7 +96,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
             vertex = connectionResult?.p ?? point;
             snappingResult = undefined;
           } else {
-            snappingResult = event.data.shift ? undefined : shapeSnapping.testPoint(point);
+            snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
             vertex = snappingResult ? add(point, snappingResult.diff) : point;
           }
 

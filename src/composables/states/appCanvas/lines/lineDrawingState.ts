@@ -34,7 +34,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     getLabel: () => "LineDrawing",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_CONNECT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
       const snappableShapes = filterShapesOverlappingRect(
@@ -75,12 +75,13 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
-          if (connectionResult) {
+          if (connectionResult?.connection) {
             vertex = connectionResult?.p ?? point;
             snappingResult = undefined;
           } else {
-            snappingResult = event.data.shift ? undefined : shapeSnapping.testPoint(point);
+            snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
             vertex = snappingResult ? add(point, snappingResult.diff) : point;
+            connectionResult = undefined;
           }
 
           let patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);

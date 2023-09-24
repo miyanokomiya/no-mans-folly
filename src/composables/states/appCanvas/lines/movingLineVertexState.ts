@@ -37,7 +37,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
     getLabel: () => "MovingLineVertex",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_CONNECT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
@@ -79,12 +79,13 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
-          if (connectionResult) {
+          if (connectionResult?.connection) {
             vertex = connectionResult?.p ?? add(origin, sub(point, event.data.start));
             snappingResult = undefined;
           } else {
-            snappingResult = event.data.shift ? undefined : shapeSnapping.testPoint(point);
+            snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
             vertex = snappingResult ? add(point, snappingResult.diff) : add(origin, sub(point, event.data.start));
+            connectionResult = undefined;
           }
 
           let patch = patchVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
