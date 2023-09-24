@@ -209,6 +209,13 @@ export const struct: ShapeStruct<LineShape> = {
 
     return Object.keys(ret).length > 0 ? ret : undefined;
   },
+  getSnappingLines(shape) {
+    const path = getLinePath(shape);
+    return {
+      h: path.map((p) => [p, p]),
+      v: path.map((p) => [p, p]),
+    };
+  },
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {

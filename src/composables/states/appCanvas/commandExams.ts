@@ -3,7 +3,8 @@ import { CommandExam } from "../types";
 
 export const COMMAND_EXAM_SRC = {
   DISABLE_SNAP: { command: getCtrlOrMetaStr(), title: "Disable snapping" },
-  DISABLE_LINE_VERTEX_SNAP: { command: getCtrlOrMetaStr(), title: "Disable snapping" },
+  DISABLE_LINE_VERTEX_CONNECT: { command: getCtrlOrMetaStr(), title: "Disable connecting" },
+  DISABLE_LINE_VERTEX_SNAP: { command: "Shift", title: "Disable snapping" },
 
   RESIZE_PROPORTIONALLY: { command: "Shift", title: "Proportionally" },
   RESIZE_AT_CENTER: { command: getAltOrOptionStr(), title: "Based on center" },

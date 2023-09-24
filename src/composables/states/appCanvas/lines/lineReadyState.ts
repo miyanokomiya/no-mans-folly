@@ -3,13 +3,14 @@ import { newPanningState } from "../../commons";
 import { handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
-import { createShape } from "../../../../shapes";
-import { LineShape } from "../../../../shapes/line";
+import { createShape, filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
+import { LineShape, isLineShape } from "../../../../shapes/line";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
-import { IVec2 } from "okageo";
+import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 
 interface Option {
   type: string;
@@ -19,18 +20,36 @@ export function newLineReadyState(option: Option): AppCanvasState {
   let vertex: IVec2 | undefined;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
+  let shapeSnapping: ShapeSnapping;
+  let snappingResult: SnappingResult | undefined;
 
   return {
     getLabel: () => "LineReady",
     onStart: (ctx) => {
       ctx.setCursor();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_CONNECT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !isLineShape(s)),
+        ctx.getViewRect()
+      );
       lineSnapping = newLineSnapping({
-        snappableShapes: Object.values(shapeMap),
+        snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
         movingIndex: 0,
+      });
+
+      const snappableLines = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => isLineShape(s)),
+        ctx.getViewRect()
+      );
+      shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        scale: ctx.getScale(),
+        gridSnapping: ctx.getGrid().getSnappingLines(),
       });
     },
     onEnd: (ctx) => {
@@ -45,7 +64,14 @@ export function newLineReadyState(option: Option): AppCanvasState {
               connectionResult = event.data.options.ctrl
                 ? undefined
                 : lineSnapping.testConnection(point, ctx.getScale());
-              vertex = connectionResult?.p ?? point;
+
+              if (connectionResult) {
+                vertex = connectionResult?.p ?? point;
+                snappingResult = undefined;
+              } else {
+                snappingResult = event.data.options.shift ? undefined : shapeSnapping.testPoint(point);
+                vertex = snappingResult ? add(point, snappingResult.diff) : point;
+              }
 
               const lineshape = createShape<LineShape>(ctx.getShapeStruct, "line", {
                 id: ctx.generateUuid(),
@@ -65,7 +91,15 @@ export function newLineReadyState(option: Option): AppCanvasState {
         case "pointerhover": {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
-          vertex = connectionResult?.p ?? point;
+
+          if (connectionResult) {
+            vertex = connectionResult?.p ?? point;
+            snappingResult = undefined;
+          } else {
+            snappingResult = event.data.shift ? undefined : shapeSnapping.testPoint(point);
+            vertex = snappingResult ? add(point, snappingResult.diff) : point;
+          }
+
           ctx.setTmpShapeMap({});
           return;
         }
@@ -103,6 +137,14 @@ export function newLineReadyState(option: Option): AppCanvasState {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
+        });
+      }
+
+      if (snappingResult) {
+        renderSnappingResult(renderCtx, {
+          style: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
+          result: snappingResult,
         });
       }
     },

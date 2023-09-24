@@ -126,6 +126,28 @@ describe("struct", () => {
       expect(result1).toHaveProperty("qConnection");
     });
   });
+
+  describe("getSnappingLines", () => {
+    test("should return each vertices as snapping lines", () => {
+      const shape = struct.create({
+        p: { x: 1, y: 1 },
+        q: { x: 10, y: 10 },
+        body: [{ p: { x: 2, y: 3 } }],
+      });
+      expect(struct.getSnappingLines?.(shape)).toEqual({
+        h: [
+          [shape.p, shape.p],
+          [shape.body![0].p, shape.body![0].p],
+          [shape.q, shape.q],
+        ],
+        v: [
+          [shape.p, shape.p],
+          [shape.body![0].p, shape.body![0].p],
+          [shape.q, shape.q],
+        ],
+      });
+    });
+  });
 });
 
 describe("getLinePath", () => {

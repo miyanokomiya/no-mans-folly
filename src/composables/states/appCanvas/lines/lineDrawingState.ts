@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
-import { renderShape } from "../../../../shapes";
-import { LineShape, patchVertex } from "../../../../shapes/line";
+import { filterShapesOverlappingRect, getSnappingLines, renderShape } from "../../../../shapes";
+import { LineShape, isLineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import {
   ConnectionResult,
@@ -14,6 +14,8 @@ import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
+import { add } from "okageo";
 
 interface Option {
   shape: LineShape;
@@ -24,21 +26,41 @@ export function newLineDrawingState(option: Option): AppCanvasState {
   let vertex = option.shape.p;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
+  let shapeSnapping: ShapeSnapping;
+  let snappingResult: SnappingResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
 
   return {
     getLabel: () => "LineDrawing",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_CONNECT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeMap = ctx.getShapeMap();
-      const selectedIds = ctx.getSelectedShapeIdMap();
+      const snappableShapes = filterShapesOverlappingRect(
+        ctx.getShapeStruct,
+        Object.values(shapeMap).filter((s) => !isLineShape(s)),
+        ctx.getViewRect()
+      );
       lineSnapping = newLineSnapping({
-        snappableShapes: Object.values(shapeMap).filter((s) => !selectedIds[s.id]),
+        snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
         movingLine: shape,
         movingIndex: 1,
+      });
+
+      const snappableLines = [
+        ...filterShapesOverlappingRect(
+          ctx.getShapeStruct,
+          Object.values(shapeMap).filter((s) => isLineShape(s)),
+          ctx.getViewRect()
+        ),
+        shape,
+      ];
+      shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        scale: ctx.getScale(),
+        gridSnapping: ctx.getGrid().getSnappingLines(),
       });
 
       elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
@@ -52,7 +74,15 @@ export function newLineDrawingState(option: Option): AppCanvasState {
         case "pointermove": {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
-          vertex = connectionResult?.p ?? point;
+
+          if (connectionResult) {
+            vertex = connectionResult?.p ?? point;
+            snappingResult = undefined;
+          } else {
+            snappingResult = event.data.shift ? undefined : shapeSnapping.testPoint(point);
+            vertex = snappingResult ? add(point, snappingResult.diff) : point;
+          }
+
           let patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
 
           const optimized = optimizeLinePath(ctx, { ...option.shape, ...patch });
@@ -107,6 +137,14 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
+        });
+      }
+
+      if (snappingResult) {
+        renderSnappingResult(renderCtx, {
+          style: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
+          result: snappingResult,
         });
       }
     },
