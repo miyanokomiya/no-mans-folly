@@ -17,6 +17,7 @@ import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
+import { scaleGlobalAlpha } from "../../../../utils/renderer";
 
 interface Option {
   lineShape: LineShape;
@@ -125,8 +126,15 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
+
+      scaleGlobalAlpha(renderCtx, 0.5, () => {
+        renderCtx.beginPath();
+        renderCtx.arc(origin.x, origin.y, vertexSize, 0, Math.PI * 2);
+        renderCtx.fill();
+      });
+
       renderCtx.beginPath();
-      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
+      renderCtx.arc(vertex.x, vertex.y, vertexSize, 0, Math.PI * 2);
       renderCtx.fill();
 
       if (connectionResult) {

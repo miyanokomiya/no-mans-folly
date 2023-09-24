@@ -35,3 +35,10 @@ export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, siz
   ctx.closePath();
   ctx.fill();
 }
+
+export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, render: () => void) {
+  const original = ctx.globalAlpha;
+  ctx.globalAlpha = original * scale;
+  render();
+  ctx.globalAlpha = original;
+}
