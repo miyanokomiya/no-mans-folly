@@ -102,6 +102,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
         shapeComposite: newShapeComposite({ shapes: duplicated.shapes, tmpShapeMap }),
         getDocumentMap: () => duplicated.docMap,
         getShapeStruct: ctx.getShapeStruct,
+        imageStore: ctx.getImageStore(),
       });
       renderCtx.globalAlpha = 0.5;
       renderer.render(renderCtx);

@@ -42,6 +42,7 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
     shapeComposite: ctx.getShapeComposite(),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
+    imageStore: ctx.getImageStore(),
   });
 
   const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes, true);
@@ -73,6 +74,7 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
     shapeComposite: ctx.getShapeComposite(),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
+    imageStore: ctx.getImageStore(),
   });
 
   const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes, true);

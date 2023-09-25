@@ -44,7 +44,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   retrieveCursorPosition: (info?: CursorPositionInfo) => number;
 
   getAssetAPI: () => AssetAPI;
-  getImageStore: () => Pick<ImageStore, "loadFromFile">;
+  getImageStore: () => ImageStore;
 }
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;

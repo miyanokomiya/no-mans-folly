@@ -42,7 +42,7 @@ export function createStateMachineContext(arg: {
   getTimestamp: () => number;
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
-  getAssetAPI: AppCanvasStateContext["getAssetAPI"];
+  getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
 }) {
   let ctx = createInitialAppCanvasStateContext(arg);
 
@@ -63,13 +63,19 @@ export function createInitialAppCanvasStateContext(arg: {
   getTimestamp: () => number;
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
-  getAssetAPI: AppCanvasStateContext["getAssetAPI"];
+  getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
 }): AppCanvasStateContext {
   return {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
-    getAssetAPI: arg.getAssetAPI,
+    getAssetAPI:
+      arg.getAssetAPI ??
+      (() => ({
+        enabled: false,
+        saveAsset: () => Promise.reject(),
+        loadAsset: () => Promise.reject(),
+      })),
 
     getRenderCtx: () => undefined,
     setViewport() {},
