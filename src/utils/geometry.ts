@@ -15,6 +15,7 @@ import {
   isOnSeg,
   isParallel,
   multi,
+  multiAffines,
   rotate,
   solveEquationOrder2,
   sub,
@@ -359,4 +360,21 @@ export function getRelativePointOnPath(path: IVec2[], rate: number): IVec2 {
 
   const remain = targetLength - stack;
   return interpolateVector(edges[targetIndex][0], edges[targetIndex][1], remain / list[targetIndex]);
+}
+
+/**
+ * "rectPath" must be rectangluar
+ */
+export function getRotatedRectAffine(rect: IRectangle, rotation: number) {
+  const width = rect.width;
+  const height = rect.height;
+  const center = getRectCenter(rect);
+  const sin = Math.sin(rotation);
+  const cos = Math.cos(rotation);
+
+  return multiAffines([
+    [1, 0, 0, 1, center.x, center.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, 1, -width / 2, -height / 2],
+  ]);
 }

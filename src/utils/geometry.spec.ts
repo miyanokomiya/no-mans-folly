@@ -11,6 +11,7 @@ import {
   getLocationFromRateOnRectPath,
   getRectCenterLines,
   getRectLines,
+  getRotatedRectAffine,
   getRectPoints,
   getRelativePointOnPath,
   getRotateFn,
@@ -553,5 +554,19 @@ describe("getRelativePointOnPath", () => {
     expect(getRelativePointOnPath(path, 0.5)).toEqual({ x: 10, y: 5 });
     expect(getRelativePointOnPath(path, 0.8)).toEqual({ x: 6, y: 10 });
     expect(getRelativePointOnPath(path, 1)).toEqual({ x: 0, y: 10 });
+  });
+});
+
+describe("getRotatedRectAffine", () => {
+  test("should return relative point on the path", () => {
+    expect(getRotatedRectAffine({ x: 100, y: 200, width: 10, height: 20 }, 0)).toEqual([1, 0, 0, 1, 100, 200]);
+
+    const result1 = getRotatedRectAffine({ x: 0, y: 0, width: 10, height: 20 }, Math.PI / 2);
+    expect(result1[0]).toBeCloseTo(0);
+    expect(result1[1]).toBeCloseTo(1);
+    expect(result1[2]).toBeCloseTo(-1);
+    expect(result1[3]).toBeCloseTo(0);
+    expect(result1[4]).toBeCloseTo(15);
+    expect(result1[5]).toBeCloseTo(5);
   });
 });

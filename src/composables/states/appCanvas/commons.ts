@@ -1,7 +1,7 @@
 import { HistoryEvent } from "../commons";
 import { ChangeStateEvent, KeyDownEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
-import { AppCanvasStateContext, TextStyleEvent } from "./core";
+import { AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
 import { DocDelta, DocOutput } from "../../../models/document";
 import {
@@ -10,9 +10,9 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
-import { canHaveText, getWrapperRect } from "../../../shapes";
+import { canHaveText, createShape, getWrapperRect, patchShapesOrderToLast } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
-import { IVec2 } from "okageo";
+import { IVec2, add, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
@@ -20,6 +20,7 @@ import { newTextReadyState } from "./text/textReadyState";
 import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
+import { ImageShape } from "../../../shapes/image";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -199,4 +200,48 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
       onPaste?.([{ insert: text }]);
     }
   );
+}
+
+export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDropEvent): Promise<void> {
+  const assetAPI = ctx.getAssetAPI();
+  if (!assetAPI.enabled) {
+    ctx.showToastMessage({ text: "Open/Save workspace to enable asset files.", type: "error" });
+    return;
+  }
+
+  const imageStore = ctx.getImageStore();
+
+  const assetMap = new Map<string, HTMLImageElement>();
+  for (const file of event.data.files) {
+    const splitted = file.name.split(".");
+    const ex = splitted.length > 1 ? splitted[splitted.length - 1] : "";
+    const str = ctx.generateUuid();
+    const id = ex ? `${str}.${ex}` : str;
+    try {
+      await assetAPI.saveAsset(id, file);
+      const img = await imageStore.loadFromFile(id, file);
+      assetMap.set(id, img);
+    } catch (e) {
+      ctx.showToastMessage({ text: `Failed to import the file: ${file.name}`, type: "error" });
+      console.error(e);
+    }
+  }
+
+  const drift = { x: 20, y: 20 };
+  const assetIds = Array.from(assetMap.keys());
+  const ids = assetIds.map(() => ctx.generateUuid());
+  const patch = patchShapesOrderToLast(ids, ctx.createLastIndex());
+  const shapes = ids.map((id, i) => {
+    const assetId = assetIds[i];
+    const img = assetMap.get(assetId);
+    return createShape<ImageShape>(ctx.getShapeStruct, "image", {
+      id,
+      assetId,
+      p: add(event.data.point, multi(drift, i)),
+      width: img?.width,
+      height: img?.height,
+      ...patch[id],
+    });
+  });
+  ctx.addShapes(shapes);
 }

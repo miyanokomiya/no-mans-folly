@@ -2,6 +2,7 @@ import { DocOutput } from "../models/document";
 import { GetShapeStruct, getShapeTextBounds, renderShape } from "../shapes";
 import { renderDoc } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
+import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
 
 interface Option {
@@ -9,6 +10,7 @@ interface Option {
   getDocumentMap: () => { [id: string]: DocOutput };
   getShapeStruct: GetShapeStruct;
   ignoreDocIds?: string[];
+  imageStore: ImageStore;
 }
 
 export function newShapeRenderer(option: Option) {
@@ -19,7 +21,7 @@ export function newShapeRenderer(option: Option) {
   function render(ctx: CanvasRenderingContext2D) {
     walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];
-      renderShape(option.getShapeStruct, ctx, shape, mergedShapeMap, node);
+      renderShape(option.getShapeStruct, ctx, shape, mergedShapeMap, node, option.imageStore);
 
       const doc = docMap[shape.id];
       if (doc && !ignoreDocIdSet.has(shape.id)) {

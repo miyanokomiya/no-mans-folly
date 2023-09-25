@@ -1,5 +1,6 @@
 import type { ModeStateBase, ModeStateEventBase } from "../core";
 import type { CanvasStateContext, CanvasStateEvent } from "../commons";
+import type { AssetAPI } from "../../persistence";
 import { Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
@@ -7,6 +8,7 @@ import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models
 import { CursorPositionInfo } from "../../../stores/documents";
 import { ShapeComposite } from "../../shapeComposite";
 import { Grid } from "../../grid";
+import { ImageStore } from "../../imageStore";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeComposite: () => ShapeComposite;
@@ -40,6 +42,9 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
   createCursorPosition: (id: string, index: number) => CursorPositionInfo | undefined;
   retrieveCursorPosition: (info?: CursorPositionInfo) => number;
+
+  getAssetAPI: () => AssetAPI;
+  getImageStore: () => Pick<ImageStore, "loadFromFile">;
 }
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;
@@ -93,5 +98,6 @@ export interface FileDropEvent extends ModeStateEventBase {
   type: "file-drop";
   data: {
     files: FileList;
+    point: IVec2;
   };
 }

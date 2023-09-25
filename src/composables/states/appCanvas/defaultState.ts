@@ -1,6 +1,12 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, newShapeClipboard } from "./commons";
+import {
+  handleCommonShortcut,
+  handleFileDrop,
+  handleHistoryEvent,
+  handleStateEvent,
+  newShapeClipboard,
+} from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
@@ -64,7 +70,7 @@ const state: AppCanvasState = {
         return;
       }
       case "file-drop": {
-        console.log(event.data);
+        handleFileDrop(ctx, event);
         return;
       }
       default:

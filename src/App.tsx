@@ -26,6 +26,7 @@ function App() {
     saveDiagramToLocal,
     saveSheetToLocal,
     canSyncoLocal,
+    getAssetAPI,
   } = usePersistence({ generateUuid });
 
   const [autoSaved, setAutoSaved] = useState(0);
@@ -84,6 +85,7 @@ function App() {
       getTimestamp: Date.now,
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
+      getAssetAPI,
     });
   }, [acctx.getStyleScheme]);
 

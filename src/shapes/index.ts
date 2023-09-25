@@ -1,15 +1,17 @@
-import { AffineMatrix, IRectangle, IVec2, getCenter, getDistance, getOuterRectangle, multiAffines, sub } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getCenter, getOuterRectangle, multiAffines, sub } from "okageo";
 import { CommonStyle, Shape } from "../models";
 import { ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as textStruct } from "./text";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
+import { struct as imageStruct } from "./image";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { TreeNode } from "../utils/tree";
 import { DocOutput } from "../models/document";
 import { mapDataToObj, remap } from "../utils/commons";
+import { ImageStore } from "../composables/imageStore";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -18,6 +20,7 @@ const SHAPE_STRUCTS: {
   text: textStruct,
   ellipse: ellipseStruct,
   line: lineStruct,
+  image: imageStruct,
 };
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
@@ -36,10 +39,11 @@ export function renderShape<T extends Shape>(
   ctx: CanvasRenderingContext2D,
   shape: T,
   shapeMap: { [id: string]: T } = {},
-  treeNode?: TreeNode
+  treeNode?: TreeNode,
+  imageStore?: ImageStore
 ) {
   const struct = getStruct(shape.type);
-  struct.render(ctx, shape, shapeMap, treeNode);
+  struct.render(ctx, shape, shapeMap, treeNode, imageStore);
 }
 
 export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape, includeBounds?: boolean): IRectangle {
@@ -110,21 +114,6 @@ export function getIntersectedOutlines(
 
 export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {
   return geometry.getLocationRateOnRectPath(getLocalRectPolygon(getStruct, shape), shape.rotation, p);
-}
-
-export function getShapeAffine(getStruct: GetShapeStruct, shape: Shape) {
-  const path = getLocalRectPolygon(getStruct, shape);
-  const width = getDistance(path[0], path[1]);
-  const height = getDistance(path[0], path[3]);
-  const center = getCenter(path[0], path[2]);
-  const sin = Math.sin(shape.rotation);
-  const cos = Math.cos(shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, center.x, center.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [1, 0, 0, 1, -width / 2, -height / 2],
-  ]);
 }
 
 export function getShapeTextBounds(

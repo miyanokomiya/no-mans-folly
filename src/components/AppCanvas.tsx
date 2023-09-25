@@ -27,6 +27,8 @@ import { ToastMessages } from "./ToastMessages";
 import { useToastMessages } from "../composables/toastMessage";
 import { getGridSize, newGrid } from "../composables/grid";
 import { FileDropArea } from "./atoms/FileDropArea";
+import { newImageStore } from "../composables/imageStore";
+import { isImageShape } from "../shapes/image";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -41,6 +43,26 @@ export function AppCanvas() {
   const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; point: IVec2 } | undefined>();
+
+  const imageStore = useMemo(() => {
+    return newImageStore();
+  }, []);
+
+  useEffect(() => {
+    const assetAPI = smctx.getCtx().getAssetAPI();
+    imageStore.batchLoad(
+      smctx
+        .getCtx()
+        .getShapes()
+        .filter(isImageShape)
+        .map((s) => s.assetId),
+      assetAPI
+    );
+
+    return imageStore.watch(() => {
+      setCanvasState({});
+    });
+  }, [imageStore]);
 
   useEffect(() => {
     return acctx.sheetStore.watchSelected(() => {
@@ -221,6 +243,7 @@ export function AppCanvas() {
       setCurrentDocAttrInfo,
       createCursorPosition: acctx.documentStore.createCursorPosition,
       retrieveCursorPosition: acctx.documentStore.retrieveCursorPosition,
+      getImageStore: () => imageStore,
     });
   }, [
     setViewport,
@@ -274,6 +297,7 @@ export function AppCanvas() {
       getDocumentMap: canvasContext.getDocumentMap,
       getShapeStruct: canvasContext.getShapeStruct,
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
+      imageStore,
     });
     renderer.render(ctx);
 
@@ -290,6 +314,7 @@ export function AppCanvas() {
     canvasState,
     textEditing,
     grid,
+    imageStore,
   ]);
 
   const [focused, setFocused] = useState(false);
@@ -476,13 +501,13 @@ export function AppCanvas() {
   }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, acctx.documentStore]);
 
   const onDrop = useCallback(
-    (files: FileList) => {
+    (e: React.DragEvent) => {
       smctx.stateMachine.handleEvent({
         type: "file-drop",
-        data: { files },
+        data: { files: e.dataTransfer.files, point: viewToCanvas({ x: e.pageX, y: e.pageY }) },
       });
     },
-    [smctx.stateMachine]
+    [smctx.stateMachine, viewToCanvas, getMousePoint]
   );
 
   const textEditor = textEditing ? (
@@ -525,7 +550,7 @@ export function AppCanvas() {
         onContextMenu={onContextMenu}
         tabIndex={-1}
       >
-        <FileDropArea onDrop={onDrop}>
+        <FileDropArea typeReg={/image\/.+/} onDrop={onDrop}>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
           <div className="absolute right-2 top-0">{smctx.stateMachine.getStateSummary().label}</div>
           <div className="absolute bottom-2 left-2 pointer-events-none">

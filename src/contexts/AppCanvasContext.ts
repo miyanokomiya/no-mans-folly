@@ -11,6 +11,7 @@ import { StyleScheme } from "../models";
 import { newDocumentStore } from "../stores/documents";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { newGrid } from "../composables/grid";
+import { newImageStore } from "../composables/imageStore";
 
 interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
@@ -26,7 +27,10 @@ export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as an
 
 interface IAppStateMachineContext {
   setCtx: (
-    c: Omit<AppCanvasStateContext, "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme">
+    c: Omit<
+      AppCanvasStateContext,
+      "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getAssetAPI"
+    >
   ) => void;
   getCtx: () => AppCanvasStateContext;
   stateMachine: ReturnType<typeof newStateMachine<AppCanvasStateContext, AppCanvasEvent>>;
@@ -38,6 +42,7 @@ export function createStateMachineContext(arg: {
   getTimestamp: () => number;
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
+  getAssetAPI: AppCanvasStateContext["getAssetAPI"];
 }) {
   let ctx = createInitialAppCanvasStateContext(arg);
 
@@ -58,11 +63,13 @@ export function createInitialAppCanvasStateContext(arg: {
   getTimestamp: () => number;
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
+  getAssetAPI: AppCanvasStateContext["getAssetAPI"];
 }): AppCanvasStateContext {
   return {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
+    getAssetAPI: arg.getAssetAPI,
 
     getRenderCtx: () => undefined,
     setViewport() {},
@@ -116,5 +123,7 @@ export function createInitialAppCanvasStateContext(arg: {
     setCurrentDocAttrInfo() {},
     createCursorPosition: () => undefined,
     retrieveCursorPosition: () => 0,
+
+    getImageStore: () => newImageStore(),
   };
 }

@@ -1,15 +1,22 @@
 import { useCallback } from "react";
 
 interface Props {
-  onDrop?: (files: FileList) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  typeReg: RegExp;
   children: React.ReactNode;
 }
 
-export const FileDropArea: React.FC<Props> = ({ onDrop, children }) => {
+export const FileDropArea: React.FC<Props> = ({ onDrop, children, typeReg }) => {
   const _onDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      onDrop?.(e.dataTransfer.files);
+      for (const file of e.dataTransfer.files) {
+        if (!typeReg.test(file.type)) {
+          return;
+        }
+      }
+
+      onDrop?.(e);
     },
     [onDrop]
   );

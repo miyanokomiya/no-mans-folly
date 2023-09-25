@@ -10,6 +10,12 @@ import { generateKeyBetween } from "fractional-indexing";
 import { newFileAccess } from "./fileAcess";
 import { newThrottle } from "./throttle";
 
+export interface AssetAPI {
+  enabled: boolean;
+  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
+  loadAsset: (assetId: string) => Promise<File | undefined>;
+}
+
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
 
@@ -215,6 +221,14 @@ export function usePersistence(option: PersistenceOption) {
     };
   }, [dbProviderSheet]);
 
+  const getAssetAPI = useMemo<() => AssetAPI>(() => {
+    return () => ({
+      enabled: fileAcess.hasHnadle(),
+      saveAsset: fileAcess.saveAsset,
+      loadAsset: fileAcess.loadAsset,
+    });
+  }, [fileAcess]);
+
   return {
     initSheet,
     initDiagram,
@@ -227,6 +241,8 @@ export function usePersistence(option: PersistenceOption) {
     canSyncoLocal,
     ...diagramStores,
     ...sheetStores,
+
+    getAssetAPI,
   };
 }
 

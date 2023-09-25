@@ -1,20 +1,32 @@
 import * as Y from "yjs";
 
 const DIAGRAM_FILE_NAME = "diagram";
+const ASSET_DIRECTORY_NAME = "assets";
 
 export function newFileAccess() {
   let handle: FileSystemDirectoryHandle | undefined;
+  let assetHandle: FileSystemDirectoryHandle | undefined;
 
   function hasHnadle(): boolean {
     return !!handle;
   }
 
   async function openDirectory(): Promise<true | undefined> {
+    assetHandle = undefined;
     const _handle = await getDirectoryHandle();
     if (_handle) {
       handle = _handle;
       return true;
     }
+  }
+
+  async function openAssetDirectory(): Promise<true | undefined> {
+    if (!handle) {
+      await openDirectory();
+    }
+    if (!handle) return;
+    assetHandle = await handle.getDirectoryHandle(ASSET_DIRECTORY_NAME, { create: true });
+    return !!assetHandle;
   }
 
   async function openDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {
@@ -81,7 +93,27 @@ export function newFileAccess() {
     return true;
   }
 
-  return { openDirectory, openDiagram, openSheet, save, hasHnadle, saveDoc, saveSheet };
+  async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {
+    if (!assetHandle) {
+      await openAssetDirectory();
+    }
+    if (!assetHandle) return;
+
+    const sheetFileHnadle = await assetHandle.getFileHandle(assetId, { create: true });
+    await overrideFile(sheetFileHnadle, blob);
+  }
+
+  async function loadAsset(assetId: string): Promise<File | undefined> {
+    if (!assetHandle) {
+      await openAssetDirectory();
+    }
+    if (!assetHandle) return;
+
+    const sheetFileHnadle = await assetHandle.getFileHandle(assetId);
+    return await readFile(sheetFileHnadle);
+  }
+
+  return { openDirectory, openDiagram, openSheet, save, hasHnadle, saveDoc, saveSheet, saveAsset, loadAsset };
 }
 
 async function getDirectoryHandle(): Promise<FileSystemDirectoryHandle | undefined> {
@@ -117,4 +149,9 @@ async function readFileAsUnit8Array(handle: FileSystemFileHandle): Promise<Uint8
 
   const array = new Uint8Array(buffer);
   return array;
+}
+
+async function readFile(handle: FileSystemFileHandle): Promise<File | undefined> {
+  const file = await handle.getFile();
+  return file;
 }
