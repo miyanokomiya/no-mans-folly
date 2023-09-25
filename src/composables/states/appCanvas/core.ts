@@ -50,7 +50,8 @@ export type AppCanvasEvent =
   | UpdateShapeEvent
   | TextInputEvent
   | TextStyleEvent
-  | ContextMenuItemEvent;
+  | ContextMenuItemEvent
+  | FileDropEvent;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";
@@ -85,5 +86,12 @@ export interface ContextMenuItemEvent extends ModeStateEventBase {
   type: "contextmenu-item";
   data: {
     key: string;
+  };
+}
+
+export interface FileDropEvent extends ModeStateEventBase {
+  type: "file-drop";
+  data: {
+    files: FileList;
   };
 }

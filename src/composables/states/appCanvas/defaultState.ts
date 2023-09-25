@@ -63,6 +63,10 @@ const state: AppCanvasState = {
         clipboard.onPaste(event.nativeEvent);
         return;
       }
+      case "file-drop": {
+        console.log(event.data);
+        return;
+      }
       default:
         return;
     }

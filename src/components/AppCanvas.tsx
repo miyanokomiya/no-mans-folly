@@ -26,6 +26,7 @@ import { ContextMenu } from "./ContextMenu";
 import { ToastMessages } from "./ToastMessages";
 import { useToastMessages } from "../composables/toastMessage";
 import { getGridSize, newGrid } from "../composables/grid";
+import { FileDropArea } from "./atoms/FileDropArea";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
@@ -474,6 +475,16 @@ export function AppCanvas() {
     return { cursor: attrs, block: attrs, doc: attrs };
   }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, acctx.documentStore]);
 
+  const onDrop = useCallback(
+    (files: FileList) => {
+      smctx.stateMachine.handleEvent({
+        type: "file-drop",
+        data: { files },
+      });
+    },
+    [smctx.stateMachine]
+  );
+
   const textEditor = textEditing ? (
     <TextEditor
       onInput={onTextInput}
@@ -498,6 +509,7 @@ export function AppCanvas() {
     return { cursor, backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" };
   }, [cursor, sheet]);
 
+  FileDropArea;
   return (
     <>
       <div
@@ -513,11 +525,13 @@ export function AppCanvas() {
         onContextMenu={onContextMenu}
         tabIndex={-1}
       >
-        <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-        <div className="absolute right-2 top-0">{smctx.stateMachine.getStateSummary().label}</div>
-        <div className="absolute bottom-2 left-2 pointer-events-none">
-          {<CommandExamPanel commandExams={commandExams} />}
-        </div>
+        <FileDropArea onDrop={onDrop}>
+          <canvas ref={canvasRef} {...canvasAttrs}></canvas>
+          <div className="absolute right-2 top-0">{smctx.stateMachine.getStateSummary().label}</div>
+          <div className="absolute bottom-2 left-2 pointer-events-none">
+            {<CommandExamPanel commandExams={commandExams} />}
+          </div>
+        </FileDropArea>
       </div>
       {floatMenu}
       {textEditor}
