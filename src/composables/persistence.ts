@@ -10,6 +10,8 @@ import { generateKeyBetween } from "fractional-indexing";
 import { newFileAccess } from "./fileAcess";
 import { newThrottle } from "./throttle";
 
+const DIAGRAM_KEY = "test-project-diagram";
+
 export type AssetAPI =
   | {
       enabled: true;
@@ -46,6 +48,7 @@ export function usePersistence(option: PersistenceOption) {
   const [sheetDoc, setSheetDoc] = useState(defaultSheetDoc);
   const [dbProviderSheet, setDbProviderSheet] = useState<IndexeddbPersistence | undefined>();
   const [ready, setReady] = useState(false);
+  const [savePending, setSavePending] = useState({ diagram: false, sheet: false });
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
@@ -67,7 +70,7 @@ export function usePersistence(option: PersistenceOption) {
 
       if (fileAcess.hasHnadle()) {
         try {
-          await fileAcess.openSheet(nextSheetDoc, sheetId);
+          await fileAcess.openSheet(sheetId, nextSheetDoc);
           await clearIndexeddbPersistence(sheetId);
           setCanSyncToLocal(fileAcess.hasHnadle());
         } catch (e) {
@@ -78,10 +81,6 @@ export function usePersistence(option: PersistenceOption) {
       const sheetProvider = new IndexeddbPersistence(sheetId, nextSheetDoc);
       await sheetProvider.whenSynced;
 
-      sheetStores.layerStore.dispose();
-      sheetStores.shapeStore.dispose();
-      sheetStores.documentStore.dispose();
-
       setDbProviderSheet(sheetProvider);
       setSheetDoc(nextSheetDoc);
       setSheetStores({
@@ -90,7 +89,7 @@ export function usePersistence(option: PersistenceOption) {
         documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
       });
     },
-    [fileAcess, sheetStores]
+    [fileAcess]
   );
 
   const initDiagram = useCallback(async () => {
@@ -98,7 +97,7 @@ export function usePersistence(option: PersistenceOption) {
     const nextDiagramDoc = new Y.Doc();
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
     createInitialDiagram(diagramStore, option.generateUuid);
-    const provider = new IndexeddbPersistence("test-project-diagram", nextDiagramDoc);
+    const provider = new IndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
     await provider.whenSynced;
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
@@ -109,9 +108,6 @@ export function usePersistence(option: PersistenceOption) {
     const sheet = sheetStore.getEntityMap()[initialSheetIdByQuery] ?? sheetStore.getSelectedSheet()!;
     sheetStore.selectSheet(sheet.id);
     await initSheet(sheet.id);
-
-    diagramStores.diagramStore.dispose();
-    diagramStores.sheetStore.dispose();
 
     setDbProviderDiagram(provider);
     setDiagramDoc(nextDiagramDoc);
@@ -126,9 +122,9 @@ export function usePersistence(option: PersistenceOption) {
     if (!result) return;
 
     setReady(false);
-    await clearIndexeddbPersistence("test-project-diagram");
+    await clearIndexeddbPersistence(DIAGRAM_KEY);
 
-    const provider = new IndexeddbPersistence("test-project-diagram", nextDiagramDoc);
+    const provider = new IndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
     await provider.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
 
@@ -140,33 +136,11 @@ export function usePersistence(option: PersistenceOption) {
     const sheet = sheetStore.getSelectedSheet()!;
     await initSheet(sheet.id);
 
-    if (diagramStores) {
-      diagramStores.diagramStore.dispose();
-      diagramStores.sheetStore.dispose();
-    }
-
     setDbProviderDiagram(provider);
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [fileAcess]);
-
-  const saveDiagramToLocal = useCallback(async () => {
-    const result = await fileAcess.saveDoc(diagramDoc);
-    setCanSyncToLocal(fileAcess.hasHnadle());
-    if (result) {
-      console.log("Saved: Diagram");
-    }
-  }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
-
-  const saveSheetToLocal = useCallback(async () => {
-    const sheetId = sheetDoc.meta.sheetId as string;
-    const result = await fileAcess.saveSheet(sheetDoc, sheetId);
-    setCanSyncToLocal(fileAcess.hasHnadle());
-    if (result) {
-      console.log("Saved: ", sheetId);
-    }
-  }, [fileAcess, diagramDoc, sheetDoc, diagramStores]);
+  }, [fileAcess, initSheet]);
 
   const saveAllToLocal = useCallback(async () => {
     if (!diagramStores) return;
@@ -179,11 +153,61 @@ export function usePersistence(option: PersistenceOption) {
       const sheetDoc = new Y.Doc();
       const sheetProvider = new IndexeddbPersistence(sheet.id, sheetDoc);
       await sheetProvider.whenSynced;
-      await fileAcess.saveSheet(sheetDoc, sheet.id);
+      await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
+      await sheetProvider.destroy();
+      sheetDoc.destroy();
     }
-    await fileAcess.saveDoc(diagramDoc);
+    await fileAcess.overwriteDiagramDoc(diagramDoc);
     setCanSyncToLocal(fileAcess.hasHnadle());
   }, [fileAcess, diagramDoc, diagramStores]);
+
+  const mergeAllWithLocal = useCallback(async () => {
+    const nextDiagramDoc = new Y.Doc();
+    const provider = new IndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider.whenSynced;
+
+    const result = await fileAcess.openDiagram(nextDiagramDoc);
+    if (!result) {
+      nextDiagramDoc.destroy();
+      await provider.destroy();
+      return;
+    }
+
+    setReady(false);
+    try {
+      await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
+      const nextDiagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
+      const nextSheetStore = newSheetStore({ ydoc: nextDiagramDoc });
+
+      const sheets = nextSheetStore.getEntities();
+      for (const sheet of sheets) {
+        const sheetDoc = new Y.Doc();
+        const sheetProvider = new IndexeddbPersistence(sheet.id, sheetDoc);
+        await sheetProvider.whenSynced;
+        await fileAcess.openSheet(sheet.id, sheetDoc);
+        await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
+        await sheetProvider.destroy();
+        sheetDoc.destroy();
+      }
+
+      if (nextSheetStore.getEntities().length === 0) {
+        createInitialSheet(nextSheetStore, option.generateUuid);
+      }
+
+      if (nextSheetStore.getEntityMap()[diagramStores.sheetStore.getSelectedSheet()?.id ?? ""]) {
+        nextSheetStore.selectSheet(diagramStores.sheetStore.getSelectedSheet()!.id);
+      }
+
+      const sheet = nextSheetStore.getSelectedSheet()!;
+      await initSheet(sheet.id);
+
+      setDbProviderDiagram(provider);
+      setDiagramDoc(nextDiagramDoc);
+      setDiagramStores({ diagramStore: nextDiagramStore, sheetStore: nextSheetStore });
+    } finally {
+      setReady(true);
+    }
+  }, [fileAcess, initSheet, diagramStores]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -194,6 +218,72 @@ export function usePersistence(option: PersistenceOption) {
       }
     );
   }, [sheetStores]);
+
+  const saveDiagramUpdateThrottle = useMemo(() => {
+    return newThrottle(
+      () => {
+        if (!canSyncoLocal) return;
+        fileAcess.overwriteDiagramDoc(diagramDoc);
+      },
+      5000,
+      true
+    );
+  }, [fileAcess, canSyncoLocal, diagramDoc]);
+
+  useEffect(() => {
+    const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
+      setSavePending((val) => ({ ...val, diagram: pending }));
+    });
+    return () => {
+      saveDiagramUpdateThrottle.flush();
+      unwatch();
+    };
+  }, [saveDiagramUpdateThrottle]);
+
+  useEffect(() => {
+    if (!canSyncoLocal) return;
+
+    diagramDoc.on("update", saveDiagramUpdateThrottle);
+    return () => {
+      diagramDoc.off("update", saveDiagramUpdateThrottle);
+      saveDiagramUpdateThrottle.flush();
+    };
+  }, [canSyncoLocal, saveDiagramUpdateThrottle, diagramDoc]);
+
+  const saveSheetUpdateThrottle = useMemo(() => {
+    return newThrottle(
+      (sheetId: string) => {
+        if (!canSyncoLocal) return;
+        fileAcess.overwriteSheetDoc(sheetId, sheetDoc);
+      },
+      5000,
+      true
+    );
+  }, [fileAcess, canSyncoLocal, sheetDoc]);
+
+  useEffect(() => {
+    const unwatch = saveSheetUpdateThrottle.watch((pending) => {
+      setSavePending((val) => ({ ...val, sheet: pending }));
+    });
+    return () => {
+      saveSheetUpdateThrottle.flush();
+      unwatch();
+    };
+  }, [saveSheetUpdateThrottle]);
+
+  useEffect(() => {
+    if (!canSyncoLocal) return;
+
+    const fn = () => {
+      saveSheetUpdateThrottle(sheetDoc.meta.sheetId);
+    };
+
+    sheetDoc.on("update", fn);
+    return () => {
+      sheetDoc.off("update", fn);
+      saveSheetUpdateThrottle.flush();
+    };
+  }, [canSyncoLocal, saveSheetUpdateThrottle, sheetDoc]);
 
   useEffect(() => {
     initDiagram();
@@ -223,6 +313,27 @@ export function usePersistence(option: PersistenceOption) {
     };
   }, [dbProviderSheet]);
 
+  useEffect(() => {
+    return () => {
+      undoManager?.destroy();
+    };
+  }, [undoManager]);
+
+  useEffect(() => {
+    return () => {
+      diagramStores.diagramStore.dispose();
+      diagramStores.sheetStore.dispose();
+    };
+  }, [diagramStores]);
+
+  useEffect(() => {
+    return () => {
+      sheetStores.layerStore.dispose();
+      sheetStores.shapeStore.dispose();
+      sheetStores.documentStore.dispose();
+    };
+  }, [sheetStores]);
+
   const getAssetAPI = useMemo<() => AssetAPI>(() => {
     return () => ({
       enabled: fileAcess.hasHnadle(),
@@ -237,9 +348,9 @@ export function usePersistence(option: PersistenceOption) {
     openDiagramFromLocal,
     undoManager,
     ready,
-    saveDiagramToLocal,
-    saveSheetToLocal,
+    savePending,
     saveAllToLocal,
+    mergeAllWithLocal,
     canSyncoLocal,
     ...diagramStores,
     ...sheetStores,
@@ -254,99 +365,6 @@ async function clearIndexeddbPersistence(name: string) {
   await tmpProvider.clearData();
   await tmpProvider.destroy();
   tmpDoc.destroy();
-}
-
-interface AutoSaveOption {
-  diagramStore: DiagramStore;
-  sheetStore: SheetStore;
-  layerStore: LayerStore;
-  shapeStore: ShapeStore;
-  documentStore: DocumentStore;
-  enable: boolean;
-  saveSheetToLocal: () => Promise<void>;
-  saveDiagramToLocal: () => Promise<void>;
-  onSave?: () => void;
-}
-
-export function useAutoSave({
-  diagramStore,
-  sheetStore,
-  layerStore,
-  shapeStore,
-  documentStore,
-  enable,
-  saveSheetToLocal,
-  saveDiagramToLocal,
-  onSave,
-}: AutoSaveOption) {
-  const [wait, setWait] = useState(false);
-
-  const saveDiagram = useCallback(async () => {
-    if (!enable) return;
-    await saveDiagramToLocal();
-    setWait(false);
-    onSave?.();
-  }, [enable, saveDiagramToLocal, onSave]);
-
-  const saveDiagramThrottled = useMemo(() => {
-    setWait(true);
-    return newThrottle(saveDiagram, 5000);
-  }, [saveDiagram]);
-
-  useEffect(() => {
-    return diagramStore.watch(() => {
-      saveDiagramThrottled();
-    });
-  }, [diagramStore, saveDiagramThrottled]);
-
-  useEffect(() => {
-    return sheetStore.watch(() => {
-      saveDiagramThrottled();
-    });
-  }, [sheetStore, saveDiagramThrottled]);
-
-  const saveSheet = useCallback(async () => {
-    if (!enable) return;
-    await saveSheetToLocal();
-    setWait(false);
-    onSave?.();
-  }, [enable, saveSheetToLocal, onSave]);
-
-  const saveSheetThrottled = useMemo(() => {
-    setWait(true);
-    return newThrottle(saveSheet, 5000);
-  }, [saveSheet]);
-
-  useEffect(() => {
-    return layerStore.watch(() => {
-      saveSheetThrottled();
-    });
-  }, [layerStore, saveSheetThrottled]);
-
-  useEffect(() => {
-    return shapeStore.watch(() => {
-      saveSheetThrottled();
-    });
-  }, [shapeStore, saveSheetThrottled]);
-
-  useEffect(() => {
-    return documentStore.watch(() => {
-      saveSheetThrottled();
-    });
-  }, [documentStore, saveSheetThrottled]);
-
-  const flush = useCallback(async () => {
-    const shouldSaveDiagram = saveDiagramThrottled.clear();
-    const shouldSaveSheet = saveSheetThrottled.clear();
-    if (shouldSaveDiagram) {
-      await saveDiagram();
-    }
-    if (shouldSaveSheet) {
-      await saveSheet();
-    }
-  }, [saveDiagramThrottled, saveSheetThrottled, saveDiagram, saveSheet]);
-
-  return { wait, flush };
 }
 
 function createInitialDiagram(diagramStore: DiagramStore, generateUuid: () => string) {

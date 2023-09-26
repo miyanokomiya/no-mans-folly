@@ -31,7 +31,7 @@ import { newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
 
-export function AppCanvas() {
+export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
   const assetAPI = smctx.getCtx().getAssetAPI();
@@ -48,7 +48,7 @@ export function AppCanvas() {
 
   const imageStore = useMemo(() => {
     return newImageStore();
-  }, []);
+  }, [acctx.shapeStore]);
 
   const loadShapeAssets = useCallback(
     (shapes: Shape[]) => {
@@ -62,19 +62,19 @@ export function AppCanvas() {
 
   useEffect(() => {
     imageStore.clear();
-    loadShapeAssets(smctx.getCtx().getShapes());
+    loadShapeAssets(acctx.shapeStore.getEntities());
 
     return imageStore.watch(() => {
       setCanvasState({});
     });
-  }, [imageStore, loadShapeAssets]);
+  }, [imageStore, loadShapeAssets, acctx.shapeStore]);
 
   useEffect(() => {
     return acctx.sheetStore.watchSelected(() => {
       smctx.stateMachine.reset();
       setCanvasState({});
     });
-  }, [acctx.shapeStore, smctx.stateMachine]);
+  }, [acctx.shapeStore, smctx.stateMachine, imageStore, loadShapeAssets]);
 
   useEffect(() => {
     return acctx.shapeStore.watch((keys) => {
@@ -574,4 +574,4 @@ export function AppCanvas() {
       <ToastMessages messages={toastMessages} closeToastMessage={closeToastMessage} />
     </>
   );
-}
+};

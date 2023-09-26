@@ -35,9 +35,14 @@ export function newImageStore() {
 
     for (const assetId of assetIds) {
       if (assetId && !processing.has(assetId)) {
-        const file = await assetAPI.loadAsset(assetId);
-        if (file) {
-          await loadFromFile(assetId, file);
+        try {
+          const file = await assetAPI.loadAsset(assetId);
+          if (file) {
+            await loadFromFile(assetId, file);
+          }
+        } catch (e) {
+          // Ignore individual error
+          console.warn(`Not found asset: ${assetId}`);
         }
       }
     }

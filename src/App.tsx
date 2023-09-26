@@ -7,7 +7,7 @@ import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SheetConfigPanel } from "./components/SheetConfigPanel";
-import { useAutoSave, usePersistence } from "./composables/persistence";
+import { usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
 
@@ -20,46 +20,24 @@ function App() {
     documentStore,
     undoManager,
     ready,
+    savePending,
     initSheet,
     openDiagramFromLocal,
     saveAllToLocal,
-    saveDiagramToLocal,
-    saveSheetToLocal,
+    mergeAllWithLocal,
     canSyncoLocal,
     getAssetAPI,
   } = usePersistence({ generateUuid });
-
-  const [autoSaved, setAutoSaved] = useState(0);
-  const onAutoSaved = useCallback(() => {
-    setAutoSaved(Date.now());
-  }, []);
-  const resetAutoSaved = useCallback(() => {
-    setAutoSaved(0);
-  }, []);
-
-  const autoSave = useAutoSave({
-    diagramStore,
-    sheetStore,
-    layerStore,
-    shapeStore,
-    documentStore,
-    enable: canSyncoLocal,
-    saveDiagramToLocal,
-    saveSheetToLocal,
-    onSave: onAutoSaved,
-  });
 
   useEffect(() => {
     return sheetStore.watchSelected(async () => {
       const sheet = sheetStore.getSelectedSheet();
       if (!ready || !sheet) return;
 
-      await autoSave.flush();
-      resetAutoSaved();
       await initSheet(sheet.id);
       history.replaceState(null, "", getSheetURL(sheet.id));
     });
-  }, [sheetStore, ready, autoSave.flush, resetAutoSaved]);
+  }, [sheetStore, ready]);
 
   const acctx = useMemo(() => {
     const context = {
@@ -97,12 +75,20 @@ function App() {
     await saveAllToLocal();
   }, [saveAllToLocal]);
 
+  const onClickMerge = useCallback(async () => {
+    await mergeAllWithLocal();
+  }, [mergeAllWithLocal]);
+
+  const saving = useMemo(() => {
+    return Object.values(savePending).some((v) => v);
+  }, [savePending]);
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasContext.Provider value={acctx}>
       <AppStateMachineContext.Provider value={smctx}>
         <div className="relative">
-          <div className="w-screen h-screen bg-black">{ready ? <AppCanvas /> : undefined}</div>
+          <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
           <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
             <AppToolbar />
           </div>
@@ -117,8 +103,9 @@ function App() {
             <AppHeader
               onClickOpen={onClickOpen}
               onClickSave={onClickSave}
+              onClickMerge={onClickMerge}
               canSyncoLocal={canSyncoLocal}
-              autoSaved={autoSaved}
+              saving={saving}
             />
           </div>
         </div>

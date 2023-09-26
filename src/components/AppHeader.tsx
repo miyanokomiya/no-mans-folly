@@ -5,11 +5,12 @@ import { useOutsideClickCallback } from "../composables/window";
 interface Props {
   onClickOpen: () => void;
   onClickSave: () => void;
+  onClickMerge: () => void;
   canSyncoLocal: boolean;
-  autoSaved: number;
+  saving: boolean;
 }
 
-export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoLocal, autoSaved }) => {
+export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, onClickMerge, canSyncoLocal, saving }) => {
   const [popupedKey, setPopupedKey] = useState("");
   const onClickPopupButton = useCallback(
     (name: string) => {
@@ -30,15 +31,20 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoL
   const storageMessage = useMemo(() => {
     if (!canSyncoLocal) {
       return (
-        <button type="button" onClick={() => onClickPopupButton("file")}>
-          Open/Save workspace for persistence
+        <button
+          className="border rounded py-1 px-2 bg-red-500 text-white"
+          type="button"
+          onClick={() => onClickPopupButton("file")}
+        >
+          Sync workspace for persistence
         </button>
       );
     }
 
-    const lastSaved = autoSaved === 0 ? "-" : new Date(autoSaved).toLocaleString();
-    return <span>Sync local. Last saved: {lastSaved}</span>;
-  }, [autoSaved, canSyncoLocal, onClickPopupButton]);
+    return (
+      <span className="border rounded py-1 px-2 bg-lime-500 text-white">{saving ? "Synching..." : "Synched"}</span>
+    );
+  }, [canSyncoLocal, onClickPopupButton, saving]);
 
   const _onClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -50,6 +56,11 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoL
     onClickSave();
   }, [onClickSave]);
 
+  const _onClickMerge = useCallback(() => {
+    setPopupedKey("");
+    onClickMerge();
+  }, [onClickMerge]);
+
   const fileItems = useMemo(() => {
     const className = "p-2 border hover:bg-gray-200";
     return (
@@ -60,9 +71,12 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, canSyncoL
         <button type="button" className={className} onClick={_onClickSave}>
           Save & Sync workspace
         </button>
+        <button type="button" className={className} onClick={_onClickMerge}>
+          Merge & Sync workspace
+        </button>
       </div>
     );
-  }, [onClickOpen, onClickSave]);
+  }, [_onClickOpen, _onClickSave, _onClickMerge]);
 
   return (
     <div ref={ref} className="h-8 bg-white flex items-center">
