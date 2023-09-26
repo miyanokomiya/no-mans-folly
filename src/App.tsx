@@ -5,7 +5,7 @@ import { AppCanvasContext, AppStateMachineContext, createStateMachineContext } f
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { SheetConfigPanel } from "./components/SheetConfigPanel";
 import { usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
