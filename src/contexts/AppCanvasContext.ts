@@ -69,13 +69,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
-    getAssetAPI:
-      arg.getAssetAPI ??
-      (() => ({
-        enabled: false,
-        saveAsset: () => Promise.reject(),
-        loadAsset: () => Promise.reject(),
-      })),
+    getAssetAPI: arg.getAssetAPI ?? (() => ({ enabled: false })),
 
     getRenderCtx: () => undefined,
     setViewport() {},

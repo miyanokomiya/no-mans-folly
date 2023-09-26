@@ -29,10 +29,12 @@ import { getGridSize, newGrid } from "../composables/grid";
 import { FileDropArea } from "./atoms/FileDropArea";
 import { newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
+import { Shape } from "../models";
 
 export function AppCanvas() {
   const acctx = useContext(AppCanvasContext);
   const smctx = useContext(AppStateMachineContext);
+  const assetAPI = smctx.getCtx().getAssetAPI();
 
   const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
@@ -48,21 +50,24 @@ export function AppCanvas() {
     return newImageStore();
   }, []);
 
+  const loadShapeAssets = useCallback(
+    (shapes: Shape[]) => {
+      imageStore.batchLoad(
+        shapes.filter(isImageShape).map((s) => s.assetId),
+        assetAPI
+      );
+    },
+    [assetAPI.enabled, imageStore]
+  );
+
   useEffect(() => {
-    const assetAPI = smctx.getCtx().getAssetAPI();
-    imageStore.batchLoad(
-      smctx
-        .getCtx()
-        .getShapes()
-        .filter(isImageShape)
-        .map((s) => s.assetId),
-      assetAPI
-    );
+    imageStore.clear();
+    loadShapeAssets(smctx.getCtx().getShapes());
 
     return imageStore.watch(() => {
       setCanvasState({});
     });
-  }, [imageStore]);
+  }, [imageStore, loadShapeAssets]);
 
   useEffect(() => {
     return acctx.sheetStore.watchSelected(() => {
@@ -187,6 +192,7 @@ export function AppCanvas() {
         } else {
           acctx.shapeStore.addEntities(shapes);
         }
+        loadShapeAssets(shapes);
       },
       deleteShapes: (ids: string[]) => {
         const targetIds = getAllBranchIds(getTree(acctx.shapeStore.getEntities()), ids);
@@ -213,6 +219,7 @@ export function AppCanvas() {
           acctx.documentStore.patchDocs(result.docMap);
         });
         acctx.shapeStore.multiSelect(result.shapes.map((s) => s.id));
+        loadShapeAssets(shapes);
       },
 
       createFirstIndex: acctx.shapeStore.createFirstIndex,
@@ -259,6 +266,7 @@ export function AppCanvas() {
     smctx,
     getMousePoint,
     grid,
+    loadShapeAssets,
   ]);
 
   useEffect(() => {

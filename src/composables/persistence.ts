@@ -10,11 +10,13 @@ import { generateKeyBetween } from "fractional-indexing";
 import { newFileAccess } from "./fileAcess";
 import { newThrottle } from "./throttle";
 
-export interface AssetAPI {
-  enabled: boolean;
-  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
-  loadAsset: (assetId: string) => Promise<File | undefined>;
-}
+export type AssetAPI =
+  | {
+      enabled: true;
+      saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
+      loadAsset: (assetId: string) => Promise<File | undefined>;
+    }
+  | { enabled: false };
 
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
