@@ -23,6 +23,10 @@ import { LineShape, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
 import { useDraggable } from "../../composables/draggable";
 
+// Use default root height until it's derived from actual element.
+// => It's useful to prevent the menu from slightly translating at the first appearance.
+const ROOT_HEIGHT = 44;
+
 interface Option {
   canvasState: any;
   scale: number;
@@ -36,7 +40,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   const smctx = useContext(AppStateMachineContext);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const [rootSize, setRootSize] = useState<Size>({ width: 0, height: 0 });
+  const [rootSize, setRootSize] = useState<Size>({ width: 0, height: ROOT_HEIGHT });
   const draggable = useDraggable();
 
   const indexShape = useMemo<Shape | undefined>(() => {
@@ -66,6 +70,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
 
   useEffect(() => {
     if (!rootRef.current) return;
+
     const bounds = rootRef.current.getBoundingClientRect();
     setRootSize({ width: bounds.width, height: bounds.height });
   }, [targetRect]);
