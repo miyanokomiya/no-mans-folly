@@ -4,6 +4,7 @@ import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import {
   handleCommonShortcut,
   handleCommonTextStyle,
+  handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
   newShapeClipboard,
@@ -199,6 +200,10 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         case "paste": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onPaste(event.nativeEvent);
+          return;
+        }
+        case "file-drop": {
+          handleFileDrop(ctx, event);
           return;
         }
         default:

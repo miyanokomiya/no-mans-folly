@@ -1,6 +1,12 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleCommonShortcut, handleHistoryEvent, handleStateEvent, newShapeClipboard } from "../commons";
+import {
+  handleCommonShortcut,
+  handleFileDrop,
+  handleHistoryEvent,
+  handleStateEvent,
+  newShapeClipboard,
+} from "../commons";
 import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
@@ -169,6 +175,10 @@ export function newLineSelectedState(): AppCanvasState {
         case "paste": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onPaste(event.nativeEvent);
+          return;
+        }
+        case "file-drop": {
+          handleFileDrop(ctx, event);
           return;
         }
         default:

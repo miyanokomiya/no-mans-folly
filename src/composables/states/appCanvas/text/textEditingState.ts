@@ -1,7 +1,7 @@
 import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
-import { handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
+import { handleFileDrop, handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -208,6 +208,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
             textEditorController.setCursor(textEditorController.getCursor() + count);
           });
           clipboard.onPaste(event.nativeEvent);
+          return;
+        }
+        case "file-drop": {
+          handleFileDrop(ctx, event);
           return;
         }
         default:

@@ -205,7 +205,7 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
 export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDropEvent): Promise<void> {
   const assetAPI = ctx.getAssetAPI();
   if (!assetAPI.enabled) {
-    ctx.showToastMessage({ text: "Open/Save workspace to enable asset files.", type: "error" });
+    ctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
     return;
   }
 

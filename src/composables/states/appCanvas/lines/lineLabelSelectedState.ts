@@ -3,6 +3,7 @@ import { newPanningState } from "../../commons";
 import {
   handleCommonShortcut,
   handleCommonTextStyle,
+  handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
   newShapeClipboard,
@@ -176,6 +177,10 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
         case "paste": {
           const clipboard = newShapeClipboard(ctx);
           clipboard.onPaste(event.nativeEvent);
+          return;
+        }
+        case "file-drop": {
+          handleFileDrop(ctx, event);
           return;
         }
         default:
