@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { canAttachSmartBranch, getLocalRectPolygon } from "../../../shapes";
 import {
+  getCommonCommandExams,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleFileDrop,
@@ -35,6 +36,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "SingleSelected",
     onStart: (ctx) => {
+      ctx.setCommandExams(getCommonCommandExams());
+
       selectedId = ctx.getLastSelectedShapeId();
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
@@ -59,6 +62,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.setContextMenuList();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       if (!selectedId) return newSelectionHubState;

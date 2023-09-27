@@ -1,6 +1,7 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
+  getCommonCommandExams,
   handleCommonShortcut,
   handleFileDrop,
   handleHistoryEvent,
@@ -33,7 +34,7 @@ export function newLineSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams()]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();

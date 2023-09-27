@@ -1,6 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import {
+  getCommonCommandExams,
   handleCommonShortcut,
   handleFileDrop,
   handleHistoryEvent,
@@ -18,6 +19,12 @@ export function newDefaultState(): AppCanvasState {
 
 const state: AppCanvasState = {
   getLabel: () => "Default",
+  onStart(ctx) {
+    ctx.setCommandExams(getCommonCommandExams());
+  },
+  onEnd(ctx) {
+    ctx.setCommandExams();
+  },
   handleEvent: (ctx, event) => {
     switch (event.type) {
       case "pointerdown":

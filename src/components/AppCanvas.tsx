@@ -270,6 +270,12 @@ export const AppCanvas: React.FC = () => {
   ]);
 
   useEffect(() => {
+    // Need to call reset once here.
+    // The sm has initial mock context until "smctx.setCtx" is called once.
+    smctx.stateMachine.reset();
+  }, [smctx]);
+
+  useEffect(() => {
     return acctx.shapeStore.watchSelected(() => {
       smctx.stateMachine.handleEvent({
         type: "selection",
@@ -542,7 +548,6 @@ export const AppCanvas: React.FC = () => {
     return { cursor, backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" };
   }, [cursor, sheet]);
 
-  FileDropArea;
   return (
     <>
       <div
@@ -562,7 +567,7 @@ export const AppCanvas: React.FC = () => {
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
           <div className="absolute right-2 top-0">{smctx.stateMachine.getStateSummary().label}</div>
           <div className="absolute bottom-2 left-2 pointer-events-none">
-            {<CommandExamPanel commandExams={commandExams} />}
+            <CommandExamPanel commandExams={commandExams} />
           </div>
         </FileDropArea>
       </div>

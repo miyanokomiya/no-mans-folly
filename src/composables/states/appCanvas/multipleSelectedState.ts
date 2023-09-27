@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import {
+  getCommonCommandExams,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleFileDrop,
@@ -35,6 +36,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
     getLabel: () => "MultipleSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
+      ctx.setCommandExams(getCommonCommandExams());
 
       selectedIdMap = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
@@ -75,6 +77,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.setContextMenuList();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       if (!selectedIdMap) return;

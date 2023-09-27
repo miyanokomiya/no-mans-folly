@@ -4,7 +4,7 @@ import { handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape, filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
-import { LineShape, isLineShape } from "../../../../shapes/line";
+import { LineShape, LineType, isLineShape } from "../../../../shapes/line";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
@@ -13,7 +13,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 
 interface Option {
-  type: string;
+  type: LineType;
 }
 
 export function newLineReadyState(option: Option): AppCanvasState {
@@ -51,6 +51,8 @@ export function newLineReadyState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
+
+      vertex = ctx.getCursorPoint();
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -78,7 +80,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
                 p: vertex,
                 q: vertex,
                 findex: ctx.createLastIndex(),
-                lineType: option.type === "elbow" ? "elbow" : undefined,
+                lineType: option.type,
                 pConnection: connectionResult?.connection,
               });
               return () => newLineDrawingState({ shape: lineshape });

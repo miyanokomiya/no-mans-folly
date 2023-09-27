@@ -1,6 +1,7 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
+  getCommonCommandExams,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleFileDrop,
@@ -35,6 +36,8 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "LineLabelSelected",
     onStart: (ctx) => {
+      ctx.setCommandExams(getCommonCommandExams());
+
       const shapeMap = ctx.getShapeMap();
       const selectedId = ctx.getLastSelectedShapeId();
       shape = shapeMap[selectedId ?? ""] as TextShape;
@@ -57,6 +60,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
       ctx.hideFloatMenu();
       ctx.setCursor();
       ctx.setContextMenuList();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {

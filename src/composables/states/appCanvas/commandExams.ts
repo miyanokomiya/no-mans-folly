@@ -13,4 +13,7 @@ export const COMMAND_EXAM_SRC = {
   TEXT_MOVE_CURSOR: { command: "Ctrl + p, n, b, f", title: "Move cursor" },
   TEXT_BACKSPACE: { command: "Ctrl + h", title: "Backspace" },
   TEXT_DELETE: { command: "Ctrl + d", title: "Delete" },
+
+  RESET_VIEWPORT: { command: "Home / !", title: "Reset viewport" },
+  NEW_LINE: { command: "l", title: "New Line" },
 } satisfies { [key: string]: CommandExam };

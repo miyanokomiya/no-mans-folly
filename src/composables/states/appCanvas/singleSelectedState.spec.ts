@@ -6,9 +6,15 @@ import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getScale: () => 1,
     getShapeAt: vi.fn(),
     clearAllSelected: vi.fn(),

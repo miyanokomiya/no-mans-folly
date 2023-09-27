@@ -21,6 +21,7 @@ import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ImageShape } from "../../../shapes/image";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -72,6 +73,9 @@ export function handleCommonShortcut(
       }
       return newSelectionHubState;
     }
+    case "l":
+      if (event.data.ctrl) ctx.undo();
+      return () => newLineReadyState({ type: undefined });
     case "z":
       if (event.data.ctrl) ctx.undo();
       return newSelectionHubState;
@@ -86,6 +90,11 @@ export function handleCommonShortcut(
       );
       return;
   }
+}
+
+const COMMON_COMMAND_EXAMS = [COMMAND_EXAM_SRC.NEW_LINE, COMMAND_EXAM_SRC.RESET_VIEWPORT];
+export function getCommonCommandExams() {
+  return COMMON_COMMAND_EXAMS;
 }
 
 export function handleCommonTextStyle(
