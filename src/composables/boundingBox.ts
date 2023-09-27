@@ -191,6 +191,8 @@ export function newBoundingBox(option: Option) {
 }
 export type BoundingBox = ReturnType<typeof newBoundingBox>;
 
+const MINIMUM_SIZE = 10;
+
 interface BoundingBoxResizingOption {
   rotation: number;
   hitResult: HitResult;
@@ -216,7 +218,20 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
 
     const adjustedRotatedDirection = centralize ? centralizedrotatedBaseDirection : rotatedBaseDirection;
     const adjustedDiff = keepAspect ? getPedal(diff, [option.resizingBase.direction, { x: 0, y: 0 }]) : diff;
-    const rotatedDiff = rotate(adjustedDiff, -option.rotation);
+    let rotatedDiff = rotate(adjustedDiff, -option.rotation);
+
+    // Avoid scaling down to much
+    {
+      const signX = Math.sign(adjustedRotatedDirection.x);
+      const signY = Math.sign(adjustedRotatedDirection.y);
+      const resizedDirection = add(rotatedDiff, adjustedRotatedDirection);
+      const miniSize = centralize ? MINIMUM_SIZE / 2 : MINIMUM_SIZE;
+      rotatedDiff = {
+        x: resizedDirection.x * signX < miniSize ? miniSize * signX - adjustedRotatedDirection.x : rotatedDiff.x,
+        y: resizedDirection.y * signY < miniSize ? miniSize * signY - adjustedRotatedDirection.y : rotatedDiff.y,
+      };
+    }
+
     const rotatedScale = {
       x: xResizable ? 1 + rotatedDiff.x / adjustedRotatedDirection.x : 1,
       y: yResizable ? 1 + rotatedDiff.y / adjustedRotatedDirection.y : 1,

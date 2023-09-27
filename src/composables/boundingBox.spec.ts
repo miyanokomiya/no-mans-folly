@@ -229,6 +229,24 @@ describe("newBoundingBoxResizing", () => {
       expect(affine1[4]).toBeCloseTo(10);
       expect(affine1[5]).toBeCloseTo(0);
     });
+
+    test("should keep minimum size", () => {
+      const corner0 = newBoundingBoxResizing({
+        rotation: 0,
+        hitResult: { type: "corner", index: 0 },
+        resizingBase: {
+          direction: { x: 100, y: 100 },
+          origin: { x: 0, y: 0 },
+        },
+      });
+      const affine0 = corner0.getAffine({ x: -120, y: -100 });
+      expect(affine0[0]).toBeCloseTo(0.1);
+      expect(affine0[1]).toBeCloseTo(0);
+      expect(affine0[2]).toBeCloseTo(0);
+      expect(affine0[3]).toBeCloseTo(0.1);
+      expect(affine0[4]).toBeCloseTo(0);
+      expect(affine0[5]).toBeCloseTo(0);
+    });
   });
 });
 
