@@ -260,7 +260,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
 
   function getAffineAfterSnapping(
     diff: IVec2,
-    movingPointInfoList: [src: IVec2, moved: IVec2, snapped: IVec2][],
+    movingPointInfoList: [src: IVec2, snapped: IVec2][],
     snappedSegment: ISegment,
     modifire?: { keepAspect?: boolean; centralize?: boolean }
   ): [affine: AffineMatrix, d: number, exactTarget?: ISegment] {
@@ -278,7 +278,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     let rate: number | undefined;
     let distance: number | undefined;
     let movingPointInfo: [IVec2, IVec2] | undefined;
-    movingPointInfoList.forEach(([p, movedP, snappedP]) => {
+    movingPointInfoList.forEach(([p, snappedP]) => {
       const rotatedP = rotateFn(p);
 
       // There are three kinds of guide lines depending on resizing anchor type and modifire.
@@ -292,7 +292,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
         : sub(rotatedP, adjustedRotatedDirection);
       const direction = KeepAspectSegment ? sub(rotatedP, adjustedRotatedOrigin) : adjustedRotatedDirection;
       const targetSeg = [adjustedRotatedOrigin, rotatedP];
-      const pedalRotatedMovedP = getPedal(rotateFn(movedP), targetSeg);
+      const pedalRotatedMovedP = getPedal(rotateFn(snappedP), targetSeg);
 
       const cross = getCrossLineAndLine(rotatedSegment, targetSeg);
       if (cross) {

@@ -264,7 +264,6 @@ describe("newBoundingBoxResizing", () => {
         [
           [
             { x: 100, y: 50 },
-            { x: 110, y: 70 },
             { x: 110, y: 50 },
           ],
         ],

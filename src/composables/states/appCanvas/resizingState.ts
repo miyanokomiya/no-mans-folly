@@ -100,9 +100,8 @@ export function newResizingState(option: Option): AppCanvasState {
 
           if (snappingResult) {
             const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
-            const movingPointInfoList: [IVec2, IVec2, IVec2][] = boundingBoxPath.map((p) => [
+            const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [
               p,
-              add(p, diff),
               applyAffine(resizingAffine, p),
             ]);
 
