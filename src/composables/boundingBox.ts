@@ -1,10 +1,10 @@
 import {
   AffineMatrix,
-  IDENTITY_AFFINE,
   IVec2,
   add,
   applyAffine,
   getCenter,
+  getDistance,
   getNorm,
   getPedal,
   getRadian,
@@ -202,6 +202,7 @@ interface BoundingBoxResizingOption {
 export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const isIndexOdd = option.hitResult.index % 2 === 0;
   const isCorner = option.hitResult.type === "corner";
+  const isSegment = option.hitResult.type === "segment";
   const xResizable = isCorner || !isIndexOdd;
   const yResizable = isCorner || isIndexOdd;
 
@@ -213,7 +214,6 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const centralizedrotatedBaseDirection = multi(rotatedBaseDirection, 1 / 2);
 
   const rotateFn = getRotateFn(-option.rotation, centralizedOrigin);
-  const rotatedBaseOrigin = rotateFn(option.resizingBase.origin);
 
   function getAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
     const keepAspect = modifire?.keepAspect;
@@ -259,32 +259,48 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
 
   function getAffineAfterSnapping(
     diff: IVec2,
+    movingPointInfoList: [IVec2, IVec2][],
     snappedSegment: ISegment,
     modifire?: { keepAspect?: boolean; centralize?: boolean }
-  ): AffineMatrix {
+  ): [affine: AffineMatrix, d: number] {
     const keepAspect = modifire?.keepAspect;
     const centralize = modifire?.centralize;
-    if (!(keepAspect && isCorner)) return getAffine(diff, modifire);
+    // FIXME: "keepAspect && isSegment" case isn't calculated well
+    if ((!keepAspect && isCorner) || (keepAspect && isSegment)) return [getAffine(diff, modifire), 0];
 
     const rotatedSegment = snappedSegment.map((p) => rotateFn(p));
     const adjustedRotatedDirection = centralize ? centralizedrotatedBaseDirection : rotatedBaseDirection;
-    const adjustedRotatedOrigin = centralize ? centralizedOrigin : rotatedBaseOrigin;
 
-    const cross = getCrossLineAndLine(rotatedSegment, [
-      adjustedRotatedOrigin,
-      add(adjustedRotatedDirection, adjustedRotatedOrigin),
-    ]);
-    if (!cross) return IDENTITY_AFFINE;
+    let rate: number | undefined;
+    let distance: number | undefined;
+    let movingPointInfo: [IVec2, IVec2] | undefined;
+    movingPointInfoList.forEach(([p, movedP]) => {
+      const rotatedP = rotateFn(p);
+      const adjustedRotatedOrigin = sub(rotatedP, adjustedRotatedDirection);
+      const cross = getCrossLineAndLine(rotatedSegment, [adjustedRotatedOrigin, rotatedP]);
+      if (cross) {
+        const d = getDistance(cross, rotateFn(movedP));
+        const r = getNorm(sub(cross, adjustedRotatedOrigin)) / getNorm(adjustedRotatedDirection);
+        if (rate === undefined || distance === undefined || d <= distance) {
+          rate = r;
+          distance = d;
+          movingPointInfo = [p, movedP];
+        }
+      }
+    });
+    if (rate === undefined || !movingPointInfo) {
+      return [getAffine(diff, modifire), 0];
+    }
 
-    const rate = getNorm(sub(cross, adjustedRotatedOrigin)) / getNorm(adjustedRotatedDirection);
     const adjustedOrigin = centralize ? centralizedOrigin : option.resizingBase.origin;
-    return multiAffines([
+    const affine = multiAffines([
       [1, 0, 0, 1, adjustedOrigin.x, adjustedOrigin.y],
       [cos, sin, -sin, cos, 0, 0],
-      [rate, 0, 0, rate, 0, 0],
+      [xResizable ? rate : 1, 0, 0, yResizable ? rate : 1, 0, 0],
       [cos, -sin, sin, cos, 0, 0],
       [1, 0, 0, 1, -adjustedOrigin.x, -adjustedOrigin.y],
     ]);
+    return [affine, getDistance(movingPointInfo[1], applyAffine(affine, movingPointInfo[0]))];
   }
 
   function getTransformedAnchor(affine: AffineMatrix): IVec2 {

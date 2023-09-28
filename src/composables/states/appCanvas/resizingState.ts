@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
-import { AffineMatrix, IDENTITY_AFFINE, add, applyAffine, getDistance, sub } from "okageo";
+import { IDENTITY_AFFINE, IVec2, add, applyAffine, sub } from "okageo";
 import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -99,27 +99,22 @@ export function newResizingState(option: Option): AppCanvasState {
 
           if (snappingResult) {
             const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
+            const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, add(p, diff)]);
 
             // Apply resizing restriction to each snapping candidate
             const results = snappingResult.targets
               .map((target) =>
-                boundingBoxResizing.getAffineAfterSnapping(adjustedD, target.line, {
+                boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, target.line, {
                   keepAspect: event.data.shift,
                   centralize: event.data.alt,
                 })
               )
-              // Evaluate snapped points by the distance from the cursor
-              .map<[AffineMatrix, number]>((affine) => [
-                affine,
-                getDistance(boundingBoxResizing.getTransformedAnchor(affine), event.data.current),
-              ])
-              // When it comes to "paved" resizing, ignore snapped points that aren't close enough to the cursor
-              .filter((result) => !event.data.shift || result[1] <= shapeSnapping.snapThreshold * 2);
+              .filter((result) => result[1] <= shapeSnapping.snapThreshold * 2);
 
             if (results.length > 0) {
               resizingAffine = results.sort((a, b) => a[1] - b[1])[0][0];
 
-              // "keepAspect" mode needs recalculation to render control lines properly.
+              // Need recalculation to get final control lines.
               // FIXME: It's not the optimal way.
               if (resizingAffine) {
                 const results = boundingBoxPath

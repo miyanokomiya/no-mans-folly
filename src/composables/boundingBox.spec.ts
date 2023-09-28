@@ -2,7 +2,7 @@ import { expect, describe, test } from "vitest";
 import { newBoundingBox, newBoundingBoxResizing, newBoundingBoxRotating } from "./boundingBox";
 import { getRectPoints } from "../utils/geometry";
 import { createStyleScheme } from "../models/factories";
-import { applyAffine } from "okageo";
+import { applyAffine, getDistance } from "okageo";
 
 describe("newBoundingBox", () => {
   describe("hitTest", () => {
@@ -262,17 +262,24 @@ describe("newBoundingBoxResizing", () => {
       const affine0 = corner0.getAffineAfterSnapping(
         { x: 10, y: 20 },
         [
+          [
+            { x: 100, y: 50 },
+            { x: 110, y: 70 },
+          ],
+        ],
+        [
           { x: 130, y: 0 },
           { x: 130, y: 100 },
         ],
         { keepAspect: true }
       );
-      expect(affine0[0]).toBeCloseTo(1.3);
-      expect(affine0[1]).toBeCloseTo(0);
-      expect(affine0[2]).toBeCloseTo(0);
-      expect(affine0[3]).toBeCloseTo(1.3);
-      expect(affine0[4]).toBeCloseTo(0);
-      expect(affine0[5]).toBeCloseTo(0);
+      expect(affine0[0][0]).toBeCloseTo(1.3);
+      expect(affine0[0][1]).toBeCloseTo(0);
+      expect(affine0[0][2]).toBeCloseTo(0);
+      expect(affine0[0][3]).toBeCloseTo(1.3);
+      expect(affine0[0][4]).toBeCloseTo(0);
+      expect(affine0[0][5]).toBeCloseTo(0);
+      expect(affine0[1]).toBeCloseTo(getDistance({ x: 110, y: 70 }, applyAffine(affine0[0], { x: 100, y: 50 })));
     });
   });
 });
