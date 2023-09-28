@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
-import { IDENTITY_AFFINE, add, applyAffine, sub } from "okageo";
+import { AffineMatrix, IDENTITY_AFFINE, add, applyAffine, getDistance, sub } from "okageo";
 import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -76,19 +76,23 @@ export function newResizingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
+
+          // Apply plain resizing
           resizingAffine = boundingBoxResizing.getAffine(diff, {
             keepAspect: event.data.shift,
             centralize: event.data.alt,
           });
 
+          // Let resized bounding box snap to shapes.
           const boundingBoxPath = getMovingBoundingBoxPoints(option.boundingBox.path, option.hitResult);
-          const results = event.data.ctrl
+          const snappingResults = event.data.ctrl
             ? []
             : boundingBoxPath
                 .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
                 .filter((r): r is SnappingResult => !!r);
-          if (results.length > 0) {
-            snappingResult = results[0];
+
+          if (snappingResults.length > 0) {
+            snappingResult = snappingResults[0];
           } else {
             snappingResult = undefined;
           }
@@ -96,20 +100,38 @@ export function newResizingState(option: Option): AppCanvasState {
           if (snappingResult) {
             const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
 
-            resizingAffine = boundingBoxResizing.getAffineAfterSnapping(adjustedD, snappingResult.targets[0].line, {
-              keepAspect: event.data.shift,
-              centralize: event.data.alt,
-            });
+            // Apply resizing restriction to each snapping candidate
+            const results = snappingResult.targets
+              .map((target) =>
+                boundingBoxResizing.getAffineAfterSnapping(adjustedD, target.line, {
+                  keepAspect: event.data.shift,
+                  centralize: event.data.alt,
+                })
+              )
+              // Evaluate snapped points by the distance from the cursor
+              .map<[AffineMatrix, number]>((affine) => [
+                affine,
+                getDistance(boundingBoxResizing.getTransformedAnchor(affine), event.data.current),
+              ])
+              // When it comes to "paved" resizing, ignore snapped points that aren't close enough to the cursor
+              .filter((result) => !event.data.shift || result[1] <= shapeSnapping.snapThreshold * 2);
 
-            // "keepAspect" mode needs recalculation to render control lines properly.
-            // FIXME: It's not the optimal way.
-            if (event.data.shift) {
-              const results = boundingBoxPath
-                .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-                .filter((r): r is SnappingResult => !!r);
-              if (results.length > 0) {
-                snappingResult = results[0];
+            if (results.length > 0) {
+              resizingAffine = results.sort((a, b) => a[1] - b[1])[0][0];
+
+              // "keepAspect" mode needs recalculation to render control lines properly.
+              // FIXME: It's not the optimal way.
+              if (resizingAffine) {
+                const results = boundingBoxPath
+                  .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+                  .filter((r): r is SnappingResult => !!r);
+                if (results.length > 0) {
+                  snappingResult = results[0];
+                }
               }
+            } else {
+              // No snapping result satisfies the resizing restriction or close enough to the cursor.
+              snappingResult = undefined;
             }
           }
 

@@ -248,6 +248,33 @@ describe("newBoundingBoxResizing", () => {
       expect(affine0[5]).toBeCloseTo(0);
     });
   });
+
+  describe("getAffineAfterSnapping", () => {
+    test("should return resizing affine matrix: at a corner && keep aspect", () => {
+      const corner0 = newBoundingBoxResizing({
+        rotation: Math.PI / 4,
+        hitResult: { type: "corner", index: 2 },
+        resizingBase: {
+          direction: { x: 100, y: 0 },
+          origin: { x: 0, y: 0 },
+        },
+      });
+      const affine0 = corner0.getAffineAfterSnapping(
+        { x: 10, y: 20 },
+        [
+          { x: 130, y: 0 },
+          { x: 130, y: 100 },
+        ],
+        { keepAspect: true }
+      );
+      expect(affine0[0]).toBeCloseTo(1.3);
+      expect(affine0[1]).toBeCloseTo(0);
+      expect(affine0[2]).toBeCloseTo(0);
+      expect(affine0[3]).toBeCloseTo(1.3);
+      expect(affine0[4]).toBeCloseTo(0);
+      expect(affine0[5]).toBeCloseTo(0);
+    });
+  });
 });
 
 describe("newBoundingBoxRotating", () => {

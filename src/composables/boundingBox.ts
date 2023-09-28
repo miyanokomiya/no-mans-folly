@@ -17,7 +17,7 @@ import {
 import { applyPath } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { ISegment, getCrossLineAndLine, isPointCloseToSegment, snapAngle } from "../utils/geometry";
+import { ISegment, getCrossLineAndLine, getRotateFn, isPointCloseToSegment, snapAngle } from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
 import { getResizingCursorStyle } from "../utils/styleHelper";
 
@@ -212,6 +212,9 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const centralizedOrigin = add(option.resizingBase.origin, multi(option.resizingBase.direction, 1 / 2));
   const centralizedrotatedBaseDirection = multi(rotatedBaseDirection, 1 / 2);
 
+  const rotateFn = getRotateFn(-option.rotation, centralizedOrigin);
+  const rotatedBaseOrigin = rotateFn(option.resizingBase.origin);
+
   function getAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
     const keepAspect = modifire?.keepAspect;
     const centralize = modifire?.centralize;
@@ -263,14 +266,18 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     const centralize = modifire?.centralize;
     if (!(keepAspect && isCorner)) return getAffine(diff, modifire);
 
-    const rotatedSegment = snappedSegment.map((p) => rotate(p, -option.rotation));
+    const rotatedSegment = snappedSegment.map((p) => rotateFn(p));
     const adjustedRotatedDirection = centralize ? centralizedrotatedBaseDirection : rotatedBaseDirection;
-    const adjustedOrigin = centralize ? centralizedOrigin : option.resizingBase.origin;
+    const adjustedRotatedOrigin = centralize ? centralizedOrigin : rotatedBaseOrigin;
 
-    const cross = getCrossLineAndLine(rotatedSegment, [adjustedOrigin, add(adjustedRotatedDirection, adjustedOrigin)]);
+    const cross = getCrossLineAndLine(rotatedSegment, [
+      adjustedRotatedOrigin,
+      add(adjustedRotatedDirection, adjustedRotatedOrigin),
+    ]);
     if (!cross) return IDENTITY_AFFINE;
 
-    const rate = getNorm(sub(cross, adjustedOrigin)) / getNorm(adjustedRotatedDirection);
+    const rate = getNorm(sub(cross, adjustedRotatedOrigin)) / getNorm(adjustedRotatedDirection);
+    const adjustedOrigin = centralize ? centralizedOrigin : option.resizingBase.origin;
     return multiAffines([
       [1, 0, 0, 1, adjustedOrigin.x, adjustedOrigin.y],
       [cos, sin, -sin, cos, 0, 0],
@@ -280,7 +287,11 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     ]);
   }
 
-  return { getAffine, getAffineAfterSnapping };
+  function getTransformedAnchor(affine: AffineMatrix): IVec2 {
+    return applyAffine(affine, add(option.resizingBase.origin, option.resizingBase.direction));
+  }
+
+  return { getAffine, getAffineAfterSnapping, getTransformedAnchor };
 }
 
 interface BoundingBoxRotatingOption {

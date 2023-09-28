@@ -218,7 +218,7 @@ export function newShapeSnapping(option: Option) {
     return { targets, intervalTargets, diff };
   }
 
-  return { test, testPoint };
+  return { test, testPoint, snapThreshold };
 }
 export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
 
