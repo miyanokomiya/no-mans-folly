@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
-import { IDENTITY_AFFINE, IVec2, add, applyAffine, sub } from "okageo";
+import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
 import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -89,7 +89,8 @@ export function newResizingState(option: Option): AppCanvasState {
             ? []
             : boundingBoxPath
                 .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-                .filter((r): r is SnappingResult => !!r);
+                .filter((r): r is SnappingResult => !!r)
+                .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
 
           if (snappingResults.length > 0) {
             snappingResult = snappingResults[0];
@@ -109,17 +110,18 @@ export function newResizingState(option: Option): AppCanvasState {
                   centralize: event.data.alt,
                 })
               )
-              .filter((result) => result[1] <= shapeSnapping.snapThreshold * 2);
+              .sort((a, b) => a[1] - b[1]);
 
             if (results.length > 0) {
-              resizingAffine = results.sort((a, b) => a[1] - b[1])[0][0];
+              resizingAffine = results[0][0];
 
               // Need recalculation to get final control lines.
               // FIXME: It's not the optimal way.
               if (resizingAffine) {
                 const results = boundingBoxPath
                   .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-                  .filter((r): r is SnappingResult => !!r);
+                  .filter((r): r is SnappingResult => !!r)
+                  .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
                 if (results.length > 0) {
                   snappingResult = results[0];
                 }

@@ -214,6 +214,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const centralizedrotatedBaseDirection = multi(rotatedBaseDirection, 1 / 2);
 
   const rotateFn = getRotateFn(-option.rotation, centralizedOrigin);
+  const rotatedBaseOrigin = rotateFn(option.resizingBase.origin);
 
   function getAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
     const keepAspect = modifire?.keepAspect;
@@ -265,9 +266,12 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   ): [affine: AffineMatrix, d: number] {
     const keepAspect = modifire?.keepAspect;
     const centralize = modifire?.centralize;
-    // FIXME: "keepAspect && isSegment" case isn't calculated well
-    if ((!keepAspect && isCorner) || (keepAspect && isSegment)) return [getAffine(diff, modifire), 0];
 
+    // If the anchor point can move freely, the resizing can be treated as normal.
+    // If not, the anchor point has to move along certain guide line.
+    if (!keepAspect && isCorner) return [getAffine(diff, modifire), 0];
+
+    const KeepAspectSegment = keepAspect && isSegment;
     const rotatedSegment = snappedSegment.map((p) => rotateFn(p));
     const adjustedRotatedDirection = centralize ? centralizedrotatedBaseDirection : rotatedBaseDirection;
 
@@ -276,15 +280,28 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     let movingPointInfo: [IVec2, IVec2] | undefined;
     movingPointInfoList.forEach(([p, movedP]) => {
       const rotatedP = rotateFn(p);
-      const adjustedRotatedOrigin = sub(rotatedP, adjustedRotatedDirection);
-      const cross = getCrossLineAndLine(rotatedSegment, [adjustedRotatedOrigin, rotatedP]);
+
+      // There are three kinds of guide lines depending on resizing anchor type and modifire.
+      // 1. When the anchor is corner and keepAspect, the guide line is diagonal ones.
+      // 2. When the anchor is segment and keepAspect, the guide line is from the center of origin segment to the opposite corners.
+      // 3. When the anchor is segment and not keepAspect, the guide line is the bisector of the segment.
+      const adjustedRotatedOrigin = KeepAspectSegment
+        ? centralize
+          ? centralizedOrigin
+          : rotatedBaseOrigin
+        : sub(rotatedP, adjustedRotatedDirection);
+      const direction = KeepAspectSegment ? sub(rotatedP, adjustedRotatedOrigin) : adjustedRotatedDirection;
+      const targetSeg = [adjustedRotatedOrigin, rotatedP];
+      const pedalRotatedMovedP = getPedal(rotateFn(movedP), targetSeg);
+
+      const cross = getCrossLineAndLine(rotatedSegment, targetSeg);
       if (cross) {
-        const d = getDistance(cross, rotateFn(movedP));
-        const r = getNorm(sub(cross, adjustedRotatedOrigin)) / getNorm(adjustedRotatedDirection);
+        const d = getDistance(cross, pedalRotatedMovedP);
+        const r = getNorm(sub(cross, adjustedRotatedOrigin)) / getNorm(direction);
         if (rate === undefined || distance === undefined || d <= distance) {
           rate = r;
           distance = d;
-          movingPointInfo = [p, movedP];
+          movingPointInfo = [p, rotateFn(pedalRotatedMovedP, true)];
         }
       }
     });
@@ -296,7 +313,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     const affine = multiAffines([
       [1, 0, 0, 1, adjustedOrigin.x, adjustedOrigin.y],
       [cos, sin, -sin, cos, 0, 0],
-      [xResizable ? rate : 1, 0, 0, yResizable ? rate : 1, 0, 0],
+      [keepAspect || xResizable ? rate : 1, 0, 0, keepAspect || yResizable ? rate : 1, 0, 0],
       [cos, -sin, sin, cos, 0, 0],
       [1, 0, 0, 1, -adjustedOrigin.x, -adjustedOrigin.y],
     ]);

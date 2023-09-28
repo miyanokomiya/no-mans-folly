@@ -279,7 +279,7 @@ describe("newBoundingBoxResizing", () => {
       expect(affine0[0][3]).toBeCloseTo(1.3);
       expect(affine0[0][4]).toBeCloseTo(0);
       expect(affine0[0][5]).toBeCloseTo(0);
-      expect(affine0[1]).toBeCloseTo(getDistance({ x: 110, y: 70 }, applyAffine(affine0[0], { x: 100, y: 50 })));
+      expect(affine0[1]).toBeCloseTo(getDistance({ x: 110, y: 50 }, applyAffine(affine0[0], { x: 100, y: 50 })));
     });
   });
 });
