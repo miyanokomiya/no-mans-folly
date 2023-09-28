@@ -15,5 +15,6 @@ export const COMMAND_EXAM_SRC = {
   TEXT_DELETE: { command: "Ctrl + d", title: "Delete" },
 
   RESET_VIEWPORT: { command: "Home / !", title: "Reset viewport" },
+  NEW_TEXT: { command: "t", title: "New Text" },
   NEW_LINE: { command: "l", title: "New Line" },
 } satisfies { [key: string]: CommandExam };

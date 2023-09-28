@@ -76,6 +76,9 @@ export function handleCommonShortcut(
     case "l":
       if (event.data.ctrl) ctx.undo();
       return () => newLineReadyState({ type: undefined });
+    case "t":
+      if (event.data.ctrl) ctx.undo();
+      return () => newTextReadyState();
     case "z":
       if (event.data.ctrl) ctx.undo();
       return newSelectionHubState;
@@ -92,7 +95,7 @@ export function handleCommonShortcut(
   }
 }
 
-const COMMON_COMMAND_EXAMS = [COMMAND_EXAM_SRC.NEW_LINE, COMMAND_EXAM_SRC.RESET_VIEWPORT];
+const COMMON_COMMAND_EXAMS = [COMMAND_EXAM_SRC.NEW_TEXT, COMMAND_EXAM_SRC.NEW_LINE, COMMAND_EXAM_SRC.RESET_VIEWPORT];
 export function getCommonCommandExams() {
   return COMMON_COMMAND_EXAMS;
 }
