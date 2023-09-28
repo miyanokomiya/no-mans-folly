@@ -265,6 +265,7 @@ describe("newBoundingBoxResizing", () => {
           [
             { x: 100, y: 50 },
             { x: 110, y: 70 },
+            { x: 110, y: 50 },
           ],
         ],
         [
@@ -280,6 +281,10 @@ describe("newBoundingBoxResizing", () => {
       expect(affine0[0][4]).toBeCloseTo(0);
       expect(affine0[0][5]).toBeCloseTo(0);
       expect(affine0[1]).toBeCloseTo(getDistance({ x: 110, y: 50 }, applyAffine(affine0[0], { x: 100, y: 50 })));
+      expect(affine0[2]).toEqual([
+        { x: 130, y: 0 },
+        { x: 130, y: 100 },
+      ]);
     });
   });
 });

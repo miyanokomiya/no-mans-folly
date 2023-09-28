@@ -100,7 +100,11 @@ export function newResizingState(option: Option): AppCanvasState {
 
           if (snappingResult) {
             const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
-            const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, add(p, diff)]);
+            const movingPointInfoList: [IVec2, IVec2, IVec2][] = boundingBoxPath.map((p) => [
+              p,
+              add(p, diff),
+              applyAffine(resizingAffine, p),
+            ]);
 
             // Apply resizing restriction to each snapping candidate
             const results = snappingResult.targets
@@ -110,14 +114,21 @@ export function newResizingState(option: Option): AppCanvasState {
                   centralize: event.data.alt,
                 })
               )
+              .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2)
               .sort((a, b) => a[1] - b[1]);
 
             if (results.length > 0) {
-              resizingAffine = results[0][0];
+              const result = results[0];
+              resizingAffine = result[0];
 
-              // Need recalculation to get final control lines.
-              // FIXME: It's not the optimal way.
-              if (resizingAffine) {
+              if (result[2]) {
+                // Pick exact target when it's determined.
+                snappingResult = {
+                  ...snappingResult,
+                  targets: snappingResult.targets.filter((t) => t.line == result[2]),
+                };
+              } else if (resizingAffine) {
+                // Need recalculation to get final control lines.
                 const results = boundingBoxPath
                   .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
                   .filter((r): r is SnappingResult => !!r)
