@@ -9,7 +9,7 @@ import {
   updateCommonStyle,
 } from "../../shapes";
 import * as geometry from "../../utils/geometry";
-import { CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
+import { BoxAlign, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
@@ -22,6 +22,8 @@ import { LineHeadItems } from "./LineHeadItems";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
 import { useDraggable } from "../../composables/draggable";
+import { AlignAnchorButton } from "./AlignAnchorButton";
+import { TextShape, isTextShape } from "../../shapes/text";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -221,6 +223,29 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     });
   }, [smctx]);
 
+  const indexTextShape = useMemo(() => {
+    return indexShape && isTextShape(indexShape) ? indexShape : undefined;
+  }, [indexShape]);
+
+  const onAlignAnchorChangeed = useCallback(
+    (val: BoxAlign) => {
+      const ctx = smctx.getCtx();
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      const shapeMap = ctx.getShapeMap();
+      const patch = ids.reduce<{ [id: string]: Partial<TextShape> }>((p, id) => {
+        const shape = shapeMap[id];
+        if (isTextShape(shape)) {
+          p[id] = val;
+        }
+        return p;
+      }, {});
+
+      ctx.patchShapes(patch);
+      focusBack?.();
+    },
+    [focusBack, smctx]
+  );
+
   const onClickStackLast = useCallback(() => {
     const ctx = smctx.getCtx();
     const selected = ctx.getSelectedShapeIdMap();
@@ -302,6 +327,14 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
               T
             </button>
           </>
+        ) : undefined}
+        {indexTextShape ? (
+          <AlignAnchorButton
+            popupedKey={popupedKey}
+            setPopupedKey={onClickPopupButton}
+            boxAlign={indexTextShape}
+            onChange={onAlignAnchorChangeed}
+          />
         ) : undefined}
         <StackButton
           popupedKey={popupedKey}

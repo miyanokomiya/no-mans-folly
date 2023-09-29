@@ -68,3 +68,8 @@ export interface ConnectionPoint {
 export interface LineHead {
   type: string;
 }
+
+export interface BoxAlign {
+  hAlign?: "left" | "center" | "right"; // "left" should be default
+  vAlign?: "top" | "center" | "bottom"; // "top" should be default
+}

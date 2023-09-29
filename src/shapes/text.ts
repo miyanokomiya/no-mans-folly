@@ -1,17 +1,16 @@
 import { IVec2, add, getCenter, getUnit, isSame, isZero, multi, sub } from "okageo";
-import { Shape, Size } from "../models";
+import { BoxAlign, Shape, Size } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { getRotateFn } from "../utils/geometry";
 
-export type TextShape = RectangleShape & {
-  maxWidth: number;
-  hAlign?: "left" | "center" | "right"; // "left" should be default
-  vAlign?: "top" | "center" | "bottom"; // "top" should be default
-  lineAttached?: number;
-};
+export type TextShape = RectangleShape &
+  BoxAlign & {
+    maxWidth: number;
+    lineAttached?: number;
+  };
 
 export const struct: ShapeStruct<TextShape> = {
   ...recntagleStruct,
