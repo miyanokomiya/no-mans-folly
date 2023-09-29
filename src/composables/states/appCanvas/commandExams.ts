@@ -14,6 +14,7 @@ export const COMMAND_EXAM_SRC = {
   TEXT_BACKSPACE: { command: "Ctrl + h", title: "Backspace" },
   TEXT_DELETE: { command: "Ctrl + d", title: "Delete" },
 
+  TOGGLE_GRID: { command: "g", title: "Grid on/off" },
   RESET_VIEWPORT: { command: "Home / !", title: "Reset viewport" },
   NEW_TEXT: { command: "t", title: "New Text" },
   NEW_LINE: { command: "l", title: "New Line" },

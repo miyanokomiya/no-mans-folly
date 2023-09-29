@@ -30,6 +30,7 @@ import { FileDropArea } from "./atoms/FileDropArea";
 import { newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
+import { useLocalStorageAdopter } from "../composables/localStorage";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -134,9 +135,14 @@ export const AppCanvas: React.FC = () => {
     editStartPoint,
   } = useCanvas(getWrapper);
 
+  const gridDisabled = useLocalStorageAdopter({
+    key: "grid_disabled",
+    version: "1",
+    initialValue: false,
+  });
   const grid = useMemo(() => {
-    return newGrid({ size: getGridSize(scale), range: viewCanvasRect });
-  }, [scale, viewCanvasRect]);
+    return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: gridDisabled.state });
+  }, [scale, viewCanvasRect, gridDisabled.state]);
 
   useEffect(() => {
     smctx.setCtx({
@@ -224,7 +230,9 @@ export const AppCanvas: React.FC = () => {
 
       createFirstIndex: acctx.shapeStore.createFirstIndex,
       createLastIndex: acctx.shapeStore.createLastIndex,
+
       getGrid: () => grid,
+      setGridDisabled: (val) => gridDisabled.setState(val),
 
       startTextEditing() {
         setTextEditing(true);

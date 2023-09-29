@@ -73,6 +73,9 @@ export function handleCommonShortcut(
       }
       return newSelectionHubState;
     }
+    case "g":
+      ctx.setGridDisabled(!ctx.getGrid().disabled);
+      return;
     case "l":
       if (event.data.ctrl) ctx.undo();
       return () => newLineReadyState({ type: undefined });
@@ -95,7 +98,12 @@ export function handleCommonShortcut(
   }
 }
 
-const COMMON_COMMAND_EXAMS = [COMMAND_EXAM_SRC.NEW_TEXT, COMMAND_EXAM_SRC.NEW_LINE, COMMAND_EXAM_SRC.RESET_VIEWPORT];
+const COMMON_COMMAND_EXAMS = [
+  COMMAND_EXAM_SRC.NEW_TEXT,
+  COMMAND_EXAM_SRC.NEW_LINE,
+  COMMAND_EXAM_SRC.TOGGLE_GRID,
+  COMMAND_EXAM_SRC.RESET_VIEWPORT,
+];
 export function getCommonCommandExams() {
   return COMMON_COMMAND_EXAMS;
 }

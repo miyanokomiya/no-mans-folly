@@ -112,7 +112,9 @@ export function createInitialAppCanvasStateContext(arg: {
     getShapeStruct: getCommonStruct,
     createFirstIndex: () => "",
     createLastIndex: () => "",
+
     getGrid: () => newGrid({ size: 100, range: { x: 0, y: 0, width: 100, height: 100 } }),
+    setGridDisabled() {},
 
     startTextEditing() {},
     stopTextEditing() {},

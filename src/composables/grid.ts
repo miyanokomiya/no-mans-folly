@@ -8,11 +8,12 @@ import { ShapeSnappingLines } from "../shapes/core";
 interface Option {
   size: number;
   range: IRectangle;
+  disabled?: boolean;
 }
 
-export function newGrid({ size, range }: Option) {
-  const countV = Math.ceil(range.width / size);
-  const countH = Math.ceil(range.height / size);
+export function newGrid({ size, range, disabled }: Option) {
+  const countV = disabled ? 0 : Math.ceil(range.width / size);
+  const countH = disabled ? 0 : Math.ceil(range.height / size);
 
   const segmentsV: ISegment[] = [...Array(countV)].map((_, i) => {
     const x = snapNumber(range.x + i * size, size);
@@ -78,7 +79,7 @@ export function newGrid({ size, range }: Option) {
     ctx.restore();
   }
 
-  return { getSegmentsV, getSegmentsH, getSnappingLines, render };
+  return { getSegmentsV, getSegmentsH, getSnappingLines, render, disabled };
 }
 export type Grid = ReturnType<typeof newGrid>;
 
