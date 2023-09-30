@@ -1,5 +1,5 @@
 import { LineShape, isLineShape } from "../shapes/line";
-import { RotatedRectPath, getLocationFromRateOnRectPath } from "../utils/geometry";
+import { RotatedRectPath, TAU, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { Shape, StyleScheme } from "../models";
 import { getLocalRectPolygon } from "../shapes";
@@ -198,19 +198,19 @@ export function renderPatchedVertices(
   option.lines.forEach((l) => {
     if (l.p) {
       ctx.beginPath();
-      ctx.arc(l.p.x, l.p.y, size, 0, Math.PI * 2);
+      ctx.arc(l.p.x, l.p.y, size, 0, TAU);
       ctx.fill();
     }
     if (l.q) {
       ctx.beginPath();
-      ctx.arc(l.q.x, l.q.y, size, 0, Math.PI * 2);
+      ctx.arc(l.q.x, l.q.y, size, 0, TAU);
       ctx.fill();
     }
     if (l.body) {
       l.body.forEach((b) => {
         if (b.c) {
           ctx.beginPath();
-          ctx.arc(b.p.x, b.p.y, size, 0, Math.PI * 2);
+          ctx.arc(b.p.x, b.p.y, size, 0, TAU);
           ctx.fill();
         }
       });

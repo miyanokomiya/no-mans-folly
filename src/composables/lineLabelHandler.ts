@@ -2,7 +2,7 @@ import { Shape } from "../models";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
 import { TextShape, isTextShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
-import { getRelativePointOnPath } from "../utils/geometry";
+import { TAU, getRelativePointOnPath } from "../utils/geometry";
 import { attachLabelToLine } from "../utils/lineLabel";
 import { applyPath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -65,7 +65,7 @@ export function renderParentLineRelation(
   const origin = getRelativePointOnPath(path, textShape.lineAttached ?? 0);
   applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
   renderCtx.beginPath();
-  renderCtx.arc(origin.x, origin.y, 3 * ctx.getScale(), 0, Math.PI * 2);
+  renderCtx.arc(origin.x, origin.y, 3 * ctx.getScale(), 0, TAU);
   renderCtx.fill();
 }
 

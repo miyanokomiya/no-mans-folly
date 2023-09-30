@@ -3,7 +3,7 @@ import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { isPointCloseToSegment } from "../utils/geometry";
+import { TAU, isPointCloseToSegment } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 
 const VERTEX_R = 7;
@@ -105,7 +105,7 @@ export function newLineBounding(option: Option) {
       if (!availableVertexIndex.has(i)) return;
 
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
       ctx.fill();
       ctx.stroke();
     });
@@ -114,15 +114,7 @@ export function newLineBounding(option: Option) {
       applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
       edgeCenters.forEach((c) => {
         ctx.beginPath();
-        ctx.ellipse(
-          c.x,
-          c.y,
-          vertexSize * ADD_VERTEX_ANCHOR_RATE,
-          vertexSize * ADD_VERTEX_ANCHOR_RATE,
-          0,
-          0,
-          Math.PI * 2
-        );
+        ctx.ellipse(c.x, c.y, vertexSize * ADD_VERTEX_ANCHOR_RATE, vertexSize * ADD_VERTEX_ANCHOR_RATE, 0, 0, TAU);
         ctx.fill();
         ctx.stroke();
       });
@@ -135,7 +127,7 @@ export function newLineBounding(option: Option) {
           applyFillStyle(ctx, { color: style.selectionPrimary });
           const p = points[hitResult.index];
           ctx.beginPath();
-          ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
           ctx.fill();
           break;
         }
@@ -152,7 +144,7 @@ export function newLineBounding(option: Option) {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
           const p = edgeCenters[hitResult.index];
           ctx.beginPath();
-          ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
           ctx.fill();
           break;
         }

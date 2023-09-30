@@ -14,7 +14,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
 import { newRectHitRectHitTest } from "./shapeHitTest";
-import { isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
+import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
@@ -102,7 +102,7 @@ export function newSmartBranchHandler(option: Option) {
     const anchors = getAnchors(scale);
     anchors.forEach((a) => {
       ctx.beginPath();
-      ctx.arc(a.x, a.y, threshold, 0, Math.PI * 2);
+      ctx.arc(a.x, a.y, threshold, 0, TAU);
       ctx.fill();
     });
 
@@ -116,7 +116,7 @@ export function newSmartBranchHandler(option: Option) {
       applyFillStyle(ctx, { color: style.selectionSecondaly });
       const target = anchors[hitResult.index];
       ctx.beginPath();
-      ctx.arc(target.x, target.y, threshold, 0, Math.PI * 2);
+      ctx.arc(target.x, target.y, threshold, 0, TAU);
       ctx.fill();
     }
   }

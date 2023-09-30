@@ -2,6 +2,7 @@ import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rot
 import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
+  TAU,
   expandRect,
   getClosestOutlineOnEllipse,
   getCrossLineAndEllipseRotated,
@@ -33,7 +34,7 @@ export const struct: ShapeStruct<EllipseShape> = {
       rx: arg.rx ?? 50,
       ry: arg.ry ?? 50,
       from: arg.from ?? 0,
-      to: arg.to ?? Math.PI * 2,
+      to: arg.to ?? TAU,
     };
   },
   render(ctx, shape) {

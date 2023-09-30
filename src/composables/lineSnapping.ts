@@ -9,7 +9,7 @@ import {
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, getLinePath } from "../shapes/line";
-import { ISegment, extendSegment, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
+import { ISegment, TAU, extendSegment, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
@@ -150,7 +150,7 @@ export function renderConnectionResult(
     applyFillStyle(ctx, { color: option.style.selectionSecondaly });
     const size = 5 * option.scale;
     ctx.beginPath();
-    ctx.arc(option.result.p.x, option.result.p.y, size, 0, Math.PI * 2);
+    ctx.arc(option.result.p.x, option.result.p.y, size, 0, TAU);
     ctx.fill();
   }
 }

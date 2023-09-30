@@ -17,7 +17,7 @@ import {
 import { applyPath } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { ISegment, getCrossLineAndLine, getRotateFn, isPointCloseToSegment, snapAngle } from "../utils/geometry";
+import { ISegment, TAU, getCrossLineAndLine, getRotateFn, isPointCloseToSegment, snapAngle } from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
 import { getResizingCursorStyle } from "../utils/styleHelper";
 
@@ -140,7 +140,7 @@ export function newBoundingBox(option: Option) {
       });
 
       ctx.beginPath();
-      ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, Math.PI * 2);
+      ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);
       ctx.fill();
       ctx.stroke();
     }

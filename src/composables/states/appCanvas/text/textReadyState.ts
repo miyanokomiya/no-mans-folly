@@ -10,6 +10,7 @@ import { newTextEditingState } from "./textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { isLineShape } from "../../../../shapes/line";
+import { TAU } from "../../../../utils/geometry";
 
 export function newTextReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -91,7 +92,7 @@ export function newTextReadyState(): AppCanvasState {
       const vertexSize = 8 * scale;
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
-      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, Math.PI * 2);
+      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
       renderCtx.fill();
 
       if (snappingResult) {

@@ -1,5 +1,5 @@
 import { IRectangle, IVec2, getRadian, getRectCenter } from "okageo";
-import { expandRect, getRotateFn, getWrapperRect, snapAngle } from "./geometry";
+import { TAU, expandRect, getRotateFn, getWrapperRect, snapAngle } from "./geometry";
 
 const ROUND_MARGIN = 10;
 
@@ -82,7 +82,7 @@ export function getConnectionDirection(p: IVec2, bounds: IRectangle): EdgeDirect
     x: (p.x - boundsCenter.x) / Math.max(bounds.width, 1),
     y: (p.y - boundsCenter.y) / Math.max(bounds.height, 1),
   });
-  const adjusted = radian < 0 ? radian + Math.PI * 2 : radian;
+  const adjusted = radian < 0 ? radian + TAU : radian;
   const index = snapAngle((adjusted * 180) / Math.PI, 90) / 90;
   switch (index) {
     case 1:

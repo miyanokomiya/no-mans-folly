@@ -18,6 +18,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { TAU } from "../../../../utils/geometry";
 
 interface Option {
   lineShape: LineShape;
@@ -129,12 +130,12 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
       scaleGlobalAlpha(renderCtx, 0.5, () => {
         renderCtx.beginPath();
-        renderCtx.arc(origin.x, origin.y, vertexSize, 0, Math.PI * 2);
+        renderCtx.arc(origin.x, origin.y, vertexSize, 0, TAU);
         renderCtx.fill();
       });
 
       renderCtx.beginPath();
-      renderCtx.arc(vertex.x, vertex.y, vertexSize, 0, Math.PI * 2);
+      renderCtx.arc(vertex.x, vertex.y, vertexSize, 0, TAU);
       renderCtx.fill();
 
       if (connectionResult) {

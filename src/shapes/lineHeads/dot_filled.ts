@@ -2,6 +2,7 @@ import { applyAffine } from "okageo";
 import { LineHead } from "../../models";
 import { applyPath } from "../../utils/renderer";
 import { LineHeadStruct } from "./core";
+import { TAU } from "../../utils/geometry";
 
 export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
   label: "Dot Filled",
@@ -14,7 +15,7 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
   render(ctx, _head, transform, lineWidth) {
     const radius = 6 + lineWidth / 2;
     ctx.beginPath();
-    ctx.arc(transform[4], transform[5], radius, 0, Math.PI * 2, true);
+    ctx.arc(transform[4], transform[5], radius, 0, TAU, true);
 
     const tmp = ctx.fillStyle;
     ctx.fillStyle = ctx.strokeStyle;

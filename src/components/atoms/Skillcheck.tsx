@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "./Dialog";
 import { useGlobalClickEffect } from "../../composables/window";
+import { TAU } from "../../utils/geometry";
 
 interface Props {
   open: boolean;
@@ -29,7 +30,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
     cancelAnimationFrame(loopRef.current);
     timerRef.current = 0;
     loopRef.current = 0;
-    const r = Math.random() * Math.PI * 2;
+    const r = Math.random() * TAU;
     setRadian(r);
     setCurrentRadian(r + range * 1.1 + (Math.random() * Math.PI) / 3);
   }, []);
@@ -43,7 +44,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
 
   const tick = useCallback(() => {
     timerRef.current = timerRef.current + 1;
-    setCurrentRadian((r) => r + (Math.PI * 2) / duration);
+    setCurrentRadian((r) => r + TAU / duration);
   }, []);
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
       cancelAnimationFrame(loopRef.current);
       setPlaying(false);
 
-      const adjusted = currentRadian - Math.PI * 2;
+      const adjusted = currentRadian - TAU;
       if (radian <= adjusted && adjusted <= radian + range) {
         if (adjusted <= radian + greatRange) {
           setStatus("great");
