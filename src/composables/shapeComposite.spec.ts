@@ -32,5 +32,6 @@ describe("newShapeComposite", () => {
       { id: "a", children: [] },
       { id: "b", children: [] },
     ]);
+    expect(target.getAllBranchMergedShapes(["line"])).toEqual([shapes[1], shapes[0]]);
   });
 });

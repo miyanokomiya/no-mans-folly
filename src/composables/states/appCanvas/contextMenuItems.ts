@@ -1,6 +1,6 @@
 import { getWrapperRectForShapes } from "../../../shapes";
-import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { newImageBuilder } from "../../imageBuilder";
+import { newShapeComposite } from "../../shapeComposite";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { TransitionValue } from "../core";
 import { ContextMenuItem } from "../types";
@@ -33,13 +33,10 @@ export function handleContextItemEvent(
 }
 
 async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
-  const shapeMap = ctx.getShapeMap();
-  const selected = ctx.getSelectedShapeIdMap();
-  const targetIds = getAllBranchIds(getTree(ctx.getShapes()), Object.keys(selected));
-  const targetShapes = targetIds.map((id) => shapeMap[id]);
+  const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
 
   const renderer = newShapeRenderer({
-    shapeComposite: ctx.getShapeComposite(),
+    shapeComposite: newShapeComposite({ shapes: targetShapes }),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
     imageStore: ctx.getImageStore(),
@@ -65,13 +62,10 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
 }
 
 function exportShapesAsPNG(ctx: AppCanvasStateContext) {
-  const shapeMap = ctx.getShapeMap();
-  const selected = ctx.getSelectedShapeIdMap();
-  const targetIds = getAllBranchIds(getTree(ctx.getShapes()), Object.keys(selected));
-  const targetShapes = targetIds.map((id) => shapeMap[id]);
+  const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
 
   const renderer = newShapeRenderer({
-    shapeComposite: ctx.getShapeComposite(),
+    shapeComposite: newShapeComposite({ shapes: targetShapes }),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
     imageStore: ctx.getImageStore(),

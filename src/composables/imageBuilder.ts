@@ -1,5 +1,9 @@
 import { IRectangle } from "okageo";
 
+// Browsers usually have specific canvas size limitation.
+// Ref: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/canvas#maximum_canvas_size
+const MAX_SIZE = 10000;
+
 interface Option {
   render: (renderCtx: CanvasRenderingContext2D) => void;
   range: IRectangle;
@@ -7,9 +11,11 @@ interface Option {
 
 export function newImageBuilder({ render, range }: Option) {
   const canvas = createCanvas();
-  canvas.width = Math.ceil(range.width);
-  canvas.height = Math.ceil(range.height);
+  const rate = Math.min(1, MAX_SIZE / Math.max(range.width, range.height));
+  canvas.width = Math.ceil(range.width * rate);
+  canvas.height = Math.ceil(range.height * rate);
   const renderCtx = canvas.getContext("2d")!;
+  renderCtx.scale(rate, rate);
   renderCtx.translate(-Math.floor(range.x), -Math.floor(range.y));
   render(renderCtx);
 

@@ -1,6 +1,6 @@
 import { Shape } from "../models";
 import { mergeMap, toMap } from "../utils/commons";
-import { getTree } from "../utils/tree";
+import { getAllBranchIds, getTree } from "../utils/tree";
 
 interface Option {
   shapes: Shape[];
@@ -15,6 +15,10 @@ export function newShapeComposite(option: Option) {
   const mergedShapes = option.shapes.map((s) => mergedShapeMap[s.id]);
   const mergedShapeTree = getTree(mergedShapes);
 
+  function getAllBranchMergedShapes(ids: string[]): Shape[] {
+    return getAllBranchIds(mergedShapeTree, ids).map((id) => mergedShapeMap[id]);
+  }
+
   return {
     shapes: option.shapes,
     shapeMap,
@@ -22,6 +26,7 @@ export function newShapeComposite(option: Option) {
     mergedShapes,
     mergedShapeMap: toMap(mergedShapes),
     mergedShapeTree,
+    getAllBranchMergedShapes,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
