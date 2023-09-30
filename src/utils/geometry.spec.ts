@@ -5,6 +5,7 @@ import {
   extendSegment,
   getClosestOutlineOnEllipse,
   getClosestOutlineOnRectangle,
+  getClosestOutlineOnPolygon,
   getCrossLineAndEllipse,
   getCrossSegAndSeg,
   getIsRectHitRectFn,
@@ -27,6 +28,8 @@ import {
   isSegmentOverlappedH,
   isSegmentOverlappedV,
   sortPointFrom,
+  getIntersectedOutlinesOnPolygon,
+  getMarkersOnPolygon,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -142,6 +145,54 @@ describe("getClosestOutlineOnEllipse", () => {
     const r3 = getClosestOutlineOnEllipse({ x: 0, y: 0 }, 3, 4, { x: 3, y: 3 }, 2);
     expect(r3?.x).toBeLessThan(3);
     expect(r3?.y).toBeLessThan(3);
+  });
+});
+
+describe("getClosestOutlineOnPolygon", () => {
+  test("should return the closest point on the polygon outline", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    expect(getClosestOutlineOnPolygon(path, { x: -1, y: -1 }, 2)).toEqual(undefined);
+    expect(getClosestOutlineOnPolygon(path, { x: 1, y: -1 }, 2)).toEqual({ x: 1, y: 0 });
+    expect(getClosestOutlineOnPolygon(path, { x: 9, y: 10 }, 2)).toEqual({ x: 9.5, y: 9.5 });
+  });
+});
+
+describe("getIntersectedOutlinesOnPolygon", () => {
+  test("should return the intersected outlines of the polygon", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+    ];
+    expect(getIntersectedOutlinesOnPolygon(path, { x: -3, y: 3 }, { x: -3, y: 13 })).toEqual(undefined);
+    expect(getIntersectedOutlinesOnPolygon(path, { x: 3, y: -3 }, { x: 3, y: 13 })).toEqual([
+      { x: 3, y: 0 },
+      { x: 3, y: 10 },
+    ]);
+    expect(getIntersectedOutlinesOnPolygon(path, { x: 3, y: 3 }, { x: 3, y: 13 })).toEqual([{ x: 3, y: 10 }]);
+  });
+});
+
+describe("getMarkersOnPolygon", () => {
+  test("should return marker points on the polygon", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    expect(getMarkersOnPolygon(path)).toEqual([
+      { x: 0, y: 0 },
+      { x: 5, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 5 },
+      { x: 10, y: 10 },
+      { x: 5, y: 5 },
+    ]);
   });
 });
 

@@ -26,6 +26,10 @@ export type ISegment = [IVec2, IVec2];
 
 export type RotatedRectPath = [path: IVec2[], rotation: number];
 
+export function getD2(v: IVec2): number {
+  return v.x * v.x + v.y * v.y;
+}
+
 export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?: boolean) => IVec2 {
   if (radian === 0) return (p) => p;
 
@@ -115,6 +119,45 @@ export function getClosestOutlineOnEllipse(
   if (threshold === undefined) return ep;
 
   return getDistance(ep, p) <= threshold ? ep : undefined;
+}
+
+export function getClosestOutlineOnPolygon(path: IVec2[], p: IVec2, threshold: number): IVec2 | undefined {
+  let candidate: IVec2 | undefined = undefined;
+  let d = Infinity;
+
+  for (let i = 0; i < path.length; i++) {
+    const seg = [path[i], path[i + 1 < path.length ? i + 1 : 0]];
+    const pedal = getPedal(p, seg);
+    const v = getD2(sub(pedal, p));
+    if (v < d && isOnSeg(pedal, seg)) {
+      candidate = pedal;
+      d = v;
+    }
+  }
+  if (d === undefined || threshold < Math.sqrt(d)) return;
+
+  return candidate;
+}
+
+export function getIntersectedOutlinesOnPolygon(polygon: IVec2[], from: IVec2, to: IVec2): IVec2[] | undefined {
+  const seg: ISegment = [from, to];
+  const ret: IVec2[] = [];
+
+  polygon.forEach((p, i) => {
+    const s = getCrossSegAndSeg([p, polygon[(i + 1) % polygon.length]], seg);
+    if (!s) return;
+    ret.push(s);
+  });
+
+  return ret.length === 0 ? undefined : sortPointFrom(from, ret);
+}
+
+export function getMarkersOnPolygon(path: IVec2[]): IVec2[] {
+  const ret: IVec2[] = [];
+  for (let i = 0; i < path.length; i++) {
+    ret.push(path[i], getCenter(path[i], path[i + 1 < path.length ? i + 1 : 0]));
+  }
+  return ret;
 }
 
 export function isPointOnEllipse(c: IVec2, rx: number, ry: number, p: IVec2): boolean {

@@ -2,12 +2,14 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { createShape } from "../shapes";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
+import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
+  { type: "rhombus", icon: iconRhombus },
   { type: "ellipse", icon: iconEllipse },
 ];
 

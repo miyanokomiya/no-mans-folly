@@ -17,10 +17,8 @@ import {
   getRotateFn,
   getRotatedWrapperRect,
   isPointOnRectangleRotated,
-  getCrossSegAndSeg,
-  ISegment,
-  sortPointFrom,
   expandRect,
+  getIntersectedOutlinesOnPolygon,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -114,16 +112,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   },
   getIntersectedOutlines(shape, from, to) {
     const polygon = getLocalRectPolygon(shape);
-    const seg: ISegment = [from, to];
-    const ret: IVec2[] = [];
-
-    polygon.forEach((p, i) => {
-      const s = getCrossSegAndSeg([p, polygon[(i + 1) % polygon.length]], seg);
-      if (!s) return;
-      ret.push(s);
-    });
-
-    return ret.length === 0 ? undefined : sortPointFrom(from, ret);
+    return getIntersectedOutlinesOnPolygon(polygon, from, to);
   },
   getCommonStyle,
   updateCommonStyle,
