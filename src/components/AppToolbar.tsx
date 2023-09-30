@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
 import { createShape } from "../shapes";
+import iconShapeSet from "../assets/icons/shape_set.svg";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
@@ -9,8 +10,8 @@ import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
-  { type: "rhombus", icon: iconRhombus },
   { type: "ellipse", icon: iconEllipse },
+  { type: "rhombus", icon: iconRhombus },
 ];
 
 const lineList = [
@@ -160,7 +161,7 @@ export const AppToolbar: React.FC = () => {
   return (
     <div className="bg-white relative border border-1 p-1 rounded shadow flex flex-col">
       <button type="button" className={getButtonClass(popup === "shapes")} onClick={onClickShapeButton}>
-        <img src={iconRectangle} alt="shapes" />
+        <img src={iconShapeSet} alt="shapes" />
       </button>
       <button type="button" className={getButtonClass(popup === "lines")} onClick={onClickLineButton}>
         <img src={iconLineStraight} alt="lines" />
