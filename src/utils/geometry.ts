@@ -26,6 +26,8 @@ export type ISegment = [IVec2, IVec2];
 
 export type RotatedRectPath = [path: IVec2[], rotation: number];
 
+export const TAU = Math.PI * 2;
+
 export function getD2(v: IVec2): number {
   return v.x * v.x + v.y * v.y;
 }
@@ -294,6 +296,10 @@ export function snapScale(scale: IVec2, step = 0.1): IVec2 {
 
 export function snapNumber(value: number, step = 1): number {
   return Math.round(value / step) * step;
+}
+
+export function snapNumberCeil(value: number, step = 1): number {
+  return Math.ceil(value / step) * step;
 }
 
 export function sortNumFn(a: number, b: number): number {

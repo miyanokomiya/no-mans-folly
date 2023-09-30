@@ -30,6 +30,7 @@ import {
   sortPointFrom,
   getIntersectedOutlinesOnPolygon,
   getMarkersOnPolygon,
+  snapNumberCeil,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -382,6 +383,17 @@ describe("isPointCloseToSegment", () => {
     expect(isPointCloseToSegment(seg, { x: 3, y: 1 }, 1)).toBe(false);
     expect(isPointCloseToSegment(seg, { x: 2, y: 1 }, 1)).toBe(true);
     expect(isPointCloseToSegment(seg, { x: -0.1, y: -0.1 }, 1)).toBe(false);
+  });
+});
+
+describe("snapNumberCeil", () => {
+  test("should return snapped number due ceil rule", () => {
+    expect(snapNumberCeil(-5, 5)).toBe(-5);
+    expect(snapNumberCeil(-1, 5)).toBeCloseTo(0);
+    expect(snapNumberCeil(0, 5)).toBe(0);
+    expect(snapNumberCeil(1, 5)).toBe(5);
+    expect(snapNumberCeil(5, 5)).toBe(5);
+    expect(snapNumberCeil(5.1, 5)).toBe(10);
   });
 });
 
