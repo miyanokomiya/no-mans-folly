@@ -1,7 +1,6 @@
 import { IRectangle } from "okageo";
 import { ISegment, snapNumber } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
 import { ShapeSnappingLines } from "../shapes/core";
 
@@ -48,7 +47,6 @@ export function newGrid({ size, range, disabled }: Option) {
 
     ctx.globalAlpha = 0.3;
     applyFillStyle(ctx, { color: COLORS.BLACK });
-    applyStrokeStyle(ctx, { color: COLORS.BLACK, width: 1 });
 
     segmentsV.forEach(([aV]) => {
       segmentsH.forEach(([aH]) => {
@@ -58,8 +56,16 @@ export function newGrid({ size, range, disabled }: Option) {
       });
     });
 
+    ctx.restore();
+  }
+
+  function renderAxisLabels(ctx: CanvasRenderingContext2D, scale = 1) {
+    ctx.save();
+
+    applyFillStyle(ctx, { color: COLORS.BLACK });
     ctx.globalAlpha = 0.5;
     ctx.font = `${14 * scale}px Arial`;
+
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     segmentsV
@@ -79,7 +85,7 @@ export function newGrid({ size, range, disabled }: Option) {
     ctx.restore();
   }
 
-  return { getSegmentsV, getSegmentsH, getSnappingLines, render, disabled };
+  return { getSegmentsV, getSegmentsH, getSnappingLines, render, renderAxisLabels, disabled };
 }
 export type Grid = ReturnType<typeof newGrid>;
 

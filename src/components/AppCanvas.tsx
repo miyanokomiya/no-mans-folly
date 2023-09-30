@@ -323,6 +323,8 @@ export const AppCanvas: React.FC = () => {
     });
     renderer.render(ctx);
 
+    grid.renderAxisLabels(ctx, scale);
+
     smctx.stateMachine.render(ctx);
   }, [
     acctx.shapeStore.shapeComposite,
