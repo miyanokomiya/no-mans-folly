@@ -134,6 +134,12 @@ export function newLineSelectedState(): AppCanvasState {
         case "selection": {
           return newSelectionHubState;
         }
+        case "shape-updated": {
+          if (event.data.keys.has(lineShape.id)) {
+            return newSelectionHubState;
+          }
+          return;
+        }
         case "history":
           handleHistoryEvent(ctx, event);
           return newSelectionHubState;

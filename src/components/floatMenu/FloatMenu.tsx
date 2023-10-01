@@ -19,11 +19,14 @@ import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { useWindow } from "../../composables/window";
 import { LineHeadItems } from "./LineHeadItems";
-import { LineShape, isLineShape } from "../../shapes/line";
+import { LineShape, LineType, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
 import { useDraggable } from "../../composables/draggable";
 import { AlignAnchorButton } from "./AlignAnchorButton";
 import { TextShape, isTextShape } from "../../shapes/text";
+import { LineTypeButton } from "./LineTypeButton";
+import { mapReduce, patchPipe, toMap } from "../../utils/commons";
+import { newElbowLineHandler } from "../../composables/elbowLineHandler";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -216,6 +219,35 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     [focusBack, smctx]
   );
 
+  const onLineTypeChanged = useCallback(
+    (lineType: LineType) => {
+      const ctx = smctx.getCtx();
+      const shapeMap = ctx.getShapeMap();
+      const lineIds = Object.keys(ctx.getSelectedShapeIdMap());
+      const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
+      ctx.patchShapes(
+        patchPipe(
+          [
+            (src) => mapReduce(src, () => ({ lineType })),
+            (src) => {
+              const elbowHandler = newElbowLineHandler({
+                getShapeStruct: ctx.getShapeStruct,
+                getShapeMap: () => ({ ...shapeMap, ...src }),
+              });
+              return mapReduce(src, (lineShape) => {
+                return lineShape.lineType !== "elbow"
+                  ? { body: undefined }
+                  : { body: elbowHandler.optimizeElbow(lineShape) };
+              });
+            },
+          ],
+          toMap(lines)
+        ).patch
+      );
+    },
+    [smctx]
+  );
+
   const onClickLineLabel = useCallback(() => {
     smctx.stateMachine.handleEvent({
       type: "state",
@@ -316,6 +348,12 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
         {indexLineShape ? (
           <>
             <div className="h-8 mx-0.5 border"></div>
+            <LineTypeButton
+              popupedKey={popupedKey}
+              setPopupedKey={onClickPopupButton}
+              currentType={indexLineShape.lineType}
+              onChange={onLineTypeChanged}
+            />
             <LineHeadItems
               popupedKey={popupedKey}
               setPopupedKey={onClickPopupButton}
