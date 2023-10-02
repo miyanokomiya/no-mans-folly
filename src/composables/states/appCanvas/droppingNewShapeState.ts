@@ -1,12 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import {
-  canHaveText,
-  filterShapesOverlappingRect,
-  getSnappingLines,
-  getWrapperRect,
-  renderShape,
-} from "../../../shapes";
+import { canHaveText, filterShapesOverlappingRect, getSnappingLines, getWrapperRect } from "../../../shapes";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -90,11 +84,9 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
     render(ctx, renderCtx) {
       const shapeComposite = newShapeComposite({
         shapes: [{ ...shape, p }],
+        getStruct: ctx.getShapeStruct,
       });
-      renderShape(ctx.getShapeStruct, renderCtx, shapeComposite.mergedShapeMap[shape.id], {
-        shapeMap: shapeComposite.mergedShapeMap,
-        treeNode: shapeComposite.mergedShapeTreeMap[shape.id],
-      });
+      shapeComposite.render(renderCtx, shapeComposite.mergedShapeMap[shape.id]);
 
       if (snappingResult) {
         renderSnappingResult(renderCtx, {

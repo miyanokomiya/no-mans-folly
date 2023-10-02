@@ -40,9 +40,10 @@ export const struct: ShapeStruct<LineShape> = {
     if (arg.qConnection) obj.qConnection = arg.qConnection;
     return obj;
   },
-  render(ctx, shape, { shapeMap, treeNode }) {
+  render(ctx, shape, { shapeMap, treeNodeMap }) {
     applyStrokeStyle(ctx, shape.stroke);
     applyFillStyle(ctx, shape.fill);
+    const treeNode = treeNodeMap[shape.id];
     const linePath = getLinePath(shape);
     const hasLabels = treeNode.children.length > 0;
 

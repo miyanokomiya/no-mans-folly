@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
-import { filterShapesOverlappingRect, getSnappingLines, renderShape } from "../../../../shapes";
+import { filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
 import { LineShape, isLineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import {
@@ -127,11 +127,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
 
       const shapeComposite = newShapeComposite({
         shapes: [shape],
+        getStruct: ctx.getShapeStruct,
       });
-      renderShape(ctx.getShapeStruct, renderCtx, shape, {
-        shapeMap: shapeComposite.mergedShapeMap,
-        treeNode: shapeComposite.mergedShapeTreeMap[shape.id],
-      });
+      shapeComposite.render(renderCtx, shape);
 
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();

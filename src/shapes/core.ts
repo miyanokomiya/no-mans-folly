@@ -7,7 +7,7 @@ import { ImageStore } from "../composables/imageStore";
 
 export interface ShapeContext {
   shapeMap: { [id: string]: Shape };
-  treeNode: TreeNode;
+  treeNodeMap: { [id: string]: TreeNode };
 }
 
 export interface ShapeStruct<T extends Shape> {

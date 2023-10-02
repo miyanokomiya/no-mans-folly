@@ -36,7 +36,7 @@ describe("renderShape", () => {
     };
     renderShape(getCommonStruct, ctx as any, shape, {
       shapeMap: { [shape.id]: shape },
-      treeNode: { id: shape.id, children: [] },
+      treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();

@@ -7,7 +7,6 @@ import {
   getIntersectedOutlines,
   getLocationRateOnShape,
   getWrapperRect,
-  renderShape,
   resizeShape,
 } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -110,13 +109,11 @@ export function newSmartBranchHandler(option: Option) {
     if (hitResult) {
       const shapeComposite = newShapeComposite({
         shapes: hitResult.previewShapes,
+        getStruct: option.getShapeStruct,
       });
       hitResult.previewShapes.forEach((s) => {
         ctx.globalAlpha = 0.5;
-        renderShape(option.getShapeStruct, ctx, s, {
-          shapeMap: shapeComposite.mergedShapeMap,
-          treeNode: shapeComposite.mergedShapeTreeMap[s.id],
-        });
+        shapeComposite.render(ctx, s);
         ctx.globalAlpha = 1;
       });
 
