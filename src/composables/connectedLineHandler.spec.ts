@@ -3,6 +3,7 @@ import { getConnectedLineInfoMap, newConnectedLineHandler } from "./connectedLin
 import { LineShape, struct } from "../shapes/line";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
+import { newShapeComposite } from "./shapeComposite";
 
 describe("newConnectedLineHandler", () => {
   describe("getModifiedMap", () => {
@@ -29,8 +30,8 @@ describe("newConnectedLineHandler", () => {
       pConnection: { rate: { x: 0.5, y: 0.5 }, id: "a", optimized: true },
       qConnection: { rate: { x: 0.2, y: 0.8 }, id: "b", optimized: true },
     });
-    const a = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
-    const b = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
+    const a = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a" });
+    const b = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "b" });
 
     test("should return patched lines", () => {
       const target = newConnectedLineHandler({
@@ -40,7 +41,11 @@ describe("newConnectedLineHandler", () => {
         },
         ctx: {
           getShapeStruct: getCommonStruct,
-          getShapeMap: () => ({ l0, a, b }),
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, a, b],
+              getStruct: getCommonStruct,
+            }),
         },
       });
 
@@ -65,8 +70,8 @@ describe("newConnectedLineHandler", () => {
           { p: { x: 10, y: 10 }, c: { rate: { x: 0.2, y: 0.8 }, id: "b" } },
         ],
       });
-      const a = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
-      const b = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
+      const a = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a" });
+      const b = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "b" });
 
       const target = newConnectedLineHandler({
         connectedLinesMap: {
@@ -75,7 +80,11 @@ describe("newConnectedLineHandler", () => {
         },
         ctx: {
           getShapeStruct: getCommonStruct,
-          getShapeMap: () => ({ l0, a, b }),
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, a, b],
+              getStruct: getCommonStruct,
+            }),
         },
       });
 
@@ -102,7 +111,11 @@ describe("newConnectedLineHandler", () => {
         },
         ctx: {
           getShapeStruct: getCommonStruct,
-          getShapeMap: () => ({ elbow0, a, b }),
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [elbow0, a, b],
+              getStruct: getCommonStruct,
+            }),
         },
       });
 
@@ -128,7 +141,11 @@ describe("newConnectedLineHandler", () => {
         },
         ctx: {
           getShapeStruct: getCommonStruct,
-          getShapeMap: () => ({ l0, l1, a, b }),
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, l1, a, b],
+              getStruct: getCommonStruct,
+            }),
         },
       });
 
@@ -155,7 +172,11 @@ describe("newConnectedLineHandler", () => {
         },
         ctx: {
           getShapeStruct: getCommonStruct,
-          getShapeMap: () => ({ l2, a, b }),
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l2, a, b],
+              getStruct: getCommonStruct,
+            }),
         },
       });
 
@@ -194,7 +215,11 @@ describe("getConnectedLineInfoMap", () => {
 
     expect(
       getConnectedLineInfoMap({
-        getShapeMap: () => ({ l0, l1, l2 }),
+        getShapeComposite: () =>
+          newShapeComposite({
+            shapes: [l0, l1, l2],
+            getStruct: getCommonStruct,
+          }),
         getSelectedShapeIdMap: () => ({ a: true, b: true }),
       })
     ).toEqual({ a: [l0], b: [l0, l1] });
@@ -217,7 +242,11 @@ describe("getConnectedLineInfoMap", () => {
 
     expect(
       getConnectedLineInfoMap({
-        getShapeMap: () => ({ l0, l1, l2 }),
+        getShapeComposite: () =>
+          newShapeComposite({
+            shapes: [l0, l1, l2],
+            getStruct: getCommonStruct,
+          }),
         getSelectedShapeIdMap: () => ({ b: true }),
       })
     ).toEqual({ b: [l0] });

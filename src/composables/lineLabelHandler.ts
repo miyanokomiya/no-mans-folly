@@ -9,12 +9,12 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 
 interface Option {
-  ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">;
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getShapeStruct">;
 }
 
 export function newLineLabelHandler(option: Option) {
   function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
-    const shapeMap = option.ctx.getShapeMap();
+    const shapeMap = option.ctx.getShapeComposite().shapeMap;
     const shapeList = Object.values(shapeMap);
     const updatedEntries = Object.entries(updatedMap);
 

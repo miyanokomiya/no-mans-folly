@@ -5,15 +5,23 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { newRotatingState } from "./rotatingState";
 import { newBoundingBox } from "../../boundingBox";
 import { getRectPoints } from "../../../utils/geometry";
+import { newShapeComposite } from "../../shapeComposite";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-    }),
-    getShapeStruct: getCommonStruct,
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        getStruct: getCommonStruct,
+      }),
     getStyleScheme: createStyleScheme,
     setTmpShapeMap: vi.fn(),
     startDragging: vi.fn(),

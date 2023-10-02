@@ -1,5 +1,6 @@
 import { expect, describe, test, vi } from "vitest";
 import { addNewVertex, deleteVertex, getLinePath, isLineShape, patchConnection, patchVertex, struct } from "./line";
+import { getCommonStruct } from ".";
 
 describe("struct", () => {
   describe("create", () => {
@@ -24,6 +25,7 @@ describe("struct", () => {
       struct.render(ctx as any, shape, {
         shapeMap: { [shape.id]: shape },
         treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
+        getStruct: getCommonStruct,
       });
       expect(ctx.stroke).toHaveBeenCalled();
     });

@@ -11,7 +11,7 @@ interface Option {
   connectedLinesMap: {
     [id: string]: LineShape[];
   };
-  ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">;
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getShapeStruct">;
 }
 
 export function newConnectedLineHandler(option: Option) {
@@ -19,12 +19,12 @@ export function newConnectedLineHandler(option: Option) {
    * Returns patched properties that are updated in this function.
    * => Returned value doesn't inherit the content of "updatedMap".
    */
-  function getModifiedMap(updatedMap: { [id: string]: Partial<Shape> }): {
+  function onModified(updatedMap: { [id: string]: Partial<Shape> }): {
     [id: string]: Partial<LineShape>;
   } {
     const ret: { [id: string]: Partial<LineShape> } = {};
 
-    const shapeMap = option.ctx.getShapeMap();
+    const shapeMap = option.ctx.getShapeComposite().shapeMap;
     const updatedShapeMap: { [id: string]: Shape } = {};
     Object.entries(updatedMap).forEach(([id, patch]) => {
       updatedShapeMap[id] = { ...shapeMap[id], ...patch };
@@ -136,14 +136,16 @@ export function newConnectedLineHandler(option: Option) {
     return ret;
   }
 
-  return { onModified: getModifiedMap };
+  return { onModified };
 }
 export type ConnectedLineHandler = ReturnType<typeof newConnectedLineHandler>;
 
-export function getConnectedLineInfoMap(ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getSelectedShapeIdMap">): {
+export function getConnectedLineInfoMap(
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getSelectedShapeIdMap">
+): {
   [id: string]: LineShape[];
 } {
-  const shapeMap = ctx.getShapeMap();
+  const shapeMap = ctx.getShapeComposite().shapeMap;
   const selectedIdMap = ctx.getSelectedShapeIdMap();
   const connectedLineInfoMap: { [id: string]: LineShape[] } = {};
   Object.values(shapeMap)
@@ -171,12 +173,12 @@ export function getConnectedLineInfoMap(ctx: Pick<AppCanvasStateContext, "getSha
 }
 
 export function getRotatedRectPathMap(
-  ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "getShapeMap">,
+  ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "getShapeComposite">,
   updatedMap: { [id: string]: Partial<Shape> }
 ): {
   [id: string]: RotatedRectPath;
 } {
-  const shapeMap = ctx.getShapeMap();
+  const shapeMap = ctx.getShapeComposite().shapeMap;
   const modifiedMap: { [id: string]: RotatedRectPath } = {};
   Object.entries(updatedMap).forEach(([id, shape]) => {
     const s = shapeMap[id];

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
+import { RectangleShape } from "../shapes/rectangle";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -34,5 +35,34 @@ describe("newShapeComposite", () => {
       { id: "b", children: [] },
     ]);
     expect(target.getAllBranchMergedShapes(["line"])).toEqual([shapes[1], shapes[0]]);
+  });
+
+  describe("getWrapperRectForShapes", () => {
+    test("should return wrapper rectangle for shapes", () => {
+      const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", width: 10, height: 20 });
+      const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "test1",
+        p: {
+          x: 10,
+          y: 20,
+        },
+        width: 10,
+        height: 20,
+      });
+
+      const shapes = [shape0, shape1];
+      const target = newShapeComposite({
+        shapes,
+        tmpShapeMap: {
+          a: { p: { x: 100, y: 100 } },
+        },
+        getStruct: getCommonStruct,
+      });
+      const result0 = target.getWrapperRectForShapes([shape0, shape1]);
+      expect(result0.x).toBeCloseTo(0);
+      expect(result0.y).toBeCloseTo(0);
+      expect(result0.width).toBeCloseTo(20);
+      expect(result0.height).toBeCloseTo(40);
+    });
   });
 });

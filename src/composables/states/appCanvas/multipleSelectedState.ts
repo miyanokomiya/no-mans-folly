@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
+import { getLocalRectPolygon } from "../../../shapes";
 import {
   getCommonCommandExams,
   handleCommonShortcut,
@@ -23,6 +23,7 @@ import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -36,7 +37,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
     getLabel: () => "MultipleSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
-      ctx.setCommandExams(getCommonCommandExams());
+      ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, ...getCommonCommandExams()]);
 
       selectedIdMap = ctx.getSelectedShapeIdMap();
       const shapeMap = ctx.getShapeMap();
@@ -65,7 +66,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       } else {
         const shapeRects = Object.keys(selectedIdMap)
           .map((id) => shapeMap[id])
-          .map((s) => getWrapperRect(ctx.getShapeStruct, s));
+          .map((s) => ctx.getShapeComposite().getWrapperRect(s));
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),

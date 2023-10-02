@@ -3,6 +3,7 @@ import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
@@ -14,26 +15,30 @@ function getMockCtx() {
     getShapeStruct: getCommonStruct,
     setTmpShapeMap: vi.fn(),
     multiSelectShapes: vi.fn(),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "a",
-        p: { x: 0, y: 0 },
-        width: 50,
-        height: 50,
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [
+          createShape<RectangleShape>(getCommonStruct, "rectangle", {
+            id: "a",
+            p: { x: 0, y: 0 },
+            width: 50,
+            height: 50,
+          }),
+          createShape<RectangleShape>(getCommonStruct, "rectangle", {
+            id: "b",
+            p: { x: 40, y: 40 },
+            width: 50,
+            height: 50,
+          }),
+          createShape<RectangleShape>(getCommonStruct, "rectangle", {
+            id: "c",
+            p: { x: 100, y: 100 },
+            width: 50,
+            height: 50,
+          }),
+        ],
+        getStruct: getCommonStruct,
       }),
-      b: createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: 40, y: 40 },
-        width: 50,
-        height: 50,
-      }),
-      c: createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "c",
-        p: { x: 100, y: 100 },
-        width: 50,
-        height: 50,
-      }),
-    }),
   };
 }
 

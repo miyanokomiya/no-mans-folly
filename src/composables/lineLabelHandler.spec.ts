@@ -4,28 +4,33 @@ import { LineShape } from "../shapes/line";
 import { TextShape } from "../shapes/text";
 import { newLineLabelHandler } from "./lineLabelHandler";
 import { createStrokeStyle } from "../utils/strokeStyle";
+import { newShapeComposite } from "./shapeComposite";
 
 describe("newLineLabelHandler", () => {
   describe("onModified", () => {
     test("should patch line labels", () => {
       const target = newLineLabelHandler({
         ctx: {
-          getShapeMap: () => ({
-            line: createShape<LineShape>(getCommonStruct, "line", {
-              id: "line",
-              p: { x: 0, y: 0 },
-              q: { x: 100, y: 0 },
-              stroke: createStrokeStyle({ width: 2 }),
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [
+                createShape<LineShape>(getCommonStruct, "line", {
+                  id: "line",
+                  p: { x: 0, y: 0 },
+                  q: { x: 100, y: 0 },
+                  stroke: createStrokeStyle({ width: 2 }),
+                }),
+                createShape<TextShape>(getCommonStruct, "text", {
+                  id: "label0",
+                  parentId: "line",
+                  lineAttached: 0.2,
+                  vAlign: "center",
+                  width: 20,
+                  height: 10,
+                }),
+              ],
+              getStruct: getCommonStruct,
             }),
-            label0: createShape<TextShape>(getCommonStruct, "text", {
-              id: "label0",
-              parentId: "line",
-              lineAttached: 0.2,
-              vAlign: "center",
-              width: 20,
-              height: 10,
-            }),
-          }),
           getShapeStruct: getCommonStruct,
         },
       });

@@ -4,7 +4,6 @@ import {
   getCommonStruct,
   getLocationRateOnShape,
   getWrapperRect,
-  getWrapperRectForShapes,
   isPointOn,
   refreshShapeRelations,
   remapShapeIds,
@@ -37,13 +36,14 @@ describe("renderShape", () => {
     renderShape(getCommonStruct, ctx as any, shape, {
       shapeMap: { [shape.id]: shape },
       treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
+      getStruct: getCommonStruct,
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();
   });
 });
 
-describe("getRect", () => {
+describe("getWrapperRect", () => {
   test("should return rectangle", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
     expect(getWrapperRect(getCommonStruct, shape)).toEqual({ x: 0, y: 0, width: 10, height: 20 });
@@ -56,15 +56,20 @@ describe("getRect", () => {
       height: 20,
       stroke: createStrokeStyle({ width: 100 }),
     });
-    expect(getWrapperRect(getCommonStruct, shape, true)).toEqual({ x: -50, y: -50, width: 110, height: 120 });
+    expect(getWrapperRect(getCommonStruct, shape, undefined, true)).toEqual({
+      x: -50,
+      y: -50,
+      width: 110,
+      height: 120,
+    });
   });
 });
 
 describe("isPointOn", () => {
   test("should return true if the point is on the shape", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
-    expect(isPointOn(getCommonStruct, shape, { x: -3, y: 3 })).toBe(false);
-    expect(isPointOn(getCommonStruct, shape, { x: 3, y: 3 })).toBe(true);
+    expect(isPointOn(getCommonStruct, shape, { x: -3, y: 3 }, {} as any)).toBe(false);
+    expect(isPointOn(getCommonStruct, shape, { x: 3, y: 3 }, {} as any)).toBe(true);
   });
 });
 
@@ -168,25 +173,5 @@ describe("refreshShapeRelations", () => {
 
     const result1 = refreshShapeRelations(getCommonStruct, [text], new Set(["line"]));
     expect(result1).toEqual({});
-  });
-});
-
-describe("getWrapperRectForShapes", () => {
-  test("should return wrapper rectangle for shapes", () => {
-    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", width: 10, height: 20 });
-    const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "test1",
-      p: {
-        x: 10,
-        y: 20,
-      },
-      width: 10,
-      height: 20,
-    });
-    const result0 = getWrapperRectForShapes(getCommonStruct, [shape0, shape1]);
-    expect(result0.x).toBeCloseTo(0);
-    expect(result0.y).toBeCloseTo(0);
-    expect(result0.width).toBeCloseTo(20);
-    expect(result0.height).toBeCloseTo(40);
   });
 });

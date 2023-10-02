@@ -1,12 +1,13 @@
 import { AffineMatrix, IRectangle, IVec2, getCenter, getOuterRectangle, multiAffines, sub } from "okageo";
 import { CommonStyle, Shape } from "../models";
-import { ShapeContext, ShapeSnappingLines, ShapeStruct } from "./core";
+import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
 import { struct as textStruct } from "./text";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
+import { struct as groupStruct } from "./group";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
@@ -22,9 +23,10 @@ const SHAPE_STRUCTS: {
   ellipse: ellipseStruct,
   line: lineStruct,
   image: imageStruct,
+  group: groupStruct,
 };
 
-export type GetShapeStruct = (type: string) => ShapeStruct<any>;
+export type GetShapeStruct = _GetShapeStruct;
 
 export const getCommonStruct: GetShapeStruct = (type: string) => {
   return SHAPE_STRUCTS[type];
@@ -46,14 +48,19 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeContext, imageStore);
 }
 
-export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape, includeBounds?: boolean): IRectangle {
+export function getWrapperRect(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  shapeContext?: ShapeContext,
+  includeBounds?: boolean
+): IRectangle {
   const struct = getStruct(shape.type);
-  return struct.getWrapperRect(shape, includeBounds);
+  return struct.getWrapperRect(shape, shapeContext, includeBounds);
 }
 
-export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape): IVec2[] {
+export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape, shapeContext?: ShapeContext): IVec2[] {
   const struct = getStruct(shape.type);
-  return struct.getLocalRectPolygon(shape);
+  return struct.getLocalRectPolygon(shape, shapeContext);
 }
 
 export function getTextRangeRect(getStruct: GetShapeStruct, shape: Shape): IRectangle | undefined {
@@ -66,9 +73,9 @@ export function canHaveText(getStruct: GetShapeStruct, shape: Shape): boolean {
   return !!struct.getTextRangeRect;
 }
 
-export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2): boolean {
+export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2, shapeContext: ShapeContext): boolean {
   const struct = getStruct(shape.type);
-  return struct.isPointOn(shape, p);
+  return struct.isPointOn(shape, p, shapeContext);
 }
 
 export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
@@ -76,11 +83,15 @@ export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAff
   return struct.resize(shape, resizingAffine);
 }
 
-export function getSnappingLines(getStruct: GetShapeStruct, shape: Shape): ShapeSnappingLines {
+export function getSnappingLines(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  shapeContext?: ShapeContext
+): ShapeSnappingLines {
   const struct = getStruct(shape.type);
   if (struct.getSnappingLines) return struct.getSnappingLines(shape);
 
-  const rect = struct.getWrapperRect(shape);
+  const rect = struct.getWrapperRect(shape, shapeContext);
   const [t, r, b, l] = geometry.getRectLines(rect);
   const [cv, ch] = geometry.getRectCenterLines(rect);
   return {
@@ -220,15 +231,6 @@ export function refreshShapeRelations(
   return ret;
 }
 
-export function getWrapperRectForShapes(
-  getStruct: GetShapeStruct,
-  shapes: Shape[],
-  includeBounds?: boolean
-): IRectangle {
-  const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s, includeBounds));
-  return geometry.getWrapperRect(shapeRects);
-}
-
 export function patchShapesOrderToLast(shapeIds: string[], lastIndex: string): { [id: string]: Partial<Shape> } {
   let findex = lastIndex;
   return shapeIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
@@ -263,6 +265,7 @@ export function canAttachSmartBranch(getStruct: GetShapeStruct, shape: Shape): b
 }
 
 export function duplicateShapes(
+  getStruct: GetShapeStruct,
   shapes: Shape[],
   docs: [id: string, doc: DocOutput][],
   generateUuid: () => string,
@@ -270,9 +273,9 @@ export function duplicateShapes(
   availableIdSet: Set<string>,
   p?: IVec2
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
-  const remapInfo = remapShapeIds(getCommonStruct, shapes, generateUuid, true);
+  const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, true);
   const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
-  const moved = p ? shiftShapesAtTopLeft(remapInfo.shapes, p) : remapInfo.shapes;
+  const moved = p ? shiftShapesAtTopLeft(getStruct, remapInfo.shapes, p) : remapInfo.shapes;
   const patch = patchShapesOrderToLast(
     moved.map((s) => s.id),
     lastFIndex
@@ -283,7 +286,7 @@ export function duplicateShapes(
   const nextAvailableIdSet = new Set(availableIdSet);
   result.forEach((s) => nextAvailableIdSet.add(s.id));
 
-  const refreshed = refreshShapeRelations(getCommonStruct, result, nextAvailableIdSet);
+  const refreshed = refreshShapeRelations(getStruct, result, nextAvailableIdSet);
   result = result.map((s) => ({ ...s, ...(refreshed[s.id] ?? {}) }));
 
   return {
@@ -292,15 +295,20 @@ export function duplicateShapes(
   };
 }
 
-function shiftShapesAtTopLeft(shapes: Shape[], targetP: IVec2): Shape[] {
-  const rect = getWrapperRectForShapes(getCommonStruct, shapes);
+function shiftShapesAtTopLeft(getStruct: GetShapeStruct, shapes: Shape[], targetP: IVec2): Shape[] {
+  const rect = getWrapperRectForShapes(getStruct, shapes);
   const d = sub(targetP, rect);
 
   const affine: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
   const moved = shapes.map((s) => {
-    const patch = resizeShape(getCommonStruct, s, affine);
+    const patch = resizeShape(getStruct, s, affine);
     return { ...s, ...patch };
   });
 
   return moved;
+}
+
+function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {
+  const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s));
+  return geometry.getWrapperRect(shapeRects);
 }

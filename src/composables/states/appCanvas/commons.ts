@@ -22,6 +22,8 @@ import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ImageShape } from "../../../shapes/image";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { mapFilter, mapReduce } from "../../../utils/commons";
+import { isGroupShape } from "../../../shapes/group";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -74,7 +76,41 @@ export function handleCommonShortcut(
       return newSelectionHubState;
     }
     case "g":
-      ctx.setGridDisabled(!ctx.getGrid().disabled);
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        const ids = Object.keys(ctx.getSelectedShapeIdMap());
+        if (ids.length < 1) return;
+
+        const group = createShape(ctx.getShapeStruct, "group", { id: ctx.generateUuid() });
+        ctx.addShapes(
+          [group],
+          undefined,
+          mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id }))
+        );
+        ctx.selectShape(group.id);
+        return newSelectionHubState;
+      } else {
+        ctx.setGridDisabled(!ctx.getGrid().disabled);
+      }
+      return newSelectionHubState;
+    case "G":
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        const ids = Object.keys(ctx.getSelectedShapeIdMap());
+        const shapeMap = ctx.getShapeMap();
+        const groups = ids.map((id) => shapeMap[id]).filter(isGroupShape);
+        if (groups.length === 0) return;
+
+        const groupIdSet = new Set(groups.map((s) => s.id));
+        const patch = mapReduce(
+          mapFilter(shapeMap, (s) => !!s.parentId && groupIdSet.has(s.parentId)),
+          () => ({ parentId: undefined })
+        );
+
+        ctx.deleteShapes(Array.from(groupIdSet), patch);
+        ctx.multiSelectShapes(Object.keys(patch));
+        return newSelectionHubState;
+      }
       return;
     case "l":
       if (event.data.ctrl) ctx.undo();

@@ -59,7 +59,7 @@ export const struct: ShapeStruct<RectangleShape> = {
       ctx.stroke();
     }
   },
-  getWrapperRect(shape, includeBounds) {
+  getWrapperRect(shape, _, includeBounds) {
     let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     if (includeBounds) {
       rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);

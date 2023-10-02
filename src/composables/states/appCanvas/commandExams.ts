@@ -18,4 +18,7 @@ export const COMMAND_EXAM_SRC = {
   RESET_VIEWPORT: { command: "Home, !", title: "Reset viewport" },
   NEW_TEXT: { command: "t", title: "New Text" },
   NEW_LINE: { command: "l", title: "New Line" },
+
+  GROUP: { command: `${getCtrlOrMetaStr()} + g`, title: "Group" },
+  UNGROUP: { command: `${getCtrlOrMetaStr()} + G`, title: "Ungroup" },
 } satisfies { [key: string]: CommandExam };

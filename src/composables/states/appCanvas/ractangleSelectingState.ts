@@ -1,6 +1,5 @@
 import { IRectangle, getOuterRectangle } from "okageo";
 import type { AppCanvasState } from "./core";
-import { getLocalRectPolygon, getWrapperRect } from "../../../shapes";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -31,9 +30,11 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         case "pointermove": {
           rectangle = getOuterRectangle([[event.data.start, event.data.current]]);
           const hitTest = newRectInRectHitTest(rectangle);
+          const composite = ctx.getShapeComposite();
+          const shapeMap = composite.mergedShapeMap;
           targetIdSet = new Set(
-            Object.entries(ctx.getShapeMap())
-              .map<[string, IRectangle]>(([id, shape]) => [id, getWrapperRect(ctx.getShapeStruct, shape)])
+            composite.mergedShapeTree
+              .map<[string, IRectangle]>((treeNode) => [treeNode.id, composite.getWrapperRect(shapeMap[treeNode.id])])
               .filter(([, rect]) => hitTest.test(rect))
               .map(([id]) => id)
           );
@@ -54,14 +55,15 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
+      const composite = ctx.getShapeComposite();
       const selectedIds = ctx.getSelectedShapeIdMap();
-      const shapes = Object.entries(ctx.getShapeMap())
+      const shapes = Object.entries(composite.mergedShapeMap)
         .filter(([id]) => selectedIds[id] || targetIdSet.has(id))
         .map(([, s]) => s);
 
       applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 });
       renderCtx.beginPath();
-      shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
+      shapes.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
       if (!rectangle) return;

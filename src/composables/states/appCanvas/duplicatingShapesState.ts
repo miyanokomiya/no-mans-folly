@@ -54,6 +54,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
 
       const docMap = ctx.getDocumentMap();
       duplicated = duplicateShapes(
+        ctx.getShapeStruct,
         targetIds.map((id) => shapeMap[id]),
         targetIds.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
         ctx.generateUuid,

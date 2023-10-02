@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { canAttachSmartBranch, getLocalRectPolygon } from "../../../shapes";
+import { canAttachSmartBranch } from "../../../shapes";
 import {
   getCommonCommandExams,
   handleCommonShortcut,
@@ -22,6 +22,8 @@ import { getOuterRectangle } from "okageo";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
+import { isGroupShape } from "../../../shapes/group";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -36,18 +38,21 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "SingleSelected",
     onStart: (ctx) => {
-      ctx.setCommandExams(getCommonCommandExams());
-
       selectedId = ctx.getLastSelectedShapeId();
       const shape = ctx.getShapeMap()[selectedId ?? ""];
       if (!shape) return;
 
       ctx.showFloatMenu();
+      if (isGroupShape(shape)) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
+      } else {
+        ctx.setCommandExams(getCommonCommandExams());
+      }
 
       boundingBox =
         option?.boundingBox ??
         newBoundingBox({
-          path: getLocalRectPolygon(ctx.getShapeStruct, shape),
+          path: ctx.getShapeComposite().getLocalRectPolygon(shape),
           styleScheme: ctx.getStyleScheme(),
           scale: ctx.getScale(),
         });

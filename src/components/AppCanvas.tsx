@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
-import { duplicateShapes, getCommonStruct, isPointOn } from "../shapes";
+import { duplicateShapes } from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import {
@@ -9,7 +9,6 @@ import {
   useGlobalMouseupEffect,
   useGlobalPasteEffect,
 } from "../composables/window";
-import { findBackward } from "../utils/commons";
 import { TextEditor } from "./textEditor/TextEditor";
 import { DocAttrInfo } from "../models/document";
 import { getDocAttributes } from "../utils/textEditor";
@@ -31,6 +30,7 @@ import { newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
 import { useLocalStorageAdopter } from "../composables/localStorage";
+import { patchPipe } from "../utils/commons";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -184,25 +184,32 @@ export const AppCanvas: React.FC = () => {
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
       getShapeAt(p) {
-        return findBackward(acctx.shapeStore.getEntities(), (s) => isPointOn(getCommonStruct, s, p));
+        return acctx.shapeStore.shapeComposite.findShapeAt(p);
       },
       selectShape: acctx.shapeStore.select,
       multiSelectShapes: acctx.shapeStore.multiSelect,
       clearAllSelected: acctx.shapeStore.clearAllSelected,
-      addShapes: (shapes, docMap) => {
-        if (docMap) {
-          acctx.shapeStore.transact(() => {
-            acctx.shapeStore.addEntities(shapes);
-            acctx.documentStore.patchDocs(docMap);
-          });
-        } else {
+      addShapes: (shapes, docMap, patch) => {
+        acctx.shapeStore.transact(() => {
           acctx.shapeStore.addEntities(shapes);
-        }
+          if (patch) {
+            acctx.shapeStore.patchEntities(patch);
+          }
+          if (docMap) {
+            acctx.documentStore.patchDocs(docMap);
+          }
+        });
         loadShapeAssets(shapes);
       },
-      deleteShapes: (ids: string[]) => {
-        const targetIds = getAllBranchIds(getTree(acctx.shapeStore.getEntities()), ids);
+      deleteShapes: (ids: string[], patch) => {
+        // Apply patch before getting branch ids in case tree structure changes by the patch.
+        // => e.g. ungrouping
+        const updated = patchPipe([() => patch ?? {}], acctx.shapeStore.getEntityMap());
+        const targetIds = getAllBranchIds(getTree(Object.values(updated.result)), ids);
         acctx.shapeStore.transact(() => {
+          if (patch) {
+            acctx.shapeStore.patchEntities(patch);
+          }
           acctx.shapeStore.deleteEntities(targetIds);
           acctx.documentStore.deleteDocs(targetIds);
         });
@@ -212,6 +219,7 @@ export const AppCanvas: React.FC = () => {
         const targetP = p ?? viewToCanvas(getMousePoint());
         const availableIdSet = new Set(acctx.shapeStore.getEntities().map((s) => s.id));
         const result = duplicateShapes(
+          smctx.getCtx().getShapeStruct,
           shapes,
           docs,
           generateUuid,

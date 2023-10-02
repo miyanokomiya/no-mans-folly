@@ -36,9 +36,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "MovingShape",
     onStart: (ctx) => {
-      const shapeMap = ctx.getShapeMap();
-      const selectedIds = ctx.getSelectedShapeIdMap();
-      targetIds = Object.keys(selectedIds);
+      const shapeMap = ctx.getShapeComposite().shapeMap;
+      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      targetIds = targets.map((s) => s.id);
+      const targetIdSet = new Set(targetIds);
 
       // Line labels should be moved via dedicated state
       targetIds = targetIds.filter((id) => {
@@ -52,7 +53,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       const snappableShapes = filterShapesOverlappingRect(
         ctx.getShapeStruct,
-        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        Object.values(shapeMap).filter((s) => !targetIdSet.has(s.id) && !isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
@@ -95,7 +96,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
 
-          const shapeMap = ctx.getShapeMap();
+          const shapeMap = ctx.getShapeComposite().shapeMap;
           const patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
             const s = shapeMap[id];
             if (s) m[id] = resizeShape(ctx.getShapeStruct, s, affine);
@@ -125,11 +126,12 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       boundingBox.render(renderCtx, affine);
       if (snappingResult) {
+        const shapeMap = ctx.getShapeMap();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, ctx.getShapeMap()[id]),
+          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]),
         });
       }
 

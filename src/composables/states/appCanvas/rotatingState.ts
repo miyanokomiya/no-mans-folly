@@ -19,7 +19,7 @@ interface Option {
 }
 
 export function newRotatingState(option: Option): AppCanvasState {
-  let selectedIds: { [id: string]: true };
+  let targets: Shape[];
   let resizingAffine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineHandler;
   let lineLabelHandler: LineLabelHandler;
@@ -32,7 +32,7 @@ export function newRotatingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "Rotating",
     onStart: (ctx) => {
-      selectedIds = ctx.getSelectedShapeIdMap();
+      targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
       ctx.startDragging();
 
       lineHandler = newConnectedLineHandler({
@@ -51,11 +51,11 @@ export function newRotatingState(option: Option): AppCanvasState {
         case "pointermove": {
           resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);
 
-          const shapeMap = ctx.getShapeMap();
-          const patchMap = Object.keys(selectedIds).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
-            const shape = shapeMap[id];
+          const shapeMap = ctx.getShapeComposite().shapeMap;
+          const patchMap = targets.reduce<{ [id: string]: Partial<Shape> }>((m, s) => {
+            const shape = shapeMap[s.id];
             if (shape) {
-              m[id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
+              m[s.id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
             }
             return m;
           }, {});

@@ -40,12 +40,12 @@ export const struct: ShapeStruct<LineShape> = {
     if (arg.qConnection) obj.qConnection = arg.qConnection;
     return obj;
   },
-  render(ctx, shape, { shapeMap, treeNodeMap }) {
+  render(ctx, shape, shapeComposite) {
     applyStrokeStyle(ctx, shape.stroke);
     applyFillStyle(ctx, shape.fill);
-    const treeNode = treeNodeMap[shape.id];
+    const treeNode = shapeComposite?.treeNodeMap[shape.id];
     const linePath = getLinePath(shape);
-    const hasLabels = treeNode.children.length > 0;
+    const hasLabels = treeNode && treeNode.children.length > 0;
 
     let pAffine: AffineMatrix | undefined;
     if (shape.pHead) {
@@ -90,9 +90,9 @@ export const struct: ShapeStruct<LineShape> = {
 
     if (region && hasLabels) {
       treeNode.children.forEach((n) => {
-        const label = shapeMap[n.id];
+        const label = shapeComposite.shapeMap[n.id];
         if (label && isTextShape(label)) {
-          applyPath(region!, textStruct.getLocalRectPolygon(label));
+          applyPath(region!, textStruct.getLocalRectPolygon(label, shapeComposite));
         }
       });
     }
@@ -121,7 +121,7 @@ export const struct: ShapeStruct<LineShape> = {
       renderLineHead(ctx, shape.qHead!, qAffine, ctx.lineWidth);
     }
   },
-  getWrapperRect(shape, includeBounds) {
+  getWrapperRect(shape, _, includeBounds) {
     let rect = getOuterRectangle([getLinePath(shape)]);
     if (includeBounds) {
       // FIXME: This expanding isn't perfect nor deals with heads.

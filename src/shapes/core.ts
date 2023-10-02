@@ -5,9 +5,12 @@ import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "../composables/imageStore";
 
+export type GetShapeStruct = (type: string) => ShapeStruct<any>;
+
 export interface ShapeContext {
   shapeMap: { [id: string]: Shape };
   treeNodeMap: { [id: string]: TreeNode };
+  getStruct: GetShapeStruct;
 }
 
 export interface ShapeStruct<T extends Shape> {
@@ -18,11 +21,11 @@ export interface ShapeStruct<T extends Shape> {
    * => e.g. line shape can have child labels and the line should be clipped by them.
    * "shapeMap" and "treeNode" are used for such purpose.
    */
-  render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext: ShapeContext, imageStore?: ImageStore) => void;
-  getWrapperRect: (shape: T, includeBounds?: boolean) => IRectangle;
-  getLocalRectPolygon: (shape: T) => IVec2[];
+  render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
+  getWrapperRect: (shape: T, shapeContext?: ShapeContext, includeBounds?: boolean) => IRectangle;
+  getLocalRectPolygon: (shape: T, shapeContext?: ShapeContext) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle | undefined;
-  isPointOn: (shape: T, p: IVec2) => boolean;
+  isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;

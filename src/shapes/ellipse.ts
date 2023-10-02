@@ -45,7 +45,7 @@ export const struct: ShapeStruct<EllipseShape> = {
     ctx.fill();
     ctx.stroke();
   },
-  getWrapperRect(shape, includeBounds) {
+  getWrapperRect(shape, _, includeBounds) {
     let rect = {
       x: shape.p.x,
       y: shape.p.y,

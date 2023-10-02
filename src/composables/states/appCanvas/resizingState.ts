@@ -10,7 +10,7 @@ import {
   newConnectedLineHandler,
   renderPatchedVertices,
 } from "../../connectedLineHandler";
-import { mergeMap } from "../../../utils/commons";
+import { mergeMap, toMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
@@ -22,7 +22,7 @@ interface Option {
 }
 
 export function newResizingState(option: Option): AppCanvasState {
-  let selectedIds: { [id: string]: true };
+  let targetShapeMap: { [id: string]: Shape };
   let resizingAffine = IDENTITY_AFFINE;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
@@ -39,13 +39,14 @@ export function newResizingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "Resizing",
     onStart: (ctx) => {
-      selectedIds = ctx.getSelectedShapeIdMap();
+      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      targetShapeMap = toMap(targets);
       ctx.startDragging();
 
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       const snappableShapes = filterShapesOverlappingRect(
         ctx.getShapeStruct,
-        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        Object.values(shapeMap).filter((s) => !targetShapeMap[s.id] && !isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
@@ -142,8 +143,8 @@ export function newResizingState(option: Option): AppCanvasState {
             }
           }
 
-          const shapeMap = ctx.getShapeMap();
-          const patchMap = Object.keys(selectedIds).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
+          const shapeMap = ctx.getShapeComposite().shapeMap;
+          const patchMap = Object.keys(targetShapeMap).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
             const shape = shapeMap[id];
             if (shape) {
               m[id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
@@ -172,11 +173,12 @@ export function newResizingState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       option.boundingBox.render(renderCtx, resizingAffine);
       if (snappingResult) {
+        const shapeMap = ctx.getShapeComposite().shapeMap;
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, ctx.getShapeMap()[id]),
+          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]),
         });
       }
 

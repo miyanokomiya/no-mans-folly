@@ -6,6 +6,7 @@ import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { TextShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
@@ -14,11 +15,15 @@ function getMockCtx() {
       generateUuid: () => "id",
       getStyleScheme: createStyleScheme,
     }),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-      label: createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
-      label2: createShape<TextShape>(getCommonStruct, "text", { id: "label2", lineAttached: 0.5 }),
-    }),
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [
+          createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+          createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
+          createShape<TextShape>(getCommonStruct, "text", { id: "label2", lineAttached: 0.5 }),
+        ],
+        getStruct: getCommonStruct,
+      }),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),

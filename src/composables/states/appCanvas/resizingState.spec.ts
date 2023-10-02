@@ -6,6 +6,7 @@ import { newResizingState } from "./resizingState";
 import { newBoundingBox } from "../../boundingBox";
 import { getRectPoints } from "../../../utils/geometry";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
@@ -16,9 +17,11 @@ function getMockCtx() {
     }),
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-    }),
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        getStruct: getCommonStruct,
+      }),
     setTmpShapeMap: vi.fn(),
   };
 }

@@ -1,4 +1,3 @@
-import { getWrapperRectForShapes } from "../../../shapes";
 import { newImageBuilder } from "../../imageBuilder";
 import { newShapeComposite } from "../../shapeComposite";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -42,7 +41,7 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
     imageStore: ctx.getImageStore(),
   });
 
-  const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes, true);
+  const range = ctx.getShapeComposite().getWrapperRectForShapes(targetShapes, true);
   const builder = newImageBuilder({ render: renderer.render, range });
   try {
     const blob = await builder.toBlob();
@@ -71,7 +70,7 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
     imageStore: ctx.getImageStore(),
   });
 
-  const range = getWrapperRectForShapes(ctx.getShapeStruct, targetShapes, true);
+  const range = ctx.getShapeComposite().getWrapperRectForShapes(targetShapes, true);
   const builder = newImageBuilder({ render: renderer.render, range });
   try {
     saveFileInWeb(builder.toDataURL(), "shapes.png");
