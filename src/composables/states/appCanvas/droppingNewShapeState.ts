@@ -12,6 +12,7 @@ import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import { getInitialOutput } from "../../../utils/textEditor";
+import { newShapeComposite } from "../../shapeComposite";
 
 interface Option {
   shape: Shape;
@@ -87,7 +88,13 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      renderShape(ctx.getShapeStruct, renderCtx, { ...shape, p });
+      const shapeComposite = newShapeComposite({
+        shapes: [{ ...shape, p }],
+      });
+      renderShape(ctx.getShapeStruct, renderCtx, shapeComposite.mergedShapeMap[shape.id], {
+        shapeMap: shapeComposite.mergedShapeMap,
+        treeNode: shapeComposite.mergedShapeTreeMap[shape.id],
+      });
 
       if (snappingResult) {
         renderSnappingResult(renderCtx, {

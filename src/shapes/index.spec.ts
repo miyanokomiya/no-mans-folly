@@ -34,7 +34,10 @@ describe("renderShape", () => {
       stroke: vi.fn(),
       setLineDash: vi.fn(),
     };
-    renderShape(getCommonStruct, ctx as any, shape);
+    renderShape(getCommonStruct, ctx as any, shape, {
+      shapeMap: { [shape.id]: shape },
+      treeNode: { id: shape.id, children: [] },
+    });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();
   });

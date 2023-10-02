@@ -36,7 +36,7 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
   const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
 
   const renderer = newShapeRenderer({
-    shapeComposite: newShapeComposite({ shapes: targetShapes }),
+    shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
     imageStore: ctx.getImageStore(),
@@ -65,7 +65,7 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
   const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
 
   const renderer = newShapeRenderer({
-    shapeComposite: newShapeComposite({ shapes: targetShapes }),
+    shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),
     getDocumentMap: ctx.getDocumentMap,
     getShapeStruct: ctx.getShapeStruct,
     imageStore: ctx.getImageStore(),

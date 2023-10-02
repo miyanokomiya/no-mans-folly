@@ -17,6 +17,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { add } from "okageo";
 import { TAU } from "../../../../utils/geometry";
+import { newShapeComposite } from "../../../shapeComposite";
 
 interface Option {
   shape: LineShape;
@@ -124,7 +125,13 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     render(ctx, renderCtx) {
       if (!vertex) return;
 
-      renderShape(ctx.getShapeStruct, renderCtx, shape);
+      const shapeComposite = newShapeComposite({
+        shapes: [shape],
+      });
+      renderShape(ctx.getShapeStruct, renderCtx, shape, {
+        shapeMap: shapeComposite.mergedShapeMap,
+        treeNode: shapeComposite.mergedShapeTreeMap[shape.id],
+      });
 
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();

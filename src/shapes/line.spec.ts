@@ -21,7 +21,7 @@ describe("struct", () => {
         stroke: vi.fn(),
         setLineDash: vi.fn(),
       };
-      struct.render(ctx as any, shape, {});
+      struct.render(ctx as any, shape, { shapeMap: { [shape.id]: shape }, treeNode: { id: shape.id, children: [] } });
       expect(ctx.stroke).toHaveBeenCalled();
     });
   });

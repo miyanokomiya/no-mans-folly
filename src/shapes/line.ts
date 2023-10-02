@@ -40,11 +40,11 @@ export const struct: ShapeStruct<LineShape> = {
     if (arg.qConnection) obj.qConnection = arg.qConnection;
     return obj;
   },
-  render(ctx, shape, shapeMap, treeNode) {
+  render(ctx, shape, { shapeMap, treeNode }) {
     applyStrokeStyle(ctx, shape.stroke);
     applyFillStyle(ctx, shape.fill);
     const linePath = getLinePath(shape);
-    const hasLabels = treeNode && treeNode.children.length > 0;
+    const hasLabels = treeNode.children.length > 0;
 
     let pAffine: AffineMatrix | undefined;
     if (shape.pHead) {

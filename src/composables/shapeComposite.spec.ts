@@ -15,6 +15,7 @@ describe("newShapeComposite", () => {
       tmpShapeMap: {
         a: { p: { x: 100, y: 100 } },
       },
+      getStruct: getCommonStruct,
     });
     expect(target.shapes).toEqual(shapes);
     expect(target.tmpShapeMap).toEqual({

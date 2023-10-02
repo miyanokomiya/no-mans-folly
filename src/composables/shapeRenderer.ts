@@ -21,7 +21,7 @@ export function newShapeRenderer(option: Option) {
   function render(ctx: CanvasRenderingContext2D) {
     walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];
-      renderShape(option.getShapeStruct, ctx, shape, mergedShapeMap, node, option.imageStore);
+      renderShape(option.getShapeStruct, ctx, shape, { shapeMap: mergedShapeMap, treeNode: node }, option.imageStore);
 
       const doc = docMap[shape.id];
       if (doc && !ignoreDocIdSet.has(shape.id)) {

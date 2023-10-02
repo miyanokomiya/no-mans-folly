@@ -15,6 +15,7 @@ import { LineShape, isLineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
 import { newRectHitRectHitTest } from "./shapeHitTest";
 import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
+import { newShapeComposite } from "./shapeComposite";
 
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
@@ -107,9 +108,15 @@ export function newSmartBranchHandler(option: Option) {
     });
 
     if (hitResult) {
+      const shapeComposite = newShapeComposite({
+        shapes: hitResult.previewShapes,
+      });
       hitResult.previewShapes.forEach((s) => {
         ctx.globalAlpha = 0.5;
-        renderShape(option.getShapeStruct, ctx, s);
+        renderShape(option.getShapeStruct, ctx, s, {
+          shapeMap: shapeComposite.mergedShapeMap,
+          treeNode: shapeComposite.mergedShapeTreeMap[s.id],
+        });
         ctx.globalAlpha = 1;
       });
 

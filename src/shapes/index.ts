@@ -1,6 +1,6 @@
 import { AffineMatrix, IRectangle, IVec2, getCenter, getOuterRectangle, multiAffines, sub } from "okageo";
 import { CommonStyle, Shape } from "../models";
-import { ShapeSnappingLines, ShapeStruct } from "./core";
+import { ShapeContext, ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
 import { struct as textStruct } from "./text";
@@ -9,7 +9,6 @@ import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
-import { TreeNode } from "../utils/tree";
 import { DocOutput } from "../models/document";
 import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
@@ -40,12 +39,11 @@ export function renderShape<T extends Shape>(
   getStruct: GetShapeStruct,
   ctx: CanvasRenderingContext2D,
   shape: T,
-  shapeMap: { [id: string]: T } = {},
-  treeNode?: TreeNode,
+  shapeContext: ShapeContext,
   imageStore?: ImageStore
 ) {
   const struct = getStruct(shape.type);
-  struct.render(ctx, shape, shapeMap, treeNode, imageStore);
+  struct.render(ctx, shape, shapeContext, imageStore);
 }
 
 export function getWrapperRect(getStruct: GetShapeStruct, shape: Shape, includeBounds?: boolean): IRectangle {

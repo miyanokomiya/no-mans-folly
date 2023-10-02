@@ -1,6 +1,6 @@
 import { Shape } from "../models";
 import { mergeMap, toMap } from "../utils/commons";
-import { getAllBranchIds, getTree } from "../utils/tree";
+import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
 
 interface Option {
   shapes: Shape[];
@@ -26,6 +26,7 @@ export function newShapeComposite(option: Option) {
     mergedShapes,
     mergedShapeMap: toMap(mergedShapes),
     mergedShapeTree,
+    mergedShapeTreeMap: toMap(flatTree(mergedShapeTree)),
     getAllBranchMergedShapes,
   };
 }

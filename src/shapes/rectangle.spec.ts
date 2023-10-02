@@ -20,7 +20,7 @@ describe("struct", () => {
         stroke: vi.fn(),
         setLineDash: vi.fn(),
       };
-      struct.render(ctx as any, shape, {});
+      struct.render(ctx as any, shape, {} as any);
       expect(ctx.fill).toHaveBeenCalled();
       expect(ctx.stroke).toHaveBeenCalled();
     });

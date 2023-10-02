@@ -99,7 +99,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
     },
     render(ctx, renderCtx) {
       const renderer = newShapeRenderer({
-        shapeComposite: newShapeComposite({ shapes: duplicated.shapes, tmpShapeMap }),
+        shapeComposite: newShapeComposite({ shapes: duplicated.shapes, tmpShapeMap, getStruct: ctx.getShapeStruct }),
         getDocumentMap: () => duplicated.docMap,
         getShapeStruct: ctx.getShapeStruct,
         imageStore: ctx.getImageStore(),

@@ -23,7 +23,7 @@ export const struct: ShapeStruct<ImageShape> = {
       assetId: arg.assetId,
     };
   },
-  render(ctx, shape, _shapeMap, _shapeTree, imageStore) {
+  render(ctx, shape, _shapeContext, imageStore) {
     const affine = getRotatedRectAffine(
       { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
       shape.rotation

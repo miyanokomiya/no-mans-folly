@@ -5,6 +5,7 @@ import { newEntitySelectable } from "./core/entitySelectable";
 import { newCallback } from "../composables/reactives";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { newCache } from "../composables/cache";
+import { getCommonStruct } from "../shapes";
 
 type Option = {
   ydoc: Y.Doc;
@@ -41,7 +42,7 @@ export function newShapeStore(option: Option) {
   }
 
   const shapeCompositeCache = newCache(() => {
-    return newShapeComposite({ shapes: entityStore.getEntities(), tmpShapeMap });
+    return newShapeComposite({ shapes: entityStore.getEntities(), tmpShapeMap, getStruct: getCommonStruct });
   });
   entityStore.watch(shapeCompositeCache.update);
   tmpShapeMapCallback.bind(shapeCompositeCache.update);

@@ -5,6 +5,11 @@ import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "../composables/imageStore";
 
+export interface ShapeContext {
+  shapeMap: { [id: string]: Shape };
+  treeNode: TreeNode;
+}
+
 export interface ShapeStruct<T extends Shape> {
   label: string;
   create: (arg?: Partial<T>) => T;
@@ -13,13 +18,7 @@ export interface ShapeStruct<T extends Shape> {
    * => e.g. line shape can have child labels and the line should be clipped by them.
    * "shapeMap" and "treeNode" are used for such purpose.
    */
-  render: (
-    ctx: CanvasRenderingContext2D,
-    shape: T,
-    shapeMap: { [id: string]: Shape },
-    treeNode?: TreeNode,
-    imageStore?: ImageStore
-  ) => void;
+  render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext: ShapeContext, imageStore?: ImageStore) => void;
   getWrapperRect: (shape: T, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle | undefined;
