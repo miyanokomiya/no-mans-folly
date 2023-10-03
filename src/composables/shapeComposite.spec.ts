@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { findBetterShapeAt, newShapeComposite } from "./shapeComposite";
+import { findBetterShapeAt, getDeleteTargetIds, newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 
@@ -108,5 +108,35 @@ describe("findBetterShapeAt", () => {
     expect(findBetterShapeAt(target, { x: 7, y: 17 }, group0.id)).toEqual(child1);
     // group scope => when there's no direct child at the point, try to find one among root ones
     expect(findBetterShapeAt(target, { x: 3, y: 3 }, group0.id)).toEqual(shape0);
+  });
+});
+
+describe("getDeleteTargetIds", () => {
+  test("should return group ids that will become empty", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      p: { x: 5, y: 5 },
+      width: 10,
+      height: 10,
+    });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group0.id,
+      p: { x: 5, y: 15 },
+      width: 10,
+      height: 10,
+    });
+
+    const shapes = [group0, child0, child1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(getDeleteTargetIds(target, ["child0"])).toEqual(["child0"]);
+    expect(getDeleteTargetIds(target, ["child1"])).toEqual(["child1"]);
+    expect(getDeleteTargetIds(target, ["child0", "child1"])).toEqual(["child0", "child1", "group0"]);
   });
 });

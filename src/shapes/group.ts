@@ -20,10 +20,10 @@ export const struct: ShapeStruct<GroupShape> = {
   // TODO: Bounds can be rendered with fill and stroke style.
   render() {},
   getWrapperRect(shape, shapeContext) {
-    if (!shapeContext) return { x: 0, y: 0, width: 0, height: 0 };
+    const children = shapeContext?.treeNodeMap[shape.id].children;
+    if (!children || children.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
 
-    const treeNode = shapeContext.treeNodeMap[shape.id];
-    const rects = treeNode.children.map((c) => {
+    const rects = children.map((c) => {
       const s = shapeContext.shapeMap[c.id];
       return shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext);
     });
@@ -33,10 +33,10 @@ export const struct: ShapeStruct<GroupShape> = {
     return getRectPoints(struct.getWrapperRect(shape, shapeContext));
   },
   isPointOn(shape, p, shapeContext) {
-    if (!shapeContext) return false;
+    const children = shapeContext?.treeNodeMap[shape.id].children;
+    if (!children || children.length === 0) return false;
 
-    const treeNode = shapeContext.treeNodeMap[shape.id];
-    return treeNode.children.some((c) => {
+    return children.some((c) => {
       const s = shapeContext.shapeMap[c.id];
       return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
     });

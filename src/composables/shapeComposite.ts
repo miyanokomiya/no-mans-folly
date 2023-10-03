@@ -96,3 +96,24 @@ export function findBetterShapeAt(shapeComposite: ShapeComposite, p: IVec2, pare
   // Seek in the scope, then seek without the scope.
   return shapeComposite.findShapeAt(p, parentId) ?? shapeComposite.findShapeAt(p);
 }
+
+/**
+ * Some shapes depend on other shapes, so they should be deleted at the same time.
+ * e.g. group shapes that will become empty by deleting children.
+ */
+export function getDeleteTargetIds(shapeComposite: ShapeComposite, deleteSrc: string[]): string[] {
+  const srcSet = new Set(deleteSrc);
+  const remainedParentIdSet = new Set(
+    shapeComposite.shapes.filter((s) => !srcSet.has(s.id) && s.parentId).map((s) => s.parentId!)
+  );
+
+  const deleteParentSet = new Set<string>();
+  deleteSrc.forEach((id) => {
+    const parentId = shapeComposite.shapeMap[id].parentId;
+    if (parentId && !remainedParentIdSet.has(parentId)) {
+      deleteParentSet.add(parentId);
+    }
+  });
+
+  return [...deleteSrc, ...deleteParentSet];
+}

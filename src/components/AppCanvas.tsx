@@ -31,6 +31,7 @@ import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
 import { useLocalStorageAdopter } from "../composables/localStorage";
 import { patchPipe } from "../utils/commons";
+import { getDeleteTargetIds } from "../composables/shapeComposite";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -201,12 +202,15 @@ export const AppCanvas: React.FC = () => {
         // Apply patch before getting branch ids in case tree structure changes by the patch.
         // => e.g. ungrouping
         const updated = patchPipe([() => patch ?? {}], acctx.shapeStore.getEntityMap());
-        const targetIds = getAllBranchIds(getTree(Object.values(updated.result)), ids);
+        const targetIds = getDeleteTargetIds(
+          acctx.shapeStore.shapeComposite,
+          getAllBranchIds(getTree(Object.values(updated.result)), ids)
+        );
         acctx.shapeStore.transact(() => {
           if (patch) {
             acctx.shapeStore.patchEntities(patch);
           }
-          acctx.shapeStore.deleteEntities(targetIds);
+          acctx.shapeStore.deleteEntities(getDeleteTargetIds(acctx.shapeStore.shapeComposite, targetIds));
           acctx.documentStore.deleteDocs(targetIds);
         });
       },
