@@ -13,10 +13,8 @@ import { ImageStore } from "../../imageStore";
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeComposite: () => ShapeComposite;
   getShapes: () => Shape[];
-  getShapeMap: () => { [id: string]: Shape };
   getSelectedShapeIdMap: () => { [id: string]: true };
   getLastSelectedShapeId: () => string | undefined;
-  getShapeAt: (p: IVec2) => Shape | undefined;
   selectShape: (id: string, ctrl?: boolean) => void;
   multiSelectShapes: (ids: string[], ctrl?: boolean) => void;
   clearAllSelected: () => void;

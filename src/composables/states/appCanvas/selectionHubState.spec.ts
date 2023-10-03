@@ -5,13 +5,16 @@ import { newMultipleSelectedState } from "./multipleSelectedState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
     getSelectedShapeIdMap: vi.fn().mockReturnValue({}),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-    }),
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        getStruct: getCommonStruct,
+      }),
   };
 }
 

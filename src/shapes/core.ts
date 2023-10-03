@@ -43,6 +43,10 @@ export interface ShapeStruct<T extends Shape> {
   canAttachSmartBranch?: boolean;
 }
 
+/**
+ * Each direction list must be aligned top-bottom or left-right order.
+ * => Interval snapping depends on this order.
+ */
 export interface ShapeSnappingLines {
   v: [IVec2, IVec2][];
   h: [IVec2, IVec2][];

@@ -176,16 +176,12 @@ export const AppCanvas: React.FC = () => {
 
       getShapeComposite: () => acctx.shapeStore.shapeComposite,
       getShapes: () => acctx.shapeStore.shapeComposite.shapes,
-      getShapeMap: () => acctx.shapeStore.shapeComposite.shapeMap,
 
       getTmpShapeMap: () => acctx.shapeStore.shapeComposite.tmpShapeMap,
       setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
 
       getSelectedShapeIdMap: acctx.shapeStore.getSelected,
       getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
-      getShapeAt(p) {
-        return acctx.shapeStore.shapeComposite.findShapeAt(p);
-      },
       selectShape: acctx.shapeStore.select,
       multiSelectShapes: acctx.shapeStore.multiSelect,
       clearAllSelected: acctx.shapeStore.clearAllSelected,

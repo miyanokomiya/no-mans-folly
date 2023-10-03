@@ -17,7 +17,6 @@ function getMockCtx() {
       getStyleScheme: createStyleScheme,
     }),
     getScale: () => 1,
-    getShapeAt: vi.fn(),
     clearAllSelected: vi.fn(),
     selectShape: vi.fn(),
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
@@ -25,7 +24,15 @@ function getMockCtx() {
     setCursor: vi.fn(),
     getShapeComposite: () =>
       newShapeComposite({
-        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        shapes: [
+          createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+          createShape<RectangleShape>(getCommonStruct, "rectangle", {
+            id: "b",
+            p: { x: 100, y: 100 },
+            width: 50,
+            height: 50,
+          }),
+        ],
         getStruct: getCommonStruct,
       }),
     getShapeStruct: getCommonStruct,
@@ -62,10 +69,9 @@ describe("newSingleSelectedState", () => {
       const target = newSingleSelectedState();
       target.onStart?.(ctx as any);
 
-      ctx.getShapeAt.mockReturnValue({ id: "b" });
       const result1 = target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: -100, y: -200 }, options: { button: 0, ctrl: false } },
+        data: { point: { x: 120, y: 120 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b");
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
@@ -73,9 +79,9 @@ describe("newSingleSelectedState", () => {
 
       const result2 = target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: true } },
+        data: { point: { x: 10, y: 20 }, options: { button: 0, ctrl: true } },
       });
-      expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "b", true);
+      expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "a", true);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
       expect(result2).toBe(undefined);
     });
@@ -84,7 +90,6 @@ describe("newSingleSelectedState", () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedState();
       target.onStart?.(ctx as any);
-      ctx.getShapeAt.mockReturnValue(undefined);
       const result = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: false } },

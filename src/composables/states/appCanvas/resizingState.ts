@@ -56,7 +56,10 @@ export function newResizingState(option: Option): AppCanvasState {
       });
 
       lineHandler = newConnectedLineHandler({
-        connectedLinesMap: getConnectedLineInfoMap(ctx),
+        connectedLinesMap: getConnectedLineInfoMap(
+          ctx,
+          targets.map((s) => s.id)
+        ),
         ctx,
       });
 

@@ -76,7 +76,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
 
       lineHandler = newConnectedLineHandler({
-        connectedLinesMap: getConnectedLineInfoMap(ctx),
+        connectedLinesMap: getConnectedLineInfoMap(ctx, targetIds),
         ctx,
       });
 

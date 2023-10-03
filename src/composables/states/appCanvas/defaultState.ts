@@ -30,7 +30,8 @@ const state: AppCanvasState = {
       case "pointerdown":
         switch (event.data.options.button) {
           case 0: {
-            const shape = ctx.getShapeAt(event.data.point);
+            const shapeComposite = ctx.getShapeComposite();
+            const shape = shapeComposite.findShapeAt(event.data.point);
             if (shape) {
               ctx.selectShape(shape.id, event.data.options.ctrl);
               if (!event.data.options.ctrl) {
@@ -48,7 +49,8 @@ const state: AppCanvasState = {
           case 1:
             return newPanningState;
           case 2: {
-            const shape = ctx.getShapeAt(event.data.point);
+            const shapeComposite = ctx.getShapeComposite();
+            const shape = shapeComposite.findShapeAt(event.data.point);
             if (!shape) return;
 
             ctx.selectShape(shape.id);
@@ -58,7 +60,8 @@ const state: AppCanvasState = {
             return;
         }
       case "pointerhover": {
-        const shape = ctx.getShapeAt(event.data.current);
+        const shapeComposite = ctx.getShapeComposite();
+        const shape = shapeComposite.findShapeAt(event.data.current);
         ctx.setCursor(shape ? "pointer" : undefined);
         return;
       }

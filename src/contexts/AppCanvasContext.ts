@@ -95,10 +95,8 @@ export function createInitialAppCanvasStateContext(arg: {
 
     getShapeComposite: () => newShapeComposite({ shapes: [], getStruct: getCommonStruct }),
     getShapes: () => [],
-    getShapeMap: () => ({}),
     getSelectedShapeIdMap: () => ({}),
     getLastSelectedShapeId: () => undefined,
-    getShapeAt: () => undefined,
     selectShape() {},
     multiSelectShapes() {},
     clearAllSelected() {},

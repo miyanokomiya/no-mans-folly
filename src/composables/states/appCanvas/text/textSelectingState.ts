@@ -18,7 +18,7 @@ export function newTextSelectingState(option: Option): AppCanvasState {
     getLabel: () => "TextEditing",
     onStart: (ctx) => {
       ctx.startDragging();
-      const shape = ctx.getShapeMap()[option.id];
+      const shape = ctx.getShapeComposite().shapeMap[option.id];
       textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
     },
     onEnd: (ctx) => {
@@ -42,7 +42,7 @@ export function newTextSelectingState(option: Option): AppCanvasState {
           return { type: "break" };
         }
         case "shape-updated": {
-          const shape = ctx.getShapeMap()[option.id];
+          const shape = ctx.getShapeComposite().shapeMap[option.id];
           if (!shape) return newSelectionHubState;
 
           textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
@@ -57,7 +57,7 @@ export function newTextSelectingState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      const shape = ctx.getShapeMap()[option.id];
+      const shape = ctx.getShapeComposite().shapeMap[option.id];
       if (!shape) return;
 
       renderCtx.save();

@@ -23,6 +23,7 @@ import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
+import { findBetterShapeAt } from "../../../shapeComposite";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -32,7 +33,7 @@ export function newLineSelectedState(): AppCanvasState {
     getLabel: () => "LineSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
-      lineShape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
+      lineShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
       ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams()]);
     },
@@ -76,30 +77,32 @@ export function newLineSelectedState(): AppCanvasState {
                 }
               }
 
-              const shape = ctx.getShapeAt(event.data.point);
-              if (!shape) {
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, lineShape.id);
+              if (!shapeAtPointer) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
 
               if (!event.data.options.ctrl) {
                 if (event.data.options.alt) {
-                  ctx.selectShape(shape.id);
+                  ctx.selectShape(shapeAtPointer.id);
                   return newDuplicatingShapesState;
-                } else if (shape.id === lineShape.id) {
+                } else if (shapeAtPointer.id === lineShape.id) {
                   return;
                 } else {
-                  ctx.selectShape(shape.id, false);
+                  ctx.selectShape(shapeAtPointer.id, false);
                   return newSingleSelectedByPointerOnState;
                 }
               }
 
-              ctx.selectShape(shape.id, true);
+              ctx.selectShape(shapeAtPointer.id, true);
               return;
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, lineShape.id);
               if (!shapeAtPointer || shapeAtPointer.id === lineShape.id) return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
@@ -116,8 +119,9 @@ export function newLineSelectedState(): AppCanvasState {
             return;
           }
 
-          const shape = ctx.getShapeAt(event.data.current);
-          ctx.setCursor(shape && shape.id !== lineShape.id ? "pointer" : undefined);
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, lineShape.id);
+          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
         case "keydown":

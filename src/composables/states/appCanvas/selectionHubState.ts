@@ -20,7 +20,7 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
       if (count === 0) {
         return newDefaultState;
       } else if (count === 1) {
-        const shape = ctx.getShapeMap()[selectedIds[0]];
+        const shape = ctx.getShapeComposite().shapeMap[selectedIds[0]];
 
         if (isLineLabelShape(shape)) {
           return newLineLabelSelectedState;

@@ -214,14 +214,16 @@ describe("getConnectedLineInfoMap", () => {
     });
 
     expect(
-      getConnectedLineInfoMap({
-        getShapeComposite: () =>
-          newShapeComposite({
-            shapes: [l0, l1, l2],
-            getStruct: getCommonStruct,
-          }),
-        getSelectedShapeIdMap: () => ({ a: true, b: true }),
-      })
+      getConnectedLineInfoMap(
+        {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, l1, l2],
+              getStruct: getCommonStruct,
+            }),
+        },
+        ["a", "b"]
+      )
     ).toEqual({ a: [l0], b: [l0, l1] });
   });
 
@@ -241,14 +243,16 @@ describe("getConnectedLineInfoMap", () => {
     });
 
     expect(
-      getConnectedLineInfoMap({
-        getShapeComposite: () =>
-          newShapeComposite({
-            shapes: [l0, l1, l2],
-            getStruct: getCommonStruct,
-          }),
-        getSelectedShapeIdMap: () => ({ b: true }),
-      })
+      getConnectedLineInfoMap(
+        {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, l1, l2],
+              getStruct: getCommonStruct,
+            }),
+        },
+        ["b"]
+      )
     ).toEqual({ b: [l0] });
   });
 });

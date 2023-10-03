@@ -36,7 +36,10 @@ export function newRotatingState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       lineHandler = newConnectedLineHandler({
-        connectedLinesMap: getConnectedLineInfoMap(ctx),
+        connectedLinesMap: getConnectedLineInfoMap(
+          ctx,
+          targets.map((s) => s.id)
+        ),
         ctx,
       });
 

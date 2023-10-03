@@ -6,13 +6,15 @@ import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-    }),
-    getShapeAt: vi.fn(),
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        getStruct: getCommonStruct,
+      }),
     clearAllSelected: vi.fn(),
     selectShape: vi.fn(),
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
@@ -27,7 +29,6 @@ describe("newDefaultState", () => {
       const ctx = getMockCtx();
       const target = newDefaultState();
 
-      ctx.getShapeAt.mockReturnValue({ id: "a" });
       const result1 = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
@@ -47,10 +48,9 @@ describe("newDefaultState", () => {
     test("should move to RectangleSelecting state if there's no shape at the point", () => {
       const ctx = getMockCtx();
       const target = newDefaultState();
-      ctx.getShapeAt.mockReturnValue(undefined);
       const result = target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: false } },
+        data: { point: { x: -1, y: -2 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).not.toHaveBeenCalled();
       expect(result).toEqual(newRectangleSelectingState);

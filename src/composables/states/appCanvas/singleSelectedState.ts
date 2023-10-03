@@ -24,6 +24,7 @@ import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { findBetterShapeAt } from "../../shapeComposite";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -34,6 +35,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
   let smartBranchHitResult: SmartBranchHitResult | undefined;
+  let parentScope: string | undefined;
   let isGroupShapeSelected: boolean;
 
   return {
@@ -45,7 +47,9 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       if (!shape) return;
 
       ctx.showFloatMenu();
+      parentScope = shape.parentId;
       isGroupShapeSelected = isGroupShape(shape);
+
       if (isGroupShapeSelected) {
         ctx.setCommandExams([COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
       } else {
@@ -105,7 +109,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                 }
               }
 
-              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
               if (!shapeAtPointer) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
@@ -128,7 +132,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
               if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
@@ -140,7 +145,15 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         case "pointerdoubledown": {
           const hitResult = boundingBox.hitTest(event.data.point);
           if (hitResult) {
-            return startTextEditingIfPossible(ctx, selectedId, event.data.point);
+            if (isGroupShapeSelected) {
+              const shapeComposite = ctx.getShapeComposite();
+              const child = shapeComposite.findShapeAt(event.data.point, selectedId);
+              if (child) {
+                ctx.selectShape(child.id);
+              }
+            } else {
+              return startTextEditingIfPossible(ctx, selectedId, event.data.point);
+            }
           }
           return;
         }
@@ -153,7 +166,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
               return;
             }
           } else {
-            const shape = ctx.getShapeMap()[selectedId];
+            const shape = ctx.getShapeComposite().shapeMap[selectedId];
             const current = smartBranchHitResult?.index;
 
             if (smartBranchHandler) {
@@ -166,8 +179,9 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
             }
           }
 
-          const shape = ctx.getShapeAt(event.data.current);
-          ctx.setCursor(shape ? "pointer" : undefined);
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, parentScope);
+          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
         case "keydown":
@@ -229,7 +243,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const shape = ctx.getShapeMap()[selectedId ?? ""];
+      const shape = ctx.getShapeComposite().shapeMap[selectedId ?? ""];
       if (!shape) return;
 
       boundingBox.render(renderCtx);

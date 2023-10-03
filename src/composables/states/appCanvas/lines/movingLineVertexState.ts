@@ -41,7 +41,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = shapeComposite.shapeMap;
       const selectedIds = ctx.getSelectedShapeIdMap();
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),

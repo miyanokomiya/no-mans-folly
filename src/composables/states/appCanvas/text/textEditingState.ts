@@ -14,6 +14,7 @@ import { DocAttrInfo, DocDelta } from "../../../../models/document";
 import { calcOriginalDocSize } from "../../../../utils/textEditor";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { findBetterShapeAt } from "../../../shapeComposite";
 
 interface Option {
   id: string;
@@ -55,7 +56,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.showFloatMenu();
       ctx.startTextEditing();
 
-      const shape = ctx.getShapeMap()[option.id];
+      const shape = ctx.getShapeComposite().shapeMap[option.id];
       textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
 
       if (option.textEditorController) {
@@ -91,7 +92,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.setCommandExams();
 
       // Delete text shape when it has no content.
-      const shape = ctx.getShapeMap()[option.id];
+      const shapeComposite = ctx.getShapeComposite();
+      const shape = shapeComposite.shapeMap[option.id];
       if (shape && isTextShape(shape)) {
         if (textEditorController.getDocLength() <= 1) {
           // Create extra history in case this deletion is undone.
@@ -122,9 +124,14 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "pointerdown": {
           switch (event.data.options.button) {
             case 0: {
-              const shape = ctx.getShapeAt(event.data.point);
-              if (shape?.id !== option.id) {
-                shape ? ctx.selectShape(shape.id, event.data.options.ctrl) : ctx.clearAllSelected();
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(
+                shapeComposite,
+                event.data.point,
+                shapeComposite.shapeMap[option.id].parentId
+              );
+              if (shapeAtPointer?.id !== option.id) {
+                shapeAtPointer ? ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl) : ctx.clearAllSelected();
                 return newSelectionHubState;
               }
 
@@ -154,7 +161,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           updateEditorPosition(ctx);
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         case "shape-updated": {
-          const shape = ctx.getShapeMap()[option.id];
+          const shape = ctx.getShapeComposite().shapeMap[option.id];
           if (!shape) return newSelectionHubState;
 
           if (event.data.keys.has(option.id)) {
@@ -219,7 +226,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      const shape = ctx.getShapeMap()[option.id];
+      const shape = ctx.getShapeComposite().shapeMap[option.id];
       if (!shape || !textEditorController) return;
 
       renderCtx.save();
@@ -375,7 +382,7 @@ function handleKeydown(
 }
 
 function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string) {
-  const shape = ctx.getShapeMap()[id];
+  const shape = ctx.getShapeComposite().shapeMap[id];
   const renderCtx = ctx.getRenderCtx();
   let shapePatch: Partial<TextShape> | undefined = undefined;
   if (renderCtx && isTextShape(shape)) {

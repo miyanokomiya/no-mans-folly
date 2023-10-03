@@ -26,7 +26,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
       ctx.setCursor("move");
 
       const id = ctx.getLastSelectedShapeId();
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       labelShape = shapeMap[id ?? ""] as TextShape;
       if (!labelShape) return newSelectionHubState;
 

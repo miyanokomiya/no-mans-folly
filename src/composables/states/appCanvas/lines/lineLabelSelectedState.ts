@@ -22,6 +22,7 @@ import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
+import { findBetterShapeAt } from "../../../shapeComposite";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -80,7 +81,8 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
                 }
               }
 
-              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, shape.parentId);
               if (!shapeAtPointer) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
@@ -103,7 +105,8 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, shape.parentId);
               if (!shapeAtPointer || shapeAtPointer.id === shape.id) return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
@@ -129,8 +132,9 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
             }
           }
 
-          const shape = ctx.getShapeAt(event.data.current);
-          ctx.setCursor(shape ? "pointer" : undefined);
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, shape.parentId);
+          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
         case "keydown":

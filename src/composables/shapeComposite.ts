@@ -5,7 +5,6 @@ import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
 import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
-import { isGroupShape } from "../shapes/group";
 import { ShapeSnappingLines } from "../shapes/core";
 
 interface Option {
@@ -34,7 +33,7 @@ export function newShapeComposite(option: Option) {
   }
 
   function getAllTransformTargets(ids: string[]): Shape[] {
-    return getAllBranchMergedShapes(ids).filter((s) => !isGroupShape(s));
+    return getAllBranchMergedShapes(ids);
   }
 
   function render(ctx: CanvasRenderingContext2D, shape: Shape, imageStore?: ImageStore) {
@@ -90,3 +89,10 @@ export function newShapeComposite(option: Option) {
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
+
+export function findBetterShapeAt(shapeComposite: ShapeComposite, p: IVec2, parentId?: string): Shape | undefined {
+  if (!parentId) return shapeComposite.findShapeAt(p);
+
+  // Seek in the scope, then seek without the scope.
+  return shapeComposite.findShapeAt(p, parentId) ?? shapeComposite.findShapeAt(p);
+}

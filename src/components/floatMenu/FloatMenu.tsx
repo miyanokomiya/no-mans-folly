@@ -121,7 +121,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     (fill: FillStyle, draft = false) => {
       const ctx = smctx.getCtx();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
         p[id] = updateCommonStyle(ctx.getShapeStruct, shapeMap[id], { fill });
         return p;
@@ -142,7 +142,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     (stroke: StrokeStyle, draft = false) => {
       const ctx = smctx.getCtx();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
         p[id] = updateCommonStyle(ctx.getShapeStruct, shapeMap[id], { stroke });
         return p;
@@ -200,7 +200,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     (val: { pHead?: LineHead; qHead?: LineHead }) => {
       const ctx = smctx.getCtx();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<LineShape> }>((p, id) => {
         const shape = shapeMap[id];
         if (isLineShape(shape)) {
@@ -218,7 +218,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   const onLineTypeChanged = useCallback(
     (lineType: LineType) => {
       const ctx = smctx.getCtx();
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       const lineIds = Object.keys(ctx.getSelectedShapeIdMap());
       const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
       ctx.patchShapes(
@@ -259,7 +259,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     (val: BoxAlign) => {
       const ctx = smctx.getCtx();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<TextShape> }>((p, id) => {
         const shape = shapeMap[id];
         if (isTextShape(shape)) {

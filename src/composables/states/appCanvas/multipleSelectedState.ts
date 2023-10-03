@@ -23,6 +23,7 @@ import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { findBetterShapeAt } from "../../shapeComposite";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -31,6 +32,7 @@ interface Option {
 export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
+  let scode: string | undefined;
 
   return {
     getLabel: () => "MultipleSelected",
@@ -39,7 +41,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, ...getCommonCommandExams()]);
 
       selectedIdMap = ctx.getSelectedShapeIdMap();
-      const shapeMap = ctx.getShapeMap();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
 
       // Prevent selecting shapes that have different parents
       {
@@ -58,6 +61,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           ctx.multiSelectShapes(nextSelected);
           return newSelectionHubState;
         }
+
+        scode = parentIdSet.keys().next()?.value;
       }
 
       if (option?.boundingBox) {
@@ -99,7 +104,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
                 }
               }
 
-              const shape = ctx.getShapeAt(event.data.point);
+              const shapeComposite = ctx.getShapeComposite();
+              const shape = findBetterShapeAt(shapeComposite, event.data.point, scode);
               if (!shape) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
@@ -127,7 +133,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeAtPointer = ctx.getShapeAt(event.data.point);
+              const shapeComposite = ctx.getShapeComposite();
+              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, scode);
               if (!shapeAtPointer || selectedIdMap[shapeAtPointer.id]) return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
@@ -137,9 +144,10 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               return;
           }
         case "pointerdoubledown": {
-          const shape = ctx.getShapeAt(event.data.point);
-          if (shape && selectedIdMap[shape.id]) {
-            return startTextEditingIfPossible(ctx, shape.id, event.data.point);
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, scode);
+          if (shapeAtPointer && selectedIdMap[shapeAtPointer.id]) {
+            return startTextEditingIfPossible(ctx, shapeAtPointer.id, event.data.point);
           }
           return;
         }
@@ -153,8 +161,9 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             }
           }
 
-          const shape = ctx.getShapeAt(event.data.current);
-          ctx.setCursor(shape ? "pointer" : undefined);
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, scode);
+          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
         case "keydown":

@@ -44,6 +44,9 @@ export const struct: ShapeStruct<GroupShape> = {
   resize() {
     return {};
   },
+  getSnappingLines() {
+    return { v: [], h: [] };
+  },
 };
 
 export function isGroupShape(shape: Shape): shape is GroupShape {

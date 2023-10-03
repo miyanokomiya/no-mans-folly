@@ -149,27 +149,28 @@ export function newConnectedLineHandler(option: Option) {
 export type ConnectedLineHandler = ReturnType<typeof newConnectedLineHandler>;
 
 export function getConnectedLineInfoMap(
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getSelectedShapeIdMap">
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
+  connectedTargetIds: string[]
 ): {
   [id: string]: LineShape[];
 } {
   const shapeMap = ctx.getShapeComposite().shapeMap;
-  const selectedIdMap = ctx.getSelectedShapeIdMap();
+  const targetIds = new Set(connectedTargetIds);
   const connectedLineInfoMap: { [id: string]: LineShape[] } = {};
   Object.values(shapeMap)
     .filter(isLineShape)
     .forEach((line) => {
-      if (line.pConnection && selectedIdMap[line.pConnection.id]) {
+      if (line.pConnection && targetIds.has(line.pConnection.id)) {
         connectedLineInfoMap[line.pConnection.id] ??= [];
         connectedLineInfoMap[line.pConnection.id].push(line);
       }
-      if (line.qConnection && selectedIdMap[line.qConnection.id]) {
+      if (line.qConnection && targetIds.has(line.qConnection.id)) {
         connectedLineInfoMap[line.qConnection.id] ??= [];
         connectedLineInfoMap[line.qConnection.id].push(line);
       }
 
       line.body?.some((b) => {
-        if (b.c && selectedIdMap[b.c.id]) {
+        if (b.c && targetIds.has(b.c.id)) {
           connectedLineInfoMap[b.c.id] ??= [];
           connectedLineInfoMap[b.c.id].push(line);
           return true;

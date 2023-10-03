@@ -7,6 +7,7 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { newSelectionHubState } from "./selectionHubState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
@@ -16,12 +17,21 @@ function getMockCtx() {
       getStyleScheme: createStyleScheme,
     }),
     getScale: () => 1,
-    getShapeAt: vi.fn(),
     clearAllSelected: vi.fn(),
     selectShape: vi.fn(),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-    }),
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [
+          createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+          createShape<RectangleShape>(getCommonStruct, "rectangle", {
+            id: "b",
+            p: { x: 100, y: 100 },
+            width: 50,
+            height: 50,
+          }),
+        ],
+        getStruct: getCommonStruct,
+      }),
     getShapeStruct: getCommonStruct,
     getStyleScheme: createStyleScheme,
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
@@ -59,10 +69,9 @@ describe("newMultipleSelectedState", () => {
       const target = newMultipleSelectedState();
       target.onStart?.(ctx as any);
 
-      ctx.getShapeAt.mockReturnValue({ id: "b" });
       const result1 = target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: -100, y: -200 }, options: { button: 0, ctrl: false } },
+        data: { point: { x: 110, y: 110 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
@@ -70,7 +79,7 @@ describe("newMultipleSelectedState", () => {
 
       const result2 = target.handleEvent(ctx as any, {
         type: "pointerdown",
-        data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: true } },
+        data: { point: { x: 110, y: 120 }, options: { button: 0, ctrl: true } },
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "b", true);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
@@ -81,7 +90,6 @@ describe("newMultipleSelectedState", () => {
       const ctx = getMockCtx();
       const target = newMultipleSelectedState();
       target.onStart?.(ctx as any);
-      ctx.getShapeAt.mockReturnValue(undefined);
       const result = target.handleEvent(ctx as any, {
         type: "pointerdown",
         data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: false } },

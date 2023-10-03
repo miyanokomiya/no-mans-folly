@@ -28,7 +28,7 @@ import { isGroupShape } from "../../../shapes/group";
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
 export function handleStateEvent(
-  _ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeMap">,
+  _ctx: unknown,
   event: ChangeStateEvent,
   acceptable: AcceptableEvent[]
 ): TransitionValue<AppCanvasStateContext> {
@@ -67,7 +67,8 @@ export function handleCommonShortcut(
   switch (event.data.key) {
     case "a": {
       event.data.prevent?.();
-      const allIds = Object.keys(ctx.getShapeMap());
+      const shapeMap = ctx.getShapeComposite().shapeMap;
+      const allIds = Object.keys(shapeMap);
       if (Object.keys(ctx.getSelectedShapeIdMap()).length === allIds.length) {
         ctx.clearAllSelected();
       } else {
@@ -97,7 +98,7 @@ export function handleCommonShortcut(
       if (event.data.ctrl) {
         event.data.prevent?.();
         const ids = Object.keys(ctx.getSelectedShapeIdMap());
-        const shapeMap = ctx.getShapeMap();
+        const shapeMap = ctx.getShapeComposite().shapeMap;
         const groups = ids.map((id) => shapeMap[id]).filter(isGroupShape);
         if (groups.length === 0) return;
 
@@ -165,7 +166,7 @@ export function handleCommonTextStyle(
   const shapePatch: { [id: string]: Partial<TextShape> } = {};
   const renderCtx = ctx.getRenderCtx();
   if (renderCtx) {
-    const shapeMap = ctx.getShapeMap();
+    const shapeMap = ctx.getShapeComposite().shapeMap;
     Object.entries(patch).forEach(([id, p]) => {
       const shape = shapeMap[id];
       if (isTextShape(shape)) {
@@ -183,12 +184,13 @@ export function handleCommonTextStyle(
 }
 
 export function startTextEditingIfPossible(
-  ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">,
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
   selectedId?: string,
   point?: IVec2
 ): TransitionValue<AppCanvasStateContext> {
-  const shape = ctx.getShapeMap()[selectedId ?? ""];
-  if (shape && canHaveText(ctx.getShapeStruct, shape)) {
+  const composite = ctx.getShapeComposite();
+  const shape = composite.shapeMap[selectedId ?? ""];
+  if (shape && canHaveText(composite.getShapeStruct, shape)) {
     return () => newTextEditingState({ id: selectedId!, point });
   }
 }
@@ -203,7 +205,7 @@ const clipboardShapeSerializer = newClipboardSerializer<
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
   return newClipboard(
     () => {
-      const shapeMap = ctx.getShapeMap();
+      const shapeMap = ctx.getShapeComposite().shapeMap;
       // Collect all related shape ids
       const targetIds = getAllBranchIds(getTree(Object.values(shapeMap)), Object.keys(ctx.getSelectedShapeIdMap()));
 

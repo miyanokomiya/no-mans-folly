@@ -132,8 +132,15 @@ export const struct: ShapeStruct<LineShape> = {
   getLocalRectPolygon(shape) {
     return getRectPoints(getOuterRectangle([getLinePath(shape)]));
   },
-  isPointOn(shape, p) {
-    return getEdges(shape).some((seg) => isPointCloseToSegment(seg, p, 10));
+  isPointOn(shape, p, shapeContext) {
+    if (getEdges(shape).some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
+    if (!shapeContext) return false;
+
+    const treeNode = shapeContext.treeNodeMap[shape.id];
+    return treeNode.children.some((c) => {
+      const s = shapeContext.shapeMap[c.id];
+      return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
+    });
   },
   resize(shape, resizingAffine) {
     const [p, q] = [shape.p, shape.q].map((p) => applyAffine(resizingAffine, p));

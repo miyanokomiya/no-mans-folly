@@ -486,6 +486,8 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
 
   for (let i = 0; i < shapeSnappingList.length; i++) {
     const s0 = shapeSnappingList[i];
+    if (s0[1].v.length === 0 || s0[1].h.length === 0) continue;
+
     const l0 = s0[1].v[0];
     const r0 = s0[1].v[s0[1].v.length - 1];
     const t0 = s0[1].h[0];
@@ -498,6 +500,8 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
       if (i === j) continue;
 
       const s1 = shapeSnappingList[j];
+      if (s1[1].v.length === 0 || s1[1].h.length === 0) continue;
+
       const l1 = s1[1].v[0];
       const r1 = s1[1].v[s1[1].v.length - 1];
       const t1 = s1[1].h[0];
