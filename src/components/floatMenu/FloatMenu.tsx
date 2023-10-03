@@ -1,13 +1,7 @@
 import { IRectangle, IVec2, getRectCenter } from "okageo";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
-import {
-  getCommonStyle,
-  getWrapperRect,
-  patchShapesOrderToFirst,
-  patchShapesOrderToLast,
-  updateCommonStyle,
-} from "../../shapes";
+import { getCommonStyle, patchShapesOrderToFirst, patchShapesOrderToLast, updateCommonStyle } from "../../shapes";
 import * as geometry from "../../utils/geometry";
 import { BoxAlign, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
@@ -25,8 +19,9 @@ import { useDraggable } from "../../composables/draggable";
 import { AlignAnchorButton } from "./AlignAnchorButton";
 import { TextShape, isTextShape } from "../../shapes/text";
 import { LineTypeButton } from "./LineTypeButton";
-import { mapReduce, patchPipe, toMap } from "../../utils/commons";
+import { mapReduce, patchPipe, toList, toMap } from "../../utils/commons";
 import { newElbowLineHandler } from "../../composables/elbowLineHandler";
+import { newShapeComposite } from "../../composables/shapeComposite";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -65,8 +60,9 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     if (ids.length === 0) return;
 
     const ctx = smctx.getCtx();
-    const shapeMap = acctx.shapeStore.getEntityMap();
-    const rect = geometry.getWrapperRect(ids.map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id])));
+    const shapeComposite = ctx.getShapeComposite();
+    const shapeMap = shapeComposite.shapeMap;
+    const rect = geometry.getWrapperRect(ids.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
     const p = canvasToView(scale, viewOrigin, rect);
     const width = rect.width / scale;
     const height = rect.height / scale;
@@ -231,8 +227,8 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
             (src) => mapReduce(src, () => ({ lineType })),
             (src) => {
               const elbowHandler = newElbowLineHandler({
-                getShapeStruct: ctx.getShapeStruct,
-                getShapeMap: () => ({ ...shapeMap, ...src }),
+                getShapeComposite: () =>
+                  newShapeComposite({ shapes: toList({ ...shapeMap, ...src }), getStruct: ctx.getShapeStruct }),
               });
               return mapReduce(src, (lineShape) => {
                 return lineShape.lineType !== "elbow"

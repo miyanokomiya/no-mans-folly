@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
 import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
-import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
+import { resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import {
@@ -43,14 +43,14 @@ export function newResizingState(option: Option): AppCanvasState {
       targetShapeMap = toMap(targets);
       ctx.startDragging();
 
-      const shapeMap = ctx.getShapeComposite().shapeMap;
-      const snappableShapes = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !targetShapeMap[s.id] && !isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -173,12 +173,13 @@ export function newResizingState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       option.boundingBox.render(renderCtx, resizingAffine);
       if (snappingResult) {
-        const shapeMap = ctx.getShapeComposite().shapeMap;
+        const shapeComposite = ctx.getShapeComposite();
+        const shapeMap = shapeComposite.shapeMap;
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]),
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
         });
       }
 

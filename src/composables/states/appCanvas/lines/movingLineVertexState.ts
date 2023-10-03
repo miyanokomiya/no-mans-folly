@@ -11,7 +11,6 @@ import {
   renderConnectionResult,
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
-import { filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
 import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
 import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
@@ -41,10 +40,10 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
+      const shapeComposite = ctx.getShapeComposite();
       const shapeMap = ctx.getShapeMap();
       const selectedIds = ctx.getSelectedShapeIdMap();
-      const snappableShapes = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
         ctx.getViewRect()
       );
@@ -55,13 +54,12 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         getShapeStruct: ctx.getShapeStruct,
       });
 
-      const snappableLines = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableLines = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

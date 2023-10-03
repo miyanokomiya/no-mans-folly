@@ -13,6 +13,7 @@ import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
 import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
+import { newShapeComposite } from "../composables/shapeComposite";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -254,11 +255,6 @@ export function cloneShapes(getStruct: GetShapeStruct, shapes: Shape[], generate
   return remapShapeIds(getStruct, cloned, generateId, true).shapes;
 }
 
-export function filterShapesOverlappingRect(getStruct: GetShapeStruct, shapes: Shape[], rect: IRectangle): Shape[] {
-  const checkFn = geometry.getIsRectHitRectFn(rect);
-  return shapes.filter((s) => checkFn(getWrapperRect(getStruct, s)));
-}
-
 export function canAttachSmartBranch(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.canAttachSmartBranch;
@@ -275,7 +271,18 @@ export function duplicateShapes(
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
   const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, true);
   const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
-  const moved = p ? shiftShapesAtTopLeft(getStruct, remapInfo.shapes, p) : remapInfo.shapes;
+
+  const remapComposite = newShapeComposite({
+    shapes: remapInfo.shapes,
+    getStruct,
+  });
+  const moved = p
+    ? shiftShapesAtTopLeft(
+        getStruct,
+        remapInfo.shapes.map((s) => [s, remapComposite.getWrapperRect(s)]),
+        p
+      )
+    : remapInfo.shapes;
   const patch = patchShapesOrderToLast(
     moved.map((s) => s.id),
     lastFIndex
@@ -295,20 +302,15 @@ export function duplicateShapes(
   };
 }
 
-function shiftShapesAtTopLeft(getStruct: GetShapeStruct, shapes: Shape[], targetP: IVec2): Shape[] {
-  const rect = getWrapperRectForShapes(getStruct, shapes);
+function shiftShapesAtTopLeft(getStruct: GetShapeStruct, shapeInfos: [Shape, IRectangle][], targetP: IVec2): Shape[] {
+  const rect = geometry.getWrapperRect(shapeInfos.map(([, r]) => r));
   const d = sub(targetP, rect);
 
   const affine: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
-  const moved = shapes.map((s) => {
+  const moved = shapeInfos.map(([s]) => {
     const patch = resizeShape(getStruct, s, affine);
     return { ...s, ...patch };
   });
 
   return moved;
-}
-
-function getWrapperRectForShapes(getStruct: GetShapeStruct, shapes: Shape[]): IRectangle {
-  const shapeRects = shapes.map((s) => getWrapperRect(getStruct, s));
-  return geometry.getWrapperRect(shapeRects);
 }

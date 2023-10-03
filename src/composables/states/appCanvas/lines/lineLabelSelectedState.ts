@@ -17,7 +17,6 @@ import { TextShape } from "../../../../shapes/text";
 import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
-import { getLocalRectPolygon } from "../../../../shapes";
 import { newMovingLineLabelState } from "./movingLineLabelState";
 import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
@@ -38,7 +37,8 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
     onStart: (ctx) => {
       ctx.setCommandExams(getCommonCommandExams());
 
-      const shapeMap = ctx.getShapeMap();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
       const selectedId = ctx.getLastSelectedShapeId();
       shape = shapeMap[selectedId ?? ""] as TextShape;
       if (!shape) return newSelectionHubState;
@@ -51,7 +51,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
       boundingBox =
         option?.boundingBox ??
         newBoundingBox({
-          path: getLocalRectPolygon(ctx.getShapeStruct, shape),
+          path: shapeComposite.getLocalRectPolygon(shape),
           styleScheme: ctx.getStyleScheme(),
           scale: ctx.getScale(),
         });

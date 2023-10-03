@@ -7,6 +7,7 @@ import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
   return {
@@ -22,9 +23,11 @@ function getMockCtx() {
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     setCursor: vi.fn(),
-    getShapeMap: vi.fn().mockReturnValue({
-      a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-    }),
+    getShapeComposite: () =>
+      newShapeComposite({
+        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        getStruct: getCommonStruct,
+      }),
     getShapeStruct: getCommonStruct,
     getStyleScheme: createStyleScheme,
     getTimestamp: vi.fn().mockReturnValue(1000),

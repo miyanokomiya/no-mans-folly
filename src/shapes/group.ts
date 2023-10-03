@@ -4,6 +4,11 @@ import { getRectPoints, getWrapperRect } from "../utils/geometry";
 
 type GroupShape = Shape;
 
+/**
+ * This shape doesn't have own stable bounds.
+ * Bounds should be derived from children.
+ * "p" is always at the origin: { x: 0, y: 0 } or unstable.
+ */
 export const struct: ShapeStruct<GroupShape> = {
   label: "Group",
   create(arg = {}) {
@@ -12,6 +17,7 @@ export const struct: ShapeStruct<GroupShape> = {
       type: "group",
     };
   },
+  // TODO: Bounds can be rendered with fill and stroke style.
   render() {},
   getWrapperRect(shape, shapeContext) {
     if (!shapeContext) return { x: 0, y: 0, width: 0, height: 0 };

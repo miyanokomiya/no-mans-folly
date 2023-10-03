@@ -3,7 +3,7 @@ import { newPanningState } from "../../commons";
 import { handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
-import { createShape, filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
+import { createShape } from "../../../../shapes";
 import { LineShape, LineType, isLineShape } from "../../../../shapes/line";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 import { IVec2, add } from "okageo";
@@ -30,9 +30,9 @@ export function newLineReadyState(option: Option): AppCanvasState {
       ctx.setCursor();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
-      const shapeMap = ctx.getShapeMap();
-      const snappableShapes = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
         ctx.getViewRect()
       );
@@ -42,13 +42,12 @@ export function newLineReadyState(option: Option): AppCanvasState {
         movingIndex: 0,
       });
 
-      const snappableLines = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableLines = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

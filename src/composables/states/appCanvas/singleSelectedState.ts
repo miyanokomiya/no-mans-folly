@@ -34,16 +34,19 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
   let smartBranchHitResult: SmartBranchHitResult | undefined;
+  let isGroupShapeSelected: boolean;
 
   return {
     getLabel: () => "SingleSelected",
     onStart: (ctx) => {
+      const shapeComposite = ctx.getShapeComposite();
       selectedId = ctx.getLastSelectedShapeId();
-      const shape = ctx.getShapeMap()[selectedId ?? ""];
+      const shape = shapeComposite.shapeMap[selectedId ?? ""];
       if (!shape) return;
 
       ctx.showFloatMenu();
-      if (isGroupShape(shape)) {
+      isGroupShapeSelected = isGroupShape(shape);
+      if (isGroupShapeSelected) {
         ctx.setCommandExams([COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
       } else {
         ctx.setCommandExams(getCommonCommandExams());
@@ -52,7 +55,7 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
       boundingBox =
         option?.boundingBox ??
         newBoundingBox({
-          path: ctx.getShapeComposite().getLocalRectPolygon(shape),
+          path: shapeComposite.getLocalRectPolygon(shape),
           styleScheme: ctx.getStyleScheme(),
           scale: ctx.getScale(),
         });
@@ -89,7 +92,8 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
                 }
               }
 
-              const shape = ctx.getShapeMap()[selectedId];
+              const shapeComposite = ctx.getShapeComposite();
+              const shape = shapeComposite.shapeMap[selectedId];
 
               if (smartBranchHandler) {
                 smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, shape, ctx.getScale());

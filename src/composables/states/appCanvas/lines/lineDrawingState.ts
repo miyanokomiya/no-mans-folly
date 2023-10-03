@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
-import { filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
 import { LineShape, isLineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import {
@@ -38,9 +37,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
+      const shapeComposite = ctx.getShapeComposite();
       const shapeMap = ctx.getShapeMap();
-      const snappableShapes = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
         ctx.getViewRect()
       );
@@ -52,15 +51,14 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       });
 
       const snappableLines = [
-        ...filterShapesOverlappingRect(
-          ctx.getShapeStruct,
+        ...shapeComposite.getShapesOverlappingRect(
           Object.values(shapeMap).filter((s) => isLineShape(s)),
           ctx.getViewRect()
         ),
         shape,
       ];
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

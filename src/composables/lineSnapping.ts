@@ -1,11 +1,5 @@
 import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
-import {
-  GetShapeStruct,
-  getIntersectedOutlines,
-  getClosestOutline,
-  getLocationRateOnShape,
-  getWrapperRect,
-} from "../shapes";
+import { GetShapeStruct, getIntersectedOutlines, getClosestOutline, getLocationRateOnShape } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, getLinePath } from "../shapes/line";
@@ -13,6 +7,7 @@ import { ISegment, TAU, extendSegment, isRectOverlappedH, isRectOverlappedV } fr
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
+import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 
 const SNAP_THRESHOLD = 10;
 
@@ -69,6 +64,10 @@ export function newLineSnapping(option: Option) {
     // Try snapping to other shapes' outline
     let outline: { p: IVec2; d: number; shape: Shape; optimized?: boolean } | undefined;
     {
+      const shapeComposite = newShapeComposite({
+        shapes: reversedSnappableShapes,
+        getStruct: option.getShapeStruct,
+      });
       reversedSnappableShapes.some((shape) => {
         // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
         let intersection: IVec2 | undefined;
@@ -86,7 +85,7 @@ export function newLineSnapping(option: Option) {
         const p = intersection ?? getClosestOutline(option.getShapeStruct, shape, point, threshold);
         if (!p) {
           if (isEndVertex) {
-            const rect = getWrapperRect(option.getShapeStruct, shape);
+            const rect = shapeComposite.getWrapperRect(shape);
             const c = getRectCenter(rect);
             const d = getDistance(c, point);
             if (d < threshold) {
@@ -156,12 +155,12 @@ export function renderConnectionResult(
 }
 
 export function getOptimizedSegment(
-  getShapeStruct: GetShapeStruct,
+  shapeComposite: ShapeComposite,
   shapeA: Shape,
   shapeB: Shape
 ): ISegment | undefined {
-  const rectA = getWrapperRect(getShapeStruct, shapeA);
-  const rectB = getWrapperRect(getShapeStruct, shapeB);
+  const rectA = shapeComposite.getWrapperRect(shapeA);
+  const rectB = shapeComposite.getWrapperRect(shapeB);
   const [baseA, baseB] = getMimumSegmentBetweenRecs(rectA, rectB);
 
   // extend lines to seek intersections
@@ -169,19 +168,19 @@ export function getOptimizedSegment(
   const segForA = extendSegment([baseB, baseA], 1 + (rectA.width + rectA.height) / d);
   const segForB = extendSegment([baseA, baseB], 1 + (rectB.width + rectB.height) / d);
 
-  const pA = getIntersectedOutlines(getShapeStruct, shapeA, segForA[0], segForA[1])?.[0];
-  const pB = getIntersectedOutlines(getShapeStruct, shapeB, segForB[0], segForB[1])?.[0];
+  const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeA, segForA[0], segForA[1])?.[0];
+  const pB = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeB, segForB[0], segForB[1])?.[0];
   return pA && pB ? [pA, pB] : undefined;
 }
 
 function getOptimizedSegmentBetweenShapeAndPoint(
-  getShapeStruct: GetShapeStruct,
+  shapeComposite: ShapeComposite,
   shape: Shape,
   point: IVec2
 ): ISegment | undefined {
-  const rect = getWrapperRect(getShapeStruct, shape);
+  const rect = shapeComposite.getWrapperRect(shape);
   const [baseA, baseB] = getMimumSegmentBetweenRecs(rect, { ...point, width: 0, height: 0 });
-  const pA = getIntersectedOutlines(getShapeStruct, shape, baseB, baseA)?.[0];
+  const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, baseB, baseA)?.[0];
   return pA ? [pA, point] : undefined;
 }
 
@@ -221,9 +220,10 @@ function getMimumSegmentBetweenRecs(rectA: IRectangle, rectB: IRectangle): ISegm
 }
 
 export function optimizeLinePath(
-  ctx: Pick<AppCanvasStateContext, "getShapeMap" | "getShapeStruct">,
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
   lineShape: LineShape
 ): Partial<LineShape> | undefined {
+  const shapeComposite = ctx.getShapeComposite();
   const vertices = getLinePath(lineShape);
   // When the line is elbow, always optimize it based on "p" and "q"
   const elbow = lineShape.lineType === "elbow";
@@ -231,10 +231,10 @@ export function optimizeLinePath(
   if (lineShape.pConnection?.optimized) {
     if (lineShape.qConnection?.optimized) {
       if (vertices.length === 2 || elbow) {
-        const shapeMap = ctx.getShapeMap();
+        const shapeMap = shapeComposite.shapeMap;
         const shapeP = shapeMap[lineShape.pConnection.id];
         const shapeQ = shapeMap[lineShape.qConnection.id];
-        const seg = getOptimizedSegment(ctx.getShapeStruct, shapeP, shapeQ);
+        const seg = getOptimizedSegment(shapeComposite, shapeP, shapeQ);
         if (!seg) return;
 
         const [p, q] = seg;
@@ -242,13 +242,19 @@ export function optimizeLinePath(
           ? {}
           : {
               p,
-              pConnection: { ...lineShape.pConnection, rate: getLocationRateOnShape(ctx.getShapeStruct, shapeP, p) },
+              pConnection: {
+                ...lineShape.pConnection,
+                rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeP, p),
+              },
             };
         const patchQ: Partial<LineShape> = isSame(q, lineShape.q)
           ? {}
           : {
               q,
-              qConnection: { ...lineShape.qConnection, rate: getLocationRateOnShape(ctx.getShapeStruct, shapeQ, q) },
+              qConnection: {
+                ...lineShape.qConnection,
+                rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeQ, q),
+              },
             };
         const ret = { ...patchP, ...patchQ };
         return Object.keys(ret).length > 0 ? ret : undefined;
@@ -259,10 +265,10 @@ export function optimizeLinePath(
   const ret: Partial<LineShape> = {};
 
   if (lineShape.pConnection?.optimized) {
-    const shapeMap = ctx.getShapeMap();
+    const shapeMap = shapeComposite.shapeMap;
     const shapeP = shapeMap[lineShape.pConnection.id];
     const seg = getOptimizedSegmentBetweenShapeAndPoint(
-      ctx.getShapeStruct,
+      shapeComposite,
       shapeP,
       vertices[elbow ? vertices.length - 1 : 1]
     );
@@ -271,15 +277,18 @@ export function optimizeLinePath(
     const p = seg[0];
     if (!isSame(p, lineShape.p)) {
       ret.p = p;
-      ret.pConnection = { ...lineShape.pConnection, rate: getLocationRateOnShape(ctx.getShapeStruct, shapeP, p) };
+      ret.pConnection = {
+        ...lineShape.pConnection,
+        rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeP, p),
+      };
     }
   }
 
   if (lineShape.qConnection?.optimized) {
-    const shapeMap = ctx.getShapeMap();
+    const shapeMap = shapeComposite.shapeMap;
     const shapeQ = shapeMap[lineShape.qConnection.id];
     const seg = getOptimizedSegmentBetweenShapeAndPoint(
-      ctx.getShapeStruct,
+      shapeComposite,
       shapeQ,
       vertices[elbow ? 0 : vertices.length - 2]
     );
@@ -288,7 +297,10 @@ export function optimizeLinePath(
     const q = seg[0];
     if (!isSame(q, lineShape.q)) {
       ret.q = q;
-      ret.qConnection = { ...lineShape.qConnection, rate: getLocationRateOnShape(ctx.getShapeStruct, shapeQ, q) };
+      ret.qConnection = {
+        ...lineShape.qConnection,
+        rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeQ, q),
+      };
     }
   }
 

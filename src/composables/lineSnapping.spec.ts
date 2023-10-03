@@ -4,6 +4,7 @@ import { RectangleShape } from "../shapes/rectangle";
 import { getOptimizedSegment, newLineSnapping, optimizeLinePath } from "./lineSnapping";
 import { LineShape } from "../shapes/line";
 import { EllipseShape } from "../shapes/ellipse";
+import { newShapeComposite } from "./shapeComposite";
 
 describe("newLineSnapping", () => {
   describe("testConnection", () => {
@@ -100,7 +101,11 @@ describe("getOptimizedSegment", () => {
         width: 100,
         height: 100,
       });
-      const res = getOptimizedSegment(getCommonStruct, shapeA, shapeB);
+      const res = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
+        shapeA,
+        shapeB
+      );
       expect(res).toEqual([
         { x: 100, y: 75 },
         { x: 200, y: 75 },
@@ -117,7 +122,11 @@ describe("getOptimizedSegment", () => {
         width: 100,
         height: 100,
       });
-      const res = getOptimizedSegment(getCommonStruct, shapeA, shapeB);
+      const res = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
+        shapeA,
+        shapeB
+      );
       expect(res).toEqual([
         { x: 75, y: 100 },
         { x: 75, y: 200 },
@@ -135,7 +144,11 @@ describe("getOptimizedSegment", () => {
         width: 100,
         height: 100,
       });
-      const res0 = getOptimizedSegment(getCommonStruct, shapeA, shapeBottomRight);
+      const res0 = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
+        shapeA,
+        shapeBottomRight
+      );
       expect(res0).toEqual([
         { x: 100, y: 100 },
         { x: 150, y: 200 },
@@ -147,7 +160,11 @@ describe("getOptimizedSegment", () => {
         width: 100,
         height: 100,
       });
-      const res1 = getOptimizedSegment(getCommonStruct, shapeA, shapeBottomLeft);
+      const res1 = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeBottomLeft], getStruct: getCommonStruct }),
+        shapeA,
+        shapeBottomLeft
+      );
       expect(res1).toEqual([
         { x: 0, y: 100 },
         { x: -50, y: 200 },
@@ -159,7 +176,11 @@ describe("getOptimizedSegment", () => {
         width: 100,
         height: 100,
       });
-      const res2 = getOptimizedSegment(getCommonStruct, shapeA, shapeTopLeft);
+      const res2 = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeTopLeft], getStruct: getCommonStruct }),
+        shapeA,
+        shapeTopLeft
+      );
       expect(res2).toEqual([
         { x: 0, y: 0 },
         { x: -50, y: -100 },
@@ -171,7 +192,11 @@ describe("getOptimizedSegment", () => {
         width: 100,
         height: 100,
       });
-      const res3 = getOptimizedSegment(getCommonStruct, shapeA, shapeTopRight);
+      const res3 = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeTopRight], getStruct: getCommonStruct }),
+        shapeA,
+        shapeTopRight
+      );
       expect(res3).toEqual([
         { x: 100, y: 0 },
         { x: 150, y: -100 },
@@ -188,7 +213,11 @@ describe("getOptimizedSegment", () => {
         height: 100,
         rotation: Math.PI / 4,
       });
-      const res0 = getOptimizedSegment(getCommonStruct, shapeA, shapeBottomRight);
+      const res0 = getOptimizedSegment(
+        newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
+        shapeA,
+        shapeBottomRight
+      );
       expect(res0?.[0]).toEqual({ x: 100, y: 0 });
       expect(res0?.[1].x).toBeGreaterThan(50);
       expect(res0?.[1].x).toBeLessThan(150);
@@ -216,11 +245,9 @@ describe("optimizeLinePath", () => {
         pConnection: { id: "a", rate: { x: 1, y: 0 }, optimized: true },
         qConnection: { id: "b", rate: { x: 1, y: 1 }, optimized: true },
       });
-      const getShapeMap = () => ({ a, b, line });
       const res = optimizeLinePath(
         {
-          getShapeMap,
-          getShapeStruct: getCommonStruct,
+          getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
         line
       );
@@ -242,11 +269,9 @@ describe("optimizeLinePath", () => {
         pConnection: { id: "a", rate: { x: 1, y: 0 }, optimized: true },
         qConnection: { id: "b", rate: { x: 1, y: 1 } },
       });
-      const getShapeMap = () => ({ a, b, line });
       const res = optimizeLinePath(
         {
-          getShapeMap,
-          getShapeStruct: getCommonStruct,
+          getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
         line
       );
@@ -266,11 +291,9 @@ describe("optimizeLinePath", () => {
         pConnection: { id: "a", rate: { x: 1, y: 0 } },
         qConnection: { id: "b", rate: { x: 1, y: 1 }, optimized: true },
       });
-      const getShapeMap = () => ({ a, b, line });
       const res = optimizeLinePath(
         {
-          getShapeMap,
-          getShapeStruct: getCommonStruct,
+          getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
         line
       );
@@ -290,11 +313,9 @@ describe("optimizeLinePath", () => {
         pConnection: { id: "a", rate: { x: 1, y: 0 } },
         qConnection: { id: "b", rate: { x: 1, y: 1 } },
       });
-      const getShapeMap = () => ({ a, b, line });
       const res = optimizeLinePath(
         {
-          getShapeMap,
-          getShapeStruct: getCommonStruct,
+          getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
         line
       );
@@ -319,11 +340,9 @@ describe("optimizeLinePath", () => {
         pConnection: { id: "a", rate: { x: 0, y: 0 }, optimized: true },
         qConnection: { id: "b", rate: { x: 0, y: 1 }, optimized: true },
       });
-      const getShapeMap = () => ({ a, b, line });
       const res = optimizeLinePath(
         {
-          getShapeMap,
-          getShapeStruct: getCommonStruct,
+          getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
         line
       );
@@ -345,11 +364,9 @@ describe("optimizeLinePath", () => {
         body: [{ p: { x: 0, y: 0 } }, { p: { x: 0, y: 0 } }, { p: { x: 0, y: 0 } }, { p: { x: 0, y: 0 } }],
         lineType: "elbow",
       });
-      const getShapeMap = () => ({ a, b, line });
       const res = optimizeLinePath(
         {
-          getShapeMap,
-          getShapeStruct: getCommonStruct,
+          getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
         line
       );

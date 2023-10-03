@@ -1,20 +1,12 @@
-import { AffineMatrix, IRectangle, IVec2, getDistance, getRectCenter } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getDistance, getRectCenter, moveRect } from "okageo";
 import { Shape, StyleScheme } from "../models";
-import {
-  GetShapeStruct,
-  cloneShapes,
-  createShape,
-  getIntersectedOutlines,
-  getLocationRateOnShape,
-  getWrapperRect,
-  resizeShape,
-} from "../shapes";
+import { cloneShapes, createShape, getIntersectedOutlines, getLocationRateOnShape, resizeShape } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
 import { newRectHitRectHitTest } from "./shapeHitTest";
 import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
-import { newShapeComposite } from "./shapeComposite";
+import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
@@ -27,8 +19,7 @@ export interface SmartBranchHitResult {
 }
 
 interface Option {
-  getShapeMap: () => { [id: string]: Shape };
-  getShapeStruct: GetShapeStruct;
+  getShapeComposite: () => ShapeComposite;
   bounds: IRectangle;
 }
 
@@ -58,20 +49,21 @@ export function newSmartBranchHandler(option: Option) {
     src: Shape,
     generateId: () => string
   ): [Shape, LineShape] {
-    const getShapeStruct = option.getShapeStruct;
+    const shapeComposite = option.getShapeComposite();
+    const getShapeStruct = shapeComposite.getShapeStruct;
     const shape = cloneShapes(getShapeStruct, [src], generateId)[0];
 
-    const obstacles = Object.values(option.getShapeMap())
+    const obstacles = Object.values(shapeComposite.shapeMap)
       .filter((s) => !isLineShape(s))
       .map((s) => {
-        return getWrapperRect(getShapeStruct, s);
+        return shapeComposite.getWrapperRect(s);
       });
     const baseQ = getTargetPosition(hitResult.index, option.bounds, obstacles);
     const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - option.bounds.x, baseQ.y - option.bounds.y];
     const moved = { ...shape, ...resizeShape(getShapeStruct, shape, affine) };
 
-    const pRect = getWrapperRect(getShapeStruct, src);
-    const qRect = getWrapperRect(getShapeStruct, moved);
+    const pRect = shapeComposite.getWrapperRect(src);
+    const qRect = moveRect(pRect, { x: baseQ.x - option.bounds.x, y: baseQ.y - option.bounds.y });
     const pCenter = getRectCenter(pRect);
     const qCenter = getRectCenter(qRect);
     const p =
@@ -109,7 +101,7 @@ export function newSmartBranchHandler(option: Option) {
     if (hitResult) {
       const shapeComposite = newShapeComposite({
         shapes: hitResult.previewShapes,
-        getStruct: option.getShapeStruct,
+        getStruct: option.getShapeComposite().getShapeStruct,
       });
       hitResult.previewShapes.forEach((s) => {
         ctx.globalAlpha = 0.5;

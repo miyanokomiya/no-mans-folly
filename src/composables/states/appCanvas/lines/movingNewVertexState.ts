@@ -4,7 +4,6 @@ import { LineShape, addNewVertex, isLineShape } from "../../../../shapes/line";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
-import { filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
 import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
 import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
@@ -32,10 +31,10 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
-      const shapeMap = ctx.getShapeMap();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
       const selectedIds = ctx.getSelectedShapeIdMap();
-      const snappableShapes = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
         ctx.getViewRect()
       );
@@ -48,13 +47,12 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         movingIndex: option.index,
       });
 
-      const snappableLines = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableLines = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

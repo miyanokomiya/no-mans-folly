@@ -2,10 +2,11 @@ import { LineShape, isLineShape } from "../shapes/line";
 import { RotatedRectPath, TAU, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { Shape, StyleScheme } from "../models";
-import { getLocalRectPolygon } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { newElbowLineHandler } from "./elbowLineHandler";
 import { optimizeLinePath } from "./lineSnapping";
+import { newShapeComposite } from "./shapeComposite";
+import { toList } from "../utils/commons";
 
 interface Option {
   connectedLinesMap: {
@@ -24,7 +25,8 @@ export function newConnectedLineHandler(option: Option) {
   } {
     const ret: { [id: string]: Partial<LineShape> } = {};
 
-    const shapeMap = option.ctx.getShapeComposite().shapeMap;
+    const shapeComposite = option.ctx.getShapeComposite();
+    const shapeMap = shapeComposite.shapeMap;
     const updatedShapeMap: { [id: string]: Shape } = {};
     Object.entries(updatedMap).forEach(([id, patch]) => {
       updatedShapeMap[id] = { ...shapeMap[id], ...patch };
@@ -58,7 +60,7 @@ export function newConnectedLineHandler(option: Option) {
         return;
       }
 
-      const rectPath = getLocalRectPolygon(option.ctx.getShapeStruct, shape);
+      const rectPath = shapeComposite.getLocalRectPolygon(shape);
       const rotation = shape.rotation;
 
       const lines = option.connectedLinesMap[id] ?? [];
@@ -87,13 +89,16 @@ export function newConnectedLineHandler(option: Option) {
       });
     });
 
+    const updatedShapeComposite = newShapeComposite({
+      shapes: toList({ ...shapeMap, ...updatedShapeMap }),
+      getStruct: option.ctx.getShapeStruct,
+    });
     // Optimize line connections
     Object.entries(ret).forEach(([id, patch]) => {
       const updated = { ...shapeMap[id], ...(updatedShapeMap[id] ?? {}), ...patch } as LineShape;
       const optimized = optimizeLinePath(
         {
-          getShapeStruct: option.ctx.getShapeStruct,
-          getShapeMap: () => ({ ...shapeMap, ...updatedShapeMap }),
+          getShapeComposite: () => updatedShapeComposite,
         },
         updated
       );
@@ -122,9 +127,12 @@ export function newConnectedLineHandler(option: Option) {
         nextShapeMap[line.id] = line;
       });
 
+      const nextShapeComposite = newShapeComposite({
+        shapes: toList(nextShapeMap),
+        getStruct: option.ctx.getShapeStruct,
+      });
       const elbowHandler = newElbowLineHandler({
-        getShapeStruct: option.ctx.getShapeStruct,
-        getShapeMap: () => nextShapeMap,
+        getShapeComposite: () => nextShapeComposite,
       });
 
       patchedElbows.forEach((lineShape) => {
@@ -178,13 +186,14 @@ export function getRotatedRectPathMap(
 ): {
   [id: string]: RotatedRectPath;
 } {
-  const shapeMap = ctx.getShapeComposite().shapeMap;
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
   const modifiedMap: { [id: string]: RotatedRectPath } = {};
   Object.entries(updatedMap).forEach(([id, shape]) => {
     const s = shapeMap[id];
     if (s) {
       const merged = { ...s, ...shape };
-      modifiedMap[id] = [getLocalRectPolygon(ctx.getShapeStruct, merged), merged.rotation];
+      modifiedMap[id] = [shapeComposite.getLocalRectPolygon(merged), merged.rotation];
     }
   });
   return modifiedMap;

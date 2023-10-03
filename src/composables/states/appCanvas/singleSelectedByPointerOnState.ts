@@ -2,7 +2,6 @@ import type { AppCanvasState } from "./core";
 import { newMovingShapeState } from "./movingShapeState";
 import { getDistance } from "okageo";
 import { newBoundingBox } from "../../boundingBox";
-import { getLocalRectPolygon } from "../../../shapes";
 import { newSelectionHubState } from "./selectionHubState";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
@@ -22,13 +21,14 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
         case "pointermove": {
           if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;
 
-          const shape = ctx.getShapeMap()[ctx.getLastSelectedShapeId() ?? ""];
+          const shapeComposite = ctx.getShapeComposite();
+          const shape = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
           if (!shape) {
             return newSelectionHubState;
           }
 
           const boundingBox = newBoundingBox({
-            path: getLocalRectPolygon(ctx.getShapeStruct, shape),
+            path: shapeComposite.getLocalRectPolygon(shape),
             styleScheme: ctx.getStyleScheme(),
             scale: ctx.getScale(),
           });

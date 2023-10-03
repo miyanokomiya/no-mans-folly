@@ -2,7 +2,7 @@ import type { AppCanvasState } from "./core";
 import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { filterShapesOverlappingRect, getSnappingLines, getWrapperRect, resizeShape } from "../../../shapes";
+import { resizeShape } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import {
@@ -36,7 +36,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "MovingShape",
     onStart: (ctx) => {
-      const shapeMap = ctx.getShapeComposite().shapeMap;
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
       const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
       targetIds = targets.map((s) => s.id);
       const targetIdSet = new Set(targetIds);
@@ -51,22 +52,21 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       ctx.setCursor("move");
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
-      const snappableShapes = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !targetIdSet.has(s.id) && !isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
-      movingRect = geometry.getWrapperRect(targetIds.map((id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id])));
+      movingRect = geometry.getWrapperRect(targetIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
 
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
-        const shapeRects = targetIds.map((id) => shapeMap[id]).map((s) => getWrapperRect(ctx.getShapeStruct, s));
+        const shapeRects = targetIds.map((id) => shapeMap[id]).map((s) => shapeComposite.getWrapperRect(s));
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
@@ -126,12 +126,13 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       boundingBox.render(renderCtx, affine);
       if (snappingResult) {
-        const shapeMap = ctx.getShapeMap();
+        const shapeComposite = ctx.getShapeComposite();
+        const shapeMap = shapeComposite.shapeMap;
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) => getWrapperRect(ctx.getShapeStruct, shapeMap[id]),
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
         });
       }
 

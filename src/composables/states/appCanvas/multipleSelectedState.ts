@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import { getLocalRectPolygon } from "../../../shapes";
 import {
   getCommonCommandExams,
   handleCommonShortcut,
@@ -216,13 +215,14 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      const shapes = Object.entries(ctx.getShapeMap())
+      const shapeComposite = ctx.getShapeComposite();
+      const shapes = Object.entries(shapeComposite.shapeMap)
         .filter(([id]) => selectedIdMap[id])
         .map(([, s]) => s);
 
       applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 });
       renderCtx.beginPath();
-      shapes.forEach((s) => applyPath(renderCtx, getLocalRectPolygon(ctx.getShapeStruct, s), true));
+      shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
       boundingBox.render(renderCtx);

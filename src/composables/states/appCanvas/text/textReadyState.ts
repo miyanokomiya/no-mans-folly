@@ -2,7 +2,7 @@ import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import { handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
-import { createShape, filterShapesOverlappingRect, getSnappingLines } from "../../../../shapes";
+import { createShape } from "../../../../shapes";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TextShape } from "../../../../shapes/text";
@@ -22,14 +22,14 @@ export function newTextReadyState(): AppCanvasState {
     onStart: (ctx) => {
       ctx.setCursor();
 
-      const shapeMap = ctx.getShapeMap();
-      const snappableLines = filterShapesOverlappingRect(
-        ctx.getShapeStruct,
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
+      const snappableLines = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => isLineShape(s)),
         ctx.getViewRect()
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, getSnappingLines(ctx.getShapeStruct, s)]),
+        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

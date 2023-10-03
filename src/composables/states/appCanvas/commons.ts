@@ -10,7 +10,7 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
-import { canHaveText, createShape, getWrapperRect, patchShapesOrderToLast } from "../../../shapes";
+import { canHaveText, createShape, patchShapesOrderToLast } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2, add, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
@@ -125,12 +125,11 @@ export function handleCommonShortcut(
       if (event.data.ctrl) ctx.redo();
       return newSelectionHubState;
     case "!":
-    case "Home":
-      ctx.setViewport(
-        geometry.getWrapperRect(Object.values(ctx.getShapeMap()).map((s) => getWrapperRect(ctx.getShapeStruct, s))),
-        80
-      );
+    case "Home": {
+      const shapeComposite = ctx.getShapeComposite();
+      ctx.setViewport(geometry.getWrapperRect(shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s))), 80);
       return;
+    }
   }
 }
 
