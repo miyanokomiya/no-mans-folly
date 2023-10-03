@@ -24,6 +24,7 @@ import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { findBetterShapeAt } from "../../shapeComposite";
+import { isGroupShape } from "../../../shapes/group";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -37,9 +38,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "MultipleSelected",
     onStart: (ctx) => {
-      ctx.showFloatMenu();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, ...getCommonCommandExams()]);
-
       selectedIdMap = ctx.getSelectedShapeIdMap();
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -63,6 +61,13 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         }
 
         scode = parentIdSet.keys().next()?.value;
+      }
+
+      ctx.showFloatMenu();
+      if (Object.keys(selectedIdMap).some((id) => isGroupShape(shapeMap[id]))) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, ...getCommonCommandExams()]);
       }
 
       if (option?.boundingBox) {
