@@ -160,10 +160,10 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   );
 
   const onDocInlineAttributesChanged = useCallback(
-    (attrs: DocAttributes) => {
+    (attrs: DocAttributes, draft?: boolean) => {
       smctx.stateMachine.handleEvent({
         type: "text-style",
-        data: { value: attrs },
+        data: { value: attrs, draft },
       });
       focusBack?.();
     },

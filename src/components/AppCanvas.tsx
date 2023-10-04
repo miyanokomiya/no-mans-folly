@@ -30,7 +30,7 @@ import { newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
 import { useLocalStorageAdopter } from "../composables/localStorage";
-import { patchPipe } from "../utils/commons";
+import { mapReduce, patchPipe } from "../utils/commons";
 import { getDeleteTargetIds } from "../composables/shapeComposite";
 
 export const AppCanvas: React.FC = () => {
@@ -90,6 +90,10 @@ export const AppCanvas: React.FC = () => {
 
   useEffect(() => {
     return acctx.shapeStore.watchTmpShapeMap(() => {
+      smctx.stateMachine.handleEvent({
+        type: "tmp-shape-updated",
+        data: {},
+      });
       setCanvasState({});
     });
   }, [acctx.shapeStore, smctx.stateMachine]);
@@ -105,6 +109,16 @@ export const AppCanvas: React.FC = () => {
       smctx.stateMachine.handleEvent({
         type: "shape-updated",
         data: { keys, text: true },
+      });
+      setCanvasState({});
+    });
+  }, [acctx.documentStore, smctx.stateMachine]);
+
+  useEffect(() => {
+    return acctx.documentStore.watchTmpDocMap(() => {
+      smctx.stateMachine.handleEvent({
+        type: "tmp-shape-updated",
+        data: { text: true },
       });
       setCanvasState({});
     });
@@ -144,6 +158,14 @@ export const AppCanvas: React.FC = () => {
   const grid = useMemo(() => {
     return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: gridDisabled.state });
   }, [scale, viewCanvasRect, gridDisabled.state]);
+
+  const mergedDocMap = useMemo(() => {
+    const tmpDocMap = acctx.documentStore.getTmpDocMap();
+    return mapReduce(acctx.documentStore.getDocMap(), (doc, id) => {
+      if (!tmpDocMap[id]) return doc;
+      return acctx.documentStore.patchDocDryRun(id, tmpDocMap[id]);
+    });
+  }, [acctx.documentStore, canvasState]);
 
   useEffect(() => {
     smctx.setCtx({
@@ -252,6 +274,8 @@ export const AppCanvas: React.FC = () => {
         setTextEditorPosition(canvasToView(p));
       },
       getDocumentMap: acctx.documentStore.getDocMap,
+      getTmpDocMap: acctx.documentStore.getTmpDocMap,
+      setTmpDocMap: acctx.documentStore.setTmpDocMap,
       patchDocuments: (val, shapes) => {
         if (shapes) {
           acctx.shapeStore.transact(() => {
@@ -324,7 +348,7 @@ export const AppCanvas: React.FC = () => {
     const selectedMap = canvasContext.getSelectedShapeIdMap();
     const renderer = newShapeRenderer({
       shapeComposite: acctx.shapeStore.shapeComposite,
-      getDocumentMap: canvasContext.getDocumentMap,
+      getDocumentMap: () => mergedDocMap,
       getShapeStruct: canvasContext.getShapeStruct,
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
       imageStore,
@@ -346,6 +370,7 @@ export const AppCanvas: React.FC = () => {
     canvasState,
     textEditing,
     grid,
+    mergedDocMap,
     imageStore,
   ]);
 
@@ -525,12 +550,12 @@ export const AppCanvas: React.FC = () => {
     if (!lastSelected) return;
     if (textEditing) return currentDocAttrInfo;
 
-    const doc = acctx.documentStore.getDocMap()[lastSelected];
+    const doc = mergedDocMap[lastSelected];
     if (!doc) return;
 
     const attrs = getDocAttributes(doc);
     return { cursor: attrs, block: attrs, doc: attrs };
-  }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, acctx.documentStore]);
+  }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, mergedDocMap]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {

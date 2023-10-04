@@ -37,6 +37,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   stopTextEditing: () => void;
   setTextEditorPosition: (p: IVec2) => void;
   getDocumentMap: () => { [id: string]: DocOutput };
+  getTmpDocMap: () => { [id: string]: DocDelta };
+  setTmpDocMap: (val: { [id: string]: DocDelta }) => void;
   patchDocuments: (val: { [id: string]: DocDelta }, shapes?: { [id: string]: Partial<Shape> }) => void;
   patchDocDryRun: (id: string, val: DocDelta) => DocOutput;
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
@@ -53,6 +55,7 @@ export type AppCanvasEvent =
   | CanvasStateEvent
   | ChangeSelectionEvent
   | UpdateShapeEvent
+  | UpdateTmpShapeEvent
   | TextInputEvent
   | TextStyleEvent
   | ContextMenuItemEvent
@@ -66,6 +69,13 @@ interface UpdateShapeEvent extends ModeStateEventBase {
   type: "shape-updated";
   data: {
     keys: Set<string>;
+    text?: boolean;
+  };
+}
+
+interface UpdateTmpShapeEvent extends ModeStateEventBase {
+  type: "tmp-shape-updated";
+  data: {
     text?: boolean;
   };
 }
@@ -84,6 +94,7 @@ export interface TextStyleEvent extends ModeStateEventBase {
     value: DocAttributes;
     block?: boolean;
     doc?: boolean;
+    draft?: boolean;
   };
 }
 

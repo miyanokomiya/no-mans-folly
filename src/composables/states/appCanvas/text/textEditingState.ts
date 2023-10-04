@@ -45,8 +45,14 @@ export function newTextEditingState(option: Option): AppCanvasState {
     ctx.setTmpShapeMap({});
   }
 
-  function patchDocument(ctx: AppCanvasStateContext, delta: DocDelta) {
-    _patchDocument(ctx, delta, option.id);
+  function patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, draft?: boolean) {
+    _patchDocument(ctx, delta, option.id, draft);
+  }
+
+  function getMergedDoc(ctx: AppCanvasStateContext) {
+    const docOutput = ctx.getDocumentMap()[option.id];
+    const tmpDoc = ctx.getTmpDocMap()[option.id];
+    return tmpDoc ? ctx.patchDocDryRun(option.id, tmpDoc) : docOutput;
   }
 
   return {
@@ -55,8 +61,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.setCursor();
       ctx.showFloatMenu();
       ctx.startTextEditing();
+      ctx.setTmpShapeMap({});
+      ctx.setTmpDocMap({});
 
-      const shape = ctx.getShapeComposite().shapeMap[option.id];
+      const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
       textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
 
       if (option.textEditorController) {
@@ -64,7 +72,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
       } else {
         textEditorController = newTextEditorController();
         textEditorController.setRenderingContext(ctx.getRenderCtx()!);
-        textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
+
+        textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
 
         if (option.point) {
           const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, option.point));
@@ -91,6 +100,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ctx.setCaptureTimeout();
       ctx.setCurrentDocAttrInfo({});
       ctx.setCommandExams();
+      ctx.setTmpShapeMap({});
+      ctx.setTmpDocMap({});
 
       // Delete text shape when it has no content.
       const shapeComposite = ctx.getShapeComposite();
@@ -162,12 +173,25 @@ export function newTextEditingState(option: Option): AppCanvasState {
           updateEditorPosition(ctx);
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         case "shape-updated": {
-          const shape = ctx.getShapeComposite().shapeMap[option.id];
+          const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
           if (!shape) return newSelectionHubState;
 
           if (event.data.keys.has(option.id)) {
             textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
-            textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
+            textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
+            textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
+          }
+          return;
+        }
+        case "tmp-shape-updated": {
+          const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
+          if (!shape) return newSelectionHubState;
+
+          if (ctx.getTmpShapeMap()[option.id]) {
+            textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
+          }
+          if (ctx.getTmpDocMap()[option.id]) {
+            textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
             textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
           }
           return;
@@ -189,7 +213,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
             nextInfo = { ...currentInfo, cursor: { ...currentInfo.cursor, ...attrs } };
           }
 
-          patchDocument(ctx, ops);
+          patchDocument(ctx, ops, event.data.draft);
           ctx.setCurrentDocAttrInfo(nextInfo);
           return;
         }
@@ -227,7 +251,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      const shape = ctx.getShapeComposite().shapeMap[option.id];
+      const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
       if (!shape || !textEditorController) return;
 
       renderCtx.save();
@@ -382,7 +406,7 @@ function handleKeydown(
   }
 }
 
-function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string) {
+function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string, draft?: boolean) {
   const shape = ctx.getShapeComposite().shapeMap[id];
   const renderCtx = ctx.getRenderCtx();
   let shapePatch: Partial<TextShape> | undefined = undefined;
@@ -392,9 +416,12 @@ function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string)
     shapePatch = patchSize(shape, size);
   }
 
-  if (shapePatch) {
-    ctx.patchDocuments({ [id]: delta }, { [id]: shapePatch });
+  if (draft) {
+    ctx.setTmpDocMap({ [id]: delta });
+    if (shapePatch) ctx.setTmpShapeMap({ [id]: shapePatch });
   } else {
-    ctx.patchDocuments({ [id]: delta });
+    ctx.setTmpDocMap({});
+    if (shapePatch) ctx.setTmpShapeMap({});
+    ctx.patchDocuments({ [id]: delta }, shapePatch ? { [id]: shapePatch } : undefined);
   }
 }

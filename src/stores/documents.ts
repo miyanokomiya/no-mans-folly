@@ -18,6 +18,19 @@ export function newDocumentStore(option: Option) {
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
 
+  let tmpDocMap: { [id: string]: DocDelta } = {};
+
+  function setTmpDocMap(val: { [id: string]: DocDelta }) {
+    tmpDocMap = val;
+    tmpDocMapCallback.dispatch();
+  }
+
+  function getTmpDocMap(): { [id: string]: DocDelta } {
+    return tmpDocMap;
+  }
+
+  const tmpDocMapCallback = newCallback();
+
   const _entitiesCache = newCache(() => {
     const ret: { [id: string]: DocOutput } = {};
     Array.from(entityMap.entries()).map(([id, ye]: [string, Y.Text]) => {
@@ -42,6 +55,7 @@ export function newDocumentStore(option: Option) {
     });
     _entitiesCache.update();
     callback.dispatch(new Set(Object.keys(getDocMap())));
+    setTmpDocMap({});
   }
   refresh(option.ydoc);
 
@@ -137,6 +151,10 @@ export function newDocumentStore(option: Option) {
     transact,
     getScope,
     watch,
+
+    setTmpDocMap,
+    getTmpDocMap,
+    watchTmpDocMap: tmpDocMapCallback.bind,
   };
 }
 export type DocumentStore = ReturnType<typeof newDocumentStore>;

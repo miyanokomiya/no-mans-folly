@@ -69,7 +69,7 @@ const DirectionPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
-  onInlineChanged?: (val: DocAttributes) => void;
+  onInlineChanged?: (val: DocAttributes, draft?: boolean) => void;
   onBlockChanged?: (val: DocAttributes) => void;
   onDocChanged?: (val: DocAttributes) => void;
   docAttrInfo: DocAttrInfo;
@@ -122,16 +122,15 @@ export const TextItems: React.FC<Props> = ({
   }, [setPopupedKey]);
 
   const onColorChanged = useCallback(
-    (value: string) => {
-      onInlineChanged?.({ color: value });
+    (value: string, draft?: boolean) => {
+      onInlineChanged?.({ color: value }, draft);
     },
     [onInlineChanged]
   );
 
   const onBackgroundChanged = useCallback(
-    (value?: string, _draft?: boolean) => {
-      // TODO: Implement draft updating
-      onInlineChanged?.({ background: value ?? null });
+    (value?: string, draft?: boolean) => {
+      onInlineChanged?.({ background: value ?? null }, draft);
     },
     [onInlineChanged]
   );

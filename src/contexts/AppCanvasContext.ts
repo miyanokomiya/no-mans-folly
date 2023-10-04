@@ -118,6 +118,8 @@ export function createInitialAppCanvasStateContext(arg: {
     stopTextEditing() {},
     setTextEditorPosition() {},
     getDocumentMap: () => ({}),
+    getTmpDocMap: () => ({}),
+    setTmpDocMap() {},
     patchDocuments() {},
     patchDocDryRun: () => [],
     setCurrentDocAttrInfo() {},

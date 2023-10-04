@@ -180,7 +180,14 @@ export function handleCommonTextStyle(
     });
   }
 
-  ctx.patchDocuments(patch, shapePatch);
+  if (event.data.draft) {
+    ctx.setTmpDocMap(patch);
+    ctx.setTmpShapeMap(shapePatch);
+  } else {
+    ctx.setTmpDocMap({});
+    ctx.setTmpShapeMap({});
+    ctx.patchDocuments(patch, shapePatch);
+  }
 }
 
 export function startTextEditingIfPossible(
