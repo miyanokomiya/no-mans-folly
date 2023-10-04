@@ -48,22 +48,22 @@ const DecorationPanel: React.FC<DecorationPanelProps> = ({ value, onChange }) =>
 
   return (
     <div className="flex gap-1">
-      <button type="button" className={getButtonClass(value?.bold)} onClick={onChangeBold}>
+      <button type="button" className={getButtonClass(!!value?.bold)} onClick={onChangeBold}>
         <div className="text-2xl pb-1 font-bold">B</div>
       </button>
-      <button type="button" className={getButtonClass(value?.italic)} onClick={onChangeItalic}>
+      <button type="button" className={getButtonClass(!!value?.italic)} onClick={onChangeItalic}>
         <div className="text-2xl pb-1 italic">It</div>
       </button>
-      <button type="button" className={getButtonClass(value?.underline)} onClick={onChangeUnderline}>
+      <button type="button" className={getButtonClass(!!value?.underline)} onClick={onChangeUnderline}>
         <div className="text-2xl pb-1 underline">U</div>
       </button>
-      <button type="button" className={getButtonClass(value?.strike)} onClick={onChangeStrike}>
+      <button type="button" className={getButtonClass(!!value?.strike)} onClick={onChangeStrike}>
         <div className="text-2xl pb-1 line-through">S</div>
       </button>
     </div>
   );
 };
 
-function getButtonClass(selected?: boolean): string {
+function getButtonClass(selected: boolean): string {
   return "w-8 h-8 flex justify-center items-center" + (selected ? " border-2 border-cyan-400" : "");
 }

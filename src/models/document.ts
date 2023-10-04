@@ -17,21 +17,26 @@ export interface DocDeltaRetain {
   attributes?: DocAttributes;
 }
 
+/**
+ * To remove a attribute, need to set "null".
+ * => "undefined" doesn't work with delta lib.
+ */
 export type DocAttributes = {
   // inline
-  color?: string;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  strike?: boolean;
-  size?: number;
-  font?: string;
+  color?: string | null;
+  background?: string | null; // format: rgba(r,g,b,a)
+  bold?: boolean | null;
+  italic?: boolean | null;
+  underline?: boolean | null;
+  strike?: boolean | null;
+  size?: number | null;
+  font?: string | null;
 
   // block
-  align?: "left" | "center" | "right";
+  align?: "left" | "center" | "right" | null;
 
   // doc
-  direction?: DocDirection;
+  direction?: DocDirection | null;
 };
 
 export type DocDirection = "top" | "middle" | "bottom";

@@ -45,6 +45,15 @@ describe("newDocumentStore", () => {
         a: [{ insert: "a" }],
       });
     });
+
+    test("should delete attributes supplied as null", () => {
+      const ydoc = new Y.Doc();
+      const store = newDocumentStore({ ydoc });
+      store.addDoc("a", [{ insert: "a", attributes: { background: "#rgba(1,1,1,1)" } }]);
+      expect(store.getDocMap()).toEqual({ a: [{ insert: "a", attributes: { background: "#rgba(1,1,1,1)" } }] });
+      store.patchDoc("a", [{ retain: 1, attributes: { background: null } }]);
+      expect(store.getDocMap()).toEqual({ a: [{ insert: "a" }] });
+    });
   });
 
   describe("patchDocDryRun", () => {

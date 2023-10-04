@@ -250,9 +250,13 @@ export function newTextEditorController() {
 
     const cursor = getCursor();
     const selection = getSelection();
-    if (selection === 0) return [];
 
-    return [{ retain: cursor }, { retain: selection, attributes: attrs }];
+    // When the selection reaches the doc end, apply the style to the line break at the doc end.
+    // => Otherwise, there's no way to change inline style of it but changing whole doc style.
+    const adjustedSelection = cursor + selection === docLength - 1 ? selection + 1 : selection;
+
+    if (adjustedSelection === 0) return [];
+    return [{ retain: cursor }, { retain: adjustedSelection, attributes: attrs }];
   }
 
   function _getDeltaByApplyBlockStyle(attrs: DocAttributes): DocDelta {
@@ -298,6 +302,8 @@ export function newTextEditorController() {
     const cursor = getCursor();
     const selection = getSelection();
 
+    renderDocByComposition(ctx, _composition, _compositionLines);
+
     if (!isIME) {
       renderSelection(ctx, {
         composition: _composition,
@@ -307,7 +313,6 @@ export function newTextEditorController() {
       });
     }
 
-    renderDocByComposition(ctx, _composition, _compositionLines);
     renderCursor(ctx, {
       composition: _composition,
       compositionLines: _compositionLines,

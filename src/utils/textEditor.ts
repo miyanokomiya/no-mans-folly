@@ -45,6 +45,17 @@ export function renderDocByComposition(
     line.outputs.forEach((op) => {
       const lineComposition = composition[index];
 
+      if (op.attributes?.background) {
+        ctx.fillStyle = op.attributes.background;
+        ctx.beginPath();
+        ctx.fillRect(
+          lineComposition.bounds.x,
+          lineComposition.bounds.y,
+          lineComposition.bounds.width,
+          lineComposition.bounds.height
+        );
+      }
+
       if (op.attributes?.underline || op.attributes?.strike) {
         applyDefaultStrokeStyle(ctx);
         if (op.attributes.color) {
