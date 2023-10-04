@@ -1,6 +1,7 @@
 import { IRectangle, IVec2 } from "okageo";
 import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
 import { Size } from "../models";
+import { applyDefaultStrokeStyle } from "./strokeStyle";
 
 export const DEFAULT_FONT_SIZE = 18;
 
@@ -42,10 +43,40 @@ export function renderDocByComposition(
     if (index === composition.length) return;
 
     line.outputs.forEach((op) => {
-      applyDocAttributesToCtx(ctx, op.attributes);
       const lineComposition = composition[index];
+
+      if (op.attributes?.underline || op.attributes?.strike) {
+        applyDefaultStrokeStyle(ctx);
+        if (op.attributes.color) {
+          ctx.strokeStyle = op.attributes.color;
+        }
+        ctx.lineWidth = lineComposition.bounds.height * 0.07;
+      }
+
+      if (op.attributes?.underline) {
+        ctx.beginPath();
+        ctx.moveTo(lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.9);
+        ctx.lineTo(
+          lineComposition.bounds.x + lineComposition.bounds.width,
+          lineComposition.bounds.y + lineComposition.bounds.height * 0.9
+        );
+        ctx.stroke();
+      }
+
+      applyDocAttributesToCtx(ctx, op.attributes);
       // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
       ctx.fillText(op.insert, lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.8);
+
+      if (op.attributes?.strike) {
+        ctx.beginPath();
+        ctx.moveTo(lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.5);
+        ctx.lineTo(
+          lineComposition.bounds.x + lineComposition.bounds.width,
+          lineComposition.bounds.y + lineComposition.bounds.height * 0.5
+        );
+        ctx.stroke();
+      }
+
       index += op.insert.length;
     });
   });

@@ -24,3 +24,11 @@ export function getStrokeWidth(stroke: StrokeStyle): number {
   if (stroke.disabled) return 0;
   return stroke.width ?? 1;
 }
+
+export function applyDefaultStrokeStyle(ctx: CanvasRenderingContext2D) {
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  ctx.lineCap = "butt";
+  ctx.lineJoin = "miter";
+}
