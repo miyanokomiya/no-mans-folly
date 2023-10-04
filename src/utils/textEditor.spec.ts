@@ -9,11 +9,22 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
   getWordRangeAtCursor,
+  isLinebreak,
   mergeDocAttrInfo,
   sliceDocOutput,
   splitDocOutputByLineBreak,
   splitOutputsIntoLineWord,
 } from "./textEditor";
+
+describe("isLinebreak", () => {
+  test("should return true when the character is line break", () => {
+    expect(isLinebreak("\n")).toBe(true);
+    expect(isLinebreak("\r\n")).toBe(true);
+    expect(isLinebreak("a")).toBe(false);
+    expect(isLinebreak(" ")).toBe(false);
+    expect(isLinebreak("\t")).toBe(false);
+  });
+});
 
 describe("getCursorLocationAt", () => {
   test("align left: should return appropriate cursor location", () => {
@@ -722,11 +733,17 @@ describe("getWordRangeAtCursor", () => {
       { char: "." },
     ];
     expect(getWordRangeAtCursor(comp, 0)).toEqual([0, 1]);
-    expect(getWordRangeAtCursor(comp, 1)).toEqual([1, 1]);
+    expect(getWordRangeAtCursor(comp, 1)).toEqual([1, 0]);
     expect(getWordRangeAtCursor(comp, 2)).toEqual([2, 4]);
     expect(getWordRangeAtCursor(comp, 3)).toEqual([2, 4]);
     expect(getWordRangeAtCursor(comp, 4)).toEqual([2, 4]);
     expect(getWordRangeAtCursor(comp, 5)).toEqual([2, 4]);
-    expect(getWordRangeAtCursor(comp, 6)).toEqual([6, 1]);
+    expect(getWordRangeAtCursor(comp, 6)).toEqual([6, 0]);
+
+    const comp1 = [{ char: "a" }, { char: "\n" }, { char: "b" }, { char: "\n" }];
+    expect(getWordRangeAtCursor(comp1, 0)).toEqual([0, 1]);
+    expect(getWordRangeAtCursor(comp1, 1)).toEqual([1, 0]);
+    expect(getWordRangeAtCursor(comp1, 2)).toEqual([2, 1]);
+    expect(getWordRangeAtCursor(comp1, 3)).toEqual([3, 0]);
   });
 });

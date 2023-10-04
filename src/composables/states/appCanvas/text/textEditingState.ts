@@ -69,6 +69,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         if (option.point) {
           const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, option.point));
           textEditorController.setCursor(textEditorController.getLocationIndex(location));
+          textEditorController.selectWordAtCursor();
         } else {
           textEditorController.moveCursorToTail();
         }

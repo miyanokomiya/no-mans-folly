@@ -4,13 +4,19 @@ import { Size } from "../models";
 
 export const DEFAULT_FONT_SIZE = 18;
 
-const WHITE_SPACE = / |\t|\.|,/;
-export const LINEBREAK = /\n/;
+const WORDBREAK = /\n| |\t|\.|,/;
+export const LINEBREAK = /\n|\r\n/;
 
-function isWhiteSpace(char: string): boolean {
-  return WHITE_SPACE.test(char);
+/**
+ * "char" must be a character.
+ */
+function isWordbreak(char: string): boolean {
+  return WORDBREAK.test(char);
 }
 
+/**
+ * "char" must be a character.
+ */
 export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
 }
@@ -449,7 +455,7 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
         lines.push(line);
         word = [];
         line = [];
-      } else if (isWhiteSpace(c)) {
+      } else if (isWordbreak(c)) {
         if (word.length > 0) line.push(word);
         line.push([[c, getW(), op.attributes]]);
         word = [];
@@ -652,12 +658,13 @@ export function getWordRangeAtCursor(
   composition: Pick<DocCompositionItem, "char">[],
   cursor: number
 ): [cursor: number, selection: number] {
-  if (isWhiteSpace(composition[cursor].char)) return [cursor, 1];
+  // Avoid selecting while space characters
+  if (isWordbreak(composition[cursor].char)) return [cursor, 0];
 
   let from = 0;
   for (let i = cursor - 1; 0 <= i; i--) {
     const c = composition[i];
-    if (isWhiteSpace(c.char)) {
+    if (isWordbreak(c.char)) {
       from = i + 1;
       break;
     }
@@ -666,7 +673,7 @@ export function getWordRangeAtCursor(
   let to = composition.length;
   for (let i = cursor + 1; i < composition.length; i++) {
     const c = composition[i];
-    if (isWhiteSpace(c.char)) {
+    if (isWordbreak(c.char)) {
       to = i;
       break;
     }
