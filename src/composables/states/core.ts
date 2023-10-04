@@ -13,6 +13,7 @@ export type TransitionValue<C, E = ModeStateEvent> =
 export interface ModeStateBase<C, E = ModeStateEvent> {
   getLabel: () => string;
   onStart?: (ctx: ModeStateContextBase & C) => TransitionValue<C, ModeStateEvent>;
+  onResume?: (ctx: ModeStateContextBase & C) => TransitionValue<C, ModeStateEvent>;
   onEnd?: (ctx: C) => void;
   handleEvent: (ctx: C, e: E) => TransitionValue<C, ModeStateEvent>;
   render?: (ctx: C, renderCtx: CanvasRenderingContext2D) => void;
@@ -84,7 +85,13 @@ export function newStateMachine<C, E = ModeStateEvent>(
     }
 
     const next = getCurrentState();
-    if (current.type !== "stack-resume") {
+    if (current.type === "stack-resume") {
+      const result = next.state.onResume?.(ctx);
+      if (result) {
+        handleTransition(result);
+        return;
+      }
+    } else {
       const result = next.state.onStart?.(ctx);
       if (result) {
         handleTransition(result);

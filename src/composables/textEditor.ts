@@ -147,7 +147,10 @@ export function newTextEditorController() {
 
   function getCurrentAttributeInfo(): DocAttrInfo {
     const cursor = getCursor();
-    const location = getCursorLocation(_compositionLines, cursor);
+    const selection = getSelection();
+    // When the selection exists, target cursor location should be in the selection: right side of the cursor.
+    // Otherwise: left side of the cursor.
+    const location = getCursorLocation(_compositionLines, cursor + (selection > 0 ? 1 : 0));
     const line = _compositionLines[location.y];
 
     // Cursor attributes should be picked from the left side of the cursor.

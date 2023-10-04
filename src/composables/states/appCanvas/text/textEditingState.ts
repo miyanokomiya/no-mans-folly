@@ -94,6 +94,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
         COMMAND_EXAM_SRC.TEXT_DELETE,
       ]);
     },
+    onResume: (ctx) => {
+      onCursorUpdated(ctx);
+    },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
       ctx.stopTextEditing();
