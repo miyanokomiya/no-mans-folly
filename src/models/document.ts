@@ -21,6 +21,9 @@ export type DocAttributes = {
   // inline
   color?: string;
   bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strike?: boolean;
   size?: number;
   font?: string;
 

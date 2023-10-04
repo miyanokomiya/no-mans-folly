@@ -90,9 +90,10 @@ export function getCursorLocation(compositionLines: DocCompositionLine[], cursor
 export function applyDocAttributesToCtx(ctx: CanvasRenderingContext2D, attrs: DocAttributes = {}): void {
   const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
   const fontFamily = attrs.font ?? "Arial";
+  const fontDecoration = [attrs.bold ? "bold" : "", attrs.italic ? "italic" : ""].join(" ");
   const color = attrs.color ?? "#000";
 
-  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.font = `${fontDecoration} ${fontSize}px ${fontFamily}`;
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.setLineDash([]);

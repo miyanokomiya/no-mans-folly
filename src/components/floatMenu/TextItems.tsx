@@ -9,6 +9,7 @@ import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
 import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
 import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
 import { TextColorPanel } from "./TextColorPanel";
+import { TextDecoration } from "./texts/TextDecoration";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -149,6 +150,12 @@ export const TextItems: React.FC<Props> = ({
           </div>
         </div>
       </PopupButton>
+      <TextDecoration
+        popupedKey={popupedKey}
+        setPopupedKey={setPopupedKey}
+        value={docAttrInfo.cursor}
+        onChange={onInlineChanged}
+      />
       <PopupButton
         name="align"
         opened={popupedKey === "align"}
