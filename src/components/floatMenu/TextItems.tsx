@@ -7,6 +7,7 @@ import iconAlignRight from "../../assets/icons/align_right.svg";
 import iconDirectionTop from "../../assets/icons/direction_top.svg";
 import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
 import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
+import iconLineheight from "../../assets/icons/lineheight.svg";
 import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
 import { TextColorPanel } from "./texts/TextColorPanel";
 import { TextDecoration } from "./texts/TextDecoration";
@@ -232,7 +233,7 @@ export const TextItems: React.FC<Props> = ({
         onClick={setPopupedKey}
       >
         <div className="w-8 h-8 flex justify-center items-center">
-          <div className="text-2xl">H</div>
+          <img src={iconLineheight} alt="Line height" />
         </div>
       </PopupButton>
     </div>
