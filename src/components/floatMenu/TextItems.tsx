@@ -8,7 +8,7 @@ import iconDirectionTop from "../../assets/icons/direction_top.svg";
 import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
 import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
 import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
-import { TextColorPanel } from "./TextColorPanel";
+import { TextColorPanel } from "./texts/TextColorPanel";
 import { TextDecoration } from "./texts/TextDecoration";
 import { TextBackgroundPanel } from "./texts/TextBackgroundPanel";
 import { SliderInput } from "../atoms/inputs/SliderInput";
@@ -171,7 +171,7 @@ export const TextItems: React.FC<Props> = ({
       <PopupButton
         name="color"
         opened={popupedKey === "color"}
-        popup={<TextColorPanel onChanged={onColorChanged} />}
+        popup={<TextColorPanel value={docAttrInfo.cursor?.color ?? undefined} onChanged={onColorChanged} />}
         onClick={setPopupedKey}
       >
         <div className="w-8 h-8 flex justify-center items-center">
