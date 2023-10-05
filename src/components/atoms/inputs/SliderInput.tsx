@@ -1,16 +1,17 @@
 import { useCallback, useRef, useState } from "react";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../../../composables/window";
-import { snapNumber } from "../../../utils/geometry";
+import { logRoundByDigit, snapNumber } from "../../../utils/geometry";
 
 interface Props {
   value: number;
   min: number;
   max: number;
   step?: number;
+  showValue?: boolean;
   onChanged?: (value: number, draft?: boolean) => void;
 }
 
-export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged }) => {
+export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue, onChanged }) => {
   const [draftValue, setDraftValue] = useState(value);
   const [down, setDown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -18,7 +19,9 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
   const updateValue = useCallback(
     (rate: number, tmp = false) => {
       const v = Math.min(Math.max(rate, 0), 1) * (max - min) + min;
-      const val = step ? snapNumber(v, step) : v;
+      // Apply "logRoundByDigit" to avoid floating error as much as possible.
+      // => Because the value is likely shown as text label.
+      const val = step ? logRoundByDigit(step.toString().length + 3, snapNumber(v, step)) : v;
       setDraftValue(val);
 
       if (tmp) {
@@ -73,6 +76,14 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, onChanged 
             right: `${(1 - (value - min) / (max - min)) * 100}%`,
           }}
         ></div>
+        {showValue ? (
+          <span
+            className="absolute top-1/2 left-1/2 leading-4 pointer-events-none"
+            style={{ transform: "translate(-50%,-50%)" }}
+          >
+            {value}
+          </span>
+        ) : undefined}
       </div>
     </div>
   );

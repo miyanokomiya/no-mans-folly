@@ -171,10 +171,10 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   );
 
   const onDocBlockAttributesChanged = useCallback(
-    (attrs: DocAttributes) => {
+    (attrs: DocAttributes, draft?: boolean) => {
       smctx.stateMachine.handleEvent({
         type: "text-style",
-        data: { value: attrs, block: true },
+        data: { value: attrs, block: true, draft },
       });
       focusBack?.();
     },
@@ -182,10 +182,10 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   );
 
   const onDocAttributesChanged = useCallback(
-    (attrs: DocAttributes) => {
+    (attrs: DocAttributes, draft?: boolean) => {
       smctx.stateMachine.handleEvent({
         type: "text-style",
-        data: { value: attrs, doc: true },
+        data: { value: attrs, doc: true, draft },
       });
       focusBack?.();
     },

@@ -283,6 +283,18 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
   return isOnSeg(pedal, seg);
 }
 
+export function logRound(log: number, val: number) {
+  const pow = Math.pow(10, -log);
+  return Math.round(val * pow) / pow;
+}
+
+export function logRoundByDigit(digitCount: number, val: number) {
+  const absint = Math.abs(Math.round(val));
+  const sign = Math.sign(val);
+  const d = absint.toString().length;
+  return d >= digitCount ? absint * sign : logRound(d - digitCount, val);
+}
+
 export function snapAngle(rotate: number, angle = 15): number {
   return snapNumber(rotate, angle);
 }

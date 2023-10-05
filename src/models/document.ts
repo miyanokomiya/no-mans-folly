@@ -34,6 +34,7 @@ export type DocAttributes = {
 
   // block
   align?: "left" | "center" | "right" | null;
+  lineheight?: number | null; // equivalent to unitless value in CSS
 
   // doc
   direction?: DocDirection | null;

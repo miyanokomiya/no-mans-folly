@@ -11,6 +11,8 @@ import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
 import { TextColorPanel } from "./TextColorPanel";
 import { TextDecoration } from "./texts/TextDecoration";
 import { TextBackgroundPanel } from "./texts/TextBackgroundPanel";
+import { SliderInput } from "../atoms/inputs/SliderInput";
+import { DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -66,12 +68,25 @@ const DirectionPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
   );
 };
 
+interface LineheightPanelProps {
+  value: number;
+  onChange?: (value: number, draft?: boolean) => void;
+}
+
+const LineheightPanel: React.FC<LineheightPanelProps> = ({ value, onChange }) => {
+  return (
+    <div className="w-40 p-1">
+      <SliderInput min={1} max={3} step={0.1} value={value} onChanged={onChange} showValue={true} />
+    </div>
+  );
+};
+
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
   onInlineChanged?: (val: DocAttributes, draft?: boolean) => void;
-  onBlockChanged?: (val: DocAttributes) => void;
-  onDocChanged?: (val: DocAttributes) => void;
+  onBlockChanged?: (val: DocAttributes, draft?: boolean) => void;
+  onDocChanged?: (val: DocAttributes, draft?: boolean) => void;
   docAttrInfo: DocAttrInfo;
 }
 
@@ -105,6 +120,13 @@ export const TextItems: React.FC<Props> = ({
       onDocChanged?.({ direction: value as any });
     },
     [onDocChanged]
+  );
+
+  const onLineheightChanged = useCallback(
+    (value: number, draft?: boolean) => {
+      onBlockChanged?.({ lineheight: value }, draft);
+    },
+    [onBlockChanged]
   );
 
   const directionIcon = useMemo(() => getDirectionIcon(docAttrInfo), [docAttrInfo]);
@@ -199,6 +221,18 @@ export const TextItems: React.FC<Props> = ({
       >
         <div className="w-8 h-8 p-1">
           <img src={directionIcon} alt="Direction" />
+        </div>
+      </PopupButton>
+      <PopupButton
+        name="lineheight"
+        opened={popupedKey === "lineheight"}
+        popup={
+          <LineheightPanel value={docAttrInfo.block?.lineheight ?? DEFAULT_LINEHEIGHT} onChange={onLineheightChanged} />
+        }
+        onClick={setPopupedKey}
+      >
+        <div className="w-8 h-8 flex justify-center items-center">
+          <div className="text-2xl">H</div>
         </div>
       </PopupButton>
     </div>

@@ -4,6 +4,7 @@ import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 
 export const DEFAULT_FONT_SIZE = 18;
+export const DEFAULT_LINEHEIGHT = 1.2;
 
 const WORDBREAK = /\n| |\t|\.|,/;
 export const LINEBREAK = /\n|\r\n/;
@@ -42,18 +43,19 @@ export function renderDocByComposition(
   compositionLines.forEach((line) => {
     if (index === composition.length) return;
 
+    const lineTop = line.y;
+    const lineHeight = line.height;
+    const fontPadding = (line.height - line.fontheight) / 2;
+    const fontTop = lineTop + fontPadding;
+    const fontHeight = line.fontheight;
+
     line.outputs.forEach((op) => {
       const lineComposition = composition[index];
 
       if (op.attributes?.background) {
         ctx.fillStyle = op.attributes.background;
         ctx.beginPath();
-        ctx.fillRect(
-          lineComposition.bounds.x,
-          lineComposition.bounds.y,
-          lineComposition.bounds.width,
-          lineComposition.bounds.height
-        );
+        ctx.fillRect(lineComposition.bounds.x, lineTop, lineComposition.bounds.width, lineHeight);
       }
 
       if (op.attributes?.underline || op.attributes?.strike) {
@@ -61,30 +63,24 @@ export function renderDocByComposition(
         if (op.attributes.color) {
           ctx.strokeStyle = op.attributes.color;
         }
-        ctx.lineWidth = lineComposition.bounds.height * 0.07;
+        ctx.lineWidth = fontHeight * 0.07;
       }
 
       if (op.attributes?.underline) {
         ctx.beginPath();
-        ctx.moveTo(lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.9);
-        ctx.lineTo(
-          lineComposition.bounds.x + lineComposition.bounds.width,
-          lineComposition.bounds.y + lineComposition.bounds.height * 0.9
-        );
+        ctx.moveTo(lineComposition.bounds.x, fontTop + fontHeight * 0.9);
+        ctx.lineTo(lineComposition.bounds.x + lineComposition.bounds.width, fontTop + fontHeight * 0.9);
         ctx.stroke();
       }
 
       applyDocAttributesToCtx(ctx, op.attributes);
       // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
-      ctx.fillText(op.insert, lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.8);
+      ctx.fillText(op.insert, lineComposition.bounds.x, fontTop + fontHeight * 0.8);
 
       if (op.attributes?.strike) {
         ctx.beginPath();
-        ctx.moveTo(lineComposition.bounds.x, lineComposition.bounds.y + lineComposition.bounds.height * 0.5);
-        ctx.lineTo(
-          lineComposition.bounds.x + lineComposition.bounds.width,
-          lineComposition.bounds.y + lineComposition.bounds.height * 0.5
-        );
+        ctx.moveTo(lineComposition.bounds.x, fontTop + fontHeight * 0.5);
+        ctx.lineTo(lineComposition.bounds.x + lineComposition.bounds.width, fontTop + fontHeight * 0.5);
         ctx.stroke();
       }
 
@@ -143,9 +139,10 @@ export function applyDocAttributesToCtx(ctx: CanvasRenderingContext2D, attrs: Do
   ctx.textAlign = "left";
 }
 
-export function getLineHeight(attrs: DocAttributes = {}): number {
+export function getLineHeight(attrs: DocAttributes = {}, blockAttrs: DocAttributes = {}): number {
   const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
-  return fontSize * 1;
+  const lineheight = blockAttrs.lineheight ?? DEFAULT_LINEHEIGHT;
+  return fontSize * lineheight;
 }
 
 export function getBreakLineIndexWord(
@@ -199,7 +196,11 @@ export interface DocCompositionItem {
 
 export interface DocCompositionLine {
   y: number;
+  // refers line's height
   height: number;
+  // refers font's height
+  // When this is smaller than "height", this line has extra padding and its content needs to be centralized.
+  fontheight: number;
   outputs: DocOutput;
 }
 
@@ -594,19 +595,24 @@ export function convertLineWordToComposition(
   const lastBlock = blockLineWord[blockLineWord.length - 1];
   const docAttrs = lastBlock[1];
 
-  const heightList: number[] = [];
+  const heightList: [height: number, fontheight: number][] = [];
   let docHeight = 0;
   {
-    blockLineWord.forEach(([lineWord]) => {
+    blockLineWord.forEach(([lineWord, blockAttrs]) => {
       lineWord.forEach((lineUnit) => {
         let height = 0;
+        let fontheight = 0;
         lineUnit.forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
-            height = Math.max(height, getLineHeight(unit[2]));
+            const h = getLineHeight(unit[2], blockAttrs);
+            if (height < h) {
+              height = h;
+              fontheight = unit[2]?.size ?? DEFAULT_FONT_SIZE;
+            }
           })
         );
         docHeight += height;
-        heightList.push(height);
+        heightList.push([height, fontheight]);
       });
     });
   }
@@ -619,14 +625,14 @@ export function convertLineWordToComposition(
     blockLineWord.forEach(([lineWord]) => {
       lineWord.forEach((lineUnit) => {
         const outputs: DocOutput = [];
-        const height = heightList[lineIndex];
+        const [height, fontheight] = heightList[lineIndex];
         lineUnit.forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
             outputs.push({ insert: unit[0], attributes: unit[2] });
           })
         );
 
-        lines.push({ y, height, outputs });
+        lines.push({ y, height, fontheight, outputs });
         y += height;
         lineIndex += 1;
       });

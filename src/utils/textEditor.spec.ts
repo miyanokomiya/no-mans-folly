@@ -1,5 +1,7 @@
 import { expect, describe, test } from "vitest";
 import {
+  DEFAULT_FONT_SIZE,
+  DEFAULT_LINEHEIGHT,
   DocCompositionItem,
   DocCompositionLine,
   applyAttrInfoToDocOutput,
@@ -8,6 +10,7 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  getLineHeight,
   getWordRangeAtCursor,
   isLinebreak,
   mergeDocAttrInfo,
@@ -26,6 +29,14 @@ describe("isLinebreak", () => {
   });
 });
 
+describe("getLineHeight", () => {
+  test("should return line height derived from the attributes", () => {
+    expect(getLineHeight({})).toBe(DEFAULT_FONT_SIZE * DEFAULT_LINEHEIGHT);
+    expect(getLineHeight({ size: 10 })).toBe(10 * DEFAULT_LINEHEIGHT);
+    expect(getLineHeight({ size: 10 }, { lineheight: 2 })).toBe(20);
+  });
+});
+
 describe("getCursorLocationAt", () => {
   test("align left: should return appropriate cursor location", () => {
     const composition: DocCompositionItem[] = [
@@ -39,8 +50,8 @@ describe("getCursorLocationAt", () => {
       { char: "\n", bounds: { x: 12, y: 10, width: 4, height: 10 } },
     ];
     const compositionLines: DocCompositionLine[] = [
-      { y: 0, height: 10, outputs: [{ insert: "abc\n" }] },
-      { y: 0, height: 10, outputs: [{ insert: "def\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "abc\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "def\n" }] },
     ];
     expect(getCursorLocationAt(composition, compositionLines, { x: -1, y: -1 })).toEqual({
       x: 0,
@@ -68,8 +79,8 @@ describe("getCursorLocationAt", () => {
       { char: "\n", bounds: { x: 16, y: 10, width: 4, height: 10 } },
     ];
     const compositionLines: DocCompositionLine[] = [
-      { y: 0, height: 10, outputs: [{ insert: "abc\n" }] },
-      { y: 0, height: 10, outputs: [{ insert: "def\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "abc\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "def\n" }] },
     ];
     expect(getCursorLocationAt(composition, compositionLines, { x: 1, y: 1 })).toEqual({
       x: 0,
@@ -91,8 +102,8 @@ describe("getCursorLocationAt", () => {
       { char: "\n", bounds: { x: 8, y: 10, width: 4, height: 10 } },
     ];
     const compositionLines: DocCompositionLine[] = [
-      { y: 0, height: 10, outputs: [{ insert: "ab\n" }] },
-      { y: 0, height: 10, outputs: [{ insert: "de\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "ab\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "de\n" }] },
     ];
     expect(getCursorLocationAt(composition, compositionLines, { x: 9, y: 2 })).toEqual({
       x: 2,
@@ -116,8 +127,8 @@ describe("getCursorLocationAt", () => {
       { char: "\n", bounds: { x: 12, y: 20, width: 4, height: 10 } },
     ];
     const compositionLines: DocCompositionLine[] = [
-      { y: 10, height: 10, outputs: [{ insert: "abc\n" }] },
-      { y: 20, height: 10, outputs: [{ insert: "def\n" }] },
+      { y: 10, height: 10, fontheight: 10, outputs: [{ insert: "abc\n" }] },
+      { y: 20, height: 10, fontheight: 10, outputs: [{ insert: "def\n" }] },
     ];
     expect(getCursorLocationAt(composition, compositionLines, { x: 5, y: 11 })).toEqual({
       x: 1,
