@@ -12,6 +12,7 @@ import {
   getDeltaByApplyInlineStyleToDoc,
   getLineHeight,
   getWordRangeAtCursor,
+  isCursorInDoc,
   isLinebreak,
   mergeDocAttrInfo,
   sliceDocOutput,
@@ -134,6 +135,34 @@ describe("getCursorLocationAt", () => {
       x: 1,
       y: 0,
     });
+  });
+});
+
+describe("isCursorInDoc", () => {
+  test("should return true when the cursor in the doc", () => {
+    const composition: DocCompositionItem[] = [
+      { char: "a", bounds: { x: 0, y: 0, width: 4, height: 10 } },
+      { char: "b", bounds: { x: 4, y: 0, width: 4, height: 10 } },
+      { char: "c", bounds: { x: 8, y: 0, width: 4, height: 10 } },
+      { char: "\n", bounds: { x: 12, y: 0, width: 4, height: 10 } },
+      { char: "d", bounds: { x: 0, y: 10, width: 4, height: 10 } },
+      { char: "e", bounds: { x: 4, y: 10, width: 4, height: 10 } },
+      { char: "f", bounds: { x: 8, y: 10, width: 4, height: 10 } },
+      { char: "\n", bounds: { x: 12, y: 10, width: 4, height: 10 } },
+    ];
+    const compositionLines: DocCompositionLine[] = [
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "abc\n" }] },
+      { y: 0, height: 10, fontheight: 10, outputs: [{ insert: "def\n" }] },
+    ];
+    expect(isCursorInDoc(composition, compositionLines, { x: -1, y: -1 })).toBe(false);
+    expect(isCursorInDoc(composition, compositionLines, { x: 1, y: -1 })).toBe(false);
+    expect(isCursorInDoc(composition, compositionLines, { x: 3, y: -1 })).toBe(false);
+    expect(isCursorInDoc(composition, compositionLines, { x: 0, y: 0 })).toBe(true);
+    expect(isCursorInDoc(composition, compositionLines, { x: 3, y: 1 })).toBe(true);
+    expect(isCursorInDoc(composition, compositionLines, { x: 3, y: 10 })).toBe(true);
+    expect(isCursorInDoc(composition, compositionLines, { x: 3, y: 11 })).toBe(false);
+    expect(isCursorInDoc(composition, compositionLines, { x: 16, y: 1 })).toBe(true);
+    expect(isCursorInDoc(composition, compositionLines, { x: 17, y: 1 })).toBe(false);
   });
 });
 

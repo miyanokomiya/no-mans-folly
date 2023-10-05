@@ -139,20 +139,27 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "pointerdown": {
           switch (event.data.options.button) {
             case 0: {
-              const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(
-                shapeComposite,
-                event.data.point,
-                shapeComposite.shapeMap[option.id].parentId
-              );
-              if (shapeAtPointer?.id !== option.id) {
-                shapeAtPointer ? ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl) : ctx.clearAllSelected();
-                return newSelectionHubState;
+              const adjustedP = applyAffine(textBounds.affineReverse, event.data.point);
+
+              // Check if the point is in the doc.
+              // If not, try to find a shape at the point.
+              if (!textEditorController.isInDoc(adjustedP)) {
+                const shapeComposite = ctx.getShapeComposite();
+                const shapeAtPointer = findBetterShapeAt(
+                  shapeComposite,
+                  event.data.point,
+                  shapeComposite.shapeMap[option.id].parentId
+                );
+
+                // If the shape is the doc owner, keep editing it.
+                // If not, select the shape.
+                if (shapeAtPointer?.id !== option.id) {
+                  shapeAtPointer ? ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl) : ctx.clearAllSelected();
+                  return newSelectionHubState;
+                }
               }
 
-              const location = textEditorController.getLocationAt(
-                applyAffine(textBounds.affineReverse, event.data.point)
-              );
+              const location = textEditorController.getLocationAt(adjustedP);
               textEditorController.setCursor(textEditorController.getLocationIndex(location));
               updateEditorPosition(ctx);
               onCursorUpdated(ctx);

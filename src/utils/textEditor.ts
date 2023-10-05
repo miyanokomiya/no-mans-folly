@@ -235,6 +235,33 @@ export function getCursorLocationAt(
   return { x: xIndex, y: lineIndex };
 }
 
+export function isCursorInDoc(
+  composition: DocCompositionItem[],
+  compositionLines: DocCompositionLine[],
+  p: IVec2
+): boolean {
+  if (
+    compositionLines.length === 0 ||
+    p.y < compositionLines[0].y ||
+    compositionLines[compositionLines.length - 1].y + compositionLines[compositionLines.length - 1].height < p.y
+  )
+    return false;
+
+  const lineIndex = compositionLines.findIndex((line) => {
+    return p.y <= line.y + line.height;
+  });
+
+  const charIndex = compositionLines.slice(0, lineIndex).reduce((n, line) => {
+    return n + getLineLength(line);
+  }, 0);
+  const lengthInLine = compositionLines[lineIndex].outputs.reduce((m, o) => m + o.insert.length, 0);
+  const compositionInLine = composition.slice(charIndex, charIndex + lengthInLine);
+
+  return compositionInLine.some((c) => {
+    return c.bounds.x <= p.x && p.x <= c.bounds.x + c.bounds.width;
+  });
+}
+
 export function getBoundsAtLocation(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],

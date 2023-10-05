@@ -16,6 +16,7 @@ import {
   getOutputAt,
   getRangeLines,
   getWordRangeAtCursor,
+  isCursorInDoc,
   isLinebreak,
   mergeDocAttrInfo,
   renderDocByComposition,
@@ -97,6 +98,10 @@ export function newTextEditorController() {
 
   function getLocationAt(p: IVec2): IVec2 {
     return getCursorLocationAt(_composition, _compositionLines, p);
+  }
+
+  function isInDoc(p: IVec2): boolean {
+    return isCursorInDoc(_composition, _compositionLines, p);
   }
 
   function moveCursorToHead() {
@@ -358,6 +363,7 @@ export function newTextEditorController() {
     getDeltaByApplyDocStyle,
 
     getLocationAt,
+    isInDoc,
     getBoundsAtIME,
     startIME,
     stopIME,

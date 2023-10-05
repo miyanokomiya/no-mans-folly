@@ -76,7 +76,7 @@ interface LineheightPanelProps {
 const LineheightPanel: React.FC<LineheightPanelProps> = ({ value, onChange }) => {
   return (
     <div className="w-40 p-1">
-      <SliderInput min={1} max={3} step={0.1} value={value} onChanged={onChange} showValue={true} />
+      <SliderInput min={0.5} max={3} step={0.1} value={value} onChanged={onChange} showValue={true} />
     </div>
   );
 };
