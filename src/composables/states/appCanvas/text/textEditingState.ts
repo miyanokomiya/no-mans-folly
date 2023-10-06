@@ -197,10 +197,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
           const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
           if (!shape) return newSelectionHubState;
 
-          if (ctx.getTmpShapeMap()[option.id]) {
+          const shapeUpdated = ctx.getTmpShapeMap()[option.id];
+          const docUpdated = ctx.getTmpDocMap()[option.id];
+          if (shapeUpdated || docUpdated) {
             textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
-          }
-          if (ctx.getTmpDocMap()[option.id]) {
             textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
             textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
           }
