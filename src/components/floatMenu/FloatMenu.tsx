@@ -1,9 +1,17 @@
 import { IRectangle, IVec2, getRectCenter } from "okageo";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, AppStateMachineContext } from "../../contexts/AppCanvasContext";
-import { getCommonStyle, patchShapesOrderToFirst, patchShapesOrderToLast, updateCommonStyle } from "../../shapes";
+import {
+  canHaveTextPadding,
+  getCommonStyle,
+  getTextPadding,
+  patchShapesOrderToFirst,
+  patchShapesOrderToLast,
+  patchTextPadding,
+  updateCommonStyle,
+} from "../../shapes";
 import * as geometry from "../../utils/geometry";
-import { BoxAlign, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
+import { BoxAlign, BoxPadding, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
 import { PopupButton } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
@@ -22,6 +30,7 @@ import { LineTypeButton } from "./LineTypeButton";
 import { mapReduce, patchPipe, toList, toMap } from "../../utils/commons";
 import { newElbowLineHandler } from "../../composables/elbowLineHandler";
 import { newShapeComposite } from "../../composables/shapeComposite";
+import { BoxPaddingButton } from "./BoxPaddingButton";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -296,6 +305,40 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     focusBack?.();
   }, [focusBack, smctx, acctx]);
 
+  const canIndexShapeHaveTextPadding = useMemo<boolean>(() => {
+    if (!indexShape) return false;
+    const ctx = smctx.getCtx();
+    return canHaveTextPadding(ctx.getShapeStruct, indexShape);
+  }, [indexShape, smctx]);
+
+  const indexTextPadding = useMemo<BoxPadding | undefined>(() => {
+    if (!indexShape) return;
+    const ctx = smctx.getCtx();
+    return getTextPadding(ctx.getShapeStruct, indexShape);
+  }, [indexShape, smctx]);
+
+  const onChangeTextPadding = useCallback(
+    (value: BoxPadding, draft?: boolean) => {
+      const ctx = smctx.getCtx();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
+      const selected = ctx.getSelectedShapeIdMap();
+      const patch = mapReduce(selected, (_, id) => {
+        const shape = shapeMap[id];
+        return patchTextPadding(shapeComposite.getShapeStruct, shape, value);
+      });
+
+      if (draft) {
+        ctx.setTmpShapeMap(patch);
+      } else {
+        ctx.patchShapes(patch);
+        ctx.setTmpShapeMap({});
+      }
+      focusBack?.();
+    },
+    [focusBack, smctx, acctx]
+  );
+
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
@@ -340,6 +383,14 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
               docAttrInfo={indexDocAttrInfo}
             />
           </>
+        ) : undefined}
+        {canIndexShapeHaveTextPadding ? (
+          <BoxPaddingButton
+            popupedKey={popupedKey}
+            setPopupedKey={onClickPopupButton}
+            value={indexTextPadding}
+            onChange={onChangeTextPadding}
+          />
         ) : undefined}
         {indexLineShape ? (
           <>

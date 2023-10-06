@@ -21,10 +21,19 @@ import {
   getIntersectedOutlinesOnPolygon,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
+import {
+  ShapeStruct,
+  TextContainer,
+  createBaseShape,
+  getCommonStyle,
+  textContainerModule,
+  updateCommonStyle,
+} from "./core";
+import { getPaddingRect } from "../utils/boxPadding";
 
 export type RectangleShape = Shape &
-  CommonStyle & {
+  CommonStyle &
+  TextContainer & {
     width: number;
     height: number;
   };
@@ -39,6 +48,7 @@ export const struct: ShapeStruct<RectangleShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
       height: arg.height ?? 100,
+      textPadding: arg.textPadding,
     };
   },
   render(ctx, shape) {
@@ -68,7 +78,8 @@ export const struct: ShapeStruct<RectangleShape> = {
   },
   getLocalRectPolygon,
   getTextRangeRect(shape) {
-    return { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
   },
   isPointOn(shape, p) {
     return isPointOnRectangleRotated(
@@ -117,6 +128,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   getCommonStyle,
   updateCommonStyle,
   canAttachSmartBranch: true,
+  ...textContainerModule,
 };
 
 function getLocalRectPolygon(shape: RectangleShape): IVec2[] {

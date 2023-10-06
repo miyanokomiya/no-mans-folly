@@ -1,5 +1,5 @@
-import { AffineMatrix, IRectangle, IVec2, getCenter, getOuterRectangle, multiAffines, sub } from "okageo";
-import { CommonStyle, Shape } from "../models";
+import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines, sub } from "okageo";
+import { BoxPadding, CommonStyle, Shape } from "../models";
 import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, ShapeStruct } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
@@ -69,9 +69,24 @@ export function getTextRangeRect(getStruct: GetShapeStruct, shape: Shape): IRect
   return struct.getTextRangeRect?.(shape);
 }
 
+export function getTextPadding(getStruct: GetShapeStruct, shape: Shape): BoxPadding | undefined {
+  const struct = getStruct(shape.type);
+  return struct.getTextPadding?.(shape);
+}
+
+export function patchTextPadding(getStruct: GetShapeStruct, shape: Shape, value: BoxPadding): Partial<Shape> {
+  const struct = getStruct(shape.type);
+  return struct.patchTextPadding?.(shape, value) ?? {};
+}
+
 export function canHaveText(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.getTextRangeRect;
+}
+
+export function canHaveTextPadding(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.getTextPadding && !!struct.patchTextPadding;
 }
 
 export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2, shapeContext: ShapeContext): boolean {
@@ -136,28 +151,30 @@ export function getShapeTextBounds(
   affineReverse: AffineMatrix;
   range: IRectangle;
 } {
-  const path = getLocalRectPolygon(getStruct, shape);
-  const center = getCenter(path[0], path[2]);
+  const rect = getWrapperRect(getStruct, shape);
+  const center = getRectCenter(rect);
   const rotateFn = geometry.getRotateFn(shape.rotation, center);
-  const range = getTextRangeRect(getStruct, shape) ?? getOuterRectangle([path.map((p) => rotateFn(p, true))]);
+  const range =
+    getTextRangeRect(getStruct, shape) ??
+    getOuterRectangle([getLocalRectPolygon(getStruct, shape).map((p) => rotateFn(p, true))]);
 
-  const width = range.width;
-  const height = range.height;
   const sin = Math.sin(shape.rotation);
   const cos = Math.cos(shape.rotation);
+  const dx = center.x - range.x;
+  const dy = center.y - range.y;
 
   return {
     affine: multiAffines([
       [1, 0, 0, 1, center.x, center.y],
       [cos, sin, -sin, cos, 0, 0],
-      [1, 0, 0, 1, -width / 2, -height / 2],
+      [1, 0, 0, 1, -dx, -dy],
     ]),
     affineReverse: multiAffines([
-      [1, 0, 0, 1, width / 2, height / 2],
+      [1, 0, 0, 1, dx, dy],
       [cos, -sin, sin, cos, 0, 0],
       [1, 0, 0, 1, -center.x, -center.y],
     ]),
-    range: { x: 0, y: 0, width, height },
+    range: { x: 0, y: 0, width: range.width, height: range.height },
   };
 }
 

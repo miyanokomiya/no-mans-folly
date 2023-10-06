@@ -1,10 +1,11 @@
 import { expect, describe, test } from "vitest";
-import { getCommonStyle, updateCommonStyle } from "./core";
+import { getCommonStyle, textContainerModule, updateCommonStyle } from "./core";
 import { createShape, getCommonStruct } from ".";
 import { RectangleShape } from "./rectangle";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { createColor } from "../models/factories";
+import { createBoxPadding } from "../utils/boxPadding";
 
 describe("getCommonStyle", () => {
   test("should return common style", () => {
@@ -30,5 +31,24 @@ describe("updateCommonStyle", () => {
     expect(updateCommonStyle(shape, { fill: fill1, stroke })).toEqual({ fill: fill1 });
     expect(updateCommonStyle(shape, { fill, stroke: stroke1 })).toEqual({ stroke: stroke1 });
     expect(updateCommonStyle(shape, { fill: fill1, stroke: stroke1 })).toEqual({ fill: fill1, stroke: stroke1 });
+  });
+});
+
+describe("getTextPadding", () => {
+  test("should return text padding property", () => {
+    expect(textContainerModule.getTextPadding({})).toEqual(undefined);
+    const padding = createBoxPadding([1, 2, 3, 4]);
+    expect(textContainerModule.getTextPadding({ textPadding: padding })).toEqual(padding);
+  });
+});
+
+describe("patchTextPadding", () => {
+  test("should return patch object for text padding", () => {
+    const padding = createBoxPadding([1, 2, 3, 4]);
+    expect(textContainerModule.patchTextPadding({}, padding)).toEqual({ textPadding: padding });
+    expect(textContainerModule.patchTextPadding({ textPadding: padding }, padding)).toEqual({});
+    expect(textContainerModule.patchTextPadding({ textPadding: padding }, undefined)).toEqual({
+      textPadding: undefined,
+    });
   });
 });

@@ -13,10 +13,19 @@ import {
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
+import {
+  ShapeStruct,
+  TextContainer,
+  createBaseShape,
+  getCommonStyle,
+  textContainerModule,
+  updateCommonStyle,
+} from "./core";
+import { getPaddingRect } from "../utils/boxPadding";
 
 export type EllipseShape = Shape &
-  CommonStyle & {
+  CommonStyle &
+  TextContainer & {
     rx: number;
     ry: number;
     from: number;
@@ -63,7 +72,8 @@ export const struct: ShapeStruct<EllipseShape> = {
     const r = Math.PI / 4;
     const dx = Math.cos(r) * shape.rx;
     const dy = Math.sin(r) * shape.ry;
-    return { x: c.x - dx, y: c.y - dy, width: dx * 2, height: dy * 2 };
+    const rect = { x: c.x - dx, y: c.y - dy, width: dx * 2, height: dy * 2 };
+    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
   },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
@@ -96,6 +106,7 @@ export const struct: ShapeStruct<EllipseShape> = {
   getCommonStyle,
   updateCommonStyle,
   canAttachSmartBranch: true,
+  ...textContainerModule,
 };
 
 function getLocalRectPolygon(shape: EllipseShape): IVec2[] {

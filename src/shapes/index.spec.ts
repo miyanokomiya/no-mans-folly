@@ -1,8 +1,11 @@
 import { expect, describe, test, vi } from "vitest";
 import {
+  canHaveText,
+  canHaveTextPadding,
   createShape,
   getCommonStruct,
   getLocationRateOnShape,
+  getShapeTextBounds,
   getWrapperRect,
   isPointOn,
   refreshShapeRelations,
@@ -65,6 +68,24 @@ describe("getWrapperRect", () => {
   });
 });
 
+describe("canHaveText", () => {
+  test("should return true when the shape's struct has getTextRangeRect", () => {
+    const rect = createShape(getCommonStruct, "rectangle", {});
+    const line = createShape(getCommonStruct, "line", {});
+    expect(canHaveText(getCommonStruct, rect)).toBe(true);
+    expect(canHaveText(getCommonStruct, line)).toBe(false);
+  });
+});
+
+describe("canHaveTextPadding", () => {
+  test("should return true when the shape's struct has functions for text padding", () => {
+    const rect = createShape(getCommonStruct, "rectangle", {});
+    const text = createShape(getCommonStruct, "text", {});
+    expect(canHaveTextPadding(getCommonStruct, rect)).toBe(true);
+    expect(canHaveTextPadding(getCommonStruct, text)).toBe(false);
+  });
+});
+
 describe("isPointOn", () => {
   test("should return true if the point is on the shape", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
@@ -87,6 +108,101 @@ describe("getLocationRateOnShape", () => {
     const result2 = getLocationRateOnShape(getCommonStruct, { ...shape, rotation: Math.PI / 2 }, { x: 5, y: 14 });
     expect(result2.x).toBeCloseTo(0.9);
     expect(result2.y).toBeCloseTo(0.5);
+  });
+});
+
+describe("getShapeTextBounds", () => {
+  test("should return text bounds", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test",
+      p: { x: 1, y: 2 },
+      width: 10,
+      height: 20,
+    });
+
+    expect(getShapeTextBounds(getCommonStruct, shape)).toEqual({
+      affine: [1, 0, 0, 1, 1, 2],
+      affineReverse: [1, 0, 0, 1, -1, -2],
+      range: { x: 0, y: 0, width: 10, height: 20 },
+    });
+  });
+
+  test("should take rotation into account", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test",
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 20,
+      rotation: Math.PI / 2,
+    });
+
+    const result = getShapeTextBounds(getCommonStruct, shape);
+    expect(result.affine[0]).toBeCloseTo(0);
+    expect(result.affine[1]).toBeCloseTo(1);
+    expect(result.affine[2]).toBeCloseTo(-1);
+    expect(result.affine[3]).toBeCloseTo(0);
+    expect(result.range.width).toBeCloseTo(10);
+    expect(result.range.height).toBeCloseTo(20);
+  });
+
+  test("should take text padding into account", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test",
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 20,
+      textPadding: { value: [1, 2, 3, 4] },
+    });
+
+    expect(getShapeTextBounds(getCommonStruct, shape)).toEqual({
+      affine: [1, 0, 0, 1, 4, 1],
+      affineReverse: [1, 0, 0, 1, -4, -1],
+      range: { x: 0, y: 0, width: 4, height: 16 },
+    });
+  });
+
+  test("should return default text bounds when the shape's struct doesn't have text information", () => {
+    const shape = createShape<LineShape>(getCommonStruct, "line", {
+      id: "test",
+      p: { x: 1, y: 2 },
+      q: { x: 10, y: 20 },
+    });
+
+    expect(getShapeTextBounds(getCommonStruct, shape)).toEqual({
+      affine: [1, 0, 0, 1, 1, 2],
+      affineReverse: [1, 0, 0, 1, -1, -2],
+      range: { x: 0, y: 0, width: 9, height: 18 },
+    });
+  });
+
+  test("rhombus case", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rhombus", {
+      id: "test",
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 20,
+      textPadding: { value: [0, 0, 0, 0] },
+    });
+
+    expect(getShapeTextBounds(getCommonStruct, shape)).toEqual({
+      affine: [1, 0, 0, 1, 2.5, 5],
+      affineReverse: [1, 0, 0, 1, -2.5, -5],
+      range: { x: 0, y: 0, width: 5, height: 10 },
+    });
+
+    const shape1 = createShape<RectangleShape>(getCommonStruct, "rhombus", {
+      id: "test",
+      p: { x: 0, y: 0 },
+      width: 100,
+      height: 200,
+      textPadding: { value: [1, 2, 3, 4] },
+    });
+
+    expect(getShapeTextBounds(getCommonStruct, shape1)).toEqual({
+      affine: [1, 0, 0, 1, 29, 51],
+      affineReverse: [1, 0, 0, 1, -29, -51],
+      range: { x: 0, y: 0, width: 44, height: 96 },
+    });
   });
 });
 

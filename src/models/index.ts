@@ -73,3 +73,8 @@ export interface BoxAlign {
   hAlign?: "left" | "center" | "right"; // "left" should be default
   vAlign?: "top" | "center" | "bottom"; // "top" should be default
 }
+
+export interface BoxPadding {
+  type?: "relative"; // undefined should mean "absolute"
+  value: [top: number, right: number, bottom: number, left: number]; // represents px with absolute, rate with relative
+}

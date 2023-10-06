@@ -1,9 +1,10 @@
 import { AffineMatrix, IRectangle, IVec2 } from "okageo";
-import { CommonStyle, FillStyle, Shape, StrokeStyle } from "../models";
+import { BoxPadding, CommonStyle, FillStyle, Shape, StrokeStyle } from "../models";
 import { isSameFillStyle } from "../utils/fillStyle";
 import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "../composables/imageStore";
+import { isSameBoxPadding } from "../utils/boxPadding";
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
 
@@ -24,7 +25,9 @@ export interface ShapeStruct<T extends Shape> {
   render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
   getWrapperRect: (shape: T, shapeContext?: ShapeContext, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T, shapeContext?: ShapeContext) => IVec2[];
-  getTextRangeRect?: (shape: T) => IRectangle | undefined;
+  getTextRangeRect?: (shape: T) => IRectangle;
+  getTextPadding?: (shape: T) => BoxPadding | undefined;
+  patchTextPadding?: (shape: T, value: BoxPadding) => Partial<T>;
   isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
@@ -80,3 +83,16 @@ export function updateCommonStyle<T extends Shape & CommonStyle>(
   }
   return ret;
 }
+
+export interface TextContainer {
+  textPadding?: BoxPadding;
+}
+
+export const textContainerModule = {
+  getTextPadding<T extends TextContainer>(shape: T): BoxPadding | undefined {
+    return shape.textPadding;
+  },
+  patchTextPadding<T extends TextContainer>(shape: T, value?: BoxPadding): Partial<TextContainer> {
+    return isSameBoxPadding(shape.textPadding, value) ? {} : { textPadding: value };
+  },
+};

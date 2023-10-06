@@ -2,9 +2,10 @@ import { IVec2, add, getCenter, getUnit, isSame, isZero, multi, sub } from "okag
 import { BoxAlign, Shape, Size } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape } from "./core";
+import { ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { getRotateFn } from "../utils/geometry";
+import { mapReduce } from "../utils/commons";
 
 export type TextShape = RectangleShape &
   BoxAlign & {
@@ -46,6 +47,7 @@ export const struct: ShapeStruct<TextShape> = {
     return ret;
   },
   canAttachSmartBranch: false,
+  ...mapReduce(textContainerModule, () => undefined),
 };
 
 export function isTextShape(shape: Shape): shape is TextShape {
