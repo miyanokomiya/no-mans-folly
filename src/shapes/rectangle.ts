@@ -29,7 +29,7 @@ import {
   textContainerModule,
   updateCommonStyle,
 } from "./core";
-import { getPaddingRect } from "../utils/boxPadding";
+import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 
 export type RectangleShape = Shape &
   CommonStyle &
@@ -48,7 +48,7 @@ export const struct: ShapeStruct<RectangleShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
       height: arg.height ?? 100,
-      textPadding: arg.textPadding,
+      textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
     };
   },
   render(ctx, shape) {
