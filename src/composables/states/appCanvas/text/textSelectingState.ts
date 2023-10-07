@@ -29,10 +29,8 @@ export function newTextSelectingState(option: Option): AppCanvasState {
         case "pointermove": {
           const start = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.start));
           const current = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, event.data.current));
-          const index0 = textEditorController.getLocationIndex(start);
-          const index1 = textEditorController.getLocationIndex(current);
-          const from = Math.min(index0, index1);
-          const to = Math.max(index0, index1);
+          const from = textEditorController.getLocationIndex(start);
+          const to = textEditorController.getLocationIndex(current);
 
           textEditorController.setCursor(from, to - from);
           ctx.setTmpShapeMap({});

@@ -391,11 +391,19 @@ function handleKeydown(
       return;
     }
     case "ArrowUp":
-      textEditorController.moveCursorUp();
+      if (event.data.shift) {
+        textEditorController.shiftSelectionUp();
+      } else {
+        textEditorController.moveCursorUp();
+      }
       onCursorUpdated(ctx);
       return;
     case "ArrowDown":
-      textEditorController.moveCursorDown();
+      if (event.data.shift) {
+        textEditorController.shiftSelectionDown();
+      } else {
+        textEditorController.moveCursorDown();
+      }
       onCursorUpdated(ctx);
       return;
     case "Backspace": {

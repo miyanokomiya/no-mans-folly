@@ -68,24 +68,33 @@ export function newTextEditorController() {
   }
 
   function shiftCursorBy(diff: number) {
-    setCursor(getCursor() + diff);
+    setCursor(getMovingCursor() + diff);
   }
 
   function shiftSelectionBy(diff: number) {
     _selection += diff;
   }
 
+  // This value always refers to the left bound of the selection range.
   function getCursor(): number {
     const c = _selection < 0 ? _cursor + _selection : _cursor;
     // The last character must be line break, and it can't be selected.
     return Math.min(Math.max(c, 0), docLength - 1);
   }
 
+  // This value always refers to positive selection range size.
   function getSelection(): number {
     const c = getCursor();
     const s = Math.min(Math.abs(_selection), docLength - getCursor());
     // The last character must be line break, and it can't be selected.
     return c + s < docLength ? s : docLength - c - 1;
+  }
+
+  // This value refers to the last moving position.
+  // It can be used as the origin for relative cursor shifting.
+  function getMovingCursor(): number {
+    // The last character must be line break, and it can't be selected.
+    return Math.min(Math.max(_cursor + _selection, 0), docLength - 1);
   }
 
   function getLocationIndex(location: IVec2): number {
@@ -116,7 +125,7 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getCursor())
+      getCursorLocation(_compositionLines, getMovingCursor())
     );
     const p = { x: location.x, y: location.y - location.height * 0.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
@@ -126,24 +135,44 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getCursor())
+      getCursorLocation(_compositionLines, getMovingCursor())
     );
     const p = { x: location.x, y: location.y + location.height * 1.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
   }
 
-  function selectAll() {
-    setCursor(0, docLength);
+  function shiftSelectionUp() {
+    const location = getBoundsAtLocation(
+      _composition,
+      _compositionLines,
+      getCursorLocation(_compositionLines, getMovingCursor())
+    );
+    const p = { x: location.x, y: location.y - location.height * 0.1 };
+    _selection = getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor;
+  }
+
+  function shiftSelectionDown() {
+    const location = getBoundsAtLocation(
+      _composition,
+      _compositionLines,
+      getCursorLocation(_compositionLines, getMovingCursor())
+    );
+    const p = { x: location.x, y: location.y + location.height * 1.1 };
+    _selection = getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor;
   }
 
   function moveCursorLineHead() {
-    const location = getCursorLocation(_compositionLines, getCursor());
+    const location = getCursorLocation(_compositionLines, getMovingCursor());
     setCursor(getLocationIndex({ x: 0, y: location.y }));
   }
 
   function moveCursorLineTail() {
-    const location = getCursorLocation(_compositionLines, getCursor());
+    const location = getCursorLocation(_compositionLines, getMovingCursor());
     setCursor(getLocationIndex({ x: getDocLength(_compositionLines[location.y].outputs) - 1, y: location.y }));
+  }
+
+  function selectAll() {
+    setCursor(0, docLength);
   }
 
   function selectWordAtCursor() {
@@ -326,6 +355,7 @@ export function newTextEditorController() {
       compositionLines: _compositionLines,
       cursor,
       selection,
+      movingCursor: getMovingCursor(),
       isIME,
     });
   }
@@ -343,6 +373,8 @@ export function newTextEditorController() {
     moveCursorToTail,
     moveCursorUp,
     moveCursorDown,
+    shiftSelectionUp,
+    shiftSelectionDown,
     selectAll,
     moveCursorLineHead,
     moveCursorLineTail,
@@ -406,12 +438,14 @@ function renderCursor(
     compositionLines,
     cursor,
     selection,
+    movingCursor,
     isIME,
   }: {
     composition: DocCompositionItem[];
     compositionLines: DocCompositionLine[];
     cursor: number;
     selection: number;
+    movingCursor: number;
     isIME: boolean;
   }
 ) {
@@ -425,8 +459,6 @@ function renderCursor(
     ctx.lineTo(1, DEFAULT_FONT_SIZE);
     ctx.stroke();
   } else if (cursor < composition.length) {
-    const c = composition[cursor];
-
     if (isIME) {
       const range = getRangeLines(composition, compositionLines, [cursor, selection]);
       ctx.beginPath();
@@ -444,6 +476,7 @@ function renderCursor(
       ctx.lineTo(cs.bounds.x + cs.bounds.width, cs.bounds.y + cs.bounds.height);
       ctx.stroke();
     } else {
+      const c = composition[movingCursor];
       ctx.beginPath();
       ctx.moveTo(c.bounds.x, c.bounds.y);
       ctx.lineTo(c.bounds.x, c.bounds.y + c.bounds.height);
