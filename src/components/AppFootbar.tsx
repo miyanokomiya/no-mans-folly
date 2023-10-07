@@ -2,6 +2,8 @@ import { useCallback, useContext, useState } from "react";
 import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
 import { PopupButton } from "./atoms/PopupButton";
 import { getWrapperRect } from "../utils/geometry";
+import { ListButton } from "./atoms/buttons/ListButton";
+import { OutsideObserver } from "./atoms/OutsideObserver";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -19,7 +21,13 @@ export const AppFootbar: React.FC = () => {
     const shapeComposite = smctx.getShapeComposite();
     smctx.setViewport(getWrapperRect(shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s))), 80);
   }, [smctx]);
+  const handleScale100 = useCallback(() => {
+    smctx.setZoom(1, true);
+  }, [smctx]);
 
+  const handleClosePopup = useCallback(() => {
+    setPopupedKey("");
+  }, []);
   const onClickZoomButton = useCallback(() => {
     setPopupedKey((key) => (key === "scale" ? "" : "scale"));
   }, []);
@@ -44,20 +52,21 @@ export const AppFootbar: React.FC = () => {
         <button type="button" className="w-4 h-8 rounded" onClick={handleScaleDown}>
           -
         </button>
-        <PopupButton
-          name="scale"
-          opened={popupedKey === "scale"}
-          popup={
-            <div className="px-4 flex">
-              <button type="button" className="w-full h-8" onClick={handleScaleFit}>
-                Fit
-              </button>
-            </div>
-          }
-          onClick={onClickZoomButton}
-        >
-          <div className="flex items-center">{scale}%</div>
-        </PopupButton>
+        <OutsideObserver onClick={handleClosePopup}>
+          <PopupButton
+            name="scale"
+            opened={popupedKey === "scale"}
+            popup={
+              <div className="flex flex-col items-center">
+                <ListButton onClick={handleScaleFit}>Fit</ListButton>
+                <ListButton onClick={handleScale100}>100%</ListButton>
+              </div>
+            }
+            onClick={onClickZoomButton}
+          >
+            <div className="flex items-center">{scale}%</div>
+          </PopupButton>
+        </OutsideObserver>
         <button type="button" className="w-4 h-8 rounded" onClick={handleScaleUp}>
           +
         </button>

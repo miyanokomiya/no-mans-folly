@@ -189,6 +189,19 @@ export function useCanvas(
     [viewCenter, scale, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint]
   );
 
+  const setZoom = useCallback(
+    (value: number, center = false): number => {
+      const origin = !center ? getMousePoint() : viewCenter;
+      const beforeOrigin = viewToCanvas(origin);
+      const nextScale = Math.min(Math.max(value, scaleMin), scaleMax);
+      const nextViewOrigin = add(viewOrigin, sub(beforeOrigin, _viewToCanvas(nextScale, viewOrigin, origin)));
+      setScale(nextScale);
+      setViewOrigin(nextViewOrigin);
+      return nextScale;
+    },
+    [viewCenter, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint]
+  );
+
   const onResize = useCallback(() => {
     const wrapperElm = getWrapper();
     if (!wrapperElm) return;
@@ -216,6 +229,7 @@ export function useCanvas(
     viewToCanvas,
     canvasToView,
     zoomView,
+    setZoom,
     panView,
     adjustToCenter,
     setViewport,

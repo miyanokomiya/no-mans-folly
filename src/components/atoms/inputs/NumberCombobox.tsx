@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useOutsideClickCallback } from "../../../composables/window";
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
   max?: number;
   onChanged?: (value: number, draft?: boolean) => void;
   onActivate?: () => void;
+  popupPosition?: "bottom" | "top";
 }
 
 export const NumberCombobox: React.FC<Props> = ({
@@ -17,6 +18,7 @@ export const NumberCombobox: React.FC<Props> = ({
   max = Infinity,
   onChanged,
   onActivate,
+  popupPosition,
 }) => {
   const [draftValue, setDraftValue] = useState(value);
   const [opened, setOpened] = useState(false);
@@ -60,6 +62,19 @@ export const NumberCombobox: React.FC<Props> = ({
     [min, max, onChanged]
   );
 
+  const popupAttrs = useMemo(() => {
+    const base = "absolute left-1/2 bg-white text-right border rounded shadow-md z-10";
+    return popupPosition === "top"
+      ? {
+          className: base + " top-0",
+          style: { transform: "translate(-50%, -100%)" },
+        }
+      : {
+          className: base + " bottom-0",
+          style: { transform: "translate(-50%, 100%)" },
+        };
+  }, [popupPosition]);
+
   return (
     <div ref={ref} className="relative w-full">
       <form action="" className="w-full" onSubmit={onSubmit}>
@@ -74,10 +89,7 @@ export const NumberCombobox: React.FC<Props> = ({
         <button type="submit" className="hidden"></button>
       </form>
       {opened ? (
-        <div
-          className="absolute left-1/2 bottom-0 bg-white text-right border rounded shadow-md z-10"
-          style={{ transform: "translate(-50%, 100%)" }}
-        >
+        <div {...popupAttrs}>
           <div className="flex gap-1 p-1">
             {options.map((o) => (
               <button

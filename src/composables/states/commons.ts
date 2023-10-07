@@ -10,6 +10,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   getRenderCtx: () => CanvasRenderingContext2D | undefined;
   setViewport: (rect?: IRectangle, margin?: number) => void;
   zoomView: (step: number, center?: boolean) => number;
+  setZoom: (value: number, center?: boolean) => number;
   getScale: () => number;
   getViewRect: () => IRectangle;
   panView: (val: EditMovement) => void;

@@ -38,6 +38,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getRenderCtx: () => undefined,
     setViewport() {},
     zoomView: () => 1,
+    setZoom: () => 1,
     getScale: () => 1,
     getViewRect: () => ({ x: 0, y: 0, width: 100, height: 100 }),
     panView() {},

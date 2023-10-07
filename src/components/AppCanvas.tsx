@@ -138,6 +138,7 @@ export const AppCanvas: React.FC = () => {
   const {
     setViewport,
     zoomView,
+    setZoom,
     panView,
     startDragging,
     endMoving,
@@ -173,8 +174,9 @@ export const AppCanvas: React.FC = () => {
   useEffect(() => {
     setSmctx({
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
-      setViewport: setViewport,
-      zoomView: zoomView,
+      setViewport,
+      zoomView,
+      setZoom,
       getScale: () => scale,
       getViewRect: () => viewCanvasRect,
       panView: panView,
@@ -298,6 +300,7 @@ export const AppCanvas: React.FC = () => {
   }, [
     setViewport,
     zoomView,
+    setZoom,
     panView,
     startDragging,
     endMoving,

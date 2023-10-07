@@ -6,7 +6,7 @@ import { StateMachine, newStateMachine } from "../composables/states/core";
 import { newDefaultState } from "../composables/states/appCanvas/defaultState";
 
 interface AppCanvasProviderProps {
-  children: React.ReactElement;
+  children: React.ReactNode;
   getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
   acctx: IAppCanvasContext;
 }

@@ -1,6 +1,7 @@
 import { IVec2 } from "okageo";
 import { ContextMenuItem } from "../composables/states/types";
 import { useMemo } from "react";
+import { ListButton } from "./atoms/buttons/ListButton";
 
 interface Props {
   items: ContextMenuItem[];
@@ -11,14 +12,9 @@ interface Props {
 export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
   const itemElm = useMemo(() => {
     return items.map((item) => (
-      <button
-        key={item.key}
-        className="p-2 border-b last:border-none hover:bg-gray-200"
-        type="button"
-        onClick={() => onClickItem?.(item.key)}
-      >
+      <ListButton key={item.key} onClick={() => onClickItem?.(item.key)}>
         {item.label}
-      </button>
+      </ListButton>
     ));
   }, [items, onClickItem]);
 
