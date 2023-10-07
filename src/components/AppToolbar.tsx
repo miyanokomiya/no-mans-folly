@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
+import { AppCanvasContext } from "../contexts/AppCanvasContext";
+import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
 import iconShapeSet from "../assets/icons/shape_set.svg";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
@@ -25,25 +26,26 @@ function getButtonClass(highlight = false) {
 
 export const AppToolbar: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
-  const smctx = useContext(AppStateMachineContext);
+  const sm = useContext(AppStateMachineContext);
+  const smctx = useContext(AppStateContext);
 
   const [stateLabel, setStateLabel] = useState("");
   useEffect(() => {
-    return smctx.stateMachine.watch(() => {
-      setStateLabel(smctx.stateMachine.getStateSummary().label);
+    return sm.watch(() => {
+      setStateLabel(sm.getStateSummary().label);
     });
-  }, [smctx.stateMachine]);
+  }, [sm]);
 
   const onDownShapeElm = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      const ctx = smctx.getCtx();
+      const ctx = smctx;
       const type = e.currentTarget.getAttribute("data-type")!;
       const shape = createShape(ctx.getShapeStruct, type, {
         id: ctx.generateUuid(),
         findex: acctx.shapeStore.createLastIndex(),
       });
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "state",
         data: {
           name: "DroppingNewShape",
@@ -52,14 +54,14 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("");
     },
-    [smctx, acctx]
+    [sm, smctx, acctx]
   );
 
   const onDownLineElm = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       const type = e.currentTarget.getAttribute("data-type")!;
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "state",
         data: {
           name: "LineReady",
@@ -68,7 +70,7 @@ export const AppToolbar: React.FC = () => {
       });
       setLineType(type);
     },
-    [smctx]
+    [sm, smctx]
   );
 
   const [popup, setPopup] = useState<"" | "shapes" | "lines">("");
@@ -80,13 +82,13 @@ export const AppToolbar: React.FC = () => {
 
   const onClickLineButton = useCallback(() => {
     if (popup === "lines" && stateLabel === "LineReady") {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "state",
         data: { name: "Break" },
       });
       setPopup("");
     } else {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "state",
         data: {
           name: "LineReady",
@@ -95,22 +97,22 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("lines");
     }
-  }, [stateLabel, popup, lineType, smctx.stateMachine]);
+  }, [stateLabel, popup, lineType, sm]);
 
   const onClickTextButton = useCallback(() => {
     setPopup("");
     if (stateLabel === "TextReady") {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "state",
         data: { name: "Break" },
       });
     } else {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "state",
         data: { name: "TextReady" },
       });
     }
-  }, [stateLabel, smctx.stateMachine]);
+  }, [stateLabel, sm]);
 
   function renderPopup() {
     switch (popup) {

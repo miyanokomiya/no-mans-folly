@@ -1,7 +1,6 @@
 import { generateUuid } from "./utils/random";
 import { AppCanvas } from "./components/AppCanvas";
 import { AppToolbar } from "./components/AppToolbar";
-import { AppCanvasContext, AppStateMachineContext, createStateMachineContext } from "./contexts/AppCanvasContext";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
@@ -10,6 +9,7 @@ import { SheetConfigPanel } from "./components/SheetConfigPanel";
 import { usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
+import { AppCanvasProvider } from "./contexts/AppContext";
 
 function App() {
   const {
@@ -58,15 +58,6 @@ function App() {
     return context;
   }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager]);
 
-  const smctx = useMemo(() => {
-    return createStateMachineContext({
-      getTimestamp: Date.now,
-      generateUuid,
-      getStyleScheme: acctx.getStyleScheme,
-      getAssetAPI,
-    });
-  }, [acctx.getStyleScheme]);
-
   const onClickOpen = useCallback(async () => {
     await openDiagramFromLocal();
   }, [openDiagramFromLocal]);
@@ -85,32 +76,30 @@ function App() {
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
-    <AppCanvasContext.Provider value={acctx}>
-      <AppStateMachineContext.Provider value={smctx}>
-        <div className="relative">
-          <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
-          <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
-            <AppToolbar />
-          </div>
-          <div className="absolute right-4 bottom-2">
-            <AppFootbar />
-          </div>
-          <div className="absolute top-8 flex">
-            <SheetList />
-            <SheetConfigPanel />
-          </div>
-          <div className="absolute left-0 top-0 flex">
-            <AppHeader
-              onClickOpen={onClickOpen}
-              onClickSave={onClickSave}
-              onClickMerge={onClickMerge}
-              canSyncoLocal={canSyncoLocal}
-              saving={saving}
-            />
-          </div>
+    <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
+      <div className="relative">
+        <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
+        <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
+          <AppToolbar />
         </div>
-      </AppStateMachineContext.Provider>
-    </AppCanvasContext.Provider>
+        <div className="absolute right-4 bottom-2">
+          <AppFootbar />
+        </div>
+        <div className="absolute top-8 flex">
+          <SheetList />
+          <SheetConfigPanel />
+        </div>
+        <div className="absolute left-0 top-0 flex">
+          <AppHeader
+            onClickOpen={onClickOpen}
+            onClickSave={onClickSave}
+            onClickMerge={onClickMerge}
+            canSyncoLocal={canSyncoLocal}
+            saving={saving}
+          />
+        </div>
+      </div>
+    </AppCanvasProvider>
   );
 }
 

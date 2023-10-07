@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AppCanvasContext, AppStateMachineContext } from "../contexts/AppCanvasContext";
-import { duplicateShapes } from "../shapes";
+import { AppCanvasContext } from "../contexts/AppCanvasContext";
+import { AppStateContext, AppStateMachineContext, SetAppStateContext } from "../contexts/AppContext";
+import { duplicateShapes, getCommonStruct } from "../shapes";
 import { useCanvas } from "../composables/canvas";
 import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import {
@@ -35,8 +36,10 @@ import { getDeleteTargetIds } from "../composables/shapeComposite";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
-  const smctx = useContext(AppStateMachineContext);
-  const assetAPI = smctx.getCtx().getAssetAPI();
+  const sm = useContext(AppStateMachineContext);
+  const smctx = useContext(AppStateContext);
+  const setSmctx = useContext(SetAppStateContext);
+  const assetAPI = smctx.getAssetAPI();
 
   const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
@@ -73,30 +76,30 @@ export const AppCanvas: React.FC = () => {
 
   useEffect(() => {
     return acctx.sheetStore.watchSelected(() => {
-      smctx.stateMachine.reset();
+      sm.reset();
       setCanvasState({});
     });
-  }, [acctx.shapeStore, smctx.stateMachine, imageStore, loadShapeAssets]);
+  }, [acctx.shapeStore, sm, imageStore, loadShapeAssets]);
 
   useEffect(() => {
     return acctx.shapeStore.watch((keys) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "shape-updated",
         data: { keys },
       });
       setCanvasState({});
     });
-  }, [acctx.shapeStore, smctx.stateMachine]);
+  }, [acctx.shapeStore, sm]);
 
   useEffect(() => {
     return acctx.shapeStore.watchTmpShapeMap(() => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "tmp-shape-updated",
         data: {},
       });
       setCanvasState({});
     });
-  }, [acctx.shapeStore, smctx.stateMachine]);
+  }, [acctx.shapeStore, sm]);
 
   useEffect(() => {
     return acctx.shapeStore.watchSelected(() => {
@@ -106,29 +109,29 @@ export const AppCanvas: React.FC = () => {
 
   useEffect(() => {
     return acctx.documentStore.watch((keys) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "shape-updated",
         data: { keys, text: true },
       });
       setCanvasState({});
     });
-  }, [acctx.documentStore, smctx.stateMachine]);
+  }, [acctx.documentStore, sm]);
 
   useEffect(() => {
     return acctx.documentStore.watchTmpDocMap(() => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "tmp-shape-updated",
         data: { text: true },
       });
       setCanvasState({});
     });
-  }, [acctx.documentStore, smctx.stateMachine]);
+  }, [acctx.documentStore, sm]);
 
   useEffect(() => {
-    return smctx.stateMachine.watch(() => {
+    return sm.watch(() => {
       setCanvasState({});
     });
-  }, [smctx.stateMachine]);
+  }, [sm]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
@@ -168,7 +171,7 @@ export const AppCanvas: React.FC = () => {
   }, [acctx.documentStore, canvasState]);
 
   useEffect(() => {
-    smctx.setCtx({
+    setSmctx({
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
       setViewport: setViewport,
       zoomView: zoomView,
@@ -241,7 +244,7 @@ export const AppCanvas: React.FC = () => {
         const targetP = p ?? viewToCanvas(getMousePoint());
         const availableIdSet = new Set(acctx.shapeStore.getEntities().map((s) => s.id));
         const result = duplicateShapes(
-          smctx.getCtx().getShapeStruct,
+          getCommonStruct,
           shapes,
           docs,
           generateUuid,
@@ -303,7 +306,6 @@ export const AppCanvas: React.FC = () => {
     scale,
     viewCanvasRect,
     acctx,
-    smctx,
     getMousePoint,
     grid,
     loadShapeAssets,
@@ -312,16 +314,16 @@ export const AppCanvas: React.FC = () => {
   useEffect(() => {
     // Need to call reset once here.
     // The sm has initial mock context until "smctx.setCtx" is called once.
-    smctx.stateMachine.reset();
-  }, [smctx]);
+    sm.reset();
+  }, [sm]);
 
   useEffect(() => {
     return acctx.shapeStore.watchSelected(() => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "selection",
       });
     });
-  }, [acctx.shapeStore, smctx.stateMachine]);
+  }, [acctx.shapeStore, sm]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -344,7 +346,7 @@ export const AppCanvas: React.FC = () => {
     ctx.translate(-viewOrigin.x, -viewOrigin.y);
     grid.render(ctx, scale);
 
-    const canvasContext = smctx.getCtx();
+    const canvasContext = smctx;
     const selectedMap = canvasContext.getSelectedShapeIdMap();
     const renderer = newShapeRenderer({
       shapeComposite: acctx.shapeStore.shapeComposite,
@@ -357,10 +359,11 @@ export const AppCanvas: React.FC = () => {
 
     grid.renderAxisLabels(ctx, scale);
 
-    smctx.stateMachine.render(ctx);
+    sm.render(ctx);
   }, [
     acctx.shapeStore.shapeComposite,
     acctx.documentStore,
+    sm,
     smctx,
     viewSize.width,
     viewSize.height,
@@ -401,13 +404,13 @@ export const AppCanvas: React.FC = () => {
 
       const timestamp = Date.now();
       if (timestamp - downInfo.timestamp < 300 && e.button === downInfo.button) {
-        smctx.stateMachine.handleEvent({ type: "pointerdoubledown", data });
+        sm.handleEvent({ type: "pointerdoubledown", data });
       } else {
-        smctx.stateMachine.handleEvent({ type: "pointerdown", data });
+        sm.handleEvent({ type: "pointerdown", data });
       }
       setDownInfo({ timestamp, button: e.button });
     },
-    [getMousePoint, viewToCanvas, smctx, downInfo, focus]
+    [getMousePoint, viewToCanvas, sm, downInfo, focus]
   );
 
   const onMouseMove = useCallback(
@@ -415,7 +418,7 @@ export const AppCanvas: React.FC = () => {
       setMousePoint(removeRootPosition({ x: e.pageX, y: e.pageY }));
       if (!editStartPoint) return;
 
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "pointermove",
         data: {
           start: viewToCanvas(editStartPoint),
@@ -425,7 +428,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, smctx]
+    [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm]
   );
   useGlobalMousemoveEffect(onMouseMove);
 
@@ -440,32 +443,32 @@ export const AppCanvas: React.FC = () => {
   const onCopy = useCallback(
     (e: ClipboardEvent) => {
       if (!focused && !textEditing) return;
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "copy",
         nativeEvent: e,
       });
     },
-    [focused, textEditing, smctx]
+    [focused, textEditing, sm]
   );
   useGlobalCopyEffect(onCopy);
 
   const onPaste = useCallback(
     (e: ClipboardEvent, option: ModifierOptions) => {
       if (!focused && !textEditing) return;
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "paste",
         nativeEvent: e,
         data: option,
       });
     },
-    [focused, textEditing, smctx]
+    [focused, textEditing, sm]
   );
   useGlobalPasteEffect(onPaste);
 
   const onMouseHover = useCallback(
     (e: React.MouseEvent) => {
       focus();
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "pointerhover",
         data: {
           current: viewToCanvas(getMousePoint()),
@@ -474,12 +477,12 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [getMousePoint, scale, viewToCanvas, smctx, focus]
+    [getMousePoint, scale, viewToCanvas, sm, focus]
   );
 
   const onMouseUp = useCallback(
     (e: MouseEvent) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "pointerup",
         data: {
           point: viewToCanvas(getMousePoint()),
@@ -487,13 +490,13 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [viewToCanvas, getMousePoint, smctx]
+    [viewToCanvas, getMousePoint, sm]
   );
   useGlobalMouseupEffect(onMouseUp);
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "keydown",
         data: {
           ...getKeyOptions(e),
@@ -501,12 +504,12 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [smctx]
+    [sm]
   );
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "wheel",
         data: {
           delta: { x: e.deltaX, y: e.deltaY },
@@ -514,27 +517,27 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [smctx]
+    [sm]
   );
 
   const onContextMenu = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      smctx.stateMachine.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(getMousePoint()) } });
+      sm.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(getMousePoint()) } });
     },
-    [smctx, getMousePoint, viewToCanvas]
+    [sm, getMousePoint, viewToCanvas]
   );
 
   const onClickContextMenuItem = useCallback(
     (key: string) => {
-      smctx.stateMachine.handleEvent({ type: "contextmenu-item", data: { key } });
+      sm.handleEvent({ type: "contextmenu-item", data: { key } });
     },
-    [smctx]
+    [sm]
   );
 
   const onTextInput = useCallback(
     (val: string, composition = false) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "text-input",
         data: {
           value: val,
@@ -542,7 +545,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [smctx.stateMachine]
+    [sm]
   );
 
   const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
@@ -559,12 +562,12 @@ export const AppCanvas: React.FC = () => {
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
-      smctx.stateMachine.handleEvent({
+      sm.handleEvent({
         type: "file-drop",
         data: { files: e.dataTransfer.files, point: viewToCanvas({ x: e.pageX, y: e.pageY }) },
       });
     },
-    [smctx.stateMachine, viewToCanvas, getMousePoint]
+    [sm, viewToCanvas, getMousePoint]
   );
 
   const textEditor = textEditing ? (
@@ -608,7 +611,7 @@ export const AppCanvas: React.FC = () => {
       >
         <FileDropArea typeReg={/image\/.+/} onDrop={onDrop}>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-          <div className="absolute right-2 top-0">{smctx.stateMachine.getStateSummary().label}</div>
+          <div className="absolute right-2 top-0">{sm.getStateSummary().label}</div>
           <div className="absolute bottom-2 left-2 pointer-events-none">
             <CommandExamPanel commandExams={commandExams} />
           </div>

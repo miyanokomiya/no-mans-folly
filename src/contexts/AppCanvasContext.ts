@@ -3,9 +3,7 @@ import type { newShapeStore } from "../stores/shapes";
 import type { newLayerStore } from "../stores/layers";
 import type { newDiagramStore } from "../stores/diagram";
 import type { newSheetStore } from "../stores/sheets";
-import { newStateMachine } from "../composables/states/core";
-import { newDefaultState } from "../composables/states/appCanvas/defaultState";
-import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
+import { AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
 import { newDocumentStore } from "../stores/documents";
@@ -13,7 +11,7 @@ import { newShapeComposite } from "../composables/shapeComposite";
 import { newGrid } from "../composables/grid";
 import { newImageStore } from "../composables/imageStore";
 
-interface IAppCanvasContext {
+export interface IAppCanvasContext {
   diagramStore: ReturnType<typeof newDiagramStore>;
   sheetStore: ReturnType<typeof newSheetStore>;
   layerStore: ReturnType<typeof newLayerStore>;
@@ -24,40 +22,6 @@ interface IAppCanvasContext {
 }
 
 export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);
-
-interface IAppStateMachineContext {
-  setCtx: (
-    c: Omit<
-      AppCanvasStateContext,
-      "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getAssetAPI"
-    >
-  ) => void;
-  getCtx: () => AppCanvasStateContext;
-  stateMachine: ReturnType<typeof newStateMachine<AppCanvasStateContext, AppCanvasEvent>>;
-}
-
-export const AppStateMachineContext = createContext<IAppStateMachineContext>(undefined as any);
-
-export function createStateMachineContext(arg: {
-  getTimestamp: () => number;
-  generateUuid: () => string;
-  getStyleScheme: () => StyleScheme;
-  getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
-}) {
-  let ctx = createInitialAppCanvasStateContext(arg);
-
-  const setCtx: IAppStateMachineContext["setCtx"] = (c) => {
-    ctx = { ...ctx, ...c };
-  };
-
-  const getCtx: IAppStateMachineContext["getCtx"] = () => ctx;
-
-  return {
-    setCtx,
-    getCtx,
-    stateMachine: newStateMachine(getCtx, newDefaultState),
-  };
-}
 
 export function createInitialAppCanvasStateContext(arg: {
   getTimestamp: () => number;

@@ -24,7 +24,7 @@ type StateStackItem<C, E = ModeStateEvent> = {
   type?: TransitionType;
 };
 
-interface StateMachine<E = ModeStateEvent> {
+export interface StateMachine<E = ModeStateEvent> {
   getStateSummary: () => { label: string };
   handleEvent: (event: E) => void;
   render: (ctx: CanvasRenderingContext2D) => void;
