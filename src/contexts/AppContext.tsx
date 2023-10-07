@@ -12,14 +12,16 @@ interface AppCanvasProviderProps {
 }
 
 export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, getAssetAPI, acctx }) => {
-  const [stateContext, setStateContext] = useState(
-    createInitialAppCanvasStateContext({
+  const initialContext = useMemo(() => {
+    return createInitialAppCanvasStateContext({
       getTimestamp: Date.now,
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
       getAssetAPI,
-    })
-  );
+    });
+  }, [acctx, getAssetAPI]);
+
+  const [stateContext, setStateContext] = useState(initialContext);
 
   const stateContextRef = useRef(stateContext);
   useEffect(() => {
