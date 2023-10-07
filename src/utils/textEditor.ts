@@ -316,6 +316,34 @@ function getLineLength(line: DocCompositionLine): number {
   return line.outputs.reduce((n, o) => n + o.insert.length, 0);
 }
 
+/**
+ * Return index at the linebreak of the target line
+ * => This index is at the left hand side of a linebreak.
+ */
+export function getLineEndIndex(composition: DocCompositionItem[], cursor: number): number {
+  for (let i = cursor; i < composition.length; i++) {
+    const c = composition[i];
+    if (isLinebreak(c.char)) {
+      return i;
+    }
+  }
+  return composition.length - 1;
+}
+
+/**
+ * Return index at the linebreak of the previous line + 1
+ * => This index is at the right hand side of a linebreak.
+ */
+export function getLineHeadIndex(composition: DocCompositionItem[], cursor: number): number {
+  for (let i = cursor - 1; 0 <= i; i--) {
+    const c = composition[i];
+    if (isLinebreak(c.char)) {
+      return i + 1;
+    }
+  }
+  return 0;
+}
+
 export function getDeltaByApplyBlockStyle(
   composition: DocCompositionItem[],
   cursor: number,

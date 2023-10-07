@@ -13,7 +13,9 @@ import {
   getDocCompositionInfo,
   getDocLength,
   getInitialOutput,
+  getLineEndIndex,
   getOutputAt,
+  getLineHeadIndex,
   getRangeLines,
   getWordRangeAtCursor,
   isCursorInDoc,
@@ -162,13 +164,11 @@ export function newTextEditorController() {
   }
 
   function moveCursorLineHead() {
-    const location = getCursorLocation(_compositionLines, getMovingCursor());
-    setCursor(getLocationIndex({ x: 0, y: location.y }));
+    setCursor(getLineHeadIndex(_composition, getMovingCursor()));
   }
 
   function moveCursorLineTail() {
-    const location = getCursorLocation(_compositionLines, getMovingCursor());
-    setCursor(getLocationIndex({ x: getDocLength(_compositionLines[location.y].outputs) - 1, y: location.y }));
+    setCursor(getLineEndIndex(_composition, getMovingCursor()));
   }
 
   function selectAll() {

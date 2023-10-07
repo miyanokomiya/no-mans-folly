@@ -10,6 +10,8 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  getLineEndIndex,
+  getLineHeadIndex,
   getLineHeight,
   getWordRangeAtCursor,
   isCursorInDoc,
@@ -163,6 +165,40 @@ describe("isCursorInDoc", () => {
     expect(isCursorInDoc(composition, compositionLines, { x: 3, y: 11 })).toBe(false);
     expect(isCursorInDoc(composition, compositionLines, { x: 16, y: 1 })).toBe(true);
     expect(isCursorInDoc(composition, compositionLines, { x: 17, y: 1 })).toBe(false);
+  });
+});
+
+describe("getLineEndIndex", () => {
+  test("should return next linebreak index", () => {
+    const composition: DocCompositionItem[] = [
+      { char: "a", bounds: { x: 0, y: 0, width: 4, height: 10 } },
+      { char: "b", bounds: { x: 4, y: 0, width: 4, height: 10 } },
+      { char: "c", bounds: { x: 8, y: 0, width: 4, height: 10 } },
+      { char: "\n", bounds: { x: 12, y: 0, width: 4, height: 10 } },
+      { char: "d", bounds: { x: 0, y: 10, width: 4, height: 10 } },
+      { char: "\n", bounds: { x: 12, y: 10, width: 4, height: 10 } },
+    ];
+    expect(getLineEndIndex(composition, 0)).toBe(3);
+    expect(getLineEndIndex(composition, 3)).toBe(3);
+    expect(getLineEndIndex(composition, 4)).toBe(5);
+    expect(getLineEndIndex(composition, 5)).toBe(5);
+  });
+});
+
+describe("getLineHeadIndex", () => {
+  test("should return previous linebreak index + 1", () => {
+    const composition: DocCompositionItem[] = [
+      { char: "a", bounds: { x: 0, y: 0, width: 4, height: 10 } },
+      { char: "b", bounds: { x: 4, y: 0, width: 4, height: 10 } },
+      { char: "c", bounds: { x: 8, y: 0, width: 4, height: 10 } },
+      { char: "\n", bounds: { x: 12, y: 0, width: 4, height: 10 } },
+      { char: "d", bounds: { x: 0, y: 10, width: 4, height: 10 } },
+      { char: "\n", bounds: { x: 12, y: 10, width: 4, height: 10 } },
+    ];
+    expect(getLineHeadIndex(composition, 0)).toBe(0);
+    expect(getLineHeadIndex(composition, 3)).toBe(0);
+    expect(getLineHeadIndex(composition, 4)).toBe(4);
+    expect(getLineHeadIndex(composition, 5)).toBe(4);
   });
 });
 
