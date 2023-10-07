@@ -16,6 +16,7 @@ import { RectangleShape } from "./rectangle";
 import { LineShape } from "./line";
 import { TextShape } from "./text";
 import { createStrokeStyle } from "../utils/strokeStyle";
+import { createBoxPadding } from "../utils/boxPadding";
 
 describe("createShape", () => {
   test("should return new shape", () => {
@@ -118,6 +119,7 @@ describe("getShapeTextBounds", () => {
       p: { x: 1, y: 2 },
       width: 10,
       height: 20,
+      textPadding: createBoxPadding([0, 0, 0, 0]),
     });
 
     expect(getShapeTextBounds(getCommonStruct, shape)).toEqual({
@@ -133,6 +135,7 @@ describe("getShapeTextBounds", () => {
       p: { x: 0, y: 0 },
       width: 10,
       height: 20,
+      textPadding: createBoxPadding([0, 0, 0, 0]),
       rotation: Math.PI / 2,
     });
 
