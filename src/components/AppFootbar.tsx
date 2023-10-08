@@ -4,6 +4,8 @@ import { PopupButton } from "./atoms/PopupButton";
 import { getWrapperRect } from "../utils/geometry";
 import { ListButton } from "./atoms/buttons/ListButton";
 import { OutsideObserver } from "./atoms/OutsideObserver";
+import iconUndo from "../assets/icons/undo.svg";
+import iconRedo from "../assets/icons/redo.svg";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -72,10 +74,10 @@ export const AppFootbar: React.FC = () => {
         </button>
       </div>
       <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onUndo}>
-        Un
+        <img src={iconUndo} alt="Undo" />
       </button>
       <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onRedo}>
-        Re
+        <img src={iconRedo} alt="Redo" />
       </button>
     </div>
   );
