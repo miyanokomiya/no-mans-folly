@@ -130,11 +130,11 @@ export function renderDocByComposition(
   });
 
   // For debug
-  composition.forEach((c) => {
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(c.bounds.x, c.bounds.y, c.bounds.width, c.bounds.height);
-  });
+  // composition.forEach((c) => {
+  //   ctx.strokeStyle = "red";
+  //   ctx.lineWidth = 1;
+  //   ctx.strokeRect(c.bounds.x, c.bounds.y, c.bounds.width, c.bounds.height);
+  // });
 }
 
 export function getRawCursor(composition: DocCompositionItem[], cursor: number): number {
