@@ -10,9 +10,12 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  getDocLength,
+  getDocRawLength,
   getLineEndIndex,
   getLineHeadIndex,
   getLineHeight,
+  getRawCursor,
   getWordRangeAtCursor,
   isCursorInDoc,
   isLinebreak,
@@ -20,6 +23,7 @@ import {
   sliceDocOutput,
   splitDocOutputByLineBreak,
   splitOutputsIntoLineWord,
+  splitToSegments,
 } from "./textEditor";
 
 describe("isLinebreak", () => {
@@ -29,6 +33,52 @@ describe("isLinebreak", () => {
     expect(isLinebreak("a")).toBe(false);
     expect(isLinebreak(" ")).toBe(false);
     expect(isLinebreak("\t")).toBe(false);
+  });
+});
+
+describe("splitToSegments", () => {
+  test("should return text segments based on graphemes", () => {
+    expect(splitToSegments("f😃a😄e😜")).toEqual(["f", "😃", "a", "😄", "e", "😜"]);
+  });
+});
+
+describe("getDocLength", () => {
+  test("should return doc length based on graphemes", () => {
+    expect(getDocLength([{ insert: "a" }, { insert: "b" }, { insert: "c" }])).toBe(3);
+    expect(getDocLength([{ insert: "a" }, { insert: "😄" }, { insert: "c" }])).toBe(3);
+  });
+});
+
+describe("getDocRawLength", () => {
+  test("should return doc length based on doc delta", () => {
+    expect(getDocRawLength([{ insert: "a" }, { insert: "b" }, { insert: "c" }])).toBe(3);
+    expect(getDocRawLength([{ insert: "a" }, { insert: "😄" }, { insert: "c" }])).toBe(4);
+  });
+});
+
+describe("getRawCursor", () => {
+  test("should return raw cursor", () => {
+    expect(
+      getRawCursor(
+        [
+          { char: "a", bounds: { x: 0, y: 0, width: 4, height: 10 } },
+          { char: "b", bounds: { x: 4, y: 0, width: 4, height: 10 } },
+          { char: "c", bounds: { x: 8, y: 0, width: 4, height: 10 } },
+        ],
+        3,
+      ),
+    ).toBe(3);
+
+    expect(
+      getRawCursor(
+        [
+          { char: "a", bounds: { x: 0, y: 0, width: 4, height: 10 } },
+          { char: "😄", bounds: { x: 4, y: 0, width: 4, height: 10 } },
+          { char: "c", bounds: { x: 8, y: 0, width: 4, height: 10 } },
+        ],
+        3,
+      ),
+    ).toBe(4);
   });
 });
 
@@ -415,8 +465,9 @@ describe("splitOutputsIntoLineWord", () => {
 
   test("should split multiple byte words into individual words", () => {
     const attrs0 = { size: 1 } as const;
-    expect(splitOutputsIntoLineWord([{ insert: "abここ\n", attributes: attrs0 }])).toEqual([
+    expect(splitOutputsIntoLineWord([{ insert: "こabここ\n", attributes: attrs0 }])).toEqual([
       [
+        [["こ", 0, attrs0]],
         [
           ["a", 0, attrs0],
           ["b", 0, attrs0],
@@ -425,6 +476,9 @@ describe("splitOutputsIntoLineWord", () => {
         [["こ", 0, attrs0]],
         [["\n", 0, attrs0]],
       ],
+    ]);
+    expect(splitOutputsIntoLineWord([{ insert: "😃a😄😜\n", attributes: attrs0 }])).toEqual([
+      [[["😃", 0, attrs0]], [["a", 0, attrs0]], [["😄", 0, attrs0]], [["😜", 0, attrs0]], [["\n", 0, attrs0]]],
     ]);
   });
 });

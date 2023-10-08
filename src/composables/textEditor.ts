@@ -23,6 +23,9 @@ import {
   mergeDocAttrInfo,
   renderDocByComposition,
   sliceDocOutput,
+  getRawCursor,
+  getDocRawLength,
+  getLineLength,
 } from "../utils/textEditor";
 import { Size } from "../models";
 
@@ -30,6 +33,9 @@ export function newTextEditorController() {
   let _ctx: CanvasRenderingContext2D;
   let _doc: DocOutput;
   let docLength = 0;
+  let outputLength = 0;
+  // cursor and selection are based on graphemes.
+  // To access raw index of outputs, use "getRawCursor" to convert it.
   let _cursor = 0;
   let _selection = 0;
   let _range: IRectangle;
@@ -53,6 +59,7 @@ export function newTextEditorController() {
     _doc = _isDocEmpty ? getInitialOutput() : doc;
     _range = range;
     docLength = getDocLength(_doc);
+    outputLength = getDocRawLength(_doc);
     updateComposition();
   }
 
@@ -92,6 +99,17 @@ export function newTextEditorController() {
     return c + s < docLength ? s : docLength - c - 1;
   }
 
+  function getOutputCursor(): number {
+    return getRawCursor(_composition, getCursor());
+  }
+
+  function getOutputSelection(): number {
+    const cursor = getCursor();
+    const outputFrom = getRawCursor(_composition, cursor);
+    const outputTo = getRawCursor(_composition, cursor + getSelection());
+    return outputTo - outputFrom;
+  }
+
   // This value refers to the last moving position.
   // It can be used as the origin for relative cursor shifting.
   function getMovingCursor(): number {
@@ -101,7 +119,7 @@ export function newTextEditorController() {
 
   function getLocationIndex(location: IVec2): number {
     const charIndex = _compositionLines.slice(0, location.y).reduce((n, line) => {
-      return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);
+      return n + getLineLength(line);
     }, 0);
 
     return charIndex + location.x;
@@ -212,12 +230,11 @@ export function newTextEditorController() {
       return getDeltaByInput(text);
     }
 
-    const cursor = getCursor();
-    const selection = getSelection();
-    const ret: DocDelta = [{ retain: cursor }];
+    const ret: DocDelta = [{ retain: getOutputCursor() }];
 
-    if (selection > 0) {
-      ret.push({ delete: selection });
+    const outputSelection = getOutputSelection();
+    if (outputSelection > 0) {
+      ret.push({ delete: outputSelection });
     }
 
     const attrInfo = mergeDocAttrInfo(getCurrentAttributeInfo());
@@ -232,12 +249,11 @@ export function newTextEditorController() {
   }
 
   function getDeltaByInput(text: string): DocDelta {
-    const cursor = getCursor();
-    const selection = getSelection();
-    const ret: DocDelta = [{ retain: cursor }];
+    const ret: DocDelta = [{ retain: getOutputCursor() }];
 
-    if (selection > 0) {
-      ret.push({ delete: selection });
+    const outputSelection = getOutputSelection();
+    if (outputSelection > 0) {
+      ret.push({ delete: outputSelection });
     }
 
     const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
@@ -260,12 +276,12 @@ export function newTextEditorController() {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
     if (_composition.length === 1) return { delta: [], cursor: 0 };
 
-    const cursor = getCursor();
-    const selection = getSelection();
-    if (selection > 0) {
-      return { cursor, delta: [{ retain: cursor }, { delete: Math.max(1, selection) }] };
+    const outputCursor = getOutputCursor();
+    const outputSelection = getOutputSelection();
+    if (outputSelection > 0) {
+      return { cursor: outputCursor, delta: [{ retain: outputCursor }, { delete: Math.max(1, outputSelection) }] };
     } else {
-      return { cursor: cursor - 1, delta: [{ retain: cursor - 1 }, { delete: 1 }] };
+      return { cursor: outputCursor - 1, delta: [{ retain: outputCursor - 1 }, { delete: 1 }] };
     }
   }
 
@@ -273,12 +289,12 @@ export function newTextEditorController() {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
     if (_composition.length === 1) return { delta: [], cursor: 0 };
 
-    const cursor = getCursor();
-    const selection = getSelection();
-    if (selection > 0) {
-      return { cursor, delta: [{ retain: cursor }, { delete: Math.max(1, selection) }] };
+    const outputCursor = getOutputCursor();
+    const outputSelection = getOutputSelection();
+    if (outputSelection > 0) {
+      return { cursor: outputCursor, delta: [{ retain: outputCursor }, { delete: Math.max(1, outputSelection) }] };
     } else {
-      return { cursor, delta: [{ retain: cursor }, { delete: 1 }] };
+      return { cursor: outputCursor, delta: [{ retain: outputCursor }, { delete: 1 }] };
     }
   }
 
@@ -290,10 +306,13 @@ export function newTextEditorController() {
 
     // When the selection reaches the doc end, apply the style to the line break at the doc end.
     // => Otherwise, there's no way to change inline style of it but changing whole doc style.
-    const adjustedSelection = cursor + selection === docLength - 1 ? selection + 1 : selection;
+    const lastSelected = cursor + selection === docLength - 1;
 
-    if (adjustedSelection === 0) return [];
-    return [{ retain: cursor }, { retain: adjustedSelection, attributes: attrs }];
+    const outputCursor = getOutputCursor();
+    const outputSelection = getOutputSelection() + (lastSelected ? 1 : 0);
+
+    if (outputSelection === 0) return [];
+    return [{ retain: outputCursor }, { retain: outputSelection, attributes: attrs }];
   }
 
   function _getDeltaByApplyBlockStyle(attrs: DocAttributes): DocDelta {
@@ -306,7 +325,7 @@ export function newTextEditorController() {
 
   function getDeltaByApplyDocStyle(attrs: DocAttributes): DocDelta {
     if (_isDocEmpty) return getInitialOutput(attrs);
-    return [{ retain: docLength - 1 }, { retain: 1, attributes: attrs }];
+    return [{ retain: outputLength - 1 }, { retain: 1, attributes: attrs }];
   }
 
   function getBoundsAtIME(): IRectangle | undefined {

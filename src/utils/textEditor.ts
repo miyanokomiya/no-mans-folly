@@ -9,6 +9,28 @@ export const DEFAULT_LINEHEIGHT = 1.2;
 const WORDBREAK = /\n| |\t|\.|,/;
 export const LINEBREAK = /\n|\r\n/;
 
+export interface DocCompositionItem {
+  char: string; // A grapheme character
+  bounds: IRectangle;
+}
+
+export interface DocCompositionLine {
+  y: number;
+  // refers line's height
+  height: number;
+  // refers font's height
+  // When this is smaller than "height", this line has extra padding and its content needs to be centralized.
+  fontheight: number;
+  outputs: DocOutput;
+}
+
+/**
+ * A letter refers to a graphme
+ */
+type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
+type LineItem = WordItem[];
+type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
+
 /**
  * "char" must be a character.
  */
@@ -23,7 +45,26 @@ export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
 }
 
+const segmenter = new (Intl as any).Segmenter();
+
+/**
+ * Returns text segments based on graphemes
+ */
+export function splitToSegments(text: string): string[] {
+  return [...segmenter.segment(text)].map((s) => s.segment);
+}
+
+/**
+ * Returns doc length based on graphemes
+ */
 export function getDocLength(doc: DocOutput): number {
+  return doc.map((d) => splitToSegments(d.insert)).reduce((p, v) => p + v.length, 0);
+}
+
+/**
+ * Returns doc length based on doc delta
+ */
+export function getDocRawLength(doc: DocOutput): number {
   return doc.map((d) => d.insert).reduce((p, v) => p + v.length, 0);
 }
 
@@ -84,16 +125,22 @@ export function renderDocByComposition(
         ctx.stroke();
       }
 
-      index += op.insert.length;
+      index += splitToSegments(op.insert).length;
     });
   });
 
   // For debug
-  // composition.forEach((c) => {
-  //   ctx.strokeStyle = "red";
-  //   ctx.lineWidth = 1;
-  //   ctx.strokeRect(c.bounds.x, c.bounds.y, c.bounds.width, c.bounds.height);
-  // });
+  composition.forEach((c) => {
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(c.bounds.x, c.bounds.y, c.bounds.width, c.bounds.height);
+  });
+}
+
+export function getRawCursor(composition: DocCompositionItem[], cursor: number): number {
+  return composition.slice(0, cursor).reduce((m, item) => {
+    return m + item.char.length;
+  }, 0);
 }
 
 export function getCursorLocation(compositionLines: DocCompositionLine[], cursor: number): IVec2 {
@@ -189,21 +236,6 @@ export function getBreakIndicesForWord(
   return ret;
 }
 
-export interface DocCompositionItem {
-  char: string; // A character
-  bounds: IRectangle;
-}
-
-export interface DocCompositionLine {
-  y: number;
-  // refers line's height
-  height: number;
-  // refers font's height
-  // When this is smaller than "height", this line has extra padding and its content needs to be centralized.
-  fontheight: number;
-  outputs: DocOutput;
-}
-
 export function getCursorLocationAt(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
@@ -219,7 +251,7 @@ export function getCursorLocationAt(
   const charIndex = compositionLines.slice(0, lineIndex).reduce((n, line) => {
     return n + getLineLength(line);
   }, 0);
-  const lengthInLine = compositionLines[lineIndex].outputs.reduce((m, o) => m + o.insert.length, 0);
+  const lengthInLine = getLineLength(compositionLines[lineIndex]);
   const compositionInLine = composition.slice(charIndex, charIndex + lengthInLine);
 
   let xIndex = 0;
@@ -254,7 +286,7 @@ export function isCursorInDoc(
   const charIndex = compositionLines.slice(0, lineIndex).reduce((n, line) => {
     return n + getLineLength(line);
   }, 0);
-  const lengthInLine = compositionLines[lineIndex].outputs.reduce((m, o) => m + o.insert.length, 0);
+  const lengthInLine = getLineLength(compositionLines[lineIndex]);
   const compositionInLine = composition.slice(charIndex, charIndex + lengthInLine);
 
   return compositionInLine.some((c) => {
@@ -271,7 +303,7 @@ export function getBoundsAtLocation(
 
   const charIndex =
     compositionLines.slice(0, location.y).reduce((n, line) => {
-      return n + line.outputs.reduce((m, o) => m + o.insert.length, 0);
+      return n + getLineLength(line);
     }, 0) + location.x;
 
   if (charIndex < composition.length) {
@@ -312,8 +344,8 @@ export function getRangeLines(
   return ret.map((val) => composition.slice(val[0], val[0] + val[1]));
 }
 
-function getLineLength(line: DocCompositionLine): number {
-  return line.outputs.reduce((n, o) => n + o.insert.length, 0);
+export function getLineLength(line: DocCompositionLine): number {
+  return line.outputs.reduce((n, o) => n + splitToSegments(o.insert).length, 0);
 }
 
 /**
@@ -413,7 +445,7 @@ export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert
   let count = 0;
   let ret = line.outputs[line.outputs.length - 1];
   line.outputs.some((o) => {
-    count += o.insert.length;
+    count += splitToSegments(o.insert).length;
     if (x <= count) {
       ret = o;
       return true;
@@ -452,7 +484,8 @@ export function sliceDocOutput(doc: DocOutput, from: number, to: number): DocOut
   let count = 0;
   for (let i = 0; i < doc.length; i++) {
     const o = doc[i];
-    const nextCount = count + o.insert.length;
+    const segments = splitToSegments(o.insert);
+    const nextCount = count + segments.length;
 
     if (nextCount <= from) {
       count = nextCount;
@@ -461,20 +494,20 @@ export function sliceDocOutput(doc: DocOutput, from: number, to: number): DocOut
 
     if (count <= from && from < nextCount) {
       if (nextCount < to) {
-        ret.push({ ...o, insert: o.insert.slice(from - count, o.insert.length) });
+        ret.push({ ...o, insert: segments.slice(from - count, o.insert.length).join("") });
         count = nextCount;
         continue;
       } else {
-        ret.push({ ...o, insert: o.insert.slice(from - count, to - count) });
+        ret.push({ ...o, insert: segments.slice(from - count, to - count).join("") });
         break;
       }
     } else {
       if (nextCount < to) {
-        ret.push({ ...o, insert: o.insert.slice(0, o.insert.length) });
+        ret.push({ ...o, insert: o.insert });
         count = nextCount;
         continue;
       } else {
-        ret.push({ ...o, insert: o.insert.slice(0, to - count) });
+        ret.push({ ...o, insert: segments.slice(0, to - count).join("") });
         break;
       }
     }
@@ -504,6 +537,9 @@ export function applyAttrInfoToDocOutput(pasted: DocOutput, attrs?: DocAttribute
   return attrs ? splited.map((d) => ({ ...d, attributes: { ...attrs, ...(d.attributes ?? {}) } })) : splited;
 }
 
+/**
+ * Letters are split into units based on graphemes
+ */
 export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext2D): Map<number, number> {
   const ret = new Map<number, number>();
 
@@ -511,8 +547,9 @@ export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext
   doc.forEach((op) => {
     applyDocAttributesToCtx(ctx, op.attributes);
 
-    for (let i = 0; i < op.insert.length; i++) {
-      const c = op.insert[i];
+    const segments = splitToSegments(op.insert);
+    for (let i = 0; i < segments.length; i++) {
+      const c = segments[i];
       if (isLinebreak(c)) {
         ret.set(cursor, 0);
       } else {
@@ -530,10 +567,6 @@ function isMultiByte(c: string) {
   return p ? p > 255 : true;
 }
 
-type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
-type LineItem = WordItem[];
-type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
-
 export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, number>): WordItem[][] {
   const lines: WordItem[][] = [];
   let line: WordItem[] = [];
@@ -545,8 +578,9 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
   };
 
   doc.forEach((op) => {
-    for (let i = 0; i < op.insert.length; i++) {
-      const c = op.insert[i];
+    const segList = splitToSegments(op.insert);
+    for (let i = 0; i < segList.length; i++) {
+      const c = segList[i];
 
       if (isLinebreak(c)) {
         if (word.length > 0) line.push(word);
@@ -560,7 +594,8 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
         word = [];
       } else if (isMultiByte(c)) {
         if (word.length > 0) line.push(word);
-        word = [[c, getW(), op.attributes]];
+        line.push([[c, getW(), op.attributes]]);
+        word = [];
       } else {
         word.push([c, getW(), op.attributes]);
       }
