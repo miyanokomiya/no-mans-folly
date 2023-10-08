@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "fractional-indexing": "^3.2.0",
-    "nanoid": "^4.0.2",
+    "nanoid": "^5.0.1",
     "okageo": "^3.0.8",
     "okaselect": "^0.1.0",
     "react": "^18.2.0",
