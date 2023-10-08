@@ -22,7 +22,7 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
         { x: -height, y: -width / 2 },
         { x: 0, y: 0 },
         { x: -height, y: width / 2 },
-      ].map((p) => applyAffine(transform, p))
+      ].map((p) => applyAffine(transform, p)),
     );
     ctx.stroke();
   },
@@ -40,7 +40,7 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
         { x: -height, y: width / 2 },
         { x: 0, y: width / 2 },
       ].map((p) => applyAffine(transform, p)),
-      true
+      true,
     );
   },
 };

@@ -47,7 +47,7 @@ describe("newLineLabelHandler", () => {
         target.onModified({
           line: { q: { x: 200, y: 0 } } as Partial<LineShape>,
           label0: { p: { x: 50, y: -100 } },
-        })
+        }),
       ).toEqual({
         label0: { p: { x: 50, y: -17 }, hAlign: "center", vAlign: "bottom", lineAttached: 0.3 },
       });

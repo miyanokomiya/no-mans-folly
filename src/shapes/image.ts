@@ -26,7 +26,7 @@ export const struct: ShapeStruct<ImageShape> = {
   render(ctx, shape, _shapeContext, imageStore) {
     const affine = getRotatedRectAffine(
       { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
-      shape.rotation
+      shape.rotation,
     );
 
     ctx.save();

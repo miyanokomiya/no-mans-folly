@@ -86,7 +86,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
         setStatus("fail");
       }
     },
-    [onSuccess, onFail, playing, currentRadian, radian, range]
+    [onSuccess, onFail, playing, currentRadian, radian, range],
   );
   useGlobalClickEffect(onStop);
 

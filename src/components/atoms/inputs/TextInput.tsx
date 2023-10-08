@@ -21,7 +21,7 @@ export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus,
       const v = e.target.value;
       onChange?.(v);
     },
-    [onChange]
+    [onChange],
   );
 
   return (

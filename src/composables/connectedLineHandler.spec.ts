@@ -53,7 +53,7 @@ describe("newConnectedLineHandler", () => {
         target.onModified({
           a: { width: 50, height: 100 } as Partial<RectangleShape>,
           b: { p: { x: 100, y: 0 }, width: 50, height: 100 } as Partial<RectangleShape>,
-        })
+        }),
       ).toEqual({
         l0: {
           p: { x: 25, y: 50 },
@@ -92,7 +92,7 @@ describe("newConnectedLineHandler", () => {
         target.onModified({
           a: { width: 50, height: 100 } as Partial<RectangleShape>,
           b: { p: { x: 100, y: 0 }, width: 50, height: 100 } as Partial<RectangleShape>,
-        })
+        }),
       ).toEqual({
         l0: {
           body: [
@@ -123,7 +123,7 @@ describe("newConnectedLineHandler", () => {
         target.onModified({
           a: { width: 50, height: 100 } as Partial<RectangleShape>,
           b: { p: { x: 100, y: 0 }, width: 50, height: 100 } as Partial<RectangleShape>,
-        })
+        }),
       ).toEqual({
         elbow0: {
           p: { x: 0, y: 50 },
@@ -184,7 +184,7 @@ describe("newConnectedLineHandler", () => {
         target.onModified({
           a: { width: 100, height: 100 } as Partial<RectangleShape>,
           b: { p: { x: 200, y: 200 }, width: 100, height: 100 } as Partial<RectangleShape>,
-        })
+        }),
       ).toEqual({
         l2: {
           p: { x: 100, y: 100 },
@@ -222,8 +222,8 @@ describe("getConnectedLineInfoMap", () => {
               getStruct: getCommonStruct,
             }),
         },
-        ["a", "b"]
-      )
+        ["a", "b"],
+      ),
     ).toEqual({ a: [l0], b: [l0, l1] });
   });
 
@@ -251,8 +251,8 @@ describe("getConnectedLineInfoMap", () => {
               getStruct: getCommonStruct,
             }),
         },
-        ["b"]
-      )
+        ["b"],
+      ),
     ).toEqual({ b: [l0] });
   });
 });

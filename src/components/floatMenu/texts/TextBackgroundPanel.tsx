@@ -19,7 +19,7 @@ export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
     (val: boolean) => {
       onChanged?.(val ? undefined : rednerRGBA(COLORS.YELLOW));
     },
-    [onChanged]
+    [onChanged],
   );
 
   const onAlphaChanged = useCallback(
@@ -28,7 +28,7 @@ export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
 
       onChanged?.(rednerRGBA({ ...color, a: val }), draft);
     },
-    [onChanged, color]
+    [onChanged, color],
   );
 
   const onColorClick = useCallback(
@@ -37,7 +37,7 @@ export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
 
       onChanged?.(rednerRGBA({ ...val, a: color.a }));
     },
-    [onChanged, color]
+    [onChanged, color],
   );
 
   return (

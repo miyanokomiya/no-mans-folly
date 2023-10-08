@@ -40,7 +40,7 @@ export function getAltOrOptionStr(): string {
 
 export function switchClick(
   e: ModifiedEvent,
-  callbacks: { plain?: () => void; shift?: () => void; ctrl?: () => void }
+  callbacks: { plain?: () => void; shift?: () => void; ctrl?: () => void },
 ) {
   if (isCtrlOrMeta(e)) {
     callbacks.ctrl?.();

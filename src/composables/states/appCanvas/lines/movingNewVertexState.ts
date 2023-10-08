@@ -36,7 +36,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       const selectedIds = ctx.getSelectedShapeIdMap();
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
       const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
 
@@ -49,7 +49,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
 
       const snappableLines = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),

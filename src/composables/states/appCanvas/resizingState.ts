@@ -47,7 +47,7 @@ export function newResizingState(option: Option): AppCanvasState {
       const shapeMap = shapeComposite.shapeMap;
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !targetShapeMap[s.id] && !isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
@@ -58,7 +58,7 @@ export function newResizingState(option: Option): AppCanvasState {
       lineHandler = newConnectedLineHandler({
         connectedLinesMap: getConnectedLineInfoMap(
           ctx,
-          targets.map((s) => s.id)
+          targets.map((s) => s.id),
         ),
         ctx,
       });
@@ -115,7 +115,7 @@ export function newResizingState(option: Option): AppCanvasState {
                 boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, target.line, {
                   keepAspect: event.data.shift,
                   centralize: event.data.alt,
-                })
+                }),
               )
               .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2)
               .sort((a, b) => a[1] - b[1]);

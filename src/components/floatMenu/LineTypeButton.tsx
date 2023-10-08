@@ -53,7 +53,7 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({ currentType, onClick }) =
       const type = e.currentTarget.getAttribute("data-type")!;
       onClick?.(type as LineType);
     },
-    [onClick]
+    [onClick],
   );
 
   const lines = LINE_LIST.map((item) => (

@@ -43,7 +43,7 @@ export function renderShape<T extends Shape>(
   ctx: CanvasRenderingContext2D,
   shape: T,
   shapeContext: ShapeContext,
-  imageStore?: ImageStore
+  imageStore?: ImageStore,
 ) {
   const struct = getStruct(shape.type);
   struct.render(ctx, shape, shapeContext, imageStore);
@@ -53,7 +53,7 @@ export function getWrapperRect(
   getStruct: GetShapeStruct,
   shape: Shape,
   shapeContext?: ShapeContext,
-  includeBounds?: boolean
+  includeBounds?: boolean,
 ): IRectangle {
   const struct = getStruct(shape.type);
   return struct.getWrapperRect(shape, shapeContext, includeBounds);
@@ -102,7 +102,7 @@ export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAff
 export function getSnappingLines(
   getStruct: GetShapeStruct,
   shape: Shape,
-  shapeContext?: ShapeContext
+  shapeContext?: ShapeContext,
 ): ShapeSnappingLines {
   const struct = getStruct(shape.type);
   if (struct.getSnappingLines) return struct.getSnappingLines(shape);
@@ -120,7 +120,7 @@ export function getClosestOutline(
   getStruct: GetShapeStruct,
   shape: Shape,
   p: IVec2,
-  threshold: number
+  threshold: number,
 ): IVec2 | undefined {
   const struct = getStruct(shape.type);
   if (struct.getClosestOutline) return struct.getClosestOutline(shape, p, threshold);
@@ -133,7 +133,7 @@ export function getIntersectedOutlines(
   getStruct: GetShapeStruct,
   shape: Shape,
   from: IVec2,
-  to: IVec2
+  to: IVec2,
 ): IVec2[] | undefined {
   const struct = getStruct(shape.type);
   if (struct.getIntersectedOutlines) return struct.getIntersectedOutlines(shape, from, to);
@@ -145,7 +145,7 @@ export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, 
 
 export function getShapeTextBounds(
   getStruct: GetShapeStruct,
-  shape: Shape
+  shape: Shape,
 ): {
   affine: AffineMatrix;
   affineReverse: AffineMatrix;
@@ -192,7 +192,7 @@ export function remapShapeIds(
   getStruct: GetShapeStruct,
   shapes: Shape[],
   generateId: () => string,
-  removeNotFound = false
+  removeNotFound = false,
 ): { shapes: Shape[]; newToOldMap: { [newId: string]: string }; oldToNewMap: { [newId: string]: string } } {
   const newToOldMap: { [id: string]: string } = {};
   const oldToNewMap: { [id: string]: string } = {};
@@ -228,7 +228,7 @@ export function remapShapeIds(
 export function refreshShapeRelations(
   getStruct: GetShapeStruct,
   shapes: Shape[],
-  availableIdSet: Set<string>
+  availableIdSet: Set<string>,
 ): { [id: string]: Partial<Shape> } {
   const ret: { [id: string]: Partial<Shape> } = {};
 
@@ -284,7 +284,7 @@ export function duplicateShapes(
   generateUuid: () => string,
   lastFIndex: string,
   availableIdSet: Set<string>,
-  p?: IVec2
+  p?: IVec2,
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
   const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, true);
   const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
@@ -297,12 +297,12 @@ export function duplicateShapes(
     ? shiftShapesAtTopLeft(
         getStruct,
         remapInfo.shapes.map((s) => [s, remapComposite.getWrapperRect(s)]),
-        p
+        p,
       )
     : remapInfo.shapes;
   const patch = patchShapesOrderToLast(
     moved.map((s) => s.id),
-    lastFIndex
+    lastFIndex,
   );
 
   let result: Shape[] = moved.map((s) => ({ ...s, ...patch[s.id] }));

@@ -16,7 +16,7 @@ describe("applyStrokeStyle", () => {
       ctx as any,
       createStrokeStyle({
         color: { r: 1, g: 2, b: 3, a: 0.5 },
-      })
+      }),
     );
     expect(ctx.strokeStyle).toBe("rgba(1,2,3,0.5)");
     expect(ctx.lineWidth).toBe(1);

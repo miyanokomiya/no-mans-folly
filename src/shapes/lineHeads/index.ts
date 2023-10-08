@@ -27,7 +27,7 @@ export function renderLineHead<T extends LineHead>(
   ctx: CanvasRenderingContext2D,
   head: T,
   transform: AffineMatrix,
-  lineWidth: number
+  lineWidth: number,
 ) {
   getLineHeadStruct(head.type).render(ctx, head, transform, lineWidth);
 }

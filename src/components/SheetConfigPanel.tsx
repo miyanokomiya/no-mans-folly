@@ -23,7 +23,7 @@ export const SheetConfigPanel: React.FC = () => {
         setPopupedKey(name);
       }
     },
-    [popupedKey]
+    [popupedKey],
   );
 
   const onClickOutside = useCallback(() => {
@@ -40,7 +40,7 @@ export const SheetConfigPanel: React.FC = () => {
       if (!sheet) return;
       acctx.sheetStore.patchEntity(sheet.id, { bgcolor: { ...color, a: sheet.bgcolor?.a ?? 1 } });
     },
-    [sheet]
+    [sheet],
   );
 
   const onAlphaChanged = useCallback(
@@ -55,7 +55,7 @@ export const SheetConfigPanel: React.FC = () => {
         acctx.sheetStore.setTmpSheetMap({});
       }
     },
-    [sheet, bgColor]
+    [sheet, bgColor],
   );
 
   const bgColorPanel = useMemo(() => {

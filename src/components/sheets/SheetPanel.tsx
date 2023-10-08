@@ -26,7 +26,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
       e.preventDefault();
       onClickSheet?.(sheet.id);
     },
-    [onClickSheet]
+    [onClickSheet],
   );
 
   const rootClass = "border rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
@@ -53,7 +53,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
       onChangeName?.(sheet.id, draftName);
       setRenaming(false);
     },
-    [sheet, draftName]
+    [sheet, draftName],
   );
 
   const cancelRename = useCallback(() => {

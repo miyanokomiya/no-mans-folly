@@ -14,28 +14,28 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
     (color: Color) => {
       onChanged?.({ ...stroke, color: { ...color, a: stroke.color.a } });
     },
-    [stroke, onChanged]
+    [stroke, onChanged],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
       onChanged?.({ ...stroke, color: { ...stroke.color, a: val } }, draft);
     },
-    [onChanged, stroke]
+    [onChanged, stroke],
   );
 
   const onWidthChanged = useCallback(
     (val: number, draft = false) => {
       onChanged?.({ ...stroke, width: val }, draft);
     },
-    [onChanged, stroke]
+    [onChanged, stroke],
   );
 
   const onDisabledChanged = useCallback(
     (val: boolean) => {
       onChanged?.({ ...stroke, disabled: val });
     },
-    [onChanged, stroke]
+    [onChanged, stroke],
   );
 
   return (

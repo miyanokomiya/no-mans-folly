@@ -28,7 +28,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
         onChanged?.(val, true);
       }
     },
-    [step, max, min, onChanged]
+    [step, max, min, onChanged],
   );
 
   const onDown = useCallback(
@@ -40,7 +40,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       const bounds = ref.current.getBoundingClientRect();
       updateValue((e.pageX - bounds.x) / bounds.width, true);
     },
-    [updateValue]
+    [updateValue],
   );
 
   const onUp = useCallback(() => {
@@ -59,7 +59,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       const bounds = ref.current.getBoundingClientRect();
       updateValue((e.pageX - bounds.x) / bounds.width, true);
     },
-    [down, updateValue]
+    [down, updateValue],
   );
   useGlobalMousemoveEffect(onMove);
 

@@ -14,8 +14,8 @@ describe("getBelowPosition", () => {
           { x: 150, y: 220, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: -125, y: 200 });
     expect(
       getBelowPosition(
@@ -26,8 +26,8 @@ describe("getBelowPosition", () => {
           { x: -130, y: 220, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: 250, y: 200 });
   });
 });
@@ -45,8 +45,8 @@ describe("getAbovePosition", () => {
           { x: 150, y: -220, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: -125, y: -200 });
     expect(
       getAbovePosition(
@@ -57,8 +57,8 @@ describe("getAbovePosition", () => {
           { x: -130, y: -220, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: 250, y: -200 });
   });
 });
@@ -76,8 +76,8 @@ describe("getRightPosition", () => {
           { x: 220, y: 150, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: 200, y: -125 });
     expect(
       getRightPosition(
@@ -88,8 +88,8 @@ describe("getRightPosition", () => {
           { x: 220, y: -130, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: 200, y: 250 });
   });
 });
@@ -107,8 +107,8 @@ describe("getLeftPosition", () => {
           { x: -220, y: 150, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: -200, y: -125 });
     expect(
       getLeftPosition(
@@ -119,8 +119,8 @@ describe("getLeftPosition", () => {
           { x: -220, y: -130, width: 100, height: 100 },
         ],
         100,
-        25
-      )
+        25,
+      ),
     ).toEqual({ x: -200, y: 250 });
   });
 });

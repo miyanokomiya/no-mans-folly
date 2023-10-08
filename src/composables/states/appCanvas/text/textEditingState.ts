@@ -115,7 +115,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           // => Because, restoring the content right before deletion isn't always feasible.
           ctx.patchDocuments(
             { [option.id]: [{ insert: "---" }] },
-            { [option.id]: { width: 40 } as Partial<TextShape> }
+            { [option.id]: { width: 40 } as Partial<TextShape> },
           );
           ctx.deleteShapes([option.id]);
           ctx.createLastIndex();
@@ -148,7 +148,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
                 const shapeAtPointer = findBetterShapeAt(
                   shapeComposite,
                   event.data.point,
-                  shapeComposite.shapeMap[option.id].parentId
+                  shapeComposite.shapeMap[option.id].parentId,
                 );
 
                 // If the shape is the doc owner, keep editing it.
@@ -284,7 +284,7 @@ function handleKeydown(
   textEditorController: TextEditorController,
   onCursorUpdated: (ctx: AppCanvasStateContext) => void,
   patchDocument: (ctx: AppCanvasStateContext, delta: DocDelta) => void,
-  event: KeyDownEvent
+  event: KeyDownEvent,
 ): TransitionValue<AppCanvasStateContext> {
   switch (event.data.key) {
     case "a":

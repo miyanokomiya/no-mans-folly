@@ -36,7 +36,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
             composite.mergedShapeTree
               .map<[string, IRectangle]>((treeNode) => [treeNode.id, composite.getWrapperRect(shapeMap[treeNode.id])])
               .filter(([, rect]) => hitTest.test(rect))
-              .map(([id]) => id)
+              .map(([id]) => id),
           );
           ctx.setTmpShapeMap({});
           return;

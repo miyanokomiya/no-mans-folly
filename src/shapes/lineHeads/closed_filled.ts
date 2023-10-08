@@ -23,7 +23,7 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
         { x: -height, y: -width / 2 },
         { x: -height, y: width / 2 },
       ].map((p) => applyAffine(transform, p)),
-      true
+      true,
     );
 
     const tmp = ctx.fillStyle;
@@ -44,7 +44,7 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
         { x: -height, y: width / 2 },
         { x: 0, y: width / 2 },
       ].map((p) => applyAffine(transform, p)),
-      true
+      true,
     );
   },
 };

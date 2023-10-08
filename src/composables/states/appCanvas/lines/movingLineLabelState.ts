@@ -50,7 +50,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
               (src) => mapReduce(src, (s) => resizeShape(ctx.getShapeStruct, s, affineSrc)),
               (_src, patch) => lineLabelHandler.onModified(patch),
             ],
-            { [labelShape.id]: labelShape }
+            { [labelShape.id]: labelShape },
           );
           ctx.setTmpShapeMap(patched.patch);
 

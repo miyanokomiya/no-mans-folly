@@ -10,7 +10,7 @@ export function getOptimalElbowBody(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin = ROUND_MARGIN
+  margin = ROUND_MARGIN,
 ): IVec2[] {
   const pd = getConnectionDirection(p, pBounds);
   const qd = getConnectionDirection(q, qBounds);
@@ -101,7 +101,7 @@ function getOptimalElbowBody_2_8(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const [, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
   const [qt, qr, , ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
@@ -147,7 +147,7 @@ function getOptimalElbowBody_2_4(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const [, pr, pb] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
   const [qt, , , ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
@@ -198,7 +198,7 @@ function getOptimalElbowBody_2_6(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const [, , pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
   const [qt, qr] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
@@ -249,7 +249,7 @@ function getOptimalElbowBody_6_4(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const rotateFn = getRotateFn(Math.PI / 2);
   const rp = rotateFn(p);
@@ -266,7 +266,7 @@ function getOptimalElbowBody_8_6(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const rotateFn = getRotateFn(Math.PI);
   const rp = rotateFn(p);
@@ -283,7 +283,7 @@ function getOptimalElbowBody_4_8(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const rotateFn = getRotateFn(-Math.PI / 2);
   const rp = rotateFn(p);
@@ -300,7 +300,7 @@ function getOptimalElbowBody_2_2(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const [pt, pr, pb, pl] = [pBounds.y, pBounds.x + pBounds.width, pBounds.y + pBounds.height, pBounds.x];
   const [qt, qr, qb, ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
@@ -349,7 +349,7 @@ function getOptimalElbowBody_8_8(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const rotateFn = getRotateFn(Math.PI);
   const rp = rotateFn(p);
@@ -366,7 +366,7 @@ function getOptimalElbowBody_4_4(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const rotateFn = getRotateFn(-Math.PI / 2);
   const rp = rotateFn(p);
@@ -383,7 +383,7 @@ function getOptimalElbowBody_6_6(
   q: IVec2,
   pBounds: IRectangle,
   qBounds: IRectangle,
-  margin: number
+  margin: number,
 ): IVec2[] {
   const rotateFn = getRotateFn(Math.PI / 2);
   const rp = rotateFn(p);

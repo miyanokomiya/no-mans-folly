@@ -11,7 +11,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 
 export function getStructForSimplePolygon<T extends RectangleShape>(
-  getPath: (shape: T) => IVec2[]
+  getPath: (shape: T) => IVec2[],
 ): Pick<ShapeStruct<T>, "render" | "isPointOn" | "getClosestOutline" | "getIntersectedOutlines"> {
   return {
     render(ctx, shape) {

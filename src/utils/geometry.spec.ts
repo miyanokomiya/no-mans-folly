@@ -56,8 +56,8 @@ describe("extendSegment", () => {
           { x: 10, y: 10 },
           { x: 20, y: 10 },
         ],
-        2
-      )
+        2,
+      ),
     ).toEqual([
       { x: 10, y: 10 },
       { x: 30, y: 10 },
@@ -233,7 +233,7 @@ describe("getCrossLineAndEllipse", () => {
       ],
       { x: 1, y: 1 },
       3,
-      4
+      4,
     );
     expect(res0?.[0].x).toBeCloseTo(-1);
     expect(res0?.[0].y).toBeGreaterThanOrEqual(-3);
@@ -249,7 +249,7 @@ describe("getCrossLineAndEllipse", () => {
       ],
       { x: 0, y: 0 },
       3,
-      4
+      4,
     );
     expect(res1).toBe(undefined);
 
@@ -260,7 +260,7 @@ describe("getCrossLineAndEllipse", () => {
       ],
       { x: 0, y: 0 },
       3,
-      4
+      4,
     );
     expect(res2).toHaveLength(1);
     expect(res2?.[0].x).toBeCloseTo(-3);
@@ -275,7 +275,7 @@ describe("getCrossLineAndEllipse", () => {
       ],
       { x: 1, y: 1 },
       3,
-      4
+      4,
     );
     expect(res0?.[0].x).toBeGreaterThanOrEqual(1.5);
     expect(res0?.[0].x).toBeLessThanOrEqual(4);
@@ -293,7 +293,7 @@ describe("getCrossLineAndEllipse", () => {
       ],
       { x: 1, y: 1 },
       3,
-      4
+      4,
     );
     expect(res1).toBe(undefined);
   });
@@ -305,13 +305,13 @@ describe("getWrapperRect", () => {
       getWrapperRect([
         { x: 1, y: 2, width: 10, height: 20 },
         { x: 6, y: 7, width: 10, height: 22 },
-      ])
+      ]),
     ).toEqual({ x: 1, y: 2, width: 15, height: 27 });
     expect(
       getWrapperRect([
         { x: 1, y: 2, width: 10, height: 20 },
         { x: 6, y: 7, width: 4, height: 6 },
-      ])
+      ]),
     ).toEqual({ x: 1, y: 2, width: 10, height: 20 });
   });
 });
@@ -408,37 +408,37 @@ describe("isSegmentOverlappedV", () => {
       isSegmentOverlappedV(seg, [
         { x: -10, y: 0 },
         { x: -1, y: 0 },
-      ])
+      ]),
     ).toBe(false);
     expect(
       isSegmentOverlappedV(seg, [
         { x: -10, y: 0 },
         { x: 1, y: 0 },
-      ])
+      ]),
     ).toBe(true);
     expect(
       isSegmentOverlappedV(seg, [
         { x: 1, y: 0 },
         { x: 9, y: 0 },
-      ])
+      ]),
     ).toBe(true);
     expect(
       isSegmentOverlappedV(seg, [
         { x: 9, y: 0 },
         { x: 11, y: 0 },
-      ])
+      ]),
     ).toBe(true);
     expect(
       isSegmentOverlappedV(seg, [
         { x: 11, y: 0 },
         { x: 12, y: 0 },
-      ])
+      ]),
     ).toBe(false);
     expect(
       isSegmentOverlappedV(seg, [
         { x: 11, y: 0 },
         { x: 9, y: 0 },
-      ])
+      ]),
     ).toBe(true);
   });
 });
@@ -454,37 +454,37 @@ describe("isSegmentOverlappedH", () => {
       isSegmentOverlappedH(seg, [
         { y: -10, x: 0 },
         { y: -1, x: 0 },
-      ])
+      ]),
     ).toBe(false);
     expect(
       isSegmentOverlappedH(seg, [
         { y: -10, x: 0 },
         { y: 1, x: 0 },
-      ])
+      ]),
     ).toBe(true);
     expect(
       isSegmentOverlappedH(seg, [
         { y: 1, x: 0 },
         { y: 9, x: 0 },
-      ])
+      ]),
     ).toBe(true);
     expect(
       isSegmentOverlappedH(seg, [
         { y: 9, x: 0 },
         { y: 11, x: 0 },
-      ])
+      ]),
     ).toBe(true);
     expect(
       isSegmentOverlappedH(seg, [
         { y: 11, x: 0 },
         { y: 12, x: 0 },
-      ])
+      ]),
     ).toBe(false);
     expect(
       isSegmentOverlappedH(seg, [
         { y: 11, x: 0 },
         { y: 9, x: 0 },
-      ])
+      ]),
     ).toBe(true);
   });
 });
@@ -524,8 +524,8 @@ describe("getCrossSegAndSeg", () => {
         [
           { x: 3, y: -3 },
           { x: 3, y: 5 },
-        ]
-      )
+        ],
+      ),
     ).toEqual({ x: 3, y: 0 });
     expect(
       getCrossSegAndSeg(
@@ -536,8 +536,8 @@ describe("getCrossSegAndSeg", () => {
         [
           { x: 3, y: 3 },
           { x: 3, y: 5 },
-        ]
-      )
+        ],
+      ),
     ).toEqual(undefined);
   });
 });
@@ -549,7 +549,7 @@ describe("sortPointFrom", () => {
         { x: 11, y: 0 },
         { x: 12, y: 12 },
         { x: 0, y: 10 },
-      ])
+      ]),
     ).toEqual([
       { x: 12, y: 12 },
       { x: 0, y: 10 },

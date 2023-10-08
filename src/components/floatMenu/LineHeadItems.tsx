@@ -41,7 +41,7 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
     (value?: LineHead) => {
       onChange?.({ pHead: value });
     },
-    [onChange]
+    [onChange],
   );
 
   const onQHeadClick = useCallback(() => {
@@ -52,7 +52,7 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
     (value?: LineHead) => {
       onChange?.({ qHead: value });
     },
-    [onChange]
+    [onChange],
   );
 
   const onHeadSwapClick = useCallback(() => {
@@ -104,7 +104,7 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
         onClick?.({ type });
       }
     },
-    [onClick]
+    [onClick],
   );
 
   const iconStyle = useMemo(() => {

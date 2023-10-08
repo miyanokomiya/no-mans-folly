@@ -245,7 +245,7 @@ export function patchVertex(
   shape: LineShape,
   index: number,
   p: IVec2,
-  c: ConnectionPoint | undefined
+  c: ConnectionPoint | undefined,
 ): Partial<LineShape> {
   const vertices = getLinePath(shape);
   switch (index) {

@@ -9,8 +9,8 @@ describe("toKeyMap", () => {
           { a: 1, b: 20 },
           { a: 2, b: 21 },
         ],
-        "a"
-      )
+        "a",
+      ),
     ).toEqual({
       1: { a: 1, b: 20 },
       2: { a: 2, b: 21 },
@@ -24,7 +24,7 @@ describe("toMap", () => {
       target.toMap([
         { id: "1", props: "a" },
         { id: "2", props: "b" },
-      ])
+      ]),
     ).toEqual({
       1: { id: "1", props: "a" },
       2: { id: "2", props: "b" },
@@ -38,7 +38,7 @@ describe("toList", () => {
       target.toList({
         1: { a: 1, b: 20 },
         2: { a: 2, b: 21 },
-      })
+      }),
     ).toEqual([
       { a: 1, b: 20 },
       { a: 2, b: 21 },
@@ -56,8 +56,8 @@ describe("findBackward", () => {
           { id: "c", v: 0 },
           { id: "d", v: 1 },
         ],
-        (d) => d.v === 0
-      )
+        (d) => d.v === 0,
+      ),
     ).toEqual({ id: "c", v: 0 });
   });
 });
@@ -91,7 +91,7 @@ describe("mapDataToObj", () => {
       target.mapDataToObj<any>([
         ["a", { v: 1 }],
         ["b", { v: 2 }],
-      ])
+      ]),
     ).toEqual({
       a: { v: 1 },
       b: { v: 2 },
@@ -109,8 +109,8 @@ describe("mapFilter", () => {
           3: { a: 3 },
           4: { a: 4 },
         },
-        (val) => val.a % 2 === 0
-      )
+        (val) => val.a % 2 === 0,
+      ),
     ).toEqual({
       2: { a: 2 },
       4: { a: 4 },
@@ -132,8 +132,8 @@ describe("mapReduce", () => {
             b: 8,
           },
         },
-        (obj: { a: number; b: number }) => ({ a: obj.b, b: obj.a })
-      )
+        (obj: { a: number; b: number }) => ({ a: obj.b, b: obj.a }),
+      ),
     ).toEqual({
       id_a: {
         a: 2,
@@ -159,8 +159,8 @@ describe("patchPipe", () => {
             return { a: { v: src["a"].v! * 3 } };
           },
         ],
-        { a: { id: "a", v: 1 }, b: { id: "b", v: 10 } }
-      )
+        { a: { id: "a", v: 1 }, b: { id: "b", v: 10 } },
+      ),
     ).toEqual({
       patch: { a: { v: 6 } },
       result: { a: { id: "a", v: 6 }, b: { id: "b", v: 10 } },
@@ -176,8 +176,8 @@ describe("patchPipe", () => {
             return { b: { v: src["b"].v! * 3 + patch["a"].v! } };
           },
         ],
-        { a: { id: "a", v: 1 }, b: { id: "b", v: 10 } }
-      )
+        { a: { id: "a", v: 1 }, b: { id: "b", v: 10 } },
+      ),
     ).toEqual({
       patch: { a: { v: 2 }, b: { v: 32 } },
       result: { a: { id: "a", v: 2 }, b: { id: "b", v: 32 } },

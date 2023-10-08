@@ -134,7 +134,7 @@ export type LineSnapping = ReturnType<typeof newLineSnapping>;
 
 export function renderConnectionResult(
   ctx: CanvasRenderingContext2D,
-  option: { result: ConnectionResult; scale: number; style: StyleScheme }
+  option: { result: ConnectionResult; scale: number; style: StyleScheme },
 ) {
   if (option.result.guidLines) {
     applyStrokeStyle(ctx, { color: option.style.selectionSecondaly, width: 2 * option.scale });
@@ -157,7 +157,7 @@ export function renderConnectionResult(
 export function getOptimizedSegment(
   shapeComposite: ShapeComposite,
   shapeA: Shape,
-  shapeB: Shape
+  shapeB: Shape,
 ): ISegment | undefined {
   const rectA = shapeComposite.getWrapperRect(shapeA);
   const rectB = shapeComposite.getWrapperRect(shapeB);
@@ -176,7 +176,7 @@ export function getOptimizedSegment(
 function getOptimizedSegmentBetweenShapeAndPoint(
   shapeComposite: ShapeComposite,
   shape: Shape,
-  point: IVec2
+  point: IVec2,
 ): ISegment | undefined {
   const rect = shapeComposite.getWrapperRect(shape);
   const [baseA, baseB] = getMimumSegmentBetweenRecs(rect, { ...point, width: 0, height: 0 });
@@ -221,7 +221,7 @@ function getMimumSegmentBetweenRecs(rectA: IRectangle, rectB: IRectangle): ISegm
 
 export function optimizeLinePath(
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
-  lineShape: LineShape
+  lineShape: LineShape,
 ): Partial<LineShape> | undefined {
   const shapeComposite = ctx.getShapeComposite();
   const vertices = getLinePath(lineShape);
@@ -270,7 +270,7 @@ export function optimizeLinePath(
     const seg = getOptimizedSegmentBetweenShapeAndPoint(
       shapeComposite,
       shapeP,
-      vertices[elbow ? vertices.length - 1 : 1]
+      vertices[elbow ? vertices.length - 1 : 1],
     );
     if (!seg) return;
 
@@ -290,7 +290,7 @@ export function optimizeLinePath(
     const seg = getOptimizedSegmentBetweenShapeAndPoint(
       shapeComposite,
       shapeQ,
-      vertices[elbow ? 0 : vertices.length - 2]
+      vertices[elbow ? 0 : vertices.length - 2],
     );
     if (!seg) return;
 

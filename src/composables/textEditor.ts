@@ -127,7 +127,7 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getMovingCursor())
+      getCursorLocation(_compositionLines, getMovingCursor()),
     );
     const p = { x: location.x, y: location.y - location.height * 0.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
@@ -137,7 +137,7 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getMovingCursor())
+      getCursorLocation(_compositionLines, getMovingCursor()),
     );
     const p = { x: location.x, y: location.y + location.height * 1.1 };
     setCursor(getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)));
@@ -147,7 +147,7 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getMovingCursor())
+      getCursorLocation(_compositionLines, getMovingCursor()),
     );
     const p = { x: location.x, y: location.y - location.height * 0.1 };
     _selection = getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor;
@@ -157,7 +157,7 @@ export function newTextEditorController() {
     const location = getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getMovingCursor())
+      getCursorLocation(_compositionLines, getMovingCursor()),
     );
     const p = { x: location.x, y: location.y + location.height * 1.1 };
     _selection = getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor;
@@ -314,7 +314,7 @@ export function newTextEditorController() {
     return getBoundsAtLocation(
       _composition,
       _compositionLines,
-      getCursorLocation(_compositionLines, getCursor() + getSelection())
+      getCursorLocation(_compositionLines, getCursor() + getSelection()),
     );
   }
 
@@ -416,7 +416,7 @@ function renderSelection(
     compositionLines: DocCompositionLine[];
     cursor: number;
     selection: number;
-  }
+  },
 ) {
   const range = getRangeLines(composition, compositionLines, [cursor, selection]);
   range.forEach((line) => {
@@ -447,7 +447,7 @@ function renderCursor(
     selection: number;
     movingCursor: number;
     isIME: boolean;
-  }
+  },
 ) {
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 2;

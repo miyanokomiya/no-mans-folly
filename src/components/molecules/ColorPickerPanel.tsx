@@ -52,7 +52,7 @@ export const ColorPickerPanel: React.FC<Option> = ({ onClick }) => {
           );
         });
       }),
-    [onClick]
+    [onClick],
   );
 
   return (

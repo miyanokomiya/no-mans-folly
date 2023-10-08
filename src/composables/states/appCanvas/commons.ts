@@ -30,7 +30,7 @@ type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 export function handleStateEvent(
   _ctx: unknown,
   event: ChangeStateEvent,
-  acceptable: AcceptableEvent[]
+  acceptable: AcceptableEvent[],
 ): TransitionValue<AppCanvasStateContext> {
   const name = event.data.name;
   if (!acceptable.includes(name as AcceptableEvent)) return;
@@ -62,7 +62,7 @@ export function handleHistoryEvent(ctx: Pick<AppCanvasStateContext, "undo" | "re
 
 export function handleCommonShortcut(
   ctx: AppCanvasStateContext,
-  event: KeyDownEvent
+  event: KeyDownEvent,
 ): TransitionValue<AppCanvasStateContext> {
   switch (event.data.key) {
     case "a": {
@@ -86,7 +86,7 @@ export function handleCommonShortcut(
         ctx.addShapes(
           [group],
           undefined,
-          mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id }))
+          mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id })),
         );
         ctx.selectShape(group.id);
         return newSelectionHubState;
@@ -105,7 +105,7 @@ export function handleCommonShortcut(
         const groupIdSet = new Set(groups.map((s) => s.id));
         const patch = mapReduce(
           mapFilter(shapeMap, (s) => !!s.parentId && groupIdSet.has(s.parentId)),
-          () => ({ parentId: undefined })
+          () => ({ parentId: undefined }),
         );
 
         ctx.deleteShapes(Array.from(groupIdSet), patch);
@@ -146,7 +146,7 @@ export function getCommonCommandExams() {
 
 export function handleCommonTextStyle(
   ctx: AppCanvasStateContext,
-  event: TextStyleEvent
+  event: TextStyleEvent,
 ): TransitionValue<AppCanvasStateContext> {
   const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
   if (selectedIds.length === 0) return;
@@ -193,7 +193,7 @@ export function handleCommonTextStyle(
 export function startTextEditingIfPossible(
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
   selectedId?: string,
-  point?: IVec2
+  point?: IVec2,
 ): TransitionValue<AppCanvasStateContext> {
   const composite = ctx.getShapeComposite();
   const shape = composite.shapeMap[selectedId ?? ""];
@@ -234,7 +234,7 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
       if (restored.shapes.length > 0) {
         ctx.pasteShapes(restored.shapes, restored.docs);
       }
-    }
+    },
   );
 }
 
@@ -262,7 +262,7 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
 
       const text: any = await item.getAsString();
       onPaste?.([{ insert: text }]);
-    }
+    },
   );
 }
 

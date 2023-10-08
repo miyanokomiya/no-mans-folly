@@ -43,7 +43,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
         ...val,
       }));
     },
-    [setStateContext]
+    [setStateContext],
   );
 
   return (

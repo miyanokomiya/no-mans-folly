@@ -89,7 +89,7 @@ export function usePersistence(option: PersistenceOption) {
         documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
       });
     },
-    [fileAcess]
+    [fileAcess],
   );
 
   const initDiagram = useCallback(async () => {
@@ -215,7 +215,7 @@ export function usePersistence(option: PersistenceOption) {
       Object.values(sheetStores ?? []).map((s) => s.getScope()),
       {
         captureTimeout: 0,
-      }
+      },
     );
   }, [sheetStores]);
 
@@ -226,7 +226,7 @@ export function usePersistence(option: PersistenceOption) {
         fileAcess.overwriteDiagramDoc(diagramDoc);
       },
       5000,
-      true
+      true,
     );
   }, [fileAcess, canSyncoLocal, diagramDoc]);
 
@@ -257,7 +257,7 @@ export function usePersistence(option: PersistenceOption) {
         fileAcess.overwriteSheetDoc(sheetId, sheetDoc);
       },
       5000,
-      true
+      true,
     );
   }, [fileAcess, canSyncoLocal, sheetDoc]);
 

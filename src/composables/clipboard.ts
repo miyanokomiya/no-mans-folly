@@ -17,7 +17,7 @@ export interface FileItem {
 
 export function newClipboard(
   generateCopyDataSet: () => CopyDataSet,
-  handlePastedItems: (items: Array<StringItem | FileItem>) => Promise<void> | void
+  handlePastedItems: (items: Array<StringItem | FileItem>) => Promise<void> | void,
 ) {
   function onCopy(e: ClipboardEvent) {
     if (!e.clipboardData) return;
@@ -85,7 +85,7 @@ interface ClipboardData<T extends string, K> {
 }
 
 export function newClipboardSerializer<T extends string, K>(
-  type: T
+  type: T,
 ): {
   serialize: (data: K) => string;
   deserialize: (text: string) => K;

@@ -104,7 +104,7 @@ describe("getOptimizedSegment", () => {
       const res = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
         shapeA,
-        shapeB
+        shapeB,
       );
       expect(res).toEqual([
         { x: 100, y: 75 },
@@ -125,7 +125,7 @@ describe("getOptimizedSegment", () => {
       const res = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
         shapeA,
-        shapeB
+        shapeB,
       );
       expect(res).toEqual([
         { x: 75, y: 100 },
@@ -147,7 +147,7 @@ describe("getOptimizedSegment", () => {
       const res0 = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
         shapeA,
-        shapeBottomRight
+        shapeBottomRight,
       );
       expect(res0).toEqual([
         { x: 100, y: 100 },
@@ -163,7 +163,7 @@ describe("getOptimizedSegment", () => {
       const res1 = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeBottomLeft], getStruct: getCommonStruct }),
         shapeA,
-        shapeBottomLeft
+        shapeBottomLeft,
       );
       expect(res1).toEqual([
         { x: 0, y: 100 },
@@ -179,7 +179,7 @@ describe("getOptimizedSegment", () => {
       const res2 = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeTopLeft], getStruct: getCommonStruct }),
         shapeA,
-        shapeTopLeft
+        shapeTopLeft,
       );
       expect(res2).toEqual([
         { x: 0, y: 0 },
@@ -195,7 +195,7 @@ describe("getOptimizedSegment", () => {
       const res3 = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeTopRight], getStruct: getCommonStruct }),
         shapeA,
-        shapeTopRight
+        shapeTopRight,
       );
       expect(res3).toEqual([
         { x: 100, y: 0 },
@@ -216,7 +216,7 @@ describe("getOptimizedSegment", () => {
       const res0 = getOptimizedSegment(
         newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
         shapeA,
-        shapeBottomRight
+        shapeBottomRight,
       );
       expect(res0?.[0]).toEqual({ x: 100, y: 0 });
       expect(res0?.[1].x).toBeGreaterThan(50);
@@ -249,7 +249,7 @@ describe("optimizeLinePath", () => {
         {
           getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
-        line
+        line,
       );
       expect(res).toEqual({
         p: { x: 100, y: 100 },
@@ -273,7 +273,7 @@ describe("optimizeLinePath", () => {
         {
           getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
-        line
+        line,
       );
       expect(res).toEqual({
         p: { x: 100, y: 100 },
@@ -295,7 +295,7 @@ describe("optimizeLinePath", () => {
         {
           getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
-        line
+        line,
       );
       expect(res).toEqual({
         q: { x: 200, y: 200 },
@@ -317,7 +317,7 @@ describe("optimizeLinePath", () => {
         {
           getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
-        line
+        line,
       );
       expect(res).toEqual(undefined);
     });
@@ -344,7 +344,7 @@ describe("optimizeLinePath", () => {
         {
           getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
-        line
+        line,
       );
       expect(res).toEqual({
         p: { x: 50, y: 100 },
@@ -368,7 +368,7 @@ describe("optimizeLinePath", () => {
         {
           getShapeComposite: () => newShapeComposite({ shapes: [a, b, line], getStruct: getCommonStruct }),
         },
-        line
+        line,
       );
       expect(res).toEqual({
         p: { x: 50, y: 100 },

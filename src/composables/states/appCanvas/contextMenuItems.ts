@@ -18,7 +18,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
 
 export function handleContextItemEvent(
   ctx: AppCanvasStateContext,
-  event: ContextMenuItemEvent
+  event: ContextMenuItemEvent,
 ): TransitionValue<AppCanvasStateContext> {
   ctx.setContextMenuList();
   switch (event.data.key) {

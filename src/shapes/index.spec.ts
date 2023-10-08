@@ -254,7 +254,7 @@ describe("remapShapeIds", () => {
         count++;
         return `new_${count}`;
       },
-      true
+      true,
     );
 
     expect((result.shapes[1] as LineShape).pConnection).toBe(undefined);

@@ -17,7 +17,7 @@ export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, o
       e.preventDefault();
       onClick?.(name);
     },
-    [name, onClick]
+    [name, onClick],
   );
 
   const { size: windowSize } = useWindow();
@@ -61,7 +61,7 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
       e.preventDefault();
       onClick?.(name);
     },
-    [name, onClick]
+    [name, onClick],
   );
 
   const ref = useRef<HTMLDivElement>(null);

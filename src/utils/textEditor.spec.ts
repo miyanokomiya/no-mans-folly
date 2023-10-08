@@ -205,7 +205,7 @@ describe("getLineHeadIndex", () => {
 describe("getDeltaByApplyBlockStyleToDoc", () => {
   test("should return doc delta to apply the block attributes", () => {
     expect(
-      getDeltaByApplyBlockStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+      getDeltaByApplyBlockStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" }),
     ).toEqual([
       { retain: 2 },
       { retain: 1, attributes: { align: "right" } },
@@ -227,7 +227,7 @@ describe("getDeltaByApplyBlockStyleToDoc", () => {
 describe("getDeltaByApplyDocStyle", () => {
   test("should return doc delta to apply the doc attributes", () => {
     expect(
-      getDeltaByApplyDocStyle([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+      getDeltaByApplyDocStyle([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" }),
     ).toEqual([{ retain: 8 }, { retain: 1, attributes: { align: "right" } }]);
   });
 
@@ -241,7 +241,9 @@ describe("getDeltaByApplyDocStyle", () => {
 describe("getDeltaByApplyInlineStyle", () => {
   test("should return doc delta to apply the doc attributes", () => {
     expect(
-      getDeltaByApplyInlineStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], { align: "right" })
+      getDeltaByApplyInlineStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], {
+        align: "right",
+      }),
     ).toEqual([{ retain: 9, attributes: { align: "right" } }]);
   });
 
@@ -259,7 +261,7 @@ describe("mergeDocAttrInfo", () => {
         cursor: { size: 1, align: "left", direction: "top" },
         block: { size: 2, align: "center", direction: "middle" },
         doc: { size: 3, align: "right", direction: "bottom" },
-      })
+      }),
     ).toEqual({ size: 1, align: "center", direction: "bottom" });
   });
 });
@@ -319,7 +321,7 @@ describe("splitOutputsIntoLineWord", () => {
       splitOutputsIntoLineWord([
         { insert: "ab c\nd", attributes: attrs0 },
         { insert: "e f\n", attributes: attrs1 },
-      ])
+      ]),
     ).toEqual([
       [
         [
@@ -356,8 +358,8 @@ describe("splitOutputsIntoLineWord", () => {
           [5, 5],
           [6, 6],
           [7, 7],
-        ])
-      )
+        ]),
+      ),
     ).toEqual([
       [
         [
@@ -398,7 +400,7 @@ describe("splitOutputsIntoLineWord", () => {
       splitOutputsIntoLineWord([
         { insert: "ab\n", attributes: attrs1 },
         { insert: "\n", attributes: attrs1 },
-      ])
+      ]),
     ).toEqual([
       [
         [
@@ -443,8 +445,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [
@@ -480,8 +482,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [
@@ -514,8 +516,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [
@@ -554,8 +556,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [
@@ -594,8 +596,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [
@@ -672,8 +674,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        12
-      )
+        12,
+      ),
     ).toEqual([
       [
         [
@@ -748,8 +750,8 @@ describe("applyRangeWidthToLineWord", () => {
             [["\n", 0, { align: "right" }]],
           ],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [
@@ -777,8 +779,8 @@ describe("applyRangeWidthToLineWord", () => {
           ],
           [[["\n", 0, { align: "right" }]]],
         ],
-        10
-      )
+        10,
+      ),
     ).toEqual([
       [
         [

@@ -23,7 +23,7 @@ export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
         { x: -height, y: -width / 2 },
         { x: -height, y: width / 2 },
       ].map((p) => applyAffine(transform, p)),
-      true
+      true,
     );
     ctx.fill();
     ctx.stroke();
@@ -40,7 +40,7 @@ export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
         { x: -height, y: width / 2 },
         { x: 0, y: width / 2 },
       ].map((p) => applyAffine(transform, p)),
-      true
+      true,
     );
   },
 };

@@ -57,8 +57,8 @@ describe("convertPaddingType", () => {
           type: "relative",
           value: [0.05, 0.2, 0.15, 0.4],
         },
-        rect
-      )
+        rect,
+      ),
     ).toEqual({
       value: [10, 20, 30, 40],
     });

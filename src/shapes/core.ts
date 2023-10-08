@@ -72,7 +72,7 @@ export function getCommonStyle<T extends Shape & CommonStyle>(shape: T): CommonS
 
 export function updateCommonStyle<T extends Shape & CommonStyle>(
   shape: T,
-  val: { fill?: FillStyle; stroke?: StrokeStyle }
+  val: { fill?: FillStyle; stroke?: StrokeStyle },
 ): Partial<T> {
   const ret: Partial<T> = {};
   if (val.fill && !isSameFillStyle(shape.fill, val.fill)) {

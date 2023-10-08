@@ -47,7 +47,7 @@ export function newSmartBranchHandler(option: Option) {
   function createBranch(
     hitResult: Pick<SmartBranchHitResult, "index">,
     src: Shape,
-    generateId: () => string
+    generateId: () => string,
   ): [Shape, LineShape] {
     const shapeComposite = option.getShapeComposite();
     const getShapeStruct = shapeComposite.getShapeStruct;
@@ -170,7 +170,7 @@ export function getBelowPosition(
   src: IRectangle,
   obstacles: IRectangle[],
   childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN
+  siblingMargin = SIBLING_MARGIN,
 ): IVec2 {
   return seekH({ ...src, y: src.y + src.height + childMargin }, obstacles, src.width + siblingMargin);
 }
@@ -179,7 +179,7 @@ export function getAbovePosition(
   src: IRectangle,
   obstacles: IRectangle[],
   childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN
+  siblingMargin = SIBLING_MARGIN,
 ): IVec2 {
   return seekH({ ...src, y: src.y - (src.height + childMargin) }, obstacles, src.width + siblingMargin);
 }
@@ -188,7 +188,7 @@ export function getRightPosition(
   src: IRectangle,
   obstacles: IRectangle[],
   childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN
+  siblingMargin = SIBLING_MARGIN,
 ): IVec2 {
   return seekV({ ...src, x: src.x + src.width + childMargin }, obstacles, src.height + siblingMargin);
 }
@@ -197,7 +197,7 @@ export function getLeftPosition(
   src: IRectangle,
   obstacles: IRectangle[],
   childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN
+  siblingMargin = SIBLING_MARGIN,
 ): IVec2 {
   return seekV({ ...src, x: src.x - (src.width + childMargin) }, obstacles, src.height + siblingMargin);
 }

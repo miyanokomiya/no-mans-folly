@@ -18,14 +18,14 @@ export const TextColorPanel: React.FC<Props> = ({ value, onChanged }) => {
     (val: number, draft = false) => {
       onChanged?.(rednerRGBA({ ...color, a: val }), draft);
     },
-    [onChanged, color]
+    [onChanged, color],
   );
 
   const onColorClick = useCallback(
     (val: Color) => {
       onChanged?.(rednerRGBA({ ...val, a: color.a }));
     },
-    [onChanged, color]
+    [onChanged, color],
   );
 
   return (

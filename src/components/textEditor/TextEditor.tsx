@@ -27,7 +27,7 @@ export const TextEditor: React.FC<Props> = ({ onInput, onKeyDown, position, focu
         setDraft("");
       }
     },
-    [composition, onInput]
+    [composition, onInput],
   );
 
   const onCompositionStart = useCallback(() => {

@@ -131,7 +131,7 @@ describe("newObjectGroupState", () => {
     const groupA = newGroupState<any, any>(
       () => groupASrc,
       () => childAA,
-      (ctx) => ctx
+      (ctx) => ctx,
     );
 
     const sm = newStateMachine(getCtx, () => groupA);

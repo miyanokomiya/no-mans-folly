@@ -111,7 +111,7 @@ export function getClosestOutlineOnEllipse(
   rx: number,
   ry: number,
   p: IVec2,
-  threshold?: number
+  threshold?: number,
 ): IVec2 | undefined {
   const np = sub(p, c);
   const r = getRadian({ x: np.x / rx, y: np.y / ry });
@@ -211,7 +211,7 @@ export function getCrossLineAndEllipseRotated(
   c: IVec2,
   rx: number,
   ry: number,
-  rotation: number
+  rotation: number,
 ): IVec2[] | undefined {
   const rotateFn = getRotateFn(-rotation, c);
   const rotatedLine: ISegment = [rotateFn(line[0]), rotateFn(line[1])];

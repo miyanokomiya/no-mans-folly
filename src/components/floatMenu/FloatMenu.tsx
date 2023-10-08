@@ -117,7 +117,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       }
       focusBack?.();
     },
-    [popupedKey, focusBack]
+    [popupedKey, focusBack],
   );
 
   const indexCommonStyle = useMemo<CommonStyle | undefined>(() => {
@@ -142,7 +142,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
         focusBack?.();
       }
     },
-    [smctx, focusBack]
+    [smctx, focusBack],
   );
 
   const onStrokeChanged = useCallback(
@@ -162,7 +162,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
         focusBack?.();
       }
     },
-    [smctx, focusBack]
+    [smctx, focusBack],
   );
 
   const onDocInlineAttributesChanged = useCallback(
@@ -173,7 +173,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       });
       focusBack?.();
     },
-    [sm, focusBack]
+    [sm, focusBack],
   );
 
   const onDocBlockAttributesChanged = useCallback(
@@ -184,7 +184,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       });
       focusBack?.();
     },
-    [sm, focusBack]
+    [sm, focusBack],
   );
 
   const onDocAttributesChanged = useCallback(
@@ -195,7 +195,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       });
       focusBack?.();
     },
-    [sm, focusBack]
+    [sm, focusBack],
   );
 
   const indexLineShape = useMemo(() => {
@@ -217,7 +217,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       smctx.patchShapes(patch);
       focusBack?.();
     },
-    [focusBack, smctx]
+    [focusBack, smctx],
   );
 
   const onLineTypeChanged = useCallback(
@@ -241,11 +241,11 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
               });
             },
           ],
-          toMap(lines)
-        ).patch
+          toMap(lines),
+        ).patch,
       );
     },
-    [smctx]
+    [smctx],
   );
 
   const onClickLineLabel = useCallback(() => {
@@ -274,7 +274,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       smctx.patchShapes(patch);
       focusBack?.();
     },
-    [focusBack, smctx]
+    [focusBack, smctx],
   );
 
   const onClickStackLast = useCallback(() => {
@@ -325,7 +325,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
       }
       focusBack?.();
     },
-    [focusBack, smctx, acctx]
+    [focusBack, smctx, acctx],
   );
 
   return targetRect ? (
@@ -427,7 +427,7 @@ function getRootAttrs(
   rootHeight: number,
   windowWidth: number,
   windowHeight: number,
-  translate: IVec2 = { x: 0, y: 0 }
+  translate: IVec2 = { x: 0, y: 0 },
 ) {
   const yMargin = 60;
   const center = getRectCenter(targetRect);

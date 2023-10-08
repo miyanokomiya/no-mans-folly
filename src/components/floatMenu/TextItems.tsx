@@ -27,7 +27,7 @@ const AlignPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
       const type = e.currentTarget.getAttribute("data-type")!;
       onClick?.(type);
     },
-    [onClick]
+    [onClick],
   );
 
   return (
@@ -51,7 +51,7 @@ const DirectionPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
       const type = e.currentTarget.getAttribute("data-type")!;
       onClick?.(type);
     },
-    [onClick]
+    [onClick],
   );
 
   return (
@@ -107,7 +107,7 @@ export const TextItems: React.FC<Props> = ({
     (value: string) => {
       onBlockChanged?.({ align: value as any });
     },
-    [onBlockChanged]
+    [onBlockChanged],
   );
 
   const alignIcon = useMemo(() => getAlignIcon(docAttrInfo), [docAttrInfo]);
@@ -120,14 +120,14 @@ export const TextItems: React.FC<Props> = ({
     (value: string) => {
       onDocChanged?.({ direction: value as any });
     },
-    [onDocChanged]
+    [onDocChanged],
   );
 
   const onLineheightChanged = useCallback(
     (value: number, draft?: boolean) => {
       onBlockChanged?.({ lineheight: value }, draft);
     },
-    [onBlockChanged]
+    [onBlockChanged],
   );
 
   const directionIcon = useMemo(() => getDirectionIcon(docAttrInfo), [docAttrInfo]);
@@ -137,7 +137,7 @@ export const TextItems: React.FC<Props> = ({
       if (draft) return;
       onInlineChanged?.({ size: value });
     },
-    [onInlineChanged]
+    [onInlineChanged],
   );
 
   const onActivateCombobox = useCallback(() => {
@@ -148,14 +148,14 @@ export const TextItems: React.FC<Props> = ({
     (value: string, draft?: boolean) => {
       onInlineChanged?.({ color: value }, draft);
     },
-    [onInlineChanged]
+    [onInlineChanged],
   );
 
   const onBackgroundChanged = useCallback(
     (value?: string, draft?: boolean) => {
       onInlineChanged?.({ background: value ?? null }, draft);
     },
-    [onInlineChanged]
+    [onInlineChanged],
   );
 
   return (

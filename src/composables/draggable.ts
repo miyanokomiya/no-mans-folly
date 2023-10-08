@@ -39,7 +39,7 @@ export function useDraggable() {
       vRef.current = sub(to, dragFrom);
       setDragTo(to);
     },
-    [dragFrom]
+    [dragFrom],
   );
   useGlobalMousemoveEffect(onMove);
 

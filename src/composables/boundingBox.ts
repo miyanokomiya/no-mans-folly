@@ -133,7 +133,7 @@ export function newBoundingBox(option: Option) {
         applyPath(
           ctx,
           anchor.map((p) => add(p, diff)),
-          true
+          true,
         );
         ctx.fill();
         ctx.stroke();
@@ -262,7 +262,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     diff: IVec2,
     movingPointInfoList: [src: IVec2, snapped: IVec2][],
     snappedSegment: ISegment,
-    modifire?: { keepAspect?: boolean; centralize?: boolean }
+    modifire?: { keepAspect?: boolean; centralize?: boolean },
   ): [affine: AffineMatrix, d: number, exactTarget?: ISegment] {
     const keepAspect = modifire?.keepAspect;
     const centralize = modifire?.centralize;

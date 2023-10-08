@@ -41,7 +41,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const shapeMap = shapeComposite.shapeMap;
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
       lineSnapping = newLineSnapping({
         snappableShapes,
@@ -53,7 +53,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const snappableLines = [
         ...shapeComposite.getShapesOverlappingRect(
           Object.values(shapeMap).filter((s) => isLineShape(s)),
-          ctx.getViewRect()
+          ctx.getViewRect(),
         ),
         shape,
       ];

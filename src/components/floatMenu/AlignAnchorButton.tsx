@@ -63,7 +63,7 @@ export const AlignAnchorButton: React.FC<Props> = ({ popupedKey, setPopupedKey, 
         vAlign: (["top", "center", "bottom"] as const)[Math.floor(index / 3)],
       });
     },
-    [onChange]
+    [onChange],
   );
 
   return (
@@ -90,7 +90,7 @@ const AnchorPanel: React.FC<AnchorPanelProps> = ({ onClick }) => {
       const type = parseInt(e.currentTarget.getAttribute("data-index")!);
       onClick?.(type);
     },
-    [onClick]
+    [onClick],
   );
 
   const table = useMemo(() => {

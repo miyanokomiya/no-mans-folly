@@ -59,10 +59,10 @@ export const AppCanvas: React.FC = () => {
     (shapes: Shape[]) => {
       imageStore.batchLoad(
         shapes.filter(isImageShape).map((s) => s.assetId),
-        assetAPI
+        assetAPI,
       );
     },
-    [assetAPI.enabled, imageStore]
+    [assetAPI.enabled, imageStore],
   );
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export const AppCanvas: React.FC = () => {
         const updated = patchPipe([() => patch ?? {}], acctx.shapeStore.getEntityMap());
         const targetIds = getDeleteTargetIds(
           acctx.shapeStore.shapeComposite,
-          getAllBranchIds(getTree(Object.values(updated.result)), ids)
+          getAllBranchIds(getTree(Object.values(updated.result)), ids),
         );
         acctx.shapeStore.transact(() => {
           if (patch) {
@@ -252,7 +252,7 @@ export const AppCanvas: React.FC = () => {
           generateUuid,
           acctx.shapeStore.createLastIndex(),
           availableIdSet,
-          targetP
+          targetP,
         );
 
         acctx.shapeStore.transact(() => {
@@ -336,7 +336,7 @@ export const AppCanvas: React.FC = () => {
       width: viewSize.width,
       height: viewSize.height,
     }),
-    [viewSize.width, viewSize.height]
+    [viewSize.width, viewSize.height],
   );
 
   useEffect(() => {
@@ -386,7 +386,7 @@ export const AppCanvas: React.FC = () => {
       if (textEditing || (!force && document.activeElement?.getAttribute("data-keep-focus"))) return;
       wrapperRef.current?.focus();
     },
-    [textEditing]
+    [textEditing],
   );
 
   const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
@@ -413,7 +413,7 @@ export const AppCanvas: React.FC = () => {
       }
       setDownInfo({ timestamp, button: e.button });
     },
-    [getMousePoint, viewToCanvas, sm, downInfo, focus]
+    [getMousePoint, viewToCanvas, sm, downInfo, focus],
   );
 
   const onMouseMove = useCallback(
@@ -431,7 +431,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm]
+    [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm],
   );
   useGlobalMousemoveEffect(onMouseMove);
 
@@ -451,7 +451,7 @@ export const AppCanvas: React.FC = () => {
         nativeEvent: e,
       });
     },
-    [focused, textEditing, sm]
+    [focused, textEditing, sm],
   );
   useGlobalCopyEffect(onCopy);
 
@@ -464,7 +464,7 @@ export const AppCanvas: React.FC = () => {
         data: option,
       });
     },
-    [focused, textEditing, sm]
+    [focused, textEditing, sm],
   );
   useGlobalPasteEffect(onPaste);
 
@@ -480,7 +480,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [getMousePoint, scale, viewToCanvas, sm, focus]
+    [getMousePoint, scale, viewToCanvas, sm, focus],
   );
 
   const onMouseUp = useCallback(
@@ -493,7 +493,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [viewToCanvas, getMousePoint, sm]
+    [viewToCanvas, getMousePoint, sm],
   );
   useGlobalMouseupEffect(onMouseUp);
 
@@ -507,7 +507,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [sm]
+    [sm],
   );
 
   const onWheel = useCallback(
@@ -520,7 +520,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [sm]
+    [sm],
   );
 
   const onContextMenu = useCallback(
@@ -528,14 +528,14 @@ export const AppCanvas: React.FC = () => {
       e.preventDefault();
       sm.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(getMousePoint()) } });
     },
-    [sm, getMousePoint, viewToCanvas]
+    [sm, getMousePoint, viewToCanvas],
   );
 
   const onClickContextMenuItem = useCallback(
     (key: string) => {
       sm.handleEvent({ type: "contextmenu-item", data: { key } });
     },
-    [sm]
+    [sm],
   );
 
   const onTextInput = useCallback(
@@ -548,7 +548,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [sm]
+    [sm],
   );
 
   const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
@@ -570,7 +570,7 @@ export const AppCanvas: React.FC = () => {
         data: { files: e.dataTransfer.files, point: viewToCanvas({ x: e.pageX, y: e.pageY }) },
       });
     },
-    [sm, viewToCanvas, getMousePoint]
+    [sm, viewToCanvas, getMousePoint],
   );
 
   const textEditor = textEditing ? (

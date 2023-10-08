@@ -28,7 +28,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
       setTargetId(id);
       setStartP({ x: e.pageX, y: e.pageY });
     },
-    [anchor]
+    [anchor],
   );
 
   const onMove = useCallback(
@@ -48,7 +48,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
       setMoving(true);
       setMovingP(p);
     },
-    [startP, moving, targetId]
+    [startP, moving, targetId],
   );
   useGlobalMousemoveEffect(onMove);
 
@@ -69,7 +69,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
       setStartP(undefined);
       setInsertion(undefined);
     },
-    [moving, targetId, insertion, onChange]
+    [moving, targetId, insertion, onChange],
   );
   useGlobalMouseupEffect(onUp);
 

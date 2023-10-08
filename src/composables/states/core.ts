@@ -36,7 +36,7 @@ export interface StateMachine<E = ModeStateEvent> {
 
 export function newStateMachine<C, E = ModeStateEvent>(
   getCtx: () => ModeStateContextBase & C,
-  getInitialState: () => ModeStateBase<C, E>
+  getInitialState: () => ModeStateBase<C, E>,
 ): StateMachine<E> {
   const stateStack: StateStackItem<C, E>[] = [{ state: getInitialState() }];
   const callback = newCallback();
@@ -105,7 +105,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
   function switchState(
     ctx: ModeStateContextBase & C,
     nextState: ModeStateBase<C, E>,
-    type?: Exclude<TransitionType, "break">
+    type?: Exclude<TransitionType, "break">,
   ): void {
     const current = getCurrentState();
 
@@ -261,7 +261,7 @@ export interface PasteEvent extends ModeStateEventBase {
 export function newGroupState<C, K, E = ModeStateEvent>(
   getState: () => ModeStateBase<C, E>,
   getInitialState: () => ModeStateBase<K, E>,
-  deriveCtx: (ctx: C) => K
+  deriveCtx: (ctx: C) => K,
 ): ModeStateBase<C, E> {
   let sm: StateMachine<E> | undefined;
   const state = getState();

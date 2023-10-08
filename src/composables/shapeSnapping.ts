@@ -117,7 +117,7 @@ export function newShapeSnapping(option: Option) {
     } else if (xClosest) {
       const [id, result] = xClosest;
       const [y0, , , y1] = [adjustedLeft[0].y, adjustedLeft[1].y, result.line[0].y, result.line[1].y].sort(
-        (a, b) => a - b
+        (a, b) => a - b,
       );
       targets.push({
         id,
@@ -140,7 +140,7 @@ export function newShapeSnapping(option: Option) {
     } else if (yClosest) {
       const [id, result] = yClosest;
       const [x0, , , x1] = [adjustedTop[0].x, adjustedTop[1].x, result.line[0].x, result.line[1].x].sort(
-        (a, b) => a - b
+        (a, b) => a - b,
       );
       targets.push({
         id,
@@ -229,7 +229,7 @@ export function renderSnappingResult(
     style: StyleScheme;
     scale: number;
     getTargetRect?: (id: string) => IRectangle | undefined;
-  }
+  },
 ) {
   applyStrokeStyle(ctx, { color: option.style.selectionPrimary, width: 2 * option.scale });
   applyFillStyle(ctx, { color: option.style.selectionPrimary });
@@ -276,7 +276,7 @@ export function renderSnappingResult(
             { x: a.x, y: mi },
             { x: b.x, y: mi },
           ],
-          arrowSize
+          arrowSize,
         );
         renderArrow(
           ctx,
@@ -284,7 +284,7 @@ export function renderSnappingResult(
             { x: a.x, y: ma },
             { x: b.x, y: ma },
           ],
-          arrowSize
+          arrowSize,
         );
       } else {
         const mi = Math.min(min, a.x, b.x);
@@ -304,7 +304,7 @@ export function renderSnappingResult(
             { x: mi, y: a.y },
             { x: mi, y: b.y },
           ],
-          arrowSize
+          arrowSize,
         );
         renderArrow(
           ctx,
@@ -312,7 +312,7 @@ export function renderSnappingResult(
             { x: ma, y: a.y },
             { x: ma, y: b.y },
           ],
-          arrowSize
+          arrowSize,
         );
       }
     });

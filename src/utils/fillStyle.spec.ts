@@ -16,7 +16,7 @@ describe("applyFillStyle", () => {
       ctx as any,
       createFillStyle({
         color: { r: 1, g: 2, b: 3, a: 0.5 },
-      })
+      }),
     );
     expect(ctx.fillStyle).toBe("rgba(1,2,3,0.5)");
   });

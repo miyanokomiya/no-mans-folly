@@ -92,7 +92,7 @@ export function useGlobalPasteEffect(fn: (e: ClipboardEvent, option: ModifierOpt
     (e: ClipboardEvent) => {
       fn(e, { shift });
     },
-    [fn, shift]
+    [fn, shift],
   );
 
   const trackKeyDown = useCallback((e: KeyboardEvent) => {
@@ -154,7 +154,7 @@ export function useOutsideClickCallback<T extends HTMLElement>(fn: () => void) {
       if (!ref.current || !e.target || ref.current.contains(e.target as Node)) return;
       fn();
     },
-    [fn]
+    [fn],
   );
   useGlobalClickEffect(callback);
 

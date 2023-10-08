@@ -271,7 +271,7 @@ describe("newBoundingBoxResizing", () => {
           { x: 130, y: 0 },
           { x: 130, y: 100 },
         ],
-        { keepAspect: true }
+        { keepAspect: true },
       );
       expect(affine0[0][0]).toBeCloseTo(1.3);
       expect(affine0[0][1]).toBeCloseTo(0);

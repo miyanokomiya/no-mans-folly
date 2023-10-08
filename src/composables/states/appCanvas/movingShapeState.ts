@@ -54,7 +54,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !targetIdSet.has(s.id) && !isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),

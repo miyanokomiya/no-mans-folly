@@ -39,7 +39,7 @@ export const NumberCombobox: React.FC<Props> = ({
       const v = parseFloat(e.currentTarget.getAttribute("data-value")!);
       onChanged?.(v);
     },
-    [close, onChanged]
+    [close, onChanged],
   );
 
   const onSubmit = useCallback(
@@ -49,7 +49,7 @@ export const NumberCombobox: React.FC<Props> = ({
       const val = Math.min(Math.max(draftValue, min), max);
       onChanged?.(val);
     },
-    [close, onChanged, draftValue, min, max]
+    [close, onChanged, draftValue, min, max],
   );
 
   const onInput = useCallback(
@@ -59,7 +59,7 @@ export const NumberCombobox: React.FC<Props> = ({
       const val = Math.min(Math.max(value, min), max);
       onChanged?.(val, true);
     },
-    [min, max, onChanged]
+    [min, max, onChanged],
   );
 
   const popupAttrs = useMemo(() => {

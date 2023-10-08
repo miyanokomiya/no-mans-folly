@@ -104,7 +104,7 @@ export function findBetterShapeAt(shapeComposite: ShapeComposite, p: IVec2, pare
 export function getDeleteTargetIds(shapeComposite: ShapeComposite, deleteSrc: string[]): string[] {
   const srcSet = new Set(deleteSrc);
   const remainedParentIdSet = new Set(
-    shapeComposite.shapes.filter((s) => !srcSet.has(s.id) && s.parentId).map((s) => s.parentId!)
+    shapeComposite.shapes.filter((s) => !srcSet.has(s.id) && s.parentId).map((s) => s.parentId!),
   );
 
   const deleteParentSet = new Set<string>();

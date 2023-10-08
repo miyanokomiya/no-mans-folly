@@ -19,7 +19,7 @@ export const SheetList: React.FC = () => {
     (id: string) => {
       acctx.sheetStore.selectSheet(id);
     },
-    [acctx.sheetStore]
+    [acctx.sheetStore],
   );
 
   const onClickAdd = useCallback(() => {
@@ -57,7 +57,7 @@ export const SheetList: React.FC = () => {
     (id: string, name: string) => {
       acctx.sheetStore.patchEntity(id, { name });
     },
-    [acctx.sheetStore]
+    [acctx.sheetStore],
   );
 
   const sheetItems = useMemo<[string, React.ReactNode][]>(() => {
@@ -81,7 +81,7 @@ export const SheetList: React.FC = () => {
         findex: generateKeyBetween(beforeFindex, nextFindex),
       });
     },
-    [sheets]
+    [sheets],
   );
 
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);

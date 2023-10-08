@@ -35,7 +35,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       const shapeMap = shapeComposite.shapeMap;
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
@@ -70,7 +70,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
             [{ ...shape, p }],
             // Newly created shape should have doc by default.
             // => It useful to apply text style even it has no content.
-            canHaveText(ctx.getShapeStruct, shape) ? { [shape.id]: getInitialOutput() } : undefined
+            canHaveText(ctx.getShapeStruct, shape) ? { [shape.id]: getInitialOutput() } : undefined,
           );
           ctx.selectShape(shape.id);
           return newSingleSelectedState;

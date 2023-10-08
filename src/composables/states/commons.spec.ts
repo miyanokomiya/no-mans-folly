@@ -66,8 +66,8 @@ describe("mapFilter", () => {
           3: { a: 3 },
           4: { a: 4 },
         },
-        (val) => val.a % 2 === 0
-      )
+        (val) => val.a % 2 === 0,
+      ),
     ).toEqual({
       2: { a: 2 },
       4: { a: 4 },

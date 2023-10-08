@@ -55,7 +55,7 @@ export function mapDataToObj<T>(src: [string, T][]): { [id: string]: T } {
 
 export function mapFilter<T>(
   origin: { [key: string]: T },
-  checkFn: (t: T, key: string) => boolean
+  checkFn: (t: T, key: string) => boolean,
 ): { [key: string]: T } {
   return Object.keys(origin).reduce<{ [key: string]: T }>((p, c) => {
     if (checkFn(origin[c], c)) {
@@ -76,7 +76,7 @@ export function patchPipe<T extends { id: string }>(
   patchFns: Array<
     (itemMap: { [id: string]: T }, patchMap: { [id: string]: Partial<T> }) => { [id: string]: Partial<T> }
   >,
-  src: { [id: string]: T }
+  src: { [id: string]: T },
 ): { patch: { [id: string]: Partial<T> }; result: { [id: string]: T } } {
   let currentResult = src;
   let currentPatch = {};

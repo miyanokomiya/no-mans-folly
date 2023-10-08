@@ -100,7 +100,7 @@ export function newConnectedLineHandler(option: Option) {
         {
           getShapeComposite: () => updatedShapeComposite,
         },
-        updated
+        updated,
       );
       if (optimized) {
         ret[id] = { ...patch, ...optimized };
@@ -150,7 +150,7 @@ export type ConnectedLineHandler = ReturnType<typeof newConnectedLineHandler>;
 
 export function getConnectedLineInfoMap(
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
-  connectedTargetIds: string[]
+  connectedTargetIds: string[],
 ): {
   [id: string]: LineShape[];
 } {
@@ -183,7 +183,7 @@ export function getConnectedLineInfoMap(
 
 export function getRotatedRectPathMap(
   ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "getShapeComposite">,
-  updatedMap: { [id: string]: Partial<Shape> }
+  updatedMap: { [id: string]: Partial<Shape> },
 ): {
   [id: string]: RotatedRectPath;
 } {
@@ -202,7 +202,7 @@ export function getRotatedRectPathMap(
 
 export function renderPatchedVertices(
   ctx: CanvasRenderingContext2D,
-  option: { lines: Partial<LineShape>[]; scale: number; style: StyleScheme }
+  option: { lines: Partial<LineShape>[]; scale: number; style: StyleScheme },
 ) {
   applyFillStyle(ctx, { color: option.style.selectionSecondaly });
   const size = 5 * option.scale;

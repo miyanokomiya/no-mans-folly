@@ -47,7 +47,7 @@ export const Dialog: React.FC<Props> = ({
     (e: React.MouseEvent) => {
       e.stopPropagation();
     },
-    [onClose]
+    [onClose],
   );
 
   return (

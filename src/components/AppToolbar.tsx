@@ -54,7 +54,7 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("");
     },
-    [sm, smctx, acctx]
+    [sm, smctx, acctx],
   );
 
   const onDownLineElm = useCallback(
@@ -70,7 +70,7 @@ export const AppToolbar: React.FC = () => {
       });
       setLineType(type);
     },
-    [sm, smctx]
+    [sm, smctx],
   );
 
   const [popup, setPopup] = useState<"" | "shapes" | "lines">("");

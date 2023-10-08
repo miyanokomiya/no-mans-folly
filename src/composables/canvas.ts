@@ -19,7 +19,7 @@ function centerizeView(
     width: number;
     height: number;
   },
-  reduceScale: (val: number) => number = (v) => v
+  reduceScale: (val: number) => number = (v) => v,
 ): {
   viewOrigin: IVec2;
   scale: number;
@@ -44,7 +44,7 @@ export function useCanvas(
   options: {
     scaleMin?: number;
     scaleMax?: number;
-  } = {}
+  } = {},
 ) {
   const scaleMin = options.scaleMin ?? 0.1;
   const scaleMax = options.scaleMax ?? 10;
@@ -67,13 +67,13 @@ export function useCanvas(
     (val: number) => {
       viewState.setState((state) => ({ scale: val, viewOrigin: state.viewOrigin }));
     },
-    [viewState.setState]
+    [viewState.setState],
   );
   const setViewOrigin = useCallback(
     (val: IVec2) => {
       viewState.setState((state) => ({ scale: state.scale, viewOrigin: val }));
     },
-    [viewState.setState]
+    [viewState.setState],
   );
 
   function setMousePoint(value: IVec2) {
@@ -109,7 +109,7 @@ export function useCanvas(
       width: viewSize.width * scale,
       height: viewSize.height * scale,
     }),
-    [viewOrigin, viewSize, scale]
+    [viewOrigin, viewSize, scale],
   );
 
   const viewCenter = useMemo(() => getRectCenter({ x: 0, y: 0, ...viewSize }), [viewSize]);
@@ -118,7 +118,7 @@ export function useCanvas(
     (v: IVec2): IVec2 => {
       return _viewToCanvas(scale, viewOrigin, v);
     },
-    [scale, viewOrigin]
+    [scale, viewOrigin],
   );
 
   const panView = useCallback(
@@ -126,14 +126,14 @@ export function useCanvas(
       if (!editStartViewOrigin) return;
       setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
     },
-    [editStartViewOrigin]
+    [editStartViewOrigin],
   );
 
   const canvasToView = useCallback(
     (v: IVec2): IVec2 => {
       return multi(sub(v, viewOrigin), 1 / scale);
     },
-    [viewOrigin, scale]
+    [viewOrigin, scale],
   );
 
   const adjustToCenter = useCallback(() => {
@@ -149,7 +149,7 @@ export function useCanvas(
       const rect = wrapperElm.getBoundingClientRect();
       return sub(p, { x: rect.x, y: rect.y });
     },
-    [getWrapper]
+    [getWrapper],
   );
 
   const addRootPosition = useCallback(
@@ -159,7 +159,7 @@ export function useCanvas(
       const rect = wrapperElm.getBoundingClientRect();
       return add(p, { x: rect.x, y: rect.y });
     },
-    [getWrapper]
+    [getWrapper],
   );
 
   const setViewport = useCallback(
@@ -173,7 +173,7 @@ export function useCanvas(
       setScale(ret.scale);
       setViewOrigin(ret.viewOrigin);
     },
-    [scale, scaleMax, adjustToCenter, viewSize]
+    [scale, scaleMax, adjustToCenter, viewSize],
   );
 
   const zoomView = useCallback(
@@ -186,7 +186,7 @@ export function useCanvas(
       setViewOrigin(nextViewOrigin);
       return nextScale;
     },
-    [viewCenter, scale, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint]
+    [viewCenter, scale, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint],
   );
 
   const setZoom = useCallback(
@@ -199,7 +199,7 @@ export function useCanvas(
       setViewOrigin(nextViewOrigin);
       return nextScale;
     },
-    [viewCenter, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint]
+    [viewCenter, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint],
   );
 
   const onResize = useCallback(() => {

@@ -55,7 +55,7 @@ export function renderParentLineRelation(
   ctx: Pick<AppCanvasStateContext, "getStyleScheme" | "getScale">,
   renderCtx: CanvasRenderingContext2D,
   textShape: TextShape,
-  parentLineShape: LineShape
+  parentLineShape: LineShape,
 ) {
   const path = getLinePath(parentLineShape);
   applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: 2 * ctx.getScale() });

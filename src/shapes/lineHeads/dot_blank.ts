@@ -31,7 +31,7 @@ export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
         { x: -radius, y: radius },
         { x: 0, y: radius },
       ].map((p) => applyAffine(transform, p)),
-      true
+      true,
     );
   },
 };

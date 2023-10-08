@@ -85,7 +85,7 @@ export const struct: ShapeStruct<RectangleShape> = {
     return isPointOnRectangleRotated(
       { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
       shape.rotation,
-      p
+      p,
     );
   },
   resize(shape, resizingAffine) {

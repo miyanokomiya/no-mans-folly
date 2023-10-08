@@ -54,7 +54,7 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
           const updated = mergedPatch[labelShape.id];
           affine = multiAffine(
             updated.p ? [1, 0, 0, 1, updated.p.x - labelShape.p.x, updated.p.y - labelShape.p.y] : IDENTITY_AFFINE,
-            affineSrc
+            affineSrc,
           );
           return;
         }

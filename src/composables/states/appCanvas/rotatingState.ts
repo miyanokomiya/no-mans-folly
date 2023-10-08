@@ -38,7 +38,7 @@ export function newRotatingState(option: Option): AppCanvasState {
       lineHandler = newConnectedLineHandler({
         connectedLinesMap: getConnectedLineInfoMap(
           ctx,
-          targets.map((s) => s.id)
+          targets.map((s) => s.id),
         ),
         ctx,
       });

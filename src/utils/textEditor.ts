@@ -37,7 +37,7 @@ export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: 
 export function renderDocByComposition(
   ctx: CanvasRenderingContext2D,
   composition: DocCompositionItem[],
-  compositionLines: DocCompositionLine[]
+  compositionLines: DocCompositionLine[],
 ) {
   let index = 0;
   compositionLines.forEach((line) => {
@@ -148,7 +148,7 @@ export function getLineHeight(attrs: DocAttributes = {}, blockAttrs: DocAttribut
 export function getBreakLineIndexWord(
   ctx: CanvasRenderingContext2D,
   word: string,
-  marginToTail: number
+  marginToTail: number,
 ): number | undefined {
   const width = ctx.measureText(word).width;
   if (width >= marginToTail) {
@@ -167,7 +167,7 @@ export function getBreakIndicesForWord(
   ctx: CanvasRenderingContext2D,
   word: string,
   marginToTail: number,
-  lineWidth: number
+  lineWidth: number,
 ): number[] | undefined {
   const indexForTop = getBreakLineIndexWord(ctx, word, marginToTail);
   if (indexForTop === undefined) return;
@@ -207,7 +207,7 @@ export interface DocCompositionLine {
 export function getCursorLocationAt(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
-  p: IVec2
+  p: IVec2,
 ): IVec2 {
   let lineIndex = 0;
   compositionLines.some((line) => {
@@ -238,7 +238,7 @@ export function getCursorLocationAt(
 export function isCursorInDoc(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
-  p: IVec2
+  p: IVec2,
 ): boolean {
   if (
     compositionLines.length === 0 ||
@@ -265,7 +265,7 @@ export function isCursorInDoc(
 export function getBoundsAtLocation(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
-  location: IVec2
+  location: IVec2,
 ): IRectangle {
   if (composition.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
 
@@ -291,7 +291,7 @@ export function getBoundsAtLocation(
 export function getRangeLines(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
-  [cursor, length]: [cursor: number, length: number]
+  [cursor, length]: [cursor: number, length: number],
 ): DocCompositionItem[][] {
   const cursorTo = Math.min(cursor + length, composition.length);
   const from = getCursorLocation(compositionLines, cursor);
@@ -348,7 +348,7 @@ export function getDeltaByApplyBlockStyle(
   composition: DocCompositionItem[],
   cursor: number,
   selection: number,
-  attrs: DocAttributes
+  attrs: DocAttributes,
 ): DocDelta {
   const breakIndexList: number[] = [];
   for (let i = cursor; i < composition.length; i++) {
@@ -635,7 +635,7 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
 export function convertLineWordToComposition(
   blockLineWord: BlockItem[],
   rangeWidth: number,
-  rangeHeight: number
+  rangeHeight: number,
 ): {
   composition: DocCompositionItem[];
   lines: DocCompositionLine[];
@@ -664,7 +664,7 @@ export function convertLineWordToComposition(
               height = h;
               fontheight = unit[2]?.size ?? DEFAULT_FONT_SIZE;
             }
-          })
+          }),
         );
         docHeight += height;
         heightList.push([height, fontheight]);
@@ -684,7 +684,7 @@ export function convertLineWordToComposition(
         lineUnit.forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
             outputs.push({ insert: unit[0], attributes: unit[2] });
-          })
+          }),
         );
 
         lines.push({ y, height, fontheight, outputs });
@@ -710,7 +710,7 @@ export function convertLineWordToComposition(
           wordUnit.forEach((unit) => {
             composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
             x += unit[1];
-          })
+          }),
         );
         lineIndex += 1;
       });
@@ -746,7 +746,7 @@ export function getDocCompositionInfo(
   doc: DocOutput,
   ctx: CanvasRenderingContext2D,
   rangeWidth: number,
-  rangeHeight: number
+  rangeHeight: number,
 ): {
   composition: DocCompositionItem[];
   lines: DocCompositionLine[];
@@ -754,13 +754,13 @@ export function getDocCompositionInfo(
   return convertLineWordToComposition(
     applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth),
     rangeWidth,
-    rangeHeight
+    rangeHeight,
   );
 }
 
 export function getWordRangeAtCursor(
   composition: Pick<DocCompositionItem, "char">[],
-  cursor: number
+  cursor: number,
 ): [cursor: number, selection: number] {
   // Avoid selecting while space characters
   if (isWordbreak(composition[cursor].char)) return [cursor, 0];
@@ -790,7 +790,7 @@ export function calcOriginalDocSize(doc: DocOutput, ctx: CanvasRenderingContext2
   const adjustedDoc = doc.length === 0 ? getInitialOutput() : doc;
   const blocks = applyRangeWidthToLineWord(
     splitOutputsIntoLineWord(adjustedDoc, getDocLetterWidthMap(adjustedDoc, ctx)),
-    rangeWidth
+    rangeWidth,
   );
   const info = convertLineWordToComposition(blocks, rangeWidth, 1);
   const height = info.lines.reduce((p, l) => p + l.height, 0);

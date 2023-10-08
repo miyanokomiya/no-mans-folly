@@ -20,7 +20,7 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, onClickMe
         setPopupedKey(name);
       }
     },
-    [popupedKey]
+    [popupedKey],
   );
 
   const closePopup = useCallback(() => {

@@ -14,21 +14,21 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
     (color: Color) => {
       onChanged?.({ ...fill, color: { ...color, a: fill.color.a } });
     },
-    [fill, onChanged]
+    [fill, onChanged],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
       onChanged?.({ ...fill, color: { ...fill.color, a: val } }, draft);
     },
-    [onChanged, fill]
+    [onChanged, fill],
   );
 
   const onDisabledChanged = useCallback(
     (val: boolean) => {
       onChanged?.({ ...fill, disabled: val });
     },
-    [onChanged, fill]
+    [onChanged, fill],
   );
 
   return (

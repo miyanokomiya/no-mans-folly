@@ -78,7 +78,7 @@ describe("rednerHSLA", () => {
         s: 0.1,
         l: 0.2,
         a: 0.3,
-      })
+      }),
     ).toEqual("hsla(1,10%,20%,0.3)");
   });
 });
@@ -91,7 +91,7 @@ describe("rednerHSVA", () => {
         s: 0.1,
         v: 0.2,
         a: 0.3,
-      })
+      }),
     ).toEqual("hsva(1,10%,20%,0.3)");
   });
 });
@@ -104,7 +104,7 @@ describe("rednerRGBA", () => {
         g: 4,
         b: 6,
         a: 0.3,
-      })
+      }),
     ).toEqual("rgba(1,4,6,0.3)");
   });
 });
@@ -165,7 +165,7 @@ describe("hslaToHsva", () => {
         s: 1,
         l: 0.5,
         a: 0.9,
-      })
+      }),
     ).toEqual({
       h: 20,
       s: 1,
@@ -183,7 +183,7 @@ describe("hsvaToHsla", () => {
         s: 1,
         v: 1,
         a: 0.9,
-      })
+      }),
     ).toEqual({
       h: 20,
       s: 1,

@@ -18,7 +18,7 @@ export const FileDropArea: React.FC<Props> = ({ onDrop, children, typeReg }) => 
 
       onDrop?.(e);
     },
-    [onDrop]
+    [onDrop],
   );
   const _onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

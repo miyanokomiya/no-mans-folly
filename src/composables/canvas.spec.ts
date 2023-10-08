@@ -72,7 +72,7 @@ describe("useCanvas", () => {
             width: 100,
             height: 200,
           },
-          10
+          10,
         );
       });
       expect(rendered.result.current.viewOrigin).toEqual({ x: -60, y: -120 });

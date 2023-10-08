@@ -31,7 +31,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
       const shapeMap = shapeComposite.shapeMap;
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !isLineShape(s)),
-        ctx.getViewRect()
+        ctx.getViewRect(),
       );
 
       shapeSnapping = newShapeSnapping({
@@ -53,7 +53,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
         targetIds.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
         ctx.generateUuid,
         ctx.createLastIndex(),
-        new Set(Object.keys(shapeMap))
+        new Set(Object.keys(shapeMap)),
       );
 
       ctx.clearAllSelected();
@@ -67,7 +67,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
         case "pointermove": {
           const d = sub(
             { x: event.data.current.x + EXTRA_DISTANCE, y: event.data.current.y + EXTRA_DISTANCE },
-            event.data.start
+            event.data.start,
           );
           snappingResult = shapeSnapping.test(moveRect(movingRect, d));
           const translate = snappingResult ? add(d, snappingResult.diff) : d;

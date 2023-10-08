@@ -33,7 +33,7 @@ describe("struct", () => {
         newShapeComposite({
           shapes: [group, child0, child1],
           getStruct: getCommonStruct,
-        }).getWrapperRect(group)
+        }).getWrapperRect(group),
       ).toEqual({ x: 1, y: 2, width: 3, height: 4 });
     });
 
@@ -43,7 +43,7 @@ describe("struct", () => {
         newShapeComposite({
           shapes: [group],
           getStruct: getCommonStruct,
-        }).getWrapperRect(group)
+        }).getWrapperRect(group),
       ).toEqual({ x: 0, y: 0, width: 0, height: 0 });
     });
   });
@@ -69,7 +69,7 @@ describe("struct", () => {
         newShapeComposite({
           shapes: [group, child0, child1],
           getStruct: getCommonStruct,
-        }).getLocalRectPolygon(group)
+        }).getLocalRectPolygon(group),
       ).toEqual([
         { x: 1, y: 2 },
         { x: 13, y: 2 },
@@ -84,7 +84,7 @@ describe("struct", () => {
         newShapeComposite({
           shapes: [group],
           getStruct: getCommonStruct,
-        }).getLocalRectPolygon(group)
+        }).getLocalRectPolygon(group),
       ).toEqual([
         { x: 0, y: 0 },
         { x: 0, y: 0 },

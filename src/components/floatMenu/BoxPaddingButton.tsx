@@ -58,47 +58,47 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
       // => Keeping it requires parent bounds and it would be too complex for this feature.
       onChange?.(createBoxPadding(undefined, val ? "relative" : undefined));
     },
-    [currentValue, onChange]
+    [currentValue, onChange],
   );
 
   const onChangeTop = useCallback(
     (val: number, draft = false) => {
       onChange?.(
         { ...currentValue, value: [val, currentValue.value[1], currentValue.value[2], currentValue.value[3]] },
-        draft
+        draft,
       );
     },
-    [currentValue, onChange]
+    [currentValue, onChange],
   );
 
   const onChangeRight = useCallback(
     (val: number, draft = false) => {
       onChange?.(
         { ...currentValue, value: [currentValue.value[0], val, currentValue.value[2], currentValue.value[3]] },
-        draft
+        draft,
       );
     },
-    [currentValue, onChange]
+    [currentValue, onChange],
   );
 
   const onChangeBottom = useCallback(
     (val: number, draft = false) => {
       onChange?.(
         { ...currentValue, value: [currentValue.value[0], currentValue.value[1], val, currentValue.value[3]] },
-        draft
+        draft,
       );
     },
-    [currentValue, onChange]
+    [currentValue, onChange],
   );
 
   const onChangeLeft = useCallback(
     (val: number, draft = false) => {
       onChange?.(
         { ...currentValue, value: [currentValue.value[0], currentValue.value[1], currentValue.value[2], val] },
-        draft
+        draft,
       );
     },
-    [currentValue, onChange]
+    [currentValue, onChange],
   );
 
   return (
