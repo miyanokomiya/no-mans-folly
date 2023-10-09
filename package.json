@@ -15,6 +15,9 @@
     "lint:fix": "yarn lint --fix && yarn lint-json -w && yarn lint-style -w"
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.1.2",
+    "@emoji-mart/react": "^1.1.1",
+    "emoji-mart": "^5.5.2",
     "fractional-indexing": "^3.2.0",
     "nanoid": "^5.0.1",
     "okageo": "^3.0.8",

@@ -35,6 +35,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
 
   startTextEditing: () => void;
   stopTextEditing: () => void;
+  getShowEmojiPicker: () => boolean;
+  setShowEmojiPicker: (val: boolean) => void;
   setTextEditorPosition: (p: IVec2) => void;
   getDocumentMap: () => { [id: string]: DocOutput };
   getTmpDocMap: () => { [id: string]: DocDelta };

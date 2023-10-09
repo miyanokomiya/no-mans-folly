@@ -46,6 +46,7 @@ export const AppCanvas: React.FC = () => {
   const [floatMenuAvailable, setFloatMenuAvailable] = useState(false);
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [currentDocAttrInfo, setCurrentDocAttrInfo] = useState<DocAttrInfo>({});
   const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
@@ -275,6 +276,8 @@ export const AppCanvas: React.FC = () => {
       stopTextEditing() {
         setTextEditing(false);
       },
+      getShowEmojiPicker: () => showEmojiPicker,
+      setShowEmojiPicker,
       setTextEditorPosition: (p) => {
         setTextEditorPosition(canvasToView(p));
       },
@@ -312,6 +315,7 @@ export const AppCanvas: React.FC = () => {
     getMousePoint,
     grid,
     loadShapeAssets,
+    setShowEmojiPicker,
   ]);
 
   useEffect(() => {
@@ -579,6 +583,8 @@ export const AppCanvas: React.FC = () => {
       onKeyDown={onKeyDown}
       position={textEditorPosition}
       focusKey={textEditorFocusKey}
+      showEmojiPicker={showEmojiPicker}
+      setShowEmojiPicker={setShowEmojiPicker}
     />
   ) : undefined;
 

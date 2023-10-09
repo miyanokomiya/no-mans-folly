@@ -67,13 +67,13 @@ export function useGlobalMouseupEffect(fn: (e: MouseEvent) => void) {
   }, [fn]);
 }
 
-export function useGlobalKeydownEffect(fn: (e: KeyboardEvent) => void) {
+export function useGlobalKeydownEffect(fn: (e: KeyboardEvent) => void, capture = false) {
   useEffect(() => {
-    window.addEventListener("keydown", fn);
+    window.addEventListener("keydown", fn, capture);
     return () => {
-      window.removeEventListener("keydown", fn);
+      window.removeEventListener("keydown", fn, capture);
     };
-  }, [fn]);
+  }, [fn, capture]);
 }
 
 export function useGlobalCopyEffect(fn: (e: ClipboardEvent) => void) {

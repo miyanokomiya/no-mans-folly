@@ -81,6 +81,8 @@ export function createInitialAppCanvasStateContext(arg: {
 
     startTextEditing() {},
     stopTextEditing() {},
+    getShowEmojiPicker: () => false,
+    setShowEmojiPicker() {},
     setTextEditorPosition() {},
     getDocumentMap: () => ({}),
     getTmpDocMap: () => ({}),

@@ -13,6 +13,7 @@ export const COMMAND_EXAM_SRC = {
   TEXT_MOVE_CURSOR: { command: "Ctrl + p, n, b, f", title: "Move cursor" },
   TEXT_BACKSPACE: { command: "Ctrl + h", title: "Backspace" },
   TEXT_DELETE: { command: "Ctrl + d", title: "Delete" },
+  TEXT_EMOJI_PICKER: { command: `${getAltOrOptionStr()} + "."`, title: "Emoji picker" },
 
   TOGGLE_GRID: { command: "g", title: "Grid on/off" },
   RESET_VIEWPORT: { command: "Home, !", title: "Reset viewport" },

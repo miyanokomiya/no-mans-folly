@@ -92,6 +92,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         COMMAND_EXAM_SRC.TEXT_MOVE_CURSOR,
         COMMAND_EXAM_SRC.TEXT_BACKSPACE,
         COMMAND_EXAM_SRC.TEXT_DELETE,
+        COMMAND_EXAM_SRC.TEXT_EMOJI_PICKER,
       ]);
     },
     onResume: (ctx) => {
@@ -372,6 +373,12 @@ function handleKeydown(
       if (event.data.ctrl) {
         event.data.prevent?.();
         ctx.redo();
+      }
+      return;
+    case ".":
+      if (event.data.alt) {
+        event.data.prevent?.();
+        ctx.setShowEmojiPicker(true);
       }
       return;
     case "ArrowLeft":
