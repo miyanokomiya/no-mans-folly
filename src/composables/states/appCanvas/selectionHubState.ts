@@ -30,9 +30,7 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
           case "line":
             return newLineSelectedState;
           default:
-            return option?.boundingBox
-              ? () => newSingleSelectedState({ boundingBox: option.boundingBox })
-              : newSingleSelectedState;
+            return newSingleSelectedState;
         }
       } else {
         return option?.boundingBox

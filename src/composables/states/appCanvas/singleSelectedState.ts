@@ -26,11 +26,7 @@ import { isGroupShape } from "../../../shapes/group";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { findBetterShapeAt } from "../../shapeComposite";
 
-interface Option {
-  boundingBox?: BoundingBox;
-}
-
-export function newSingleSelectedState(option?: Option): AppCanvasState {
+export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
@@ -56,13 +52,11 @@ export function newSingleSelectedState(option?: Option): AppCanvasState {
         ctx.setCommandExams(getCommonCommandExams());
       }
 
-      boundingBox =
-        option?.boundingBox ??
-        newBoundingBox({
-          path: shapeComposite.getLocalRectPolygon(shape),
-          styleScheme: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
-        });
+      boundingBox = newBoundingBox({
+        path: shapeComposite.getLocalRectPolygon(shape),
+        styleScheme: ctx.getStyleScheme(),
+        scale: ctx.getScale(),
+      });
 
       if (canAttachSmartBranch(ctx.getShapeStruct, shape)) {
         smartBranchHandler = newSmartBranchHandler({

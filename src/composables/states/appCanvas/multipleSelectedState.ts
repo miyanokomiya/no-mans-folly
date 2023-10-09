@@ -27,6 +27,8 @@ import { findBetterShapeAt } from "../../shapeComposite";
 import { isGroupShape } from "../../../shapes/group";
 
 interface Option {
+  // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
+  // Then, let this state receive concurrent bounding box.
   boundingBox?: BoundingBox;
 }
 

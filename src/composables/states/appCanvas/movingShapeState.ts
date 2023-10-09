@@ -114,7 +114,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           if (Object.keys(val).length > 0) {
             ctx.patchShapes(val);
           }
-          return newSelectionHubState;
+          return () => newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
         }
         case "selection": {
           return newSelectionHubState;
