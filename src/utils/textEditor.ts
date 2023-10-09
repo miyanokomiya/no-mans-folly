@@ -441,6 +441,16 @@ export function getDeltaByApplyInlineStyleToDoc(doc: DocOutput, attrs: DocAttrib
   return [{ retain, attributes: attrs }];
 }
 
+export function getDeltaByScaleTextSize(doc: DocOutput, scale: number, floor = false): DocDelta {
+  return doc.map((o) => {
+    const val = (o.attributes?.size ?? DEFAULT_FONT_SIZE) * scale;
+    return {
+      retain: o.insert.length,
+      attributes: { size: floor ? Math.floor(val) : val },
+    };
+  });
+}
+
 export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert {
   let count = 0;
   let ret = line.outputs[line.outputs.length - 1];

@@ -1,5 +1,11 @@
 import type { AppCanvasState } from "./core";
-import { BoundingBox, HitResult, getMovingBoundingBoxPoints, newBoundingBoxResizing } from "../../boundingBox";
+import {
+  BoundingBox,
+  BoundingBoxResizing,
+  HitResult,
+  getMovingBoundingBoxPoints,
+  newBoundingBoxResizing,
+} from "../../boundingBox";
 import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
 import { resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
@@ -15,6 +21,9 @@ import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { TextShape, isTextShape } from "../../../shapes/text";
+import { DocDelta } from "../../../models/document";
+import { getDeltaByScaleTextSize } from "../../../utils/textEditor";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -29,12 +38,7 @@ export function newResizingState(option: Option): AppCanvasState {
   let lineHandler: ConnectedLineHandler;
   let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
-
-  const boundingBoxResizing = newBoundingBoxResizing({
-    rotation: option.boundingBox.getRotation(),
-    hitResult: option.hitResult,
-    resizingBase: option.boundingBox.getResizingBase(option.hitResult),
-  });
+  let boundingBoxResizing: BoundingBoxResizing;
 
   return {
     getLabel: () => "Resizing",
@@ -65,6 +69,13 @@ export function newResizingState(option: Option): AppCanvasState {
 
       lineLabelHandler = newLineLabelHandler({ ctx });
 
+      boundingBoxResizing = newBoundingBoxResizing({
+        rotation: option.boundingBox.getRotation(),
+        hitResult: option.hitResult,
+        resizingBase: option.boundingBox.getResizingBase(option.hitResult),
+        mode: targets.some((s) => isTextShape(s)) ? "text" : undefined,
+      });
+
       ctx.setCommandExams([
         COMMAND_EXAM_SRC.DISABLE_SNAP,
         COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY,
@@ -74,6 +85,7 @@ export function newResizingState(option: Option): AppCanvasState {
     onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
+      ctx.setTmpDocMap({});
       ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
@@ -158,11 +170,28 @@ export function newResizingState(option: Option): AppCanvasState {
           linePatchedMap = lineHandler.onModified(patchMap);
           const merged = mergeMap(patchMap, linePatchedMap);
           const labelPatch = lineLabelHandler.onModified(merged);
-          ctx.setTmpShapeMap(mergeMap(merged, labelPatch));
+          const nextTmpShapeMap = mergeMap(merged, labelPatch);
+
+          const docMap = ctx.getDocumentMap();
+          const docPatch: { [id: string]: DocDelta } = {};
+          Object.keys(nextTmpShapeMap).forEach((id) => {
+            const src = shapeMap[id];
+            const shapeDoc = docMap[id];
+            if (!shapeDoc || !isTextShape(src)) return;
+
+            const diff = nextTmpShapeMap[id] as Partial<TextShape>;
+            if (diff.height === undefined) return;
+
+            const heightScale = diff.height / src.height;
+            docPatch[id] = getDeltaByScaleTextSize(shapeDoc, heightScale, true);
+          });
+
+          ctx.setTmpShapeMap(nextTmpShapeMap);
+          ctx.setTmpDocMap(docPatch);
           return;
         }
         case "pointerup": {
-          ctx.patchShapes(ctx.getTmpShapeMap());
+          ctx.patchDocuments(ctx.getTmpDocMap(), ctx.getTmpShapeMap());
           return () =>
             newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
         }

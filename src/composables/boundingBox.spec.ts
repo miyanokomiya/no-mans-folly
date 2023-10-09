@@ -247,6 +247,44 @@ describe("newBoundingBoxResizing", () => {
       expect(affine0[4]).toBeCloseTo(0);
       expect(affine0[5]).toBeCloseTo(0);
     });
+
+    test("should return resizing affine matrix: at a segment && text mode", () => {
+      // Should keep aspect ratio when resizing vertically
+      const corner0 = newBoundingBoxResizing({
+        rotation: 0,
+        hitResult: { type: "segment", index: 0 },
+        resizingBase: {
+          direction: { x: 0, y: -100 },
+          origin: { x: 50, y: 100 },
+        },
+        mode: "text",
+      });
+      const affine0 = corner0.getAffine({ x: 0, y: -20 });
+      expect(affine0[0]).toBeCloseTo(1.2);
+      expect(affine0[1]).toBeCloseTo(0);
+      expect(affine0[2]).toBeCloseTo(0);
+      expect(affine0[3]).toBeCloseTo(1.2);
+      expect(affine0[4]).toBeCloseTo(-10);
+      expect(affine0[5]).toBeCloseTo(-20);
+
+      // Should resize as usual when resizing horizontally
+      const corner1 = newBoundingBoxResizing({
+        rotation: 0,
+        hitResult: { type: "segment", index: 1 },
+        resizingBase: {
+          direction: { x: 100, y: 0 },
+          origin: { x: 0, y: 50 },
+        },
+        mode: "text",
+      });
+      const affine1 = corner1.getAffine({ x: 10, y: 0 });
+      expect(affine1[0]).toBeCloseTo(1.1);
+      expect(affine1[1]).toBeCloseTo(0);
+      expect(affine1[2]).toBeCloseTo(0);
+      expect(affine1[3]).toBeCloseTo(1);
+      expect(affine1[4]).toBeCloseTo(0);
+      expect(affine1[5]).toBeCloseTo(0);
+    });
   });
 
   describe("getAffineAfterSnapping", () => {

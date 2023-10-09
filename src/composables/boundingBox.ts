@@ -197,6 +197,7 @@ interface BoundingBoxResizingOption {
   rotation: number;
   hitResult: HitResult;
   resizingBase: ResizingBase;
+  mode?: "text";
 }
 
 export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
@@ -216,8 +217,14 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   const rotateFn = getRotateFn(-option.rotation, centralizedOrigin);
   const rotatedBaseOrigin = rotateFn(option.resizingBase.origin);
 
+  // In "text" mode,
+  // - cannot be resized vertically
+  // - can be resized horizontally
+  // - can be resized proportionally
+  const keepAspectForce = option.mode === "text" && yResizable;
+
   function getAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
-    const keepAspect = modifire?.keepAspect;
+    const keepAspect = keepAspectForce || modifire?.keepAspect;
     const centralize = modifire?.centralize;
 
     const adjustedRotatedDirection = centralize ? centralizedrotatedBaseDirection : rotatedBaseDirection;
@@ -264,7 +271,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     snappedSegment: ISegment,
     modifire?: { keepAspect?: boolean; centralize?: boolean },
   ): [affine: AffineMatrix, d: number, exactTarget?: ISegment] {
-    const keepAspect = modifire?.keepAspect;
+    const keepAspect = keepAspectForce || modifire?.keepAspect;
     const centralize = modifire?.centralize;
 
     // If the anchor point can move freely, the resizing can be treated as normal.
@@ -326,6 +333,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
 
   return { getAffine, getAffineAfterSnapping, getTransformedAnchor };
 }
+export type BoundingBoxResizing = ReturnType<typeof newBoundingBoxResizing>;
 
 interface BoundingBoxRotatingOption {
   rotation: number;
