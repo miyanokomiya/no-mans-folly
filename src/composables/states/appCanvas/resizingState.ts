@@ -236,19 +236,17 @@ export function newResizingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const targetIds = Object.keys(targetShapeMap);
-      // When only one target exists, show its realtime outline rather than the bounding box.
-      // => Because certain shapes, such as text shape, don't always transform along with the boudning box.
-      if (targetIds.length === 1) {
-        const style = ctx.getStyleScheme();
-        const shapeComposite = ctx.getShapeComposite();
-        applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * ctx.getScale() });
-        renderCtx.beginPath();
-        applyPath(renderCtx, shapeComposite.getLocalRectPolygon(shapeComposite.mergedShapeMap[targetIds[0]]), true);
-        renderCtx.stroke();
-      } else {
-        option.boundingBox.render(renderCtx, resizingAffine);
-      }
+      const style = ctx.getStyleScheme();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapes = Object.entries(shapeComposite.mergedShapeMap)
+        .filter(([id]) => targetShapeMap[id])
+        .map(([, s]) => s);
+
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
+      renderCtx.beginPath();
+      shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
+      renderCtx.stroke();
+      option.boundingBox.render(renderCtx, resizingAffine);
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
