@@ -47,3 +47,8 @@ export interface DocAttrInfo {
   block?: DocAttributes;
   doc?: DocAttributes;
 }
+
+export interface EmojiData {
+  id: string;
+  native: string;
+}

@@ -1,6 +1,7 @@
 import { IVec2 } from "okageo";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EmojiData, EmojiPicker } from "../molecules/EmojiPicker";
+import { EmojiPicker } from "../molecules/EmojiPicker";
+import { EmojiData } from "../../models/document";
 
 interface Props {
   onInput?: (val: string, composition?: boolean) => void;

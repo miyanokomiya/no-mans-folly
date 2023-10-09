@@ -1,12 +1,7 @@
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
-import { useGlobalKeydownEffect } from "../../composables/window";
-import { useCallback } from "react";
+import { Suspense, lazy } from "react";
+import { EmojiData } from "../../models/document";
 
-export interface EmojiData {
-  id: string;
-  native: string;
-}
+const LazyEmojiPicker = lazy(() => import("./_EmojiPicker"));
 
 interface Props {
   onEmojiSelect?: (val: EmojiData) => void;
@@ -14,16 +9,9 @@ interface Props {
 }
 
 export const EmojiPicker: React.FC<Props> = ({ onEmojiSelect, onClose }) => {
-  const handleGlobalKeydown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onClose?.();
-    }
-  }, []);
-  useGlobalKeydownEffect(handleGlobalKeydown, true);
-
   return (
-    <div>
-      <Picker data={data} onEmojiSelect={onEmojiSelect} autoFocus={true} onClickOutside={onClose} />
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <LazyEmojiPicker onEmojiSelect={onEmojiSelect} onClose={onClose} />
+    </Suspense>
   );
 };
