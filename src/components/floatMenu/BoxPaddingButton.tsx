@@ -109,18 +109,18 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
         </ToggleInput>
       </div>
       <div className="flex flex-col items-center gap-1 mt-2">
-        <div className="w-24">
+        <div className="w-40">
           <SliderInput {...sliderAttrs} value={currentValue.value[0]} onChanged={onChangeTop} />
         </div>
         <div className="flex gap-1">
-          <div className="w-24">
+          <div className="w-40">
             <SliderInput {...sliderAttrs} value={currentValue.value[3]} onChanged={onChangeLeft} />
           </div>
-          <div className="w-24">
+          <div className="w-40">
             <SliderInput {...sliderAttrs} value={currentValue.value[1]} onChanged={onChangeRight} />
           </div>
         </div>
-        <div className="w-24">
+        <div className="w-40">
           <SliderInput {...sliderAttrs} value={currentValue.value[2]} onChanged={onChangeBottom} />
         </div>
       </div>
