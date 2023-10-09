@@ -81,7 +81,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.patchShapes).toHaveBeenNthCalledWith(1, { a: { value: 1 } });
-      expect(result).toEqual(newSelectionHubState);
+      expect((result as any)?.().getLabel()).toEqual("SelectionHub");
     });
   });
 
