@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, IAppCanvasContext, createInitialAppCanvasStateContext } from "./AppCanvasContext";
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { generateUuid } from "../utils/random";
@@ -22,11 +22,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
   }, [acctx, getAssetAPI]);
 
   const [stateContext, setStateContext] = useState(initialContext);
-
   const stateContextRef = useRef(stateContext);
-  useEffect(() => {
-    stateContextRef.current = stateContext;
-  }, [stateContext]);
 
   const stateMachine = useMemo(() => {
     return newStateMachine(() => stateContextRef.current, newDefaultState);
@@ -34,14 +30,18 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
 
   const handleSetStateContext = useCallback<React.Dispatch<AppCanvasStateContextPart>>(
     (val) => {
-      setStateContext((prev) => ({
-        getTimestamp: prev.getTimestamp,
-        generateUuid: prev.generateUuid,
-        getShapeStruct: prev.getShapeStruct,
-        getStyleScheme: prev.getStyleScheme,
-        getAssetAPI: prev.getAssetAPI,
-        ...val,
-      }));
+      setStateContext((prev) => {
+        const next = {
+          getTimestamp: prev.getTimestamp,
+          generateUuid: prev.generateUuid,
+          getShapeStruct: prev.getShapeStruct,
+          getStyleScheme: prev.getStyleScheme,
+          getAssetAPI: prev.getAssetAPI,
+          ...val,
+        };
+        stateContextRef.current = next;
+        return next;
+      });
     },
     [setStateContext],
   );

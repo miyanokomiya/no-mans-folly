@@ -321,7 +321,6 @@ export const AppCanvas: React.FC = () => {
   useEffect(() => {
     // Need to call reset once here.
     // The sm has initial mock context until "smctx.setCtx" is called once.
-    // TODO: Doesn't work
     sm.reset();
   }, [sm]);
 
