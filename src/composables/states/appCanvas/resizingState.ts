@@ -16,14 +16,16 @@ import {
   newConnectedLineHandler,
   renderPatchedVertices,
 } from "../../connectedLineHandler";
-import { mergeMap, toMap } from "../../../utils/commons";
+import { patchPipe, toMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { TextShape, isTextShape } from "../../../shapes/text";
+import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
-import { getDeltaByScaleTextSize } from "../../../utils/textEditor";
+import { calcOriginalDocSize, getDeltaByScaleTextSize } from "../../../utils/textEditor";
+import { applyPath } from "../../../utils/renderer";
+import { applyStrokeStyle } from "../../../utils/strokeStyle";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -159,34 +161,65 @@ export function newResizingState(option: Option): AppCanvasState {
           }
 
           const shapeMap = ctx.getShapeComposite().shapeMap;
-          const patchMap = Object.keys(targetShapeMap).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
-            const shape = shapeMap[id];
-            if (shape) {
-              m[id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
-            }
-            return m;
-          }, {});
-
-          linePatchedMap = lineHandler.onModified(patchMap);
-          const merged = mergeMap(patchMap, linePatchedMap);
-          const labelPatch = lineLabelHandler.onModified(merged);
-          const nextTmpShapeMap = mergeMap(merged, labelPatch);
-
           const docMap = ctx.getDocumentMap();
           const docPatch: { [id: string]: DocDelta } = {};
-          Object.keys(nextTmpShapeMap).forEach((id) => {
-            const src = shapeMap[id];
-            const shapeDoc = docMap[id];
-            if (!shapeDoc || !isTextShape(src)) return;
+          const patchResult = patchPipe(
+            [
+              (current) => {
+                return Object.keys(targetShapeMap).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
+                  const shape = current[id];
+                  if (shape) {
+                    m[id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
+                  }
+                  return m;
+                }, {});
+              },
+              (_, patch) => {
+                linePatchedMap = lineHandler.onModified(patch);
+                return linePatchedMap;
+              },
+              (_, patch) => {
+                return lineLabelHandler.onModified(patch);
+              },
+              (_, patch) => {
+                // Scale each text size along with height scaling
+                Object.keys(patch).forEach((id) => {
+                  const src = shapeMap[id];
+                  const shapeDoc = docMap[id];
+                  if (!shapeDoc || !isTextShape(src)) return;
 
-            const diff = nextTmpShapeMap[id] as Partial<TextShape>;
-            if (diff.height === undefined) return;
+                  const diff = patch[id] as Partial<TextShape>;
+                  if (diff.height === undefined) return;
 
-            const heightScale = diff.height / src.height;
-            docPatch[id] = getDeltaByScaleTextSize(shapeDoc, heightScale, true);
-          });
+                  const heightScale = diff.height / src.height;
+                  docPatch[id] = getDeltaByScaleTextSize(shapeDoc, heightScale, true);
+                });
+                return {};
+              },
+              (current, patch) => {
+                // Adjust each text shape's size along with its content
+                const shapePatch: { [id: string]: Partial<TextShape> } = {};
+                const renderCtx = ctx.getRenderCtx();
+                if (renderCtx) {
+                  Object.keys(patch).forEach((id) => {
+                    const shape = current[id];
+                    if (isTextShape(shape)) {
+                      const nextDoc = docPatch[id] ? ctx.patchDocDryRun(id, docPatch[id]) : docMap[id];
+                      const size = calcOriginalDocSize(nextDoc, renderCtx, shape.maxWidth);
+                      const update = patchSize(shape, size);
+                      if (update) {
+                        shapePatch[id] = update;
+                      }
+                    }
+                  });
+                }
+                return shapePatch;
+              },
+            ],
+            shapeMap,
+          );
 
-          ctx.setTmpShapeMap(nextTmpShapeMap);
+          ctx.setTmpShapeMap(patchResult.patch);
           ctx.setTmpDocMap(docPatch);
           return;
         }
@@ -203,7 +236,20 @@ export function newResizingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      option.boundingBox.render(renderCtx, resizingAffine);
+      const targetIds = Object.keys(targetShapeMap);
+      // When only one target exists, show its realtime outline rather than the bounding box.
+      // => Because certain shapes, such as text shape, don't always transform along with the boudning box.
+      if (targetIds.length === 1) {
+        const style = ctx.getStyleScheme();
+        const shapeComposite = ctx.getShapeComposite();
+        applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * ctx.getScale() });
+        renderCtx.beginPath();
+        applyPath(renderCtx, shapeComposite.getLocalRectPolygon(shapeComposite.mergedShapeMap[targetIds[0]]), true);
+        renderCtx.stroke();
+      } else {
+        option.boundingBox.render(renderCtx, resizingAffine);
+      }
+
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
         const shapeMap = shapeComposite.shapeMap;
