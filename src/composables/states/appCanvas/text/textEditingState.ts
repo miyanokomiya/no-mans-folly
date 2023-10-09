@@ -11,7 +11,7 @@ import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape, patchSize } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
-import { calcOriginalDocSize } from "../../../../utils/textEditor";
+import { calcOriginalDocSize, getDocLength, splitToSegments } from "../../../../utils/textEditor";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
@@ -126,11 +126,12 @@ export function newTextEditingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "text-input": {
           const cursor = textEditorController.getCursor();
+          const inputLength = splitToSegments(event.data.value).length;
           patchDocument(ctx, textEditorController.getDeltaByInput(event.data.value));
-          textEditorController.setCursor(cursor + event.data.value.length);
+          textEditorController.setCursor(cursor + inputLength);
 
           if (event.data.composition) {
-            textEditorController.startIME(event.data.value.length);
+            textEditorController.startIME(inputLength);
           } else {
             textEditorController.stopIME();
           }
@@ -245,7 +246,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "paste": {
           const clipboard = newDocClipboard([], (doc) => {
-            const count = doc.flatMap((p) => p.insert).join("").length;
+            const count = getDocLength(doc);
             patchDocument(ctx, textEditorController.getDeltaByPaste(doc, event.data.shift));
             textEditorController.setCursor(textEditorController.getCursor() + count);
           });
