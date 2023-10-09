@@ -321,6 +321,7 @@ export const AppCanvas: React.FC = () => {
   useEffect(() => {
     // Need to call reset once here.
     // The sm has initial mock context until "smctx.setCtx" is called once.
+    // TODO: Doesn't work
     sm.reset();
   }, [sm]);
 
@@ -577,6 +578,17 @@ export const AppCanvas: React.FC = () => {
     [sm, viewToCanvas, getMousePoint],
   );
 
+  const handleSetShowEmojiPicker = useCallback(
+    (val: boolean) => {
+      if (val) {
+        setShowEmojiPicker(val);
+      } else {
+        sm.handleEvent({ type: "close-emoji-picker" });
+      }
+    },
+    [sm, setShowEmojiPicker],
+  );
+
   const textEditor = textEditing ? (
     <TextEditor
       onInput={onTextInput}
@@ -584,7 +596,7 @@ export const AppCanvas: React.FC = () => {
       position={textEditorPosition}
       focusKey={textEditorFocusKey}
       showEmojiPicker={showEmojiPicker}
-      setShowEmojiPicker={setShowEmojiPicker}
+      setShowEmojiPicker={handleSetShowEmojiPicker}
     />
   ) : undefined;
 

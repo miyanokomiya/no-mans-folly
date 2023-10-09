@@ -80,7 +80,13 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   function addEntities(entities: T[]) {
     transact(() => {
-      entities.forEach((entity) => addEntity(entity));
+      entities.forEach((entity) => {
+        if (entity.id) {
+          addEntity(entity);
+        } else {
+          throw new Error("Entity must have id");
+        }
+      });
     });
   }
 

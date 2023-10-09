@@ -61,7 +61,8 @@ export type AppCanvasEvent =
   | TextInputEvent
   | TextStyleEvent
   | ContextMenuItemEvent
-  | FileDropEvent;
+  | FileDropEvent
+  | CloseEmojiPicker;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";
@@ -113,4 +114,8 @@ export interface FileDropEvent extends ModeStateEventBase {
     files: FileList;
     point: IVec2;
   };
+}
+
+export interface CloseEmojiPicker extends ModeStateEventBase {
+  type: "close-emoji-picker";
 }

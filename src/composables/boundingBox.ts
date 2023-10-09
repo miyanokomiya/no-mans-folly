@@ -197,7 +197,7 @@ interface BoundingBoxResizingOption {
   rotation: number;
   hitResult: HitResult;
   resizingBase: ResizingBase;
-  mode?: "text";
+  mode?: "text" | "keepAspect";
 }
 
 export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
@@ -221,7 +221,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
   // - cannot be resized vertically
   // - can be resized horizontally
   // - can be resized proportionally
-  const keepAspectForce = option.mode === "text" && yResizable;
+  const keepAspectForce = option.mode === "keepAspect" || (option.mode === "text" && yResizable);
 
   function getAffine(diff: IVec2, modifire?: { keepAspect?: boolean; centralize?: boolean }): AffineMatrix {
     const keepAspect = keepAspectForce || modifire?.keepAspect;

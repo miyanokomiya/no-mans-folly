@@ -7,6 +7,7 @@ import { struct as textStruct } from "./text";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
+import { struct as emojiStruct } from "./emoji";
 import { struct as groupStruct } from "./group";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
@@ -24,6 +25,7 @@ const SHAPE_STRUCTS: {
   ellipse: ellipseStruct,
   line: lineStruct,
   image: imageStruct,
+  emoji: emojiStruct,
   group: groupStruct,
 };
 
@@ -275,6 +277,11 @@ export function cloneShapes(getStruct: GetShapeStruct, shapes: Shape[], generate
 export function canAttachSmartBranch(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.canAttachSmartBranch;
+}
+
+export function shouldKeepAspect(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.shouldKeepAspect;
 }
 
 export function duplicateShapes(

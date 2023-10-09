@@ -7,7 +7,7 @@ import {
   newBoundingBoxResizing,
 } from "../../boundingBox";
 import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
-import { resizeShape } from "../../../shapes";
+import { resizeShape, shouldKeepAspect } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import {
@@ -75,7 +75,11 @@ export function newResizingState(option: Option): AppCanvasState {
         rotation: option.boundingBox.getRotation(),
         hitResult: option.hitResult,
         resizingBase: option.boundingBox.getResizingBase(option.hitResult),
-        mode: targets.some((s) => isTextShape(s)) ? "text" : undefined,
+        mode: targets.some((s) => shouldKeepAspect(shapeComposite.getShapeStruct, s))
+          ? "keepAspect"
+          : targets.some((s) => isTextShape(s))
+          ? "text"
+          : undefined,
       });
 
       ctx.setCommandExams([

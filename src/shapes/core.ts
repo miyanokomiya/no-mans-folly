@@ -44,6 +44,7 @@ export interface ShapeStruct<T extends Shape> {
    */
   refreshRelation?: (shape: T, availableIdSet: Set<string>) => Partial<T> | undefined;
   canAttachSmartBranch?: boolean;
+  shouldKeepAspect?: boolean;
 }
 
 /**

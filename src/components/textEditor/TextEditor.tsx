@@ -52,9 +52,9 @@ export const TextEditor: React.FC<Props> = ({
   }, [draft, onInput]);
 
   const handleEmojiSelect = useCallback((val: EmojiData) => {
-    setShowEmojiPicker?.(false);
     onInput?.(val.native);
     setDraft("");
+    setShowEmojiPicker?.(false);
     inputRef.current?.focus?.();
   }, []);
 

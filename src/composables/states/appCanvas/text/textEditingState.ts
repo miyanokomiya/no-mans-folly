@@ -229,6 +229,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
           ctx.setCurrentDocAttrInfo(nextInfo);
           return;
         }
+        case "close-emoji-picker":
+          ctx.setShowEmojiPicker(false);
+          return;
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;

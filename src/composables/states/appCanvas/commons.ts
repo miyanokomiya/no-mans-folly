@@ -24,6 +24,7 @@ import { ImageShape } from "../../../shapes/image";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
+import { newEmojiPickerState } from "./emojiPickerState";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -125,6 +126,11 @@ export function handleCommonShortcut(
     case "Z":
       if (event.data.ctrl) ctx.redo();
       return newSelectionHubState;
+    case ".":
+      if (event.data.alt) {
+        return newEmojiPickerState;
+      }
+      return;
     case "!":
     case "Home": {
       const shapeComposite = ctx.getShapeComposite();
@@ -137,6 +143,7 @@ export function handleCommonShortcut(
 const COMMON_COMMAND_EXAMS = [
   COMMAND_EXAM_SRC.NEW_TEXT,
   COMMAND_EXAM_SRC.NEW_LINE,
+  COMMAND_EXAM_SRC.NEW_EMOJI,
   COMMAND_EXAM_SRC.TOGGLE_GRID,
   COMMAND_EXAM_SRC.RESET_VIEWPORT,
 ];
