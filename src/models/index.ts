@@ -52,7 +52,10 @@ export interface StrokeStyle {
   disabled?: boolean;
   color: Color;
   width?: number;
+  dash?: LineDash;
 }
+
+export type LineDash = undefined | "solid" | "dot" | "short" | "long"; // "undefined" refers to "solid"
 
 export interface CommonStyle {
   fill: FillStyle;

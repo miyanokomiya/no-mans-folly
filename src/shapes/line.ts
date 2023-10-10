@@ -41,7 +41,7 @@ export const struct: ShapeStruct<LineShape> = {
     return obj;
   },
   render(ctx, shape, shapeComposite) {
-    applyStrokeStyle(ctx, shape.stroke);
+    applyStrokeStyle(ctx, { ...shape.stroke, dash: undefined });
     applyFillStyle(ctx, shape.fill);
     const treeNode = shapeComposite?.treeNodeMap[shape.id];
     const linePath = getLinePath(shape);
@@ -104,10 +104,15 @@ export const struct: ShapeStruct<LineShape> = {
 
     ctx.beginPath();
     applyPath(ctx, linePath);
-    applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color });
-    ctx.stroke();
-    applyStrokeStyle(ctx, { ...shape.stroke, width: ctx.lineWidth * 0.8 });
-    ctx.stroke();
+    if (!shape.fill.disabled) {
+      applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color, dash: undefined });
+      ctx.stroke();
+      applyStrokeStyle(ctx, { ...shape.stroke, width: ctx.lineWidth * 0.8 });
+      ctx.stroke();
+    } else {
+      applyStrokeStyle(ctx, shape.stroke);
+      ctx.stroke();
+    }
 
     if (region) {
       ctx.restore();
