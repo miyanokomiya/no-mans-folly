@@ -2,8 +2,9 @@ import { Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { getRotatedRectAffine } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape } from "./core";
+import { ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
+import { mapReduce } from "../utils/commons";
 
 export type ImageShape = RectangleShape & {
   assetId?: string;
@@ -54,7 +55,9 @@ export const struct: ShapeStruct<ImageShape> = {
     ctx.restore();
   },
   getTextRangeRect: undefined,
+  ...mapReduce(textContainerModule, () => undefined),
   canAttachSmartBranch: false,
+  shouldKeepAspect: true,
 };
 
 export function isImageShape(shape: Shape): shape is ImageShape {
