@@ -119,7 +119,6 @@ export function newTextEditingState(option: Option): AppCanvasState {
             { [option.id]: { width: 40 } as Partial<TextShape> },
           );
           ctx.deleteShapes([option.id]);
-          ctx.createLastIndex();
         }
       }
     },

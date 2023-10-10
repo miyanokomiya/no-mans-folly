@@ -11,6 +11,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { isLineShape } from "../../../../shapes/line";
 import { TAU } from "../../../../utils/geometry";
+import { getInitialOutput } from "../../../../utils/textEditor";
 
 export function newTextReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -50,7 +51,9 @@ export function newTextReadyState(): AppCanvasState {
                 p: vertex,
                 findex: ctx.createLastIndex(),
               });
-              ctx.addShapes([textshape]);
+              // Better create initial doc here.
+              // Otherwise, history operations for upcoming text editing don't work well for some reason.
+              ctx.addShapes([textshape], { [textshape.id]: getInitialOutput() });
               ctx.selectShape(textshape.id);
               return () => newTextEditingState({ id: textshape.id });
             }
