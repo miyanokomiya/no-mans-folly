@@ -1,6 +1,6 @@
 import { Shape } from "../models";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
-import { TextShape, isTextShape, patchPosition } from "../shapes/text";
+import { TextShape, isLineLabelShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU, getRelativePointOnPath } from "../utils/geometry";
 import { attachLabelToLine } from "../utils/lineLabel";
@@ -25,7 +25,7 @@ export function newLineLabelHandler(option: Option) {
       if (!isLineShape(src)) return;
 
       const patchedLine: LineShape = { ...src, ...patch };
-      const labels = shapeList.filter((s): s is TextShape => isTextShape(s) && s.parentId === lineId);
+      const labels = shapeList.filter((s): s is TextShape => isLineLabelShape(s) && s.parentId === lineId);
       labels.forEach((label) => {
         const origin = getRelativePointOnPath(getLinePath(patchedLine), label.lineAttached ?? 0.5);
         const labelPatch = patchPosition(label, origin, getLabelMargin(patchedLine));
@@ -37,7 +37,7 @@ export function newLineLabelHandler(option: Option) {
 
     updatedEntries.forEach(([labelId, patch]) => {
       const shape = shapeMap[labelId];
-      if (!isTextShape(shape) || !shape.parentId) return;
+      if (!isLineLabelShape(shape) || !shape.parentId) return;
 
       const label = { ...shape, ...patch } as TextShape;
       const line = { ...shapeMap[shape.parentId], ...(updatedMap[shape.parentId] ?? {}) } as LineShape;

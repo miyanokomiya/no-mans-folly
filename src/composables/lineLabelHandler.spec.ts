@@ -52,5 +52,33 @@ describe("newLineLabelHandler", () => {
         label0: { p: { x: 50, y: -17 }, hAlign: "center", vAlign: "bottom", lineAttached: 0.3 },
       });
     });
+
+    test("should not patch when a child text shape belongs to a group shape", () => {
+      const target = newLineLabelHandler({
+        ctx: {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [
+                createShape(getCommonStruct, "group", {
+                  id: "group",
+                  p: { x: 0, y: 0 },
+                }),
+                createShape<TextShape>(getCommonStruct, "text", {
+                  id: "label0",
+                  parentId: "line",
+                  lineAttached: 0.2,
+                  vAlign: "center",
+                  width: 20,
+                  height: 10,
+                }),
+              ],
+              getStruct: getCommonStruct,
+            }),
+          getShapeStruct: getCommonStruct,
+        },
+      });
+
+      expect(target.onModified({ group: { q: { x: 200, y: 0 } } as Partial<LineShape> })).toEqual({});
+    });
   });
 });
