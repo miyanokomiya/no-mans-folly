@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { BoxAlign } from "../../models";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import iconTL from "../../assets/icons/anchor_tl.svg";
 import iconTC from "../../assets/icons/anchor_tc.svg";
 import iconTR from "../../assets/icons/anchor_tr.svg";
@@ -27,11 +27,18 @@ const altList = [
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  defaultDirection?: PopupDirection; // bottom by default
   boxAlign: BoxAlign;
   onChange?: (val: BoxAlign) => void;
 }
 
-export const AlignAnchorButton: React.FC<Props> = ({ popupedKey, setPopupedKey, boxAlign, onChange }) => {
+export const AlignAnchorButton: React.FC<Props> = ({
+  popupedKey,
+  setPopupedKey,
+  defaultDirection,
+  boxAlign,
+  onChange,
+}) => {
   const index = useMemo(() => {
     let ret = 0;
 
@@ -73,6 +80,7 @@ export const AlignAnchorButton: React.FC<Props> = ({ popupedKey, setPopupedKey, 
         opened={popupedKey === "align-anchor"}
         popup={<AnchorPanel onClick={onIndexChange} />}
         onClick={setPopupedKey}
+        defaultDirection={defaultDirection}
       >
         <img className="w-8 h-8" src={anchorList[index]} alt="Anchor" />
       </PopupButton>

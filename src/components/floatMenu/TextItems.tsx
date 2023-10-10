@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupDirection, PopupButton } from "../atoms/PopupButton";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
 import iconAlignLeft from "../../assets/icons/align_left.svg";
 import iconAlignCenter from "../../assets/icons/align_center.svg";
@@ -85,6 +85,7 @@ const LineheightPanel: React.FC<LineheightPanelProps> = ({ value, onChange }) =>
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  defaultDirection?: PopupDirection; // bottom by default
   onInlineChanged?: (val: DocAttributes, draft?: boolean) => void;
   onBlockChanged?: (val: DocAttributes, draft?: boolean) => void;
   onDocChanged?: (val: DocAttributes, draft?: boolean) => void;
@@ -94,6 +95,7 @@ interface Props {
 export const TextItems: React.FC<Props> = ({
   popupedKey,
   setPopupedKey,
+  defaultDirection,
   onInlineChanged,
   onBlockChanged,
   onDocChanged,
@@ -167,6 +169,7 @@ export const TextItems: React.FC<Props> = ({
           min={1}
           onChanged={onSizeChanged}
           onActivate={onActivateCombobox}
+          defaultDirection={defaultDirection}
         />
       </div>
       <PopupButton
@@ -174,6 +177,7 @@ export const TextItems: React.FC<Props> = ({
         opened={popupedKey === "color"}
         popup={<TextColorPanel value={docAttrInfo.cursor?.color ?? undefined} onChanged={onColorChanged} />}
         onClick={setPopupedKey}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 flex justify-center items-center">
           <div className="text-2xl underline pb-1" style={{ color: docAttrInfo.cursor?.color ?? "#000000" }}>
@@ -188,6 +192,7 @@ export const TextItems: React.FC<Props> = ({
           <TextBackgroundPanel value={docAttrInfo.cursor?.background ?? undefined} onChanged={onBackgroundChanged} />
         }
         onClick={setPopupedKey}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 flex justify-center items-center">
           <div
@@ -201,6 +206,7 @@ export const TextItems: React.FC<Props> = ({
       <TextDecoration
         popupedKey={popupedKey}
         setPopupedKey={setPopupedKey}
+        defaultDirection={defaultDirection}
         value={docAttrInfo.cursor}
         onChange={onInlineChanged}
       />
@@ -209,6 +215,7 @@ export const TextItems: React.FC<Props> = ({
         opened={popupedKey === "align"}
         popup={<AlignPanel onClick={onAlignChanged} />}
         onClick={onAlignClick}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 p-1">
           <img src={alignIcon} alt="Align" />
@@ -219,6 +226,7 @@ export const TextItems: React.FC<Props> = ({
         opened={popupedKey === "direction"}
         popup={<DirectionPanel onClick={onDirectionChanged} />}
         onClick={onDirectionClick}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 p-1">
           <img src={directionIcon} alt="Direction" />
@@ -231,6 +239,7 @@ export const TextItems: React.FC<Props> = ({
           <LineheightPanel value={docAttrInfo.block?.lineheight ?? DEFAULT_LINEHEIGHT} onChange={onLineheightChanged} />
         }
         onClick={setPopupedKey}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 flex justify-center items-center">
           <img src={iconLineheight} alt="Line height" />

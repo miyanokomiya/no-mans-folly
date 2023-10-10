@@ -1,21 +1,23 @@
 import { useCallback } from "react";
 import { DocAttributes } from "../../../models/document";
-import { PopupButton } from "../../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../../atoms/PopupButton";
 
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  defaultDirection?: PopupDirection; // bottom by default
   value?: DocAttributes;
   onChange?: (val: DocAttributes) => void;
 }
 
-export const TextDecoration: React.FC<Props> = ({ popupedKey, setPopupedKey, value, onChange }) => {
+export const TextDecoration: React.FC<Props> = ({ popupedKey, setPopupedKey, defaultDirection, value, onChange }) => {
   return (
     <PopupButton
       name="decoration"
       opened={popupedKey === "decoration"}
       popup={<DecorationPanel value={value} onChange={onChange} />}
       onClick={setPopupedKey}
+      defaultDirection={defaultDirection}
     >
       <div className="w-8 h-8 flex justify-center items-center">
         <div className="text-2xl pb-1 font-bold italic underline">D</div>

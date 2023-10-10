@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { BoxPadding } from "../../models";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { createBoxPadding } from "../../utils/boxPadding";
 import iconPadding from "../../assets/icons/padding.svg";
@@ -9,11 +9,12 @@ import { ToggleInput } from "../atoms/inputs/ToggleInput";
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  defaultDirection?: PopupDirection; // bottom by default
   value?: BoxPadding;
   onChange?: (val: BoxPadding, draft?: boolean) => void;
 }
 
-export const BoxPaddingButton: React.FC<Props> = ({ popupedKey, setPopupedKey, value, onChange }) => {
+export const BoxPaddingButton: React.FC<Props> = ({ popupedKey, setPopupedKey, defaultDirection, value, onChange }) => {
   return (
     <div className="flex gap-1 items-center">
       <PopupButton
@@ -21,6 +22,7 @@ export const BoxPaddingButton: React.FC<Props> = ({ popupedKey, setPopupedKey, v
         opened={popupedKey === "box-padding"}
         popup={<BoxPaddingPanel value={value} onChange={onChange} />}
         onClick={setPopupedKey}
+        defaultDirection={defaultDirection}
       >
         <img className="w-8 h-8" src={iconPadding} alt="Text padding" />
       </PopupButton>

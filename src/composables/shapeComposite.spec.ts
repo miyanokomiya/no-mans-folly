@@ -139,4 +139,24 @@ describe("getDeleteTargetIds", () => {
     expect(getDeleteTargetIds(target, ["child1"])).toEqual(["child1"]);
     expect(getDeleteTargetIds(target, ["child0", "child1"])).toEqual(["child0", "child1", "group0"]);
   });
+
+  test("should not return text ids even though they will have no children", () => {
+    const text = createShape(getCommonStruct, "text", { id: "text" });
+    const child0 = createShape(getCommonStruct, "text", {
+      id: "child0",
+      parentId: text.id,
+    });
+    const child1 = createShape(getCommonStruct, "text", {
+      id: "child1",
+      parentId: text.id,
+    });
+
+    const shapes = [text, child0, child1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(getDeleteTargetIds(target, ["child0", "child1"])).toEqual(["child0", "child1"]);
+  });
 });

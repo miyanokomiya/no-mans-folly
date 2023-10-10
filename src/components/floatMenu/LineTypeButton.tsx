@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { LineType } from "../../shapes/line";
 import iconLineStraight from "../../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../../assets/icons/shape_line_elbow.svg";
@@ -12,11 +12,18 @@ const LINE_LIST = [
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  defaultDirection?: PopupDirection; // bottom by default
   currentType: LineType;
   onChange?: (lineType: LineType) => void;
 }
 
-export const LineTypeButton: React.FC<Props> = ({ popupedKey, setPopupedKey, currentType, onChange }) => {
+export const LineTypeButton: React.FC<Props> = ({
+  popupedKey,
+  setPopupedKey,
+  defaultDirection,
+  currentType,
+  onChange,
+}) => {
   const onLineTypeClick = useCallback(() => {
     setPopupedKey("line-type");
   }, [setPopupedKey]);
@@ -32,6 +39,7 @@ export const LineTypeButton: React.FC<Props> = ({ popupedKey, setPopupedKey, cur
         opened={popupedKey === "line-type"}
         popup={<LineTypePanel currentType={currentType} onClick={onChange} />}
         onClick={onLineTypeClick}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 p-1">
           <img src={selected.icon} alt={selected.type} />

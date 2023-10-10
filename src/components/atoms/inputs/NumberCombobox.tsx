@@ -8,7 +8,7 @@ interface Props {
   max?: number;
   onChanged?: (value: number, draft?: boolean) => void;
   onActivate?: () => void;
-  popupPosition?: "bottom" | "top";
+  defaultDirection?: "bottom" | "top";
 }
 
 export const NumberCombobox: React.FC<Props> = ({
@@ -18,7 +18,7 @@ export const NumberCombobox: React.FC<Props> = ({
   max = Infinity,
   onChanged,
   onActivate,
-  popupPosition,
+  defaultDirection,
 }) => {
   const [draftValue, setDraftValue] = useState(value);
   const [opened, setOpened] = useState(false);
@@ -64,7 +64,7 @@ export const NumberCombobox: React.FC<Props> = ({
 
   const popupAttrs = useMemo(() => {
     const base = "absolute left-1/2 bg-white text-right border rounded shadow-md z-10";
-    return popupPosition === "top"
+    return defaultDirection === "top"
       ? {
           className: base + " top-0",
           style: { transform: "translate(-50%, -100%)" },
@@ -73,7 +73,7 @@ export const NumberCombobox: React.FC<Props> = ({
           className: base + " bottom-0",
           style: { transform: "translate(-50%, 100%)" },
         };
-  }, [popupPosition]);
+  }, [defaultDirection]);
 
   return (
     <div ref={ref} className="relative w-full">

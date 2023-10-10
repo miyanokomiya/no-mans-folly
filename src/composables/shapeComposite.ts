@@ -6,6 +6,7 @@ import { findBackward, mergeMap, toMap } from "../utils/commons";
 import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeSnappingLines } from "../shapes/core";
+import { isGroupShape } from "../shapes/group";
 
 interface Option {
   shapes: Shape[];
@@ -110,7 +111,7 @@ export function getDeleteTargetIds(shapeComposite: ShapeComposite, deleteSrc: st
   const deleteParentSet = new Set<string>();
   deleteSrc.forEach((id) => {
     const parentId = shapeComposite.shapeMap[id].parentId;
-    if (parentId && !remainedParentIdSet.has(parentId)) {
+    if (parentId && isGroupShape(shapeComposite.shapeMap[parentId]) && !remainedParentIdSet.has(parentId)) {
       deleteParentSet.add(parentId);
     }
   });

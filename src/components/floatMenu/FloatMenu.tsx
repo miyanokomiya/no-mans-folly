@@ -14,7 +14,7 @@ import {
 import * as geometry from "../../utils/geometry";
 import { BoxAlign, BoxPadding, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
@@ -106,6 +106,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     setRootAttrsFixed(rootAttrs);
   }, [draggable.v, rootAttrsFixed]);
 
+  const popupDefaultDirection: PopupDirection = rootAttrs?.className.includes(TOP_LOCATED_KEY) ? "top" : "bottom";
   const [popupedKey, setPopupedKey] = useState("");
 
   const onClickPopupButton = useCallback(
@@ -328,6 +329,12 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     [focusBack, smctx, acctx],
   );
 
+  const popupButtonCommonProps = {
+    popupedKey: popupedKey,
+    setPopupedKey: onClickPopupButton,
+    defaultDirection: popupDefaultDirection,
+  };
+
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
@@ -338,6 +345,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
             opened={popupedKey === "fill"}
             popup={<FillPanel fill={indexCommonStyle.fill} onChanged={onFillChanged} />}
             onClick={onClickPopupButton}
+            defaultDirection={popupDefaultDirection}
           >
             <div
               className="w-8 h-8 border-2 rounded-full"
@@ -351,6 +359,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
             opened={popupedKey === "stroke"}
             popup={<StrokePanel stroke={indexCommonStyle.stroke} onChanged={onStrokeChanged} />}
             onClick={onClickPopupButton}
+            defaultDirection={popupDefaultDirection}
           >
             <div className="w-8 h-8 flex justify-center items-center">
               <div
@@ -364,8 +373,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
           <>
             <div className="h-8 mx-0.5 border"></div>
             <TextItems
-              popupedKey={popupedKey}
-              setPopupedKey={onClickPopupButton}
+              {...popupButtonCommonProps}
               onInlineChanged={onDocInlineAttributesChanged}
               onBlockChanged={onDocBlockAttributesChanged}
               onDocChanged={onDocAttributesChanged}
@@ -374,25 +382,18 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
           </>
         ) : undefined}
         {canIndexShapeHaveTextPadding ? (
-          <BoxPaddingButton
-            popupedKey={popupedKey}
-            setPopupedKey={onClickPopupButton}
-            value={indexTextPadding}
-            onChange={onChangeTextPadding}
-          />
+          <BoxPaddingButton {...popupButtonCommonProps} value={indexTextPadding} onChange={onChangeTextPadding} />
         ) : undefined}
         {indexLineShape ? (
           <>
             <div className="h-8 mx-0.5 border"></div>
             <LineTypeButton
-              popupedKey={popupedKey}
-              setPopupedKey={onClickPopupButton}
+              {...popupButtonCommonProps}
               currentType={indexLineShape.lineType}
               onChange={onLineTypeChanged}
             />
             <LineHeadItems
-              popupedKey={popupedKey}
-              setPopupedKey={onClickPopupButton}
+              {...popupButtonCommonProps}
               pHead={indexLineShape.pHead}
               qHead={indexLineShape.qHead}
               onChange={onLineHeadChanged}
@@ -403,23 +404,15 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
           </>
         ) : undefined}
         {indexTextShape ? (
-          <AlignAnchorButton
-            popupedKey={popupedKey}
-            setPopupedKey={onClickPopupButton}
-            boxAlign={indexTextShape}
-            onChange={onAlignAnchorChangeed}
-          />
+          <AlignAnchorButton {...popupButtonCommonProps} boxAlign={indexTextShape} onChange={onAlignAnchorChangeed} />
         ) : undefined}
-        <StackButton
-          popupedKey={popupedKey}
-          setPopupedKey={onClickPopupButton}
-          onClickLast={onClickStackLast}
-          onClickFirst={onClickStackFirst}
-        />
+        <StackButton {...popupButtonCommonProps} onClickLast={onClickStackLast} onClickFirst={onClickStackFirst} />
       </div>
     </div>
   ) : undefined;
 };
+
+const TOP_LOCATED_KEY = "top-located";
 
 function getRootAttrs(
   targetRect: IRectangle,
@@ -432,18 +425,18 @@ function getRootAttrs(
   const yMargin = 60;
   const center = getRectCenter(targetRect);
   const topY = targetRect.y - yMargin - rootHeight + translate.y;
+  const toBottom = topY < 0;
   const p = {
     x: center.x + translate.x,
-    y: topY < 0 ? targetRect.y + targetRect.height + yMargin + translate.y : topY,
+    y: toBottom ? targetRect.y + targetRect.height + yMargin + translate.y : topY,
   };
-  const baseClass = "fixed border rounded shadow bg-white px-1 ";
 
   const dx = Math.min(windowWidth - (p.x + rootWidth / 2), 0);
   const tx = p.x - rootWidth / 2 < 0 ? "0" : `calc(${p.x + dx}px - 50%)`;
   const dy = Math.min(windowHeight - (p.y + rootHeight), 0);
   const ty = p.y < 0 ? "0" : `calc(${p.y + dy}px)`;
   return {
-    className: baseClass + "top-0 left-0",
+    className: "fixed border rounded shadow bg-white px-1 top-0 left-0" + (toBottom ? "" : ` ${TOP_LOCATED_KEY}`),
     style: {
       transform: `translate(${tx}, ${ty})`,
     },

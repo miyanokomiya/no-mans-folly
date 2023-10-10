@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import iconStack from "../../assets/icons/stack.svg";
 import iconStackFirst from "../../assets/icons/stack_first.svg";
 import iconStackLast from "../../assets/icons/stack_last.svg";
@@ -7,13 +7,20 @@ import iconStackLast from "../../assets/icons/stack_last.svg";
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  defaultDirection?: PopupDirection; // bottom by default
   onClickFirst?: () => void;
   onClickBack?: () => void;
   onClickFront?: () => void;
   onClickLast?: () => void;
 }
 
-export const StackButton: React.FC<Props> = ({ popupedKey, setPopupedKey, onClickFirst, onClickLast }) => {
+export const StackButton: React.FC<Props> = ({
+  popupedKey,
+  setPopupedKey,
+  defaultDirection,
+  onClickFirst,
+  onClickLast,
+}) => {
   const onStackClick = useCallback(() => {
     setPopupedKey("stack");
   }, [setPopupedKey]);
@@ -25,6 +32,7 @@ export const StackButton: React.FC<Props> = ({ popupedKey, setPopupedKey, onClic
         opened={popupedKey === "stack"}
         popup={<StackPanel onClickFirst={onClickFirst} onClickLast={onClickLast} />}
         onClick={onStackClick}
+        defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 p-1">
           <img src={iconStack} alt="Stack" />

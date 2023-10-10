@@ -2,16 +2,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalScroll, useWindow } from "../../composables/window";
 import { IRectangle } from "okageo";
 
+export type PopupDirection = "bottom" | "top";
+
 interface Option {
   children: React.ReactNode;
   name: string;
   popup: React.ReactNode;
   opened?: boolean;
   onClick?: (key: string) => void;
-  popupPosition?: "bottom" | "right" | "left";
+  popupPosition?: "bottom" | "right" | "left"; // bottom by default
+  defaultDirection?: PopupDirection; // bottom by default
 }
 
-export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, onClick, popupPosition }) => {
+export const PopupButton: React.FC<Option> = ({
+  children,
+  popup,
+  name,
+  opened,
+  onClick,
+  popupPosition,
+  defaultDirection,
+}) => {
   const onButtonClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -34,8 +45,8 @@ export const PopupButton: React.FC<Option> = ({ children, popup, name, opened, o
   }, [opened]);
 
   const popupAttrs = useMemo(() => {
-    return getPopupAttrs(windowSize.height, popupBounds, popupPosition);
-  }, [popupPosition, popupBounds, windowSize.height]);
+    return getPopupAttrs(windowSize.height, popupBounds, popupPosition, defaultDirection);
+  }, [popupPosition, defaultDirection, popupBounds, windowSize.height]);
 
   return (
     <div className="relative">
@@ -111,14 +122,20 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
   );
 };
 
-function getPopupAttrs(windowHeight: number, popupBounds?: IRectangle, popupPosition?: "bottom" | "right" | "left") {
+function getPopupAttrs(
+  windowHeight: number,
+  popupBounds?: IRectangle,
+  popupPosition?: Option["popupPosition"],
+  defaultDirection?: PopupDirection,
+) {
   const classBase = "z-10 absolute bg-white border rounded drop-shadow-md ";
   if (!popupBounds) {
     // Make invisbile until "popupBounds" is determined.
-    return { className: classBase + "invisible" };
+    return { className: classBase + "invisible " + (defaultDirection === "top" ? "bottom-0" : "") };
   }
 
-  const toBottom = popupBounds.y + popupBounds.height < windowHeight;
+  const toTop = defaultDirection === "top" && 0 < popupBounds.y;
+  const toBottom = !toTop && popupBounds.y + popupBounds.height < windowHeight;
   switch (popupPosition) {
     case "right":
       return toBottom
