@@ -9,6 +9,7 @@ import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
 import { newFileAccess } from "./fileAcess";
 import { newThrottle } from "./throttle";
+import { COLORS } from "../utils/color";
 
 const DIAGRAM_KEY = "test-project-diagram";
 
@@ -22,6 +23,7 @@ export type AssetAPI =
 
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
+const noIndexedDB = !!queryParameters.get("noindexeddb");
 
 const defaultDiagramDoc = new Y.Doc();
 const defaultSheetDoc = new Y.Doc();
@@ -78,8 +80,8 @@ export function usePersistence(option: PersistenceOption) {
         }
       }
 
-      const sheetProvider = new IndexeddbPersistence(sheetId, nextSheetDoc);
-      await sheetProvider.whenSynced;
+      const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
+      await sheetProvider?.whenSynced;
 
       setDbProviderSheet(sheetProvider);
       setSheetDoc(nextSheetDoc);
@@ -97,8 +99,8 @@ export function usePersistence(option: PersistenceOption) {
     const nextDiagramDoc = new Y.Doc();
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
     createInitialDiagram(diagramStore, option.generateUuid);
-    const provider = new IndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider.whenSynced;
+    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider?.whenSynced;
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
@@ -124,8 +126,8 @@ export function usePersistence(option: PersistenceOption) {
     setReady(false);
     await clearIndexeddbPersistence(DIAGRAM_KEY);
 
-    const provider = new IndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider.whenSynced;
+    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider?.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
@@ -151,10 +153,10 @@ export function usePersistence(option: PersistenceOption) {
     const sheets = diagramStores.sheetStore.getEntities();
     for (const sheet of sheets) {
       const sheetDoc = new Y.Doc();
-      const sheetProvider = new IndexeddbPersistence(sheet.id, sheetDoc);
-      await sheetProvider.whenSynced;
+      const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
+      await sheetProvider?.whenSynced;
       await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
-      await sheetProvider.destroy();
+      await sheetProvider?.destroy();
       sheetDoc.destroy();
     }
     await fileAcess.overwriteDiagramDoc(diagramDoc);
@@ -163,13 +165,13 @@ export function usePersistence(option: PersistenceOption) {
 
   const mergeAllWithLocal = useCallback(async () => {
     const nextDiagramDoc = new Y.Doc();
-    const provider = new IndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider.whenSynced;
+    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider?.whenSynced;
 
     const result = await fileAcess.openDiagram(nextDiagramDoc);
     if (!result) {
       nextDiagramDoc.destroy();
-      await provider.destroy();
+      await provider?.destroy();
       return;
     }
 
@@ -182,11 +184,11 @@ export function usePersistence(option: PersistenceOption) {
       const sheets = nextSheetStore.getEntities();
       for (const sheet of sheets) {
         const sheetDoc = new Y.Doc();
-        const sheetProvider = new IndexeddbPersistence(sheet.id, sheetDoc);
-        await sheetProvider.whenSynced;
+        const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
+        await sheetProvider?.whenSynced;
         await fileAcess.openSheet(sheet.id, sheetDoc);
         await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
-        await sheetProvider.destroy();
+        await sheetProvider?.destroy();
         sheetDoc.destroy();
       }
 
@@ -361,9 +363,9 @@ export function usePersistence(option: PersistenceOption) {
 
 async function clearIndexeddbPersistence(name: string) {
   const tmpDoc = new Y.Doc();
-  const tmpProvider = new IndexeddbPersistence(name, tmpDoc);
-  await tmpProvider.clearData();
-  await tmpProvider.destroy();
+  const tmpProvider = newIndexeddbPersistence(name, tmpDoc);
+  await tmpProvider?.clearData();
+  await tmpProvider?.destroy();
   tmpDoc.destroy();
 }
 
@@ -373,6 +375,15 @@ function createInitialDiagram(diagramStore: DiagramStore, generateUuid: () => st
 
 function createInitialSheet(sheetStore: SheetStore, generateUuid: () => string) {
   const sheetId = generateUuid();
-  sheetStore.addEntity({ id: sheetId, findex: generateKeyBetween(null, null), name: "New Sheet" });
+  sheetStore.addEntity({
+    id: sheetId,
+    findex: generateKeyBetween(null, null),
+    name: "New Sheet",
+    bgcolor: COLORS.GRAY_1,
+  });
   sheetStore.selectSheet(sheetId);
+}
+
+function newIndexeddbPersistence(key: string, doc: Y.Doc): IndexeddbPersistence | undefined {
+  return noIndexedDB ? undefined : new IndexeddbPersistence(key, doc);
 }
