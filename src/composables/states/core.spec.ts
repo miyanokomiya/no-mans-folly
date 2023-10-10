@@ -53,6 +53,54 @@ describe("newStateMachine", () => {
       sm.handleEvent({ type: "test" } as any);
       expect(sm.getStateSummary().label).toBe("next2");
     });
+
+    test("should stop handling event during onStart processing", () => {
+      const current = getMockState({
+        getLabel: () => "current",
+      });
+      const next1 = getMockState({ getLabel: () => "next1" });
+      current.handleEvent = () => {
+        return () => next1;
+      };
+      const startSpy = vi.fn();
+      const sm = newStateMachine(getCtx, () => current);
+      next1.onStart = () => {
+        startSpy();
+        sm.handleEvent({ type: "test" } as any);
+      };
+      const handleSpy = vi.fn();
+      next1.handleEvent = () => {
+        handleSpy();
+      };
+      sm.handleEvent({ type: "test" } as any);
+      expect(startSpy).toHaveBeenCalledTimes(1);
+      expect(handleSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe("onEnd", () => {
+    test("should stop handling event during onEnd processing", () => {
+      const current = getMockState({
+        getLabel: () => "current",
+      });
+      const next1 = getMockState({ getLabel: () => "next1" });
+      const handleSpy = vi.fn();
+      current.handleEvent = () => {
+        handleSpy();
+        return () => next1;
+      };
+      const endSpy = vi.fn();
+      current.onEnd = () => {
+        endSpy();
+        sm.handleEvent({ type: "test" } as any);
+      };
+      const sm = newStateMachine(getCtx, () => current);
+
+      sm.handleEvent({ type: "test" } as any);
+      expect(sm.getStateSummary().label).toBe("next1");
+      expect(handleSpy).toHaveBeenCalledTimes(1);
+      expect(endSpy).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("transition: stack-restart", () => {

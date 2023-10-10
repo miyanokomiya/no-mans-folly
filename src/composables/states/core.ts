@@ -40,11 +40,23 @@ export function newStateMachine<C, E = ModeStateEvent>(
 ): StateMachine<E> {
   const stateStack: StateStackItem<C, E>[] = [{ state: getInitialState() }];
   const callback = newCallback();
+  let eventBlocked = false;
+
+  function blockEvent<T>(fn: () => T): T {
+    eventBlocked = true;
+    try {
+      return fn();
+    } finally {
+      eventBlocked = false;
+    }
+  }
 
   function getCurrentState(): StateStackItem<C, E> {
     return stateStack[stateStack.length - 1];
   }
-  getCurrentState().state.onStart?.(getCtx());
+  blockEvent(() => {
+    getCurrentState().state.onStart?.(getCtx());
+  });
 
   function getStateSummary() {
     return {
@@ -57,6 +69,8 @@ export function newStateMachine<C, E = ModeStateEvent>(
   }
 
   function handleEvent(event: E): void {
+    if (eventBlocked) return;
+
     const ctx = getCtx();
     const ret = getCurrentState().state.handleEvent(ctx, event);
     handleTransition(ret);
@@ -77,7 +91,9 @@ export function newStateMachine<C, E = ModeStateEvent>(
 
   function breakState(ctx: ModeStateContextBase & C) {
     const current = getCurrentState();
-    current.state.onEnd?.(ctx);
+    blockEvent(() => {
+      current.state.onEnd?.(ctx);
+    });
 
     stateStack.pop();
     if (stateStack.length === 0) {
@@ -92,7 +108,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
         return;
       }
     } else {
-      const result = next.state.onStart?.(ctx);
+      const result = blockEvent(() => next.state.onStart?.(ctx));
       if (result) {
         handleTransition(result);
         return;
@@ -113,19 +129,23 @@ export function newStateMachine<C, E = ModeStateEvent>(
 
     switch (type) {
       case "stack-restart":
-        current.state.onEnd?.(ctx);
+        blockEvent(() => {
+          current.state.onEnd?.(ctx);
+        });
         stateStack.push(nextItem);
         break;
       case "stack-resume":
         stateStack.push(nextItem);
         break;
       default:
-        current.state.onEnd?.(ctx);
+        blockEvent(() => {
+          current.state.onEnd?.(ctx);
+        });
         stateStack[stateStack.length - 1] = { ...nextItem, type: current.type };
         break;
     }
 
-    const result = nextState.onStart?.(ctx);
+    const result = blockEvent(() => nextState.onStart?.(ctx));
     if (result) {
       handleTransition(result);
       return;
@@ -143,7 +163,10 @@ export function newStateMachine<C, E = ModeStateEvent>(
   function dispose() {
     const ctx = getCtx();
     const current = getCurrentState();
-    current.state.onEnd?.(ctx);
+    blockEvent(() => {
+      current.state.onEnd?.(ctx);
+    });
+    eventBlocked = true;
     stateStack.length = 0;
   }
 

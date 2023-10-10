@@ -238,7 +238,7 @@ export const AppCanvas: React.FC = () => {
           if (patch) {
             acctx.shapeStore.patchEntities(patch);
           }
-          acctx.shapeStore.deleteEntities(getDeleteTargetIds(acctx.shapeStore.shapeComposite, targetIds));
+          acctx.shapeStore.deleteEntities(targetIds);
           acctx.documentStore.deleteDocs(targetIds);
         });
       },
