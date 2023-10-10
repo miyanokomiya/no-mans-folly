@@ -56,6 +56,18 @@ describe("newEntityStore", () => {
         { id: "b", findex: "1" },
       ]);
     });
+
+    test("should add latest findex when an entity doens't have it", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      store.addEntity({ id: "a", findex: "" });
+      expect(store.getEntities()).toEqual([{ id: "a", findex: "a0" }]);
+      store.addEntity({ id: "b", findex: "" });
+      expect(store.getEntities()).toEqual([
+        { id: "a", findex: "a0" },
+        { id: "b", findex: "a1" },
+      ]);
+    });
   });
 
   describe("addEntities", () => {
@@ -69,6 +81,25 @@ describe("newEntityStore", () => {
       expect(store.getEntities()).toEqual([
         { id: "a", findex: "0" },
         { id: "b", findex: "1" },
+      ]);
+    });
+
+    test("should add latest findex when an entity doens't have it", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      store.addEntities([
+        { id: "a", findex: "" },
+        { id: "b", findex: "" },
+      ]);
+      expect(store.getEntities()).toEqual([
+        { id: "a", findex: "a0" },
+        { id: "b", findex: "a1" },
+      ]);
+      store.addEntities([{ id: "c", findex: "" }]);
+      expect(store.getEntities()).toEqual([
+        { id: "a", findex: "a0" },
+        { id: "b", findex: "a1" },
+        { id: "c", findex: "a2" },
       ]);
     });
   });

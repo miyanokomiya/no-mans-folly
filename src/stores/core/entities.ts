@@ -75,16 +75,24 @@ export function newEntityStore<T extends Entity>(option: Option) {
   }
 
   function addEntity(entity: T) {
-    entityMap.set(entity.id, toYEntity(entity));
+    if (!entity.id) throw new Error("Entity must have id");
+
+    if (entity.findex) {
+      entityMap.set(entity.id, toYEntity(entity));
+    } else {
+      entityMap.set(entity.id, toYEntity({ ...entity, findex: createLastIndex() }));
+    }
   }
 
   function addEntities(entities: T[]) {
+    let lastIndex = createLastIndex();
     transact(() => {
       entities.forEach((entity) => {
-        if (entity.id) {
+        if (entity.findex) {
           addEntity(entity);
         } else {
-          throw new Error("Entity must have id");
+          addEntity({ ...entity, findex: lastIndex });
+          lastIndex = generateKeyBetween(lastIndex, null);
         }
       });
     });
