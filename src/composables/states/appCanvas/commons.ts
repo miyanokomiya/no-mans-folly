@@ -126,8 +126,8 @@ export function handleCommonShortcut(
     case "Z":
       if (event.data.ctrl) ctx.redo();
       return newSelectionHubState;
-    case ".":
-      if (event.data.alt) {
+    case ":":
+      if (event.data.ctrl) {
         return newEmojiPickerState;
       }
       return;

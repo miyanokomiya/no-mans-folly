@@ -378,8 +378,8 @@ function handleKeydown(
         ctx.redo();
       }
       return;
-    case ".":
-      if (event.data.alt) {
+    case ":":
+      if (event.data.ctrl) {
         event.data.prevent?.();
         ctx.setShowEmojiPicker(true);
       }
