@@ -10,7 +10,7 @@ import {
   useGlobalMouseupEffect,
   useGlobalPasteEffect,
 } from "../composables/window";
-import { TextEditor } from "./textEditor/TextEditor";
+import { TextEditor, TextEditorEmojiOnly } from "./textEditor/TextEditor";
 import { DocAttrInfo } from "../models/document";
 import { getDocAttributes } from "../utils/textEditor";
 import { IVec2 } from "okageo";
@@ -277,7 +277,15 @@ export const AppCanvas: React.FC = () => {
         setTextEditing(false);
       },
       getShowEmojiPicker: () => showEmojiPicker,
-      setShowEmojiPicker,
+      setShowEmojiPicker: (val, p) => {
+        if (p) {
+          setTextEditorPosition(canvasToView(p));
+        }
+        setShowEmojiPicker(val);
+        if (!val) {
+          focus();
+        }
+      },
       setTextEditorPosition: (p) => {
         setTextEditorPosition(canvasToView(p));
       },
@@ -595,6 +603,12 @@ export const AppCanvas: React.FC = () => {
       position={textEditorPosition}
       focusKey={textEditorFocusKey}
       showEmojiPicker={showEmojiPicker}
+      setShowEmojiPicker={handleSetShowEmojiPicker}
+    />
+  ) : showEmojiPicker ? (
+    <TextEditorEmojiOnly
+      onInput={onTextInput}
+      position={textEditorPosition}
       setShowEmojiPicker={handleSetShowEmojiPicker}
     />
   ) : undefined;

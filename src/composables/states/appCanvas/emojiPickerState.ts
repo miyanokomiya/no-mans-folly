@@ -13,12 +13,9 @@ export function newEmojiPickerState(): AppCanvasState {
     onStart: (ctx) => {
       ctx.clearAllSelected();
       p = ctx.getCursorPoint();
-      ctx.startTextEditing();
-      ctx.setTextEditorPosition(p);
-      ctx.setShowEmojiPicker(true);
+      ctx.setShowEmojiPicker(true, p);
     },
     onEnd: (ctx) => {
-      ctx.stopTextEditing();
       ctx.setShowEmojiPicker(false);
     },
     handleEvent: (ctx, event) => {

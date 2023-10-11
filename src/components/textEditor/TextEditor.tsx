@@ -93,3 +93,31 @@ export const TextEditor: React.FC<Props> = ({
     </>
   );
 };
+
+interface TextEditorEmojiOnlyProps {
+  onInput?: (val: string, composition?: boolean) => void;
+  position: IVec2;
+  setShowEmojiPicker?: (val: boolean) => void;
+}
+
+export const TextEditorEmojiOnly: React.FC<TextEditorEmojiOnlyProps> = ({ onInput, position, setShowEmojiPicker }) => {
+  const handleEmojiSelect = useCallback((val: EmojiData) => {
+    onInput?.(val.native);
+    setShowEmojiPicker?.(false);
+  }, []);
+
+  const handleEmojiClickOutside = useCallback(() => {
+    setShowEmojiPicker?.(false);
+  }, []);
+
+  return (
+    <div
+      className="fixed top-0 left-0"
+      style={{
+        transform: `translate(${position.x + 10}px, ${position.y - 40}px)`,
+      }}
+    >
+      <EmojiPicker onEmojiSelect={handleEmojiSelect} onClose={handleEmojiClickOutside} />
+    </div>
+  );
+};
