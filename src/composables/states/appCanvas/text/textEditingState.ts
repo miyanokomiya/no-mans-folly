@@ -377,6 +377,7 @@ function handleKeydown(
         ctx.redo();
       }
       return;
+    case ";":
     case ":":
       if (event.data.ctrl) {
         event.data.prevent?.();
