@@ -12,8 +12,7 @@ export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus,
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!autofocus) return;
-    ref.current?.focus();
+    if (autofocus) ref.current?.focus();
   }, [autofocus]);
 
   const _onChange = useCallback(

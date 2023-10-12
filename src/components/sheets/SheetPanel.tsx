@@ -41,7 +41,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
     setPopupOpen(false);
     setDraftName(sheet.name);
     setRenaming(true);
-  }, [sheet]);
+  }, [sheet.name]);
 
   const _onChangeName = useCallback((val: string) => {
     setDraftName(val);
@@ -68,7 +68,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
         </button>
       </div>
     );
-  }, []);
+  }, [_onClickRename]);
 
   const content = useMemo(() => {
     if (renaming) {
