@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { Sheet } from "../../models";
 import { FixedPopupButton } from "../atoms/PopupButton";
-import { useOutsideClickCallback } from "../../composables/window";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { getSheetURL } from "../../utils/route";
+import { OutsideObserver } from "../atoms/OutsideObserver";
 
 interface Props {
   sheet: Sheet;
@@ -24,8 +24,6 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
   const closePopup = useCallback(() => {
     setPopupOpen(false);
   }, []);
-
-  const { ref } = useOutsideClickCallback<HTMLDivElement>(closePopup);
 
   const _onClickRename = useCallback(() => {
     setPopupOpen(false);
@@ -84,7 +82,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
       );
     } else {
       return (
-        <a href={getSheetURL(sheet.id)} onClick={_onClickSheet} className="w-full h-full flex items-center" data-anchor>
+        <a href={getSheetURL(sheet.id)} onClick={_onClickSheet} className="w-full h-full flex items-center">
           <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
         </a>
       );
@@ -98,10 +96,10 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
   return (
     <div className={rootClass}>
       <div className="flex justify-between">
-        <div className="rounded-full h-5 px-1 bg-white border text-sm flex items-center justify-center pointer-events-none">
+        <div className="rounded px-2 bg-white border flex items-center flex-1 mr-1 cursor-grab" data-anchor>
           {index}
         </div>
-        <div ref={ref} className="">
+        <OutsideObserver onClick={closePopup}>
           <FixedPopupButton
             name="sheet"
             popupPosition="right"
@@ -109,9 +107,9 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
             opened={popupOpen}
             onClick={onClickMenuButton}
           >
-            <img src={iconDots} alt="Menu" className="w-4 h-4" />
+            <img src={iconDots} alt="Menu" className="w-5 h-5" />
           </FixedPopupButton>
-        </div>
+        </OutsideObserver>
       </div>
       <div className="w-24 h-8 text-sm whitespace-nowrap">{content}</div>
     </div>
