@@ -19,16 +19,6 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
 
-  const _onClickSheet = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0) return;
-
-      e.preventDefault();
-      onClickSheet?.(sheet.id);
-    },
-    [onClickSheet],
-  );
-
   const rootClass = "border rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
 
   const closePopup = useCallback(() => {
@@ -46,6 +36,21 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
   const _onChangeName = useCallback((val: string) => {
     setDraftName(val);
   }, []);
+
+  const _onClickSheet = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+
+      e.preventDefault();
+
+      if (e.detail === 2) {
+        _onClickRename();
+      } else {
+        onClickSheet?.(sheet.id);
+      }
+    },
+    [onClickSheet, _onClickRename],
+  );
 
   const onSubmitName = useCallback(
     (e: React.FormEvent) => {
