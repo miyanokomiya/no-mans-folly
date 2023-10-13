@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2 } from "okageo";
-import { BoxPadding, CommonStyle, FillStyle, Shape, StrokeStyle } from "../models";
+import { BoxPadding, CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../models";
 import { isSameFillStyle } from "../utils/fillStyle";
 import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
@@ -30,6 +30,7 @@ export interface ShapeStruct<T extends Shape> {
   patchTextPadding?: (shape: T, value: BoxPadding) => Partial<T>;
   isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
+  resizeOnTextEdit?: (shape: T, size: Size) => Partial<T> | undefined;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
@@ -87,6 +88,7 @@ export function updateCommonStyle<T extends Shape & CommonStyle>(
 
 export interface TextContainer {
   textPadding?: BoxPadding;
+  maxWidth?: number;
 }
 
 export const textContainerModule = {

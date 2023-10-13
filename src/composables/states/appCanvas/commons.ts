@@ -10,14 +10,20 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
-import { canHaveText, createShape, patchShapesOrderToLast } from "../../../shapes";
+import {
+  canHaveText,
+  createShape,
+  patchShapesOrderToLast,
+  resizeOnTextEdit,
+  shouldResizeOnTextEdit,
+} from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2, add, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
-import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
+import { TextShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ImageShape } from "../../../shapes/image";
@@ -175,13 +181,15 @@ export function handleCommonTextStyle(
   const shapePatch: { [id: string]: Partial<TextShape> } = {};
   const renderCtx = ctx.getRenderCtx();
   if (renderCtx) {
-    const shapeMap = ctx.getShapeComposite().shapeMap;
+    const shapeComposite = ctx.getShapeComposite();
+    const shapeMap = shapeComposite.shapeMap;
     Object.entries(patch).forEach(([id, p]) => {
       const shape = shapeMap[id];
-      if (isTextShape(shape)) {
+      const resizeOnTextEditInfo = shouldResizeOnTextEdit(shapeComposite.getShapeStruct, shape);
+      if (resizeOnTextEditInfo?.maxWidth) {
         const patched = ctx.patchDocDryRun(id, p);
-        const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
-        const update = patchSize(shape, size);
+        const size = calcOriginalDocSize(patched, renderCtx, resizeOnTextEditInfo.maxWidth);
+        const update = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
         if (update) {
           shapePatch[id] = update;
         }

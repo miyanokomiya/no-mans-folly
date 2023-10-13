@@ -1,6 +1,12 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines, sub } from "okageo";
-import { BoxPadding, CommonStyle, Shape } from "../models";
-import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, ShapeStruct } from "./core";
+import { BoxPadding, CommonStyle, Shape, Size } from "../models";
+import {
+  GetShapeStruct as _GetShapeStruct,
+  ShapeContext,
+  ShapeSnappingLines,
+  ShapeStruct,
+  TextContainer,
+} from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
 import { struct as textStruct } from "./text";
@@ -99,6 +105,18 @@ export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2, sha
 export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
   const struct = getStruct(shape.type);
   return struct.resize(shape, resizingAffine);
+}
+
+export function resizeOnTextEdit(getStruct: GetShapeStruct, shape: Shape, size: Size): Partial<Shape> | undefined {
+  const struct = getStruct(shape.type);
+  return struct.resizeOnTextEdit?.(shape, size);
+}
+
+export function shouldResizeOnTextEdit(getStruct: GetShapeStruct, shape: Shape): { maxWidth?: number } | undefined {
+  const struct = getStruct(shape.type);
+  if (!struct.resizeOnTextEdit) return undefined;
+
+  return { maxWidth: (shape as TextContainer).maxWidth ?? getTextRangeRect(getStruct, shape)?.width };
 }
 
 export function getSnappingLines(

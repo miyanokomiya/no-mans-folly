@@ -7,7 +7,7 @@ import {
   newBoundingBoxResizing,
 } from "../../boundingBox";
 import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
-import { resizeShape, shouldKeepAspect } from "../../../shapes";
+import { resizeOnTextEdit, resizeShape, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import {
@@ -21,7 +21,7 @@ import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
+import { TextShape, isTextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
 import { calcOriginalDocSize, getDeltaByScaleTextSize } from "../../../utils/textEditor";
 import { applyPath } from "../../../utils/renderer";
@@ -164,7 +164,8 @@ export function newResizingState(option: Option): AppCanvasState {
             }
           }
 
-          const shapeMap = ctx.getShapeComposite().shapeMap;
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeMap = shapeComposite.shapeMap;
           const docMap = ctx.getDocumentMap();
           const docPatch: { [id: string]: DocDelta } = {};
           const patchResult = patchPipe(
@@ -207,10 +208,11 @@ export function newResizingState(option: Option): AppCanvasState {
                 if (renderCtx) {
                   Object.keys(patch).forEach((id) => {
                     const shape = current[id];
-                    if (isTextShape(shape)) {
+                    const resizeOnTextEditInfo = shouldResizeOnTextEdit(shapeComposite.getShapeStruct, shape);
+                    if (resizeOnTextEditInfo?.maxWidth) {
                       const nextDoc = docPatch[id] ? ctx.patchDocDryRun(id, docPatch[id]) : docMap[id];
-                      const size = calcOriginalDocSize(nextDoc, renderCtx, shape.maxWidth);
-                      const update = patchSize(shape, size);
+                      const size = calcOriginalDocSize(nextDoc, renderCtx, resizeOnTextEditInfo.maxWidth);
+                      const update = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
                       if (update) {
                         shapePatch[id] = update;
                       }
