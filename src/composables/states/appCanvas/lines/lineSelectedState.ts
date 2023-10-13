@@ -2,14 +2,14 @@ import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
+  handleCommonPointerDownLeftOnSingleSelection,
+  handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
   newShapeClipboard,
 } from "../commons";
-import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
-import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
@@ -77,36 +77,12 @@ export function newLineSelectedState(): AppCanvasState {
                 }
               }
 
-              const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, lineShape.id);
-              if (!shapeAtPointer) {
-                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
-              }
-
-              if (!event.data.options.ctrl) {
-                if (event.data.options.alt) {
-                  ctx.selectShape(shapeAtPointer.id);
-                  return newDuplicatingShapesState;
-                } else if (shapeAtPointer.id === lineShape.id) {
-                  return;
-                } else {
-                  ctx.selectShape(shapeAtPointer.id, false);
-                  return newSingleSelectedByPointerOnState;
-                }
-              }
-
-              ctx.selectShape(shapeAtPointer.id, true);
-              return;
+              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, lineShape.id, lineShape.id);
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, lineShape.id);
-              if (!shapeAtPointer || shapeAtPointer.id === lineShape.id) return;
-
-              ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
-              return;
+              return handleCommonPointerDownRightOnSingleSelection(ctx, event, lineShape.id, lineShape.id);
             }
             default:
               return;

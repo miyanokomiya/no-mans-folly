@@ -1,5 +1,5 @@
 import { HistoryEvent } from "../commons";
-import { ChangeStateEvent, KeyDownEvent, TransitionValue } from "../core";
+import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -31,6 +31,11 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
+import { findBetterShapeAt } from "../../shapeComposite";
+import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newDuplicatingShapesState } from "./duplicatingShapesState";
+import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newMovingShapeState } from "./movingShapeState";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -325,4 +330,46 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
     });
   });
   ctx.addShapes(shapes);
+}
+
+export function handleCommonPointerDownLeftOnSingleSelection(
+  ctx: AppCanvasStateContext,
+  event: PointerDownEvent,
+  selectedId: string,
+  parentScope?: string,
+): TransitionValue<AppCanvasStateContext> {
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
+  if (!shapeAtPointer) {
+    return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
+  }
+
+  if (!event.data.options.ctrl) {
+    if (event.data.options.alt) {
+      ctx.selectShape(shapeAtPointer.id);
+      return newDuplicatingShapesState;
+    } else if (shapeAtPointer.id === selectedId) {
+      return newMovingShapeState;
+    } else {
+      ctx.selectShape(shapeAtPointer.id, false);
+      return newSingleSelectedByPointerOnState;
+    }
+  }
+
+  ctx.selectShape(shapeAtPointer.id, true);
+  return;
+}
+
+export function handleCommonPointerDownRightOnSingleSelection(
+  ctx: AppCanvasStateContext,
+  event: PointerDownEvent,
+  selectedId: string,
+  parentScope?: string,
+): TransitionValue<AppCanvasStateContext> {
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
+  if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
+
+  ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
+  return;
 }

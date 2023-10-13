@@ -3,6 +3,8 @@ import { newPanningState } from "../commons";
 import { canAttachSmartBranch } from "../../../shapes";
 import {
   getCommonCommandExams,
+  handleCommonPointerDownLeftOnSingleSelection,
+  handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
   handleCommonTextStyle,
   handleFileDrop,
@@ -11,15 +13,11 @@ import {
   newShapeClipboard,
   startTextEditingIfPossible,
 } from "./commons";
-import { newMovingShapeState } from "./movingShapeState";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
 import { getOuterRectangle } from "okageo";
-import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
@@ -103,35 +101,12 @@ export function newSingleSelectedState(): AppCanvasState {
                 }
               }
 
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
-              if (!shapeAtPointer) {
-                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
-              }
-
-              if (!event.data.options.ctrl) {
-                if (event.data.options.alt) {
-                  ctx.selectShape(shapeAtPointer.id);
-                  return newDuplicatingShapesState;
-                } else if (shapeAtPointer.id === selectedId) {
-                  return () => newMovingShapeState({ boundingBox });
-                } else {
-                  ctx.selectShape(shapeAtPointer.id);
-                  return newSingleSelectedByPointerOnState;
-                }
-              }
-
-              ctx.selectShape(shapeAtPointer.id, true);
-              return;
+              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, selectedId, parentScope);
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
-              if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
-
-              ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
-              return;
+              return handleCommonPointerDownRightOnSingleSelection(ctx, event, selectedId, parentScope);
             }
             default:
               return;
