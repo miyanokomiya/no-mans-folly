@@ -23,6 +23,7 @@ import { DocOutput } from "../models/document";
 import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
 import { newShapeComposite } from "../composables/shapeComposite";
+import { getPaddingRect } from "../utils/boxPadding";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -35,8 +36,8 @@ const SHAPE_STRUCTS: {
   image: imageStruct,
   emoji: emojiStruct,
   group: groupStruct,
-  treeRoot: treeRootStruct,
-  treeNode: treeNodeStruct,
+  tree_root: treeRootStruct,
+  tree_node: treeNodeStruct,
 };
 
 export type GetShapeStruct = _GetShapeStruct;
@@ -111,16 +112,33 @@ export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAff
   return struct.resize(shape, resizingAffine);
 }
 
-export function resizeOnTextEdit(getStruct: GetShapeStruct, shape: Shape, size: Size): Partial<Shape> | undefined {
+export function resizeOnTextEdit(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  textBoxSize: Size,
+): Partial<Shape> | undefined {
   const struct = getStruct(shape.type);
-  return struct.resizeOnTextEdit?.(shape, size);
+  return struct.resizeOnTextEdit?.(shape, textBoxSize);
 }
 
+/**
+ * Returned "maxWidth" refers to the eventual text box width including the text padding.
+ */
 export function shouldResizeOnTextEdit(getStruct: GetShapeStruct, shape: Shape): { maxWidth?: number } | undefined {
   const struct = getStruct(shape.type);
   if (!struct.resizeOnTextEdit) return undefined;
 
-  return { maxWidth: (shape as TextContainer).maxWidth ?? getTextRangeRect(getStruct, shape)?.width };
+  const maxWidth = (shape as TextContainer).maxWidth ?? getTextRangeRect(getStruct, shape)?.width;
+  const textPadding = (shape as TextContainer).textPadding;
+  if (textPadding) {
+    const poly = getLocalRectPolygon(getStruct, shape);
+    const width = poly[1].x - poly[0].x;
+    const prect = getPaddingRect(textPadding, { x: 0, y: 0, width, height: 100 });
+    const wDiff = width - prect.width;
+    return { maxWidth: (maxWidth ?? width) - wDiff };
+  } else {
+    return { maxWidth };
+  }
 }
 
 export function getSnappingLines(

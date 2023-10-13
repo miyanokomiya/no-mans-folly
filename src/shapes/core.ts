@@ -30,7 +30,10 @@ export interface ShapeStruct<T extends Shape> {
   patchTextPadding?: (shape: T, value: BoxPadding) => Partial<T>;
   isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
-  resizeOnTextEdit?: (shape: T, size: Size) => Partial<T> | undefined;
+  /**
+   * "textBoxSize" refers to the eventual text box size including text padding.
+   */
+  resizeOnTextEdit?: (shape: T, textBoxSize: Size) => Partial<T> | undefined;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;

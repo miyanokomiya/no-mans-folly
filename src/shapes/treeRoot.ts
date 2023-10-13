@@ -1,4 +1,5 @@
 import { BoxAlign, Shape } from "../models";
+import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
@@ -20,6 +21,7 @@ export const struct: ShapeStruct<TreeRootShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
       height: arg.height ?? 30,
+      textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       maxWidth: arg.maxWidth ?? 300,
     };
   },
@@ -31,17 +33,28 @@ export const struct: ShapeStruct<TreeRootShape> = {
     return ret;
   },
   canAttachSmartBranch: false,
-  resizeOnTextEdit(shape, size) {
+  resizeOnTextEdit(shape, textBoxSize) {
+    const prect = shape.textPadding
+      ? getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.height })
+      : undefined;
+    const wDiff = prect ? shape.width - prect.width : 0;
+    const hDiff = prect ? shape.height - prect.height : 0;
+
     let changed = false;
     const ret: Partial<TreeRootShape> = {};
-    if (shape.width !== size.width) {
-      ret.width = size.width;
+
+    const nextWidth = textBoxSize.width + wDiff;
+    if (shape.width !== nextWidth) {
+      ret.width = nextWidth;
       changed = true;
     }
-    if (shape.height !== size.height) {
-      ret.height = size.height;
+
+    const nextHeight = textBoxSize.height + hDiff;
+    if (shape.height !== nextHeight) {
+      ret.height = nextHeight;
       changed = true;
     }
+
     return changed ? ret : undefined;
   },
 };
