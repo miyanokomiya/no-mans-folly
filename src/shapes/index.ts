@@ -15,6 +15,8 @@ import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
 import { struct as emojiStruct } from "./emoji";
 import { struct as groupStruct } from "./group";
+import { struct as treeRootStruct } from "./treeRoot";
+import { struct as treeNodeStruct } from "./treeNode";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
@@ -33,6 +35,8 @@ const SHAPE_STRUCTS: {
   image: imageStruct,
   emoji: emojiStruct,
   group: groupStruct,
+  treeRoot: treeRootStruct,
+  treeNode: treeNodeStruct,
 };
 
 export type GetShapeStruct = _GetShapeStruct;
