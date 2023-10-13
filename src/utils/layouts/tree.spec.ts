@@ -39,6 +39,18 @@ describe("getTreeBranchPositionMap", () => {
     expect(result.get("ba")).toEqual({ x: -130, y: -40 });
     expect(result.get("bb")).toEqual({ x: -130, y: 0 });
   });
+
+  test("should return tree branch sizes: direction 1, 2 nodes", () => {
+    const rect10 = { x: 0, y: 0, width: 10, height: 10 };
+    const src: TreeLayoutNode[] = [
+      { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: { x: 0, y: 0, width: 10, height: 30 } },
+      { id: "b", findex: "b", type: "node", direction: 1, parentId: "a", rect: rect10 },
+    ];
+    const branchSizeMap = getTreeBranchSizeMap(toMap(src), getTree(src)[0], 30, 50);
+    const result = getTreeBranchPositionMap(toMap(src), getTree(src)[0], branchSizeMap, 30, 50);
+    expect(result.get("a")).toEqual({ x: 0, y: 0 });
+    expect(result.get("b")).toEqual({ x: 60, y: 10 });
+  });
 });
 
 describe("getTreeBranchSizes", () => {

@@ -17,8 +17,16 @@ export interface TreeLayoutNode extends LayoutNode {
 export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {
   const srcMap = toMap(src);
   const treeRoot = getTree(src)[0];
+  const positionMap = getTreeBranchPositionMap(srcMap, treeRoot, getTreeBranchSizeMap(srcMap, treeRoot));
 
-  return src;
+  return src.map((s) => {
+    const p = positionMap.get(s.id);
+    if (p) {
+      return { ...s, rect: { ...p, width: s.rect.width, height: s.rect.height } };
+    } else {
+      return s;
+    }
+  });
 };
 
 export function getTreeBranchPositionMap(
@@ -72,6 +80,7 @@ function getSiblingSizeMap(ret: Map<string, Size>, srcMap: { [id: string]: TreeL
   walkTree([rootNode], (t) => {
     if (t.children.length === 0) return;
 
+    // TODO: Consider gap between nodes
     const rect = getWrapperRect(t.children.map((c) => srcMap[c.id].rect));
     ret.set(t.id, { width: rect.width, height: rect.height });
     t.children.forEach((c) => getSiblingSizeMap(ret, srcMap, c));
@@ -87,10 +96,12 @@ function getChildrenBranchPositionMapRight(
   childMargin = CHILD_MARGIN,
 ) {
   const nodeSize = srcMap[treeNode.id].rect;
-  const nodeBranchSize = sizeMap.get(treeNode.id)!;
+  const siblingBranchHeight =
+    treeNode.children.reduce((m, c) => m + sizeMap.get(c.id)!.height, 0) +
+    Math.max(0, treeNode.children.length - 1) * siblingMargin;
   const nodeP = ret.get(treeNode.id)!;
   const x = nodeP.x + nodeSize.width + childMargin;
-  let y = nodeP.y + nodeSize.height / 2 - nodeBranchSize.height / 2;
+  let y = nodeP.y + nodeSize.height / 2 - siblingBranchHeight / 2;
   treeNode.children.forEach((c) => {
     const childSize = srcMap[c.id].rect;
     const childBranchSize = sizeMap.get(c.id)!;
