@@ -1,4 +1,4 @@
-import { Shape } from "../models";
+import { Direction4, Shape } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
@@ -10,6 +10,7 @@ import { TreeRootShape, struct as treeRootStruct } from "./treeRoot";
  */
 export type TreeNodeShape = TreeRootShape & {
   treeParentId: string;
+  direction: Direction4;
 };
 
 export const struct: ShapeStruct<TreeNodeShape> = {
@@ -25,6 +26,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       height: arg.height ?? 30,
       maxWidth: arg.maxWidth ?? 300,
       treeParentId: arg.treeParentId ?? "",
+      direction: arg.direction ?? 1,
     };
   },
 };

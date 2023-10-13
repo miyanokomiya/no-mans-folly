@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { Size } from "../../models";
+import { Direction4, Size } from "../../models";
 import { groupBy, toMap } from "../commons";
 import { TreeNode, getTree, walkTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
@@ -11,7 +11,7 @@ export const CHILD_MARGIN = 50;
 export interface TreeLayoutNode extends LayoutNode {
   type: "root" | "node"; // root should be unique in a layout
   parentId: string;
-  direction: 0 | 1 | 2 | 3; // top, right, bottom, left
+  direction: Direction4;
 }
 
 export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {

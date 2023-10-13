@@ -174,6 +174,7 @@ export const AppCanvas: React.FC = () => {
 
   useEffect(() => {
     setSmctx({
+      redraw: () => setCanvasState({}),
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
       setViewport,
       zoomView,

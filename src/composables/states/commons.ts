@@ -7,6 +7,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
 
+  redraw: () => void;
   getRenderCtx: () => CanvasRenderingContext2D | undefined;
   setViewport: (rect?: IRectangle, margin?: number) => void;
   zoomView: (step: number, center?: boolean) => number;

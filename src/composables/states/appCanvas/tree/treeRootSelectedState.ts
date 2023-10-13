@@ -13,9 +13,12 @@ import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { TreeRootShape } from "../../../../shapes/treeRoot";
+import { TreeHandler, TreeHitResult, isSameTreeHitResult, newTreeHandler } from "../../../treeHandler";
 
 export function newTreeRootSelectedState(): AppCanvasState {
   let treeRootShape: TreeRootShape;
+  let treeHandler: TreeHandler;
+  let hitResult: TreeHitResult | undefined;
 
   return {
     getLabel: () => "TreeRootSelected",
@@ -23,6 +26,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       treeRootShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeRootShape;
       ctx.setCommandExams([]);
+      treeHandler = newTreeHandler({ getShapeComposite: ctx.getShapeComposite, targetId: treeRootShape.id });
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -39,6 +43,12 @@ export function newTreeRootSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
+              hitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
+              if (hitResult) {
+                console.log(hitResult);
+                return;
+              }
+
               return handleCommonPointerDownLeftOnSingleSelection(ctx, event, treeRootShape.id, treeRootShape.id);
             }
             case 1:
@@ -50,6 +60,13 @@ export function newTreeRootSelectedState(): AppCanvasState {
               return;
           }
         case "pointerhover": {
+          const result = treeHandler.hitTest(event.data.current, ctx.getScale());
+          if (!isSameTreeHitResult(hitResult, result)) {
+            ctx.redraw();
+          }
+          hitResult = result;
+          if (hitResult) return;
+
           const shapeComposite = ctx.getShapeComposite();
           const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, treeRootShape.id);
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
@@ -107,6 +124,8 @@ export function newTreeRootSelectedState(): AppCanvasState {
           return;
       }
     },
-    render: (_ctx, _renderCtx) => {},
+    render: (ctx, renderCtx) => {
+      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), hitResult);
+    },
   };
 }
