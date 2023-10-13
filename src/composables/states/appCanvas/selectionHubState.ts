@@ -6,6 +6,7 @@ import { newMultipleSelectedState } from "./multipleSelectedState";
 import { BoundingBox } from "../../boundingBox";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newLineLabelSelectedState } from "./lines/lineLabelSelectedState";
+import { newTreeRootSelectedState } from "./tree/treeRootSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -29,6 +30,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
         switch (shape.type) {
           case "line":
             return newLineSelectedState;
+          case "tree_root":
+            return newTreeRootSelectedState;
           default:
             return newSingleSelectedState;
         }
