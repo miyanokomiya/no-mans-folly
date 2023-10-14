@@ -5,6 +5,9 @@ import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 
+const MIN_WIDTH = 100;
+const MIN_HEIGHT = 30;
+
 export type TreeRootShape = RectangleShape &
   BoxAlign & {
     maxWidth: number;
@@ -19,16 +22,20 @@ export const struct: ShapeStruct<TreeRootShape> = {
       type: "tree_root",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      width: arg.width ?? 100,
-      height: arg.height ?? 30,
+      width: arg.width ?? MIN_WIDTH,
+      height: arg.height ?? MIN_HEIGHT,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       maxWidth: arg.maxWidth ?? 300,
     };
   },
   resize(shape, resizingAffine) {
     const ret: Partial<TreeRootShape> = { ...recntagleStruct.resize(shape, resizingAffine) };
-    if (ret.width) {
+    if (ret.width !== undefined) {
+      ret.width = Math.max(ret.width, MIN_WIDTH);
       ret.maxWidth = ret.width;
+    }
+    if (ret.height !== undefined) {
+      ret.height = Math.max(ret.height, MIN_HEIGHT);
     }
     return ret;
   },
@@ -45,13 +52,13 @@ export const struct: ShapeStruct<TreeRootShape> = {
 
     const nextWidth = textBoxSize.width + wDiff;
     if (shape.width !== nextWidth) {
-      ret.width = nextWidth;
+      ret.width = Math.max(nextWidth, MIN_WIDTH);
       changed = true;
     }
 
     const nextHeight = textBoxSize.height + hDiff;
     if (shape.height !== nextHeight) {
-      ret.height = nextHeight;
+      ret.height = Math.max(nextHeight, MIN_HEIGHT);
       changed = true;
     }
 

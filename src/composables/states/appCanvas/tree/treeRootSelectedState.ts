@@ -11,9 +11,18 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt } from "../../../shapeComposite";
+import { findBetterShapeAt, newShapeComposite } from "../../../shapeComposite";
 import { TreeRootShape } from "../../../../shapes/treeRoot";
-import { TreeHandler, TreeHitResult, isSameTreeHitResult, newTreeHandler } from "../../../treeHandler";
+import {
+  TreeHandler,
+  TreeHitResult,
+  getNextTreeLayout,
+  isSameTreeHitResult,
+  newTreeHandler,
+} from "../../../treeHandler";
+import { canHaveText, createShape } from "../../../../shapes";
+import { TreeNodeShape } from "../../../../shapes/treeNode";
+import { getInitialOutput } from "../../../../utils/textEditor";
 
 export function newTreeRootSelectedState(): AppCanvasState {
   let treeRootShape: TreeRootShape;
@@ -45,7 +54,28 @@ export function newTreeRootSelectedState(): AppCanvasState {
             case 0: {
               hitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
-                console.log(hitResult);
+                const shapeComposite = ctx.getShapeComposite();
+                let treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                  id: ctx.generateUuid(),
+                  findex: ctx.createLastIndex(),
+                  parentId: treeRootShape.id,
+                  treeParentId: treeRootShape.id,
+                  direction: hitResult.direction,
+                });
+
+                const nextComposite = newShapeComposite({
+                  getStruct: shapeComposite.getShapeStruct,
+                  shapes: [...shapeComposite.shapes, treeNode],
+                });
+                const patch = getNextTreeLayout(nextComposite, treeRootShape.id);
+                treeNode = { ...treeNode, ...patch[treeNode.id] };
+                delete patch[treeNode.id];
+
+                ctx.addShapes(
+                  [treeNode],
+                  canHaveText(ctx.getShapeStruct, treeNode) ? { [treeNode.id]: getInitialOutput() } : undefined,
+                  patch,
+                );
                 return;
               }
 

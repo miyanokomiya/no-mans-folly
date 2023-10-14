@@ -1,8 +1,8 @@
 import { Direction4, Shape } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
-import { createStrokeStyle } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
-import { TreeRootShape, struct as treeRootStruct } from "./treeRoot";
+import { TreeRootShape, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
 
 /**
  * "parentId" should always refer to the root node.
@@ -28,6 +28,30 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       treeParentId: arg.treeParentId ?? "",
       direction: arg.direction ?? 1,
     };
+  },
+  render(ctx, shape, shapeContext) {
+    treeRootStruct.render(ctx, shape);
+
+    const treeParent = shapeContext?.shapeMap[shape.treeParentId];
+    if (!treeParent || !isTreeRootShape(treeParent)) return;
+
+    const shapeRect = struct.getWrapperRect(shape);
+    const treeParentRect = treeRootStruct.getWrapperRect(treeParent);
+    applyStrokeStyle(ctx, shape.stroke);
+    ctx.beginPath();
+    switch (shape.direction) {
+      case 3: {
+        ctx.moveTo(shapeRect.x + shapeRect.width, shapeRect.y + shapeRect.height / 2);
+        ctx.lineTo(treeParentRect.x, treeParentRect.y + treeParentRect.height / 2);
+        break;
+      }
+      default: {
+        ctx.moveTo(shapeRect.x, shapeRect.y + shapeRect.height / 2);
+        ctx.lineTo(treeParentRect.x + treeParentRect.width, treeParentRect.y + treeParentRect.height / 2);
+        break;
+      }
+    }
+    ctx.stroke();
   },
 };
 

@@ -3,7 +3,6 @@ import { Direction4, Size } from "../../models";
 import { groupBy, toMap } from "../commons";
 import { TreeNode, getTree, walkTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
-import { getWrapperRect } from "../geometry";
 
 export const SIBLING_MARGIN = 30;
 export const CHILD_MARGIN = 50;
@@ -54,37 +53,28 @@ export function getTreeBranchPositionMap(
 
   if (grouped["3"]) {
     const targets = grouped["3"];
-    getChildrenBranchPositionMapRight(
-      positionMap,
-      srcMap,
-      { ...treeRoot, children: targets },
-      sizeMap,
-      siblingMargin,
-      childMargin,
-    );
-    const originX = rootNode.rect.x;
-    const siblingSizeMap = new Map<string, Size>();
-    getSiblingSizeMap(siblingSizeMap, srcMap, treeRoot);
+    const localRoot = { ...treeRoot, children: targets };
+    getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
+    const originX = rootNode.rect.x + rootNode.rect.width / 2;
+    const siblingSizeMap = new Map<string, number>();
+    getSiblingWidthMap(siblingSizeMap, srcMap, localRoot);
     walkTree(targets, (t) => {
       if (!t.parentId) return;
 
       const p = positionMap.get(t.id)!;
-      positionMap.set(t.id, { x: originX - (p.x - originX) - siblingSizeMap.get(t.parentId)!.width, y: p.y });
+      positionMap.set(t.id, { x: 2 * originX - p.x - siblingSizeMap.get(t.parentId)!, y: p.y });
     });
   }
 
   return positionMap;
 }
 
-function getSiblingSizeMap(ret: Map<string, Size>, srcMap: { [id: string]: TreeLayoutNode }, rootNode: TreeNode) {
-  walkTree([rootNode], (t) => {
-    if (t.children.length === 0) return;
+function getSiblingWidthMap(ret: Map<string, number>, srcMap: { [id: string]: TreeLayoutNode }, treeNode: TreeNode) {
+  if (treeNode.children.length === 0) return;
 
-    // TODO: Consider gap between nodes
-    const rect = getWrapperRect(t.children.map((c) => srcMap[c.id].rect));
-    ret.set(t.id, { width: rect.width, height: rect.height });
-    t.children.forEach((c) => getSiblingSizeMap(ret, srcMap, c));
-  });
+  const width = treeNode.children.reduce((m, c) => Math.max(m, srcMap[c.id].rect.width), 0);
+  ret.set(treeNode.id, width);
+  treeNode.children.forEach((c) => getSiblingWidthMap(ret, srcMap, c));
 }
 
 function getChildrenBranchPositionMapRight(

@@ -3,10 +3,12 @@ import { getWrapperRect } from "../shapes";
 import { TreeNodeShape, isTreeNodeShape } from "../shapes/treeNode";
 import { TreeRootShape, isTreeRootShape } from "../shapes/treeRoot";
 import { ShapeComposite } from "./shapeComposite";
-import { Direction4, StyleScheme } from "../models";
+import { Direction4, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
+import { TreeLayoutNode, treeLayout } from "../utils/layouts/tree";
+import { flatTree } from "../utils/tree";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
@@ -95,4 +97,35 @@ export function isSameTreeHitResult(a?: TreeHitResult, b?: TreeHitResult): boole
   }
 
   return !a && !b;
+}
+
+export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
+  const tree = shapeComposite.mergedShapeTreeMap[rootId];
+  const layoutNodes: TreeLayoutNode[] = [];
+  flatTree([tree]).forEach((t) => {
+    const s = shapeComposite.mergedShapeMap[t.id];
+    const rect = getWrapperRect(shapeComposite.getShapeStruct, s);
+    if (isTreeRootShape(s)) {
+      layoutNodes.push({ id: t.id, findex: s.findex, type: "root", rect, direction: 0, parentId: "" });
+    } else if (isTreeNodeShape(s)) {
+      layoutNodes.push({
+        id: t.id,
+        findex: s.findex,
+        type: "node",
+        rect,
+        direction: s.direction,
+        parentId: s.treeParentId,
+      });
+    }
+  });
+
+  const result = treeLayout(layoutNodes);
+  const ret: { [id: string]: Partial<Shape> } = {};
+  result.forEach((r) => {
+    if (!isSame(r.rect, shapeComposite.shapeMap[r.id].p)) {
+      ret[r.id] = { p: { x: r.rect.x, y: r.rect.y } };
+    }
+  });
+
+  return ret;
 }
