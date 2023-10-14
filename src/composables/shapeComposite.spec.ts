@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import { findBetterShapeAt, getDeleteTargetIds, newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
+import { LineShape } from "../shapes/line";
+import { TextShape } from "../shapes/text";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -63,6 +65,43 @@ describe("newShapeComposite", () => {
       expect(result0.y).toBeCloseTo(0);
       expect(result0.width).toBeCloseTo(20);
       expect(result0.height).toBeCloseTo(40);
+    });
+  });
+
+  describe("findShapeAt", () => {
+    test("should be able to find a child shape when a parent is transparent selection", () => {
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 0, y: 0 },
+        q: { x: 100, y: 100 },
+      });
+      const child0 = createShape<TextShape>(getCommonStruct, "text", {
+        id: "child0",
+        parentId: line.id,
+        p: { x: 0, y: 0 },
+        width: 10,
+        height: 10,
+        lineAttached: 0,
+      });
+      const child1 = createShape<TextShape>(getCommonStruct, "text", {
+        id: "child1",
+        parentId: line.id,
+        p: { x: 50, y: 50 },
+        width: 10,
+        height: 10,
+        lineAttached: 0.5,
+      });
+
+      const shapes = [line, child0, child1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.findShapeAt({ x: -50, y: -50 })).toEqual(undefined);
+      expect(target.findShapeAt({ x: 90, y: 90 })).toEqual(line);
+      expect(target.findShapeAt({ x: 5, y: 8 })).toEqual(child0);
+      expect(target.findShapeAt({ x: 95, y: 98 })).toEqual(child1);
     });
   });
 });

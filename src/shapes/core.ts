@@ -49,6 +49,10 @@ export interface ShapeStruct<T extends Shape> {
   refreshRelation?: (shape: T, availableIdSet: Set<string>) => Partial<T> | undefined;
   canAttachSmartBranch?: boolean;
   shouldKeepAspect?: boolean;
+  /**
+   * If true, children of this shape should be selected as if they are in the root scope.
+   */
+  transparentSelection?: boolean;
 }
 
 /**

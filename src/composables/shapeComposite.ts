@@ -43,7 +43,13 @@ export function newShapeComposite(option: Option) {
 
   function findShapeAt(p: IVec2, parentId?: string): Shape | undefined {
     const scope = (parentId ? mergedShapeTreeMap[parentId].children : mergedShapeTree).map((t) => mergedShapeMap[t.id]);
-    return findBackward(scope, (s) => shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext));
+    const candidate = findBackward(scope, (s) => shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext));
+    if (!candidate) return;
+    if (!shapeModule.isTransparentSelection(option.getStruct, candidate)) return candidate;
+
+    // When the candidate is transparent for selection, try seeking its children.
+    const childCandidate = findShapeAt(p, candidate.id);
+    return childCandidate ?? candidate;
   }
 
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {

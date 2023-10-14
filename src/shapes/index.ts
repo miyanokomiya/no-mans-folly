@@ -107,6 +107,11 @@ export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2, sha
   return struct.isPointOn(shape, p, shapeContext);
 }
 
+export function isTransparentSelection(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.transparentSelection;
+}
+
 export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
   const struct = getStruct(shape.type);
   return struct.resize(shape, resizingAffine);

@@ -4,6 +4,7 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
+import { struct as groupStruct } from "../group";
 import { TreeShapeBase } from "./core";
 
 const MIN_WIDTH = 100;
@@ -62,6 +63,11 @@ export const struct: ShapeStruct<TreeRootShape> = {
 
     return changed ? ret : undefined;
   },
+  isPointOn(shape, p, shapeContext) {
+    const selfResult = recntagleStruct.isPointOn(shape, p, shapeContext);
+    return selfResult || groupStruct.isPointOn(shape, p, shapeContext);
+  },
+  transparentSelection: true,
 };
 
 export function isTreeRootShape(shape: Shape): shape is TreeRootShape {
