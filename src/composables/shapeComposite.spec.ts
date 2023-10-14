@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { findBetterShapeAt, getDeleteTargetIds, newShapeComposite } from "./shapeComposite";
+import { canGroupShapes, findBetterShapeAt, getDeleteTargetIds, newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { LineShape } from "../shapes/line";
@@ -197,5 +197,41 @@ describe("getDeleteTargetIds", () => {
     });
 
     expect(getDeleteTargetIds(target, ["child0", "child1"])).toEqual(["child0", "child1"]);
+  });
+});
+
+describe("canGroupShapes", () => {
+  test("should return true when shapes can be grouped", () => {
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0" });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+      parentId: shape0.id,
+    });
+    const shape2 = createShape(getCommonStruct, "text", {
+      id: "shape2",
+      parentId: shape0.id,
+    });
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group0.id,
+    });
+
+    const shapes = [shape0, shape1, shape2, group0, child0, child1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(canGroupShapes(target, ["shape0"])).toBe(false);
+    expect(canGroupShapes(target, ["shape0", "shape1"])).toBe(true);
+    expect(canGroupShapes(target, ["shape0", "shape1", "shape2"])).toBe(true);
+    expect(canGroupShapes(target, ["group0", "child0"])).toBe(false);
+    expect(canGroupShapes(target, ["child0", "child1"])).toBe(false);
+    expect(canGroupShapes(target, ["shape0", "child0"])).toBe(false);
   });
 });

@@ -31,7 +31,7 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
-import { findBetterShapeAt } from "../../shapeComposite";
+import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
@@ -91,10 +91,12 @@ export function handleCommonShortcut(
     case "g":
       if (event.data.ctrl) {
         event.data.prevent?.();
-        const ids = Object.keys(ctx.getSelectedShapeIdMap());
-        if (ids.length < 1) return;
 
-        const group = createShape(ctx.getShapeStruct, "group", { id: ctx.generateUuid() });
+        const shapeComposite = ctx.getShapeComposite();
+        const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+        if (!canGroupShapes(shapeComposite, targetIds)) return;
+
+        const group = createShape(shapeComposite.getShapeStruct, "group", { id: ctx.generateUuid() });
         ctx.addShapes(
           [group],
           undefined,
