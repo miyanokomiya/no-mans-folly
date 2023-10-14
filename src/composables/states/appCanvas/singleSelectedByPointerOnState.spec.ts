@@ -48,26 +48,14 @@ describe("newSingleSelectedByPointerOnState", () => {
   });
 
   describe("handle pointermove", () => {
-    test("should move to MovingShape state", () => {
+    test("should move to MovingHub state", () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedByPointerOnState();
       const result = target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       }) as any;
-      expect(result?.().getLabel()).toBe("MovingShape");
-    });
-
-    test("should move to MovingLineLabel state when a line label is selected", () => {
-      const ctx = getMockCtx();
-      ctx.getLastSelectedShapeId = vi.fn().mockReturnValue("label");
-      ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ label: true });
-      const target = newSingleSelectedByPointerOnState();
-      const result = target.handleEvent(ctx as any, {
-        type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
-      }) as any;
-      expect(result?.().getLabel()).toBe("MovingLineLabel");
+      expect(result?.().getLabel()).toBe("MovingHub");
     });
   });
 

@@ -13,7 +13,6 @@ import {
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
-import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
@@ -25,6 +24,7 @@ import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItem
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { isGroupShape } from "../../../shapes/group";
+import { newMovingHubState } from "./movingHubState";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -123,7 +123,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
                   if (event.data.options.alt) {
                     return newDuplicatingShapesState;
                   } else {
-                    return () => newMovingShapeState({ boundingBox });
+                    return () => newMovingHubState({ boundingBox });
                   }
                 } else {
                   ctx.selectShape(shape.id, false);

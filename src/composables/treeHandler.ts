@@ -61,6 +61,9 @@ export function newTreeHandler(option: Option) {
     applyFillStyle(ctx, { color: style.selectionPrimary });
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
 
+    ctx.beginPath();
+    ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
     const anchors = getAnchors(scale);
     anchors.forEach(([d, p]) => {
       ctx.beginPath();

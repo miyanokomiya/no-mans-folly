@@ -13,7 +13,6 @@ import {
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
-import { newMovingShapeState } from "../movingShapeState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { createShape } from "../../../../shapes";
@@ -24,6 +23,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
+import { newMovingHubState } from "../movingHubState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -70,7 +70,7 @@ export function newLineSelectedState(): AppCanvasState {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
                   case "edge":
-                    return newMovingShapeState;
+                    return newMovingHubState;
                   case "new-vertex-anchor":
                     return () =>
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });

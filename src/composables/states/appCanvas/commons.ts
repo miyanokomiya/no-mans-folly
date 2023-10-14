@@ -35,7 +35,7 @@ import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { newMovingShapeState } from "./movingShapeState";
+import { newMovingHubState } from "./movingHubState";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -351,7 +351,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
       ctx.selectShape(shapeAtPointer.id);
       return newDuplicatingShapesState;
     } else if (shapeAtPointer.id === selectedId) {
-      return newMovingShapeState;
+      return newMovingHubState;
     } else {
       ctx.selectShape(shapeAtPointer.id, false);
       return newSingleSelectedByPointerOnState;
