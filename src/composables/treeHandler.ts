@@ -144,7 +144,13 @@ export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string
   flatTree([tree]).forEach((t) => {
     const s = shapeComposite.mergedShapeMap[t.id];
     if (!isTreeShapeBase(s)) return;
-    layoutNodes.push(toLayoutNode(shapeComposite, s));
+    const node = toLayoutNode(shapeComposite, s);
+    if (!node.parentId || shapeComposite.mergedShapeMap[node.parentId]) {
+      layoutNodes.push(node);
+    } else {
+      // Fallback when a parent doesn't exist for whatever reason.
+      layoutNodes.push({ ...node, parentId: rootId });
+    }
   });
 
   const result = treeLayout(layoutNodes);

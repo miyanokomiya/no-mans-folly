@@ -15,7 +15,13 @@ export interface TreeLayoutNode extends LayoutNode {
 
 export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {
   const srcMap = toMap(src);
-  const treeRoot = getTree(src)[0];
+  const trees = getTree(src);
+  if (trees.length !== 1) {
+    console.warn(`Tree layout should have single root, but detected ${trees.length}.`);
+    return src;
+  }
+
+  const treeRoot = trees[0];
   const positionMap = getTreeBranchPositionMap(srcMap, treeRoot, getTreeBranchSizeMap(srcMap, treeRoot));
 
   return src.map((s) => {
