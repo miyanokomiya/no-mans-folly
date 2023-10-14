@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { Shape } from "../models";
+import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
@@ -134,4 +134,23 @@ export function canGroupShapes(shapeComposite: ShapeComposite, targetIds: string
   if (targetIds.length < 2) return false;
   const shapeMap = shapeComposite.shapeMap;
   return !targetIds.some((id) => shapeMap[id].parentId);
+}
+
+export function getNextShapeComposite(
+  shapeComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+): ShapeComposite {
+  const deletedIdSet = patchInfo.delete ? new Set(patchInfo.delete) : undefined;
+  const remainedShapes = deletedIdSet
+    ? shapeComposite.shapes.filter((s) => !deletedIdSet!.has(s.id))
+    : shapeComposite.shapes;
+
+  const patchedShapes = patchInfo.update
+    ? remainedShapes.map((s) => (patchInfo.update![s.id] ? { ...s, ...patchInfo.update![s.id] } : s))
+    : remainedShapes;
+
+  return newShapeComposite({
+    shapes: patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes,
+    getStruct: shapeComposite.getShapeStruct,
+  });
 }

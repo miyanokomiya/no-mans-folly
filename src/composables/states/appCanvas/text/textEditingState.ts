@@ -15,6 +15,7 @@ import { calcOriginalDocSize, getDocLength, splitToSegments } from "../../../../
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   id: string;
@@ -447,12 +448,17 @@ function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string,
     shapePatch = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
   }
 
+  let patchMap = shapePatch ? { [shape.id]: shapePatch } : undefined;
+  if (patchMap) {
+    patchMap = getPatchByLayouts(shapeComposite, { update: patchMap });
+  }
+
   if (draft) {
     ctx.setTmpDocMap({ [id]: delta });
-    if (shapePatch) ctx.setTmpShapeMap({ [id]: shapePatch });
+    if (patchMap) ctx.setTmpShapeMap(patchMap);
   } else {
     ctx.setTmpDocMap({});
-    if (shapePatch) ctx.setTmpShapeMap({});
-    ctx.patchDocuments({ [id]: delta }, shapePatch ? { [id]: shapePatch } : undefined);
+    if (patchMap) ctx.setTmpShapeMap({});
+    ctx.patchDocuments({ [id]: delta }, patchMap);
   }
 }

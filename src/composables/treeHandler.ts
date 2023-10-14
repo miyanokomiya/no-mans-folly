@@ -3,7 +3,7 @@ import { getWrapperRect } from "../shapes";
 import { TreeNodeShape, isTreeNodeShape } from "../shapes/tree/treeNode";
 import { TreeRootShape, isTreeRootShape } from "../shapes/tree/treeRoot";
 import { ShapeComposite } from "./shapeComposite";
-import { Direction4, Shape, StyleScheme } from "../models";
+import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -128,4 +128,46 @@ export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string
   });
 
   return ret;
+}
+
+export function getTreeLayoutPatchFunctions(
+  srcComposite: ShapeComposite,
+  updatedComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+) {
+  const targetTreeRootIdSet = new Set<string>();
+
+  if (patchInfo.add) {
+    patchInfo.add.forEach((shape) => {
+      if (isTreeRootShape(shape)) {
+        targetTreeRootIdSet.add(shape.id);
+      } else if (isTreeNodeShape(shape) && shape.parentId) {
+        targetTreeRootIdSet.add(shape.parentId);
+      }
+    });
+  }
+
+  if (patchInfo.update) {
+    Object.keys(patchInfo.update).forEach((id) => {
+      const shape = srcComposite.shapeMap[id];
+      if (isTreeRootShape(shape)) {
+        targetTreeRootIdSet.add(shape.id);
+      } else if (isTreeNodeShape(shape) && shape.parentId) {
+        targetTreeRootIdSet.add(shape.parentId);
+      }
+    });
+  }
+
+  if (patchInfo.delete) {
+    patchInfo.delete.forEach((id) => {
+      const shape = srcComposite.shapeMap[id];
+      if (isTreeNodeShape(shape) && shape.parentId) {
+        targetTreeRootIdSet.add(shape.parentId);
+      }
+    });
+  }
+
+  return Array.from(targetTreeRootIdSet).map((id) => {
+    return () => getNextTreeLayout(updatedComposite, id);
+  });
 }

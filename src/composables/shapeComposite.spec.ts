@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { canGroupShapes, findBetterShapeAt, getDeleteTargetIds, newShapeComposite } from "./shapeComposite";
+import {
+  canGroupShapes,
+  findBetterShapeAt,
+  getDeleteTargetIds,
+  getNextShapeComposite,
+  newShapeComposite,
+} from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { LineShape } from "../shapes/line";
@@ -231,5 +237,34 @@ describe("canGroupShapes", () => {
     expect(canGroupShapes(target, ["group0", "child0"])).toBe(false);
     expect(canGroupShapes(target, ["child0", "child1"])).toBe(false);
     expect(canGroupShapes(target, ["shape0", "child0"])).toBe(false);
+  });
+});
+
+describe("getNextShapeComposite", () => {
+  test("should return next shape composite applied the patches", () => {
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0" });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+    });
+    const shape2 = createShape(getCommonStruct, "text", {
+      id: "shape2",
+    });
+    const shape3 = createShape(getCommonStruct, "text", {
+      id: "shape3",
+    });
+
+    const shapes = [shape0, shape1, shape2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(
+      getNextShapeComposite(target, {
+        add: [shape3],
+        update: { [shape0.id]: { p: { x: 10, y: 10 } } },
+        delete: ["shape1"],
+      }).shapes,
+    ).toEqual([{ ...shape0, p: { x: 10, y: 10 } }, shape2, shape3]);
   });
 });

@@ -8,6 +8,7 @@ import {
   handleHistoryEvent,
   handleStateEvent,
   newShapeClipboard,
+  startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
@@ -89,6 +90,14 @@ export function newTreeRootSelectedState(): AppCanvasState {
             default:
               return;
           }
+        case "pointerdoubledown": {
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point);
+          if (shapeAtPointer?.id === treeRootShape.id) {
+            return startTextEditingIfPossible(ctx, treeRootShape.id, event.data.point);
+          }
+          return;
+        }
         case "pointerhover": {
           const result = treeHandler.hitTest(event.data.current, ctx.getScale());
           if (!isSameTreeHitResult(hitResult, result)) {
