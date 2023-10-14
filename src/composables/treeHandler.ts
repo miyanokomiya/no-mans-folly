@@ -8,7 +8,8 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TreeLayoutNode, treeLayout } from "../utils/layouts/tree";
-import { flatTree } from "../utils/tree";
+import { TreeFlatNode, flatTree, getAllBranchIds, getTree } from "../utils/tree";
+import { TreeShapeBase, isTreeShapeBase } from "../shapes/tree/core";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
@@ -99,24 +100,51 @@ export function isSameTreeHitResult(a?: TreeHitResult, b?: TreeHitResult): boole
   return !a && !b;
 }
 
+function toTreeNode(shape: TreeShapeBase): TreeFlatNode {
+  return isTreeNodeShape(shape) ? { id: shape.id, parentId: shape.treeParentId } : { id: shape.id };
+}
+
+function toLayoutNode(shapeComposite: ShapeComposite, shape: TreeShapeBase): TreeLayoutNode {
+  const rect = getWrapperRect(shapeComposite.getShapeStruct, shape);
+  if (isTreeNodeShape(shape)) {
+    return {
+      id: shape.id,
+      findex: shape.findex,
+      type: "node",
+      rect,
+      direction: shape.direction,
+      parentId: shape.treeParentId,
+    };
+  } else {
+    return { id: shape.id, findex: shape.findex, type: "root", rect, direction: 0, parentId: "" };
+  }
+}
+
+/**
+ * Returns shape ids that belong to the the branches of the targets. The targets included.
+ */
+export function getTreeBranchIds(shapeComposite: ShapeComposite, targetIds: string[]): string[] {
+  if (targetIds.length === 0) return [];
+
+  const indexShape = shapeComposite.mergedShapeMap[targetIds[0]];
+  const root = shapeComposite.mergedShapeTreeMap[indexShape.parentId || indexShape.id];
+  const nodes = flatTree([root]);
+  const layoutNodes = nodes
+    .map((n) => shapeComposite.mergedShapeMap[n.id])
+    .filter((s) => !!s)
+    .filter(isTreeShapeBase)
+    .map(toTreeNode);
+
+  return getAllBranchIds(flatTree(getTree(layoutNodes)), targetIds);
+}
+
 export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
   const tree = shapeComposite.mergedShapeTreeMap[rootId];
   const layoutNodes: TreeLayoutNode[] = [];
   flatTree([tree]).forEach((t) => {
     const s = shapeComposite.mergedShapeMap[t.id];
-    const rect = getWrapperRect(shapeComposite.getShapeStruct, s);
-    if (isTreeRootShape(s)) {
-      layoutNodes.push({ id: t.id, findex: s.findex, type: "root", rect, direction: 0, parentId: "" });
-    } else if (isTreeNodeShape(s)) {
-      layoutNodes.push({
-        id: t.id,
-        findex: s.findex,
-        type: "node",
-        rect,
-        direction: s.direction,
-        parentId: s.treeParentId,
-      });
-    }
+    if (!isTreeShapeBase(s)) return;
+    layoutNodes.push(toLayoutNode(shapeComposite, s));
   });
 
   const result = treeLayout(layoutNodes);

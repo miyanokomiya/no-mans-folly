@@ -18,6 +18,7 @@ import {
   TreeHandler,
   TreeHitResult,
   getNextTreeLayout,
+  getTreeBranchIds,
   isSameTreeHitResult,
   newTreeHandler,
 } from "../../../treeHandler";
@@ -114,7 +115,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Delete":
-              ctx.deleteShapes([treeNodeShape.id]);
+              ctx.deleteShapes(getTreeBranchIds(ctx.getShapeComposite(), [treeNodeShape.id]));
               return;
             default:
               return handleCommonShortcut(ctx, event);
