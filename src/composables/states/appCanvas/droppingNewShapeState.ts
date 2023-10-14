@@ -1,12 +1,12 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
 import { canHaveText } from "../../../shapes";
-import { newSingleSelectedState } from "./singleSelectedState";
 import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import { getInitialOutput } from "../../../utils/textEditor";
 import { newShapeComposite } from "../../shapeComposite";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   shape: Shape;
@@ -73,7 +73,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
             canHaveText(ctx.getShapeStruct, shape) ? { [shape.id]: getInitialOutput() } : undefined,
           );
           ctx.selectShape(shape.id);
-          return newSingleSelectedState;
+          return newSelectionHubState;
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;

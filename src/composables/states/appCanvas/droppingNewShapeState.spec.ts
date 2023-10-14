@@ -1,12 +1,12 @@
 import { expect, test, describe, vi } from "vitest";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { createShape, getCommonStruct } from "../../../shapes";
-import { newSingleSelectedState } from "./singleSelectedState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
 import { getInitialOutput } from "../../../utils/textEditor";
 import { newShapeComposite } from "../../shapeComposite";
+import { newSelectionHubState } from "./selectionHubState";
 
 function getMockCtx() {
   return {
@@ -72,7 +72,7 @@ describe("newDroppingNewShapeState", () => {
       expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shape, p: { x: -40, y: -50 } }], {
         [getOption().shape.id]: getInitialOutput(),
       });
-      expect(result2).toEqual(newSingleSelectedState);
+      expect(result2).toEqual(newSelectionHubState);
     });
   });
 });

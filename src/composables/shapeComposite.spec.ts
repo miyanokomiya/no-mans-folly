@@ -101,7 +101,7 @@ describe("newShapeComposite", () => {
       expect(target.findShapeAt({ x: -50, y: -50 })).toEqual(undefined);
       expect(target.findShapeAt({ x: 90, y: 90 })).toEqual(line);
       expect(target.findShapeAt({ x: 5, y: 8 })).toEqual(child0);
-      expect(target.findShapeAt({ x: 95, y: 98 })).toEqual(child1);
+      expect(target.findShapeAt({ x: 50, y: 55 })).toEqual(child1);
     });
   });
 });
@@ -205,11 +205,9 @@ describe("canGroupShapes", () => {
     const shape0 = createShape(getCommonStruct, "text", { id: "shape0" });
     const shape1 = createShape(getCommonStruct, "text", {
       id: "shape1",
-      parentId: shape0.id,
     });
     const shape2 = createShape(getCommonStruct, "text", {
       id: "shape2",
-      parentId: shape0.id,
     });
     const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
