@@ -1,7 +1,7 @@
 import { IVec2, getDistance, isSame } from "okageo";
 import { getWrapperRect } from "../shapes";
-import { TreeNodeShape, isTreeNodeShape } from "../shapes/treeNode";
-import { TreeRootShape, isTreeRootShape } from "../shapes/treeRoot";
+import { TreeNodeShape, isTreeNodeShape } from "../shapes/tree/treeNode";
+import { TreeRootShape, isTreeRootShape } from "../shapes/tree/treeRoot";
 import { ShapeComposite } from "./shapeComposite";
 import { Direction4, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";

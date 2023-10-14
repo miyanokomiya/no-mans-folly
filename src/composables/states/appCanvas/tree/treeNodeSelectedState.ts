@@ -12,7 +12,7 @@ import {
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt, newShapeComposite } from "../../../shapeComposite";
-import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
+import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
   TreeHandler,
   TreeHitResult,
@@ -21,21 +21,20 @@ import {
   newTreeHandler,
 } from "../../../treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
-import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import { getInitialOutput } from "../../../../utils/textEditor";
 
-export function newTreeRootSelectedState(): AppCanvasState {
-  let treeRootShape: TreeRootShape;
+export function newTreeNodeSelectedState(): AppCanvasState {
+  let treeNodeShape: TreeNodeShape;
   let treeHandler: TreeHandler;
   let hitResult: TreeHitResult | undefined;
 
   return {
-    getLabel: () => "TreeRootSelected",
+    getLabel: () => "TreeNodeSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
-      treeRootShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeRootShape;
+      treeNodeShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeNodeShape;
       ctx.setCommandExams([]);
-      treeHandler = newTreeHandler({ getShapeComposite: ctx.getShapeComposite, targetId: treeRootShape.id });
+      treeHandler = newTreeHandler({ getShapeComposite: ctx.getShapeComposite, targetId: treeNodeShape.id });
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -44,7 +43,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
       ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
-      if (!treeRootShape) return newSelectionHubState;
+      if (!treeNodeShape) return newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
@@ -55,11 +54,12 @@ export function newTreeRootSelectedState(): AppCanvasState {
               hitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 const shapeComposite = ctx.getShapeComposite();
+                const treeRootId = treeNodeShape.parentId!;
                 let treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
                   id: ctx.generateUuid(),
                   findex: ctx.createLastIndex(),
-                  parentId: treeRootShape.id,
-                  treeParentId: treeRootShape.id,
+                  parentId: treeRootId,
+                  treeParentId: treeNodeShape.id,
                   direction: hitResult.direction,
                 });
 
@@ -67,7 +67,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
                   getStruct: shapeComposite.getShapeStruct,
                   shapes: [...shapeComposite.shapes, treeNode],
                 });
-                const patch = getNextTreeLayout(nextComposite, treeRootShape.id);
+                const patch = getNextTreeLayout(nextComposite, treeRootId);
                 treeNode = { ...treeNode, ...patch[treeNode.id] };
                 delete patch[treeNode.id];
 
@@ -79,12 +79,12 @@ export function newTreeRootSelectedState(): AppCanvasState {
                 return;
               }
 
-              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, treeRootShape.id, treeRootShape.id);
+              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, treeNodeShape.id, treeNodeShape.id);
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(ctx, event, treeRootShape.id, treeRootShape.id);
+              return handleCommonPointerDownRightOnSingleSelection(ctx, event, treeNodeShape.id, treeNodeShape.id);
             }
             default:
               return;
@@ -98,14 +98,14 @@ export function newTreeRootSelectedState(): AppCanvasState {
           if (hitResult) return;
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, treeRootShape.id);
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, treeNodeShape.id);
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
         case "keydown":
           switch (event.data.key) {
             case "Delete":
-              ctx.deleteShapes([treeRootShape.id]);
+              ctx.deleteShapes([treeNodeShape.id]);
               return;
             default:
               return handleCommonShortcut(ctx, event);
@@ -117,7 +117,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
           return newSelectionHubState;
         }
         case "shape-updated": {
-          if (event.data.keys.has(treeRootShape.id)) {
+          if (event.data.keys.has(treeNodeShape.id)) {
             return newSelectionHubState;
           }
           return;

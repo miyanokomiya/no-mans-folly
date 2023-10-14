@@ -18,7 +18,7 @@ import { LineShape } from "./line";
 import { TextShape } from "./text";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { createBoxPadding } from "../utils/boxPadding";
-import { TreeRootShape } from "./treeRoot";
+import { TreeRootShape } from "./tree/treeRoot";
 
 describe("createShape", () => {
   test("should return new shape", () => {

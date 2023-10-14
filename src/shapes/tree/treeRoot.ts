@@ -1,17 +1,15 @@
-import { BoxAlign, Shape } from "../models";
-import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
-import { createFillStyle } from "../utils/fillStyle";
-import { createStrokeStyle } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape } from "./core";
-import { RectangleShape, struct as recntagleStruct } from "./rectangle";
+import { Shape } from "../../models";
+import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import { createFillStyle } from "../../utils/fillStyle";
+import { createStrokeStyle } from "../../utils/strokeStyle";
+import { ShapeStruct, createBaseShape } from "../core";
+import { struct as recntagleStruct } from "../rectangle";
+import { TreeShapeBase } from "./core";
 
 const MIN_WIDTH = 100;
 const MIN_HEIGHT = 30;
 
-export type TreeRootShape = RectangleShape &
-  BoxAlign & {
-    maxWidth: number;
-  };
+export type TreeRootShape = TreeShapeBase;
 
 export const struct: ShapeStruct<TreeRootShape> = {
   ...recntagleStruct,
