@@ -439,3 +439,35 @@ export function getRotatedRectAffine(rect: IRectangle, rotation: number) {
     [1, 0, 0, 1, -width / 2, -height / 2],
   ]);
 }
+
+export function getDistanceBetweenPointAndRect(p: IVec2, rect: IRectangle): number {
+  if (isPointOnRectangle(rect, p)) return 0;
+
+  let ret = Infinity;
+  let closeToSegment = false;
+  const right = rect.x + rect.width;
+  const bottom = rect.y + rect.height;
+
+  if (rect.x <= p.x && p.x <= right) {
+    ret = Math.min(ret, Math.abs(p.y - rect.y), Math.abs(bottom - p.y));
+    closeToSegment = true;
+  }
+  if (rect.y <= p.y && p.y <= bottom) {
+    ret = Math.min(ret, Math.abs(p.x - rect.x), Math.abs(right - p.x));
+    closeToSegment = true;
+  }
+
+  if (!closeToSegment) {
+    if (p.x < rect.x && p.y < rect.y) {
+      ret = getDistance(p, rect);
+    } else if (right < p.x && p.y < rect.y) {
+      ret = getDistance(p, { x: right, y: rect.y });
+    } else if (right < p.x && bottom < p.y) {
+      ret = getDistance(p, { x: right, y: bottom });
+    } else {
+      ret = getDistance(p, { x: rect.x, y: bottom });
+    }
+  }
+
+  return ret;
+}

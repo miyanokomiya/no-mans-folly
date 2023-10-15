@@ -1,42 +1,54 @@
 import { describe, test, expect } from "vitest";
-import { getNextTreeLayout, getTreeBranchIds } from "./treeHandler";
+import { getNextTreeLayout, getTreeBranchIds, newTreeNodeMovingHandler } from "./treeHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
+import { TreeRootShape } from "../shapes/tree/treeRoot";
+import { generateKeyBetween } from "fractional-indexing";
 
-const root = createShape(getCommonStruct, "tree_root", { id: "root" });
+const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
+  id: "root",
+  findex: generateKeyBetween(null, null),
+  p: { x: 0, y: 0 },
+  width: 10,
+  height: 10,
+});
 const a = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
   id: "a",
-  findex: "a",
+  findex: generateKeyBetween(root.findex, null),
   parentId: root.id,
   treeParentId: root.id,
+  p: { x: 50, y: -50 },
   width: 10,
   height: 10,
   direction: 1,
 });
 const aa = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
   id: "aa",
-  findex: "aa",
+  findex: generateKeyBetween(a.findex, null),
   parentId: root.id,
   treeParentId: a.id,
+  p: { x: 100, y: -50 },
   width: 10,
   height: 10,
   direction: 1,
 });
 const b = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
   id: "b",
-  findex: "b",
+  findex: generateKeyBetween(aa.findex, null),
   parentId: root.id,
   treeParentId: root.id,
+  p: { x: 50, y: 50 },
   width: 10,
   height: 10,
   direction: 1,
 });
 const bb = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
   id: "bb",
-  findex: "bb",
+  findex: generateKeyBetween(b.findex, null),
   parentId: root.id,
   treeParentId: b.id,
+  p: { x: 100, y: 50 },
   width: 10,
   height: 10,
   direction: 1,
@@ -44,6 +56,54 @@ const bb = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
 const shapeComposite = newShapeComposite({
   shapes: [root, a, aa, b, bb],
   getStruct: getCommonStruct,
+});
+
+describe("newTreeNodeMovingHandler", () => {
+  describe("moveTest", () => {
+    test("should return node moving result: move inside the siblings", () => {
+      const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
+      expect(target.moveTest({ x: 50, y: -60 })).toEqual(undefined);
+      expect(target.moveTest({ x: 50, y: -30 })).toEqual(undefined);
+      expect(target.moveTest({ x: 50, y: 40 })).toEqual(undefined);
+      expect(target.moveTest({ x: 50, y: 60 })).toEqual({
+        treeParentId: "root",
+        direction: 1,
+        findex: generateKeyBetween(b.findex, null),
+      });
+    });
+
+    test("should return node moving result: move to other parent", () => {
+      const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
+      expect(target.moveTest({ x: 110, y: 50 })).toEqual({
+        treeParentId: "b",
+        direction: 1,
+        findex: generateKeyBetween(null, bb.findex),
+      });
+      expect(target.moveTest({ x: 110, y: 60 })).toEqual({
+        treeParentId: "b",
+        direction: 1,
+        findex: generateKeyBetween(bb.findex, null),
+      });
+    });
+
+    test("should return node moving result: become the first child", () => {
+      const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
+      expect(target.moveTest({ x: 150, y: 50 })).toEqual({
+        treeParentId: "bb",
+        direction: 1,
+        findex: generateKeyBetween(bb.findex, null),
+      });
+    });
+
+    test("should return node moving result: should not move to own children", () => {
+      const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
+      expect(target.moveTest({ x: 110, y: -50 })).toEqual({
+        treeParentId: "b",
+        direction: 1,
+        findex: generateKeyBetween(null, bb.findex),
+      });
+    });
+  });
 });
 
 describe("getTreeBranchIds", () => {
