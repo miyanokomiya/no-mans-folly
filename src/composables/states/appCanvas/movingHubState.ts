@@ -4,7 +4,7 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 import { newMovingShapeState } from "./movingShapeState";
-import {newTreeNodeMovingState} from "./tree/treeNodeMovingState";
+import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
 
 interface Option {
   boundingBox?: BoundingBox;
