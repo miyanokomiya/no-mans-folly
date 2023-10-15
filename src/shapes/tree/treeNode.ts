@@ -60,6 +60,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
 
     return ret;
   },
+  stackOrderDisabled: true,
 };
 
 export function isTreeNodeShape(shape: Shape): shape is TreeNodeShape {

@@ -329,6 +329,11 @@ export function shouldKeepAspect(getStruct: GetShapeStruct, shape: Shape): boole
   return !!struct.shouldKeepAspect;
 }
 
+export function stackOrderDisabled(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.stackOrderDisabled;
+}
+
 export function duplicateShapes(
   getStruct: GetShapeStruct,
   shapes: Shape[],

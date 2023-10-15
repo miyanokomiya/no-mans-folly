@@ -9,6 +9,7 @@ import {
   patchShapesOrderToFirst,
   patchShapesOrderToLast,
   patchTextPadding,
+  stackOrderDisabled,
   updateCommonStyle,
 } from "../../shapes";
 import * as geometry from "../../utils/geometry";
@@ -278,25 +279,31 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     [focusBack, smctx],
   );
 
-  const onClickStackLast = useCallback(() => {
+  const canChangeStack = useMemo<boolean>(() => {
+    const shapeComposite = smctx.getShapeComposite();
     const selected = smctx.getSelectedShapeIdMap();
-    const ids = acctx.shapeStore
-      .getEntities()
-      .filter((s) => selected[s.id])
+    return shapeComposite.shapes.every((s) => selected[s.id] && stackOrderDisabled(smctx.getShapeStruct, s));
+  }, [smctx]);
+
+  const onClickStackLast = useCallback(() => {
+    const shapeComposite = smctx.getShapeComposite();
+    const selected = smctx.getSelectedShapeIdMap();
+    const ids = shapeComposite.shapes
+      .filter((s) => selected[s.id] && stackOrderDisabled(smctx.getShapeStruct, s))
       .map((s) => s.id);
     smctx.patchShapes(patchShapesOrderToLast(ids, smctx.createLastIndex()));
     focusBack?.();
-  }, [focusBack, smctx, acctx]);
+  }, [focusBack, smctx]);
 
   const onClickStackFirst = useCallback(() => {
+    const shapeComposite = smctx.getShapeComposite();
     const selected = smctx.getSelectedShapeIdMap();
-    const ids = acctx.shapeStore
-      .getEntities()
-      .filter((s) => selected[s.id])
+    const ids = shapeComposite.shapes
+      .filter((s) => selected[s.id] && stackOrderDisabled(smctx.getShapeStruct, s))
       .map((s) => s.id);
     smctx.patchShapes(patchShapesOrderToFirst(ids, smctx.createFirstIndex()));
     focusBack?.();
-  }, [focusBack, smctx, acctx]);
+  }, [focusBack, smctx]);
 
   const canIndexShapeHaveTextPadding = useMemo<boolean>(() => {
     if (!indexShape) return false;
@@ -406,7 +413,9 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
         {indexTextShape ? (
           <AlignAnchorButton {...popupButtonCommonProps} boxAlign={indexTextShape} onChange={onAlignAnchorChangeed} />
         ) : undefined}
-        <StackButton {...popupButtonCommonProps} onClickLast={onClickStackLast} onClickFirst={onClickStackFirst} />
+        {canChangeStack ? (
+          <StackButton {...popupButtonCommonProps} onClickLast={onClickStackLast} onClickFirst={onClickStackFirst} />
+        ) : undefined}
       </div>
     </div>
   ) : undefined;

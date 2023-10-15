@@ -53,6 +53,11 @@ export interface ShapeStruct<T extends Shape> {
    * If true, children of this shape should be selected as if they are in the root scope.
    */
   transparentSelection?: boolean;
+  /**
+   * If true, this shape's "findex" doesn't change via usual operation.
+   * When "findex" has special meaning for this shape, such as tree node shape, type. set this attribute true.
+   */
+  stackOrderDisabled?: boolean;
 }
 
 /**
