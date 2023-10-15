@@ -1,5 +1,12 @@
 import { describe, test, expect } from "vitest";
-import { getModifiedTreeRootIds, getNextTreeLayout, getTreeBranchIds, newTreeNodeMovingHandler } from "./treeHandler";
+import {
+  generateFindexNextAt,
+  generateFindexPreviousAt,
+  getModifiedTreeRootIds,
+  getNextTreeLayout,
+  getTreeBranchIds,
+  newTreeNodeMovingHandler,
+} from "./treeHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
@@ -190,6 +197,20 @@ describe("getTreeBranchIds", () => {
     expect(getTreeBranchIds(shapeComposite, ["b"])).toEqual(["b", "bb"]);
     expect(getTreeBranchIds(shapeComposite, ["a", "bb"])).toEqual(["a", "aa", "bb"]);
     expect(getTreeBranchIds(shapeComposite, ["a", "aa"])).toEqual(["a", "aa"]);
+  });
+});
+
+describe("generateFindexPreviousAt", () => {
+  test("should return shape ids in the target branches", () => {
+    expect(generateFindexPreviousAt(shapeComposite, "a")).toBe(generateKeyBetween(null, a.findex));
+    expect(generateFindexPreviousAt(shapeComposite, "b")).toBe(generateKeyBetween(a.findex, b.findex));
+  });
+});
+
+describe("generateFindexNextAt", () => {
+  test("should return shape ids in the target branches", () => {
+    expect(generateFindexNextAt(shapeComposite, "a")).toBe(generateKeyBetween(a.findex, b.findex));
+    expect(generateFindexNextAt(shapeComposite, "b")).toBe(generateKeyBetween(b.findex, null));
   });
 });
 

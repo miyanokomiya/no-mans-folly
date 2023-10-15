@@ -13,7 +13,7 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt, newShapeComposite } from "../../../shapeComposite";
+import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
 import {
   TreeHandler,
@@ -66,9 +66,8 @@ export function newTreeRootSelectedState(): AppCanvasState {
                   direction: hitResult.direction,
                 });
 
-                const nextComposite = newShapeComposite({
-                  getStruct: shapeComposite.getShapeStruct,
-                  shapes: [...shapeComposite.shapes, treeNode],
+                const nextComposite = getNextShapeComposite(shapeComposite, {
+                  add: [treeNode],
                 });
                 const patch = getNextTreeLayout(nextComposite, treeRootShape.id);
                 treeNode = { ...treeNode, ...patch[treeNode.id] };
@@ -79,6 +78,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
                   canHaveText(ctx.getShapeStruct, treeNode) ? { [treeNode.id]: getInitialOutput() } : undefined,
                   patch,
                 );
+                ctx.selectShape(treeNode.id);
                 return;
               }
 

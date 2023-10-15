@@ -13,11 +13,13 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt, newShapeComposite } from "../../../shapeComposite";
+import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
   TreeHandler,
   TreeHitResult,
+  generateFindexNextAt,
+  generateFindexPreviousAt,
   getNextTreeLayout,
   getTreeBranchIds,
   isSameTreeHitResult,
@@ -58,17 +60,36 @@ export function newTreeNodeSelectedState(): AppCanvasState {
               if (hitResult) {
                 const shapeComposite = ctx.getShapeComposite();
                 const treeRootId = treeNodeShape.parentId!;
-                let treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
-                  id: ctx.generateUuid(),
-                  findex: ctx.createLastIndex(),
-                  parentId: treeRootId,
-                  treeParentId: treeNodeShape.id,
-                  direction: hitResult.direction,
-                });
 
-                const nextComposite = newShapeComposite({
-                  getStruct: shapeComposite.getShapeStruct,
-                  shapes: [...shapeComposite.shapes, treeNode],
+                let treeNode: TreeNodeShape;
+                if (hitResult.type === 0) {
+                  treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                    id: ctx.generateUuid(),
+                    findex: generateFindexPreviousAt(shapeComposite, treeNodeShape.id),
+                    parentId: treeRootId,
+                    treeParentId: treeNodeShape.treeParentId,
+                    direction: hitResult.direction,
+                  });
+                } else if (hitResult.type === 1) {
+                  treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                    id: ctx.generateUuid(),
+                    findex: generateFindexNextAt(shapeComposite, treeNodeShape.id),
+                    parentId: treeRootId,
+                    treeParentId: treeNodeShape.treeParentId,
+                    direction: hitResult.direction,
+                  });
+                } else {
+                  treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                    id: ctx.generateUuid(),
+                    findex: ctx.createLastIndex(),
+                    parentId: treeRootId,
+                    treeParentId: treeNodeShape.id,
+                    direction: hitResult.direction,
+                  });
+                }
+
+                const nextComposite = getNextShapeComposite(shapeComposite, {
+                  add: [treeNode],
                 });
                 const patch = getNextTreeLayout(nextComposite, treeRootId);
                 treeNode = { ...treeNode, ...patch[treeNode.id] };
@@ -79,6 +100,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                   canHaveText(ctx.getShapeStruct, treeNode) ? { [treeNode.id]: getInitialOutput() } : undefined,
                   patch,
                 );
+                ctx.selectShape(treeNode.id);
                 return;
               }
 

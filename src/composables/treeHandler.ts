@@ -14,11 +14,22 @@ import { generateKeyBetween } from "fractional-indexing";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
+const ANCHOR_SIBLING_MARGIN = 18;
+
+/**
+ * - undefined: insert as a child
+ * - 0: insert as the previous sibling
+ * - 1: insert as the next sibling
+ */
+type InsertType = undefined | 0 | 1;
 
 export interface TreeHitResult {
   direction: Direction4;
   p: IVec2;
+  type: InsertType;
 }
+
+type AnchorInfo = [Direction4, IVec2, type?: InsertType];
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -32,7 +43,7 @@ export function newTreeHandler(option: Option) {
   const direction = isTreeNodeShape(shape) ? shape.direction : 0;
   const bounds = getWrapperRect(shapeComposite.getShapeStruct, shape);
 
-  function getAnchors(scale: number): [Direction4, IVec2][] {
+  function getAnchors(scale: number): AnchorInfo[] {
     const margin = ANCHOR_MARGIN * scale;
     if (isRoot) {
       return [
@@ -41,11 +52,20 @@ export function newTreeHandler(option: Option) {
       ];
     }
 
+    const siblingMargin = ANCHOR_SIBLING_MARGIN * scale;
     switch (direction) {
       case 3:
-        return [[3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }]];
+        return [
+          [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
+          [3, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0],
+          [3, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1],
+        ];
       default:
-        return [[1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }]];
+        return [
+          [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
+          [1, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0],
+          [1, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1],
+        ];
     }
   }
 
@@ -54,7 +74,7 @@ export function newTreeHandler(option: Option) {
 
     const anchor = getAnchors(scale).find((a) => getDistance(a[1], p) <= threshold);
     if (!anchor) return;
-    return { direction: anchor[0], p: anchor[1] };
+    return { direction: anchor[0], p: anchor[1], type: anchor[2] };
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
@@ -66,15 +86,27 @@ export function newTreeHandler(option: Option) {
     ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
     const anchors = getAnchors(scale);
-    anchors.forEach(([d, p]) => {
+    anchors.forEach(([d, p, t]) => {
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
       switch (d) {
         case 3:
-          ctx.lineTo(bounds.x, p.y);
+          if (t === 0) {
+            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
+          } else if (t === 1) {
+            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+          } else {
+            ctx.lineTo(bounds.x, p.y);
+          }
           break;
         default:
-          ctx.lineTo(bounds.x + bounds.width, p.y);
+          if (t === 0) {
+            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
+          } else if (t === 1) {
+            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+          } else {
+            ctx.lineTo(bounds.x + bounds.width, p.y);
+          }
           break;
       }
       ctx.stroke();
@@ -324,6 +356,32 @@ export function getTreeBranchIds(shapeComposite: ShapeComposite, targetIds: stri
   const indexShape = shapeComposite.mergedShapeMap[targetIds[0]];
   const layoutNodes = toLayoutNodes(shapeComposite, indexShape.parentId || indexShape.id);
   return getAllBranchIds(flatTree(getTree(layoutNodes)), targetIds);
+}
+
+export function generateFindexPreviousAt(shapeComposite: ShapeComposite, targetId: string): string {
+  const shape = shapeComposite.shapeMap[targetId] as TreeNodeShape;
+  const tree = shapeComposite.mergedShapeTreeMap[shape.parentId!];
+  const allShapeNodes = tree.children.map((t) => shapeComposite.shapeMap[t.id] as TreeNodeShape);
+  const siblings = allShapeNodes.filter(
+    (s) => s.treeParentId === shape.treeParentId && s.direction === shape.direction,
+  );
+  const targetIndex = siblings.findIndex((s) => s.id === shape.id);
+  return targetIndex === 0
+    ? generateKeyBetween(null, shape.findex)
+    : generateKeyBetween(siblings[targetIndex - 1].findex, shape.findex);
+}
+
+export function generateFindexNextAt(shapeComposite: ShapeComposite, targetId: string): string {
+  const shape = shapeComposite.shapeMap[targetId] as TreeNodeShape;
+  const tree = shapeComposite.mergedShapeTreeMap[shape.parentId!];
+  const allShapeNodes = tree.children.map((t) => shapeComposite.shapeMap[t.id] as TreeNodeShape);
+  const siblings = allShapeNodes.filter(
+    (s) => s.treeParentId === shape.treeParentId && s.direction === shape.direction,
+  );
+  const targetIndex = siblings.findIndex((s) => s.id === shape.id);
+  return targetIndex === siblings.length - 1
+    ? generateKeyBetween(shape.findex, null)
+    : generateKeyBetween(shape.findex, siblings[targetIndex + 1].findex);
 }
 
 export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
