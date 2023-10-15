@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { getNextTreeLayout, getTreeBranchIds, newTreeNodeMovingHandler } from "./treeHandler";
+import { getModifiedTreeRootIds, getNextTreeLayout, getTreeBranchIds, newTreeNodeMovingHandler } from "./treeHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
@@ -211,5 +211,26 @@ describe("getNextTreeLayout", () => {
     const result = getNextTreeLayout(shapeComposite, "root");
     expect(result["a"].p!.x).toBeCloseTo(result["cc"].p!.x);
     expect(result["aa"].p!.x).not.toBeCloseTo(result["cc"].p!.x);
+  });
+});
+
+describe("getModifiedTreeRootIds", () => {
+  test("should return modified tree root ids", () => {
+    expect(getModifiedTreeRootIds(shapeComposite, {})).toEqual([]);
+
+    expect(
+      getModifiedTreeRootIds(shapeComposite, {
+        update: { a: { findex: "zz" } },
+      }),
+    ).toEqual(["root"]);
+  });
+
+  test("should not return deleted tree root ids even if its content is modified", () => {
+    expect(
+      getModifiedTreeRootIds(shapeComposite, {
+        update: { a: { findex: "zz" }, root: { p: { x: 10, y: 10 } } },
+        delete: ["root"],
+      }),
+    ).toEqual([]);
   });
 });

@@ -344,7 +344,14 @@ export function getTreeLayoutPatchFunctions(
   updatedComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
 ) {
+  return getModifiedTreeRootIds(srcComposite, patchInfo).map((id) => {
+    return () => getNextTreeLayout(updatedComposite, id);
+  });
+}
+
+export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {
   const targetTreeRootIdSet = new Set<string>();
+  const deletedRootIdSet = new Set<string>();
 
   if (patchInfo.add) {
     patchInfo.add.forEach((shape) => {
@@ -370,15 +377,15 @@ export function getTreeLayoutPatchFunctions(
   if (patchInfo.delete) {
     patchInfo.delete.forEach((id) => {
       const shape = srcComposite.shapeMap[id];
-      if (isTreeNodeShape(shape) && shape.parentId) {
+      if (isTreeRootShape(shape)) {
+        deletedRootIdSet.add(shape.id);
+      } else if (isTreeNodeShape(shape) && shape.parentId) {
         targetTreeRootIdSet.add(shape.parentId);
       }
     });
   }
 
-  return Array.from(targetTreeRootIdSet).map((id) => {
-    return () => getNextTreeLayout(updatedComposite, id);
-  });
+  return Array.from(targetTreeRootIdSet).filter((id) => !deletedRootIdSet.has(id));
 }
 
 function renderMovingPreview(
