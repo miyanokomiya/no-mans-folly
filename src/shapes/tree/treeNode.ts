@@ -5,6 +5,7 @@ import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase } from "./core";
+import { createBoxPadding } from "../../utils/boxPadding";
 
 /**
  * "parentId" should always refer to the root node.
@@ -26,6 +27,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
       height: arg.height ?? 30,
+      textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       maxWidth: arg.maxWidth ?? 300,
       treeParentId: arg.treeParentId ?? "",
       direction: arg.direction ?? 1,
