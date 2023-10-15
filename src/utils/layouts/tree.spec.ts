@@ -4,7 +4,7 @@ import { getTree } from "../tree";
 import { toMap } from "../commons";
 
 describe("getTreeBranchPositionMap", () => {
-  test("should return tree branch sizes: direction 1", () => {
+  test("should return tree branch positions: direction 1", () => {
     const rect10 = { x: 0, y: 0, width: 10, height: 10 };
     const src: TreeLayoutNode[] = [
       { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: rect10 },
@@ -22,7 +22,7 @@ describe("getTreeBranchPositionMap", () => {
     expect(result.get("bb")).toEqual({ x: 120, y: 0 });
   });
 
-  test("should return tree branch sizes: direction 3", () => {
+  test("should return tree branch positions: direction 3", () => {
     const rect10 = { x: 0, y: 0, width: 10, height: 10 };
     const src: TreeLayoutNode[] = [
       { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: rect10 },
@@ -40,7 +40,22 @@ describe("getTreeBranchPositionMap", () => {
     expect(result.get("bb")).toEqual({ x: -120, y: 0 });
   });
 
-  test("should return tree branch sizes: direction 1, 2 nodes", () => {
+  test("should return tree branch positions: direction 3, different sizes", () => {
+    const rect10 = { x: 0, y: 0, width: 10, height: 10 };
+    const rect20 = { x: 0, y: 0, width: 20, height: 10 };
+    const src: TreeLayoutNode[] = [
+      { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: rect10 },
+      { id: "b", findex: "b", type: "node", direction: 3, parentId: "a", rect: rect10 },
+      { id: "c", findex: "c", type: "node", direction: 3, parentId: "a", rect: rect20 },
+    ];
+    const branchSizeMap = getTreeBranchSizeMap(toMap(src), getTree(src)[0], 30, 50);
+    const result = getTreeBranchPositionMap(toMap(src), getTree(src)[0], branchSizeMap, 30, 50);
+    expect(result.get("a")).toEqual({ x: 0, y: 0 });
+    expect(result.get("b")).toEqual({ x: -60, y: -20 });
+    expect(result.get("c")).toEqual({ x: -70, y: 20 });
+  });
+
+  test("should return tree branch positions: direction 1, 2 nodes", () => {
     const rect10 = { x: 0, y: 0, width: 10, height: 10 };
     const src: TreeLayoutNode[] = [
       { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: { x: 0, y: 0, width: 10, height: 30 } },
@@ -52,7 +67,7 @@ describe("getTreeBranchPositionMap", () => {
     expect(result.get("b")).toEqual({ x: 60, y: 10 });
   });
 
-  test("should return tree branch sizes: direction 3, 2 nodes", () => {
+  test("should return tree branch positions: direction 3, 2 nodes", () => {
     const rect10 = { x: 0, y: 0, width: 40, height: 10 };
     const src: TreeLayoutNode[] = [
       { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: { x: 0, y: 0, width: 20, height: 30 } },

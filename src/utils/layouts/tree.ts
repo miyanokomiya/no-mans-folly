@@ -62,13 +62,16 @@ export function getTreeBranchPositionMap(
     const localRoot = { ...treeRoot, children: targets };
     getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
     const originX = rootNode.rect.x + rootNode.rect.width / 2;
-    const siblingSizeMap = new Map<string, number>();
-    getSiblingWidthMap(siblingSizeMap, srcMap, localRoot);
+    const siblingWidthMap = new Map<string, number>();
+    getSiblingWidthMap(siblingWidthMap, srcMap, localRoot);
     walkTree(targets, (t) => {
       if (!t.parentId) return;
 
       const p = positionMap.get(t.id)!;
-      positionMap.set(t.id, { x: 2 * originX - p.x - siblingSizeMap.get(t.parentId)!, y: p.y });
+      const siblingWidth = siblingWidthMap.get(t.parentId)!;
+      // Align to right in the sinblings
+      const wGap = siblingWidth - srcMap[t.id].rect.width;
+      positionMap.set(t.id, { x: 2 * originX - p.x - siblingWidth + wGap, y: p.y });
     });
   }
 
