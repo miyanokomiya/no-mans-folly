@@ -4,6 +4,7 @@ import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
+  handleCommonTextStyle,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -24,6 +25,7 @@ import {
 import { canHaveText, createShape } from "../../../../shapes";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import { getInitialOutput } from "../../../../utils/textEditor";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 export function newTreeRootSelectedState(): AppCanvasState {
   let treeRootShape: TreeRootShape;
@@ -131,6 +133,9 @@ export function newTreeRootSelectedState(): AppCanvasState {
           }
           return;
         }
+        case "text-style": {
+          return handleCommonTextStyle(ctx, event);
+        }
         case "history":
           handleHistoryEvent(ctx, event);
           return newSelectionHubState;
@@ -164,6 +169,13 @@ export function newTreeRootSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      const shapeComposite = ctx.getShapeComposite();
+      const rect = shapeComposite.getWrapperRectForShapes(shapeComposite.getAllBranchMergedShapes([treeRootShape.id]));
+      applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: ctx.getScale() * 2 });
+      renderCtx.beginPath();
+      renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
+      renderCtx.stroke();
+
       treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), hitResult);
     },
   };

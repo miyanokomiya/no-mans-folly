@@ -36,6 +36,7 @@ import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newMovingHubState } from "./movingHubState";
+import { getPatchByLayouts } from "../../shapeLayoutHandler";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -185,10 +186,10 @@ export function handleCommonTextStyle(
     return m;
   }, {});
 
-  const shapePatch: { [id: string]: Partial<TextShape> } = {};
+  const shapeComposite = ctx.getShapeComposite();
+  let patchMap: { [id: string]: Partial<TextShape> } = {};
   const renderCtx = ctx.getRenderCtx();
   if (renderCtx) {
-    const shapeComposite = ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
     Object.entries(patch).forEach(([id, p]) => {
       const shape = shapeMap[id];
@@ -198,19 +199,21 @@ export function handleCommonTextStyle(
         const size = calcOriginalDocSize(patched, renderCtx, resizeOnTextEditInfo.maxWidth);
         const update = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
         if (update) {
-          shapePatch[id] = update;
+          patchMap[id] = update;
         }
       }
     });
   }
 
+  patchMap = getPatchByLayouts(shapeComposite, { update: patchMap });
+
   if (event.data.draft) {
     ctx.setTmpDocMap(patch);
-    ctx.setTmpShapeMap(shapePatch);
+    ctx.setTmpShapeMap(patchMap);
   } else {
     ctx.setTmpDocMap({});
     ctx.setTmpShapeMap({});
-    ctx.patchDocuments(patch, shapePatch);
+    ctx.patchDocuments(patch, patchMap);
   }
 }
 

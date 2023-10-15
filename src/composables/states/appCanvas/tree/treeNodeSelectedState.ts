@@ -4,6 +4,7 @@ import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
+  handleCommonTextStyle,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -131,6 +132,9 @@ export function newTreeNodeSelectedState(): AppCanvasState {
             return newSelectionHubState;
           }
           return;
+        }
+        case "text-style": {
+          return handleCommonTextStyle(ctx, event);
         }
         case "history":
           handleHistoryEvent(ctx, event);
