@@ -33,6 +33,7 @@ import { Shape } from "../models";
 import { useLocalStorageAdopter } from "../composables/localStorage";
 import { mapReduce, patchPipe } from "../utils/commons";
 import { getDeleteTargetIds } from "../composables/shapeComposite";
+import { getPatchByLayouts } from "../composables/shapeLayoutHandler";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -174,6 +175,7 @@ export const AppCanvas: React.FC = () => {
 
   useEffect(() => {
     setSmctx({
+      redraw: () => setCanvasState({}),
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
       setViewport,
       zoomView,
@@ -234,9 +236,12 @@ export const AppCanvas: React.FC = () => {
           acctx.shapeStore.shapeComposite,
           getAllBranchIds(getTree(Object.values(updated.result)), ids),
         );
+
+        const shapePatch = getPatchByLayouts(acctx.shapeStore.shapeComposite, { update: patch, delete: targetIds });
+
         acctx.shapeStore.transact(() => {
-          if (patch) {
-            acctx.shapeStore.patchEntities(patch);
+          if (shapePatch) {
+            acctx.shapeStore.patchEntities(shapePatch);
           }
           acctx.shapeStore.deleteEntities(targetIds);
           acctx.documentStore.deleteDocs(targetIds);

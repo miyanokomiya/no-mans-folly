@@ -4,6 +4,7 @@ import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newSelectionHubState } from "./selectionHubState";
+import { isTransparentSelection } from "../../../shapes";
 
 interface Option {
   keepSelection?: boolean;
@@ -13,6 +14,8 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
   const keepSelection = option?.keepSelection ?? false;
   let rectangle: IRectangle;
   let targetIdSet = new Set<string>();
+  let selectionScope: string | undefined;
+  let hasInitialSelectionScope: boolean;
 
   return {
     getLabel: () => "RectangleSelecting",
@@ -21,6 +24,11 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
       if (!keepSelection) {
         ctx.clearAllSelected();
       }
+      const lastSelectedId = ctx.getLastSelectedShapeId();
+      if (lastSelectedId) {
+        selectionScope = ctx.getShapeComposite().shapeMap[lastSelectedId].parentId;
+      }
+      hasInitialSelectionScope = !!selectionScope;
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -32,13 +40,42 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           const hitTest = newRectInRectHitTest(rectangle);
           const composite = ctx.getShapeComposite();
           const shapeMap = composite.mergedShapeMap;
+
+          const candidateIds = selectionScope
+            ? composite.mergedShapeTreeMap[selectionScope].children.map((t) => t.id)
+            : composite.mergedShapeTree.flatMap((t) => {
+                const shape = shapeMap[t.id];
+                if (isTransparentSelection(composite.getShapeStruct, shape)) {
+                  return [t.id, ...t.children.map((c) => c.id)];
+                } else {
+                  return [t.id];
+                }
+              });
+
           targetIdSet = new Set(
-            composite.mergedShapeTree
-              .map<[string, IRectangle]>((treeNode) => [treeNode.id, composite.getWrapperRect(shapeMap[treeNode.id])])
+            candidateIds
+              .map<[string, IRectangle]>((id) => [id, composite.getWrapperRect(shapeMap[id])])
               .filter(([, rect]) => hitTest.test(rect))
               .map(([id]) => id),
           );
-          ctx.setTmpShapeMap({});
+
+          if (targetIdSet.size === 0) {
+            // Get rid of the scope if this state originally had no scope.
+            if (!hasInitialSelectionScope) {
+              selectionScope = undefined;
+            }
+          } else {
+            // Pick a scope if any selected shape has a parent.
+            const hasParentId = Array.from(targetIdSet.values()).find((id) => shapeMap[id].parentId);
+            selectionScope = hasParentId ? shapeMap[hasParentId].parentId : undefined;
+          }
+
+          if (selectionScope) {
+            // When the scope exists, the parent shouldn't be selected.
+            targetIdSet.delete(selectionScope);
+          }
+
+          ctx.redraw();
           return;
         }
         case "pointerup":

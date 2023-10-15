@@ -1,5 +1,5 @@
 import { HistoryEvent } from "../commons";
-import { ChangeStateEvent, KeyDownEvent, TransitionValue } from "../core";
+import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -10,14 +10,20 @@ import {
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
 } from "../../../utils/textEditor";
-import { canHaveText, createShape, patchShapesOrderToLast } from "../../../shapes";
+import {
+  canHaveText,
+  createShape,
+  patchShapesOrderToLast,
+  resizeOnTextEdit,
+  shouldResizeOnTextEdit,
+} from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2, add, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
-import { TextShape, isTextShape, patchSize } from "../../../shapes/text";
+import { TextShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ImageShape } from "../../../shapes/image";
@@ -25,6 +31,12 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
+import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
+import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newDuplicatingShapesState } from "./duplicatingShapesState";
+import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newMovingHubState } from "./movingHubState";
+import { getPatchByLayouts } from "../../shapeLayoutHandler";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -80,10 +92,12 @@ export function handleCommonShortcut(
     case "g":
       if (event.data.ctrl) {
         event.data.prevent?.();
-        const ids = Object.keys(ctx.getSelectedShapeIdMap());
-        if (ids.length < 1) return;
 
-        const group = createShape(ctx.getShapeStruct, "group", { id: ctx.generateUuid() });
+        const shapeComposite = ctx.getShapeComposite();
+        const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+        if (!canGroupShapes(shapeComposite, targetIds)) return;
+
+        const group = createShape(shapeComposite.getShapeStruct, "group", { id: ctx.generateUuid() });
         ctx.addShapes(
           [group],
           undefined,
@@ -172,30 +186,34 @@ export function handleCommonTextStyle(
     return m;
   }, {});
 
-  const shapePatch: { [id: string]: Partial<TextShape> } = {};
+  const shapeComposite = ctx.getShapeComposite();
+  let patchMap: { [id: string]: Partial<TextShape> } = {};
   const renderCtx = ctx.getRenderCtx();
   if (renderCtx) {
-    const shapeMap = ctx.getShapeComposite().shapeMap;
+    const shapeMap = shapeComposite.shapeMap;
     Object.entries(patch).forEach(([id, p]) => {
       const shape = shapeMap[id];
-      if (isTextShape(shape)) {
+      const resizeOnTextEditInfo = shouldResizeOnTextEdit(shapeComposite.getShapeStruct, shape);
+      if (resizeOnTextEditInfo?.maxWidth) {
         const patched = ctx.patchDocDryRun(id, p);
-        const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
-        const update = patchSize(shape, size);
+        const size = calcOriginalDocSize(patched, renderCtx, resizeOnTextEditInfo.maxWidth);
+        const update = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
         if (update) {
-          shapePatch[id] = update;
+          patchMap[id] = update;
         }
       }
     });
   }
 
+  patchMap = getPatchByLayouts(shapeComposite, { update: patchMap });
+
   if (event.data.draft) {
     ctx.setTmpDocMap(patch);
-    ctx.setTmpShapeMap(shapePatch);
+    ctx.setTmpShapeMap(patchMap);
   } else {
     ctx.setTmpDocMap({});
     ctx.setTmpShapeMap({});
-    ctx.patchDocuments(patch, shapePatch);
+    ctx.patchDocuments(patch, patchMap);
   }
 }
 
@@ -317,4 +335,46 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
     });
   });
   ctx.addShapes(shapes);
+}
+
+export function handleCommonPointerDownLeftOnSingleSelection(
+  ctx: AppCanvasStateContext,
+  event: PointerDownEvent,
+  selectedId: string,
+  parentScope?: string,
+): TransitionValue<AppCanvasStateContext> {
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
+  if (!shapeAtPointer) {
+    return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
+  }
+
+  if (!event.data.options.ctrl) {
+    if (event.data.options.alt) {
+      ctx.selectShape(shapeAtPointer.id);
+      return newDuplicatingShapesState;
+    } else if (shapeAtPointer.id === selectedId) {
+      return newMovingHubState;
+    } else {
+      ctx.selectShape(shapeAtPointer.id, false);
+      return newSingleSelectedByPointerOnState;
+    }
+  }
+
+  ctx.selectShape(shapeAtPointer.id, true);
+  return;
+}
+
+export function handleCommonPointerDownRightOnSingleSelection(
+  ctx: AppCanvasStateContext,
+  event: PointerDownEvent,
+  selectedId: string,
+  parentScope?: string,
+): TransitionValue<AppCanvasStateContext> {
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
+  if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
+
+  ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
+  return;
 }

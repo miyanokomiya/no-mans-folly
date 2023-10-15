@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { Shape } from "../models";
+import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
@@ -43,7 +43,13 @@ export function newShapeComposite(option: Option) {
 
   function findShapeAt(p: IVec2, parentId?: string): Shape | undefined {
     const scope = (parentId ? mergedShapeTreeMap[parentId].children : mergedShapeTree).map((t) => mergedShapeMap[t.id]);
-    return findBackward(scope, (s) => shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext));
+    const candidate = findBackward(scope, (s) => shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext));
+    if (!candidate) return;
+    if (!shapeModule.isTransparentSelection(option.getStruct, candidate)) return candidate;
+
+    // When the candidate is transparent for selection, try seeking its children.
+    const childCandidate = findShapeAt(p, candidate.id);
+    return childCandidate ?? candidate;
   }
 
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
@@ -117,4 +123,36 @@ export function getDeleteTargetIds(shapeComposite: ShapeComposite, deleteSrc: st
   });
 
   return [...deleteSrc, ...deleteParentSet];
+}
+
+/**
+ * Shapes can be grouped when
+ * - Multiple shapes exist as the targets.
+ * - No shape in the targets has parent.
+ */
+export function canGroupShapes(shapeComposite: ShapeComposite, targetIds: string[]): boolean {
+  if (targetIds.length < 2) return false;
+  const shapeMap = shapeComposite.shapeMap;
+  return !targetIds.some((id) => shapeMap[id].parentId);
+}
+
+export function getNextShapeComposite(
+  shapeComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+): ShapeComposite {
+  const deletedIdSet = patchInfo.delete ? new Set(patchInfo.delete) : undefined;
+  const remainedShapes = deletedIdSet
+    ? shapeComposite.shapes.filter((s) => !deletedIdSet!.has(s.id))
+    : shapeComposite.shapes;
+
+  const patchedShapes = patchInfo.update
+    ? remainedShapes.map((s) => (patchInfo.update![s.id] ? { ...s, ...patchInfo.update![s.id] } : s))
+    : remainedShapes;
+
+  const shapes = patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes;
+  shapes.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
+  return newShapeComposite({
+    shapes,
+    getStruct: shapeComposite.getShapeStruct,
+  });
 }

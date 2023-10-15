@@ -73,7 +73,7 @@ describe("newSingleSelectedState", () => {
         type: "pointerdown",
         data: { point: { x: 120, y: 120 }, options: { button: 0, ctrl: false } },
       });
-      expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b");
+      expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
       expect(result1).toBe(newSingleSelectedByPointerOnState);
 

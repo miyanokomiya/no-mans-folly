@@ -31,6 +31,7 @@ import {
   getIntersectedOutlinesOnPolygon,
   getMarkersOnPolygon,
   snapNumberCeil,
+  getDistanceBetweenPointAndRect,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -631,5 +632,24 @@ describe("getRotatedRectAffine", () => {
     expect(result1[3]).toBeCloseTo(0);
     expect(result1[4]).toBeCloseTo(15);
     expect(result1[5]).toBeCloseTo(5);
+  });
+});
+
+describe("measurePointAndRect", () => {
+  test("should return squared distance between a point and a rectangle", () => {
+    const rect = { x: 0, y: 0, width: 100, height: 50 };
+
+    // Outside the rect
+    expect(getDistanceBetweenPointAndRect({ x: -10, y: -10 }, rect)).toBeCloseTo(Math.sqrt(200));
+    expect(getDistanceBetweenPointAndRect({ x: 10, y: -20 }, rect)).toBeCloseTo(20);
+    expect(getDistanceBetweenPointAndRect({ x: 110, y: -10 }, rect)).toBeCloseTo(Math.sqrt(200));
+    expect(getDistanceBetweenPointAndRect({ x: 120, y: 10 }, rect)).toBeCloseTo(20);
+    expect(getDistanceBetweenPointAndRect({ x: 110, y: 60 }, rect)).toBeCloseTo(Math.sqrt(200));
+    expect(getDistanceBetweenPointAndRect({ x: 90, y: 60 }, rect)).toBeCloseTo(10);
+    expect(getDistanceBetweenPointAndRect({ x: -10, y: 60 }, rect)).toBeCloseTo(Math.sqrt(200));
+    expect(getDistanceBetweenPointAndRect({ x: -10, y: 40 }, rect)).toBeCloseTo(10);
+
+    // Inside the rect
+    expect(getDistanceBetweenPointAndRect({ x: 10, y: 20 }, rect)).toBeCloseTo(0);
   });
 });

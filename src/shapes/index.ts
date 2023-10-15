@@ -1,6 +1,12 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines, sub } from "okageo";
-import { BoxPadding, CommonStyle, Shape } from "../models";
-import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, ShapeStruct } from "./core";
+import { BoxPadding, CommonStyle, Shape, Size } from "../models";
+import {
+  GetShapeStruct as _GetShapeStruct,
+  ShapeContext,
+  ShapeSnappingLines,
+  ShapeStruct,
+  TextContainer,
+} from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
 import { struct as textStruct } from "./text";
@@ -9,12 +15,15 @@ import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
 import { struct as emojiStruct } from "./emoji";
 import { struct as groupStruct } from "./group";
+import { struct as treeRootStruct } from "./tree/treeRoot";
+import { struct as treeNodeStruct } from "./tree/treeNode";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
 import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
 import { newShapeComposite } from "../composables/shapeComposite";
+import { getPaddingRect } from "../utils/boxPadding";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -27,6 +36,8 @@ const SHAPE_STRUCTS: {
   image: imageStruct,
   emoji: emojiStruct,
   group: groupStruct,
+  tree_root: treeRootStruct,
+  tree_node: treeNodeStruct,
 };
 
 export type GetShapeStruct = _GetShapeStruct;
@@ -96,9 +107,43 @@ export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2, sha
   return struct.isPointOn(shape, p, shapeContext);
 }
 
+export function isTransparentSelection(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.transparentSelection;
+}
+
 export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
   const struct = getStruct(shape.type);
   return struct.resize(shape, resizingAffine);
+}
+
+export function resizeOnTextEdit(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  textBoxSize: Size,
+): Partial<Shape> | undefined {
+  const struct = getStruct(shape.type);
+  return struct.resizeOnTextEdit?.(shape, textBoxSize);
+}
+
+/**
+ * Returned "maxWidth" refers to the eventual text box width including the text padding.
+ */
+export function shouldResizeOnTextEdit(getStruct: GetShapeStruct, shape: Shape): { maxWidth?: number } | undefined {
+  const struct = getStruct(shape.type);
+  if (!struct.resizeOnTextEdit) return undefined;
+
+  const maxWidth = (shape as TextContainer).maxWidth ?? getTextRangeRect(getStruct, shape)?.width;
+  const textPadding = (shape as TextContainer).textPadding;
+  if (textPadding) {
+    const poly = getLocalRectPolygon(getStruct, shape);
+    const width = poly[1].x - poly[0].x;
+    const prect = getPaddingRect(textPadding, { x: 0, y: 0, width, height: 100 });
+    const wDiff = width - prect.width;
+    return { maxWidth: (maxWidth ?? width) - wDiff };
+  } else {
+    return { maxWidth };
+  }
 }
 
 export function getSnappingLines(
@@ -282,6 +327,11 @@ export function canAttachSmartBranch(getStruct: GetShapeStruct, shape: Shape): b
 export function shouldKeepAspect(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.shouldKeepAspect;
+}
+
+export function stackOrderDisabled(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.stackOrderDisabled;
 }
 
 export function duplicateShapes(

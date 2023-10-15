@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2 } from "okageo";
-import { BoxPadding, CommonStyle, FillStyle, Shape, StrokeStyle } from "../models";
+import { BoxPadding, CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../models";
 import { isSameFillStyle } from "../utils/fillStyle";
 import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
@@ -30,6 +30,10 @@ export interface ShapeStruct<T extends Shape> {
   patchTextPadding?: (shape: T, value: BoxPadding) => Partial<T>;
   isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
+  /**
+   * "textBoxSize" refers to the eventual text box size including text padding.
+   */
+  resizeOnTextEdit?: (shape: T, textBoxSize: Size) => Partial<T> | undefined;
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
@@ -45,6 +49,15 @@ export interface ShapeStruct<T extends Shape> {
   refreshRelation?: (shape: T, availableIdSet: Set<string>) => Partial<T> | undefined;
   canAttachSmartBranch?: boolean;
   shouldKeepAspect?: boolean;
+  /**
+   * If true, children of this shape should be selected as if they are in the root scope.
+   */
+  transparentSelection?: boolean;
+  /**
+   * If true, this shape's "findex" doesn't change via usual operation.
+   * When "findex" has special meaning for this shape, such as tree node shape, type. set this attribute true.
+   */
+  stackOrderDisabled?: boolean;
 }
 
 /**
@@ -87,6 +100,7 @@ export function updateCommonStyle<T extends Shape & CommonStyle>(
 
 export interface TextContainer {
   textPadding?: BoxPadding;
+  maxWidth?: number;
 }
 
 export const textContainerModule = {

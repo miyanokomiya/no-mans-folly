@@ -184,3 +184,24 @@ describe("patchPipe", () => {
     });
   });
 });
+
+describe("groupBy", () => {
+  test("should return grouped item list", () => {
+    expect(
+      target.groupBy(
+        [
+          { id: "a", value: 0 },
+          { id: "b", value: 0 },
+          { id: "c", value: 1 },
+        ],
+        (item) => item.value,
+      ),
+    ).toEqual({
+      0: [
+        { id: "a", value: 0 },
+        { id: "b", value: 0 },
+      ],
+      1: [{ id: "c", value: 1 }],
+    });
+  });
+});

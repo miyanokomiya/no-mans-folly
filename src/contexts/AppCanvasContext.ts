@@ -35,6 +35,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getStyleScheme: arg.getStyleScheme,
     getAssetAPI: arg.getAssetAPI ?? (() => ({ enabled: false })),
 
+    redraw() {},
     getRenderCtx: () => undefined,
     setViewport() {},
     zoomView: () => 1,

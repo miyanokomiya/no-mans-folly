@@ -81,3 +81,11 @@ export interface BoxPadding {
   type?: "relative"; // undefined should mean "absolute"
   value: [top: number, right: number, bottom: number, left: number]; // represents px with absolute, rate with relative
 }
+
+export type Direction4 = 0 | 1 | 2 | 3; // top, right, bottom, left
+
+export interface EntityPatchInfo<T extends Entity> {
+  add?: T[];
+  update?: { [id: string]: Partial<T> };
+  delete?: string[];
+}

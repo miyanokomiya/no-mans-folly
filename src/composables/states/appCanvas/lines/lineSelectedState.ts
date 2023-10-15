@@ -2,18 +2,17 @@ import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
+  handleCommonPointerDownLeftOnSingleSelection,
+  handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
   newShapeClipboard,
 } from "../commons";
-import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
-import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
-import { newMovingShapeState } from "../movingShapeState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { createShape } from "../../../../shapes";
@@ -24,6 +23,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
+import { newMovingHubState } from "../movingHubState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -70,43 +70,19 @@ export function newLineSelectedState(): AppCanvasState {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
                   case "edge":
-                    return newMovingShapeState;
+                    return newMovingHubState;
                   case "new-vertex-anchor":
                     return () =>
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });
                 }
               }
 
-              const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, lineShape.id);
-              if (!shapeAtPointer) {
-                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
-              }
-
-              if (!event.data.options.ctrl) {
-                if (event.data.options.alt) {
-                  ctx.selectShape(shapeAtPointer.id);
-                  return newDuplicatingShapesState;
-                } else if (shapeAtPointer.id === lineShape.id) {
-                  return;
-                } else {
-                  ctx.selectShape(shapeAtPointer.id, false);
-                  return newSingleSelectedByPointerOnState;
-                }
-              }
-
-              ctx.selectShape(shapeAtPointer.id, true);
-              return;
+              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, lineShape.id, lineShape.id);
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, lineShape.id);
-              if (!shapeAtPointer || shapeAtPointer.id === lineShape.id) return;
-
-              ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
-              return;
+              return handleCommonPointerDownRightOnSingleSelection(ctx, event, lineShape.id, lineShape.id);
             }
             default:
               return;

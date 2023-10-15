@@ -11,12 +11,14 @@ import {
   refreshShapeRelations,
   remapShapeIds,
   renderShape,
+  shouldResizeOnTextEdit,
 } from ".";
 import { RectangleShape } from "./rectangle";
 import { LineShape } from "./line";
 import { TextShape } from "./text";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { createBoxPadding } from "../utils/boxPadding";
+import { TreeRootShape } from "./tree/treeRoot";
 
 describe("createShape", () => {
   test("should return new shape", () => {
@@ -92,6 +94,26 @@ describe("isPointOn", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
     expect(isPointOn(getCommonStruct, shape, { x: -3, y: 3 }, {} as any)).toBe(false);
     expect(isPointOn(getCommonStruct, shape, { x: 3, y: 3 }, {} as any)).toBe(true);
+  });
+});
+
+describe("shouldResizeOnTextEdit", () => {
+  test("should return undefined when a shape doesn't need it", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
+    expect(shouldResizeOnTextEdit(getCommonStruct, shape)).toBe(undefined);
+  });
+
+  test("should return information for resizing when a shape needs it", () => {
+    const shape0 = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
+      id: "test",
+      width: 10,
+      height: 20,
+      textPadding: createBoxPadding([1, 2, 3, 4]),
+      maxWidth: 20,
+    });
+    expect(shouldResizeOnTextEdit(getCommonStruct, shape0)).toEqual({
+      maxWidth: 14,
+    });
   });
 });
 

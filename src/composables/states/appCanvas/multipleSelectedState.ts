@@ -13,7 +13,6 @@ import {
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
-import { newMovingShapeState } from "./movingShapeState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
@@ -23,8 +22,9 @@ import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { findBetterShapeAt } from "../../shapeComposite";
+import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { isGroupShape } from "../../../shapes/group";
+import { newMovingHubState } from "./movingHubState";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -43,18 +43,19 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       selectedIdMap = ctx.getSelectedShapeIdMap();
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
+      const selectedIds = Object.keys(selectedIdMap);
 
       // Prevent selecting shapes that have different parents
       {
         const parentIdSet = new Set<string | undefined>();
-        Object.keys(selectedIdMap).forEach((id) => {
+        selectedIds.forEach((id) => {
           const shape = shapeMap[id];
           parentIdSet.add(shape.parentId);
         });
 
         if (parentIdSet.size >= 2) {
           const first: string = parentIdSet.keys().next()!.value;
-          const nextSelected = Object.keys(selectedIdMap).filter((id) => {
+          const nextSelected = selectedIds.filter((id) => {
             const shape = shapeMap[id];
             return shape.parentId === first;
           });
@@ -66,18 +67,18 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       }
 
       ctx.showFloatMenu();
-      if (Object.keys(selectedIdMap).some((id) => isGroupShape(shapeMap[id]))) {
+      if (selectedIds.some((id) => isGroupShape(shapeMap[id]))) {
         ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
-      } else {
+      } else if (canGroupShapes(shapeComposite, selectedIds)) {
         ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, ...getCommonCommandExams()]);
+      } else {
+        ctx.setCommandExams(getCommonCommandExams());
       }
 
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
-        const shapeRects = Object.keys(selectedIdMap)
-          .map((id) => shapeMap[id])
-          .map((s) => ctx.getShapeComposite().getWrapperRect(s));
+        const shapeRects = selectedIds.map((id) => shapeMap[id]).map((s) => ctx.getShapeComposite().getWrapperRect(s));
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
@@ -122,7 +123,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
                   if (event.data.options.alt) {
                     return newDuplicatingShapesState;
                   } else {
-                    return () => newMovingShapeState({ boundingBox });
+                    return () => newMovingHubState({ boundingBox });
                   }
                 } else {
                   ctx.selectShape(shape.id, false);

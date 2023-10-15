@@ -87,3 +87,16 @@ export function patchPipe<T extends { id: string }>(
   });
   return { patch: currentPatch, result: currentResult };
 }
+
+export function groupBy<T>(src: T[], fn: (item: T) => string | number): { [key: string]: T[] } {
+  const ret: { [key: string]: T[] } = {};
+  src.forEach((item) => {
+    const key = fn(item);
+    if (ret[key]) {
+      ret[key].push(item);
+    } else {
+      ret[key] = [item];
+    }
+  });
+  return ret;
+}

@@ -47,6 +47,7 @@ export const struct: ShapeStruct<TextShape> = {
     return ret;
   },
   canAttachSmartBranch: false,
+  resizeOnTextEdit: patchSize,
   ...mapReduce(textContainerModule, () => undefined),
 };
 
@@ -58,14 +59,14 @@ export function isLineLabelShape(shape: Shape): shape is TextShape {
   return isTextShape(shape) && shape.lineAttached !== undefined;
 }
 
-export function patchSize(shape: TextShape, size: Size): Partial<TextShape> | undefined {
+function patchSize(shape: TextShape, textBoxSize: Size): Partial<TextShape> | undefined {
   const ret: Partial<TextShape> = {};
   let x = shape.p.x;
   let y = shape.p.y;
 
-  if (shape.width !== size.width) {
-    const diff = size.width - shape.width;
-    ret.width = size.width;
+  if (shape.width !== textBoxSize.width) {
+    const diff = textBoxSize.width - shape.width;
+    ret.width = textBoxSize.width;
     switch (shape.hAlign) {
       case "center":
         x -= diff / 2;
@@ -76,9 +77,9 @@ export function patchSize(shape: TextShape, size: Size): Partial<TextShape> | un
     }
   }
 
-  if (shape.height !== size.height) {
-    const diff = size.height - shape.height;
-    ret.height = size.height;
+  if (shape.height !== textBoxSize.height) {
+    const diff = textBoxSize.height - shape.height;
+    ret.height = textBoxSize.height;
     switch (shape.vAlign) {
       case "center":
         y -= diff / 2;

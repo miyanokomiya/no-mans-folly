@@ -1,7 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { findBetterShapeAt, getDeleteTargetIds, newShapeComposite } from "./shapeComposite";
+import {
+  canGroupShapes,
+  findBetterShapeAt,
+  getDeleteTargetIds,
+  getNextShapeComposite,
+  newShapeComposite,
+} from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
+import { LineShape } from "../shapes/line";
+import { TextShape } from "../shapes/text";
+import { generateKeyBetween } from "fractional-indexing";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -63,6 +72,43 @@ describe("newShapeComposite", () => {
       expect(result0.y).toBeCloseTo(0);
       expect(result0.width).toBeCloseTo(20);
       expect(result0.height).toBeCloseTo(40);
+    });
+  });
+
+  describe("findShapeAt", () => {
+    test("should be able to find a child shape when a parent is transparent selection", () => {
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 0, y: 0 },
+        q: { x: 100, y: 100 },
+      });
+      const child0 = createShape<TextShape>(getCommonStruct, "text", {
+        id: "child0",
+        parentId: line.id,
+        p: { x: 0, y: 0 },
+        width: 10,
+        height: 10,
+        lineAttached: 0,
+      });
+      const child1 = createShape<TextShape>(getCommonStruct, "text", {
+        id: "child1",
+        parentId: line.id,
+        p: { x: 50, y: 50 },
+        width: 10,
+        height: 10,
+        lineAttached: 0.5,
+      });
+
+      const shapes = [line, child0, child1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.findShapeAt({ x: -50, y: -50 })).toEqual(undefined);
+      expect(target.findShapeAt({ x: 90, y: 90 })).toEqual(line);
+      expect(target.findShapeAt({ x: 5, y: 8 })).toEqual(child0);
+      expect(target.findShapeAt({ x: 50, y: 55 })).toEqual(child1);
     });
   });
 });
@@ -158,5 +204,100 @@ describe("getDeleteTargetIds", () => {
     });
 
     expect(getDeleteTargetIds(target, ["child0", "child1"])).toEqual(["child0", "child1"]);
+  });
+});
+
+describe("canGroupShapes", () => {
+  test("should return true when shapes can be grouped", () => {
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0" });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+    });
+    const shape2 = createShape(getCommonStruct, "text", {
+      id: "shape2",
+    });
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group0.id,
+    });
+
+    const shapes = [shape0, shape1, shape2, group0, child0, child1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(canGroupShapes(target, ["shape0"])).toBe(false);
+    expect(canGroupShapes(target, ["shape0", "shape1"])).toBe(true);
+    expect(canGroupShapes(target, ["shape0", "shape1", "shape2"])).toBe(true);
+    expect(canGroupShapes(target, ["group0", "child0"])).toBe(false);
+    expect(canGroupShapes(target, ["child0", "child1"])).toBe(false);
+    expect(canGroupShapes(target, ["shape0", "child0"])).toBe(false);
+  });
+});
+
+describe("getNextShapeComposite", () => {
+  test("should return next shape composite applied the patches", () => {
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0", findex: generateKeyBetween(null, null) });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+      findex: generateKeyBetween(shape0.findex, null),
+    });
+    const shape2 = createShape(getCommonStruct, "text", {
+      id: "shape2",
+      findex: generateKeyBetween(shape1.findex, null),
+    });
+    const shape3 = createShape(getCommonStruct, "text", {
+      id: "shape3",
+      findex: generateKeyBetween(shape2.findex, null),
+    });
+
+    const shapes = [shape0, shape1, shape2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(
+      getNextShapeComposite(target, {
+        add: [shape3],
+        update: { [shape0.id]: { p: { x: 10, y: 10 } } },
+        delete: ["shape1"],
+      }).shapes,
+    ).toEqual([{ ...shape0, p: { x: 10, y: 10 } }, shape2, shape3]);
+  });
+
+  test("should sort shapes by updated findex", () => {
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0", findex: generateKeyBetween(null, null) });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+      findex: generateKeyBetween(shape0.findex, null),
+    });
+    const shape2 = createShape(getCommonStruct, "text", {
+      id: "shape2",
+      findex: generateKeyBetween(shape1.findex, null),
+    });
+    const shape3 = createShape(getCommonStruct, "text", {
+      id: "shape3",
+      findex: generateKeyBetween(shape0.findex, shape1.findex),
+    });
+
+    const shapes = [shape0, shape1, shape2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(
+      getNextShapeComposite(target, {
+        add: [shape3],
+        update: { [shape2.id]: { findex: generateKeyBetween(null, shape0.findex) } },
+      }).shapes,
+    ).toEqual([{ ...shape2, findex: generateKeyBetween(null, shape0.findex) }, shape0, shape3, shape1]);
   });
 });

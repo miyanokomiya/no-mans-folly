@@ -1,5 +1,5 @@
 import { IVec2, applyAffine } from "okageo";
-import { getShapeTextBounds } from "../../../../shapes";
+import { getShapeTextBounds, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import { handleFileDrop, handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
@@ -9,12 +9,13 @@ import { newPanningState } from "../../commons";
 import { isMac } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
-import { TextShape, isTextShape, patchSize } from "../../../../shapes/text";
+import { TextShape, isTextShape } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
 import { calcOriginalDocSize, getDocLength, splitToSegments } from "../../../../utils/textEditor";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   id: string;
@@ -436,21 +437,28 @@ function handleKeydown(
 }
 
 function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string, draft?: boolean) {
-  const shape = ctx.getShapeComposite().shapeMap[id];
+  const shapeComposite = ctx.getShapeComposite();
+  const shape = shapeComposite.shapeMap[id];
   const renderCtx = ctx.getRenderCtx();
   let shapePatch: Partial<TextShape> | undefined = undefined;
-  if (renderCtx && isTextShape(shape)) {
+  const resizeOnTextEditInfo = shouldResizeOnTextEdit(shapeComposite.getShapeStruct, shape);
+  if (renderCtx && resizeOnTextEditInfo?.maxWidth) {
     const patched = ctx.patchDocDryRun(id, delta);
-    const size = calcOriginalDocSize(patched, renderCtx, shape.maxWidth);
-    shapePatch = patchSize(shape, size);
+    const size = calcOriginalDocSize(patched, renderCtx, resizeOnTextEditInfo.maxWidth);
+    shapePatch = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
+  }
+
+  let patchMap = shapePatch ? { [shape.id]: shapePatch } : undefined;
+  if (patchMap) {
+    patchMap = getPatchByLayouts(shapeComposite, { update: patchMap });
   }
 
   if (draft) {
     ctx.setTmpDocMap({ [id]: delta });
-    if (shapePatch) ctx.setTmpShapeMap({ [id]: shapePatch });
+    if (patchMap) ctx.setTmpShapeMap(patchMap);
   } else {
     ctx.setTmpDocMap({});
-    if (shapePatch) ctx.setTmpShapeMap({});
-    ctx.patchDocuments({ [id]: delta }, shapePatch ? { [id]: shapePatch } : undefined);
+    if (patchMap) ctx.setTmpShapeMap({});
+    ctx.patchDocuments({ [id]: delta }, patchMap);
   }
 }

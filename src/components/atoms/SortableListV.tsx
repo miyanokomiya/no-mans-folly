@@ -78,14 +78,14 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
 
     return (
       <div
-        className="fixed opacity-50 pointer-events-none"
+        className="fixed opacity-50 cursor-grabbing"
         style={{
           left: movingP.x,
           top: movingP.y,
           transform: "translate(-30%, -50%)",
         }}
       >
-        {items[insertion[0]][1]}
+        <div className="pointer-events-none">{items[insertion[0]][1]}</div>
       </div>
     );
   }, [insertion, movingP]);

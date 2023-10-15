@@ -229,6 +229,7 @@ export const struct: ShapeStruct<LineShape> = {
       v: path.map((p) => [p, p]),
     };
   },
+  transparentSelection: true,
 };
 
 export function getLinePath(shape: LineShape): IVec2[] {

@@ -13,6 +13,7 @@ const shapeList = [
   { type: "rectangle", icon: iconRectangle },
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
+  { type: "tree_root", icon: iconRhombus },
 ];
 
 const lineList = [

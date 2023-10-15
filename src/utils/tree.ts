@@ -1,4 +1,4 @@
-interface TreeFlatNode {
+export interface TreeFlatNode {
   id: string;
   parentId?: string;
 }

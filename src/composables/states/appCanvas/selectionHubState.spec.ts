@@ -26,14 +26,14 @@ describe("newSelectionHubState", () => {
     expect(result).toEqual(newDefaultState);
   });
 
-  test("should move to MultipleSelected state if no shape is selected", () => {
+  test("should move to MultipleSelected state if a shape is selected", () => {
     const ctx = getMockCtx();
     ctx.getSelectedShapeIdMap.mockReturnValue({ a: true });
     const result = newSelectionHubState().onStart?.(ctx as any);
     expect(result).toEqual(newSingleSelectedState);
   });
 
-  test("should move to MultipleSelected state if no shape is selected", () => {
+  test("should move to MultipleSelected state if multiple shape is selected", () => {
     const ctx = getMockCtx();
     ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
     const result = newSelectionHubState().onStart?.(ctx as any);
