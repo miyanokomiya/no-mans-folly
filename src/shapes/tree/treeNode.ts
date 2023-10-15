@@ -45,6 +45,21 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     ctx.lineTo(toP.x, toP.y);
     ctx.stroke();
   },
+  immigrateShapeIds(shape, oldToNewIdMap) {
+    const ret: Partial<TreeNodeShape> = {};
+
+    ret.treeParentId = oldToNewIdMap[shape.treeParentId];
+
+    // When a parent doesn't exist, convert to a rectangle shape.
+    if (!ret.treeParentId) {
+      ret.type = "rectangle";
+      ret.maxWidth = undefined;
+      ret.direction = undefined;
+      ret.treeParentId = undefined;
+    }
+
+    return ret;
+  },
 };
 
 export function isTreeNodeShape(shape: Shape): shape is TreeNodeShape {
