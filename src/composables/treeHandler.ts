@@ -46,14 +46,43 @@ export function newTreeHandler(option: Option) {
   function getAnchors(scale: number): AnchorInfo[] {
     const margin = ANCHOR_MARGIN * scale;
     if (isRoot) {
-      return [
-        [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
-        [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
-      ];
+      const tree = shapeComposite.mergedShapeTreeMap[shape.id];
+      if (tree.children.length > 0) {
+        const node = shapeComposite.mergedShapeMap[tree.children[0].id] as TreeNodeShape;
+        const vertical = node.direction === 0 || node.direction === 2;
+        return vertical
+          ? [
+              [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
+              [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
+            ]
+          : [
+              [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
+              [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
+            ];
+      } else {
+        return [
+          [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
+          [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
+          [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
+          [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
+        ];
+      }
     }
 
     const siblingMargin = ANCHOR_SIBLING_MARGIN * scale;
     switch (direction) {
+      case 0:
+        return [
+          [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
+          [0, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height / 2 }, 0],
+          [0, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height / 2 }, 1],
+        ];
+      case 2:
+        return [
+          [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
+          [2, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height / 2 }, 0],
+          [2, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height / 2 }, 1],
+        ];
       case 3:
         return [
           [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
@@ -90,6 +119,24 @@ export function newTreeHandler(option: Option) {
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
       switch (d) {
+        case 0:
+          if (t === 0) {
+            ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
+          } else if (t === 1) {
+            ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
+          } else {
+            ctx.lineTo(p.x, bounds.y);
+          }
+          break;
+        case 2:
+          if (t === 0) {
+            ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
+          } else if (t === 1) {
+            ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
+          } else {
+            ctx.lineTo(p.x, bounds.y + bounds.height);
+          }
+          break;
         case 3:
           if (t === 0) {
             ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
@@ -142,10 +189,14 @@ export interface TreeNodeMovingResult {
   findex: string;
 }
 
+/**
+ * Suppose a tree can contain either vertical or horizontal branches.
+ */
 export function newTreeNodeMovingHandler(option: Option) {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as TreeNodeShape;
   const root = shapeComposite.shapeMap[shape.parentId!] as TreeRootShape;
+  const vertical = shape.direction === 0 || shape.direction === 2;
 
   const tree = shapeComposite.mergedShapeTreeMap[root.id];
   const allIds = flatTree([shapeComposite.mergedShapeTreeMap[root.id]]).map((t) => t.id);
@@ -172,11 +223,17 @@ export function newTreeNodeMovingHandler(option: Option) {
 
     const closest = shapeComposite.shapeMap[closestId] as TreeShapeBase;
     const closestRectCenter = getRectCenter(closestRect);
+
     if (isTreeRootShape(closest)) {
       const closestNode = closest as TreeRootShape;
 
-      // TODO: Vertical
-      const direction = closestRect.x + closestRect.width / 2 < p.x ? 1 : 3;
+      const direction = vertical
+        ? closestRect.y + closestRect.height / 2 < p.y
+          ? 2
+          : 0
+        : closestRect.x + closestRect.width / 2 < p.x
+        ? 1
+        : 3;
       const siblings = allShapeNodes.filter((s) => s.treeParentId === closestNode.id && s.direction === direction);
       if (siblings.length > 0) {
         // Case: Insert as the last child
@@ -201,10 +258,42 @@ export function newTreeNodeMovingHandler(option: Option) {
       const siblings = allShapeNodes.filter(
         (s) => s.treeParentId === closestNode.treeParentId && s.direction === closestNode.direction,
       );
-      const index = siblings.findIndex((c) => c.id === closestId);
 
-      // TODO: Vertical
-      if (closestNode.direction === 1 || closestNode.direction === 3) {
+      if (closestNode.direction === 2 || closestNode.direction === 0) {
+        if (closestNode.direction === 2) {
+          if (closestRect.y + closestRect.height < p.y) {
+            const childrenOfClosest = allShapeNodes.filter((s) => s.treeParentId === closestNode.id);
+            if (childrenOfClosest.length === 0) {
+              // Case: Insert as a child & The parent has no children
+              return {
+                treeParentId: closestNode.id,
+                direction: closestNode.direction,
+                findex: generateKeyBetween(closestNode.findex, null),
+              };
+            }
+          }
+        } else {
+          if (p.y < closestRect.y) {
+            const childrenOfClosest = allShapeNodes.filter((s) => s.treeParentId === closestNode.id);
+            if (childrenOfClosest.length === 0) {
+              // Case: Insert as a child & The parent has no children
+              return {
+                treeParentId: closestNode.id,
+                direction: closestNode.direction,
+                findex: generateKeyBetween(closestNode.findex, null),
+              };
+            }
+          }
+        }
+
+        return getTreeNodeMovingResultToInsertSibling(
+          shapeComposite,
+          shape.id,
+          closestNode,
+          siblings,
+          p.x < closestRectCenter.x,
+        );
+      } else {
         if (closestNode.direction === 1) {
           if (closestRect.x + closestRect.width < p.x) {
             const childrenOfClosest = allShapeNodes.filter((s) => s.treeParentId === closestNode.id);
@@ -231,45 +320,13 @@ export function newTreeNodeMovingHandler(option: Option) {
           }
         }
 
-        if (p.y < closestRectCenter.y) {
-          if (index > 0) {
-            // Case: Insert as an intermediate child
-            const prev = shapeComposite.shapeMap[siblings[index - 1].id];
-            if (prev.id === shape.id) return;
-
-            return {
-              treeParentId: closestNode.treeParentId,
-              direction: closestNode.direction,
-              findex: generateKeyBetween(prev.findex, closestNode.findex),
-            };
-          } else {
-            // Case: Insert as the first child
-            return {
-              treeParentId: closestNode.treeParentId,
-              direction: closestNode.direction,
-              findex: generateKeyBetween(null, closestNode.findex),
-            };
-          }
-        } else {
-          if (index < siblings.length - 1) {
-            // Case: Insert as an intermediate child
-            const next = shapeComposite.shapeMap[siblings[index + 1].id];
-            if (next.id === shape.id) return;
-
-            return {
-              treeParentId: closestNode.treeParentId,
-              direction: closestNode.direction,
-              findex: generateKeyBetween(closestNode.findex, next.findex),
-            };
-          } else {
-            // Case: Insert as the last child
-            return {
-              treeParentId: closestNode.treeParentId,
-              direction: closestNode.direction,
-              findex: generateKeyBetween(closestNode.findex, null),
-            };
-          }
-        }
+        return getTreeNodeMovingResultToInsertSibling(
+          shapeComposite,
+          shape.id,
+          closestNode,
+          siblings,
+          p.y < closestRectCenter.y,
+        );
       }
     }
   }
@@ -305,6 +362,55 @@ export function newTreeNodeMovingHandler(option: Option) {
   return { moveTest, render, branchIds: Array.from(ownBranchIdSet) };
 }
 export type TreeNodeMovingHandler = ReturnType<typeof newTreeNodeMovingHandler>;
+
+function getTreeNodeMovingResultToInsertSibling(
+  shapeComposite: ShapeComposite,
+  targetId: string,
+  closestNode: TreeNodeShape,
+  closestNodeSiblings: TreeNodeShape[],
+  previous = false,
+): TreeNodeMovingResult | undefined {
+  const index = closestNodeSiblings.findIndex((c) => c.id === closestNode.id);
+  if (previous) {
+    if (index > 0) {
+      // Case: Insert as an intermediate child
+      const prev = shapeComposite.shapeMap[closestNodeSiblings[index - 1].id];
+      if (prev.id === targetId) return;
+
+      return {
+        treeParentId: closestNode.treeParentId,
+        direction: closestNode.direction,
+        findex: generateKeyBetween(prev.findex, closestNode.findex),
+      };
+    } else {
+      // Case: Insert as the first child
+      return {
+        treeParentId: closestNode.treeParentId,
+        direction: closestNode.direction,
+        findex: generateKeyBetween(null, closestNode.findex),
+      };
+    }
+  } else {
+    if (index < closestNodeSiblings.length - 1) {
+      // Case: Insert as an intermediate child
+      const next = shapeComposite.shapeMap[closestNodeSiblings[index + 1].id];
+      if (next.id === targetId) return;
+
+      return {
+        treeParentId: closestNode.treeParentId,
+        direction: closestNode.direction,
+        findex: generateKeyBetween(closestNode.findex, next.findex),
+      };
+    } else {
+      // Case: Insert as the last child
+      return {
+        treeParentId: closestNode.treeParentId,
+        direction: closestNode.direction,
+        findex: generateKeyBetween(closestNode.findex, null),
+      };
+    }
+  }
+}
 
 export function isSameTreeNodeMovingResult(a?: TreeNodeMovingResult, b?: TreeNodeMovingResult): boolean {
   if (a && b) {
@@ -459,85 +565,106 @@ function renderMovingPreview(
   const anchorHeight = 16;
 
   switch (direction) {
-    case 3: {
-      const renderAnchor = (base: IVec2) => {
-        ctx.beginPath();
-        ctx.rect(base.x - anchorWidth, base.y - anchorHeight / 2, anchorWidth, anchorHeight);
-        ctx.fill();
-      };
-
-      const x = parentRect.x - childMargin;
-      ctx.beginPath();
-      ctx.moveTo(parentRect.x, parentRect.y + parentRect.height / 2);
-
-      if (!prevRect && !nextRect) {
-        // Case: Insert as a child & The parent has no children
-        const to = {
-          x,
-          y: parentRect.y + parentRect.height / 2,
-        };
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-        renderAnchor(to);
-      } else if (prevRect && nextRect) {
+    case 0: {
+      const y = parentRect.y - childMargin;
+      let to: IVec2;
+      if (prevRect && nextRect) {
         // Case: Insert as an intermediate child
-        const y = (prevRect.y + prevRect.height + nextRect.y) / 2;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        renderAnchor({ x, y });
+        to = { x: (prevRect.x + prevRect.width + nextRect.x) / 2, y };
       } else if (prevRect) {
         // Case: Insert as the last child
-        const y = prevRect.y + prevRect.height + siblingMargin / 2;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        renderAnchor({ x, y });
+        to = { x: prevRect.x + prevRect.width + siblingMargin / 2, y };
       } else if (nextRect) {
         // Case: Insert as the first child
-        const y = nextRect.y - siblingMargin / 2;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        renderAnchor({ x, y });
+        to = { x: nextRect.x - siblingMargin / 2, y };
+      } else {
+        // Case: Insert as a child & The parent has no children
+        to = { x: parentRect.x + parentRect.width / 2, y };
       }
+
+      ctx.beginPath();
+      ctx.moveTo(parentRect.x + parentRect.width / 2, parentRect.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(to.x - anchorHeight / 2, to.y - anchorWidth, anchorHeight, anchorWidth);
+      ctx.fill();
+      return;
+    }
+    case 2: {
+      let to: IVec2;
+      if (prevRect && nextRect) {
+        // Case: Insert as an intermediate child
+        to = { x: (prevRect.x + prevRect.width + nextRect.x) / 2, y: nextRect.y };
+      } else if (prevRect) {
+        // Case: Insert as the last child
+        to = { x: prevRect.x + prevRect.width + siblingMargin / 2, y: prevRect.y };
+      } else if (nextRect) {
+        // Case: Insert as the first child
+        to = { x: nextRect.x - siblingMargin / 2, y: nextRect.y };
+      } else {
+        // Case: Insert as a child & The parent has no children
+        to = { x: parentRect.x + parentRect.width / 2, y: parentRect.y + parentRect.height + childMargin };
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(parentRect.x + parentRect.width / 2, parentRect.y + parentRect.height);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(to.x - anchorHeight / 2, to.y, anchorHeight, anchorWidth);
+      ctx.fill();
+      return;
+    }
+    case 3: {
+      const x = parentRect.x - childMargin;
+      let to: IVec2;
+      if (prevRect && nextRect) {
+        // Case: Insert as an intermediate child
+        to = { x, y: (prevRect.y + prevRect.height + nextRect.y) / 2 };
+      } else if (prevRect) {
+        // Case: Insert as the last child
+        to = { x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
+      } else if (nextRect) {
+        // Case: Insert as the first child
+        to = { x, y: nextRect.y - siblingMargin / 2 };
+      } else {
+        // Case: Insert as a child & The parent has no children
+        to = { x, y: parentRect.y + parentRect.height / 2 };
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(parentRect.x, parentRect.y + parentRect.height / 2);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(to.x - anchorWidth, to.y - anchorHeight / 2, anchorWidth, anchorHeight);
+      ctx.fill();
       return;
     }
     default: {
-      const renderAnchor = (base: IVec2) => {
-        ctx.beginPath();
-        ctx.rect(base.x, base.y - anchorHeight / 2, anchorWidth, anchorHeight);
-        ctx.fill();
-      };
+      let to: IVec2;
+      if (prevRect && nextRect) {
+        // Case: Insert as an intermediate child
+        to = { x: nextRect.x, y: (prevRect.y + prevRect.height + nextRect.y) / 2 };
+      } else if (prevRect) {
+        // Case: Insert as the last child
+        to = { x: prevRect.x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
+      } else if (nextRect) {
+        // Case: Insert as the first child
+        to = { x: nextRect.x, y: nextRect.y - siblingMargin / 2 };
+      } else {
+        // Case: Insert as a child & The parent has no children
+        to = { x: parentRect.x + parentRect.width + childMargin, y: parentRect.y + parentRect.height / 2 };
+      }
 
       ctx.beginPath();
       ctx.moveTo(parentRect.x + parentRect.width, parentRect.y + parentRect.height / 2);
-
-      if (!prevRect && !nextRect) {
-        // Case: Insert as a child & The parent has no children
-        const to = {
-          x: parentRect.x + parentRect.width + childMargin,
-          y: parentRect.y + parentRect.height / 2,
-        };
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-        renderAnchor(to);
-      } else if (prevRect && nextRect) {
-        // Case: Insert as an intermediate child
-        const y = (prevRect.y + prevRect.height + nextRect.y) / 2;
-        ctx.lineTo(nextRect.x, y);
-        ctx.stroke();
-        renderAnchor({ x: nextRect.x, y });
-      } else if (prevRect) {
-        // Case: Insert as the last child
-        const y = prevRect.y + prevRect.height + siblingMargin / 2;
-        ctx.lineTo(prevRect.x, y);
-        ctx.stroke();
-        renderAnchor({ x: prevRect.x, y });
-      } else if (nextRect) {
-        // Case: Insert as the first child
-        const y = nextRect.y - siblingMargin / 2;
-        ctx.lineTo(nextRect.x, y);
-        ctx.stroke();
-        renderAnchor({ x: nextRect.x, y });
-      }
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(to.x, to.y - anchorHeight / 2, anchorWidth, anchorHeight);
+      ctx.fill();
       return;
     }
   }

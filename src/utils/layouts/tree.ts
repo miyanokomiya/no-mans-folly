@@ -75,6 +75,36 @@ export function getTreeBranchPositionMap(
     });
   }
 
+  if (grouped["2"]) {
+    const targets = grouped["2"];
+    getChildrenBranchPositionMapBottom(
+      positionMap,
+      srcMap,
+      { ...treeRoot, children: targets },
+      sizeMap,
+      siblingMargin,
+      childMargin,
+    );
+  }
+
+  if (grouped["0"]) {
+    const targets = grouped["0"];
+    const localRoot = { ...treeRoot, children: targets };
+    getChildrenBranchPositionMapBottom(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
+    const originY = rootNode.rect.y + rootNode.rect.height / 2;
+    const siblingHeightMap = new Map<string, number>();
+    getSiblingHeightMap(siblingHeightMap, srcMap, localRoot);
+    walkTree(targets, (t) => {
+      if (!t.parentId) return;
+
+      const p = positionMap.get(t.id)!;
+      const siblingHeight = siblingHeightMap.get(t.parentId)!;
+      // Align to right in the sinblings
+      const hGap = siblingHeight - srcMap[t.id].rect.height;
+      positionMap.set(t.id, { x: p.x, y: 2 * originY - p.y - siblingHeight + hGap });
+    });
+  }
+
   return positionMap;
 }
 
@@ -84,6 +114,14 @@ function getSiblingWidthMap(ret: Map<string, number>, srcMap: { [id: string]: Tr
   const width = treeNode.children.reduce((m, c) => Math.max(m, srcMap[c.id].rect.width), 0);
   ret.set(treeNode.id, width);
   treeNode.children.forEach((c) => getSiblingWidthMap(ret, srcMap, c));
+}
+
+function getSiblingHeightMap(ret: Map<string, number>, srcMap: { [id: string]: TreeLayoutNode }, treeNode: TreeNode) {
+  if (treeNode.children.length === 0) return;
+
+  const height = treeNode.children.reduce((m, c) => Math.max(m, srcMap[c.id].rect.height), 0);
+  ret.set(treeNode.id, height);
+  treeNode.children.forEach((c) => getSiblingHeightMap(ret, srcMap, c));
 }
 
 function getChildrenBranchPositionMapRight(
@@ -110,6 +148,33 @@ function getChildrenBranchPositionMapRight(
 
   treeNode.children.forEach((c) => {
     getChildrenBranchPositionMapRight(ret, srcMap, c, sizeMap, siblingMargin, childMargin);
+  });
+}
+
+function getChildrenBranchPositionMapBottom(
+  ret: Map<string, IVec2>,
+  srcMap: { [id: string]: TreeLayoutNode },
+  treeNode: TreeNode,
+  sizeMap: Map<string, Size>,
+  siblingMargin = SIBLING_MARGIN,
+  childMargin = CHILD_MARGIN,
+) {
+  const nodeSize = srcMap[treeNode.id].rect;
+  const siblingBranchWidth =
+    treeNode.children.reduce((m, c) => m + sizeMap.get(c.id)!.width, 0) +
+    Math.max(0, treeNode.children.length - 1) * siblingMargin;
+  const nodeP = ret.get(treeNode.id)!;
+  let x = nodeP.x + nodeSize.width / 2 - siblingBranchWidth / 2;
+  const y = nodeP.y + nodeSize.height + childMargin;
+  treeNode.children.forEach((c) => {
+    const childSize = srcMap[c.id].rect;
+    const childBranchSize = sizeMap.get(c.id)!;
+    ret.set(c.id, { x: x + childBranchSize.width / 2 - childSize.width / 2, y });
+    x += childBranchSize.width + siblingMargin;
+  });
+
+  treeNode.children.forEach((c) => {
+    getChildrenBranchPositionMapBottom(ret, srcMap, c, sizeMap, siblingMargin, childMargin);
   });
 }
 

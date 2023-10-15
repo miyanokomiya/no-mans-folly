@@ -78,6 +78,42 @@ describe("getTreeBranchPositionMap", () => {
     expect(result.get("a")).toEqual({ x: 0, y: 0 });
     expect(result.get("b")).toEqual({ x: -90, y: 10 });
   });
+
+  test("should return tree branch positions: direction 2", () => {
+    const rect10 = { x: 0, y: 0, width: 10, height: 10 };
+    const src: TreeLayoutNode[] = [
+      { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: rect10 },
+      { id: "b", findex: "b", type: "node", direction: 2, parentId: "a", rect: rect10 },
+      { id: "c", findex: "c", type: "node", direction: 2, parentId: "a", rect: rect10 },
+      { id: "ba", findex: "ba", type: "node", direction: 2, parentId: "b", rect: rect10 },
+      { id: "bb", findex: "bb", type: "node", direction: 2, parentId: "b", rect: rect10 },
+    ];
+    const branchSizeMap = getTreeBranchSizeMap(toMap(src), getTree(src)[0], 30, 50);
+    const result = getTreeBranchPositionMap(toMap(src), getTree(src)[0], branchSizeMap, 30, 50);
+    expect(result.get("a")).toEqual({ x: 0, y: 0 });
+    expect(result.get("b")).toEqual({ x: -20, y: 60 });
+    expect(result.get("c")).toEqual({ x: 40, y: 60 });
+    expect(result.get("ba")).toEqual({ x: -40, y: 120 });
+    expect(result.get("bb")).toEqual({ x: 0, y: 120 });
+  });
+
+  test("should return tree branch positions: direction 0", () => {
+    const rect10 = { x: 0, y: 0, width: 10, height: 10 };
+    const src: TreeLayoutNode[] = [
+      { id: "a", findex: "a", type: "root", direction: 0, parentId: "", rect: rect10 },
+      { id: "b", findex: "b", type: "node", direction: 0, parentId: "a", rect: rect10 },
+      { id: "c", findex: "c", type: "node", direction: 0, parentId: "a", rect: rect10 },
+      { id: "ba", findex: "ba", type: "node", direction: 0, parentId: "b", rect: rect10 },
+      { id: "bb", findex: "bb", type: "node", direction: 0, parentId: "b", rect: rect10 },
+    ];
+    const branchSizeMap = getTreeBranchSizeMap(toMap(src), getTree(src)[0], 30, 50);
+    const result = getTreeBranchPositionMap(toMap(src), getTree(src)[0], branchSizeMap, 30, 50);
+    expect(result.get("a")).toEqual({ x: 0, y: 0 });
+    expect(result.get("b")).toEqual({ x: -20, y: -60 });
+    expect(result.get("c")).toEqual({ x: 40, y: -60 });
+    expect(result.get("ba")).toEqual({ x: -40, y: -120 });
+    expect(result.get("bb")).toEqual({ x: 0, y: -120 });
+  });
 });
 
 describe("getTreeBranchSizes", () => {
