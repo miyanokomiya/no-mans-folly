@@ -141,8 +141,29 @@ export function newTreeNodeMovingHandler(option: Option) {
     const closest = shapeComposite.shapeMap[closestId] as TreeShapeBase;
     const closestRectCenter = getRectCenter(closestRect);
     if (isTreeRootShape(closest)) {
-      // TODO
-      return;
+      const closestNode = closest as TreeRootShape;
+
+      // TODO: Vertical
+      const direction = closestRect.x + closestRect.width / 2 < p.x ? 1 : 3;
+      const siblings = allShapeNodes.filter((s) => s.treeParentId === closestNode.id && s.direction === direction);
+      if (siblings.length > 0) {
+        // Case: Insert as the last child
+        const prev = siblings[siblings.length - 1];
+        if (prev.id === shape.id) return;
+
+        return {
+          treeParentId: closestNode.id,
+          direction,
+          findex: generateKeyBetween(prev.findex, null),
+        };
+      } else {
+        // Case: Insert as a child & The parent has no children
+        return {
+          treeParentId: closestNode.id,
+          direction,
+          findex: generateKeyBetween(closestNode.findex, null),
+        };
+      }
     } else {
       const closestNode = closest as TreeNodeShape;
       const siblings = allShapeNodes.filter(
