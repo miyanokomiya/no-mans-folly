@@ -149,8 +149,10 @@ export function getNextShapeComposite(
     ? remainedShapes.map((s) => (patchInfo.update![s.id] ? { ...s, ...patchInfo.update![s.id] } : s))
     : remainedShapes;
 
+  const shapes = patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes;
+  shapes.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
   return newShapeComposite({
-    shapes: patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes,
+    shapes,
     getStruct: shapeComposite.getShapeStruct,
   });
 }

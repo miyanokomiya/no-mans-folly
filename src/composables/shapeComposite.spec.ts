@@ -10,6 +10,7 @@ import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { LineShape } from "../shapes/line";
 import { TextShape } from "../shapes/text";
+import { generateKeyBetween } from "fractional-indexing";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -242,15 +243,18 @@ describe("canGroupShapes", () => {
 
 describe("getNextShapeComposite", () => {
   test("should return next shape composite applied the patches", () => {
-    const shape0 = createShape(getCommonStruct, "text", { id: "shape0" });
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0", findex: generateKeyBetween(null, null) });
     const shape1 = createShape(getCommonStruct, "text", {
       id: "shape1",
+      findex: generateKeyBetween(shape0.findex, null),
     });
     const shape2 = createShape(getCommonStruct, "text", {
       id: "shape2",
+      findex: generateKeyBetween(shape1.findex, null),
     });
     const shape3 = createShape(getCommonStruct, "text", {
       id: "shape3",
+      findex: generateKeyBetween(shape2.findex, null),
     });
 
     const shapes = [shape0, shape1, shape2];
@@ -266,5 +270,34 @@ describe("getNextShapeComposite", () => {
         delete: ["shape1"],
       }).shapes,
     ).toEqual([{ ...shape0, p: { x: 10, y: 10 } }, shape2, shape3]);
+  });
+
+  test("should sort shapes by updated findex", () => {
+    const shape0 = createShape(getCommonStruct, "text", { id: "shape0", findex: generateKeyBetween(null, null) });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+      findex: generateKeyBetween(shape0.findex, null),
+    });
+    const shape2 = createShape(getCommonStruct, "text", {
+      id: "shape2",
+      findex: generateKeyBetween(shape1.findex, null),
+    });
+    const shape3 = createShape(getCommonStruct, "text", {
+      id: "shape3",
+      findex: generateKeyBetween(shape0.findex, shape1.findex),
+    });
+
+    const shapes = [shape0, shape1, shape2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(
+      getNextShapeComposite(target, {
+        add: [shape3],
+        update: { [shape2.id]: { findex: generateKeyBetween(null, shape0.findex) } },
+      }).shapes,
+    ).toEqual([{ ...shape2, findex: generateKeyBetween(null, shape0.findex) }, shape0, shape3, shape1]);
   });
 });
