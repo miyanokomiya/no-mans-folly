@@ -164,6 +164,22 @@ describe("newTreeNodeMovingHandler", () => {
       expect(target2.moveTest({ x: -50, y: 0 })).toEqual(undefined);
     });
   });
+
+  describe("branchIds", () => {
+    test("should return branch ids belonging to the target shape", () => {
+      expect(newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" }).branchIds).toEqual([
+        "a",
+        "aa",
+      ]);
+      expect(newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "b" }).branchIds).toEqual([
+        "b",
+        "bb",
+      ]);
+      expect(newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "bb" }).branchIds).toEqual([
+        "bb",
+      ]);
+    });
+  });
 });
 
 describe("getTreeBranchIds", () => {

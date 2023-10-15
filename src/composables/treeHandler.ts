@@ -270,7 +270,7 @@ export function newTreeNodeMovingHandler(option: Option) {
     );
   }
 
-  return { moveTest, render };
+  return { moveTest, render, branchIds: Array.from(ownBranchIdSet) };
 }
 export type TreeNodeMovingHandler = ReturnType<typeof newTreeNodeMovingHandler>;
 

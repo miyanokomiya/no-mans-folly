@@ -1,4 +1,4 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
@@ -6,7 +6,13 @@ import {
   newTreeNodeMovingHandler,
   TreeNodeMovingResult,
   isSameTreeNodeMovingResult,
+  getNextTreeLayout,
 } from "../../../treeHandler";
+import { getNextShapeComposite } from "../../../shapeComposite";
+import { mergeMap } from "../../../../utils/commons";
+import { applyFillStyle } from "../../../../utils/fillStyle";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { scaleGlobalAlpha } from "../../../../utils/renderer";
 
 interface Option {
   targetId: string;
@@ -17,16 +23,20 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
   let treeMovingHandler: TreeNodeMovingHandler;
   let movingResult: TreeNodeMovingResult | undefined;
 
+  const initData = (ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    treeNodeShape = shapeComposite.shapeMap[option.targetId] as TreeNodeShape;
+    treeMovingHandler = newTreeNodeMovingHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      targetId: treeNodeShape.id,
+    });
+  };
+
   return {
     getLabel: () => "TreeNodeMoving",
     onStart: (ctx) => {
       ctx.startDragging();
-      treeNodeShape = ctx.getShapeComposite().shapeMap[option.targetId] as TreeNodeShape;
-
-      treeMovingHandler = newTreeNodeMovingHandler({
-        getShapeComposite: ctx.getShapeComposite,
-        targetId: treeNodeShape.id,
-      });
+      initData(ctx);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -44,16 +54,68 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
+          if (movingResult) {
+            // All nodes in the branch need to change their direction along with the new direction.
+            const directionPatch =
+              treeNodeShape.direction !== movingResult.direction
+                ? treeMovingHandler.branchIds.reduce<{ [id: string]: Partial<TreeNodeShape> }>((p, id) => {
+                    p[id] = { direction: movingResult!.direction };
+                    return p;
+                  }, {})
+                : {};
+
+            const patch = {
+              ...directionPatch,
+              [treeNodeShape.id]: {
+                findex: movingResult.findex,
+                direction: movingResult.direction,
+                treeParentId: movingResult.treeParentId,
+              },
+            };
+
+            const shapeComposite = ctx.getShapeComposite();
+            const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
+            const layoutPatch = getNextTreeLayout(nextComposite, treeNodeShape.parentId!);
+            ctx.patchShapes(mergeMap(layoutPatch, patch));
+          }
           return newSelectionHubState;
         }
         case "selection": {
           return newSelectionHubState;
+        }
+        case "shape-updated": {
+          const shapeComposite = ctx.getShapeComposite();
+          const shape = shapeComposite.mergedShapeMap[treeNodeShape.id];
+          if (!shape) return newSelectionHubState;
+
+          const isTreeChanged = Array.from(event.data.keys).some(
+            (id) => shapeComposite.mergedShapeMap[id].parentId === treeNodeShape.parentId,
+          );
+          if (isTreeChanged) {
+            initData(ctx);
+          }
+          return;
         }
         default:
           return;
       }
     },
     render: (ctx, renderCtx) => {
+      const style = ctx.getStyleScheme();
+      applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: ctx.getScale() * 2 });
+
+      const shapeComposite = ctx.getShapeComposite();
+      const rect = shapeComposite.getWrapperRectForShapes(
+        treeMovingHandler.branchIds.map((id) => shapeComposite.mergedShapeMap[id]),
+      );
+      renderCtx.beginPath();
+      renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
+      scaleGlobalAlpha(renderCtx, 0.3, () => {
+        renderCtx.fill();
+      });
+      renderCtx.stroke();
+
       treeMovingHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), movingResult);
     },
   };
