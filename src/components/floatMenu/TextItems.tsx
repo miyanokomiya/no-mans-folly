@@ -14,6 +14,7 @@ import { TextDecoration } from "./texts/TextDecoration";
 import { TextBackgroundPanel } from "./texts/TextBackgroundPanel";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
+import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -179,10 +180,11 @@ export const TextItems: React.FC<Props> = ({
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
       >
-        <div className="w-8 h-8 flex justify-center items-center">
-          <div className="text-2xl underline pb-1" style={{ color: docAttrInfo.cursor?.color ?? "#000000" }}>
-            A
-          </div>
+        <div
+          className="w-8 h-8 flex justify-center items-center"
+          style={{ color: docAttrInfo.cursor?.color ?? "#000000" }}
+        >
+          <TextColorIcon />
         </div>
       </PopupButton>
       <PopupButton
@@ -194,13 +196,11 @@ export const TextItems: React.FC<Props> = ({
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
       >
-        <div className="w-8 h-8 flex justify-center items-center">
-          <div
-            className="text-2xl px-1 border rounded"
-            style={{ backgroundColor: docAttrInfo.cursor?.background ?? "transparent" }}
-          >
-            A
-          </div>
+        <div
+          className="w-8 h-8 flex justify-center items-center"
+          style={{ color: docAttrInfo.cursor?.background ?? "transparent" }}
+        >
+          <TextColorBgIcon color={docAttrInfo.cursor?.color ?? undefined} />
         </div>
       </PopupButton>
       <TextDecoration

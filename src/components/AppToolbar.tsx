@@ -8,18 +8,23 @@ import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
+import iconText from "../assets/icons/text.svg";
+import iconLayoutBranch from "../assets/icons/layout_branch.svg";
+import iconLayout from "../assets/icons/layout.svg";
+import { OutsideObserver } from "./atoms/OutsideObserver";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
-  { type: "tree_root", icon: iconRhombus },
 ];
 
 const lineList = [
   { type: "straight", icon: iconLineStraight },
   { type: "elbow", icon: iconLineElbow },
 ];
+
+const layoutList = [{ type: "tree_root", icon: iconLayoutBranch }];
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
@@ -74,11 +79,19 @@ export const AppToolbar: React.FC = () => {
     [sm, smctx],
   );
 
-  const [popup, setPopup] = useState<"" | "shapes" | "lines">("");
+  const [popup, setPopup] = useState<"" | "shapes" | "lines" | "layouts">("");
   const [lineType, setLineType] = useState<string>("straight");
+
+  const handleClosePopup = useCallback(() => {
+    setPopup("");
+  }, []);
 
   const onClickShapeButton = useCallback(() => {
     setPopup(popup === "shapes" ? "" : "shapes");
+  }, [popup]);
+
+  const onClickLayoutButton = useCallback(() => {
+    setPopup(popup === "layouts" ? "" : "layouts");
   }, [popup]);
 
   const onClickLineButton = useCallback(() => {
@@ -156,23 +169,46 @@ export const AppToolbar: React.FC = () => {
             ))}
           </div>
         );
+      case "layouts":
+        return (
+          <div
+            className="bg-white absolute left-0 border p-1 rounded shadow"
+            style={{ top: "50%", transform: "translate(-100%, -50%)" }}
+          >
+            {layoutList.map((shape) => (
+              <div
+                key={shape.type}
+                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-grab"
+                data-type={shape.type}
+                onMouseDown={onDownShapeElm}
+              >
+                <img src={shape.icon} alt={shape.type} />
+              </div>
+            ))}
+          </div>
+        );
       default:
         return;
     }
   }
 
   return (
-    <div className="bg-white relative border border-1 p-1 rounded shadow flex flex-col">
-      <button type="button" className={getButtonClass(popup === "shapes")} onClick={onClickShapeButton}>
-        <img src={iconShapeSet} alt="shapes" />
-      </button>
-      <button type="button" className={getButtonClass(popup === "lines")} onClick={onClickLineButton}>
-        <img src={iconLineStraight} alt="lines" />
-      </button>
-      <button type="button" className={getButtonClass(stateLabel === "TextReady")} onClick={onClickTextButton}>
-        <span className="text-2xl">T</span>
-      </button>
-      {renderPopup()}
-    </div>
+    <OutsideObserver onClick={handleClosePopup}>
+      <div className="bg-white relative border border-1 p-1 rounded shadow flex flex-col">
+        <button type="button" className={getButtonClass(popup === "shapes")} onClick={onClickShapeButton}>
+          <img src={iconShapeSet} alt="shapes" />
+        </button>
+        <button type="button" className={getButtonClass(popup === "lines")} onClick={onClickLineButton}>
+          <img src={iconLineStraight} alt="lines" />
+        </button>
+        <button type="button" className={getButtonClass(stateLabel === "TextReady")} onClick={onClickTextButton}>
+          <img src={iconText} alt="text" />
+        </button>
+        <button type="button" className={getButtonClass(popup === "layouts")} onClick={onClickLayoutButton}>
+          <img src={iconLayout} alt="layouts" />
+        </button>
+        {renderPopup()}
+      </div>
+    </OutsideObserver>
   );
 };
