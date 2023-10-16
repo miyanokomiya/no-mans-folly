@@ -31,7 +31,6 @@ describe("newLineLabelHandler", () => {
               ],
               getStruct: getCommonStruct,
             }),
-          getShapeStruct: getCommonStruct,
         },
       });
 
@@ -74,7 +73,6 @@ describe("newLineLabelHandler", () => {
               ],
               getStruct: getCommonStruct,
             }),
-          getShapeStruct: getCommonStruct,
         },
       });
 

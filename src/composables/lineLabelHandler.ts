@@ -1,4 +1,4 @@
-import { Shape } from "../models";
+import { EntityPatchInfo, Shape } from "../models";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
 import { TextShape, isLineLabelShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -6,10 +6,11 @@ import { TAU, getRelativePointOnPath } from "../utils/geometry";
 import { attachLabelToLine } from "../utils/lineLabel";
 import { applyPath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
+import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 
 interface Option {
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getShapeStruct">;
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
 }
 
 export function newLineLabelHandler(option: Option) {
@@ -71,4 +72,13 @@ export function renderParentLineRelation(
 
 function getLabelMargin(line: LineShape): number {
   return (line.stroke.width ?? 1) / 2 + 6;
+}
+
+export function getLineLabelPatch(srcComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {
+  if (!patchInfo.update) return {};
+
+  const handler = newLineLabelHandler({
+    ctx: { getShapeComposite: () => srcComposite },
+  });
+  return handler.onModified(patchInfo.update);
 }

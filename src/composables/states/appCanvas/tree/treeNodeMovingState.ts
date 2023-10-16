@@ -1,9 +1,6 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import {
-  TreeNodeShape,
-  getBoxAlignByDirection,
-} from "../../../../shapes/tree/treeNode";
+import { TreeNodeShape, getBoxAlignByDirection } from "../../../../shapes/tree/treeNode";
 import {
   TreeNodeMovingHandler,
   newTreeNodeMovingHandler,

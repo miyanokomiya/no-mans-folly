@@ -1,6 +1,7 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { patchPipe } from "../utils/commons";
 import { getConnectedLinePatch } from "./connectedLineHandler";
+import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
 import { getTreeLayoutPatchFunctions } from "./treeHandler";
 
@@ -19,6 +20,7 @@ export function getPatchByLayouts(
       () => patchInfo.update ?? {},
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,
   );
@@ -35,7 +37,11 @@ export function getPatchAfterLayouts(
   patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
   const result = patchPipe(
-    [() => patchInfo.update ?? {}, () => getConnectedLinePatch(shapeComposite, patchInfo)],
+    [
+      () => patchInfo.update ?? {},
+      (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
+    ],
     shapeComposite.shapeMap,
   );
 
