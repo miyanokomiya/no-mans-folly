@@ -1,6 +1,9 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
+import {
+  TreeNodeShape,
+  getBoxAlignByDirection,
+} from "../../../../shapes/tree/treeNode";
 import {
   TreeNodeMovingHandler,
   newTreeNodeMovingHandler,
@@ -65,12 +68,15 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
                   }, {})
                 : {};
 
+            const { vAlign, hAlign } = getBoxAlignByDirection(movingResult.direction);
             const patch = {
               ...directionPatch,
               [treeNodeShape.id]: {
                 findex: movingResult.findex,
                 direction: movingResult.direction,
                 treeParentId: movingResult.treeParentId,
+                vAlign,
+                hAlign,
               },
             };
 

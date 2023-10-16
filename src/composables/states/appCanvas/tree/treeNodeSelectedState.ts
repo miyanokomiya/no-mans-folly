@@ -27,11 +27,15 @@ import {
 } from "../../../treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { getInitialOutput } from "../../../../utils/textEditor";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
+import { newResizingState } from "../resizingState";
+import { newRotatingState } from "../rotatingState";
 
 export function newTreeNodeSelectedState(): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
   let treeHandler: TreeHandler;
-  let hitResult: TreeHitResult | undefined;
+  let treeHitResult: TreeHitResult | undefined;
+  let boundingBox: BoundingBox;
 
   return {
     getLabel: () => "TreeNodeSelected",
@@ -40,6 +44,13 @@ export function newTreeNodeSelectedState(): AppCanvasState {
       treeNodeShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeNodeShape;
       ctx.setCommandExams([]);
       treeHandler = newTreeHandler({ getShapeComposite: ctx.getShapeComposite, targetId: treeNodeShape.id });
+
+      const shapeComposite = ctx.getShapeComposite();
+      boundingBox = newBoundingBox({
+        path: shapeComposite.getLocalRectPolygon(treeNodeShape),
+        styleScheme: ctx.getStyleScheme(),
+        scale: ctx.getScale(),
+      });
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -56,27 +67,27 @@ export function newTreeNodeSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              hitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
-              if (hitResult) {
+              treeHitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
+              if (treeHitResult) {
                 const shapeComposite = ctx.getShapeComposite();
                 const treeRootId = treeNodeShape.parentId!;
 
                 let treeNode: TreeNodeShape;
-                if (hitResult.type === 0) {
+                if (treeHitResult.type === 0) {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
                     id: ctx.generateUuid(),
                     findex: generateFindexPreviousAt(shapeComposite, treeNodeShape.id),
                     parentId: treeRootId,
                     treeParentId: treeNodeShape.treeParentId,
-                    direction: hitResult.direction,
+                    direction: treeHitResult.direction,
                   });
-                } else if (hitResult.type === 1) {
+                } else if (treeHitResult.type === 1) {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
                     id: ctx.generateUuid(),
                     findex: generateFindexNextAt(shapeComposite, treeNodeShape.id),
                     parentId: treeRootId,
                     treeParentId: treeNodeShape.treeParentId,
-                    direction: hitResult.direction,
+                    direction: treeHitResult.direction,
                   });
                 } else {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
@@ -84,7 +95,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                     findex: ctx.createLastIndex(),
                     parentId: treeRootId,
                     treeParentId: treeNodeShape.id,
-                    direction: hitResult.direction,
+                    direction: treeHitResult.direction,
                   });
                 }
 
@@ -104,6 +115,17 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                 return;
               }
 
+              const hitResult = boundingBox.hitTest(event.data.point);
+              if (hitResult) {
+                switch (hitResult.type) {
+                  case "corner":
+                  case "segment":
+                    return () => newResizingState({ boundingBox, hitResult });
+                  case "rotation":
+                    return () => newRotatingState({ boundingBox });
+                }
+              }
+
               return handleCommonPointerDownLeftOnSingleSelection(ctx, event, treeNodeShape.id, treeNodeShape.id);
             }
             case 1:
@@ -115,20 +137,28 @@ export function newTreeNodeSelectedState(): AppCanvasState {
               return;
           }
         case "pointerdoubledown": {
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point);
-          if (shapeAtPointer?.id === treeNodeShape.id) {
+          const hitResult = boundingBox.hitTest(event.data.point);
+          if (hitResult) {
             return startTextEditingIfPossible(ctx, treeNodeShape.id, event.data.point);
           }
           return;
         }
         case "pointerhover": {
           const result = treeHandler.hitTest(event.data.current, ctx.getScale());
-          if (!isSameTreeHitResult(hitResult, result)) {
+          if (!isSameTreeHitResult(treeHitResult, result)) {
             ctx.redraw();
           }
-          hitResult = result;
-          if (hitResult) return;
+          treeHitResult = result;
+          if (treeHitResult) return;
+
+          const hitBounding = boundingBox.hitTest(event.data.current);
+          if (hitBounding) {
+            const style = boundingBox.getCursorStyle(hitBounding);
+            if (style) {
+              ctx.setCursor(style);
+              return;
+            }
+          }
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, treeNodeShape.id);
@@ -191,7 +221,8 @@ export function newTreeNodeSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), hitResult);
+      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), treeHitResult);
+      boundingBox.render(renderCtx);
     },
   };
 }

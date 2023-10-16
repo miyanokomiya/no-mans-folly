@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { struct } from "./treeNode";
+import { getBoxAlignByDirection, struct } from "./treeNode";
 
 describe("immigrateShapeIds", () => {
   test("should convert a shape to rectangle shape if a parent doesn't exist", () => {
@@ -14,5 +14,14 @@ describe("immigrateShapeIds", () => {
   test("should immigrate tree parent if it exists", () => {
     const shape = struct.create({ treeParentId: "a" });
     expect(struct.immigrateShapeIds!(shape, { a: "b" })).toEqual({ treeParentId: "b" });
+  });
+});
+
+describe("getBoxAlignByDirection", () => {
+  test("should return appropriate box align for a direction", () => {
+    expect(getBoxAlignByDirection(0)).toEqual({ vAlign: "bottom", hAlign: "center" });
+    expect(getBoxAlignByDirection(1)).toEqual({ vAlign: "center", hAlign: "left" });
+    expect(getBoxAlignByDirection(2)).toEqual({ vAlign: "top", hAlign: "center" });
+    expect(getBoxAlignByDirection(3)).toEqual({ vAlign: "center", hAlign: "right" });
   });
 });

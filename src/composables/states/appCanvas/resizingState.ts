@@ -7,7 +7,13 @@ import {
   newBoundingBoxResizing,
 } from "../../boundingBox";
 import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
-import { resizeOnTextEdit, resizeShape, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
+import {
+  getTextRangeRect,
+  resizeOnTextEdit,
+  resizeShape,
+  shouldKeepAspect,
+  shouldResizeOnTextEdit,
+} from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import {
@@ -21,11 +27,12 @@ import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { TextShape, isTextShape } from "../../../shapes/text";
+import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
 import { calcOriginalDocSize, getDeltaByScaleTextSize } from "../../../utils/textEditor";
 import { applyPath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
+import { getPatchByLayouts } from "../../shapeLayoutHandler";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -77,7 +84,7 @@ export function newResizingState(option: Option): AppCanvasState {
         resizingBase: option.boundingBox.getResizingBase(option.hitResult),
         mode: targets.some((s) => shouldKeepAspect(shapeComposite.getShapeStruct, s))
           ? "keepAspect"
-          : targets.some((s) => isTextShape(s))
+          : targets.some((s) => shouldResizeOnTextEdit(shapeComposite.getShapeStruct, s))
           ? "text"
           : undefined,
       });
@@ -186,17 +193,18 @@ export function newResizingState(option: Option): AppCanvasState {
               (_, patch) => {
                 return lineLabelHandler.onModified(patch);
               },
-              (_, patch) => {
+              (patchedSrc, patch) => {
                 // Scale each text size along with height scaling
                 Object.keys(patch).forEach((id) => {
                   const src = shapeMap[id];
                   const shapeDoc = docMap[id];
-                  if (!shapeDoc || !isTextShape(src)) return;
+                  if (!shapeDoc || !shouldResizeOnTextEdit(shapeComposite.getShapeStruct, src)) return;
 
-                  const diff = patch[id] as Partial<TextShape>;
-                  if (diff.height === undefined) return;
+                  const srcTextRect = getTextRangeRect(shapeComposite.getShapeStruct, src)!;
+                  const patchedTextRect = getTextRangeRect(shapeComposite.getShapeStruct, patchedSrc[id])!;
+                  if (patchedTextRect.height === srcTextRect.height) return;
 
-                  const heightScale = diff.height / src.height;
+                  const heightScale = patchedTextRect.height / srcTextRect.height;
                   docPatch[id] = getDeltaByScaleTextSize(shapeDoc, heightScale, true);
                 });
                 return {};
@@ -230,7 +238,8 @@ export function newResizingState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
-          ctx.patchDocuments(ctx.getTmpDocMap(), ctx.getTmpShapeMap());
+          const patch = getPatchByLayouts(ctx.getShapeComposite(), { update: ctx.getTmpShapeMap() });
+          ctx.patchDocuments(ctx.getTmpDocMap(), patch);
           return () =>
             newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
         }

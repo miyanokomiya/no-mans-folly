@@ -1,5 +1,5 @@
 import { IVec2, add } from "okageo";
-import { Direction4, Shape } from "../../models";
+import { BoxAlign, Direction4, Shape } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
@@ -20,6 +20,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
   ...treeRootStruct,
   label: "TreeNode",
   create(arg = {}) {
+    const direction = arg.direction ?? 1;
     return {
       ...createBaseShape(arg),
       type: "tree_node",
@@ -30,7 +31,8 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       maxWidth: arg.maxWidth ?? 300,
       treeParentId: arg.treeParentId ?? "",
-      direction: arg.direction ?? 1,
+      direction,
+      ...getBoxAlignByDirection(direction),
     };
   },
   render(ctx, shape, shapeContext) {
@@ -57,6 +59,8 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       ret.type = "rectangle";
       ret.maxWidth = undefined;
       ret.direction = undefined;
+      ret.vAlign = undefined;
+      ret.hAlign = undefined;
       ret.treeParentId = undefined;
     }
 
@@ -93,4 +97,11 @@ function getChildConnectionPoint(child: TreeNodeShape): IVec2 {
     default:
       return add(child.p, { x: 0, y: child.height / 2 });
   }
+}
+
+export function getBoxAlignByDirection(direction: Direction4): BoxAlign {
+  return {
+    vAlign: direction === 0 ? "bottom" : direction === 2 ? "top" : "center",
+    hAlign: direction === 1 ? "left" : direction === 3 ? "right" : "center",
+  };
 }
