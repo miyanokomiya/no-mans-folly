@@ -1,18 +1,18 @@
 import { LineShape, isLineShape } from "../shapes/line";
 import { RotatedRectPath, TAU, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { Shape, StyleScheme } from "../models";
+import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { newElbowLineHandler } from "./elbowLineHandler";
 import { optimizeLinePath } from "./lineSnapping";
-import { newShapeComposite } from "./shapeComposite";
+import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { toList } from "../utils/commons";
 
 interface Option {
   connectedLinesMap: {
     [id: string]: LineShape[];
   };
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getShapeStruct">;
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
 }
 
 export function newConnectedLineHandler(option: Option) {
@@ -91,7 +91,7 @@ export function newConnectedLineHandler(option: Option) {
 
     const updatedShapeComposite = newShapeComposite({
       shapes: toList({ ...shapeMap, ...updatedShapeMap }),
-      getStruct: option.ctx.getShapeStruct,
+      getStruct: shapeComposite.getShapeStruct,
     });
     // Optimize line connections
     Object.entries(ret).forEach(([id, patch]) => {
@@ -129,7 +129,7 @@ export function newConnectedLineHandler(option: Option) {
 
       const nextShapeComposite = newShapeComposite({
         shapes: toList(nextShapeMap),
-        getStruct: option.ctx.getShapeStruct,
+        getStruct: shapeComposite.getShapeStruct,
       });
       const elbowHandler = newElbowLineHandler({
         getShapeComposite: () => nextShapeComposite,
@@ -182,7 +182,7 @@ export function getConnectedLineInfoMap(
 }
 
 export function getRotatedRectPathMap(
-  ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "getShapeComposite">,
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
   updatedMap: { [id: string]: Partial<Shape> },
 ): {
   [id: string]: RotatedRectPath;
@@ -246,4 +246,18 @@ function getElbowConnectedShapeIds(lines: LineShape[]): string[] {
   });
 
   return Array.from(ret.keys());
+}
+
+export function getConnectedLinePatch(srcComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {
+  if (!patchInfo.update) return {};
+
+  const connectedLinesMap = getConnectedLineInfoMap(
+    { getShapeComposite: () => srcComposite },
+    Object.keys(patchInfo.update),
+  );
+  const handler = newConnectedLineHandler({
+    connectedLinesMap,
+    ctx: { getShapeComposite: () => srcComposite },
+  });
+  return handler.onModified(patchInfo.update);
 }

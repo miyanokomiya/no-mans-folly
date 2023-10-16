@@ -13,6 +13,7 @@ import { mergeMap } from "../../../../utils/commons";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   targetId: string;
@@ -76,7 +77,8 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
             const shapeComposite = ctx.getShapeComposite();
             const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
             const layoutPatch = getNextTreeLayout(nextComposite, treeNodeShape.parentId!);
-            ctx.patchShapes(mergeMap(layoutPatch, patch));
+            const adjustedPatch = getPatchAfterLayouts(shapeComposite, { update: mergeMap(layoutPatch, patch) });
+            ctx.patchShapes(adjustedPatch);
           }
           return newSelectionHubState;
         }
