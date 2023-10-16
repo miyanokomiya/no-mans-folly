@@ -1,4 +1,4 @@
-import { IRectangle, IVec2 } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getRectCenter, multiAffines } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
@@ -155,4 +155,33 @@ export function getNextShapeComposite(
     shapes,
     getStruct: shapeComposite.getShapeStruct,
   });
+}
+
+/**
+ * Returns rotated wrapper rect for target shapes.
+ */
+export function getRotatedTargetBounds(
+  shapeComposite: ShapeComposite,
+  targetIds: string[],
+  boundingRotation: number,
+): IVec2[] {
+  const shapeMap = shapeComposite.shapeMap;
+  const shapes = targetIds.map((id) => shapeMap[id]);
+  const wrapperRect = geometry.getWrapperRect(shapes.map((s) => shapeComposite.getWrapperRect(s)));
+  const c = getRectCenter(wrapperRect);
+  const r = boundingRotation;
+  const sin = Math.sin(-r);
+  const cos = Math.cos(-r);
+  const affine: AffineMatrix = multiAffines([
+    [1, 0, 0, 1, c.x, c.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, 1, -c.x, -c.y],
+  ]);
+  const rotatedWrapperRect = geometry.getWrapperRect(
+    shapes
+      .map((s) => ({ ...s, ...shapeModule.resizeShape(shapeComposite.getShapeStruct, s, affine) }))
+      .map((s) => shapeComposite.getWrapperRect(s)),
+  );
+  const rotateFn = geometry.getRotateFn(r, c);
+  return geometry.getRectPoints(rotatedWrapperRect).map((p) => rotateFn(p));
 }

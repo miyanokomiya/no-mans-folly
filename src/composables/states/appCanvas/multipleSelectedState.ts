@@ -22,7 +22,7 @@ import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
+import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { isGroupShape } from "../../../shapes/group";
 import { newMovingHubState } from "./movingHubState";
 
@@ -76,9 +76,15 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       }
 
       if (option?.boundingBox) {
-        boundingBox = option.boundingBox;
+        // Recalculate the bounding because shapes aren't always transformed along with the bounding box.
+        // => Also, need to conserve the rotation.
+        boundingBox = newBoundingBox({
+          path: getRotatedTargetBounds(shapeComposite, selectedIds, option.boundingBox.getRotation()),
+          styleScheme: ctx.getStyleScheme(),
+          scale: ctx.getScale(),
+        });
       } else {
-        const shapeRects = selectedIds.map((id) => shapeMap[id]).map((s) => ctx.getShapeComposite().getWrapperRect(s));
+        const shapeRects = selectedIds.map((id) => shapeMap[id]).map((s) => shapeComposite.getWrapperRect(s));
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),

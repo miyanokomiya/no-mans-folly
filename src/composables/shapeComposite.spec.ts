@@ -4,6 +4,7 @@ import {
   findBetterShapeAt,
   getDeleteTargetIds,
   getNextShapeComposite,
+  getRotatedTargetBounds,
   newShapeComposite,
 } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
@@ -299,5 +300,43 @@ describe("getNextShapeComposite", () => {
         update: { [shape2.id]: { findex: generateKeyBetween(null, shape0.findex) } },
       }).shapes,
     ).toEqual([{ ...shape2, findex: generateKeyBetween(null, shape0.findex) }, shape0, shape3, shape1]);
+  });
+});
+
+describe("getRotatedTargetBounds", () => {
+  test("should return rotated wrapper rect path for the targets", () => {
+    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "shape0",
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+    });
+    const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "shape1",
+      p: { x: 100, y: 50 },
+      width: 10,
+      height: 10,
+    });
+    const shapeComposite = newShapeComposite({ shapes: [shape0, shape1], getStruct: getCommonStruct });
+
+    const result0 = getRotatedTargetBounds(shapeComposite, [shape0.id, shape1.id], 0);
+    expect(result0[0].x).toBeCloseTo(0);
+    expect(result0[0].y).toBeCloseTo(0);
+    expect(result0[1].x).toBeCloseTo(110);
+    expect(result0[1].y).toBeCloseTo(0);
+    expect(result0[2].x).toBeCloseTo(110);
+    expect(result0[2].y).toBeCloseTo(60);
+    expect(result0[3].x).toBeCloseTo(0);
+    expect(result0[3].y).toBeCloseTo(60);
+
+    const result1 = getRotatedTargetBounds(shapeComposite, [shape0.id, shape1.id], Math.PI / 2);
+    expect(result1[0].x).toBeCloseTo(110);
+    expect(result1[0].y).toBeCloseTo(0);
+    expect(result1[1].x).toBeCloseTo(110);
+    expect(result1[1].y).toBeCloseTo(60);
+    expect(result1[2].x).toBeCloseTo(0);
+    expect(result1[2].y).toBeCloseTo(60);
+    expect(result1[3].x).toBeCloseTo(0);
+    expect(result1[3].y).toBeCloseTo(0);
   });
 });
