@@ -48,7 +48,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
       setMoving(true);
       setMovingP(p);
     },
-    [startP, moving, targetId],
+    [startP, moving, targetId, items],
   );
   useGlobalMousemoveEffect(onMove);
 
@@ -88,7 +88,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
         <div className="pointer-events-none">{items[insertion[0]][1]}</div>
       </div>
     );
-  }, [insertion, movingP]);
+  }, [insertion, movingP, items]);
 
   const borderElm = <div className="border-4 border-blue-400"></div>;
 

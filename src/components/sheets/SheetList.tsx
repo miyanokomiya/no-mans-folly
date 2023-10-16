@@ -64,12 +64,18 @@ export const SheetList: React.FC = () => {
     return sheets.map((s, i) => {
       return [
         s.id,
-        <div key={s.id}>
-          <SheetPanel sheet={s} selected={s.id === selectedSheet?.id} index={i + 1} onChangeName={onChangeName} />
+        <div>
+          <SheetPanel
+            sheet={s}
+            selected={s.id === selectedSheet?.id}
+            index={i + 1}
+            onChangeName={onChangeName}
+            onClickSheet={onClickSheet}
+          />
         </div>,
       ];
     });
-  }, [selectedSheet, sheets, onClickSheet]);
+  }, [selectedSheet, sheets, onChangeName, onClickSheet]);
 
   const onChangeOrder = useCallback(
     ([from, to]: [number, number]) => {

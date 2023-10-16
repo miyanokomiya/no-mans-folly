@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Sheet } from "../../models";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import iconDots from "../../assets/icons/three_dots_v.svg";
@@ -47,7 +47,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
         onClickSheet?.(sheet.id);
       }
     },
-    [onClickSheet, _onClickRename],
+    [sheet, onClickSheet, _onClickRename],
   );
 
   const onSubmitName = useCallback(
@@ -63,35 +63,27 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
     setRenaming(false);
   }, []);
 
-  const popupMenu = useMemo(() => {
-    return (
-      <div className="flex flex-col bg-white">
-        <button type="button" className="hover:bg-gray-200 p-1" onClick={_onClickRename}>
-          Rename
-        </button>
-      </div>
-    );
-  }, [_onClickRename]);
-
-  const content = useMemo(() => {
-    if (renaming) {
-      return (
-        <form className="w-full h-full flex items-center" onSubmit={onSubmitName}>
-          <TextInput value={draftName} onChange={_onChangeName} onBlur={cancelRename} autofocus keepFocus />
-        </form>
-      );
-    } else {
-      return (
-        <a href={getSheetURL(sheet.id)} onClick={_onClickSheet} className="w-full h-full flex items-center">
-          <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
-        </a>
-      );
-    }
-  }, [renaming, draftName]);
-
   const onClickMenuButton = useCallback(() => {
     setPopupOpen(!popupOpen);
   }, [popupOpen]);
+
+  const popupMenu = (
+    <div className="flex flex-col bg-white">
+      <button type="button" className="hover:bg-gray-200 p-1" onClick={_onClickRename}>
+        Rename
+      </button>
+    </div>
+  );
+
+  const content = renaming ? (
+    <form className="w-full h-full flex items-center" onSubmit={onSubmitName}>
+      <TextInput value={draftName} onChange={_onChangeName} onBlur={cancelRename} autofocus keepFocus />
+    </form>
+  ) : (
+    <a href={getSheetURL(sheet.id)} onClick={_onClickSheet} className="w-full h-full flex items-center">
+      <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
+    </a>
+  );
 
   return (
     <div className={rootClass}>
