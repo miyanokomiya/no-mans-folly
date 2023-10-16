@@ -297,10 +297,10 @@ export const AppCanvas: React.FC = () => {
       getDocumentMap: acctx.documentStore.getDocMap,
       getTmpDocMap: acctx.documentStore.getTmpDocMap,
       setTmpDocMap: acctx.documentStore.setTmpDocMap,
-      patchDocuments: (val, shapes) => {
-        if (shapes) {
+      patchDocuments: (val, shapePatch) => {
+        if (shapePatch) {
           acctx.shapeStore.transact(() => {
-            acctx.shapeStore.patchEntities(shapes);
+            acctx.shapeStore.patchEntities(shapePatch);
             acctx.documentStore.patchDocs(val);
           });
         } else {

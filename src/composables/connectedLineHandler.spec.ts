@@ -130,34 +130,70 @@ describe("newConnectedLineHandler", () => {
       });
     });
 
-    test("should delete connections when a line is modified but connected shapes arn't", () => {
-      const target = newConnectedLineHandler({
-        connectedLinesMap: {
-          a: [l0, l1],
-          b: [l0, l1],
-        },
-        ctx: {
-          getShapeComposite: () =>
-            newShapeComposite({
-              shapes: [l0, l1, a, b],
-              getStruct: getCommonStruct,
-            }),
-        },
+    describe("when a line is modified but connected shapes arn't", () => {
+      test("should delete connections", () => {
+        const target = newConnectedLineHandler({
+          connectedLinesMap: {
+            a: [l0, l1],
+            b: [l0, l1],
+          },
+          ctx: {
+            getShapeComposite: () =>
+              newShapeComposite({
+                shapes: [l0, l1, a, b],
+                getStruct: getCommonStruct,
+              }),
+          },
+        });
+
+        const result = target.onModified({
+          a: { width: 50, height: 100 } as Partial<RectangleShape>,
+          l0: { p: { x: 10, y: 10 } },
+          l1: { p: { x: 10, y: 10 } },
+        });
+        expect(result).toEqual({
+          l0: { p: { x: 25, y: 50 }, qConnection: undefined },
+          l1: {
+            body: [{ p: { x: 0, y: 50 }, c: { rate: { x: 0, y: 0.5 }, id: "a" } }, { p: { x: 10, y: 10 } }],
+          },
+        });
+        expect(result.l0).not.toHaveProperty("pConnection");
+        expect(result.l0).toHaveProperty("qConnection");
       });
 
-      const result = target.onModified({
-        a: { width: 50, height: 100 } as Partial<RectangleShape>,
-        l0: { p: { x: 10, y: 10 } },
-        l1: { p: { x: 10, y: 10 } },
+      test("should not delete connections when keepConnection is true", () => {
+        const target = newConnectedLineHandler({
+          connectedLinesMap: {
+            a: [l0, l1],
+            b: [l0, l1],
+          },
+          ctx: {
+            getShapeComposite: () =>
+              newShapeComposite({
+                shapes: [l0, l1, a, b],
+                getStruct: getCommonStruct,
+              }),
+          },
+          keepConnection: true,
+        });
+
+        const result = target.onModified({
+          a: { width: 50, height: 100 } as Partial<RectangleShape>,
+          l0: { p: { x: 10, y: 10 } },
+          l1: { p: { x: 10, y: 10 } },
+        });
+        expect(result).toEqual({
+          l0: { p: { x: 25, y: 50 } },
+          l1: {
+            body: [
+              { p: { x: 0, y: 50 }, c: { rate: { x: 0, y: 0.5 }, id: "a" } },
+              { p: { x: 10, y: 10 }, c: { rate: { x: 1, y: 0.5 }, id: "b" } },
+            ],
+          },
+        });
+        expect(result.l0).not.toHaveProperty("pConnection");
+        expect(result.l0).not.toHaveProperty("qConnection");
       });
-      expect(result).toEqual({
-        l0: { p: { x: 25, y: 50 }, qConnection: undefined },
-        l1: {
-          body: [{ p: { x: 0, y: 50 }, c: { rate: { x: 0, y: 0.5 }, id: "a" } }, { p: { x: 10, y: 10 } }],
-        },
-      });
-      expect(result.l0).not.toHaveProperty("pConnection");
-      expect(result.l0).toHaveProperty("qConnection");
     });
 
     test("should regard optimized connections", () => {

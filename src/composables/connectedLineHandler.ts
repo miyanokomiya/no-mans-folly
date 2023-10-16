@@ -13,6 +13,7 @@ interface Option {
     [id: string]: LineShape[];
   };
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
+  keepConnection?: boolean;
 }
 
 export function newConnectedLineHandler(option: Option) {
@@ -35,7 +36,9 @@ export function newConnectedLineHandler(option: Option) {
     // Update connections
     Object.entries(updatedShapeMap).forEach(([id, shape]) => {
       // When a line is modified but connected shapes doesn't, the connections should be deleted.
-      if (isLineShape(shape)) {
+      // => This behavior shouldn't always work when the operation isn't supposed to be shape moving.
+      // => Prepare "keepConnection" to disable this behavior.
+      if (!option.keepConnection && isLineShape(shape)) {
         if (shape.pConnection && !updatedShapeMap[shape.pConnection.id]) {
           ret[shape.id] ??= {};
           ret[shape.id].pConnection = undefined;
@@ -258,6 +261,7 @@ export function getConnectedLinePatch(srcComposite: ShapeComposite, patchInfo: E
   const handler = newConnectedLineHandler({
     connectedLinesMap,
     ctx: { getShapeComposite: () => srcComposite },
+    keepConnection: true,
   });
   return handler.onModified(patchInfo.update);
 }
