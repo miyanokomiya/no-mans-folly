@@ -6,6 +6,7 @@ import { getTreeLayoutPatchFunctions } from "./treeHandler";
 
 /**
  * Genaral porpus patch function to recalculate all layouts and automatic adjustments.
+ * Returned patch includes src patch supplied as an argument.
  */
 export function getPatchByLayouts(
   shapeComposite: ShapeComposite,
@@ -27,6 +28,7 @@ export function getPatchByLayouts(
 
 /**
  * Similar to "getPatchByLayouts" but proc only automatic adjustments.
+ * Returned patch includes src patch supplied as an argument.
  */
 export function getPatchAfterLayouts(
   shapeComposite: ShapeComposite,

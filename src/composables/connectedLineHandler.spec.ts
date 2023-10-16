@@ -40,7 +40,6 @@ describe("newConnectedLineHandler", () => {
           b: [l0],
         },
         ctx: {
-          getShapeStruct: getCommonStruct,
           getShapeComposite: () =>
             newShapeComposite({
               shapes: [l0, a, b],
@@ -79,7 +78,6 @@ describe("newConnectedLineHandler", () => {
           b: [l0],
         },
         ctx: {
-          getShapeStruct: getCommonStruct,
           getShapeComposite: () =>
             newShapeComposite({
               shapes: [l0, a, b],
@@ -110,7 +108,6 @@ describe("newConnectedLineHandler", () => {
           b: [elbow0],
         },
         ctx: {
-          getShapeStruct: getCommonStruct,
           getShapeComposite: () =>
             newShapeComposite({
               shapes: [elbow0, a, b],
@@ -140,7 +137,6 @@ describe("newConnectedLineHandler", () => {
           b: [l0, l1],
         },
         ctx: {
-          getShapeStruct: getCommonStruct,
           getShapeComposite: () =>
             newShapeComposite({
               shapes: [l0, l1, a, b],
@@ -171,7 +167,6 @@ describe("newConnectedLineHandler", () => {
           b: [l2],
         },
         ctx: {
-          getShapeStruct: getCommonStruct,
           getShapeComposite: () =>
             newShapeComposite({
               shapes: [l2, a, b],
