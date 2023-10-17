@@ -21,6 +21,7 @@ import {
   generateFindexNextAt,
   generateFindexPreviousAt,
   getNextTreeLayout,
+  getPatchToDisconnectBranch,
   getTreeBranchIds,
   isSameTreeHitResult,
   newTreeHandler,
@@ -30,6 +31,7 @@ import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
+import { mergeMap } from "../../../../utils/commons";
 
 export function newTreeNodeSelectedState(): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
@@ -71,6 +73,16 @@ export function newTreeNodeSelectedState(): AppCanvasState {
               if (treeHitResult) {
                 const shapeComposite = ctx.getShapeComposite();
                 const treeRootId = treeNodeShape.parentId!;
+
+                if (treeHitResult.type === -1) {
+                  // Disconnect this branch and make it new tree.
+                  const shapePatch = getPatchToDisconnectBranch(shapeComposite, treeNodeShape.id);
+                  // Need to recalculate original tree's layout.
+                  const nextComposite = getNextShapeComposite(shapeComposite, { update: shapePatch });
+                  const treePatch = getNextTreeLayout(nextComposite, treeRootId);
+                  ctx.patchShapes(mergeMap(shapePatch, treePatch));
+                  return;
+                }
 
                 let treeNode: TreeNodeShape;
                 if (treeHitResult.type === 0) {

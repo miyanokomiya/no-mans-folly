@@ -68,6 +68,10 @@ export function newTreeRootSelectedState(): AppCanvasState {
             case 0: {
               treeHitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
               if (treeHitResult) {
+                if (treeHitResult.type === -1) {
+                  return;
+                }
+
                 const shapeComposite = ctx.getShapeComposite();
                 let treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
                   id: ctx.generateUuid(),

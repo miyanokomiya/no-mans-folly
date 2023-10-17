@@ -4,6 +4,7 @@ import {
   generateFindexPreviousAt,
   getModifiedTreeRootIds,
   getNextTreeLayout,
+  getPatchToDisconnectBranch,
   getTreeBranchIds,
   newTreeNodeMovingHandler,
 } from "./treeHandler";
@@ -404,5 +405,20 @@ describe("getModifiedTreeRootIds", () => {
         delete: ["root"],
       }),
     ).toEqual([]);
+  });
+});
+
+describe("getPatchToDisconnectBranch", () => {
+  test("should return patch data to disconnect the branch and make it new tree root", () => {
+    const result = getPatchToDisconnectBranch(shapeComposite, "a");
+    expect(result).toEqual({
+      a: { type: "tree_root" },
+      aa: { parentId: "a" },
+    });
+    expect(result["a"]).toHaveProperty("parentId");
+    expect(result["a"]).toHaveProperty("treeParentId");
+    expect(result["a"]).toHaveProperty("direction");
+    expect(result["a"]).toHaveProperty("vAlign");
+    expect(result["a"]).toHaveProperty("hAlign");
   });
 });

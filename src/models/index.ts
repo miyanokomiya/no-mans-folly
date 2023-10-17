@@ -34,6 +34,7 @@ export interface Size {
 export interface StyleScheme {
   selectionPrimary: Color;
   selectionSecondaly: Color;
+  alert: Color;
 }
 
 export interface Color {

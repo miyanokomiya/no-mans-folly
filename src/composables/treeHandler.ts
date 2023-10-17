@@ -20,16 +20,17 @@ const ANCHOR_SIBLING_MARGIN = 18;
  * - undefined: insert as a child
  * - 0: insert as the previous sibling
  * - 1: insert as the next sibling
+ * - -1: disconnect from a parent
  */
-type InsertType = undefined | 0 | 1;
+type AnchorType = undefined | 0 | 1 | -1;
 
 export interface TreeHitResult {
   direction: Direction4;
   p: IVec2;
-  type: InsertType;
+  type: AnchorType;
 }
 
-type AnchorInfo = [Direction4, IVec2, type?: InsertType];
+type AnchorInfo = [Direction4, IVec2, type?: AnchorType];
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -76,24 +77,28 @@ export function newTreeHandler(option: Option) {
           [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
           [0, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height / 2 }, 0],
           [0, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height / 2 }, 1],
+          [0, { x: bounds.x + bounds.width * 0.8, y: bounds.y + bounds.height + siblingMargin }, -1],
         ];
       case 2:
         return [
           [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
           [2, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height / 2 }, 0],
           [2, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height / 2 }, 1],
+          [2, { x: bounds.x + bounds.width * 0.8, y: bounds.y - siblingMargin }, -1],
         ];
       case 3:
         return [
           [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
           [3, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0],
           [3, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1],
+          [3, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1],
         ];
       default:
         return [
           [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
           [1, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0],
           [1, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1],
+          [1, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1],
         ];
     }
   }
@@ -107,61 +112,91 @@ export function newTreeHandler(option: Option) {
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
+    const anchors = getAnchors(scale);
     const threshold = ANCHOR_SIZE * scale;
+
     applyFillStyle(ctx, { color: style.selectionPrimary });
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
-
     ctx.beginPath();
     ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    const anchors = getAnchors(scale);
-    anchors.forEach(([d, p, t]) => {
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      switch (d) {
-        case 0:
-          if (t === 0) {
-            ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
-          } else if (t === 1) {
-            ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
-          } else {
-            ctx.lineTo(p.x, bounds.y);
-          }
-          break;
-        case 2:
-          if (t === 0) {
-            ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
-          } else if (t === 1) {
-            ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
-          } else {
-            ctx.lineTo(p.x, bounds.y + bounds.height);
-          }
-          break;
-        case 3:
-          if (t === 0) {
-            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
-          } else if (t === 1) {
-            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
-          } else {
-            ctx.lineTo(bounds.x, p.y);
-          }
-          break;
-        default:
-          if (t === 0) {
-            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
-          } else if (t === 1) {
-            ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
-          } else {
-            ctx.lineTo(bounds.x + bounds.width, p.y);
-          }
-          break;
-      }
-      ctx.stroke();
+    anchors
+      .filter(([, , t]) => t !== -1)
+      .forEach(([d, p, t]) => {
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        switch (d) {
+          case 0:
+            if (t === 0) {
+              ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
+            } else if (t === 1) {
+              ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
+            } else {
+              ctx.lineTo(p.x, bounds.y);
+            }
+            break;
+          case 2:
+            if (t === 0) {
+              ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
+            } else if (t === 1) {
+              ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
+            } else {
+              ctx.lineTo(p.x, bounds.y + bounds.height);
+            }
+            break;
+          case 3:
+            if (t === 0) {
+              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
+            } else if (t === 1) {
+              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+            } else {
+              ctx.lineTo(bounds.x, p.y);
+            }
+            break;
+          default:
+            if (t === 0) {
+              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
+            } else if (t === 1) {
+              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+            } else {
+              ctx.lineTo(bounds.x + bounds.width, p.y);
+            }
+            break;
+        }
+        ctx.stroke();
 
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, threshold, 0, TAU);
-      ctx.fill();
-    });
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, threshold, 0, TAU);
+        ctx.fill();
+      });
+
+    applyFillStyle(ctx, { color: style.alert });
+    applyStrokeStyle(ctx, { color: style.alert, width: scale });
+    anchors
+      .filter(([, , t]) => t === -1)
+      .forEach(([d, p]) => {
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        switch (d) {
+          case 0:
+            ctx.lineTo(p.x, bounds.y + bounds.height);
+            break;
+          case 2:
+            ctx.lineTo(p.x, bounds.y);
+            break;
+          case 3:
+            ctx.lineTo(bounds.x + bounds.width, p.y);
+            break;
+          default:
+            ctx.lineTo(bounds.x, p.y);
+            break;
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, threshold * 0.7, 0, TAU);
+        ctx.fill();
+      });
 
     if (hitResult) {
       applyFillStyle(ctx, { color: style.selectionSecondaly });
@@ -550,6 +585,35 @@ export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: 
   }
 
   return Array.from(targetTreeRootIdSet).filter((id) => !deletedRootIdSet.has(id));
+}
+
+/**
+ * Returns patch data to disconnect the target branch and make it new tree root.
+ * This function doesn't recalculate tree layout for either original and new trees.
+ */
+export function getPatchToDisconnectBranch(
+  shapeComposite: ShapeComposite,
+  targetNodeId: string,
+): { [id: string]: Partial<Shape> } {
+  const branchIds = getTreeBranchIds(shapeComposite, [targetNodeId]);
+  return {
+    ...branchIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+      p[id] = { parentId: targetNodeId };
+      return p;
+    }, {}),
+    [targetNodeId]: getPatchToConvertNodeToRoot(),
+  };
+}
+
+function getPatchToConvertNodeToRoot(): Partial<TreeNodeShape> {
+  return {
+    type: "tree_root",
+    parentId: undefined,
+    treeParentId: undefined,
+    direction: undefined,
+    vAlign: undefined,
+    hAlign: undefined,
+  };
 }
 
 function renderMovingPreview(
