@@ -26,7 +26,7 @@ import {
   newTreeHandler,
 } from "../../../treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
-import { getInitialOutput } from "../../../../utils/textEditor";
+import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
@@ -75,6 +75,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                 let treeNode: TreeNodeShape;
                 if (treeHitResult.type === 0) {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                    ...treeNodeShape,
                     id: ctx.generateUuid(),
                     findex: generateFindexPreviousAt(shapeComposite, treeNodeShape.id),
                     parentId: treeRootId,
@@ -83,6 +84,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                   });
                 } else if (treeHitResult.type === 1) {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                    ...treeNodeShape,
                     id: ctx.generateUuid(),
                     findex: generateFindexNextAt(shapeComposite, treeNodeShape.id),
                     parentId: treeRootId,
@@ -91,6 +93,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                   });
                 } else {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                    ...treeNodeShape,
                     id: ctx.generateUuid(),
                     findex: ctx.createLastIndex(),
                     parentId: treeRootId,
@@ -106,9 +109,12 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                 treeNode = { ...treeNode, ...patch[treeNode.id] };
                 delete patch[treeNode.id];
 
+                const treeNodeShapeDoc = ctx.getDocumentMap()[treeNodeShape.id];
                 ctx.addShapes(
                   [treeNode],
-                  canHaveText(ctx.getShapeStruct, treeNode) ? { [treeNode.id]: getInitialOutput() } : undefined,
+                  canHaveText(ctx.getShapeStruct, treeNode)
+                    ? { [treeNode.id]: getInitialOutput(getDocAttributes(treeNodeShapeDoc)) }
+                    : undefined,
                   patch,
                 );
                 ctx.selectShape(treeNode.id);

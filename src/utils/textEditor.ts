@@ -469,7 +469,8 @@ export function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
 }
 
 // The last output represents a doc's attributes
-export function getDocAttributes(doc: DocOutput): DocAttributes | undefined {
+export function getDocAttributes(doc?: DocOutput): DocAttributes | undefined {
+  if (!doc) return;
   return doc.length === 0 ? getInitialOutput()[0].attributes : doc[doc.length - 1].attributes;
 }
 
