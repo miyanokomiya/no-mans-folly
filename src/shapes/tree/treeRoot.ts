@@ -31,8 +31,9 @@ export const struct: ShapeStruct<TreeRootShape> = {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.save();
-    ctx.translate(shape.p.x, shape.p.y);
+    ctx.translate(shape.p.x + shape.width / 2, shape.p.y + shape.height / 2);
     ctx.rotate(shape.rotation);
+    ctx.translate(-shape.width / 2, -shape.height / 2);
 
     ctx.beginPath();
     ctx.roundRect(0, 0, shape.width, shape.height, 6);
