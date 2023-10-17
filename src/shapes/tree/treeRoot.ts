@@ -1,14 +1,14 @@
 import { Shape } from "../../models";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
-import { createFillStyle } from "../../utils/fillStyle";
-import { createStrokeStyle } from "../../utils/strokeStyle";
+import { applyFillStyle, createFillStyle } from "../../utils/fillStyle";
+import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
 import { struct as groupStruct } from "../group";
 import { TreeShapeBase } from "./core";
 
-const MIN_WIDTH = 100;
-const MIN_HEIGHT = 30;
+const MIN_WIDTH = 120;
+const MIN_HEIGHT = 60;
 
 export type TreeRootShape = TreeShapeBase;
 
@@ -23,9 +23,30 @@ export const struct: ShapeStruct<TreeRootShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? MIN_WIDTH,
       height: arg.height ?? MIN_HEIGHT,
-      textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
+      textPadding: arg.textPadding ?? createBoxPadding([6, 6, 6, 6]),
       maxWidth: arg.maxWidth ?? 300,
     };
+  },
+  render(ctx, shape) {
+    if (shape.fill.disabled && shape.stroke.disabled) return;
+
+    ctx.save();
+    ctx.translate(shape.p.x, shape.p.y);
+    ctx.rotate(shape.rotation);
+
+    ctx.beginPath();
+    ctx.roundRect(0, 0, shape.width, shape.height, 6);
+
+    if (!shape.fill.disabled) {
+      applyFillStyle(ctx, shape.fill);
+      ctx.fill();
+    }
+    if (!shape.stroke.disabled) {
+      applyStrokeStyle(ctx, shape.stroke);
+      ctx.stroke();
+    }
+
+    ctx.restore();
   },
   resize(shape, resizingAffine) {
     const ret: Partial<TreeRootShape> = { ...recntagleStruct.resize(shape, resizingAffine) };

@@ -7,6 +7,9 @@ import { struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
 
+const MIN_WIDTH = 120;
+const MIN_HEIGHT = 50;
+
 /**
  * "parentId" should always refer to the root node.
  * "treeParentId" should refer to the parent as the tree structure.
@@ -26,9 +29,9 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       type: "tree_node",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      width: arg.width ?? 100,
-      height: arg.height ?? 30,
-      textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
+      width: arg.width ?? MIN_WIDTH,
+      height: arg.height ?? MIN_HEIGHT,
+      textPadding: arg.textPadding ?? createBoxPadding([6, 6, 6, 6]),
       maxWidth: arg.maxWidth ?? 300,
       treeParentId: arg.treeParentId ?? "",
       direction,
@@ -36,18 +39,18 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     };
   },
   render(ctx, shape, shapeContext) {
-    treeRootStruct.render(ctx, shape);
-
     const treeParent = shapeContext?.shapeMap[shape.treeParentId];
-    if (!treeParent || !isTreeShapeBase(treeParent)) return;
+    if (treeParent && isTreeShapeBase(treeParent)) {
+      const toP = getParentConnectionPoint(treeParent, shape.direction);
+      const fromP = getChildConnectionPoint(shape);
+      applyStrokeStyle(ctx, shape.stroke);
+      ctx.beginPath();
+      ctx.moveTo(fromP.x, fromP.y);
+      ctx.lineTo(toP.x, toP.y);
+      ctx.stroke();
+    }
 
-    const toP = getParentConnectionPoint(treeParent, shape.direction);
-    const fromP = getChildConnectionPoint(shape);
-    applyStrokeStyle(ctx, shape.stroke);
-    ctx.beginPath();
-    ctx.moveTo(fromP.x, fromP.y);
-    ctx.lineTo(toP.x, toP.y);
-    ctx.stroke();
+    treeRootStruct.render(ctx, shape);
   },
   immigrateShapeIds(shape, oldToNewIdMap) {
     const ret: Partial<TreeNodeShape> = {};
