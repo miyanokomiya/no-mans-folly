@@ -5,6 +5,7 @@ import {
   getModifiedTreeRootIds,
   getNextTreeLayout,
   getPatchToDisconnectBranch,
+  getPatchToGraftBranch,
   getTreeBranchIds,
   newTreeNodeMovingHandler,
 } from "./treeHandler";
@@ -420,5 +421,37 @@ describe("getPatchToDisconnectBranch", () => {
     expect(result["a"]).toHaveProperty("direction");
     expect(result["a"]).toHaveProperty("vAlign");
     expect(result["a"]).toHaveProperty("hAlign");
+  });
+});
+
+describe("getPatchToGraftBranch", () => {
+  const root1 = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
+    id: "root1",
+    findex: generateKeyBetween(null, null),
+  });
+  const a1 = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+    id: "a1",
+    findex: generateKeyBetween(root1.findex, null),
+    parentId: root1.id,
+    treeParentId: root1.id,
+    direction: 2,
+  });
+  test("should return patch data to graft the branch to other tree", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, a, aa, b, bb, ia, root1, a1],
+      getStruct: getCommonStruct,
+    });
+    expect(getPatchToGraftBranch(shapeComposite, "root1", "a")).toEqual({
+      root1: {
+        type: "tree_node",
+        findex: generateKeyBetween(aa.findex, null),
+        parentId: "root",
+        treeParentId: "a",
+        direction: 1,
+        vAlign: "center",
+        hAlign: "left",
+      },
+      a1: { parentId: "root", direction: 1, vAlign: "center", hAlign: "left" },
+    });
   });
 });

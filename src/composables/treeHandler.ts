@@ -1,6 +1,6 @@
 import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
 import { getWrapperRect } from "../shapes";
-import { TreeNodeShape, isTreeNodeShape } from "../shapes/tree/treeNode";
+import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../shapes/tree/treeNode";
 import { TreeRootShape, isTreeRootShape } from "../shapes/tree/treeRoot";
 import { ShapeComposite } from "./shapeComposite";
 import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../models";
@@ -614,6 +614,64 @@ function getPatchToConvertNodeToRoot(): Partial<TreeNodeShape> {
     vAlign: undefined,
     hAlign: undefined,
   };
+}
+
+/**
+ * Returns patch data to graft the target branch to other tree.
+ * This function doesn't recalculate tree layout.
+ */
+export function getPatchToGraftBranch(
+  shapeComposite: ShapeComposite,
+  branchRootId: string,
+  graftTargetId: string,
+): { [id: string]: Partial<Shape> } {
+  const branchIds = getTreeBranchIds(shapeComposite, [branchRootId]);
+  const graftTarget = shapeComposite.mergedShapeMap[graftTargetId] as TreeShapeBase;
+  const branchPatch = getPatchToConvertRootToNode(graftTarget);
+
+  // Generate new findex when a sibling exists at the branch's new position.
+  const allShapeNodes = shapeComposite.getAllBranchMergedShapes([branchPatch.parentId!]);
+  const graftSiblings = allShapeNodes.filter(
+    (s) => isTreeNodeShape(s) && s.treeParentId === branchPatch.treeParentId && s.direction === branchPatch.direction,
+  );
+  const graftElderId = graftSiblings.length > 0 ? graftSiblings[graftSiblings.length - 1].id : undefined;
+  const branchFIndex = graftElderId
+    ? generateKeyBetween(shapeComposite.mergedShapeMap[graftElderId].findex, null)
+    : undefined;
+
+  return {
+    ...branchIds.reduce<{ [id: string]: Partial<TreeNodeShape> }>((p, id) => {
+      p[id] = {
+        parentId: branchPatch.parentId,
+        direction: branchPatch.direction,
+        vAlign: branchPatch.vAlign,
+        hAlign: branchPatch.hAlign,
+      };
+      return p;
+    }, {}),
+    [branchRootId]: branchFIndex ? { ...branchPatch, findex: branchFIndex } : branchPatch,
+  };
+}
+
+function getPatchToConvertRootToNode(graftTargetShape: TreeShapeBase): Partial<TreeNodeShape> {
+  if (isTreeNodeShape(graftTargetShape)) {
+    return {
+      type: "tree_node",
+      parentId: graftTargetShape.parentId,
+      treeParentId: graftTargetShape.id,
+      direction: graftTargetShape.direction,
+      vAlign: graftTargetShape.vAlign,
+      hAlign: graftTargetShape.hAlign,
+    };
+  } else {
+    return {
+      type: "tree_node",
+      parentId: graftTargetShape.id,
+      treeParentId: graftTargetShape.id,
+      direction: 1,
+      ...getBoxAlignByDirection(1),
+    };
+  }
 }
 
 function renderMovingPreview(

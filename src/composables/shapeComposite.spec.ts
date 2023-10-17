@@ -111,6 +111,28 @@ describe("newShapeComposite", () => {
       expect(target.findShapeAt({ x: 5, y: 8 })).toEqual(child0);
       expect(target.findShapeAt({ x: 50, y: 55 })).toEqual(child1);
     });
+
+    test("should ignore shapes supplied as exclude ids", () => {
+      const child0 = createShape<TextShape>(getCommonStruct, "text", {
+        id: "child0",
+        p: { x: 0, y: 0 },
+        width: 10,
+        height: 10,
+      });
+      const child1 = createShape<TextShape>(getCommonStruct, "text", {
+        id: "child1",
+        p: { x: 5, y: 5 },
+        width: 10,
+        height: 10,
+      });
+      const shapeComposite = newShapeComposite({
+        shapes: [child0, child1],
+        getStruct: getCommonStruct,
+      });
+      expect(shapeComposite.findShapeAt({ x: 7, y: 7 }, undefined, [])).toEqual(child1);
+      expect(shapeComposite.findShapeAt({ x: 7, y: 7 }, undefined, [child1.id])).toEqual(child0);
+      expect(shapeComposite.findShapeAt({ x: 7, y: 7 }, undefined, [child0.id, child1.id])).toEqual(undefined);
+    });
   });
 });
 
@@ -149,6 +171,9 @@ describe("findBetterShapeAt", () => {
     expect(findBetterShapeAt(target, { x: 3, y: 3 })).toEqual(shape0);
     expect(findBetterShapeAt(target, { x: 7, y: 7 })).toEqual(group0);
     expect(findBetterShapeAt(target, { x: 7, y: 17 })).toEqual(group0);
+
+    // Ignore excluded shapes
+    expect(findBetterShapeAt(target, { x: 7, y: 17 }, undefined, [group0.id])).toEqual(undefined);
 
     // group scope => should find one among direct children of the group
     expect(findBetterShapeAt(target, { x: 7, y: 7 }, group0.id)).toEqual(child0);

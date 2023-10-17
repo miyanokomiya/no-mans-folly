@@ -41,9 +41,13 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(option.getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
-  function findShapeAt(p: IVec2, parentId?: string): Shape | undefined {
+  function findShapeAt(p: IVec2, parentId?: string, excludeIds?: string[]): Shape | undefined {
+    const excludeSet = new Set(excludeIds ?? []);
     const scope = (parentId ? mergedShapeTreeMap[parentId].children : mergedShapeTree).map((t) => mergedShapeMap[t.id]);
-    const candidate = findBackward(scope, (s) => shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext));
+    const candidate = findBackward(
+      scope,
+      (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext),
+    );
     if (!candidate) return;
     if (!shapeModule.isTransparentSelection(option.getStruct, candidate)) return candidate;
 
@@ -97,11 +101,16 @@ export function newShapeComposite(option: Option) {
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
 
-export function findBetterShapeAt(shapeComposite: ShapeComposite, p: IVec2, parentId?: string): Shape | undefined {
-  if (!parentId) return shapeComposite.findShapeAt(p);
+export function findBetterShapeAt(
+  shapeComposite: ShapeComposite,
+  p: IVec2,
+  parentId?: string,
+  excludeIds?: string[],
+): Shape | undefined {
+  if (!parentId) return shapeComposite.findShapeAt(p, undefined, excludeIds);
 
   // Seek in the scope, then seek without the scope.
-  return shapeComposite.findShapeAt(p, parentId) ?? shapeComposite.findShapeAt(p);
+  return shapeComposite.findShapeAt(p, parentId, excludeIds) ?? shapeComposite.findShapeAt(p, undefined, excludeIds);
 }
 
 /**

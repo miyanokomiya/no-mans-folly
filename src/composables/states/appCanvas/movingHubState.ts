@@ -5,6 +5,7 @@ import { isLineLabelShape } from "../../../shapes/text";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 import { newMovingShapeState } from "./movingShapeState";
 import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
+import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -35,6 +36,8 @@ export function newMovingHubState(option?: Option): AppCanvasState {
         }
 
         switch (shape.type) {
+          case "tree_root":
+            return () => newTreeRootMovingState({ targetId: shape.id });
           case "tree_node":
             return () => newTreeNodeMovingState({ targetId: shape.id });
           default:
