@@ -77,13 +77,19 @@ describe("getBoardRectMap", () => {
     columnId: column1.id,
     laneId: lane0.id,
   };
+  const column2: BoardLayoutCommon = {
+    id: "column2",
+    findex: generateKeyBetween(column1.findex, null),
+    type: "column",
+    rect: { ...rect, width: columnWidth },
+  } as const;
 
   test("should return calculated rectangles for all nodes: 0 column", () => {
     const cardMap = new Map<string, BoardLayoutCard>([]);
     const columnMap = new Map<string, BoardLayoutCommon>([]);
     const laneMap = new Map<string, BoardLayoutCommon>([]);
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 40, height: 40 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 20, height: 20 });
   });
 
   test("should return calculated rectangles for all nodes: 1 column, 1 lane, 0 cards", () => {
@@ -91,8 +97,8 @@ describe("getBoardRectMap", () => {
     const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
     const laneMap = new Map<string, BoardLayoutCommon>([["lane0", lane0]]);
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 200, height: 160 });
     expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 20 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 180, height: 120 });
   });
 
   test("should return calculated rectangles for all nodes: 1 column, 0 lane", () => {
@@ -103,10 +109,10 @@ describe("getBoardRectMap", () => {
     const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
     const laneMap = new Map<string, BoardLayoutCommon>([]);
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 200, height: 220 });
     expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 160 });
     expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 100, height: 50 });
     expect(result[card1.id]).toEqual({ x: 40, y: 110, width: 100, height: 50 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 180, height: 200 });
   });
 
   test("should return calculated rectangles for all nodes: 2 column, 0 lane", () => {
@@ -121,12 +127,34 @@ describe("getBoardRectMap", () => {
     ]);
     const laneMap = new Map<string, BoardLayoutCommon>([]);
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 370, height: 220 });
     expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 160 });
     expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 100, height: 50 });
     expect(result[card1.id]).toEqual({ x: 40, y: 110, width: 100, height: 50 });
     expect(result[column1.id]).toEqual({ x: 190, y: 20, width: 140, height: 160 });
     expect(result[card2.id]).toEqual({ x: 210, y: 40, width: 100, height: 50 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 350, height: 200 });
+  });
+
+  test("should return calculated rectangles for all nodes: 3 column, 0 lane", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card1", card1],
+      ["card2", card2],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([
+      ["column0", column0],
+      ["column1", column1],
+      ["column2", column2],
+    ]);
+    const laneMap = new Map<string, BoardLayoutCommon>([]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 160 });
+    expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 100, height: 50 });
+    expect(result[card1.id]).toEqual({ x: 40, y: 110, width: 100, height: 50 });
+    expect(result[column1.id]).toEqual({ x: 190, y: 20, width: 140, height: 160 });
+    expect(result[card2.id]).toEqual({ x: 210, y: 40, width: 100, height: 50 });
+    expect(result[column2.id]).toEqual({ x: 360, y: 20, width: 140, height: 160 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 520, height: 200 });
   });
 
   test("should return calculated rectangles for all nodes: 1 column, 1 lane", () => {
@@ -137,11 +165,11 @@ describe("getBoardRectMap", () => {
     const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
     const laneMap = new Map<string, BoardLayoutCommon>([["lane0", lane0]]);
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 200, height: 240 });
     expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 180 });
     expect(result[card3.id]).toEqual({ x: 40, y: 50, width: 100, height: 50 });
     expect(result[card0.id]).toEqual({ x: 40, y: 130, width: 100, height: 50 });
     expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 70 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 180, height: 220 });
   });
 
   test("should return calculated rectangles for all nodes: 2 column, 1 lane", () => {
@@ -164,7 +192,7 @@ describe("getBoardRectMap", () => {
     expect(result[card5.id]).toEqual({ x: 210, y: 120, width: 100, height: 50 });
     expect(result[card0.id]).toEqual({ x: 40, y: 200, width: 100, height: 50 });
     expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 140 });
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 370, height: 310 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 350, height: 290 });
   });
 
   test("should resize cards to fit belonging lane", () => {
@@ -180,6 +208,6 @@ describe("getBoardRectMap", () => {
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
     expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 160, height: 50 });
     expect(result[card2.id]).toEqual({ x: 270, y: 40, width: 160, height: 50 });
-    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 490, height: 150 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 470, height: 130 });
   });
 });
