@@ -210,4 +210,24 @@ describe("getBoardRectMap", () => {
     expect(result[card2.id]).toEqual({ x: 270, y: 40, width: 160, height: 50 });
     expect(result[root.id]).toEqual({ x: 0, y: 0, width: 470, height: 130 });
   });
+
+  test("should layout based on root position", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card1", card1],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
+    const laneMap = new Map<string, BoardLayoutCommon>([]);
+    const result = getBoardRectMap(
+      { ...root, rect: { ...root.rect, x: 10000, y: 20000 } },
+      cardMap,
+      columnMap,
+      laneMap,
+      offsetInfo,
+    );
+    expect(result[column0.id]).toEqual({ x: 10020, y: 20020, width: 140, height: 160 });
+    expect(result[card0.id]).toEqual({ x: 10040, y: 20040, width: 100, height: 50 });
+    expect(result[card1.id]).toEqual({ x: 10040, y: 20110, width: 100, height: 50 });
+    expect(result[root.id]).toEqual({ x: 10000, y: 20000, width: 180, height: 200 });
+  });
 });

@@ -159,8 +159,8 @@ export function getBoardRectMap(
     }
   }
 
-  const boardWidth = offsetInfo.boardPadding + (lastColumnRect?.x ?? 0) + (lastColumnRect?.width ?? 0);
-  const boardHeight = offsetInfo.boardPadding + (lastColumnRect?.y ?? 0) + (lastColumnRect?.height ?? 0);
+  const boardWidth = offsetInfo.boardPadding + (lastColumnRect?.x ?? 0) + (lastColumnRect?.width ?? 0) - root.rect.x;
+  const boardHeight = offsetInfo.boardPadding + (lastColumnRect?.y ?? 0) + (lastColumnRect?.height ?? 0) - root.rect.y;
   distRectMap[root.id] = { ...root.rect, width: boardWidth, height: boardHeight };
 
   return distRectMap;
