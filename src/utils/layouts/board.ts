@@ -106,8 +106,10 @@ export function getBoardRectMap(
   const colTop = offsetInfo.boardPadding + root.rect.y;
   let left = offsetInfo.boardPadding + root.rect.x;
   for (const [columnId, laneMap] of cardsInLaneByColumnMap) {
+    const column = columnMap.get(columnId)!;
     const colP = { x: left, y: colTop };
     const cardX = colP.x + offsetInfo.columnPadding;
+    const cardW = column.rect.width - 2 * offsetInfo.columnPadding;
 
     let laneTop = colP.y + offsetInfo.columnPadding;
     for (const [laneId, cardsInLane] of laneMap) {
@@ -118,7 +120,7 @@ export function getBoardRectMap(
       }
 
       for (const c of cards) {
-        const cardRect = { x: cardX, y: cardTop, width: c.rect.width, height: c.rect.height };
+        const cardRect = { x: cardX, y: cardTop, width: cardW, height: c.rect.height };
         distRectMap[c.id] = cardRect;
 
         cardTop += c.rect.height + offsetInfo.cardMargin;
@@ -130,7 +132,6 @@ export function getBoardRectMap(
       laneTop -= offsetInfo.cardMargin;
     }
 
-    const column = columnMap.get(columnId)!;
     distRectMap[columnId] = {
       x: colP.x,
       y: colP.y,

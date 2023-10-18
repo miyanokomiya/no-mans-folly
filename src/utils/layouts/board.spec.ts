@@ -166,4 +166,20 @@ describe("getBoardRectMap", () => {
     expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 140 });
     expect(result[root.id]).toEqual({ x: 0, y: 0, width: 370, height: 310 });
   });
+
+  test("should resize cards to fit belonging lane", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card2", card2],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([
+      ["column0", { ...column0, rect: { ...column0.rect, width: 200 } }],
+      ["column1", { ...column1, rect: { ...column1.rect, width: 200 } }],
+    ]);
+    const laneMap = new Map<string, BoardLayoutCommon>([]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 160, height: 50 });
+    expect(result[card2.id]).toEqual({ x: 270, y: 40, width: 160, height: 50 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 490, height: 150 });
+  });
 });
