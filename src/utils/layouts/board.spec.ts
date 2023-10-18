@@ -1,0 +1,169 @@
+import { describe, test, expect } from "vitest";
+import { BoardLayoutCard, BoardLayoutCommon, getBoardRectMap } from "./board";
+import { generateKeyBetween } from "fractional-indexing";
+
+const offsetInfo = {
+  boardPadding: 20,
+  columnMargin: 30,
+  columnPadding: 20,
+  lanePadding: 10,
+  cardMargin: 20,
+};
+
+describe("getBoardRectMap", () => {
+  const rect = { x: 0, y: 0, width: 100, height: 50 };
+  const columnWidth = 140;
+  const root: BoardLayoutCommon = { id: "root", findex: generateKeyBetween(null, null), type: "root", rect } as const;
+  const column0: BoardLayoutCommon = {
+    id: "column0",
+    findex: generateKeyBetween(root.findex, null),
+    type: "column",
+    rect: { ...rect, width: columnWidth },
+  } as const;
+  const card0: BoardLayoutCard = {
+    id: "card0",
+    findex: generateKeyBetween(column0.findex, null),
+    type: "card",
+    rect,
+    columnId: column0.id,
+  };
+  const card1: BoardLayoutCard = {
+    id: "card1",
+    findex: generateKeyBetween(card0.findex, null),
+    type: "card",
+    rect,
+    columnId: column0.id,
+  };
+  const column1: BoardLayoutCommon = {
+    id: "column1",
+    findex: generateKeyBetween(column0.findex, null),
+    type: "column",
+    rect: { ...rect, width: columnWidth },
+  } as const;
+  const card2: BoardLayoutCard = {
+    id: "card2",
+    findex: generateKeyBetween(column1.findex, null),
+    type: "card",
+    rect,
+    columnId: column1.id,
+  };
+  const lane0: BoardLayoutCommon = {
+    id: "lane0",
+    findex: generateKeyBetween(root.findex, null),
+    type: "lane",
+    rect,
+  } as const;
+  const card3: BoardLayoutCard = {
+    id: "card3",
+    findex: generateKeyBetween(lane0.findex, null),
+    type: "card",
+    rect,
+    columnId: column0.id,
+    laneId: lane0.id,
+  };
+  const card4: BoardLayoutCard = {
+    id: "card4",
+    findex: generateKeyBetween(card3.findex, null),
+    type: "card",
+    rect,
+    columnId: column1.id,
+    laneId: lane0.id,
+  };
+  const card5: BoardLayoutCard = {
+    id: "card5",
+    findex: generateKeyBetween(card4.findex, null),
+    type: "card",
+    rect,
+    columnId: column1.id,
+    laneId: lane0.id,
+  };
+
+  test("should return calculated rectangles for all nodes: 0 column", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([]);
+    const columnMap = new Map<string, BoardLayoutCommon>([]);
+    const laneMap = new Map<string, BoardLayoutCommon>([]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 40, height: 40 });
+  });
+
+  test("should return calculated rectangles for all nodes: 1 column, 1 lane, 0 cards", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([]);
+    const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
+    const laneMap = new Map<string, BoardLayoutCommon>([["lane0", lane0]]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 200, height: 160 });
+    expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 20 });
+  });
+
+  test("should return calculated rectangles for all nodes: 1 column, 0 lane", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card1", card1],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
+    const laneMap = new Map<string, BoardLayoutCommon>([]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 200, height: 220 });
+    expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 160 });
+    expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 100, height: 50 });
+    expect(result[card1.id]).toEqual({ x: 40, y: 110, width: 100, height: 50 });
+  });
+
+  test("should return calculated rectangles for all nodes: 2 column, 0 lane", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card1", card1],
+      ["card2", card2],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([
+      ["column0", column0],
+      ["column1", column1],
+    ]);
+    const laneMap = new Map<string, BoardLayoutCommon>([]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 370, height: 220 });
+    expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 160 });
+    expect(result[card0.id]).toEqual({ x: 40, y: 40, width: 100, height: 50 });
+    expect(result[card1.id]).toEqual({ x: 40, y: 110, width: 100, height: 50 });
+    expect(result[column1.id]).toEqual({ x: 190, y: 20, width: 140, height: 160 });
+    expect(result[card2.id]).toEqual({ x: 210, y: 40, width: 100, height: 50 });
+  });
+
+  test("should return calculated rectangles for all nodes: 1 column, 1 lane", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card3", card3],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
+    const laneMap = new Map<string, BoardLayoutCommon>([["lane0", lane0]]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 200, height: 240 });
+    expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 180 });
+    expect(result[card3.id]).toEqual({ x: 40, y: 50, width: 100, height: 50 });
+    expect(result[card0.id]).toEqual({ x: 40, y: 130, width: 100, height: 50 });
+    expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 70 });
+  });
+
+  test("should return calculated rectangles for all nodes: 2 column, 1 lane", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card3", card3],
+      ["card4", card4],
+      ["card5", card5],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([
+      ["column0", column0],
+      ["column1", column1],
+    ]);
+    const laneMap = new Map<string, BoardLayoutCommon>([["lane0", lane0]]);
+    const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 250 });
+    expect(result[column1.id]).toEqual({ x: 190, y: 20, width: 140, height: 250 });
+    expect(result[card3.id]).toEqual({ x: 40, y: 50, width: 100, height: 50 });
+    expect(result[card4.id]).toEqual({ x: 210, y: 50, width: 100, height: 50 });
+    expect(result[card5.id]).toEqual({ x: 210, y: 120, width: 100, height: 50 });
+    expect(result[card0.id]).toEqual({ x: 40, y: 200, width: 100, height: 50 });
+    expect(result[lane0.id]).toEqual({ x: 20, y: 20, width: 140, height: 140 });
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 370, height: 310 });
+  });
+});
