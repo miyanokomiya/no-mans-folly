@@ -17,9 +17,12 @@ import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoardCardShape } from "../../../../shapes/board/boardCard";
 import { applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
 
 export function newBoardCardSelectedState(): AppCanvasState {
   let cardShape: BoardCardShape;
+  let boardHandler: BoardHandler;
+  let boardHitResult: BoardHitResult | undefined;
 
   return {
     getLabel: () => "BoardCardSelected",
@@ -27,6 +30,11 @@ export function newBoardCardSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       cardShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as BoardCardShape;
       ctx.setCommandExams([]);
+
+      boardHandler = newBoardHandler({
+        getShapeComposite: ctx.getShapeComposite,
+        targetId: cardShape.parentId!,
+      });
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -43,6 +51,12 @@ export function newBoardCardSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
+              boardHitResult = boardHandler.hitTest(event.data.point, ctx.getScale());
+              if (boardHitResult) {
+                console.log(boardHitResult);
+                return;
+              }
+
               return handleCommonPointerDownLeftOnSingleSelection(ctx, event, cardShape.id, cardShape.id);
             }
             case 1:
@@ -62,6 +76,16 @@ export function newBoardCardSelectedState(): AppCanvasState {
           return;
         }
         case "pointerhover": {
+          const result = boardHandler.hitTest(event.data.current, ctx.getScale());
+          if (!isSameBoardHitResult(boardHitResult, result)) {
+            ctx.redraw();
+          }
+          boardHitResult = result;
+          if (boardHitResult) {
+            ctx.setCursor();
+            return;
+          }
+
           const shapeComposite = ctx.getShapeComposite();
           const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, cardShape.id);
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
@@ -124,12 +148,15 @@ export function newBoardCardSelectedState(): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
+      const scale = ctx.getScale();
       const shapeComposite = ctx.getShapeComposite();
       const path = shapeComposite.getLocalRectPolygon(cardShape);
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * ctx.getScale() });
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
       renderCtx.beginPath();
       applyPath(renderCtx, path, true);
       renderCtx.stroke();
+
+      boardHandler.render(renderCtx, style, scale, boardHitResult);
     },
   };
 }

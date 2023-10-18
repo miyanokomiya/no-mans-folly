@@ -1,16 +1,143 @@
 import { generateKeyBetween } from "fractional-indexing";
-import { EntityPatchInfo, Shape } from "../models";
+import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { createShape, getWrapperRect } from "../shapes";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { BoardCardShape, isBoardCardShape } from "../shapes/board/boardCard";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { BoardLayoutNode, boardLayout } from "../utils/layouts/board";
 import { flatTree } from "../utils/tree";
-import { isBoardRootShape } from "../shapes/board/boardRoot";
-import { isBoardColumnShape } from "../shapes/board/boardColumn";
-import { isBoardLaneShape } from "../shapes/board/boardLane";
-import { isSame } from "okageo";
+import { BoardRootShape, isBoardRootShape } from "../shapes/board/boardRoot";
+import { BoardColumnShape, isBoardColumnShape } from "../shapes/board/boardColumn";
+import { BoardLaneShape, isBoardLaneShape } from "../shapes/board/boardLane";
+import { IVec2, isSame, sub } from "okageo";
 import { RectangleShape } from "../shapes/rectangle";
+import { TAU, getD2 } from "../utils/geometry";
+import { applyFillStyle } from "../utils/fillStyle";
+
+const ANCHOR_SIZE = 10;
+const ANCHOR_MARGIN = 20;
+
+export type BoardHitResult =
+  | {
+      type: "add_card";
+      p: IVec2;
+      columnId: string;
+      laneId: string;
+    }
+  | {
+      type: "add_column";
+      p: IVec2;
+    }
+  | {
+      type: "add_lane";
+      p: IVec2;
+    };
+
+interface Option {
+  getShapeComposite: () => ShapeComposite;
+  targetId: string;
+}
+
+export function newBoardHandler(option: Option) {
+  const shapeComposite = option.getShapeComposite();
+  const root = shapeComposite.shapeMap[option.targetId] as BoardRootShape;
+  const childIds = shapeComposite.mergedShapeTreeMap[root.id].children.map((c) => c.id);
+  const columnMap = new Map<string, BoardColumnShape>();
+  const laneMap = new Map<string, BoardLaneShape>();
+  const cardMap = new Map<string, BoardCardShape>();
+  childIds.forEach((id) => {
+    const s = shapeComposite.shapeMap[id];
+    if (isBoardColumnShape(s)) {
+      columnMap.set(s.id, s);
+    } else if (isBoardLaneShape(s)) {
+      laneMap.set(s.id, s);
+    } else if (isBoardCardShape(s)) {
+      cardMap.set(s.id, s);
+    }
+  });
+  const cardByLaneByColumnMap = new Map<string, Map<string, BoardCardShape[]>>(
+    Array.from(columnMap).map(([id]) => {
+      const l = new Map(Array.from(laneMap).map(([id]) => [id, []]));
+      l.set("", []);
+      return [id, l];
+    }),
+  );
+  for (const [, card] of cardMap) {
+    const column = cardByLaneByColumnMap.get(card.columnId)!;
+    column.get(card.laneId ?? "")!.push(card);
+  }
+
+  const anchors: BoardHitResult[] = [];
+  for (const [columnId, byColumn] of cardByLaneByColumnMap) {
+    const column = columnMap.get(columnId)!;
+    for (const [laneId] of byColumn) {
+      if (laneId) {
+        const lane = laneMap.get(laneId)!;
+        anchors.push({
+          type: "add_card",
+          p: { x: column.p.x + column.width / 2, y: lane.p.y + lane.height },
+          columnId,
+          laneId,
+        });
+      } else {
+        anchors.push({
+          type: "add_card",
+          p: { x: column.p.x + column.width / 2, y: column.p.y + column.height },
+          columnId,
+          laneId: "",
+        });
+      }
+    }
+  }
+
+  anchors.push({
+    type: "add_column",
+    p: { x: root.p.x + root.width, y: root.p.y + ANCHOR_MARGIN },
+  });
+  anchors.push({
+    type: "add_lane",
+    p: { x: root.p.x + ANCHOR_MARGIN, y: root.p.y + root.height },
+  });
+
+  function hitTest(p: IVec2, scale = 1): BoardHitResult | undefined {
+    const threshold = ANCHOR_SIZE * scale;
+    const t2 = threshold * threshold;
+    return anchors.find((a) => getD2(sub(a.p, p)) <= t2);
+  }
+
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BoardHitResult) {
+    const threshold = ANCHOR_SIZE * scale;
+    applyFillStyle(ctx, { color: style.selectionPrimary });
+    anchors.forEach((a) => {
+      ctx.beginPath();
+      ctx.arc(a.p.x, a.p.y, threshold, 0, TAU);
+      ctx.fill();
+    });
+
+    if (hitResult) {
+      applyFillStyle(ctx, { color: style.selectionSecondaly });
+      ctx.beginPath();
+      ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  return { hitTest, render };
+}
+export type BoardHandler = ReturnType<typeof newBoardHandler>;
+
+export function isSameBoardHitResult(a?: BoardHitResult, b?: BoardHitResult): boolean {
+  if (a && b) {
+    if (a.type !== b.type || !isSame(a.p, b.p)) return false;
+    if (a.type === "add_card" && b.type === "add_card") {
+      return a.columnId === b.columnId && a.laneId === b.laneId;
+    } else {
+      return true;
+    }
+  }
+
+  return !a && !b;
+}
 
 export function generateBoardTemplate(
   ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "generateUuid" | "createLastIndex">,
