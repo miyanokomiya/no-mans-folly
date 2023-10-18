@@ -12,6 +12,8 @@ import iconText from "../assets/icons/text.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayout from "../assets/icons/layout.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
+import { Shape } from "../models";
+import { generateBoardTemplate } from "../composables/boardHandler";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
@@ -24,7 +26,10 @@ const lineList = [
   { type: "elbow", icon: iconLineElbow },
 ];
 
-const layoutList = [{ type: "tree_root", icon: iconLayoutBranch }];
+const layoutList = [
+  { type: "tree_root", icon: iconLayoutBranch },
+  { type: "board_root", icon: iconLayoutBranch },
+];
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
@@ -47,15 +52,25 @@ export const AppToolbar: React.FC = () => {
       e.preventDefault();
       const ctx = smctx;
       const type = e.currentTarget.getAttribute("data-type")!;
-      const shape = createShape(ctx.getShapeStruct, type, {
-        id: ctx.generateUuid(),
-        findex: acctx.shapeStore.createLastIndex(),
-      });
+
+      let shapes: Shape[] = [];
+      if (type === "board_root") {
+        shapes = generateBoardTemplate(ctx);
+      } else {
+        shapes = [
+          createShape(ctx.getShapeStruct, type, {
+            id: ctx.generateUuid(),
+            findex: acctx.shapeStore.createLastIndex(),
+          }),
+        ];
+      }
+      if (shapes.length === 0) return;
+
       sm.handleEvent({
         type: "state",
         data: {
           name: "DroppingNewShape",
-          options: { shape },
+          options: { shapes },
         },
       });
       setPopup("");

@@ -17,6 +17,10 @@ import { struct as emojiStruct } from "./emoji";
 import { struct as groupStruct } from "./group";
 import { struct as treeRootStruct } from "./tree/treeRoot";
 import { struct as treeNodeStruct } from "./tree/treeNode";
+import { struct as boardRootStruct } from "./board/boardRoot";
+import { struct as boardColumnStruct } from "./board/boardColumn";
+import { struct as boardLaneStruct } from "./board/boardLane";
+import { struct as boardCardStruct } from "./board/boardCard";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
@@ -38,6 +42,10 @@ const SHAPE_STRUCTS: {
   group: groupStruct,
   tree_root: treeRootStruct,
   tree_node: treeNodeStruct,
+  board_root: boardRootStruct,
+  board_column: boardColumnStruct,
+  board_lane: boardLaneStruct,
+  board_card: boardCardStruct,
 };
 
 export type GetShapeStruct = _GetShapeStruct;

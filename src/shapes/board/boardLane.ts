@@ -24,6 +24,7 @@ export const struct: ShapeStruct<BoardLaneShape> = {
     return rect;
   },
   canAttachSmartBranch: false,
+  stackOrderDisabled: true,
 };
 
 export function isBoardLaneShape(shape: Shape): shape is BoardLaneShape {

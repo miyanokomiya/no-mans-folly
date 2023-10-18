@@ -26,6 +26,7 @@ export const struct: ShapeStruct<BoardColumnShape> = {
     return rect;
   },
   canAttachSmartBranch: false,
+  stackOrderDisabled: true,
 };
 
 export function isBoardColumnShape(shape: Shape): shape is BoardColumnShape {

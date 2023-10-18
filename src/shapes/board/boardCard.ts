@@ -47,6 +47,7 @@ export const struct: ShapeStruct<BoardCardShape> = {
     return changed ? ret : undefined;
   },
   canAttachSmartBranch: false,
+  stackOrderDisabled: true,
 };
 
 export function isBoardCardShape(shape: Shape): shape is BoardCardShape {
