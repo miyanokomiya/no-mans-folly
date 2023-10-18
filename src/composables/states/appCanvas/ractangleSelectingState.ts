@@ -14,8 +14,12 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
   const keepSelection = option?.keepSelection ?? false;
   let rectangle: IRectangle;
   let targetIdSet = new Set<string>();
-  let selectionScope: string | undefined;
+  let selectionScope: string | null | undefined; // null: root scope, undefined: root scope but not determined
   let hasInitialSelectionScope: boolean;
+
+  const getScope = () => {
+    return typeof selectionScope === "string" ? selectionScope : undefined;
+  };
 
   return {
     getLabel: () => "RectangleSelecting",
@@ -41,8 +45,9 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           const composite = ctx.getShapeComposite();
           const shapeMap = composite.mergedShapeMap;
 
-          const candidateIds = selectionScope
-            ? composite.mergedShapeTreeMap[selectionScope].children.map((t) => t.id)
+          const currentScope = getScope();
+          const candidateIds = currentScope
+            ? composite.mergedShapeTreeMap[currentScope].children.map((t) => t.id)
             : composite.mergedShapeTree.flatMap((t) => {
                 const shape = shapeMap[t.id];
                 if (isTransparentSelection(composite.getShapeStruct, shape)) {
@@ -64,15 +69,28 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
             if (!hasInitialSelectionScope) {
               selectionScope = undefined;
             }
+          } else if (targetIdSet.size === 1) {
+            const id = Array.from(targetIdSet)[0];
+            selectionScope = shapeMap[id].parentId ?? null;
+          } else if (selectionScope === null) {
+            // When the scope is determined to root, only root shapes should be selected.
+            // => Ignore transparent scope
+            Array.from(targetIdSet).forEach((id) => {
+              if (shapeMap[id].parentId) {
+                targetIdSet.delete(id);
+              }
+            });
           } else {
             // Pick a scope if any selected shape has a parent.
-            const hasParentId = Array.from(targetIdSet.values()).find((id) => shapeMap[id].parentId);
-            selectionScope = hasParentId ? shapeMap[hasParentId].parentId : undefined;
+            const hasParentId = Array.from(targetIdSet).find((id) => shapeMap[id].parentId);
+            // If no shape has a parent, determine root as curreent scope.
+            selectionScope = hasParentId ? shapeMap[hasParentId].parentId : null;
           }
 
-          if (selectionScope) {
+          const nextScope = getScope();
+          if (nextScope) {
             // When the scope exists, the parent shouldn't be selected.
-            targetIdSet.delete(selectionScope);
+            targetIdSet.delete(nextScope);
           }
 
           ctx.redraw();

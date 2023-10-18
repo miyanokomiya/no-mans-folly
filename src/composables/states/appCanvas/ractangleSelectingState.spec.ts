@@ -68,7 +68,7 @@ function getMockCtx() {
 
 describe("newRectangleSelectingState", () => {
   describe("pointermove", () => {
-    test("should create scope when a selected shape has a parent", () => {
+    test("should not create scope when the first selected shape has no parent", () => {
       const ctx = getMockCtx();
       ctx.getSelectedShapeIdMap.mockReturnValue({});
       ctx.getLastSelectedShapeId.mockReturnValue(undefined);
@@ -79,12 +79,38 @@ describe("newRectangleSelectingState", () => {
         type: "pointermove",
         data: { start: { x: -200, y: -10 }, current: { x: 10, y: 80 }, scale: 1 },
       });
-      target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_root"], false);
-
       target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
+      });
+      target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_root"], false);
+    });
+
+    test("should create scope when the first selected shape has a parent", () => {
+      const ctx = getMockCtx();
+      ctx.getSelectedShapeIdMap.mockReturnValue({});
+      ctx.getLastSelectedShapeId.mockReturnValue(undefined);
+      const target = newRectangleSelectingState();
+      target.onStart?.(ctx as any);
+
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: -200, y: 280 }, current: { x: 10, y: 180 }, scale: 1 },
+      });
+      target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node1"], false);
+
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: -200, y: 280 }, current: { x: 10, y: 80 }, scale: 1 },
+      });
+      target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], false);
+
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: -200, y: 280 }, current: { x: 10, y: -10 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], false);
