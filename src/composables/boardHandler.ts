@@ -1,5 +1,5 @@
 import { generateKeyBetween } from "fractional-indexing";
-import { Shape } from "../models";
+import { EntityPatchInfo, Shape } from "../models";
 import { createShape, getWrapperRect } from "../shapes";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { BoardCardShape, isBoardCardShape } from "../shapes/board/boardCard";
@@ -88,6 +88,56 @@ export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: strin
   });
 
   return ret;
+}
+
+export function getBoardLayoutPatchFunctions(
+  srcComposite: ShapeComposite,
+  updatedComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+) {
+  return getModifiedBoardRootIds(srcComposite, patchInfo).map((id) => {
+    return () => getNextBoardLayout(updatedComposite, id);
+  });
+}
+
+export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>): string[] {
+  const targetBoardRootIdSet = new Set<string>();
+  const deletedRootIdSet = new Set<string>();
+
+  const shapeMap = srcComposite.shapeMap;
+  if (patchInfo.add) {
+    patchInfo.add.forEach((shape) => {
+      if (isBoardRootShape(shape)) {
+        targetBoardRootIdSet.add(shape.id);
+      } else if (shape.parentId && isBoardRootShape(shapeMap[shape.parentId])) {
+        targetBoardRootIdSet.add(shape.parentId);
+      }
+    });
+  }
+
+  if (patchInfo.update) {
+    Object.keys(patchInfo.update).forEach((id) => {
+      const shape = shapeMap[id];
+      if (isBoardRootShape(shape)) {
+        targetBoardRootIdSet.add(shape.id);
+      } else if (shape.parentId && isBoardRootShape(shapeMap[shape.parentId])) {
+        targetBoardRootIdSet.add(shape.parentId);
+      }
+    });
+  }
+
+  if (patchInfo.delete) {
+    patchInfo.delete.forEach((id) => {
+      const shape = shapeMap[id];
+      if (isBoardRootShape(shape)) {
+        deletedRootIdSet.add(shape.id);
+      } else if (shape.parentId && isBoardRootShape(shapeMap[shape.parentId])) {
+        targetBoardRootIdSet.add(shape.parentId);
+      }
+    });
+  }
+
+  return Array.from(targetBoardRootIdSet).filter((id) => !deletedRootIdSet.has(id));
 }
 
 function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLayoutNode[] {

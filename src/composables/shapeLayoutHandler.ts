@@ -1,5 +1,6 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { patchPipe } from "../utils/commons";
+import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
@@ -19,6 +20,7 @@ export function getPatchByLayouts(
     [
       () => patchInfo.update ?? {},
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
+      ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
