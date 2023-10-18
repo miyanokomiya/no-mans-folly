@@ -114,7 +114,7 @@ export function newBoundingBox(option: Option) {
 
   function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix) {
     const style = option.styleScheme;
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
     ctx.fillStyle = "#fff";
 
     function resize(p: IVec2): IVec2 {
