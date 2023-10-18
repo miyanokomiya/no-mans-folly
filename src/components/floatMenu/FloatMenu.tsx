@@ -12,7 +12,6 @@ import {
   stackOrderDisabled,
   updateCommonStyle,
 } from "../../shapes";
-import * as geometry from "../../utils/geometry";
 import { BoxAlign, BoxPadding, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
 import { canvasToView } from "../../composables/canvas";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
@@ -66,18 +65,23 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     return tmp ? { ...shape, ...tmp } : shape;
   }, [canvasState, smctx, acctx.shapeStore]);
 
-  const targetRect = useMemo<IRectangle | undefined>(() => {
-    const ids = Object.keys(acctx.shapeStore.getSelected());
-    if (ids.length === 0) return;
-
+  const selectedShapes = useMemo(() => {
     const shapeComposite = smctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
-    const rect = geometry.getWrapperRect(ids.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
+    const selected = smctx.getSelectedShapeIdMap();
+    return Object.keys(selected).map((id) => shapeMap[id]);
+  }, [canvasState, smctx, acctx.shapeStore]);
+
+  const targetRect = useMemo<IRectangle | undefined>(() => {
+    if (selectedShapes.length === 0) return;
+
+    const shapeComposite = smctx.getShapeComposite();
+    const rect = shapeComposite.getWrapperRectForShapes(selectedShapes);
     const p = canvasToView(scale, viewOrigin, rect);
     const width = rect.width / scale;
     const height = rect.height / scale;
     return { x: p.x, y: p.y, width, height };
-  }, [canvasState, viewOrigin, scale, smctx, acctx.shapeStore]);
+  }, [viewOrigin, scale, smctx, selectedShapes]);
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -281,29 +285,20 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
 
   const canChangeStack = useMemo<boolean>(() => {
     const shapeComposite = smctx.getShapeComposite();
-    const selected = smctx.getSelectedShapeIdMap();
-    return shapeComposite.shapes.every((s) => selected[s.id] && stackOrderDisabled(smctx.getShapeStruct, s));
-  }, [smctx]);
+    return !!indexShape && !stackOrderDisabled(shapeComposite.getShapeStruct, indexShape);
+  }, [indexShape, smctx]);
 
   const onClickStackLast = useCallback(() => {
-    const shapeComposite = smctx.getShapeComposite();
-    const selected = smctx.getSelectedShapeIdMap();
-    const ids = shapeComposite.shapes
-      .filter((s) => selected[s.id] && stackOrderDisabled(smctx.getShapeStruct, s))
-      .map((s) => s.id);
+    const ids = selectedShapes.filter((s) => !stackOrderDisabled(smctx.getShapeStruct, s)).map((s) => s.id);
     smctx.patchShapes(patchShapesOrderToLast(ids, smctx.createLastIndex()));
     focusBack?.();
-  }, [focusBack, smctx]);
+  }, [focusBack, smctx, selectedShapes]);
 
   const onClickStackFirst = useCallback(() => {
-    const shapeComposite = smctx.getShapeComposite();
-    const selected = smctx.getSelectedShapeIdMap();
-    const ids = shapeComposite.shapes
-      .filter((s) => selected[s.id] && stackOrderDisabled(smctx.getShapeStruct, s))
-      .map((s) => s.id);
+    const ids = selectedShapes.filter((s) => !stackOrderDisabled(smctx.getShapeStruct, s)).map((s) => s.id);
     smctx.patchShapes(patchShapesOrderToFirst(ids, smctx.createFirstIndex()));
     focusBack?.();
-  }, [focusBack, smctx]);
+  }, [focusBack, smctx, selectedShapes]);
 
   const canIndexShapeHaveTextPadding = useMemo<boolean>(() => {
     if (!indexShape) return false;
