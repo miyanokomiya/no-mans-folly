@@ -97,7 +97,7 @@ describe("getBoardRectMap", () => {
     const columnMap = new Map<string, BoardLayoutCommon>([["column0", column0]]);
     const laneMap = new Map<string, BoardLayoutCommon>([["lane0", lane0]]);
     const result = getBoardRectMap(root, cardMap, columnMap, laneMap, offsetInfo);
-    expect(result[lane0.id]).toEqual({ x: 20, y: 40, width: 140, height: 20 });
+    expect(result[lane0.id]).toEqual({ x: 10, y: 40, width: 160, height: 20 });
     expect(result[root.id]).toEqual({ x: 0, y: 0, width: 180, height: 120 });
   });
 
@@ -168,7 +168,7 @@ describe("getBoardRectMap", () => {
     expect(result[column0.id]).toEqual({ x: 20, y: 20, width: 140, height: 180 });
     expect(result[card3.id]).toEqual({ x: 40, y: 50, width: 100, height: 50 });
     expect(result[card0.id]).toEqual({ x: 40, y: 130, width: 100, height: 50 });
-    expect(result[lane0.id]).toEqual({ x: 20, y: 40, width: 140, height: 70 });
+    expect(result[lane0.id]).toEqual({ x: 10, y: 40, width: 160, height: 70 });
     expect(result[root.id]).toEqual({ x: 0, y: 0, width: 180, height: 220 });
   });
 
@@ -191,7 +191,7 @@ describe("getBoardRectMap", () => {
     expect(result[card4.id]).toEqual({ x: 210, y: 50, width: 100, height: 50 });
     expect(result[card5.id]).toEqual({ x: 210, y: 120, width: 100, height: 50 });
     expect(result[card0.id]).toEqual({ x: 40, y: 200, width: 100, height: 50 });
-    expect(result[lane0.id]).toEqual({ x: 20, y: 40, width: 310, height: 140 });
+    expect(result[lane0.id]).toEqual({ x: 10, y: 40, width: 330, height: 140 });
     expect(result[root.id]).toEqual({ x: 0, y: 0, width: 350, height: 290 });
   });
 

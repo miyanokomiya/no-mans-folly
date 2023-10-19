@@ -1,4 +1,5 @@
 import { Shape } from "../../models";
+import { createColor } from "../../models/factories";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
@@ -13,7 +14,7 @@ export const struct: ShapeStruct<BoardLaneShape> = {
     return {
       ...createBaseShape(arg),
       type: "board_lane",
-      fill: arg.fill ?? createFillStyle(),
+      fill: arg.fill ?? createFillStyle({ color: createColor(255, 255, 255, 0.3) }),
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 300,
       height: arg.height ?? 100,

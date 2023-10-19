@@ -155,9 +155,9 @@ export function getBoardRectMap(
     let laneTop = offsetInfo.boardPadding + offsetInfo.columnPadding + root.rect.y;
     for (const [laneId, laneHeight] of laneHeightMap) {
       distRectMap[laneId] = {
-        x: offsetInfo.boardPadding + root.rect.x,
+        x: offsetInfo.boardPadding / 2 + root.rect.x,
         y: laneTop,
-        width: boardWidth - 2 * offsetInfo.boardPadding,
+        width: boardWidth - 2 * offsetInfo.boardPadding + offsetInfo.boardPadding,
         height: laneHeight,
       };
       laneTop += laneHeight + offsetInfo.cardMargin;
