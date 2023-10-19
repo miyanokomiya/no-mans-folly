@@ -31,6 +31,48 @@ export function getPatchByLayouts(
 }
 
 /**
+ * Delete shapes that can no longer exist under the updated environment.
+ * Other than that, same as "getPatchByLayouts"
+ */
+export function getPatchInfoByLayouts(
+  shapeComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+): EntityPatchInfo<Shape> {
+  const updatedCompositeBeforeDelete = getNextShapeComposite(shapeComposite, patchInfo);
+  const shouldDeleteIds = updatedCompositeBeforeDelete.shapes
+    .filter((s) => updatedCompositeBeforeDelete.shouldDelete(s))
+    .map((s) => s.id);
+  const updatedComposite =
+    shouldDeleteIds.length > 0
+      ? getNextShapeComposite(updatedCompositeBeforeDelete, { delete: shouldDeleteIds })
+      : updatedCompositeBeforeDelete;
+  const adjustedPatchInfo =
+    shouldDeleteIds.length > 0
+      ? {
+          ...patchInfo,
+          delete: [...(patchInfo.delete ?? []), ...shouldDeleteIds],
+        }
+      : patchInfo;
+
+  const patchResult = patchPipe(
+    [
+      () => adjustedPatchInfo.update ?? {},
+      ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
+      ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
+      (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
+    ],
+    shapeComposite.shapeMap,
+  );
+
+  return {
+    add: adjustedPatchInfo.add,
+    update: patchResult.patch,
+    delete: adjustedPatchInfo.delete,
+  };
+}
+
+/**
  * Similar to "getPatchByLayouts" but proc only automatic adjustments.
  * Returned patch includes src patch supplied as an argument.
  */

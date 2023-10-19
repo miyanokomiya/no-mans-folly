@@ -33,7 +33,7 @@ import { Shape } from "../models";
 import { useLocalStorageAdopter } from "../composables/localStorage";
 import { mapReduce, patchPipe } from "../utils/commons";
 import { getDeleteTargetIds } from "../composables/shapeComposite";
-import { getPatchByLayouts } from "../composables/shapeLayoutHandler";
+import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -237,14 +237,18 @@ export const AppCanvas: React.FC = () => {
           getAllBranchIds(getTree(Object.values(updated.result)), ids),
         );
 
-        const shapePatch = getPatchByLayouts(acctx.shapeStore.shapeComposite, { update: patch, delete: targetIds });
+        const shapePatchInfo = getPatchInfoByLayouts(acctx.shapeStore.shapeComposite, {
+          update: patch,
+          delete: targetIds,
+        });
 
         acctx.shapeStore.transact(() => {
-          if (shapePatch) {
-            acctx.shapeStore.patchEntities(shapePatch);
+          if (shapePatchInfo.update) {
+            acctx.shapeStore.patchEntities(shapePatchInfo.update);
           }
-          acctx.shapeStore.deleteEntities(targetIds);
-          acctx.documentStore.deleteDocs(targetIds);
+          const adjustedTargetIds = shapePatchInfo.delete ?? targetIds;
+          acctx.shapeStore.deleteEntities(adjustedTargetIds);
+          acctx.documentStore.deleteDocs(adjustedTargetIds);
         });
       },
       patchShapes: acctx.shapeStore.patchEntities,
