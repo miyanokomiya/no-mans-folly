@@ -68,7 +68,12 @@ export function newBoardHandler(option: Option) {
   );
   for (const [, card] of cardMap) {
     const column = cardByLaneByColumnMap.get(card.columnId)!;
-    column.get(card.laneId ?? "")!.push(card);
+    if (column) {
+      column.get(card.laneId ?? "")!.push(card);
+    } else {
+      // Cards must have valid column
+      cardMap.delete(card.id);
+    }
   }
 
   const anchors: BoardHitResult[] = [];
@@ -219,7 +224,15 @@ export function generateBoardTemplate(
 
 export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
   const layoutNodes = toLayoutNodes(shapeComposite, rootId);
-  const result = boardLayout(layoutNodes);
+  if (layoutNodes.length === 0) return {};
+
+  let result: ReturnType<typeof boardLayout>;
+  try {
+    result = boardLayout(layoutNodes);
+  } catch {
+    return {};
+  }
+
   const ret: { [id: string]: Partial<Shape> } = {};
   result.forEach((r) => {
     const src = shapeComposite.shapeMap[r.id] as RectangleShape;
@@ -261,11 +274,15 @@ export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo:
   const deletedRootIdSet = new Set<string>();
 
   const shapeMap = srcComposite.shapeMap;
+  const isParentRoot = (s: Shape): s is Shape & { parentId: string } => {
+    return !!(s.parentId && shapeMap[s.parentId] && isBoardRootShape(shapeMap[s.parentId]));
+  };
+
   if (patchInfo.add) {
     patchInfo.add.forEach((shape) => {
       if (isBoardRootShape(shape)) {
         targetBoardRootIdSet.add(shape.id);
-      } else if (shape.parentId && isBoardRootShape(shapeMap[shape.parentId])) {
+      } else if (isParentRoot(shape)) {
         targetBoardRootIdSet.add(shape.parentId);
       }
     });
@@ -276,7 +293,7 @@ export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo:
       const shape = shapeMap[id];
       if (isBoardRootShape(shape)) {
         targetBoardRootIdSet.add(shape.id);
-      } else if (shape.parentId && isBoardRootShape(shapeMap[shape.parentId])) {
+      } else if (isParentRoot(shape)) {
         targetBoardRootIdSet.add(shape.parentId);
       }
     });
@@ -287,7 +304,7 @@ export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo:
       const shape = shapeMap[id];
       if (isBoardRootShape(shape)) {
         deletedRootIdSet.add(shape.id);
-      } else if (shape.parentId && isBoardRootShape(shapeMap[shape.parentId])) {
+      } else if (isParentRoot(shape)) {
         targetBoardRootIdSet.add(shape.parentId);
       }
     });
@@ -298,9 +315,15 @@ export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo:
 
 function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLayoutNode[] {
   const tree = shapeComposite.mergedShapeTreeMap[rootId];
+  if (!tree) return [];
+
+  const columnIdSet = new Set<string>();
+  const laneIdSet = new Set<string>();
   const layoutNodes: BoardLayoutNode[] = [];
   flatTree([tree]).forEach((t) => {
     const s = shapeComposite.mergedShapeMap[t.id];
+    if (isBoardCardShape(s)) return;
+
     const rect = getWrapperRect(shapeComposite.getShapeStruct, s);
     if (isBoardColumnShape(s)) {
       layoutNodes.push({
@@ -309,6 +332,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
         rect,
         type: "column",
       });
+      columnIdSet.add(s.id);
     } else if (isBoardLaneShape(s)) {
       layoutNodes.push({
         id: s.id,
@@ -316,15 +340,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
         rect,
         type: "lane",
       });
-    } else if (isBoardCardShape(s)) {
-      layoutNodes.push({
-        id: s.id,
-        findex: s.findex,
-        rect,
-        type: "card",
-        columnId: s.columnId,
-        laneId: s.laneId,
-      });
+      laneIdSet.add(s.id);
     } else if (isBoardRootShape(s)) {
       layoutNodes.push({
         id: s.id,
@@ -334,5 +350,23 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
       });
     }
   });
+
+  flatTree([tree]).forEach((t) => {
+    const s = shapeComposite.mergedShapeMap[t.id];
+    const rect = getWrapperRect(shapeComposite.getShapeStruct, s);
+    // Ignore cards in invalid columns
+    if (isBoardCardShape(s) && columnIdSet.has(s.columnId)) {
+      layoutNodes.push({
+        id: s.id,
+        findex: s.findex,
+        rect,
+        type: "card",
+        columnId: s.columnId,
+        // Fallback to default lane when a lane is invalid
+        laneId: s.laneId && laneIdSet.has(s.laneId) ? s.laneId : undefined,
+      });
+    }
+  });
+
   return layoutNodes;
 }

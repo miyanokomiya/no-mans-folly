@@ -26,9 +26,14 @@ const column0 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
   findex: generateKeyBetween(root.findex, null),
   parentId: root.id,
 });
+const column1 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+  id: "column1",
+  findex: generateKeyBetween(column0.findex, null),
+  parentId: root.id,
+});
 const lane0 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   id: "lane0",
-  findex: generateKeyBetween(column0.findex, null),
+  findex: generateKeyBetween(column1.findex, null),
   parentId: root.id,
 });
 const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
@@ -118,6 +123,42 @@ describe("getNextBoardLayout", () => {
     expect(result0["root"]).toEqual({ width: 380, height: 240 });
     expect(Object.keys(result0)).toHaveLength(5);
   });
+
+  test("should do nothing when no root is found", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [column0, card0, lane0, card1],
+      getStruct: getCommonStruct,
+    });
+    const result0 = getNextBoardLayout(shapeComposite, "root");
+    expect(result0).toEqual({});
+  });
+
+  test("should do nothing when no column is found", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, card0, lane0],
+      getStruct: getCommonStruct,
+    });
+    const result0 = getNextBoardLayout(shapeComposite, "root");
+    expect(result0).toEqual({});
+  });
+
+  test("should not change a card when a parent column isn't found", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column1, card0, lane0],
+      getStruct: getCommonStruct,
+    });
+    const result0 = getNextBoardLayout(shapeComposite, "root");
+    expect(Object.keys(result0).sort()).toEqual(["column1", "lane0", "root"]);
+  });
+
+  test.only("should return patch even when a lane isn't found", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column0, card1],
+      getStruct: getCommonStruct,
+    });
+    const result0 = getNextBoardLayout(shapeComposite, "root");
+    expect(Object.keys(result0).sort()).toEqual(["card1", "column0", "root"]);
+  });
 });
 
 describe("getModifiedBoardRootIds", () => {
@@ -127,5 +168,13 @@ describe("getModifiedBoardRootIds", () => {
     expect(getModifiedBoardRootIds(shapeComposite, { update: { column0: {} } })).toEqual(["root"]);
     expect(getModifiedBoardRootIds(shapeComposite, { update: { card0: {} } })).toEqual(["root"]);
     expect(getModifiedBoardRootIds(shapeComposite, { update: { card0: {} }, delete: ["root"] })).toEqual([]);
+  });
+
+  test("should not return board roots when they are not found", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [column0, card0, lane0, card1],
+      getStruct: getCommonStruct,
+    });
+    expect(getModifiedBoardRootIds(shapeComposite, {})).toEqual([]);
   });
 });

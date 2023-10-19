@@ -21,9 +21,10 @@ describe("immigrateShapeIds", () => {
     const card = struct.create({ parentId: "board", columnId: "column", laneId: "lane" });
 
     expect(struct.immigrateShapeIds?.(card, {}, true)).toEqual({
-      type: "rectangle",
-      columnId: undefined,
+      columnId: "",
+      laneId: "",
     });
+    expect(struct.immigrateShapeIds?.(card, {}, true)).toHaveProperty("parentId");
     expect(struct.immigrateShapeIds?.(card, {})).toEqual({});
   });
 });
@@ -33,12 +34,11 @@ describe("refreshRelation", () => {
     const card = struct.create({ parentId: "board", columnId: "column", laneId: "lane" });
 
     expect(struct.refreshRelation?.(card, new Set())).toEqual({
-      type: "rectangle",
-      columnId: undefined,
-      laneId: undefined,
+      columnId: "",
+      laneId: "",
     });
     expect(struct.refreshRelation?.(card, new Set(["column"]))).toEqual({
-      laneId: undefined,
+      laneId: "",
     });
     expect(struct.refreshRelation?.(card, new Set(["column"]))).toHaveProperty("laneId");
   });

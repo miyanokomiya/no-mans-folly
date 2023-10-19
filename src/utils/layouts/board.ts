@@ -48,6 +48,7 @@ export const boardLayout: LayoutFn<BoardLayoutNode> = (src) => {
     }
   });
   if (!root) throw new Error("Not found board root.");
+  if (columnMap.size === 0) throw new Error("Not found board column.");
 
   const distRectMap = getBoardRectMap(root, cardMap, columnMap, laneMap);
   return src.map((s) => ({ ...s, rect: distRectMap[s.id] }));

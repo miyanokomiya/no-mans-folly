@@ -27,6 +27,7 @@ import {
 import { canHaveText, createShape } from "../../../../shapes";
 import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
 import { Shape } from "../../../../models";
+import { newSingleSelectedState } from "../singleSelectedState";
 
 export function newBoardCardSelectedState(): AppCanvasState {
   let cardShape: BoardCardShape;
@@ -43,8 +44,13 @@ export function newBoardCardSelectedState(): AppCanvasState {
   return {
     getLabel: () => "BoardCardSelected",
     onStart: (ctx) => {
+      const shapeMap = ctx.getShapeComposite().shapeMap;
+      cardShape = shapeMap[ctx.getLastSelectedShapeId() ?? ""] as BoardCardShape;
+      if (!shapeMap[cardShape.parentId ?? ""] || !shapeMap[cardShape.columnId]) {
+        return newSingleSelectedState;
+      }
+
       ctx.showFloatMenu();
-      cardShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as BoardCardShape;
       ctx.setCommandExams([]);
       initHandler(ctx);
     },
