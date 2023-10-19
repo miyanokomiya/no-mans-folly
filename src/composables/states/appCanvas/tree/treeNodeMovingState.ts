@@ -50,8 +50,8 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
           const result = treeMovingHandler.moveTest(event.data.current);
           if (!isSameTreeNodeMovingResult(result, movingResult)) {
             ctx.redraw();
-            movingResult = result;
           }
+          movingResult = result;
           return;
         }
         case "pointerup": {

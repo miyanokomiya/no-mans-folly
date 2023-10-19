@@ -9,9 +9,9 @@ import { flatTree } from "../utils/tree";
 import { BoardRootShape, isBoardRootShape } from "../shapes/board/boardRoot";
 import { BoardColumnShape, isBoardColumnShape } from "../shapes/board/boardColumn";
 import { BoardLaneShape, isBoardLaneShape } from "../shapes/board/boardLane";
-import { IVec2, isSame, sub } from "okageo";
+import { IRectangle, IVec2, isSame, sub } from "okageo";
 import { RectangleShape } from "../shapes/rectangle";
-import { TAU, getD2 } from "../utils/geometry";
+import { TAU, getD2, getDistanceBetweenPointAndRect, isPointOnRectangle } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -156,7 +156,18 @@ export function newBoardHandler(option: Option) {
     return ids.some((id) => shapeComposite.mergedShapeMap[id]?.parentId === root.id || id === root.id);
   }
 
-  return { hitTest, render, getCardsInColumnLane, generateNewColumnFindex, generateNewLaneFindex, isBoardChanged };
+  return {
+    hitTest,
+    render,
+    getCardsInColumnLane,
+    generateNewColumnFindex,
+    generateNewLaneFindex,
+    isBoardChanged,
+    columnMap,
+    laneMap,
+    cardMap,
+    cardByLaneByColumnMap,
+  };
 }
 export type BoardHandler = ReturnType<typeof newBoardHandler>;
 
@@ -369,4 +380,148 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
   });
 
   return layoutNodes;
+}
+
+export type BoardCardMovingHitResult = {
+  columnId: string;
+  laneId: string;
+  findex: string;
+  rect: IRectangle;
+};
+
+interface BoardCardMovingOption extends Option {
+  cardIds: string[];
+}
+
+export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
+  const shapeComposite = option.getShapeComposite();
+  const boardHandler = newBoardHandler(option);
+  const allCardIdSet = new Set(boardHandler.cardMap.keys());
+
+  const candidateIdSet = new Set(allCardIdSet);
+  option.cardIds.forEach((id) => candidateIdSet.delete(id));
+  const movingCardIdSet = new Set(option.cardIds);
+
+  const shapeMap = shapeComposite.shapeMap;
+  const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
+    id,
+    shapeComposite.getWrapperRect(shapeMap[id]),
+  ]);
+
+  const emptyCells: { columnId: string; laneId: string }[] = [];
+  for (const [columnId, byColumn] of boardHandler.cardByLaneByColumnMap) {
+    for (const [laneId, byLane] of byColumn) {
+      if (byLane.filter((s) => !movingCardIdSet.has(s.id)).length === 0) {
+        emptyCells.push({ columnId, laneId });
+      }
+    }
+  }
+  const emptyCellRects = emptyCells.map<[{ columnId: string; laneId: string }, IRectangle]>((cell) => {
+    const column = boardHandler.columnMap.get(cell.columnId)!;
+    if (cell.laneId) {
+      const lane = boardHandler.laneMap.get(cell.laneId)!;
+      return [cell, { x: column.p.x, y: lane.p.y, width: column.width, height: lane.height }];
+    } else {
+      const lanes = Array.from(boardHandler.laneMap.values());
+      if (lanes.length > 0) {
+        const lastLane = lanes[lanes.length - 1];
+        const y = lastLane.p.y + lastLane.height;
+        return [cell, { x: column.p.x, y, width: column.width, height: column.p.y + column.height - y }];
+      } else {
+        return [cell, { x: column.p.x, y: column.p.y, width: column.width, height: column.height }];
+      }
+    }
+  });
+
+  function hitTest(p: IVec2): BoardCardMovingHitResult | undefined {
+    if (rects.length === 0) return;
+
+    {
+      const targetInfo = emptyCellRects.find(([, rect]) => isPointOnRectangle(rect, p));
+      if (targetInfo) {
+        const [cell, rect] = targetInfo;
+        return {
+          columnId: cell.columnId,
+          laneId: cell.laneId,
+          findex: generateKeyBetween(shapeMap[cell.laneId]?.findex ?? shapeMap[cell.columnId].findex, null),
+          rect,
+        };
+      }
+    }
+
+    const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
+      id,
+      rect,
+      getDistanceBetweenPointAndRect(p, rect),
+    ]);
+    const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
+    const toBelow = closestRect.y + closestRect.height / 2 < p.y;
+    const closestCard = boardHandler.cardMap.get(closestId)!;
+    const siblings = boardHandler.cardByLaneByColumnMap.get(closestCard.columnId)!.get(closestCard.laneId)!;
+    const closestIndex = siblings.findIndex((s) => s.id === closestId);
+    const previousIndex = toBelow ? closestIndex : closestIndex - 1;
+    const nextIndex = toBelow ? closestIndex + 1 : closestIndex;
+    const column = shapeMap[closestCard.columnId];
+    const lane = shapeMap[closestCard.laneId];
+
+    // Allow to pick the same location as current cards.
+    // When multiple cards are moving, location updating can still happen.
+    let rect: IRectangle;
+    let findex: string;
+    if (previousIndex === -1) {
+      const next = siblings[nextIndex];
+      const nextRect = shapeComposite.getWrapperRect(next);
+      rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
+      findex = generateKeyBetween(lane?.findex ?? column.findex, next.findex);
+    } else if (nextIndex === siblings.length) {
+      const prev = siblings[previousIndex];
+      const prevRect = shapeComposite.getWrapperRect(prev);
+      rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
+      findex = generateKeyBetween(prev.findex, null);
+    } else {
+      const prev = siblings[previousIndex];
+      const next = siblings[nextIndex];
+      const prevRect = shapeComposite.getWrapperRect(prev);
+      const nextRect = shapeComposite.getWrapperRect(next);
+      rect = {
+        x: prevRect.x,
+        y: (prevRect.y + prevRect.height + nextRect.y) / 2 - 5,
+        width: prevRect.width,
+        height: 15,
+      };
+      findex = generateKeyBetween(prev.findex, next.findex);
+    }
+
+    return {
+      findex,
+      columnId: closestCard.columnId,
+      laneId: closestCard.laneId,
+      rect,
+    };
+  }
+
+  function render(
+    ctx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    _scale: number,
+    hitResult?: BoardCardMovingHitResult,
+  ) {
+    if (hitResult) {
+      applyFillStyle(ctx, { color: style.selectionSecondaly });
+      ctx.beginPath();
+      ctx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
+      ctx.fill();
+    }
+  }
+
+  return { hitTest, render, isBoardChanged: boardHandler.isBoardChanged };
+}
+export type BoardCardMovingHandler = ReturnType<typeof newBoardCardMovingHandler>;
+
+export function isSameBoardCardMovingHitResult(a?: BoardCardMovingHitResult, b?: BoardCardMovingHitResult): boolean {
+  if (a && b) {
+    return a.findex === b.findex && a.columnId === b.columnId && a.laneId === b.laneId;
+  }
+
+  return !a && !b;
 }
