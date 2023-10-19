@@ -65,6 +65,8 @@ export function getBoardRectMap(
     columnPadding: COLUMN_PADDING,
     lanePadding: LANE_PADDING,
     cardMargin: CARD_MARGIN,
+    columnMinHeight: 10 * CARD_MARGIN + 2 * COLUMN_PADDING,
+    laneMinHeight: 5 * CARD_MARGIN + 2 * LANE_PADDING,
   },
 ): { [id: string]: IRectangle } {
   const columnIds = Array.from(columnMap.keys());
@@ -93,10 +95,12 @@ export function getBoardRectMap(
     for (const [laneId] of cardsInLaneMap) {
       const cards = goruped[laneId] ?? [];
       map.set(laneId, cards);
-      const laneHeight =
+      const laneHeight = Math.max(
         cards.reduce((m, c) => m + c.rect.height, 0) +
-        (cards.length - 1) * offsetInfo.cardMargin +
-        (laneId ? 2 * offsetInfo.lanePadding : 0);
+          (cards.length - 1) * offsetInfo.cardMargin +
+          (laneId ? 2 * offsetInfo.lanePadding : 0),
+        offsetInfo.laneMinHeight,
+      );
       const h = laneHeightMap.get(laneId)!;
       if (h < laneHeight) {
         laneHeightMap.set(laneId, laneHeight);
@@ -134,7 +138,7 @@ export function getBoardRectMap(
       x: colP.x,
       y: colP.y,
       width: column.rect.width,
-      height: laneTop + offsetInfo.columnPadding - colP.y,
+      height: Math.max(laneTop + offsetInfo.columnPadding - colP.y, offsetInfo.columnMinHeight),
     };
     left += column.rect.width + offsetInfo.columnMargin;
   }

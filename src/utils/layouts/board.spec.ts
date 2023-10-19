@@ -8,6 +8,8 @@ const offsetInfo = {
   columnPadding: 20,
   lanePadding: 10,
   cardMargin: 20,
+  columnMinHeight: 0,
+  laneMinHeight: 0,
 };
 
 describe("getBoardRectMap", () => {
