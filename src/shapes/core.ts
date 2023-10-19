@@ -47,6 +47,10 @@ export interface ShapeStruct<T extends Shape> {
    * Needless to care "parentId" that is refreshed outside this function.
    */
   refreshRelation?: (shape: T, availableIdSet: Set<string>) => Partial<T> | undefined;
+  /**
+   * Returns true when the shape should be deleted under the condition of the context.
+   */
+  shouldDelete?: (shape: T, shapeContext: ShapeContext) => boolean;
   canAttachSmartBranch?: boolean;
   shouldKeepAspect?: boolean;
   /**

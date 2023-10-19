@@ -46,6 +46,32 @@ export const struct: ShapeStruct<BoardCardShape> = {
 
     return changed ? ret : undefined;
   },
+  immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
+    if (removeNotFound && !oldToNewIdMap[shape.columnId]) {
+      return { type: "rectangle", columnId: undefined, laneId: undefined };
+    }
+
+    const ret: Partial<BoardCardShape> = { columnId: oldToNewIdMap[shape.columnId] };
+    if (shape.laneId) {
+      if (oldToNewIdMap[shape.laneId]) {
+        ret.laneId = oldToNewIdMap[shape.laneId];
+      } else if (removeNotFound) {
+        ret.laneId = undefined;
+      }
+    }
+
+    return ret;
+  },
+  refreshRelation(shape, availableIdSet) {
+    if (!availableIdSet.has(shape.columnId)) {
+      return { type: "rectangle", columnId: undefined, laneId: undefined };
+    } else if (shape.laneId && !availableIdSet.has(shape.laneId)) {
+      return { laneId: undefined };
+    }
+  },
+  shouldDelete(shape, shapeContext) {
+    return !shapeContext.shapeMap[shape.columnId] || !shape.parentId || !shapeContext.shapeMap[shape.parentId];
+  },
   canAttachSmartBranch: false,
   stackOrderDisabled: true,
 };

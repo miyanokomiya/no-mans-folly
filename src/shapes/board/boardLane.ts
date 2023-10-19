@@ -23,6 +23,17 @@ export const struct: ShapeStruct<BoardLaneShape> = {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: 20 };
     return rect;
   },
+  immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
+    if (removeNotFound && !oldToNewIdMap[shape.parentId!]) {
+      return { type: "rectangle", parentId: undefined };
+    }
+    return {};
+  },
+  refreshRelation(shape, availableIdSet) {
+    if (!availableIdSet.has(shape.parentId!)) {
+      return { type: "rectangle", parentId: undefined };
+    }
+  },
   canAttachSmartBranch: false,
   stackOrderDisabled: true,
 };

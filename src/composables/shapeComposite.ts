@@ -78,6 +78,10 @@ export function newShapeComposite(option: Option) {
     return shapeModule.getSnappingLines(option.getStruct, shape, mergedShapeContext);
   }
 
+  function shouldDelete(shape: Shape): boolean {
+    return !!option.getStruct(shape.type).shouldDelete?.(shape, mergedShapeContext);
+  }
+
   return {
     getShapeStruct: option.getStruct,
     shapes: option.shapes,
@@ -97,6 +101,7 @@ export function newShapeComposite(option: Option) {
     getLocalRectPolygon,
     getShapesOverlappingRect,
     getSnappingLines,
+    shouldDelete,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
