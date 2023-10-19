@@ -94,7 +94,7 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
           if (!shape) return newSelectionHubState;
 
           const isTreeChanged = Array.from(event.data.keys).some(
-            (id) => shapeComposite.mergedShapeMap[id].parentId === treeNodeShape.parentId,
+            (id) => shapeComposite.mergedShapeMap[id]?.parentId === treeNodeShape.parentId,
           );
           if (isTreeChanged) {
             initData(ctx);

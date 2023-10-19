@@ -146,22 +146,22 @@ export function getBoardRectMap(
 
   const lastColumnRect = columnIds.length > 0 ? distRectMap[columnIds[columnIds.length - 1]] : undefined;
 
+  const boardWidth = offsetInfo.boardPadding + (lastColumnRect?.x ?? 0) + (lastColumnRect?.width ?? 0) - root.rect.x;
+  const boardHeight = offsetInfo.boardPadding + (lastColumnRect?.y ?? 0) + (lastColumnRect?.height ?? 0) - root.rect.y;
+  distRectMap[root.id] = { ...root.rect, width: boardWidth, height: boardHeight };
+
   if (lastColumnRect) {
-    let laneTop = offsetInfo.boardPadding + root.rect.y;
+    let laneTop = offsetInfo.boardPadding + offsetInfo.columnPadding + root.rect.y;
     for (const [laneId, laneHeight] of laneHeightMap) {
       distRectMap[laneId] = {
         x: offsetInfo.boardPadding + root.rect.x,
         y: laneTop,
-        width: lastColumnRect.width,
+        width: boardWidth - 2 * offsetInfo.boardPadding,
         height: laneHeight,
       };
-      laneTop += laneHeight;
+      laneTop += laneHeight + offsetInfo.cardMargin;
     }
   }
-
-  const boardWidth = offsetInfo.boardPadding + (lastColumnRect?.x ?? 0) + (lastColumnRect?.width ?? 0) - root.rect.x;
-  const boardHeight = offsetInfo.boardPadding + (lastColumnRect?.y ?? 0) + (lastColumnRect?.height ?? 0) - root.rect.y;
-  distRectMap[root.id] = { ...root.rect, width: boardWidth, height: boardHeight };
 
   return distRectMap;
 }

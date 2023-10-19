@@ -10,7 +10,7 @@ const MIN_HEIGHT = 60;
 
 export type BoardCardShape = RectangleShape & {
   columnId: string;
-  laneId: string;
+  laneId: string; // Empty string represents no lane.
 };
 
 export const struct: ShapeStruct<BoardCardShape> = {

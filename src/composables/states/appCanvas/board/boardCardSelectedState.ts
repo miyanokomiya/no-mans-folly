@@ -1,4 +1,4 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -13,16 +13,32 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt } from "../../../shapeComposite";
+import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { BoardCardShape } from "../../../../shapes/board/boardCard";
 import { applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
+import {
+  BoardHandler,
+  BoardHitResult,
+  getNextBoardLayout,
+  isSameBoardHitResult,
+  newBoardHandler,
+} from "../../../boardHandler";
+import { canHaveText, createShape } from "../../../../shapes";
+import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
+import { Shape } from "../../../../models";
 
 export function newBoardCardSelectedState(): AppCanvasState {
   let cardShape: BoardCardShape;
   let boardHandler: BoardHandler;
   let boardHitResult: BoardHitResult | undefined;
+
+  function initHandler(ctx: AppCanvasStateContext) {
+    boardHandler = newBoardHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      boardId: cardShape.parentId!,
+    });
+  }
 
   return {
     getLabel: () => "BoardCardSelected",
@@ -30,11 +46,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       cardShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as BoardCardShape;
       ctx.setCommandExams([]);
-
-      boardHandler = newBoardHandler({
-        getShapeComposite: ctx.getShapeComposite,
-        targetId: cardShape.parentId!,
-      });
+      initHandler(ctx);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -53,7 +65,57 @@ export function newBoardCardSelectedState(): AppCanvasState {
             case 0: {
               boardHitResult = boardHandler.hitTest(event.data.point, ctx.getScale());
               if (boardHitResult) {
-                console.log(boardHitResult);
+                const shapeComposite = ctx.getShapeComposite();
+
+                let newShape: Shape | undefined;
+                switch (boardHitResult.type) {
+                  case "add_card": {
+                    newShape = createShape<BoardCardShape>(shapeComposite.getShapeStruct, "board_card", {
+                      id: ctx.generateUuid(),
+                      findex: ctx.createLastIndex(),
+                      parentId: cardShape.parentId,
+                      columnId: boardHitResult.columnId,
+                      laneId: boardHitResult.laneId,
+                    });
+                    break;
+                  }
+                  case "add_column": {
+                    newShape = createShape(shapeComposite.getShapeStruct, "board_column", {
+                      id: ctx.generateUuid(),
+                      findex: boardHandler.generateNewColumnFindex(),
+                      parentId: cardShape.parentId,
+                    });
+                    break;
+                  }
+                  case "add_lane": {
+                    newShape = createShape(shapeComposite.getShapeStruct, "board_lane", {
+                      id: ctx.generateUuid(),
+                      findex: boardHandler.generateNewLaneFindex(),
+                      parentId: cardShape.parentId,
+                    });
+                    break;
+                  }
+                }
+
+                if (newShape) {
+                  const nextComposite = getNextShapeComposite(shapeComposite, {
+                    add: [newShape],
+                  });
+                  const patch = getNextBoardLayout(nextComposite, newShape.parentId!);
+                  newShape = { ...newShape, ...patch[newShape.id] };
+                  delete patch[newShape.id];
+
+                  ctx.addShapes(
+                    [newShape],
+                    canHaveText(ctx.getShapeStruct, newShape)
+                      ? {
+                          [newShape.id]: getInitialOutput(getDocAttributes(ctx.getDocumentMap()[newShape.id])),
+                        }
+                      : undefined,
+                    patch,
+                  );
+                  ctx.selectShape(newShape.id);
+                }
                 return;
               }
 
@@ -106,8 +168,12 @@ export function newBoardCardSelectedState(): AppCanvasState {
           return newSelectionHubState;
         }
         case "shape-updated": {
-          if (event.data.keys.has(cardShape.id)) {
-            return newSelectionHubState;
+          const shapeComposite = ctx.getShapeComposite();
+          const shape = shapeComposite.mergedShapeMap[cardShape.id];
+          if (!shape) return newSelectionHubState;
+
+          if (boardHandler.isBoardChanged(Array.from(event.data.keys))) {
+            initHandler(ctx);
           }
           return;
         }

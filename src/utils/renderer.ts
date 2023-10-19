@@ -36,6 +36,18 @@ export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, siz
   ctx.fill();
 }
 
+export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
+  const half = size / 2;
+  ctx.beginPath();
+  ctx.moveTo(p.x - half, p.y);
+  ctx.lineTo(p.x + half, p.y);
+  ctx.moveTo(p.x, p.y - half);
+  ctx.lineTo(p.x, p.y + half);
+  ctx.stroke();
+
+  ctx.beginPath();
+}
+
 export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, render: () => void) {
   const original = ctx.globalAlpha;
   ctx.globalAlpha = original * scale;

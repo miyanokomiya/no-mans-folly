@@ -205,3 +205,25 @@ describe("groupBy", () => {
     });
   });
 });
+
+describe("getFirstItemOfMap", () => {
+  test("should return the first item of the map", () => {
+    const map = new Map([
+      ["a", 0],
+      ["b", 1],
+    ]);
+    expect(target.getFirstItemOfMap(map)).toBe(0);
+    expect(target.getFirstItemOfMap(new Map())).toBe(undefined);
+  });
+});
+
+describe("getlastItemOfMap", () => {
+  test("should return the first item of the map", () => {
+    const map = new Map([
+      ["a", 0],
+      ["b", 1],
+    ]);
+    expect(target.getlastItemOfMap(map)).toBe(1);
+    expect(target.getlastItemOfMap(new Map())).toBe(undefined);
+  });
+});

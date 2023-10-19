@@ -13,6 +13,10 @@ import { IVec2, isSame, sub } from "okageo";
 import { RectangleShape } from "../shapes/rectangle";
 import { TAU, getD2 } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
+import { renderPlusIcon } from "../utils/renderer";
+import { applyStrokeStyle } from "../utils/strokeStyle";
+import { COLORS } from "../utils/color";
+import { getFirstItemOfMap, getlastItemOfMap } from "../utils/commons";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 20;
@@ -35,12 +39,12 @@ export type BoardHitResult =
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
-  targetId: string;
+  boardId: string;
 }
 
 export function newBoardHandler(option: Option) {
   const shapeComposite = option.getShapeComposite();
-  const root = shapeComposite.shapeMap[option.targetId] as BoardRootShape;
+  const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
   const childIds = shapeComposite.mergedShapeTreeMap[root.id].children.map((c) => c.id);
   const columnMap = new Map<string, BoardColumnShape>();
   const laneMap = new Map<string, BoardLaneShape>();
@@ -108,10 +112,12 @@ export function newBoardHandler(option: Option) {
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BoardHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     applyFillStyle(ctx, { color: style.selectionPrimary });
+    applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 2 * scale });
     anchors.forEach((a) => {
       ctx.beginPath();
       ctx.arc(a.p.x, a.p.y, threshold, 0, TAU);
       ctx.fill();
+      renderPlusIcon(ctx, a.p, threshold);
     });
 
     if (hitResult) {
@@ -119,10 +125,33 @@ export function newBoardHandler(option: Option) {
       ctx.beginPath();
       ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
       ctx.fill();
+      renderPlusIcon(ctx, hitResult.p, threshold);
     }
   }
 
-  return { hitTest, render };
+  function getCardsInColumnLane(columnId: string, laneId = ""): BoardCardShape[] {
+    const byColumn = cardByLaneByColumnMap.get(columnId);
+    if (!byColumn) return [];
+    return byColumn.get(laneId) ?? [];
+  }
+
+  function generateNewColumnFindex(): string {
+    const from = getlastItemOfMap(columnMap)?.findex ?? root.findex;
+    const to = getFirstItemOfMap(laneMap)?.findex ?? getFirstItemOfMap(cardMap)?.findex ?? null;
+    return generateKeyBetween(from, to);
+  }
+
+  function generateNewLaneFindex(): string {
+    const from = getlastItemOfMap(laneMap)?.findex ?? getlastItemOfMap(columnMap)?.findex ?? root.findex;
+    const to = getFirstItemOfMap(cardMap)?.findex ?? null;
+    return generateKeyBetween(from, to);
+  }
+
+  function isBoardChanged(ids: string[]): boolean {
+    return ids.some((id) => shapeComposite.mergedShapeMap[id]?.parentId === root.id || id === root.id);
+  }
+
+  return { hitTest, render, getCardsInColumnLane, generateNewColumnFindex, generateNewLaneFindex, isBoardChanged };
 }
 export type BoardHandler = ReturnType<typeof newBoardHandler>;
 
