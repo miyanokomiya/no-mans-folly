@@ -11,7 +11,7 @@ import { BoardColumnShape, isBoardColumnShape } from "../shapes/board/boardColum
 import { BoardLaneShape, isBoardLaneShape } from "../shapes/board/boardLane";
 import { IRectangle, IVec2, isSame, sub } from "okageo";
 import { RectangleShape } from "../shapes/rectangle";
-import { TAU, getD2, getDistanceBetweenPointAndRect, isPointOnRectangle } from "../utils/geometry";
+import { TAU, getD2, getDistanceBetweenPointAndRect } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -401,6 +401,7 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   const candidateIdSet = new Set(allCardIdSet);
   option.cardIds.forEach((id) => candidateIdSet.delete(id));
   const movingCardIdSet = new Set(option.cardIds);
+  const singleMovingId = option.cardIds.length === 1 ? option.cardIds[0] : undefined;
 
   const shapeMap = shapeComposite.shapeMap;
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
@@ -436,10 +437,20 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   function hitTest(p: IVec2): BoardCardMovingHitResult | undefined {
     if (rects.length === 0) return;
 
-    {
-      const targetInfo = emptyCellRects.find(([, rect]) => isPointOnRectangle(rect, p));
-      if (targetInfo) {
-        const [cell, rect] = targetInfo;
+    const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
+      id,
+      rect,
+      getDistanceBetweenPointAndRect(p, rect),
+    ]);
+    const [closestId, closestRect, closestD] = evaluated.sort((a, b) => a[2] - b[2])[0];
+
+    if (emptyCellRects.length > 0) {
+      const emptyEvaluated = emptyCellRects.map<[{ columnId: string; laneId: string }, IRectangle, number]>(
+        ([cell, rect]) => [cell, rect, getDistanceBetweenPointAndRect(p, rect)],
+      );
+      const closestEmtpy = emptyEvaluated.sort((a, b) => a[2] - b[2])[0];
+      if (closestEmtpy[2] < closestD) {
+        const [cell, rect] = closestEmtpy;
         return {
           columnId: cell.columnId,
           laneId: cell.laneId,
@@ -449,12 +460,6 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       }
     }
 
-    const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
-      id,
-      rect,
-      getDistanceBetweenPointAndRect(p, rect),
-    ]);
-    const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
     const toBelow = closestRect.y + closestRect.height / 2 < p.y;
     const closestCard = boardHandler.cardMap.get(closestId)!;
     const siblings = boardHandler.cardByLaneByColumnMap.get(closestCard.columnId)!.get(closestCard.laneId)!;
@@ -470,17 +475,23 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
     let findex: string;
     if (previousIndex === -1) {
       const next = siblings[nextIndex];
+      if (next.id === singleMovingId) return;
+
       const nextRect = shapeComposite.getWrapperRect(next);
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
       findex = generateKeyBetween(lane?.findex ?? column.findex, next.findex);
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
+      if (prev.id === singleMovingId) return;
+
       const prevRect = shapeComposite.getWrapperRect(prev);
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
       findex = generateKeyBetween(prev.findex, null);
     } else {
       const prev = siblings[previousIndex];
       const next = siblings[nextIndex];
+      if (prev.id === singleMovingId || next.id === singleMovingId) return;
+
       const prevRect = shapeComposite.getWrapperRect(prev);
       const nextRect = shapeComposite.getWrapperRect(next);
       rect = {
