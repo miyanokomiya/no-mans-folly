@@ -223,37 +223,61 @@ describe("findBetterShapeAt", () => {
     expect(findBetterShapeAt(target, { x: 3, y: 3 }, { parentId: group0.id })).toEqual(shape0);
   });
 
-  test("should be able to find a child of a transparent shape", () => {
-    const board0 = createShape<BoardRootShape>(getCommonStruct, "board_root", {
-      id: "board0",
-      p: { x: 0, y: 0 },
-      width: 100,
-      height: 100,
-    });
-    const column0 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
-      id: "column0",
-      parentId: board0.id,
-      p: { x: 10, y: 10 },
-      width: 80,
-      height: 80,
-    });
-    const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
-      id: "card0",
-      parentId: board0.id,
-      columnId: column0.id,
-      p: { x: 20, y: 20 },
-      width: 60,
-      height: 60,
-    });
-    const shapes = [board0, column0, card0];
-    const target = newShapeComposite({
-      shapes,
-      getStruct: getCommonStruct,
-    });
+  const board0 = createShape<BoardRootShape>(getCommonStruct, "board_root", {
+    id: "board0",
+    p: { x: 0, y: 0 },
+    width: 200,
+    height: 200,
+  });
+  const column0 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+    id: "column0",
+    parentId: board0.id,
+    p: { x: 10, y: 10 },
+    width: 80,
+    height: 80,
+  });
+  const column1 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+    id: "column1",
+    parentId: column0.id,
+    p: { x: 100, y: 10 },
+    width: 180,
+    height: 180,
+  });
+  const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+    id: "card0",
+    parentId: board0.id,
+    columnId: column1.id,
+    p: { x: 20, y: 20 },
+    width: 60,
+    height: 60,
+  });
+  const card1 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+    id: "card1",
+    parentId: board0.id,
+    columnId: column1.id,
+    p: { x: 120, y: 20 },
+    width: 60,
+    height: 60,
+  });
+  const shapes = [board0, column0, column1, card0, card1];
+  const target = newShapeComposite({
+    shapes,
+    getStruct: getCommonStruct,
+  });
 
+  test("should be able to find a child of a transparent shape", () => {
     expect(findBetterShapeAt(target, { x: 3, y: 3 })).toEqual(board0);
     expect(findBetterShapeAt(target, { x: 12, y: 12 })).toEqual(column0);
     expect(findBetterShapeAt(target, { x: 27, y: 27 })).toEqual(card0);
+  });
+
+  test("should ignore the scope key", () => {
+    expect(findBetterShapeAt(target, { x: 27, y: 27 }, { parentId: board0.id, scopeKey: "board_column" })).toEqual(
+      card0,
+    );
+    expect(findBetterShapeAt(target, { x: 127, y: 27 }, { parentId: board0.id, scopeKey: "board_column" })).toEqual(
+      card1,
+    );
   });
 });
 

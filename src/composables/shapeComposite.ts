@@ -143,6 +143,11 @@ export function newShapeComposite(option: Option) {
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
 
+/**
+ * "scope.scopeKey" is ignored by this function for better behavior.
+ * e.g. When a board column is selected and a user tries to select a card on it, "scopeKey" prevents selecting it.
+ * To respect "scopeKye", use "findShapeAt" of ShapeComposite instead.
+ */
 export function findBetterShapeAt(
   shapeComposite: ShapeComposite,
   p: IVec2,
@@ -151,8 +156,12 @@ export function findBetterShapeAt(
 ): Shape | undefined {
   if (!scope) return shapeComposite.findShapeAt(p, undefined, excludeIds);
 
-  // Seek in the scope, then seek without the scope.
-  return shapeComposite.findShapeAt(p, scope, excludeIds) ?? shapeComposite.findShapeAt(p, undefined, excludeIds);
+  // Seek in the parent scope
+  const result2 = shapeComposite.findShapeAt(p, { parentId: scope.parentId }, excludeIds);
+  if (result2) return result2;
+
+  // Lift the scope
+  return shapeComposite.findShapeAt(p, undefined, excludeIds);
 }
 
 /**
