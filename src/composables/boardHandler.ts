@@ -627,3 +627,101 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
   return { hitTest, render, isBoardChanged: boardHandler.isBoardChanged };
 }
 export type BoardColumnMovingHandler = ReturnType<typeof newBoardColumnMovingHandler>;
+
+export type BoardLaneMovingHitResult = {
+  findexBetween: [string | null, string | null];
+  rect: IRectangle;
+};
+
+interface BoardLaneMovingOption extends Option {
+  laneIds: string[];
+}
+
+export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
+  const shapeComposite = option.getShapeComposite();
+  const boardHandler = newBoardHandler(option);
+  const allLaneIdSet = new Set(boardHandler.laneMap.keys());
+
+  const candidateIdSet = new Set(allLaneIdSet);
+  option.laneIds.forEach((id) => candidateIdSet.delete(id));
+  const singleMovingId = option.laneIds.length === 1 ? option.laneIds[0] : undefined;
+
+  const shapeMap = shapeComposite.shapeMap;
+  const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
+    id,
+    shapeComposite.getWrapperRect(shapeMap[id]),
+  ]);
+
+  function hitTest(p: IVec2): BoardLaneMovingHitResult | undefined {
+    if (rects.length === 0) return;
+
+    const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
+      id,
+      rect,
+      getDistanceBetweenPointAndRect(p, rect),
+    ]);
+    const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
+
+    const toNext = closestRect.y + closestRect.height / 2 < p.y;
+    const siblings = Array.from(boardHandler.laneMap.values());
+    const closestIndex = siblings.findIndex((s) => s.id === closestId);
+    const previousIndex = toNext ? closestIndex : closestIndex - 1;
+    const nextIndex = toNext ? closestIndex + 1 : closestIndex;
+
+    // Allow to pick the same location as current ones.
+    // When multiple items are moving, location updating can still happen.
+    let rect: IRectangle;
+    let findexBetween: BoardLaneMovingHitResult["findexBetween"];
+    if (previousIndex === -1) {
+      const next = siblings[nextIndex];
+      if (next.id === singleMovingId) return;
+
+      const nextRect = shapeComposite.getWrapperRect(next);
+      rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
+      findexBetween = [getlastItemOfMap(boardHandler.columnMap)?.findex ?? boardHandler.root.findex, next.findex];
+    } else if (nextIndex === siblings.length) {
+      const prev = siblings[previousIndex];
+      if (prev.id === singleMovingId) return;
+
+      const prevRect = shapeComposite.getWrapperRect(prev);
+      rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
+      findexBetween = [prev.findex, getFirstItemOfMap(boardHandler.cardMap)?.findex ?? null];
+    } else {
+      const prev = siblings[previousIndex];
+      const next = siblings[nextIndex];
+      if (prev.id === singleMovingId || next.id === singleMovingId) return;
+
+      const prevRect = shapeComposite.getWrapperRect(prev);
+      const nextRect = shapeComposite.getWrapperRect(next);
+      rect = {
+        x: prevRect.x,
+        y: (prevRect.y + prevRect.height + nextRect.y) / 2 - 7.5,
+        width: prevRect.width,
+        height: 15,
+      };
+      findexBetween = [prev.findex, next.findex];
+    }
+
+    return {
+      findexBetween,
+      rect,
+    };
+  }
+
+  function render(
+    ctx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    _scale: number,
+    hitResult?: BoardLaneMovingHitResult,
+  ) {
+    if (hitResult) {
+      applyFillStyle(ctx, { color: style.selectionSecondaly });
+      ctx.beginPath();
+      ctx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
+      ctx.fill();
+    }
+  }
+
+  return { hitTest, render, isBoardChanged: boardHandler.isBoardChanged };
+}
+export type BoardLaneMovingHandler = ReturnType<typeof newBoardLaneMovingHandler>;

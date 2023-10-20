@@ -5,6 +5,7 @@ import {
   newBoardCardMovingHandler,
   newBoardColumnMovingHandler,
   newBoardHandler,
+  newBoardLaneMovingHandler,
 } from "./boardHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { BoardRootShape } from "../shapes/board/boardRoot";
@@ -12,6 +13,7 @@ import { generateKeyBetween } from "fractional-indexing";
 import { BoardColumnShape } from "../shapes/board/boardColumn";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
+import { BoardLaneShape } from "../shapes/board/boardLane";
 
 const root = createShape<BoardRootShape>(getCommonStruct, "board_root", {
   id: "root",
@@ -52,9 +54,24 @@ const lane0 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   findex: generateKeyBetween(column3.findex, null),
   parentId: root.id,
 });
+const lane1 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
+  id: "lane1",
+  findex: generateKeyBetween(lane0.findex, null),
+  parentId: root.id,
+});
+const lane2 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
+  id: "lane2",
+  findex: generateKeyBetween(lane1.findex, null),
+  parentId: root.id,
+});
+const lane3 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
+  id: "lane3",
+  findex: generateKeyBetween(lane2.findex, null),
+  parentId: root.id,
+});
 const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
   id: "card0",
-  findex: generateKeyBetween(lane0.findex, null),
+  findex: generateKeyBetween(lane3.findex, null),
   parentId: root.id,
   columnId: column0.id,
 });
@@ -361,6 +378,73 @@ describe("newBoardColumnMovingHandler", () => {
       });
       expect(target1.hitTest(layoutColumn3.p)).toEqual({
         findexBetween: [column2.findex, column3.findex],
+        rect: expect.anything(),
+      });
+    });
+  });
+});
+
+describe("newBoardLaneMovingHandler", () => {
+  describe("hitTest", () => {
+    const shapes = [root, column0, card0, lane0, lane1, lane2, lane3];
+    const patch = getNextBoardLayout(
+      newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      }),
+      root.id,
+    );
+    const layoutShapes = shapes.map((s) => ({ ...s, ...patch[s.id] }));
+    const shapeComposite = newShapeComposite({
+      shapes: layoutShapes,
+      getStruct: getCommonStruct,
+    });
+    const target = newBoardLaneMovingHandler({
+      getShapeComposite: () => shapeComposite,
+      boardId: root.id,
+      laneIds: [lane1.id],
+    });
+    const layoutLane0 = shapeComposite.shapeMap[lane0.id] as BoardLaneShape;
+    const layoutLane2 = shapeComposite.shapeMap[lane2.id] as BoardLaneShape;
+    const layoutLane3 = shapeComposite.shapeMap[lane3.id] as BoardLaneShape;
+
+    test("should return insertion information: to between columns", () => {
+      expect(target.hitTest(layoutLane3.p)).toEqual({
+        findexBetween: [layoutLane2.findex, layoutLane3.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should return insertion information: to the first", () => {
+      expect(target.hitTest(layoutLane0.p)).toEqual({
+        findexBetween: [column0.findex, lane0.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should return insertion information: to the last", () => {
+      expect(target.hitTest({ x: layoutLane3.p.x, y: layoutLane3.p.y + layoutLane3.height })).toEqual({
+        findexBetween: [lane3.findex, card0.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should not return insertion information when the target is single card and the location is its neighbor", () => {
+      const target0 = newBoardLaneMovingHandler({
+        getShapeComposite: () => shapeComposite,
+        boardId: root.id,
+        laneIds: [lane1.id],
+      });
+      expect(target0.hitTest(layoutLane2.p)).toEqual(undefined);
+      expect(target0.hitTest({ x: layoutLane0.p.x, y: layoutLane0.p.y + layoutLane0.height })).toEqual(undefined);
+
+      const target1 = newBoardLaneMovingHandler({
+        getShapeComposite: () => shapeComposite,
+        boardId: root.id,
+        laneIds: [lane1.id, lane2.id],
+      });
+      expect(target1.hitTest(layoutLane3.p)).toEqual({
+        findexBetween: [lane2.findex, lane3.findex],
         rect: expect.anything(),
       });
     });
