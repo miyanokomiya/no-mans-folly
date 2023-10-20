@@ -375,7 +375,6 @@ export const AppCanvas: React.FC = () => {
     const renderer = newShapeRenderer({
       shapeComposite: acctx.shapeStore.shapeComposite,
       getDocumentMap: () => mergedDocMap,
-      getShapeStruct: canvasContext.getShapeStruct,
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
       imageStore,
     });

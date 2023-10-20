@@ -7,6 +7,7 @@ import { newMovingShapeState } from "./movingShapeState";
 import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
 import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardCardMovingState } from "./board/boardCardMovingState";
+import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -42,6 +43,8 @@ export function newMovingHubState(option?: Option): AppCanvasState {
             return () => newTreeRootMovingState({ targetId: shape.id });
           case "tree_node":
             return () => newTreeNodeMovingState({ targetId: shape.id });
+          case "board_column":
+            return newBoardColumnMovingState;
           case "board_card":
             return newBoardCardMovingState;
           default:
@@ -52,6 +55,8 @@ export function newMovingHubState(option?: Option): AppCanvasState {
         if (types.size === 1) {
           const type = Array.from(types)[0];
           switch (type) {
+            case "board_column":
+              return newBoardColumnMovingState;
             case "board_card":
               return newBoardCardMovingState;
           }

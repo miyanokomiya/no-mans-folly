@@ -1,12 +1,11 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { BoardCardShape } from "../../../../shapes/board/boardCard";
 import { newMovingShapeState } from "../movingShapeState";
 import {
-  BoardCardMovingHandler,
-  BoardCardMovingHitResult,
+  BoardColumnMovingHandler,
+  BoardColumnMovingHitResult,
   getNextBoardLayout,
-  newBoardCardMovingHandler,
+  newBoardColumnMovingHandler,
 } from "../../../boardHandler";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
@@ -16,29 +15,30 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { findexSortFn, mergeMap } from "../../../../utils/commons";
 import { IVec2, add, sub } from "okageo";
 import { newShapeRenderer } from "../../../shapeRenderer";
+import { BoardColumnShape } from "../../../../shapes/board/boardColumn";
 
-export function newBoardCardMovingState(): AppCanvasState {
-  let cardShapes: BoardCardShape[];
-  let boardCardMovingHandler: BoardCardMovingHandler;
-  let boardMovingHitResult: BoardCardMovingHitResult | undefined;
+export function newBoardColumnMovingState(): AppCanvasState {
+  let columnShapes: BoardColumnShape[];
+  let boardColumnMovingHandler: BoardColumnMovingHandler;
+  let boardMovingHitResult: BoardColumnMovingHitResult | undefined;
   let diff: IVec2;
 
   function initHandler(ctx: AppCanvasStateContext) {
-    boardCardMovingHandler = newBoardCardMovingHandler({
+    boardColumnMovingHandler = newBoardColumnMovingHandler({
       getShapeComposite: ctx.getShapeComposite,
-      boardId: cardShapes[0].parentId!,
-      cardIds: cardShapes.map((s) => s.id),
+      boardId: columnShapes[0].parentId!,
+      columnIds: columnShapes.map((s) => s.id),
     });
   }
 
   return {
-    getLabel: () => "BoardCardMoving",
+    getLabel: () => "BoardColumnMoving",
     onStart: (ctx) => {
       const shapeMap = ctx.getShapeComposite().shapeMap;
       const cardIds = Object.keys(ctx.getSelectedShapeIdMap());
-      cardShapes = cardIds.map((id) => shapeMap[id] as BoardCardShape).sort(findexSortFn);
+      columnShapes = cardIds.map((id) => shapeMap[id] as BoardColumnShape).sort(findexSortFn);
 
-      if (cardShapes.some((s) => !shapeMap[s.parentId ?? ""] || !shapeMap[s.columnId])) {
+      if (columnShapes.some((s) => !shapeMap[s.parentId ?? ""])) {
         return newMovingShapeState;
       }
 
@@ -52,7 +52,7 @@ export function newBoardCardMovingState(): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           diff = sub(event.data.current, event.data.start);
-          const result = boardCardMovingHandler.hitTest(event.data.current);
+          const result = boardColumnMovingHandler.hitTest(event.data.current);
           ctx.redraw();
           boardMovingHitResult = result;
           return;
@@ -60,18 +60,16 @@ export function newBoardCardMovingState(): AppCanvasState {
         case "pointerup": {
           if (boardMovingHitResult) {
             const findexBetween = boardMovingHitResult.findexBetween;
-            const columnId = boardMovingHitResult.columnId;
-            const laneId = boardMovingHitResult.laneId;
             let findex = generateKeyBetween(findexBetween[0], findexBetween[1]);
-            const patch = cardShapes.reduce<{ [id: string]: Partial<BoardCardShape> }>((p, s) => {
-              p[s.id] = { findex, columnId, laneId };
+            const patch = columnShapes.reduce<{ [id: string]: Partial<BoardColumnShape> }>((p, s) => {
+              p[s.id] = { findex };
               findex = generateKeyBetween(findex, findexBetween[1]);
               return p;
             }, {});
 
             const shapeComposite = ctx.getShapeComposite();
             const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
-            const layoutPatch = getNextBoardLayout(nextComposite, cardShapes[0].parentId!);
+            const layoutPatch = getNextBoardLayout(nextComposite, columnShapes[0].parentId!);
             const adjustedPatch = getPatchAfterLayouts(shapeComposite, { update: mergeMap(layoutPatch, patch) });
             ctx.patchShapes(adjustedPatch);
           }
@@ -81,7 +79,7 @@ export function newBoardCardMovingState(): AppCanvasState {
           return newSelectionHubState;
         }
         case "shape-updated": {
-          if (boardCardMovingHandler.isBoardChanged(Array.from(event.data.keys))) {
+          if (boardColumnMovingHandler.isBoardChanged(Array.from(event.data.keys))) {
             initHandler(ctx);
           }
           return;
@@ -94,7 +92,7 @@ export function newBoardCardMovingState(): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
       const shapeComposite = ctx.getShapeComposite();
-      const rect = shapeComposite.getWrapperRectForShapes(cardShapes);
+      const rect = shapeComposite.getWrapperRectForShapes(columnShapes);
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
       renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
@@ -102,12 +100,12 @@ export function newBoardCardMovingState(): AppCanvasState {
         renderCtx.fill();
       });
 
-      boardCardMovingHandler.render(renderCtx, style, scale, boardMovingHitResult);
+      boardColumnMovingHandler.render(renderCtx, style, scale, boardMovingHitResult);
 
       if (diff) {
         const shapeRenderer = newShapeRenderer({
           shapeComposite: newShapeComposite({
-            shapes: cardShapes.map((s) => ({ ...s, p: add(s.p, diff) })),
+            shapes: columnShapes.map((s) => ({ ...s, p: add(s.p, diff) })),
             getStruct: shapeComposite.getShapeStruct,
           }),
           getDocumentMap: ctx.getDocumentMap,

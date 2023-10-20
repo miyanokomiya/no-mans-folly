@@ -3,6 +3,7 @@ import {
   getModifiedBoardRootIds,
   getNextBoardLayout,
   newBoardCardMovingHandler,
+  newBoardColumnMovingHandler,
   newBoardHandler,
 } from "./boardHandler";
 import { createShape, getCommonStruct } from "../shapes";
@@ -36,9 +37,19 @@ const column1 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
   findex: generateKeyBetween(column0.findex, null),
   parentId: root.id,
 });
+const column2 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+  id: "column2",
+  findex: generateKeyBetween(column1.findex, null),
+  parentId: root.id,
+});
+const column3 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+  id: "column3",
+  findex: generateKeyBetween(column2.findex, null),
+  parentId: root.id,
+});
 const lane0 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   id: "lane0",
-  findex: generateKeyBetween(column1.findex, null),
+  findex: generateKeyBetween(column3.findex, null),
   parentId: root.id,
 });
 const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
@@ -227,7 +238,7 @@ describe("newBoardCardMovingHandler", () => {
       expect(target.hitTest(layoutColumn1.p)).toEqual({
         columnId: layoutColumn1.id,
         laneId: lane0.id,
-        findex: generateKeyBetween(lane0.findex, null),
+        findexBetween: [lane0.findex, null],
         rect: expect.anything(),
       });
     });
@@ -236,13 +247,13 @@ describe("newBoardCardMovingHandler", () => {
       expect(target.hitTest(layoutCard2.p)).toEqual({
         columnId: card2.columnId,
         laneId: card2.laneId,
-        findex: generateKeyBetween(card1.findex, card2.findex),
+        findexBetween: [card1.findex, card2.findex],
         rect: expect.anything(),
       });
       expect(target.hitTest({ x: layoutCard2.p.x, y: layoutCard2.p.y + layoutCard2.height })).toEqual({
         columnId: card2.columnId,
         laneId: card2.laneId,
-        findex: generateKeyBetween(card2.findex, card3.findex),
+        findexBetween: [card2.findex, card3.findex],
         rect: expect.anything(),
       });
     });
@@ -251,7 +262,7 @@ describe("newBoardCardMovingHandler", () => {
       expect(target.hitTest(layoutCard1.p)).toEqual({
         columnId: card1.columnId,
         laneId: card1.laneId,
-        findex: generateKeyBetween(null, card1.findex),
+        findexBetween: [lane0.findex, card1.findex],
         rect: expect.anything(),
       });
     });
@@ -260,7 +271,7 @@ describe("newBoardCardMovingHandler", () => {
       expect(target.hitTest({ x: layoutCard3.p.x, y: layoutCard3.p.y + layoutCard3.height })).toEqual({
         columnId: card3.columnId,
         laneId: card3.laneId,
-        findex: generateKeyBetween(card3.findex, null),
+        findexBetween: [card3.findex, null],
         rect: expect.anything(),
       });
     });
@@ -282,7 +293,74 @@ describe("newBoardCardMovingHandler", () => {
       expect(target1.hitTest(layoutCard2.p)).toEqual({
         columnId: card1.columnId,
         laneId: card1.laneId,
-        findex: generateKeyBetween(card1.findex, card2.findex),
+        findexBetween: [card1.findex, card2.findex],
+        rect: expect.anything(),
+      });
+    });
+  });
+});
+
+describe("newBoardColumnMovingHandler", () => {
+  describe("hitTest", () => {
+    const shapes = [root, column0, column1, column2, column3, card0, lane0];
+    const patch = getNextBoardLayout(
+      newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      }),
+      root.id,
+    );
+    const layoutShapes = shapes.map((s) => ({ ...s, ...patch[s.id] }));
+    const shapeComposite = newShapeComposite({
+      shapes: layoutShapes,
+      getStruct: getCommonStruct,
+    });
+    const target = newBoardColumnMovingHandler({
+      getShapeComposite: () => shapeComposite,
+      boardId: root.id,
+      columnIds: [column1.id],
+    });
+    const layoutColumn0 = shapeComposite.shapeMap[column0.id] as BoardColumnShape;
+    const layoutColumn2 = shapeComposite.shapeMap[column2.id] as BoardColumnShape;
+    const layoutColumn3 = shapeComposite.shapeMap[column3.id] as BoardColumnShape;
+
+    test("should return insertion information: to between columns", () => {
+      expect(target.hitTest(layoutColumn3.p)).toEqual({
+        findexBetween: [layoutColumn2.findex, layoutColumn3.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should return insertion information: to the first", () => {
+      expect(target.hitTest(layoutColumn0.p)).toEqual({
+        findexBetween: [root.findex, column0.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should return insertion information: to the last", () => {
+      expect(target.hitTest({ x: layoutColumn3.p.x + layoutColumn3.width, y: layoutColumn3.p.y })).toEqual({
+        findexBetween: [column3.findex, lane0.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should not return insertion information when the target is single card and the location is its neighbor", () => {
+      const target0 = newBoardColumnMovingHandler({
+        getShapeComposite: () => shapeComposite,
+        boardId: root.id,
+        columnIds: [column1.id],
+      });
+      expect(target0.hitTest(layoutColumn2.p)).toEqual(undefined);
+      expect(target0.hitTest({ x: layoutColumn0.p.x + layoutColumn0.width, y: layoutColumn0.p.y })).toEqual(undefined);
+
+      const target1 = newBoardColumnMovingHandler({
+        getShapeComposite: () => shapeComposite,
+        boardId: root.id,
+        columnIds: [column1.id, column2.id],
+      });
+      expect(target1.hitTest(layoutColumn3.p)).toEqual({
+        findexBetween: [column2.findex, column3.findex],
         rect: expect.anything(),
       });
     });

@@ -227,3 +227,12 @@ describe("getlastItemOfMap", () => {
     expect(target.getlastItemOfMap(new Map())).toBe(undefined);
   });
 });
+
+describe("findexSortFn", () => {
+  test("should work as a sort function for objects having findex", () => {
+    const a = { id: "a", findex: "Ay" };
+    const b = { id: "b", findex: "Az" };
+    const c = { id: "c", findex: "Ax" };
+    expect([b, a, c].sort(target.findexSortFn)).toEqual([c, a, b]);
+  });
+});

@@ -108,3 +108,7 @@ export function getFirstItemOfMap<T>(map: Map<any, T>): T | undefined {
 export function getlastItemOfMap<T>(map: Map<any, T>): T | undefined {
   return map.size > 0 ? Array.from(map.values())[map.size - 1] : undefined;
 }
+
+export function findexSortFn<T extends { findex: string }>(a: T, b: T): number {
+  return a.findex <= b.findex ? -1 : 1;
+}
