@@ -10,7 +10,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, treeLayout } from "../utils/layouts/tree";
 import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
 import { TreeShapeBase, isTreeShapeBase } from "../shapes/tree/core";
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetweenAllowSame } from "../utils/findex";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
@@ -278,14 +278,14 @@ export function newTreeNodeMovingHandler(option: Option) {
         return {
           treeParentId: closestNode.id,
           direction,
-          findex: generateKeyBetween(prev.findex, null),
+          findex: generateKeyBetweenAllowSame(prev.findex, null),
         };
       } else {
         // Case: Insert as a child & The parent has no children
         return {
           treeParentId: closestNode.id,
           direction,
-          findex: generateKeyBetween(closestNode.findex, null),
+          findex: generateKeyBetweenAllowSame(closestNode.findex, null),
         };
       }
     } else {
@@ -303,7 +303,7 @@ export function newTreeNodeMovingHandler(option: Option) {
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
-                findex: generateKeyBetween(closestNode.findex, null),
+                findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
           }
@@ -315,7 +315,7 @@ export function newTreeNodeMovingHandler(option: Option) {
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
-                findex: generateKeyBetween(closestNode.findex, null),
+                findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
           }
@@ -337,7 +337,7 @@ export function newTreeNodeMovingHandler(option: Option) {
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
-                findex: generateKeyBetween(closestNode.findex, null),
+                findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
           }
@@ -349,7 +349,7 @@ export function newTreeNodeMovingHandler(option: Option) {
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
-                findex: generateKeyBetween(closestNode.findex, null),
+                findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
           }
@@ -415,14 +415,14 @@ function getTreeNodeMovingResultToInsertSibling(
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
-        findex: generateKeyBetween(prev.findex, closestNode.findex),
+        findex: generateKeyBetweenAllowSame(prev.findex, closestNode.findex),
       };
     } else {
       // Case: Insert as the first child
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
-        findex: generateKeyBetween(null, closestNode.findex),
+        findex: generateKeyBetweenAllowSame(null, closestNode.findex),
       };
     }
   } else {
@@ -434,14 +434,14 @@ function getTreeNodeMovingResultToInsertSibling(
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
-        findex: generateKeyBetween(closestNode.findex, next.findex),
+        findex: generateKeyBetweenAllowSame(closestNode.findex, next.findex),
       };
     } else {
       // Case: Insert as the last child
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
-        findex: generateKeyBetween(closestNode.findex, null),
+        findex: generateKeyBetweenAllowSame(closestNode.findex, null),
       };
     }
   }
@@ -508,8 +508,8 @@ export function generateFindexPreviousAt(shapeComposite: ShapeComposite, targetI
   );
   const targetIndex = siblings.findIndex((s) => s.id === shape.id);
   return targetIndex === 0
-    ? generateKeyBetween(null, shape.findex)
-    : generateKeyBetween(siblings[targetIndex - 1].findex, shape.findex);
+    ? generateKeyBetweenAllowSame(null, shape.findex)
+    : generateKeyBetweenAllowSame(siblings[targetIndex - 1].findex, shape.findex);
 }
 
 export function generateFindexNextAt(shapeComposite: ShapeComposite, targetId: string): string {
@@ -521,8 +521,8 @@ export function generateFindexNextAt(shapeComposite: ShapeComposite, targetId: s
   );
   const targetIndex = siblings.findIndex((s) => s.id === shape.id);
   return targetIndex === siblings.length - 1
-    ? generateKeyBetween(shape.findex, null)
-    : generateKeyBetween(shape.findex, siblings[targetIndex + 1].findex);
+    ? generateKeyBetweenAllowSame(shape.findex, null)
+    : generateKeyBetweenAllowSame(shape.findex, siblings[targetIndex + 1].findex);
 }
 
 export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
@@ -636,7 +636,7 @@ export function getPatchToGraftBranch(
   );
   const graftElderId = graftSiblings.length > 0 ? graftSiblings[graftSiblings.length - 1].id : undefined;
   const branchFIndex = graftElderId
-    ? generateKeyBetween(shapeComposite.mergedShapeMap[graftElderId].findex, null)
+    ? generateKeyBetweenAllowSame(shapeComposite.mergedShapeMap[graftElderId].findex, null)
     : undefined;
 
   return {

@@ -10,12 +10,12 @@ import {
 } from "../../../boardHandler";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { generateKeyBetween } from "fractional-indexing";
 import { getNextShapeComposite, newShapeComposite } from "../../../shapeComposite";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { findexSortFn, mergeMap } from "../../../../utils/commons";
 import { IVec2, add, sub } from "okageo";
 import { newShapeRenderer } from "../../../shapeRenderer";
+import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 
 export function newBoardCardMovingState(): AppCanvasState {
   let cardShapes: BoardCardShape[];
@@ -62,10 +62,10 @@ export function newBoardCardMovingState(): AppCanvasState {
             const findexBetween = boardMovingHitResult.findexBetween;
             const columnId = boardMovingHitResult.columnId;
             const laneId = boardMovingHitResult.laneId;
-            let findex = generateKeyBetween(findexBetween[0], findexBetween[1]);
+            let findex = generateKeyBetweenAllowSame(findexBetween[0], findexBetween[1]);
             const patch = cardShapes.reduce<{ [id: string]: Partial<BoardCardShape> }>((p, s) => {
               p[s.id] = { findex, columnId, laneId };
-              findex = generateKeyBetween(findex, findexBetween[1]);
+              findex = generateKeyBetweenAllowSame(findex, findexBetween[1]);
               return p;
             }, {});
 

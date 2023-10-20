@@ -2,13 +2,13 @@ import { useCallback, useContext, useMemo, useState } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { SheetPanel } from "./SheetPanel";
 import { generateUuid } from "../../utils/random";
-import { generateKeyBetween } from "fractional-indexing";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDelete from "../../assets/icons/delete_filled.svg";
 import { SortableListV } from "../atoms/SortableListV";
 import { useSelectedSheet, useSheets } from "../../composables/storeHooks";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 import { Skillcheck } from "../atoms/Skillcheck";
+import { generateKeyBetweenAllowSame } from "../../utils/findex";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -31,7 +31,7 @@ export const SheetList: React.FC = () => {
     const id = generateUuid();
     acctx.sheetStore.addEntity({
       id,
-      findex: generateKeyBetween(beforeFindex, afterFindex),
+      findex: generateKeyBetweenAllowSame(beforeFindex, afterFindex),
       name: "New Sheet",
       bgcolor: selectedSheet?.bgcolor,
     });
@@ -84,7 +84,7 @@ export const SheetList: React.FC = () => {
       const nextFindex = sheets[to]?.findex ?? null;
 
       acctx.sheetStore.patchEntity(target.id, {
-        findex: generateKeyBetween(beforeFindex, nextFindex),
+        findex: generateKeyBetweenAllowSame(beforeFindex, nextFindex),
       });
     },
     [sheets],
