@@ -12,6 +12,9 @@ import { RectangleShape } from "../shapes/rectangle";
 import { LineShape } from "../shapes/line";
 import { TextShape } from "../shapes/text";
 import { generateKeyBetween } from "fractional-indexing";
+import { BoardCardShape } from "../shapes/board/boardCard";
+import { BoardRootShape } from "../shapes/board/boardRoot";
+import { BoardColumnShape } from "../shapes/board/boardColumn";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -134,6 +137,44 @@ describe("newShapeComposite", () => {
       expect(shapeComposite.findShapeAt({ x: 7, y: 7 }, undefined, [child0.id, child1.id])).toEqual(undefined);
     });
   });
+
+  describe("getMergedShapesInSelectionScope", () => {
+    test("should return shapes having the same scope", () => {
+      const board0 = createShape(getCommonStruct, "board_root", { id: "board0" });
+      const board1 = createShape(getCommonStruct, "board_root", { id: "board1" });
+      const column0 = createShape(getCommonStruct, "board_column", { id: "column0", parentId: board0.id });
+      const column1 = createShape(getCommonStruct, "board_column", { id: "column1", parentId: board1.id });
+      const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+        id: "card0",
+        parentId: board0.id,
+        columnId: column0.id,
+      });
+      const card1 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+        id: "card1",
+        parentId: board0.id,
+        columnId: column0.id,
+      });
+      const card2 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+        id: "card2",
+        parentId: board1.id,
+        columnId: column1.id,
+      });
+
+      const shapes = [board0, board1, column0, column1, card0, card1, card2];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getMergedShapesInSelectionScope()).toEqual([board0, board1]);
+      expect(target.getMergedShapesInSelectionScope({ parentId: board0.id, scopeKey: "board_column" })).toEqual([
+        column0,
+      ]);
+      expect(target.getMergedShapesInSelectionScope({ parentId: board0.id, scopeKey: "board_card" })).toEqual([
+        card0,
+        card1,
+      ]);
+    });
+  });
 });
 
 describe("findBetterShapeAt", () => {
@@ -176,10 +217,43 @@ describe("findBetterShapeAt", () => {
     expect(findBetterShapeAt(target, { x: 7, y: 17 }, undefined, [group0.id])).toEqual(undefined);
 
     // group scope => should find one among direct children of the group
-    expect(findBetterShapeAt(target, { x: 7, y: 7 }, group0.id)).toEqual(child0);
-    expect(findBetterShapeAt(target, { x: 7, y: 17 }, group0.id)).toEqual(child1);
+    expect(findBetterShapeAt(target, { x: 7, y: 7 }, { parentId: group0.id })).toEqual(child0);
+    expect(findBetterShapeAt(target, { x: 7, y: 17 }, { parentId: group0.id })).toEqual(child1);
     // group scope => when there's no direct child at the point, try to find one among root ones
-    expect(findBetterShapeAt(target, { x: 3, y: 3 }, group0.id)).toEqual(shape0);
+    expect(findBetterShapeAt(target, { x: 3, y: 3 }, { parentId: group0.id })).toEqual(shape0);
+  });
+
+  test("should be able to find a child of a transparent shape", () => {
+    const board0 = createShape<BoardRootShape>(getCommonStruct, "board_root", {
+      id: "board0",
+      p: { x: 0, y: 0 },
+      width: 100,
+      height: 100,
+    });
+    const column0 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+      id: "column0",
+      parentId: board0.id,
+      p: { x: 10, y: 10 },
+      width: 80,
+      height: 80,
+    });
+    const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+      id: "card0",
+      parentId: board0.id,
+      columnId: column0.id,
+      p: { x: 20, y: 20 },
+      width: 60,
+      height: 60,
+    });
+    const shapes = [board0, column0, card0];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(findBetterShapeAt(target, { x: 3, y: 3 })).toEqual(board0);
+    expect(findBetterShapeAt(target, { x: 12, y: 12 })).toEqual(column0);
+    expect(findBetterShapeAt(target, { x: 27, y: 27 })).toEqual(card0);
   });
 });
 

@@ -23,13 +23,14 @@ import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItem
 import { isGroupShape } from "../../../shapes/group";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { findBetterShapeAt } from "../../shapeComposite";
+import { ShapeSelectionScope } from "../../../shapes/core";
 
 export function newSingleSelectedState(): AppCanvasState {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
   let smartBranchHitResult: SmartBranchHitResult | undefined;
-  let parentScope: string | undefined;
+  let selectionScope: ShapeSelectionScope | undefined;
   let isGroupShapeSelected: boolean;
 
   return {
@@ -41,7 +42,7 @@ export function newSingleSelectedState(): AppCanvasState {
       if (!shape) return;
 
       ctx.showFloatMenu();
-      parentScope = shape.parentId;
+      selectionScope = shapeComposite.getSelectionScope(shape);
       isGroupShapeSelected = isGroupShape(shape);
 
       if (isGroupShapeSelected) {
@@ -101,12 +102,12 @@ export function newSingleSelectedState(): AppCanvasState {
                 }
               }
 
-              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, selectedId, parentScope);
+              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, selectedId, selectionScope);
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(ctx, event, selectedId, parentScope);
+              return handleCommonPointerDownRightOnSingleSelection(ctx, event, selectedId, selectionScope);
             }
             default:
               return;
@@ -116,7 +117,7 @@ export function newSingleSelectedState(): AppCanvasState {
           if (hitResult) {
             if (isGroupShapeSelected) {
               const shapeComposite = ctx.getShapeComposite();
-              const child = shapeComposite.findShapeAt(event.data.point, selectedId);
+              const child = shapeComposite.findShapeAt(event.data.point, { parentId: selectedId });
               if (child) {
                 ctx.selectShape(child.id);
               }
@@ -149,7 +150,7 @@ export function newSingleSelectedState(): AppCanvasState {
           }
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, parentScope);
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, selectionScope);
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }

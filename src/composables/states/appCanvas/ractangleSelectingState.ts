@@ -5,6 +5,7 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newSelectionHubState } from "./selectionHubState";
 import { isTransparentSelection } from "../../../shapes";
+import { ShapeSelectionScope } from "../../../shapes/core";
 
 interface Option {
   keepSelection?: boolean;
@@ -14,11 +15,11 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
   const keepSelection = option?.keepSelection ?? false;
   let rectangle: IRectangle;
   let targetIdSet = new Set<string>();
-  let selectionScope: string | null | undefined; // null: root scope, undefined: root scope but not determined
+  let selectionScope: ShapeSelectionScope | null | undefined; // null: root scope, undefined: root scope but not determined
   let hasInitialSelectionScope: boolean;
 
   const getScope = () => {
-    return typeof selectionScope === "string" ? selectionScope : undefined;
+    return selectionScope ? selectionScope : undefined;
   };
 
   return {
@@ -28,9 +29,10 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
       if (!keepSelection) {
         ctx.clearAllSelected();
       }
+      const shapeComposite = ctx.getShapeComposite();
       const lastSelectedId = ctx.getLastSelectedShapeId();
       if (lastSelectedId) {
-        selectionScope = ctx.getShapeComposite().shapeMap[lastSelectedId].parentId;
+        selectionScope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[lastSelectedId]);
       }
       hasInitialSelectionScope = !!selectionScope;
     },
@@ -47,7 +49,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
 
           const currentScope = getScope();
           const candidateIds = currentScope
-            ? composite.mergedShapeTreeMap[currentScope].children.map((t) => t.id)
+            ? composite.getMergedShapesInSelectionScope(currentScope).map((s) => s.id)
             : composite.mergedShapeTree.flatMap((t) => {
                 const shape = shapeMap[t.id];
                 if (isTransparentSelection(composite.getShapeStruct, shape)) {
@@ -71,7 +73,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
             }
           } else if (targetIdSet.size === 1) {
             const id = Array.from(targetIdSet)[0];
-            selectionScope = shapeMap[id].parentId ?? null;
+            selectionScope = composite.getSelectionScope(shapeMap[id]) ?? null;
           } else if (selectionScope === null) {
             // When the scope is determined to root, only root shapes should be selected.
             // => Ignore transparent scope
@@ -82,15 +84,15 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
             });
           } else {
             // Pick a scope if any selected shape has a parent.
-            const hasParentId = Array.from(targetIdSet).find((id) => shapeMap[id].parentId);
+            const hasParentId = Array.from(targetIdSet).find((id) => composite.getSelectionScope(shapeMap[id]));
             // If no shape has a parent, determine root as curreent scope.
-            selectionScope = hasParentId ? shapeMap[hasParentId].parentId : null;
+            selectionScope = hasParentId ? composite.getSelectionScope(shapeMap[hasParentId]) : null;
           }
 
           const nextScope = getScope();
-          if (nextScope) {
+          if (nextScope?.parentId) {
             // When the scope exists, the parent shouldn't be selected.
-            targetIdSet.delete(nextScope);
+            targetIdSet.delete(nextScope.parentId);
           }
 
           ctx.redraw();

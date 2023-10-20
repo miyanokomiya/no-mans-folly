@@ -25,6 +25,7 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { isGroupShape } from "../../../shapes/group";
 import { newMovingHubState } from "./movingHubState";
+import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -35,7 +36,7 @@ interface Option {
 export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
-  let scode: string | undefined;
+  let scode: ShapeSelectionScope | undefined;
 
   return {
     getLabel: () => "MultipleSelected",
@@ -47,23 +48,28 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
       // Prevent selecting shapes that have different parents
       {
-        const parentIdSet = new Set<string | undefined>();
+        let firstScope: ShapeSelectionScope | undefined;
+        let multipleScope = false;
         selectedIds.forEach((id) => {
           const shape = shapeMap[id];
-          parentIdSet.add(shape.parentId);
+          const scope = shapeComposite.getSelectionScope(shape);
+          if (!firstScope) {
+            firstScope = scope;
+          } else if (!isSameShapeSelectionScope(firstScope, scope)) {
+            multipleScope = true;
+          }
         });
 
-        if (parentIdSet.size >= 2) {
-          const first: string = parentIdSet.keys().next()!.value;
+        if (multipleScope) {
           const nextSelected = selectedIds.filter((id) => {
             const shape = shapeMap[id];
-            return shape.parentId === first;
+            return isSameShapeSelectionScope(firstScope, shapeComposite.getSelectionScope(shape));
           });
           ctx.multiSelectShapes(nextSelected);
           return newSelectionHubState;
         }
 
-        scode = parentIdSet.keys().next()?.value;
+        scode = firstScope;
       }
 
       ctx.showFloatMenu();

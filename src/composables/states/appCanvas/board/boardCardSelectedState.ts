@@ -125,19 +125,33 @@ export function newBoardCardSelectedState(): AppCanvasState {
                 return;
               }
 
-              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, cardShape.id, cardShape.id);
+              return handleCommonPointerDownLeftOnSingleSelection(
+                ctx,
+                event,
+                cardShape.id,
+                ctx.getShapeComposite().getSelectionScope(cardShape),
+              );
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(ctx, event, cardShape.id, cardShape.id);
+              return handleCommonPointerDownRightOnSingleSelection(
+                ctx,
+                event,
+                cardShape.id,
+                ctx.getShapeComposite().getSelectionScope(cardShape),
+              );
             }
             default:
               return;
           }
         case "pointerdoubledown": {
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, cardShape.parentId!);
+          const shapeAtPointer = findBetterShapeAt(
+            shapeComposite,
+            event.data.point,
+            shapeComposite.getSelectionScope(cardShape),
+          );
           if (shapeAtPointer && shapeAtPointer.id === cardShape.id) {
             return startTextEditingIfPossible(ctx, cardShape.id, event.data.point);
           }
@@ -155,7 +169,11 @@ export function newBoardCardSelectedState(): AppCanvasState {
           }
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, cardShape.id);
+          const shapeAtPointer = findBetterShapeAt(
+            shapeComposite,
+            event.data.current,
+            shapeComposite.getSelectionScope(cardShape),
+          );
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }

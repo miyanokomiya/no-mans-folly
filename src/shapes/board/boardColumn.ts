@@ -36,6 +36,13 @@ export const struct: ShapeStruct<BoardColumnShape> = {
       return { type: "rectangle", parentId: undefined };
     }
   },
+  getSelectionScope(shape, shapeContext) {
+    if (shapeContext.shapeMap[shape.parentId ?? ""]) {
+      return { parentId: shape.parentId, scopeKey: shape.type };
+    } else {
+      return {};
+    }
+  },
   canAttachSmartBranch: false,
   stackOrderDisabled: true,
 };

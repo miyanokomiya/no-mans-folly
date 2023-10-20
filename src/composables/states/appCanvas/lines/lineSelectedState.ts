@@ -77,12 +77,22 @@ export function newLineSelectedState(): AppCanvasState {
                 }
               }
 
-              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, lineShape.id, lineShape.id);
+              return handleCommonPointerDownLeftOnSingleSelection(
+                ctx,
+                event,
+                lineShape.id,
+                ctx.getShapeComposite().getSelectionScope(lineShape),
+              );
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(ctx, event, lineShape.id, lineShape.id);
+              return handleCommonPointerDownRightOnSingleSelection(
+                ctx,
+                event,
+                lineShape.id,
+                ctx.getShapeComposite().getSelectionScope(lineShape),
+              );
             }
             default:
               return;
@@ -96,7 +106,7 @@ export function newLineSelectedState(): AppCanvasState {
           }
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, lineShape.id);
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, { parentId: lineShape.id });
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }

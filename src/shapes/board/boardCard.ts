@@ -72,6 +72,13 @@ export const struct: ShapeStruct<BoardCardShape> = {
   shouldDelete(shape, shapeContext) {
     return !shapeContext.shapeMap[shape.columnId] || !shape.parentId || !shapeContext.shapeMap[shape.parentId];
   },
+  getSelectionScope(shape, shapeContext) {
+    if (shapeContext.shapeMap[shape.parentId ?? ""] && shapeContext.shapeMap[shape.columnId]) {
+      return { parentId: shape.parentId!, scopeKey: shape.type };
+    } else {
+      return {};
+    }
+  },
   canAttachSmartBranch: false,
   stackOrderDisabled: true,
 };

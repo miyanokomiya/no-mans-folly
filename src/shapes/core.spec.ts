@@ -1,5 +1,11 @@
 import { expect, describe, test } from "vitest";
-import { getCommonStyle, textContainerModule, updateCommonStyle } from "./core";
+import {
+  getCommonStyle,
+  isSameShapeParentScope,
+  isSameShapeSelectionScope,
+  textContainerModule,
+  updateCommonStyle,
+} from "./core";
 import { createShape, getCommonStruct } from ".";
 import { RectangleShape } from "./rectangle";
 import { createFillStyle } from "../utils/fillStyle";
@@ -50,5 +56,29 @@ describe("patchTextPadding", () => {
     expect(textContainerModule.patchTextPadding({ textPadding: padding }, undefined)).toEqual({
       textPadding: undefined,
     });
+  });
+});
+
+describe("isSameShapeSelectionScope", () => {
+  test("should return true when two values have same information", () => {
+    expect(isSameShapeSelectionScope(undefined, undefined)).toBe(true);
+    expect(isSameShapeSelectionScope({}, {})).toBe(true);
+    expect(isSameShapeSelectionScope({ parentId: "a" }, { parentId: "a" })).toBe(true);
+    expect(isSameShapeSelectionScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "b" })).toBe(true);
+    expect(isSameShapeSelectionScope({ parentId: "a" }, { parentId: "b" })).toBe(false);
+    expect(isSameShapeSelectionScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "c" })).toBe(false);
+    expect(isSameShapeSelectionScope({ parentId: "a", scopeKey: "b" }, { parentId: "c", scopeKey: "b" })).toBe(false);
+  });
+});
+
+describe("isSameShapeParentScope", () => {
+  test("should return true when two values have same parent information", () => {
+    expect(isSameShapeParentScope(undefined, undefined)).toBe(true);
+    expect(isSameShapeParentScope({}, {})).toBe(true);
+    expect(isSameShapeParentScope({ parentId: "a" }, { parentId: "a" })).toBe(true);
+    expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "b" })).toBe(true);
+    expect(isSameShapeParentScope({ parentId: "a" }, { parentId: "b" })).toBe(false);
+    expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "c" })).toBe(true);
+    expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "c", scopeKey: "b" })).toBe(false);
   });
 });

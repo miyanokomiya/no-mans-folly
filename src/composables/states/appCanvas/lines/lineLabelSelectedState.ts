@@ -82,7 +82,11 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
               }
 
               const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, shape.parentId);
+              const shapeAtPointer = findBetterShapeAt(
+                shapeComposite,
+                event.data.point,
+                shape.parentId ? { parentId: shape.parentId } : undefined,
+              );
               if (!shapeAtPointer) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
@@ -106,7 +110,11 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, shape.parentId);
+              const shapeAtPointer = findBetterShapeAt(
+                shapeComposite,
+                event.data.point,
+                shape.parentId ? { parentId: shape.parentId } : undefined,
+              );
               if (!shapeAtPointer || shapeAtPointer.id === shape.id) return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
@@ -133,7 +141,11 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           }
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, shape.parentId);
+          const shapeAtPointer = findBetterShapeAt(
+            shapeComposite,
+            event.data.current,
+            shape.parentId ? { parentId: shape.parentId } : undefined,
+          );
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
