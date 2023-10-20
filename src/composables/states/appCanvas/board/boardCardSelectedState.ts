@@ -78,7 +78,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
                   case "add_card": {
                     newShape = createShape<BoardCardShape>(shapeComposite.getShapeStruct, "board_card", {
                       id: ctx.generateUuid(),
-                      findex: ctx.createLastIndex(),
+                      findex: boardHandler.generateNewCardFindex(),
                       parentId: cardShape.parentId,
                       columnId: boardHitResult.columnId,
                       laneId: boardHitResult.laneId,

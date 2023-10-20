@@ -31,67 +31,67 @@ const root1 = createShape<BoardRootShape>(getCommonStruct, "board_root", {
 });
 const column0 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
   id: "column0",
-  findex: generateKeyBetween(root.findex, null),
+  findex: generateKeyBetween("a0", "a1"),
   parentId: root.id,
 });
 const column1 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
   id: "column1",
-  findex: generateKeyBetween(column0.findex, null),
+  findex: generateKeyBetween(column0.findex, "a1"),
   parentId: root.id,
 });
 const column2 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
   id: "column2",
-  findex: generateKeyBetween(column1.findex, null),
+  findex: generateKeyBetween(column1.findex, "a1"),
   parentId: root.id,
 });
 const column3 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
   id: "column3",
-  findex: generateKeyBetween(column2.findex, null),
+  findex: generateKeyBetween(column2.findex, "a1"),
   parentId: root.id,
 });
 const lane0 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   id: "lane0",
-  findex: generateKeyBetween(column3.findex, null),
+  findex: generateKeyBetween("a1", "a2"),
   parentId: root.id,
 });
 const lane1 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   id: "lane1",
-  findex: generateKeyBetween(lane0.findex, null),
+  findex: generateKeyBetween(lane0.findex, "a2"),
   parentId: root.id,
 });
 const lane2 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   id: "lane2",
-  findex: generateKeyBetween(lane1.findex, null),
+  findex: generateKeyBetween(lane1.findex, "a2"),
   parentId: root.id,
 });
 const lane3 = createShape<BoardColumnShape>(getCommonStruct, "board_lane", {
   id: "lane3",
-  findex: generateKeyBetween(lane2.findex, null),
+  findex: generateKeyBetween(lane2.findex, "a2"),
   parentId: root.id,
 });
 const card0 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
   id: "card0",
-  findex: generateKeyBetween(lane3.findex, null),
+  findex: generateKeyBetween("a2", "a3"),
   parentId: root.id,
   columnId: column0.id,
 });
 const card1 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
   id: "card1",
-  findex: generateKeyBetween(card0.findex, null),
+  findex: generateKeyBetween(card0.findex, "a3"),
   parentId: root.id,
   columnId: column0.id,
   laneId: lane0.id,
 });
 const card2 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
   id: "card2",
-  findex: generateKeyBetween(card1.findex, null),
+  findex: generateKeyBetween(card1.findex, "a3"),
   parentId: root.id,
   columnId: column0.id,
   laneId: lane0.id,
 });
 const card3 = createShape<BoardCardShape>(getCommonStruct, "board_card", {
   id: "card3",
-  findex: generateKeyBetween(card2.findex, null),
+  findex: generateKeyBetween(card2.findex, "a3"),
   parentId: root.id,
   columnId: column0.id,
   laneId: lane0.id,

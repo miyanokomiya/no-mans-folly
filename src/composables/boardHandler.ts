@@ -18,6 +18,12 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
 import { getFirstItemOfMap, getlastItemOfMap } from "../utils/commons";
 
+// Never change these values to avoid messing up findex between different type entities.
+const COLUMN_FINDEX_FROM = "a0";
+const LANE_FINDEXF_FROM = "a1";
+const CARD_FINDEX_FROM = "a2";
+const CARD_FINDEX_TO = "a3";
+
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 20;
 
@@ -141,15 +147,18 @@ export function newBoardHandler(option: Option) {
   }
 
   function generateNewColumnFindex(): string {
-    const from = getlastItemOfMap(columnMap)?.findex ?? root.findex;
-    const to = getFirstItemOfMap(laneMap)?.findex ?? getFirstItemOfMap(cardMap)?.findex ?? null;
-    return generateKeyBetween(from, to);
+    const from = getlastItemOfMap(columnMap)?.findex ?? COLUMN_FINDEX_FROM;
+    return generateKeyBetween(from, LANE_FINDEXF_FROM);
   }
 
   function generateNewLaneFindex(): string {
-    const from = getlastItemOfMap(laneMap)?.findex ?? getlastItemOfMap(columnMap)?.findex ?? root.findex;
-    const to = getFirstItemOfMap(cardMap)?.findex ?? null;
-    return generateKeyBetween(from, to);
+    const from = getlastItemOfMap(laneMap)?.findex ?? LANE_FINDEXF_FROM;
+    return generateKeyBetween(from, CARD_FINDEX_FROM);
+  }
+
+  function generateNewCardFindex(): string {
+    const from = getlastItemOfMap(cardMap)?.findex ?? CARD_FINDEX_FROM;
+    return generateKeyBetween(from, CARD_FINDEX_TO);
   }
 
   function isBoardChanged(ids: string[]): boolean {
@@ -162,6 +171,7 @@ export function newBoardHandler(option: Option) {
     getCardsInColumnLane,
     generateNewColumnFindex,
     generateNewLaneFindex,
+    generateNewCardFindex,
     isBoardChanged,
     root,
     columnMap,
@@ -188,41 +198,40 @@ export function isSameBoardHitResult(a?: BoardHitResult, b?: BoardHitResult): bo
 export function generateBoardTemplate(
   ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "generateUuid" | "createLastIndex">,
 ): Shape[] {
-  const findex = ctx.createLastIndex();
   const root = createShape(ctx.getShapeStruct, "board_root", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(findex, null),
+    findex: generateKeyBetween(ctx.createLastIndex(), null),
   });
   const column0 = createShape(ctx.getShapeStruct, "board_column", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(root.findex, null),
+    findex: generateKeyBetween(COLUMN_FINDEX_FROM, LANE_FINDEXF_FROM),
     parentId: root.id,
   });
   const column1 = createShape(ctx.getShapeStruct, "board_column", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(column0.findex, null),
+    findex: generateKeyBetween(column0.findex, LANE_FINDEXF_FROM),
     parentId: root.id,
   });
   const column2 = createShape(ctx.getShapeStruct, "board_column", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(column1.findex, null),
+    findex: generateKeyBetween(column1.findex, LANE_FINDEXF_FROM),
     parentId: root.id,
   });
   const card0 = createShape<BoardCardShape>(ctx.getShapeStruct, "board_card", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(column2.findex, null),
+    findex: generateKeyBetween(CARD_FINDEX_FROM, CARD_FINDEX_TO),
     parentId: root.id,
     columnId: column0.id,
   });
   const card1 = createShape<BoardCardShape>(ctx.getShapeStruct, "board_card", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(card0.findex, null),
+    findex: generateKeyBetween(card0.findex, CARD_FINDEX_TO),
     parentId: root.id,
     columnId: column0.id,
   });
   const card2 = createShape<BoardCardShape>(ctx.getShapeStruct, "board_card", {
     id: ctx.generateUuid(),
-    findex: generateKeyBetween(card1.findex, null),
+    findex: generateKeyBetween(card1.findex, CARD_FINDEX_TO),
     parentId: root.id,
     columnId: column1.id,
   });
