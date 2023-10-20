@@ -3,10 +3,13 @@ import { BoardLayoutCard, BoardLayoutCommon, getBoardRectMap } from "./board";
 import { generateKeyBetween } from "fractional-indexing";
 
 const offsetInfo = {
-  boardPadding: 20,
+  boardPaddingX: 20,
+  boardPaddingY: 20,
   columnMargin: 30,
-  columnPadding: 20,
-  lanePadding: 10,
+  columnPaddingX: 20,
+  columnPaddingY: 20,
+  lanePaddingX: 10,
+  lanePaddingY: 10,
   cardMargin: 20,
   columnMinHeight: 0,
   laneMinHeight: 0,

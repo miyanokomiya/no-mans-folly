@@ -4,7 +4,7 @@ import { createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
 
-const COLUMN_WIDTH = 340;
+const COLUMN_WIDTH = 300;
 
 export type BoardColumnShape = RectangleShape;
 

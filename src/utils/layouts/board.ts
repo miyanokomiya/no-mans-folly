@@ -3,7 +3,7 @@ import { LayoutFn, LayoutNode } from "./core";
 import { groupBy } from "../commons";
 
 const BOARD_PADDING = 20;
-const COLUMN_MARGIN = 30;
+const COLUMN_MARGIN = 20;
 const COLUMN_PADDING = 20;
 const LANE_PADDING = 10;
 const CARD_MARGIN = 20;
@@ -50,7 +50,20 @@ export const boardLayout: LayoutFn<BoardLayoutNode> = (src) => {
   if (!root) throw new Error("Not found board root.");
   if (columnMap.size === 0) throw new Error("Not found board column.");
 
-  const distRectMap = getBoardRectMap(root, cardMap, columnMap, laneMap);
+  const columnMaxWidth = Math.max(...Array.from(columnMap.values()).map((c) => c.rect.width));
+  const scale = columnMaxWidth / 300;
+  const distRectMap = getBoardRectMap(root, cardMap, columnMap, laneMap, {
+    boardPaddingX: BOARD_PADDING * scale,
+    boardPaddingY: BOARD_PADDING * scale,
+    columnMargin: COLUMN_MARGIN * scale,
+    columnPaddingX: COLUMN_PADDING * scale,
+    columnPaddingY: COLUMN_PADDING * scale,
+    lanePaddingX: LANE_PADDING * scale,
+    lanePaddingY: LANE_PADDING * scale,
+    cardMargin: CARD_MARGIN * scale,
+    columnMinHeight: (10 * CARD_MARGIN + 2 * COLUMN_PADDING) * scale,
+    laneMinHeight: (5 * CARD_MARGIN + 2 * LANE_PADDING) * scale,
+  });
   return src.map((s) => ({ ...s, rect: distRectMap[s.id] }));
 };
 
@@ -60,10 +73,13 @@ export function getBoardRectMap(
   columnMap: Map<string, BoardLayoutCommon>,
   laneMap: Map<string, BoardLayoutCommon>,
   offsetInfo = {
-    boardPadding: BOARD_PADDING,
+    boardPaddingX: BOARD_PADDING,
+    boardPaddingY: BOARD_PADDING,
     columnMargin: COLUMN_MARGIN,
-    columnPadding: COLUMN_PADDING,
-    lanePadding: LANE_PADDING,
+    columnPaddingX: COLUMN_PADDING,
+    columnPaddingY: COLUMN_PADDING,
+    lanePaddingX: LANE_PADDING,
+    lanePaddingY: LANE_PADDING,
     cardMargin: CARD_MARGIN,
     columnMinHeight: 10 * CARD_MARGIN + 2 * COLUMN_PADDING,
     laneMinHeight: 5 * CARD_MARGIN + 2 * LANE_PADDING,
@@ -87,7 +103,7 @@ export function getBoardRectMap(
   const cardsInLaneByColumnMap = new Map<string, Map<string, BoardLayoutCard[]>>(
     columnIds.map((colId) => [colId, new Map()]),
   );
-  const laneHeightMap = new Map<string, number>(laneIds.map((laneId) => [laneId, 2 * offsetInfo.lanePadding]));
+  const laneHeightMap = new Map<string, number>(laneIds.map((laneId) => [laneId, 2 * offsetInfo.lanePaddingY]));
   laneHeightMap.set("", 0);
   for (const [columnId, cardsInColumn] of cardsInColumnMap) {
     const map = cardsInLaneByColumnMap.get(columnId)!;
@@ -98,7 +114,7 @@ export function getBoardRectMap(
       const laneHeight = Math.max(
         cards.reduce((m, c) => m + c.rect.height, 0) +
           (cards.length - 1) * offsetInfo.cardMargin +
-          (laneId ? 2 * offsetInfo.lanePadding : 0),
+          (laneId ? 2 * offsetInfo.lanePaddingY : 0),
         offsetInfo.laneMinHeight,
       );
       const h = laneHeightMap.get(laneId)!;
@@ -108,20 +124,20 @@ export function getBoardRectMap(
     }
   }
 
-  const colTop = offsetInfo.boardPadding + root.rect.y;
-  let left = offsetInfo.boardPadding + root.rect.x;
+  const colTop = offsetInfo.boardPaddingY + root.rect.y;
+  let left = offsetInfo.boardPaddingX + root.rect.x;
   for (const [columnId, laneMap] of cardsInLaneByColumnMap) {
     const column = columnMap.get(columnId)!;
     const colP = { x: left, y: colTop };
-    const cardX = colP.x + offsetInfo.columnPadding;
-    const cardW = column.rect.width - 2 * offsetInfo.columnPadding;
+    const cardX = colP.x + offsetInfo.columnPaddingX;
+    const cardW = column.rect.width - 2 * offsetInfo.columnPaddingX;
 
-    let laneTop = colP.y + offsetInfo.columnPadding;
+    let laneTop = colP.y + offsetInfo.columnPaddingY;
     for (const [laneId, cardsInLane] of laneMap) {
       let cardTop = laneTop;
       const cards = cardsInLane.filter((c) => c.columnId === columnId);
       if (laneId) {
-        cardTop += offsetInfo.lanePadding;
+        cardTop += offsetInfo.lanePaddingY;
       }
 
       for (const c of cards) {
@@ -138,7 +154,7 @@ export function getBoardRectMap(
       x: colP.x,
       y: colP.y,
       width: column.rect.width,
-      height: Math.max(laneTop + offsetInfo.columnPadding - colP.y, offsetInfo.columnMinHeight),
+      height: Math.max(laneTop + offsetInfo.columnPaddingY - colP.y, offsetInfo.columnMinHeight),
     };
     left += column.rect.width + offsetInfo.columnMargin;
   }
@@ -151,17 +167,17 @@ export function getBoardRectMap(
 
   const lastColumnRect = columnIds.length > 0 ? distRectMap[columnIds[columnIds.length - 1]] : undefined;
 
-  const boardWidth = offsetInfo.boardPadding + (lastColumnRect?.x ?? 0) + (lastColumnRect?.width ?? 0) - root.rect.x;
-  const boardHeight = offsetInfo.boardPadding + (lastColumnRect?.y ?? 0) + (lastColumnRect?.height ?? 0) - root.rect.y;
+  const boardWidth = offsetInfo.boardPaddingX + (lastColumnRect?.x ?? 0) + (lastColumnRect?.width ?? 0) - root.rect.x;
+  const boardHeight = offsetInfo.boardPaddingY + (lastColumnRect?.y ?? 0) + (lastColumnRect?.height ?? 0) - root.rect.y;
   distRectMap[root.id] = { ...root.rect, width: boardWidth, height: boardHeight };
 
   if (lastColumnRect) {
-    let laneTop = offsetInfo.boardPadding + offsetInfo.columnPadding + root.rect.y;
+    let laneTop = offsetInfo.boardPaddingY + offsetInfo.columnPaddingY + root.rect.y;
     for (const [laneId, laneHeight] of laneHeightMap) {
       distRectMap[laneId] = {
-        x: offsetInfo.boardPadding / 2 + root.rect.x,
+        x: offsetInfo.boardPaddingX / 2 + root.rect.x,
         y: laneTop,
-        width: boardWidth - 2 * offsetInfo.boardPadding + offsetInfo.boardPadding,
+        width: boardWidth - 2 * offsetInfo.boardPaddingX + offsetInfo.boardPaddingX,
         height: laneHeight,
       };
       laneTop += laneHeight + offsetInfo.cardMargin;
