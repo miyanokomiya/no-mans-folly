@@ -109,7 +109,7 @@ export function newBoardHandler(option: Option) {
 
   anchors.push({
     type: "add_column",
-    p: { x: root.p.x + root.width, y: root.p.y + ANCHOR_MARGIN },
+    p: { x: root.p.x + root.width, y: root.p.y + root.titleHeight + ANCHOR_MARGIN },
   });
   anchors.push({
     type: "add_lane",
@@ -453,7 +453,10 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
     const column = boardHandler.columnMap.get(cell.columnId)!;
     if (cell.laneId) {
       const lane = boardHandler.laneMap.get(cell.laneId)!;
-      return [cell, { x: column.p.x, y: lane.p.y, width: column.width, height: lane.height }];
+      return [
+        cell,
+        { x: column.p.x, y: lane.p.y + lane.titleHeight, width: column.width, height: lane.height - lane.titleHeight },
+      ];
     } else {
       const lanes = Array.from(boardHandler.laneMap.values());
       if (lanes.length > 0) {

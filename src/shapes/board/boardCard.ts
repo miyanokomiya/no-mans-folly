@@ -70,7 +70,9 @@ export const struct: ShapeStruct<BoardCardShape> = {
     }
   },
   shouldDelete(shape, shapeContext) {
-    return !shapeContext.shapeMap[shape.columnId] || !shape.parentId || !shapeContext.shapeMap[shape.parentId];
+    // Should delete this card when its board exists but its column doesn't.
+    if (!shape.parentId || !shapeContext.shapeMap[shape.parentId]) return false;
+    return !shapeContext.shapeMap[shape.columnId];
   },
   getSelectionScope(shape, shapeContext) {
     if (shapeContext.shapeMap[shape.parentId ?? ""] && shapeContext.shapeMap[shape.columnId]) {

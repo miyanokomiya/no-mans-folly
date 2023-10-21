@@ -45,7 +45,7 @@ describe("refreshRelation", () => {
 });
 
 describe("shouldDelete", () => {
-  test("should return true when either the column or the board doesn't exist", () => {
+  test("should return true when the column doesn't exist the board does", () => {
     const board = createShape(getCommonStruct, "board_root", { id: "board" });
     const column = createShape(getCommonStruct, "board_column", { id: "column" });
     const card = struct.create({ parentId: board.id, columnId: column.id });
@@ -55,7 +55,7 @@ describe("shouldDelete", () => {
         shapes: [card],
         getStruct: getCommonStruct,
       }).shouldDelete(card),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       newShapeComposite({
         shapes: [board, card],
@@ -67,7 +67,7 @@ describe("shouldDelete", () => {
         shapes: [column, card],
         getStruct: getCommonStruct,
       }).shouldDelete(card),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       newShapeComposite({
         shapes: [board, column, card],
