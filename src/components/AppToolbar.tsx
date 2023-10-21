@@ -10,6 +10,7 @@ import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
 import iconText from "../assets/icons/text.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
+import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayout from "../assets/icons/layout.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { Shape } from "../models";
@@ -29,7 +30,7 @@ const lineList = [
 
 const layoutList = [
   { type: "tree_root", icon: iconLayoutBranch },
-  { type: "board_root", icon: iconLayoutBranch },
+  { type: "board_root", icon: iconLayoutBoard },
 ];
 
 function getButtonClass(highlight = false) {
