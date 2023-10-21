@@ -16,7 +16,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
-import { getFirstItemOfMap, getlastItemOfMap } from "../utils/commons";
+import { getlastItemOfMap } from "../utils/commons";
 import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
 
@@ -304,18 +304,28 @@ export function getBoardLayoutPatchFunctions(
   updatedComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
 ) {
-  return getModifiedBoardRootIds(srcComposite, patchInfo).map((id) => {
+  return getModifiedBoardRootIds(srcComposite, updatedComposite, patchInfo).map((id) => {
     return () => getNextBoardLayout(updatedComposite, id);
   });
 }
 
-export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>): string[] {
+export function getModifiedBoardRootIds(
+  srcComposite: ShapeComposite,
+  updatedComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+): string[] {
   const targetBoardRootIdSet = new Set<string>();
   const deletedRootIdSet = new Set<string>();
 
   const shapeMap = srcComposite.shapeMap;
+  const updatedShapeMap = updatedComposite.shapeMap;
+
   const isParentRoot = (s: Shape): s is Shape & { parentId: string } => {
     return !!(s.parentId && shapeMap[s.parentId] && isBoardRootShape(shapeMap[s.parentId]));
+  };
+
+  const isParentUpdatedRoot = (s: Shape): s is Shape & { parentId: string } => {
+    return !!(s.parentId && updatedShapeMap[s.parentId] && isBoardRootShape(updatedShapeMap[s.parentId]));
   };
 
   if (patchInfo.add) {
@@ -335,6 +345,13 @@ export function getModifiedBoardRootIds(srcComposite: ShapeComposite, patchInfo:
         targetBoardRootIdSet.add(shape.id);
       } else if (isParentRoot(shape)) {
         targetBoardRootIdSet.add(shape.parentId);
+      }
+
+      const updatedShape = updatedShapeMap[id];
+      if (isBoardRootShape(updatedShape)) {
+        targetBoardRootIdSet.add(updatedShape.id);
+      } else if (isParentUpdatedRoot(updatedShape)) {
+        targetBoardRootIdSet.add(updatedShape.parentId);
       }
     });
   }
@@ -489,7 +506,7 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
         return {
           columnId: cell.columnId,
           laneId: cell.laneId,
-          findexBetween: [shapeMap[cell.laneId]?.findex ?? shapeMap[cell.columnId].findex, null],
+          findexBetween: [CARD_FINDEX_FROM, CARD_FINDEX_TO],
           rect,
         };
       }
@@ -501,8 +518,6 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
     const closestIndex = siblings.findIndex((s) => s.id === closestId);
     const previousIndex = toBelow ? closestIndex : closestIndex - 1;
     const nextIndex = toBelow ? closestIndex + 1 : closestIndex;
-    const column = shapeMap[closestCard.columnId];
-    const lane = shapeMap[closestCard.laneId];
 
     // Allow to pick the same location as current cards.
     // When multiple cards are moving, location updating can still happen.
@@ -514,14 +529,14 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
 
       const nextRect = shapeComposite.getWrapperRect(next);
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
-      findexBetween = [lane?.findex ?? column.findex, next.findex];
+      findexBetween = [CARD_FINDEX_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
       const prevRect = shapeComposite.getWrapperRect(prev);
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
-      findexBetween = [prev.findex, null];
+      findexBetween = [prev.findex, CARD_FINDEX_TO];
     } else {
       const prev = siblings[previousIndex];
       const next = siblings[nextIndex];
@@ -614,14 +629,14 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
 
       const nextRect = shapeComposite.getWrapperRect(next);
       rect = { x: nextRect.x - 15, y: nextRect.y, width: 15, height: nextRect.height };
-      findexBetween = [boardHandler.root.findex, next.findex];
+      findexBetween = [COLUMN_FINDEX_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
       const prevRect = shapeComposite.getWrapperRect(prev);
       rect = { x: prevRect.x + prevRect.width, y: prevRect.y, width: 15, height: prevRect.height };
-      findexBetween = [prev.findex, getFirstItemOfMap(boardHandler.laneMap)?.findex ?? null];
+      findexBetween = [prev.findex, LANE_FINDEXF_FROM];
     } else {
       const prev = siblings[previousIndex];
       const next = siblings[nextIndex];
@@ -712,14 +727,14 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
 
       const nextRect = shapeComposite.getWrapperRect(next);
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
-      findexBetween = [getlastItemOfMap(boardHandler.columnMap)?.findex ?? boardHandler.root.findex, next.findex];
+      findexBetween = [LANE_FINDEXF_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
       const prevRect = shapeComposite.getWrapperRect(prev);
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
-      findexBetween = [prev.findex, getFirstItemOfMap(boardHandler.cardMap)?.findex ?? null];
+      findexBetween = [prev.findex, CARD_FINDEX_FROM];
     } else {
       const prev = siblings[previousIndex];
       const next = siblings[nextIndex];
