@@ -1,6 +1,7 @@
 import { Shape } from "../../models";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
-import { createFillStyle } from "../../utils/fillStyle";
+import { applyFillStyle, createFillStyle } from "../../utils/fillStyle";
+import { applyLocalSpace } from "../../utils/renderer";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
@@ -24,10 +25,30 @@ export const struct: ShapeStruct<BoardCardShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? CARD_WIDTH,
       height: arg.height ?? MIN_HEIGHT,
-      textPadding: arg.textPadding ?? createBoxPadding([6, 6, 6, 6]),
+      textPadding: arg.textPadding ?? createBoxPadding([6, 6, 12, 6]),
       columnId: arg.columnId ?? "",
       laneId: arg.laneId ?? "",
     };
+  },
+  render(ctx, shape) {
+    rectangleStruct.render(ctx, shape);
+
+    if (!shape.stroke.disabled) {
+      const paddingBottom = shape.textPadding?.value[2] ?? 0;
+      const y = shape.height - paddingBottom / 2;
+
+      applyLocalSpace(
+        ctx,
+        { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
+        shape.rotation,
+        () => {
+          applyFillStyle(ctx, { color: shape.stroke.color });
+          ctx.beginPath();
+          ctx.fillRect(0, y, shape.width, paddingBottom / 2);
+          ctx.stroke();
+        },
+      );
+    }
   },
   resizeOnTextEdit(shape, textBoxSize) {
     const prect = shape.textPadding
