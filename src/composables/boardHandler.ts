@@ -16,7 +16,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
-import { getlastItemOfMap } from "../utils/commons";
+import { getFirstItemOfMap, getlastItemOfMap } from "../utils/commons";
 import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
 
@@ -113,10 +113,19 @@ export function newBoardHandler(option: Option) {
   });
 
   if (columnMap.size > 0) {
-    anchors.push({
-      type: "add_lane",
-      p: { x: root.p.x + ANCHOR_MARGIN, y: root.p.y + root.height },
-    });
+    if (laneMap.size === 0) {
+      const firstColumn = getFirstItemOfMap(columnMap)!;
+      anchors.push({
+        type: "add_lane",
+        p: { x: root.p.x, y: firstColumn.p.y + firstColumn.titleHeight + ANCHOR_MARGIN },
+      });
+    } else {
+      const lastLane = getlastItemOfMap(laneMap)!;
+      anchors.push({
+        type: "add_lane",
+        p: { x: root.p.x, y: lastLane.p.y + lastLane.height + ANCHOR_MARGIN },
+      });
+    }
   }
 
   function hitTest(p: IVec2, scale = 1): BoardHitResult | undefined {
