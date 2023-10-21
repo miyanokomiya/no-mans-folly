@@ -351,6 +351,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
         id: s.id,
         findex: s.findex,
         rect,
+        titleHeight: s.titleHeight,
         type: "column",
       });
       columnIdSet.add(s.id);
@@ -359,6 +360,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
         id: s.id,
         findex: s.findex,
         rect,
+        titleHeight: s.titleHeight,
         type: "lane",
       });
       laneIdSet.add(s.id);
@@ -367,6 +369,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
         id: s.id,
         findex: s.findex,
         rect,
+        titleHeight: s.titleHeight,
         type: "root",
       });
     }

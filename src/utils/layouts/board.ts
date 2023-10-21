@@ -2,16 +2,17 @@ import { IRectangle } from "okageo";
 import { LayoutFn, LayoutNode } from "./core";
 import { groupBy } from "../commons";
 
-const BOARD_PADDING = 20;
+const BOARD_PADDING = 30;
 const COLUMN_MARGIN = 20;
 const COLUMN_PADDING = 20;
-const LANE_PADDING = 10;
+const LANE_PADDING = 20;
 const CARD_MARGIN = 20;
 
 export type BoardLayoutNode = LayoutNode & (BoardLayoutCommon | BoardLayoutCard);
 
 export interface BoardLayoutCommon extends LayoutNode {
   type: "root" | "column" | "lane"; // root should be unique in a layout
+  titleHeight?: number;
 }
 
 export interface BoardLayoutCard extends LayoutNode {
@@ -91,6 +92,8 @@ export function getBoardRectMap(
     cardsInColumnMap.get(c.columnId)?.push(c);
   }
 
+  const columnMaxTitleHeight = columnIds.reduce((m, id) => Math.max(m, columnMap.get(id)?.titleHeight ?? 0), 0);
+
   const laneIds = Array.from(laneMap.keys());
   const cardsInLaneMap = new Map<string, BoardLayoutCard[]>(laneIds.map((laneId) => [laneId, []]));
   cardsInLaneMap.set("", []);
@@ -103,7 +106,9 @@ export function getBoardRectMap(
   const cardsInLaneByColumnMap = new Map<string, Map<string, BoardLayoutCard[]>>(
     columnIds.map((colId) => [colId, new Map()]),
   );
-  const laneHeightMap = new Map<string, number>(laneIds.map((laneId) => [laneId, 2 * offsetInfo.lanePaddingY]));
+  const laneHeightMap = new Map<string, number>(
+    laneIds.map((laneId) => [laneId, 2 * offsetInfo.lanePaddingY + (laneMap.get(laneId)?.titleHeight ?? 0)]),
+  );
   laneHeightMap.set("", 0);
   for (const [columnId, cardsInColumn] of cardsInColumnMap) {
     const map = cardsInLaneByColumnMap.get(columnId)!;
@@ -114,7 +119,7 @@ export function getBoardRectMap(
       const laneHeight = Math.max(
         cards.reduce((m, c) => m + c.rect.height, 0) +
           (cards.length - 1) * offsetInfo.cardMargin +
-          (laneId ? 2 * offsetInfo.lanePaddingY : 0),
+          (laneId ? 2 * offsetInfo.lanePaddingY + (laneMap.get(laneId)?.titleHeight ?? 0) : 0),
         offsetInfo.laneMinHeight,
       );
       const h = laneHeightMap.get(laneId)!;
@@ -124,20 +129,20 @@ export function getBoardRectMap(
     }
   }
 
-  const colTop = offsetInfo.boardPaddingY + root.rect.y;
+  const colTop = offsetInfo.boardPaddingY + root.rect.y + (root.titleHeight ?? 0);
   let left = offsetInfo.boardPaddingX + root.rect.x;
-  for (const [columnId, laneMap] of cardsInLaneByColumnMap) {
+  for (const [columnId, cardsByLane] of cardsInLaneByColumnMap) {
     const column = columnMap.get(columnId)!;
     const colP = { x: left, y: colTop };
     const cardX = colP.x + offsetInfo.columnPaddingX;
     const cardW = column.rect.width - 2 * offsetInfo.columnPaddingX;
 
-    let laneTop = colP.y + offsetInfo.columnPaddingY;
-    for (const [laneId, cardsInLane] of laneMap) {
+    let laneTop = colP.y + offsetInfo.columnPaddingY + columnMaxTitleHeight;
+    for (const [laneId, cardsInLane] of cardsByLane) {
       let cardTop = laneTop;
       const cards = cardsInLane.filter((c) => c.columnId === columnId);
       if (laneId) {
-        cardTop += offsetInfo.lanePaddingY;
+        cardTop += offsetInfo.lanePaddingY + (laneMap.get(laneId)?.titleHeight ?? 0);
       }
 
       for (const c of cards) {
@@ -172,7 +177,7 @@ export function getBoardRectMap(
   distRectMap[root.id] = { ...root.rect, width: boardWidth, height: boardHeight };
 
   if (lastColumnRect) {
-    let laneTop = offsetInfo.boardPaddingY + offsetInfo.columnPaddingY + root.rect.y;
+    let laneTop = lastColumnRect.y + offsetInfo.columnPaddingY + columnMaxTitleHeight;
     for (const [laneId, laneHeight] of laneHeightMap) {
       distRectMap[laneId] = {
         x: offsetInfo.boardPaddingX / 2 + root.rect.x,

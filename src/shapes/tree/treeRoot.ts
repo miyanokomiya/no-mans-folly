@@ -6,6 +6,7 @@ import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
 import { struct as groupStruct } from "../group";
 import { TreeShapeBase } from "./core";
+import { applyLocalSpace } from "../../utils/renderer";
 
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 60;
@@ -30,24 +31,24 @@ export const struct: ShapeStruct<TreeRootShape> = {
   render(ctx, shape) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
-    ctx.save();
-    ctx.translate(shape.p.x + shape.width / 2, shape.p.y + shape.height / 2);
-    ctx.rotate(shape.rotation);
-    ctx.translate(-shape.width / 2, -shape.height / 2);
+    applyLocalSpace(
+      ctx,
+      { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
+      shape.rotation,
+      () => {
+        ctx.beginPath();
+        ctx.roundRect(0, 0, shape.width, shape.height, 6);
 
-    ctx.beginPath();
-    ctx.roundRect(0, 0, shape.width, shape.height, 6);
-
-    if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
-      ctx.fill();
-    }
-    if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
-      ctx.stroke();
-    }
-
-    ctx.restore();
+        if (!shape.fill.disabled) {
+          applyFillStyle(ctx, shape.fill);
+          ctx.fill();
+        }
+        if (!shape.stroke.disabled) {
+          applyStrokeStyle(ctx, shape.stroke);
+          ctx.stroke();
+        }
+      },
+    );
   },
   resize(shape, resizingAffine) {
     const ret: Partial<TreeRootShape> = { ...recntagleStruct.resize(shape, resizingAffine) };
