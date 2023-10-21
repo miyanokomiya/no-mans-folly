@@ -381,7 +381,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
     const s = shapeComposite.mergedShapeMap[t.id];
     if (isBoardCardShape(s)) return;
 
-    const rect = getWrapperRect(shapeComposite.getShapeStruct, s);
+    const rect = getWrapperRect(shapeComposite.getShapeStruct, { ...s, rotation: 0 });
     if (isBoardColumnShape(s)) {
       layoutNodes.push({
         id: s.id,
@@ -413,7 +413,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
 
   flatTree([tree]).forEach((t) => {
     const s = shapeComposite.mergedShapeMap[t.id];
-    const rect = getWrapperRect(shapeComposite.getShapeStruct, s);
+    const rect = getWrapperRect(shapeComposite.getShapeStruct, { ...s, rotation: 0 });
     // Ignore cards in invalid columns
     if (isBoardCardShape(s) && columnIdSet.has(s.columnId)) {
       layoutNodes.push({
