@@ -15,8 +15,6 @@ import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
-import { applyPath } from "../../../../utils/renderer";
-import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import {
   BoardHandler,
   BoardHitResult,
@@ -29,6 +27,8 @@ import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor
 import { Shape } from "../../../../models";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
+import { newResizingState } from "../resizingState";
 
 /**
  * General selected state for any board entity
@@ -39,6 +39,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
   let targetShape: Shape;
   let boardHandler: BoardHandler;
   let boardHitResult: BoardHitResult | undefined;
+  let boundingBox: BoundingBox;
 
   function initHandler(ctx: AppCanvasStateContext) {
     boardHandler = newBoardHandler({
@@ -50,7 +51,8 @@ export function newBoardEntitySelectedState(): AppCanvasState {
   return {
     getLabel: () => "BoardEntitySelected",
     onStart: (ctx) => {
-      const shapeMap = ctx.getShapeComposite().shapeMap;
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
       targetShape = shapeMap[ctx.getLastSelectedShapeId() ?? ""];
 
       if (isBoardRootShape(targetShape)) {
@@ -66,6 +68,13 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       if (isBoardCardShape(targetShape) && !shapeMap[targetShape.columnId]) {
         return newSingleSelectedState;
       }
+
+      boundingBox = newBoundingBox({
+        path: shapeComposite.getLocalRectPolygon(targetShape),
+        styleScheme: ctx.getStyleScheme(),
+        scale: ctx.getScale(),
+        noRotation: true,
+      });
 
       ctx.showFloatMenu();
       ctx.setCommandExams([]);
@@ -142,6 +151,15 @@ export function newBoardEntitySelectedState(): AppCanvasState {
                 return;
               }
 
+              const hitResult = boundingBox.hitTest(event.data.point);
+              if (hitResult) {
+                switch (hitResult.type) {
+                  case "corner":
+                  case "segment":
+                    return () => newResizingState({ boundingBox, hitResult });
+                }
+              }
+
               return handleCommonPointerDownLeftOnSingleSelection(
                 ctx,
                 event,
@@ -185,6 +203,15 @@ export function newBoardEntitySelectedState(): AppCanvasState {
             return;
           }
 
+          const hitBounding = boundingBox.hitTest(event.data.current);
+          if (hitBounding) {
+            const style = boundingBox.getCursorStyle(hitBounding);
+            if (style) {
+              ctx.setCursor(style);
+              return;
+            }
+          }
+
           const shapeComposite = ctx.getShapeComposite();
           const shapeAtPointer = findBetterShapeAt(
             shapeComposite,
@@ -203,7 +230,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
               return handleCommonShortcut(ctx, event);
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          boundingBox.updateScale(ctx.zoomView(event.data.delta.y));
           return;
         case "selection": {
           return newSelectionHubState;
@@ -256,13 +283,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      const shapeComposite = ctx.getShapeComposite();
-      const path = shapeComposite.getLocalRectPolygon(targetShape);
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
-      renderCtx.beginPath();
-      applyPath(renderCtx, path, true);
-      renderCtx.stroke();
-
+      boundingBox.render(renderCtx);
       boardHandler.render(renderCtx, style, scale, boardHitResult);
     },
   };
