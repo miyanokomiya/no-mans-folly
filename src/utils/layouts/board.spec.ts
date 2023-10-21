@@ -235,4 +235,19 @@ describe("getBoardRectMap", () => {
     expect(result[card1.id]).toEqual({ x: 10040, y: 20110, width: 100, height: 50 });
     expect(result[root.id]).toEqual({ x: 10000, y: 20000, width: 180, height: 200 });
   });
+
+  test("should take care title height for each entity", () => {
+    const cardMap = new Map<string, BoardLayoutCard>([
+      ["card0", card0],
+      ["card3", card3],
+    ]);
+    const columnMap = new Map<string, BoardLayoutCommon>([["column0", { ...column0, titleHeight: 2 }]]);
+    const laneMap = new Map<string, BoardLayoutCommon>([["lane0", { ...lane0, titleHeight: 5 }]]);
+    const result = getBoardRectMap({ ...root, titleHeight: 1 }, cardMap, columnMap, laneMap, offsetInfo);
+    expect(result[root.id]).toEqual({ x: 0, y: 0, width: 180, height: 228 });
+    expect(result[column0.id]).toEqual({ x: 20, y: 21, width: 140, height: 187 });
+    expect(result[lane0.id]).toEqual({ x: 10, y: 43, width: 160, height: 75 });
+    expect(result[card3.id]).toEqual({ x: 40, y: 58, width: 100, height: 50 });
+    expect(result[card0.id]).toEqual({ x: 40, y: 138, width: 100, height: 50 });
+  });
 });

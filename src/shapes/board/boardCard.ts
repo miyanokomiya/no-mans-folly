@@ -1,5 +1,5 @@
 import { Shape } from "../../models";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import { createBoxPadding, getBoxPaddingValue, getPaddingRect } from "../../utils/boxPadding";
 import { applyFillStyle, createFillStyle } from "../../utils/fillStyle";
 import { applyLocalSpace } from "../../utils/renderer";
 import { createStrokeStyle } from "../../utils/strokeStyle";
@@ -34,7 +34,12 @@ export const struct: ShapeStruct<BoardCardShape> = {
     rectangleStruct.render(ctx, shape);
 
     if (!shape.stroke.disabled) {
-      const paddingBottom = shape.textPadding?.value[2] ?? 0;
+      const paddingBottom = getBoxPaddingValue(shape.textPadding, {
+        x: 0,
+        y: 0,
+        width: shape.width,
+        height: shape.height,
+      })[2];
       const y = shape.height - paddingBottom / 2;
 
       applyLocalSpace(
@@ -51,10 +56,8 @@ export const struct: ShapeStruct<BoardCardShape> = {
     }
   },
   resizeOnTextEdit(shape, textBoxSize) {
-    const prect = shape.textPadding
-      ? getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.height })
-      : undefined;
-    const hDiff = prect ? shape.height - prect.height : 0;
+    const prect = getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.height });
+    const hDiff = shape.height - prect.height;
 
     let changed = false;
     const ret: Partial<BoardCardShape> = {};

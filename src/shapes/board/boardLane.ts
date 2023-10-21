@@ -57,13 +57,11 @@ export const struct: ShapeStruct<BoardLaneShape> = {
   },
   getTextRangeRect(shape) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.titleHeight };
-    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+    return getPaddingRect(shape.textPadding, rect);
   },
   resizeOnTextEdit(shape, textBoxSize) {
-    const prect = shape.textPadding
-      ? getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.height })
-      : undefined;
-    const hDiff = prect ? shape.height - prect.height : 0;
+    const prect = getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.titleHeight });
+    const hDiff = prect ? shape.titleHeight - prect.height : 0;
 
     let changed = false;
     const ret: Partial<BoardLaneShape> = {};
