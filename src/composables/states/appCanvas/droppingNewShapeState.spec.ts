@@ -30,7 +30,7 @@ function getMockCtx() {
 
 describe("newDroppingNewShapeState", () => {
   const getOption = () => ({
-    shape: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 }),
+    shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 })],
   });
 
   describe("lifecycle", () => {
@@ -69,8 +69,8 @@ describe("newDroppingNewShapeState", () => {
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       const result2 = target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shape, p: { x: -40, y: -50 } }], {
-        [getOption().shape.id]: getInitialOutput(),
+      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shapes[0], p: { x: -40, y: -50 } }], {
+        [getOption().shapes[0].id]: getInitialOutput(),
       });
       expect(result2).toEqual(newSelectionHubState);
     });

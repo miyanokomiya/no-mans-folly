@@ -78,7 +78,7 @@ export const SheetConfigPanel: React.FC = () => {
         opened={popupedKey === "bgColor"}
         popup={bgColorPanel}
         onClick={onClickPopupButton}
-        popupPosition="right"
+        popupPosition="left"
       >
         <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
       </PopupButton>

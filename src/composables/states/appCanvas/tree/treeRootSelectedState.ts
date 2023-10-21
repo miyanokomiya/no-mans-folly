@@ -108,12 +108,22 @@ export function newTreeRootSelectedState(): AppCanvasState {
                 }
               }
 
-              return handleCommonPointerDownLeftOnSingleSelection(ctx, event, treeRootShape.id, treeRootShape.id);
+              return handleCommonPointerDownLeftOnSingleSelection(
+                ctx,
+                event,
+                treeRootShape.id,
+                ctx.getShapeComposite().getSelectionScope(treeRootShape),
+              );
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(ctx, event, treeRootShape.id, treeRootShape.id);
+              return handleCommonPointerDownRightOnSingleSelection(
+                ctx,
+                event,
+                treeRootShape.id,
+                ctx.getShapeComposite().getSelectionScope(treeRootShape),
+              );
             }
             default:
               return;
@@ -143,7 +153,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
           }
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, treeRootShape.id);
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, { parentId: treeRootShape.id });
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }

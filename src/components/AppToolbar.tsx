@@ -10,8 +10,12 @@ import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
 import iconText from "../assets/icons/text.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
+import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayout from "../assets/icons/layout.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
+import { Shape } from "../models";
+import { generateBoardTemplate } from "../composables/boardHandler";
+import { DocOutput } from "../models/document";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
@@ -24,7 +28,10 @@ const lineList = [
   { type: "elbow", icon: iconLineElbow },
 ];
 
-const layoutList = [{ type: "tree_root", icon: iconLayoutBranch }];
+const layoutList = [
+  { type: "tree_root", icon: iconLayoutBranch },
+  { type: "board_root", icon: iconLayoutBoard },
+];
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
@@ -47,15 +54,27 @@ export const AppToolbar: React.FC = () => {
       e.preventDefault();
       const ctx = smctx;
       const type = e.currentTarget.getAttribute("data-type")!;
-      const shape = createShape(ctx.getShapeStruct, type, {
-        id: ctx.generateUuid(),
-        findex: acctx.shapeStore.createLastIndex(),
-      });
+
+      let template: { shapes: Shape[]; docMap?: { [id: string]: DocOutput } };
+      if (type === "board_root") {
+        template = generateBoardTemplate(ctx);
+      } else {
+        template = {
+          shapes: [
+            createShape(ctx.getShapeStruct, type, {
+              id: ctx.generateUuid(),
+              findex: acctx.shapeStore.createLastIndex(),
+            }),
+          ],
+        };
+      }
+      if (template.shapes.length === 0) return;
+
       sm.handleEvent({
         type: "state",
         data: {
           name: "DroppingNewShape",
-          options: { shape },
+          options: template,
         },
       });
       setPopup("");

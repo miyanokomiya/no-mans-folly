@@ -53,27 +53,33 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     treeRootStruct.render(ctx, shape);
   },
   immigrateShapeIds(shape, oldToNewIdMap) {
-    const ret: Partial<TreeNodeShape> = {};
-
-    ret.treeParentId = oldToNewIdMap[shape.treeParentId];
-
-    // When a parent doesn't exist, convert to a rectangle shape.
-    if (!ret.treeParentId) {
-      ret.type = "rectangle";
-      ret.maxWidth = undefined;
-      ret.direction = undefined;
-      ret.vAlign = undefined;
-      ret.hAlign = undefined;
-      ret.treeParentId = undefined;
+    if (!oldToNewIdMap[shape.treeParentId]) {
+      return getPatchRectangleShape();
+    } else {
+      return { treeParentId: oldToNewIdMap[shape.treeParentId] };
     }
-
-    return ret;
+  },
+  refreshRelation(shape, availableIdSet) {
+    if (!availableIdSet.has(shape.treeParentId)) {
+      return getPatchRectangleShape();
+    }
   },
   stackOrderDisabled: true,
 };
 
 export function isTreeNodeShape(shape: Shape): shape is TreeNodeShape {
   return shape.type === "tree_node";
+}
+
+function getPatchRectangleShape(): Partial<TreeNodeShape> {
+  return {
+    type: "rectangle",
+    maxWidth: undefined,
+    direction: undefined,
+    vAlign: undefined,
+    hAlign: undefined,
+    treeParentId: undefined,
+  };
 }
 
 function getParentConnectionPoint(parent: TreeShapeBase, direction: Direction4): IVec2 {

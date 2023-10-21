@@ -147,10 +147,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
               // If not, try to find a shape at the point.
               if (!textEditorController.isInDoc(adjustedP)) {
                 const shapeComposite = ctx.getShapeComposite();
+                shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]);
                 const shapeAtPointer = findBetterShapeAt(
                   shapeComposite,
                   event.data.point,
-                  shapeComposite.shapeMap[option.id].parentId,
+                  shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]),
                 );
 
                 // If the shape is the doc owner, keep editing it.

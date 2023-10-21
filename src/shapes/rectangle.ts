@@ -79,7 +79,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   getLocalRectPolygon,
   getTextRangeRect(shape) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+    return getPaddingRect(shape.textPadding, rect);
   },
   isPointOn(shape, p) {
     return isPointOnRectangleRotated(

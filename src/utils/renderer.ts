@@ -1,4 +1,4 @@
-import { IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
+import { IRectangle, IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
 import { ISegment } from "./geometry";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
@@ -36,9 +36,30 @@ export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, siz
   ctx.fill();
 }
 
+export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
+  const half = size / 2;
+  ctx.beginPath();
+  ctx.moveTo(p.x - half, p.y);
+  ctx.lineTo(p.x + half, p.y);
+  ctx.moveTo(p.x, p.y - half);
+  ctx.lineTo(p.x, p.y + half);
+  ctx.stroke();
+
+  ctx.beginPath();
+}
+
 export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, render: () => void) {
   const original = ctx.globalAlpha;
   ctx.globalAlpha = original * scale;
   render();
   ctx.globalAlpha = original;
+}
+
+export function applyLocalSpace(ctx: CanvasRenderingContext2D, rect: IRectangle, rotation: number, fn: () => void) {
+  ctx.save();
+  ctx.translate(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  ctx.rotate(rotation);
+  ctx.translate(-rect.width / 2, -rect.height / 2);
+  fn();
+  ctx.restore();
 }

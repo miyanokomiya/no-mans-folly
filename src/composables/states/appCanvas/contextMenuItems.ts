@@ -37,7 +37,6 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
   const renderer = newShapeRenderer({
     shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),
     getDocumentMap: ctx.getDocumentMap,
-    getShapeStruct: ctx.getShapeStruct,
     imageStore: ctx.getImageStore(),
   });
 
@@ -66,7 +65,6 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
   const renderer = newShapeRenderer({
     shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),
     getDocumentMap: ctx.getDocumentMap,
-    getShapeStruct: ctx.getShapeStruct,
     imageStore: ctx.getImageStore(),
   });
 

@@ -11,7 +11,9 @@ export function isSameBoxPadding(a?: BoxPadding, b?: BoxPadding): boolean {
   return a.type === b.type && a.value.every((v, i) => v === b.value[i]);
 }
 
-export function getPaddingRect(padding: BoxPadding, rect: IRectangle): IRectangle {
+export function getPaddingRect(padding: BoxPadding | undefined, rect: IRectangle): IRectangle {
+  if (!padding) return rect;
+
   if (padding.type === "relative") {
     const left = Math.min(rect.x + rect.width, rect.x + padding.value[3] * rect.width);
     const right = Math.max(left, rect.x + rect.width - padding.value[1] * rect.width);
@@ -60,4 +62,17 @@ export function convertPaddingType(padding: BoxPadding, rect: IRectangle, type?:
       value: absValue,
     };
   }
+}
+
+export function getBoxPaddingValue(padding: BoxPadding | undefined, rect: IRectangle): BoxPadding["value"] {
+  if (!padding) return [0, 0, 0, 0];
+  if (padding.type !== "relative") return padding.value;
+
+  const prect = getPaddingRect(padding, rect);
+  return [
+    prect.y - rect.y,
+    rect.x + rect.width - prect.x - prect.width,
+    rect.y + rect.height - prect.y - prect.height,
+    prect.x - rect.x,
+  ];
 }

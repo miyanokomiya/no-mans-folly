@@ -14,6 +14,19 @@ export interface ShapeContext {
   getStruct: GetShapeStruct;
 }
 
+/**
+ * Selection scope strategy
+ * - When a scope is undefined, root shapes and children of transparent root shapes are selection candidates.
+ * - When a scope is defined
+ *   - When parentId is undefined, root shapes are selection candidates.
+ *   - When parentId is defined, its children are selection candidates.
+ *   - When parentId and scopeKey are defined, its children having the same scopeKey are selection candidates.
+ */
+export interface ShapeSelectionScope {
+  parentId?: string; // When undefined, the scope refers strict root scope ignoring transparency
+  scopeKey?: string;
+}
+
 export interface ShapeStruct<T extends Shape> {
   label: string;
   create: (arg?: Partial<T>) => T;
@@ -47,6 +60,15 @@ export interface ShapeStruct<T extends Shape> {
    * Needless to care "parentId" that is refreshed outside this function.
    */
   refreshRelation?: (shape: T, availableIdSet: Set<string>) => Partial<T> | undefined;
+  /**
+   * Returns true when the shape should be deleted under the condition of the context.
+   */
+  shouldDelete?: (shape: T, shapeContext: ShapeContext) => boolean;
+  /**
+   * Returns selection scope for the shape. See the description of ShapeSelectionScope.
+   * When this method is undefined, valid "parentId" should be used.
+   */
+  getSelectionScope?: (shape: T, shapeContext: ShapeContext) => ShapeSelectionScope;
   canAttachSmartBranch?: boolean;
   shouldKeepAspect?: boolean;
   /**
@@ -111,3 +133,17 @@ export const textContainerModule = {
     return isSameBoxPadding(shape.textPadding, value) ? {} : { textPadding: value };
   },
 };
+
+export function isSameShapeSelectionScope(a?: ShapeSelectionScope, b?: ShapeSelectionScope): boolean {
+  if (a && b) {
+    return a.parentId === b.parentId && a.scopeKey === b.scopeKey;
+  }
+  return a === b;
+}
+
+export function isSameShapeParentScope(a?: ShapeSelectionScope, b?: ShapeSelectionScope): boolean {
+  if (a && b) {
+    return a.parentId === b.parentId;
+  }
+  return a === b;
+}

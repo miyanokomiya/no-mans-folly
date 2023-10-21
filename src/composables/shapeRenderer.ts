@@ -1,5 +1,5 @@
 import { DocOutput } from "../models/document";
-import { GetShapeStruct, getShapeTextBounds } from "../shapes";
+import { getShapeTextBounds } from "../shapes";
 import { renderDoc } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
@@ -8,9 +8,8 @@ import { ShapeComposite } from "./shapeComposite";
 interface Option {
   shapeComposite: ShapeComposite;
   getDocumentMap: () => { [id: string]: DocOutput };
-  getShapeStruct: GetShapeStruct;
   ignoreDocIds?: string[];
-  imageStore: ImageStore;
+  imageStore?: ImageStore;
 }
 
 export function newShapeRenderer(option: Option) {
@@ -26,7 +25,7 @@ export function newShapeRenderer(option: Option) {
       const doc = docMap[shape.id];
       if (doc && !ignoreDocIdSet.has(shape.id)) {
         ctx.save();
-        const bounds = getShapeTextBounds(option.getShapeStruct, shape);
+        const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
         ctx.transform(...bounds.affine);
         renderDoc(ctx, doc, bounds.range);
         ctx.restore();

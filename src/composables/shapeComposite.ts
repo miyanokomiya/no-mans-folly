@@ -5,7 +5,12 @@ import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
 import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
-import { ShapeSnappingLines } from "../shapes/core";
+import {
+  ShapeSelectionScope,
+  ShapeSnappingLines,
+  isSameShapeParentScope,
+  isSameShapeSelectionScope,
+} from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 
 interface Option {
@@ -41,19 +46,28 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(option.getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
-  function findShapeAt(p: IVec2, parentId?: string, excludeIds?: string[]): Shape | undefined {
+  function findShapeAt(
+    p: IVec2,
+    scope?: ShapeSelectionScope,
+    excludeIds?: string[],
+    parentScopeCheckOnly = false,
+  ): Shape | undefined {
     const excludeSet = new Set(excludeIds ?? []);
-    const scope = (parentId ? mergedShapeTreeMap[parentId].children : mergedShapeTree).map((t) => mergedShapeMap[t.id]);
+    const candidates = getMergedShapesInSelectionScope(scope, parentScopeCheckOnly);
     const candidate = findBackward(
-      scope,
+      candidates,
       (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext),
     );
     if (!candidate) return;
     if (!shapeModule.isTransparentSelection(option.getStruct, candidate)) return candidate;
 
     // When the candidate is transparent for selection, try seeking its children.
-    const childCandidate = findShapeAt(p, candidate.id);
+    const childCandidate = findShapeAt(p, { parentId: candidate.id }, undefined, true);
     return childCandidate ?? candidate;
+  }
+
+  function isPointOn(shape: Shape, p: IVec2): boolean {
+    return shapeModule.isPointOn(option.getStruct, shape, p, mergedShapeContext);
   }
 
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
@@ -78,6 +92,35 @@ export function newShapeComposite(option: Option) {
     return shapeModule.getSnappingLines(option.getStruct, shape, mergedShapeContext);
   }
 
+  function shouldDelete(shape: Shape): boolean {
+    return !!option.getStruct(shape.type).shouldDelete?.(shape, mergedShapeContext);
+  }
+
+  function getSelectionScope(shape: Shape): ShapeSelectionScope {
+    const struct = option.getStruct(shape.type);
+    if (struct.getSelectionScope) {
+      return struct.getSelectionScope(shape, mergedShapeContext);
+    } else if (mergedShapeContext.shapeMap[shape.parentId ?? ""]) {
+      return { parentId: shape.parentId! };
+    } else {
+      return { parentId: undefined };
+    }
+  }
+
+  /**
+   * When scope is undefined, returns root shapes
+   */
+  function getMergedShapesInSelectionScope(scope?: ShapeSelectionScope, parentScopeCheckOnly = false): Shape[] {
+    if (!scope?.parentId) return mergedShapeTree.map((t) => mergedShapeMap[t.id]);
+
+    const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
+    return (
+      mergedShapeTreeMap[scope.parentId]?.children
+        .map((t) => mergedShapeMap[t.id])
+        .filter((s) => checkFn(getSelectionScope(s), scope)) ?? []
+    );
+  }
+
   return {
     getShapeStruct: option.getStruct,
     shapes: option.shapes,
@@ -92,25 +135,38 @@ export function newShapeComposite(option: Option) {
 
     render,
     findShapeAt,
+    isPointOn,
     getWrapperRect,
     getWrapperRectForShapes,
     getLocalRectPolygon,
     getShapesOverlappingRect,
     getSnappingLines,
+    shouldDelete,
+    getSelectionScope,
+    getMergedShapesInSelectionScope,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
 
+/**
+ * "scope.scopeKey" is ignored by this function for better behavior.
+ * e.g. When a board column is selected and a user tries to select a card on it, "scopeKey" prevents selecting it.
+ * To respect "scopeKye", use "findShapeAt" of ShapeComposite instead.
+ */
 export function findBetterShapeAt(
   shapeComposite: ShapeComposite,
   p: IVec2,
-  parentId?: string,
+  scope?: ShapeSelectionScope,
   excludeIds?: string[],
 ): Shape | undefined {
-  if (!parentId) return shapeComposite.findShapeAt(p, undefined, excludeIds);
+  if (!scope) return shapeComposite.findShapeAt(p, undefined, excludeIds);
 
-  // Seek in the scope, then seek without the scope.
-  return shapeComposite.findShapeAt(p, parentId, excludeIds) ?? shapeComposite.findShapeAt(p, undefined, excludeIds);
+  // Seek in the parent scope
+  const result2 = shapeComposite.findShapeAt(p, { parentId: scope.parentId }, excludeIds);
+  if (result2) return result2;
+
+  // Lift the scope
+  return shapeComposite.findShapeAt(p, undefined, excludeIds);
 }
 
 /**

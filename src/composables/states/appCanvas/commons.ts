@@ -37,6 +37,7 @@ import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
+import { ShapeSelectionScope } from "../../../shapes/core";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -341,10 +342,10 @@ export function handleCommonPointerDownLeftOnSingleSelection(
   ctx: AppCanvasStateContext,
   event: PointerDownEvent,
   selectedId: string,
-  parentScope?: string,
+  selectionScope?: ShapeSelectionScope,
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
-  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope);
   if (!shapeAtPointer) {
     return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
   }
@@ -369,10 +370,10 @@ export function handleCommonPointerDownRightOnSingleSelection(
   ctx: AppCanvasStateContext,
   event: PointerDownEvent,
   selectedId: string,
-  parentScope?: string,
+  selectionScope?: ShapeSelectionScope,
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
-  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, parentScope);
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope);
   if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
 
   ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);

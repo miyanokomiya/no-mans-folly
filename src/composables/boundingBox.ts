@@ -38,6 +38,7 @@ interface Option {
   path: IVec2[];
   styleScheme: StyleScheme;
   scale?: number;
+  noRotation?: boolean;
 }
 
 export function newBoundingBox(option: Option) {
@@ -84,17 +85,21 @@ export function newBoundingBox(option: Option) {
     });
   }
 
-  function getRotationAnchor(): { c: IVec2; r: number } {
-    return {
-      c: add(tr, multi(rotate({ x: 20, y: -20 }, rotation), scale)),
-      r: scaledAnchorSize * 2,
-    };
+  function getRotationAnchor(): { c: IVec2; r: number } | undefined {
+    return option.noRotation
+      ? undefined
+      : {
+          c: add(tr, multi(rotate({ x: 20, y: -20 }, rotation), scale)),
+          r: scaledAnchorSize * 2,
+        };
   }
 
   function hitTest(p: IVec2): HitResult | undefined {
-    const rotationHitTest = newCircleHitTest(rotationAnchor.c, rotationAnchor.r);
-    if (rotationHitTest.test(p)) {
-      return { type: "rotation", index: 0 };
+    if (rotationAnchor) {
+      const rotationHitTest = newCircleHitTest(rotationAnchor.c, rotationAnchor.r);
+      if (rotationHitTest.test(p)) {
+        return { type: "rotation", index: 0 };
+      }
     }
 
     const cornerIndex = anchors.findIndex((a) => isOnPolygon(p, a));
@@ -114,7 +119,7 @@ export function newBoundingBox(option: Option) {
 
   function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix) {
     const style = option.styleScheme;
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
     ctx.fillStyle = "#fff";
 
     function resize(p: IVec2): IVec2 {
@@ -139,10 +144,12 @@ export function newBoundingBox(option: Option) {
         ctx.stroke();
       });
 
-      ctx.beginPath();
-      ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
+      if (rotationAnchor) {
+        ctx.beginPath();
+        ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+      }
     }
   }
 

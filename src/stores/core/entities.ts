@@ -2,7 +2,7 @@ import * as Y from "yjs";
 import { generateKeyBetween } from "fractional-indexing";
 import type { Entity } from "../../models";
 import { newCallback } from "../../composables/reactives";
-import { toMap } from "../../utils/commons";
+import { findexSortFn, toMap } from "../../utils/commons";
 import { newCache } from "../../composables/cache";
 
 type Option = {
@@ -20,7 +20,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   const _entitiesCache = newCache(() => {
     const list = Array.from(entityMap.values()).map((ye) => toEntity(ye));
-    list.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
+    list.sort(findexSortFn);
     return list;
   });
 

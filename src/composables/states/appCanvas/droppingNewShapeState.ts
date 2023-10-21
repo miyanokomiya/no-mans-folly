@@ -1,20 +1,25 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { canHaveText } from "../../../shapes";
+import { canHaveText, getWrapperRect } from "../../../shapes";
 import { IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import { getInitialOutput } from "../../../utils/textEditor";
 import { newShapeComposite } from "../../shapeComposite";
 import { newSelectionHubState } from "./selectionHubState";
+import * as geometry from "../../../utils/geometry";
+import { mapReduce, toMap } from "../../../utils/commons";
+import { DocOutput } from "../../../models/document";
+import { newShapeRenderer } from "../../shapeRenderer";
 
 interface Option {
-  shape: Shape;
+  shapes: Shape[];
+  docMap?: { [id: string]: DocOutput };
 }
 
 export function newDroppingNewShapeState(option: Option): AppCanvasState {
-  const shape = option.shape;
-  let p: IVec2; // represents the center of the shape
+  const shapes = option.shapes;
+  let p: IVec2; // represents the center of the shapes
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
   let snappingResult: SnappingResult | undefined;
@@ -22,6 +27,10 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
   function updateP(topLeft: IVec2) {
     const rectSize = { width: movingRect.width / 2, height: movingRect.height / 2 };
     p = sub(topLeft, { x: rectSize.width, y: rectSize.height });
+  }
+
+  function getDiff(): IVec2 {
+    return sub(p, movingRect);
   }
 
   return {
@@ -42,7 +51,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
-      movingRect = shapeComposite.getWrapperRect(shape);
+      movingRect = geometry.getWrapperRect(shapes.map((s) => getWrapperRect(shapeComposite.getShapeStruct, s)));
       updateP(ctx.getCursorPoint());
     },
     onEnd: (ctx) => {
@@ -65,15 +74,20 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           ctx.setTmpShapeMap({});
           return;
         }
-        case "pointerup":
+        case "pointerup": {
+          const diff = getDiff();
           ctx.addShapes(
-            [{ ...shape, p }],
-            // Newly created shape should have doc by default.
+            shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
+            // Newly created shapes should have doc by default.
             // => It useful to apply text style even it has no content.
-            canHaveText(ctx.getShapeStruct, shape) ? { [shape.id]: getInitialOutput() } : undefined,
+            mapReduce(
+              toMap(shapes.filter((s) => canHaveText(ctx.getShapeStruct, s))),
+              (_, id) => option.docMap?.[id] ?? getInitialOutput(),
+            ),
           );
-          ctx.selectShape(shape.id);
+          ctx.multiSelectShapes(shapes.map((s) => s.id));
           return newSelectionHubState;
+        }
         case "wheel":
           ctx.zoomView(event.data.delta.y);
           return;
@@ -82,11 +96,17 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
+      const diff = getDiff();
       const shapeComposite = newShapeComposite({
-        shapes: [{ ...shape, p }],
+        shapes: shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
         getStruct: ctx.getShapeStruct,
       });
-      shapeComposite.render(renderCtx, shapeComposite.mergedShapeMap[shape.id]);
+      const renderer = newShapeRenderer({
+        shapeComposite,
+        getDocumentMap: () => option.docMap ?? {},
+        imageStore: ctx.getImageStore(),
+      });
+      renderer.render(renderCtx);
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();

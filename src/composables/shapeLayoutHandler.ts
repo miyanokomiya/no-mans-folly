@@ -1,5 +1,6 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { patchPipe } from "../utils/commons";
+import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
@@ -19,6 +20,7 @@ export function getPatchByLayouts(
     [
       () => patchInfo.update ?? {},
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
+      ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
@@ -26,6 +28,48 @@ export function getPatchByLayouts(
   );
 
   return result.patch;
+}
+
+/**
+ * Delete shapes that can no longer exist under the updated environment.
+ * Other than that, same as "getPatchByLayouts"
+ */
+export function getPatchInfoByLayouts(
+  shapeComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+): EntityPatchInfo<Shape> {
+  const updatedCompositeBeforeDelete = getNextShapeComposite(shapeComposite, patchInfo);
+  const shouldDeleteIds = updatedCompositeBeforeDelete.shapes
+    .filter((s) => updatedCompositeBeforeDelete.shouldDelete(s))
+    .map((s) => s.id);
+  const updatedComposite =
+    shouldDeleteIds.length > 0
+      ? getNextShapeComposite(updatedCompositeBeforeDelete, { delete: shouldDeleteIds })
+      : updatedCompositeBeforeDelete;
+  const adjustedPatchInfo =
+    shouldDeleteIds.length > 0
+      ? {
+          ...patchInfo,
+          delete: [...(patchInfo.delete ?? []), ...shouldDeleteIds],
+        }
+      : patchInfo;
+
+  const patchResult = patchPipe(
+    [
+      () => adjustedPatchInfo.update ?? {},
+      ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
+      ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
+      (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
+    ],
+    shapeComposite.shapeMap,
+  );
+
+  return {
+    add: adjustedPatchInfo.add,
+    update: patchResult.patch,
+    delete: adjustedPatchInfo.delete,
+  };
 }
 
 /**
