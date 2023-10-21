@@ -172,6 +172,19 @@ describe("getNextBoardLayout", () => {
     expect(Object.keys(result0)).toHaveLength(5);
   });
 
+  test("should clear rotation", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column0, card0, lane0, card1].map((s) => ({ ...s, rotation: Math.PI / 4 })),
+      getStruct: getCommonStruct,
+    });
+    const result0 = getNextBoardLayout(shapeComposite, "root");
+    expect(result0["root"].rotation).toBe(0);
+    expect(result0["column0"].rotation).toBe(0);
+    expect(result0["lane0"].rotation).toBe(0);
+    expect(result0["card0"].rotation).toBe(0);
+    expect(result0["card1"].rotation).toBe(0);
+  });
+
   test("should do nothing when no root is found", () => {
     const shapeComposite = newShapeComposite({
       shapes: [column0, card0, lane0, card1],

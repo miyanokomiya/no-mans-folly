@@ -272,6 +272,13 @@ export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: strin
       changed = true;
     }
 
+    // Clear rotation
+    // TODO: Allowing rotation isn't impossible, but it requires further adjustments throughtout the process.
+    if (src.rotation !== 0) {
+      patch.rotation = 0;
+      changed = true;
+    }
+
     if (changed) {
       ret[r.id] = patch;
     }
