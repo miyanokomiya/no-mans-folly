@@ -17,6 +17,8 @@ import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
 import { getFirstItemOfMap, getlastItemOfMap } from "../utils/commons";
+import { DocOutput } from "../models/document";
+import { getInitialOutput } from "../utils/textEditor";
 
 // Never change these values to avoid messing up findex between different type entities.
 const COLUMN_FINDEX_FROM = "a0";
@@ -197,7 +199,7 @@ export function isSameBoardHitResult(a?: BoardHitResult, b?: BoardHitResult): bo
 
 export function generateBoardTemplate(
   ctx: Pick<AppCanvasStateContext, "getShapeStruct" | "generateUuid" | "createLastIndex">,
-): Shape[] {
+): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
   const root = createShape(ctx.getShapeStruct, "board_root", {
     id: ctx.generateUuid(),
     findex: generateKeyBetween(ctx.createLastIndex(), null),
@@ -240,7 +242,17 @@ export function generateBoardTemplate(
     getStruct: ctx.getShapeStruct,
   });
   const patch = getNextBoardLayout(composite, root.id);
-  return composite.shapes.map((s) => ({ ...s, ...patch[s.id] }));
+  const shapes = composite.shapes.map((s) => ({ ...s, ...patch[s.id] }));
+
+  return {
+    shapes,
+    docMap: {
+      [root.id]: [{ insert: "Board" }, ...getInitialOutput()],
+      [column0.id]: [{ insert: "To do" }, ...getInitialOutput()],
+      [column1.id]: [{ insert: "In progress" }, ...getInitialOutput()],
+      [column2.id]: [{ insert: "Done" }, ...getInitialOutput()],
+    },
+  };
 }
 
 export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {

@@ -14,6 +14,7 @@ import iconLayout from "../assets/icons/layout.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { Shape } from "../models";
 import { generateBoardTemplate } from "../composables/boardHandler";
+import { DocOutput } from "../models/document";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
@@ -53,24 +54,26 @@ export const AppToolbar: React.FC = () => {
       const ctx = smctx;
       const type = e.currentTarget.getAttribute("data-type")!;
 
-      let shapes: Shape[] = [];
+      let template: { shapes: Shape[]; docMap?: { [id: string]: DocOutput } };
       if (type === "board_root") {
-        shapes = generateBoardTemplate(ctx);
+        template = generateBoardTemplate(ctx);
       } else {
-        shapes = [
-          createShape(ctx.getShapeStruct, type, {
-            id: ctx.generateUuid(),
-            findex: acctx.shapeStore.createLastIndex(),
-          }),
-        ];
+        template = {
+          shapes: [
+            createShape(ctx.getShapeStruct, type, {
+              id: ctx.generateUuid(),
+              findex: acctx.shapeStore.createLastIndex(),
+            }),
+          ],
+        };
       }
-      if (shapes.length === 0) return;
+      if (template.shapes.length === 0) return;
 
       sm.handleEvent({
         type: "state",
         data: {
           name: "DroppingNewShape",
-          options: { shapes },
+          options: template,
         },
       });
       setPopup("");

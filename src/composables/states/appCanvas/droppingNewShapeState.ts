@@ -9,9 +9,12 @@ import { newShapeComposite } from "../../shapeComposite";
 import { newSelectionHubState } from "./selectionHubState";
 import * as geometry from "../../../utils/geometry";
 import { mapReduce, toMap } from "../../../utils/commons";
+import { DocOutput } from "../../../models/document";
+import { newShapeRenderer } from "../../shapeRenderer";
 
 interface Option {
   shapes: Shape[];
+  docMap?: { [id: string]: DocOutput };
 }
 
 export function newDroppingNewShapeState(option: Option): AppCanvasState {
@@ -77,7 +80,10 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
             shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
             // Newly created shapes should have doc by default.
             // => It useful to apply text style even it has no content.
-            mapReduce(toMap(shapes.filter((s) => canHaveText(ctx.getShapeStruct, s))), () => getInitialOutput()),
+            mapReduce(
+              toMap(shapes.filter((s) => canHaveText(ctx.getShapeStruct, s))),
+              (_, id) => option.docMap?.[id] ?? getInitialOutput(),
+            ),
           );
           ctx.multiSelectShapes(shapes.map((s) => s.id));
           return newSelectionHubState;
@@ -95,9 +101,12 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         shapes: shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
         getStruct: ctx.getShapeStruct,
       });
-      shapeComposite.shapes.forEach((s) => {
-        shapeComposite.render(renderCtx, s);
+      const renderer = newShapeRenderer({
+        shapeComposite,
+        getDocumentMap: () => option.docMap ?? {},
+        imageStore: ctx.getImageStore(),
       });
+      renderer.render(renderCtx);
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
