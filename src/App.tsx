@@ -87,7 +87,9 @@ function App() {
         </div>
         <div className="absolute top-8 flex">
           <SheetList />
-          <SheetConfigPanel />
+          <div className="absolute top-0 flex" style={{ left: 116 }}>
+            <SheetConfigPanel />
+          </div>
         </div>
         <div className="absolute left-0 top-0 flex">
           <AppHeader
