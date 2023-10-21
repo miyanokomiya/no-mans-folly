@@ -111,10 +111,13 @@ export function newBoardHandler(option: Option) {
     type: "add_column",
     p: { x: root.p.x + root.width, y: root.p.y + root.titleHeight + ANCHOR_MARGIN },
   });
-  anchors.push({
-    type: "add_lane",
-    p: { x: root.p.x + ANCHOR_MARGIN, y: root.p.y + root.height },
-  });
+
+  if (columnMap.size > 0) {
+    anchors.push({
+      type: "add_lane",
+      p: { x: root.p.x + ANCHOR_MARGIN, y: root.p.y + root.height },
+    });
+  }
 
   function hitTest(p: IVec2, scale = 1): BoardHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -481,20 +484,27 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
         const y = lastLane.p.y + lastLane.height;
         return [cell, { x: column.p.x, y, width: column.width, height: column.p.y + column.height - y }];
       } else {
-        return [cell, { x: column.p.x, y: column.p.y, width: column.width, height: column.height }];
+        return [
+          cell,
+          {
+            x: column.p.x,
+            y: column.p.y + column.titleHeight,
+            width: column.width,
+            height: column.height - column.titleHeight,
+          },
+        ];
       }
     }
   });
 
   function hitTest(p: IVec2): BoardCardMovingHitResult | undefined {
-    if (rects.length === 0) return;
-
     const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
       id,
       rect,
       getDistanceBetweenPointAndRect(p, rect),
     ]);
-    const [closestId, closestRect, closestD] = evaluated.sort((a, b) => a[2] - b[2])[0];
+    const [closestId, closestRect, closestD] =
+      evaluated.length > 0 ? evaluated.sort((a, b) => a[2] - b[2])[0] : [undefined, undefined, Infinity];
 
     if (emptyCellRects.length > 0) {
       const emptyEvaluated = emptyCellRects.map<[{ columnId: string; laneId: string }, IRectangle, number]>(
@@ -511,6 +521,8 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
         };
       }
     }
+
+    if (!closestId || !closestRect) return;
 
     const toBelow = closestRect.y + closestRect.height / 2 < p.y;
     const closestCard = boardHandler.cardMap.get(closestId)!;

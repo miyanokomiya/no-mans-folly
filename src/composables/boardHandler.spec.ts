@@ -14,6 +14,7 @@ import { BoardColumnShape } from "../shapes/board/boardColumn";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { BoardLaneShape } from "../shapes/board/boardLane";
+import { add } from "okageo";
 
 const root = createShape<BoardRootShape>(getCommonStruct, "board_root", {
   id: "root",
@@ -294,6 +295,12 @@ describe("newBoardCardMovingHandler", () => {
         findexBetween: ["a2", "a3"],
         rect: expect.anything(),
       });
+      expect(target.hitTest(add(layoutColumn1.p, { x: 0, y: layoutColumn1.height }))).toEqual({
+        columnId: layoutColumn1.id,
+        laneId: "",
+        findexBetween: ["a2", "a3"],
+        rect: expect.anything(),
+      });
     });
 
     test("should return insertion information: to between cards", () => {
@@ -347,6 +354,41 @@ describe("newBoardCardMovingHandler", () => {
         columnId: card1.columnId,
         laneId: card1.laneId,
         findexBetween: [card1.findex, card2.findex],
+        rect: expect.anything(),
+      });
+    });
+
+    test("should be able to insert a board without any cards", () => {
+      const shapes = [root, column0, lane0];
+      const patch = getNextBoardLayout(
+        newShapeComposite({
+          shapes,
+          getStruct: getCommonStruct,
+        }),
+        root.id,
+      );
+      const layoutShapes = shapes.map((s) => ({ ...s, ...patch[s.id] }));
+      const shapeComposite = newShapeComposite({
+        shapes: layoutShapes,
+        getStruct: getCommonStruct,
+      });
+      const target = newBoardCardMovingHandler({
+        getShapeComposite: () => shapeComposite,
+        boardId: root.id,
+        cardIds: [card0.id],
+      });
+      const layoutColumn0 = shapeComposite.shapeMap[column0.id] as BoardColumnShape;
+
+      expect(target.hitTest(layoutColumn0.p)).toEqual({
+        columnId: layoutColumn0.id,
+        laneId: lane0.id,
+        findexBetween: ["a2", "a3"],
+        rect: expect.anything(),
+      });
+      expect(target.hitTest(add(layoutColumn0.p, { x: 0, y: layoutColumn0.height }))).toEqual({
+        columnId: layoutColumn0.id,
+        laneId: "",
+        findexBetween: ["a2", "a3"],
         rect: expect.anything(),
       });
     });
