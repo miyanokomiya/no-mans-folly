@@ -14,7 +14,7 @@ import {
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
-import { BoardCardShape } from "../../../../shapes/board/boardCard";
+import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
 import { applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import {
@@ -28,25 +28,42 @@ import { canHaveText, createShape } from "../../../../shapes";
 import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
 import { Shape } from "../../../../models";
 import { newSingleSelectedState } from "../singleSelectedState";
+import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
 
-export function newBoardCardSelectedState(): AppCanvasState {
-  let cardShape: BoardCardShape;
+/**
+ * General selected state for any board entity
+ * - BoardRootShape, BoardColumnShape, BoardLaneShape, BoardCardShape
+ */
+export function newBoardEntitySelectedState(): AppCanvasState {
+  let boardId: string;
+  let targetShape: Shape;
   let boardHandler: BoardHandler;
   let boardHitResult: BoardHitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
     boardHandler = newBoardHandler({
       getShapeComposite: ctx.getShapeComposite,
-      boardId: cardShape.parentId!,
+      boardId,
     });
   }
 
   return {
-    getLabel: () => "BoardCardSelected",
+    getLabel: () => "BoardEntitySelected",
     onStart: (ctx) => {
       const shapeMap = ctx.getShapeComposite().shapeMap;
-      cardShape = shapeMap[ctx.getLastSelectedShapeId() ?? ""] as BoardCardShape;
-      if (!shapeMap[cardShape.parentId ?? ""] || !shapeMap[cardShape.columnId]) {
+      targetShape = shapeMap[ctx.getLastSelectedShapeId() ?? ""];
+
+      if (isBoardRootShape(targetShape)) {
+        boardId = targetShape.id;
+      } else {
+        if (!shapeMap[targetShape.parentId ?? ""]) {
+          return newSingleSelectedState;
+        }
+
+        boardId = targetShape.parentId!;
+      }
+
+      if (isBoardCardShape(targetShape) && !shapeMap[targetShape.columnId]) {
         return newSingleSelectedState;
       }
 
@@ -61,7 +78,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
       ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
-      if (!cardShape) return newSelectionHubState;
+      if (!targetShape) return newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
@@ -79,7 +96,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
                     newShape = createShape<BoardCardShape>(shapeComposite.getShapeStruct, "board_card", {
                       id: ctx.generateUuid(),
                       findex: boardHandler.generateNewCardFindex(),
-                      parentId: cardShape.parentId,
+                      parentId: boardId,
                       columnId: boardHitResult.columnId,
                       laneId: boardHitResult.laneId,
                     });
@@ -89,7 +106,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
                     newShape = createShape(shapeComposite.getShapeStruct, "board_column", {
                       id: ctx.generateUuid(),
                       findex: boardHandler.generateNewColumnFindex(),
-                      parentId: cardShape.parentId,
+                      parentId: boardId,
                     });
                     break;
                   }
@@ -97,7 +114,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
                     newShape = createShape(shapeComposite.getShapeStruct, "board_lane", {
                       id: ctx.generateUuid(),
                       findex: boardHandler.generateNewLaneFindex(),
-                      parentId: cardShape.parentId,
+                      parentId: boardId,
                     });
                     break;
                   }
@@ -128,8 +145,8 @@ export function newBoardCardSelectedState(): AppCanvasState {
               return handleCommonPointerDownLeftOnSingleSelection(
                 ctx,
                 event,
-                cardShape.id,
-                ctx.getShapeComposite().getSelectionScope(cardShape),
+                targetShape.id,
+                ctx.getShapeComposite().getSelectionScope(targetShape),
               );
             }
             case 1:
@@ -138,8 +155,8 @@ export function newBoardCardSelectedState(): AppCanvasState {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,
                 event,
-                cardShape.id,
-                ctx.getShapeComposite().getSelectionScope(cardShape),
+                targetShape.id,
+                ctx.getShapeComposite().getSelectionScope(targetShape),
               );
             }
             default:
@@ -150,10 +167,10 @@ export function newBoardCardSelectedState(): AppCanvasState {
           const shapeAtPointer = findBetterShapeAt(
             shapeComposite,
             event.data.point,
-            shapeComposite.getSelectionScope(cardShape),
+            shapeComposite.getSelectionScope(targetShape),
           );
-          if (shapeAtPointer && shapeAtPointer.id === cardShape.id) {
-            return startTextEditingIfPossible(ctx, cardShape.id, event.data.point);
+          if (shapeAtPointer && shapeAtPointer.id === targetShape.id) {
+            return startTextEditingIfPossible(ctx, targetShape.id, event.data.point);
           }
           return;
         }
@@ -172,7 +189,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
           const shapeAtPointer = findBetterShapeAt(
             shapeComposite,
             event.data.current,
-            shapeComposite.getSelectionScope(cardShape),
+            shapeComposite.getSelectionScope(targetShape),
           );
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
@@ -180,7 +197,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Delete":
-              ctx.deleteShapes([cardShape.id]);
+              ctx.deleteShapes([targetShape.id]);
               return;
             default:
               return handleCommonShortcut(ctx, event);
@@ -193,7 +210,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
         }
         case "shape-updated": {
           const shapeComposite = ctx.getShapeComposite();
-          const shape = shapeComposite.mergedShapeMap[cardShape.id];
+          const shape = shapeComposite.mergedShapeMap[targetShape.id];
           if (!shape) return newSelectionHubState;
 
           if (boardHandler.isBoardChanged(Array.from(event.data.keys))) {
@@ -240,7 +257,7 @@ export function newBoardCardSelectedState(): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
       const shapeComposite = ctx.getShapeComposite();
-      const path = shapeComposite.getLocalRectPolygon(cardShape);
+      const path = shapeComposite.getLocalRectPolygon(targetShape);
       applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
       renderCtx.beginPath();
       applyPath(renderCtx, path, true);
