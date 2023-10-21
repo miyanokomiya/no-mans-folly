@@ -69,7 +69,7 @@ export function newBoardCardMovingState(): AppCanvasState {
             shapeComposite.isPointOn(s, event.data.current),
           );
 
-          if (!board) {
+          if (!board || event.data.ctrl) {
             boardId = undefined;
             boardMovingHitResult = undefined;
             return movingState.handleEvent(ctx, event);
@@ -90,13 +90,19 @@ export function newBoardCardMovingState(): AppCanvasState {
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
 
-          if (!boardId) {
+          if (!boardId || event.data.options.ctrl) {
             const tmpShapeMap = ctx.getTmpShapeMap();
             // Disconnect cards from the board.
             const patch = mapReduce(tmpShapeMap, (v, id) => {
               const s = shapeMap[id];
               if (isBoardCardShape(s) && s.parentId) {
-                return { ...v, parentId: undefined, columnId: undefined, layerId: undefined };
+                return {
+                  ...v,
+                  parentId: undefined,
+                  columnId: undefined,
+                  layerId: undefined,
+                  findex: ctx.createLastIndex(),
+                };
               } else {
                 return v;
               }

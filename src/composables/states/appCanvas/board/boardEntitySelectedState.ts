@@ -1,6 +1,7 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newPanningState } from "../../commons";
 import {
+  getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
@@ -77,7 +78,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       });
 
       ctx.showFloatMenu();
-      ctx.setCommandExams([]);
+      ctx.setCommandExams(getCommonCommandExams());
       initHandler(ctx);
     },
     onEnd: (ctx) => {
