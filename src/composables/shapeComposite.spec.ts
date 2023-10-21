@@ -138,6 +138,18 @@ describe("newShapeComposite", () => {
     });
   });
 
+  describe("isPointOn", () => {
+    test("should return true when the point is on the shape", () => {
+      const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", width: 10, height: 20 });
+
+      const shapes = [shape0];
+      const target = newShapeComposite({ shapes, getStruct: getCommonStruct });
+
+      expect(target.isPointOn(shape0, { x: -50, y: -50 })).toBe(false);
+      expect(target.isPointOn(shape0, { x: 5, y: 5 })).toBe(true);
+    });
+  });
+
   describe("getMergedShapesInSelectionScope", () => {
     test("should return shapes having the same scope", () => {
       const board0 = createShape(getCommonStruct, "board_root", { id: "board0" });

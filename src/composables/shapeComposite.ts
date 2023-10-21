@@ -66,6 +66,10 @@ export function newShapeComposite(option: Option) {
     return childCandidate ?? candidate;
   }
 
+  function isPointOn(shape: Shape, p: IVec2): boolean {
+    return shapeModule.isPointOn(option.getStruct, shape, p, mergedShapeContext);
+  }
+
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
     return shapeModule.getWrapperRect(option.getStruct, shape, mergedShapeContext, includeBounds);
   }
@@ -131,6 +135,7 @@ export function newShapeComposite(option: Option) {
 
     render,
     findShapeAt,
+    isPointOn,
     getWrapperRect,
     getWrapperRectForShapes,
     getLocalRectPolygon,
