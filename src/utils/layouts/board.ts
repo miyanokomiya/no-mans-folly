@@ -51,6 +51,9 @@ export const boardLayout: LayoutFn<BoardLayoutNode> = (src) => {
   if (!root) throw new Error("Not found board root.");
   if (columnMap.size === 0) throw new Error("Not found board column.");
 
+  // Let spacings depend on max width of the columns.
+  // It isn't ideal dependance though, there seems no better one in a board.
+  // If spacings don't depend at all, resizing a board feels a bit strange.
   const columnMaxWidth = Math.max(...Array.from(columnMap.values()).map((c) => c.rect.width));
   const scale = columnMaxWidth / 300;
   const distRectMap = getBoardRectMap(root, cardMap, columnMap, laneMap, {
