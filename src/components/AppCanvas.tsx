@@ -653,7 +653,7 @@ export const AppCanvas: React.FC = () => {
       >
         <FileDropArea typeReg={/image\/.+/} onDrop={onDrop}>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-          <div className="absolute right-2 top-0">{sm.getStateSummary().label}</div>
+          <div className="absolute right-16 top-0">{sm.getStateSummary().label}</div>
           <div className="absolute bottom-2 left-2 pointer-events-none">
             <CommandExamPanel commandExams={commandExams} />
           </div>
