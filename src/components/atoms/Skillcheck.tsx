@@ -68,10 +68,10 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
 
   const onStop = useCallback(
     (e: MouseEvent) => {
-      e.preventDefault();
       // Check "timerRef" to avoid detecting the click initiating this component.
       if (!playing || timerRef.current < 10) return;
 
+      e.preventDefault();
       cancelAnimationFrame(loopRef.current);
       setPlaying(false);
 

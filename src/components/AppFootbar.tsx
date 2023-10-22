@@ -2,10 +2,11 @@ import { useCallback, useContext, useState } from "react";
 import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
 import { PopupButton } from "./atoms/PopupButton";
 import { getWrapperRect } from "../utils/geometry";
-import { ListButton } from "./atoms/buttons/ListButton";
+import { ListButton, ListLink } from "./atoms/buttons/ListButton";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import iconUndo from "../assets/icons/undo.svg";
 import iconRedo from "../assets/icons/redo.svg";
+import iconHelp from "../assets/icons/help.svg";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -27,11 +28,14 @@ export const AppFootbar: React.FC = () => {
     smctx.setZoom(1, true);
   }, [smctx]);
 
-  const handleClosePopup = useCallback(() => {
-    setPopupedKey("");
+  const onClickPopupButton = useCallback((value: string) => {
+    setPopupedKey((key) => (key === value ? "" : value));
   }, []);
-  const onClickZoomButton = useCallback(() => {
-    setPopupedKey((key) => (key === "scale" ? "" : "scale"));
+  const handleCloseScalePopup = useCallback(() => {
+    setPopupedKey((key) => (key === "scale" ? "" : key));
+  }, []);
+  const handleCloseHelpPopup = useCallback(() => {
+    setPopupedKey((key) => (key === "help" ? "" : key));
   }, []);
 
   const onUndo = useCallback(() => {
@@ -54,7 +58,7 @@ export const AppFootbar: React.FC = () => {
         <button type="button" className="w-4 h-8 rounded" onClick={handleScaleDown}>
           -
         </button>
-        <OutsideObserver onClick={handleClosePopup}>
+        <OutsideObserver onClick={handleCloseScalePopup}>
           <PopupButton
             name="scale"
             opened={popupedKey === "scale"}
@@ -64,7 +68,7 @@ export const AppFootbar: React.FC = () => {
                 <ListButton onClick={handleScale100}>100%</ListButton>
               </div>
             }
-            onClick={onClickZoomButton}
+            onClick={onClickPopupButton}
           >
             <div className="flex items-center">{scale}%</div>
           </PopupButton>
@@ -79,6 +83,27 @@ export const AppFootbar: React.FC = () => {
       <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onRedo}>
         <img src={iconRedo} alt="Redo" />
       </button>
+      {process.env.CONTACT_FORM_URL ? (
+        <OutsideObserver onClick={handleCloseHelpPopup}>
+          <PopupButton
+            name="help"
+            opened={popupedKey === "help"}
+            popup={
+              <div className="flex flex-col items-center">
+                <ListLink href={process.env.CONTACT_FORM_URL} external>
+                  Contact
+                </ListLink>
+              </div>
+            }
+            onClick={onClickPopupButton}
+            popupPosition="left"
+          >
+            <div className="w-6 h-6 flex justify-center items-center">
+              <img src={iconHelp} alt="Help" />
+            </div>
+          </PopupButton>
+        </OutsideObserver>
+      ) : undefined}
     </div>
   );
 };

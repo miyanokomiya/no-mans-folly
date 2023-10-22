@@ -6,5 +6,6 @@ export default defineConfig({
   plugins: [react()],
   define: {
     "process.env.APP_VERSION": JSON.stringify(process.env.npm_package_version),
+    "process.env.CONTACT_FORM_URL": JSON.stringify(process.env.CONTACT_FORM_URL),
   },
 });
