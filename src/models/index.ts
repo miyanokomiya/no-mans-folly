@@ -85,6 +85,7 @@ export interface BoxPadding {
 }
 
 export type Direction4 = 0 | 1 | 2 | 3; // top, right, bottom, left
+export type Direction2 = 0 | 1; // vertical, horizontal
 
 export interface EntityPatchInfo<T extends Entity> {
   add?: T[];
