@@ -21,6 +21,7 @@ import { struct as boardRootStruct } from "./board/boardRoot";
 import { struct as boardColumnStruct } from "./board/boardColumn";
 import { struct as boardLaneStruct } from "./board/boardLane";
 import { struct as boardCardStruct } from "./board/boardCard";
+import { struct as alignBoxStruct } from "./align/alignBox";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
@@ -46,6 +47,7 @@ const SHAPE_STRUCTS: {
   board_column: boardColumnStruct,
   board_lane: boardLaneStruct,
   board_card: boardCardStruct,
+  align_box: alignBoxStruct,
 };
 
 export type GetShapeStruct = _GetShapeStruct;

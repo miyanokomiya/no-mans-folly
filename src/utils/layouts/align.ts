@@ -1,6 +1,6 @@
 import { IRectangle, IVec2, add } from "okageo";
 import { Direction2 } from "../../models";
-import { TreeNode } from "../tree";
+import { TreeNode, getTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
 import { getWrapperRect } from "../geometry";
 
@@ -29,8 +29,11 @@ export interface AlignLayoutBox extends AlignLayoutBase {
   gap: number;
 }
 
-export const boardLayout: LayoutFn<AlignLayoutNode> = (src) => {
-  return src;
+export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
+  const nodeMap = new Map(src.map((n) => [n.id, n]));
+  const treeRoots = getTree(src);
+  const map = getAlignRectMap(nodeMap, treeRoots);
+  return src.map((n) => ({ ...n, rect: map.get(n.id)! }));
 };
 
 export function getAlignRectMap(nodeMap: Map<string, AlignLayoutNode>, treeRoots: TreeNode[]): Map<string, IRectangle> {
