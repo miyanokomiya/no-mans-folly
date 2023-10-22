@@ -86,12 +86,36 @@ describe("getModifiedAlignRootIds", () => {
     expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id, box10.id]);
   });
 
+  test("should return related align box shapes: leave from a box", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: { rect0: { parentId: undefined } },
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
+  });
+
   test("should return related align box shapes: nested boxes", () => {
     const patchInfo: EntityPatchInfo<Shape> = {
       update: { rect10: { findex: "a" } },
     };
     const srcComposite = newShapeComposite({
       shapes: [box0, rect0, rect1, { ...box10, parentId: box0.id }, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
+  });
+
+  test("should return related align box shapes: a box becomes a child", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: { box10: { parentId: box0.id } },
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
       getStruct: getCommonStruct,
     });
     const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);

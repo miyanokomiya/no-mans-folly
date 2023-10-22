@@ -138,8 +138,26 @@ export function getModifiedAlignRootIds(
 
   if (patchInfo.update) {
     Object.keys(patchInfo.update).forEach((id) => {
-      saveParentBoxes(shapeMap[id]);
-      saveUpdatedParentBoxes(updatedShapeMap[id]);
+      const currentAlignId = getBranchPath(srcComposite.mergedShapeTreeMap, id).find((id) => {
+        if (isAlignBoxShape(shapeMap[id])) {
+          return true;
+        }
+      });
+
+      const nextAlignId = getBranchPath(updatedComposite.mergedShapeTreeMap, id).find((id) => {
+        if (isAlignBoxShape(updatedShapeMap[id])) {
+          return true;
+        }
+      });
+
+      if (currentAlignId && nextAlignId && id === currentAlignId && currentAlignId !== nextAlignId) {
+        // Root board becomes a child of other board.
+        // => Should pick eventual root board only.
+        targetRootIdSet.add(nextAlignId);
+      } else {
+        if (currentAlignId) targetRootIdSet.add(currentAlignId);
+        if (nextAlignId) targetRootIdSet.add(nextAlignId);
+      }
     });
   }
 
