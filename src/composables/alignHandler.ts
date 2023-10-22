@@ -1,8 +1,8 @@
 import { isSame } from "okageo";
-import { Shape } from "../models";
+import { EntityPatchInfo, Shape } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
-import { flatTree } from "../utils/tree";
+import { flatTree, getBranchPath } from "../utils/tree";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
@@ -15,7 +15,7 @@ interface AlignHandlerOption {
   targetId: string;
 }
 
-export function newAlignHandler(option: AlignHandlerOption) {}
+export function newAlignHandler(_option: AlignHandlerOption) {}
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayoutNode | undefined {
@@ -58,23 +58,102 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
   const ret: { [id: string]: Partial<Shape> & Partial<AlignBoxShape> } = {};
   result.forEach((r) => {
     const shape = shapeComposite.shapeMap[r.id];
+    let changed = false;
+    const patch: Partial<Shape> & Partial<AlignBoxShape> = {};
     if (!isSame(r.rect, shape.p)) {
-      ret[r.id] = { p: { x: r.rect.x, y: r.rect.y } };
+      patch.p = { x: r.rect.x, y: r.rect.y };
+      changed = true;
     }
     if (isAlignBoxShape(shape)) {
       if (r.rect.width !== shape.width) {
-        ret[r.id].width = r.rect.width;
+        patch.width = r.rect.width;
+        changed = true;
       }
       if (r.rect.height !== shape.height) {
-        ret[r.id].height = r.rect.height;
+        patch.height = r.rect.height;
+        changed = true;
       }
       if (shape.rotation !== 0) {
-        ret[r.id].rotation = 0;
+        patch.rotation = 0;
+        changed = true;
       }
+    }
+
+    if (changed) {
+      ret[r.id] = patch;
     }
   });
 
   return ret;
+}
+
+export function getAlignLayoutPatchFunctions(
+  srcComposite: ShapeComposite,
+  updatedComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+) {
+  return getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo).map((id) => {
+    return () => getNextAlignLayout(updatedComposite, id);
+  });
+}
+
+export function getModifiedAlignRootIds(
+  srcComposite: ShapeComposite,
+  updatedComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+) {
+  const targetRootIdSet = new Set<string>();
+  const deletedRootIdSet = new Set<string>();
+
+  const shapeMap = srcComposite.shapeMap;
+  const updatedShapeMap = updatedComposite.shapeMap;
+
+  srcComposite.mergedShapeTreeMap;
+
+  const saveParentBoxes = (s: Shape) => {
+    // Seek the shallowest align box shape.
+    getBranchPath(srcComposite.mergedShapeTreeMap, s.id).some((id) => {
+      if (isAlignBoxShape(shapeMap[id])) {
+        targetRootIdSet.add(id);
+        return true;
+      }
+    });
+  };
+
+  const saveUpdatedParentBoxes = (s: Shape) => {
+    // Seek the shallowest align box shape.
+    getBranchPath(updatedComposite.mergedShapeTreeMap, s.id).some((id) => {
+      if (isAlignBoxShape(updatedShapeMap[id])) {
+        targetRootIdSet.add(id);
+        return true;
+      }
+    });
+  };
+
+  if (patchInfo.add) {
+    patchInfo.add.forEach((shape) => {
+      saveUpdatedParentBoxes(shape);
+    });
+  }
+
+  if (patchInfo.update) {
+    Object.keys(patchInfo.update).forEach((id) => {
+      saveParentBoxes(shapeMap[id]);
+      saveUpdatedParentBoxes(updatedShapeMap[id]);
+    });
+  }
+
+  if (patchInfo.delete) {
+    patchInfo.delete.forEach((id) => {
+      const shape = shapeMap[id];
+      if (isAlignBoxShape(shape)) {
+        deletedRootIdSet.add(id);
+      }
+      saveParentBoxes(shape);
+    });
+  }
+
+  return Array.from(targetRootIdSet).filter((id) => !deletedRootIdSet.has(id));
 }
 
 export function generateAlignTemplate(

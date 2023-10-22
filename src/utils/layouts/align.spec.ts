@@ -52,17 +52,24 @@ const entity11: AlignLayoutNode = {
 
 describe("getAlignRectMap", () => {
   test("should return absolete aligned rects: vertical & nested box", () => {
-    const nodes = [box0, entity0, { ...box10, parentId: box0.id }, entity10, entity11, entity1];
+    const nodes = [
+      { ...box0, rect: { ...box0.rect, x: 1, y: 2 } },
+      entity0,
+      { ...box10, parentId: box0.id },
+      entity10,
+      entity11,
+      entity1,
+    ];
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     const result0 = getAlignRectMap(nodeMap, getTree(nodes));
     expect(result0).toEqual(
       new Map([
-        ["box0", { x: 0, y: 0, width: 20, height: 200 }],
-        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
-        ["box10", { x: 0, y: 40, width: 20, height: 100 }],
-        ["entity10", { x: 0, y: 40, width: 20, height: 30 }],
-        ["entity11", { x: 0, y: 80, width: 20, height: 30 }],
-        ["entity1", { x: 0, y: 150, width: 20, height: 30 }],
+        ["box0", { x: 1, y: 2, width: 20, height: 200 }],
+        ["entity0", { x: 1, y: 2, width: 20, height: 30 }],
+        ["box10", { x: 1, y: 42, width: 20, height: 100 }],
+        ["entity10", { x: 1, y: 42, width: 20, height: 30 }],
+        ["entity11", { x: 1, y: 82, width: 20, height: 30 }],
+        ["entity1", { x: 1, y: 152, width: 20, height: 30 }],
       ]),
     );
   });
@@ -89,6 +96,19 @@ describe("getAlignRelativeRectMap", () => {
     expect(result0).toEqual(
       new Map([
         ["box0", { x: 0, y: 0, width: 50, height: 50 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should return relative aligned rects: vertical & line break & oversized node", () => {
+    const nodes = [{ ...box0, rect: { x: 0, y: 0, width: 10, height: 20 } }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 50, height: 20 }],
         ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
         ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
       ]),

@@ -38,13 +38,18 @@ export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
 
 export function getAlignRectMap(nodeMap: Map<string, AlignLayoutNode>, treeRoots: TreeNode[]): Map<string, IRectangle> {
   const relativeMap = getAlignRelativeRectMap(nodeMap, treeRoots);
-  return toAbsoleteRectMap(relativeMap, treeRoots);
+  return toAbsoleteRectMap(nodeMap, relativeMap, treeRoots);
 }
 
-function toAbsoleteRectMap(relativeMap: Map<string, IRectangle>, treeRoots: TreeNode[]): Map<string, IRectangle> {
+function toAbsoleteRectMap(
+  nodeMap: Map<string, AlignLayoutNode>,
+  relativeMap: Map<string, IRectangle>,
+  treeRoots: TreeNode[],
+): Map<string, IRectangle> {
   const ret = new Map<string, IRectangle>();
   treeRoots.forEach((t) => {
-    toAbsoleteRectMapStep(ret, relativeMap, t, { x: 0, y: 0 });
+    const node = nodeMap.get(t.id)!;
+    toAbsoleteRectMapStep(ret, relativeMap, t, node.rect);
   });
   return ret;
 }
@@ -115,7 +120,7 @@ function calcAlignRectMap(
       let x = from.x;
       let y = 0;
       let maxWidth = 0;
-      treeNode.children.forEach((c) => {
+      treeNode.children.forEach((c, i) => {
         const result = calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, node.rect.height - y);
         if (!result) {
           const crect = ret.get(c.id)!;
@@ -123,11 +128,13 @@ function calcAlignRectMap(
           y += crect.height + node.gap;
         } else {
           // Should break line once
-          x += maxWidth + node.gap;
-          y = 0;
-          calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, node.rect.height - y);
+          if (i > 0) {
+            x += maxWidth + node.gap;
+            y = 0;
+          }
+          calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, Infinity);
           const crect = ret.get(c.id)!;
-          maxWidth = 0;
+          maxWidth = crect.width;
           y += crect.height + node.gap;
         }
       });
