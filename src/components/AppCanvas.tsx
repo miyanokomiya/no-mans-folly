@@ -530,6 +530,19 @@ export const AppCanvas: React.FC = () => {
     [sm],
   );
 
+  const onKeyUp = useCallback(
+    (e: React.KeyboardEvent) => {
+      sm.handleEvent({
+        type: "keyup",
+        data: {
+          ...getKeyOptions(e),
+          prevent: () => e.preventDefault(),
+        },
+      });
+    },
+    [sm],
+  );
+
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
       sm.handleEvent({
@@ -608,6 +621,7 @@ export const AppCanvas: React.FC = () => {
     <TextEditor
       onInput={onTextInput}
       onKeyDown={onKeyDown}
+      onKeyUp={onKeyUp}
       position={textEditorPosition}
       focusKey={textEditorFocusKey}
       showEmojiPicker={showEmojiPicker}
@@ -645,6 +659,7 @@ export const AppCanvas: React.FC = () => {
         onMouseDown={onMouseDown}
         onMouseMove={onMouseHover}
         onKeyDown={onKeyDown}
+        onKeyUp={onKeyUp}
         onWheel={onWheel}
         onFocus={onFocus}
         onBlur={onBlur}

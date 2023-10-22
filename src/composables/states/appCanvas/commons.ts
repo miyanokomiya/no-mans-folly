@@ -1,4 +1,4 @@
-import { HistoryEvent } from "../commons";
+import { HistoryEvent, newPanningReadyState } from "../commons";
 import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
@@ -148,6 +148,9 @@ export function handleCommonShortcut(
         return newEmojiPickerState;
       }
       return;
+    case " ": {
+      return { type: "stack-restart", getState: newPanningReadyState };
+    }
     case "!":
     case "Home": {
       const shapeComposite = ctx.getShapeComposite();
@@ -162,6 +165,7 @@ const COMMON_COMMAND_EXAMS = [
   COMMAND_EXAM_SRC.NEW_LINE,
   COMMAND_EXAM_SRC.NEW_EMOJI,
   COMMAND_EXAM_SRC.TOGGLE_GRID,
+  COMMAND_EXAM_SRC.PAN_CANVAS,
   COMMAND_EXAM_SRC.RESET_VIEWPORT,
 ];
 export function getCommonCommandExams() {

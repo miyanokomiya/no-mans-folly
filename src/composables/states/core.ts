@@ -192,6 +192,7 @@ export type ModeStateEvent =
   | PointerDoubleDownEvent
   | PointerUpEvent
   | KeyDownEvent
+  | KeyUpEvent
   | WheelEvent
   | ChangeStateEvent
   | ContextMenuEvent
@@ -245,6 +246,12 @@ export interface PointerUpEvent extends ModeStateEventBase {
 
 export interface KeyDownEvent extends ModeStateEventBase {
   type: "keydown";
+  data: KeyOptions;
+  point?: IVec2;
+}
+
+export interface KeyUpEvent extends ModeStateEventBase {
+  type: "keyup";
   data: KeyOptions;
   point?: IVec2;
 }

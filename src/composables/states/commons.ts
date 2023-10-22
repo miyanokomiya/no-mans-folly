@@ -49,9 +49,11 @@ const panningState: CanvasState = {
   getLabel: () => "Panning",
   onStart: (ctx) => {
     ctx.startDragging();
+    ctx.setCursor("grabbing");
   },
   onEnd: (ctx) => {
     ctx.stopDragging();
+    ctx.setCursor();
   },
   handleEvent: (ctx, event) => {
     switch (event.type) {
@@ -63,3 +65,34 @@ const panningState: CanvasState = {
     }
   },
 };
+
+export function newPanningReadyState(): CanvasState {
+  let _panningState: CanvasState;
+
+  return {
+    getLabel: () => "PanningReady",
+    onStart: (ctx) => {
+      _panningState = newPanningState();
+      ctx.setCursor("grab");
+    },
+    onEnd: (ctx) => {
+      _panningState.onEnd?.(ctx);
+      ctx.setCursor();
+    },
+    handleEvent: (ctx, event) => {
+      switch (event.type) {
+        case "pointerdown":
+          _panningState.onStart?.(ctx);
+          return;
+        case "pointermove":
+          return _panningState.handleEvent(ctx, event);
+        case "pointerup":
+          _panningState.onEnd?.(ctx);
+          ctx.setCursor("grab");
+          return;
+        case "keyup":
+          return { type: "break" };
+      }
+    },
+  };
+}

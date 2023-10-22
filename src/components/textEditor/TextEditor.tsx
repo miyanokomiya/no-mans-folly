@@ -6,6 +6,7 @@ import { EmojiData } from "../../models/document";
 interface Props {
   onInput?: (val: string, composition?: boolean) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  onKeyUp?: (e: React.KeyboardEvent) => void;
   position: IVec2;
   focusKey?: any;
   showEmojiPicker?: boolean;
@@ -15,6 +16,7 @@ interface Props {
 export const TextEditor: React.FC<Props> = ({
   onInput,
   onKeyDown,
+  onKeyUp,
   position,
   focusKey,
   showEmojiPicker,
@@ -76,6 +78,7 @@ export const TextEditor: React.FC<Props> = ({
           value={draft}
           onChange={onChange}
           onKeyDown={onKeyDown}
+          onKeyUp={onKeyUp}
           onCompositionStart={onCompositionStart}
           onCompositionEnd={onCompositionEnd}
         />
