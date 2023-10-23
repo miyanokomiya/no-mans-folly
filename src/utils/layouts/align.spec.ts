@@ -130,4 +130,50 @@ describe("getAlignRelativeRectMap", () => {
       ]),
     );
   });
+
+  test("should return relative aligned rects: vertical & line break & nested box", () => {
+    const nodes = [
+      { ...box0, rect: { x: 0, y: 0, width: 10, height: 100 } },
+      entity0,
+      entity1,
+      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 10, height: 50 } },
+      entity10,
+      entity11,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 80, height: 100 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 0, y: 40, width: 20, height: 30 }],
+        ["box10", { x: 30, y: 0, width: 50, height: 50 }],
+        ["entity10", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity11", { x: 30, y: 0, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should return relative aligned rects: vertical & line break & nested box 2", () => {
+    const nodes = [
+      { ...box0, rect: { x: 0, y: 0, width: 10, height: 50 } },
+      entity0,
+      entity1,
+      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 10, height: 50 } },
+      entity10,
+      entity11,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 110, height: 50 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
+        ["box10", { x: 60, y: 0, width: 50, height: 50 }],
+        ["entity10", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity11", { x: 30, y: 0, width: 20, height: 30 }],
+      ]),
+    );
+  });
 });

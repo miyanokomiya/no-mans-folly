@@ -103,6 +103,10 @@ function calcAlignRectMapForRoot(
   }
 }
 
+/**
+ * Returns "true" when the node's size is over "remain".
+ * => It means, this node should be located in the next line.
+ */
 function calcAlignRectMap(
   ret: Map<string, IRectangle>,
   nodeMap: Map<string, AlignLayoutNode>,
@@ -117,11 +121,12 @@ function calcAlignRectMap(
   const node = nodeMap.get(treeNode.id)!;
   if (node.type === "box") {
     if (node.direction === 0) {
-      let x = from.x;
+      let x = 0;
       let y = 0;
       let maxWidth = 0;
       treeNode.children.forEach((c, i) => {
         const result = calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, node.rect.height - y);
+
         if (!result) {
           const crect = ret.get(c.id)!;
           maxWidth = Math.max(maxWidth, crect.width);
@@ -132,26 +137,28 @@ function calcAlignRectMap(
             x += maxWidth + node.gap;
             y = 0;
           }
-          calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, Infinity);
           const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x, y });
           maxWidth = crect.width;
           y += crect.height + node.gap;
         }
       });
 
-      if (treeNode.children.length > 0) {
-        const rect = getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!));
-        ret.set(node.id, { ...node.rect, ...from, width: rect.width });
-      } else {
-        ret.set(node.id, { ...node.rect, ...from, width: options.emptySize });
-      }
+      const rect =
+        treeNode.children.length > 0
+          ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
+          : { ...node.rect, ...from, width: options.emptySize };
+
+      ret.set(node.id, { ...node.rect, ...from, width: rect.width });
     }
   } else {
-    if (direction === 0) {
-      if (remain < node.rect.height) return true;
-    } else {
-      if (remain < node.rect.width) return true;
-    }
     ret.set(node.id, { ...node.rect, ...from });
+  }
+
+  const rect = ret.get(treeNode.id)!;
+  if (direction === 0) {
+    return remain < rect.height;
+  } else {
+    return remain < rect.width;
   }
 }
