@@ -148,8 +148,36 @@ function calcAlignRectMap(
         treeNode.children.length > 0
           ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
           : { ...node.rect, ...from, width: options.emptySize };
-
       ret.set(node.id, { ...node.rect, ...from, width: rect.width });
+    } else {
+      let x = 0;
+      let y = 0;
+      let maxHeight = 0;
+      treeNode.children.forEach((c, i) => {
+        const result = calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, node.rect.width - x);
+
+        if (!result) {
+          const crect = ret.get(c.id)!;
+          maxHeight = Math.max(maxHeight, crect.height);
+          x += crect.width + node.gap;
+        } else {
+          // Should break line once
+          if (i > 0) {
+            x = 0;
+            y += maxHeight + node.gap;
+          }
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x, y });
+          maxHeight = crect.height;
+          x += crect.width + node.gap;
+        }
+      });
+
+      const rect =
+        treeNode.children.length > 0
+          ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
+          : { ...node.rect, ...from, height: options.emptySize };
+      ret.set(node.id, { ...node.rect, ...from, height: rect.height });
     }
   } else {
     ret.set(node.id, { ...node.rect, ...from });

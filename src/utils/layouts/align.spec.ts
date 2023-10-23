@@ -176,4 +176,27 @@ describe("getAlignRelativeRectMap", () => {
       ]),
     );
   });
+
+  test("should return relative aligned rects: horizontal & line break & nested box 2", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, rect: { x: 0, y: 0, width: 50, height: 10 }, direction: 1 },
+      { ...entity0, rect: { x: 10, y: 0, width: 30, height: 20 } },
+      { ...entity1, rect: { x: 0, y: 0, width: 30, height: 20 } },
+      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 50, height: 10 }, direction: 1 },
+      { ...entity10, rect: { x: 10, y: 0, width: 30, height: 20 } },
+      { ...entity11, rect: { x: 0, y: 0, width: 30, height: 20 } },
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 50, height: 110 }],
+        ["entity0", { x: 0, y: 0, width: 30, height: 20 }],
+        ["entity1", { x: 0, y: 30, width: 30, height: 20 }],
+        ["box10", { x: 0, y: 60, width: 50, height: 50 }],
+        ["entity10", { x: 0, y: 0, width: 30, height: 20 }],
+        ["entity11", { x: 0, y: 30, width: 30, height: 20 }],
+      ]),
+    );
+  });
 });
