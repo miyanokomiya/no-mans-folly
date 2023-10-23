@@ -471,3 +471,20 @@ export function getDistanceBetweenPointAndRect(p: IVec2, rect: IRectangle): numb
 
   return ret;
 }
+
+export function getRotationAffines(rotation: number, origin: IVec2) {
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  return {
+    rotateAffine: multiAffines([
+      [1, 0, 0, 1, origin.x, origin.y],
+      [cos, sin, -sin, cos, 0, 0],
+      [1, 0, 0, 1, -origin.x, -origin.y],
+    ]),
+    derotateAffine: multiAffines([
+      [1, 0, 0, 1, origin.x, origin.y],
+      [cos, -sin, sin, cos, 0, 0],
+      [1, 0, 0, 1, -origin.x, -origin.y],
+    ]),
+  };
+}

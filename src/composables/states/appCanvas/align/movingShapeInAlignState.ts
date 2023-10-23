@@ -10,7 +10,7 @@ import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
-import { AlignBoxHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
+import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -25,7 +25,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
   let shapes: Shape[];
   const alignBoxId = option.alignBoxId;
   let alignHandler: AlignHandler;
-  let hitResult: AlignBoxHitResult | undefined;
+  let hitResult: AlignHitResult | undefined;
   let diff: IVec2;
 
   function initHandler(ctx: AppCanvasStateContext) {

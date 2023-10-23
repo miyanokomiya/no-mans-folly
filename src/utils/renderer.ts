@@ -36,6 +36,23 @@ export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, siz
   ctx.fill();
 }
 
+export function renderArrowUnit(ctx: CanvasRenderingContext2D, p: IVec2, rotation: number, size: number) {
+  const n = { x: size, y: 0 };
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(rotation);
+  ctx.beginPath();
+  ctx.moveTo(size, 0);
+  const b = rotate(n, Math.PI * 0.7);
+  ctx.lineTo(b.x, b.y);
+  const c = rotate(n, -Math.PI * 0.7);
+  ctx.lineTo(c.x, c.y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
   const half = size / 2;
   ctx.beginPath();

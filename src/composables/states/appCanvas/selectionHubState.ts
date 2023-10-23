@@ -9,6 +9,7 @@ import { newLineLabelSelectedState } from "./lines/lineLabelSelectedState";
 import { newTreeRootSelectedState } from "./tree/treeRootSelectedState";
 import { newTreeNodeSelectedState } from "./tree/treeNodeSelectedState";
 import { newBoardEntitySelectedState } from "./board/boardEntitySelectedState";
+import { newAlignBoxSelectedState } from "./align/alignBoxSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -41,6 +42,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
           case "board_lane":
           case "board_card":
             return newBoardEntitySelectedState;
+          case "align_box":
+            return newAlignBoxSelectedState;
           default:
             return newSingleSelectedState;
         }

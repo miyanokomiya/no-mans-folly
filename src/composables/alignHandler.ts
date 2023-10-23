@@ -1,5 +1,5 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getRectCenter, isSame, multiAffines, rotate } from "okageo";
-import { EntityPatchInfo, Shape, StyleScheme } from "../models";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getRectCenter, isSame, multiAffines, rotate, sub } from "okageo";
+import { Direction2, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
 import { flatTree, getBranchPath } from "../utils/tree";
@@ -9,10 +9,21 @@ import { DocOutput } from "../models/document";
 import { createShape, resizeShape } from "../shapes";
 import { generateKeyBetween } from "fractional-indexing";
 import { RectangleShape } from "../shapes/rectangle";
-import { ISegment, getDistanceBetweenPointAndRect, getRotateFn, isPointOnRectangle } from "../utils/geometry";
-import { applyStrokeStyle } from "../utils/strokeStyle";
+import {
+  ISegment,
+  TAU,
+  getD2,
+  getDistanceBetweenPointAndRect,
+  getRotateFn,
+  getRotationAffines,
+  isPointOnRectangle,
+} from "../utils/geometry";
+import { applyDefaultStrokeStyle, applyStrokeStyle } from "../utils/strokeStyle";
+import { applyFillStyle } from "../utils/fillStyle";
+import { renderArrowUnit } from "../utils/renderer";
+import { COLORS } from "../utils/color";
 
-export type AlignBoxHitResult = {
+export type AlignHitResult = {
   seg: ISegment;
   findexBetween: [string | null, string | null];
 };
@@ -33,19 +44,7 @@ export function newAlignHandler(option: AlignHandlerOption) {
     width: alignBox.width,
     height: alignBox.height,
   };
-  const alignBoxCenter = getRectCenter(alignBoxRect);
-  const cos = Math.cos(alignBox.rotation);
-  const sin = Math.sin(alignBox.rotation);
-  const rotateAffine: AffineMatrix = multiAffines([
-    [1, 0, 0, 1, alignBoxCenter.x, alignBoxCenter.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [1, 0, 0, 1, -alignBoxCenter.x, -alignBoxCenter.y],
-  ]);
-  const derotateAffine: AffineMatrix = multiAffines([
-    [1, 0, 0, 1, alignBoxCenter.x, alignBoxCenter.y],
-    [cos, -sin, sin, cos, 0, 0],
-    [1, 0, 0, 1, -alignBoxCenter.x, -alignBoxCenter.y],
-  ]);
+  const { rotateAffine, derotateAffine } = getRotationAffines(alignBox.rotation, getRectCenter(alignBoxRect));
 
   const siblingIds = shapeComposite.mergedShapeTreeMap[alignBox.id].children.map((c) => c.id);
 
@@ -55,8 +54,8 @@ export function newAlignHandler(option: AlignHandlerOption) {
     return [id, shapeComposite.getWrapperRect(derotatedShape)];
   });
 
-  function hitTest(p: IVec2): AlignBoxHitResult | undefined {
-    let result: AlignBoxHitResult | undefined;
+  function hitTest(p: IVec2): AlignHitResult | undefined {
+    let result: AlignHitResult | undefined;
 
     // When there's no sibling, test with align box itself.
     if (siblingRects.length === 0) {
@@ -104,6 +103,30 @@ export function newAlignHandler(option: AlignHandlerOption) {
             ],
           };
         }
+      } else {
+        if (derotatedP.x < closestRect.x + closestRect.width / 2) {
+          result = {
+            seg: [
+              { x: closestRect.x, y: closestRect.y },
+              { x: closestRect.x, y: closestRect.y + closestRect.height },
+            ],
+            findexBetween: [
+              closestIndex === 0 ? null : shapeMap[siblingIds[closestIndex - 1]].findex,
+              closestShape.findex,
+            ],
+          };
+        } else {
+          result = {
+            seg: [
+              { x: closestRect.x + closestRect.width, y: closestRect.y },
+              { x: closestRect.x + closestRect.width, y: closestRect.y + closestRect.height },
+            ],
+            findexBetween: [
+              closestShape.findex,
+              closestIndex === siblingIds.length - 1 ? null : shapeMap[siblingIds[closestIndex + 1]].findex,
+            ],
+          };
+        }
       }
     }
 
@@ -117,7 +140,7 @@ export function newAlignHandler(option: AlignHandlerOption) {
     return;
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignHitResult) {
     if (hitResult) {
       applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * 2 * scale });
       ctx.beginPath();
@@ -134,6 +157,79 @@ export function newAlignHandler(option: AlignHandlerOption) {
   return { hitTest, render, isAlignChanged };
 }
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
+
+const DIRECTION_ANCHOR_SIZE = 10;
+
+export type AlignBoxHitResult = AlignBoxDirectionHitResult;
+type AlignBoxDirectionHitResult = {
+  type: "direction";
+  direction: Direction2;
+  p: IVec2;
+};
+
+export function newAlignBoxHandler(option: AlignHandlerOption) {
+  const shapeComposite = option.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
+  const alignBox = shapeMap[option.alignBoxId] as AlignBoxShape;
+  const alignBoxRect = {
+    x: alignBox.p.x,
+    y: alignBox.p.y,
+    width: alignBox.width,
+    height: alignBox.height,
+  };
+  const { rotateAffine, derotateAffine } = getRotationAffines(alignBox.rotation, getRectCenter(alignBoxRect));
+
+  const directionAnchor: AlignBoxDirectionHitResult =
+    alignBox.direction === 0
+      ? {
+          type: "direction",
+          direction: 1,
+          p: { x: alignBoxRect.x + DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y - DIRECTION_ANCHOR_SIZE * 2 },
+        }
+      : {
+          type: "direction",
+          direction: 0,
+          p: { x: alignBoxRect.x - DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y + DIRECTION_ANCHOR_SIZE * 2 },
+        };
+
+  function hitTest(p: IVec2, scale: number): AlignBoxHitResult | undefined {
+    const derotatedP = applyAffine(derotateAffine, p);
+    const threshold = DIRECTION_ANCHOR_SIZE * scale;
+    if (getD2(sub(directionAnchor.p, derotatedP)) <= threshold * threshold) {
+      return { ...directionAnchor, p: directionAnchor.p };
+    }
+
+    return;
+  }
+
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
+    const threshold = DIRECTION_ANCHOR_SIZE * scale;
+
+    ctx.save();
+    ctx.transform(...rotateAffine);
+
+    applyDefaultStrokeStyle(ctx);
+    applyFillStyle(ctx, { color: style.selectionPrimary });
+    ctx.beginPath();
+    ctx.arc(directionAnchor.p.x, directionAnchor.p.y, threshold, 0, TAU);
+    ctx.fill();
+
+    if (hitResult) {
+      applyFillStyle(ctx, { color: style.selectionSecondaly });
+      ctx.beginPath();
+      ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
+      ctx.fill();
+    }
+
+    applyFillStyle(ctx, { color: COLORS.WHITE });
+    renderArrowUnit(ctx, directionAnchor.p, directionAnchor.direction === 0 ? Math.PI / 2 : 0, threshold * 0.7);
+
+    ctx.restore();
+  }
+
+  return { hitTest, render };
+}
+export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
 
 function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayoutNode | undefined {
   const parent = shape.parentId ? shapeComposite.mergedShapeMap[shape.parentId] : undefined;

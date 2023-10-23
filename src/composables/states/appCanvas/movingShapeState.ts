@@ -160,7 +160,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
               ? mapReduce(val, (v, id) => (selectedIdMap[id] ? { ...v, parentId: undefined } : v))
               : val;
             const layoutPatch = getPatchByLayouts(shapeComposite, { update: adjusted });
-            console.log(val, layoutPatch);
             ctx.patchShapes(layoutPatch);
           }
           return () => newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
