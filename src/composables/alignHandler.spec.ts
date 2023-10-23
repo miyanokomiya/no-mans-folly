@@ -61,15 +61,22 @@ describe("getNextAlignLayout", () => {
     expect(result).toHaveProperty(rect1.id);
   });
 
-  test("should return patch to clear rotation of align shapes", () => {
+  test("should apply root rotation to all shapes", () => {
     const shapeComposite = newShapeComposite({
-      shapes: [{ ...box0, rotation: Math.PI }, rect0, { ...rect1, rotation: Math.PI }, box10, rect10, rect11, box20],
+      shapes: [
+        { ...box0, rotation: Math.PI },
+        rect0,
+        { ...rect1, rotation: Math.PI / 2 },
+        box10,
+        rect10,
+        rect11,
+        box20,
+      ],
       getStruct: getCommonStruct,
     });
     const result = getNextAlignLayout(shapeComposite, box0.id);
-    expect(result[box0.id].rotation).toBe(0);
-    // should not clear other shape's rotation
-    expect(result[rect1.id]).not.toHaveProperty("rotation");
+    expect(result[rect0.id].rotation).toBeCloseTo(Math.PI);
+    expect(result[rect1.id].rotation).toBeCloseTo(Math.PI);
   });
 });
 
@@ -110,7 +117,7 @@ describe("getModifiedAlignRootIds", () => {
     expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
   });
 
-  test("should return related align box shapes: a box becomes a child", () => {
+  test("should not return a box id when it becomes a child of other board", () => {
     const patchInfo: EntityPatchInfo<Shape> = {
       update: { box10: { parentId: box0.id } },
     };
