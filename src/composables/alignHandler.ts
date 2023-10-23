@@ -324,13 +324,19 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
 
     const patch: Partial<Shape> & Partial<AlignBoxShape> = {};
     let updated = false;
-    if (isAlignBoxShape(s)) {
-      const p = rotatedPatch.p ?? { x: r.rect.x, y: r.rect.y };
-      if (!isSame(s.p, p)) {
-        patch.p = p;
-        updated = true;
-      }
 
+    const p = rotatedPatch.p ?? { x: r.rect.x, y: r.rect.y };
+    if (!isSame(s.p, p)) {
+      patch.p = p;
+      updated = true;
+    }
+
+    if (rootShape.rotation !== s.rotation) {
+      patch.rotation = rootShape.rotation;
+      updated = true;
+    }
+
+    if (isAlignBoxShape(s)) {
       const width = rotatedPatch.width ?? r.rect.width;
       if (width !== s.width) {
         patch.width = width;
@@ -340,17 +346,6 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
       const height = rotatedPatch.height ?? r.rect.height;
       if (height !== s.height) {
         patch.height = height;
-        updated = true;
-      }
-    } else {
-      const p = rotatedPatch.p ?? { x: r.rect.x, y: r.rect.y };
-      if (!isSame(s.p, p)) {
-        patch.p = p;
-        updated = true;
-      }
-
-      if (rootShape.rotation !== s.rotation) {
-        patch.rotation = rootShape.rotation;
         updated = true;
       }
     }
