@@ -3,7 +3,7 @@ import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
-import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
+import { flatTree, getAllBranchIds, getBranchPath, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
   ShapeSelectionScope,
@@ -249,4 +249,17 @@ export function getRotatedTargetBounds(
   );
   const rotateFn = geometry.getRotateFn(r, c);
   return geometry.getRectPoints(rotatedWrapperRect).map((p) => rotateFn(p));
+}
+
+export function getClosestShapeByType<T extends Shape>(
+  shapeComposite: ShapeComposite,
+  targetId: string,
+  type: string,
+): T | undefined {
+  const path = getBranchPath(shapeComposite.mergedShapeTreeMap, targetId);
+  const id = findBackward(path, (id) => {
+    const shape = shapeComposite.mergedShapeMap[id];
+    return shape.type === type;
+  });
+  return id ? (shapeComposite.mergedShapeMap[id] as T) : undefined;
 }

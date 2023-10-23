@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   canGroupShapes,
   findBetterShapeAt,
+  getClosestShapeByType,
   getDeleteTargetIds,
   getNextShapeComposite,
   getRotatedTargetBounds,
@@ -473,5 +474,34 @@ describe("getRotatedTargetBounds", () => {
     expect(result1[2].y).toBeCloseTo(60);
     expect(result1[3].x).toBeCloseTo(0);
     expect(result1[3].y).toBeCloseTo(0);
+  });
+});
+
+describe("getClosestShapeByType", () => {
+  test("should return closest shape having the type", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape(getCommonStruct, "group", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape(getCommonStruct, "align_box", {
+      id: "child1",
+      parentId: child0.id,
+    });
+    const child2 = createShape(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: child1.id,
+    });
+
+    const shapes = [group0, child0, child1, child2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(getClosestShapeByType(target, "child2", "group")).toEqual(child0);
+    expect(getClosestShapeByType(target, "child2", "align_box")).toEqual(child1);
+    // Should include the target
+    expect(getClosestShapeByType(target, "child2", "rectangle")).toEqual(child2);
   });
 });
