@@ -37,6 +37,7 @@ export const struct: ShapeStruct<AlignBoxShape> = {
   ...mapReduce(textContainerModule, () => undefined),
   canAttachSmartBranch: false,
   transparentSelection: true,
+  unboundChildren: true,
 };
 
 export function isAlignBoxShape(shape: Shape): shape is AlignBoxShape {

@@ -51,6 +51,33 @@ describe("newShapeComposite", () => {
     expect(target.getAllBranchMergedShapes(["line"])).toEqual([shapes[1], shapes[0]]);
   });
 
+  describe("getAllTransformTargets", () => {
+    test("should not return shapes that are children of unbound parents when ignoreUnbound is true", () => {
+      const shapes = [
+        createShape(getCommonStruct, "text", { id: "label", parentId: "line" }),
+        createShape(getCommonStruct, "line", { id: "line" }),
+        createShape(getCommonStruct, "align_box", { id: "align" }),
+        createShape(getCommonStruct, "rectangle", { id: "a", parentId: "align" }),
+      ];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(
+        target
+          .getAllTransformTargets(["line", "align"], true)
+          .map((s) => s.id)
+          .sort(),
+      ).toEqual(["align", "label", "line"]);
+      expect(
+        target
+          .getAllTransformTargets(["line", "align"])
+          .map((s) => s.id)
+          .sort(),
+      ).toEqual(["a", "align", "label", "line"]);
+    });
+  });
+
   describe("getWrapperRectForShapes", () => {
     test("should return wrapper rectangle for shapes", () => {
       const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", width: 10, height: 20 });

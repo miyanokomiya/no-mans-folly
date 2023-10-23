@@ -38,8 +38,26 @@ export function newShapeComposite(option: Option) {
     return getAllBranchIds(mergedShapeTree, ids).map((id) => mergedShapeMap[id]);
   }
 
-  function getAllTransformTargets(ids: string[]): Shape[] {
-    return getAllBranchMergedShapes(ids);
+  /**
+   * Order of the returned value is unstable.
+   */
+  function getAllTransformTargets(ids: string[], ignoreUnbound = false): Shape[] {
+    // Pick shapes declared "unboundChildren" and exclude their children.
+    const unboundParents: Shape[] = [];
+    const filteredIds = ignoreUnbound
+      ? ids.filter((id) => {
+          const s = mergedShapeMap[id];
+          if (option.getStruct(s.type).unboundChildren) {
+            unboundParents.push(s);
+            return false;
+          }
+          return true;
+        })
+      : ids;
+
+    // Pick all shapes from branches.
+    const branchShapes = getAllBranchMergedShapes(filteredIds);
+    return [...unboundParents, ...branchShapes];
   }
 
   function render(ctx: CanvasRenderingContext2D, shape: Shape, imageStore?: ImageStore) {

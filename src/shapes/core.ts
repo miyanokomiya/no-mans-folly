@@ -80,6 +80,10 @@ export interface ShapeStruct<T extends Shape> {
    * When "findex" has special meaning for this shape, such as tree node shape, type. set this attribute true.
    */
   stackOrderDisabled?: boolean;
+  /**
+   * If true, child shapes don't follow the shape's scaling.
+   */
+  unboundChildren?: boolean;
 }
 
 /**

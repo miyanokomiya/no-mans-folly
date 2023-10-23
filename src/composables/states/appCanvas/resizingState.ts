@@ -52,7 +52,7 @@ export function newResizingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "Resizing",
     onStart: (ctx) => {
-      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()), true);
       targetShapeMap = toMap(targets);
       ctx.startDragging();
 
