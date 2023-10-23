@@ -1,5 +1,5 @@
-import { AffineMatrix, getRectCenter, isSame, multiAffines, rotate } from "okageo";
-import { EntityPatchInfo, Shape } from "../models";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getRectCenter, isSame, multiAffines, rotate } from "okageo";
+import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
 import { flatTree, getBranchPath } from "../utils/tree";
@@ -9,14 +9,130 @@ import { DocOutput } from "../models/document";
 import { createShape, resizeShape } from "../shapes";
 import { generateKeyBetween } from "fractional-indexing";
 import { RectangleShape } from "../shapes/rectangle";
-import { getRotateFn } from "../utils/geometry";
+import { ISegment, getDistanceBetweenPointAndRect, getRotateFn, isPointOnRectangle } from "../utils/geometry";
+import { applyStrokeStyle } from "../utils/strokeStyle";
+
+export type AlignBoxHitResult = {
+  seg: ISegment;
+  findexBetween: [string | null, string | null];
+};
 
 interface AlignHandlerOption {
   getShapeComposite: () => ShapeComposite;
-  targetId: string;
+  alignBoxId: string;
 }
 
-export function newAlignHandler(_option: AlignHandlerOption) {}
+export function newAlignHandler(option: AlignHandlerOption) {
+  const shapeComposite = option.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
+  const alignBox = shapeMap[option.alignBoxId] as AlignBoxShape;
+
+  const alignBoxRect = {
+    x: alignBox.p.x,
+    y: alignBox.p.y,
+    width: alignBox.width,
+    height: alignBox.height,
+  };
+  const alignBoxCenter = getRectCenter(alignBoxRect);
+  const cos = Math.cos(alignBox.rotation);
+  const sin = Math.sin(alignBox.rotation);
+  const rotateAffine: AffineMatrix = multiAffines([
+    [1, 0, 0, 1, alignBoxCenter.x, alignBoxCenter.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, 1, -alignBoxCenter.x, -alignBoxCenter.y],
+  ]);
+  const derotateAffine: AffineMatrix = multiAffines([
+    [1, 0, 0, 1, alignBoxCenter.x, alignBoxCenter.y],
+    [cos, -sin, sin, cos, 0, 0],
+    [1, 0, 0, 1, -alignBoxCenter.x, -alignBoxCenter.y],
+  ]);
+
+  const siblingIds = shapeComposite.mergedShapeTreeMap[alignBox.id].children.map((c) => c.id);
+
+  const siblingRects = siblingIds.map<[string, IRectangle]>((id) => {
+    const shape = shapeMap[id];
+    const derotatedShape = { ...shape, ...resizeShape(shapeComposite.getShapeStruct, shape, derotateAffine) };
+    return [id, shapeComposite.getWrapperRect(derotatedShape)];
+  });
+
+  function hitTest(p: IVec2): AlignBoxHitResult | undefined {
+    let result: AlignBoxHitResult | undefined;
+
+    // When there's no sibling, test with align box itself.
+    if (siblingRects.length === 0) {
+      if (isPointOnRectangle(alignBoxRect, p)) {
+        result = {
+          seg: [
+            { x: alignBoxRect.x, y: alignBoxRect.y },
+            { x: alignBoxRect.x + alignBoxRect.width, y: alignBoxRect.y },
+          ],
+          findexBetween: [alignBox.findex, null],
+        };
+      }
+    } else {
+      const derotatedP = applyAffine(derotateAffine, p);
+      const evaluated = siblingRects.map<[string, IRectangle, number]>(([id, rect]) => [
+        id,
+        rect,
+        getDistanceBetweenPointAndRect(derotatedP, rect),
+      ]);
+      const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
+      const closestIndex = siblingIds.findIndex((id) => id === closestId);
+      const closestShape = shapeMap[closestId];
+
+      if (alignBox.direction === 0) {
+        if (derotatedP.y < closestRect.y + closestRect.height / 2) {
+          result = {
+            seg: [
+              { x: closestRect.x, y: closestRect.y },
+              { x: closestRect.x + closestRect.width, y: closestRect.y },
+            ],
+            findexBetween: [
+              closestIndex === 0 ? null : shapeMap[siblingIds[closestIndex - 1]].findex,
+              closestShape.findex,
+            ],
+          };
+        } else {
+          result = {
+            seg: [
+              { x: closestRect.x, y: closestRect.y + closestRect.height },
+              { x: closestRect.x + closestRect.width, y: closestRect.y + closestRect.height },
+            ],
+            findexBetween: [
+              closestShape.findex,
+              closestIndex === siblingIds.length - 1 ? null : shapeMap[siblingIds[closestIndex + 1]].findex,
+            ],
+          };
+        }
+      }
+    }
+
+    if (result) {
+      return {
+        findexBetween: result.findexBetween,
+        seg: [applyAffine(rotateAffine, result.seg[0]), applyAffine(rotateAffine, result.seg[1])],
+      };
+    }
+
+    return;
+  }
+
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
+    if (hitResult) {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * 2 * scale });
+      ctx.beginPath();
+      ctx.moveTo(hitResult.seg[0].x, hitResult.seg[0].y);
+      ctx.lineTo(hitResult.seg[1].x, hitResult.seg[1].y);
+      ctx.stroke();
+    }
+  }
+
+  function isAlignChanged(idSet: Set<string>): boolean {
+    return idSet.has(alignBox.id) || siblingIds.some((id) => idSet.has(id));
+  }
+
+  return { hitTest, render, isAlignChanged };
+}
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayoutNode | undefined {
