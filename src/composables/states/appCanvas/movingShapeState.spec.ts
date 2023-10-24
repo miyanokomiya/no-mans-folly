@@ -25,6 +25,7 @@ function getMockCtx() {
         getStruct: getCommonStruct,
       }),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
+    getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
     setTmpShapeMap: vi.fn(),

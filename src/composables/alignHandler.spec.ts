@@ -11,6 +11,7 @@ const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   height: 100,
   direction: 0,
   gap: 10,
+  baseWidth: undefined,
 });
 const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
   id: "rect0",
@@ -29,6 +30,7 @@ const box10 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   height: 100,
   direction: 0,
   gap: 10,
+  baseWidth: undefined,
 });
 const rect10 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
   id: "rect10",
@@ -47,6 +49,7 @@ const box20 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   height: 100,
   direction: 0,
   gap: 10,
+  baseWidth: undefined,
 });
 
 describe("getNextAlignLayout", () => {
