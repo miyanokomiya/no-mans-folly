@@ -4,7 +4,7 @@ import { TreeNode, getTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
 import { getWrapperRect } from "../geometry";
 
-const EMPTY_SIZE = 100;
+const EMPTY_SIZE = 180;
 
 export type AlignLayoutNode = AlignLayoutBox | AlignLayoutEntity;
 
@@ -27,6 +27,12 @@ export interface AlignLayoutBox extends AlignLayoutBase {
   type: "box";
   direction: Direction2;
   gap: number;
+  /**
+   * When direction is 0, baseWidth is used as minimum width, baseHeight is used as fixed height vice versa.
+   * "undefined" means optimal to its content.
+   */
+  baseWidth?: number;
+  baseHeight?: number;
 }
 
 export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
@@ -125,7 +131,14 @@ function calcAlignRectMap(
       let y = 0;
       let maxWidth = 0;
       treeNode.children.forEach((c, i) => {
-        const result = calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, node.rect.height - y);
+        const result = calcAlignRectMap(
+          ret,
+          nodeMap,
+          c,
+          node.direction,
+          { x, y },
+          node.baseHeight === undefined ? Infinity : node.rect.height - y,
+        );
 
         if (!result) {
           const crect = ret.get(c.id)!;
@@ -147,14 +160,26 @@ function calcAlignRectMap(
       const rect =
         treeNode.children.length > 0
           ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
-          : { ...node.rect, ...from, width: options.emptySize };
-      ret.set(node.id, { ...node.rect, ...from, width: rect.width });
+          : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
+      ret.set(node.id, {
+        ...node.rect,
+        ...from,
+        width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
+        height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
+      });
     } else {
       let x = 0;
       let y = 0;
       let maxHeight = 0;
       treeNode.children.forEach((c, i) => {
-        const result = calcAlignRectMap(ret, nodeMap, c, node.direction, { x, y }, node.rect.width - x);
+        const result = calcAlignRectMap(
+          ret,
+          nodeMap,
+          c,
+          node.direction,
+          { x, y },
+          node.baseWidth === undefined ? Infinity : node.rect.width - x,
+        );
 
         if (!result) {
           const crect = ret.get(c.id)!;
@@ -176,8 +201,13 @@ function calcAlignRectMap(
       const rect =
         treeNode.children.length > 0
           ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
-          : { ...node.rect, ...from, height: options.emptySize };
-      ret.set(node.id, { ...node.rect, ...from, height: rect.height });
+          : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
+      ret.set(node.id, {
+        ...node.rect,
+        ...from,
+        width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
+        height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
+      });
     }
   } else {
     ret.set(node.id, { ...node.rect, ...from });

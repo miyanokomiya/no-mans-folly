@@ -10,6 +10,7 @@ const box0: AlignLayoutNode = {
   type: "box",
   direction: 0,
   gap: 10,
+  baseHeight: 200,
 };
 const entity0: AlignLayoutNode = {
   id: "entity0",
@@ -34,6 +35,7 @@ const box10: AlignLayoutNode = {
   type: "box",
   direction: 0,
   gap: 10,
+  baseHeight: 100,
 };
 const entity10: AlignLayoutNode = {
   id: "entity10",
@@ -90,7 +92,7 @@ describe("getAlignRelativeRectMap", () => {
   });
 
   test("should return relative aligned rects: vertical & line break", () => {
-    const nodes = [{ ...box0, rect: { x: 0, y: 0, width: 10, height: 50 } }, entity0, entity1];
+    const nodes = [{ ...box0, rect: { x: 0, y: 0, width: 10, height: 50 }, baseHeight: 50 }, entity0, entity1];
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
     expect(result0).toEqual(
@@ -103,12 +105,12 @@ describe("getAlignRelativeRectMap", () => {
   });
 
   test("should return relative aligned rects: vertical & line break & oversized node", () => {
-    const nodes = [{ ...box0, rect: { x: 0, y: 0, width: 10, height: 20 } }, entity0, entity1];
+    const nodes = [{ ...box0, rect: { x: 0, y: 0, width: 10, height: 20 }, baseHeight: 20 }, entity0, entity1];
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
     expect(result0).toEqual(
       new Map([
-        ["box0", { x: 0, y: 0, width: 50, height: 20 }],
+        ["box0", { x: 0, y: 0, width: 50, height: 30 }],
         ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
         ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
       ]),
@@ -133,10 +135,10 @@ describe("getAlignRelativeRectMap", () => {
 
   test("should return relative aligned rects: vertical & line break & nested box", () => {
     const nodes = [
-      { ...box0, rect: { x: 0, y: 0, width: 10, height: 100 } },
+      { ...box0, rect: { x: 0, y: 0, width: 10, height: 100 }, baseHeight: 100 },
       entity0,
       entity1,
-      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 10, height: 50 } },
+      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 10, height: 50 }, baseHeight: 50 },
       entity10,
       entity11,
     ];
@@ -156,10 +158,10 @@ describe("getAlignRelativeRectMap", () => {
 
   test("should return relative aligned rects: vertical & line break & nested box 2", () => {
     const nodes = [
-      { ...box0, rect: { x: 0, y: 0, width: 10, height: 50 } },
+      { ...box0, rect: { x: 0, y: 0, width: 10, height: 50 }, baseHeight: 50 },
       entity0,
       entity1,
-      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 10, height: 50 } },
+      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 10, height: 50 }, baseHeight: 50 },
       entity10,
       entity11,
     ];
@@ -179,10 +181,17 @@ describe("getAlignRelativeRectMap", () => {
 
   test("should return relative aligned rects: horizontal & line break & nested box 2", () => {
     const nodes: AlignLayoutNode[] = [
-      { ...box0, rect: { x: 0, y: 0, width: 50, height: 10 }, direction: 1 },
+      { ...box0, rect: { x: 0, y: 0, width: 50, height: 10 }, baseWidth: 50, baseHeight: 10, direction: 1 },
       { ...entity0, rect: { x: 10, y: 0, width: 30, height: 20 } },
       { ...entity1, rect: { x: 0, y: 0, width: 30, height: 20 } },
-      { ...box10, parentId: box0.id, rect: { x: 0, y: 0, width: 50, height: 10 }, direction: 1 },
+      {
+        ...box10,
+        parentId: box0.id,
+        rect: { x: 0, y: 0, width: 50, height: 10 },
+        baseWidth: 50,
+        baseHeight: 10,
+        direction: 1,
+      },
       { ...entity10, rect: { x: 10, y: 0, width: 30, height: 20 } },
       { ...entity11, rect: { x: 0, y: 0, width: 30, height: 20 } },
     ];
@@ -196,6 +205,126 @@ describe("getAlignRelativeRectMap", () => {
         ["box10", { x: 0, y: 60, width: 50, height: 50 }],
         ["entity10", { x: 0, y: 0, width: 30, height: 20 }],
         ["entity11", { x: 0, y: 30, width: 30, height: 20 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseWidth: vertical & small baseWidth => should expand up to the content", () => {
+    const nodes = [{ ...box0, baseWidth: 10 }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 20, height: 200 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 0, y: 40, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseWidth: vertical & big baseWidth => should not shrink down from the size", () => {
+    const nodes = [{ ...box0, baseWidth: 100 }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 100, height: 200 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 0, y: 40, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseHeight: vertical & small baseHeight => should expand up to the size", () => {
+    const nodes = [{ ...box0, baseHeight: 10 }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 20, height: 70 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 0, y: 40, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseHeight: vertical & big baseHeight => should not shrink down from the size", () => {
+    const nodes = [{ ...box0, baseHeight: 100 }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 20, height: 100 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 0, y: 40, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseHeight: horizontal & small baseHeight => should expand up to the content", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, direction: 1, rect: { x: 0, y: 0, width: 100, height: 10 }, baseHeight: 10 },
+      entity0,
+      entity1,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 50, height: 30 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseHeight: horizontal & big baseHeight => should not shrink down from the size", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, direction: 1, rect: { x: 0, y: 0, width: 100, height: 10 }, baseHeight: 100 },
+      entity0,
+      entity1,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 50, height: 100 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseWidth: horizontal & small baseWidth => should expand up to the content", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, direction: 1, rect: { x: 0, y: 0, width: 100, height: 10 }, baseWidth: 10 },
+      entity0,
+      entity1,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 50, height: 200 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of baseWidth: horizontal & big baseWidth => should not shrink down from the content", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, direction: 1, rect: { x: 0, y: 0, width: 100, height: 10 }, baseWidth: 100 },
+      entity0,
+      entity1,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 100, height: 200 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 30, y: 0, width: 20, height: 30 }],
       ]),
     );
   });
