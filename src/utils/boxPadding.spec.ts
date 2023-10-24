@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { convertPaddingType, getBoxPaddingValue, getPaddingRect } from "./boxPadding";
+import { convertPaddingType, getBoxPaddingValue, getNegativePaddingRect, getPaddingRect } from "./boxPadding";
 
 describe("getPaddingRect", () => {
   test("should return a rect applied the padding: absolute", () => {
@@ -42,6 +42,14 @@ describe("getPaddingRect", () => {
   test("should return the same rect when a padding is undefined", () => {
     const rect = { x: 0, y: 0, width: 100, height: 100 };
     expect(getPaddingRect(undefined, rect)).toEqual(rect);
+  });
+});
+
+describe("getNativePaddingRect", () => {
+  test("should return a rect applied the negative padding", () => {
+    const rect = { x: 0, y: 0, width: 100, height: 100 };
+    expect(getNegativePaddingRect({ value: [0, 0, 0, 0] }, rect)).toEqual(rect);
+    expect(getNegativePaddingRect({ value: [1, 2, 3, 4] }, rect)).toEqual({ x: -4, y: -1, width: 106, height: 104 });
   });
 });
 

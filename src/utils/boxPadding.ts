@@ -41,6 +41,11 @@ export function getPaddingRect(padding: BoxPadding | undefined, rect: IRectangle
   }
 }
 
+export function getNegativePaddingRect(padding: BoxPadding | undefined, rect: IRectangle): IRectangle {
+  if (!padding) return rect;
+  return getPaddingRect({ ...padding, value: padding.value.map((v) => -v) } as BoxPadding, rect);
+}
+
 export function convertPaddingType(padding: BoxPadding, rect: IRectangle, type?: BoxPadding["type"]): BoxPadding {
   if (padding.type === type) return padding;
 

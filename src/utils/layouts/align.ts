@@ -1,8 +1,9 @@
 import { IRectangle, IVec2, add } from "okageo";
-import { Direction2 } from "../../models";
+import { BoxValues4, Direction2 } from "../../models";
 import { TreeNode, getTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
 import { getWrapperRect } from "../geometry";
+import { getNegativePaddingRect } from "../boxPadding";
 
 const EMPTY_SIZE = 180;
 
@@ -33,6 +34,7 @@ export interface AlignLayoutBox extends AlignLayoutBase {
    */
   baseWidth?: number;
   baseHeight?: number;
+  padding?: BoxValues4; // absolete values
 }
 
 export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
@@ -126,9 +128,10 @@ function calcAlignRectMap(
 ): boolean | undefined {
   const node = nodeMap.get(treeNode.id)!;
   if (node.type === "box") {
+    let x = node.padding?.[3] ?? 0;
+    let y = node.padding?.[0] ?? 0;
+
     if (node.direction === 0) {
-      let x = 0;
-      let y = 0;
       let maxWidth = 0;
       treeNode.children.forEach((c, i) => {
         const result = calcAlignRectMap(
@@ -137,7 +140,9 @@ function calcAlignRectMap(
           c,
           node.direction,
           { x, y },
-          node.baseHeight === undefined ? Infinity : node.rect.height - y,
+          node.baseHeight === undefined
+            ? Infinity
+            : node.rect.height - y - (node.padding ? node.padding[0] - node.padding[2] : 0),
         );
 
         if (!result) {
@@ -157,10 +162,11 @@ function calcAlignRectMap(
         }
       });
 
-      const rect =
-        treeNode.children.length > 0
-          ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
-          : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
+      const childWrapperRect =
+        treeNode.children.length > 0 ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!)) : undefined;
+      const rect = childWrapperRect
+        ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
+        : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
       ret.set(node.id, {
         ...node.rect,
         ...from,
@@ -168,8 +174,6 @@ function calcAlignRectMap(
         height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
       });
     } else {
-      let x = 0;
-      let y = 0;
       let maxHeight = 0;
       treeNode.children.forEach((c, i) => {
         const result = calcAlignRectMap(
@@ -178,7 +182,9 @@ function calcAlignRectMap(
           c,
           node.direction,
           { x, y },
-          node.baseWidth === undefined ? Infinity : node.rect.width - x,
+          node.baseWidth === undefined
+            ? Infinity
+            : node.rect.width - x - (node.padding ? node.padding[1] - node.padding[3] : 0),
         );
 
         if (!result) {
@@ -198,10 +204,11 @@ function calcAlignRectMap(
         }
       });
 
-      const rect =
-        treeNode.children.length > 0
-          ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!))
-          : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
+      const childWrapperRect =
+        treeNode.children.length > 0 ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!)) : undefined;
+      const rect = childWrapperRect
+        ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
+        : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
       ret.set(node.id, {
         ...node.rect,
         ...from,

@@ -328,4 +328,34 @@ describe("getAlignRelativeRectMap", () => {
       ]),
     );
   });
+
+  test("should take care of padding: vertical", () => {
+    const nodes: AlignLayoutNode[] = [{ ...box0, padding: [1, 2, 3, 4] }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 26, height: 200 }],
+        ["entity0", { x: 4, y: 1, width: 20, height: 30 }],
+        ["entity1", { x: 4, y: 41, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of padding: horizontal", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, direction: 1, baseHeight: undefined, padding: [1, 2, 3, 4] },
+      entity0,
+      entity1,
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 56, height: 34 }],
+        ["entity0", { x: 4, y: 1, width: 20, height: 30 }],
+        ["entity1", { x: 34, y: 1, width: 20, height: 30 }],
+      ]),
+    );
+  });
 });
