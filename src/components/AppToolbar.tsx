@@ -12,6 +12,7 @@ import iconText from "../assets/icons/text.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayout from "../assets/icons/layout.svg";
+import iconLayoutAlignBox from "../assets/icons/layout_align_box.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { Shape } from "../models";
 import { generateBoardTemplate } from "../composables/boardHandler";
@@ -32,7 +33,7 @@ const lineList = [
 const layoutList = [
   { type: "tree_root", icon: iconLayoutBranch },
   { type: "board_root", icon: iconLayoutBoard },
-  { type: "align_box", icon: iconLayoutBoard },
+  { type: "align_box", icon: iconLayoutAlignBox },
 ];
 
 function getButtonClass(highlight = false) {
