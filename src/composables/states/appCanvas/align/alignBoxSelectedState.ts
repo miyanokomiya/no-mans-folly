@@ -72,23 +72,34 @@ export function newAlignBoxSelectedState(): AppCanvasState {
               if (alignBoxHitResult) {
                 const shapeComposite = ctx.getShapeComposite();
 
+                let patch: Partial<AlignBoxShape> | undefined;
                 switch (alignBoxHitResult.type) {
                   case "direction": {
                     const maxSize = Math.max(targetShape.width, targetShape.height);
-                    const patch: Partial<AlignBoxShape> = {
+                    patch = {
                       direction: alignBoxHitResult.direction,
                       width: maxSize,
                       height: maxSize,
                     };
-                    const layoutPatch = getPatchByLayouts(shapeComposite, {
-                      update: { [targetShape.id]: patch },
-                    });
-                    ctx.patchShapes(layoutPatch);
-                    alignBoxHitResult = undefined;
+                    break;
+                  }
+                  case "optimize-width": {
+                    patch = { baseWidth: undefined };
+                    break;
+                  }
+                  case "optimize-height": {
+                    patch = { baseHeight: undefined };
                     break;
                   }
                 }
 
+                if (patch) {
+                  const layoutPatch = getPatchByLayouts(shapeComposite, {
+                    update: { [targetShape.id]: patch },
+                  });
+                  ctx.patchShapes(layoutPatch);
+                  alignBoxHitResult = undefined;
+                }
                 return;
               }
 

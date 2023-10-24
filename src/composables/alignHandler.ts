@@ -160,10 +160,16 @@ export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 const DIRECTION_ANCHOR_SIZE = 10;
 
-export type AlignBoxHitResult = AlignBoxDirectionHitResult;
+export type AlignBoxHitResult = AlignBoxDirectionHitResult | AlignBoxBaseSizeHitResult;
+
 type AlignBoxDirectionHitResult = {
   type: "direction";
   direction: Direction2;
+  p: IVec2;
+};
+
+type AlignBoxBaseSizeHitResult = {
+  type: "optimize-width" | "optimize-height";
   p: IVec2;
 };
 
@@ -192,11 +198,43 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
           p: { x: alignBoxRect.x - DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y + DIRECTION_ANCHOR_SIZE * 2 },
         };
 
+  const baseWidthOptimizeAnchor: AlignBoxBaseSizeHitResult | undefined =
+    alignBox.baseWidth === undefined
+      ? undefined
+      : {
+          type: "optimize-width",
+          p: {
+            x: alignBoxRect.x + alignBoxRect.width + DIRECTION_ANCHOR_SIZE * 2,
+            y: alignBoxRect.y + alignBoxRect.height / 2,
+          },
+        };
+
+  const baseHeightOptimizeAnchor: AlignBoxBaseSizeHitResult | undefined =
+    alignBox.baseHeight === undefined
+      ? undefined
+      : {
+          type: "optimize-height",
+          p: {
+            x: alignBoxRect.x + alignBoxRect.width / 2,
+            y: alignBoxRect.y + alignBoxRect.height + DIRECTION_ANCHOR_SIZE * 2,
+          },
+        };
+
   function hitTest(p: IVec2, scale: number): AlignBoxHitResult | undefined {
     const derotatedP = applyAffine(derotateAffine, p);
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
-    if (getD2(sub(directionAnchor.p, derotatedP)) <= threshold * threshold) {
-      return { ...directionAnchor, p: directionAnchor.p };
+    const thresholdD2 = threshold * threshold;
+
+    if (getD2(sub(directionAnchor.p, derotatedP)) <= thresholdD2) {
+      return directionAnchor;
+    }
+
+    if (baseWidthOptimizeAnchor && getD2(sub(baseWidthOptimizeAnchor.p, derotatedP)) <= thresholdD2) {
+      return baseWidthOptimizeAnchor;
+    }
+
+    if (baseHeightOptimizeAnchor && getD2(sub(baseHeightOptimizeAnchor.p, derotatedP)) <= thresholdD2) {
+      return baseHeightOptimizeAnchor;
     }
 
     return;
@@ -210,9 +248,22 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
 
     applyDefaultStrokeStyle(ctx);
     applyFillStyle(ctx, { color: style.selectionPrimary });
+
     ctx.beginPath();
     ctx.arc(directionAnchor.p.x, directionAnchor.p.y, threshold, 0, TAU);
     ctx.fill();
+
+    if (baseWidthOptimizeAnchor) {
+      ctx.beginPath();
+      ctx.arc(baseWidthOptimizeAnchor.p.x, baseWidthOptimizeAnchor.p.y, threshold, 0, TAU);
+      ctx.fill();
+    }
+
+    if (baseHeightOptimizeAnchor) {
+      ctx.beginPath();
+      ctx.arc(baseHeightOptimizeAnchor.p.x, baseHeightOptimizeAnchor.p.y, threshold, 0, TAU);
+      ctx.fill();
+    }
 
     if (hitResult) {
       applyFillStyle(ctx, { color: style.selectionSecondaly });
@@ -223,6 +274,12 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
 
     applyFillStyle(ctx, { color: COLORS.WHITE });
     renderArrowUnit(ctx, directionAnchor.p, directionAnchor.direction === 0 ? Math.PI / 2 : 0, threshold * 0.7);
+    if (baseWidthOptimizeAnchor) {
+      renderArrowUnit(ctx, baseWidthOptimizeAnchor.p, alignBox.baseWidth === undefined ? 0 : Math.PI, threshold * 0.7);
+    }
+    if (baseHeightOptimizeAnchor) {
+      renderArrowUnit(ctx, baseHeightOptimizeAnchor.p, -Math.PI / 2, threshold * 0.7);
+    }
 
     ctx.restore();
   }
@@ -245,6 +302,8 @@ function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayout
       rect,
       direction: shape.direction,
       gap: shape.gap,
+      baseWidth: shape.baseWidth,
+      baseHeight: shape.baseHeight,
     };
   } else {
     const rect = shapeComposite.getWrapperRect(shape);
