@@ -2,7 +2,12 @@ import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
 import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { getNextShapeComposite, newShapeComposite } from "../../../shapeComposite";
+import {
+  findBetterShapeAt,
+  getClosestShapeByType,
+  getNextShapeComposite,
+  newShapeComposite,
+} from "../../../shapeComposite";
 import { findexSortFn } from "../../../../utils/commons";
 import { IVec2, add, sub } from "okageo";
 import { newShapeRenderer } from "../../../shapeRenderer";
@@ -11,6 +16,7 @@ import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
+import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -23,12 +29,13 @@ interface Option {
  */
 export function newMovingShapeInAlignState(option: Option): AppCanvasState {
   let shapes: Shape[];
-  const alignBoxId = option.alignBoxId;
+  let alignBoxId = option.alignBoxId;
   let alignHandler: AlignHandler;
   let hitResult: AlignHitResult | undefined;
   let diff: IVec2;
 
   function initHandler(ctx: AppCanvasStateContext) {
+    hitResult = undefined;
     alignHandler = newAlignHandler({
       getShapeComposite: ctx.getShapeComposite,
       alignBoxId: alignBoxId,
@@ -49,9 +56,26 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
-          const alignBox = shapeComposite.mergedShapeMap[alignBoxId];
-          if (!shapeComposite.isPointOn(alignBox, event.data.current)) {
+          // const alignBox = shapeComposite.mergedShapeMap[alignBoxId];
+          // if (!shapeComposite.isPointOn(alignBox, event.data.current)) {
+          //   return { type: "break" };
+          // }
+
+          const scope = shapeComposite.getSelectionScope(shapes[0]);
+          const shapeAtPoint = findBetterShapeAt(
+            shapeComposite,
+            event.data.current,
+            scope,
+            shapes.map((s) => s.id),
+          );
+          if (!shapeAtPoint) return { type: "break" };
+
+          const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
+          if (!alignBoxShape) {
             return { type: "break" };
+          } else if (alignBoxShape.id !== alignBoxId) {
+            alignBoxId = alignBoxShape.id;
+            initHandler(ctx);
           }
 
           diff = sub(event.data.current, event.data.start);

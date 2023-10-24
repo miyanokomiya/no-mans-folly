@@ -1,4 +1,4 @@
-import type { AppCanvasState, AppCanvasStateContext } from "./core";
+import type { AppCanvasState } from "./core";
 import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -11,18 +11,13 @@ import {
   newConnectedLineHandler,
   renderPatchedVertices,
 } from "../../connectedLineHandler";
-import { mapReduce, mergeMap } from "../../../utils/commons";
+import { mergeMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
-import { ShapeSelectionScope } from "../../../shapes/core";
-import { AlignBoxShape } from "../../../shapes/align/alignBox";
-import { isGroupShape } from "../../../shapes/group";
-import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
-import { getPatchByLayouts } from "../../shapeLayoutHandler";
+import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -38,17 +33,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
   let targetIds: string[];
-  let scope: ShapeSelectionScope;
-
-  function canAlign(ctx: AppCanvasStateContext) {
-    const shapeComposite = ctx.getShapeComposite();
-    const indexShape = shapeComposite.shapeMap[ctx.getLastSelectedShapeId()!];
-    return (
-      !indexShape.parentId ||
-      !shapeComposite.shapeMap[indexShape.parentId] ||
-      !isGroupShape(shapeComposite.shapeMap[indexShape.parentId])
-    );
-  }
 
   return {
     getLabel: () => "MovingShape",
@@ -56,7 +40,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
-      scope = shapeComposite.getSelectionScope(targets[0]);
       targetIds = targets.map((s) => s.id);
       const targetIdSet = new Set(targetIds);
 
@@ -109,27 +92,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          // TODO: refactor
-          {
-            const shapeComposite = ctx.getShapeComposite();
-            if (canAlign(ctx)) {
-              const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, targetIds);
-              shapeComposite.findShapeAt;
-              if (shapeAtPoint) {
-                const alisnBoxShape = getClosestShapeByType<AlignBoxShape>(
-                  shapeComposite,
-                  shapeAtPoint.id,
-                  "align_box",
-                );
-                if (alisnBoxShape) {
-                  return {
-                    type: "stack-resume",
-                    getState: () => newMovingShapeInAlignState({ boundingBox, alignBoxId: alisnBoxShape.id }),
-                  };
-                }
-              }
-            }
-          }
+          const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, option);
+          if (onLayoutResult) return onLayoutResult;
 
           const d = sub(event.data.current, event.data.start);
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
@@ -153,14 +117,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const val = ctx.getTmpShapeMap();
 
           if (Object.keys(val).length > 0) {
-            // TODO: refactor
-            const shapeComposite = ctx.getShapeComposite();
-            const selectedIdMap = ctx.getSelectedShapeIdMap();
-            const adjusted = canAlign(ctx)
-              ? mapReduce(val, (v, id) => (selectedIdMap[id] ? { ...v, parentId: undefined } : v))
-              : val;
-            const layoutPatch = getPatchByLayouts(shapeComposite, { update: adjusted });
-            ctx.patchShapes(layoutPatch);
+            ctx.patchShapes(getPatchByPointerUpOutsideLayout(ctx, val));
           }
           return () => newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
         }
