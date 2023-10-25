@@ -14,15 +14,9 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
+import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
-import {
-  BoardHandler,
-  BoardHitResult,
-  getNextBoardLayout,
-  isSameBoardHitResult,
-  newBoardHandler,
-} from "../../../boardHandler";
+import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
 import { Shape } from "../../../../models";
@@ -30,6 +24,7 @@ import { newSingleSelectedState } from "../singleSelectedState";
 import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 /**
  * General selected state for any board entity
@@ -131,10 +126,9 @@ export function newBoardEntitySelectedState(): AppCanvasState {
                 }
 
                 if (newShape) {
-                  const nextComposite = getNextShapeComposite(shapeComposite, {
+                  const patch = getPatchByLayouts(shapeComposite, {
                     add: [newShape],
                   });
-                  const patch = getNextBoardLayout(nextComposite, newShape.parentId!);
                   newShape = { ...newShape, ...patch[newShape.id] };
                   delete patch[newShape.id];
 

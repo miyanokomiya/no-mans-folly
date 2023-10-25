@@ -1,5 +1,5 @@
 import { EntityPatchInfo, Shape } from "../models";
-import { patchPipe } from "../utils/commons";
+import { mergeMap, patchPipe } from "../utils/commons";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
@@ -22,7 +22,20 @@ export function getPatchByLayouts(
       () => patchInfo.update ?? {},
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
-      ...getAlignLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
+      (_, patch) => {
+        const nextPatchInfo = {
+          ...patchInfo,
+          update: mergeMap(patchInfo.update ?? {}, patch),
+        };
+        return patchPipe(
+          getAlignLayoutPatchFunctions(
+            shapeComposite,
+            getNextShapeComposite(shapeComposite, nextPatchInfo),
+            nextPatchInfo,
+          ),
+          {},
+        ).patch;
+      },
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
@@ -61,7 +74,20 @@ export function getPatchInfoByLayouts(
       () => adjustedPatchInfo.update ?? {},
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
-      ...getAlignLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
+      (_, patch) => {
+        const nextPatchInfo = {
+          ...adjustedPatchInfo,
+          update: mergeMap(adjustedPatchInfo.update ?? {}, patch),
+        };
+        return patchPipe(
+          getAlignLayoutPatchFunctions(
+            shapeComposite,
+            getNextShapeComposite(shapeComposite, nextPatchInfo),
+            nextPatchInfo,
+          ),
+          {},
+        ).patch;
+      },
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],

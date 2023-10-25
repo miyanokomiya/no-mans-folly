@@ -23,7 +23,7 @@ export function newLineLabelHandler(option: Option) {
 
     updatedEntries.forEach(([lineId, patch]) => {
       const src = shapeMap[lineId];
-      if (!isLineShape(src)) return;
+      if (!src || !isLineShape(src)) return;
 
       const patchedLine: LineShape = { ...src, ...patch };
       const labels = shapeList.filter((s): s is TextShape => isLineLabelShape(s) && s.parentId === lineId);
@@ -38,7 +38,7 @@ export function newLineLabelHandler(option: Option) {
 
     updatedEntries.forEach(([labelId, patch]) => {
       const shape = shapeMap[labelId];
-      if (!isLineLabelShape(shape) || !shape.parentId) return;
+      if (!shape || !isLineLabelShape(shape) || !shape.parentId) return;
 
       const label = { ...shape, ...patch } as TextShape;
       const line = { ...shapeMap[shape.parentId], ...(updatedMap[shape.parentId] ?? {}) } as LineShape;

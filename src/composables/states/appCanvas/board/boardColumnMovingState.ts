@@ -4,14 +4,13 @@ import { newMovingShapeState } from "../movingShapeState";
 import {
   BoardColumnMovingHandler,
   BoardColumnMovingHitResult,
-  getNextBoardLayout,
   newBoardColumnMovingHandler,
 } from "../../../boardHandler";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { getNextShapeComposite, newShapeComposite } from "../../../shapeComposite";
-import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
-import { findexSortFn, mergeMap } from "../../../../utils/commons";
+import { newShapeComposite } from "../../../shapeComposite";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { findexSortFn } from "../../../../utils/commons";
 import { IVec2, add, sub } from "okageo";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { BoardColumnShape } from "../../../../shapes/board/boardColumn";
@@ -68,10 +67,7 @@ export function newBoardColumnMovingState(): AppCanvasState {
             }, {});
 
             const shapeComposite = ctx.getShapeComposite();
-            const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
-            const layoutPatch = getNextBoardLayout(nextComposite, columnShapes[0].parentId!);
-            const adjustedPatch = getPatchAfterLayouts(shapeComposite, { update: mergeMap(layoutPatch, patch) });
-            ctx.patchShapes(adjustedPatch);
+            ctx.patchShapes(getPatchByLayouts(shapeComposite, { update: patch }));
           }
           return newSelectionHubState;
         }

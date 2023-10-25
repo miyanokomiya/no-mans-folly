@@ -30,7 +30,9 @@ export function newConnectedLineHandler(option: Option) {
     const shapeMap = shapeComposite.shapeMap;
     const updatedShapeMap: { [id: string]: Shape } = {};
     Object.entries(updatedMap).forEach(([id, patch]) => {
-      updatedShapeMap[id] = { ...shapeMap[id], ...patch };
+      if (shapeMap[id]) {
+        updatedShapeMap[id] = { ...shapeMap[id], ...patch };
+      }
     });
 
     // Update connections
