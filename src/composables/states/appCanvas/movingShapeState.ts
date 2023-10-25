@@ -17,6 +17,7 @@ import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -39,6 +40,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      if (targets.length === 0) return newSelectionHubState;
+
       targetIds = targets.map((s) => s.id);
       const targetIdSet = new Set(targetIds);
 
@@ -91,6 +94,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, option);
+          if (onLayoutResult) return onLayoutResult;
+
           const d = sub(event.data.current, event.data.start);
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
@@ -111,8 +117,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         }
         case "pointerup": {
           const val = ctx.getTmpShapeMap();
+
           if (Object.keys(val).length > 0) {
-            ctx.patchShapes(val);
+            ctx.patchShapes(getPatchByPointerUpOutsideLayout(ctx, val));
           }
           return () => newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
         }

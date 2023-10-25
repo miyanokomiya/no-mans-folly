@@ -12,10 +12,12 @@ import iconText from "../assets/icons/text.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayout from "../assets/icons/layout.svg";
+import iconLayoutAlignBox from "../assets/icons/layout_align_box.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { Shape } from "../models";
 import { generateBoardTemplate } from "../composables/boardHandler";
 import { DocOutput } from "../models/document";
+import { generateAlignTemplate } from "../composables/alignHandler";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
@@ -31,6 +33,7 @@ const lineList = [
 const layoutList = [
   { type: "tree_root", icon: iconLayoutBranch },
   { type: "board_root", icon: iconLayoutBoard },
+  { type: "align_box", icon: iconLayoutAlignBox },
 ];
 
 function getButtonClass(highlight = false) {
@@ -58,6 +61,8 @@ export const AppToolbar: React.FC = () => {
       let template: { shapes: Shape[]; docMap?: { [id: string]: DocOutput } };
       if (type === "board_root") {
         template = generateBoardTemplate(ctx);
+      } else if (type === "align_box") {
+        template = generateAlignTemplate(ctx);
       } else {
         template = {
           shapes: [

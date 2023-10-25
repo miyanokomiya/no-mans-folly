@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   canGroupShapes,
   findBetterShapeAt,
+  getClosestShapeByType,
   getDeleteTargetIds,
   getNextShapeComposite,
   getRotatedTargetBounds,
@@ -48,6 +49,33 @@ describe("newShapeComposite", () => {
       { id: "b", children: [] },
     ]);
     expect(target.getAllBranchMergedShapes(["line"])).toEqual([shapes[1], shapes[0]]);
+  });
+
+  describe("getAllTransformTargets", () => {
+    test("should not return shapes that are children of unbound parents when ignoreUnbound is true", () => {
+      const shapes = [
+        createShape(getCommonStruct, "text", { id: "label", parentId: "line" }),
+        createShape(getCommonStruct, "line", { id: "line" }),
+        createShape(getCommonStruct, "align_box", { id: "align" }),
+        createShape(getCommonStruct, "rectangle", { id: "a", parentId: "align" }),
+      ];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(
+        target
+          .getAllTransformTargets(["line", "align"], true)
+          .map((s) => s.id)
+          .sort(),
+      ).toEqual(["align", "label", "line"]);
+      expect(
+        target
+          .getAllTransformTargets(["line", "align"])
+          .map((s) => s.id)
+          .sort(),
+      ).toEqual(["a", "align", "label", "line"]);
+    });
   });
 
   describe("getWrapperRectForShapes", () => {
@@ -113,6 +141,9 @@ describe("newShapeComposite", () => {
       expect(target.findShapeAt({ x: 90, y: 90 })).toEqual(line);
       expect(target.findShapeAt({ x: 5, y: 8 })).toEqual(child0);
       expect(target.findShapeAt({ x: 50, y: 55 })).toEqual(child1);
+      // still should respect exclude ids
+      expect(target.findShapeAt({ x: 50, y: 55 }, undefined, [child1.id])).toEqual(line);
+      expect(target.findShapeAt({ x: 50, y: 55 }, undefined, [child1.id, line.id])).toEqual(undefined);
     });
 
     test("should ignore shapes supplied as exclude ids", () => {
@@ -473,5 +504,34 @@ describe("getRotatedTargetBounds", () => {
     expect(result1[2].y).toBeCloseTo(60);
     expect(result1[3].x).toBeCloseTo(0);
     expect(result1[3].y).toBeCloseTo(0);
+  });
+});
+
+describe("getClosestShapeByType", () => {
+  test("should return closest shape having the type", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape(getCommonStruct, "group", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape(getCommonStruct, "align_box", {
+      id: "child1",
+      parentId: child0.id,
+    });
+    const child2 = createShape(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: child1.id,
+    });
+
+    const shapes = [group0, child0, child1, child2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(getClosestShapeByType(target, "child2", "group")).toEqual(child0);
+    expect(getClosestShapeByType(target, "child2", "align_box")).toEqual(child1);
+    // Should include the target
+    expect(getClosestShapeByType(target, "child2", "rectangle")).toEqual(child2);
   });
 });

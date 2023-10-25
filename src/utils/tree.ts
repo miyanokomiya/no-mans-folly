@@ -76,3 +76,15 @@ export function getAllBranchIds(allNodes: TreeNode[], targetIds: string[]): stri
   });
   return Array.from(retIdSet);
 }
+
+export function getBranchPath(nodeMap: { [id: string]: TreeNode }, targetId: string): string[] {
+  const ret: string[] = [];
+
+  let node: TreeNode | undefined = nodeMap[targetId];
+  while (node) {
+    ret.push(node.id);
+    node = node.parentId ? nodeMap[node.parentId] : undefined;
+  }
+
+  return ret.reverse();
+}

@@ -15,62 +15,39 @@ import {
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
-import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
-import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
-import { canHaveText, createShape } from "../../../../shapes";
-import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
-import { Shape } from "../../../../models";
-import { newSingleSelectedState } from "../singleSelectedState";
-import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
+import { AlignBoxShape } from "../../../../shapes/align/alignBox";
+import { newRotatingState } from "../rotatingState";
+import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
+import { newAlignBoxGapState } from "./alignBoxGapState";
 
-/**
- * General selected state for any board entity
- * - BoardRootShape, BoardColumnShape, BoardLaneShape, BoardCardShape
- */
-export function newBoardEntitySelectedState(): AppCanvasState {
-  let boardId: string;
-  let targetShape: Shape;
-  let boardHandler: BoardHandler;
-  let boardHitResult: BoardHitResult | undefined;
+export function newAlignBoxSelectedState(): AppCanvasState {
+  let targetId: string;
   let boundingBox: BoundingBox;
+  let alignBoxHandler: AlignBoxHandler;
+  let alignBoxHitResult: AlignBoxHitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
-    boardHandler = newBoardHandler({
+    const shapeComposite = ctx.getShapeComposite();
+    const shapeMap = shapeComposite.shapeMap;
+    boundingBox = newBoundingBox({
+      path: ctx.getShapeComposite().getLocalRectPolygon(shapeMap[targetId]),
+      styleScheme: ctx.getStyleScheme(),
+      scale: ctx.getScale(),
+    });
+    alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,
-      boardId,
+      alignBoxId: targetId,
     });
   }
 
   return {
-    getLabel: () => "BoardEntitySelected",
+    getLabel: () => "AlignBoxSelected",
     onStart: (ctx) => {
-      const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      targetShape = shapeMap[ctx.getLastSelectedShapeId() ?? ""];
-
-      if (isBoardRootShape(targetShape)) {
-        boardId = targetShape.id;
-      } else {
-        if (!shapeMap[targetShape.parentId ?? ""]) {
-          return newSingleSelectedState;
-        }
-
-        boardId = targetShape.parentId!;
-      }
-
-      if (isBoardCardShape(targetShape) && !shapeMap[targetShape.columnId]) {
-        return newSingleSelectedState;
-      }
-
-      boundingBox = newBoundingBox({
-        path: shapeComposite.getLocalRectPolygon(targetShape),
-        styleScheme: ctx.getStyleScheme(),
-        scale: ctx.getScale(),
-        noRotation: true,
-      });
+      targetId = ctx.getLastSelectedShapeId()!;
 
       ctx.showFloatMenu();
       ctx.setCommandExams(getCommonCommandExams());
@@ -83,6 +60,8 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
+      const shapeComposite = ctx.getShapeComposite();
+      const targetShape: AlignBoxShape | undefined = shapeComposite.shapeMap[targetId] as AlignBoxShape;
       if (!targetShape) return newSelectionHubState;
 
       switch (event.type) {
@@ -91,57 +70,55 @@ export function newBoardEntitySelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              boardHitResult = boardHandler.hitTest(event.data.point, ctx.getScale());
-              if (boardHitResult) {
+              alignBoxHitResult = alignBoxHandler.hitTest(event.data.point, ctx.getScale());
+              if (alignBoxHitResult) {
                 const shapeComposite = ctx.getShapeComposite();
 
-                let newShape: Shape | undefined;
-                switch (boardHitResult.type) {
-                  case "add_card": {
-                    newShape = createShape<BoardCardShape>(shapeComposite.getShapeStruct, "board_card", {
-                      id: ctx.generateUuid(),
-                      findex: boardHandler.generateNewCardFindex(),
-                      parentId: boardId,
-                      columnId: boardHitResult.columnId,
-                      laneId: boardHitResult.laneId,
-                    });
+                let patch: Partial<AlignBoxShape> | undefined;
+                switch (alignBoxHitResult.type) {
+                  case "direction": {
+                    const maxSize = Math.max(targetShape.width, targetShape.height);
+                    patch = {
+                      direction: alignBoxHitResult.direction,
+                      width: maxSize,
+                      height: maxSize,
+                    };
                     break;
                   }
-                  case "add_column": {
-                    newShape = createShape(shapeComposite.getShapeStruct, "board_column", {
-                      id: ctx.generateUuid(),
-                      findex: boardHandler.generateNewColumnFindex(),
-                      parentId: boardId,
-                    });
+                  case "align-items": {
+                    if (alignBoxHitResult.value !== targetShape.alignItems) {
+                      patch = { alignItems: alignBoxHitResult.value };
+                    }
                     break;
                   }
-                  case "add_lane": {
-                    newShape = createShape(shapeComposite.getShapeStruct, "board_lane", {
-                      id: ctx.generateUuid(),
-                      findex: boardHandler.generateNewLaneFindex(),
-                      parentId: boardId,
-                    });
+                  case "optimize-width": {
+                    patch = { baseWidth: undefined };
                     break;
+                  }
+                  case "optimize-height": {
+                    patch = { baseHeight: undefined };
+                    break;
+                  }
+                  case "padding-top":
+                  case "padding-right":
+                  case "padding-bottom":
+                  case "padding-left": {
+                    const type = alignBoxHitResult.type;
+                    return () => newAlignBoxPaddingState({ type, alignBoxId: targetId });
+                  }
+                  case "gap-r":
+                  case "gap-c": {
+                    const type = alignBoxHitResult.type;
+                    return () => newAlignBoxGapState({ type, alignBoxId: targetId });
                   }
                 }
 
-                if (newShape) {
-                  const patch = getPatchByLayouts(shapeComposite, {
-                    add: [newShape],
+                if (patch) {
+                  const layoutPatch = getPatchByLayouts(shapeComposite, {
+                    update: { [targetShape.id]: patch },
                   });
-                  newShape = { ...newShape, ...patch[newShape.id] };
-                  delete patch[newShape.id];
-
-                  ctx.addShapes(
-                    [newShape],
-                    canHaveText(ctx.getShapeStruct, newShape)
-                      ? {
-                          [newShape.id]: getInitialOutput(getDocAttributes(ctx.getDocumentMap()[newShape.id])),
-                        }
-                      : undefined,
-                    patch,
-                  );
-                  ctx.selectShape(newShape.id);
+                  ctx.patchShapes(layoutPatch);
+                  alignBoxHitResult = undefined;
                 }
                 return;
               }
@@ -152,6 +129,8 @@ export function newBoardEntitySelectedState(): AppCanvasState {
                   case "corner":
                   case "segment":
                     return () => newResizingState({ boundingBox, hitResult });
+                  case "rotation":
+                    return () => newRotatingState({ boundingBox });
                 }
               }
 
@@ -188,12 +167,9 @@ export function newBoardEntitySelectedState(): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          const result = boardHandler.hitTest(event.data.current, ctx.getScale());
-          if (!isSameBoardHitResult(boardHitResult, result)) {
-            ctx.redraw();
-          }
-          boardHitResult = result;
-          if (boardHitResult) {
+          alignBoxHitResult = alignBoxHandler.hitTest(event.data.current, ctx.getScale());
+          ctx.redraw();
+          if (alignBoxHitResult) {
             ctx.setCursor();
             return;
           }
@@ -235,7 +211,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
           const shape = shapeComposite.mergedShapeMap[targetShape.id];
           if (!shape) return newSelectionHubState;
 
-          if (boardHandler.isBoardChanged(Array.from(event.data.keys))) {
+          if (event.data.keys.has(targetShape.id)) {
             initHandler(ctx);
           }
           return;
@@ -279,7 +255,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
       boundingBox.render(renderCtx);
-      boardHandler.render(renderCtx, style, scale, boardHitResult);
+      alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
     },
   };
 }

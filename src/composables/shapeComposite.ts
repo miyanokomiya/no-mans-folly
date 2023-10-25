@@ -3,7 +3,7 @@ import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
-import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
+import { flatTree, getAllBranchIds, getBranchPath, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
   ShapeSelectionScope,
@@ -38,8 +38,26 @@ export function newShapeComposite(option: Option) {
     return getAllBranchIds(mergedShapeTree, ids).map((id) => mergedShapeMap[id]);
   }
 
-  function getAllTransformTargets(ids: string[]): Shape[] {
-    return getAllBranchMergedShapes(ids);
+  /**
+   * Order of the returned value is unstable.
+   */
+  function getAllTransformTargets(ids: string[], ignoreUnbound = false): Shape[] {
+    // Pick shapes declared "unboundChildren" and exclude their children.
+    const unboundParents: Shape[] = [];
+    const filteredIds = ignoreUnbound
+      ? ids.filter((id) => {
+          const s = mergedShapeMap[id];
+          if (option.getStruct(s.type).unboundChildren) {
+            unboundParents.push(s);
+            return false;
+          }
+          return true;
+        })
+      : ids;
+
+    // Pick all shapes from branches.
+    const branchShapes = getAllBranchMergedShapes(filteredIds);
+    return [...unboundParents, ...branchShapes];
   }
 
   function render(ctx: CanvasRenderingContext2D, shape: Shape, imageStore?: ImageStore) {
@@ -59,10 +77,11 @@ export function newShapeComposite(option: Option) {
       (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext),
     );
     if (!candidate) return;
-    if (!shapeModule.isTransparentSelection(option.getStruct, candidate)) return candidate;
+    if (!excludeSet.has(candidate.id) && !shapeModule.isTransparentSelection(option.getStruct, candidate))
+      return candidate;
 
     // When the candidate is transparent for selection, try seeking its children.
-    const childCandidate = findShapeAt(p, { parentId: candidate.id }, undefined, true);
+    const childCandidate = findShapeAt(p, { parentId: candidate.id }, excludeIds, true);
     return childCandidate ?? candidate;
   }
 
@@ -129,7 +148,7 @@ export function newShapeComposite(option: Option) {
     mergedShapes,
     mergedShapeMap,
     mergedShapeTree,
-    mergedShapeTreeMap: toMap(flatTree(mergedShapeTree)),
+    mergedShapeTreeMap,
     getAllBranchMergedShapes,
     getAllTransformTargets,
 
@@ -249,4 +268,17 @@ export function getRotatedTargetBounds(
   );
   const rotateFn = geometry.getRotateFn(r, c);
   return geometry.getRectPoints(rotatedWrapperRect).map((p) => rotateFn(p));
+}
+
+export function getClosestShapeByType<T extends Shape>(
+  shapeComposite: ShapeComposite,
+  targetId: string,
+  type: string,
+): T | undefined {
+  const path = getBranchPath(shapeComposite.mergedShapeTreeMap, targetId);
+  const id = findBackward(path, (id) => {
+    const shape = shapeComposite.mergedShapeMap[id];
+    return shape.type === type;
+  });
+  return id ? (shapeComposite.mergedShapeMap[id] as T) : undefined;
 }

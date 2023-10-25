@@ -139,9 +139,12 @@ export function newStateMachine<C, E = ModeStateEvent>(
         break;
       default:
         blockEvent(() => {
-          current.state.onEnd?.(ctx);
+          stateStack.forEach((s) => {
+            s.state.onEnd?.(ctx);
+          });
         });
-        stateStack[stateStack.length - 1] = { ...nextItem, type: current.type };
+        stateStack.length = 0;
+        stateStack.push(nextItem);
         break;
     }
 

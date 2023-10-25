@@ -16,15 +16,9 @@ import {
 } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import {
-  ConnectedLineHandler,
-  getConnectedLineInfoMap,
-  newConnectedLineHandler,
-  renderPatchedVertices,
-} from "../../connectedLineHandler";
+import { renderPatchedVertices } from "../../connectedLineHandler";
 import { patchPipe, toMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
-import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
@@ -44,15 +38,13 @@ export function newResizingState(option: Option): AppCanvasState {
   let resizingAffine = IDENTITY_AFFINE;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
-  let lineHandler: ConnectedLineHandler;
-  let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
   let boundingBoxResizing: BoundingBoxResizing;
 
   return {
     getLabel: () => "Resizing",
     onStart: (ctx) => {
-      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()), true);
       targetShapeMap = toMap(targets);
       ctx.startDragging();
 
@@ -67,16 +59,6 @@ export function newResizingState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
-
-      lineHandler = newConnectedLineHandler({
-        connectedLinesMap: getConnectedLineInfoMap(
-          ctx,
-          targets.map((s) => s.id),
-        ),
-        ctx,
-      });
-
-      lineLabelHandler = newLineLabelHandler({ ctx });
 
       boundingBoxResizing = newBoundingBoxResizing({
         rotation: option.boundingBox.getRotation(),
@@ -186,13 +168,6 @@ export function newResizingState(option: Option): AppCanvasState {
                   return m;
                 }, {});
               },
-              (_, patch) => {
-                linePatchedMap = lineHandler.onModified(patch);
-                return linePatchedMap;
-              },
-              (_, patch) => {
-                return lineLabelHandler.onModified(patch);
-              },
               (patchedSrc, patch) => {
                 // Scale each text size along with height scaling
                 Object.keys(patch).forEach((id) => {
@@ -233,7 +208,7 @@ export function newResizingState(option: Option): AppCanvasState {
             shapeMap,
           );
 
-          ctx.setTmpShapeMap(patchResult.patch);
+          ctx.setTmpShapeMap(getPatchByLayouts(shapeComposite, { update: patchResult.patch }));
           ctx.setTmpDocMap(docPatch);
           return;
         }

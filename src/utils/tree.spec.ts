@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import * as target from "./tree";
+import { toMap } from "./commons";
 
 describe("getTree", () => {
   test("get nodes tree: nested children", () => {
@@ -91,5 +92,25 @@ describe("getAllBranchIds", () => {
       { id: "b", parentId: "" },
     ]);
     expect(target.getAllBranchIds(tree, ["a", "b"])).toEqual(["a", "aa", "aaa", "b", "bb"]);
+  });
+});
+
+describe("getBranchPath", () => {
+  test("should return ids from the root to the target", () => {
+    const tree = target.getTree([
+      { id: "a", parentId: "" },
+      { id: "aa", parentId: "a" },
+      { id: "ab", parentId: "a" },
+      { id: "aaa", parentId: "aa" },
+      { id: "aab", parentId: "aa" },
+      { id: "b", parentId: "" },
+      { id: "bb", parentId: "b" },
+    ]);
+    const nodeMap = toMap(target.flatTree(tree));
+    expect(target.getBranchPath(nodeMap, "a")).toEqual(["a"]);
+    expect(target.getBranchPath(nodeMap, "aa")).toEqual(["a", "aa"]);
+    expect(target.getBranchPath(nodeMap, "aab")).toEqual(["a", "aa", "aab"]);
+    expect(target.getBranchPath(nodeMap, "bb")).toEqual(["b", "bb"]);
+    expect(target.getBranchPath(nodeMap, "cc")).toEqual([]);
   });
 });

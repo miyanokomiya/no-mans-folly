@@ -55,6 +55,8 @@ export interface StrokeStyle {
   color: Color;
   width?: number;
   dash?: LineDash;
+  lineCap?: CanvasLineCap;
+  lineJoin?: CanvasLineJoin;
 }
 
 export type LineDash = undefined | "solid" | "dot" | "short" | "long"; // "undefined" refers to "solid"
@@ -79,12 +81,15 @@ export interface BoxAlign {
   vAlign?: "top" | "center" | "bottom"; // "top" should be default
 }
 
+export type BoxValues4 = [top: number, right: number, bottom: number, left: number];
+
 export interface BoxPadding {
   type?: "relative"; // undefined should mean "absolute"
-  value: [top: number, right: number, bottom: number, left: number]; // represents px with absolute, rate with relative
+  value: BoxValues4; // represents px with absolute, rate with relative
 }
 
 export type Direction4 = 0 | 1 | 2 | 3; // top, right, bottom, left
+export type Direction2 = 0 | 1; // vertical, horizontal
 
 export interface EntityPatchInfo<T extends Entity> {
   add?: T[];
