@@ -427,4 +427,102 @@ describe("getAlignRelativeRectMap", () => {
       ]),
     );
   });
+
+  test("should take care of align items: vertical & line break & align teims center", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, rect: { x: 0, y: 0, width: 10, height: 100 }, baseHeight: 100, alignItems: "center" },
+      entity0,
+      { ...entity0, id: "entity00", rect: { x: 0, y: 0, width: 30, height: 30 } },
+      entity1,
+      { ...entity1, id: "entity01", rect: { x: 0, y: 0, width: 10, height: 30 } },
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 60, height: 100 }],
+        ["entity0", { x: 5, y: 0, width: 20, height: 30 }],
+        ["entity00", { x: 0, y: 40, width: 30, height: 30 }],
+        ["entity1", { x: 40, y: 0, width: 20, height: 30 }],
+        ["entity01", { x: 45, y: 40, width: 10, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of align items: vertical & line break & align teims end", () => {
+    const nodes: AlignLayoutNode[] = [
+      { ...box0, rect: { x: 0, y: 0, width: 10, height: 100 }, baseHeight: 100, alignItems: "end" },
+      entity0,
+      { ...entity0, id: "entity00", rect: { x: 0, y: 0, width: 30, height: 30 } },
+      entity1,
+      { ...entity1, id: "entity01", rect: { x: 0, y: 0, width: 10, height: 30 } },
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 60, height: 100 }],
+        ["entity0", { x: 10, y: 0, width: 20, height: 30 }],
+        ["entity00", { x: 0, y: 40, width: 30, height: 30 }],
+        ["entity1", { x: 40, y: 0, width: 20, height: 30 }],
+        ["entity01", { x: 50, y: 40, width: 10, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of align items: horizontal & line break & align teims center", () => {
+    const nodes: AlignLayoutNode[] = [
+      {
+        ...box0,
+        rect: { x: 0, y: 0, width: 70, height: 10 },
+        baseHeight: undefined,
+        baseWidth: 70,
+        direction: 1,
+        alignItems: "center",
+      },
+      entity0,
+      { ...entity0, id: "entity00", rect: { x: 0, y: 0, width: 20, height: 40 } },
+      entity1,
+      { ...entity1, id: "entity01", rect: { x: 0, y: 0, width: 20, height: 10 } },
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 70, height: 80 }],
+        ["entity0", { x: 0, y: 5, width: 20, height: 30 }],
+        ["entity00", { x: 30, y: 0, width: 20, height: 40 }],
+        ["entity1", { x: 0, y: 50, width: 20, height: 30 }],
+        ["entity01", { x: 30, y: 60, width: 20, height: 10 }],
+      ]),
+    );
+  });
+
+  test("should take care of align items: horizontal & line break & align teims end", () => {
+    const nodes: AlignLayoutNode[] = [
+      {
+        ...box0,
+        rect: { x: 0, y: 0, width: 70, height: 10 },
+        baseHeight: undefined,
+        baseWidth: 70,
+        direction: 1,
+        alignItems: "end",
+      },
+      entity0,
+      { ...entity0, id: "entity00", rect: { x: 0, y: 0, width: 20, height: 40 } },
+      entity1,
+      { ...entity1, id: "entity01", rect: { x: 0, y: 0, width: 20, height: 10 } },
+    ];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 70, height: 80 }],
+        ["entity0", { x: 0, y: 10, width: 20, height: 30 }],
+        ["entity00", { x: 30, y: 0, width: 20, height: 40 }],
+        ["entity1", { x: 0, y: 50, width: 20, height: 30 }],
+        ["entity01", { x: 30, y: 70, width: 20, height: 10 }],
+      ]),
+    );
+  });
 });

@@ -4,6 +4,7 @@ import { TreeNode, getTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
 import { getWrapperRect } from "../geometry";
 import { getNegativePaddingRect } from "../boxPadding";
+import { groupBy } from "../commons";
 
 const EMPTY_SIZE = 180;
 
@@ -36,6 +37,11 @@ export interface AlignLayoutBox extends AlignLayoutBase {
   baseWidth?: number;
   baseHeight?: number;
   padding?: BoxValues4; // absolete values
+  /**
+   * Works same as CSS flex.
+   * "start" by default.
+   */
+  alignItems?: "start" | "center" | "end";
 }
 
 export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
@@ -171,11 +177,25 @@ function calcAlignRectMap(
 
       const childWrapperRect =
         treeNode.children.length > 0 ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!)) : undefined;
+
+      if (node.alignItems && node.alignItems !== "start") {
+        const alignCenter = node.alignItems === "center";
+        Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+          const lineWidth = Math.max(...line.map((c) => ret.get(c.id)!.width));
+          line.forEach((c) => {
+            const rect = ret.get(c.id)!;
+            const d = lineWidth - rect.width;
+            if (d !== 0) {
+              ret.set(c.id, { ...rect, x: alignCenter ? rect.x + d / 2 : rect.x + d });
+            }
+          });
+        });
+      }
+
       const rect = childWrapperRect
         ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
         : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
       ret.set(node.id, {
-        ...node.rect,
         ...from,
         width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
         height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
@@ -214,11 +234,25 @@ function calcAlignRectMap(
 
       const childWrapperRect =
         treeNode.children.length > 0 ? getWrapperRect(treeNode.children.map((c) => ret.get(c.id)!)) : undefined;
+
+      if (node.alignItems && node.alignItems !== "start") {
+        const alignCenter = node.alignItems === "center";
+        Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+          const lineHeight = Math.max(...line.map((c) => ret.get(c.id)!.height));
+          line.forEach((c) => {
+            const rect = ret.get(c.id)!;
+            const d = lineHeight - rect.height;
+            if (d !== 0) {
+              ret.set(c.id, { ...rect, y: alignCenter ? rect.y + d / 2 : rect.y + d });
+            }
+          });
+        });
+      }
+
       const rect = childWrapperRect
         ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
         : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
       ret.set(node.id, {
-        ...node.rect,
         ...from,
         width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
         height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
