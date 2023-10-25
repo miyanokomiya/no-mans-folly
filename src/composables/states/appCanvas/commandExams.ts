@@ -9,6 +9,9 @@ export const COMMAND_EXAM_SRC = {
   RESIZE_PROPORTIONALLY: { command: "Shift", title: "Proportionally" },
   RESIZE_AT_CENTER: { command: getAltOrOptionStr(), title: "Based on center" },
 
+  PADDING_BOTH_SIDES: { command: "Shift", title: "Both sides" },
+  PADDING_ALL_SIDES: { command: getAltOrOptionStr(), title: "All sides" },
+
   DELETE_INER_VERTX: { command: "Shift + Click", title: "Delete inner vertex" },
 
   TEXT_MOVE_CURSOR: { command: "Ctrl + p, n, b, f", title: "Move cursor" },

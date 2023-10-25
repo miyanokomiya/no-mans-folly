@@ -5,6 +5,7 @@ import { AlignBoxHandler, AlignBoxPaddingHitResult, newAlignBoxHandler } from ".
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { BoxValues4 } from "../../../../models";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -29,7 +30,7 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
     onStart: (ctx) => {
       initHandler(ctx);
       ctx.startDragging();
-      ctx.setCommandExams();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.PADDING_BOTH_SIDES, COMMAND_EXAM_SRC.PADDING_ALL_SIDES]);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
