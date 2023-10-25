@@ -9,7 +9,8 @@ const box0: AlignLayoutNode = {
   rect: { x: 0, y: 0, width: 10, height: 200 },
   type: "box",
   direction: 0,
-  gap: 10,
+  gapC: 10,
+  gapR: 10,
   baseHeight: 200,
 };
 const entity0: AlignLayoutNode = {
@@ -34,7 +35,8 @@ const box10: AlignLayoutNode = {
   rect: { x: 0, y: 0, width: 10, height: 100 },
   type: "box",
   direction: 0,
-  gap: 10,
+  gapC: 10,
+  gapR: 10,
   baseHeight: 100,
 };
 const entity10: AlignLayoutNode = {
@@ -355,6 +357,32 @@ describe("getAlignRelativeRectMap", () => {
         ["box0", { x: 0, y: 0, width: 56, height: 34 }],
         ["entity0", { x: 4, y: 1, width: 20, height: 30 }],
         ["entity1", { x: 34, y: 1, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of gapR: vertical", () => {
+    const nodes: AlignLayoutNode[] = [{ ...box0, gapR: 1 }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 20, height: 200 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 0, y: 31, width: 20, height: 30 }],
+      ]),
+    );
+  });
+
+  test("should take care of gapC: horizontal", () => {
+    const nodes: AlignLayoutNode[] = [{ ...box0, direction: 1, baseHeight: undefined, gapC: 1 }, entity0, entity1];
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+    expect(result0).toEqual(
+      new Map([
+        ["box0", { x: 0, y: 0, width: 41, height: 30 }],
+        ["entity0", { x: 0, y: 0, width: 20, height: 30 }],
+        ["entity1", { x: 21, y: 0, width: 20, height: 30 }],
       ]),
     );
   });

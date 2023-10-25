@@ -27,7 +27,8 @@ export interface AlignLayoutEntity extends AlignLayoutBase {
 export interface AlignLayoutBox extends AlignLayoutBase {
   type: "box";
   direction: Direction2;
-  gap: number;
+  gapC?: number;
+  gapR?: number;
   /**
    * When direction is 0, baseWidth is used as minimum width, baseHeight is used as fixed height vice versa.
    * "undefined" means optimal to its content.
@@ -127,7 +128,10 @@ function calcAlignRectMap(
   },
 ): boolean | undefined {
   const node = nodeMap.get(treeNode.id)!;
+
   if (node.type === "box") {
+    const gapC = node.gapC ?? 0;
+    const gapR = node.gapR ?? 0;
     let x = node.padding?.[3] ?? 0;
     let y = node.padding?.[0] ?? 0;
 
@@ -149,17 +153,17 @@ function calcAlignRectMap(
         if (!result) {
           const crect = ret.get(c.id)!;
           maxWidth = Math.max(maxWidth, crect.width);
-          y += crect.height + node.gap;
+          y += crect.height + gapR;
         } else {
           // Should break line once
           if (i > 0) {
-            x += maxWidth + node.gap;
+            x += maxWidth + gapC;
             y = 0;
           }
           const crect = ret.get(c.id)!;
           ret.set(c.id, { ...crect, x, y });
           maxWidth = crect.width;
-          y += crect.height + node.gap;
+          y += crect.height + gapR;
         }
       });
 
@@ -192,17 +196,17 @@ function calcAlignRectMap(
         if (!result) {
           const crect = ret.get(c.id)!;
           maxHeight = Math.max(maxHeight, crect.height);
-          x += crect.width + node.gap;
+          x += crect.width + gapC;
         } else {
           // Should break line once
           if (i > 0) {
             x = 0;
-            y += maxHeight + node.gap;
+            y += maxHeight + gapR;
           }
           const crect = ret.get(c.id)!;
           ret.set(c.id, { ...crect, x, y });
           maxHeight = crect.height;
-          x += crect.width + node.gap;
+          x += crect.width + gapC;
         }
       });
 

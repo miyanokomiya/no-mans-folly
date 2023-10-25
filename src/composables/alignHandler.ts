@@ -471,7 +471,8 @@ function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayout
       type: "box",
       rect,
       direction: shape.direction,
-      gap: shape.gap,
+      gapC: shape.gapC,
+      gapR: shape.gapR,
       baseWidth: shape.baseWidth,
       baseHeight: shape.baseHeight,
       padding: shape.padding,
@@ -679,9 +680,11 @@ export function generateAlignTemplate(
   const root = createShape<AlignBoxShape>(ctx.getShapeStruct, "align_box", {
     id: ctx.generateUuid(),
     findex: generateKeyBetween(ctx.createLastIndex(), null),
-    height: 300,
-    direction: 0,
-    gap: 10,
+    width: 300,
+    height: 200,
+    direction: 1,
+    gapC: 10,
+    gapR: 10,
   });
   const column0 = createShape<RectangleShape>(ctx.getShapeStruct, "rectangle", {
     id: ctx.generateUuid(),
