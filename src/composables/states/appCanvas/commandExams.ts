@@ -28,4 +28,7 @@ export const COMMAND_EXAM_SRC = {
 
   GROUP: { command: `${getCtrlOrMetaStr()} + g`, title: "Group" },
   UNGROUP: { command: `${getCtrlOrMetaStr()} + G`, title: "Ungroup" },
+
+  SELECT_PARENT: { command: "p", title: "Select parent" },
+  SELECT_CHILD: { command: "c", title: "Select child" },
 } satisfies { [key: string]: CommandExam };

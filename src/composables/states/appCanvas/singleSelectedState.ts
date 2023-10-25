@@ -21,7 +21,6 @@ import { getOuterRectangle } from "okageo";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
-import { COMMAND_EXAM_SRC } from "./commandExams";
 import { findBetterShapeAt } from "../../shapeComposite";
 import { ShapeSelectionScope } from "../../../shapes/core";
 
@@ -45,11 +44,7 @@ export function newSingleSelectedState(): AppCanvasState {
       selectionScope = shapeComposite.getSelectionScope(shape);
       isGroupShapeSelected = isGroupShape(shape);
 
-      if (isGroupShapeSelected) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
-      } else {
-        ctx.setCommandExams(getCommonCommandExams());
-      }
+      ctx.setCommandExams(getCommonCommandExams(ctx));
 
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(shape),

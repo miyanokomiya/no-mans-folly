@@ -38,6 +38,7 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
+import { CommandExam } from "../types";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -89,6 +90,24 @@ export function handleCommonShortcut(
         ctx.multiSelectShapes(allIds);
       }
       return newSelectionHubState;
+    }
+    case "p": {
+      const shapeComposite = ctx.getShapeComposite();
+      const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
+      if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
+        ctx.selectShape(current.parentId);
+        return newSelectionHubState;
+      }
+      return;
+    }
+    case "c": {
+      const shapeComposite = ctx.getShapeComposite();
+      const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
+      if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
+        ctx.selectShape(currentNode.children[0].id);
+        return newSelectionHubState;
+      }
+      return;
     }
     case "g":
       if (event.data.ctrl) {
@@ -168,8 +187,30 @@ const COMMON_COMMAND_EXAMS = [
   COMMAND_EXAM_SRC.PAN_CANVAS,
   COMMAND_EXAM_SRC.RESET_VIEWPORT,
 ];
-export function getCommonCommandExams() {
-  return COMMON_COMMAND_EXAMS;
+export function getCommonCommandExams(ctx: AppCanvasStateContext): CommandExam[] {
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
+  const current = shapeMap[ctx.getLastSelectedShapeId() ?? ""];
+  if (!current) return COMMON_COMMAND_EXAMS;
+
+  const extra: CommandExam[] = [];
+  if (shapeComposite.shapeMap[current.parentId ?? ""]) {
+    extra.push(COMMAND_EXAM_SRC.SELECT_PARENT);
+  }
+  const currentNode = shapeComposite.mergedShapeTreeMap[current.id];
+  if (currentNode.children.length > 0 && shapeMap[currentNode.children[0].id]) {
+    extra.push(COMMAND_EXAM_SRC.SELECT_CHILD);
+  }
+
+  const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (canGroupShapes(shapeComposite, selectedIds)) {
+    extra.push(COMMAND_EXAM_SRC.GROUP);
+  }
+  if (selectedIds.some((id) => shapeMap[id] && isGroupShape(shapeMap[id]))) {
+    extra.push(COMMAND_EXAM_SRC.UNGROUP);
+  }
+
+  return extra.length > 0 ? [...extra, ...COMMON_COMMAND_EXAMS] : COMMON_COMMAND_EXAMS;
 }
 
 export function handleCommonTextStyle(

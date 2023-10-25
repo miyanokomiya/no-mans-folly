@@ -40,13 +40,13 @@ function getChildNodes<T extends TreeFlatNode>(parentMap: { [id: string]: T[] },
 /**
  * Depth first ordered
  */
-export function walkTree(treeNodes: TreeNode[], fn: (node: TreeNode) => void) {
-  treeNodes.forEach((n) => walkTreeStep(n, fn));
+export function walkTree(treeNodes: TreeNode[], fn: (node: TreeNode, i: number) => void) {
+  treeNodes.forEach((n, i) => walkTreeStep(n, fn, i));
 }
 
-function walkTreeStep(node: TreeNode, fn: (node: TreeNode) => void) {
-  fn(node);
-  node.children.forEach((c) => walkTreeStep(c, fn));
+function walkTreeStep(node: TreeNode, fn: (node: TreeNode, i: number) => void, i: number) {
+  fn(node, i);
+  node.children.forEach((c, j) => walkTreeStep(c, fn, j));
 }
 
 /**

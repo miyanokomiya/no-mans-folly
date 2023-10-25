@@ -36,7 +36,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "LineLabelSelected",
     onStart: (ctx) => {
-      ctx.setCommandExams(getCommonCommandExams());
+      ctx.setCommandExams(getCommonCommandExams(ctx));
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;

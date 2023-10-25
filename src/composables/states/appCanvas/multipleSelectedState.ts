@@ -21,9 +21,7 @@ import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
-import { COMMAND_EXAM_SRC } from "./commandExams";
-import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
-import { isGroupShape } from "../../../shapes/group";
+import { findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
 
@@ -73,13 +71,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       }
 
       ctx.showFloatMenu();
-      if (selectedIds.some((id) => isGroupShape(shapeMap[id]))) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, COMMAND_EXAM_SRC.UNGROUP, ...getCommonCommandExams()]);
-      } else if (canGroupShapes(shapeComposite, selectedIds)) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.GROUP, ...getCommonCommandExams()]);
-      } else {
-        ctx.setCommandExams(getCommonCommandExams());
-      }
+      ctx.setCommandExams(getCommonCommandExams(ctx));
 
       if (option?.boundingBox) {
         // Recalculate the bounding because shapes aren't always transformed along with the bounding box.

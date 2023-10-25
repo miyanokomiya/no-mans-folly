@@ -73,7 +73,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       });
 
       ctx.showFloatMenu();
-      ctx.setCommandExams(getCommonCommandExams());
+      ctx.setCommandExams(getCommonCommandExams(ctx));
       initHandler(ctx);
     },
     onEnd: (ctx) => {

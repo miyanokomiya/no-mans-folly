@@ -35,7 +35,7 @@ export function newLineSelectedState(): AppCanvasState {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams()]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams(ctx)]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();

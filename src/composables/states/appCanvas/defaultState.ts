@@ -20,7 +20,7 @@ export function newDefaultState(): AppCanvasState {
 const state: AppCanvasState = {
   getLabel: () => "Default",
   onStart(ctx) {
-    ctx.setCommandExams(getCommonCommandExams());
+    ctx.setCommandExams(getCommonCommandExams(ctx));
   },
   onEnd(ctx) {
     ctx.setCommandExams();

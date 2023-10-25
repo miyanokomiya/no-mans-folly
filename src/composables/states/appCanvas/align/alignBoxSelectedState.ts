@@ -50,7 +50,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
       targetId = ctx.getLastSelectedShapeId()!;
 
       ctx.showFloatMenu();
-      ctx.setCommandExams(getCommonCommandExams());
+      ctx.setCommandExams(getCommonCommandExams(ctx));
       initHandler(ctx);
     },
     onEnd: (ctx) => {
