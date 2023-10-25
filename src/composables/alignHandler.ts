@@ -397,7 +397,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
 
     {
       paddingAnchors.forEach(({ seg }) => {
-        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold });
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold, lineCap: "round" });
         ctx.beginPath();
         ctx.moveTo(seg[0].x, seg[0].y);
         ctx.lineTo(seg[1].x, seg[1].y);
@@ -405,7 +405,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       });
 
       gapAnchors.forEach(({ seg }) => {
-        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold });
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold, lineCap: "round" });
         ctx.beginPath();
         ctx.moveTo(seg[0].x, seg[0].y);
         ctx.lineTo(seg[1].x, seg[1].y);
@@ -413,7 +413,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       });
 
       if (hitResult && "seg" in hitResult) {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold });
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold, lineCap: "round" });
         ctx.beginPath();
         ctx.moveTo(hitResult.seg[0].x, hitResult.seg[0].y);
         ctx.lineTo(hitResult.seg[1].x, hitResult.seg[1].y);
@@ -454,30 +454,30 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     switch (type) {
       case "padding-top": {
         const d = Math.round(vec.y);
-        if (d === 0) return undefined;
         if (modiifer?.allSides) return src.map(() => src[0] + d) as BoxValues4;
         if (modiifer?.bothSides) return [src[0] + d, src[1], src[0] + d, src[3]];
+        if (d === 0) return undefined;
         return [src[0] + d, src[1], src[2], src[3]];
       }
       case "padding-right": {
         const d = -Math.round(vec.x);
-        if (d === 0) return undefined;
         if (modiifer?.allSides) return src.map(() => src[1] + d) as BoxValues4;
         if (modiifer?.bothSides) return [src[0], src[1] + d, src[2], src[1] + d];
+        if (d === 0) return undefined;
         return [src[0], src[1] + d, src[2], src[3]];
       }
       case "padding-bottom": {
         const d = -Math.round(vec.y);
-        if (d === 0) return undefined;
         if (modiifer?.allSides) return src.map(() => src[2] + d) as BoxValues4;
         if (modiifer?.bothSides) return [src[2] + d, src[1], src[2] + d, src[3]];
+        if (d === 0) return undefined;
         return [src[0], src[1], src[2] + d, src[3]];
       }
       case "padding-left": {
         const d = Math.round(vec.x);
-        if (d === 0) return undefined;
         if (modiifer?.allSides) return src.map(() => src[3] + d) as BoxValues4;
         if (modiifer?.bothSides) return [src[0], src[3] + d, src[2], src[3] + d];
+        if (d === 0) return undefined;
         return [src[0], src[1], src[2], src[3] + d];
       }
     }
@@ -504,7 +504,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       ctx.lineTo(seg[1].x + diff.x, seg[1].y + diff.y);
       ctx.stroke();
       const p = add(getCenter(seg[0], seg[1]), diff);
-      renderValueLabel(ctx, nextPaddingDefined[i], p, -alignBox.rotation, scale);
+      renderValueLabel(ctx, nextPaddingDefined[i], p, -alignBox.rotation);
     });
 
     ctx.restore();
@@ -524,16 +524,16 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     switch (type) {
       case "gap-r": {
         const d = Math.round(vec.y);
-        if (d === 0) return undefined;
         const v = Math.max(0, src.y + d);
         if (modiifer?.both) return { x: v, y: v };
+        if (d === 0) return undefined;
         return { x: src.x, y: v };
       }
       case "gap-c": {
         const d = Math.round(vec.x);
-        if (d === 0) return undefined;
         const v = Math.max(0, src.x + d);
         if (modiifer?.both) return { x: v, y: v };
+        if (d === 0) return undefined;
         return { x: v, y: src.y };
       }
     }
@@ -555,7 +555,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       ctx.lineTo(seg[1].x + diff.x, seg[1].y + diff.y);
       ctx.stroke();
       const p = add(getCenter(seg[0], seg[1]), diff);
-      renderValueLabel(ctx, i === 0 ? nextGapDefined.y : nextGapDefined.x, p, -alignBox.rotation, scale);
+      renderValueLabel(ctx, i === 0 ? nextGapDefined.y : nextGapDefined.x, p, -alignBox.rotation);
     });
 
     ctx.restore();
@@ -787,9 +787,10 @@ export function generateAlignTemplate(
   const root = createShape<AlignBoxShape>(ctx.getShapeStruct, "align_box", {
     id: ctx.generateUuid(),
     findex: generateKeyBetween(ctx.createLastIndex(), null),
-    width: 300,
-    height: 200,
+    baseWidth: undefined,
+    baseHeight: undefined,
     direction: 1,
+    padding: [10, 10, 10, 10],
     gapC: 10,
     gapR: 10,
   });

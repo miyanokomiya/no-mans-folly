@@ -55,6 +55,8 @@ export interface StrokeStyle {
   color: Color;
   width?: number;
   dash?: LineDash;
+  lineCap?: CanvasLineCap;
+  lineJoin?: CanvasLineJoin;
 }
 
 export type LineDash = undefined | "solid" | "dot" | "short" | "long"; // "undefined" refers to "solid"

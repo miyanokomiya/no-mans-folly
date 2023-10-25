@@ -38,6 +38,7 @@ export const struct: ShapeStruct<AlignBoxShape> = {
       direction,
       gapC: arg.gapC,
       gapR: arg.gapR,
+      padding: arg.padding,
       baseWidth: "baseWidth" in arg ? arg.baseWidth : width,
       baseHeight: "baseHeight" in arg ? arg.baseHeight : height,
     };
