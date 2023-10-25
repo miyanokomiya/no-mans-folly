@@ -141,6 +141,9 @@ describe("newShapeComposite", () => {
       expect(target.findShapeAt({ x: 90, y: 90 })).toEqual(line);
       expect(target.findShapeAt({ x: 5, y: 8 })).toEqual(child0);
       expect(target.findShapeAt({ x: 50, y: 55 })).toEqual(child1);
+      // still should respect exclude ids
+      expect(target.findShapeAt({ x: 50, y: 55 }, undefined, [child1.id])).toEqual(line);
+      expect(target.findShapeAt({ x: 50, y: 55 }, undefined, [child1.id, line.id])).toEqual(undefined);
     });
 
     test("should ignore shapes supplied as exclude ids", () => {

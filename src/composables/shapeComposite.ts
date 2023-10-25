@@ -77,10 +77,11 @@ export function newShapeComposite(option: Option) {
       (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext),
     );
     if (!candidate) return;
-    if (!shapeModule.isTransparentSelection(option.getStruct, candidate)) return candidate;
+    if (!excludeSet.has(candidate.id) && !shapeModule.isTransparentSelection(option.getStruct, candidate))
+      return candidate;
 
     // When the candidate is transparent for selection, try seeking its children.
-    const childCandidate = findShapeAt(p, { parentId: candidate.id }, undefined, true);
+    const childCandidate = findShapeAt(p, { parentId: candidate.id }, excludeIds, true);
     return childCandidate ?? candidate;
   }
 
@@ -147,7 +148,7 @@ export function newShapeComposite(option: Option) {
     mergedShapes,
     mergedShapeMap,
     mergedShapeTree,
-    mergedShapeTreeMap: toMap(flatTree(mergedShapeTree)),
+    mergedShapeTreeMap,
     getAllBranchMergedShapes,
     getAllTransformTargets,
 
