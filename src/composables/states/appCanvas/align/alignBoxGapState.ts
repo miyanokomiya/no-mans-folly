@@ -1,20 +1,20 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { AlignBoxHandler, AlignBoxPaddingHitResult, newAlignBoxHandler } from "../../../alignHandler";
+import { AlignBoxHandler, AlignBoxGapHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
-import { BoxValues4 } from "../../../../models";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { IVec2 } from "okageo";
 
 interface Option {
-  type: AlignBoxPaddingHitResult["type"];
+  type: AlignBoxGapHitResult["type"];
   alignBoxId: string;
 }
 
-export function newAlignBoxPaddingState(option: Option): AppCanvasState {
+export function newAlignBoxGapState(option: Option): AppCanvasState {
   const alignBoxId = option.alignBoxId;
   let alignBoxHandler: AlignBoxHandler;
-  let nextPadding: BoxValues4 | undefined;
+  let nextGap: IVec2 | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
     alignBoxHandler = newAlignBoxHandler({
@@ -24,11 +24,11 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
   }
 
   return {
-    getLabel: () => "AlignBoxPadding",
+    getLabel: () => "AlignBoxGap",
     onStart: (ctx) => {
       initHandler(ctx);
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.PADDING_BOTH_SIDES, COMMAND_EXAM_SRC.PADDING_ALL_SIDES]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.GAP_BOTH]);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -40,12 +40,18 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
 
-          nextPadding = alignBoxHandler.getModifiedPadding(option.type, event.data.start, event.data.current, {
-            bothSides: event.data.shift,
-            allSides: event.data.alt,
+          nextGap = alignBoxHandler.getModifiedGap(option.type, event.data.start, event.data.current, {
+            both: event.data.shift,
           });
-          if (nextPadding) {
-            const patch: Partial<AlignBoxShape> = { padding: nextPadding };
+          if (nextGap) {
+            const src = shapeComposite.shapeMap[alignBoxId] as AlignBoxShape;
+            const patch: Partial<AlignBoxShape> = {};
+            if (nextGap.x !== src.gapC) {
+              patch.gapC = nextGap.x;
+            }
+            if (nextGap.y !== src.gapR) {
+              patch.gapR = nextGap.y;
+            }
             const layoutPatch = getPatchByLayouts(shapeComposite, { update: { [alignBoxId]: patch } });
             ctx.setTmpShapeMap(layoutPatch);
           } else {
@@ -75,7 +81,7 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      alignBoxHandler.renderModifiedPadding(renderCtx, style, ctx.getScale(), nextPadding);
+      alignBoxHandler.renderModifiedGap(renderCtx, style, ctx.getScale(), nextGap);
     },
   };
 }

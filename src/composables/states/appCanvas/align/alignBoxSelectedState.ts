@@ -22,6 +22,7 @@ import { newRotatingState } from "../rotatingState";
 import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
+import { newAlignBoxGapState } from "./alignBoxGapState";
 
 export function newAlignBoxSelectedState(): AppCanvasState {
   let targetId: string;
@@ -98,6 +99,11 @@ export function newAlignBoxSelectedState(): AppCanvasState {
                   case "padding-left": {
                     const type = alignBoxHitResult.type;
                     return () => newAlignBoxPaddingState({ type, alignBoxId: targetId });
+                  }
+                  case "gap-r":
+                  case "gap-c": {
+                    const type = alignBoxHitResult.type;
+                    return () => newAlignBoxGapState({ type, alignBoxId: targetId });
                   }
                 }
 

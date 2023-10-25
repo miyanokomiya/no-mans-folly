@@ -11,6 +11,7 @@ export const COMMAND_EXAM_SRC = {
 
   PADDING_BOTH_SIDES: { command: "Shift", title: "Both sides" },
   PADDING_ALL_SIDES: { command: getAltOrOptionStr(), title: "All sides" },
+  GAP_BOTH: { command: "Shift", title: "Both gaps" },
 
   DELETE_INER_VERTX: { command: "Shift + Click", title: "Delete inner vertex" },
 

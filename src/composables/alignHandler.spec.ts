@@ -10,7 +10,8 @@ const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   id: "box0",
   height: 100,
   direction: 0,
-  gap: 10,
+  gapR: 10,
+  gapC: 10,
   baseWidth: undefined,
 });
 const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
@@ -29,7 +30,8 @@ const box10 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   id: "box10",
   height: 100,
   direction: 0,
-  gap: 10,
+  gapR: 10,
+  gapC: 10,
   baseWidth: undefined,
 });
 const rect10 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
@@ -48,7 +50,8 @@ const box20 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   id: "box20",
   height: 100,
   direction: 0,
-  gap: 10,
+  gapR: 10,
+  gapC: 10,
   baseWidth: undefined,
 });
 
@@ -105,6 +108,31 @@ describe("newAlignBoxHandler", () => {
       expect(target.getModifiedPadding("padding-left", { x: 0, y: 0 }, { x: 10, y: 0 }, { allSides: true })).toEqual([
         10, 10, 10, 10,
       ]);
+    });
+  });
+
+  describe("getModifiedGap", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const target = newAlignBoxHandler({
+      getShapeComposite: () => shapeComposite,
+      alignBoxId: box0.id,
+    });
+
+    test("should return modified gap: row", () => {
+      expect(target.getModifiedGap("gap-r", { x: 0, y: 0 }, { x: 10, y: 0 })).toEqual(undefined);
+      expect(target.getModifiedGap("gap-r", { x: 0, y: 0 }, { x: 0, y: 50 })).toEqual({ x: 10, y: 60 });
+      expect(target.getModifiedGap("gap-r", { x: 0, y: 0 }, { x: 0, y: 50 }, { both: true })).toEqual({ x: 60, y: 60 });
+      expect(target.getModifiedGap("gap-r", { x: 0, y: 0 }, { x: 0, y: -50 })).toEqual({ x: 10, y: 0 });
+    });
+
+    test("should return modified gap: column", () => {
+      expect(target.getModifiedGap("gap-c", { x: 0, y: 0 }, { x: 0, y: 10 })).toEqual(undefined);
+      expect(target.getModifiedGap("gap-c", { x: 0, y: 0 }, { x: 50, y: 0 })).toEqual({ x: 60, y: 10 });
+      expect(target.getModifiedGap("gap-c", { x: 0, y: 0 }, { x: 50, y: 0 }, { both: true })).toEqual({ x: 60, y: 60 });
+      expect(target.getModifiedGap("gap-c", { x: 0, y: 0 }, { x: -50, y: 0 })).toEqual({ x: 0, y: 10 });
     });
   });
 });

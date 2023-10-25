@@ -56,11 +56,6 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
-          // const alignBox = shapeComposite.mergedShapeMap[alignBoxId];
-          // if (!shapeComposite.isPointOn(alignBox, event.data.current)) {
-          //   return { type: "break" };
-          // }
-
           const scope = shapeComposite.getSelectionScope(shapes[0]);
           const shapeAtPoint = findBetterShapeAt(
             shapeComposite,
@@ -74,6 +69,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           if (!alignBoxShape) {
             return { type: "break" };
           } else if (alignBoxShape.id !== alignBoxId) {
+            // Switch to the closest align box shape
             alignBoxId = alignBoxShape.id;
             initHandler(ctx);
           }

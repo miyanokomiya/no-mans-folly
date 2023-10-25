@@ -22,7 +22,6 @@ export function handlePointerMoveOnLayout(
   if (canAlign(ctx)) {
     const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[movingIds[0]]);
     const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, movingIds);
-    shapeComposite.findShapeAt;
     if (shapeAtPoint) {
       const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
       if (alignBoxShape) {

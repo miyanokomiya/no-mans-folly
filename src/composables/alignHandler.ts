@@ -175,7 +175,11 @@ export type AlignHandler = ReturnType<typeof newAlignHandler>;
 const DIRECTION_ANCHOR_SIZE = 10;
 const PADDING_ANCHOR_SIZE = 8;
 
-export type AlignBoxHitResult = AlignBoxDirectionHitResult | AlignBoxBaseSizeHitResult | AlignBoxPaddingHitResult;
+export type AlignBoxHitResult =
+  | AlignBoxDirectionHitResult
+  | AlignBoxBaseSizeHitResult
+  | AlignBoxPaddingHitResult
+  | AlignBoxGapHitResult;
 
 type AlignBoxDirectionHitResult = {
   type: "direction";
@@ -190,6 +194,11 @@ type AlignBoxBaseSizeHitResult = {
 
 export type AlignBoxPaddingHitResult = {
   type: "padding-top" | "padding-right" | "padding-bottom" | "padding-left";
+  seg: ISegment;
+};
+
+export type AlignBoxGapHitResult = {
+  type: "gap-r" | "gap-c";
   seg: ISegment;
 };
 
@@ -288,6 +297,36 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     },
   ];
 
+  // Keep the order: row, column
+  const gapAnchors: AlignBoxGapHitResult[] = [
+    {
+      type: "gap-r",
+      seg: [
+        {
+          x: alignBoxRect.x + alignBoxRect.width * 0.8,
+          y: alignBoxRect.y + alignBoxRect.height + DIRECTION_ANCHOR_SIZE * 2,
+        },
+        {
+          x: alignBoxRect.x + alignBoxRect.width * 0.9,
+          y: alignBoxRect.y + alignBoxRect.height + DIRECTION_ANCHOR_SIZE * 2,
+        },
+      ],
+    },
+    {
+      type: "gap-c",
+      seg: [
+        {
+          x: alignBoxRect.x + alignBoxRect.width + DIRECTION_ANCHOR_SIZE * 2,
+          y: alignBoxRect.y + alignBoxRect.height * 0.8,
+        },
+        {
+          x: alignBoxRect.x + alignBoxRect.width + DIRECTION_ANCHOR_SIZE * 2,
+          y: alignBoxRect.y + alignBoxRect.height * 0.9,
+        },
+      ],
+    },
+  ];
+
   function hitTest(p: IVec2, scale: number): AlignBoxHitResult | undefined {
     const derotatedP = applyAffine(derotateAffine, p);
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
@@ -311,6 +350,11 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       return paddingAnchor;
     }
 
+    const gapAnchor = gapAnchors.find(({ seg }) => isPointCloseToSegment(seg, derotatedP, segThreshold));
+    if (gapAnchor) {
+      return gapAnchor;
+    }
+
     return;
   }
 
@@ -321,65 +365,77 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     ctx.save();
     ctx.transform(...rotateAffine);
 
-    applyDefaultStrokeStyle(ctx);
-    applyFillStyle(ctx, { color: style.selectionPrimary });
+    {
+      applyDefaultStrokeStyle(ctx);
+      applyFillStyle(ctx, { color: style.selectionPrimary });
 
-    ctx.beginPath();
-    ctx.arc(directionAnchor.p.x, directionAnchor.p.y, threshold, 0, TAU);
-    ctx.fill();
-
-    if (baseWidthOptimizeAnchor) {
       ctx.beginPath();
-      ctx.arc(baseWidthOptimizeAnchor.p.x, baseWidthOptimizeAnchor.p.y, threshold, 0, TAU);
+      ctx.arc(directionAnchor.p.x, directionAnchor.p.y, threshold, 0, TAU);
       ctx.fill();
+
+      [baseWidthOptimizeAnchor, baseHeightOptimizeAnchor].forEach((a) => {
+        if (!a) return;
+        ctx.beginPath();
+        ctx.arc(a.p.x, a.p.y, threshold, 0, TAU);
+        ctx.fill();
+      });
+
+      if (hitResult && "p" in hitResult) {
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
+        ctx.fill();
+      }
+
+      applyFillStyle(ctx, { color: COLORS.WHITE });
+      renderArrowUnit(ctx, directionAnchor.p, directionAnchor.direction === 0 ? Math.PI / 2 : 0, threshold * 0.7);
+      [baseWidthOptimizeAnchor, baseHeightOptimizeAnchor].forEach((a) => {
+        if (!a) return;
+        renderArrowUnit(ctx, a.p, a.type === "optimize-width" ? Math.PI : -Math.PI / 2, threshold * 0.7);
+      });
     }
 
-    if (baseHeightOptimizeAnchor) {
-      ctx.beginPath();
-      ctx.arc(baseHeightOptimizeAnchor.p.x, baseHeightOptimizeAnchor.p.y, threshold, 0, TAU);
-      ctx.fill();
-    }
+    {
+      paddingAnchors.forEach(({ seg }) => {
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold });
+        ctx.beginPath();
+        ctx.moveTo(seg[0].x, seg[0].y);
+        ctx.lineTo(seg[1].x, seg[1].y);
+        ctx.stroke();
+      });
 
-    if (hitResult && "p" in hitResult) {
-      applyFillStyle(ctx, { color: style.selectionSecondaly });
-      ctx.beginPath();
-      ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
-      ctx.fill();
-    }
+      gapAnchors.forEach(({ seg }) => {
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold });
+        ctx.beginPath();
+        ctx.moveTo(seg[0].x, seg[0].y);
+        ctx.lineTo(seg[1].x, seg[1].y);
+        ctx.stroke();
+      });
 
-    applyDefaultStrokeStyle(ctx);
-    applyFillStyle(ctx, { color: COLORS.WHITE });
-    renderArrowUnit(ctx, directionAnchor.p, directionAnchor.direction === 0 ? Math.PI / 2 : 0, threshold * 0.7);
-    if (baseWidthOptimizeAnchor) {
-      renderArrowUnit(ctx, baseWidthOptimizeAnchor.p, alignBox.baseWidth === undefined ? 0 : Math.PI, threshold * 0.7);
-    }
-    if (baseHeightOptimizeAnchor) {
-      renderArrowUnit(ctx, baseHeightOptimizeAnchor.p, -Math.PI / 2, threshold * 0.7);
-    }
+      if (hitResult && "seg" in hitResult) {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold });
+        ctx.beginPath();
+        ctx.moveTo(hitResult.seg[0].x, hitResult.seg[0].y);
+        ctx.lineTo(hitResult.seg[1].x, hitResult.seg[1].y);
+        ctx.stroke();
+      }
 
-    paddingAnchors.forEach(({ seg }) => {
-      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold });
-      ctx.beginPath();
-      ctx.moveTo(seg[0].x, seg[0].y);
-      ctx.lineTo(seg[1].x, seg[1].y);
-      ctx.stroke();
-    });
+      paddingAnchors.forEach(({ seg }) => {
+        applyStrokeStyle(ctx, { color: COLORS.WHITE, width: segThreshold / 3 });
+        ctx.beginPath();
+        ctx.moveTo(seg[0].x, seg[0].y);
+        ctx.lineTo(seg[1].x, seg[1].y);
+        ctx.stroke();
+      });
 
-    if (hitResult && "seg" in hitResult) {
-      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold });
-      ctx.beginPath();
-      ctx.moveTo(hitResult.seg[0].x, hitResult.seg[0].y);
-      ctx.lineTo(hitResult.seg[1].x, hitResult.seg[1].y);
-      ctx.stroke();
+      gapAnchors.forEach(({ seg }) => {
+        applyStrokeStyle(ctx, { color: COLORS.WHITE, width: segThreshold / 3 });
+        ctx.beginPath();
+        ctx.moveTo(seg[0].x, seg[0].y);
+        ctx.lineTo(seg[1].x, seg[1].y);
+        ctx.stroke();
+      });
     }
-
-    paddingAnchors.forEach(({ seg }) => {
-      applyStrokeStyle(ctx, { color: COLORS.WHITE, width: segThreshold / 3 });
-      ctx.beginPath();
-      ctx.moveTo(seg[0].x, seg[0].y);
-      ctx.lineTo(seg[1].x, seg[1].y);
-      ctx.stroke();
-    });
 
     ctx.restore();
   }
@@ -454,7 +510,58 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     ctx.restore();
   }
 
-  return { hitTest, render, getModifiedPadding, renderModifiedPadding };
+  function getModifiedGap(
+    type: AlignBoxGapHitResult["type"],
+    from: IVec2,
+    to: IVec2,
+    modiifer?: { both?: boolean },
+  ): IVec2 | undefined {
+    const derotatedFrom = applyAffine(derotateAffine, from);
+    const derotatedTo = applyAffine(derotateAffine, to);
+    const vec = sub(derotatedTo, derotatedFrom);
+    const src = { x: alignBox.gapC ?? 0, y: alignBox.gapR ?? 0 };
+
+    switch (type) {
+      case "gap-r": {
+        const d = Math.round(vec.y);
+        if (d === 0) return undefined;
+        const v = Math.max(0, src.y + d);
+        if (modiifer?.both) return { x: v, y: v };
+        return { x: src.x, y: v };
+      }
+      case "gap-c": {
+        const d = Math.round(vec.x);
+        if (d === 0) return undefined;
+        const v = Math.max(0, src.x + d);
+        if (modiifer?.both) return { x: v, y: v };
+        return { x: v, y: src.y };
+      }
+    }
+  }
+
+  function renderModifiedGap(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, nextGap?: IVec2) {
+    const segThreshold = PADDING_ANCHOR_SIZE * scale;
+
+    ctx.save();
+    ctx.transform(...rotateAffine);
+
+    const srcGap = { x: alignBox.gapC ?? 0, y: alignBox.gapR ?? 0 };
+    const nextGapDefined = nextGap ?? srcGap;
+    const diff = sub(nextGapDefined, srcGap);
+    gapAnchors.forEach(({ seg }, i) => {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold });
+      ctx.beginPath();
+      ctx.moveTo(seg[0].x + diff.x, seg[0].y + diff.y);
+      ctx.lineTo(seg[1].x + diff.x, seg[1].y + diff.y);
+      ctx.stroke();
+      const p = add(getCenter(seg[0], seg[1]), diff);
+      renderValueLabel(ctx, i === 0 ? nextGapDefined.y : nextGapDefined.x, p, -alignBox.rotation, scale);
+    });
+
+    ctx.restore();
+  }
+
+  return { hitTest, render, getModifiedPadding, renderModifiedPadding, getModifiedGap, renderModifiedGap };
 }
 export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
 
