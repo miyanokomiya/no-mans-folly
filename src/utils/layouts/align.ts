@@ -149,7 +149,7 @@ function calcAlignRectMap(
           node.baseHeight === undefined
             ? Infinity
             : // Add extra room to absorb rounding error
-              node.rect.height - y - (node.padding ? node.padding[0] - node.padding[2] : 0) + MINVALUE,
+              node.rect.height - y - (node.padding ? node.padding[2] : 0) + MINVALUE,
         );
 
         if (!result) {
@@ -192,7 +192,7 @@ function calcAlignRectMap(
           node.baseWidth === undefined
             ? Infinity
             : // Add extra room to absorb rounding error
-              node.rect.width - x - (node.padding ? node.padding[1] - node.padding[3] : 0) + MINVALUE,
+              node.rect.width - x - (node.padding ? node.padding[1] : 0) + MINVALUE,
         );
 
         if (!result) {
