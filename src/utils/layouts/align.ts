@@ -132,8 +132,10 @@ function calcAlignRectMap(
   if (node.type === "box") {
     const gapC = node.gapC ?? 0;
     const gapR = node.gapR ?? 0;
-    let x = node.padding?.[3] ?? 0;
-    let y = node.padding?.[0] ?? 0;
+    const paddingL = node.padding?.[3] ?? 0;
+    const paddingT = node.padding?.[0] ?? 0;
+    let x = paddingL;
+    let y = paddingT;
 
     if (node.direction === 0) {
       let maxWidth = 0;
@@ -158,7 +160,7 @@ function calcAlignRectMap(
           // Should break line once
           if (i > 0) {
             x += maxWidth + gapC;
-            y = 0;
+            y = paddingT;
           }
           const crect = ret.get(c.id)!;
           ret.set(c.id, { ...crect, x, y });
@@ -200,7 +202,7 @@ function calcAlignRectMap(
         } else {
           // Should break line once
           if (i > 0) {
-            x = 0;
+            x = paddingL;
             y += maxHeight + gapR;
           }
           const crect = ret.get(c.id)!;
