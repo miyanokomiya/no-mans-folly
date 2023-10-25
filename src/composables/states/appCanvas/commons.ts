@@ -92,20 +92,24 @@ export function handleCommonShortcut(
       return newSelectionHubState;
     }
     case "p": {
-      const shapeComposite = ctx.getShapeComposite();
-      const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
-      if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
-        ctx.selectShape(current.parentId);
-        return newSelectionHubState;
+      if (!event.data.ctrl) {
+        const shapeComposite = ctx.getShapeComposite();
+        const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
+        if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
+          ctx.selectShape(current.parentId);
+          return newSelectionHubState;
+        }
       }
       return;
     }
     case "c": {
-      const shapeComposite = ctx.getShapeComposite();
-      const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
-      if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
-        ctx.selectShape(currentNode.children[0].id);
-        return newSelectionHubState;
+      if (!event.data.ctrl) {
+        const shapeComposite = ctx.getShapeComposite();
+        const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
+        if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
+          ctx.selectShape(currentNode.children[0].id);
+          return newSelectionHubState;
+        }
       }
       return;
     }
