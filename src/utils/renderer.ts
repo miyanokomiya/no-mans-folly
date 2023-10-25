@@ -105,7 +105,7 @@ export function applyDefaultTextStyle(
 }
 
 export function renderValueLabel(ctx: CanvasRenderingContext2D, value: number, p: IVec2, rotation = 0, scale = 1) {
-  applyDefaultTextStyle(ctx, 24, "center");
+  applyDefaultTextStyle(ctx, 18 * scale, "center");
   applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 2 * scale });
   applyFillStyle(ctx, { color: COLORS.BLACK });
   applyRotation(ctx, rotation, p, () => {

@@ -588,7 +588,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       ctx.lineTo(seg[1].x + diff.x, seg[1].y + diff.y);
       ctx.stroke();
       const p = add(getCenter(seg[0], seg[1]), diff);
-      renderValueLabel(ctx, nextPaddingDefined[i], p, -alignBox.rotation);
+      renderValueLabel(ctx, nextPaddingDefined[i], p, -alignBox.rotation, scale);
     });
 
     ctx.restore();
@@ -639,7 +639,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       ctx.lineTo(seg[1].x + diff.x, seg[1].y + diff.y);
       ctx.stroke();
       const p = add(getCenter(seg[0], seg[1]), diff);
-      renderValueLabel(ctx, i === 0 ? nextGapDefined.y : nextGapDefined.x, p, -alignBox.rotation);
+      renderValueLabel(ctx, i === 0 ? nextGapDefined.y : nextGapDefined.x, p, -alignBox.rotation, scale);
     });
 
     ctx.restore();
