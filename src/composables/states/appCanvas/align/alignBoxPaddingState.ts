@@ -5,6 +5,7 @@ import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { BoxValues4 } from "../../../../models";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { newShapeComposite } from "../../../shapeComposite";
 
 interface Option {
   type: AlignBoxPaddingHitResult["type"];
@@ -75,7 +76,18 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      alignBoxHandler.renderModifiedPadding(renderCtx, style, ctx.getScale(), nextPadding);
+      const shapeComposite = ctx.getShapeComposite();
+
+      // Since padding anchors' position deeply depend on layout result, recreating the handler here is easy workaround for rendering.
+      const tmpShapeComposite = newShapeComposite({
+        shapes: [shapeComposite.mergedShapeMap[alignBoxId]],
+        getStruct: shapeComposite.getShapeStruct,
+      });
+      const tmpAlignBoxHandler = newAlignBoxHandler({
+        getShapeComposite: () => tmpShapeComposite,
+        alignBoxId: alignBoxId,
+      });
+      tmpAlignBoxHandler.renderModifiedPadding(renderCtx, style, ctx.getScale(), nextPadding);
     },
   };
 }
