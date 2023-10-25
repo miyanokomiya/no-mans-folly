@@ -166,6 +166,23 @@ describe("getNextAlignLayout", () => {
     expect(result[rect0.id].rotation).toBeCloseTo(Math.PI);
     expect(result[rect1.id].rotation).toBeCloseTo(Math.PI);
   });
+
+  test("should translate all children when a shape has ones", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0", parentId: box0.id });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      width: 30,
+      height: 30,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [box0, rect0, group0, child0],
+      getStruct: getCommonStruct,
+    });
+    const result = getNextAlignLayout(shapeComposite, box0.id);
+    expect(result[group0.id]).toEqual({ p: { x: 0, y: 40 } });
+    expect(result[child0.id]).toEqual({ p: { x: 0, y: 40 } });
+  });
 });
 
 describe("getModifiedAlignRootIds", () => {

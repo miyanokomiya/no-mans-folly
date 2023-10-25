@@ -771,6 +771,16 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
         patch.height = height;
         updated = true;
       }
+    } else {
+      if (!isSame(s.p, p)) {
+        // Need to deal with all children if the shape isn't align box.
+        const v = sub(p, s.p);
+        shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
+          if (target.id !== s.id) {
+            ret[target.id] = { p: add(target.p, v) };
+          }
+        });
+      }
     }
 
     if (updated) ret[r.id] = patch;
