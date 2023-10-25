@@ -173,10 +173,12 @@ export function newAlignHandler(option: AlignHandlerOption) {
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 const DIRECTION_ANCHOR_SIZE = 10;
+const ALIGN_ITEMS_ANCHOR_SIZE = 7;
 const PADDING_ANCHOR_SIZE = 8;
 
 export type AlignBoxHitResult =
   | AlignBoxDirectionHitResult
+  | AlignBoxAlignItemsHitResult
   | AlignBoxBaseSizeHitResult
   | AlignBoxPaddingHitResult
   | AlignBoxGapHitResult;
@@ -184,6 +186,12 @@ export type AlignBoxHitResult =
 type AlignBoxDirectionHitResult = {
   type: "direction";
   direction: Direction2;
+  p: IVec2;
+};
+
+type AlignBoxAlignItemsHitResult = {
+  type: "align-items";
+  value: AlignBoxShape["alignItems"];
   p: IVec2;
 };
 
@@ -230,6 +238,51 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
           direction: 0,
           p: { x: alignBoxRect.x - DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y + DIRECTION_ANCHOR_SIZE * 2 },
         };
+
+  const alignItemsAnchors: AlignBoxAlignItemsHitResult[] = [
+    {
+      type: "align-items",
+      value: "start",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x + DIRECTION_ANCHOR_SIZE,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height + DIRECTION_ANCHOR_SIZE * 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width + DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + DIRECTION_ANCHOR_SIZE,
+            },
+    },
+    {
+      type: "align-items",
+      value: "center",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width / 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height + DIRECTION_ANCHOR_SIZE * 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width + DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height / 2,
+            },
+    },
+    {
+      type: "align-items",
+      value: "end",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width - DIRECTION_ANCHOR_SIZE,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height + DIRECTION_ANCHOR_SIZE * 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width + DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height - DIRECTION_ANCHOR_SIZE,
+            },
+    },
+  ];
 
   const baseWidthOptimizeAnchor: AlignBoxBaseSizeHitResult | undefined =
     alignBox.baseWidth === undefined
@@ -331,10 +384,16 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     const derotatedP = applyAffine(derotateAffine, p);
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
     const thresholdD2 = threshold * threshold;
-    const segThreshold = PADDING_ANCHOR_SIZE * scale;
 
     if (getD2(sub(directionAnchor.p, derotatedP)) <= thresholdD2) {
       return directionAnchor;
+    }
+
+    const alignItemsThreshold = ALIGN_ITEMS_ANCHOR_SIZE * scale;
+    const alignItemsThresholdD2 = alignItemsThreshold * alignItemsThreshold;
+    const alignItemsAnchor = alignItemsAnchors.find(({ p }) => getD2(sub(p, derotatedP)) <= alignItemsThresholdD2);
+    if (alignItemsAnchor && alignItemsAnchor.value !== (alignBox.alignItems ?? "start")) {
+      return alignItemsAnchor;
     }
 
     if (baseWidthOptimizeAnchor && getD2(sub(baseWidthOptimizeAnchor.p, derotatedP)) <= thresholdD2) {
@@ -345,6 +404,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       return baseHeightOptimizeAnchor;
     }
 
+    const segThreshold = PADDING_ANCHOR_SIZE * scale;
     const paddingAnchor = paddingAnchors.find(({ seg }) => isPointCloseToSegment(seg, derotatedP, segThreshold));
     if (paddingAnchor) {
       return paddingAnchor;
@@ -360,6 +420,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
+    const alignItemsThreshold = ALIGN_ITEMS_ANCHOR_SIZE * scale;
     const segThreshold = PADDING_ANCHOR_SIZE * scale;
 
     ctx.save();
@@ -380,7 +441,30 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         ctx.fill();
       });
 
-      if (hitResult && "p" in hitResult) {
+      alignItemsAnchors.forEach((a) => {
+        ctx.beginPath();
+        ctx.arc(a.p.x, a.p.y, alignItemsThreshold, 0, TAU);
+        ctx.fill();
+      });
+
+      const selectedAlignItemsIndex = alignBox.alignItems === "center" ? 1 : alignBox.alignItems === "end" ? 2 : 0;
+      applyFillStyle(ctx, { color: COLORS.WHITE });
+      ctx.beginPath();
+      ctx.arc(
+        alignItemsAnchors[selectedAlignItemsIndex].p.x,
+        alignItemsAnchors[selectedAlignItemsIndex].p.y,
+        alignItemsThreshold * 0.5,
+        0,
+        TAU,
+      );
+      ctx.fill();
+
+      if (hitResult?.type === "align-items") {
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.arc(hitResult.p.x, hitResult.p.y, alignItemsThreshold, 0, TAU);
+        ctx.fill();
+      } else if (hitResult && "p" in hitResult) {
         applyFillStyle(ctx, { color: style.selectionSecondaly });
         ctx.beginPath();
         ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
@@ -583,6 +667,7 @@ function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayout
       baseWidth: shape.baseWidth,
       baseHeight: shape.baseHeight,
       padding: shape.padding,
+      alignItems: shape.alignItems,
     };
   } else {
     const rect = shapeComposite.getWrapperRect(shape);

@@ -85,6 +85,12 @@ export function newAlignBoxSelectedState(): AppCanvasState {
                     };
                     break;
                   }
+                  case "align-items": {
+                    if (alignBoxHitResult.value !== targetShape.alignItems) {
+                      patch = { alignItems: alignBoxHitResult.value };
+                    }
+                    break;
+                  }
                   case "optimize-width": {
                     patch = { baseWidth: undefined };
                     break;

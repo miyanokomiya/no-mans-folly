@@ -17,6 +17,7 @@ export type AlignBoxShape = RectangleShape & {
   baseWidth?: AlignLayoutBox["baseWidth"];
   baseHeight?: AlignLayoutBox["baseHeight"];
   padding?: AlignLayoutBox["padding"];
+  alignItems?: AlignLayoutBox["alignItems"];
 };
 
 export const struct: ShapeStruct<AlignBoxShape> = {
@@ -39,6 +40,7 @@ export const struct: ShapeStruct<AlignBoxShape> = {
       gapC: arg.gapC,
       gapR: arg.gapR,
       padding: arg.padding,
+      alignItems: arg.alignItems,
       baseWidth: "baseWidth" in arg ? arg.baseWidth : width,
       baseHeight: "baseHeight" in arg ? arg.baseHeight : height,
     };
