@@ -21,6 +21,7 @@ import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { newRotatingState } from "../rotatingState";
 import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
 
 export function newAlignBoxSelectedState(): AppCanvasState {
   let targetId: string;
@@ -90,6 +91,13 @@ export function newAlignBoxSelectedState(): AppCanvasState {
                   case "optimize-height": {
                     patch = { baseHeight: undefined };
                     break;
+                  }
+                  case "padding-top":
+                  case "padding-right":
+                  case "padding-bottom":
+                  case "padding-left": {
+                    const type = alignBoxHitResult.type;
+                    return () => newAlignBoxPaddingState({ type, alignBoxId: targetId });
                   }
                 }
 

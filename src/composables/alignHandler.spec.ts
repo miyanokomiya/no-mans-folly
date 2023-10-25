@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { getModifiedAlignRootIds, getNextAlignLayout } from "./alignHandler";
+import { getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { AlignBoxShape } from "../shapes/align/alignBox";
 import { RectangleShape } from "../shapes/rectangle";
@@ -50,6 +50,63 @@ const box20 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   direction: 0,
   gap: 10,
   baseWidth: undefined,
+});
+
+describe("newAlignBoxHandler", () => {
+  describe("getModifiedPadding", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const target = newAlignBoxHandler({
+      getShapeComposite: () => shapeComposite,
+      alignBoxId: box0.id,
+    });
+
+    test("should return modified padding: top", () => {
+      expect(target.getModifiedPadding("padding-top", { x: 0, y: 0 }, { x: 10, y: 0 })).toEqual(undefined);
+      expect(target.getModifiedPadding("padding-top", { x: 0, y: 0 }, { x: 0, y: 10 })).toEqual([10, 0, 0, 0]);
+      expect(target.getModifiedPadding("padding-top", { x: 0, y: 0 }, { x: 0, y: 10 }, { bothSides: true })).toEqual([
+        10, 0, 10, 0,
+      ]);
+      expect(target.getModifiedPadding("padding-top", { x: 0, y: 0 }, { x: 0, y: 10 }, { allSides: true })).toEqual([
+        10, 10, 10, 10,
+      ]);
+    });
+
+    test("should return modified padding: right", () => {
+      expect(target.getModifiedPadding("padding-right", { x: 0, y: 0 }, { x: 0, y: 10 })).toEqual(undefined);
+      expect(target.getModifiedPadding("padding-right", { x: 0, y: 0 }, { x: -10, y: 0 })).toEqual([0, 10, 0, 0]);
+      expect(target.getModifiedPadding("padding-right", { x: 0, y: 0 }, { x: -10, y: 0 }, { bothSides: true })).toEqual(
+        [0, 10, 0, 10],
+      );
+      expect(target.getModifiedPadding("padding-right", { x: 0, y: 0 }, { x: -10, y: 0 }, { allSides: true })).toEqual([
+        10, 10, 10, 10,
+      ]);
+    });
+
+    test("should return modified padding: bottom", () => {
+      expect(target.getModifiedPadding("padding-bottom", { x: 0, y: 0 }, { x: 10, y: 0 })).toEqual(undefined);
+      expect(target.getModifiedPadding("padding-bottom", { x: 0, y: 0 }, { x: 0, y: -10 })).toEqual([0, 0, 10, 0]);
+      expect(
+        target.getModifiedPadding("padding-bottom", { x: 0, y: 0 }, { x: 0, y: -10 }, { bothSides: true }),
+      ).toEqual([10, 0, 10, 0]);
+      expect(target.getModifiedPadding("padding-bottom", { x: 0, y: 0 }, { x: 0, y: -10 }, { allSides: true })).toEqual(
+        [10, 10, 10, 10],
+      );
+    });
+
+    test("should return modified padding: left", () => {
+      expect(target.getModifiedPadding("padding-left", { x: 0, y: 0 }, { x: 0, y: 10 })).toEqual(undefined);
+      expect(target.getModifiedPadding("padding-left", { x: 0, y: 0 }, { x: 10, y: 0 })).toEqual([0, 0, 0, 10]);
+      expect(target.getModifiedPadding("padding-left", { x: 0, y: 0 }, { x: 10, y: 0 }, { bothSides: true })).toEqual([
+        0, 10, 0, 10,
+      ]);
+      expect(target.getModifiedPadding("padding-left", { x: 0, y: 0 }, { x: 10, y: 0 }, { allSides: true })).toEqual([
+        10, 10, 10, 10,
+      ]);
+    });
+  });
 });
 
 describe("getNextAlignLayout", () => {

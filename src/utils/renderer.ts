@@ -1,5 +1,8 @@
 import { IRectangle, IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
 import { ISegment } from "./geometry";
+import { applyStrokeStyle } from "./strokeStyle";
+import { applyFillStyle } from "./fillStyle";
+import { COLORS } from "./color";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
   path.forEach((p, i) => {
@@ -79,4 +82,35 @@ export function applyLocalSpace(ctx: CanvasRenderingContext2D, rect: IRectangle,
   ctx.translate(-rect.width / 2, -rect.height / 2);
   fn();
   ctx.restore();
+}
+
+export function applyRotation(ctx: CanvasRenderingContext2D, rotation: number, origin: IVec2, fn: () => void) {
+  ctx.save();
+  ctx.translate(origin.x, origin.y);
+  ctx.rotate(rotation);
+  ctx.translate(-origin.x, -origin.y);
+  fn();
+  ctx.restore();
+}
+
+export function applyDefaultTextStyle(
+  ctx: CanvasRenderingContext2D,
+  fontSize = 18,
+  textAlign: CanvasTextAlign = "left",
+) {
+  ctx.font = `${fontSize}px Arial`;
+  ctx.setLineDash([]);
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = textAlign;
+}
+
+export function renderValueLabel(ctx: CanvasRenderingContext2D, value: number, p: IVec2, rotation = 0, scale = 1) {
+  applyDefaultTextStyle(ctx, undefined, "center");
+  applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 2 * scale });
+  applyFillStyle(ctx, { color: COLORS.BLACK });
+  applyRotation(ctx, rotation, p, () => {
+    ctx.beginPath();
+    ctx.strokeText(`${value}`, p.x, p.y);
+    ctx.fillText(`${value}`, p.x, p.y);
+  });
 }

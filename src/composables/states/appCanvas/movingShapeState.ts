@@ -40,6 +40,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      if (targets.length === 0) return newSelectionHubState;
+
       targetIds = targets.map((s) => s.id);
       const targetIdSet = new Set(targetIds);
 

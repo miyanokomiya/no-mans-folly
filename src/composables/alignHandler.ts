@@ -1,5 +1,17 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getRectCenter, isSame, multiAffines, rotate, sub } from "okageo";
-import { Direction2, EntityPatchInfo, Shape, StyleScheme } from "../models";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  add,
+  applyAffine,
+  getCenter,
+  getRectCenter,
+  isSame,
+  multiAffines,
+  rotate,
+  sub,
+} from "okageo";
+import { BoxValues4, Direction2, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
 import { flatTree, getBranchPath } from "../utils/tree";
@@ -16,12 +28,14 @@ import {
   getDistanceBetweenPointAndRect,
   getRotateFn,
   getRotationAffines,
+  isPointCloseToSegment,
   isPointOnRectangle,
 } from "../utils/geometry";
 import { applyDefaultStrokeStyle, applyStrokeStyle } from "../utils/strokeStyle";
 import { applyFillStyle } from "../utils/fillStyle";
-import { renderArrowUnit } from "../utils/renderer";
+import { renderArrowUnit, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
+import { getPaddingRect } from "../utils/boxPadding";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -159,8 +173,9 @@ export function newAlignHandler(option: AlignHandlerOption) {
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 const DIRECTION_ANCHOR_SIZE = 10;
+const PADDING_ANCHOR_SIZE = 8;
 
-export type AlignBoxHitResult = AlignBoxDirectionHitResult | AlignBoxBaseSizeHitResult;
+export type AlignBoxHitResult = AlignBoxDirectionHitResult | AlignBoxBaseSizeHitResult | AlignBoxPaddingHitResult;
 
 type AlignBoxDirectionHitResult = {
   type: "direction";
@@ -171,6 +186,11 @@ type AlignBoxDirectionHitResult = {
 type AlignBoxBaseSizeHitResult = {
   type: "optimize-width" | "optimize-height";
   p: IVec2;
+};
+
+export type AlignBoxPaddingHitResult = {
+  type: "padding-top" | "padding-right" | "padding-bottom" | "padding-left";
+  seg: ISegment;
 };
 
 export function newAlignBoxHandler(option: AlignHandlerOption) {
@@ -184,6 +204,10 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     height: alignBox.height,
   };
   const { rotateAffine, derotateAffine } = getRotationAffines(alignBox.rotation, getRectCenter(alignBoxRect));
+  const alignBoxRectWithPadding = getPaddingRect(
+    alignBox.padding ? { value: alignBox.padding } : undefined,
+    alignBoxRect,
+  );
 
   const directionAnchor: AlignBoxDirectionHitResult =
     alignBox.direction === 0
@@ -220,10 +244,55 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
           },
         };
 
+  // Keep the box order: top, right, bottom, left
+  const paddingAnchors: AlignBoxPaddingHitResult[] = [
+    {
+      type: "padding-top",
+      seg: [
+        { x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.4, y: alignBoxRectWithPadding.y },
+        { x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.6, y: alignBoxRectWithPadding.y },
+      ],
+    },
+    {
+      type: "padding-right",
+      seg: [
+        {
+          x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width,
+          y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.4,
+        },
+        {
+          x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width,
+          y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.6,
+        },
+      ],
+    },
+    {
+      type: "padding-bottom",
+      seg: [
+        {
+          x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.4,
+          y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height,
+        },
+        {
+          x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.6,
+          y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height,
+        },
+      ],
+    },
+    {
+      type: "padding-left",
+      seg: [
+        { x: alignBoxRectWithPadding.x, y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.4 },
+        { x: alignBoxRectWithPadding.x, y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.6 },
+      ],
+    },
+  ];
+
   function hitTest(p: IVec2, scale: number): AlignBoxHitResult | undefined {
     const derotatedP = applyAffine(derotateAffine, p);
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
     const thresholdD2 = threshold * threshold;
+    const segThreshold = PADDING_ANCHOR_SIZE * scale;
 
     if (getD2(sub(directionAnchor.p, derotatedP)) <= thresholdD2) {
       return directionAnchor;
@@ -237,11 +306,17 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       return baseHeightOptimizeAnchor;
     }
 
+    const paddingAnchor = paddingAnchors.find(({ seg }) => isPointCloseToSegment(seg, derotatedP, segThreshold));
+    if (paddingAnchor) {
+      return paddingAnchor;
+    }
+
     return;
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
+    const segThreshold = PADDING_ANCHOR_SIZE * scale;
 
     ctx.save();
     ctx.transform(...rotateAffine);
@@ -265,13 +340,14 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       ctx.fill();
     }
 
-    if (hitResult) {
+    if (hitResult && "p" in hitResult) {
       applyFillStyle(ctx, { color: style.selectionSecondaly });
       ctx.beginPath();
       ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
       ctx.fill();
     }
 
+    applyDefaultStrokeStyle(ctx);
     applyFillStyle(ctx, { color: COLORS.WHITE });
     renderArrowUnit(ctx, directionAnchor.p, directionAnchor.direction === 0 ? Math.PI / 2 : 0, threshold * 0.7);
     if (baseWidthOptimizeAnchor) {
@@ -281,10 +357,104 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       renderArrowUnit(ctx, baseHeightOptimizeAnchor.p, -Math.PI / 2, threshold * 0.7);
     }
 
+    paddingAnchors.forEach(({ seg }) => {
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold });
+      ctx.beginPath();
+      ctx.moveTo(seg[0].x, seg[0].y);
+      ctx.lineTo(seg[1].x, seg[1].y);
+      ctx.stroke();
+    });
+
+    if (hitResult && "seg" in hitResult) {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold });
+      ctx.beginPath();
+      ctx.moveTo(hitResult.seg[0].x, hitResult.seg[0].y);
+      ctx.lineTo(hitResult.seg[1].x, hitResult.seg[1].y);
+      ctx.stroke();
+    }
+
+    paddingAnchors.forEach(({ seg }) => {
+      applyStrokeStyle(ctx, { color: COLORS.WHITE, width: segThreshold / 3 });
+      ctx.beginPath();
+      ctx.moveTo(seg[0].x, seg[0].y);
+      ctx.lineTo(seg[1].x, seg[1].y);
+      ctx.stroke();
+    });
+
     ctx.restore();
   }
 
-  return { hitTest, render };
+  function getModifiedPadding(
+    type: AlignBoxPaddingHitResult["type"],
+    from: IVec2,
+    to: IVec2,
+    modiifer?: { bothSides?: boolean; allSides?: boolean },
+  ): BoxValues4 | undefined {
+    const derotatedFrom = applyAffine(derotateAffine, from);
+    const derotatedTo = applyAffine(derotateAffine, to);
+    const vec = sub(derotatedTo, derotatedFrom);
+    const src = alignBox.padding ?? [0, 0, 0, 0];
+
+    switch (type) {
+      case "padding-top": {
+        const d = Math.round(vec.y);
+        if (d === 0) return undefined;
+        if (modiifer?.allSides) return src.map(() => src[0] + d) as BoxValues4;
+        if (modiifer?.bothSides) return [src[0] + d, src[1], src[0] + d, src[3]];
+        return [src[0] + d, src[1], src[2], src[3]];
+      }
+      case "padding-right": {
+        const d = -Math.round(vec.x);
+        if (d === 0) return undefined;
+        if (modiifer?.allSides) return src.map(() => src[1] + d) as BoxValues4;
+        if (modiifer?.bothSides) return [src[0], src[1] + d, src[2], src[1] + d];
+        return [src[0], src[1] + d, src[2], src[3]];
+      }
+      case "padding-bottom": {
+        const d = -Math.round(vec.y);
+        if (d === 0) return undefined;
+        if (modiifer?.allSides) return src.map(() => src[2] + d) as BoxValues4;
+        if (modiifer?.bothSides) return [src[2] + d, src[1], src[2] + d, src[3]];
+        return [src[0], src[1], src[2] + d, src[3]];
+      }
+      case "padding-left": {
+        const d = Math.round(vec.x);
+        if (d === 0) return undefined;
+        if (modiifer?.allSides) return src.map(() => src[3] + d) as BoxValues4;
+        if (modiifer?.bothSides) return [src[0], src[3] + d, src[2], src[3] + d];
+        return [src[0], src[1], src[2], src[3] + d];
+      }
+    }
+  }
+
+  function renderModifiedPadding(
+    ctx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    scale: number,
+    nextPadding?: BoxValues4,
+  ) {
+    const segThreshold = PADDING_ANCHOR_SIZE * scale;
+
+    ctx.save();
+    ctx.transform(...rotateAffine);
+
+    const srcPadding = alignBox.padding ?? [0, 0, 0, 0];
+    const nextPaddingDefined = nextPadding ?? srcPadding;
+    const diff = { x: nextPaddingDefined?.[3] - srcPadding[3], y: nextPaddingDefined?.[0] - srcPadding[0] };
+    paddingAnchors.forEach(({ seg }, i) => {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold });
+      ctx.beginPath();
+      ctx.moveTo(seg[0].x + diff.x, seg[0].y + diff.y);
+      ctx.lineTo(seg[1].x + diff.x, seg[1].y + diff.y);
+      ctx.stroke();
+      const p = add(getCenter(seg[0], seg[1]), diff);
+      renderValueLabel(ctx, nextPaddingDefined[i], p, -alignBox.rotation, scale);
+    });
+
+    ctx.restore();
+  }
+
+  return { hitTest, render, getModifiedPadding, renderModifiedPadding };
 }
 export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
 
@@ -304,6 +474,7 @@ function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayout
       gap: shape.gap,
       baseWidth: shape.baseWidth,
       baseHeight: shape.baseHeight,
+      padding: shape.padding,
     };
   } else {
     const rect = shapeComposite.getWrapperRect(shape);

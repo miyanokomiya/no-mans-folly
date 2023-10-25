@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, add } from "okageo";
+import { IRectangle, IVec2, MINVALUE, add } from "okageo";
 import { BoxValues4, Direction2 } from "../../models";
 import { TreeNode, getTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
@@ -142,7 +142,8 @@ function calcAlignRectMap(
           { x, y },
           node.baseHeight === undefined
             ? Infinity
-            : node.rect.height - y - (node.padding ? node.padding[0] - node.padding[2] : 0),
+            : // Add extra room to absorb rounding error
+              node.rect.height - y - (node.padding ? node.padding[0] - node.padding[2] : 0) + MINVALUE,
         );
 
         if (!result) {
@@ -184,7 +185,8 @@ function calcAlignRectMap(
           { x, y },
           node.baseWidth === undefined
             ? Infinity
-            : node.rect.width - x - (node.padding ? node.padding[1] - node.padding[3] : 0),
+            : // Add extra room to absorb rounding error
+              node.rect.width - x - (node.padding ? node.padding[1] - node.padding[3] : 0) + MINVALUE,
         );
 
         if (!result) {
