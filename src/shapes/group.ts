@@ -51,6 +51,14 @@ export const struct: ShapeStruct<GroupShape> = {
     const rect = struct.getWrapperRect(shape, shapeContext);
     return { x: rect.x, y: rect.y };
   },
+  shouldDelete(shape, shapeContext) {
+    // Should delete when there's no children.
+    for (const id in shapeContext.shapeMap) {
+      const exist = shape.id === shapeContext.shapeMap[id].parentId;
+      if (exist) return false;
+    }
+    return true;
+  },
 };
 
 export function isGroupShape(shape: Shape): shape is GroupShape {

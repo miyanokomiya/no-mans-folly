@@ -51,7 +51,8 @@ export function handlePointerMoveOnLayout(
 function canAttendToBoard(ctx: AppCanvasStateContext, event: PointerMoveEvent): string | undefined {
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
   const shapeComposite = ctx.getShapeComposite();
-  if (ids.some((id) => !isBoardCardShape(shapeComposite.shapeMap[id]))) return;
+  const shapes = ids.map((id) => shapeComposite.shapeMap[id]);
+  if (shapes.some((s) => !isBoardCardShape(s))) return;
 
   const board = findBackward(shapeComposite.shapes.filter(isBoardRootShape), (s) =>
     shapeComposite.isPointOn(s, event.data.current),

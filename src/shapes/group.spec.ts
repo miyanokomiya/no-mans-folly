@@ -155,4 +155,29 @@ describe("struct", () => {
       ).toEqual({ x: 1, y: 2 });
     });
   });
+
+  describe("shouldDelete", () => {
+    test("should return true when there's no children", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0],
+          getStruct: getCommonStruct,
+        }).shouldDelete(group),
+      ).toBe(false);
+      expect(
+        newShapeComposite({
+          shapes: [group],
+          getStruct: getCommonStruct,
+        }).shouldDelete(group),
+      ).toBe(true);
+    });
+  });
 });

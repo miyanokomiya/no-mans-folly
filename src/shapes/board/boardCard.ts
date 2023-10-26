@@ -5,6 +5,7 @@ import { applyLocalSpace } from "../../utils/renderer";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
+import { isBoardRootShape } from "./boardRoot";
 
 const CARD_WIDTH = 300;
 const MIN_HEIGHT = 60;
@@ -99,10 +100,13 @@ export const struct: ShapeStruct<BoardCardShape> = {
     return !shapeContext.shapeMap[shape.columnId];
   },
   getSelectionScope(shape, shapeContext) {
-    if (shapeContext.shapeMap[shape.parentId ?? ""] && shapeContext.shapeMap[shape.columnId]) {
-      return { parentId: shape.parentId!, scopeKey: shape.type };
+    const parent = shapeContext.shapeMap[shape.parentId ?? ""];
+    if (!parent) return {};
+
+    if (isBoardRootShape(parent) && shapeContext.shapeMap[shape.columnId]) {
+      return { parentId: parent.id, scopeKey: shape.type };
     } else {
-      return {};
+      return { parentId: parent.id };
     }
   },
   canAttachSmartBranch: false,
