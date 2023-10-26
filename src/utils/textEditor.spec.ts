@@ -7,6 +7,8 @@ import {
   applyAttrInfoToDocOutput,
   applyRangeWidthToLineWord,
   getCursorLocationAt,
+  getDeltaAndCursorByBackspace,
+  getDeltaAndCursorByDelete,
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
@@ -15,6 +17,7 @@ import {
   getLineEndIndex,
   getLineHeadIndex,
   getLineHeight,
+  getOutputSelection,
   getRawCursor,
   getWordRangeAtCursor,
   isCursorInDoc,
@@ -877,5 +880,175 @@ describe("getWordRangeAtCursor", () => {
     expect(getWordRangeAtCursor(comp1, 1)).toEqual([1, 0]);
     expect(getWordRangeAtCursor(comp1, 2)).toEqual([2, 1]);
     expect(getWordRangeAtCursor(comp1, 3)).toEqual([3, 0]);
+  });
+});
+
+describe("getOutputSelection", () => {
+  const bounds = { x: 0, y: 0, width: 4, height: 10 };
+  const composition = [
+    { char: "a", bounds },
+    { char: "b", bounds },
+    { char: "😄", bounds },
+    { char: "😄", bounds },
+    { char: "c", bounds },
+    { char: "d", bounds },
+    { char: "\n", bounds },
+  ];
+  const nocontent = [{ char: "\n", bounds }];
+  const empty: DocCompositionItem[] = [];
+
+  test("should return raw selection", () => {
+    expect(getOutputSelection(empty, 0, 0)).toEqual(0);
+    expect(getOutputSelection(nocontent, 0, 0)).toEqual(0);
+    expect(getOutputSelection(composition, 0, 1)).toEqual(1);
+    expect(getOutputSelection(composition, 0, 2)).toEqual(2);
+    expect(getOutputSelection(composition, 0, 3)).toEqual(4);
+    expect(getOutputSelection(composition, 0, 4)).toEqual(6);
+    expect(getOutputSelection(composition, 1, 2)).toEqual(3);
+  });
+});
+
+describe("getDeltaAndCursorByBackspace", () => {
+  const bounds = { x: 0, y: 0, width: 4, height: 10 };
+  const composition = [
+    { char: "a", bounds },
+    { char: "b", bounds },
+    { char: "😄", bounds },
+    { char: "😄", bounds },
+    { char: "c", bounds },
+    { char: "d", bounds },
+    { char: "\n", bounds },
+  ];
+  const nocontent = [{ char: "\n", bounds }];
+  const empty: DocCompositionItem[] = [];
+
+  test("should return delta and next cursor: no target", () => {
+    expect(getDeltaAndCursorByBackspace(empty, 0, 0)).toEqual({
+      delta: [],
+      cursor: 0,
+    });
+    expect(getDeltaAndCursorByBackspace(nocontent, 0, 0)).toEqual({
+      delta: [],
+      cursor: 0,
+    });
+  });
+
+  test("should return delta and next cursor", () => {
+    expect(getDeltaAndCursorByBackspace(composition, 1, 0)).toEqual({
+      delta: [{ retain: 0 }, { delete: 1 }],
+      cursor: 0,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 2, 0)).toEqual({
+      delta: [{ retain: 1 }, { delete: 1 }],
+      cursor: 1,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 1, 1)).toEqual({
+      delta: [{ retain: 1 }, { delete: 1 }],
+      cursor: 1,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 0, 2)).toEqual({
+      delta: [{ retain: 0 }, { delete: 2 }],
+      cursor: 0,
+    });
+  });
+
+  test("should return delta and next cursor: emoji", () => {
+    expect(getDeltaAndCursorByBackspace(composition, 3, 0)).toEqual({
+      delta: [{ retain: 2 }, { delete: 2 }],
+      cursor: 2,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 4, 0)).toEqual({
+      delta: [{ retain: 4 }, { delete: 2 }],
+      cursor: 3,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 2, 1)).toEqual({
+      delta: [{ retain: 2 }, { delete: 2 }],
+      cursor: 2,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 2, 2)).toEqual({
+      delta: [{ retain: 2 }, { delete: 4 }],
+      cursor: 2,
+    });
+    expect(getDeltaAndCursorByBackspace(composition, 1, 2)).toEqual({
+      delta: [{ retain: 1 }, { delete: 3 }],
+      cursor: 1,
+    });
+  });
+});
+
+describe("getDeltaAndCursorByDelete", () => {
+  const bounds = { x: 0, y: 0, width: 4, height: 10 };
+  const composition = [
+    { char: "a", bounds },
+    { char: "b", bounds },
+    { char: "😄", bounds },
+    { char: "😄", bounds },
+    { char: "c", bounds },
+    { char: "d", bounds },
+    { char: "\n", bounds },
+  ];
+  const docLength = composition.length;
+  const nocontent = [{ char: "\n", bounds }];
+  const empty: DocCompositionItem[] = [];
+
+  test("should return delta and next cursor: no target", () => {
+    expect(getDeltaAndCursorByDelete(empty, 0, 0, 0)).toEqual({
+      delta: [],
+      cursor: 0,
+    });
+    expect(getDeltaAndCursorByDelete(nocontent, 1, 0, 0)).toEqual({
+      delta: [],
+      cursor: 0,
+    });
+  });
+
+  test("should return delta and next cursor", () => {
+    expect(getDeltaAndCursorByDelete(composition, docLength, 0, 0)).toEqual({
+      delta: [{ retain: 0 }, { delete: 1 }],
+      cursor: 0,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 1, 0)).toEqual({
+      delta: [{ retain: 1 }, { delete: 1 }],
+      cursor: 1,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 5, 0)).toEqual({
+      delta: [{ retain: 7 }, { delete: 1 }],
+      cursor: 5,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 6, 0)).toEqual({
+      delta: [{ retain: 8 }, { delete: 0 }],
+      cursor: 6,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 1, 1)).toEqual({
+      delta: [{ retain: 1 }, { delete: 1 }],
+      cursor: 1,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 0, 2)).toEqual({
+      delta: [{ retain: 0 }, { delete: 2 }],
+      cursor: 0,
+    });
+  });
+
+  test("should return delta and next cursor: emoji", () => {
+    expect(getDeltaAndCursorByDelete(composition, docLength, 2, 0)).toEqual({
+      delta: [{ retain: 2 }, { delete: 2 }],
+      cursor: 2,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 3, 0)).toEqual({
+      delta: [{ retain: 4 }, { delete: 2 }],
+      cursor: 3,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 2, 1)).toEqual({
+      delta: [{ retain: 2 }, { delete: 2 }],
+      cursor: 2,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 2, 2)).toEqual({
+      delta: [{ retain: 2 }, { delete: 4 }],
+      cursor: 2,
+    });
+    expect(getDeltaAndCursorByDelete(composition, docLength, 1, 2)).toEqual({
+      delta: [{ retain: 1 }, { delete: 3 }],
+      cursor: 1,
+    });
   });
 });

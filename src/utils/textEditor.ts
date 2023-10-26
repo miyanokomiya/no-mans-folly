@@ -854,3 +854,51 @@ export function calcOriginalDocSize(doc: DocOutput, ctx: CanvasRenderingContext2
   });
   return { width, height };
 }
+
+export function getOutputSelection(composition: DocCompositionItem[], cursor: number, selection: number): number {
+  const outputFrom = getRawCursor(composition, cursor);
+  const outputTo = getRawCursor(composition, cursor + selection);
+  return outputTo - outputFrom;
+}
+
+export function getDeltaAndCursorByBackspace(
+  composition: DocCompositionItem[],
+  cursor: number,
+  selection: number,
+): { delta: DocDelta; cursor: number } {
+  if (composition.length <= 1) return { delta: [], cursor: 0 };
+
+  const outputCursor = getRawCursor(composition, cursor);
+  const outputSelection = getOutputSelection(composition, cursor, selection);
+  if (outputSelection > 0) {
+    return { cursor, delta: [{ retain: outputCursor }, { delete: outputSelection }] };
+  } else {
+    const cursorMinus1 = Math.max(cursor - 1, 0);
+    const outputCursorMinus1 = getRawCursor(composition, cursorMinus1);
+    return {
+      cursor: cursorMinus1,
+      delta: [{ retain: outputCursorMinus1 }, { delete: outputCursor - outputCursorMinus1 }],
+    };
+  }
+}
+
+export function getDeltaAndCursorByDelete(
+  composition: DocCompositionItem[],
+  docLength: number,
+  cursor: number,
+  selection: number,
+): { delta: DocDelta; cursor: number } {
+  if (composition.length <= 1) return { delta: [], cursor: 0 };
+
+  const outputCursor = getRawCursor(composition, cursor);
+  const outputSelection = getOutputSelection(composition, cursor, selection);
+  if (outputSelection > 0) {
+    return { cursor, delta: [{ retain: outputCursor }, { delete: outputSelection }] };
+  } else {
+    const outputCursorPlus1 = getRawCursor(composition, Math.min(cursor + 1, docLength - 1));
+    return {
+      cursor,
+      delta: [{ retain: outputCursor }, { delete: outputCursorPlus1 - outputCursor }],
+    };
+  }
+}

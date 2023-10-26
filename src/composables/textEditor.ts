@@ -27,6 +27,7 @@ import {
   getDocRawLength,
   getLineLength,
 } from "../utils/textEditor";
+import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
 
 export function newTextEditorController() {
@@ -104,10 +105,7 @@ export function newTextEditorController() {
   }
 
   function getOutputSelection(): number {
-    const cursor = getCursor();
-    const outputFrom = getRawCursor(_composition, cursor);
-    const outputTo = getRawCursor(_composition, cursor + getSelection());
-    return outputTo - outputFrom;
+    return textEditorUtil.getOutputSelection(_composition, getCursor(), getSelection());
   }
 
   // This value refers to the last moving position.
@@ -274,28 +272,12 @@ export function newTextEditorController() {
 
   function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
-    if (_composition.length === 1) return { delta: [], cursor: 0 };
-
-    const outputCursor = getOutputCursor();
-    const outputSelection = getOutputSelection();
-    if (outputSelection > 0) {
-      return { cursor: outputCursor, delta: [{ retain: outputCursor }, { delete: Math.max(1, outputSelection) }] };
-    } else {
-      return { cursor: outputCursor - 1, delta: [{ retain: outputCursor - 1 }, { delete: 1 }] };
-    }
+    return textEditorUtil.getDeltaAndCursorByBackspace(_composition, getCursor(), getSelection());
   }
 
   function getDeltaAndCursorByDelete(): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
-    if (_composition.length === 1) return { delta: [], cursor: 0 };
-
-    const outputCursor = getOutputCursor();
-    const outputSelection = getOutputSelection();
-    if (outputSelection > 0) {
-      return { cursor: outputCursor, delta: [{ retain: outputCursor }, { delete: Math.max(1, outputSelection) }] };
-    } else {
-      return { cursor: outputCursor, delta: [{ retain: outputCursor }, { delete: 1 }] };
-    }
+    return textEditorUtil.getDeltaAndCursorByDelete(_composition, docLength, getCursor(), getSelection());
   }
 
   function getDeltaByApplyInlineStyle(attrs: DocAttributes): DocDelta {
