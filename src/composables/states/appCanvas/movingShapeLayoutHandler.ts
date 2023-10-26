@@ -1,12 +1,15 @@
 import { Shape } from "../../../models";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
-import { mapReduce } from "../../../utils/commons";
+import { isBoardCardShape } from "../../../shapes/board/boardCard";
+import { isBoardRootShape } from "../../../shapes/board/boardRoot";
+import { findBackward, mapReduce } from "../../../utils/commons";
 import { canAttendToAlignBox } from "../../alignHandler";
 import { BoundingBox } from "../../boundingBox";
 import { findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
+import { newBoardCardMovingState } from "./board/boardCardMovingState";
 import { AppCanvasStateContext } from "./core";
 
 /**
@@ -18,10 +21,18 @@ export function handlePointerMoveOnLayout(
   movingIds: string[],
   option?: { boundingBox?: BoundingBox },
 ): TransitionValue<AppCanvasStateContext> {
+  if (event.data.ctrl) return;
   if (movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
-  if (canAlign(ctx)) {
+
+  const boardId = canAttendToBoard(ctx, event);
+  if (boardId) {
+    return {
+      type: "stack-resume",
+      getState: () => newBoardCardMovingState({ boardId }),
+    };
+  } else if (canAlign(ctx)) {
     const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[movingIds[0]]);
     const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, movingIds);
     if (shapeAtPoint) {
@@ -35,6 +46,17 @@ export function handlePointerMoveOnLayout(
       }
     }
   }
+}
+
+function canAttendToBoard(ctx: AppCanvasStateContext, event: PointerMoveEvent): string | undefined {
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  const shapeComposite = ctx.getShapeComposite();
+  if (ids.some((id) => !isBoardCardShape(shapeComposite.shapeMap[id]))) return;
+
+  const board = findBackward(shapeComposite.shapes.filter(isBoardRootShape), (s) =>
+    shapeComposite.isPointOn(s, event.data.current),
+  );
+  return board?.id;
 }
 
 /**

@@ -59,6 +59,8 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          if (event.data.ctrl) return { type: "break" };
+
           const shapeComposite = ctx.getShapeComposite();
           const scope = shapeComposite.getSelectionScope(shapes[0]);
           const shapeAtPoint = findBetterShapeAt(
@@ -85,6 +87,8 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
+          if (event.data.options.ctrl) return newSelectionHubState;
+
           const shapeComposite = ctx.getShapeComposite();
           if (!hitResult) {
             const patch = shapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {

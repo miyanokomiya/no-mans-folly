@@ -6,7 +6,6 @@ import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 import { newMovingShapeState } from "./movingShapeState";
 import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
 import { newTreeRootMovingState } from "./tree/treeRootMovingState";
-import { newBoardCardMovingState } from "./board/boardCardMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 import { newBoardLaneMovingState } from "./board/boardLaneMovingState";
 
@@ -48,8 +47,6 @@ export function newMovingHubState(option?: Option): AppCanvasState {
             return newBoardColumnMovingState;
           case "board_lane":
             return newBoardLaneMovingState;
-          case "board_card":
-            return newBoardCardMovingState;
           default:
             return () => newMovingShapeState({ boundingBox: option?.boundingBox });
         }
@@ -62,8 +59,6 @@ export function newMovingHubState(option?: Option): AppCanvasState {
               return newBoardColumnMovingState;
             case "board_lane":
               return newBoardLaneMovingState;
-            case "board_card":
-              return newBoardCardMovingState;
           }
         }
 
