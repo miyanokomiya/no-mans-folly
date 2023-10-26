@@ -31,9 +31,9 @@ const lineList = [
 ];
 
 const layoutList = [
+  { type: "align_box", icon: iconLayoutAlignBox },
   { type: "tree_root", icon: iconLayoutBranch },
   { type: "board_root", icon: iconLayoutBoard },
-  { type: "align_box", icon: iconLayoutAlignBox },
 ];
 
 function getButtonClass(highlight = false) {
