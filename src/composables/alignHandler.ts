@@ -36,6 +36,8 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { renderArrowUnit, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
+import { isLineShape } from "../shapes/line";
+import { isGroupShape } from "../shapes/group";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -874,6 +876,15 @@ export function getModifiedAlignRootIds(
   }
 
   return Array.from(targetRootIdSet).filter((id) => !deletedRootIdSet.has(id));
+}
+
+export function canAttendToAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
+  if (isLineShape(shape)) return false;
+  return (
+    !shape.parentId ||
+    !shapeComposite.shapeMap[shape.parentId] ||
+    !isGroupShape(shapeComposite.shapeMap[shape.parentId])
+  );
 }
 
 export function generateAlignTemplate(

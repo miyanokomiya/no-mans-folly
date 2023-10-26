@@ -15,7 +15,7 @@ import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
-import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
+import { AlignHitResult, AlignHandler, newAlignHandler, canAttendToAlignBox } from "../../../alignHandler";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 
 interface Option {
@@ -45,9 +45,13 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
   return {
     getLabel: () => "MovingShapeInAlign",
     onStart: (ctx) => {
-      const shapeMap = ctx.getShapeComposite().shapeMap;
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      shapes = ids.map((id) => shapeMap[id]).sort(findexSortFn);
+      shapes = ids
+        .map((id) => shapeMap[id])
+        .filter((s) => canAttendToAlignBox(shapeComposite, s))
+        .sort(findexSortFn);
 
       initHandler(ctx);
       ctx.setTmpShapeMap({});

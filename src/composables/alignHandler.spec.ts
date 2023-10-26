@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
+import { canAttendToAlignBox, getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { AlignBoxShape } from "../shapes/align/alignBox";
 import { RectangleShape } from "../shapes/rectangle";
@@ -258,5 +258,41 @@ describe("getModifiedAlignRootIds", () => {
     });
     const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
     expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
+  });
+});
+
+describe("canAttendToAlignBox", () => {
+  test("should return true when a shape can attend to align box", () => {
+    const rect0 = createShape(getCommonStruct, "rectangle", {
+      id: "rect0",
+    });
+    const line0 = createShape(getCommonStruct, "line", {
+      id: "line0",
+    });
+    const label0 = createShape(getCommonStruct, "text", {
+      id: "label0",
+      parentId: line0.id,
+    });
+    const group0 = createShape(getCommonStruct, "group", {
+      id: "group0",
+    });
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: "unknown",
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect0, line0, label0, group0, child0, child1],
+      getStruct: getCommonStruct,
+    });
+    expect(canAttendToAlignBox(shapeComposite, rect0)).toBe(true);
+    expect(canAttendToAlignBox(shapeComposite, line0)).toBe(false);
+    expect(canAttendToAlignBox(shapeComposite, label0)).toBe(false);
+    expect(canAttendToAlignBox(shapeComposite, group0)).toBe(true);
+    expect(canAttendToAlignBox(shapeComposite, child0)).toBe(false);
+    expect(canAttendToAlignBox(shapeComposite, child1)).toBe(true);
   });
 });

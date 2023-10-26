@@ -1,7 +1,7 @@
 import { Shape } from "../../../models";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
-import { isGroupShape } from "../../../shapes/group";
 import { mapReduce } from "../../../utils/commons";
+import { canAttendToAlignBox } from "../../alignHandler";
 import { BoundingBox } from "../../boundingBox";
 import { findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
@@ -52,10 +52,6 @@ export function getPatchByPointerUpOutsideLayout(
 
 function canAlign(ctx: AppCanvasStateContext) {
   const shapeComposite = ctx.getShapeComposite();
-  const indexShape = shapeComposite.shapeMap[ctx.getLastSelectedShapeId()!];
-  return (
-    !indexShape.parentId ||
-    !shapeComposite.shapeMap[indexShape.parentId] ||
-    !isGroupShape(shapeComposite.shapeMap[indexShape.parentId])
-  );
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  return ids.some((id) => canAttendToAlignBox(shapeComposite, shapeComposite.shapeMap[id]));
 }
