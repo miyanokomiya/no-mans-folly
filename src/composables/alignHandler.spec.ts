@@ -5,6 +5,7 @@ import { AlignBoxShape } from "../shapes/align/alignBox";
 import { RectangleShape } from "../shapes/rectangle";
 import { getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { EntityPatchInfo, Shape } from "../models";
+import { TextShape } from "../shapes/text";
 
 const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   id: "box0",
@@ -183,6 +184,26 @@ describe("getNextAlignLayout", () => {
     expect(result[group0.id]).toEqual({ p: { x: 0, y: 40 } });
     expect(result[child0.id]).toEqual({ p: { x: 0, y: 40 } });
   });
+
+  test("should take care of group shape's position", () => {
+    const group0 = createShape(getCommonStruct, "group", {
+      id: "group0",
+      parentId: box0.id,
+    });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      width: 10,
+      height: 20,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, group0, child0],
+      getStruct: getCommonStruct,
+    });
+    const result = getNextAlignLayout(shapeComposite, box0.id);
+    expect(result).toHaveProperty(group0.id);
+    expect(result[child0.id]).toEqual({ p: { x: 0, y: 80 } });
+  });
 });
 
 describe("getModifiedAlignRootIds", () => {
@@ -269,9 +290,10 @@ describe("canAttendToAlignBox", () => {
     const line0 = createShape(getCommonStruct, "line", {
       id: "line0",
     });
-    const label0 = createShape(getCommonStruct, "text", {
+    const label0 = createShape<TextShape>(getCommonStruct, "text", {
       id: "label0",
       parentId: line0.id,
+      lineAttached: 0.5,
     });
     const group0 = createShape(getCommonStruct, "group", {
       id: "group0",

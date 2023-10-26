@@ -18,6 +18,8 @@ export function handlePointerMoveOnLayout(
   movingIds: string[],
   option?: { boundingBox?: BoundingBox },
 ): TransitionValue<AppCanvasStateContext> {
+  if (movingIds.length === 0) return;
+
   const shapeComposite = ctx.getShapeComposite();
   if (canAlign(ctx)) {
     const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[movingIds[0]]);

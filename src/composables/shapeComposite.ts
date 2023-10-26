@@ -140,6 +140,10 @@ export function newShapeComposite(option: Option) {
     );
   }
 
+  function getShapeActualPosition(shape: Shape): IVec2 {
+    return option.getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
+  }
+
   return {
     getShapeStruct: option.getStruct,
     shapes: option.shapes,
@@ -163,6 +167,7 @@ export function newShapeComposite(option: Option) {
     shouldDelete,
     getSelectionScope,
     getMergedShapesInSelectionScope,
+    getShapeActualPosition,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;

@@ -129,4 +129,30 @@ describe("struct", () => {
       expect(shapeComposite.findShapeAt({ x: -0, y: -0 })).toEqual(undefined);
     });
   });
+
+  describe("getActualPosition", () => {
+    test("should return top left of the wrapper rectangle derived from children", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0, child1],
+          getStruct: getCommonStruct,
+        }).getShapeActualPosition(group),
+      ).toEqual({ x: 1, y: 2 });
+    });
+  });
 });

@@ -69,6 +69,11 @@ export interface ShapeStruct<T extends Shape> {
    * When this method is undefined, valid "parentId" should be used.
    */
   getSelectionScope?: (shape: T, shapeContext: ShapeContext) => ShapeSelectionScope;
+  /**
+   * Define when a shape has special position behavior.
+   * e.g. group shape doesn't have own position but it's derived from children.
+   */
+  getActualPosition?: (shape: T, shapeContext: ShapeContext) => IVec2;
   canAttachSmartBranch?: boolean;
   shouldKeepAspect?: boolean;
   /**

@@ -47,6 +47,10 @@ export const struct: ShapeStruct<GroupShape> = {
   getSnappingLines() {
     return { v: [], h: [] };
   },
+  getActualPosition(shape, shapeContext) {
+    const rect = struct.getWrapperRect(shape, shapeContext);
+    return { x: rect.x, y: rect.y };
+  },
 };
 
 export function isGroupShape(shape: Shape): shape is GroupShape {

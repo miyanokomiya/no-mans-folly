@@ -38,6 +38,7 @@ import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
 import { isGroupShape } from "../shapes/group";
+import { isLineLabelShape } from "../shapes/text";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -745,13 +746,14 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
   const ret: { [id: string]: Partial<Shape> & Partial<AlignBoxShape> } = {};
   result.forEach((r) => {
     const s = shapeComposite.shapeMap[r.id];
+    const srcPosition = shapeComposite.getShapeActualPosition(s);
     const rotatedPatch = rotatedPatchMap[r.id] ?? {};
 
     const patch: Partial<Shape> & Partial<AlignBoxShape> = {};
     let updated = false;
 
     const p = rotatedPatch.p ?? { x: r.rect.x, y: r.rect.y };
-    if (!isSame(s.p, p)) {
+    if (!isSame(srcPosition, p)) {
       patch.p = p;
       updated = true;
     }
@@ -774,9 +776,9 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
         updated = true;
       }
     } else {
-      if (!isSame(s.p, p)) {
+      if (!isSame(srcPosition, p)) {
         // Need to deal with all children if the shape isn't align box.
-        const v = sub(p, s.p);
+        const v = sub(p, srcPosition);
         shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
           if (target.id !== s.id) {
             ret[target.id] = { p: add(target.p, v) };
@@ -880,6 +882,7 @@ export function getModifiedAlignRootIds(
 
 export function canAttendToAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (isLineShape(shape)) return false;
+  if (isLineLabelShape(shape)) return false;
   return (
     !shape.parentId ||
     !shapeComposite.shapeMap[shape.parentId] ||
