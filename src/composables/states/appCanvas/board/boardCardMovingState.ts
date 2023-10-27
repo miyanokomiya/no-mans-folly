@@ -49,14 +49,14 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          if (event.data.ctrl) return { type: "break" };
+
           const shapeComposite = ctx.getShapeComposite();
           const board = findBackward(shapeComposite.shapes.filter(isBoardRootShape), (s) =>
             shapeComposite.isPointOn(s, event.data.current),
           );
 
-          if (!board || event.data.ctrl) {
-            return { type: "break" };
-          }
+          if (!board) return { type: "break" };
 
           if (boardId !== board.id) {
             boardId = board.id;
