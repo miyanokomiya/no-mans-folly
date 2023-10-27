@@ -15,7 +15,7 @@ import {
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
-import { BoundingBox, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { newRotatingState } from "../rotatingState";
@@ -29,6 +29,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
   let boundingBox: BoundingBox;
   let alignBoxHandler: AlignBoxHandler;
   let alignBoxHitResult: AlignBoxHitResult | undefined;
+  let boundingHitResult: HitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
     const shapeComposite = ctx.getShapeComposite();
@@ -175,12 +176,13 @@ export function newAlignBoxSelectedState(): AppCanvasState {
           }
 
           const hitBounding = boundingBox.hitTest(event.data.current);
-          if (hitBounding) {
-            const style = boundingBox.getCursorStyle(hitBounding);
-            if (style) {
-              ctx.setCursor(style);
-              return;
-            }
+          if (!isSameHitResult(boundingHitResult, hitBounding)) {
+            boundingHitResult = hitBounding;
+            ctx.redraw();
+          }
+          if (boundingHitResult) {
+            ctx.setCursor();
+            return;
           }
 
           const shapeComposite = ctx.getShapeComposite();
@@ -254,7 +256,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx);
+      boundingBox.render(renderCtx, undefined, boundingHitResult);
       alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
     },
   };

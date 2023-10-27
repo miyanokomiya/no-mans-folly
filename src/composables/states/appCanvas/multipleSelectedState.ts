@@ -14,7 +14,7 @@ import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { BoundingBox, newBoundingBox } from "../../boundingBox";
+import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
@@ -35,6 +35,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
   let scode: ShapeSelectionScope | undefined;
+  let hitResult: HitResult | undefined;
 
   return {
     getLabel: () => "MultipleSelected",
@@ -164,13 +165,14 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          const hitBounding = boundingBox.hitTest(event.data.current);
-          if (hitBounding) {
-            const style = boundingBox.getCursorStyle(hitBounding);
-            if (style) {
-              ctx.setCursor(style);
-              return;
-            }
+          const _hitResult = boundingBox.hitTest(event.data.current);
+          if (!isSameHitResult(hitResult, _hitResult)) {
+            hitResult = _hitResult;
+            ctx.redraw();
+          }
+          if (hitResult) {
+            ctx.setCursor();
+            return;
           }
 
           const shapeComposite = ctx.getShapeComposite();
@@ -246,7 +248,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
-      boundingBox.render(renderCtx);
+      boundingBox.render(renderCtx, undefined, hitResult);
     },
   };
 }

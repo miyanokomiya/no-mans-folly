@@ -19,7 +19,8 @@ import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ISegment, TAU, getCrossLineAndLine, getRotateFn, isPointCloseToSegment, snapAngle } from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
-import { getResizingCursorStyle } from "../utils/styleHelper";
+import { applyFillStyle } from "../utils/fillStyle";
+import { COLORS } from "../utils/color";
 
 const ANCHOR_SIZE = 5;
 
@@ -117,10 +118,9 @@ export function newBoundingBox(option: Option) {
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix) {
+  function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix, hitResult?: HitResult) {
     const style = option.styleScheme;
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
-    ctx.fillStyle = "#fff";
 
     function resize(p: IVec2): IVec2 {
       return resizingAffine ? applyAffine(resizingAffine, p) : p;
@@ -128,9 +128,23 @@ export function newBoundingBox(option: Option) {
 
     ctx.beginPath();
     applyPath(ctx, option.path.map(resize), true);
+    if (!resizingAffine && hitResult?.type === "area") {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+    }
     ctx.stroke();
 
     if (!resizingAffine) {
+      if (hitResult?.type === "segment") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+        ctx.beginPath();
+        applyPath(ctx, segments[hitResult.index]);
+        ctx.stroke();
+      }
+    }
+
+    if (!resizingAffine) {
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
+      applyFillStyle(ctx, { color: COLORS.WHITE });
       ctx.lineWidth = 2 * scale;
       anchors.forEach((anchor, i) => {
         const diff = sub(resize(option.path[i]), option.path[i]);
@@ -151,24 +165,23 @@ export function newBoundingBox(option: Option) {
         ctx.stroke();
       }
     }
-  }
 
-  function getCursorStyle(hitBounding: HitResult): string | undefined {
-    if (!hitBounding) return;
-
-    switch (hitBounding.type) {
-      case "corner": {
-        const r = hitBounding.index % 2 === 0 ? Math.PI / 4 : -Math.PI / 4;
-        return getResizingCursorStyle(r + rotation);
+    if (!resizingAffine) {
+      if (hitResult?.type === "corner") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+        applyFillStyle(ctx, { color: COLORS.WHITE });
+        ctx.beginPath();
+        applyPath(ctx, anchors[hitResult.index]);
+        ctx.fill();
+        ctx.stroke();
+      } else if (rotationAnchor && hitResult?.type === "rotation") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+        applyFillStyle(ctx, { color: COLORS.WHITE });
+        ctx.beginPath();
+        ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
       }
-      case "segment": {
-        const r = hitBounding.index % 2 === 0 ? Math.PI / 2 : 0;
-        return getResizingCursorStyle(r + rotation);
-      }
-      case "rotation":
-        return "grab";
-      default:
-        return;
     }
   }
 
@@ -191,12 +204,19 @@ export function newBoundingBox(option: Option) {
     getCenter: () => center,
     hitTest,
     render,
-    getCursorStyle,
     getResizingBase,
     getTransformedBoundingBox,
   };
 }
 export type BoundingBox = ReturnType<typeof newBoundingBox>;
+
+export function isSameHitResult(a?: HitResult, b?: HitResult): boolean {
+  if (a && b) {
+    return a.type === b.type && a.index === b.index;
+  } else {
+    return a === b;
+  }
+}
 
 const MINIMUM_SIZE = 10;
 

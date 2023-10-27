@@ -15,7 +15,7 @@ import { newRectangleSelectingState } from "../ractangleSelectingState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { TextShape } from "../../../../shapes/text";
 import { newSelectionHubState } from "../selectionHubState";
-import { BoundingBox, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newMovingLineLabelState } from "./movingLineLabelState";
 import { LineShape } from "../../../../shapes/line";
@@ -32,6 +32,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
   let shape: TextShape;
   let parentLineShape: LineShape;
   let boundingBox: BoundingBox;
+  let boundingHitResult: HitResult | undefined;
 
   return {
     getLabel: () => "LineLabelSelected",
@@ -132,12 +133,13 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
         }
         case "pointerhover": {
           const hitBounding = boundingBox.hitTest(event.data.current);
-          if (hitBounding) {
-            const style = boundingBox.getCursorStyle(hitBounding);
-            if (style) {
-              ctx.setCursor(style);
-              return;
-            }
+          if (!isSameHitResult(boundingHitResult, hitBounding)) {
+            boundingHitResult = hitBounding;
+            ctx.redraw();
+          }
+          if (boundingHitResult) {
+            ctx.setCursor();
+            return;
           }
 
           const shapeComposite = ctx.getShapeComposite();
@@ -209,7 +211,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       renderParentLineRelation(ctx, renderCtx, shape, parentLineShape);
-      boundingBox.render(renderCtx);
+      boundingBox.render(renderCtx, undefined, boundingHitResult);
     },
   };
 }

@@ -22,7 +22,7 @@ import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor
 import { Shape } from "../../../../models";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
-import { BoundingBox, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
@@ -36,6 +36,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
   let boardHandler: BoardHandler;
   let boardHitResult: BoardHitResult | undefined;
   let boundingBox: BoundingBox;
+  let boundingHitResult: HitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
     boardHandler = newBoardHandler({
@@ -199,12 +200,13 @@ export function newBoardEntitySelectedState(): AppCanvasState {
           }
 
           const hitBounding = boundingBox.hitTest(event.data.current);
-          if (hitBounding) {
-            const style = boundingBox.getCursorStyle(hitBounding);
-            if (style) {
-              ctx.setCursor(style);
-              return;
-            }
+          if (!isSameHitResult(boundingHitResult, hitBounding)) {
+            boundingHitResult = hitBounding;
+            ctx.redraw();
+          }
+          if (boundingHitResult) {
+            ctx.setCursor();
+            return;
           }
 
           const shapeComposite = ctx.getShapeComposite();
@@ -278,7 +280,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx);
+      boundingBox.render(renderCtx, undefined, boundingHitResult);
       boardHandler.render(renderCtx, style, scale, boardHitResult);
     },
   };

@@ -13,7 +13,7 @@ import {
   newShapeClipboard,
   startTextEditingIfPossible,
 } from "./commons";
-import { BoundingBox, newBoundingBox } from "../../boundingBox";
+import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
@@ -31,6 +31,7 @@ export function newSingleSelectedState(): AppCanvasState {
   let smartBranchHitResult: SmartBranchHitResult | undefined;
   let selectionScope: ShapeSelectionScope | undefined;
   let isGroupShapeSelected: boolean;
+  let hitResult: HitResult | undefined;
 
   return {
     getLabel: () => "SingleSelected",
@@ -123,13 +124,15 @@ export function newSingleSelectedState(): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          const hitBounding = boundingBox.hitTest(event.data.current);
-          if (hitBounding) {
-            const style = boundingBox.getCursorStyle(hitBounding);
-            if (style) {
-              ctx.setCursor(style);
-              return;
-            }
+          const _hitResult = boundingBox.hitTest(event.data.current);
+          if (!isSameHitResult(hitResult, _hitResult)) {
+            hitResult = _hitResult;
+            ctx.redraw();
+          }
+
+          if (hitResult) {
+            ctx.setCursor();
+            return;
           } else {
             const shape = ctx.getShapeComposite().shapeMap[selectedId];
             const current = smartBranchHitResult?.index;
@@ -211,7 +214,7 @@ export function newSingleSelectedState(): AppCanvasState {
       const shape = ctx.getShapeComposite().shapeMap[selectedId ?? ""];
       if (!shape) return;
 
-      boundingBox.render(renderCtx);
+      boundingBox.render(renderCtx, undefined, hitResult);
       smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
     },
   };
