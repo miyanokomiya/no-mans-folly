@@ -94,6 +94,11 @@ export function newFileAccess() {
     return await readFile(sheetFileHnadle);
   }
 
+  async function disconnect() {
+    handle = undefined;
+    assetHandle = undefined;
+  }
+
   return {
     hasHnadle,
     openDirectory,
@@ -105,6 +110,8 @@ export function newFileAccess() {
 
     saveAsset,
     loadAsset,
+
+    disconnect,
   };
 }
 

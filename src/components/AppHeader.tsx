@@ -1,16 +1,26 @@
 import { useCallback, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
 import { useOutsideClickCallback } from "../composables/window";
+import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
+import { Skillcheck } from "./atoms/Skillcheck";
 
 interface Props {
   onClickOpen: () => void;
   onClickSave: () => void;
   onClickMerge: () => void;
+  onClickClear: () => void;
   canSyncoLocal: boolean;
   saving: boolean;
 }
 
-export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, onClickMerge, canSyncoLocal, saving }) => {
+export const AppHeader: React.FC<Props> = ({
+  onClickOpen,
+  onClickSave,
+  onClickMerge,
+  onClickClear,
+  canSyncoLocal,
+  saving,
+}) => {
   const [popupedKey, setPopupedKey] = useState("");
   const onClickPopupButton = useCallback(
     (name: string) => {
@@ -61,6 +71,30 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, onClickMe
     onClickMerge();
   }, [onClickMerge]);
 
+  const [openClearConfirm, setOpenClearConfirm] = useState(false);
+  const closeClearConfirm = useCallback(() => {
+    setOpenClearConfirm(false);
+  }, []);
+
+  const [openClearSkillcheck, setOpenClearSkillcheck] = useState(false);
+  const onFailClearSkillcheck = useCallback(() => {
+    setOpenClearSkillcheck(false);
+  }, []);
+  const onSucessClearSkillcheck = useCallback(() => {
+    setOpenClearSkillcheck(false);
+    setOpenClearConfirm(true);
+  }, []);
+
+  const handleClickClear = useCallback(() => {
+    setOpenClearSkillcheck(true);
+  }, [setOpenClearSkillcheck]);
+
+  const clearDiagram = useCallback(() => {
+    setPopupedKey("");
+    setOpenClearConfirm(false);
+    onClickClear();
+  }, [onClickClear]);
+
   const fileItems = useMemo(() => {
     const className = "p-2 border hover:bg-gray-200";
     return (
@@ -73,6 +107,9 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, onClickMe
         </button>
         <button type="button" className={className} onClick={_onClickMerge}>
           Merge & Sync workspace
+        </button>
+        <button type="button" className={className} onClick={handleClickClear}>
+          Clear diagram
         </button>
       </div>
     );
@@ -92,6 +129,24 @@ export const AppHeader: React.FC<Props> = ({ onClickOpen, onClickSave, onClickMe
       <div className="px-2 text-sm">
         <span>{storageMessage}</span>
       </div>
+      <Skillcheck open={openClearSkillcheck} onSuccess={onSucessClearSkillcheck} onFail={onFailClearSkillcheck} />
+      <Dialog
+        open={openClearConfirm}
+        onClose={closeClearConfirm}
+        title="Clear diagram"
+        actions={
+          <>
+            <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
+            <DialogButtonAlert onClick={clearDiagram}>Clear</DialogButtonAlert>
+          </>
+        }
+      >
+        <div>
+          <p>All data stored in IndexedDB will be cleared.</p>
+          <p>Workspace files will not be affected.</p>
+          <p>This action cannot be undone.</p>
+        </div>
+      </Dialog>
     </div>
   );
 };

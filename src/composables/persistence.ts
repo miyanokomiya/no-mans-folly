@@ -124,8 +124,33 @@ export function usePersistence(option: PersistenceOption) {
     if (!result) return;
 
     setReady(false);
-    await clearIndexeddbPersistence(DIAGRAM_KEY);
+    await clearIndexeddbPersistenceAll();
 
+    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider?.whenSynced;
+    const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
+
+    const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
+    if (sheetStore.getEntities().length === 0) {
+      createInitialSheet(sheetStore, option.generateUuid);
+    }
+
+    const sheet = sheetStore.getSelectedSheet()!;
+    await initSheet(sheet.id);
+
+    setDbProviderDiagram(provider);
+    setDiagramDoc(nextDiagramDoc);
+    setDiagramStores({ diagramStore, sheetStore });
+    setReady(true);
+  }, [fileAcess, initSheet]);
+
+  const clearDiagram = useCallback(async () => {
+    await fileAcess.disconnect();
+    setCanSyncToLocal(fileAcess.hasHnadle());
+    setReady(false);
+    await clearIndexeddbPersistenceAll();
+
+    const nextDiagramDoc = new Y.Doc();
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
     await provider?.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
@@ -348,6 +373,7 @@ export function usePersistence(option: PersistenceOption) {
     initSheet,
     initDiagram,
     openDiagramFromLocal,
+    clearDiagram,
     undoManager,
     ready,
     savePending,
@@ -367,6 +393,15 @@ async function clearIndexeddbPersistence(name: string) {
   await tmpProvider?.clearData();
   await tmpProvider?.destroy();
   tmpDoc.destroy();
+}
+
+async function clearIndexeddbPersistenceAll() {
+  const databases = await indexedDB.databases();
+  databases.forEach((db) => {
+    if (db.name) {
+      indexedDB.deleteDatabase(db.name);
+    }
+  });
 }
 
 function createInitialDiagram(diagramStore: DiagramStore, generateUuid: () => string) {

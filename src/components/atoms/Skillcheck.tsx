@@ -94,7 +94,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
     if (!status) return;
 
     setTimeout(() => {
-      if (status === "success") {
+      if (status === "success" || status === "great") {
         onSuccess();
       } else {
         onFail();

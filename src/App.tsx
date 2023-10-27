@@ -23,6 +23,7 @@ function App() {
     savePending,
     initSheet,
     openDiagramFromLocal,
+    clearDiagram,
     saveAllToLocal,
     mergeAllWithLocal,
     canSyncoLocal,
@@ -70,6 +71,10 @@ function App() {
     await mergeAllWithLocal();
   }, [mergeAllWithLocal]);
 
+  const onClickClear = useCallback(async () => {
+    await clearDiagram();
+  }, [clearDiagram]);
+
   const saving = useMemo(() => {
     return Object.values(savePending).some((v) => v);
   }, [savePending]);
@@ -96,6 +101,7 @@ function App() {
             onClickOpen={onClickOpen}
             onClickSave={onClickSave}
             onClickMerge={onClickMerge}
+            onClickClear={onClickClear}
             canSyncoLocal={canSyncoLocal}
             saving={saving}
           />
