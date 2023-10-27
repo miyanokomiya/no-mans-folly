@@ -144,6 +144,10 @@ export function newShapeComposite(option: Option) {
     return option.getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
   }
 
+  function hasParent(shape: Shape): boolean {
+    return !!shapeMap[shape.parentId ?? ""];
+  }
+
   return {
     getShapeStruct: option.getStruct,
     shapes: option.shapes,
@@ -168,6 +172,7 @@ export function newShapeComposite(option: Option) {
     getSelectionScope,
     getMergedShapesInSelectionScope,
     getShapeActualPosition,
+    hasParent,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;

@@ -53,7 +53,7 @@ export function newSingleSelectedState(): AppCanvasState {
         scale: ctx.getScale(),
       });
 
-      if (canAttachSmartBranch(ctx.getShapeStruct, shape)) {
+      if (!shapeComposite.hasParent(shape) && canAttachSmartBranch(ctx.getShapeStruct, shape)) {
         smartBranchHandler = newSmartBranchHandler({
           ...ctx,
           bounds: getOuterRectangle([boundingBox.path]),

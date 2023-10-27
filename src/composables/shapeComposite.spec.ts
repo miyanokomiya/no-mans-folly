@@ -218,6 +218,37 @@ describe("newShapeComposite", () => {
       ]);
     });
   });
+
+  describe("hasParent", () => {
+    test("should return true when a shape's parent exist", () => {
+      const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+      const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "child0",
+        parentId: group0.id,
+        p: { x: 5, y: 5 },
+        width: 10,
+        height: 10,
+      });
+      const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "child1",
+        parentId: "unknown",
+        p: { x: 5, y: 15 },
+        width: 10,
+        height: 10,
+      });
+
+      const shapes = [group0, child0, child1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      // no scope => should find one among root ones
+      expect(target.hasParent(group0)).toBe(false);
+      expect(target.hasParent(child0)).toBe(true);
+      expect(target.hasParent(child1)).toBe(false);
+    });
+  });
 });
 
 describe("findBetterShapeAt", () => {
