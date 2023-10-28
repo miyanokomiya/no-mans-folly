@@ -211,10 +211,10 @@ export function getBreakLineIndexWord(
   word: string,
   marginToTail: number,
 ): number | undefined {
-  const width = ctx.measureText(word).width;
+  const width = measureTextWidth(ctx, word);
   if (width >= marginToTail) {
     for (let i = 1; i <= word.length; i++) {
-      const w = ctx.measureText(word.slice(0, i)).width;
+      const w = measureTextWidth(ctx, word.slice(0, i));
       if (w >= marginToTail) {
         return i - 1;
       }
@@ -578,13 +578,24 @@ export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext
       if (isLinebreak(c)) {
         ret.set(cursor, 0);
       } else {
-        ret.set(cursor, ctx.measureText(c).width);
+        ret.set(cursor, measureTextWidth(ctx, c));
       }
       cursor += 1;
     }
   });
 
   return ret;
+}
+
+const textWidthCache = newChronoCache<string, number>({ duration: 30000, getTimestamp: Date.now });
+function measureTextWidth(ctx: CanvasRenderingContext2D, text: string): number {
+  const key = ctx.font + ":" + text;
+  const cache = textWidthCache.getValue(key);
+  if (cache) return cache;
+
+  const width = ctx.measureText(text).width;
+  textWidthCache.setValue(key, width);
+  return width;
 }
 
 function isMultiByte(c: string) {
