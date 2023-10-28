@@ -2,6 +2,7 @@ import { IRectangle, IVec2 } from "okageo";
 import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
+import { newChronoCache } from "../composables/cache";
 
 export const DEFAULT_FONT_SIZE = 18;
 export const DEFAULT_LINEHEIGHT = 1.2;
@@ -47,11 +48,18 @@ export function isLinebreak(char: string): boolean {
 
 const segmenter = new (Intl as any).Segmenter();
 
+const segmenterCache = newChronoCache<string, string[]>({ duration: 5000, getTimestamp: Date.now });
+
 /**
  * Returns text segments based on graphemes
  */
 export function splitToSegments(text: string): string[] {
-  return [...segmenter.segment(text)].map((s) => s.segment);
+  const cache = segmenterCache.getValue(text);
+  if (cache) return cache;
+
+  const value = [...segmenter.segment(text)].map((s) => s.segment);
+  segmenterCache.setValue(text, value);
+  return value;
 }
 
 /**
