@@ -47,8 +47,7 @@ export function isLinebreak(char: string): boolean {
 }
 
 const segmenter = new (Intl as any).Segmenter();
-
-const segmenterCache = newChronoCache<string, string[]>({ duration: 5000, getTimestamp: Date.now });
+const segmenterCache = newChronoCache<string, string[]>({ duration: 30000, getTimestamp: Date.now });
 
 /**
  * Returns text segments based on graphemes
@@ -180,18 +179,25 @@ export function getCursorLocation(compositionLines: DocCompositionLine[], cursor
   return { x, y };
 }
 
-export function applyDocAttributesToCtx(ctx: CanvasRenderingContext2D, attrs: DocAttributes = {}): void {
+export function applyDocAttributesToCtx(
+  ctx: CanvasRenderingContext2D,
+  attrs: DocAttributes = {},
+  forMeasureWidth = false,
+): void {
   const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
   const fontFamily = attrs.font ?? "Arial";
-  const fontDecoration = [attrs.bold ? "bold" : "", attrs.italic ? "italic" : ""].join(" ");
-  const color = attrs.color ?? "#000";
+  const fontDecoration =
+    attrs.bold && attrs.italic ? "bold italic" : attrs.bold ? "bold" : attrs.italic ? "italic" : "";
 
   ctx.font = `${fontDecoration} ${fontSize}px ${fontFamily}`;
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.setLineDash([]);
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
+  if (!forMeasureWidth) {
+    const color = attrs.color ?? "#000";
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.setLineDash([]);
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "left";
+  }
 }
 
 export function getLineHeight(attrs: DocAttributes = {}, blockAttrs: DocAttributes = {}): number {
@@ -564,7 +570,7 @@ export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext
 
   let cursor = 0;
   doc.forEach((op) => {
-    applyDocAttributesToCtx(ctx, op.attributes);
+    applyDocAttributesToCtx(ctx, op.attributes, true);
 
     const segments = splitToSegments(op.insert);
     for (let i = 0; i < segments.length; i++) {
