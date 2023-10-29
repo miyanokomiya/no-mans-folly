@@ -18,7 +18,7 @@ export const struct: ShapeStruct<ImageShape> = {
       ...createBaseShape(arg),
       type: "image",
       fill: arg.fill ?? createFillStyle({ disabled: true }),
-      stroke: arg.stroke ?? createStrokeStyle(),
+      stroke: arg.stroke ?? createStrokeStyle({ disabled: true }),
       width: arg.width ?? 100,
       height: arg.height ?? 100,
       assetId: arg.assetId,

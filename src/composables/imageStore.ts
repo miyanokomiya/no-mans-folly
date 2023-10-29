@@ -10,7 +10,7 @@ export function newImageStore() {
     imageMap.clear();
   }
 
-  function loadFromFile(assetId: string, file: File): Promise<HTMLImageElement> {
+  function loadFromFile(assetId: string, file: File | Blob): Promise<HTMLImageElement> {
     const url = URL.createObjectURL(file);
     const img = new Image();
 
