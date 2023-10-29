@@ -133,6 +133,8 @@ export function usePersistence(option: PersistenceOption) {
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
       createInitialSheet(sheetStore, option.generateUuid);
+      // Need to save the diagram having new sheet.
+      await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
     }
 
     const sheet = sheetStore.getSelectedSheet()!;
