@@ -123,12 +123,16 @@ interface IconButtonProps {
 
 export const IconButton: React.FC<IconButtonProps> = ({ path, name, id, onDown }) => {
   const url = path + "/" + name;
-  const handleDown = useCallback(() => {
-    onDown?.(url, id);
-  }, [onDown]);
+  const handleDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      onDown?.(url, id);
+    },
+    [onDown],
+  );
 
   return (
-    <button type="button" onMouseDown={handleDown}>
+    <button type="button" onMouseDown={handleDown} className="cursor-grab">
       <img src={url} alt={name} className="w-10 h-10" />
     </button>
   );
