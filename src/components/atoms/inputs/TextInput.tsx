@@ -6,9 +6,10 @@ interface Props {
   onBlur?: () => void;
   autofocus?: boolean;
   keepFocus?: boolean;
+  placeholder?: string;
 }
 
-export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus, keepFocus }) => {
+export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus, keepFocus, placeholder }) => {
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus,
       onChange={_onChange}
       onBlur={onBlur}
       className="border rounded py-1 px-2 w-full"
+      placeholder={placeholder}
     />
   );
 };

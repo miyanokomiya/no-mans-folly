@@ -10,17 +10,17 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
   const smctx = useContext(AppStateContext);
   const sm = useContext(AppStateMachineContext);
 
-  const [selected, setSelected] = useState<"" | "aws">("");
+  const [selected, setSelected] = useState<string>("");
+  const handleClickAccordion = useCallback((name: string) => {
+    setSelected((v) => (v === name ? "" : name));
+  }, []);
+
   const [stateLabel, setStateLabel] = useState("");
   useEffect(() => {
     return sm.watch(() => {
       setStateLabel(sm.getStateSummary().label);
     });
   }, [sm]);
-
-  const handleClickAws = useCallback(() => {
-    setSelected("aws");
-  }, []);
 
   const handleIconDown = useCallback(
     async (url: string, id: string) => {
@@ -69,16 +69,33 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
 
   return (
     <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
-      <div>
-        <button type="button" onClick={handleClickAws} className="border rounded p-2 w-full text-left">
-          AWS
-        </button>
-        {selected ? (
-          <div className="pl-2">
-            <ShapeLibraryGroup name="aws" onIconDown={handleIconDown} />
-          </div>
-        ) : undefined}
-      </div>
+      <GroupAccordion selectedName={selected} name="AWS" onClick={handleClickAccordion} onIconDown={handleIconDown} />
+    </div>
+  );
+};
+
+interface GroupAccordionProps {
+  selectedName: string;
+  name: string;
+  onClick?: (name: string) => void;
+  onIconDown?: (url: string, id: string) => void;
+}
+
+export const GroupAccordion: React.FC<GroupAccordionProps> = ({ selectedName, name, onClick, onIconDown }) => {
+  const handleClick = useCallback(() => {
+    onClick?.(name);
+  }, [name, onClick]);
+
+  return (
+    <div>
+      <button type="button" onClick={handleClick} className="border rounded p-2 w-full text-left">
+        {name}
+      </button>
+      {selectedName === name ? (
+        <div className="pl-2">
+          <ShapeLibraryGroup name="aws" onIconDown={onIconDown} />
+        </div>
+      ) : undefined}
     </div>
   );
 };
