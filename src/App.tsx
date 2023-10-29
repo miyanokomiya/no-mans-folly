@@ -10,6 +10,7 @@ import { usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
 import { AppCanvasProvider } from "./contexts/AppContext";
+import { ShapeLibraryPanel } from "./components/ShapeLibraryPanel";
 
 function App() {
   const {
@@ -89,6 +90,9 @@ function App() {
         </div>
         <div className="absolute right-4 bottom-2">
           <AppFootbar />
+        </div>
+        <div className="absolute right-20" style={{ top: "50%", transform: "translateY(-50%)" }}>
+          <ShapeLibraryPanel />
         </div>
         <div className="absolute top-8 flex">
           <SheetList />
