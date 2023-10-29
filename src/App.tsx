@@ -4,7 +4,7 @@ import { AppToolbar } from "./components/AppToolbar";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SheetConfigPanel } from "./components/SheetConfigPanel";
 import { usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
@@ -80,24 +80,42 @@ function App() {
     return Object.values(savePending).some((v) => v);
   }, [savePending]);
 
+  // TODO: Refactor to extract from App.tsx
+  const [rightPanel, setRightPanel] = useState("");
+  const floatRightClass = rightPanel ? " right-60" : " right-4";
+  const floatRightPanelClass = rightPanel ? " right-0" : " left-full";
+  const handleRightPanel = useCallback((key: string) => {
+    setRightPanel((v) => (v === key ? "" : key));
+  }, []);
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
       <div className="relative">
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
-        <div className="absolute right-4" style={{ top: "50%", transform: "translateY(-50%)" }}>
+        <div className={"absolute top-2 bottom-2 bg-white" + floatRightPanelClass}>
+          <div
+            className="absolute top-12 left-0 bg-white w-6 h-16 border rounded flex items-center justify-center"
+            style={{ transform: "translateX(calc(-100%))" }}
+          >
+            <button type="button" className="rotate-90" onClick={() => handleRightPanel("icons")}>
+              Icons
+            </button>
+          </div>
+          <div className="w-60 h-full overflow-auto p-2">
+            <ShapeLibraryPanel />
+          </div>
+        </div>
+        <div className={"absolute" + floatRightClass} style={{ top: "50%", transform: "translateY(-50%)" }}>
           <AppToolbar />
         </div>
-        <div className="absolute right-4 bottom-2">
+        <div className={"absolute bottom-2" + floatRightClass}>
           <AppFootbar />
-        </div>
-        <div className="absolute right-20" style={{ top: "50%", transform: "translateY(-50%)" }}>
-          <ShapeLibraryPanel />
         </div>
         <div className="absolute top-8 flex">
           <SheetList />
         </div>
-        <div className="absolute top-2 right-4">
+        <div className={"absolute top-2" + floatRightClass}>
           <SheetConfigPanel />
         </div>
         <div className="absolute left-0 top-0 flex">

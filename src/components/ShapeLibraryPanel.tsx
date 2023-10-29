@@ -68,13 +68,13 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
   );
 
   return (
-    <div className={"bg-white p-2 transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
+    <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
       <div>
         <button type="button" onClick={handleClickAws} className="border rounded p-2 w-full text-left">
           AWS
         </button>
         {selected ? (
-          <div className="pl-2 w-60 h-96 overflow-auto">
+          <div className="pl-2">
             <ShapeLibraryGroup name="aws" onIconDown={handleIconDown} />
           </div>
         ) : undefined}
