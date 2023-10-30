@@ -82,8 +82,9 @@ function App() {
 
   // TODO: Refactor to extract from App.tsx
   const [rightPanel, setRightPanel] = useState("");
-  const floatRightClass = rightPanel ? " right-60" : " right-4";
-  const floatRightPanelClass = rightPanel ? " right-0" : " left-full";
+  const rightPanelWidth = 300;
+  const floatRightStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth + 16}px)` } : {};
+  const floatRightPanelStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth}px)` } : {};
   const handleRightPanel = useCallback((key: string) => {
     setRightPanel((v) => (v === key ? "" : key));
   }, []);
@@ -93,29 +94,32 @@ function App() {
     <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
       <div className="relative">
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
-        <div className={"absolute top-2 bottom-2 bg-white" + floatRightPanelClass}>
-          <div
+        <div className={"absolute top-2 bottom-2 left-full bg-white transition-transform"} style={floatRightPanelStyle}>
+          <button
+            type="button"
             className="absolute top-12 left-0 bg-white w-6 h-16 border rounded flex items-center justify-center"
             style={{ transform: "translateX(calc(-100%))" }}
+            onClick={() => handleRightPanel("icons")}
           >
-            <button type="button" className="rotate-90" onClick={() => handleRightPanel("icons")}>
-              Icons
-            </button>
-          </div>
-          <div className="w-60 h-full overflow-auto p-2">
+            <span className="rotate-90">Icons</span>
+          </button>
+          <div className="h-full overflow-auto p-2" style={{ width: rightPanelWidth }}>
             <ShapeLibraryPanel />
           </div>
         </div>
-        <div className={"absolute" + floatRightClass} style={{ top: "50%", transform: "translateY(-50%)" }}>
+        <div
+          className="absolute right-4 transition-transform"
+          style={{ top: "50%", transform: "translateY(-50%)" + (floatRightStyle.transform ?? "") }}
+        >
           <AppToolbar />
         </div>
-        <div className={"absolute bottom-2" + floatRightClass}>
+        <div className="absolute bottom-2 right-4 transition-transform" style={floatRightStyle}>
           <AppFootbar />
         </div>
         <div className="absolute top-8 flex">
           <SheetList />
         </div>
-        <div className={"absolute top-2" + floatRightClass}>
+        <div className="absolute top-2 right-4 transition-transform" style={floatRightStyle}>
           <SheetConfigPanel />
         </div>
         <div className="absolute left-0 top-0 flex">
