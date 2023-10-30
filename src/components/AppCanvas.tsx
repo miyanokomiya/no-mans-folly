@@ -544,7 +544,9 @@ export const AppCanvas: React.FC = () => {
   );
 
   const onWheel = useCallback(
-    (e: React.WheelEvent) => {
+    (e: WheelEvent) => {
+      // TODO: trackpad handling
+      e.preventDefault();
       sm.handleEvent({
         type: "wheel",
         data: {
@@ -555,6 +557,15 @@ export const AppCanvas: React.FC = () => {
     },
     [sm],
   );
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+
+    // There's no way to proc "preventDefault" in React way.
+    wrapperRef.current.addEventListener("wheel", onWheel);
+    return () => {
+      wrapperRef.current?.removeEventListener("wheel", onWheel);
+    };
+  }, [onWheel]);
 
   const onContextMenu = useCallback(
     (e: React.MouseEvent) => {
@@ -660,7 +671,6 @@ export const AppCanvas: React.FC = () => {
         onMouseMove={onMouseHover}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
-        onWheel={onWheel}
         onFocus={onFocus}
         onBlur={onBlur}
         onContextMenu={onContextMenu}
