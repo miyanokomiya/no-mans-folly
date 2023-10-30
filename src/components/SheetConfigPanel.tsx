@@ -72,16 +72,21 @@ export const SheetConfigPanel: React.FC = () => {
   }, [bgColor, sheet]);
 
   return (
-    <div ref={outside.ref}>
-      <PopupButton
-        name="bgColor"
-        opened={popupedKey === "bgColor"}
-        popup={bgColorPanel}
-        onClick={onClickPopupButton}
-        popupPosition="left"
-      >
-        <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
-      </PopupButton>
+    <div>
+      <div className="flex justify-between items-center">
+        <p className="text-lg">Background color</p>
+        <div ref={outside.ref}>
+          <PopupButton
+            name="bgColor"
+            opened={popupedKey === "bgColor"}
+            popup={bgColorPanel}
+            onClick={onClickPopupButton}
+            popupPosition="left"
+          >
+            <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
+          </PopupButton>
+        </div>
+      </div>
     </div>
   );
 };

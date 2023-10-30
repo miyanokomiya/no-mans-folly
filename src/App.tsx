@@ -5,12 +5,11 @@ import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SheetConfigPanel } from "./components/SheetConfigPanel";
 import { usePersistence } from "./composables/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
 import { AppCanvasProvider } from "./contexts/AppContext";
-import { ShapeLibraryPanel } from "./components/ShapeLibraryPanel";
+import { AppRightPanel } from "./components/AppRightPanel";
 
 function App() {
   const {
@@ -80,7 +79,6 @@ function App() {
     return Object.values(savePending).some((v) => v);
   }, [savePending]);
 
-  // TODO: Refactor to extract from App.tsx
   const [rightPanel, setRightPanel] = useState("");
   const rightPanelWidth = 300;
   const floatRightStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth + 16}px)` } : {};
@@ -94,18 +92,11 @@ function App() {
     <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
       <div className="relative">
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
-        <div className={"absolute top-2 bottom-2 left-full bg-white transition-transform"} style={floatRightPanelStyle}>
-          <button
-            type="button"
-            className="absolute top-12 left-0 bg-white w-6 h-16 border rounded flex items-center justify-center"
-            style={{ transform: "translateX(calc(-100%))" }}
-            onClick={() => handleRightPanel("icons")}
-          >
-            <span className="rotate-90">Icons</span>
-          </button>
-          <div className="h-full overflow-auto p-2" style={{ width: rightPanelWidth }}>
-            <ShapeLibraryPanel />
-          </div>
+        <div
+          className={"absolute top-2 bottom-2 left-full bg-white transition-transform"}
+          style={{ width: rightPanelWidth, ...floatRightPanelStyle }}
+        >
+          <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
         </div>
         <div
           className="absolute right-4 transition-transform"
@@ -118,9 +109,6 @@ function App() {
         </div>
         <div className="absolute top-8 flex">
           <SheetList />
-        </div>
-        <div className="absolute top-2 right-4 transition-transform" style={floatRightStyle}>
-          <SheetConfigPanel />
         </div>
         <div className="absolute left-0 top-0 flex">
           <AppHeader
