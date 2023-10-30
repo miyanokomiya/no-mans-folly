@@ -38,8 +38,8 @@ const TabButton: React.FC<TabButtonProps> = ({ name, selected, onClick }) => {
     <button
       type="button"
       className={
-        "bg-white w-6 h-16 rounded-l flex items-center justify-center" +
-        (selected ? " bg-gray-500 text-white font-medium" : "")
+        "w-6 h-16 rounded-l flex items-center justify-center" +
+        (selected ? " bg-gray-500 text-white font-medium" : " bg-white ")
       }
       onClick={handleClick}
     >
