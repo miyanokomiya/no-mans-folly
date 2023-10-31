@@ -60,8 +60,7 @@ export function newFileAccess() {
     if (!handle) return;
 
     const update = Y.encodeStateAsUpdate(doc);
-    const fileHandler = await handle.getFileHandle(name, { create: true });
-    await writeFile(fileHandler, update);
+    await writeFileBySwap(handle, name, update);
 
     return true;
   }
@@ -133,11 +132,30 @@ async function writeFile(handle: FileSystemFileHandle, content: FileSystemWriteC
     writable = await handle.createWritable();
     await writable.write(content);
   } catch (e) {
-    // ignore the error caused by not allowing
+    // ignore the error caused by not allowed
     if (e instanceof Error && e.message?.includes("not allowed")) return;
     throw e;
   } finally {
     await writable?.close();
+  }
+}
+
+/**
+ * Create temporary swap file, delete the target file, then rename the swap file to the target file.
+ */
+async function writeFileBySwap(dirHandle: FileSystemDirectoryHandle, name: string, content: FileSystemWriteChunkType) {
+  const swapName = `${name}.swap`;
+
+  const swapFileHandler = await dirHandle.getFileHandle(swapName, { create: true });
+  await writeFile(swapFileHandler, content);
+
+  try {
+    await dirHandle.removeEntry(name);
+    await (swapFileHandler as any).move(name);
+  } catch (e) {
+    // ignore the error caused by not allowed
+    if (e instanceof Error && e.message?.includes("not allowed")) return;
+    throw e;
   }
 }
 
