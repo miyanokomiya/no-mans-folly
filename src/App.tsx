@@ -10,6 +10,10 @@ import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
 import { AppCanvasProvider } from "./contexts/AppContext";
 import { AppRightPanel } from "./components/AppRightPanel";
+import { EntranceDialog } from "./components/navigations/EntranceDialog";
+
+const queryParameters = new URLSearchParams(window.location.search);
+const noIndexedDB = !queryParameters.get("indexeddb");
 
 function App() {
   const {
@@ -60,7 +64,7 @@ function App() {
   }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager]);
 
   const onClickOpen = useCallback(async () => {
-    await openDiagramFromLocal();
+    return await openDiagramFromLocal();
   }, [openDiagramFromLocal]);
 
   const onClickSave = useCallback(async () => {
@@ -87,10 +91,22 @@ function App() {
     setRightPanel((v) => (v === key ? "" : key));
   }, []);
 
+  const [openEntranceDialog, setOpenEntranceDialog] = useState(noIndexedDB);
+  const closeEntranceDialog = useCallback(() => {
+    setOpenEntranceDialog(false);
+  }, []);
+  const handleOpenWorkspace = useCallback(async () => {
+    const result = await onClickOpen();
+    if (result) {
+      closeEntranceDialog();
+    }
+  }, [onClickOpen, closeEntranceDialog]);
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
-      <div className="relative">
+      <EntranceDialog open={openEntranceDialog} onClose={closeEntranceDialog} onOpenWorkspace={handleOpenWorkspace} />
+      <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
         <div
           className={"absolute top-2 bottom-2 left-full bg-white transition-transform"}

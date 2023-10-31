@@ -60,7 +60,7 @@ export const Dialog: React.FC<Props> = ({
       <div onClick={onClickContent} className="p-4">
         {title ? <div className="mb-1 text-lg font-medium">{title}</div> : undefined}
         <div>{children}</div>
-        {actions ? <div className="flex justify-end gap-1 mt-4">{actions}</div> : undefined}
+        {actions ? <div className="flex justify-end gap-2 mt-4">{actions}</div> : undefined}
       </div>
     </dialog>
   );
@@ -74,6 +74,14 @@ interface DialogButtonProps {
 export const DialogButtonPlain: React.FC<DialogButtonProps> = ({ onClick, children }) => {
   return (
     <button type="button" className="py-1 px-2 border rounded" onClick={onClick}>
+      {children}
+    </button>
+  );
+};
+
+export const DialogButtonPrimary: React.FC<DialogButtonProps> = ({ onClick, children }) => {
+  return (
+    <button type="button" className="py-1 px-2 border rounded bg-blue-400 text-white" onClick={onClick}>
       {children}
     </button>
   );

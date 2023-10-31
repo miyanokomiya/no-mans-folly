@@ -23,7 +23,7 @@ export type AssetAPI =
 
 const queryParameters = new URLSearchParams(window.location.search);
 const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
-const noIndexedDB = !!queryParameters.get("noindexeddb");
+const noIndexedDB = !queryParameters.get("indexeddb");
 
 const defaultDiagramDoc = new Y.Doc();
 const defaultSheetDoc = new Y.Doc();
@@ -117,11 +117,11 @@ export function usePersistence(option: PersistenceOption) {
     setReady(true);
   }, [fileAcess, diagramStores, initSheet]);
 
-  const openDiagramFromLocal = useCallback(async () => {
+  const openDiagramFromLocal = useCallback(async (): Promise<boolean> => {
     const nextDiagramDoc = new Y.Doc();
     const result = await fileAcess.openDiagram(nextDiagramDoc);
     setCanSyncToLocal(fileAcess.hasHnadle());
-    if (!result) return;
+    if (!result) return false;
 
     setReady(false);
     await clearIndexeddbPersistenceAll();
@@ -144,6 +144,7 @@ export function usePersistence(option: PersistenceOption) {
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
+    return true;
   }, [fileAcess, initSheet]);
 
   const clearDiagram = useCallback(async () => {
