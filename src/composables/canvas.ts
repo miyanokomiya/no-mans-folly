@@ -65,6 +65,8 @@ export function useCanvas(
   const { scale, viewOrigin } = viewState.state;
   const setScale = useCallback(
     (val: number) => {
+      // For safety
+      if (isNaN(val)) return;
       viewState.setState((state) => ({ scale: val, viewOrigin: state.viewOrigin }));
     },
     [viewState.setState],

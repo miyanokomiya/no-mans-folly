@@ -177,7 +177,9 @@ export function handleCommonShortcut(
     case "!":
     case "Home": {
       const shapeComposite = ctx.getShapeComposite();
-      ctx.setViewport(geometry.getWrapperRect(shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s))), 80);
+      const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
+      if (rects.length === 0) return;
+      ctx.setViewport(geometry.getWrapperRect(rects), 80);
       return;
     }
   }
