@@ -3,6 +3,8 @@ import * as Y from "yjs";
 const DIAGRAM_FILE_NAME = "diagram.folly";
 const ASSET_DIRECTORY_NAME = "assets";
 
+let hasMoveAPI = true;
+
 export function newFileAccess() {
   let handle: FileSystemDirectoryHandle | undefined;
   let assetHandle: FileSystemDirectoryHandle | undefined;
@@ -150,8 +152,21 @@ async function writeFileBySwap(dirHandle: FileSystemDirectoryHandle, name: strin
   await writeFile(swapFileHandler, content);
 
   try {
-    await dirHandle.removeEntry(name);
-    await (swapFileHandler as any).move(name);
+    if (hasMoveAPI) {
+      try {
+        // Since this method is quite a newly one, only Chrome supports it.
+        // => Fallback to overwriting way when it fails.
+        await (swapFileHandler as any).move(name);
+      } catch {
+        hasMoveAPI = false;
+      }
+    }
+
+    if (!hasMoveAPI) {
+      const fileHandler = await dirHandle.getFileHandle(name, { create: true });
+      await writeFile(fileHandler, content);
+      await dirHandle.removeEntry(swapName);
+    }
   } catch (e) {
     // ignore the error caused by not allowed
     if (e instanceof Error && e.message?.includes("not allowed")) return;
