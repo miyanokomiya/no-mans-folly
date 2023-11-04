@@ -128,6 +128,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   getCommonStyle,
   updateCommonStyle,
   canAttachSmartBranch: true,
+  rectangularOptimizedSegment: true,
   ...textContainerModule,
 };
 

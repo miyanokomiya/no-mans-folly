@@ -89,6 +89,10 @@ export interface ShapeStruct<T extends Shape> {
    * If true, child shapes don't follow the shape's scaling.
    */
   unboundChildren?: boolean;
+  /**
+   * If true, lines that connect to the center of this shape are optimized based on rectangular bounds.
+   */
+  rectangularOptimizedSegment?: boolean;
 }
 
 /**

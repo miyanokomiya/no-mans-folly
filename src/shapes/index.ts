@@ -344,6 +344,11 @@ export function stackOrderDisabled(getStruct: GetShapeStruct, shape: Shape): boo
   return !!struct.stackOrderDisabled;
 }
 
+export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.rectangularOptimizedSegment;
+}
+
 export function duplicateShapes(
   getStruct: GetShapeStruct,
   shapes: Shape[],

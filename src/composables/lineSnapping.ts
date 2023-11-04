@@ -1,5 +1,11 @@
 import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
-import { GetShapeStruct, getIntersectedOutlines, getClosestOutline, getLocationRateOnShape } from "../shapes";
+import {
+  GetShapeStruct,
+  getIntersectedOutlines,
+  getClosestOutline,
+  getLocationRateOnShape,
+  isRectangularOptimizedSegment,
+} from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, getLinePath } from "../shapes/line";
@@ -159,18 +165,45 @@ export function getOptimizedSegment(
   shapeA: Shape,
   shapeB: Shape,
 ): ISegment | undefined {
-  const rectA = shapeComposite.getWrapperRect(shapeA);
-  const rectB = shapeComposite.getWrapperRect(shapeB);
-  const [baseA, baseB] = getMimumSegmentBetweenRecs(rectA, rectB);
+  const rectangularA = isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shapeA);
+  const rectangularB = isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shapeB);
 
-  // extend lines to seek intersections
-  const d = getDistance(baseB, baseA);
-  const segForA = extendSegment([baseB, baseA], 1 + (rectA.width + rectA.height) / d);
-  const segForB = extendSegment([baseA, baseB], 1 + (rectB.width + rectB.height) / d);
+  if (rectangularA && rectangularB) {
+    const rectA = shapeComposite.getWrapperRect(shapeA);
+    const rectB = shapeComposite.getWrapperRect(shapeB);
+    const [baseA, baseB] = getMimumSegmentBetweenRecs(rectA, rectB);
+    // extend lines to seek intersections
+    const d = getDistance(baseB, baseA);
+    const segForA = extendSegment([baseB, baseA], 1 + (rectA.width + rectA.height) / d);
+    const segForB = extendSegment([baseA, baseB], 1 + (rectB.width + rectB.height) / d);
+    const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeA, segForA[0], segForA[1])?.[0];
+    const pB = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeB, segForB[0], segForB[1])?.[0];
+    return pA && pB ? [pA, pB] : undefined;
+  } else if (rectangularA) {
+    const rectB = shapeComposite.getWrapperRect(shapeB);
+    const centerB = getRectCenter(rectB);
+    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeA, centerB);
+    if (!seg) return;
 
-  const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeA, segForA[0], segForA[1])?.[0];
-  const pB = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeB, segForB[0], segForB[1])?.[0];
-  return pA && pB ? [pA, pB] : undefined;
+    const pB = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeB, seg[0], seg[1])?.[0];
+    return pB ? [seg[0], pB] : undefined;
+  } else if (rectangularB) {
+    const rectA = shapeComposite.getWrapperRect(shapeA);
+    const centerA = getRectCenter(rectA);
+    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeB, centerA);
+    if (!seg) return;
+
+    const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeA, seg[0], seg[1])?.[0];
+    return pA ? [pA, seg[0]] : undefined;
+  } else {
+    const rectA = shapeComposite.getWrapperRect(shapeA);
+    const centerA = getRectCenter(rectA);
+    const rectB = shapeComposite.getWrapperRect(shapeB);
+    const centerB = getRectCenter(rectB);
+    const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeA, centerB, centerA)?.[0];
+    const pB = getIntersectedOutlines(shapeComposite.getShapeStruct, shapeB, centerA, centerB)?.[0];
+    return pA && pB ? [pA, pB] : undefined;
+  }
 }
 
 function getOptimizedSegmentBetweenShapeAndPoint(

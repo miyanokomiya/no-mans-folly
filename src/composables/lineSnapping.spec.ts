@@ -225,6 +225,52 @@ describe("getOptimizedSegment", () => {
       expect(res0?.[1].y).toBeLessThan(-100);
     });
   });
+
+  test("should optimize based on the center when a shape doesn't require rectangular optimization", () => {
+    const shapeA = createShape<EllipseShape>(getCommonStruct, "ellipse", { id: "a", rx: 50, ry: 50 });
+    const shapeB = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "b",
+      p: { x: 200, y: 50 },
+      width: 100,
+      height: 100,
+    });
+    const shapeC = createShape<EllipseShape>(getCommonStruct, "ellipse", {
+      id: "c",
+      p: { x: 0, y: 200 },
+      rx: 50,
+      ry: 50,
+    });
+
+    const res0 = getOptimizedSegment(
+      newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
+      shapeA,
+      shapeB,
+    );
+    expect(res0).toEqual([
+      { x: 100, y: 50 },
+      { x: 200, y: 50 },
+    ]);
+
+    const res1 = getOptimizedSegment(
+      newShapeComposite({ shapes: [shapeB, shapeA], getStruct: getCommonStruct }),
+      shapeB,
+      shapeA,
+    );
+    expect(res1).toEqual([
+      { x: 200, y: 50 },
+      { x: 100, y: 50 },
+    ]);
+
+    const res2 = getOptimizedSegment(
+      newShapeComposite({ shapes: [shapeA, shapeC], getStruct: getCommonStruct }),
+      shapeA,
+      shapeC,
+    );
+    expect(res2).toEqual([
+      { x: 50, y: 100 },
+      { x: 50, y: 200 },
+    ]);
+  });
 });
 
 describe("optimizeLinePath", () => {
