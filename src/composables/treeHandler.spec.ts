@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import {
+  canBeGraftTarget,
   generateFindexNextAt,
   generateFindexPreviousAt,
   getModifiedTreeRootIds,
@@ -7,6 +8,7 @@ import {
   getPatchToDisconnectBranch,
   getPatchToGraftBranch,
   getTreeBranchIds,
+  isValidTreeNode,
   newTreeNodeMovingHandler,
 } from "./treeHandler";
 import { newShapeComposite } from "./shapeComposite";
@@ -453,5 +455,48 @@ describe("getPatchToGraftBranch", () => {
       },
       a1: { parentId: "root", direction: 1, vAlign: "center", hAlign: "left" },
     });
+  });
+});
+
+describe("isValidTreeNode", () => {
+  test("should return true when a shape has valid tree root and parent", () => {
+    const noTreeParent = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "noTreeParent",
+      parentId: root.id,
+    });
+    const noTreeRoot = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "noTreeRoot",
+      treeParentId: root.id,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [root, a, aa, noTreeParent, noTreeRoot],
+      getStruct: getCommonStruct,
+    });
+    expect(isValidTreeNode(shapeComposite, a)).toBe(true);
+    expect(isValidTreeNode(shapeComposite, aa)).toBe(true);
+    expect(isValidTreeNode(shapeComposite, noTreeParent)).toBe(false);
+    expect(isValidTreeNode(shapeComposite, noTreeRoot)).toBe(false);
+  });
+});
+
+describe("canBeGraftTarget", () => {
+  test("should return true when a shape is tree root or valid tree node", () => {
+    const noTreeParent = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "noTreeParent",
+      parentId: root.id,
+    });
+    const noTreeRoot = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "noTreeRoot",
+      treeParentId: root.id,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [root, a, aa, noTreeParent, noTreeRoot],
+      getStruct: getCommonStruct,
+    });
+    expect(canBeGraftTarget(shapeComposite, root)).toBe(true);
+    expect(canBeGraftTarget(shapeComposite, a)).toBe(true);
+    expect(canBeGraftTarget(shapeComposite, aa)).toBe(true);
+    expect(canBeGraftTarget(shapeComposite, noTreeParent)).toBe(false);
+    expect(canBeGraftTarget(shapeComposite, noTreeRoot)).toBe(false);
   });
 });

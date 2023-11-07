@@ -24,6 +24,7 @@ import {
   getPatchToDisconnectBranch,
   getTreeBranchIds,
   isSameTreeHitResult,
+  isValidTreeNode,
   newTreeHandler,
 } from "../../../treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
@@ -32,6 +33,7 @@ import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../.
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { mergeMap } from "../../../../utils/commons";
+import { newSingleSelectedState } from "../singleSelectedState";
 
 export function newTreeNodeSelectedState(): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
@@ -44,11 +46,16 @@ export function newTreeNodeSelectedState(): AppCanvasState {
     getLabel: () => "TreeNodeSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
-      treeNodeShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeNodeShape;
       ctx.setCommandExams([]);
-      treeHandler = newTreeHandler({ getShapeComposite: ctx.getShapeComposite, targetId: treeNodeShape.id });
 
       const shapeComposite = ctx.getShapeComposite();
+      treeNodeShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeNodeShape;
+      if (!isValidTreeNode(shapeComposite, treeNodeShape)) {
+        return newSingleSelectedState;
+      }
+
+      treeHandler = newTreeHandler({ getShapeComposite: ctx.getShapeComposite, targetId: treeNodeShape.id });
+
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(treeNodeShape),
         styleScheme: ctx.getStyleScheme(),

@@ -3,7 +3,7 @@ import { BoxAlign, Direction4, Shape } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
-import { struct as treeRootStruct } from "./treeRoot";
+import { TreeRootShape, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
 
@@ -14,7 +14,7 @@ const MIN_HEIGHT = 50;
  * "parentId" should always refer to the root node.
  * "treeParentId" should refer to the parent as the tree structure.
  */
-export type TreeNodeShape = TreeShapeBase & {
+export type TreeNodeShape = TreeRootShape & {
   treeParentId: string;
   direction: Direction4;
 };
@@ -39,29 +39,32 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     };
   },
   render(ctx, shape, shapeContext) {
-    const treeParent = shapeContext?.shapeMap[shape.treeParentId];
-    if (treeParent && isTreeShapeBase(treeParent)) {
-      const toP = getParentConnectionPoint(treeParent, shape.direction);
-      const fromP = getChildConnectionPoint(shape);
-      applyStrokeStyle(ctx, shape.stroke);
-      ctx.beginPath();
-      ctx.moveTo(fromP.x, fromP.y);
-      ctx.lineTo(toP.x, toP.y);
-      ctx.stroke();
+    const treeRoot = shapeContext?.shapeMap[shape.parentId ?? ""];
+    if (isTreeRootShape(treeRoot)) {
+      const treeParent = shapeContext?.shapeMap[shape.treeParentId];
+      if (treeParent && isTreeShapeBase(treeParent)) {
+        const toP = getParentConnectionPoint(treeParent, shape.direction);
+        const fromP = getChildConnectionPoint(shape);
+        applyStrokeStyle(ctx, shape.stroke);
+        ctx.beginPath();
+        ctx.moveTo(fromP.x, fromP.y);
+        ctx.lineTo(toP.x, toP.y);
+        ctx.stroke();
+      }
     }
 
     treeRootStruct.render(ctx, shape);
   },
   immigrateShapeIds(shape, oldToNewIdMap) {
-    if (!oldToNewIdMap[shape.treeParentId]) {
-      return getPatchRectangleShape();
+    if (!oldToNewIdMap[shape.treeParentId] || !oldToNewIdMap[shape.parentId ?? ""]) {
+      return getPatchTreeRootShape();
     } else {
       return { treeParentId: oldToNewIdMap[shape.treeParentId] };
     }
   },
   refreshRelation(shape, availableIdSet) {
-    if (!availableIdSet.has(shape.treeParentId)) {
-      return getPatchRectangleShape();
+    if (!availableIdSet.has(shape.treeParentId) || !availableIdSet.has(shape.parentId ?? "")) {
+      return getPatchTreeRootShape();
     }
   },
   stackOrderDisabled: true,
@@ -71,14 +74,13 @@ export function isTreeNodeShape(shape: Shape): shape is TreeNodeShape {
   return shape.type === "tree_node";
 }
 
-function getPatchRectangleShape(): Partial<TreeNodeShape> {
+function getPatchTreeRootShape(): Partial<TreeNodeShape> {
   return {
-    type: "rectangle",
-    maxWidth: undefined,
+    type: "tree_root",
     direction: undefined,
+    treeParentId: undefined,
     vAlign: undefined,
     hAlign: undefined,
-    treeParentId: undefined,
   };
 }
 

@@ -1,10 +1,10 @@
 import type { AppCanvasState } from "../core";
 import { newMovingShapeState } from "../movingShapeState";
 import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
-import { TreeShapeBase, isTreeShapeBase } from "../../../../shapes/tree/core";
+import { TreeShapeBase } from "../../../../shapes/tree/core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
-import { getNextTreeLayout, getPatchToGraftBranch, getTreeBranchIds } from "../../../treeHandler";
+import { canBeGraftTarget, getNextTreeLayout, getPatchToGraftBranch, getTreeBranchIds } from "../../../treeHandler";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
@@ -32,7 +32,8 @@ export function newTreeRootMovingState(option: Option): AppCanvasState {
           const shapeComposite = ctx.getShapeComposite();
           const branchIds = getTreeBranchIds(shapeComposite, [option.targetId]);
           const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, undefined, branchIds);
-          graftTargetShape = shapeAtPointer && isTreeShapeBase(shapeAtPointer) ? shapeAtPointer : undefined;
+          graftTargetShape =
+            shapeAtPointer && canBeGraftTarget(shapeComposite, shapeAtPointer) ? shapeAtPointer : undefined;
           break;
         }
         case "pointerup": {

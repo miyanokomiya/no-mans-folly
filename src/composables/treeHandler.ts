@@ -556,8 +556,8 @@ export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: 
     patchInfo.add.forEach((shape) => {
       if (isTreeRootShape(shape)) {
         targetTreeRootIdSet.add(shape.id);
-      } else if (isTreeNodeShape(shape) && shape.parentId) {
-        targetTreeRootIdSet.add(shape.parentId);
+      } else if (isTreeNodeShape(shape) && isValidTreeNode(srcComposite, shape)) {
+        targetTreeRootIdSet.add(shape.parentId!);
       }
     });
   }
@@ -567,8 +567,8 @@ export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: 
       const shape = srcComposite.shapeMap[id];
       if (isTreeRootShape(shape)) {
         targetTreeRootIdSet.add(shape.id);
-      } else if (isTreeNodeShape(shape) && shape.parentId) {
-        targetTreeRootIdSet.add(shape.parentId);
+      } else if (isTreeNodeShape(shape) && isValidTreeNode(srcComposite, shape)) {
+        targetTreeRootIdSet.add(shape.parentId!);
       }
     });
   }
@@ -578,8 +578,8 @@ export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: 
       const shape = srcComposite.shapeMap[id];
       if (isTreeRootShape(shape)) {
         deletedRootIdSet.add(shape.id);
-      } else if (isTreeNodeShape(shape) && shape.parentId) {
-        targetTreeRootIdSet.add(shape.parentId);
+      } else if (isTreeNodeShape(shape) && isValidTreeNode(srcComposite, shape)) {
+        targetTreeRootIdSet.add(shape.parentId!);
       }
     });
   }
@@ -790,4 +790,20 @@ function renderMovingPreview(
       return;
     }
   }
+}
+
+function hasValidTreeRoot(shapeComposite: ShapeComposite, shape: TreeNodeShape): boolean {
+  return !!shape.parentId && isTreeRootShape(shapeComposite.shapeMap[shape.parentId]);
+}
+
+function hasValidTreeParent(shapeComposite: ShapeComposite, shape: TreeNodeShape): boolean {
+  return !!shape.treeParentId && !!shapeComposite.shapeMap[shape.treeParentId];
+}
+
+export function isValidTreeNode(shapeComposite: ShapeComposite, shape: TreeNodeShape): boolean {
+  return hasValidTreeRoot(shapeComposite, shape) && hasValidTreeParent(shapeComposite, shape);
+}
+
+export function canBeGraftTarget(shapeComposite: ShapeComposite, shape: Shape): shape is TreeShapeBase {
+  return isTreeRootShape(shape) || (isTreeNodeShape(shape) && isValidTreeNode(shapeComposite, shape));
 }

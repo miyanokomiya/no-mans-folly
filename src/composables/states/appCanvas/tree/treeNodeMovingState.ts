@@ -7,6 +7,7 @@ import {
   TreeNodeMovingResult,
   isSameTreeNodeMovingResult,
   getNextTreeLayout,
+  isValidTreeNode,
 } from "../../../treeHandler";
 import { getNextShapeComposite } from "../../../shapeComposite";
 import { mergeMap } from "../../../../utils/commons";
@@ -14,6 +15,8 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { TransitionValue } from "../../core";
+import { newTreeRootMovingState } from "./treeRootMovingState";
 
 interface Option {
   targetId: string;
@@ -24,9 +27,13 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
   let treeMovingHandler: TreeNodeMovingHandler;
   let movingResult: TreeNodeMovingResult | undefined;
 
-  const initData = (ctx: AppCanvasStateContext) => {
+  const initData = (ctx: AppCanvasStateContext): TransitionValue<AppCanvasStateContext> => {
     const shapeComposite = ctx.getShapeComposite();
     treeNodeShape = shapeComposite.shapeMap[option.targetId] as TreeNodeShape;
+    if (!isValidTreeNode(shapeComposite, treeNodeShape)) {
+      return () => newTreeRootMovingState({ targetId: option.targetId });
+    }
+
     treeMovingHandler = newTreeNodeMovingHandler({
       getShapeComposite: ctx.getShapeComposite,
       targetId: treeNodeShape.id,
@@ -37,7 +44,7 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
     getLabel: () => "TreeNodeMoving",
     onStart: (ctx) => {
       ctx.startDragging();
-      initData(ctx);
+      return initData(ctx);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -97,7 +104,7 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
             (id) => shapeComposite.mergedShapeMap[id]?.parentId === treeNodeShape.parentId,
           );
           if (isTreeChanged) {
-            initData(ctx);
+            return initData(ctx);
           }
           return;
         }

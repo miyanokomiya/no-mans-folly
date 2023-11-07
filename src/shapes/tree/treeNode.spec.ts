@@ -5,15 +5,15 @@ describe("immigrateShapeIds", () => {
   test("should convert a shape to rectangle shape if a parent doesn't exist", () => {
     const shape = struct.create({ treeParentId: "a" });
     const result = struct.immigrateShapeIds!(shape, {});
-    expect(result).toEqual({ type: "rectangle" });
-    expect(result).toHaveProperty("maxWidth");
+    expect(result).toEqual({ type: "tree_root" });
     expect(result).toHaveProperty("direction");
     expect(result).toHaveProperty("treeParentId");
   });
 
-  test("should immigrate tree parent if it exists", () => {
-    const shape = struct.create({ treeParentId: "a" });
-    expect(struct.immigrateShapeIds!(shape, { a: "b" })).toEqual({ treeParentId: "b" });
+  test("should immigrate tree parent if both tree parent and tree root exist", () => {
+    const shape = struct.create({ treeParentId: "a", parentId: "p" });
+    expect(struct.immigrateShapeIds!(shape, { a: "b" })).toEqual({ type: "tree_root" });
+    expect(struct.immigrateShapeIds!(shape, { a: "b", p: "pp" })).toEqual({ treeParentId: "b" });
   });
 });
 

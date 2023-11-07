@@ -93,6 +93,6 @@ export const struct: ShapeStruct<TreeRootShape> = {
   transparentSelection: true,
 };
 
-export function isTreeRootShape(shape: Shape): shape is TreeRootShape {
-  return shape.type === "tree_root";
+export function isTreeRootShape(shape?: Shape): shape is TreeRootShape {
+  return shape?.type === "tree_root";
 }
