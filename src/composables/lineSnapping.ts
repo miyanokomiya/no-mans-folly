@@ -212,9 +212,14 @@ function getOptimizedSegmentBetweenShapeAndPoint(
   point: IVec2,
 ): ISegment | undefined {
   const rect = shapeComposite.getWrapperRect(shape);
-  const [baseA, baseB] = getMimumSegmentBetweenRecs(rect, { ...point, width: 0, height: 0 });
-  const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, baseB, baseA)?.[0];
-  return pA ? [pA, point] : undefined;
+  if (isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shape)) {
+    const [baseA, baseB] = getMimumSegmentBetweenRecs(rect, { ...point, width: 0, height: 0 });
+    const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, baseB, baseA)?.[0];
+    return pA ? [pA, point] : undefined;
+  } else {
+    const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, point, getRectCenter(rect))?.[0];
+    return pA ? [pA, point] : undefined;
+  }
 }
 
 function getMimumSegmentBetweenRecs(rectA: IRectangle, rectB: IRectangle): ISegment {
@@ -300,11 +305,7 @@ export function optimizeLinePath(
   if (lineShape.pConnection?.optimized) {
     const shapeMap = shapeComposite.shapeMap;
     const shapeP = shapeMap[lineShape.pConnection.id];
-    const seg = getOptimizedSegmentBetweenShapeAndPoint(
-      shapeComposite,
-      shapeP,
-      vertices[elbow ? vertices.length - 1 : 1],
-    );
+    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeP, vertices[1]);
     if (!seg) return;
 
     const p = seg[0];
@@ -320,11 +321,7 @@ export function optimizeLinePath(
   if (lineShape.qConnection?.optimized) {
     const shapeMap = shapeComposite.shapeMap;
     const shapeQ = shapeMap[lineShape.qConnection.id];
-    const seg = getOptimizedSegmentBetweenShapeAndPoint(
-      shapeComposite,
-      shapeQ,
-      vertices[elbow ? 0 : vertices.length - 2],
-    );
+    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeQ, vertices[vertices.length - 2]);
     if (!seg) return;
 
     const q = seg[0];
