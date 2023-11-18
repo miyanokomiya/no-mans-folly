@@ -18,6 +18,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
+import { getAutomaticCurve } from "../../../../utils/curveLine";
 
 interface Option {
   lineShape: LineShape;
@@ -96,6 +97,10 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           if (elbowHandler) {
             const body = elbowHandler.optimizeElbow({ ...option.lineShape, ...patch });
             patch = { ...patch, body };
+          }
+
+          if (option.lineShape.curveType === "auto") {
+            patch.curves = getAutomaticCurve(getLinePath({ ...option.lineShape, ...patch }));
           }
 
           const patchMap = { [option.lineShape.id]: patch };

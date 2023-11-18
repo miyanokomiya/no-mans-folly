@@ -76,6 +76,11 @@ export interface LineHead {
   type: string;
 }
 
+export interface CurveControl {
+  c1: IVec2;
+  c2: IVec2;
+}
+
 export interface BoxAlign {
   hAlign?: "left" | "center" | "right"; // "left" should be default
   vAlign?: "top" | "center" | "bottom"; // "top" should be default

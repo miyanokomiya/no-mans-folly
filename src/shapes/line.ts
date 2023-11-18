@@ -1,15 +1,16 @@
 import { AffineMatrix, IVec2, applyAffine, getOuterRectangle, getRadian, isSame, multiAffines } from "okageo";
-import { ConnectionPoint, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
+import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, renderLineHead } from "./lineHeads";
-import { applyPath } from "../utils/renderer";
+import { applyBezierPath, applyPath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 
 export type LineType = undefined | "elbow";
+export type CurveType = undefined | "auto";
 
 export interface LineShape extends Shape {
   fill: FillStyle;
@@ -21,6 +22,12 @@ export interface LineShape extends Shape {
   qHead?: LineHead;
   body?: { p: IVec2; c?: ConnectionPoint }[];
   lineType?: LineType;
+  /**
+   * The first item represents body[0], the last one does "q" and others do "body".
+   * "curves.length" should be equal to "body.length + 1"
+   */
+  curves?: CurveControl[];
+  curveType?: CurveType;
 }
 
 export const struct: ShapeStruct<LineShape> = {
@@ -35,6 +42,8 @@ export const struct: ShapeStruct<LineShape> = {
       q: arg.q ?? { x: 100, y: 0 },
       body: arg.body,
       lineType: arg.lineType,
+      curves: arg.curves,
+      curveType: arg.curveType,
     };
     if (arg.pConnection) obj.pConnection = arg.pConnection;
     if (arg.qConnection) obj.qConnection = arg.qConnection;
@@ -103,7 +112,12 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     ctx.beginPath();
-    applyPath(ctx, linePath);
+    if (shape.curves) {
+      applyBezierPath(ctx, linePath, shape.curves);
+    } else {
+      applyPath(ctx, linePath);
+    }
+
     if (!shape.fill.disabled) {
       applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color, dash: undefined });
       ctx.stroke();
@@ -150,11 +164,17 @@ export const struct: ShapeStruct<LineShape> = {
   resize(shape, resizingAffine) {
     const [p, q] = [shape.p, shape.q].map((p) => applyAffine(resizingAffine, p));
     const body = shape.body?.map((b) => ({ ...b, p: applyAffine(resizingAffine, b.p) }));
+    const curves = shape.curves?.map((c) => ({
+      c1: applyAffine(resizingAffine, c.c1),
+      c2: applyAffine(resizingAffine, c.c2),
+    }));
 
     const ret: Partial<LineShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
     if (!isSame(q, shape.q)) ret.q = q;
     if (body?.some((b, i) => !isSame(b.p, shape.body![i].p))) ret.body = body;
+    if (curves?.some((c, i) => !isSame(c.c1, shape.curves![i].c1) || !isSame(c.c2, shape.curves![i].c2)))
+      ret.curves = curves;
 
     return ret;
   },

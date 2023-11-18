@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent } from "../commons";
-import { LineShape, addNewVertex, isLineShape } from "../../../../shapes/line";
+import { LineShape, addNewVertex, getLinePath, isLineShape } from "../../../../shapes/line";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
@@ -10,6 +10,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
+import { getAutomaticCurve } from "../../../../utils/curveLine";
 
 interface Option {
   lineShape: LineShape;
@@ -79,12 +80,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
             connectionResult = undefined;
           }
 
-          const patchMap = {
-            [option.lineShape.id]: {
-              ...addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection),
-            },
-          };
+          const patch = addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
 
+          if (option.lineShape.curveType === "auto") {
+            patch.curves = getAutomaticCurve(getLinePath({ ...option.lineShape, ...patch }));
+          }
+
+          const patchMap = { [option.lineShape.id]: patch };
           const labelPatch = lineLabelHandler.onModified(patchMap);
           ctx.setTmpShapeMap(mergeMap(patchMap, labelPatch));
           return;
