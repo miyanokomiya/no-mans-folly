@@ -42,5 +42,34 @@ describe("newLineBounding", () => {
         index: 0,
       });
     });
+
+    test("should take care of bezier curve", () => {
+      const target = newLineBounding({
+        ...option,
+        lineShape: struct.create({
+          p: { x: 0, y: 0 },
+          q: { x: 100, y: 100 },
+          body: [{ p: { x: 100, y: 0 } }],
+          curves: [
+            { c1: { x: 20, y: -50 }, c2: { x: 80, y: -50 } },
+            { c1: { x: 150, y: 20 }, c2: { x: 150, y: 80 } },
+          ],
+        }),
+      });
+
+      expect(target.hitTest({ x: -1, y: 0 })).toEqual({
+        type: "vertex",
+        index: 0,
+      });
+      expect(target.hitTest({ x: 30, y: -30 })).toEqual({
+        type: "edge",
+        index: 0,
+      });
+      expect(target.hitTest({ x: 50, y: 0 })).toEqual(undefined);
+      expect(target.hitTest({ x: 50, y: -40 })).toEqual({
+        type: "new-vertex-anchor",
+        index: 0,
+      });
+    });
   });
 });

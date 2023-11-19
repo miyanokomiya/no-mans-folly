@@ -1,10 +1,11 @@
-import { IVec2, getCenter } from "okageo";
+import { IVec2, getBezier3LerpFn, getCenter } from "okageo";
 import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { TAU, isPointCloseToSegment } from "../utils/geometry";
+import { TAU, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
+import { applyBezierPath, applyPath } from "../utils/renderer";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 0.8;
@@ -25,7 +26,15 @@ export function newLineBounding(option: Option) {
   const lineShape = option.lineShape;
   const vertices = getLinePath(lineShape);
   const edges = getEdges(lineShape);
-  const edgeCenters = edges.map((edge) => getCenter(edge[0], edge[1]));
+  const curves = lineShape.curves && lineShape.curves.length === edges.length ? lineShape.curves : undefined;
+  const edgeCenters = edges.map((edge, i) => {
+    if (curves) {
+      const lerpFn = getBezier3LerpFn([edge[0], curves[i].c1, curves[i].c2, edge[1]]);
+      return lerpFn(0.5);
+    } else {
+      return getCenter(edge[0], edge[1]);
+    }
+  });
   let scale = option.scale ?? 1;
   let hitResult: LineHitResult | undefined;
 
@@ -72,9 +81,17 @@ export function newLineBounding(option: Option) {
     }
 
     {
-      const edgeIndex = edges.findIndex((seg) => {
-        return isPointCloseToSegment(seg, p, vertexSize);
-      });
+      let edgeIndex = -1;
+      if (curves) {
+        edgeIndex = edges.findIndex(([p1, p2], i) => {
+          const control = curves[i];
+          return isPointCloseToBezierSegment(p1, p2, control.c1, control.c2, p, vertexSize);
+        });
+      } else {
+        edgeIndex = edges.findIndex((seg) => {
+          return isPointCloseToSegment(seg, p, vertexSize);
+        });
+      }
       if (edgeIndex !== -1) {
         return { type: "edge", index: edgeIndex };
       }
@@ -132,12 +149,13 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "edge": {
-          edges.forEach(([a, b]) => {
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          });
+          ctx.beginPath();
+          if (curves) {
+            applyBezierPath(ctx, edges[hitResult.index], [curves[hitResult.index]]);
+          } else {
+            applyPath(ctx, edges[hitResult.index]);
+          }
+          ctx.stroke();
           break;
         }
         case "new-vertex-anchor": {

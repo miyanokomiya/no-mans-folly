@@ -10,7 +10,13 @@ import {
 } from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
+import {
+  ISegment,
+  expandRect,
+  getRectPoints,
+  isPointCloseToBezierSpline,
+  isPointCloseToSegment,
+} from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, renderLineHead } from "./lineHeads";
@@ -173,7 +179,13 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(getOuterRectangle([getLinePath(shape)]));
   },
   isPointOn(shape, p, shapeContext) {
-    if (getEdges(shape).some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
+    const edges = getEdges(shape);
+
+    if (shape.curves && shape.curves.length === edges.length) {
+      if (isPointCloseToBezierSpline(getLinePath(shape), shape.curves, p, 10)) return true;
+    } else {
+      if (edges.some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
+    }
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
