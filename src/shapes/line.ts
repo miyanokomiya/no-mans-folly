@@ -1,4 +1,13 @@
-import { AffineMatrix, IVec2, applyAffine, getOuterRectangle, getRadian, isSame, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IVec2,
+  applyAffine,
+  getBezier3LerpFn,
+  getOuterRectangle,
+  getRadian,
+  isSame,
+  multiAffines,
+} from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
@@ -58,8 +67,14 @@ export const struct: ShapeStruct<LineShape> = {
 
     let pAffine: AffineMatrix | undefined;
     if (shape.pHead) {
+      let pVicinity = linePath[1];
       const p = linePath[0];
-      const r = getRadian(p, linePath[1]);
+      if (shape.curves && shape.curves.length > 0) {
+        const c = shape.curves[0];
+        const lerpFn = getBezier3LerpFn([p, c.c1, c.c2, linePath[1]]);
+        pVicinity = lerpFn(0.01);
+      }
+      const r = getRadian(p, pVicinity);
       const sin = Math.sin(r);
       const cos = Math.cos(r);
       pAffine = multiAffines([
@@ -70,8 +85,14 @@ export const struct: ShapeStruct<LineShape> = {
 
     let qAffine: AffineMatrix | undefined;
     if (shape.qHead) {
+      let qVicinity = linePath[linePath.length - 2];
       const q = linePath[linePath.length - 1];
-      const r = getRadian(q, linePath[linePath.length - 2]);
+      if (shape.curves && shape.curves.length > 0) {
+        const c = shape.curves[shape.curves.length - 1];
+        const lerpFn = getBezier3LerpFn([q, c.c2, c.c1, linePath[linePath.length - 2]]);
+        qVicinity = lerpFn(0.01);
+      }
+      const r = getRadian(q, qVicinity);
       const sin = Math.sin(r);
       const cos = Math.cos(r);
       qAffine = multiAffines([
