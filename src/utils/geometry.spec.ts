@@ -35,6 +35,7 @@ import {
   isPointCloseToBezierSpline,
   isPointCloseToBezierSegment,
   getRelativePointOnBezierPath,
+  getSegments,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -49,6 +50,27 @@ describe("getRotateFn", () => {
       x: 10,
       y: 10,
     });
+  });
+});
+
+describe("getSegments", () => {
+  test("should return segment list", () => {
+    expect(
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ]),
+    ).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ],
+    ]);
   });
 });
 

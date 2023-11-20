@@ -28,7 +28,7 @@ import {
 } from "okageo";
 import { CurveControl } from "../models";
 
-const BEZIER_APPROX_SIZE = 10;
+export const BEZIER_APPROX_SIZE = 10;
 
 export type ISegment = [IVec2, IVec2];
 
@@ -52,6 +52,14 @@ export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?
       : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     return origin ? add(rotatedV, origin) : rotatedV;
   };
+}
+
+export function getSegments(points: IVec2[]): ISegment[] {
+  const ret: ISegment[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    ret.push([points[i], points[i + 1]]);
+  }
+  return ret;
 }
 
 export function extendSegment(seg: ISegment, rate: number): ISegment {

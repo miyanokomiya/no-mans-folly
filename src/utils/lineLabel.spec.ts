@@ -126,4 +126,30 @@ describe("attachLabelToLine", () => {
       lineAttached: 0.3,
     });
   });
+
+  test("should take care of curve line", () => {
+    const line0 = lineStruct.create({
+      q: { x: 100, y: 100 },
+      body: [{ p: { x: 100, y: 0 } }],
+      curves: [
+        { c1: { x: 20, y: -50 }, c2: { x: 80, y: -50 } },
+        { c1: { x: 150, y: 20 }, c2: { x: 150, y: 80 } },
+      ],
+    });
+    const label0 = textStruct.create({ p: { x: 45, y: -100 }, width: 10, height: 10 });
+    const ret0 = attachLabelToLine(line0, label0);
+    expect(ret0.p!.x).toBeCloseTo(45, 3);
+    expect(ret0.p!.y).toBeCloseTo(-47.5, 3);
+    expect(ret0.hAlign).toBe("center");
+    expect(ret0.vAlign).toBe("bottom");
+    expect(ret0.lineAttached).toBeCloseTo(0.25, 3);
+
+    const label1 = textStruct.create({ p: { x: 200, y: 45 }, width: 10, height: 10 });
+    const ret1 = attachLabelToLine(line0, label1);
+    expect(ret1.p!.x).toBeCloseTo(137.5, 3);
+    expect(ret1.p!.y).toBeCloseTo(45, 3);
+    expect(ret1.hAlign).toBe("left");
+    expect(ret1.vAlign).toBe("center");
+    expect(ret1.lineAttached).toBeCloseTo(0.75, 3);
+  });
 });

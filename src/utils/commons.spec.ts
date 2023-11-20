@@ -236,3 +236,14 @@ describe("findexSortFn", () => {
     expect([b, a, c].sort(target.findexSortFn)).toEqual([c, a, b]);
   });
 });
+
+describe("pickMinItem", () => {
+  test("should return an item having minimum value", () => {
+    const items = [
+      { id: "a", value: 2 },
+      { id: "b", value: 1 },
+      { id: "c", value: 4 },
+    ];
+    expect(target.pickMinItem(items, (item) => item.value)).toEqual(items[1]);
+  });
+});
