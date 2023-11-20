@@ -1,5 +1,14 @@
 import { expect, describe, test, vi } from "vitest";
-import { addNewVertex, deleteVertex, getLinePath, isLineShape, patchConnection, patchVertex, struct } from "./line";
+import {
+  addNewVertex,
+  deleteVertex,
+  getLinePath,
+  isCurveLine,
+  isLineShape,
+  patchConnection,
+  patchVertex,
+  struct,
+} from "./line";
 import { getCommonStruct } from ".";
 
 describe("struct", () => {
@@ -387,5 +396,25 @@ describe("isLineShape", () => {
     const line = struct.create();
     expect(isLineShape(line)).toBe(true);
     expect(isLineShape({ ...line, type: "unknown" })).toBe(false);
+  });
+});
+
+describe("isCurveLine", () => {
+  test("should return true when a line has valid curve property", () => {
+    const p = { x: 0, y: 0 };
+    expect(isCurveLine(struct.create())).toBe(false);
+    expect(isCurveLine(struct.create({ curves: [{ c1: p, c2: p }] }))).toBe(true);
+    expect(isCurveLine(struct.create({ body: [{ p }], curves: [{ c1: p, c2: p }] }))).toBe(false);
+    expect(
+      isCurveLine(
+        struct.create({
+          body: [{ p }],
+          curves: [
+            { c1: p, c2: p },
+            { c1: p, c2: p },
+          ],
+        }),
+      ),
+    ).toBe(true);
   });
 });

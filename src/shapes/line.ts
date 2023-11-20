@@ -14,6 +14,8 @@ import {
   ISegment,
   expandRect,
   getRectPoints,
+  getRelativePointOnBezierPath,
+  getRelativePointOnPath,
   isPointCloseToBezierSpline,
   isPointCloseToSegment,
 } from "../utils/geometry";
@@ -384,4 +386,17 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
 
 export function isLineShape(shape: Shape): shape is LineShape {
   return shape.type === "line";
+}
+
+export function isCurveLine(shape: LineShape): shape is LineShape & Required<Pick<LineShape, "curves">> {
+  return !!shape.curves && shape.curves.length === 1 + (shape.body?.length ?? 0);
+}
+
+export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
+  const path = getLinePath(shape);
+  if (isCurveLine(shape)) {
+    return getRelativePointOnBezierPath(path, shape.curves, rate);
+  } else {
+    return getRelativePointOnPath(path, rate);
+  }
 }

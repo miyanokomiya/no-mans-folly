@@ -10,14 +10,13 @@ import {
   handleStateEvent,
   newShapeClipboard,
 } from "../commons";
-import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
+import { LineShape, deleteVertex, getRelativePointOn } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { createShape } from "../../../../shapes";
 import { TextShape, patchPosition } from "../../../../shapes/text";
-import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -146,7 +145,7 @@ export function newLineSelectedState(): AppCanvasState {
               });
               const textshape = {
                 ...textshapeSrc,
-                ...patchPosition(textshapeSrc, getRelativePointOnPath(getLinePath(lineShape), 0.5)),
+                ...patchPosition(textshapeSrc, getRelativePointOn(lineShape, 0.5)),
               };
               ctx.addShapes([textshape]);
               ctx.selectShape(textshape.id);

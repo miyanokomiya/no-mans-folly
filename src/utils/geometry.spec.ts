@@ -34,6 +34,7 @@ import {
   getDistanceBetweenPointAndRect,
   isPointCloseToBezierSpline,
   isPointCloseToBezierSegment,
+  getRelativePointOnBezierPath,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -658,6 +659,35 @@ describe("getRelativePointOnPath", () => {
     expect(getRelativePointOnPath(path, 0.5)).toEqual({ x: 10, y: 5 });
     expect(getRelativePointOnPath(path, 0.8)).toEqual({ x: 6, y: 10 });
     expect(getRelativePointOnPath(path, 1)).toEqual({ x: 0, y: 10 });
+  });
+});
+
+describe("getRelativePointOnBezierPath", () => {
+  test("should return relative point on the path", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const controls = [
+      { c1: { x: 2, y: -5 }, c2: { x: 8, y: -5 } },
+      { c1: { x: 15, y: 2 }, c2: { x: 15, y: 8 } },
+    ];
+    const ret0 = getRelativePointOnBezierPath(path, controls, 0);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(0, 3);
+    const ret10 = getRelativePointOnBezierPath(path, controls, 0.1);
+    expect(ret10.x).toBeCloseTo(1.616, 3);
+    expect(ret10.y).toBeCloseTo(-2.4, 3);
+    const ret50 = getRelativePointOnBezierPath(path, controls, 0.5);
+    expect(ret50.x).toBeCloseTo(10, 3);
+    expect(ret50.y).toBeCloseTo(0, 3);
+    const ret90 = getRelativePointOnBezierPath(path, controls, 0.9);
+    expect(ret90.x).toBeCloseTo(12.4, 3);
+    expect(ret90.y).toBeCloseTo(8.384, 3);
+    const ret100 = getRelativePointOnBezierPath(path, controls, 1);
+    expect(ret100.x).toBeCloseTo(10, 3);
+    expect(ret100.y).toBeCloseTo(10, 3);
   });
 });
 
