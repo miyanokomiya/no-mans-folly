@@ -130,6 +130,37 @@ describe("newConnectedLineHandler", () => {
       });
     });
 
+    test("should regard curve controls", () => {
+      const l0 = struct.create({
+        id: "l0",
+        pConnection: { rate: { x: 0.5, y: 0.5 }, id: "a" },
+        qConnection: { rate: { x: 0.5, y: 0.5 }, id: "b" },
+        body: [{ p: { x: 0, y: 0 } }],
+        curveType: "auto",
+      });
+      const a = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a" });
+      const b = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "b" });
+
+      const target = newConnectedLineHandler({
+        connectedLinesMap: {
+          a: [l0],
+          b: [l0],
+        },
+        ctx: {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, a, b],
+              getStruct: getCommonStruct,
+            }),
+        },
+      });
+
+      const ret = target.onModified({
+        b: { p: { x: 100, y: 0 }, width: 50, height: 100 } as Partial<RectangleShape>,
+      });
+      expect(ret.l0.curves?.length).toBe(2);
+    });
+
     describe("when a line is modified but connected shapes arn't", () => {
       test("should delete connections", () => {
         const target = newConnectedLineHandler({

@@ -4,11 +4,16 @@ import {
   MINVALUE,
   add,
   clamp,
+  getApproPoints,
+  getBezier3LerpFn,
   getCenter,
   getCrossSegAndLine,
   getDistance,
   getOuterRectangle,
+  getPathPointAtLengthFromStructs,
+  getPathTotalLengthFromStructs,
   getPedal,
+  getPolylineLength,
   getRadian,
   getRectCenter,
   interpolateVector,
@@ -21,6 +26,9 @@ import {
   sub,
   vec,
 } from "okageo";
+import { CurveControl } from "../models";
+
+export const BEZIER_APPROX_SIZE = 10;
 
 export type ISegment = [IVec2, IVec2];
 
@@ -44,6 +52,14 @@ export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?
       : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     return origin ? add(rotatedV, origin) : rotatedV;
   };
+}
+
+export function getSegments(points: IVec2[]): ISegment[] {
+  const ret: ISegment[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    ret.push([points[i], points[i + 1]]);
+  }
+  return ret;
 }
 
 export function extendSegment(seg: ISegment, rate: number): ISegment {
@@ -283,6 +299,43 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
   return isOnSeg(pedal, seg);
 }
 
+// Likewise "isPointCloseToSegment"
+export function isPointCloseToBezierSpline(
+  points: IVec2[],
+  controls: CurveControl[],
+  p: IVec2,
+  threshold: number,
+): boolean {
+  for (let i = 0; i < points.length - 1; i++) {
+    const hit = isPointCloseToBezierSegment(points[i], points[i + 1], controls[i].c1, controls[i].c2, p, threshold);
+    if (hit) return true;
+  }
+  return false;
+}
+
+export function isPointCloseToBezierSegment(
+  p1: IVec2,
+  p2: IVec2,
+  c1: IVec2,
+  c2: IVec2,
+  p: IVec2,
+  threshold: number,
+): boolean {
+  const bezier = [p1, c1, c2, p2];
+  // The point should be inside the bounds of the bezier points at least.
+  const bounds = expandRect(getOuterRectangle([bezier]), threshold);
+  if (!isPointOnRectangle(bounds, p)) return false;
+
+  const lerpFn = getBezier3LerpFn(bezier as [IVec2, IVec2, IVec2, IVec2]);
+  const size = BEZIER_APPROX_SIZE;
+  const step = 1 / size;
+  for (let i = 0; i < size; i++) {
+    const seg = [lerpFn(step * i), lerpFn(step * (i + 1))];
+    if (isPointCloseToSegment(seg, p, threshold)) return true;
+  }
+  return false;
+}
+
 export function logRound(log: number, val: number) {
   const pow = Math.pow(10, -log);
   return Math.round(val * pow) / pow;
@@ -421,6 +474,23 @@ export function getRelativePointOnPath(path: IVec2[], rate: number): IVec2 {
 
   const remain = targetLength - stack;
   return interpolateVector(edges[targetIndex][0], edges[targetIndex][1], remain / list[targetIndex]);
+}
+
+export function getRelativePointOnBezierPath(points: IVec2[], controls: CurveControl[], rate: number): IVec2 {
+  if (points.length <= 1) return points[0];
+  if (points.length !== controls.length + 1) return getRelativePointOnPath(points, rate);
+
+  const sections: [IVec2, IVec2, IVec2, IVec2][] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    sections.push([points[i], controls[i].c1, controls[i].c2, points[i + 1]]);
+  }
+  const pathStructs = sections.map((sec) => {
+    const lerpFn = getBezier3LerpFn(sec);
+    const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
+    return { lerpFn, length };
+  });
+  const totalLength = getPathTotalLengthFromStructs(pathStructs);
+  return getPathPointAtLengthFromStructs(pathStructs, totalLength * rate);
 }
 
 /**

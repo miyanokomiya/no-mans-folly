@@ -10,20 +10,21 @@ import {
   handleStateEvent,
   newShapeClipboard,
 } from "../commons";
-import { LineShape, deleteVertex, getLinePath } from "../../../../shapes/line";
+import { LineShape, deleteVertex, getLinePath, getRelativePointOn } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { createShape } from "../../../../shapes";
 import { TextShape, patchPosition } from "../../../../shapes/text";
-import { getRelativePointOnPath } from "../../../../utils/geometry";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingHubState } from "../movingHubState";
+import { getAutomaticCurve } from "../../../../utils/curveLine";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -63,7 +64,12 @@ export function newLineSelectedState(): AppCanvasState {
                     if (event.data.options.shift) {
                       const patch = deleteVertex(lineShape, hitResult.index);
                       if (Object.keys(patch).length > 0) {
-                        ctx.patchShapes({ [lineShape.id]: patch });
+                        if (lineShape.curveType === "auto") {
+                          patch.curves = getAutomaticCurve(getLinePath({ ...lineShape, ...patch }));
+                        }
+                        ctx.patchShapes(
+                          getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }),
+                        );
                       }
                       return newSelectionHubState;
                     } else {
@@ -146,7 +152,7 @@ export function newLineSelectedState(): AppCanvasState {
               });
               const textshape = {
                 ...textshapeSrc,
-                ...patchPosition(textshapeSrc, getRelativePointOnPath(getLinePath(lineShape), 0.5)),
+                ...patchPosition(textshapeSrc, getRelativePointOn(lineShape, 0.5)),
               };
               ctx.addShapes([textshape]);
               ctx.selectShape(textshape.id);

@@ -1898,10 +1898,10 @@ object-hash@^3.0.0:
   resolved "https://registry.yarnpkg.com/object-hash/-/object-hash-3.0.0.tgz#73f97f753e7baffc0e2cc9d6e079079744ac82e9"
   integrity sha512-RSn9F68PjH9HqtltsSnqYC1XXoWe9Bju5+213R98cNGttag9q9yAOTzdbsqvIa7aNm5WffBZFpWYr2aWrklWAw==
 
-okageo@^3.0.8:
-  version "3.0.8"
-  resolved "https://registry.yarnpkg.com/okageo/-/okageo-3.0.8.tgz#19d9c84b5f21d196b27690d0225f05b33bacb7fb"
-  integrity sha512-k9ILN+wbpUF0Zwk/+uWDBboIqU/hj7Y/VwNXc4WPr2o6ilKRx3F63s1pIzuJ7tv6hlTTUQsL/2NFQki5DodUzQ==
+okageo@^3.1.1:
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/okageo/-/okageo-3.1.1.tgz#2597bfe0e2cffd7f1a68e51d2510c4ffa3e58cdc"
+  integrity sha512-HA+eT3mc1nR5qXslA3EJ3s/nvKefoJW1MS1M+j1DPxOrUOx7lEdXwHTguIK66jhZX0KHK0Zoe9HrByOZ3iS0kg==
 
 okaselect@^0.1.0:
   version "0.1.0"

@@ -22,7 +22,7 @@ import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { useWindow } from "../../composables/window";
 import { LineHeadItems } from "./LineHeadItems";
-import { LineShape, LineType, isLineShape } from "../../shapes/line";
+import { CurveType, LineShape, LineType, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
 import { useDraggable } from "../../composables/draggable";
 import { AlignAnchorButton } from "./AlignAnchorButton";
@@ -32,6 +32,8 @@ import { mapReduce, patchPipe, toList, toMap } from "../../utils/commons";
 import { newElbowLineHandler } from "../../composables/elbowLineHandler";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { BoxPaddingButton } from "./BoxPaddingButton";
+import { getPatchByChangingCurveType } from "../../utils/curveLine";
+import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -227,8 +229,9 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
   );
 
   const onLineTypeChanged = useCallback(
-    (lineType: LineType) => {
-      const shapeMap = smctx.getShapeComposite().shapeMap;
+    (lineType: LineType, curveType?: CurveType) => {
+      const shapeComposite = smctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
       const lineIds = Object.keys(smctx.getSelectedShapeIdMap());
       const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
       smctx.patchShapes(
@@ -242,9 +245,15 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
               });
               return mapReduce(src, (lineShape) => {
                 return lineShape.lineType !== "elbow"
-                  ? { body: undefined }
+                  ? (shapeMap[lineShape.id] as LineShape).lineType === "elbow"
+                    ? { body: undefined } // Reset "body" when elbow line becomes straight.
+                    : {}
                   : { body: elbowHandler.optimizeElbow(lineShape) };
               });
+            },
+            (src) => mapReduce(src, (line) => getPatchByChangingCurveType(line, curveType, true) ?? {}),
+            (_, patch) => {
+              return getPatchAfterLayouts(shapeComposite, { update: patch });
             },
           ],
           toMap(lines),
@@ -392,6 +401,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
             <LineTypeButton
               {...popupButtonCommonProps}
               currentType={indexLineShape.lineType}
+              currentCurve={indexLineShape.curveType}
               onChange={onLineTypeChanged}
             />
             <LineHeadItems

@@ -1,15 +1,33 @@
-import { AffineMatrix, IVec2, applyAffine, getOuterRectangle, getRadian, isSame, multiAffines } from "okageo";
-import { ConnectionPoint, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
+import {
+  AffineMatrix,
+  IVec2,
+  applyAffine,
+  getBezier3LerpFn,
+  getOuterRectangle,
+  getRadian,
+  isSame,
+  multiAffines,
+} from "okageo";
+import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { ISegment, expandRect, getRectPoints, isPointCloseToSegment } from "../utils/geometry";
+import {
+  ISegment,
+  expandRect,
+  getRectPoints,
+  getRelativePointOnBezierPath,
+  getRelativePointOnPath,
+  isPointCloseToBezierSpline,
+  isPointCloseToSegment,
+} from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, renderLineHead } from "./lineHeads";
-import { applyPath } from "../utils/renderer";
+import { applyBezierPath, applyPath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 
 export type LineType = undefined | "elbow";
+export type CurveType = undefined | "auto";
 
 export interface LineShape extends Shape {
   fill: FillStyle;
@@ -21,6 +39,12 @@ export interface LineShape extends Shape {
   qHead?: LineHead;
   body?: { p: IVec2; c?: ConnectionPoint }[];
   lineType?: LineType;
+  /**
+   * The first item represents body[0], the last one does "q" and others do "body".
+   * "curves.length" should be equal to "body.length + 1"
+   */
+  curves?: CurveControl[];
+  curveType?: CurveType;
 }
 
 export const struct: ShapeStruct<LineShape> = {
@@ -35,6 +59,8 @@ export const struct: ShapeStruct<LineShape> = {
       q: arg.q ?? { x: 100, y: 0 },
       body: arg.body,
       lineType: arg.lineType,
+      curves: arg.curves,
+      curveType: arg.curveType,
     };
     if (arg.pConnection) obj.pConnection = arg.pConnection;
     if (arg.qConnection) obj.qConnection = arg.qConnection;
@@ -49,8 +75,14 @@ export const struct: ShapeStruct<LineShape> = {
 
     let pAffine: AffineMatrix | undefined;
     if (shape.pHead) {
+      let pVicinity = linePath[1];
       const p = linePath[0];
-      const r = getRadian(p, linePath[1]);
+      if (shape.curves && shape.curves.length > 0) {
+        const c = shape.curves[0];
+        const lerpFn = getBezier3LerpFn([p, c.c1, c.c2, linePath[1]]);
+        pVicinity = lerpFn(0.01);
+      }
+      const r = getRadian(p, pVicinity);
       const sin = Math.sin(r);
       const cos = Math.cos(r);
       pAffine = multiAffines([
@@ -61,8 +93,14 @@ export const struct: ShapeStruct<LineShape> = {
 
     let qAffine: AffineMatrix | undefined;
     if (shape.qHead) {
+      let qVicinity = linePath[linePath.length - 2];
       const q = linePath[linePath.length - 1];
-      const r = getRadian(q, linePath[linePath.length - 2]);
+      if (shape.curves && shape.curves.length > 0) {
+        const c = shape.curves[shape.curves.length - 1];
+        const lerpFn = getBezier3LerpFn([q, c.c2, c.c1, linePath[linePath.length - 2]]);
+        qVicinity = lerpFn(0.01);
+      }
+      const r = getRadian(q, qVicinity);
       const sin = Math.sin(r);
       const cos = Math.cos(r);
       qAffine = multiAffines([
@@ -103,7 +141,12 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     ctx.beginPath();
-    applyPath(ctx, linePath);
+    if (shape.curves) {
+      applyBezierPath(ctx, linePath, shape.curves);
+    } else {
+      applyPath(ctx, linePath);
+    }
+
     if (!shape.fill.disabled) {
       applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color, dash: undefined });
       ctx.stroke();
@@ -138,7 +181,13 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(getOuterRectangle([getLinePath(shape)]));
   },
   isPointOn(shape, p, shapeContext) {
-    if (getEdges(shape).some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
+    const edges = getEdges(shape);
+
+    if (shape.curves && shape.curves.length === edges.length) {
+      if (isPointCloseToBezierSpline(getLinePath(shape), shape.curves, p, 10)) return true;
+    } else {
+      if (edges.some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
+    }
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
@@ -150,11 +199,17 @@ export const struct: ShapeStruct<LineShape> = {
   resize(shape, resizingAffine) {
     const [p, q] = [shape.p, shape.q].map((p) => applyAffine(resizingAffine, p));
     const body = shape.body?.map((b) => ({ ...b, p: applyAffine(resizingAffine, b.p) }));
+    const curves = shape.curves?.map((c) => ({
+      c1: applyAffine(resizingAffine, c.c1),
+      c2: applyAffine(resizingAffine, c.c2),
+    }));
 
     const ret: Partial<LineShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
     if (!isSame(q, shape.q)) ret.q = q;
     if (body?.some((b, i) => !isSame(b.p, shape.body![i].p))) ret.body = body;
+    if (curves?.some((c, i) => !isSame(c.c1, shape.curves![i].c1) || !isSame(c.c2, shape.curves![i].c2)))
+      ret.curves = curves;
 
     return ret;
   },
@@ -331,4 +386,17 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
 
 export function isLineShape(shape: Shape): shape is LineShape {
   return shape.type === "line";
+}
+
+export function isCurveLine(shape: LineShape): shape is LineShape & Required<Pick<LineShape, "curves">> {
+  return !!shape.curves && shape.curves.length === 1 + (shape.body?.length ?? 0);
+}
+
+export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
+  const path = getLinePath(shape);
+  if (isCurveLine(shape)) {
+    return getRelativePointOnBezierPath(path, shape.curves, rate);
+  } else {
+    return getRelativePointOnPath(path, rate);
+  }
 }

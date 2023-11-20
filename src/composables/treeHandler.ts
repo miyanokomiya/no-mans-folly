@@ -11,6 +11,7 @@ import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, treeLayout } from "../uti
 import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
 import { TreeShapeBase, isTreeShapeBase } from "../shapes/tree/core";
 import { generateKeyBetweenAllowSame } from "../utils/findex";
+import { pickMinItem } from "../utils/commons";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
@@ -253,7 +254,7 @@ export function newTreeNodeMovingHandler(option: Option) {
       rect,
       getDistanceBetweenPointAndRect(p, rect),
     ]);
-    const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
+    const [closestId, closestRect] = pickMinItem(evaluated, (v) => v[2])!;
     if (option.targetId === closestId) return;
 
     const closest = shapeComposite.shapeMap[closestId] as TreeShapeBase;

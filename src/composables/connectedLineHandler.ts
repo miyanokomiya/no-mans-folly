@@ -1,4 +1,4 @@
-import { LineShape, isLineShape } from "../shapes/line";
+import { LineShape, getLinePath, isLineShape } from "../shapes/line";
 import { RotatedRectPath, TAU, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { EntityPatchInfo, Shape, StyleScheme } from "../models";
@@ -7,6 +7,7 @@ import { newElbowLineHandler } from "./elbowLineHandler";
 import { optimizeLinePath } from "./lineSnapping";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { toList } from "../utils/commons";
+import { getAutomaticCurve } from "../utils/curveLine";
 
 interface Option {
   connectedLinesMap: {
@@ -143,6 +144,20 @@ export function newConnectedLineHandler(option: Option) {
       patchedElbows.forEach((lineShape) => {
         const body = elbowHandler.optimizeElbow(lineShape);
         ret[lineShape.id] = { ...ret[lineShape.id], body };
+      });
+    }
+
+    // Update curves
+    {
+      Object.entries(ret).forEach(([id, patch]) => {
+        const original = shapeMap[id] as LineShape;
+        if (original.curveType !== "auto") return;
+
+        const updated = updatedMap[id] ?? {};
+        ret[id] = {
+          ...patch,
+          curves: getAutomaticCurve(getLinePath({ ...original, ...updated, ...patch })),
+        };
       });
     }
 

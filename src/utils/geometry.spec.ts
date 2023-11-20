@@ -32,6 +32,10 @@ import {
   getMarkersOnPolygon,
   snapNumberCeil,
   getDistanceBetweenPointAndRect,
+  isPointCloseToBezierSpline,
+  isPointCloseToBezierSegment,
+  getRelativePointOnBezierPath,
+  getSegments,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -46,6 +50,27 @@ describe("getRotateFn", () => {
       x: 10,
       y: 10,
     });
+  });
+});
+
+describe("getSegments", () => {
+  test("should return segment list", () => {
+    expect(
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ]),
+    ).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ],
+    ]);
   });
 });
 
@@ -387,6 +412,44 @@ describe("isPointCloseToSegment", () => {
   });
 });
 
+describe("isPointCloseToBezierSpline", () => {
+  test("should return true if the point is close to the bezier spline", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const controls = [
+      { c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } },
+      { c1: { x: 15, y: 2.5 }, c2: { x: 15, y: 7.5 } },
+    ];
+    expect(isPointCloseToBezierSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(false);
+    expect(isPointCloseToBezierSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(true);
+    expect(isPointCloseToBezierSpline(points, controls, { x: 0.1, y: -6 }, 1)).toBe(false);
+    expect(isPointCloseToBezierSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(true);
+    expect(isPointCloseToBezierSpline(points, controls, { x: 16, y: 10 }, 1)).toBe(false);
+  });
+});
+
+describe("isPointCloseToBezierSegment", () => {
+  test("should return true if the point is close to the bezier segment", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    const controls = [{ c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } }];
+    expect(isPointCloseToBezierSegment(points[0], points[1], controls[0].c1, controls[0].c2, { x: 0, y: 0.1 }, 1)).toBe(
+      false,
+    );
+    expect(
+      isPointCloseToBezierSegment(points[0], points[1], controls[0].c1, controls[0].c2, { x: 0.1, y: -2 }, 1),
+    ).toBe(true);
+    expect(
+      isPointCloseToBezierSegment(points[0], points[1], controls[0].c1, controls[0].c2, { x: 0.1, y: -6 }, 1),
+    ).toBe(false);
+  });
+});
+
 describe("snapNumberCeil", () => {
   test("should return snapped number due ceil rule", () => {
     expect(snapNumberCeil(-5, 5)).toBe(-5);
@@ -618,6 +681,35 @@ describe("getRelativePointOnPath", () => {
     expect(getRelativePointOnPath(path, 0.5)).toEqual({ x: 10, y: 5 });
     expect(getRelativePointOnPath(path, 0.8)).toEqual({ x: 6, y: 10 });
     expect(getRelativePointOnPath(path, 1)).toEqual({ x: 0, y: 10 });
+  });
+});
+
+describe("getRelativePointOnBezierPath", () => {
+  test("should return relative point on the path", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const controls = [
+      { c1: { x: 2, y: -5 }, c2: { x: 8, y: -5 } },
+      { c1: { x: 15, y: 2 }, c2: { x: 15, y: 8 } },
+    ];
+    const ret0 = getRelativePointOnBezierPath(path, controls, 0);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(0, 3);
+    const ret10 = getRelativePointOnBezierPath(path, controls, 0.1);
+    expect(ret10.x).toBeCloseTo(1.616, 3);
+    expect(ret10.y).toBeCloseTo(-2.4, 3);
+    const ret50 = getRelativePointOnBezierPath(path, controls, 0.5);
+    expect(ret50.x).toBeCloseTo(10, 3);
+    expect(ret50.y).toBeCloseTo(0, 3);
+    const ret90 = getRelativePointOnBezierPath(path, controls, 0.9);
+    expect(ret90.x).toBeCloseTo(12.4, 3);
+    expect(ret90.y).toBeCloseTo(8.384, 3);
+    const ret100 = getRelativePointOnBezierPath(path, controls, 1);
+    expect(ret100.x).toBeCloseTo(10, 3);
+    expect(ret100.y).toBeCloseTo(10, 3);
   });
 });
 

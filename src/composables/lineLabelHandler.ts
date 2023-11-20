@@ -1,10 +1,10 @@
 import { EntityPatchInfo, Shape } from "../models";
-import { LineShape, getLinePath, isLineShape } from "../shapes/line";
+import { LineShape, getLinePath, getRelativePointOn, isCurveLine, isLineShape } from "../shapes/line";
 import { TextShape, isLineLabelShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
-import { TAU, getRelativePointOnPath } from "../utils/geometry";
+import { TAU } from "../utils/geometry";
 import { attachLabelToLine } from "../utils/lineLabel";
-import { applyPath } from "../utils/renderer";
+import { applyBezierPath, applyPath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
@@ -28,7 +28,7 @@ export function newLineLabelHandler(option: Option) {
       const patchedLine: LineShape = { ...src, ...patch };
       const labels = shapeList.filter((s): s is TextShape => isLineLabelShape(s) && s.parentId === lineId);
       labels.forEach((label) => {
-        const origin = getRelativePointOnPath(getLinePath(patchedLine), label.lineAttached ?? 0.5);
+        const origin = getRelativePointOn(patchedLine, label.lineAttached ?? 0.5);
         const labelPatch = patchPosition(label, origin, getLabelMargin(patchedLine));
         if (labelPatch) {
           ret[label.id] = labelPatch;
@@ -61,9 +61,13 @@ export function renderParentLineRelation(
   const path = getLinePath(parentLineShape);
   applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: 2 * ctx.getScale() });
   renderCtx.beginPath();
-  applyPath(renderCtx, path);
+  if (isCurveLine(parentLineShape)) {
+    applyBezierPath(renderCtx, path, parentLineShape.curves);
+  } else {
+    applyPath(renderCtx, path);
+  }
   renderCtx.stroke();
-  const origin = getRelativePointOnPath(path, textShape.lineAttached ?? 0);
+  const origin = getRelativePointOn(parentLineShape, textShape.lineAttached ?? 0);
   applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
   renderCtx.beginPath();
   renderCtx.arc(origin.x, origin.y, 3 * ctx.getScale(), 0, TAU);

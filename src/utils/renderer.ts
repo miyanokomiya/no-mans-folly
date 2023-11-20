@@ -3,10 +3,34 @@ import { ISegment } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
+import { CurveControl } from "../models";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
   path.forEach((p, i) => {
     i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+  });
+  if (closed) {
+    ctx.closePath();
+  }
+}
+
+export function applyBezierPath(
+  ctx: CanvasRenderingContext2D | Path2D,
+  path: IVec2[],
+  curves: CurveControl[],
+  closed = false,
+) {
+  path.forEach((p, i) => {
+    if (i === 0) {
+      ctx.moveTo(p.x, p.y);
+    } else {
+      const controls = curves[i - 1];
+      if (controls) {
+        ctx.bezierCurveTo(controls.c1.x, controls.c1.y, controls.c2.x, controls.c2.y, p.x, p.y);
+      } else {
+        ctx.lineTo(p.x, p.y);
+      }
+    }
   });
   if (closed) {
     ctx.closePath();

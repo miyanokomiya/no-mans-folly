@@ -112,3 +112,22 @@ export function getlastItemOfMap<T>(map: Map<any, T>): T | undefined {
 export function findexSortFn<T extends { findex: string }>(a: T, b: T): number {
   return a.findex <= b.findex ? -1 : 1;
 }
+
+/**
+ * This function should be faster than doing "src.sort(...)[0]".
+ */
+export function pickMinItem<T>(src: T[], getValue: (item: T) => number): T | undefined {
+  if (src.length === 0) return;
+
+  let ret = src[0];
+  let d = getValue(ret);
+  for (let i = 1; i < src.length; i++) {
+    const item = src[i];
+    const itemD = getValue(item);
+    if (itemD < d) {
+      ret = item;
+      d = itemD;
+    }
+  }
+  return ret;
+}

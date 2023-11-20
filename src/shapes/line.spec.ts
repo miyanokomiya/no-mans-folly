@@ -1,5 +1,14 @@
 import { expect, describe, test, vi } from "vitest";
-import { addNewVertex, deleteVertex, getLinePath, isLineShape, patchConnection, patchVertex, struct } from "./line";
+import {
+  addNewVertex,
+  deleteVertex,
+  getLinePath,
+  isCurveLine,
+  isLineShape,
+  patchConnection,
+  patchVertex,
+  struct,
+} from "./line";
 import { getCommonStruct } from ".";
 
 describe("struct", () => {
@@ -61,6 +70,27 @@ describe("struct", () => {
         p: { x: 101, y: 2 },
         q: { x: 110, y: -20 },
         body: [{ p: { x: 101, y: 2 }, c: { id: "a", rate: { x: 1, y: 0 } } }],
+      });
+
+      expect(
+        struct.resize(
+          struct.create({
+            p: { x: 1, y: 2 },
+            q: { x: 10, y: -20 },
+            curves: [
+              { c1: { x: 0, y: 0 }, c2: { x: 10, y: 10 } },
+              { c1: { x: 20, y: 20 }, c2: { x: 30, y: 30 } },
+            ],
+          }),
+          [1, 0, 0, 1, 100, 0],
+        ),
+      ).toEqual({
+        p: { x: 101, y: 2 },
+        q: { x: 110, y: -20 },
+        curves: [
+          { c1: { x: 100, y: 0 }, c2: { x: 110, y: 10 } },
+          { c1: { x: 120, y: 20 }, c2: { x: 130, y: 30 } },
+        ],
       });
     });
   });
@@ -366,5 +396,25 @@ describe("isLineShape", () => {
     const line = struct.create();
     expect(isLineShape(line)).toBe(true);
     expect(isLineShape({ ...line, type: "unknown" })).toBe(false);
+  });
+});
+
+describe("isCurveLine", () => {
+  test("should return true when a line has valid curve property", () => {
+    const p = { x: 0, y: 0 };
+    expect(isCurveLine(struct.create())).toBe(false);
+    expect(isCurveLine(struct.create({ curves: [{ c1: p, c2: p }] }))).toBe(true);
+    expect(isCurveLine(struct.create({ body: [{ p }], curves: [{ c1: p, c2: p }] }))).toBe(false);
+    expect(
+      isCurveLine(
+        struct.create({
+          body: [{ p }],
+          curves: [
+            { c1: p, c2: p },
+            { c1: p, c2: p },
+          ],
+        }),
+      ),
+    ).toBe(true);
   });
 });
