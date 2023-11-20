@@ -10,7 +10,7 @@ import {
   handleStateEvent,
   newShapeClipboard,
 } from "../commons";
-import { LineShape, deleteVertex, getRelativePointOn } from "../../../../shapes/line";
+import { LineShape, deleteVertex, getLinePath, getRelativePointOn } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
@@ -23,6 +23,8 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingHubState } from "../movingHubState";
+import { getAutomaticCurve } from "../../../../utils/curveLine";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -62,7 +64,12 @@ export function newLineSelectedState(): AppCanvasState {
                     if (event.data.options.shift) {
                       const patch = deleteVertex(lineShape, hitResult.index);
                       if (Object.keys(patch).length > 0) {
-                        ctx.patchShapes({ [lineShape.id]: patch });
+                        if (lineShape.curveType === "auto") {
+                          patch.curves = getAutomaticCurve(getLinePath({ ...lineShape, ...patch }));
+                        }
+                        ctx.patchShapes(
+                          getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }),
+                        );
                       }
                       return newSelectionHubState;
                     } else {

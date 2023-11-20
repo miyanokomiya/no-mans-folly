@@ -11,14 +11,13 @@ import {
   renderConnectionResult,
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
-import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
-import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -31,7 +30,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
-  let lineLabelHandler: LineLabelHandler;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
 
@@ -66,8 +64,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       });
 
       elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
-
-      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -103,9 +99,9 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
             patch.curves = getAutomaticCurve(getLinePath({ ...option.lineShape, ...patch }));
           }
 
-          const patchMap = { [option.lineShape.id]: patch };
-          const labelPatch = lineLabelHandler.onModified(patchMap);
-          ctx.setTmpShapeMap(mergeMap(patchMap, labelPatch));
+          ctx.setTmpShapeMap(
+            getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),
+          );
           return;
         }
         case "pointerup": {

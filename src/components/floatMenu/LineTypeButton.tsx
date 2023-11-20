@@ -8,8 +8,8 @@ import iconLineElbowCurve from "../../assets/icons/shape_line_elbow_curve.svg";
 
 const LINE_LIST = [
   { type: "straight", icon: iconLineStraight },
-  { type: "elbow", icon: iconLineElbow },
   { type: "curve", icon: iconLineCurve },
+  { type: "elbow", icon: iconLineElbow },
   { type: "elbow-curve", icon: iconLineElbowCurve },
 ] as const;
 type LineItemType = (typeof LINE_LIST)[number]["type"];
@@ -36,11 +36,13 @@ export const LineTypeButton: React.FC<Props> = ({
   }, [setPopupedKey]);
 
   const selected = useMemo(() => {
+    let type: LineItemType;
     if (currentType === "elbow") {
-      return currentCurve === "auto" ? LINE_LIST[3] : LINE_LIST[1];
+      type = currentCurve === "auto" ? "elbow-curve" : "elbow";
     } else {
-      return currentCurve === "auto" ? LINE_LIST[2] : LINE_LIST[0];
+      type = currentCurve === "auto" ? "curve" : "straight";
     }
+    return LINE_LIST.find((v) => v.type === type)!;
   }, [currentType, currentCurve]);
 
   return (

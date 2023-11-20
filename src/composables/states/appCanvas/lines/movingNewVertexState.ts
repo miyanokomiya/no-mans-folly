@@ -4,13 +4,12 @@ import { LineShape, addNewVertex, getLinePath, isLineShape } from "../../../../s
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
-import { LineLabelHandler, newLineLabelHandler } from "../../../lineLabelHandler";
-import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -22,7 +21,6 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
   let vertex = option.p;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
-  let lineLabelHandler: LineLabelHandler;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
 
@@ -57,8 +55,6 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
-
-      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -86,9 +82,9 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
             patch.curves = getAutomaticCurve(getLinePath({ ...option.lineShape, ...patch }));
           }
 
-          const patchMap = { [option.lineShape.id]: patch };
-          const labelPatch = lineLabelHandler.onModified(patchMap);
-          ctx.setTmpShapeMap(mergeMap(patchMap, labelPatch));
+          ctx.setTmpShapeMap(
+            getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),
+          );
           return;
         }
         case "pointerup": {

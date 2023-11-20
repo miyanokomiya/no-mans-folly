@@ -7,8 +7,15 @@ export function getAutomaticCurve(path: IVec2[]): CurveControl[] | undefined {
   return getBezierInterpolation(path).map(([c1, c2]) => ({ c1, c2 }));
 }
 
-export function getPatchByChangingCurveType(line: LineShape, curveType?: CurveType): Partial<LineShape> | undefined {
-  if (line.curveType === curveType) return;
+/**
+ * When "force" is true, this function always returns the calculated result.
+ */
+export function getPatchByChangingCurveType(
+  line: LineShape,
+  curveType?: CurveType,
+  force = false,
+): Partial<LineShape> | undefined {
+  if (!force && line.curveType === curveType) return;
 
   if (curveType === "auto") {
     return {
