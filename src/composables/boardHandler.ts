@@ -16,7 +16,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
-import { getFirstItemOfMap, getlastItemOfMap } from "../utils/commons";
+import { getFirstItemOfMap, getlastItemOfMap, pickMinItem } from "../utils/commons";
 import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
 
@@ -513,13 +513,13 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       getDistanceBetweenPointAndRect(p, rect),
     ]);
     const [closestId, closestRect, closestD] =
-      evaluated.length > 0 ? evaluated.sort((a, b) => a[2] - b[2])[0] : [undefined, undefined, Infinity];
+      evaluated.length > 0 ? pickMinItem(evaluated, (v) => v[2])! : [undefined, undefined, Infinity];
 
     if (emptyCellRects.length > 0) {
       const emptyEvaluated = emptyCellRects.map<[{ columnId: string; laneId: string }, IRectangle, number]>(
         ([cell, rect]) => [cell, rect, getDistanceBetweenPointAndRect(p, rect)],
       );
-      const closestEmtpy = emptyEvaluated.sort((a, b) => a[2] - b[2])[0];
+      const closestEmtpy = pickMinItem(emptyEvaluated, (v) => v[2])!;
       if (closestEmtpy[2] < closestD) {
         const [cell, rect] = closestEmtpy;
         return {
@@ -632,7 +632,7 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
       rect,
       getDistanceBetweenPointAndRect(p, rect),
     ]);
-    const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
+    const [closestId, closestRect] = pickMinItem(evaluated, (v) => v[2])!;
 
     const toNext = closestRect.x + closestRect.width / 2 < p.x;
     const siblings = Array.from(boardHandler.columnMap.values());
@@ -730,7 +730,7 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
       rect,
       getDistanceBetweenPointAndRect(p, rect),
     ]);
-    const [closestId, closestRect] = evaluated.sort((a, b) => a[2] - b[2])[0];
+    const [closestId, closestRect] = pickMinItem(evaluated, (v) => v[2])!;
 
     const toNext = closestRect.y + closestRect.height / 2 < p.y;
     const siblings = Array.from(boardHandler.laneMap.values());

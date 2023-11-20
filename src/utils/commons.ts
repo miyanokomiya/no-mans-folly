@@ -114,10 +114,11 @@ export function findexSortFn<T extends { findex: string }>(a: T, b: T): number {
 }
 
 /**
- * "src" must have at least one item.
  * This function should be faster than doing "src.sort(...)[0]".
  */
-export function pickMinItem<T>(src: T[], getValue: (item: T) => number): T {
+export function pickMinItem<T>(src: T[], getValue: (item: T) => number): T | undefined {
+  if (src.length === 0) return;
+
   let ret = src[0];
   let d = getValue(ret);
   for (let i = 1; i < src.length; i++) {

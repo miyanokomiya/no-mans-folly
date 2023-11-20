@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastMessage } from "../composables/states/types";
+import { pickMinItem } from "../utils/commons";
 
 interface Option {
   timeout?: number;
@@ -29,7 +30,7 @@ export function useToastMessages(option?: Option) {
   useEffect(() => {
     if (timers.current.size === 0) return;
 
-    const target = Array.from(timers.current.entries()).sort((a, b) => a[1] - b[1])[0];
+    const target = pickMinItem(Array.from(timers.current.entries()), (v) => v[1])!;
     const duration = target[1] - Date.now();
     if (duration <= 0) {
       closeToastMessage(target[0]);

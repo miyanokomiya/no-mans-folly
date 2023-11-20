@@ -30,7 +30,7 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
     }
     return [i, getDistance(labelCenter, pedal), pedal];
   });
-  const closestValue = pickMinItem(values, (v) => v[1]);
+  const closestValue = pickMinItem(values, (v) => v[1])!;
   const closestEdgeIndex = closestValue[0];
   const closestPedal = closestValue[2];
 

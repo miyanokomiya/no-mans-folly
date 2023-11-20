@@ -5,6 +5,7 @@ import { StyleScheme } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
 import { renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
+import { pickMinItem } from "../utils/commons";
 
 const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
@@ -65,7 +66,10 @@ export function newShapeSnapping(option: Option) {
             rectRight[0].x,
           ]);
         });
-        const closest = vList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
+        const closest = pickMinItem(
+          vList.filter((v) => v.ad < snapThreshold),
+          (v) => v.ad,
+        );
         if (closest) {
           xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
         }
@@ -82,7 +86,10 @@ export function newShapeSnapping(option: Option) {
 
           return getSnappingTmpResult(line, line[0].y, values);
         });
-        const closest = hList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
+        const closest = pickMinItem(
+          hList.filter((v) => v.ad < snapThreshold),
+          (v) => v.ad,
+        );
         if (closest) {
           yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
         }
@@ -163,7 +170,10 @@ export function newShapeSnapping(option: Option) {
         const vList = lines.v.map<SnappingTmpResult>((line) => {
           return getSnappingTmpResult(line, line[0].x, [p.x]);
         });
-        const closest = vList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
+        const closest = pickMinItem(
+          vList.filter((v) => v.ad < snapThreshold),
+          (v) => v.ad,
+        );
         if (closest) {
           xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
         }
@@ -174,7 +184,10 @@ export function newShapeSnapping(option: Option) {
         const hList = lines.h.map<SnappingTmpResult>((line) => {
           return getSnappingTmpResult(line, line[0].y, [p.y]);
         });
-        const closest = hList.filter((v) => v.ad < snapThreshold).sort((a, b) => a.ad - b.ad)[0];
+        const closest = pickMinItem(
+          hList.filter((v) => v.ad < snapThreshold),
+          (v) => v.ad,
+        );
         if (closest) {
           yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
         }
@@ -320,13 +333,14 @@ export function renderSnappingResult(
 }
 
 function getSnappingTmpResult(line: [IVec2, IVec2], target: number, clients: number[]): SnappingTmpResult {
-  return clients
-    .map((v) => {
+  return pickMinItem(
+    clients.map((v) => {
       const d = target - v;
       const ad = Math.abs(d);
       return { d, ad, line };
-    })
-    .sort((a, b) => a.ad - b.ad)[0];
+    }),
+    (v) => v.ad,
+  )!;
 }
 
 interface IntervalSnappingInfo {

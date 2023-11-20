@@ -246,4 +246,7 @@ describe("pickMinItem", () => {
     ];
     expect(target.pickMinItem(items, (item) => item.value)).toEqual(items[1]);
   });
+  test("should return undefined when there's no item", () => {
+    expect(target.pickMinItem([], () => 0)).toEqual(undefined);
+  });
 });
