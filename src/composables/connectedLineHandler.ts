@@ -153,9 +153,10 @@ export function newConnectedLineHandler(option: Option) {
         const original = shapeMap[id] as LineShape;
         if (original.curveType !== "auto") return;
 
+        const updated = updatedMap[id] ?? {};
         ret[id] = {
           ...patch,
-          curves: getAutomaticCurve(getLinePath({ ...original, ...patch })),
+          curves: getAutomaticCurve(getLinePath({ ...original, ...updated, ...patch })),
         };
       });
     }
