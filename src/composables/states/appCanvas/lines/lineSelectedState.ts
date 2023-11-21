@@ -88,6 +88,7 @@ export function newLineSelectedState(): AppCanvasState {
                 event,
                 lineShape.id,
                 ctx.getShapeComposite().getSelectionScope(lineShape),
+                [lineShape.id],
               );
             }
             case 1:
@@ -98,6 +99,7 @@ export function newLineSelectedState(): AppCanvasState {
                 event,
                 lineShape.id,
                 ctx.getShapeComposite().getSelectionScope(lineShape),
+                [lineShape.id],
               );
             }
             default:
@@ -112,7 +114,9 @@ export function newLineSelectedState(): AppCanvasState {
           }
 
           const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, { parentId: lineShape.id });
+          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, { parentId: lineShape.id }, [
+            lineShape.id,
+          ]);
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }

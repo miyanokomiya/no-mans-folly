@@ -394,9 +394,10 @@ export function handleCommonPointerDownLeftOnSingleSelection(
   event: PointerDownEvent,
   selectedId: string,
   selectionScope?: ShapeSelectionScope,
+  excludeIds?: string[],
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
-  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope);
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope, excludeIds);
   if (!shapeAtPointer) {
     return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
   }
@@ -422,9 +423,10 @@ export function handleCommonPointerDownRightOnSingleSelection(
   event: PointerDownEvent,
   selectedId: string,
   selectionScope?: ShapeSelectionScope,
+  excludeIds?: string[],
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
-  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope);
+  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope, excludeIds);
   if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
 
   ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
