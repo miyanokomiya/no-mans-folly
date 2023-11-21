@@ -13,6 +13,7 @@ import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   ISegment,
   expandRect,
+  getBezierSplineBounds,
   getRectPoints,
   getRelativePointOnBezierPath,
   getRelativePointOnPath,
@@ -170,15 +171,17 @@ export const struct: ShapeStruct<LineShape> = {
     }
   },
   getWrapperRect(shape, _, includeBounds) {
-    let rect = getOuterRectangle([getLinePath(shape)]);
+    const path = getLinePath(shape);
+    let rect = isCurveLine(shape) ? getBezierSplineBounds(path, shape.curves) : getOuterRectangle([path]);
+
     if (includeBounds) {
       // FIXME: This expanding isn't perfect nor deals with heads.
-      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
+      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 1.9);
     }
     return rect;
   },
   getLocalRectPolygon(shape) {
-    return getRectPoints(getOuterRectangle([getLinePath(shape)]));
+    return getRectPoints(struct.getWrapperRect(shape));
   },
   isPointOn(shape, p, shapeContext) {
     const edges = getEdges(shape);

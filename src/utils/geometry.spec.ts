@@ -36,6 +36,9 @@ import {
   isPointCloseToBezierSegment,
   getRelativePointOnBezierPath,
   getSegments,
+  getBezierMinValue,
+  getBezierMaxValue,
+  getBezierSplineBounds,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -743,5 +746,40 @@ describe("measurePointAndRect", () => {
 
     // Inside the rect
     expect(getDistanceBetweenPointAndRect({ x: 10, y: 20 }, rect)).toBeCloseTo(0);
+  });
+});
+
+describe("getBezierSplineBounds", () => {
+  test("should return the bounds of the bezier spline", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const controls = [
+      { c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } },
+      { c1: { x: 15, y: 2.5 }, c2: { x: 15, y: 7.5 } },
+    ];
+    const ret0 = getBezierSplineBounds(points, controls);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(-3.75, 3);
+    expect(ret0.width).toBeCloseTo(13.75, 3);
+    expect(ret0.height).toBeCloseTo(13.75, 3);
+  });
+});
+
+describe("getBezierMinValue", () => {
+  test("should return minimum value on the supplied cubic bezier", () => {
+    expect(getBezierMinValue(0, 10, 2, 8)).toBeCloseTo(0, 3);
+    expect(getBezierMinValue(0, 0, -10, -10)).toBeCloseTo(-7.5, 3);
+    expect(getBezierMinValue(10, 10, 0, 0)).toBeCloseTo(10 - 7.5, 3);
+  });
+});
+
+describe("getBezierMaxValue", () => {
+  test("should return maximum value on the supplied cubic bezier", () => {
+    expect(getBezierMaxValue(0, 10, 2, 8)).toBeCloseTo(10, 3);
+    expect(getBezierMaxValue(0, 0, 10, 10)).toBeCloseTo(7.5, 3);
+    expect(getBezierMaxValue(10, 10, 20, 20)).toBeCloseTo(17.5, 3);
   });
 });

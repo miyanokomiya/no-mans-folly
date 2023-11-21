@@ -27,10 +27,13 @@ import {
   vec,
 } from "okageo";
 import { CurveControl } from "../models";
+import { pickMinItem } from "./commons";
 
 export const BEZIER_APPROX_SIZE = 10;
 
 export type ISegment = [IVec2, IVec2];
+
+export type IRange = [min: number, max: number];
 
 export type RotatedRectPath = [path: IVec2[], rotation: number];
 
@@ -557,4 +560,93 @@ export function getRotationAffines(rotation: number, origin: IVec2) {
       [1, 0, 0, 1, -origin.x, -origin.y],
     ]),
   };
+}
+
+export function getBezierSplineBounds(points: IVec2[], controls: CurveControl[]): IRectangle {
+  const segments = getSegments(points);
+  const segmentRangeList = segments.map<{ x: IRange; y: IRange; p1: IVec2; p2: IVec2; c1: IVec2; c2: IVec2 }>(
+    ([p1, p2], i) => {
+      const { c1, c2 } = controls[i];
+      return {
+        x: [Math.min(p1.x, p2.x, c1.x, c2.x), Math.max(p1.x, p2.x, c1.x, c2.x)],
+        y: [Math.min(p1.y, p2.y, c1.y, c2.y), Math.max(p1.y, p2.y, c1.y, c2.y)],
+        p1,
+        p2,
+        c1,
+        c2,
+      };
+    },
+  );
+
+  const candidatesMinX = segmentRangeList.reduce((list, item) => {
+    return list.filter((c) => c.x[0] <= item.x[1]);
+  }, segmentRangeList);
+  const candidatesMaxX = segmentRangeList.reduce((list, item) => {
+    return list.filter((c) => item.x[0] <= c.x[1]);
+  }, segmentRangeList);
+  const candidatesMinY = segmentRangeList.reduce((list, item) => {
+    return list.filter((c) => c.y[0] <= item.y[1]);
+  }, segmentRangeList);
+  const candidatesMaxY = segmentRangeList.reduce((list, item) => {
+    return list.filter((c) => item.y[0] <= c.y[1]);
+  }, segmentRangeList);
+
+  const minX = pickMinItem(
+    candidatesMinX.map((c) => getBezierMinValue(c.p1.x, c.p2.x, c.c1.x, c.c2.x)),
+    (v) => v,
+  )!;
+  const maxX = pickMinItem(
+    candidatesMaxX.map((c) => getBezierMaxValue(c.p1.x, c.p2.x, c.c1.x, c.c2.x)),
+    (v) => -v,
+  )!;
+  const minY = pickMinItem(
+    candidatesMinY.map((c) => getBezierMinValue(c.p1.y, c.p2.y, c.c1.y, c.c2.y)),
+    (v) => v,
+  )!;
+  const maxY = pickMinItem(
+    candidatesMaxY.map((c) => getBezierMaxValue(c.p1.y, c.p2.y, c.c1.y, c.c2.y)),
+    (v) => -v,
+  )!;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+export function getBezierMinValue(v1: number, v2: number, c1: number, c2: number): number {
+  const minV = Math.min(v1, v2);
+  if (minV <= c1 && minV <= c2) {
+    // The target point is at a vertex.
+    return minV;
+  } else {
+    // The target point is on the curve.
+    const [a, b, c] = getBezierDerivative(v1, v2, c1, c2);
+    const valued = solveEquationOrder2(a, b, c).filter((v) => 0 < v && v < 1);
+    return Math.min(minV, ...valued.map((v) => getBezierValue(v1, v2, c1, c2, v)));
+  }
+}
+
+export function getBezierMaxValue(v1: number, v2: number, c1: number, c2: number): number {
+  const maxV = Math.max(v1, v2);
+  if (c1 <= maxV && c2 <= maxV) {
+    // The target point is at a vertex.
+    return maxV;
+  } else {
+    // The target point is on the curve.
+    const [a, b, c] = getBezierDerivative(v1, v2, c1, c2);
+    const valued = solveEquationOrder2(a, b, c).filter((v) => 0 < v && v < 1);
+    return Math.max(maxV, ...valued.map((v) => getBezierValue(v1, v2, c1, c2, v)));
+  }
+}
+
+function getBezierDerivative(v1: number, v2: number, c1: number, c2: number): [a: number, b: number, c: number] {
+  const d1 = c1 - v1;
+  const d2 = c2 - c1;
+  const d3 = v2 - c2;
+  const a = 3 * d1 - 6 * d2 + 3 * d3;
+  const b = -6 * d1 + 6 * d2;
+  const c = 3 * d1;
+  return [a, b, c];
+}
+
+function getBezierValue(v1: number, v2: number, c1: number, c2: number, t: number): number {
+  const nt = 1 - t;
+  return v1 * nt * nt * nt + 3 * c1 * t * nt * nt + 3 * c2 * t * t * nt + v2 * t * t * t;
 }
