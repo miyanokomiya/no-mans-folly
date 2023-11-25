@@ -38,4 +38,7 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
       true,
     );
   },
+  getWrapperRadius(_head, lineWidth) {
+    return 6 + lineWidth;
+  },
 };

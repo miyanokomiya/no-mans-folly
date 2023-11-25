@@ -6,6 +6,11 @@ export interface LineHeadStruct<T extends LineHead> {
   create: (arg?: Partial<T>) => T;
   render: (ctx: CanvasRenderingContext2D, head: T, transform: AffineMatrix, lineWidth: number) => void;
   clip: (region: Path2D, head: T, transform: AffineMatrix, lineWidth: number) => void;
+  /**
+   * Returns radius bigger enough to accomodate this head.
+   * This value isn't the precisest to omit some complicate parameters such as rotation.
+   */
+  getWrapperRadius: (head: T, lineWidth: number) => number;
 }
 
 export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
@@ -18,4 +23,5 @@ export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
   },
   render() {},
   clip() {},
+  getWrapperRadius: () => 0,
 };

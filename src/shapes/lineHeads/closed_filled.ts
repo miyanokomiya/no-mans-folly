@@ -13,7 +13,7 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
   },
   render(ctx, _head, transform, lineWidth) {
     const height = 12 + lineWidth;
-    const width = 12 + lineWidth;
+    const width = height;
 
     ctx.beginPath();
     applyPath(
@@ -34,7 +34,7 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
   },
   clip(region, _head, transform, lineWidth) {
     const height = 12 + lineWidth;
-    const width = 12 + lineWidth;
+    const width = height;
 
     applyPath(
       region,
@@ -46,5 +46,8 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
       ].map((p) => applyAffine(transform, p)),
       true,
     );
+  },
+  getWrapperRadius(_head, lineWidth) {
+    return (12 + lineWidth) * Math.SQRT2;
   },
 };

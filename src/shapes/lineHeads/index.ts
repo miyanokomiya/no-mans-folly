@@ -35,3 +35,7 @@ export function renderLineHead<T extends LineHead>(
 export function clipLineHead<T extends LineHead>(region: Path2D, head: T, transform: AffineMatrix, lineWidth: number) {
   getLineHeadStruct(head.type).clip(region, head, transform, lineWidth);
 }
+
+export function getLineHeadWrapperRadius<T extends LineHead>(head: T, lineWidth: number): number {
+  return getLineHeadStruct(head.type).getWrapperRadius(head, lineWidth);
+}

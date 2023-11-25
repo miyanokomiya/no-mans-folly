@@ -43,4 +43,7 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
       true,
     );
   },
+  getWrapperRadius(_head, lineWidth) {
+    return (20 + lineWidth) * Math.SQRT2;
+  },
 };

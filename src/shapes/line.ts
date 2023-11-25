@@ -1,5 +1,6 @@
 import {
   AffineMatrix,
+  IRectangle,
   IVec2,
   applyAffine,
   getBezier3LerpFn,
@@ -17,12 +18,13 @@ import {
   getRectPoints,
   getRelativePointOnBezierPath,
   getRelativePointOnPath,
+  getWrapperRect,
   isPointCloseToBezierSpline,
   isPointCloseToSegment,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
-import { clipLineHead, renderLineHead } from "./lineHeads";
+import { clipLineHead, getLineHeadWrapperRadius, renderLineHead } from "./lineHeads";
 import { applyBezierPath, applyPath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
@@ -178,6 +180,18 @@ export const struct: ShapeStruct<LineShape> = {
       // FIXME: This expanding isn't perfect nor deals with heads.
       rect = expandRect(rect, getStrokeWidth(shape.stroke) / 1.9);
     }
+
+    const headRects: IRectangle[] = [];
+    if (shape.pHead) {
+      const size = getLineHeadWrapperRadius(shape.pHead, shape.stroke.width ?? 1);
+      headRects.push({ x: shape.p.x - size, y: shape.p.y - size, width: size * 2, height: size * 2 });
+    }
+    if (shape.qHead) {
+      const size = getLineHeadWrapperRadius(shape.qHead, shape.stroke.width ?? 1) * 2;
+      headRects.push({ x: shape.q.x - size, y: shape.q.y - size, width: size * 2, height: size * 2 });
+    }
+    rect = headRects.length > 0 ? getWrapperRect([rect, ...headRects]) : rect;
+
     return rect;
   },
   getLocalRectPolygon(shape) {
