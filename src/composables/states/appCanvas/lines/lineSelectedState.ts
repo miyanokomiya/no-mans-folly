@@ -35,7 +35,7 @@ export function newLineSelectedState(): AppCanvasState {
     onStart: (ctx) => {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
-      lineBounding = newLineBounding({ lineShape, scale: ctx.getScale(), styleScheme: ctx.getStyleScheme() });
+      lineBounding = newLineBounding({ lineShape, styleScheme: ctx.getStyleScheme() });
       ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams(ctx)]);
     },
     onEnd: (ctx) => {
@@ -53,13 +53,15 @@ export function newLineSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              const hitResult = lineBounding.hitTest(event.data.point);
+              const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 if (event.data.options.alt) {
                   return newDuplicatingShapesState;
                 }
 
                 switch (hitResult.type) {
+                  case "move-anchor":
+                    return newMovingHubState;
                   case "vertex":
                     if (event.data.options.shift) {
                       const patch = deleteVertex(lineShape, hitResult.index);
@@ -106,7 +108,7 @@ export function newLineSelectedState(): AppCanvasState {
               return;
           }
         case "pointerhover": {
-          const hitResult = lineBounding.hitTest(event.data.current);
+          const hitResult = lineBounding.hitTest(event.data.current, ctx.getScale());
           if (lineBounding.saveHitResult(hitResult)) ctx.setTmpShapeMap({});
           if (hitResult) {
             ctx.setCursor();
@@ -129,7 +131,7 @@ export function newLineSelectedState(): AppCanvasState {
               return handleCommonShortcut(ctx, event);
           }
         case "wheel":
-          lineBounding.updateScale(ctx.zoomView(event.data.delta.y));
+          ctx.zoomView(event.data.delta.y);
           return;
         case "selection": {
           return newSelectionHubState;
@@ -192,8 +194,8 @@ export function newLineSelectedState(): AppCanvasState {
           return;
       }
     },
-    render: (_ctx, renderCtx) => {
-      lineBounding.render(renderCtx);
+    render: (ctx, renderCtx) => {
+      lineBounding.render(renderCtx, ctx.getScale());
     },
   };
 }

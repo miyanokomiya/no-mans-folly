@@ -10,10 +10,17 @@ describe("newLineBounding", () => {
       styleScheme: createStyleScheme(),
       scale: 1,
     };
+
     test("should return hit result for the line", () => {
       const target = newLineBounding(option);
 
       expect(target.hitTest({ x: -10, y: 0 })).toEqual(undefined);
+
+      expect(target.hitTest({ x: -30, y: 0 })).toEqual({
+        type: "move-anchor",
+        index: 0,
+      });
+
       expect(target.hitTest({ x: -1, y: 0 })).toEqual({
         type: "vertex",
         index: 0,

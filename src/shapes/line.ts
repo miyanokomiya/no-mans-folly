@@ -78,14 +78,8 @@ export const struct: ShapeStruct<LineShape> = {
 
     let pAffine: AffineMatrix | undefined;
     if (shape.pHead) {
-      let pVicinity = linePath[1];
       const p = linePath[0];
-      if (shape.curves && shape.curves.length > 0) {
-        const c = shape.curves[0];
-        const lerpFn = getBezier3LerpFn([p, c.c1, c.c2, linePath[1]]);
-        pVicinity = lerpFn(0.01);
-      }
-      const r = getRadian(p, pVicinity);
+      const r = getRadianP(shape);
       const sin = Math.sin(r);
       const cos = Math.cos(r);
       pAffine = multiAffines([
@@ -96,14 +90,8 @@ export const struct: ShapeStruct<LineShape> = {
 
     let qAffine: AffineMatrix | undefined;
     if (shape.qHead) {
-      let qVicinity = linePath[linePath.length - 2];
       const q = linePath[linePath.length - 1];
-      if (shape.curves && shape.curves.length > 0) {
-        const c = shape.curves[shape.curves.length - 1];
-        const lerpFn = getBezier3LerpFn([q, c.c2, c.c1, linePath[linePath.length - 2]]);
-        qVicinity = lerpFn(0.01);
-      }
-      const r = getRadian(q, qVicinity);
+      const r = getRadianQ(shape);
       const sin = Math.sin(r);
       const cos = Math.cos(r);
       qAffine = multiAffines([
@@ -416,4 +404,30 @@ export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
   } else {
     return getRelativePointOnPath(path, rate);
   }
+}
+
+export function getRadianP(shape: LineShape): number {
+  const linePath = getLinePath(shape);
+  const p = linePath[0];
+
+  let pVicinity = linePath[1];
+  if (shape.curves && shape.curves.length > 0) {
+    const c = shape.curves[0];
+    const lerpFn = getBezier3LerpFn([p, c.c1, c.c2, linePath[1]]);
+    pVicinity = lerpFn(0.01);
+  }
+  return getRadian(p, pVicinity);
+}
+
+export function getRadianQ(shape: LineShape): number {
+  const linePath = getLinePath(shape);
+  const q = linePath[linePath.length - 1];
+
+  let qVicinity = linePath[linePath.length - 2];
+  if (shape.curves && shape.curves.length > 0) {
+    const c = shape.curves[shape.curves.length - 1];
+    const lerpFn = getBezier3LerpFn([q, c.c2, c.c1, linePath[linePath.length - 2]]);
+    qVicinity = lerpFn(0.01);
+  }
+  return getRadian(q, qVicinity);
 }

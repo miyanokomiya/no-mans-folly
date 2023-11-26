@@ -3,6 +3,8 @@ import {
   addNewVertex,
   deleteVertex,
   getLinePath,
+  getRadianP,
+  getRadianQ,
   isCurveLine,
   isLineShape,
   patchConnection,
@@ -416,5 +418,45 @@ describe("isCurveLine", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("getRadianP", () => {
+  test("should return radian toward the first point", () => {
+    expect(getRadianP(struct.create({ p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 10 } }] }))).toBeCloseTo(
+      (-Math.PI * 3) / 4,
+    );
+    expect(
+      getRadianP(
+        struct.create({
+          p: { x: 0, y: 0 },
+          body: [{ p: { x: 10, y: 10 } }],
+          curves: [
+            { c1: { x: 0, y: 5 }, c2: { x: 5, y: 10 } },
+            { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } },
+          ],
+        }),
+      ),
+    ).toBeCloseTo(-1.581, 3);
+  });
+});
+
+describe("getRadianQ", () => {
+  test("should return radian toward the last point", () => {
+    expect(getRadianQ(struct.create({ q: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 10 } }] }))).toBeCloseTo(
+      (-Math.PI * 3) / 4,
+    );
+    expect(
+      getRadianQ(
+        struct.create({
+          q: { x: 0, y: 0 },
+          body: [{ p: { x: 10, y: 10 } }],
+          curves: [
+            { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } },
+            { c1: { x: 5, y: 10 }, c2: { x: 0, y: 5 } },
+          ],
+        }),
+      ),
+    ).toBeCloseTo(-1.581, 3);
   });
 });

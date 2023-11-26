@@ -1,6 +1,6 @@
-import { IVec2, getBezier3LerpFn, getCenter } from "okageo";
+import { IVec2, add, getBezier3LerpFn, getCenter, multi, rotate } from "okageo";
 import { StyleScheme } from "../models";
-import { LineShape, getEdges, getLinePath } from "../shapes/line";
+import { LineShape, getEdges, getLinePath, getRadianP } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
@@ -9,8 +9,9 @@ import { applyBezierPath, applyPath } from "../utils/renderer";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 0.8;
+const MOVE_ANCHOR_RATE = 1.4;
 
-type LineHitType = "vertex" | "edge" | "new-vertex-anchor";
+type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor";
 export interface LineHitResult {
   type: LineHitType;
   index: number;
@@ -19,7 +20,6 @@ export interface LineHitResult {
 interface Option {
   lineShape: LineShape;
   styleScheme: StyleScheme;
-  scale?: number;
 }
 
 export function newLineBounding(option: Option) {
@@ -35,14 +35,15 @@ export function newLineBounding(option: Option) {
       return getCenter(edge[0], edge[1]);
     }
   });
-  let scale = option.scale ?? 1;
-  let hitResult: LineHitResult | undefined;
+  const moveAnchorV = rotate({ x: 30, y: 0 }, getRadianP(lineShape));
 
   const elbow = isElbow(lineShape);
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
 
-  function updateScale(val: number) {
-    scale = val;
+  let hitResult: LineHitResult | undefined;
+
+  function getMoveAnchor(scale: number): IVec2 {
+    return add(vertices[0], multi(moveAnchorV, scale));
   }
 
   // Returns true when something changes
@@ -56,9 +57,17 @@ export function newLineBounding(option: Option) {
     return false;
   }
 
-  function hitTest(p: IVec2): LineHitResult | undefined {
+  function hitTest(p: IVec2, scale = 1): LineHitResult | undefined {
     const vertexSize = VERTEX_R * scale;
     const addAnchorSize = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+
+    {
+      const moveAnchor = getMoveAnchor(scale);
+      const testFn = newCircleHitTest(moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
+      if (testFn.test(p)) {
+        return { type: "move-anchor", index: 0 };
+      }
+    }
 
     {
       const vertexIndex = vertices.findIndex((v) => {
@@ -111,7 +120,7 @@ export function newLineBounding(option: Option) {
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D) {
+  function render(ctx: CanvasRenderingContext2D, scale = 1) {
     const vertexSize = VERTEX_R * scale;
     const style = option.styleScheme;
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
@@ -127,6 +136,12 @@ export function newLineBounding(option: Option) {
       ctx.stroke();
     });
 
+    const moveAnchor = getMoveAnchor(scale);
+    ctx.beginPath();
+    ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+
     if (!elbow) {
       applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
       edgeCenters.forEach((c) => {
@@ -140,6 +155,40 @@ export function newLineBounding(option: Option) {
     if (hitResult) {
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
       switch (hitResult.type) {
+        case "move-anchor": {
+          applyFillStyle(ctx, { color: style.selectionPrimary });
+          ctx.beginPath();
+          ctx.ellipse(
+            moveAnchor.x,
+            moveAnchor.y,
+            vertexSize * MOVE_ANCHOR_RATE,
+            vertexSize * MOVE_ANCHOR_RATE,
+            0,
+            0,
+            TAU,
+          );
+          ctx.fill();
+
+          edges.forEach((edge, i) => {
+            ctx.beginPath();
+            if (curves) {
+              applyBezierPath(ctx, edge, [curves[i]]);
+            } else {
+              applyPath(ctx, edge);
+            }
+            ctx.stroke();
+          });
+
+          points.forEach((p, i) => {
+            if (!availableVertexIndex.has(i)) return;
+
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+            ctx.fill();
+            ctx.stroke();
+          });
+          break;
+        }
         case "vertex": {
           applyFillStyle(ctx, { color: style.selectionPrimary });
           const p = points[hitResult.index];
@@ -170,7 +219,7 @@ export function newLineBounding(option: Option) {
     }
   }
 
-  return { updateScale, saveHitResult, hitTest, getCursorStyle, render };
+  return { saveHitResult, hitTest, getCursorStyle, render };
 }
 export type LineBounding = ReturnType<typeof newLineBounding>;
 
