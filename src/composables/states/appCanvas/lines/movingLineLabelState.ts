@@ -1,12 +1,19 @@
 import type { AppCanvasState } from "../core";
 import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
 import { mapReduce, patchPipe } from "../../../../utils/commons";
-import { LineLabelHandler, newLineLabelHandler, renderParentLineRelation } from "../../../lineLabelHandler";
+import {
+  LineLabelHandler,
+  getPatchByUpdateLabelAlign,
+  newLineLabelHandler,
+  renderParentLineRelation,
+} from "../../../lineLabelHandler";
 import { resizeShape } from "../../../../shapes";
 import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
+import { Shape } from "../../../../models";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -24,6 +31,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
     onStart: (ctx) => {
       ctx.startDragging();
       ctx.setCursor("move");
+      ctx.setCommandExams([COMMAND_EXAM_SRC.LABEL_ALIGN]);
 
       const id = ctx.getLastSelectedShapeId();
       const shapeMap = ctx.getShapeComposite().shapeMap;
@@ -39,23 +47,43 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
       ctx.setCursor();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          const d = sub(event.data.current, event.data.start);
-          const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
-          const patched = patchPipe(
-            [
-              (src) => mapReduce(src, (s) => resizeShape(ctx.getShapeStruct, s, affineSrc)),
-              (_src, patch) => lineLabelHandler.onModified(patch),
-            ],
-            { [labelShape.id]: labelShape },
-          );
-          ctx.setTmpShapeMap(patched.patch);
+          let patch: { [id: string]: Partial<Shape> };
 
+          if (event.data.shift) {
+            // Keep the latest label position.
+            const lineAttached =
+              (ctx.getTmpShapeMap()[labelShape.id] as TextShape)?.lineAttached ?? labelShape.lineAttached;
+            patch = {
+              [labelShape.id]: {
+                lineAttached,
+                ...getPatchByUpdateLabelAlign(
+                  parentLineShape,
+                  { ...labelShape, lineAttached },
+                  event.data.current,
+                  ctx.getScale(),
+                ),
+              },
+            };
+          } else {
+            const d = sub(event.data.current, event.data.start);
+            const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
+            patch = patchPipe(
+              [
+                (src) => mapReduce(src, (s) => resizeShape(ctx.getShapeStruct, s, affineSrc)),
+                (_src, patch) => lineLabelHandler.onModified(patch),
+              ],
+              { [labelShape.id]: labelShape },
+            ).patch;
+          }
+
+          ctx.setTmpShapeMap(patch);
           // Save final transition as current affine
-          const updated = patched.patch[labelShape.id];
+          const updated = patch[labelShape.id];
           affine = updated.p
             ? [1, 0, 0, 1, updated.p.x - labelShape.p.x, updated.p.y - labelShape.p.y]
             : IDENTITY_AFFINE;

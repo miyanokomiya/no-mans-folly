@@ -1,3 +1,4 @@
+import { IVec2 } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { LineShape, getLinePath, getRelativePointOn, isCurveLine, isLineShape } from "../shapes/line";
 import { TextShape, isLineLabelShape, patchPosition } from "../shapes/text";
@@ -76,6 +77,28 @@ export function renderParentLineRelation(
 
 function getLabelMargin(line: LineShape): number {
   return (line.stroke.width ?? 1) / 2 + 6;
+}
+
+/**
+ * Returns patch object to update the lable's aligns and position based on the parent line and the given point.
+ */
+export function getPatchByUpdateLabelAlign(parentLine: LineShape, label: TextShape, targetP: IVec2, scale = 1) {
+  const origin = getRelativePointOn(parentLine, label.lineAttached ?? 0.5);
+  const size = 20 * scale;
+  let patched: Partial<TextShape> = {
+    hAlign: targetP.x < origin.x - size ? "right" : origin.x + size < targetP.x ? "left" : "center",
+    vAlign: targetP.y < origin.y - size ? "bottom" : origin.y + size < targetP.y ? "top" : "center",
+  };
+  patched = { ...patched, ...patchPosition({ ...label, ...patched }, origin, getLabelMargin(parentLine)) };
+
+  if (patched.hAlign === label.hAlign) {
+    delete patched.hAlign;
+  }
+  if (patched.vAlign === label.vAlign) {
+    delete patched.vAlign;
+  }
+
+  return patched;
 }
 
 export function getLineLabelPatch(srcComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {

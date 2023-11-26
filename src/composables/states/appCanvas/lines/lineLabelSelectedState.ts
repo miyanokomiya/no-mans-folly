@@ -23,6 +23,7 @@ import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
 import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -37,7 +38,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "LineLabelSelected",
     onStart: (ctx) => {
-      ctx.setCommandExams(getCommonCommandExams(ctx));
+      ctx.setCommandExams([COMMAND_EXAM_SRC.LABEL_ALIGN_ACTIVATE, ...getCommonCommandExams(ctx)]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
