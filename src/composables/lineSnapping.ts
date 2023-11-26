@@ -8,12 +8,13 @@ import {
 } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
-import { LineShape, getLinePath } from "../shapes/line";
+import { LineShape, getLinePath, isLineShape } from "../shapes/line";
 import { ISegment, TAU, extendSegment, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
+import { isLineLabelShape } from "../shapes/text";
 
 const SNAP_THRESHOLD = 10;
 
@@ -335,4 +336,8 @@ export function optimizeLinePath(
   }
 
   return Object.keys(ret).length > 0 ? ret : undefined;
+}
+
+export function isLineSnappableShape(shape: Shape): boolean {
+  return !isLineShape(shape) && !isLineLabelShape(shape);
 }

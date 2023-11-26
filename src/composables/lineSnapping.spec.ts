@@ -1,10 +1,11 @@
 import { expect, describe, test } from "vitest";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
-import { getOptimizedSegment, newLineSnapping, optimizeLinePath } from "./lineSnapping";
+import { getOptimizedSegment, isLineSnappableShape, newLineSnapping, optimizeLinePath } from "./lineSnapping";
 import { LineShape } from "../shapes/line";
 import { EllipseShape } from "../shapes/ellipse";
 import { newShapeComposite } from "./shapeComposite";
+import { TextShape } from "../shapes/text";
 
 describe("newLineSnapping", () => {
   describe("testConnection", () => {
@@ -423,5 +424,15 @@ describe("optimizeLinePath", () => {
         qConnection: { id: "b", rate: { x: 0.5, y: 0 }, optimized: true },
       });
     });
+  });
+});
+
+describe("isLineSnappableShape", () => {
+  test("should return true if a shape is snappable to lines", () => {
+    expect(isLineSnappableShape(createShape(getCommonStruct, "rectangle", {}))).toBe(true);
+    expect(isLineSnappableShape(createShape(getCommonStruct, "text", {}))).toBe(true);
+
+    expect(isLineSnappableShape(createShape(getCommonStruct, "line", {}))).toBe(false);
+    expect(isLineSnappableShape(createShape<TextShape>(getCommonStruct, "text", { lineAttached: 0.5 }))).toBe(false);
   });
 });

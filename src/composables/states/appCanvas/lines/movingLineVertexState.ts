@@ -6,6 +6,7 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
   ConnectionResult,
   LineSnapping,
+  isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
   renderConnectionResult,
@@ -42,8 +43,9 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const selectedIds = ctx.getSelectedShapeIdMap();
+      const branchIdSet = new Set(shapeComposite.getAllBranchMergedShapes(Object.keys(selectedIds)).map((s) => s.id));
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        Object.values(shapeMap).filter((s) => !branchIdSet.has(s.id) && isLineSnappableShape(s)),
         ctx.getViewRect(),
       );
       lineSnapping = newLineSnapping({

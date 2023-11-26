@@ -3,7 +3,13 @@ import { handleHistoryEvent } from "../commons";
 import { LineShape, addNewVertex, getLinePath, isLineShape } from "../../../../shapes/line";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { ConnectionResult, LineSnapping, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import {
+  ConnectionResult,
+  LineSnapping,
+  isLineSnappableShape,
+  newLineSnapping,
+  renderConnectionResult,
+} from "../../../lineSnapping";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
@@ -34,7 +40,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       const shapeMap = shapeComposite.shapeMap;
       const selectedIds = ctx.getSelectedShapeIdMap();
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !isLineShape(s)),
+        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && isLineSnappableShape(s)),
         ctx.getViewRect(),
       );
       const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };

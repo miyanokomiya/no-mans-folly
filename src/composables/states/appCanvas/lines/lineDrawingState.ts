@@ -5,6 +5,7 @@ import { newLineSelectedState } from "./lineSelectedState";
 import {
   ConnectionResult,
   LineSnapping,
+  isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
   renderConnectionResult,
@@ -40,7 +41,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !isLineShape(s)),
+        Object.values(shapeMap).filter(isLineSnappableShape),
         ctx.getViewRect(),
       );
       lineSnapping = newLineSnapping({
