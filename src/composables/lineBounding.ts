@@ -5,7 +5,7 @@ import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyBezierPath, applyPath } from "../utils/renderer";
+import { applyBezierPath, applyPath, renderMoveIcon } from "../utils/renderer";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 0.8;
@@ -136,12 +136,6 @@ export function newLineBounding(option: Option) {
       ctx.stroke();
     });
 
-    const moveAnchor = getMoveAnchor(scale);
-    ctx.beginPath();
-    ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
-    ctx.fill();
-    ctx.stroke();
-
     if (!elbow) {
       applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
       edgeCenters.forEach((c) => {
@@ -151,6 +145,13 @@ export function newLineBounding(option: Option) {
         ctx.stroke();
       });
     }
+
+    const moveAnchor = getMoveAnchor(scale);
+    ctx.beginPath();
+    ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
+    ctx.fill();
+    applyFillStyle(ctx, { color: style.selectionPrimary });
+    renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
 
     if (hitResult) {
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
@@ -168,6 +169,8 @@ export function newLineBounding(option: Option) {
             TAU,
           );
           ctx.fill();
+          ctx.fillStyle = "#fff";
+          renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
 
           edges.forEach((edge, i) => {
             ctx.beginPath();

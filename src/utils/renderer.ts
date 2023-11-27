@@ -1,5 +1,5 @@
 import { IRectangle, IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
-import { ISegment } from "./geometry";
+import { ISegment, getRotateFn } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
@@ -88,8 +88,44 @@ export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: nu
   ctx.moveTo(p.x, p.y - half);
   ctx.lineTo(p.x, p.y + half);
   ctx.stroke();
+}
 
+export function renderMoveIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
+  const size_1_4 = size / 4;
+  const size_1_8 = size_1_4 / 2;
+  const size_3_4 = (size * 3) / 4;
+  const size_3_16 = size_3_4 / 2;
+
+  const from = { x: size_1_8, y: size_1_8 };
+  const arrowPath = [
+    { x: size_1_8, y: size_1_8 + size_3_16 },
+    { x: size_3_16, y: size_1_8 + size_3_16 },
+    { x: 0, y: size_1_4 + size_3_4 },
+    { x: -size_3_16, y: size_1_8 + size_3_16 },
+    { x: -size_1_8, y: size_1_8 + size_3_16 },
+    { x: -size_1_8, y: size_1_8 },
+  ];
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.setLineDash([]);
+  ctx.lineWidth = size * 0.03;
+  ctx.translate(p.x, p.y);
   ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  [0, 1, 2, 3].forEach((d) => {
+    const rotateFn = getRotateFn((d * Math.PI) / 2);
+    arrowPath
+      .map((p) => rotateFn(p))
+      .forEach((p) => {
+        ctx.lineTo(p.x, p.y);
+      });
+  });
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 }
 
 export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, render: () => void) {
