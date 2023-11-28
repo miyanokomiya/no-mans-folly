@@ -9,6 +9,7 @@ import {
   isLineShape,
   patchConnection,
   patchVertex,
+  patchVertices,
   struct,
 } from "./line";
 import { getCommonStruct } from ".";
@@ -244,6 +245,33 @@ describe("patchVertex", () => {
       body: [{ p: { x: 2, y: 3 } }, { p: v, c }],
     });
     expect(patchVertex(shape1, 3, v, c)).toEqual({ q: v, qConnection: c });
+  });
+});
+
+describe("patchVertices", () => {
+  test("should return patched object to update vertices", () => {
+    const shape0 = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
+    const v = { x: -1, y: -1 };
+    const c = { id: "a", rate: { x: 0.1, y: 0.2 } };
+    expect(patchVertices(shape0, [[0, v, undefined]])).toEqual({ p: v });
+    expect(
+      patchVertices(shape0, [
+        [0, v, undefined],
+        [1, v, c],
+      ]),
+    ).toEqual({ p: v, q: v, qConnection: c });
+
+    const shape1 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+    });
+    expect(
+      patchVertices(shape1, [
+        [0, v, undefined],
+        [2, v, c],
+      ]),
+    ).toEqual({ p: v, body: [{ p: { x: 2, y: 3 } }, { p: v, c }] });
   });
 });
 

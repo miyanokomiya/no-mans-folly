@@ -102,7 +102,9 @@ export function newLineBounding(option: Option) {
         });
       }
       if (edgeIndex !== -1) {
-        return { type: "edge", index: edgeIndex };
+        // Each edge of elbow line shouldn't be targeted.
+        // => They are calculated automatically.
+        return { type: elbow ? "move-anchor" : "edge", index: edgeIndex };
       }
     }
   }

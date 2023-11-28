@@ -324,6 +324,32 @@ export function patchVertex(
   }
 }
 
+export function patchVertices(
+  shape: LineShape,
+  data: [index: number, p: IVec2, c: ConnectionPoint | undefined][],
+): Partial<LineShape> {
+  const vertices = getLinePath(shape);
+  return data.reduce<Partial<LineShape>>((patch, [index, p, c]) => {
+    switch (index) {
+      case 0:
+        patch.p = p;
+        patch.pConnection = c;
+        break;
+      case vertices.length - 1:
+        patch.q = p;
+        patch.qConnection = c;
+        break;
+      default:
+        if (shape.body) {
+          patch.body ??= shape.body.concat();
+          patch.body[index - 1] = { p, c };
+        }
+        break;
+    }
+    return patch;
+  }, {});
+}
+
 export function patchConnection(shape: LineShape, index: number, connection?: ConnectionPoint): Partial<LineShape> {
   const vertices = getLinePath(shape);
   switch (index) {

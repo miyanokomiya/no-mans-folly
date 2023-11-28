@@ -25,6 +25,7 @@ import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingHubState } from "../movingHubState";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { newMovingLineSegmentState } from "./movingLineSegmentState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -78,7 +79,7 @@ export function newLineSelectedState(): AppCanvasState {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
                   case "edge":
-                    return newMovingHubState;
+                    return () => newMovingLineSegmentState({ lineShape, index: hitResult.index });
                   case "new-vertex-anchor":
                     return () =>
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });
