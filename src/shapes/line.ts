@@ -69,10 +69,10 @@ export const struct: ShapeStruct<LineShape> = {
     if (arg.qConnection) obj.qConnection = arg.qConnection;
     return obj;
   },
-  render(ctx, shape, shapeComposite) {
+  render(ctx, shape, shapeContext) {
     applyStrokeStyle(ctx, { ...shape.stroke, dash: undefined });
     applyFillStyle(ctx, shape.fill);
-    const treeNode = shapeComposite?.treeNodeMap[shape.id];
+    const treeNode = shapeContext?.treeNodeMap[shape.id];
     const linePath = getLinePath(shape);
     const hasLabels = treeNode && treeNode.children.length > 0;
 
@@ -103,8 +103,7 @@ export const struct: ShapeStruct<LineShape> = {
     let region: Path2D | undefined;
 
     if (pAffine || qAffine || hasLabels) {
-      const wrapper = getOuterRectangle([getLinePath(shape)]);
-      const outline = expandRect(wrapper, (shape.stroke.width ?? 1) * 4 + 40);
+      const outline = struct.getWrapperRect(shape, shapeContext, true);
       region = new Path2D();
       region.rect(outline.x, outline.y, outline.width, outline.height);
     }
@@ -119,9 +118,9 @@ export const struct: ShapeStruct<LineShape> = {
 
     if (region && hasLabels) {
       treeNode.children.forEach((n) => {
-        const label = shapeComposite.shapeMap[n.id];
+        const label = shapeContext.shapeMap[n.id];
         if (label && isTextShape(label)) {
-          applyPath(region!, textStruct.getLocalRectPolygon(label, shapeComposite));
+          applyPath(region!, textStruct.getLocalRectPolygon(label, shapeContext));
         }
       });
     }
@@ -165,7 +164,7 @@ export const struct: ShapeStruct<LineShape> = {
     let rect = isCurveLine(shape) ? getBezierSplineBounds(path, shape.curves) : getOuterRectangle([path]);
 
     if (includeBounds) {
-      // FIXME: This expanding isn't perfect nor deals with heads.
+      // FIXME: This expanding isn't precise but just large enough.
       rect = expandRect(rect, getStrokeWidth(shape.stroke) / 1.9);
     }
 
