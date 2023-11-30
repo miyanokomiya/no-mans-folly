@@ -650,3 +650,53 @@ function getBezierValue(v1: number, v2: number, c1: number, c2: number, t: numbe
   const nt = 1 - t;
   return v1 * nt * nt * nt + 3 * c1 * t * nt * nt + 3 * c2 * t * t * nt + v2 * t * t * t;
 }
+
+/**
+ * Returns parameters of the arc that
+ * - starts from "segment[0]" to "segment[1]"
+ * - passes through the point the same distance away from "segment" as "control"
+ * Calculation ref: https://github.com/miyanokomiya/no-mans-folly/issues/6
+ */
+export function getArcCurveParams(
+  segment: ISegment,
+  control: IVec2,
+):
+  | {
+      c: IVec2;
+      radius: number;
+      from: number;
+      to: number;
+      counterclockwise: boolean;
+      largearc: boolean;
+    }
+  | undefined {
+  const rotation = getRadian(segment[1], segment[0]);
+  const rotateFn = getRotateFn(rotation);
+
+  const nQ = rotateFn(sub(control, segment[0]), true);
+  // No arc exists when three points are on the same line.
+  if (Math.abs(nQ.y) < MINVALUE) return;
+
+  const nP = rotateFn(sub(segment[1], segment[0]), true);
+  // No arc exists when the segment is invalid
+  if (Math.abs(nP.x) < MINVALUE) return;
+
+  const dx = nP.x;
+  const dy = nQ.y;
+  const r1 = Math.atan2(dy, dx / 2);
+  const r3 = 2 * r1 - Math.PI / 2;
+  const rad = (Math.cos(r3) * dx) / 2;
+  const nC = { x: dx / 2, y: dy - rad };
+  const nFrom = Math.atan2(-nC.y, -nC.x);
+  const nTo = Math.atan2(-nC.y, nC.x);
+
+  const radius = Math.abs(rad);
+  return {
+    c: add(rotateFn(nC), segment[0]),
+    radius,
+    from: nFrom + rotation,
+    to: nTo + rotation,
+    counterclockwise: nQ.y > 0,
+    largearc: Math.abs(nQ.y) > radius,
+  };
+}

@@ -39,6 +39,7 @@ import {
   getBezierMinValue,
   getBezierMaxValue,
   getBezierSplineBounds,
+  getArcCurveParams,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -781,5 +782,98 @@ describe("getBezierMaxValue", () => {
     expect(getBezierMaxValue(0, 10, 2, 8)).toBeCloseTo(10, 3);
     expect(getBezierMaxValue(0, 0, 10, 10)).toBeCloseTo(7.5, 3);
     expect(getBezierMaxValue(10, 10, 20, 20)).toBeCloseTo(17.5, 3);
+  });
+});
+
+describe("getArcCurveParams", () => {
+  test("should return arc curve params based on given segment and control point: no rotation", () => {
+    const segment = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+    ] as ISegment;
+
+    const ret0 = getArcCurveParams(segment, { x: 0, y: 50 })!;
+    expect(ret0.c.x).toBeCloseTo(50, 3);
+    expect(ret0.c.y).toBeCloseTo(0, 3);
+    expect(ret0.radius).toBeCloseTo(50, 3);
+    expect(Math.abs(ret0.from)).toBeCloseTo(Math.PI, 3);
+    expect(ret0.to).toBeCloseTo(0, 3);
+
+    const ret1 = getArcCurveParams(segment, { x: 0, y: 75 })!;
+    expect(ret1.c.x).toBeCloseTo(50, 3);
+    expect(ret1.c.y).toBeCloseTo(28.846, 3);
+    expect(ret1.radius).toBeCloseTo(46.154, 3);
+    expect(ret1.from).toBeCloseTo(-2.618, 3);
+    expect(ret1.to).toBeCloseTo(-0.523, 3);
+    expect(ret1.counterclockwise).toBe(true);
+    expect(ret1.largearc).toBe(true);
+
+    const ret2 = getArcCurveParams(segment, { x: 0, y: -75 })!;
+    expect(ret2.c.x).toBeCloseTo(50, 3);
+    expect(ret2.c.y).toBeCloseTo(-28.846, 3);
+    expect(ret2.radius).toBeCloseTo(46.154, 3);
+    expect(ret2.from).toBeCloseTo(2.618, 3);
+    expect(ret2.to).toBeCloseTo(0.523, 3);
+    expect(ret2.counterclockwise).toBe(false);
+    expect(ret2.largearc).toBe(true);
+
+    const ret3 = getArcCurveParams(segment, { x: 0, y: 25 })!;
+    expect(ret3.c.x).toBeCloseTo(50, 3);
+    expect(ret3.c.y).toBeCloseTo(-15, 3);
+    expect(ret3.radius).toBeCloseTo(40, 3);
+    expect(ret3.from).toBeCloseTo(2.85, 3);
+    expect(ret3.to).toBeCloseTo(0.291, 3);
+    expect(ret3.counterclockwise).toBe(true);
+    expect(ret3.largearc).toBe(false);
+
+    const ret4 = getArcCurveParams(segment, { x: 0, y: -25 })!;
+    expect(ret4.c.x).toBeCloseTo(50, 3);
+    expect(ret4.c.y).toBeCloseTo(15, 3);
+    expect(ret4.radius).toBeCloseTo(40, 3);
+    expect(ret4.from).toBeCloseTo(-2.85, 3);
+    expect(ret4.to).toBeCloseTo(-0.291, 3);
+    expect(ret4.counterclockwise).toBe(false);
+    expect(ret4.largearc).toBe(false);
+  });
+
+  test("should return arc curve params based on given segment and control point: rotated segment", () => {
+    const segment = [
+      { x: 0, y: 0 },
+      { x: 0, y: 100 },
+    ] as ISegment;
+
+    const ret0 = getArcCurveParams(segment, { x: -50, y: 0 })!;
+    expect(ret0.c.x).toBeCloseTo(0, 3);
+    expect(ret0.c.y).toBeCloseTo(50, 3);
+    expect(ret0.radius).toBeCloseTo(50, 3);
+    expect(ret0.from).toBeCloseTo(-Math.PI / 2, 3);
+    expect(ret0.to).toBeCloseTo(Math.PI / 2, 3);
+
+    const ret1 = getArcCurveParams(segment, { x: -75, y: 0 })!;
+    expect(ret1.counterclockwise).toBe(true);
+
+    const ret2 = getArcCurveParams(segment, { x: 75, y: 0 })!;
+    expect(ret2.counterclockwise).toBe(false);
+  });
+
+  test("should return undefined if there's no appropriate arc", () => {
+    expect(
+      getArcCurveParams(
+        [
+          { x: 0, y: 0 },
+          { x: 100, y: 0 },
+        ],
+        { x: 50, y: 0 },
+      ),
+    ).toBe(undefined);
+    expect(
+      getArcCurveParams(
+        [
+          { x: 0, y: 0 },
+          { x: 0, y: 0 },
+        ],
+        { x: 50, y: 50 },
+      ),
+    ).toBe(undefined);
   });
 });
