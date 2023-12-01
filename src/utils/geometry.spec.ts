@@ -40,6 +40,7 @@ import {
   getBezierMaxValue,
   getBezierSplineBounds,
   getArcCurveParams,
+  normalizeSegment,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -875,5 +876,18 @@ describe("getArcCurveParams", () => {
         { x: 50, y: 50 },
       ),
     ).toBe(undefined);
+  });
+});
+
+describe("normalizeSegment", () => {
+  test("should return normalized segment", () => {
+    const ret0 = normalizeSegment([
+      { x: 10, y: 20 },
+      { x: 10, y: 40 },
+    ]);
+    expect(ret0[0].x).toBeCloseTo(0, 3);
+    expect(ret0[0].y).toBeCloseTo(0, 3);
+    expect(ret0[1].x).toBeCloseTo(20, 3);
+    expect(ret0[1].y).toBeCloseTo(0, 3);
   });
 });

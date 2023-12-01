@@ -700,3 +700,8 @@ export function getArcCurveParams(
     largearc: Math.abs(nQ.y) > radius,
   };
 }
+
+export function normalizeSegment(segment: ISegment): ISegment {
+  const rotation = getRadian(segment[1], segment[0]);
+  return [{ x: 0, y: 0 }, rotate(sub(segment[1], segment[0]), -rotation)];
+}
