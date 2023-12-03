@@ -3,6 +3,7 @@ import {
   IVec2,
   MINVALUE,
   add,
+  circleClamp,
   clamp,
   getApproPoints,
   getBezier3LerpFn,
@@ -56,6 +57,13 @@ export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?
       : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     return origin ? add(rotatedV, origin) : rotatedV;
   };
+}
+
+/**
+ * Returns equivalent radian inside the range: [-pi, pi]
+ */
+export function normalizeRadian(value: number): number {
+  return circleClamp(-Math.PI, Math.PI, value);
 }
 
 export function getSegments(points: IVec2[]): ISegment[] {
@@ -777,4 +785,31 @@ export function getCurveLerpFn(segment: ISegment, control?: CurveControl | undef
   } else {
     return getBezier3LerpFn([segment[0], control.c1, control.c2, segment[1]]);
   }
+}
+
+export function getArcBounds({ c, radius, to, from, counterclockwise }: ArcCurveParams): IRectangle {
+  const [f, t] = counterclockwise ? [to, from] : [from, to];
+  const nfrom = normalizeRadian(f);
+  const nto = normalizeRadian(t);
+  const fromP = multi({ x: Math.cos(nfrom), y: Math.sin(nfrom) }, radius);
+  const toP = multi({ x: Math.cos(nto), y: Math.sin(nto) }, radius);
+
+  const left = isRadianInside(nfrom, nto, Math.PI) ? -radius : Math.min(fromP.x, toP.x);
+  const right = isRadianInside(nfrom, nto, 0) ? radius : Math.max(fromP.x, toP.x);
+  const top = isRadianInside(nfrom, nto, -Math.PI / 2) ? -radius : Math.min(fromP.y, toP.y);
+  const bottom = isRadianInside(nfrom, nto, Math.PI / 2) ? radius : Math.max(fromP.y, toP.y);
+
+  return {
+    x: left + c.x,
+    y: top + c.y,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+/**
+ * Suppose each argument is normalized. See: "normalizeRadian"
+ */
+function isRadianInside(nfrom: number, nto: number, nr: number): boolean {
+  return (nfrom < nr && (nto < nfrom || nr <= nto)) || (nr < nfrom && nr <= nto && nto < nfrom);
 }

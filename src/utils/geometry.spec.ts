@@ -43,6 +43,8 @@ import {
   getArcLerpFn,
   getRelativePointOnCurvePath,
   getCurveLerpFn,
+  normalizeRadian,
+  getArcBounds,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -57,6 +59,15 @@ describe("getRotateFn", () => {
       x: 10,
       y: 10,
     });
+  });
+});
+
+describe("normalizeRadian", () => {
+  test("should return normalized radian", () => {
+    expect(normalizeRadian(Math.PI * 1.5)).toBeCloseTo(-Math.PI * 0.5, 3);
+    expect(normalizeRadian(Math.PI * 2.5)).toBeCloseTo(Math.PI * 0.5, 3);
+    expect(normalizeRadian(-Math.PI * 1.5)).toBeCloseTo(Math.PI * 0.5, 3);
+    expect(normalizeRadian(-Math.PI * 2.5)).toBeCloseTo(-Math.PI * 0.5, 3);
   });
 });
 
@@ -1021,5 +1032,43 @@ describe("getCurveLerpFn", () => {
     expect(ret0(0.5).y).toBeCloseTo(3.75, 3);
     expect(ret0(1).x).toBeCloseTo(10, 3);
     expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+});
+
+describe("getArcBounds", () => {
+  test("should return the bounds of the arc", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getArcBounds({ c, radius: 10, from: -Math.PI / 4, to: Math.PI / 2 });
+    expect(ret0.x).toBeCloseTo(100, 3);
+    expect(ret0.width).toBeCloseTo(10, 3);
+    expect(ret0.y).toBeCloseTo(92.929, 3);
+    expect(ret0.height).toBeCloseTo(17.071, 3);
+
+    const ret1 = getArcBounds({ c, radius: 10, from: Math.PI / 2, to: Math.PI * 1.25 });
+    expect(ret1.x).toBeCloseTo(90, 3);
+    expect(ret1.width).toBeCloseTo(10, 3);
+    expect(ret1.y).toBeCloseTo(92.929, 3);
+    expect(ret1.height).toBeCloseTo(17.071, 3);
+
+    const ret2 = getArcBounds({ c, radius: 10, from: Math.PI * 0.25, to: Math.PI * 0.75 });
+    expect(ret2.x).toBeCloseTo(92.929, 3);
+    expect(ret2.width).toBeCloseTo(14.142, 3);
+    expect(ret2.y).toBeCloseTo(107.071, 3);
+    expect(ret2.height).toBeCloseTo(2.929, 3);
+  });
+
+  test("should return the bounds of the arc: counterclockwise", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getArcBounds({ c, radius: 10, from: -Math.PI / 4, to: Math.PI / 2, counterclockwise: true });
+    expect(ret0.x).toBeCloseTo(90, 3);
+    expect(ret0.width).toBeCloseTo(17.071, 3);
+
+    const ret1 = getArcBounds({ c, radius: 10, from: Math.PI / 2, to: Math.PI * 1.25, counterclockwise: true });
+    expect(ret1.x).toBeCloseTo(92.929, 3);
+    expect(ret1.width).toBeCloseTo(17.071, 3);
+
+    const ret2 = getArcBounds({ c, radius: 10, from: Math.PI * 0.25, to: Math.PI * 0.75, counterclockwise: true });
+    expect(ret2.x).toBeCloseTo(90, 3);
+    expect(ret2.width).toBeCloseTo(20, 3);
   });
 });
