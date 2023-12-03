@@ -40,8 +40,9 @@ import {
   getBezierSplineBounds,
   getArcCurveParams,
   normalizeSegment,
-  getCircleLerpFn,
+  getArcLerpFn,
   getRelativePointOnCurvePath,
+  getCurveLerpFn,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -937,8 +938,8 @@ describe("normalizeSegment", () => {
 });
 
 describe("getCircleLerpFn", () => {
-  test("should return lert function for a circule", () => {
-    const ret0 = getCircleLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2 });
+  test("should return lerp function for a circule", () => {
+    const ret0 = getArcLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2 });
     expect(ret0(0).x).toBeCloseTo(15, 3);
     expect(ret0(0).y).toBeCloseTo(20, 3);
     expect(ret0(0.5).x).toBeCloseTo(13.536, 3);
@@ -946,13 +947,13 @@ describe("getCircleLerpFn", () => {
     expect(ret0(1).x).toBeCloseTo(10, 3);
     expect(ret0(1).y).toBeCloseTo(25, 3);
 
-    const ret1 = getCircleLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: -Math.PI * 1.5 });
+    const ret1 = getArcLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: -Math.PI * 1.5 });
     expect(ret1(0.5).x).toBeCloseTo(13.536, 3);
     expect(ret1(0.5).y).toBeCloseTo(23.536, 3);
   });
 
-  test("should return lert function for a circule: counterclockwise", () => {
-    const ret0 = getCircleLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2, counterclockwise: true });
+  test("should return lerp function for a circule: counterclockwise", () => {
+    const ret0 = getArcLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2, counterclockwise: true });
     expect(ret0(0).x).toBeCloseTo(15, 3);
     expect(ret0(0).y).toBeCloseTo(20, 3);
     expect(ret0(0.5).x).toBeCloseTo(6.464, 3);
@@ -960,7 +961,7 @@ describe("getCircleLerpFn", () => {
     expect(ret0(1).x).toBeCloseTo(10, 3);
     expect(ret0(1).y).toBeCloseTo(25, 3);
 
-    const ret1 = getCircleLerpFn({
+    const ret1 = getArcLerpFn({
       c: { x: 10, y: 20 },
       radius: 5,
       from: 0,
@@ -969,5 +970,56 @@ describe("getCircleLerpFn", () => {
     });
     expect(ret1(0.5).x).toBeCloseTo(6.464, 3);
     expect(ret1(0.5).y).toBeCloseTo(16.464, 3);
+  });
+});
+
+describe("getCurveLerpFn", () => {
+  test("should return lerp function for a line", () => {
+    const ret0 = getCurveLerpFn([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ]);
+    expect(ret0(0).x).toBeCloseTo(0, 3);
+    expect(ret0(0).y).toBeCloseTo(0, 3);
+    expect(ret0(0.5).x).toBeCloseTo(5, 3);
+    expect(ret0(0.5).y).toBeCloseTo(0, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+
+  test("should return lerp function for an arc curve", () => {
+    const ret0 = getCurveLerpFn(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      { d: { x: 5, y: 5 } },
+    );
+    expect(ret0(0).x).toBeCloseTo(0, 3);
+    expect(ret0(0).y).toBeCloseTo(0, 3);
+    expect(ret0(0.1).x).toBeCloseTo(0.245, 3);
+    expect(ret0(0.1).y).toBeCloseTo(1.545, 3);
+    expect(ret0(0.5).x).toBeCloseTo(5, 3);
+    expect(ret0(0.5).y).toBeCloseTo(5, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+
+  test("should return lerp function for a bezier curve", () => {
+    const ret0 = getCurveLerpFn(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      { c1: { x: 2, y: 5 }, c2: { x: 8, y: 5 } },
+    );
+    expect(ret0(0).x).toBeCloseTo(0, 3);
+    expect(ret0(0).y).toBeCloseTo(0, 3);
+    expect(ret0(0.1).x).toBeCloseTo(0.712, 3);
+    expect(ret0(0.1).y).toBeCloseTo(1.35, 3);
+    expect(ret0(0.5).x).toBeCloseTo(5, 3);
+    expect(ret0(0.5).y).toBeCloseTo(3.75, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(0, 3);
   });
 });

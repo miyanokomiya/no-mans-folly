@@ -495,19 +495,11 @@ export function getRelativePointOnCurvePath(
   for (let i = 0; i < points.length - 1; i++) {
     const seg: ISegment = [points[i], points[i + 1]];
     const c = controls[i];
+    const lerpFn = getCurveLerpFn(seg, c);
     if (!c) {
-      const lerpFn = (t: number) => lerpPoint(seg[0], seg[1], t);
       const length = getDistance(seg[0], seg[1]);
       pathStructs.push({ lerpFn, length });
-    } else if ("d" in c) {
-      const arcParams = getArcCurveParamsByNormalizedControl(seg, c.d);
-      if (arcParams) {
-        const lerpFn = getCircleLerpFn(arcParams);
-        const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
-        pathStructs.push({ lerpFn, length });
-      }
     } else {
-      const lerpFn = getBezier3LerpFn([seg[0], c.c1, c.c2, seg[1]]);
       const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
       pathStructs.push({ lerpFn, length });
     }
@@ -690,6 +682,8 @@ interface ArcCurveParams {
  * - starts from "segment[0]" to "segment[1]"
  * - passes through the point the same distance away from "segment" as "control"
  * Calculation ref: https://github.com/miyanokomiya/no-mans-folly/issues/6
+ *
+ * Returns undefined when no arc exists for given arguments.
  */
 export function getArcCurveParams(segment: ISegment, control: IVec2): ArcCurveParams | undefined {
   const rotation = getRadian(segment[1], segment[0]);
@@ -759,7 +753,7 @@ export function normalizeSegment(segment: ISegment): ISegment {
   return [{ x: 0, y: 0 }, rotate(sub(segment[1], segment[0]), -rotation)];
 }
 
-export function getCircleLerpFn({ c, radius, to, from, counterclockwise }: ArcCurveParams): (t: number) => IVec2 {
+export function getArcLerpFn({ c, radius, to, from, counterclockwise }: ArcCurveParams): (t: number) => IVec2 {
   const nt = to < from ? to + TAU : to;
   const [min, max] = counterclockwise ? [nt, from + TAU] : [from, nt];
   const range = max - min;
@@ -768,4 +762,19 @@ export function getCircleLerpFn({ c, radius, to, from, counterclockwise }: ArcCu
     const r = counterclockwise ? range * (1 - t) + min : range * t + min;
     return add(vec(radius * Math.cos(r), radius * Math.sin(r)), c);
   };
+}
+
+export function getCurveLerpFn(segment: ISegment, control?: CurveControl | undefined): (t: number) => IVec2 {
+  if (!control) {
+    return (t) => lerpPoint(segment[0], segment[1], t);
+  } else if ("d" in control) {
+    const arcParams = getArcCurveParamsByNormalizedControl(segment, control.d);
+    if (arcParams) {
+      return getArcLerpFn(arcParams);
+    } else {
+      return (t) => lerpPoint(segment[0], segment[1], t);
+    }
+  } else {
+    return getBezier3LerpFn([segment[0], control.c1, control.c2, segment[1]]);
+  }
 }

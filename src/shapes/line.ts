@@ -3,7 +3,6 @@ import {
   IRectangle,
   IVec2,
   applyAffine,
-  getBezier3LerpFn,
   getOuterRectangle,
   getRadian,
   isSame,
@@ -15,9 +14,9 @@ import {
   ISegment,
   expandRect,
   getBezierSplineBounds,
+  getCurveLerpFn,
   getRectPoints,
   getRelativePointOnCurvePath,
-  getRelativePointOnPath,
   getWrapperRect,
   isPointCloseToBezierSpline,
   isPointCloseToSegment,
@@ -431,9 +430,8 @@ export function getRadianP(shape: LineShape): number {
   const p = linePath[0];
 
   let pVicinity = linePath[1];
-  if (shape.curves && shape.curves.length > 0) {
-    const c = shape.curves[0];
-    const lerpFn = getBezier3LerpFn([p, c.c1, c.c2, linePath[1]]);
+  if (shape.curves && shape.curves[0]) {
+    const lerpFn = getCurveLerpFn([p, linePath[1]], shape.curves[0]);
     pVicinity = lerpFn(0.01);
   }
   return getRadian(p, pVicinity);
@@ -444,10 +442,9 @@ export function getRadianQ(shape: LineShape): number {
   const q = linePath[linePath.length - 1];
 
   let qVicinity = linePath[linePath.length - 2];
-  if (shape.curves && shape.curves.length > 0) {
-    const c = shape.curves[shape.curves.length - 1];
-    const lerpFn = getBezier3LerpFn([q, c.c2, c.c1, linePath[linePath.length - 2]]);
-    qVicinity = lerpFn(0.01);
+  if (shape.curves && shape.curves[shape.curves.length - 1]) {
+    const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[shape.curves.length - 1]);
+    qVicinity = lerpFn(0.99);
   }
   return getRadian(q, qVicinity);
 }
