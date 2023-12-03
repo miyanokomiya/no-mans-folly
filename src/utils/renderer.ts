@@ -1,9 +1,9 @@
 import { IRectangle, IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
-import { ISegment, getRotateFn } from "./geometry";
+import { ISegment, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
-import { BezierCurveControl } from "../models";
+import { CurveControl } from "../models";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
   path.forEach((p, i) => {
@@ -14,21 +14,35 @@ export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[],
   }
 }
 
-export function applyBezierPath(
+export function applyCurvePath(
   ctx: CanvasRenderingContext2D | Path2D,
   path: IVec2[],
-  curves: BezierCurveControl[],
+  curves: (CurveControl | undefined)[] = [],
   closed = false,
 ) {
   path.forEach((p, i) => {
     if (i === 0) {
       ctx.moveTo(p.x, p.y);
     } else {
-      const controls = curves[i - 1];
-      if (controls) {
-        ctx.bezierCurveTo(controls.c1.x, controls.c1.y, controls.c2.x, controls.c2.y, p.x, p.y);
-      } else {
+      const control = curves[i - 1];
+      if (!control) {
         ctx.lineTo(p.x, p.y);
+      } else if ("d" in control) {
+        const arcParams = getArcCurveParamsByNormalizedControl([path[i - 1], p], control.d);
+        if (arcParams) {
+          ctx.arc(
+            arcParams.c.x,
+            arcParams.c.y,
+            arcParams.radius,
+            arcParams.from,
+            arcParams.to,
+            arcParams.counterclockwise,
+          );
+        } else {
+          ctx.lineTo(p.x, p.y);
+        }
+      } else {
+        ctx.bezierCurveTo(control.c1.x, control.c1.y, control.c2.x, control.c2.y, p.x, p.y);
       }
     }
   });

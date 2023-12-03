@@ -1,11 +1,11 @@
-import { IVec2, add, getBezier3LerpFn, getCenter, multi, rotate } from "okageo";
+import { IVec2, add, getCenter, multi, rotate } from "okageo";
 import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath, getRadianP, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { TAU, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
+import { TAU, getCurveLerpFn, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyBezierPath, applyPath, renderMoveIcon } from "../utils/renderer";
+import { applyCurvePath, applyPath, renderMoveIcon } from "../utils/renderer";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 0.8;
@@ -29,7 +29,7 @@ export function newLineBounding(option: Option) {
   const curves = isCurveLine(lineShape) ? lineShape.curves : undefined;
   const edgeCenters = edges.map((edge, i) => {
     if (curves) {
-      const lerpFn = getBezier3LerpFn([edge[0], curves[i].c1, curves[i].c2, edge[1]]);
+      const lerpFn = getCurveLerpFn(edge, curves[i]);
       return lerpFn(0.5);
     } else {
       return getCenter(edge[0], edge[1]);
@@ -177,7 +177,7 @@ export function newLineBounding(option: Option) {
           edges.forEach((edge, i) => {
             ctx.beginPath();
             if (curves) {
-              applyBezierPath(ctx, edge, [curves[i]]);
+              applyCurvePath(ctx, edge, [curves[i]]);
             } else {
               applyPath(ctx, edge);
             }
@@ -205,7 +205,7 @@ export function newLineBounding(option: Option) {
         case "edge": {
           ctx.beginPath();
           if (curves) {
-            applyBezierPath(ctx, edges[hitResult.index], [curves[hitResult.index]]);
+            applyCurvePath(ctx, edges[hitResult.index], [curves[hitResult.index]]);
           } else {
             applyPath(ctx, edges[hitResult.index]);
           }

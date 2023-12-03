@@ -717,7 +717,7 @@ export function getArcCurveParams(segment: ISegment, control: IVec2): ArcCurvePa
   };
 }
 
-function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec2): ArcCurveParams | undefined {
+export function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec2): ArcCurveParams | undefined {
   const rotation = getRadian(segment[1], segment[0]);
   const rotateFn = getRotateFn(rotation);
 

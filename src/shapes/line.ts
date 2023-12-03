@@ -24,7 +24,7 @@ import {
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, getLineHeadWrapperRadius, renderLineHead } from "./lineHeads";
-import { applyBezierPath, applyPath } from "../utils/renderer";
+import { applyCurvePath, applyPath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 
@@ -130,11 +130,7 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     ctx.beginPath();
-    if (shape.curves) {
-      applyBezierPath(ctx, linePath, shape.curves);
-    } else {
-      applyPath(ctx, linePath);
-    }
+    applyCurvePath(ctx, linePath, shape.curves);
 
     if (!shape.fill.disabled) {
       applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color, dash: undefined });
