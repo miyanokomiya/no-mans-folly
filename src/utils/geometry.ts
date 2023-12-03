@@ -19,6 +19,7 @@ import {
   interpolateVector,
   isOnSeg,
   isParallel,
+  lerpPoint,
   multi,
   multiAffines,
   rotate,
@@ -26,7 +27,7 @@ import {
   sub,
   vec,
 } from "okageo";
-import { CurveControl } from "../models";
+import { BezierCurveControl, CurveControl } from "../models";
 import { pickMinItem } from "./commons";
 
 export const BEZIER_APPROX_SIZE = 10;
@@ -305,7 +306,7 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
 // Likewise "isPointCloseToSegment"
 export function isPointCloseToBezierSpline(
   points: IVec2[],
-  controls: CurveControl[],
+  controls: BezierCurveControl[],
   p: IVec2,
   threshold: number,
 ): boolean {
@@ -479,19 +480,38 @@ export function getRelativePointOnPath(path: IVec2[], rate: number): IVec2 {
   return interpolateVector(edges[targetIndex][0], edges[targetIndex][1], remain / list[targetIndex]);
 }
 
-export function getRelativePointOnBezierPath(points: IVec2[], controls: CurveControl[], rate: number): IVec2 {
+export function getRelativePointOnCurvePath(
+  points: IVec2[],
+  controls: (CurveControl | undefined)[] = [],
+  rate: number,
+): IVec2 {
   if (points.length <= 1) return points[0];
   if (points.length !== controls.length + 1) return getRelativePointOnPath(points, rate);
 
-  const sections: [IVec2, IVec2, IVec2, IVec2][] = [];
+  const pathStructs: {
+    lerpFn: (t: number) => IVec2;
+    length: number;
+  }[] = [];
   for (let i = 0; i < points.length - 1; i++) {
-    sections.push([points[i], controls[i].c1, controls[i].c2, points[i + 1]]);
+    const seg: ISegment = [points[i], points[i + 1]];
+    const c = controls[i];
+    if (!c) {
+      const lerpFn = (t: number) => lerpPoint(seg[0], seg[1], t);
+      const length = getDistance(seg[0], seg[1]);
+      pathStructs.push({ lerpFn, length });
+    } else if ("d" in c) {
+      const arcParams = getArcCurveParamsByNormalizedControl(seg, c.d);
+      if (arcParams) {
+        const lerpFn = getCircleLerpFn(arcParams);
+        const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
+        pathStructs.push({ lerpFn, length });
+      }
+    } else {
+      const lerpFn = getBezier3LerpFn([seg[0], c.c1, c.c2, seg[1]]);
+      const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
+      pathStructs.push({ lerpFn, length });
+    }
   }
-  const pathStructs = sections.map((sec) => {
-    const lerpFn = getBezier3LerpFn(sec);
-    const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
-    return { lerpFn, length };
-  });
   const totalLength = getPathTotalLengthFromStructs(pathStructs);
   return getPathPointAtLengthFromStructs(pathStructs, totalLength * rate);
 }
@@ -562,7 +582,7 @@ export function getRotationAffines(rotation: number, origin: IVec2) {
   };
 }
 
-export function getBezierSplineBounds(points: IVec2[], controls: CurveControl[]): IRectangle {
+export function getBezierSplineBounds(points: IVec2[], controls: BezierCurveControl[]): IRectangle {
   const segments = getSegments(points);
   const segmentRangeList = segments.map<{ x: IRange; y: IRange; p1: IVec2; p2: IVec2; c1: IVec2; c2: IVec2 }>(
     ([p1, p2], i) => {
@@ -652,24 +672,26 @@ function getBezierValue(v1: number, v2: number, c1: number, c2: number, t: numbe
 }
 
 /**
+ * These parameters are compatible to HTML canvas "arc" method.
+ * => "from" and "to" reprenset absolete positions on the circumference.
+ * ex) from:0, to: -pi/2 => The curve still should be clockwise.
+ */
+interface ArcCurveParams {
+  c: IVec2;
+  radius: number;
+  from: number;
+  to: number;
+  counterclockwise?: boolean;
+  largearc?: boolean;
+}
+
+/**
  * Returns parameters of the arc that
  * - starts from "segment[0]" to "segment[1]"
  * - passes through the point the same distance away from "segment" as "control"
  * Calculation ref: https://github.com/miyanokomiya/no-mans-folly/issues/6
  */
-export function getArcCurveParams(
-  segment: ISegment,
-  control: IVec2,
-):
-  | {
-      c: IVec2;
-      radius: number;
-      from: number;
-      to: number;
-      counterclockwise: boolean;
-      largearc: boolean;
-    }
-  | undefined {
+export function getArcCurveParams(segment: ISegment, control: IVec2): ArcCurveParams | undefined {
   const rotation = getRadian(segment[1], segment[0]);
   const rotateFn = getRotateFn(rotation);
 
@@ -701,7 +723,49 @@ export function getArcCurveParams(
   };
 }
 
+function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec2): ArcCurveParams | undefined {
+  const rotation = getRadian(segment[1], segment[0]);
+  const rotateFn = getRotateFn(rotation);
+
+  // No arc exists when three points are on the same line.
+  if (Math.abs(nQ.y) < MINVALUE) return;
+
+  const nP = rotateFn(sub(segment[1], segment[0]), true);
+  // No arc exists when the segment is invalid
+  if (Math.abs(nP.x) < MINVALUE) return;
+
+  const dx = nP.x;
+  const dy = nQ.y;
+  const r1 = Math.atan2(dy, dx / 2);
+  const r3 = 2 * r1 - Math.PI / 2;
+  const rad = (Math.cos(r3) * dx) / 2;
+  const nC = { x: dx / 2, y: dy - rad };
+  const nFrom = Math.atan2(-nC.y, -nC.x);
+  const nTo = Math.atan2(-nC.y, nC.x);
+
+  const radius = Math.abs(rad);
+  return {
+    c: add(rotateFn(nC), segment[0]),
+    radius,
+    from: nFrom + rotation,
+    to: nTo + rotation,
+    counterclockwise: nQ.y > 0,
+    largearc: Math.abs(nQ.y) > radius,
+  };
+}
+
 export function normalizeSegment(segment: ISegment): ISegment {
   const rotation = getRadian(segment[1], segment[0]);
   return [{ x: 0, y: 0 }, rotate(sub(segment[1], segment[0]), -rotation)];
+}
+
+export function getCircleLerpFn({ c, radius, to, from, counterclockwise }: ArcCurveParams): (t: number) => IVec2 {
+  const nt = to < from ? to + TAU : to;
+  const [min, max] = counterclockwise ? [nt, from + TAU] : [from, nt];
+  const range = max - min;
+
+  return (t) => {
+    const r = counterclockwise ? range * (1 - t) + min : range * t + min;
+    return add(vec(radius * Math.cos(r), radius * Math.sin(r)), c);
+  };
 }

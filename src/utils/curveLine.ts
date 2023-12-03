@@ -1,8 +1,8 @@
 import { IVec2, getBezierInterpolation } from "okageo";
-import { CurveControl } from "../models";
+import { BezierCurveControl } from "../models";
 import { CurveType, LineShape, getLinePath } from "../shapes/line";
 
-export function getAutomaticCurve(path: IVec2[]): CurveControl[] | undefined {
+export function getAutomaticCurve(path: IVec2[]): BezierCurveControl[] | undefined {
   if (path.length <= 2) return;
   return getBezierInterpolation(path).map(([c1, c2]) => ({ c1, c2 }));
 }

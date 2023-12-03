@@ -34,13 +34,14 @@ import {
   getDistanceBetweenPointAndRect,
   isPointCloseToBezierSpline,
   isPointCloseToBezierSegment,
-  getRelativePointOnBezierPath,
   getSegments,
   getBezierMinValue,
   getBezierMaxValue,
   getBezierSplineBounds,
   getArcCurveParams,
   normalizeSegment,
+  getCircleLerpFn,
+  getRelativePointOnCurvePath,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -689,8 +690,8 @@ describe("getRelativePointOnPath", () => {
   });
 });
 
-describe("getRelativePointOnBezierPath", () => {
-  test("should return relative point on the path", () => {
+describe("getRelativePointOnCurvePath", () => {
+  test("should return relative point on the path: bezier curves", () => {
     const path = [
       { x: 0, y: 0 },
       { x: 10, y: 0 },
@@ -700,19 +701,62 @@ describe("getRelativePointOnBezierPath", () => {
       { c1: { x: 2, y: -5 }, c2: { x: 8, y: -5 } },
       { c1: { x: 15, y: 2 }, c2: { x: 15, y: 8 } },
     ];
-    const ret0 = getRelativePointOnBezierPath(path, controls, 0);
+    const ret0 = getRelativePointOnCurvePath(path, controls, 0);
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(0, 3);
-    const ret10 = getRelativePointOnBezierPath(path, controls, 0.1);
+    const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
     expect(ret10.x).toBeCloseTo(1.616, 3);
     expect(ret10.y).toBeCloseTo(-2.4, 3);
-    const ret50 = getRelativePointOnBezierPath(path, controls, 0.5);
+    const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
     expect(ret50.x).toBeCloseTo(10, 3);
     expect(ret50.y).toBeCloseTo(0, 3);
-    const ret90 = getRelativePointOnBezierPath(path, controls, 0.9);
+    const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
     expect(ret90.x).toBeCloseTo(12.4, 3);
     expect(ret90.y).toBeCloseTo(8.384, 3);
-    const ret100 = getRelativePointOnBezierPath(path, controls, 1);
+    const ret100 = getRelativePointOnCurvePath(path, controls, 1);
+    expect(ret100.x).toBeCloseTo(10, 3);
+    expect(ret100.y).toBeCloseTo(10, 3);
+  });
+
+  test("should return relative point on the path: arc curves", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    const controls = [{ d: { x: 5, y: 5 } }];
+    const ret0 = getRelativePointOnCurvePath(path, controls, 0);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(0, 3);
+    const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
+    expect(ret10.x).toBeCloseTo(0.245, 3);
+    expect(ret10.y).toBeCloseTo(1.545, 3);
+    const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
+    expect(ret50.x).toBeCloseTo(5, 3);
+    expect(ret50.y).toBeCloseTo(5, 3);
+    const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
+    expect(ret90.x).toBeCloseTo(9.755, 3);
+    expect(ret90.y).toBeCloseTo(1.545, 3);
+    const ret100 = getRelativePointOnCurvePath(path, controls, 1);
+    expect(ret100.x).toBeCloseTo(10, 3);
+    expect(ret100.y).toBeCloseTo(0, 3);
+  });
+
+  test("should return relative point on the path: straight lines", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const ret0 = getRelativePointOnCurvePath(path, undefined, 0);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(0, 3);
+    const ret10 = getRelativePointOnCurvePath(path, undefined, 0.1);
+    expect(ret10.x).toBeCloseTo(2, 3);
+    expect(ret10.y).toBeCloseTo(0, 3);
+    const ret90 = getRelativePointOnCurvePath(path, [], 0.9);
+    expect(ret90.x).toBeCloseTo(10, 3);
+    expect(ret90.y).toBeCloseTo(8, 3);
+    const ret100 = getRelativePointOnCurvePath(path, [], 1);
     expect(ret100.x).toBeCloseTo(10, 3);
     expect(ret100.y).toBeCloseTo(10, 3);
   });
@@ -889,5 +933,41 @@ describe("normalizeSegment", () => {
     expect(ret0[0].y).toBeCloseTo(0, 3);
     expect(ret0[1].x).toBeCloseTo(20, 3);
     expect(ret0[1].y).toBeCloseTo(0, 3);
+  });
+});
+
+describe("getCircleLerpFn", () => {
+  test("should return lert function for a circule", () => {
+    const ret0 = getCircleLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2 });
+    expect(ret0(0).x).toBeCloseTo(15, 3);
+    expect(ret0(0).y).toBeCloseTo(20, 3);
+    expect(ret0(0.5).x).toBeCloseTo(13.536, 3);
+    expect(ret0(0.5).y).toBeCloseTo(23.536, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(25, 3);
+
+    const ret1 = getCircleLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: -Math.PI * 1.5 });
+    expect(ret1(0.5).x).toBeCloseTo(13.536, 3);
+    expect(ret1(0.5).y).toBeCloseTo(23.536, 3);
+  });
+
+  test("should return lert function for a circule: counterclockwise", () => {
+    const ret0 = getCircleLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2, counterclockwise: true });
+    expect(ret0(0).x).toBeCloseTo(15, 3);
+    expect(ret0(0).y).toBeCloseTo(20, 3);
+    expect(ret0(0.5).x).toBeCloseTo(6.464, 3);
+    expect(ret0(0.5).y).toBeCloseTo(16.464, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(25, 3);
+
+    const ret1 = getCircleLerpFn({
+      c: { x: 10, y: 20 },
+      radius: 5,
+      from: 0,
+      to: -Math.PI * 1.5,
+      counterclockwise: true,
+    });
+    expect(ret1(0.5).x).toBeCloseTo(6.464, 3);
+    expect(ret1(0.5).y).toBeCloseTo(16.464, 3);
   });
 });

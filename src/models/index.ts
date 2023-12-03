@@ -76,9 +76,17 @@ export interface LineHead {
   type: string;
 }
 
-export interface CurveControl {
+export type CurveControl = BezierCurveControl | ArcCurveControl;
+
+export interface BezierCurveControl {
   c1: IVec2;
   c2: IVec2;
+}
+
+export interface ArcCurveControl {
+  // Represents normalized position for target segment.
+  // Ref: geometry.ts#normalizeSegment
+  d: IVec2;
 }
 
 export interface BoxAlign {

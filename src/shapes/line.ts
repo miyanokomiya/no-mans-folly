@@ -16,7 +16,7 @@ import {
   expandRect,
   getBezierSplineBounds,
   getRectPoints,
-  getRelativePointOnBezierPath,
+  getRelativePointOnCurvePath,
   getRelativePointOnPath,
   getWrapperRect,
   isPointCloseToBezierSpline,
@@ -46,7 +46,7 @@ export interface LineShape extends Shape {
    * The first item represents body[0], the last one does "q" and others do "body".
    * "curves.length" should be equal to "body.length + 1"
    */
-  curves?: CurveControl[];
+  curves?: (CurveControl | undefined)[];
   curveType?: CurveType;
 }
 
@@ -423,12 +423,7 @@ export function isCurveLine(shape: LineShape): shape is LineShape & Required<Pic
 }
 
 export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
-  const path = getLinePath(shape);
-  if (isCurveLine(shape)) {
-    return getRelativePointOnBezierPath(path, shape.curves, rate);
-  } else {
-    return getRelativePointOnPath(path, rate);
-  }
+  return getRelativePointOnCurvePath(getLinePath(shape), shape.curves, rate);
 }
 
 export function getRadianP(shape: LineShape): number {

@@ -3,7 +3,7 @@ import { ISegment, getRotateFn } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
-import { CurveControl } from "../models";
+import { BezierCurveControl } from "../models";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
   path.forEach((p, i) => {
@@ -17,7 +17,7 @@ export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[],
 export function applyBezierPath(
   ctx: CanvasRenderingContext2D | Path2D,
   path: IVec2[],
-  curves: CurveControl[],
+  curves: BezierCurveControl[],
   closed = false,
 ) {
   path.forEach((p, i) => {

@@ -1,6 +1,6 @@
 import { IVec2, add, getBezier3LerpFn, getCenter, multi, rotate } from "okageo";
 import { StyleScheme } from "../models";
-import { LineShape, getEdges, getLinePath, getRadianP } from "../shapes/line";
+import { LineShape, getEdges, getLinePath, getRadianP, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
@@ -26,7 +26,7 @@ export function newLineBounding(option: Option) {
   const lineShape = option.lineShape;
   const vertices = getLinePath(lineShape);
   const edges = getEdges(lineShape);
-  const curves = lineShape.curves && lineShape.curves.length === edges.length ? lineShape.curves : undefined;
+  const curves = isCurveLine(lineShape) ? lineShape.curves : undefined;
   const edgeCenters = edges.map((edge, i) => {
     if (curves) {
       const lerpFn = getBezier3LerpFn([edge[0], curves[i].c1, curves[i].c2, edge[1]]);
