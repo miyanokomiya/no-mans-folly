@@ -32,12 +32,12 @@ import {
   getMarkersOnPolygon,
   snapNumberCeil,
   getDistanceBetweenPointAndRect,
-  isPointCloseToBezierSpline,
+  isPointCloseToCurveSpline,
   isPointCloseToBezierSegment,
   getSegments,
   getBezierMinValue,
   getBezierMaxValue,
-  getBezierSplineBounds,
+  getCurveSplineBounds,
   getArcCurveParams,
   normalizeSegment,
   getArcLerpFn,
@@ -45,6 +45,7 @@ import {
   getCurveLerpFn,
   normalizeRadian,
   getArcBounds,
+  isPointCloseToArc,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -441,11 +442,24 @@ describe("isPointCloseToBezierSpline", () => {
       { c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } },
       { c1: { x: 15, y: 2.5 }, c2: { x: 15, y: 7.5 } },
     ];
-    expect(isPointCloseToBezierSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(false);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(true);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 0.1, y: -6 }, 1)).toBe(false);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(true);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 16, y: 10 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0.1, y: -6 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 16, y: 10 }, 1)).toBe(false);
+  });
+
+  test("should return true if the point is close to the straight spline", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const controls = undefined;
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 9.5, y: 0 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(false);
   });
 });
 
@@ -818,7 +832,7 @@ describe("getBezierSplineBounds", () => {
       { c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } },
       { c1: { x: 15, y: 2.5 }, c2: { x: 15, y: 7.5 } },
     ];
-    const ret0 = getBezierSplineBounds(points, controls);
+    const ret0 = getCurveSplineBounds(points, controls);
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(-3.75, 3);
     expect(ret0.width).toBeCloseTo(13.75, 3);
@@ -1070,5 +1084,24 @@ describe("getArcBounds", () => {
     const ret2 = getArcBounds({ c, radius: 10, from: Math.PI * 0.25, to: Math.PI * 0.75, counterclockwise: true });
     expect(ret2.x).toBeCloseTo(90, 3);
     expect(ret2.width).toBeCloseTo(20, 3);
+  });
+});
+
+describe("isPointCloseToArc", () => {
+  test("should return true if the point is on the arc", () => {
+    const c = { x: 100, y: 100 };
+    const params0 = { c, radius: 30, from: -Math.PI / 4, to: Math.PI / 2 };
+    expect(isPointCloseToArc(params0, { x: 110, y: 110 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params0, { x: 130, y: 100 }, 10)).toBe(true);
+    expect(isPointCloseToArc(params0, { x: 99, y: 130 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params0, { x: 101, y: 130 }, 10)).toBe(true);
+    expect(isPointCloseToArc(params0, { x: 70, y: 100 }, 10)).toBe(false);
+
+    const params1 = { c, radius: 30, from: -Math.PI / 4, to: Math.PI / 2, counterclockwise: true };
+    expect(isPointCloseToArc(params1, { x: 110, y: 110 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params1, { x: 130, y: 100 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params1, { x: 99, y: 130 }, 10)).toBe(true);
+    expect(isPointCloseToArc(params1, { x: 101, y: 130 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params1, { x: 70, y: 100 }, 10)).toBe(true);
   });
 });

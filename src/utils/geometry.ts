@@ -10,6 +10,7 @@ import {
   getCenter,
   getCrossSegAndLine,
   getDistance,
+  getNorm,
   getOuterRectangle,
   getPathPointAtLengthFromStructs,
   getPathTotalLengthFromStructs,
@@ -28,8 +29,7 @@ import {
   sub,
   vec,
 } from "okageo";
-import { BezierCurveControl, CurveControl } from "../models";
-import { pickMinItem } from "./commons";
+import { CurveControl } from "../models";
 
 export const BEZIER_APPROX_SIZE = 10;
 
@@ -312,14 +312,29 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
 }
 
 // Likewise "isPointCloseToSegment"
-export function isPointCloseToBezierSpline(
+export function isPointCloseToCurveSpline(
   points: IVec2[],
-  controls: BezierCurveControl[],
+  controls: (CurveControl | undefined)[] = [],
   p: IVec2,
   threshold: number,
 ): boolean {
   for (let i = 0; i < points.length - 1; i++) {
-    const hit = isPointCloseToBezierSegment(points[i], points[i + 1], controls[i].c1, controls[i].c2, p, threshold);
+    const seg: ISegment = [points[i], points[i + 1]];
+    const control = controls[i];
+    let hit = false;
+    if (!control) {
+      hit = isPointCloseToSegment(seg, p, threshold);
+    } else if ("d" in control) {
+      const arcParams = getArcCurveParamsByNormalizedControl(seg, control.d);
+      if (arcParams) {
+        hit = isPointCloseToArc(arcParams, p, threshold);
+      } else {
+        hit = isPointCloseToSegment(seg, p, threshold);
+      }
+    } else {
+      hit = isPointCloseToBezierSegment(seg[0], seg[1], control.c1, control.c2, p, threshold);
+    }
+
     if (hit) return true;
   }
   return false;
@@ -787,6 +802,18 @@ export function getArcBounds({ c, radius, to, from, counterclockwise }: ArcCurve
     width: right - left,
     height: bottom - top,
   };
+}
+
+export function isPointCloseToArc(
+  { c, radius, to, from, counterclockwise }: ArcCurveParams,
+  p: IVec2,
+  threshold: number,
+): boolean {
+  const np = sub(p, c);
+  if (Math.abs(getNorm(np) - radius) > threshold) return false;
+  const [f, t] = counterclockwise ? [to, from] : [from, to];
+  if (!isRadianInside(normalizeRadian(f), normalizeRadian(t), getRadian(np))) return false;
+  return true;
 }
 
 /**
