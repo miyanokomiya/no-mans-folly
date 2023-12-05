@@ -582,52 +582,34 @@ export function getRotationAffines(rotation: number, origin: IVec2) {
   };
 }
 
-export function getBezierSplineBounds(points: IVec2[], controls: BezierCurveControl[]): IRectangle {
+export function getCurveSplineBounds(points: IVec2[], controls: (CurveControl | undefined)[] = []): IRectangle {
   const segments = getSegments(points);
-  const segmentRangeList = segments.map<{ x: IRange; y: IRange; p1: IVec2; p2: IVec2; c1: IVec2; c2: IVec2 }>(
-    ([p1, p2], i) => {
-      const { c1, c2 } = controls[i];
-      return {
-        x: [Math.min(p1.x, p2.x, c1.x, c2.x), Math.max(p1.x, p2.x, c1.x, c2.x)],
-        y: [Math.min(p1.y, p2.y, c1.y, c2.y), Math.max(p1.y, p2.y, c1.y, c2.y)],
-        p1,
-        p2,
-        c1,
-        c2,
-      };
-    },
-  );
+  const rects = segments.map((seg, i) => {
+    const control = controls[i];
+    if (!control) {
+      return getOuterRectangle([seg]);
+    } else if ("d" in control) {
+      const params = getArcCurveParamsByNormalizedControl(seg, control.d);
+      return params ? getArcBounds(params) : getOuterRectangle([seg]);
+    } else {
+      return getBezierBounds(seg[0], seg[1], control.c1, control.c2);
+    }
+  });
+  return getWrapperRect(rects);
+}
 
-  const candidatesMinX = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => c.x[0] <= item.x[1]);
-  }, segmentRangeList);
-  const candidatesMaxX = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => item.x[0] <= c.x[1]);
-  }, segmentRangeList);
-  const candidatesMinY = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => c.y[0] <= item.y[1]);
-  }, segmentRangeList);
-  const candidatesMaxY = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => item.y[0] <= c.y[1]);
-  }, segmentRangeList);
+export function getBezierBounds(v1: IVec2, v2: IVec2, c1: IVec2, c2: IVec2): IRectangle {
+  const left = getBezierMinValue(v1.x, v2.x, c1.x, c2.x);
+  const right = getBezierMaxValue(v1.x, v2.x, c1.x, c2.x);
+  const top = getBezierMinValue(v1.y, v2.y, c1.y, c2.y);
+  const bottom = getBezierMaxValue(v1.y, v2.y, c1.y, c2.y);
 
-  const minX = pickMinItem(
-    candidatesMinX.map((c) => getBezierMinValue(c.p1.x, c.p2.x, c.c1.x, c.c2.x)),
-    (v) => v,
-  )!;
-  const maxX = pickMinItem(
-    candidatesMaxX.map((c) => getBezierMaxValue(c.p1.x, c.p2.x, c.c1.x, c.c2.x)),
-    (v) => -v,
-  )!;
-  const minY = pickMinItem(
-    candidatesMinY.map((c) => getBezierMinValue(c.p1.y, c.p2.y, c.c1.y, c.c2.y)),
-    (v) => v,
-  )!;
-  const maxY = pickMinItem(
-    candidatesMaxY.map((c) => getBezierMaxValue(c.p1.y, c.p2.y, c.c1.y, c.c2.y)),
-    (v) => -v,
-  )!;
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
 }
 
 export function getBezierMinValue(v1: number, v2: number, c1: number, c2: number): number {

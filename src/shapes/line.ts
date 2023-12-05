@@ -13,7 +13,7 @@ import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   ISegment,
   expandRect,
-  getBezierSplineBounds,
+  getCurveSplineBounds,
   getCurveLerpFn,
   getRectPoints,
   getRelativePointOnCurvePath,
@@ -156,7 +156,7 @@ export const struct: ShapeStruct<LineShape> = {
   },
   getWrapperRect(shape, _, includeBounds) {
     const path = getLinePath(shape);
-    let rect = isCurveLine(shape) ? getBezierSplineBounds(path, shape.curves) : getOuterRectangle([path]);
+    let rect = getCurveSplineBounds(path, shape.curves);
 
     if (includeBounds) {
       // FIXME: This expanding isn't precise but just large enough.
