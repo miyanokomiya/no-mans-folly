@@ -1,13 +1,4 @@
-import {
-  AffineMatrix,
-  IRectangle,
-  IVec2,
-  applyAffine,
-  getOuterRectangle,
-  getRadian,
-  isSame,
-  multiAffines,
-} from "okageo";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getRadian, isSame, multiAffines } from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
@@ -18,7 +9,7 @@ import {
   getRectPoints,
   getRelativePointOnCurvePath,
   getWrapperRect,
-  isPointCloseToBezierSpline,
+  isPointCloseToCurveSpline,
   isPointCloseToSegment,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
@@ -183,7 +174,7 @@ export const struct: ShapeStruct<LineShape> = {
     const edges = getEdges(shape);
 
     if (shape.curves && shape.curves.length === edges.length) {
-      if (isPointCloseToBezierSpline(getLinePath(shape), shape.curves, p, 10)) return true;
+      if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, 10)) return true;
     } else {
       if (edges.some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
     }
@@ -198,17 +189,20 @@ export const struct: ShapeStruct<LineShape> = {
   resize(shape, resizingAffine) {
     const [p, q] = [shape.p, shape.q].map((p) => applyAffine(resizingAffine, p));
     const body = shape.body?.map((b) => ({ ...b, p: applyAffine(resizingAffine, b.p) }));
-    const curves = shape.curves?.map((c) => ({
-      c1: applyAffine(resizingAffine, c.c1),
-      c2: applyAffine(resizingAffine, c.c2),
-    }));
+    const curves = shape.curves?.map((c) => {
+      return c && "c1" in c
+        ? {
+            c1: applyAffine(resizingAffine, c.c1),
+            c2: applyAffine(resizingAffine, c.c2),
+          }
+        : c;
+    });
 
     const ret: Partial<LineShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
     if (!isSame(q, shape.q)) ret.q = q;
     if (body?.some((b, i) => !isSame(b.p, shape.body![i].p))) ret.body = body;
-    if (curves?.some((c, i) => !isSame(c.c1, shape.curves![i].c1) || !isSame(c.c2, shape.curves![i].c2)))
-      ret.curves = curves;
+    if (!isSameCurve(shape.curves, curves)) ret.curves = curves;
 
     return ret;
   },
@@ -443,4 +437,21 @@ export function getRadianQ(shape: LineShape): number {
     qVicinity = lerpFn(0.99);
   }
   return getRadian(q, qVicinity);
+}
+
+function isSameCurve(a: LineShape["curves"], b: LineShape["curves"]): boolean {
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  return a.every((s, i) => {
+    const t = b[i];
+    if (!s || !t) {
+      return false;
+    } else if ("d" in s && "d" in t) {
+      return isSame(s.d, t.d);
+    } else if ("c1" in s && "c1" in t) {
+      return isSame(s.c1, t.c1) && isSame(s.c2, t.c2);
+    } else {
+      return false;
+    }
+  });
 }
