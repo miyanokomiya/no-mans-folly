@@ -1,7 +1,6 @@
 import {
   IVec2,
   getApproPoints,
-  getBezier3LerpFn,
   getDistance,
   getPathPointAtLengthFromStructs,
   getPedal,
@@ -11,7 +10,7 @@ import {
 } from "okageo";
 import { LineShape, getLinePath, isCurveLine } from "../shapes/line";
 import { TextShape, patchPosition } from "../shapes/text";
-import { BEZIER_APPROX_SIZE, ISegment, getRotateFn, getSegments } from "./geometry";
+import { BEZIER_APPROX_SIZE, ISegment, getCurveLerpFn, getRotateFn, getSegments } from "./geometry";
 import { pickMinItem } from "./commons";
 
 export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0): Partial<TextShape> {
@@ -98,15 +97,15 @@ function getEdgeInfo(
     };
   }
 
-  const curves = line.curves.map((c) => [rotateFn(c.c1), rotateFn(c.c2)]);
-  const sections: [IVec2, IVec2, IVec2, IVec2][] = [];
-  for (let i = 0; i < edges.length; i++) {
-    sections.push([edges[i][0], curves[i][0], curves[i][1], edges[i][1]]);
-  }
-  const pathStructs = sections.map((sec) => {
-    const lerpFn = getBezier3LerpFn(sec);
-    const points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
-    const edges = getSegments(points);
+  const pathStructs = edges.map((edge, i) => {
+    const curve = line.curves[i];
+    const lerpFn = getCurveLerpFn(edge, curve);
+    let points: IVec2[] = edge;
+    let edges = [edge];
+    if (curve) {
+      points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
+      edges = getSegments(points);
+    }
     return { lerpFn, length: getPolylineLength(points), edges };
   });
 

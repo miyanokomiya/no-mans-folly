@@ -3,7 +3,7 @@ import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath, getRadianP, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { TAU, getCurveLerpFn, isPointCloseToBezierSegment, isPointCloseToSegment } from "../utils/geometry";
+import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { applyCurvePath, applyPath, renderMoveIcon } from "../utils/renderer";
 
@@ -90,17 +90,10 @@ export function newLineBounding(option: Option) {
     }
 
     {
-      let edgeIndex = -1;
-      if (curves) {
-        edgeIndex = edges.findIndex(([p1, p2], i) => {
-          const control = curves[i];
-          return isPointCloseToBezierSegment(p1, p2, control.c1, control.c2, p, vertexSize);
-        });
-      } else {
-        edgeIndex = edges.findIndex((seg) => {
-          return isPointCloseToSegment(seg, p, vertexSize);
-        });
-      }
+      const edgeIndex = edges.findIndex((edge, i) => {
+        return isPointCloseToCurveSpline(edge, [curves?.[i]], p, vertexSize);
+      });
+
       if (edgeIndex !== -1) {
         // Each edge of elbow line shouldn't be targeted.
         // => They are calculated automatically.
