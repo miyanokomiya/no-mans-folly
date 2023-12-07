@@ -706,12 +706,12 @@ export function getArcCurveParams(segment: ISegment, control: IVec2): ArcCurvePa
   const dy = nQ.y;
   const r1 = Math.atan2(dy, dx / 2);
   const r3 = 2 * r1 - Math.PI / 2;
-  const rad = (Math.cos(r3) * dx) / 2;
-  const nC = { x: dx / 2, y: dy - rad };
+  const radiusRaw = dx / 2 / Math.cos(r3);
+  const nC = { x: dx / 2, y: dy - radiusRaw };
   const nFrom = Math.atan2(-nC.y, -nC.x);
   const nTo = Math.atan2(-nC.y, nC.x);
 
-  const radius = Math.abs(rad);
+  const radius = Math.abs(radiusRaw);
   return {
     c: add(rotateFn(nC), segment[0]),
     radius,
@@ -737,12 +737,12 @@ export function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec
   const dy = nQ.y;
   const r1 = Math.atan2(dy, dx / 2);
   const r3 = 2 * r1 - Math.PI / 2;
-  const rad = (Math.cos(r3) * dx) / 2;
-  const nC = { x: dx / 2, y: dy - rad };
+  const radiusRaw = dx / 2 / Math.cos(r3);
+  const nC = { x: dx / 2, y: dy - radiusRaw };
   const nFrom = Math.atan2(-nC.y, -nC.x);
   const nTo = Math.atan2(-nC.y, nC.x);
 
-  const radius = Math.abs(rad);
+  const radius = Math.abs(radiusRaw);
   return {
     c: add(rotateFn(nC), segment[0]),
     radius,

@@ -872,37 +872,37 @@ describe("getArcCurveParams", () => {
 
     const ret1 = getArcCurveParams(segment, { x: 0, y: 75 })!;
     expect(ret1.c.x).toBeCloseTo(50, 3);
-    expect(ret1.c.y).toBeCloseTo(28.846, 3);
-    expect(ret1.radius).toBeCloseTo(46.154, 3);
-    expect(ret1.from).toBeCloseTo(-2.618, 3);
-    expect(ret1.to).toBeCloseTo(-0.523, 3);
+    expect(ret1.c.y).toBeCloseTo(20.833, 3);
+    expect(ret1.radius).toBeCloseTo(54.167, 3);
+    expect(ret1.from).toBeCloseTo(-2.747, 3);
+    expect(ret1.to).toBeCloseTo(-0.395, 3);
     expect(ret1.counterclockwise).toBe(true);
     expect(ret1.largearc).toBe(true);
 
     const ret2 = getArcCurveParams(segment, { x: 0, y: -75 })!;
     expect(ret2.c.x).toBeCloseTo(50, 3);
-    expect(ret2.c.y).toBeCloseTo(-28.846, 3);
-    expect(ret2.radius).toBeCloseTo(46.154, 3);
-    expect(ret2.from).toBeCloseTo(2.618, 3);
-    expect(ret2.to).toBeCloseTo(0.523, 3);
+    expect(ret2.c.y).toBeCloseTo(-20.833, 3);
+    expect(ret2.radius).toBeCloseTo(54.167, 3);
+    expect(ret2.from).toBeCloseTo(2.747, 3);
+    expect(ret2.to).toBeCloseTo(0.395, 3);
     expect(ret2.counterclockwise).toBe(false);
     expect(ret2.largearc).toBe(true);
 
     const ret3 = getArcCurveParams(segment, { x: 0, y: 25 })!;
     expect(ret3.c.x).toBeCloseTo(50, 3);
-    expect(ret3.c.y).toBeCloseTo(-15, 3);
-    expect(ret3.radius).toBeCloseTo(40, 3);
-    expect(ret3.from).toBeCloseTo(2.85, 3);
-    expect(ret3.to).toBeCloseTo(0.291, 3);
+    expect(ret3.c.y).toBeCloseTo(-37.5, 3);
+    expect(ret3.radius).toBeCloseTo(62.5, 3);
+    expect(ret3.from).toBeCloseTo(2.498, 3);
+    expect(ret3.to).toBeCloseTo(0.644, 3);
     expect(ret3.counterclockwise).toBe(true);
     expect(ret3.largearc).toBe(false);
 
     const ret4 = getArcCurveParams(segment, { x: 0, y: -25 })!;
     expect(ret4.c.x).toBeCloseTo(50, 3);
-    expect(ret4.c.y).toBeCloseTo(15, 3);
-    expect(ret4.radius).toBeCloseTo(40, 3);
-    expect(ret4.from).toBeCloseTo(-2.85, 3);
-    expect(ret4.to).toBeCloseTo(-0.291, 3);
+    expect(ret4.c.y).toBeCloseTo(37.5, 3);
+    expect(ret4.radius).toBeCloseTo(62.5, 3);
+    expect(ret4.from).toBeCloseTo(-2.498, 3);
+    expect(ret4.to).toBeCloseTo(-0.644, 3);
     expect(ret4.counterclockwise).toBe(false);
     expect(ret4.largearc).toBe(false);
   });
