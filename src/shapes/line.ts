@@ -10,7 +10,6 @@ import {
   getRelativePointOnCurvePath,
   getWrapperRect,
   isPointCloseToCurveSpline,
-  isPointCloseToSegment,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -171,13 +170,7 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(struct.getWrapperRect(shape));
   },
   isPointOn(shape, p, shapeContext) {
-    const edges = getEdges(shape);
-
-    if (shape.curves && shape.curves.length === edges.length) {
-      if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, 10)) return true;
-    } else {
-      if (edges.some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
-    }
+    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, 10)) return true;
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
@@ -384,7 +377,13 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
     default:
       if (shape.body) {
         const body = [...shape.body.slice(0, index - 1), { p, c }, ...shape.body.slice(index - 1)];
-        return { body };
+        if (shape.curves && shape.curves.length > index) {
+          // Insert new curve and let it inherit the previous one.
+          const curves = [...shape.curves.slice(0, index), shape.curves[index - 1], ...shape.curves.slice(index)];
+          return { body, curves };
+        } else {
+          return { body };
+        }
       } else {
         return { body: [{ p, c }] };
       }
@@ -400,7 +399,14 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
   const vertices = getLinePath(shape);
   if (0 === index || index === vertices.length - 1) return {};
 
-  return { body: shape.body.filter((_, i) => i !== index - 1) };
+  const body = shape.body.filter((_, i) => i !== index - 1);
+  if (shape.curves && shape.curves.length > index) {
+    // Delete corresponding curve.
+    const curves = shape.curves.filter((_, i) => i !== index);
+    return { body, curves };
+  } else {
+    return { body };
+  }
 }
 
 export function isLineShape(shape: Shape): shape is LineShape {
@@ -408,7 +414,7 @@ export function isLineShape(shape: Shape): shape is LineShape {
 }
 
 export function isCurveLine(shape: LineShape): shape is LineShape & Required<Pick<LineShape, "curves">> {
-  return !!shape.curves && shape.curves.length === 1 + (shape.body?.length ?? 0);
+  return !!shape.curves;
 }
 
 export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
@@ -432,8 +438,8 @@ export function getRadianQ(shape: LineShape): number {
   const q = linePath[linePath.length - 1];
 
   let qVicinity = linePath[linePath.length - 2];
-  if (shape.curves && shape.curves[shape.curves.length - 1]) {
-    const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[shape.curves.length - 1]);
+  if (shape.curves && shape.curves[linePath.length - 2]) {
+    const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[linePath.length - 2]);
     qVicinity = lerpFn(0.99);
   }
   return getRadian(q, qVicinity);
