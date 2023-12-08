@@ -18,7 +18,7 @@ export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeSt
   ctx.lineWidth = width;
   ctx.setLineDash(getLineDashArray(stroke.dash, width));
   ctx.lineCap = stroke.lineCap ?? "butt";
-  ctx.lineJoin = stroke.lineJoin ?? "miter";
+  ctx.lineJoin = stroke.lineJoin ?? "round";
 }
 
 export function getStrokeWidth(stroke: StrokeStyle): number {

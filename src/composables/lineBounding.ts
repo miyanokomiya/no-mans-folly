@@ -1,17 +1,17 @@
-import { IVec2, add, getCenter, multi, rotate } from "okageo";
+import { IVec2, add, multi, rotate } from "okageo";
 import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath, getRadianP, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyCurvePath, applyPath, renderMoveIcon } from "../utils/renderer";
+import { applyCurvePath, applyPath, renderMoveIcon, renderPlusIcon } from "../utils/renderer";
 
 const VERTEX_R = 7;
-const ADD_VERTEX_ANCHOR_RATE = 0.8;
+const ADD_VERTEX_ANCHOR_RATE = 1;
 const MOVE_ANCHOR_RATE = 1.4;
 
-type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor";
+type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor" | "arc-anchor";
 export interface LineHitResult {
   type: LineHitType;
   index: number;
@@ -28,12 +28,12 @@ export function newLineBounding(option: Option) {
   const edges = getEdges(lineShape);
   const curves = isCurveLine(lineShape) ? lineShape.curves : undefined;
   const edgeCenters = edges.map((edge, i) => {
-    if (curves) {
-      const lerpFn = getCurveLerpFn(edge, curves[i]);
-      return lerpFn(0.5);
-    } else {
-      return getCenter(edge[0], edge[1]);
-    }
+    const lerpFn = getCurveLerpFn(edge, curves?.[i]);
+    return lerpFn(0.5);
+  });
+  const addAnchors = edges.map((edge, i) => {
+    const lerpFn = getCurveLerpFn(edge, curves?.[i]);
+    return lerpFn(0.25);
   });
   const moveAnchorV = rotate({ x: 30, y: 0 }, getRadianP(lineShape));
 
@@ -59,7 +59,6 @@ export function newLineBounding(option: Option) {
 
   function hitTest(p: IVec2, scale = 1): LineHitResult | undefined {
     const vertexSize = VERTEX_R * scale;
-    const addAnchorSize = vertexSize * ADD_VERTEX_ANCHOR_RATE;
 
     {
       const moveAnchor = getMoveAnchor(scale);
@@ -80,12 +79,26 @@ export function newLineBounding(option: Option) {
     }
 
     if (!elbow) {
-      const edgeCenterIndex = edgeCenters.findIndex((v) => {
-        const testFn = newCircleHitTest(v, addAnchorSize);
-        return testFn.test(p);
-      });
-      if (edgeCenterIndex !== -1) {
-        return { type: "new-vertex-anchor", index: edgeCenterIndex };
+      {
+        const addAnchorSize = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+        const edgeCenterIndex = addAnchors.findIndex((v) => {
+          const testFn = newCircleHitTest(v, addAnchorSize);
+          return testFn.test(p);
+        });
+        if (edgeCenterIndex !== -1) {
+          return { type: "new-vertex-anchor", index: edgeCenterIndex };
+        }
+      }
+
+      {
+        const arcAnchorSize = vertexSize;
+        const arcAnchorIndex = edgeCenters.findIndex((v) => {
+          const testFn = newCircleHitTest(v, arcAnchorSize);
+          return testFn.test(p);
+        });
+        if (arcAnchorIndex !== -1) {
+          return { type: "arc-anchor", index: arcAnchorIndex };
+        }
       }
     }
 
@@ -132,13 +145,26 @@ export function newLineBounding(option: Option) {
     });
 
     if (!elbow) {
-      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
-      edgeCenters.forEach((c) => {
-        ctx.beginPath();
-        ctx.ellipse(c.x, c.y, vertexSize * ADD_VERTEX_ANCHOR_RATE, vertexSize * ADD_VERTEX_ANCHOR_RATE, 0, 0, TAU);
-        ctx.fill();
-        ctx.stroke();
-      });
+      {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
+        const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+        edgeCenters.forEach((c) => {
+          ctx.beginPath();
+          ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
+          ctx.stroke();
+        });
+      }
+
+      {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
+        const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+        addAnchors.forEach((c) => {
+          ctx.beginPath();
+          ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
+          ctx.fill();
+          renderPlusIcon(ctx, c, size * 2);
+        });
+      }
     }
 
     const moveAnchor = getMoveAnchor(scale);
@@ -206,6 +232,16 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "new-vertex-anchor": {
+          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          const p = addAnchors[hitResult.index];
+          const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, size, size, 0, 0, TAU);
+          ctx.fill();
+          renderPlusIcon(ctx, p, size * 2);
+          break;
+        }
+        case "arc-anchor": {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
           const p = edgeCenters[hitResult.index];
           ctx.beginPath();

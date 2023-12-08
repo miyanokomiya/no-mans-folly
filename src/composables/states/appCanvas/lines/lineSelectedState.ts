@@ -26,6 +26,7 @@ import { newMovingHubState } from "../movingHubState";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
+import { newMovingLineArcState } from "./movingLineArcState";
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -83,6 +84,8 @@ export function newLineSelectedState(): AppCanvasState {
                   case "new-vertex-anchor":
                     return () =>
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });
+                  case "arc-anchor":
+                    return () => newMovingLineArcState({ lineShape, index: hitResult.index, p: event.data.point });
                 }
               }
 
