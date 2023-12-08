@@ -39,10 +39,9 @@ export const LineHeadClosedFilledStruct: LineHeadStruct<LineHead> = {
     applyPath(
       region,
       [
-        { x: 0, y: -width / 2 },
+        { x: 0, y: 0 },
         { x: -height, y: -width / 2 },
         { x: -height, y: width / 2 },
-        { x: 0, y: width / 2 },
       ].map((p) => applyAffine(transform, p)),
       true,
     );

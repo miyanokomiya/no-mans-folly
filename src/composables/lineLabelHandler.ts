@@ -1,11 +1,11 @@
 import { IVec2 } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
-import { LineShape, getLinePath, getRelativePointOn, isCurveLine, isLineShape } from "../shapes/line";
+import { LineShape, getLinePath, getRelativePointOn, isLineShape } from "../shapes/line";
 import { TextShape, isLineLabelShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
 import { attachLabelToLine } from "../utils/lineLabel";
-import { applyBezierPath, applyPath } from "../utils/renderer";
+import { applyCurvePath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
@@ -62,11 +62,7 @@ export function renderParentLineRelation(
   const path = getLinePath(parentLineShape);
   applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: 2 * ctx.getScale() });
   renderCtx.beginPath();
-  if (isCurveLine(parentLineShape)) {
-    applyBezierPath(renderCtx, path, parentLineShape.curves);
-  } else {
-    applyPath(renderCtx, path);
-  }
+  applyCurvePath(renderCtx, path, parentLineShape.curves);
   renderCtx.stroke();
   const origin = getRelativePointOn(parentLineShape, textShape.lineAttached ?? 0);
   applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });

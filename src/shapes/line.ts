@@ -1,31 +1,20 @@
-import {
-  AffineMatrix,
-  IRectangle,
-  IVec2,
-  applyAffine,
-  getBezier3LerpFn,
-  getOuterRectangle,
-  getRadian,
-  isSame,
-  multiAffines,
-} from "okageo";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getRadian, isSame, multiAffines } from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   ISegment,
   expandRect,
-  getBezierSplineBounds,
+  getCurveSplineBounds,
+  getCurveLerpFn,
   getRectPoints,
-  getRelativePointOnBezierPath,
-  getRelativePointOnPath,
+  getRelativePointOnCurvePath,
   getWrapperRect,
-  isPointCloseToBezierSpline,
-  isPointCloseToSegment,
+  isPointCloseToCurveSpline,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import { clipLineHead, getLineHeadWrapperRadius, renderLineHead } from "./lineHeads";
-import { applyBezierPath, applyPath } from "../utils/renderer";
+import { applyCurvePath, applyPath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 
@@ -46,7 +35,7 @@ export interface LineShape extends Shape {
    * The first item represents body[0], the last one does "q" and others do "body".
    * "curves.length" should be equal to "body.length + 1"
    */
-  curves?: CurveControl[];
+  curves?: (CurveControl | undefined)[];
   curveType?: CurveType;
 }
 
@@ -131,11 +120,7 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     ctx.beginPath();
-    if (shape.curves) {
-      applyBezierPath(ctx, linePath, shape.curves);
-    } else {
-      applyPath(ctx, linePath);
-    }
+    applyCurvePath(ctx, linePath, shape.curves);
 
     if (!shape.fill.disabled) {
       applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color, dash: undefined });
@@ -161,7 +146,7 @@ export const struct: ShapeStruct<LineShape> = {
   },
   getWrapperRect(shape, _, includeBounds) {
     const path = getLinePath(shape);
-    let rect = isCurveLine(shape) ? getBezierSplineBounds(path, shape.curves) : getOuterRectangle([path]);
+    let rect = getCurveSplineBounds(path, shape.curves);
 
     if (includeBounds) {
       // FIXME: This expanding isn't precise but just large enough.
@@ -185,13 +170,8 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(struct.getWrapperRect(shape));
   },
   isPointOn(shape, p, shapeContext) {
-    const edges = getEdges(shape);
-
-    if (shape.curves && shape.curves.length === edges.length) {
-      if (isPointCloseToBezierSpline(getLinePath(shape), shape.curves, p, 10)) return true;
-    } else {
-      if (edges.some((seg) => isPointCloseToSegment(seg, p, 10))) return true;
-    }
+    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 2)))
+      return true;
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
@@ -203,17 +183,20 @@ export const struct: ShapeStruct<LineShape> = {
   resize(shape, resizingAffine) {
     const [p, q] = [shape.p, shape.q].map((p) => applyAffine(resizingAffine, p));
     const body = shape.body?.map((b) => ({ ...b, p: applyAffine(resizingAffine, b.p) }));
-    const curves = shape.curves?.map((c) => ({
-      c1: applyAffine(resizingAffine, c.c1),
-      c2: applyAffine(resizingAffine, c.c2),
-    }));
+    const curves = shape.curves?.map((c) => {
+      return c && "c1" in c
+        ? {
+            c1: applyAffine(resizingAffine, c.c1),
+            c2: applyAffine(resizingAffine, c.c2),
+          }
+        : c;
+    });
 
     const ret: Partial<LineShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
     if (!isSame(q, shape.q)) ret.q = q;
     if (body?.some((b, i) => !isSame(b.p, shape.body![i].p))) ret.body = body;
-    if (curves?.some((c, i) => !isSame(c.c1, shape.curves![i].c1) || !isSame(c.c2, shape.curves![i].c2)))
-      ret.curves = curves;
+    if (!isSameCurve(shape.curves, curves)) ret.curves = curves;
 
     return ret;
   },
@@ -395,7 +378,13 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
     default:
       if (shape.body) {
         const body = [...shape.body.slice(0, index - 1), { p, c }, ...shape.body.slice(index - 1)];
-        return { body };
+        if (shape.curves && shape.curves.length > index) {
+          // Insert new curve and let it inherit the previous one.
+          const curves = [...shape.curves.slice(0, index), shape.curves[index - 1], ...shape.curves.slice(index)];
+          return { body, curves };
+        } else {
+          return { body };
+        }
       } else {
         return { body: [{ p, c }] };
       }
@@ -411,7 +400,14 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
   const vertices = getLinePath(shape);
   if (0 === index || index === vertices.length - 1) return {};
 
-  return { body: shape.body.filter((_, i) => i !== index - 1) };
+  const body = shape.body.filter((_, i) => i !== index - 1);
+  if (shape.curves && shape.curves.length > index) {
+    // Delete corresponding curve.
+    const curves = shape.curves.filter((_, i) => i !== index);
+    return { body, curves };
+  } else {
+    return { body };
+  }
 }
 
 export function isLineShape(shape: Shape): shape is LineShape {
@@ -419,16 +415,11 @@ export function isLineShape(shape: Shape): shape is LineShape {
 }
 
 export function isCurveLine(shape: LineShape): shape is LineShape & Required<Pick<LineShape, "curves">> {
-  return !!shape.curves && shape.curves.length === 1 + (shape.body?.length ?? 0);
+  return !!shape.curves;
 }
 
 export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
-  const path = getLinePath(shape);
-  if (isCurveLine(shape)) {
-    return getRelativePointOnBezierPath(path, shape.curves, rate);
-  } else {
-    return getRelativePointOnPath(path, rate);
-  }
+  return getRelativePointOnCurvePath(getLinePath(shape), shape.curves, rate);
 }
 
 export function getRadianP(shape: LineShape): number {
@@ -436,9 +427,8 @@ export function getRadianP(shape: LineShape): number {
   const p = linePath[0];
 
   let pVicinity = linePath[1];
-  if (shape.curves && shape.curves.length > 0) {
-    const c = shape.curves[0];
-    const lerpFn = getBezier3LerpFn([p, c.c1, c.c2, linePath[1]]);
+  if (shape.curves && shape.curves[0]) {
+    const lerpFn = getCurveLerpFn([p, linePath[1]], shape.curves[0]);
     pVicinity = lerpFn(0.01);
   }
   return getRadian(p, pVicinity);
@@ -449,10 +439,26 @@ export function getRadianQ(shape: LineShape): number {
   const q = linePath[linePath.length - 1];
 
   let qVicinity = linePath[linePath.length - 2];
-  if (shape.curves && shape.curves.length > 0) {
-    const c = shape.curves[shape.curves.length - 1];
-    const lerpFn = getBezier3LerpFn([q, c.c2, c.c1, linePath[linePath.length - 2]]);
-    qVicinity = lerpFn(0.01);
+  if (shape.curves && shape.curves[linePath.length - 2]) {
+    const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[linePath.length - 2]);
+    qVicinity = lerpFn(0.99);
   }
   return getRadian(q, qVicinity);
+}
+
+function isSameCurve(a: LineShape["curves"], b: LineShape["curves"]): boolean {
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  return a.every((s, i) => {
+    const t = b[i];
+    if (!s || !t) {
+      return false;
+    } else if ("d" in s && "d" in t) {
+      return isSame(s.d, t.d);
+    } else if ("c1" in s && "c1" in t) {
+      return isSame(s.c1, t.c1) && isSame(s.c2, t.c2);
+    } else {
+      return false;
+    }
+  });
 }

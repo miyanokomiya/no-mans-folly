@@ -3,12 +3,14 @@ import {
   IVec2,
   MINVALUE,
   add,
+  circleClamp,
   clamp,
   getApproPoints,
   getBezier3LerpFn,
   getCenter,
   getCrossSegAndLine,
   getDistance,
+  getNorm,
   getOuterRectangle,
   getPathPointAtLengthFromStructs,
   getPathTotalLengthFromStructs,
@@ -19,6 +21,7 @@ import {
   interpolateVector,
   isOnSeg,
   isParallel,
+  lerpPoint,
   multi,
   multiAffines,
   rotate,
@@ -27,7 +30,6 @@ import {
   vec,
 } from "okageo";
 import { CurveControl } from "../models";
-import { pickMinItem } from "./commons";
 
 export const BEZIER_APPROX_SIZE = 10;
 
@@ -55,6 +57,13 @@ export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?
       : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     return origin ? add(rotatedV, origin) : rotatedV;
   };
+}
+
+/**
+ * Returns equivalent radian inside the range: [-pi, pi]
+ */
+export function normalizeRadian(value: number): number {
+  return circleClamp(-Math.PI, Math.PI, value);
 }
 
 export function getSegments(points: IVec2[]): ISegment[] {
@@ -303,14 +312,29 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
 }
 
 // Likewise "isPointCloseToSegment"
-export function isPointCloseToBezierSpline(
+export function isPointCloseToCurveSpline(
   points: IVec2[],
-  controls: CurveControl[],
+  controls: (CurveControl | undefined)[] = [],
   p: IVec2,
   threshold: number,
 ): boolean {
   for (let i = 0; i < points.length - 1; i++) {
-    const hit = isPointCloseToBezierSegment(points[i], points[i + 1], controls[i].c1, controls[i].c2, p, threshold);
+    const seg: ISegment = [points[i], points[i + 1]];
+    const control = controls[i];
+    let hit = false;
+    if (!control) {
+      hit = isPointCloseToSegment(seg, p, threshold);
+    } else if ("d" in control) {
+      const arcParams = getArcCurveParamsByNormalizedControl(seg, control.d);
+      if (arcParams) {
+        hit = isPointCloseToArc(arcParams, p, threshold);
+      } else {
+        hit = isPointCloseToSegment(seg, p, threshold);
+      }
+    } else {
+      hit = isPointCloseToBezierSegment(seg[0], seg[1], control.c1, control.c2, p, threshold);
+    }
+
     if (hit) return true;
   }
   return false;
@@ -479,19 +503,30 @@ export function getRelativePointOnPath(path: IVec2[], rate: number): IVec2 {
   return interpolateVector(edges[targetIndex][0], edges[targetIndex][1], remain / list[targetIndex]);
 }
 
-export function getRelativePointOnBezierPath(points: IVec2[], controls: CurveControl[], rate: number): IVec2 {
+export function getRelativePointOnCurvePath(
+  points: IVec2[],
+  controls: (CurveControl | undefined)[] = [],
+  rate: number,
+): IVec2 {
   if (points.length <= 1) return points[0];
   if (points.length !== controls.length + 1) return getRelativePointOnPath(points, rate);
 
-  const sections: [IVec2, IVec2, IVec2, IVec2][] = [];
+  const pathStructs: {
+    lerpFn: (t: number) => IVec2;
+    length: number;
+  }[] = [];
   for (let i = 0; i < points.length - 1; i++) {
-    sections.push([points[i], controls[i].c1, controls[i].c2, points[i + 1]]);
+    const seg: ISegment = [points[i], points[i + 1]];
+    const c = controls[i];
+    const lerpFn = getCurveLerpFn(seg, c);
+    if (!c) {
+      const length = getDistance(seg[0], seg[1]);
+      pathStructs.push({ lerpFn, length });
+    } else {
+      const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
+      pathStructs.push({ lerpFn, length });
+    }
   }
-  const pathStructs = sections.map((sec) => {
-    const lerpFn = getBezier3LerpFn(sec);
-    const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
-    return { lerpFn, length };
-  });
   const totalLength = getPathTotalLengthFromStructs(pathStructs);
   return getPathPointAtLengthFromStructs(pathStructs, totalLength * rate);
 }
@@ -562,52 +597,34 @@ export function getRotationAffines(rotation: number, origin: IVec2) {
   };
 }
 
-export function getBezierSplineBounds(points: IVec2[], controls: CurveControl[]): IRectangle {
+export function getCurveSplineBounds(points: IVec2[], controls: (CurveControl | undefined)[] = []): IRectangle {
   const segments = getSegments(points);
-  const segmentRangeList = segments.map<{ x: IRange; y: IRange; p1: IVec2; p2: IVec2; c1: IVec2; c2: IVec2 }>(
-    ([p1, p2], i) => {
-      const { c1, c2 } = controls[i];
-      return {
-        x: [Math.min(p1.x, p2.x, c1.x, c2.x), Math.max(p1.x, p2.x, c1.x, c2.x)],
-        y: [Math.min(p1.y, p2.y, c1.y, c2.y), Math.max(p1.y, p2.y, c1.y, c2.y)],
-        p1,
-        p2,
-        c1,
-        c2,
-      };
-    },
-  );
+  const rects = segments.map((seg, i) => {
+    const control = controls[i];
+    if (!control) {
+      return getOuterRectangle([seg]);
+    } else if ("d" in control) {
+      const params = getArcCurveParamsByNormalizedControl(seg, control.d);
+      return params ? getArcBounds(params) : getOuterRectangle([seg]);
+    } else {
+      return getBezierBounds(seg[0], seg[1], control.c1, control.c2);
+    }
+  });
+  return getWrapperRect(rects);
+}
 
-  const candidatesMinX = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => c.x[0] <= item.x[1]);
-  }, segmentRangeList);
-  const candidatesMaxX = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => item.x[0] <= c.x[1]);
-  }, segmentRangeList);
-  const candidatesMinY = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => c.y[0] <= item.y[1]);
-  }, segmentRangeList);
-  const candidatesMaxY = segmentRangeList.reduce((list, item) => {
-    return list.filter((c) => item.y[0] <= c.y[1]);
-  }, segmentRangeList);
+export function getBezierBounds(v1: IVec2, v2: IVec2, c1: IVec2, c2: IVec2): IRectangle {
+  const left = getBezierMinValue(v1.x, v2.x, c1.x, c2.x);
+  const right = getBezierMaxValue(v1.x, v2.x, c1.x, c2.x);
+  const top = getBezierMinValue(v1.y, v2.y, c1.y, c2.y);
+  const bottom = getBezierMaxValue(v1.y, v2.y, c1.y, c2.y);
 
-  const minX = pickMinItem(
-    candidatesMinX.map((c) => getBezierMinValue(c.p1.x, c.p2.x, c.c1.x, c.c2.x)),
-    (v) => v,
-  )!;
-  const maxX = pickMinItem(
-    candidatesMaxX.map((c) => getBezierMaxValue(c.p1.x, c.p2.x, c.c1.x, c.c2.x)),
-    (v) => -v,
-  )!;
-  const minY = pickMinItem(
-    candidatesMinY.map((c) => getBezierMinValue(c.p1.y, c.p2.y, c.c1.y, c.c2.y)),
-    (v) => v,
-  )!;
-  const maxY = pickMinItem(
-    candidatesMaxY.map((c) => getBezierMaxValue(c.p1.y, c.p2.y, c.c1.y, c.c2.y)),
-    (v) => -v,
-  )!;
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
 }
 
 export function getBezierMinValue(v1: number, v2: number, c1: number, c2: number): number {
@@ -649,4 +666,154 @@ function getBezierDerivative(v1: number, v2: number, c1: number, c2: number): [a
 function getBezierValue(v1: number, v2: number, c1: number, c2: number, t: number): number {
   const nt = 1 - t;
   return v1 * nt * nt * nt + 3 * c1 * t * nt * nt + 3 * c2 * t * t * nt + v2 * t * t * t;
+}
+
+/**
+ * These parameters are compatible to HTML canvas "arc" method.
+ * => "from" and "to" reprenset absolete positions on the circumference.
+ * ex) from:0, to: -pi/2 => The curve still should be clockwise.
+ */
+interface ArcCurveParams {
+  c: IVec2;
+  radius: number;
+  from: number;
+  to: number;
+  counterclockwise?: boolean;
+  largearc?: boolean;
+}
+
+/**
+ * Returns parameters of the arc that
+ * - starts from "segment[0]" to "segment[1]"
+ * - passes through the point the same distance away from "segment" as "control"
+ * Calculation ref: https://github.com/miyanokomiya/no-mans-folly/issues/6
+ *
+ * Returns undefined when no arc exists for given arguments.
+ */
+export function getArcCurveParams(segment: ISegment, control: IVec2): ArcCurveParams | undefined {
+  const rotation = getRadian(segment[1], segment[0]);
+  const rotateFn = getRotateFn(rotation);
+  const nQ = rotateFn(sub(control, segment[0]), true);
+  return getArcCurveParamsByNormalizedControl(segment, nQ);
+}
+
+export function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec2): ArcCurveParams | undefined {
+  const rotation = getRadian(segment[1], segment[0]);
+  const rotateFn = getRotateFn(rotation);
+
+  const nP = rotateFn(sub(segment[1], segment[0]), true);
+  // Treat as a circule when the segment has zero length
+  if (Math.abs(nP.x) < MINVALUE) {
+    const rad = getRadian(nQ);
+    return {
+      c: add({ x: nQ.x / 2, y: nQ.y / 2 }, segment[0]),
+      radius: getNorm(nQ) / 2,
+      from: rad - Math.PI,
+      to: rad + Math.PI,
+      largearc: true,
+    };
+  }
+
+  // No arc exists when three points are on the same line.
+  if (Math.abs(nQ.y) < MINVALUE) return;
+
+  const dx = nP.x;
+  const dy = nQ.y;
+  const r1 = Math.atan2(dy, dx / 2);
+  const r3 = 2 * r1 - Math.PI / 2;
+  const radiusRaw = dx / 2 / Math.cos(r3);
+  const nC = { x: dx / 2, y: dy - radiusRaw };
+  const nFrom = Math.atan2(-nC.y, -nC.x);
+  const nTo = Math.atan2(-nC.y, nC.x);
+
+  const radius = Math.abs(radiusRaw);
+  return {
+    c: add(rotateFn(nC), segment[0]),
+    radius,
+    from: nFrom + rotation,
+    to: nTo + rotation,
+    counterclockwise: nQ.y > 0,
+    largearc: Math.abs(nQ.y) > radius,
+  };
+}
+
+export function normalizeSegment(segment: ISegment): ISegment {
+  const rotation = getRadian(segment[1], segment[0]);
+  return [{ x: 0, y: 0 }, rotate(sub(segment[1], segment[0]), -rotation)];
+}
+
+export function getArcLerpFn({ c, radius, to, from, counterclockwise }: ArcCurveParams): (t: number) => IVec2 {
+  const nt = to < from ? to + TAU : to;
+  const [min, max] = counterclockwise ? [nt, from + TAU] : [from, nt];
+  const range = max - min;
+
+  return (t) => {
+    const r = counterclockwise ? range * (1 - t) + min : range * t + min;
+    return add(vec(radius * Math.cos(r), radius * Math.sin(r)), c);
+  };
+}
+
+export function getCurveLerpFn(segment: ISegment, control?: CurveControl | undefined): (t: number) => IVec2 {
+  if (!control) {
+    return (t) => lerpPoint(segment[0], segment[1], t);
+  } else if ("d" in control) {
+    const arcParams = getArcCurveParamsByNormalizedControl(segment, control.d);
+    if (arcParams) {
+      return getArcLerpFn(arcParams);
+    } else {
+      return (t) => lerpPoint(segment[0], segment[1], t);
+    }
+  } else {
+    return getBezier3LerpFn([segment[0], control.c1, control.c2, segment[1]]);
+  }
+}
+
+export function getArcBounds({ c, radius, to, from, counterclockwise }: ArcCurveParams): IRectangle {
+  const [f, t] = counterclockwise ? [to, from] : [from, to];
+  const nfrom = normalizeRadian(f);
+  const nto = normalizeRadian(t);
+  if (Math.abs(nto - nfrom) < MINVALUE) {
+    return {
+      x: c.x - radius,
+      y: c.y - radius,
+      width: 2 * radius,
+      height: 2 * radius,
+    };
+  }
+
+  const fromP = multi({ x: Math.cos(nfrom), y: Math.sin(nfrom) }, radius);
+  const toP = multi({ x: Math.cos(nto), y: Math.sin(nto) }, radius);
+
+  const left = isRadianInside(nfrom, nto, Math.PI) ? -radius : Math.min(fromP.x, toP.x);
+  const right = isRadianInside(nfrom, nto, 0) ? radius : Math.max(fromP.x, toP.x);
+  const top = isRadianInside(nfrom, nto, -Math.PI / 2) ? -radius : Math.min(fromP.y, toP.y);
+  const bottom = isRadianInside(nfrom, nto, Math.PI / 2) ? radius : Math.max(fromP.y, toP.y);
+
+  return {
+    x: left + c.x,
+    y: top + c.y,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+export function isPointCloseToArc(
+  { c, radius, to, from, counterclockwise }: ArcCurveParams,
+  p: IVec2,
+  threshold: number,
+): boolean {
+  const np = sub(p, c);
+  if (Math.abs(getNorm(np) - radius) > threshold) return false;
+  const [f, t] = counterclockwise ? [to, from] : [from, to];
+  if (!isRadianInside(normalizeRadian(f), normalizeRadian(t), getRadian(np))) return false;
+  return true;
+}
+
+/**
+ * Suppose each argument is normalized. See: "normalizeRadian"
+ * When nfrom === nto, returns true for any value.
+ */
+function isRadianInside(nfrom: number, nto: number, nr: number): boolean {
+  if (nfrom === nto) return true;
+  return (nfrom < nr && (nto < nfrom || nr <= nto)) || (nr < nfrom && nr <= nto && nto < nfrom);
 }

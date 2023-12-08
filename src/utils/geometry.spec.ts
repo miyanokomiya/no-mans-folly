@@ -32,13 +32,20 @@ import {
   getMarkersOnPolygon,
   snapNumberCeil,
   getDistanceBetweenPointAndRect,
-  isPointCloseToBezierSpline,
+  isPointCloseToCurveSpline,
   isPointCloseToBezierSegment,
-  getRelativePointOnBezierPath,
   getSegments,
   getBezierMinValue,
   getBezierMaxValue,
-  getBezierSplineBounds,
+  getCurveSplineBounds,
+  getArcCurveParams,
+  normalizeSegment,
+  getArcLerpFn,
+  getRelativePointOnCurvePath,
+  getCurveLerpFn,
+  normalizeRadian,
+  getArcBounds,
+  isPointCloseToArc,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -53,6 +60,15 @@ describe("getRotateFn", () => {
       x: 10,
       y: 10,
     });
+  });
+});
+
+describe("normalizeRadian", () => {
+  test("should return normalized radian", () => {
+    expect(normalizeRadian(Math.PI * 1.5)).toBeCloseTo(-Math.PI * 0.5, 3);
+    expect(normalizeRadian(Math.PI * 2.5)).toBeCloseTo(Math.PI * 0.5, 3);
+    expect(normalizeRadian(-Math.PI * 1.5)).toBeCloseTo(Math.PI * 0.5, 3);
+    expect(normalizeRadian(-Math.PI * 2.5)).toBeCloseTo(-Math.PI * 0.5, 3);
   });
 });
 
@@ -426,11 +442,24 @@ describe("isPointCloseToBezierSpline", () => {
       { c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } },
       { c1: { x: 15, y: 2.5 }, c2: { x: 15, y: 7.5 } },
     ];
-    expect(isPointCloseToBezierSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(false);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(true);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 0.1, y: -6 }, 1)).toBe(false);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(true);
-    expect(isPointCloseToBezierSpline(points, controls, { x: 16, y: 10 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0.1, y: -6 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 16, y: 10 }, 1)).toBe(false);
+  });
+
+  test("should return true if the point is close to the straight spline", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const controls = undefined;
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0, y: 0.1 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 0.1, y: -2 }, 1)).toBe(false);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 9.5, y: 0 }, 1)).toBe(true);
+    expect(isPointCloseToCurveSpline(points, controls, { x: 12, y: 9 }, 1)).toBe(false);
   });
 });
 
@@ -687,8 +716,8 @@ describe("getRelativePointOnPath", () => {
   });
 });
 
-describe("getRelativePointOnBezierPath", () => {
-  test("should return relative point on the path", () => {
+describe("getRelativePointOnCurvePath", () => {
+  test("should return relative point on the path: bezier curves", () => {
     const path = [
       { x: 0, y: 0 },
       { x: 10, y: 0 },
@@ -698,19 +727,62 @@ describe("getRelativePointOnBezierPath", () => {
       { c1: { x: 2, y: -5 }, c2: { x: 8, y: -5 } },
       { c1: { x: 15, y: 2 }, c2: { x: 15, y: 8 } },
     ];
-    const ret0 = getRelativePointOnBezierPath(path, controls, 0);
+    const ret0 = getRelativePointOnCurvePath(path, controls, 0);
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(0, 3);
-    const ret10 = getRelativePointOnBezierPath(path, controls, 0.1);
+    const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
     expect(ret10.x).toBeCloseTo(1.616, 3);
     expect(ret10.y).toBeCloseTo(-2.4, 3);
-    const ret50 = getRelativePointOnBezierPath(path, controls, 0.5);
+    const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
     expect(ret50.x).toBeCloseTo(10, 3);
     expect(ret50.y).toBeCloseTo(0, 3);
-    const ret90 = getRelativePointOnBezierPath(path, controls, 0.9);
+    const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
     expect(ret90.x).toBeCloseTo(12.4, 3);
     expect(ret90.y).toBeCloseTo(8.384, 3);
-    const ret100 = getRelativePointOnBezierPath(path, controls, 1);
+    const ret100 = getRelativePointOnCurvePath(path, controls, 1);
+    expect(ret100.x).toBeCloseTo(10, 3);
+    expect(ret100.y).toBeCloseTo(10, 3);
+  });
+
+  test("should return relative point on the path: arc curves", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    const controls = [{ d: { x: 5, y: 5 } }];
+    const ret0 = getRelativePointOnCurvePath(path, controls, 0);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(0, 3);
+    const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
+    expect(ret10.x).toBeCloseTo(0.245, 3);
+    expect(ret10.y).toBeCloseTo(1.545, 3);
+    const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
+    expect(ret50.x).toBeCloseTo(5, 3);
+    expect(ret50.y).toBeCloseTo(5, 3);
+    const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
+    expect(ret90.x).toBeCloseTo(9.755, 3);
+    expect(ret90.y).toBeCloseTo(1.545, 3);
+    const ret100 = getRelativePointOnCurvePath(path, controls, 1);
+    expect(ret100.x).toBeCloseTo(10, 3);
+    expect(ret100.y).toBeCloseTo(0, 3);
+  });
+
+  test("should return relative point on the path: straight lines", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const ret0 = getRelativePointOnCurvePath(path, undefined, 0);
+    expect(ret0.x).toBeCloseTo(0, 3);
+    expect(ret0.y).toBeCloseTo(0, 3);
+    const ret10 = getRelativePointOnCurvePath(path, undefined, 0.1);
+    expect(ret10.x).toBeCloseTo(2, 3);
+    expect(ret10.y).toBeCloseTo(0, 3);
+    const ret90 = getRelativePointOnCurvePath(path, [], 0.9);
+    expect(ret90.x).toBeCloseTo(10, 3);
+    expect(ret90.y).toBeCloseTo(8, 3);
+    const ret100 = getRelativePointOnCurvePath(path, [], 1);
     expect(ret100.x).toBeCloseTo(10, 3);
     expect(ret100.y).toBeCloseTo(10, 3);
   });
@@ -760,7 +832,7 @@ describe("getBezierSplineBounds", () => {
       { c1: { x: 2.5, y: -5 }, c2: { x: 7.5, y: -5 } },
       { c1: { x: 15, y: 2.5 }, c2: { x: 15, y: 7.5 } },
     ];
-    const ret0 = getBezierSplineBounds(points, controls);
+    const ret0 = getCurveSplineBounds(points, controls);
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(-3.75, 3);
     expect(ret0.width).toBeCloseTo(13.75, 3);
@@ -781,5 +853,294 @@ describe("getBezierMaxValue", () => {
     expect(getBezierMaxValue(0, 10, 2, 8)).toBeCloseTo(10, 3);
     expect(getBezierMaxValue(0, 0, 10, 10)).toBeCloseTo(7.5, 3);
     expect(getBezierMaxValue(10, 10, 20, 20)).toBeCloseTo(17.5, 3);
+  });
+});
+
+describe("getArcCurveParams", () => {
+  test("should return arc curve params based on given segment and control point: no rotation", () => {
+    const segment = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+    ] as ISegment;
+
+    const ret0 = getArcCurveParams(segment, { x: 0, y: 50 })!;
+    expect(ret0.c.x).toBeCloseTo(50, 3);
+    expect(ret0.c.y).toBeCloseTo(0, 3);
+    expect(ret0.radius).toBeCloseTo(50, 3);
+    expect(Math.abs(ret0.from)).toBeCloseTo(Math.PI, 3);
+    expect(ret0.to).toBeCloseTo(0, 3);
+
+    const ret1 = getArcCurveParams(segment, { x: 0, y: 75 })!;
+    expect(ret1.c.x).toBeCloseTo(50, 3);
+    expect(ret1.c.y).toBeCloseTo(20.833, 3);
+    expect(ret1.radius).toBeCloseTo(54.167, 3);
+    expect(ret1.from).toBeCloseTo(-2.747, 3);
+    expect(ret1.to).toBeCloseTo(-0.395, 3);
+    expect(ret1.counterclockwise).toBe(true);
+    expect(ret1.largearc).toBe(true);
+
+    const ret2 = getArcCurveParams(segment, { x: 0, y: -75 })!;
+    expect(ret2.c.x).toBeCloseTo(50, 3);
+    expect(ret2.c.y).toBeCloseTo(-20.833, 3);
+    expect(ret2.radius).toBeCloseTo(54.167, 3);
+    expect(ret2.from).toBeCloseTo(2.747, 3);
+    expect(ret2.to).toBeCloseTo(0.395, 3);
+    expect(ret2.counterclockwise).toBe(false);
+    expect(ret2.largearc).toBe(true);
+
+    const ret3 = getArcCurveParams(segment, { x: 0, y: 25 })!;
+    expect(ret3.c.x).toBeCloseTo(50, 3);
+    expect(ret3.c.y).toBeCloseTo(-37.5, 3);
+    expect(ret3.radius).toBeCloseTo(62.5, 3);
+    expect(ret3.from).toBeCloseTo(2.498, 3);
+    expect(ret3.to).toBeCloseTo(0.644, 3);
+    expect(ret3.counterclockwise).toBe(true);
+    expect(ret3.largearc).toBe(false);
+
+    const ret4 = getArcCurveParams(segment, { x: 0, y: -25 })!;
+    expect(ret4.c.x).toBeCloseTo(50, 3);
+    expect(ret4.c.y).toBeCloseTo(37.5, 3);
+    expect(ret4.radius).toBeCloseTo(62.5, 3);
+    expect(ret4.from).toBeCloseTo(-2.498, 3);
+    expect(ret4.to).toBeCloseTo(-0.644, 3);
+    expect(ret4.counterclockwise).toBe(false);
+    expect(ret4.largearc).toBe(false);
+  });
+
+  test("should return arc curve params based on given segment and control point: rotated segment", () => {
+    const segment = [
+      { x: 0, y: 0 },
+      { x: 0, y: 100 },
+    ] as ISegment;
+
+    const ret0 = getArcCurveParams(segment, { x: -50, y: 0 })!;
+    expect(ret0.c.x).toBeCloseTo(0, 3);
+    expect(ret0.c.y).toBeCloseTo(50, 3);
+    expect(ret0.radius).toBeCloseTo(50, 3);
+    expect(ret0.from).toBeCloseTo(-Math.PI / 2, 3);
+    expect(ret0.to).toBeCloseTo(Math.PI / 2, 3);
+
+    const ret1 = getArcCurveParams(segment, { x: -75, y: 0 })!;
+    expect(ret1.counterclockwise).toBe(true);
+
+    const ret2 = getArcCurveParams(segment, { x: 75, y: 0 })!;
+    expect(ret2.counterclockwise).toBe(false);
+  });
+
+  test("should return arc curve params based on given segment and control point: zero length segment", () => {
+    const segment: ISegment = [
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ];
+    const ret0 = getArcCurveParams(segment, { x: 0, y: 100 })!;
+    expect(ret0.c.x).toBeCloseTo(0, 3);
+    expect(ret0.c.y).toBeCloseTo(50, 3);
+    expect(ret0.radius).toBeCloseTo(50, 3);
+    expect(ret0.from).toBeCloseTo(-Math.PI / 2, 3);
+    expect(ret0.to).toBeCloseTo(Math.PI * 1.5, 3);
+
+    const ret1 = getArcCurveParams(segment, { x: 0, y: -100 })!;
+    expect(ret1.c.x).toBeCloseTo(0, 3);
+    expect(ret1.c.y).toBeCloseTo(-50, 3);
+    expect(ret1.radius).toBeCloseTo(50, 3);
+    expect(ret1.from).toBeCloseTo(-Math.PI * 1.5, 3);
+    expect(ret1.to).toBeCloseTo(Math.PI * 0.5, 3);
+
+    const ret2 = getArcCurveParams(segment, { x: 100, y: 0 })!;
+    expect(ret2.c.x).toBeCloseTo(50, 3);
+    expect(ret2.c.y).toBeCloseTo(0, 3);
+    expect(ret2.radius).toBeCloseTo(50, 3);
+    expect(ret2.from).toBeCloseTo(-Math.PI, 3);
+    expect(ret2.to).toBeCloseTo(Math.PI, 3);
+  });
+
+  test("should return undefined if there's no appropriate arc", () => {
+    expect(
+      getArcCurveParams(
+        [
+          { x: 0, y: 0 },
+          { x: 100, y: 0 },
+        ],
+        { x: 50, y: 0 },
+      ),
+    ).toBe(undefined);
+  });
+});
+
+describe("normalizeSegment", () => {
+  test("should return normalized segment", () => {
+    const ret0 = normalizeSegment([
+      { x: 10, y: 20 },
+      { x: 10, y: 40 },
+    ]);
+    expect(ret0[0].x).toBeCloseTo(0, 3);
+    expect(ret0[0].y).toBeCloseTo(0, 3);
+    expect(ret0[1].x).toBeCloseTo(20, 3);
+    expect(ret0[1].y).toBeCloseTo(0, 3);
+  });
+});
+
+describe("getCircleLerpFn", () => {
+  test("should return lerp function for a circule", () => {
+    const ret0 = getArcLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2 });
+    expect(ret0(0).x).toBeCloseTo(15, 3);
+    expect(ret0(0).y).toBeCloseTo(20, 3);
+    expect(ret0(0.5).x).toBeCloseTo(13.536, 3);
+    expect(ret0(0.5).y).toBeCloseTo(23.536, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(25, 3);
+
+    const ret1 = getArcLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: -Math.PI * 1.5 });
+    expect(ret1(0.5).x).toBeCloseTo(13.536, 3);
+    expect(ret1(0.5).y).toBeCloseTo(23.536, 3);
+  });
+
+  test("should return lerp function for a circule: counterclockwise", () => {
+    const ret0 = getArcLerpFn({ c: { x: 10, y: 20 }, radius: 5, from: 0, to: Math.PI / 2, counterclockwise: true });
+    expect(ret0(0).x).toBeCloseTo(15, 3);
+    expect(ret0(0).y).toBeCloseTo(20, 3);
+    expect(ret0(0.5).x).toBeCloseTo(6.464, 3);
+    expect(ret0(0.5).y).toBeCloseTo(16.464, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(25, 3);
+
+    const ret1 = getArcLerpFn({
+      c: { x: 10, y: 20 },
+      radius: 5,
+      from: 0,
+      to: -Math.PI * 1.5,
+      counterclockwise: true,
+    });
+    expect(ret1(0.5).x).toBeCloseTo(6.464, 3);
+    expect(ret1(0.5).y).toBeCloseTo(16.464, 3);
+  });
+});
+
+describe("getCurveLerpFn", () => {
+  test("should return lerp function for a line", () => {
+    const ret0 = getCurveLerpFn([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ]);
+    expect(ret0(0).x).toBeCloseTo(0, 3);
+    expect(ret0(0).y).toBeCloseTo(0, 3);
+    expect(ret0(0.5).x).toBeCloseTo(5, 3);
+    expect(ret0(0.5).y).toBeCloseTo(0, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+
+  test("should return lerp function for an arc curve", () => {
+    const ret0 = getCurveLerpFn(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      { d: { x: 5, y: 5 } },
+    );
+    expect(ret0(0).x).toBeCloseTo(0, 3);
+    expect(ret0(0).y).toBeCloseTo(0, 3);
+    expect(ret0(0.1).x).toBeCloseTo(0.245, 3);
+    expect(ret0(0.1).y).toBeCloseTo(1.545, 3);
+    expect(ret0(0.5).x).toBeCloseTo(5, 3);
+    expect(ret0(0.5).y).toBeCloseTo(5, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+
+  test("should return lerp function for a bezier curve", () => {
+    const ret0 = getCurveLerpFn(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      { c1: { x: 2, y: 5 }, c2: { x: 8, y: 5 } },
+    );
+    expect(ret0(0).x).toBeCloseTo(0, 3);
+    expect(ret0(0).y).toBeCloseTo(0, 3);
+    expect(ret0(0.1).x).toBeCloseTo(0.712, 3);
+    expect(ret0(0.1).y).toBeCloseTo(1.35, 3);
+    expect(ret0(0.5).x).toBeCloseTo(5, 3);
+    expect(ret0(0.5).y).toBeCloseTo(3.75, 3);
+    expect(ret0(1).x).toBeCloseTo(10, 3);
+    expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+});
+
+describe("getArcBounds", () => {
+  test("should return the bounds of the arc", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getArcBounds({ c, radius: 10, from: -Math.PI / 4, to: Math.PI / 2 });
+    expect(ret0.x).toBeCloseTo(100, 3);
+    expect(ret0.width).toBeCloseTo(10, 3);
+    expect(ret0.y).toBeCloseTo(92.929, 3);
+    expect(ret0.height).toBeCloseTo(17.071, 3);
+
+    const ret1 = getArcBounds({ c, radius: 10, from: Math.PI / 2, to: Math.PI * 1.25 });
+    expect(ret1.x).toBeCloseTo(90, 3);
+    expect(ret1.width).toBeCloseTo(10, 3);
+    expect(ret1.y).toBeCloseTo(92.929, 3);
+    expect(ret1.height).toBeCloseTo(17.071, 3);
+
+    const ret2 = getArcBounds({ c, radius: 10, from: Math.PI * 0.25, to: Math.PI * 0.75 });
+    expect(ret2.x).toBeCloseTo(92.929, 3);
+    expect(ret2.width).toBeCloseTo(14.142, 3);
+    expect(ret2.y).toBeCloseTo(107.071, 3);
+    expect(ret2.height).toBeCloseTo(2.929, 3);
+  });
+
+  test("should return the bounds of the arc: counterclockwise", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getArcBounds({ c, radius: 10, from: -Math.PI / 4, to: Math.PI / 2, counterclockwise: true });
+    expect(ret0.x).toBeCloseTo(90, 3);
+    expect(ret0.width).toBeCloseTo(17.071, 3);
+
+    const ret1 = getArcBounds({ c, radius: 10, from: Math.PI / 2, to: Math.PI * 1.25, counterclockwise: true });
+    expect(ret1.x).toBeCloseTo(92.929, 3);
+    expect(ret1.width).toBeCloseTo(17.071, 3);
+
+    const ret2 = getArcBounds({ c, radius: 10, from: Math.PI * 0.25, to: Math.PI * 0.75, counterclockwise: true });
+    expect(ret2.x).toBeCloseTo(90, 3);
+    expect(ret2.width).toBeCloseTo(20, 3);
+  });
+
+  test("should return the bounds of the arc: around the world", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getArcBounds({ c, radius: 10, from: -Math.PI / 2, to: Math.PI * 1.5 });
+    expect(ret0.x).toBeCloseTo(90, 3);
+    expect(ret0.width).toBeCloseTo(20, 3);
+    expect(ret0.y).toBeCloseTo(90, 3);
+    expect(ret0.height).toBeCloseTo(20, 3);
+
+    const ret1 = getArcBounds({ c, radius: 10, from: 0, to: Math.PI * 2 });
+    expect(ret1.x).toBeCloseTo(90, 3);
+    expect(ret1.width).toBeCloseTo(20, 3);
+    expect(ret1.y).toBeCloseTo(90, 3);
+    expect(ret1.height).toBeCloseTo(20, 3);
+
+    const ret2 = getArcBounds({ c, radius: 10, from: -Math.PI / 2, to: -Math.PI / 2 });
+    expect(ret2.x).toBeCloseTo(90, 3);
+    expect(ret2.width).toBeCloseTo(20, 3);
+    expect(ret2.y).toBeCloseTo(90, 3);
+    expect(ret2.height).toBeCloseTo(20, 3);
+  });
+});
+
+describe("isPointCloseToArc", () => {
+  test("should return true if the point is on the arc", () => {
+    const c = { x: 100, y: 100 };
+    const params0 = { c, radius: 30, from: -Math.PI / 4, to: Math.PI / 2 };
+    expect(isPointCloseToArc(params0, { x: 110, y: 110 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params0, { x: 130, y: 100 }, 10)).toBe(true);
+    expect(isPointCloseToArc(params0, { x: 99, y: 130 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params0, { x: 101, y: 130 }, 10)).toBe(true);
+    expect(isPointCloseToArc(params0, { x: 70, y: 100 }, 10)).toBe(false);
+
+    const params1 = { c, radius: 30, from: -Math.PI / 4, to: Math.PI / 2, counterclockwise: true };
+    expect(isPointCloseToArc(params1, { x: 110, y: 110 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params1, { x: 130, y: 100 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params1, { x: 99, y: 130 }, 10)).toBe(true);
+    expect(isPointCloseToArc(params1, { x: 101, y: 130 }, 10)).toBe(false);
+    expect(isPointCloseToArc(params1, { x: 70, y: 100 }, 10)).toBe(true);
   });
 });

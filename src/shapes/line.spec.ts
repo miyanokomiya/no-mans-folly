@@ -398,6 +398,27 @@ describe("addNewVertex", () => {
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
     });
   });
+
+  test("should return patched object with new curves along with new vertex", () => {
+    const v = { x: -1, y: -1 };
+    const shape1 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
+    });
+    expect(addNewVertex(shape1, 0, v)).toEqual({});
+    expect(addNewVertex(shape1, 1, v)).toEqual({
+      body: [{ p: v }, { p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
+    });
+    expect(addNewVertex(shape1, 2, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: v }, { p: { x: 3, y: 4 } }],
+    });
+    expect(addNewVertex(shape1, 3, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
+    });
+  });
 });
 
 describe("deleteVertex", () => {
@@ -419,6 +440,27 @@ describe("deleteVertex", () => {
     });
     expect(deleteVertex(shape0, 4)).toEqual({});
   });
+
+  test("should return patched object to delete a curve along with the vertex", () => {
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 1)).toEqual({
+      body: [{ p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 2, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 2)).toEqual({
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 3, y: 3 } }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
+    });
+    expect(deleteVertex(shape0, 3)).toEqual({
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 4)).toEqual({});
+  });
 });
 
 describe("isLineShape", () => {
@@ -430,11 +472,11 @@ describe("isLineShape", () => {
 });
 
 describe("isCurveLine", () => {
-  test("should return true when a line has valid curve property", () => {
+  test("should return true when a line has curve property", () => {
     const p = { x: 0, y: 0 };
     expect(isCurveLine(struct.create())).toBe(false);
     expect(isCurveLine(struct.create({ curves: [{ c1: p, c2: p }] }))).toBe(true);
-    expect(isCurveLine(struct.create({ body: [{ p }], curves: [{ c1: p, c2: p }] }))).toBe(false);
+    expect(isCurveLine(struct.create({ body: [{ p }], curves: [{ c1: p, c2: p }] }))).toBe(true);
     expect(
       isCurveLine(
         struct.create({
