@@ -63,7 +63,8 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
           let d = rotateFn(sub(p, edge[0]), true);
-          if (Math.abs(d.y) < 10 * ctx.getScale()) {
+          // Snap to none arc point.
+          if (!event.data.ctrl && Math.abs(d.y) < 10 * ctx.getScale()) {
             d = { x: d.x, y: 0 };
           }
 

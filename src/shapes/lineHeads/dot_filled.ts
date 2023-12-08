@@ -1,6 +1,4 @@
-import { applyAffine } from "okageo";
 import { LineHead } from "../../models";
-import { applyPath } from "../../utils/renderer";
 import { LineHeadStruct } from "./core";
 import { TAU } from "../../utils/geometry";
 
@@ -25,18 +23,8 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
   },
   clip(region, _head, transform, lineWidth) {
     const radius = 6 + lineWidth / 2;
-
-    // "arc" doesn't work well when other clipping are exists
-    applyPath(
-      region,
-      [
-        { x: 0, y: -radius },
-        { x: -radius, y: -radius },
-        { x: -radius, y: radius },
-        { x: 0, y: radius },
-      ].map((p) => applyAffine(transform, p)),
-      true,
-    );
+    region.moveTo(transform[4] + radius, transform[5]);
+    region.arc(transform[4], transform[5], radius, 0, TAU, true);
   },
   getWrapperRadius(_head, lineWidth) {
     return 6 + lineWidth;
