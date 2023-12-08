@@ -170,7 +170,8 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(struct.getWrapperRect(shape));
   },
   isPointOn(shape, p, shapeContext) {
-    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, 10)) return true;
+    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 2)))
+      return true;
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
