@@ -693,45 +693,29 @@ interface ArcCurveParams {
 export function getArcCurveParams(segment: ISegment, control: IVec2): ArcCurveParams | undefined {
   const rotation = getRadian(segment[1], segment[0]);
   const rotateFn = getRotateFn(rotation);
-
   const nQ = rotateFn(sub(control, segment[0]), true);
-  // No arc exists when three points are on the same line.
-  if (Math.abs(nQ.y) < MINVALUE) return;
-
-  const nP = rotateFn(sub(segment[1], segment[0]), true);
-  // No arc exists when the segment is invalid
-  if (Math.abs(nP.x) < MINVALUE) return;
-
-  const dx = nP.x;
-  const dy = nQ.y;
-  const r1 = Math.atan2(dy, dx / 2);
-  const r3 = 2 * r1 - Math.PI / 2;
-  const radiusRaw = dx / 2 / Math.cos(r3);
-  const nC = { x: dx / 2, y: dy - radiusRaw };
-  const nFrom = Math.atan2(-nC.y, -nC.x);
-  const nTo = Math.atan2(-nC.y, nC.x);
-
-  const radius = Math.abs(radiusRaw);
-  return {
-    c: add(rotateFn(nC), segment[0]),
-    radius,
-    from: nFrom + rotation,
-    to: nTo + rotation,
-    counterclockwise: nQ.y > 0,
-    largearc: Math.abs(nQ.y) > radius,
-  };
+  return getArcCurveParamsByNormalizedControl(segment, nQ);
 }
 
 export function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec2): ArcCurveParams | undefined {
   const rotation = getRadian(segment[1], segment[0]);
   const rotateFn = getRotateFn(rotation);
 
+  const nP = rotateFn(sub(segment[1], segment[0]), true);
+  // Treat as a circule when the segment has zero length
+  if (Math.abs(nP.x) < MINVALUE) {
+    const rad = getRadian(nQ);
+    return {
+      c: add({ x: nQ.x / 2, y: nQ.y / 2 }, segment[0]),
+      radius: getNorm(nQ) / 2,
+      from: rad - Math.PI,
+      to: rad + Math.PI,
+      largearc: true,
+    };
+  }
+
   // No arc exists when three points are on the same line.
   if (Math.abs(nQ.y) < MINVALUE) return;
-
-  const nP = rotateFn(sub(segment[1], segment[0]), true);
-  // No arc exists when the segment is invalid
-  if (Math.abs(nP.x) < MINVALUE) return;
 
   const dx = nP.x;
   const dy = nQ.y;
@@ -788,6 +772,15 @@ export function getArcBounds({ c, radius, to, from, counterclockwise }: ArcCurve
   const [f, t] = counterclockwise ? [to, from] : [from, to];
   const nfrom = normalizeRadian(f);
   const nto = normalizeRadian(t);
+  if (Math.abs(nto - nfrom) < MINVALUE) {
+    return {
+      x: c.x - radius,
+      y: c.y - radius,
+      width: 2 * radius,
+      height: 2 * radius,
+    };
+  }
+
   const fromP = multi({ x: Math.cos(nfrom), y: Math.sin(nfrom) }, radius);
   const toP = multi({ x: Math.cos(nto), y: Math.sin(nto) }, radius);
 
@@ -818,7 +811,9 @@ export function isPointCloseToArc(
 
 /**
  * Suppose each argument is normalized. See: "normalizeRadian"
+ * When nfrom === nto, returns true for any value.
  */
 function isRadianInside(nfrom: number, nto: number, nr: number): boolean {
+  if (nfrom === nto) return true;
   return (nfrom < nr && (nto < nfrom || nr <= nto)) || (nr < nfrom && nr <= nto && nto < nfrom);
 }

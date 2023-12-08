@@ -927,6 +927,33 @@ describe("getArcCurveParams", () => {
     expect(ret2.counterclockwise).toBe(false);
   });
 
+  test("should return arc curve params based on given segment and control point: zero length segment", () => {
+    const segment: ISegment = [
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ];
+    const ret0 = getArcCurveParams(segment, { x: 0, y: 100 })!;
+    expect(ret0.c.x).toBeCloseTo(0, 3);
+    expect(ret0.c.y).toBeCloseTo(50, 3);
+    expect(ret0.radius).toBeCloseTo(50, 3);
+    expect(ret0.from).toBeCloseTo(-Math.PI / 2, 3);
+    expect(ret0.to).toBeCloseTo(Math.PI * 1.5, 3);
+
+    const ret1 = getArcCurveParams(segment, { x: 0, y: -100 })!;
+    expect(ret1.c.x).toBeCloseTo(0, 3);
+    expect(ret1.c.y).toBeCloseTo(-50, 3);
+    expect(ret1.radius).toBeCloseTo(50, 3);
+    expect(ret1.from).toBeCloseTo(-Math.PI * 1.5, 3);
+    expect(ret1.to).toBeCloseTo(Math.PI * 0.5, 3);
+
+    const ret2 = getArcCurveParams(segment, { x: 100, y: 0 })!;
+    expect(ret2.c.x).toBeCloseTo(50, 3);
+    expect(ret2.c.y).toBeCloseTo(0, 3);
+    expect(ret2.radius).toBeCloseTo(50, 3);
+    expect(ret2.from).toBeCloseTo(-Math.PI, 3);
+    expect(ret2.to).toBeCloseTo(Math.PI, 3);
+  });
+
   test("should return undefined if there's no appropriate arc", () => {
     expect(
       getArcCurveParams(
@@ -935,15 +962,6 @@ describe("getArcCurveParams", () => {
           { x: 100, y: 0 },
         ],
         { x: 50, y: 0 },
-      ),
-    ).toBe(undefined);
-    expect(
-      getArcCurveParams(
-        [
-          { x: 0, y: 0 },
-          { x: 0, y: 0 },
-        ],
-        { x: 50, y: 50 },
       ),
     ).toBe(undefined);
   });
@@ -1084,6 +1102,27 @@ describe("getArcBounds", () => {
     const ret2 = getArcBounds({ c, radius: 10, from: Math.PI * 0.25, to: Math.PI * 0.75, counterclockwise: true });
     expect(ret2.x).toBeCloseTo(90, 3);
     expect(ret2.width).toBeCloseTo(20, 3);
+  });
+
+  test("should return the bounds of the arc: around the world", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getArcBounds({ c, radius: 10, from: -Math.PI / 2, to: Math.PI * 1.5 });
+    expect(ret0.x).toBeCloseTo(90, 3);
+    expect(ret0.width).toBeCloseTo(20, 3);
+    expect(ret0.y).toBeCloseTo(90, 3);
+    expect(ret0.height).toBeCloseTo(20, 3);
+
+    const ret1 = getArcBounds({ c, radius: 10, from: 0, to: Math.PI * 2 });
+    expect(ret1.x).toBeCloseTo(90, 3);
+    expect(ret1.width).toBeCloseTo(20, 3);
+    expect(ret1.y).toBeCloseTo(90, 3);
+    expect(ret1.height).toBeCloseTo(20, 3);
+
+    const ret2 = getArcBounds({ c, radius: 10, from: -Math.PI / 2, to: -Math.PI / 2 });
+    expect(ret2.x).toBeCloseTo(90, 3);
+    expect(ret2.width).toBeCloseTo(20, 3);
+    expect(ret2.y).toBeCloseTo(90, 3);
+    expect(ret2.height).toBeCloseTo(20, 3);
   });
 });
 

@@ -27,10 +27,13 @@ export function newLineBounding(option: Option) {
   const vertices = getLinePath(lineShape);
   const edges = getEdges(lineShape);
   const curves = isCurveLine(lineShape) ? lineShape.curves : undefined;
-  const edgeCenters = edges.map((edge, i) => {
-    const lerpFn = getCurveLerpFn(edge, curves?.[i]);
-    return lerpFn(0.5);
-  });
+  const arcAnchors =
+    lineShape.curveType === "auto"
+      ? []
+      : edges.map((edge, i) => {
+          const lerpFn = getCurveLerpFn(edge, curves?.[i]);
+          return lerpFn(0.5);
+        });
   const addAnchors = edges.map((edge, i) => {
     const lerpFn = getCurveLerpFn(edge, curves?.[i]);
     return lerpFn(0.25);
@@ -92,7 +95,7 @@ export function newLineBounding(option: Option) {
 
       {
         const arcAnchorSize = vertexSize;
-        const arcAnchorIndex = edgeCenters.findIndex((v) => {
+        const arcAnchorIndex = arcAnchors.findIndex((v) => {
           const testFn = newCircleHitTest(v, arcAnchorSize);
           return testFn.test(p);
         });
@@ -148,7 +151,7 @@ export function newLineBounding(option: Option) {
       {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
         const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
-        edgeCenters.forEach((c) => {
+        arcAnchors.forEach((c) => {
           ctx.beginPath();
           ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
           ctx.stroke();
@@ -243,7 +246,7 @@ export function newLineBounding(option: Option) {
         }
         case "arc-anchor": {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
-          const p = edgeCenters[hitResult.index];
+          const p = arcAnchors[hitResult.index];
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
           ctx.fill();
