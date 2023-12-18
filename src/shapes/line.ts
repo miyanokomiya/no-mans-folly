@@ -46,7 +46,7 @@ export const struct: ShapeStruct<LineShape> = {
       ...createBaseShape(arg),
       type: "line",
       rotation: 0, // should always be "0" or just ignored
-      fill: arg.fill ?? createFillStyle(),
+      fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
       q: arg.q ?? { x: 100, y: 0 },
       body: arg.body,
