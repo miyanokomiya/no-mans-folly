@@ -142,6 +142,7 @@ export const AppCanvas: React.FC = () => {
     zoomView,
     setZoom,
     panView,
+    scrollView,
     startDragging,
     endMoving,
     scale,
@@ -545,8 +546,19 @@ export const AppCanvas: React.FC = () => {
 
   const onWheel = useCallback(
     (e: WheelEvent) => {
-      // TODO: trackpad handling
       e.preventDefault();
+
+      if (!e.ctrlKey && acctx.userSettingStore.getState().wheelAction === "pan") {
+        // Handle here for simplicity.
+        // TODO: It should be handled by each state.
+        if (e.shiftKey) {
+          scrollView({ x: e.deltaY, y: e.deltaX });
+        } else {
+          scrollView({ x: e.deltaX, y: e.deltaY });
+        }
+        return;
+      }
+
       sm.handleEvent({
         type: "wheel",
         data: {
@@ -555,7 +567,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [sm],
+    [sm, acctx, scrollView],
   );
   useEffect(() => {
     if (!wrapperRef.current) return;

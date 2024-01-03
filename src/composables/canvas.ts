@@ -131,6 +131,13 @@ export function useCanvas(
     [editStartViewOrigin],
   );
 
+  const scrollView = useCallback(
+    (val: IVec2) => {
+      setViewOrigin(add(viewOrigin, multi(val, scale)));
+    },
+    [viewOrigin, scale],
+  );
+
   const canvasToView = useCallback(
     (v: IVec2): IVec2 => {
       return multi(sub(v, viewOrigin), 1 / scale);
@@ -233,6 +240,7 @@ export function useCanvas(
     zoomView,
     setZoom,
     panView,
+    scrollView,
     adjustToCenter,
     setViewport,
 

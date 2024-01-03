@@ -11,9 +11,15 @@ import { AppHeader } from "./components/AppHeader";
 import { AppCanvasProvider } from "./contexts/AppContext";
 import { AppRightPanel } from "./components/AppRightPanel";
 import { EntranceDialog } from "./components/navigations/EntranceDialog";
+import { newUserSettingStore } from "./stores/userSettingStore";
+import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
+
+const USER_SETTING_KEY = "userSetting";
+const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
+const initialUserSetting = userSettingStr ? JSON.parse(userSettingStr) : {};
 
 function App() {
   const {
@@ -44,8 +50,18 @@ function App() {
     });
   }, [sheetStore, ready]);
 
-  const acctx = useMemo(() => {
+  const userSetting = useMemo(() => {
+    return newUserSettingStore({ initialValue: initialUserSetting });
+  }, []);
+  useEffect(() => {
+    return userSetting.watch(() => {
+      localStorage.setItem(USER_SETTING_KEY, JSON.stringify(userSetting.getState()));
+    });
+  }, [userSetting]);
+
+  const acctx = useMemo<IAppCanvasContext>(() => {
     const context = {
+      userSettingStore: userSetting,
       diagramStore,
       sheetStore,
       layerStore,

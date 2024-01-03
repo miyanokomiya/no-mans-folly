@@ -109,3 +109,7 @@ export interface EntityPatchInfo<T extends Entity> {
   update?: { [id: string]: Partial<T> };
   delete?: string[];
 }
+
+export interface UserSetting {
+  wheelAction?: "zoom" | "pan"; // should be "zoom" when it's undefined
+}

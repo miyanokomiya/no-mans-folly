@@ -1,22 +1,24 @@
 import { createContext } from "react";
-import type { newShapeStore } from "../stores/shapes";
-import type { newLayerStore } from "../stores/layers";
-import type { newDiagramStore } from "../stores/diagram";
-import type { newSheetStore } from "../stores/sheets";
+import type { ShapeStore } from "../stores/shapes";
+import type { LayerStore } from "../stores/layers";
+import type { DiagramStore } from "../stores/diagram";
+import type { SheetStore } from "../stores/sheets";
 import { AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { getCommonStruct } from "../shapes";
 import { StyleScheme } from "../models";
-import { newDocumentStore } from "../stores/documents";
+import { DocumentStore } from "../stores/documents";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { newGrid } from "../composables/grid";
 import { newImageStore } from "../composables/imageStore";
+import { UserSettingStore } from "../stores/userSettingStore";
 
 export interface IAppCanvasContext {
-  diagramStore: ReturnType<typeof newDiagramStore>;
-  sheetStore: ReturnType<typeof newSheetStore>;
-  layerStore: ReturnType<typeof newLayerStore>;
-  shapeStore: ReturnType<typeof newShapeStore>;
-  documentStore: ReturnType<typeof newDocumentStore>;
+  userSettingStore: UserSettingStore;
+  diagramStore: DiagramStore;
+  sheetStore: SheetStore;
+  layerStore: LayerStore;
+  shapeStore: ShapeStore;
+  documentStore: DocumentStore;
   undoManager: { undo: () => void; redo: () => void; setCaptureTimeout: (timeout?: number) => void };
   getStyleScheme: () => StyleScheme;
 }
