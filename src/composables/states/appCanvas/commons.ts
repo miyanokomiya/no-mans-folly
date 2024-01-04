@@ -437,9 +437,16 @@ export function handleCommonPointerDownRightOnSingleSelection(
  * Procs zooming or panning depending on the user setting.
  * Returns the latest scale.
  */
-export function handleCommonWheel(ctx: AppCanvasStateContext, event: WheelEvent): number {
+export function handleCommonWheel(
+  ctx: Pick<AppCanvasStateContext, "getUserSetting" | "scrollView" | "zoomView" | "getScale">,
+  event: WheelEvent,
+): number {
   if (!event.data.options.ctrl && ctx.getUserSetting().wheelAction === "pan") {
-    ctx.scrollView(event.data.delta);
+    if (event.data.options.shift) {
+      ctx.scrollView({ x: event.data.delta.y, y: event.data.delta.x });
+    } else {
+      ctx.scrollView(event.data.delta);
+    }
     return ctx.getScale();
   }
 
