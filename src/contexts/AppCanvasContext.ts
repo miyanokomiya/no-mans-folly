@@ -5,7 +5,7 @@ import type { DiagramStore } from "../stores/diagram";
 import type { SheetStore } from "../stores/sheets";
 import { AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { getCommonStruct } from "../shapes";
-import { StyleScheme } from "../models";
+import { StyleScheme, UserSetting } from "../models";
 import { DocumentStore } from "../stores/documents";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { newGrid } from "../composables/grid";
@@ -13,7 +13,6 @@ import { newImageStore } from "../composables/imageStore";
 import { UserSettingStore } from "../stores/userSettingStore";
 
 export interface IAppCanvasContext {
-  userSettingStore: UserSettingStore;
   diagramStore: DiagramStore;
   sheetStore: SheetStore;
   layerStore: LayerStore;
@@ -21,6 +20,7 @@ export interface IAppCanvasContext {
   documentStore: DocumentStore;
   undoManager: { undo: () => void; redo: () => void; setCaptureTimeout: (timeout?: number) => void };
   getStyleScheme: () => StyleScheme;
+  userSettingStore: UserSettingStore;
 }
 
 export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);
@@ -29,12 +29,14 @@ export function createInitialAppCanvasStateContext(arg: {
   getTimestamp: () => number;
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
+  getUserSetting?: () => UserSetting;
   getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
 }): AppCanvasStateContext {
   return {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
+    getUserSetting: arg.getUserSetting ?? (() => ({})),
     getAssetAPI: arg.getAssetAPI ?? (() => ({ enabled: false })),
 
     redraw() {},
@@ -45,6 +47,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getScale: () => 1,
     getViewRect: () => ({ x: 0, y: 0, width: 100, height: 100 }),
     panView() {},
+    scrollView() {},
     startDragging() {},
     stopDragging() {},
     getCursorPoint: () => ({ x: 0, y: 0 }),

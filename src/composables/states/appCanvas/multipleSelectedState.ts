@@ -4,6 +4,7 @@ import {
   getCommonCommandExams,
   handleCommonShortcut,
   handleCommonTextStyle,
+  handleCommonWheel,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -198,8 +199,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           return handleCommonTextStyle(ctx, event);
         }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
-          boundingBox.updateScale(ctx.getScale());
+          boundingBox.updateScale(handleCommonWheel(ctx, event));
           return;
         case "selection": {
           return newSelectionHubState;

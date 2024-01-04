@@ -18,6 +18,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { add } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
+import { handleCommonWheel } from "../commons";
 
 interface Option {
   shape: LineShape;
@@ -113,7 +114,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
               return;
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "history":
           return newDefaultState;

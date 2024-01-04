@@ -4,6 +4,7 @@ import {
   getCommonCommandExams,
   handleCommonShortcut,
   handleCommonTextStyle,
+  handleCommonWheel,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -173,7 +174,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           return handleCommonTextStyle(ctx, event);
         }
         case "wheel":
-          boundingBox.updateScale(ctx.zoomView(event.data.delta.y));
+          boundingBox.updateScale(handleCommonWheel(ctx, event));
           return;
         case "selection": {
           return newSelectionHubState;

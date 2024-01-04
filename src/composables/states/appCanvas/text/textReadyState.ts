@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleStateEvent } from "../commons";
+import { handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { createShape } from "../../../../shapes";
 import { IVec2, add } from "okageo";
@@ -77,7 +77,7 @@ export function newTextReadyState(): AppCanvasState {
               return;
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "history":
           return newDefaultState;

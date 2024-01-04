@@ -5,6 +5,7 @@ import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
+  handleCommonWheel,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -135,7 +136,7 @@ export function newLineSelectedState(): AppCanvasState {
               return handleCommonShortcut(ctx, event);
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;

@@ -13,6 +13,7 @@ import { mergeMap } from "../../../utils/commons";
 import { LineShape } from "../../../shapes/line";
 import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
+import { handleCommonWheel } from "./commons";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -75,7 +76,7 @@ export function newRotatingState(option: Option): AppCanvasState {
             newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
         }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;

@@ -5,6 +5,7 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
   handleCommonTextStyle,
+  handleCommonWheel,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -211,7 +212,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
               return handleCommonShortcut(ctx, event);
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;

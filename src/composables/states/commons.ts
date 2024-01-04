@@ -1,11 +1,12 @@
 import { IVec2, IRectangle } from "okageo";
 import type { ModeStateBase, ModeStateContextBase, ModeStateEvent, ModeStateEventBase } from "./core";
 import type { CommandExam, ContextMenuItem, EditMovement, ToastMessage } from "./types";
-import { StyleScheme } from "../../models";
+import { StyleScheme, UserSetting } from "../../models";
 
 export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
+  getUserSetting: () => UserSetting;
 
   redraw: () => void;
   getRenderCtx: () => CanvasRenderingContext2D | undefined;
@@ -15,6 +16,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   getScale: () => number;
   getViewRect: () => IRectangle;
   panView: (val: EditMovement) => void;
+  scrollView: (delta: IVec2) => void;
   startDragging: () => void;
   stopDragging: () => void;
   getCursorPoint: () => IVec2; // must be canvas space

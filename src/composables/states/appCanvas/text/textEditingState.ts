@@ -1,7 +1,7 @@
 import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
-import { handleFileDrop, handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
+import { handleCommonWheel, handleFileDrop, handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -234,7 +234,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           ctx.setShowEmojiPicker(false);
           return;
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;

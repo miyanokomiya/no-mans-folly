@@ -1,5 +1,5 @@
 import { HistoryEvent, newPanningReadyState } from "../commons";
-import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue } from "../core";
+import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue, WheelEvent } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -431,4 +431,17 @@ export function handleCommonPointerDownRightOnSingleSelection(
 
   ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
   return;
+}
+
+/**
+ * Procs zooming or panning depending on the user setting.
+ * Returns the latest scale.
+ */
+export function handleCommonWheel(ctx: AppCanvasStateContext, event: WheelEvent): number {
+  if (!event.data.options.ctrl && ctx.getUserSetting().wheelAction === "pan") {
+    ctx.scrollView(event.data.delta);
+    return ctx.getScale();
+  }
+
+  return ctx.zoomView(event.data.delta.y);
 }

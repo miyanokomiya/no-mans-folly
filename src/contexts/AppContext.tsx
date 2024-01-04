@@ -17,6 +17,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
       getTimestamp: Date.now,
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
+      getUserSetting: acctx.userSettingStore.getState,
       getAssetAPI,
     });
   }, [acctx, getAssetAPI]);
@@ -36,6 +37,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
           generateUuid: prev.generateUuid,
           getShapeStruct: prev.getShapeStruct,
           getStyleScheme: prev.getStyleScheme,
+          getUserSetting: prev.getUserSetting,
           getAssetAPI: prev.getAssetAPI,
           ...val,
         };
@@ -63,5 +65,5 @@ export const AppStateMachineContext = createContext<StateMachine<AppCanvasEvent>
 
 type AppCanvasStateContextPart = Omit<
   AppCanvasStateContext,
-  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getAssetAPI"
+  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getUserSetting" | "getAssetAPI"
 >;

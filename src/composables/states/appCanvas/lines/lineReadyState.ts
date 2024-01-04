@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
-import { handleStateEvent } from "../commons";
+import { handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
@@ -119,7 +119,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
               return;
           }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         case "history":
           return newDefaultState;

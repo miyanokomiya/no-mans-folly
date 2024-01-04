@@ -183,7 +183,8 @@ export const AppCanvas: React.FC = () => {
       setZoom,
       getScale: () => scale,
       getViewRect: () => viewCanvasRect,
-      panView: panView,
+      panView,
+      scrollView,
       startDragging: startDragging,
       stopDragging: endMoving,
       getCursorPoint: () => viewToCanvas(getMousePoint()),
@@ -323,6 +324,7 @@ export const AppCanvas: React.FC = () => {
     zoomView,
     setZoom,
     panView,
+    scrollView,
     startDragging,
     endMoving,
     canvasToView,
@@ -547,17 +549,6 @@ export const AppCanvas: React.FC = () => {
   const onWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault();
-
-      if (!e.ctrlKey && acctx.userSettingStore.getState().wheelAction === "pan") {
-        // Handle here for simplicity.
-        // TODO: It should be handled by each state.
-        if (e.shiftKey) {
-          scrollView({ x: e.deltaY, y: e.deltaX });
-        } else {
-          scrollView({ x: e.deltaX, y: e.deltaY });
-        }
-        return;
-      }
 
       sm.handleEvent({
         type: "wheel",

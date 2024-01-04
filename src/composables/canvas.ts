@@ -132,8 +132,8 @@ export function useCanvas(
   );
 
   const scrollView = useCallback(
-    (val: IVec2) => {
-      setViewOrigin(add(viewOrigin, multi(val, scale)));
+    (delta: IVec2) => {
+      setViewOrigin(add(viewOrigin, multi(delta, scale)));
     },
     [viewOrigin, scale],
   );

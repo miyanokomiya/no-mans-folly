@@ -10,6 +10,7 @@ import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { newShapeComposite } from "../../shapeComposite";
+import { handleCommonWheel } from "./commons";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;
@@ -86,7 +87,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
           return newSelectionHubState;
         }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         default:
           return;

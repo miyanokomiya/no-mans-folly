@@ -6,6 +6,7 @@ import { applyPath } from "../../../utils/renderer";
 import { newSelectionHubState } from "./selectionHubState";
 import { isTransparentSelection } from "../../../shapes";
 import { ShapeSelectionScope } from "../../../shapes/core";
+import { handleCommonWheel } from "./commons";
 
 interface Option {
   keepSelection?: boolean;
@@ -104,7 +105,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           }
           return newSelectionHubState;
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         default:
           return;

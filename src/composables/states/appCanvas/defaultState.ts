@@ -3,6 +3,7 @@ import { newPanningState } from "../commons";
 import {
   getCommonCommandExams,
   handleCommonShortcut,
+  handleCommonWheel,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -68,7 +69,7 @@ const state: AppCanvasState = {
       case "keydown":
         return handleCommonShortcut(ctx, event);
       case "wheel":
-        ctx.zoomView(event.data.delta.y);
+        handleCommonWheel(ctx, event);
         return;
       case "history":
         return handleHistoryEvent(ctx, event);

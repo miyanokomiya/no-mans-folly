@@ -11,6 +11,7 @@ import * as geometry from "../../../utils/geometry";
 import { mapReduce, toMap } from "../../../utils/commons";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
+import { handleCommonWheel } from "./commons";
 
 interface Option {
   shapes: Shape[];
@@ -89,7 +90,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           return newSelectionHubState;
         }
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         default:
           return;

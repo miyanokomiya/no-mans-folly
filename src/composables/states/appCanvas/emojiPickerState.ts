@@ -4,6 +4,7 @@ import { EmojiShape } from "../../../shapes/emoji";
 import type { AppCanvasState } from "./core";
 import { newSingleSelectedState } from "./singleSelectedState";
 import { newSelectionHubState } from "./selectionHubState";
+import { handleCommonWheel } from "./commons";
 
 export function newEmojiPickerState(): AppCanvasState {
   let p: IVec2;
@@ -37,7 +38,7 @@ export function newEmojiPickerState(): AppCanvasState {
         case "close-emoji-picker":
           return newSelectionHubState;
         case "wheel":
-          ctx.zoomView(event.data.delta.y);
+          handleCommonWheel(ctx, event);
           return;
         default:
           return;
