@@ -268,8 +268,8 @@ export function newTreeNodeMovingHandler(option: Option) {
           ? 2
           : 0
         : closestRect.x + closestRect.width / 2 < p.x
-        ? 1
-        : 3;
+          ? 1
+          : 3;
       const siblings = allShapeNodes.filter((s) => s.treeParentId === closestNode.id && s.direction === direction);
       if (siblings.length > 0) {
         // Case: Insert as the last child

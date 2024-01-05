@@ -278,8 +278,8 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     const adjustedRotatedScale = !keepAspect
       ? rotatedScale
       : xResizable
-      ? { x: rotatedScale.x, y: rotatedScale.x }
-      : { x: rotatedScale.y, y: rotatedScale.y };
+        ? { x: rotatedScale.x, y: rotatedScale.x }
+        : { x: rotatedScale.y, y: rotatedScale.y };
 
     const adjustedOrigin = centralize ? centralizedOrigin : option.resizingBase.origin;
 
@@ -408,8 +408,8 @@ export function getMovingBoundingBoxPoints(boundingBoxPath: IVec2[], hitResult: 
   return hitResult.type === "corner"
     ? [boundingBoxPath[hitResult.index]]
     : hitResult.type === "segment"
-    ? [boundingBoxPath[hitResult.index], boundingBoxPath[(hitResult.index + 1) % 4]]
-    : [];
+      ? [boundingBoxPath[hitResult.index], boundingBoxPath[(hitResult.index + 1) % 4]]
+      : [];
 }
 
 function _getResizingBase([tl, tr, br, bl]: IVec2[], hitResult: HitResult): ResizingBase {

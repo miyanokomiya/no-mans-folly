@@ -67,8 +67,8 @@ export function newResizingState(option: Option): AppCanvasState {
         mode: targets.some((s) => shouldKeepAspect(shapeComposite.getShapeStruct, s))
           ? "keepAspect"
           : targets.some((s) => shouldResizeOnTextEdit(shapeComposite.getShapeStruct, s))
-          ? "text"
-          : undefined,
+            ? "text"
+            : undefined,
       });
 
       ctx.setCommandExams([

@@ -35,10 +35,10 @@ export function newLineSnapping(option: Option) {
     vertices.length === 0 || option.movingIndex === undefined
       ? []
       : option.movingIndex === 0
-      ? [vertices[1]]
-      : option.movingIndex === vertices.length - 1
-      ? [vertices[vertices.length - 2]]
-      : [vertices[option.movingIndex - 1], vertices[option.movingIndex + 1]];
+        ? [vertices[1]]
+        : option.movingIndex === vertices.length - 1
+          ? [vertices[vertices.length - 2]]
+          : [vertices[option.movingIndex - 1], vertices[option.movingIndex + 1]];
 
   function testConnection(point: IVec2, scale: number): ConnectionResult | undefined {
     const threshold = SNAP_THRESHOLD * scale;
