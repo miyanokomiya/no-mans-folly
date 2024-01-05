@@ -94,11 +94,15 @@ export type Grid = ReturnType<typeof newGrid>;
 
 export function getGridSize(scale: number): number {
   // Should be scaled by same rate
-  if (scale < 0.75) {
+  if (scale < 0.6) {
+    return 25;
+  } else if (scale < 1.5) {
     return 50;
-  } else if (scale < 2) {
+  } else if (scale < 2.4) {
     return 100;
-  } else {
+  } else if (scale < 4.8) {
     return 200;
+  } else {
+    return 400;
   }
 }
