@@ -34,6 +34,7 @@ import { useLocalStorageAdopter } from "../composables/localStorage";
 import { mapReduce, patchPipe } from "../utils/commons";
 import { getDeleteTargetIds } from "../composables/shapeComposite";
 import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
+import { GridBackground } from "./atoms/GridBackground";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -371,7 +372,6 @@ export const AppCanvas: React.FC = () => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.scale(1 / scale, 1 / scale);
     ctx.translate(-viewOrigin.x, -viewOrigin.y);
-    grid.render(ctx, scale);
 
     const canvasContext = smctx;
     const selectedMap = canvasContext.getSelectedShapeIdMap();
@@ -680,6 +680,9 @@ export const AppCanvas: React.FC = () => {
         tabIndex={-1}
       >
         <FileDropArea typeReg={/image\/.+/} onDrop={onDrop}>
+          <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
+            <GridBackground x={grid.range.x / scale} y={grid.range.y / scale} size={grid.size / scale} />
+          </div>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
           <div className="absolute right-16 top-0">{sm.getStateSummary().label}</div>
           <div className="absolute bottom-2 left-2 pointer-events-none">

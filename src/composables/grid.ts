@@ -1,5 +1,5 @@
 import { IRectangle } from "okageo";
-import { ISegment, TAU, snapNumberCeil } from "../utils/geometry";
+import { ISegment, snapNumberCeil } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -44,24 +44,6 @@ export function newGrid({ size, range, disabled }: Option) {
     return { v: segmentsV, h: segmentsH };
   }
 
-  function render(ctx: CanvasRenderingContext2D, scale = 1) {
-    ctx.save();
-
-    ctx.globalAlpha = 0.3;
-    applyFillStyle(ctx, { color: COLORS.BLACK });
-
-    const radius = 2 * scale;
-    segmentsV.forEach(([aV]) => {
-      segmentsH.forEach(([aH]) => {
-        ctx.beginPath();
-        ctx.arc(aV.x, aH.y, radius, 0, TAU);
-        ctx.fill();
-      });
-    });
-
-    ctx.restore();
-  }
-
   function renderAxisLabels(ctx: CanvasRenderingContext2D, scale = 1) {
     ctx.save();
 
@@ -71,24 +53,20 @@ export function newGrid({ size, range, disabled }: Option) {
 
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    segmentsV
-      .filter(([a]) => a.x % 100 === 0)
-      .forEach(([a, b]) => {
-        ctx.fillText(`${a.x}`, a.x, b.y - 4);
-      });
+    segmentsV.forEach(([a, b]) => {
+      ctx.fillText(`${a.x}`, a.x, b.y - 4);
+    });
 
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    segmentsH
-      .filter(([a]) => a.y % 100 === 0)
-      .forEach(([a]) => {
-        ctx.fillText(`${a.y}`, a.x + 4, a.y);
-      });
+    segmentsH.forEach(([a]) => {
+      ctx.fillText(`${a.y}`, a.x + 4, a.y);
+    });
 
     ctx.restore();
   }
 
-  return { getSegmentsV, getSegmentsH, getSnappingLines, render, renderAxisLabels, disabled };
+  return { getSegmentsV, getSegmentsH, getSnappingLines, renderAxisLabels, disabled, size, range };
 }
 export type Grid = ReturnType<typeof newGrid>;
 
