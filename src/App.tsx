@@ -18,8 +18,6 @@ const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
 
 const USER_SETTING_KEY = "userSetting";
-const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
-const initialUserSetting = userSettingStr ? JSON.parse(userSettingStr) : {};
 
 function App() {
   const {
@@ -51,7 +49,8 @@ function App() {
   }, [sheetStore, ready]);
 
   const userSetting = useMemo(() => {
-    return newUserSettingStore({ initialValue: initialUserSetting });
+    const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
+    return newUserSettingStore({ initialValue: userSettingStr ? JSON.parse(userSettingStr) : {} });
   }, []);
   useEffect(() => {
     return userSetting.watch(() => {
