@@ -30,6 +30,7 @@ export const struct: ShapeStruct<RhombusShape> = {
     };
     return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
   },
+  canAttachSmartBranch: true,
 };
 
 function getPath(shape: RhombusShape): IVec2[] {

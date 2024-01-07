@@ -9,7 +9,7 @@ import {
   isSame,
   rotate,
 } from "okageo";
-import { ShapeStruct, TextContainer } from "./core";
+import { ShapeStruct, TextContainer, getCommonStyle, updateCommonStyle, textContainerModule } from "./core";
 import {
   expandRect,
   getClosestOutlineOnPolygon,
@@ -41,6 +41,8 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "getClosestOutline"
   | "resize"
   | "getIntersectedOutlines"
+  | "getCommonStyle"
+  | "updateCommonStyle"
 > {
   return {
     render(ctx, shape) {
@@ -120,5 +122,8 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const path = getPath(shape).map((p) => rotateFn(p));
       return getIntersectedOutlinesOnPolygon(path, from, to);
     },
+    getCommonStyle,
+    updateCommonStyle,
+    ...textContainerModule,
   };
 }
