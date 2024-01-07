@@ -1,19 +1,24 @@
 import { IVec2 } from "okageo";
-import { ShapeStruct } from "./core";
-import { RectangleShape, struct as recntagleStruct } from "./rectangle";
-import { getStructForSimplePolygon } from "./simplePolygon";
-import { getPaddingRect } from "../utils/boxPadding";
+import { ShapeStruct, createBaseShape } from "./core";
+import { SimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
+import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
+import { createFillStyle } from "../utils/fillStyle";
+import { createStrokeStyle } from "../utils/strokeStyle";
 
-type RhombusShape = RectangleShape;
+type RhombusShape = SimplePolygonShape;
 
 export const struct: ShapeStruct<RhombusShape> = {
-  ...recntagleStruct,
   ...getStructForSimplePolygon<RhombusShape>(getPath),
   label: "Rhombus",
   create(arg = {}) {
     return {
-      ...recntagleStruct.create(arg),
+      ...createBaseShape(arg),
       type: "rhombus",
+      fill: arg.fill ?? createFillStyle(),
+      stroke: arg.stroke ?? createStrokeStyle(),
+      width: arg.width ?? 100,
+      height: arg.height ?? 100,
+      textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
     };
   },
   getTextRangeRect(shape) {

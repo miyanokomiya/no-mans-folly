@@ -1,18 +1,47 @@
-import { IVec2, getCenter, getDistance, isOnPolygon, rotate } from "okageo";
-import { RectangleShape } from "./rectangle";
-import { ShapeStruct } from "./core";
 import {
+  IVec2,
+  applyAffine,
+  getCenter,
+  getDistance,
+  getRadian,
+  getRectCenter,
+  isOnPolygon,
+  isSame,
+  rotate,
+} from "okageo";
+import { ShapeStruct, TextContainer } from "./core";
+import {
+  expandRect,
   getClosestOutlineOnPolygon,
   getIntersectedOutlinesOnPolygon,
   getMarkersOnPolygon,
+  getRectPoints,
   getRotateFn,
+  getRotatedWrapperRect,
 } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyStrokeStyle } from "../utils/strokeStyle";
+import { applyStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { CommonStyle, Shape } from "../models";
 
-export function getStructForSimplePolygon<T extends RectangleShape>(
+export type SimplePolygonShape = Shape &
+  CommonStyle &
+  TextContainer & {
+    width: number;
+    height: number;
+  };
+
+export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   getPath: (shape: T) => IVec2[],
-): Pick<ShapeStruct<T>, "render" | "isPointOn" | "getClosestOutline" | "getIntersectedOutlines"> {
+): Pick<
+  ShapeStruct<T>,
+  | "render"
+  | "getWrapperRect"
+  | "getLocalRectPolygon"
+  | "isPointOn"
+  | "getClosestOutline"
+  | "resize"
+  | "getIntersectedOutlines"
+> {
   return {
     render(ctx, shape) {
       if (shape.fill.disabled && shape.stroke.disabled) return;
@@ -35,10 +64,39 @@ export function getStructForSimplePolygon<T extends RectangleShape>(
         ctx.stroke();
       }
     },
+    getWrapperRect(shape, _, includeBounds) {
+      let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+      if (includeBounds) {
+        rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
+      }
+      return getRotatedWrapperRect(rect, shape.rotation);
+    },
+    getLocalRectPolygon(shape) {
+      const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+      const c = getRectCenter(rect);
+      const rotateFn = getRotateFn(shape.rotation, c);
+      return getRectPoints(rect).map((p) => rotateFn(p));
+    },
     isPointOn(shape, p) {
       const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotatedP = rotate(p, -shape.rotation, center);
       return isOnPolygon(rotatedP, getPath(shape));
+    },
+    resize(shape, resizingAffine) {
+      const localRectPolygon = this.getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
+      const center = getCenter(localRectPolygon[0], localRectPolygon[2]);
+      const width = getDistance(localRectPolygon[0], localRectPolygon[1]);
+      const height = getDistance(localRectPolygon[0], localRectPolygon[3]);
+      const p = { x: center.x - width / 2, y: center.y - height / 2 };
+      const rotation = getRadian(localRectPolygon[1], localRectPolygon[0]);
+
+      const ret: Partial<T> = {};
+      if (!isSame(p, shape.p)) ret.p = p;
+      if (width !== shape.width) ret.width = width;
+      if (height !== shape.height) ret.height = height;
+      if (rotation !== shape.rotation) ret.rotation = rotation;
+
+      return ret;
     },
     getClosestOutline(shape, p, threshold) {
       const path = getPath(shape);
