@@ -1,7 +1,7 @@
 import { HistoryEvent, newPanningReadyState } from "../commons";
 import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue, WheelEvent } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
-import { AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
+import { AppCanvasState, AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
 import { DocDelta, DocOutput } from "../../../models/document";
 import {
@@ -39,6 +39,7 @@ import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam } from "../types";
+import { handleContextItemEvent } from "./contextMenuItems";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -452,3 +453,41 @@ export function handleCommonWheel(
 
   return ctx.zoomView(event.data.delta.y);
 }
+
+export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {
+  switch (event.type) {
+    case "wheel":
+      handleCommonWheel(ctx, event);
+      return;
+    case "selection": {
+      return newSelectionHubState;
+    }
+    case "text-style": {
+      return handleCommonTextStyle(ctx, event);
+    }
+    case "history":
+      handleHistoryEvent(ctx, event);
+      return newSelectionHubState;
+    case "state":
+      return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+    case "contextmenu-item": {
+      return handleContextItemEvent(ctx, event);
+    }
+    case "copy": {
+      const clipboard = newShapeClipboard(ctx);
+      clipboard.onCopy(event.nativeEvent);
+      return;
+    }
+    case "paste": {
+      const clipboard = newShapeClipboard(ctx);
+      clipboard.onPaste(event.nativeEvent);
+      return;
+    }
+    case "file-drop": {
+      handleFileDrop(ctx, event);
+      return;
+    }
+    default:
+      return;
+  }
+};
