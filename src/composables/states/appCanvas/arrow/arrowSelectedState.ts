@@ -16,6 +16,7 @@ import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
 import { ArrowHandler, ArrowHitResult, newArrowHandler } from "../../../arrowHandler";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
+import { newMovingArrowTailState } from "./movingArrowTailState";
 
 export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;
@@ -60,6 +61,8 @@ export function newArrowSelectedState(): AppCanvasState {
                 switch (hitResult.type) {
                   case "head":
                     return () => newMovingArrowHeadState({ targetId: targetShape.id });
+                  case "tail":
+                    return () => newMovingArrowTailState({ targetId: targetShape.id });
                   default:
                     return;
                 }

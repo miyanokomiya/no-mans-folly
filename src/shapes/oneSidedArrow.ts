@@ -37,7 +37,7 @@ export const struct: ShapeStruct<OneSidedArrowShape> = {
       height: arg.height ?? 50,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       headControl: arg.headControl ?? { x: 0.25, y: 0.5 },
-      tailControl: arg.tailControl ?? { x: 1, y: 1 },
+      tailControl: arg.tailControl ?? { x: 0, y: 1 },
     };
   },
   getTextRangeRect(shape) {
