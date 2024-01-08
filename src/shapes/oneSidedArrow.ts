@@ -1,4 +1,4 @@
-import { IVec2 } from "okageo";
+import { IVec2, add, multi, rotate } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
 import { SimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
@@ -9,7 +9,7 @@ import { createStrokeStyle } from "../utils/strokeStyle";
  * Suppose the head faces toward right by default.
  * => "width" represents length of the arrow.
  */
-type OneSidedArrowShape = SimplePolygonShape & {
+export type OneSidedArrowShape = SimplePolygonShape & {
   /**
    * Represents the rate from the arrow top to top left of the shape.
    * - The bigger x, the bigger length of the head.
@@ -17,7 +17,7 @@ type OneSidedArrowShape = SimplePolygonShape & {
    */
   headControl: IVec2;
   /**
-   * Represents the rate from the opposite of the arrow top to top left of the shape.
+   * Represents the rate from the opposite of the arrow top to top left of the body.
    * - x has no role.
    * - The smaller y, the skewer the tail of the arrow.
    */
@@ -59,13 +59,31 @@ function getPath(shape: OneSidedArrowShape): IVec2[] {
   const halfHeight = shape.height / 2;
   const headDepth = halfHeight * (1 - shape.headControl.y);
   const headLength = shape.width * shape.headControl.x;
+  const bodyHeight = shape.height - headDepth * 2;
+  const tailHeight = bodyHeight * shape.tailControl.y;
+  const halfTailHeight = tailHeight / 2;
   return [
-    { x: shape.p.x, y: shape.p.y + headDepth },
+    { x: shape.p.x, y: shape.p.y + halfHeight - halfTailHeight },
     { x: shape.p.x + shape.width - headLength, y: shape.p.y + headDepth },
     { x: shape.p.x + shape.width - headLength, y: shape.p.y },
     { x: shape.p.x + shape.width, y: shape.p.y + halfHeight },
     { x: shape.p.x + shape.width - headLength, y: shape.p.y + shape.height },
     { x: shape.p.x + shape.width - headLength, y: shape.p.y + shape.height - headDepth },
-    { x: shape.p.x, y: shape.p.y + shape.height - headDepth },
+    { x: shape.p.x, y: shape.p.y + halfHeight + halfTailHeight },
   ];
+}
+
+export function getHeadControlPoint(shape: OneSidedArrowShape): IVec2 {
+  const from = { x: shape.width, y: shape.height / 2 };
+  const v = multi(from, -1);
+  const relativeP = add({ x: v.x * shape.headControl.x, y: v.y * shape.headControl.y }, from);
+  return add(rotate(relativeP, shape.rotation, { x: shape.width / 2, y: shape.height / 2 }), shape.p);
+}
+
+export function getTailControlPoint(shape: OneSidedArrowShape): IVec2 {
+  const headDepth = (shape.height / 2) * (1 - shape.headControl.y);
+  const from = { x: 0, y: shape.height / 2 };
+  const v = { x: 0, y: headDepth - from.y };
+  const relativeP = add({ x: 0, y: v.y * shape.tailControl.y }, from);
+  return add(rotate(relativeP, shape.rotation, { x: shape.width / 2, y: shape.height / 2 }), shape.p);
 }
