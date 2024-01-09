@@ -36,7 +36,7 @@ export function newMovingArrowTailState(option: Option): AppCanvasState {
           const adjustedP = rotateFn(p, true);
           const origin = targetShape.p.y + targetShape.height / 2;
           const value = origin - adjustedP.y;
-          const maxH = targetShape.height / 2;
+          const maxH = (targetShape.height * targetShape.headControl.y) / 2;
           const nextControl = {
             x: 0,
             y: clamp(0, 1, value / maxH),
