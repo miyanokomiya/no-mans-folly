@@ -417,7 +417,7 @@ export const AppCanvas: React.FC = () => {
     setTextEditorFocusKey({});
   }, []);
 
-  const [downInfo, setDownInfo] = useState({ timestamp: 0, button: 0 });
+  const downInfo = useRef<{ timestamp: number; button: number }>();
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -429,14 +429,15 @@ export const AppCanvas: React.FC = () => {
       };
 
       const timestamp = Date.now();
-      if (timestamp - downInfo.timestamp < 300 && e.button === downInfo.button) {
+      if (downInfo.current && timestamp - downInfo.current.timestamp < 300 && e.button === downInfo.current.button) {
         sm.handleEvent({ type: "pointerdoubledown", data });
+        downInfo.current = undefined;
       } else {
         sm.handleEvent({ type: "pointerdown", data });
+        downInfo.current = { timestamp, button: e.button };
       }
-      setDownInfo({ timestamp, button: e.button });
     },
-    [getMousePoint, viewToCanvas, sm, downInfo, focus],
+    [getMousePoint, viewToCanvas, sm, focus],
   );
 
   const onMouseMove = useCallback(
