@@ -442,12 +442,8 @@ export function handleCommonWheel(
   ctx: Pick<AppCanvasStateContext, "getUserSetting" | "scrollView" | "zoomView" | "getScale">,
   event: WheelEvent,
 ): number {
-  if (!event.data.options.ctrl && ctx.getUserSetting().wheelAction === "pan") {
-    if (event.data.options.shift) {
-      ctx.scrollView({ x: event.data.delta.y, y: event.data.delta.x });
-    } else {
-      ctx.scrollView(event.data.delta);
-    }
+  if (!!event.data.options.ctrl !== (ctx.getUserSetting().wheelAction === "pan")) {
+    ctx.scrollView(event.data.options.shift ? { x: event.data.delta.y, y: event.data.delta.x } : event.data.delta);
     return ctx.getScale();
   }
 
