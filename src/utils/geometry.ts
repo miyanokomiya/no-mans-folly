@@ -29,7 +29,7 @@ import {
   sub,
   vec,
 } from "okageo";
-import { CurveControl } from "../models";
+import { CurveControl, Direction4 } from "../models";
 
 export const BEZIER_APPROX_SIZE = 10;
 
@@ -41,12 +41,16 @@ export type RotatedRectPath = [path: IVec2[], rotation: number];
 
 export const TAU = Math.PI * 2;
 
+function identityFn<T>(v: T): T {
+  return v;
+}
+
 export function getD2(v: IVec2): number {
   return v.x * v.x + v.y * v.y;
 }
 
 export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?: boolean) => IVec2 {
-  if (radian === 0) return (p) => p;
+  if (radian === 0) return identityFn;
 
   const sin = Math.sin(radian);
   const cos = Math.cos(radian);
@@ -57,6 +61,19 @@ export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?
       : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     return origin ? add(rotatedV, origin) : rotatedV;
   };
+}
+
+export function getRadianForDirection4(direction: Direction4): number {
+  switch (direction) {
+    case 0:
+      return -Math.PI / 2;
+    case 2:
+      return Math.PI / 2;
+    case 3:
+      return Math.PI;
+    default:
+      return 0;
+  }
 }
 
 /**

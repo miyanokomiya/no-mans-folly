@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { OneSidedArrowShape, getTailControlPoint } from "../../../../shapes/oneSidedArrow";
+import { OneSidedArrowShape, getNormalizedArrowShape, getTailControlPoint } from "../../../../shapes/oneSidedArrow";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
@@ -29,15 +29,17 @@ export function newMovingArrowTailState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
-          const rotateFn = getRotateFn(targetShape.rotation, {
-            x: targetShape.p.x + targetShape.width / 2,
-            y: targetShape.p.y + targetShape.height / 2,
+
+          const normalizedTarget = getNormalizedArrowShape(targetShape);
+          const rotateFn = getRotateFn(normalizedTarget.rotation, {
+            x: normalizedTarget.p.x + normalizedTarget.width / 2,
+            y: normalizedTarget.p.y + normalizedTarget.height / 2,
           });
-          const p = add(getTailControlPoint(targetShape), diff);
+          const p = add(getTailControlPoint(normalizedTarget), diff);
           const adjustedP = rotateFn(p, true);
-          const origin = targetShape.p.y + targetShape.height / 2;
+          const origin = normalizedTarget.p.y + normalizedTarget.height / 2;
           const value = origin - adjustedP.y;
-          const maxH = (targetShape.height * targetShape.headControl.y) / 2;
+          const maxH = (normalizedTarget.height * normalizedTarget.headControl.y) / 2;
           const nextControl = {
             x: 0,
             y: clamp(0, 1, value / maxH),

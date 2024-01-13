@@ -12,11 +12,12 @@ import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
+import { OneSidedArrowShape, getArrowDirection } from "../../../../shapes/oneSidedArrow";
 import { ArrowHandler, ArrowHitResult, newArrowHandler } from "../../../arrowHandler";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { newMovingArrowTailState } from "./movingArrowTailState";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;
@@ -62,6 +63,17 @@ export function newArrowSelectedState(): AppCanvasState {
                     return () => newMovingArrowHeadState({ targetId: targetShape.id });
                   case "tail":
                     return () => newMovingArrowTailState({ targetId: targetShape.id });
+                  case "direction": {
+                    const shapeComposite = ctx.getShapeComposite();
+                    const patch = {
+                      direction: (getArrowDirection(targetShape) + 1) % 4,
+                    } as Partial<OneSidedArrowShape>;
+                    const layoutPatch = getPatchByLayouts(shapeComposite, {
+                      update: { [targetShape.id]: patch },
+                    });
+                    ctx.patchShapes(layoutPatch);
+                    return newSelectionHubState;
+                  }
                   default:
                     return;
                 }
