@@ -51,7 +51,6 @@ export function newSingleSelectedState(): AppCanvasState {
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(shape),
         styleScheme: ctx.getStyleScheme(),
-        scale: ctx.getScale(),
       });
 
       if (!shapeComposite.hasParent(shape) && canAttachSmartBranch(ctx.getShapeStruct, shape)) {
@@ -75,7 +74,7 @@ export function newSingleSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              const hitResult = boundingBox.hitTest(event.data.point);
+              const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
                   case "corner":
@@ -110,7 +109,7 @@ export function newSingleSelectedState(): AppCanvasState {
               return;
           }
         case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point);
+          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
             if (isGroupShapeSelected) {
               const shapeComposite = ctx.getShapeComposite();
@@ -125,7 +124,7 @@ export function newSingleSelectedState(): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          const _hitResult = boundingBox.hitTest(event.data.current);
+          const _hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(hitResult, _hitResult)) {
             hitResult = _hitResult;
             ctx.redraw();
@@ -174,7 +173,7 @@ export function newSingleSelectedState(): AppCanvasState {
           return handleCommonTextStyle(ctx, event);
         }
         case "wheel":
-          boundingBox.updateScale(handleCommonWheel(ctx, event));
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;
@@ -215,7 +214,7 @@ export function newSingleSelectedState(): AppCanvasState {
       const shape = ctx.getShapeComposite().shapeMap[selectedId ?? ""];
       if (!shape) return;
 
-      boundingBox.render(renderCtx, undefined, hitResult);
+      boundingBox.render(renderCtx, undefined, hitResult, ctx.getScale());
       smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
     },
   };

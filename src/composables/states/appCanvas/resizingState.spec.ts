@@ -34,7 +34,7 @@ describe("newResizingState", () => {
         path: getRectPoints({ x: 0, y: 0, width: 50, height: 50 }),
         styleScheme: ctx.getStyleScheme(),
       });
-      const hitResult = boundingBox.hitTest({ x: 0, y: 0 })!;
+      const hitResult = boundingBox.hitTest({ x: 0, y: 0 }, 1)!;
       const target = newResizingState({
         boundingBox,
         hitResult,

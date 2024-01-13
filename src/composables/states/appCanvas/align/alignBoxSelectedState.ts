@@ -38,7 +38,6 @@ export function newAlignBoxSelectedState(): AppCanvasState {
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(shapeMap[targetId]),
       styleScheme: ctx.getStyleScheme(),
-      scale: ctx.getScale(),
     });
     alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,
@@ -125,7 +124,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
                 return;
               }
 
-              const hitResult = boundingBox.hitTest(event.data.point);
+              const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
                   case "corner":
@@ -176,7 +175,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
             return;
           }
 
-          const hitBounding = boundingBox.hitTest(event.data.current);
+          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
             boundingHitResult = hitBounding;
             ctx.redraw();
@@ -204,7 +203,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
               return handleCommonShortcut(ctx, event);
           }
         case "wheel":
-          boundingBox.updateScale(handleCommonWheel(ctx, event));
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;
@@ -257,7 +256,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx, undefined, boundingHitResult);
+      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
       alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
     },
   };

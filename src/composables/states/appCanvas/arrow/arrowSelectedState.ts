@@ -38,7 +38,6 @@ export function newArrowSelectedState(): AppCanvasState {
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
         styleScheme: ctx.getStyleScheme(),
-        scale: ctx.getScale(),
       });
     },
     onEnd: (ctx) => {
@@ -68,7 +67,7 @@ export function newArrowSelectedState(): AppCanvasState {
                 }
               }
 
-              const boundingHitResult = boundingBox.hitTest(event.data.point);
+              const boundingHitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (boundingHitResult) {
                 switch (boundingHitResult.type) {
                   case "corner":
@@ -100,7 +99,7 @@ export function newArrowSelectedState(): AppCanvasState {
               return;
           }
         case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point);
+          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
             return startTextEditingIfPossible(ctx, targetShape.id, event.data.point);
           }
@@ -114,7 +113,7 @@ export function newArrowSelectedState(): AppCanvasState {
             return;
           }
 
-          const hitBounding = boundingBox.hitTest(event.data.current);
+          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
             boundingHitResult = hitBounding;
             ctx.redraw();
@@ -157,7 +156,7 @@ export function newArrowSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, undefined, boundingHitResult);
+      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), hitResult);
     },
   };

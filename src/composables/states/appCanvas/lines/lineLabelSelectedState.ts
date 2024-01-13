@@ -57,7 +57,6 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
         newBoundingBox({
           path: shapeComposite.getLocalRectPolygon(shape),
           styleScheme: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
         });
     },
     onEnd: (ctx) => {
@@ -73,7 +72,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              const hitResult = boundingBox.hitTest(event.data.point);
+              const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
                   case "corner":
@@ -127,14 +126,14 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
               return;
           }
         case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point);
+          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
             return startTextEditingIfPossible(ctx, shape.id, event.data.point);
           }
           return;
         }
         case "pointerhover": {
-          const hitBounding = boundingBox.hitTest(event.data.current);
+          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
             boundingHitResult = hitBounding;
             ctx.redraw();
@@ -174,7 +173,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           return handleCommonTextStyle(ctx, event);
         }
         case "wheel":
-          boundingBox.updateScale(handleCommonWheel(ctx, event));
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;
@@ -213,7 +212,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       renderParentLineRelation(ctx, renderCtx, shape, parentLineShape);
-      boundingBox.render(renderCtx, undefined, boundingHitResult);
+      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
     },
   };
 }

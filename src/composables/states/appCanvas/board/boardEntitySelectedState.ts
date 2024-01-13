@@ -70,7 +70,6 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
         styleScheme: ctx.getStyleScheme(),
-        scale: ctx.getScale(),
         noRotation: true,
       });
 
@@ -148,7 +147,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
                 return;
               }
 
-              const hitResult = boundingBox.hitTest(event.data.point);
+              const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
                   case "corner":
@@ -200,7 +199,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
             return;
           }
 
-          const hitBounding = boundingBox.hitTest(event.data.current);
+          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
             boundingHitResult = hitBounding;
             ctx.redraw();
@@ -228,7 +227,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
               return handleCommonShortcut(ctx, event);
           }
         case "wheel":
-          boundingBox.updateScale(handleCommonWheel(ctx, event));
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;
@@ -281,7 +280,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx, undefined, boundingHitResult);
+      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
       boardHandler.render(renderCtx, style, scale, boardHitResult);
     },
   };

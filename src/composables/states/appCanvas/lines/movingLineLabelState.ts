@@ -106,7 +106,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape = ctx.getTmpShapeMap()[labelShape.id] ?? {};
       renderParentLineRelation(ctx, renderCtx, { ...labelShape, ...tmpShape }, parentLineShape);
-      boundingBox.render(renderCtx, affine);
+      boundingBox.render(renderCtx, affine, undefined, ctx.getScale());
     },
   };
 }

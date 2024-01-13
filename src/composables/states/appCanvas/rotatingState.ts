@@ -86,7 +86,7 @@ export function newRotatingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      option.boundingBox.render(renderCtx, resizingAffine);
+      option.boundingBox.render(renderCtx, resizingAffine, undefined, ctx.getScale());
 
       if (linePatchedMap) {
         renderPatchedVertices(renderCtx, {

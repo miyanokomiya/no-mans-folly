@@ -38,7 +38,6 @@ interface ResizingBase {
 interface Option {
   path: IVec2[];
   styleScheme: StyleScheme;
-  scale?: number;
   noRotation?: boolean;
 }
 
@@ -54,19 +53,8 @@ export function newBoundingBox(option: Option) {
     [bl, tl],
   ];
 
-  let scale = option.scale ?? 1;
-  let scaledAnchorSize = ANCHOR_SIZE * scale;
-  let anchors = getAnchors();
-  let rotationAnchor = getRotationAnchor();
-
-  function updateScale(val: number) {
-    scale = val;
-    scaledAnchorSize = ANCHOR_SIZE * scale;
-    anchors = getAnchors();
-    rotationAnchor = getRotationAnchor();
-  }
-
-  function getAnchors(): IVec2[][] {
+  function getAnchors(scale = 1): IVec2[][] {
+    const scaledAnchorSize = ANCHOR_SIZE * scale;
     return option.path.map((p) => {
       const x0 = p.x - scaledAnchorSize;
       const x1 = p.x + scaledAnchorSize;
@@ -86,7 +74,8 @@ export function newBoundingBox(option: Option) {
     });
   }
 
-  function getRotationAnchor(): { c: IVec2; r: number } | undefined {
+  function getRotationAnchor(scale = 1): { c: IVec2; r: number } | undefined {
+    const scaledAnchorSize = ANCHOR_SIZE * scale;
     return option.noRotation
       ? undefined
       : {
@@ -95,7 +84,10 @@ export function newBoundingBox(option: Option) {
         };
   }
 
-  function hitTest(p: IVec2): HitResult | undefined {
+  function hitTest(p: IVec2, scale = 1): HitResult | undefined {
+    const scaledAnchorSize = ANCHOR_SIZE * scale;
+
+    const rotationAnchor = getRotationAnchor(scale);
     if (rotationAnchor) {
       const rotationHitTest = newCircleHitTest(rotationAnchor.c, rotationAnchor.r);
       if (rotationHitTest.test(p)) {
@@ -103,6 +95,7 @@ export function newBoundingBox(option: Option) {
       }
     }
 
+    const anchors = getAnchors(scale);
     const cornerIndex = anchors.findIndex((a) => isOnPolygon(p, a));
     if (cornerIndex > -1) {
       return { type: "corner", index: cornerIndex };
@@ -118,8 +111,10 @@ export function newBoundingBox(option: Option) {
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix, hitResult?: HitResult) {
+  function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix, hitResult?: HitResult, scale = 1) {
     const style = option.styleScheme;
+    const anchors = getAnchors(scale);
+    const rotationAnchor = getRotationAnchor(scale);
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
 
     function resize(p: IVec2): IVec2 {
@@ -193,12 +188,10 @@ export function newBoundingBox(option: Option) {
     return newBoundingBox({
       path: option.path.map((p) => applyAffine(affine, p)),
       styleScheme: option.styleScheme,
-      scale,
     });
   }
 
   return {
-    updateScale,
     path: option.path,
     getRotation: () => rotation,
     getCenter: () => center,

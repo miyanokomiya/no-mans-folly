@@ -81,7 +81,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         boundingBox = newBoundingBox({
           path: getRotatedTargetBounds(shapeComposite, selectedIds, option.boundingBox.getRotation()),
           styleScheme: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
         });
       } else {
         const shapeRects = selectedIds.map((id) => shapeMap[id]).map((s) => shapeComposite.getWrapperRect(s));
@@ -89,7 +88,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
           styleScheme: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
         });
       }
     },
@@ -107,7 +105,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              const hitResult = boundingBox.hitTest(event.data.point);
+              const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
                   case "corner":
@@ -166,7 +164,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          const _hitResult = boundingBox.hitTest(event.data.current);
+          const _hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(hitResult, _hitResult)) {
             hitResult = _hitResult;
             ctx.redraw();
@@ -199,7 +197,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           return handleCommonTextStyle(ctx, event);
         }
         case "wheel":
-          boundingBox.updateScale(handleCommonWheel(ctx, event));
+          handleCommonWheel(ctx, event);
           return;
         case "selection": {
           return newSelectionHubState;
@@ -248,7 +246,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
-      boundingBox.render(renderCtx, undefined, hitResult);
+      boundingBox.render(renderCtx, undefined, hitResult, ctx.getScale());
     },
   };
 }

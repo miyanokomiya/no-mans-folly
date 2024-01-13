@@ -60,7 +60,6 @@ export function newTreeNodeSelectedState(): AppCanvasState {
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(treeNodeShape),
         styleScheme: ctx.getStyleScheme(),
-        scale: ctx.getScale(),
       });
     },
     onEnd: (ctx) => {
@@ -142,7 +141,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                 return;
               }
 
-              const hitResult = boundingBox.hitTest(event.data.point);
+              const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
                   case "corner":
@@ -174,7 +173,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
               return;
           }
         case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point);
+          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
             return startTextEditingIfPossible(ctx, treeNodeShape.id, event.data.point);
           }
@@ -188,7 +187,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
           treeHitResult = result;
           if (treeHitResult) return;
 
-          const hitBounding = boundingBox.hitTest(event.data.current);
+          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
             boundingHitResult = hitBounding;
             ctx.redraw();
@@ -260,7 +259,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), treeHitResult);
-      boundingBox.render(renderCtx, undefined, boundingHitResult);
+      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
     },
   };
 }
