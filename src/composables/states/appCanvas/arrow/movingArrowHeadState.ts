@@ -4,6 +4,7 @@ import { OneSidedArrowShape, getHeadControlPoint } from "../../../../shapes/oneS
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   targetId: string;
@@ -42,9 +43,15 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
             x: clamp(0, 1, value.x / maxW),
             y: clamp(0, 1, value.y / maxH),
           };
-          ctx.setTmpShapeMap({
-            [targetShape.id]: { headControl: nextControl } as Partial<OneSidedArrowShape>,
+
+          const shapeComposite = ctx.getShapeComposite();
+          const patch = { headControl: nextControl } as Partial<OneSidedArrowShape>;
+          // Note: Line connections don't change by this operation.
+          // => Mainly because of its complexity.
+          const layoutPatch = getPatchByLayouts(shapeComposite, {
+            update: { [targetShape.id]: patch },
           });
+          ctx.setTmpShapeMap(layoutPatch);
           return;
         }
         case "pointerup": {

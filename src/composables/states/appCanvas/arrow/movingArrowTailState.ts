@@ -4,6 +4,7 @@ import { OneSidedArrowShape, getTailControlPoint } from "../../../../shapes/oneS
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   targetId: string;
@@ -41,9 +42,15 @@ export function newMovingArrowTailState(option: Option): AppCanvasState {
             x: 0,
             y: clamp(0, 1, value / maxH),
           };
-          ctx.setTmpShapeMap({
-            [targetShape.id]: { tailControl: nextControl } as Partial<OneSidedArrowShape>,
+
+          const shapeComposite = ctx.getShapeComposite();
+          const patch = { tailControl: nextControl } as Partial<OneSidedArrowShape>;
+          // Note: Line connections don't change by this operation.
+          // => Mainly because of its complexity.
+          const layoutPatch = getPatchByLayouts(shapeComposite, {
+            update: { [targetShape.id]: patch },
           });
+          ctx.setTmpShapeMap(layoutPatch);
           return;
         }
         case "pointerup": {
