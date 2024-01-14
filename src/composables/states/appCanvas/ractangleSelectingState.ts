@@ -112,6 +112,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const composite = ctx.getShapeComposite();
       const selectedIds = ctx.getSelectedShapeIdMap();
@@ -119,7 +120,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         .filter(([id]) => selectedIds[id] || targetIdSet.has(id))
         .map(([, s]) => s);
 
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 });
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 * scale });
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
