@@ -682,7 +682,9 @@ export const AppCanvas: React.FC = () => {
       >
         <FileDropArea typeReg={/image\/.+/} onDrop={onDrop}>
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
-            <GridBackground x={grid.range.x / scale} y={grid.range.y / scale} size={grid.size / scale} />
+            {grid.disabled ? undefined : (
+              <GridBackground x={grid.range.x / scale} y={grid.range.y / scale} size={grid.size / scale} />
+            )}
           </div>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
           <div className="absolute right-16 top-0">{sm.getStateSummary().label}</div>
