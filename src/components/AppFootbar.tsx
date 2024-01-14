@@ -13,7 +13,7 @@ export const AppFootbar: React.FC = () => {
   const smctx = useContext(AppStateContext);
   const [popupedKey, setPopupedKey] = useState("");
 
-  const scale = Math.round(smctx.getScale() * 100);
+  const scale = Math.round((1 / smctx.getScale()) * 100);
   const handleScaleDown = useCallback(() => {
     smctx.zoomView(1, true);
   }, [smctx]);
@@ -70,7 +70,7 @@ export const AppFootbar: React.FC = () => {
             }
             onClick={onClickPopupButton}
           >
-            <div className="flex items-center">{scale}%</div>
+            <div className="flex items-center justify-center w-12">{scale}%</div>
           </PopupButton>
         </OutsideObserver>
         <button type="button" className="w-4 h-8 rounded" onClick={handleScaleUp}>
