@@ -154,10 +154,16 @@ export function getTailControlPoint(src: OneSidedArrowShape): IVec2 {
   return add(rotate(relativeP, shape.rotation, c), shape.p);
 }
 
-export function getHeadPoint(src: OneSidedArrowShape): IVec2 {
+export function getArrowHeadPoint(src: OneSidedArrowShape): IVec2 {
   const shape = getNormalizedArrowShape(src);
-  const c = { x: shape.width, y: shape.height / 2 };
+  const c = { x: shape.width / 2, y: shape.height / 2 };
   return add(rotate({ x: shape.width, y: c.y }, shape.rotation, c), shape.p);
+}
+
+export function getArrowTailPoint(src: OneSidedArrowShape): IVec2 {
+  const shape = getNormalizedArrowShape(src);
+  const c = { x: shape.width / 2, y: shape.height / 2 };
+  return add(rotate({ x: 0, y: c.y }, shape.rotation, c), shape.p);
 }
 
 export function getArrowDirection(shape: OneSidedArrowShape): Direction4 {
