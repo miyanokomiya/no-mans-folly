@@ -18,7 +18,7 @@ import { COLORS } from "../utils/color";
 const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;
 
-type AnchorType = "head" | "tail" | "direction" | "to";
+type AnchorType = "head" | "tail" | "direction" | "to" | "from";
 
 export interface ArrowHitResult {
   type: AnchorType;
@@ -35,6 +35,7 @@ export function newArrowHandler(option: Option) {
   const headControlP = getHeadControlPoint(shape);
   const tailControlP = getTailControlPoint(shape);
   const toControlP = getArrowHeadPoint(shape);
+  const fromControlP = getArrowTailPoint(shape);
 
   function getDirectionAnchor(scale: number) {
     const d = DIRECTION_ANCHOR_SIZE * 2 * scale;
@@ -58,6 +59,9 @@ export function newArrowHandler(option: Option) {
     if (getDistance(toControlP, p) <= threshold) {
       return { type: "to" };
     }
+    if (getDistance(fromControlP, p) <= threshold) {
+      return { type: "from" };
+    }
 
     const directionThreshold = DIRECTION_ANCHOR_SIZE * scale;
     if (getDistance(getDirectionAnchor(scale), p) <= directionThreshold) {
@@ -74,6 +78,7 @@ export function newArrowHandler(option: Option) {
         [headControlP, hitResult?.type === "head"],
         [tailControlP, hitResult?.type === "tail"],
         [toControlP, hitResult?.type === "to"],
+        [fromControlP, hitResult?.type === "from"],
       ] as const
     ).forEach(([p, highlight]) => {
       if (highlight) {
@@ -148,6 +153,47 @@ export function patchToMoveHead(src: OneSidedArrowShape, p: IVec2): Partial<OneS
   if (!isSame(tailP, tmpTailP)) {
     const tailAdjustment = sub(tailP, tmpTailP);
     patch.p = add(src.p, tailAdjustment);
+  }
+  return patch;
+}
+
+export function patchToMoveTail(src: OneSidedArrowShape, p: IVec2): Partial<OneSidedArrowShape> {
+  const headP = getArrowHeadPoint(src);
+  const currentTailP = getArrowTailPoint(src);
+  const currentDistance = getDistance(headP, currentTailP);
+  const nextDistance = Math.max(getDistance(headP, p), getArrowHeadLength(src));
+  const rate = nextDistance / currentDistance;
+
+  const patch = {
+    headControl: { x: src.headControl.x / rate, y: src.headControl.y },
+  } as Partial<OneSidedArrowShape>;
+  switch (src.direction) {
+    case 0:
+      patch.rotation = getRadian(headP, p) + Math.PI / 2;
+      patch.height = nextDistance;
+      break;
+    case 2:
+      patch.rotation = getRadian(headP, p) - Math.PI / 2;
+      patch.height = nextDistance;
+      break;
+    case 3:
+      patch.rotation = getRadian(headP, p) - Math.PI;
+      patch.width = nextDistance;
+      break;
+    default:
+      patch.rotation = getRadian(headP, p);
+      patch.width = nextDistance;
+      break;
+  }
+
+  if (patch.rotation === src.rotation) {
+    delete patch.rotation;
+  }
+
+  const tmpHeadP = getArrowHeadPoint({ ...src, ...patch });
+  if (!isSame(headP, tmpHeadP)) {
+    const headAdjustment = sub(headP, tmpHeadP);
+    patch.p = add(src.p, headAdjustment);
   }
   return patch;
 }

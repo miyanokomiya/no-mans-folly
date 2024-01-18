@@ -19,6 +19,7 @@ import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { newMovingArrowTailState } from "./movingArrowTailState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
+import { newMovingArrowFromState } from "./movingArrowFromState";
 
 export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;
@@ -66,6 +67,8 @@ export function newArrowSelectedState(): AppCanvasState {
                     return () => newMovingArrowTailState({ targetId: targetShape.id });
                   case "to":
                     return () => newMovingArrowToState({ targetId: targetShape.id });
+                  case "from":
+                    return () => newMovingArrowFromState({ targetId: targetShape.id });
                   case "direction": {
                     const shapeComposite = ctx.getShapeComposite();
                     const patch = {
