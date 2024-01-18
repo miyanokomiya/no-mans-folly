@@ -131,7 +131,8 @@ function getPath(src: OneSidedArrowShape): IVec2[] {
     { x: shape.p.x + shape.width - headLength, y: shape.p.y + shape.height - headDepth },
     { x: shape.p.x, y: c.y + halfTailHeight },
   ];
-  const rotateFn = getRotateFn(shape.rotation, c);
+  // "src.rotation" should be removed here because this function should return original path.
+  const rotateFn = getRotateFn(shape.rotation - src.rotation, c);
   return path.map((p) => rotateFn(p));
 }
 
