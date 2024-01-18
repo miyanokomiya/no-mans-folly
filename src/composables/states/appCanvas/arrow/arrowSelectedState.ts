@@ -18,6 +18,7 @@ import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { newMovingArrowTailState } from "./movingArrowTailState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { newMovingArrowToState } from "./movingArrowToState";
 
 export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;
@@ -63,6 +64,8 @@ export function newArrowSelectedState(): AppCanvasState {
                     return () => newMovingArrowHeadState({ targetId: targetShape.id });
                   case "tail":
                     return () => newMovingArrowTailState({ targetId: targetShape.id });
+                  case "to":
+                    return () => newMovingArrowToState({ targetId: targetShape.id });
                   case "direction": {
                     const shapeComposite = ctx.getShapeComposite();
                     const patch = {
@@ -118,8 +121,9 @@ export function newArrowSelectedState(): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          hitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
-          if (hitResult) {
+          const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
+          if (hitResult?.type !== nextHitResult?.type) {
+            hitResult = nextHitResult;
             boundingHitResult = undefined;
             ctx.redraw();
             return;

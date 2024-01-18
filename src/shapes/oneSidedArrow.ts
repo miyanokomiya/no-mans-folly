@@ -167,6 +167,16 @@ export function getArrowTailPoint(src: OneSidedArrowShape): IVec2 {
   return add(rotate({ x: 0, y: c.y }, shape.rotation, c), shape.p);
 }
 
+export function getArrowHeadLength(src: OneSidedArrowShape): number {
+  switch (src.direction) {
+    case 0:
+    case 2:
+      return src.height * src.headControl.x;
+    default:
+      return src.width * src.headControl.x;
+  }
+}
+
 export function getArrowDirection(shape: OneSidedArrowShape): Direction4 {
   return shape.direction ?? 1;
 }
