@@ -12,23 +12,28 @@ interface Props {
 }
 
 export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue, onChanged }) => {
-  const [draftValue, setDraftValue] = useState(value);
   const [down, setDown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const draftValue = useRef(value);
 
-  const updateValue = useCallback(
-    (rate: number, tmp = false) => {
-      const v = Math.min(Math.max(rate, 0), 1) * (max - min) + min;
+  const applyStep = useCallback(
+    (v: number) => {
       // Apply "logRoundByDigit" to avoid floating error as much as possible.
       // => Because the value is likely shown as text label.
       const val = step ? logRoundByDigit(step.toString().length + 3, snapNumber(v, step)) : v;
-      setDraftValue(val);
-
-      if (tmp) {
-        onChanged?.(val, true);
-      }
+      return Math.min(Math.max(val, min), max);
     },
-    [step, max, min, onChanged],
+    [step, max, min],
+  );
+
+  const updateDraftValueByRate = useCallback(
+    (rate: number) => {
+      const v = rate * (max - min) + min;
+      const val = applyStep(v);
+      draftValue.current = val;
+      onChanged?.(val, true);
+    },
+    [applyStep, onChanged],
   );
 
   const onDown = useCallback(
@@ -36,11 +41,12 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       if (!ref.current) return;
 
       e.preventDefault();
+      ref.current.focus();
       setDown(true);
       const bounds = ref.current.getBoundingClientRect();
-      updateValue((e.pageX - bounds.x) / bounds.width, true);
+      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width);
     },
-    [updateValue],
+    [updateDraftValueByRate],
   );
 
   const onUp = useCallback(() => {
@@ -48,8 +54,8 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
 
     setDown(false);
     // Use "draftValue", because "value" in this scope can be outdated.
-    onChanged?.(draftValue);
-  }, [onChanged, draftValue, down]);
+    onChanged?.(draftValue.current);
+  }, [onChanged, down]);
   useGlobalMouseupEffect(onUp);
 
   const onMove = useCallback(
@@ -57,18 +63,54 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       if (!ref.current || !down) return;
 
       const bounds = ref.current.getBoundingClientRect();
-      updateValue((e.pageX - bounds.x) / bounds.width, true);
+      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width);
     },
-    [down, updateValue],
+    [down, updateDraftValueByRate],
   );
   useGlobalMousemoveEffect(onMove);
+
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const s = step ?? 1;
+      switch (e.key) {
+        case "ArrowRight": {
+          const v = applyStep(value + s);
+          draftValue.current = v;
+          onChanged?.(v);
+          return;
+        }
+        case "ArrowUp": {
+          const v = applyStep(value + s * 10);
+          draftValue.current = v;
+          onChanged?.(v);
+          return;
+        }
+        case "ArrowLeft": {
+          const v = applyStep(value - s);
+          draftValue.current = v;
+          onChanged?.(v);
+          return;
+        }
+        case "ArrowDown": {
+          const v = applyStep(value - s * 10);
+          draftValue.current = v;
+          onChanged?.(v);
+          return;
+        }
+      }
+    },
+    [value, applyStep, onChanged],
+  );
 
   return (
     <div className="relative">
       <div
         ref={ref}
         className="relative bg-white border rounded-full overflow-hidden h-4 cursor-pointer"
+        tabIndex={0}
+        data-keep-focus
         onMouseDown={onDown}
+        onKeyDown={onKeyDown}
       >
         <div
           className="absolute top-0 left-0 h-4 bg-sky-400 pointer-events-none"
