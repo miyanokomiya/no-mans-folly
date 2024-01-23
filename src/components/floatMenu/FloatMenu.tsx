@@ -72,7 +72,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
     const shapeMap = shapeComposite.shapeMap;
     const selected = smctx.getSelectedShapeIdMap();
     return Object.keys(selected).map((id) => shapeMap[id]);
-  }, [canvasState, smctx, acctx.shapeStore]);
+  }, [canvasState, smctx]);
 
   const targetRect = useMemo<IRectangle | undefined>(() => {
     if (selectedShapes.length === 0) return;
@@ -335,9 +335,10 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
         smctx.patchShapes(patch);
         smctx.setTmpShapeMap({});
       }
-      focusBack?.();
+      // It's better not to call "focusBack" here.
+      // => Number sliders can keep focused and handle arrow-key inputs.
     },
-    [focusBack, smctx, acctx],
+    [smctx],
   );
 
   const popupButtonCommonProps = {
