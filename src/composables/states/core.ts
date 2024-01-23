@@ -1,5 +1,6 @@
 import { IVec2 } from "okageo";
-import { EditMovement, HoverMovement, KeyOptions, ModifierOptions, MouseOptions } from "./types";
+import { EditMovement, HoverMovement, KeyOptions, MouseOptions } from "./types";
+import { ModifierOptions } from "../../utils/devices";
 import { newCallback } from "../reactives";
 
 type TransitionType = "break" | "stack-restart" | "stack-resume";

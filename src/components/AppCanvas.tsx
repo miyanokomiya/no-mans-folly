@@ -3,7 +3,7 @@ import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext, SetAppStateContext } from "../contexts/AppContext";
 import { duplicateShapes, getCommonStruct } from "../shapes";
 import { useCanvas } from "../composables/canvas";
-import { getKeyOptions, getMouseOptions } from "../utils/devices";
+import { getKeyOptions, getMouseOptions, ModifierOptions } from "../utils/devices";
 import {
   useGlobalCopyEffect,
   useGlobalMousemoveEffect,
@@ -16,7 +16,7 @@ import { getDocAttributes } from "../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
-import { CommandExam, ContextMenuItem, ModifierOptions } from "../composables/states/types";
+import { CommandExam, ContextMenuItem } from "../composables/states/types";
 import { CommandExamPanel } from "./molecules/CommandExamPanel";
 import { rednerRGBA } from "../utils/color";
 import { useSelectedTmpSheet } from "../composables/storeHooks";

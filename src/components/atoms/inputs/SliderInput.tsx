@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../../../composables/window";
 import { logRoundByDigit, snapNumber } from "../../../utils/geometry";
+import { ModifierOptions, getModifierOptions } from "../../../utils/devices";
 
 interface Props {
   value: number;
@@ -8,7 +9,7 @@ interface Props {
   max: number;
   step?: number;
   showValue?: boolean;
-  onChanged?: (value: number, draft?: boolean) => void;
+  onChanged?: (value: number, draft?: boolean, option?: ModifierOptions) => void;
 }
 
 export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue, onChanged }) => {
@@ -27,11 +28,11 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
   );
 
   const updateDraftValueByRate = useCallback(
-    (rate: number) => {
+    (rate: number, option?: ModifierOptions) => {
       const v = rate * (max - min) + min;
       const val = applyStep(v);
       draftValue.current = val;
-      onChanged?.(val, true);
+      onChanged?.(val, true, option);
     },
     [applyStep, onChanged],
   );
@@ -44,7 +45,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       ref.current.focus();
       setDown(true);
       const bounds = ref.current.getBoundingClientRect();
-      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width);
+      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width, getModifierOptions(e));
     },
     [updateDraftValueByRate],
   );
@@ -63,7 +64,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       if (!ref.current || !down) return;
 
       const bounds = ref.current.getBoundingClientRect();
-      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width);
+      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width, getModifierOptions(e));
     },
     [down, updateDraftValueByRate],
   );
@@ -71,32 +72,32 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      const s = step ?? 1;
+      const unit = step ?? 1;
+      let d = 0;
+
       switch (e.key) {
         case "ArrowRight": {
-          const v = applyStep(value + s);
-          draftValue.current = v;
-          onChanged?.(v);
-          return;
+          d = unit;
+          break;
         }
         case "ArrowUp": {
-          const v = applyStep(value + s * 10);
-          draftValue.current = v;
-          onChanged?.(v);
-          return;
+          d = unit * 10;
+          break;
         }
         case "ArrowLeft": {
-          const v = applyStep(value - s);
-          draftValue.current = v;
-          onChanged?.(v);
-          return;
+          d = -unit;
+          break;
         }
         case "ArrowDown": {
-          const v = applyStep(value - s * 10);
-          draftValue.current = v;
-          onChanged?.(v);
-          return;
+          d = -unit * 10;
+          break;
         }
+      }
+
+      if (d) {
+        const v = applyStep(value + d);
+        draftValue.current = v;
+        onChanged?.(v, false, getModifierOptions(e));
       }
     },
     [value, applyStep, onChanged],

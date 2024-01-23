@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Size } from "../models";
-import { ModifierOptions } from "./states/types";
+import { ModifierOptions } from "../utils/devices";
 
 export function useWindow() {
   const [size, setSize] = useState<Size>({ width: window.innerWidth, height: window.innerHeight });

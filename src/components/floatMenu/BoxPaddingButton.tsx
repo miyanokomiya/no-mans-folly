@@ -5,6 +5,7 @@ import { SliderInput } from "../atoms/inputs/SliderInput";
 import { createBoxPadding } from "../../utils/boxPadding";
 import iconPadding from "../../assets/icons/padding.svg";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
+import { ModifierOptions } from "../../utils/devices";
 
 interface Props {
   popupedKey: string;
@@ -64,9 +65,14 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
   );
 
   const onChangeTop = useCallback(
-    (val: number, draft = false) => {
+    (val: number, draft = false, option?: ModifierOptions) => {
       onChange?.(
-        { ...currentValue, value: [val, currentValue.value[1], currentValue.value[2], currentValue.value[3]] },
+        {
+          ...currentValue,
+          value: option?.alt
+            ? [val, val, val, val]
+            : [val, currentValue.value[1], option?.shift ? val : currentValue.value[2], currentValue.value[3]],
+        },
         draft,
       );
     },
@@ -74,9 +80,14 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
   );
 
   const onChangeRight = useCallback(
-    (val: number, draft = false) => {
+    (val: number, draft = false, option?: ModifierOptions) => {
       onChange?.(
-        { ...currentValue, value: [currentValue.value[0], val, currentValue.value[2], currentValue.value[3]] },
+        {
+          ...currentValue,
+          value: option?.alt
+            ? [val, val, val, val]
+            : [currentValue.value[0], val, currentValue.value[2], option?.shift ? val : currentValue.value[3]],
+        },
         draft,
       );
     },
@@ -84,9 +95,14 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
   );
 
   const onChangeBottom = useCallback(
-    (val: number, draft = false) => {
+    (val: number, draft = false, option?: ModifierOptions) => {
       onChange?.(
-        { ...currentValue, value: [currentValue.value[0], currentValue.value[1], val, currentValue.value[3]] },
+        {
+          ...currentValue,
+          value: option?.alt
+            ? [val, val, val, val]
+            : [option?.shift ? val : currentValue.value[0], currentValue.value[1], val, currentValue.value[3]],
+        },
         draft,
       );
     },
@@ -94,9 +110,14 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
   );
 
   const onChangeLeft = useCallback(
-    (val: number, draft = false) => {
+    (val: number, draft = false, option?: ModifierOptions) => {
       onChange?.(
-        { ...currentValue, value: [currentValue.value[0], currentValue.value[1], currentValue.value[2], val] },
+        {
+          ...currentValue,
+          value: option?.alt
+            ? [val, val, val, val]
+            : [currentValue.value[0], option?.shift ? val : currentValue.value[1], currentValue.value[2], val],
+        },
         draft,
       );
     },
@@ -125,6 +146,9 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
         <div className="w-40">
           <SliderInput {...sliderAttrs} value={currentValue.value[2]} onChanged={onChangeBottom} />
         </div>
+      </div>
+      <div className="mt-2 text-sm">
+        <p>Shift, Alt: Symmetrically</p>
       </div>
     </div>
   );

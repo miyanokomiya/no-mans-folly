@@ -1,13 +1,5 @@
 import type { IVec2 } from "okageo";
-
-export type ModifierOptions = {
-  // "Command" key is also treated as Ctrl key
-  // When those keys need to be distinguished, check "command" value and use "isMac" in "devices.ts"
-  ctrl?: boolean;
-  shift?: boolean;
-  alt?: boolean;
-  command?: boolean;
-};
+import { ModifierOptions } from "../../utils/devices";
 
 export type EditMovement = {
   current: IVec2;
