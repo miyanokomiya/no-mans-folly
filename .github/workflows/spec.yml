@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - run: corepack enable yarn
       - run: yarn install
       - run: yarn lint-json
       - run: yarn lint-style
