@@ -11,6 +11,7 @@ import { newTreeNodeSelectedState } from "./tree/treeNodeSelectedState";
 import { newBoardEntitySelectedState } from "./board/boardEntitySelectedState";
 import { newAlignBoxSelectedState } from "./align/alignBoxSelectedState";
 import { newArrowSelectedState } from "./arrow/arrowSelectedState";
+import { newArrowTwoSelectedState } from "./arrow/arrowTwoSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -36,6 +37,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newLineSelectedState;
           case "one_sided_arrow":
             return newArrowSelectedState;
+          case "two_sided_arrow":
+            return newArrowTwoSelectedState;
           case "tree_root":
             return newTreeRootSelectedState;
           case "tree_node":

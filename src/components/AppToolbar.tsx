@@ -6,6 +6,7 @@ import iconShapeSet from "../assets/icons/shape_set.svg";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
+import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
@@ -25,6 +26,7 @@ const shapeList = [
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
+  { type: "two_sided_arrow", icon: iconTwoSidedArrow },
 ];
 
 const lineList = [

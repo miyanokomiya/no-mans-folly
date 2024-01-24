@@ -1,26 +1,25 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { OneSidedArrowShape, getArrowHeadPoint } from "../../../../shapes/oneSidedArrow";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU } from "../../../../utils/geometry";
 import { add } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
-import { patchToMoveHead } from "../../../arrowHandler";
+import { ArrowCommon, getArrowHeadPoint, patchToMoveHead } from "../../../../utils/arrows";
 
 interface Option {
   targetId: string;
 }
 
 export function newMovingArrowToState(option: Option): AppCanvasState {
-  let targetShape: OneSidedArrowShape;
+  let targetShape: ArrowCommon;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
 
   return {
     getLabel: () => "MovingArrowTo",
     onStart: (ctx) => {
-      targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as OneSidedArrowShape;
+      targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as ArrowCommon;
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
@@ -61,7 +60,7 @@ export function newMovingArrowToState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const tmpShape: OneSidedArrowShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
+      const tmpShape: ArrowCommon = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const headP = getArrowHeadPoint(tmpShape);
       applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
       renderCtx.beginPath();

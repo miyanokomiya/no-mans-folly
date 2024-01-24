@@ -1,22 +1,22 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { OneSidedArrowShape, getHeadControlPoint, getNormalizedArrowShape } from "../../../../shapes/oneSidedArrow";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { ArrowCommon, getHeadControlPoint, getHeadMaxLength, getNormalizedArrowShape } from "../../../../utils/arrows";
 
 interface Option {
   targetId: string;
 }
 
 export function newMovingArrowHeadState(option: Option): AppCanvasState {
-  let targetShape: OneSidedArrowShape;
+  let targetShape: ArrowCommon;
 
   return {
     getLabel: () => "MovingArrowHead",
     onStart: (ctx) => {
-      targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as OneSidedArrowShape;
+      targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as ArrowCommon;
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
@@ -42,7 +42,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
             y: normalizedTarget.p.y + normalizedTarget.height / 2,
           };
           const value = sub(origin, adjustedP);
-          const maxW = normalizedTarget.width;
+          const maxW = getHeadMaxLength(normalizedTarget);
           const maxH = normalizedTarget.height / 2;
           const nextControl = {
             x: clamp(0, 1, value.x / maxW),
@@ -50,7 +50,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
           };
 
           const shapeComposite = ctx.getShapeComposite();
-          const patch = { headControl: nextControl } as Partial<OneSidedArrowShape>;
+          const patch = { headControl: nextControl } as Partial<ArrowCommon>;
           // Note: Line connections don't change by this operation.
           // => Mainly because of its complexity.
           const layoutPatch = getPatchByLayouts(shapeComposite, {
@@ -68,7 +68,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const tmpShape: OneSidedArrowShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
+      const tmpShape: ArrowCommon = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const headControlP = getHeadControlPoint(tmpShape);
       applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
       renderCtx.beginPath();

@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import { patchToMoveHead, patchToMoveTail } from "./arrowHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { OneSidedArrowShape } from "../shapes/oneSidedArrow";
+import { patchToMoveHead, patchToMoveTail } from "./arrows";
 
 describe("patchToMoveHead", () => {
   const shape = createShape<OneSidedArrowShape>(getCommonStruct, "one_sided_arrow", {

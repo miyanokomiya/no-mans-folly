@@ -1,12 +1,11 @@
 import { IVec2, add, getDistance, rotate } from "okageo";
 import {
-  OneSidedArrowShape,
+  TwoSidedArrowShape,
   getArrowDirection,
   getArrowHeadPoint,
   getArrowTailPoint,
   getHeadControlPoint,
-  getTailControlPoint,
-} from "../shapes/oneSidedArrow";
+} from "../shapes/twoSidedArrow";
 import { StyleScheme } from "../models";
 import { ShapeComposite } from "./shapeComposite";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -17,9 +16,9 @@ import { COLORS } from "../utils/color";
 const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;
 
-type AnchorType = "head" | "tail" | "direction" | "to" | "from";
+type AnchorType = "head" | "direction" | "to" | "from";
 
-export interface ArrowHitResult {
+export interface ArrowTwoHitResult {
   type: AnchorType;
 }
 
@@ -28,11 +27,10 @@ interface Option {
   targetId: string;
 }
 
-export function newArrowHandler(option: Option) {
+export function newArrowTwoHandler(option: Option) {
   const shapeComposite = option.getShapeComposite();
-  const shape = shapeComposite.shapeMap[option.targetId] as OneSidedArrowShape;
+  const shape = shapeComposite.shapeMap[option.targetId] as TwoSidedArrowShape;
   const headControlP = getHeadControlPoint(shape);
-  const tailControlP = getTailControlPoint(shape);
   const toControlP = getArrowHeadPoint(shape);
   const fromControlP = getArrowTailPoint(shape);
 
@@ -47,13 +45,10 @@ export function newArrowHandler(option: Option) {
     );
   }
 
-  function hitTest(p: IVec2, scale = 1): ArrowHitResult | undefined {
+  function hitTest(p: IVec2, scale = 1): ArrowTwoHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
     if (getDistance(headControlP, p) <= threshold) {
       return { type: "head" };
-    }
-    if (getDistance(tailControlP, p) <= threshold) {
-      return { type: "tail" };
     }
     if (getDistance(toControlP, p) <= threshold) {
       return { type: "to" };
@@ -68,14 +63,13 @@ export function newArrowHandler(option: Option) {
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: ArrowHitResult) {
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: ArrowTwoHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const directionThreshold = DIRECTION_ANCHOR_SIZE * scale;
 
     (
       [
         [headControlP, hitResult?.type === "head"],
-        [tailControlP, hitResult?.type === "tail"],
         [toControlP, hitResult?.type === "to"],
         [fromControlP, hitResult?.type === "from"],
       ] as const
@@ -113,4 +107,4 @@ export function newArrowHandler(option: Option) {
     render,
   };
 }
-export type ArrowHandler = ReturnType<typeof newArrowHandler>;
+export type ArrowTwoHandler = ReturnType<typeof newArrowTwoHandler>;
