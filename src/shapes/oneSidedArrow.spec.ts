@@ -1,49 +1,5 @@
 import { expect, describe, test } from "vitest";
-import {
-  struct,
-  getHeadControlPoint,
-  getTailControlPoint,
-  getNormalizedArrowShape,
-  getArrowHeadPoint,
-  getArrowTailPoint,
-} from "./oneSidedArrow";
-
-describe("getNormalizedArrowShape", () => {
-  const shape = struct.create({ p: { x: 0, y: 0 }, width: 200, height: 100, rotation: Math.PI * 0.25 });
-
-  test("should return equivalent arrow shape facing right: direction 0", () => {
-    const result = getNormalizedArrowShape({ ...shape, direction: 0 });
-    expect(result.p.x).toBeCloseTo(50);
-    expect(result.p.y).toBeCloseTo(-50);
-    expect(result.width).toBeCloseTo(shape.height);
-    expect(result.height).toBeCloseTo(shape.width);
-    expect(result.rotation).toBeCloseTo(Math.PI * -0.25);
-  });
-
-  test("should return equivalent arrow shape facing right: direction 1", () => {
-    const result = getNormalizedArrowShape({ ...shape, direction: 1 });
-    expect(result).toEqual(shape);
-    expect(result.rotation).toBeCloseTo(Math.PI * 0.25);
-  });
-
-  test("should return equivalent arrow shape facing right: direction 2", () => {
-    const result = getNormalizedArrowShape({ ...shape, direction: 2 });
-    expect(result.p.x).toBeCloseTo(50);
-    expect(result.p.y).toBeCloseTo(-50);
-    expect(result.width).toBeCloseTo(shape.height);
-    expect(result.height).toBeCloseTo(shape.width);
-    expect(result.rotation).toBeCloseTo(Math.PI * 0.75);
-  });
-
-  test("should return equivalent arrow shape facing right: direction 3", () => {
-    const result = getNormalizedArrowShape({ ...shape, direction: 3 });
-    expect(result.p.x).toBeCloseTo(shape.p.x);
-    expect(result.p.y).toBeCloseTo(shape.p.y);
-    expect(result.width).toBeCloseTo(shape.width);
-    expect(result.height).toBeCloseTo(shape.height);
-    expect(result.rotation).toBeCloseTo(Math.PI * 1.25);
-  });
-});
+import { struct, getHeadControlPoint, getTailControlPoint } from "./oneSidedArrow";
 
 describe("getHeadControlPoint", () => {
   const shape = struct.create({ p: { x: 1000, y: 2000 }, width: 200, height: 100, headControl: { x: 0.2, y: 0.3 } });
@@ -92,47 +48,5 @@ describe("getTailControlPoint", () => {
       tailControl: { x: 0, y: 0.5 },
     });
     expect(getTailControlPoint(shape1)).toEqual({ x: 0, y: 60 });
-  });
-});
-
-describe("getArrowHeadPoint", () => {
-  const shape = struct.create({ p: { x: 1000, y: 2000 }, width: 200, height: 100, headControl: { x: 0.2, y: 0.3 } });
-  test("should return head point", () => {
-    const result0 = getArrowHeadPoint({ ...shape, direction: 0 });
-    expect(result0.x).toBeCloseTo(1100);
-    expect(result0.y).toBeCloseTo(2000);
-
-    const result1 = getArrowHeadPoint({ ...shape, direction: 1 });
-    expect(result1.x).toBeCloseTo(1200);
-    expect(result1.y).toBeCloseTo(2050);
-
-    const result2 = getArrowHeadPoint({ ...shape, direction: 2 });
-    expect(result2.x).toBeCloseTo(1100);
-    expect(result2.y).toBeCloseTo(2100);
-
-    const result3 = getArrowHeadPoint({ ...shape, direction: 3 });
-    expect(result3.x).toBeCloseTo(1000);
-    expect(result3.y).toBeCloseTo(2050);
-  });
-});
-
-describe("getArrowTailPoint", () => {
-  const shape = struct.create({ p: { x: 1000, y: 2000 }, width: 200, height: 100, headControl: { x: 0.2, y: 0.3 } });
-  test("should return head point", () => {
-    const result0 = getArrowTailPoint({ ...shape, direction: 0 });
-    expect(result0.x).toBeCloseTo(1100);
-    expect(result0.y).toBeCloseTo(2100);
-
-    const result1 = getArrowTailPoint({ ...shape, direction: 1 });
-    expect(result1.x).toBeCloseTo(1000);
-    expect(result1.y).toBeCloseTo(2050);
-
-    const result2 = getArrowTailPoint({ ...shape, direction: 2 });
-    expect(result2.x).toBeCloseTo(1100);
-    expect(result2.y).toBeCloseTo(2000);
-
-    const result3 = getArrowTailPoint({ ...shape, direction: 3 });
-    expect(result3.x).toBeCloseTo(1200);
-    expect(result3.y).toBeCloseTo(2050);
   });
 });

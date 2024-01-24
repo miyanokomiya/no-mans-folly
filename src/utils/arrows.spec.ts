@@ -1,7 +1,59 @@
 import { describe, test, expect } from "vitest";
 import { createShape, getCommonStruct } from "../shapes";
 import { OneSidedArrowShape } from "../shapes/oneSidedArrow";
-import { patchToMoveHead, patchToMoveTail } from "./arrows";
+import { patchToMoveHead, patchToMoveTail, getArrowHeadPoint, getArrowTailPoint } from "./arrows";
+
+describe("getArrowHeadPoint", () => {
+  const shape = createShape<OneSidedArrowShape>(getCommonStruct, "one_sided_arrow", {
+    p: { x: 1000, y: 2000 },
+    width: 200,
+    height: 100,
+    headControl: { x: 0.2, y: 0.3 },
+  });
+  test("should return head point", () => {
+    const result0 = getArrowHeadPoint({ ...shape, direction: 0 });
+    expect(result0.x).toBeCloseTo(1100);
+    expect(result0.y).toBeCloseTo(2000);
+
+    const result1 = getArrowHeadPoint({ ...shape, direction: 1 });
+    expect(result1.x).toBeCloseTo(1200);
+    expect(result1.y).toBeCloseTo(2050);
+
+    const result2 = getArrowHeadPoint({ ...shape, direction: 2 });
+    expect(result2.x).toBeCloseTo(1100);
+    expect(result2.y).toBeCloseTo(2100);
+
+    const result3 = getArrowHeadPoint({ ...shape, direction: 3 });
+    expect(result3.x).toBeCloseTo(1000);
+    expect(result3.y).toBeCloseTo(2050);
+  });
+});
+
+describe("getArrowTailPoint", () => {
+  const shape = createShape<OneSidedArrowShape>(getCommonStruct, "one_sided_arrow", {
+    p: { x: 1000, y: 2000 },
+    width: 200,
+    height: 100,
+    headControl: { x: 0.2, y: 0.3 },
+  });
+  test("should return head point", () => {
+    const result0 = getArrowTailPoint({ ...shape, direction: 0 });
+    expect(result0.x).toBeCloseTo(1100);
+    expect(result0.y).toBeCloseTo(2100);
+
+    const result1 = getArrowTailPoint({ ...shape, direction: 1 });
+    expect(result1.x).toBeCloseTo(1000);
+    expect(result1.y).toBeCloseTo(2050);
+
+    const result2 = getArrowTailPoint({ ...shape, direction: 2 });
+    expect(result2.x).toBeCloseTo(1100);
+    expect(result2.y).toBeCloseTo(2000);
+
+    const result3 = getArrowTailPoint({ ...shape, direction: 3 });
+    expect(result3.x).toBeCloseTo(1200);
+    expect(result3.y).toBeCloseTo(2050);
+  });
+});
 
 describe("patchToMoveHead", () => {
   const shape = createShape<OneSidedArrowShape>(getCommonStruct, "one_sided_arrow", {

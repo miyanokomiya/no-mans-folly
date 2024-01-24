@@ -12,13 +12,14 @@ import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { TwoSidedArrowShape, getArrowDirection } from "../../../../shapes/twoSidedArrow";
+import { TwoSidedArrowShape } from "../../../../shapes/twoSidedArrow";
 import { ArrowTwoHandler, ArrowTwoHitResult, newArrowTwoHandler } from "../../../arrowTwoHandler";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
+import { getArrowDirection } from "../../../../utils/arrows";
 
 export function newArrowTwoSelectedState(): AppCanvasState {
   let targetShape: TwoSidedArrowShape;

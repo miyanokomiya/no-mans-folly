@@ -1,17 +1,12 @@
 import { IVec2, add, getDistance, rotate } from "okageo";
-import {
-  TwoSidedArrowShape,
-  getArrowDirection,
-  getArrowHeadPoint,
-  getArrowTailPoint,
-  getHeadControlPoint,
-} from "../shapes/twoSidedArrow";
+import { TwoSidedArrowShape, getHeadControlPoint } from "../shapes/twoSidedArrow";
 import { StyleScheme } from "../models";
 import { ShapeComposite } from "./shapeComposite";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU, getRadianForDirection4 } from "../utils/geometry";
 import { renderArrowUnit } from "../utils/renderer";
 import { COLORS } from "../utils/color";
+import { getArrowDirection, getArrowHeadPoint, getArrowTailPoint } from "../utils/arrows";
 
 const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;

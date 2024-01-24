@@ -1,14 +1,14 @@
 import { IRectangle, IVec2, add, rotate } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
-import { SimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
+import { SimplePolygonShape, getNormalizedSimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
-import { Direction2, Shape } from "../models";
+import { Shape } from "../models";
 import { getRotateFn } from "../utils/geometry";
 
 /**
- * Suppose the heads are horizontal.
+ * Suppose the heads face horizontally.
  */
 export type TwoSidedArrowShape = SimplePolygonShape & {
   /**
@@ -17,7 +17,6 @@ export type TwoSidedArrowShape = SimplePolygonShape & {
    * - The bigger y, the smaller depth of the head.
    */
   headControl: IVec2;
-  direction?: Direction2; // "undefined" should mean "1"
 };
 
 export const struct: ShapeStruct<TwoSidedArrowShape> = {
@@ -69,33 +68,8 @@ export const struct: ShapeStruct<TwoSidedArrowShape> = {
   },
 };
 
-export function getNormalizedArrowShape(shape: TwoSidedArrowShape): TwoSidedArrowShape {
-  switch (shape.direction) {
-    case 0:
-      return {
-        ...shape,
-        ...getNormalizedAttrsForVertical(shape),
-        rotation: shape.rotation - Math.PI / 2,
-      };
-    default:
-      return shape;
-  }
-}
-
-function getNormalizedAttrsForVertical(shape: TwoSidedArrowShape): Partial<TwoSidedArrowShape> {
-  return {
-    p: rotate({ x: shape.p.x, y: shape.p.y + shape.height }, Math.PI / 2, {
-      x: shape.p.x + shape.width / 2,
-      y: shape.p.y + shape.height / 2,
-    }),
-    width: shape.height,
-    height: shape.width,
-    direction: 1,
-  };
-}
-
 function getPath(src: TwoSidedArrowShape): IVec2[] {
-  const shape = getNormalizedArrowShape(src);
+  const shape = getNormalizedSimplePolygonShape(src);
   const halfWidth = shape.width / 2;
   const halfHeight = shape.height / 2;
   const c = { x: shape.p.x + halfWidth, y: shape.p.y + halfHeight };
@@ -123,37 +97,12 @@ function getPath(src: TwoSidedArrowShape): IVec2[] {
 }
 
 export function getHeadControlPoint(src: TwoSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
+  const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: shape.width / 2, y: shape.height / 2 };
   const from = { x: shape.width, y: c.y };
   const v = { x: -shape.width / 2, y: -c.y };
   const relativeP = add({ x: v.x * shape.headControl.x, y: v.y * shape.headControl.y }, from);
   return add(rotate(relativeP, shape.rotation, c), shape.p);
-}
-
-export function getArrowHeadPoint(src: TwoSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
-  const c = { x: shape.width / 2, y: shape.height / 2 };
-  return add(rotate({ x: shape.width, y: c.y }, shape.rotation, c), shape.p);
-}
-
-export function getArrowTailPoint(src: TwoSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
-  const c = { x: shape.width / 2, y: shape.height / 2 };
-  return add(rotate({ x: 0, y: c.y }, shape.rotation, c), shape.p);
-}
-
-export function getArrowHeadLength(src: TwoSidedArrowShape): number {
-  switch (src.direction) {
-    case 0:
-      return (src.height / 2) * src.headControl.x;
-    default:
-      return (src.width / 2) * src.headControl.x;
-  }
-}
-
-export function getArrowDirection(shape: TwoSidedArrowShape): Direction2 {
-  return shape.direction ?? 1;
 }
 
 export function isTwoSidedArrowShape(shape: Shape): shape is TwoSidedArrowShape {

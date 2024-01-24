@@ -1,10 +1,11 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { OneSidedArrowShape, getNormalizedArrowShape, getTailControlPoint } from "../../../../shapes/oneSidedArrow";
+import { OneSidedArrowShape, getTailControlPoint } from "../../../../shapes/oneSidedArrow";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 
 interface Option {
   targetId: string;
@@ -30,7 +31,7 @@ export function newMovingArrowTailState(option: Option): AppCanvasState {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
 
-          const normalizedTarget = getNormalizedArrowShape(targetShape);
+          const normalizedTarget = getNormalizedSimplePolygonShape(targetShape);
           const rotateFn = getRotateFn(normalizedTarget.rotation, {
             x: normalizedTarget.p.x + normalizedTarget.width / 2,
             y: normalizedTarget.p.y + normalizedTarget.height / 2,

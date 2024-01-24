@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { getStructForSimplePolygon } from "./simplePolygon";
+import { getStructForSimplePolygon, getNormalizedSimplePolygonShape } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
+import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 
 describe("getStructForSimplePolygon", () => {
   const shape = rectangleStruct.create({ width: 100, height: 100 });
@@ -98,5 +99,42 @@ describe("getStructForSimplePolygon", () => {
       expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 3, y: 0 })).toEqual([{ x: 0, y: 0 }]);
       expect(target.getIntersectedOutlines!(shape, { x: 3, y: 2 }, { x: 3, y: 5 })).toEqual([{ x: 3, y: 3 }]);
     });
+  });
+});
+
+describe("getNormalizedSimplePolygonShape", () => {
+  const shape = oneSidedArrowStruct.create({ p: { x: 0, y: 0 }, width: 200, height: 100, rotation: Math.PI * 0.25 });
+
+  test("should return equivalent arrow shape facing right: direction 0", () => {
+    const result = getNormalizedSimplePolygonShape({ ...shape, direction: 0 });
+    expect(result.p.x).toBeCloseTo(50);
+    expect(result.p.y).toBeCloseTo(-50);
+    expect(result.width).toBeCloseTo(shape.height);
+    expect(result.height).toBeCloseTo(shape.width);
+    expect(result.rotation).toBeCloseTo(Math.PI * -0.25);
+  });
+
+  test("should return equivalent arrow shape facing right: direction 1", () => {
+    const result = getNormalizedSimplePolygonShape({ ...shape, direction: 1 });
+    expect(result).toEqual(shape);
+    expect(result.rotation).toBeCloseTo(Math.PI * 0.25);
+  });
+
+  test("should return equivalent arrow shape facing right: direction 2", () => {
+    const result = getNormalizedSimplePolygonShape({ ...shape, direction: 2 });
+    expect(result.p.x).toBeCloseTo(50);
+    expect(result.p.y).toBeCloseTo(-50);
+    expect(result.width).toBeCloseTo(shape.height);
+    expect(result.height).toBeCloseTo(shape.width);
+    expect(result.rotation).toBeCloseTo(Math.PI * 0.75);
+  });
+
+  test("should return equivalent arrow shape facing right: direction 3", () => {
+    const result = getNormalizedSimplePolygonShape({ ...shape, direction: 3 });
+    expect(result.p.x).toBeCloseTo(shape.p.x);
+    expect(result.p.y).toBeCloseTo(shape.p.y);
+    expect(result.width).toBeCloseTo(shape.width);
+    expect(result.height).toBeCloseTo(shape.height);
+    expect(result.rotation).toBeCloseTo(Math.PI * 1.25);
   });
 });

@@ -12,7 +12,7 @@ import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { OneSidedArrowShape, getArrowDirection } from "../../../../shapes/oneSidedArrow";
+import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
 import { ArrowHandler, ArrowHitResult, newArrowHandler } from "../../../arrowHandler";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
@@ -20,6 +20,7 @@ import { newMovingArrowTailState } from "./movingArrowTailState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
+import { getArrowDirection } from "../../../../utils/arrows";
 
 export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;

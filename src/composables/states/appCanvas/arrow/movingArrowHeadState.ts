@@ -4,19 +4,20 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
-import { ArrowCommon, getHeadControlPoint, getHeadMaxLength, getNormalizedArrowShape } from "../../../../utils/arrows";
+import { ArrowCommonShape, getHeadControlPoint, getHeadMaxLength } from "../../../../utils/arrows";
+import { getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 
 interface Option {
   targetId: string;
 }
 
 export function newMovingArrowHeadState(option: Option): AppCanvasState {
-  let targetShape: ArrowCommon;
+  let targetShape: ArrowCommonShape;
 
   return {
     getLabel: () => "MovingArrowHead",
     onStart: (ctx) => {
-      targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as ArrowCommon;
+      targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as ArrowCommonShape;
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
@@ -30,7 +31,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
 
-          const normalizedTarget = getNormalizedArrowShape(targetShape);
+          const normalizedTarget = getNormalizedSimplePolygonShape(targetShape);
           const rotateFn = getRotateFn(normalizedTarget.rotation, {
             x: normalizedTarget.p.x + normalizedTarget.width / 2,
             y: normalizedTarget.p.y + normalizedTarget.height / 2,
@@ -50,7 +51,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
           };
 
           const shapeComposite = ctx.getShapeComposite();
-          const patch = { headControl: nextControl } as Partial<ArrowCommon>;
+          const patch = { headControl: nextControl } as Partial<ArrowCommonShape>;
           // Note: Line connections don't change by this operation.
           // => Mainly because of its complexity.
           const layoutPatch = getPatchByLayouts(shapeComposite, {
@@ -68,7 +69,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const tmpShape: ArrowCommon = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
+      const tmpShape: ArrowCommonShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const headControlP = getHeadControlPoint(tmpShape);
       applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
       renderCtx.beginPath();

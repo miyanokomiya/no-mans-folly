@@ -1,10 +1,10 @@
 import { IRectangle, IVec2, add, multi, rotate } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
-import { SimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
+import { SimplePolygonShape, getNormalizedSimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
-import { Direction4, Shape } from "../models";
+import { Shape } from "../models";
 import { getRotateFn } from "../utils/geometry";
 
 /**
@@ -24,7 +24,6 @@ export type OneSidedArrowShape = SimplePolygonShape & {
    * - The smaller y, the skewer the tail of the arrow.
    */
   tailControl: IVec2;
-  direction?: Direction4; // "undefined" should mean "1"
 };
 
 export const struct: ShapeStruct<OneSidedArrowShape> = {
@@ -77,41 +76,8 @@ export const struct: ShapeStruct<OneSidedArrowShape> = {
   },
 };
 
-export function getNormalizedArrowShape(shape: OneSidedArrowShape): OneSidedArrowShape {
-  switch (shape.direction) {
-    case 0:
-      return {
-        ...shape,
-        ...getNormalizedAttrsForVertical(shape),
-        rotation: shape.rotation - Math.PI / 2,
-      };
-    case 2:
-      return {
-        ...shape,
-        ...getNormalizedAttrsForVertical(shape),
-        rotation: shape.rotation + Math.PI / 2,
-      };
-    case 3:
-      return { ...shape, rotation: shape.rotation + Math.PI, direction: 1 };
-    default:
-      return shape;
-  }
-}
-
-function getNormalizedAttrsForVertical(shape: OneSidedArrowShape): Partial<OneSidedArrowShape> {
-  return {
-    p: rotate({ x: shape.p.x, y: shape.p.y + shape.height }, Math.PI / 2, {
-      x: shape.p.x + shape.width / 2,
-      y: shape.p.y + shape.height / 2,
-    }),
-    width: shape.height,
-    height: shape.width,
-    direction: 1,
-  };
-}
-
 function getPath(src: OneSidedArrowShape): IVec2[] {
-  const shape = getNormalizedArrowShape(src);
+  const shape = getNormalizedSimplePolygonShape(src);
   const halfWidth = shape.width / 2;
   const halfHeight = shape.height / 2;
   const c = { x: shape.p.x + halfWidth, y: shape.p.y + halfHeight };
@@ -137,7 +103,7 @@ function getPath(src: OneSidedArrowShape): IVec2[] {
 }
 
 export function getHeadControlPoint(src: OneSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
+  const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: shape.width / 2, y: shape.height / 2 };
   const from = { x: shape.width, y: c.y };
   const v = multi(from, -1);
@@ -146,39 +112,13 @@ export function getHeadControlPoint(src: OneSidedArrowShape): IVec2 {
 }
 
 export function getTailControlPoint(src: OneSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
+  const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: shape.width / 2, y: shape.height / 2 };
   const headDepth = c.y * (1 - shape.headControl.y);
   const from = { x: 0, y: c.y };
   const v = { x: 0, y: headDepth - from.y };
   const relativeP = add({ x: 0, y: v.y * shape.tailControl.y }, from);
   return add(rotate(relativeP, shape.rotation, c), shape.p);
-}
-
-export function getArrowHeadPoint(src: OneSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
-  const c = { x: shape.width / 2, y: shape.height / 2 };
-  return add(rotate({ x: shape.width, y: c.y }, shape.rotation, c), shape.p);
-}
-
-export function getArrowTailPoint(src: OneSidedArrowShape): IVec2 {
-  const shape = getNormalizedArrowShape(src);
-  const c = { x: shape.width / 2, y: shape.height / 2 };
-  return add(rotate({ x: 0, y: c.y }, shape.rotation, c), shape.p);
-}
-
-export function getArrowHeadLength(src: OneSidedArrowShape): number {
-  switch (src.direction) {
-    case 0:
-    case 2:
-      return src.height * src.headControl.x;
-    default:
-      return src.width * src.headControl.x;
-  }
-}
-
-export function getArrowDirection(shape: OneSidedArrowShape): Direction4 {
-  return shape.direction ?? 1;
 }
 
 export function isOneSidedArrowShape(shape: Shape): shape is OneSidedArrowShape {

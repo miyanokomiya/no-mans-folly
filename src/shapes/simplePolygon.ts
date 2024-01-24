@@ -21,13 +21,15 @@ import {
 } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
-import { CommonStyle, Shape } from "../models";
+import { CommonStyle, Direction4, Shape } from "../models";
 
 export type SimplePolygonShape = Shape &
   CommonStyle &
   TextContainer & {
     width: number;
     height: number;
+    // Default direction can depend on each shape type.
+    direction?: Direction4;
   };
 
 export function getStructForSimplePolygon<T extends SimplePolygonShape>(
@@ -125,5 +127,38 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     getCommonStyle,
     updateCommonStyle,
     ...textContainerModule,
+  };
+}
+
+export function getNormalizedSimplePolygonShape<T extends SimplePolygonShape>(shape: T): T {
+  switch (shape.direction) {
+    case 0:
+      return {
+        ...shape,
+        ...getNormalizedAttrsForVertical(shape),
+        rotation: shape.rotation - Math.PI / 2,
+      };
+    case 2:
+      return {
+        ...shape,
+        ...getNormalizedAttrsForVertical(shape),
+        rotation: shape.rotation + Math.PI / 2,
+      };
+    case 3:
+      return { ...shape, rotation: shape.rotation + Math.PI, direction: 1 };
+    default:
+      return shape;
+  }
+}
+
+function getNormalizedAttrsForVertical(shape: SimplePolygonShape): Partial<SimplePolygonShape> {
+  return {
+    p: rotate({ x: shape.p.x, y: shape.p.y + shape.height }, Math.PI / 2, {
+      x: shape.p.x + shape.width / 2,
+      y: shape.p.y + shape.height / 2,
+    }),
+    width: shape.height,
+    height: shape.width,
+    direction: 1,
   };
 }
