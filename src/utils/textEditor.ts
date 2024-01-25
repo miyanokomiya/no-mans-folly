@@ -46,6 +46,12 @@ export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
 }
 
+const URL_TEXT = /https?:\/\/[^\s]+/;
+const URL_TEXT_EXACT = /^https?:\/\/[^\s]+/;
+export function isUrlText(char: string, exact = false): boolean {
+  return (exact ? URL_TEXT_EXACT : URL_TEXT).test(char);
+}
+
 const segmenter = new (Intl as any).Segmenter();
 const segmenterCache = newChronoCache<string, string[]>({ duration: 30000, getTimestamp: Date.now });
 

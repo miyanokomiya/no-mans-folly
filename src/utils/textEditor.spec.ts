@@ -22,6 +22,7 @@ import {
   getWordRangeAtCursor,
   isCursorInDoc,
   isLinebreak,
+  isUrlText,
   mergeDocAttrInfo,
   sliceDocOutput,
   splitDocOutputByLineBreak,
@@ -36,6 +37,22 @@ describe("isLinebreak", () => {
     expect(isLinebreak("a")).toBe(false);
     expect(isLinebreak(" ")).toBe(false);
     expect(isLinebreak("\t")).toBe(false);
+  });
+});
+
+describe("isUrlText", () => {
+  test("should return true when the text can be URL", () => {
+    expect(isUrlText("example.com")).toBe(false);
+    expect(isUrlText("http://example.com")).toBe(true);
+    expect(isUrlText("abc https://example.com abc")).toBe(true);
+  });
+
+  test("should return true when the text is exactly URL", () => {
+    expect(isUrlText("http://example.com", true)).toBe(true);
+    expect(isUrlText("abc https://example.com abc", true)).toBe(false);
+    expect(isUrlText(" https://example.com", true)).toBe(false);
+    // Tail part can be anithing
+    expect(isUrlText("https://example.com ", true)).toBe(true);
   });
 });
 
