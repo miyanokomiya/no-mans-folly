@@ -17,6 +17,8 @@ import {
   getLineEndIndex,
   getLineHeadIndex,
   getLineHeight,
+  getNewInlineAttributesAt,
+  getOutputAndIndexAt,
   getOutputSelection,
   getRawCursor,
   getWordRangeAtCursor,
@@ -326,7 +328,7 @@ describe("getDeltaByApplyDocStyle", () => {
   });
 });
 
-describe("getDeltaByApplyInlineStyle", () => {
+describe("getDeltaByApplyInlineStyleToDoc", () => {
   test("should return doc delta to apply the doc attributes", () => {
     expect(
       getDeltaByApplyInlineStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], {
@@ -339,6 +341,38 @@ describe("getDeltaByApplyInlineStyle", () => {
     expect(getDeltaByApplyInlineStyleToDoc([], { align: "right" })).toEqual([
       { insert: "\n", attributes: { align: "right", direction: "middle" } },
     ]);
+  });
+});
+
+describe("getOutputAndIndexAt", () => {
+  test("should return doc output, index and tail flag at given position", () => {
+    const line = [{ insert: "abc" }, { insert: "de" }, { insert: "\n" }];
+    expect(getOutputAndIndexAt(line, 0)).toEqual([{ insert: "abc" }, 0, false]);
+    expect(getOutputAndIndexAt(line, 1)).toEqual([{ insert: "abc" }, 1, false]);
+    expect(getOutputAndIndexAt(line, 3)).toEqual([{ insert: "abc" }, 3, false]);
+    expect(getOutputAndIndexAt(line, 4)).toEqual([{ insert: "de" }, 1, false]);
+    expect(getOutputAndIndexAt(line, 5)).toEqual([{ insert: "de" }, 2, false]);
+    expect(getOutputAndIndexAt(line, 6)).toEqual([{ insert: "\n" }, 1, true]);
+    expect(getOutputAndIndexAt(line, 7)).toEqual([{ insert: "\n" }, 1, true]);
+  });
+});
+
+describe("getNewInlineAttributesAt", () => {
+  test("should delete link related attributes when the position isn't inside link", () => {
+    const linkAttrs = { link: "link" };
+    const otherAttrs = { color: "#aaa" };
+    const line = [
+      { insert: "abc", attributes: linkAttrs },
+      { insert: "de", attributes: otherAttrs },
+      { insert: "\n", attributes: linkAttrs },
+    ];
+    // expect(getNewInlineAttributesAt(line, 0)).toEqual({});
+    expect(getNewInlineAttributesAt(line, 1)).toEqual({ link: "link" });
+    expect(getNewInlineAttributesAt(line, 2)).toEqual({ link: "link" });
+    expect(getNewInlineAttributesAt(line, 3)).toEqual({});
+    expect(getNewInlineAttributesAt(line, 5)).toEqual(otherAttrs);
+    expect(getNewInlineAttributesAt(line, 6)).toEqual({});
+    expect(getNewInlineAttributesAt(line, 7)).toEqual({});
   });
 });
 

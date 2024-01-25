@@ -14,7 +14,6 @@ import {
   getDocLength,
   getInitialOutput,
   getLineEndIndex,
-  getOutputAt,
   getLineHeadIndex,
   getRangeLines,
   getWordRangeAtCursor,
@@ -205,10 +204,14 @@ export function newTextEditorController() {
 
     // Cursor attributes should be picked from the left side of the cursor.
     // When there's no left side item in the line, pick the right side item.
-    const cursorLeft = getOutputAt(line, Math.max(location.x, 0)).attributes;
+    const cursorLeft = textEditorUtil.getNewInlineAttributesAt(line.outputs, Math.max(location.x, 0));
     const lineEnd = line.outputs[line.outputs.length - 1];
     const docEnd = _doc[_doc.length - 1];
-    return { cursor: cursorLeft, block: lineEnd.attributes, doc: docEnd.attributes };
+    return {
+      cursor: cursorLeft,
+      block: textEditorUtil.deleteInlineExclusiveAttibutes(lineEnd.attributes),
+      doc: textEditorUtil.deleteInlineExclusiveAttibutes(docEnd.attributes),
+    };
   }
 
   function getContentSize(): Size {

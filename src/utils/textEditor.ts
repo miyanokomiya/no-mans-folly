@@ -491,6 +491,46 @@ export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert
   return ret;
 }
 
+export function getOutputAndIndexAt(
+  lineOutputs: DocOutput,
+  x: number,
+): [deltas: DocDeltaInsert, index: number, isTail: boolean] {
+  let count = 0;
+  const tail = lineOutputs[lineOutputs.length - 1];
+  let ret: [DocDeltaInsert, number, boolean] = [tail, tail.insert.length, true];
+  lineOutputs.some((o) => {
+    const nextCount = count + splitToSegments(o.insert).length;
+    if (x <= nextCount) {
+      ret = [o, x - count, o === tail && x === nextCount];
+      return true;
+    }
+    count = nextCount;
+  });
+  return ret;
+}
+
+export function getNewInlineAttributesAt(lineOutputs: DocOutput, x: number): DocAttributes | undefined {
+  const beforeInfo = getOutputAndIndexAt(lineOutputs, x);
+  const afterInfo = getOutputAndIndexAt(lineOutputs, x + 1);
+  if (afterInfo[2]) return deleteLinkAttibutes(beforeInfo[0].attributes);
+  if (beforeInfo[0].attributes?.link === afterInfo[0].attributes?.link) return beforeInfo[0].attributes;
+  return deleteLinkAttibutes(beforeInfo[0].attributes);
+}
+
+export function deleteLinkAttibutes(src?: DocAttributes): DocAttributes | undefined {
+  if (!src?.link) return src;
+
+  const ret = { ...src };
+  delete ret.link;
+  delete ret.underline;
+  delete ret.color;
+  return ret;
+}
+
+export function deleteInlineExclusiveAttibutes(src?: DocAttributes): DocAttributes | undefined {
+  return deleteLinkAttibutes(src);
+}
+
 export function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
   return [{ insert: "\n", attributes: { direction: "middle", align: "center", ...attrs } }];
 }
