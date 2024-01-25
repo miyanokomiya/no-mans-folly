@@ -34,7 +34,7 @@ export function getArrowHeadLength(shape: ArrowCommonShape): number {
     case 2:
       return shape.height * shape.headControl.x;
     default:
-      return shape.width * shape.headControl.x / (arrowModule.isOneSidedArrowShape(shape) ? 1 : 2);
+      return (shape.width * shape.headControl.x) / (arrowModule.isOneSidedArrowShape(shape) ? 1 : 2);
   }
 }
 
