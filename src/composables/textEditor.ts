@@ -257,7 +257,14 @@ export function newTextEditorController() {
     const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
     const list = text.split(LINEBREAK);
     list.forEach((block, i) => {
-      if (block) ret.push({ insert: block, attributes: attrs });
+      if (block) {
+        textEditorUtil.splitTextByURL(block).forEach((item) => {
+          ret.push({
+            insert: item.val,
+            attributes: item.isUrl ? { ...attrs, ...textEditorUtil.LINK_STYLE_ATTRS, link: item.val } : attrs,
+          });
+        });
+      }
       if (i !== list.length - 1) {
         ret.push({ insert: "\n", attributes: attrs });
       }

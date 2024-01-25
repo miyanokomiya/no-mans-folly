@@ -31,6 +31,7 @@ export type DocAttributes = {
   strike?: boolean | null;
   size?: number | null;
   font?: string | null;
+  link?: string;
 
   // block
   align?: "left" | "center" | "right" | null;

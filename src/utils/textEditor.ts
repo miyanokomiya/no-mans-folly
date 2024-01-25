@@ -32,6 +32,8 @@ type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
 type LineItem = WordItem[];
 type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
 
+export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#0000ee" };
+
 /**
  * "char" must be a character.
  */
@@ -46,10 +48,15 @@ export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
 }
 
-const URL_TEXT = /https?:\/\/[^\s]+/;
-const URL_TEXT_EXACT = /^https?:\/\/[^\s]+/;
-export function isUrlText(char: string, exact = false): boolean {
-  return (exact ? URL_TEXT_EXACT : URL_TEXT).test(char);
+export const URL_TEXT_REG = /https?:\/\/[^\s]+/;
+export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
+export function isUrlText(text: string, exact = false): boolean {
+  return (exact ? URL_TEXT_EXACT_REG : URL_TEXT_REG).test(text);
+}
+
+export function splitTextByURL(text: string): { val: string; isUrl: boolean }[] {
+  const items = text.split(/(https?:\/\/[^\s]+)/);
+  return items.filter((val) => val !== "").map((val) => ({ val, isUrl: URL_TEXT_REG.test(val) }));
 }
 
 const segmenter = new (Intl as any).Segmenter();

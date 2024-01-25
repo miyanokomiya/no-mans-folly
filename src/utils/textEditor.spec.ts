@@ -27,6 +27,7 @@ import {
   sliceDocOutput,
   splitDocOutputByLineBreak,
   splitOutputsIntoLineWord,
+  splitTextByURL,
   splitToSegments,
 } from "./textEditor";
 
@@ -53,6 +54,23 @@ describe("isUrlText", () => {
     expect(isUrlText(" https://example.com", true)).toBe(false);
     // Tail part can be anithing
     expect(isUrlText("https://example.com ", true)).toBe(true);
+  });
+});
+
+describe("splitTextByURL", () => {
+  test("should return split text with URL information", () => {
+    expect(splitTextByURL("example.com")).toEqual([{ val: "example.com", isUrl: false }]);
+    expect(splitTextByURL("http://example.com")).toEqual([{ val: "http://example.com", isUrl: true }]);
+    expect(splitTextByURL("ab http://example.com cd")).toEqual([
+      { val: "ab ", isUrl: false },
+      { val: "http://example.com", isUrl: true },
+      { val: " cd", isUrl: false },
+    ]);
+    expect(splitTextByURL("http://example.com http://example.com")).toEqual([
+      { val: "http://example.com", isUrl: true },
+      { val: " ", isUrl: false },
+      { val: "http://example.com", isUrl: true },
+    ]);
   });
 });
 
