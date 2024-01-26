@@ -509,12 +509,55 @@ export function getOutputAndIndexAt(
   return ret;
 }
 
-export function getNewInlineAttributesAt(lineOutputs: DocOutput, x: number): DocAttributes | undefined {
-  const beforeInfo = getOutputAndIndexAt(lineOutputs, x);
-  const afterInfo = getOutputAndIndexAt(lineOutputs, x + 1);
-  if (afterInfo[2]) return deleteLinkAttibutes(beforeInfo[0].attributes);
-  if (beforeInfo[0].attributes?.link === afterInfo[0].attributes?.link) return beforeInfo[0].attributes;
-  return deleteLinkAttibutes(beforeInfo[0].attributes);
+export function getNewInlineAttributesAt(lines: DocOutput[], position: IVec2): DocAttributes | undefined {
+  const aroundAttrsInfo = getInlineAttributesAroundAt(lines, position);
+  if (aroundAttrsInfo.around.length === 2 && aroundAttrsInfo.around[0]?.link === aroundAttrsInfo.around[1]?.link) {
+    // Keep link style when the position is surrounded by link
+    return aroundAttrsInfo.around[aroundAttrsInfo.target];
+  }
+
+  return deleteLinkAttibutes(aroundAttrsInfo.around[aroundAttrsInfo.target]);
+}
+
+/**
+ * Returns inline attributes surrounding the position.
+ */
+function getInlineAttributesAroundAt(
+  lines: DocOutput[],
+  position: IVec2,
+): {
+  around: [DocAttributes | undefined] | [DocAttributes | undefined, DocAttributes | undefined];
+  target: number; // index of "around" array that should be priority for the position
+} {
+  const targetLine = lines[position.y];
+  const targetInfo = getOutputAndIndexAt(targetLine, position.x);
+
+  if (position.x === 0) {
+    // when position is the head of the line
+    if (position.y > 0) {
+      // get the tail item of the above line
+      const beforeLine = lines[position.y - 1];
+      const beforeInfo = getOutputAndIndexAt(beforeLine, beforeLine.length - 1);
+      return { around: [beforeInfo[0].attributes, targetInfo[0].attributes], target: 1 };
+    } else {
+      return { around: [targetInfo[0].attributes], target: 0 };
+    }
+  } else if (position.x >= targetLine.length - 1) {
+    // when position is the tail of the line
+    if (position.y + 1 < lines.length) {
+      // get the head item of the below line
+      const afterLine = lines[position.y + 1];
+      const afterInfo = getOutputAndIndexAt(afterLine, 0);
+      return { around: [targetInfo[0].attributes, afterInfo[0].attributes], target: 0 };
+    } else {
+      return { around: [targetInfo[0].attributes], target: 0 };
+    }
+  } else {
+    // when position is neither the head nor the tail of the line
+    // get the next item of the target
+    const afterInfo = getOutputAndIndexAt(targetLine, position.x + 1);
+    return { around: [targetInfo[0].attributes, afterInfo[0].attributes], target: 0 };
+  }
 }
 
 export function deleteLinkAttibutes(src?: DocAttributes): DocAttributes | undefined {

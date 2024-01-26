@@ -204,7 +204,10 @@ export function newTextEditorController() {
 
     // Cursor attributes should be picked from the left side of the cursor.
     // When there's no left side item in the line, pick the right side item.
-    const cursorLeft = textEditorUtil.getNewInlineAttributesAt(line.outputs, Math.max(location.x, 0));
+    const cursorLeft = textEditorUtil.getNewInlineAttributesAt(
+      _compositionLines.map((l) => l.outputs),
+      location,
+    );
     const lineEnd = line.outputs[line.outputs.length - 1];
     const docEnd = _doc[_doc.length - 1];
     return {
