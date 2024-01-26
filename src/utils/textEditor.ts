@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
+import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../models/document";
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "../composables/cache";
@@ -478,37 +478,6 @@ export function getDeltaByScaleTextSize(doc: DocOutput, scale: number, floor = f
   });
 }
 
-export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert {
-  let count = 0;
-  let ret = line.outputs[line.outputs.length - 1];
-  line.outputs.some((o) => {
-    count += splitToSegments(o.insert).length;
-    if (x <= count) {
-      ret = o;
-      return true;
-    }
-  });
-  return ret;
-}
-
-export function getOutputAndIndexAt(
-  lineOutputs: DocOutput,
-  x: number,
-): [deltas: DocDeltaInsert, index: number, isTail: boolean] {
-  let count = 0;
-  const tail = lineOutputs[lineOutputs.length - 1];
-  let ret: [DocDeltaInsert, number, boolean] = [tail, tail.insert.length, true];
-  lineOutputs.some((o) => {
-    const nextCount = count + splitToSegments(o.insert).length;
-    if (x <= nextCount) {
-      ret = [o, x - count, o === tail && x === nextCount];
-      return true;
-    }
-    count = nextCount;
-  });
-  return ret;
-}
-
 export function getNewInlineAttributesAt(lines: DocOutput[], position: IVec2): DocAttributes | undefined {
   const aroundAttrsInfo = getInlineAttributesAroundAt(lines, position);
   if (aroundAttrsInfo.around.length === 2 && aroundAttrsInfo.around[0]?.link === aroundAttrsInfo.around[1]?.link) {
@@ -530,33 +499,35 @@ function getInlineAttributesAroundAt(
   target: number; // index of "around" array that should be priority for the position
 } {
   const targetLine = lines[position.y];
-  const targetInfo = getOutputAndIndexAt(targetLine, position.x);
 
   if (position.x === 0) {
+    const targetInfo = targetLine[position.x];
     // when position is the head of the line
     if (position.y > 0) {
       // get the tail item of the above line
       const beforeLine = lines[position.y - 1];
-      const beforeInfo = getOutputAndIndexAt(beforeLine, beforeLine.length - 1);
-      return { around: [beforeInfo[0].attributes, targetInfo[0].attributes], target: 1 };
+      const beforeInfo = beforeLine[beforeLine.length - 1];
+      return { around: [beforeInfo.attributes, targetInfo.attributes], target: isLinebreak(beforeInfo.insert) ? 1 : 0 };
     } else {
-      return { around: [targetInfo[0].attributes], target: 0 };
+      return { around: [targetInfo.attributes], target: 0 };
     }
-  } else if (position.x >= targetLine.length - 1) {
+  } else if (position.x >= targetLine.length) {
+    const targetInfo = targetLine[targetLine.length - 1];
     // when position is the tail of the line
     if (position.y + 1 < lines.length) {
       // get the head item of the below line
       const afterLine = lines[position.y + 1];
-      const afterInfo = getOutputAndIndexAt(afterLine, 0);
-      return { around: [targetInfo[0].attributes, afterInfo[0].attributes], target: 0 };
+      const afterInfo = afterLine[0];
+      return { around: [targetInfo.attributes, afterInfo.attributes], target: isLinebreak(targetInfo.insert) ? 1 : 0 };
     } else {
-      return { around: [targetInfo[0].attributes], target: 0 };
+      return { around: [targetInfo.attributes], target: 0 };
     }
   } else {
+    const targetInfo = targetLine[position.x];
     // when position is neither the head nor the tail of the line
     // get the next item of the target
-    const afterInfo = getOutputAndIndexAt(targetLine, position.x + 1);
-    return { around: [targetInfo[0].attributes, afterInfo[0].attributes], target: 0 };
+    const beforeInfo = targetLine[position.x - 1];
+    return { around: [beforeInfo.attributes, targetInfo.attributes], target: 0 };
   }
 }
 
@@ -587,11 +558,11 @@ export function getDocAttributes(doc?: DocOutput): DocAttributes | undefined {
 export function mergeDocAttrInfo(info: DocAttrInfo): DocAttributes | undefined {
   if (!info.cursor && !info.block && !info.doc) return;
 
-  // priority: doc < block < inline
-  const ret = { ...(info.doc ?? {}), ...(info.block ?? {}), ...(info.cursor ?? {}) };
+  const ret = info.cursor ? { ...info.cursor } : {};
 
   // block specific
   if (info?.block?.align) ret.align = info.block.align;
+  if (info?.block?.lineheight) ret.lineheight = info.block.lineheight;
 
   // doc specific
   if (info?.doc?.direction) ret.direction = info.doc.direction;

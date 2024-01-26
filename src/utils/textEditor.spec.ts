@@ -18,7 +18,6 @@ import {
   getLineHeadIndex,
   getLineHeight,
   getNewInlineAttributesAt,
-  getOutputAndIndexAt,
   getOutputSelection,
   getRawCursor,
   getWordRangeAtCursor,
@@ -344,20 +343,73 @@ describe("getDeltaByApplyInlineStyleToDoc", () => {
   });
 });
 
-describe("getOutputAndIndexAt", () => {
-  test("should return doc output, index and tail flag at given position", () => {
-    const line = [{ insert: "abc" }, { insert: "de" }, { insert: "\n" }];
-    expect(getOutputAndIndexAt(line, 0)).toEqual([{ insert: "abc" }, 0, false]);
-    expect(getOutputAndIndexAt(line, 1)).toEqual([{ insert: "abc" }, 1, false]);
-    expect(getOutputAndIndexAt(line, 3)).toEqual([{ insert: "abc" }, 3, false]);
-    expect(getOutputAndIndexAt(line, 4)).toEqual([{ insert: "de" }, 1, false]);
-    expect(getOutputAndIndexAt(line, 5)).toEqual([{ insert: "de" }, 2, false]);
-    expect(getOutputAndIndexAt(line, 6)).toEqual([{ insert: "\n" }, 1, true]);
-    expect(getOutputAndIndexAt(line, 7)).toEqual([{ insert: "\n" }, 1, true]);
-  });
-});
-
 describe("getNewInlineAttributesAt", () => {
+  test("should inherit previous item if it exists: no sibling lines", () => {
+    const attrs0 = { color: "#aaa" };
+    const attrs1 = { color: "#bbb" };
+    const lines = [
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+        { insert: "c", attributes: attrs0 },
+        { insert: "d", attributes: attrs1 },
+        { insert: "e", attributes: attrs0 },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 0 })).toEqual(attrs1);
+    expect(getNewInlineAttributesAt(lines, { x: 3, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 4, y: 0 })).toEqual(attrs1);
+    expect(getNewInlineAttributesAt(lines, { x: 5, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 6, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 7, y: 0 })).toEqual(attrs0);
+  });
+
+  test("should inherit previous item if it exists: with sibling lines", () => {
+    const attrs0 = { color: "#aaa" };
+    const attrs1 = { color: "#bbb" };
+    const lines = [
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 1 })).toEqual(attrs1);
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 1 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 1 })).toEqual(attrs1);
+  });
+
+  test("should inherit next item if previous item is line break: with broken lines", () => {
+    const attrs0 = { color: "#aaa" };
+    const attrs1 = { color: "#bbb" };
+    const lines = [
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "\n", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "\n", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 1 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 1 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 1 })).toEqual(attrs0);
+  });
+
   test("should delete link related attributes when the position isn't inside link: no sibling lines", () => {
     const linkAttrs = { link: "link" };
     const otherAttrs = { color: "#aaa" };
@@ -372,9 +424,10 @@ describe("getNewInlineAttributesAt", () => {
       ],
     ];
     expect(getNewInlineAttributesAt(lines, { x: 0, y: 0 })).toEqual({});
-    expect(getNewInlineAttributesAt(lines, { x: 1, y: 0 })).toEqual({ link: "link" });
-    expect(getNewInlineAttributesAt(lines, { x: 2, y: 0 })).toEqual({ link: "link" });
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 0 })).toEqual(linkAttrs);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 0 })).toEqual(linkAttrs);
     expect(getNewInlineAttributesAt(lines, { x: 3, y: 0 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines, { x: 4, y: 0 })).toEqual(otherAttrs);
     expect(getNewInlineAttributesAt(lines, { x: 5, y: 0 })).toEqual(otherAttrs);
     expect(getNewInlineAttributesAt(lines, { x: 6, y: 0 })).toEqual({});
     expect(getNewInlineAttributesAt(lines, { x: 7, y: 0 })).toEqual({});
@@ -385,53 +438,55 @@ describe("getNewInlineAttributesAt", () => {
     const otherAttrs = { color: "#aaa" };
     const lines0 = [
       [
-        { insert: "a", attributes: linkAttrs },
-        { insert: "\n", attributes: otherAttrs },
+        { insert: "a", attributes: otherAttrs },
+        { insert: "b", attributes: linkAttrs },
       ],
       [
         { insert: "a", attributes: linkAttrs },
         { insert: "b", attributes: linkAttrs },
-        { insert: "\n", attributes: otherAttrs },
+        { insert: "c", attributes: otherAttrs },
       ],
       [
         { insert: "a", attributes: linkAttrs },
-        { insert: "\n", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
       ],
     ];
-    expect(getNewInlineAttributesAt(lines0, { x: 0, y: 1 })).toEqual({ link: "link" });
-    expect(getNewInlineAttributesAt(lines0, { x: 2, y: 1 })).toEqual({ link: "link" });
+    expect(getNewInlineAttributesAt(lines0, { x: 0, y: 1 })).toEqual(linkAttrs);
+    expect(getNewInlineAttributesAt(lines0, { x: 2, y: 1 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines0, { x: 3, y: 1 })).toEqual(otherAttrs);
 
     const lines1 = [
       [
         { insert: "a", attributes: otherAttrs },
-        { insert: "\n", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
       ],
       [
         { insert: "a", attributes: linkAttrs },
         { insert: "b", attributes: linkAttrs },
-        { insert: "\n", attributes: otherAttrs },
-      ],
-      [
-        { insert: "a", attributes: otherAttrs },
-        { insert: "\n", attributes: otherAttrs },
-      ],
-    ];
-    expect(getNewInlineAttributesAt(lines1, { x: 0, y: 1 })).toEqual({});
-    expect(getNewInlineAttributesAt(lines1, { x: 2, y: 1 })).toEqual({});
-
-    const lines2 = [
-      [
-        { insert: "a", attributes: linkAttrs },
-        { insert: "\n", attributes: otherAttrs },
+        { insert: "c", attributes: otherAttrs },
       ],
       [
         { insert: "a", attributes: otherAttrs },
         { insert: "b", attributes: otherAttrs },
-        { insert: "\n", attributes: otherAttrs },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines1, { x: 0, y: 1 })).toEqual(otherAttrs);
+    expect(getNewInlineAttributesAt(lines1, { x: 2, y: 1 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines1, { x: 3, y: 1 })).toEqual(otherAttrs);
+
+    const lines2 = [
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: otherAttrs },
+      ],
+      [
+        { insert: "a", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
+        { insert: "c", attributes: otherAttrs },
       ],
       [
         { insert: "a", attributes: linkAttrs },
-        { insert: "\n", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
       ],
     ];
     expect(getNewInlineAttributesAt(lines2, { x: 0, y: 1 })).toEqual(otherAttrs);
