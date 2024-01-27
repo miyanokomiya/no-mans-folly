@@ -12,6 +12,7 @@ import {
   isSameShapeSelectionScope,
 } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
+import { DocCompositionInfo } from "../utils/textEditor";
 
 interface Option {
   shapes: Shape[];
@@ -33,6 +34,8 @@ export function newShapeComposite(option: Option) {
     treeNodeMap: mergedShapeTreeMap,
     getStruct: option.getStruct,
   };
+
+  const docCompositeCacheMap: { [id: string]: DocCompositionInfo } = {};
 
   function getAllBranchMergedShapes(ids: string[]): Shape[] {
     return getAllBranchIds(mergedShapeTree, ids).map((id) => mergedShapeMap[id]);
@@ -148,6 +151,14 @@ export function newShapeComposite(option: Option) {
     return !!shapeMap[shape.parentId ?? ""];
   }
 
+  function setDocCompositeCache(id: string, val: DocCompositionInfo) {
+    docCompositeCacheMap[id] = val;
+  }
+
+  function getDocCompositeCache(id: string): DocCompositionInfo | undefined {
+    return docCompositeCacheMap[id];
+  }
+
   return {
     getShapeStruct: option.getStruct,
     shapes: option.shapes,
@@ -173,6 +184,9 @@ export function newShapeComposite(option: Option) {
     getMergedShapesInSelectionScope,
     getShapeActualPosition,
     hasParent,
+
+    setDocCompositeCache,
+    getDocCompositeCache,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
