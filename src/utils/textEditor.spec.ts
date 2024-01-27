@@ -17,6 +17,7 @@ import {
   getLineEndIndex,
   getLineHeadIndex,
   getLineHeight,
+  getLinkAt,
   getNewInlineAttributesAt,
   getOutputSelection,
   getRawCursor,
@@ -1237,5 +1238,98 @@ describe("getDeltaAndCursorByDelete", () => {
       delta: [{ retain: 1 }, { delete: 3 }],
       cursor: 1,
     });
+  });
+});
+
+describe("getLinkAt", () => {
+  const linkAttrs0 = { link: "a" };
+  const linkAttrs1 = { link: "b" };
+  const bounds = { x: 0, y: 0, width: 4, height: 10 };
+
+  test("should return inline link information at the point: link within a line", () => {
+    const composition = [
+      { char: "a", bounds },
+      { char: "b", bounds: { ...bounds, x: 4 } },
+      { char: "c", bounds: { ...bounds, x: 8 } },
+      { char: "\n", bounds: { ...bounds, x: 12 } },
+      { char: "d", bounds: { ...bounds, y: 10 } },
+      { char: "\n", bounds: { ...bounds, x: 4, y: 10 } },
+    ];
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [
+          { insert: "a" },
+          { insert: "b", attributes: linkAttrs0 },
+          { insert: "c", attributes: linkAttrs0 },
+          { insert: "\n" },
+        ],
+      },
+      {
+        y: 10,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d", attributes: linkAttrs0 }, { insert: "e" }, { insert: "\n" }],
+      },
+    ];
+
+    expect(getLinkAt({ composition, lines }, { x: 3, y: 1 })).toEqual(undefined);
+    expect(getLinkAt({ composition, lines }, { x: 5, y: 1 })).toEqual({
+      link: "a",
+      bounds: { x: 4, y: 0, width: 8, height: 10 },
+      docRange: [1, 2],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 1, y: 11 })).toEqual({
+      link: "a",
+      bounds: { x: 0, y: 10, width: 4, height: 10 },
+      docRange: [4, 1],
+    });
+  });
+
+  test("should return inline link information at the point: link over lines", () => {
+    const composition = [
+      { char: "a", bounds },
+      { char: "b", bounds: { ...bounds, x: 4 } },
+      { char: "c", bounds: { ...bounds, x: 8 } },
+      { char: "d", bounds: { ...bounds, x: 0, y: 10 } },
+      { char: "\n", bounds: { ...bounds, x: 4, y: 10 } },
+    ];
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [
+          { insert: "a", attributes: linkAttrs1 },
+          { insert: "b", attributes: linkAttrs0 },
+          { insert: "c", attributes: linkAttrs0 },
+        ],
+      },
+      {
+        y: 10,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d", attributes: linkAttrs0 }, { insert: "\n" }],
+      },
+    ];
+
+    expect(getLinkAt({ composition, lines }, { x: 3, y: 1 })).toEqual({
+      link: "b",
+      bounds: { x: 0, y: 0, width: 4, height: 10 },
+      docRange: [0, 1],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 5, y: 1 })).toEqual({
+      link: "a",
+      bounds: { x: 0, y: 0, width: 12, height: 20 },
+      docRange: [1, 3],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 3, y: 11 })).toEqual({
+      link: "a",
+      bounds: { x: 0, y: 0, width: 12, height: 20 },
+      docRange: [1, 3],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 5, y: 11 })).toEqual(undefined);
   });
 });

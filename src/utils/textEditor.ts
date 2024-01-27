@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../models/document";
+import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "../composables/cache";
@@ -1029,10 +1029,97 @@ export function getLinkAt(
   const link = item.attributes?.link;
   if (!link) return;
 
-  const index = getLocationIndex(info.lines, location);
+  const [fromIndex, toIndex] = getDocItemUnitRange(info.lines, location, (val) => val.attributes?.link === link);
+  const bounds = getDocItemBounds(info.composition, fromIndex, toIndex);
+
   return {
     link,
-    bounds: info.composition[index].bounds,
-    docRange: [index, 1],
+    bounds,
+    docRange: [fromIndex, toIndex - fromIndex + 1],
+  };
+}
+
+function getDocItemUnitRange(
+  lines: DocCompositionLine[],
+  location: IVec2,
+  isUnitFn: (val: DocDeltaInsert) => boolean,
+): [from: number, to: number] {
+  const item = lines[location.y].outputs[location.x];
+  const index = getLocationIndex(lines, location);
+  let fromIndex = index;
+  {
+    let x = location.x;
+    let y = location.y;
+    let current = item;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (x === 0) {
+        if (y === 0) {
+          break;
+        } else {
+          y--;
+          x = lines[y].outputs.length - 1;
+        }
+      } else {
+        x--;
+      }
+
+      current = lines[y].outputs[x];
+      if (isUnitFn(current)) {
+        fromIndex--;
+      } else {
+        break;
+      }
+    }
+  }
+
+  let toIndex = index;
+  {
+    let x = location.x;
+    let y = location.y;
+    let current = item;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (x === lines[y].outputs.length - 1) {
+        if (y === lines.length - 1) {
+          break;
+        } else {
+          y++;
+          x = 0;
+        }
+      } else {
+        x++;
+      }
+
+      current = lines[y].outputs[x];
+      if (isUnitFn(current)) {
+        toIndex++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return [fromIndex, toIndex];
+}
+
+function getDocItemBounds(composition: DocCompositionItem[], from: number, to: number): IRectangle {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (let i = from; i <= to; i++) {
+    const bounds = composition[i].bounds;
+    minX = Math.min(bounds.x, minX);
+    minY = Math.min(bounds.y, minY);
+    maxX = Math.max(bounds.x + bounds.width, maxX);
+    maxY = Math.max(bounds.y + bounds.height, maxY);
+  }
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
   };
 }

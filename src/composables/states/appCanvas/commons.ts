@@ -20,7 +20,7 @@ import {
   shouldResizeOnTextEdit,
 } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
-import { IVec2, add, applyAffine, multi } from "okageo";
+import { IVec2, add, applyAffine, getOuterRectangle, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
@@ -462,15 +462,9 @@ export function getInlineLinkInfoAt(ctx: AppCanvasStateContext, shape: Shape, p:
   const info = getLinkAt(docInfo, adjustedP);
   if (!info) return;
 
-  const actualBounds = geometry.getRotatedWrapperRect(
-    {
-      x: info.bounds.x + shape.p.x,
-      y: info.bounds.y + shape.p.y,
-      width: info.bounds.width,
-      height: info.bounds.height,
-    },
-    shape.rotation,
-  );
+  const actualBounds = getOuterRectangle([
+    geometry.getRectPoints(info.bounds).map((p) => applyAffine(bounds.affine, p)),
+  ]);
   return { shapeId: shape.id, link: info.link, docRange: info.docRange, bounds: actualBounds };
 }
 
