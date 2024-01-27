@@ -9,16 +9,18 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  getLinkAt,
 } from "../../../utils/textEditor";
 import {
   canHaveText,
   createShape,
+  getShapeTextBounds,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
 } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
-import { IVec2, add, multi } from "okageo";
+import { IVec2, add, applyAffine, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
@@ -38,7 +40,7 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
-import { CommandExam } from "../types";
+import { CommandExam, LinkInfo } from "../types";
 import { handleContextItemEvent } from "./contextMenuItems";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
@@ -448,6 +450,28 @@ export function handleCommonWheel(
   }
 
   return ctx.zoomView(event.data.delta.y);
+}
+
+export function getInlineLinkInfoAt(ctx: AppCanvasStateContext, shape: Shape, p: IVec2): LinkInfo | undefined {
+  const shapeComposite = ctx.getShapeComposite();
+  const docInfo = shapeComposite.getDocCompositeCache(shape.id);
+  if (!docInfo) return;
+
+  const bounds = getShapeTextBounds(shapeComposite.getShapeStruct, shape);
+  const adjustedP = applyAffine(bounds.affineReverse, p);
+  const info = getLinkAt(docInfo, adjustedP);
+  if (!info) return;
+
+  const actualBounds = geometry.getRotatedWrapperRect(
+    {
+      x: info.bounds.x + shape.p.x,
+      y: info.bounds.y + shape.p.y,
+      width: info.bounds.width,
+      height: info.bounds.height,
+    },
+    shape.rotation,
+  );
+  return { shapeId: shape.id, link: info.link, docRange: info.docRange, bounds: actualBounds };
 }
 
 export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {

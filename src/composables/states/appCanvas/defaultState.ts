@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import {
   getCommonCommandExams,
+  getInlineLinkInfoAt,
   handleCommonShortcut,
   handleCommonWheel,
   handleFileDrop,
@@ -25,6 +26,7 @@ const state: AppCanvasState = {
   },
   onEnd(ctx) {
     ctx.setCommandExams();
+    ctx.setLinkInfo();
   },
   handleEvent: (ctx, event) => {
     switch (event.type) {
@@ -63,7 +65,14 @@ const state: AppCanvasState = {
       case "pointerhover": {
         const shapeComposite = ctx.getShapeComposite();
         const shape = shapeComposite.findShapeAt(event.data.current);
-        ctx.setCursor(shape ? "pointer" : undefined);
+
+        if (shape) {
+          const linkInfo = getInlineLinkInfoAt(ctx, shape, event.data.current);
+          ctx.setCursor(linkInfo ? "pointer" : undefined);
+          ctx.setLinkInfo(linkInfo);
+        } else {
+          ctx.setCursor(undefined);
+        }
         return;
       }
       case "keydown":

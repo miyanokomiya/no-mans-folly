@@ -668,6 +668,7 @@ export const AppCanvas: React.FC = () => {
       canvasState={canvasState}
       focusBack={focusBackTextEditor}
       canvasToView={canvasToView}
+      scale={scale}
       linkInfo={linkInfo}
     />
   ) : undefined;

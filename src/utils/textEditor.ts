@@ -25,6 +25,11 @@ export interface DocCompositionLine {
   outputs: DocOutput;
 }
 
+export interface DocCompositionInfo {
+  composition: DocCompositionItem[];
+  lines: DocCompositionLine[];
+}
+
 /**
  * A letter refers to a graphme
  */
@@ -263,10 +268,16 @@ export function getBreakIndicesForWord(
   return ret;
 }
 
+/**
+ * Returns right side item's location when "floor" is false and "p" is at right half of the character.
+ * This function always returns the most probable location even if no character exists at "p".
+ * => "isCursorInDoc" is available to check if any character exists at "p".
+ */
 export function getCursorLocationAt(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
   p: IVec2,
+  floor = false,
 ): IVec2 {
   let lineIndex = 0;
   compositionLines.some((line) => {
@@ -286,7 +297,7 @@ export function getCursorLocationAt(
   // => When the cursor is after line break, it means the cursor is in the next line.
   for (let i = 0; i < compositionInLine.length - 1; i++) {
     const c = compositionInLine[i];
-    if (p.x < c.bounds.x + c.bounds.width / 2) break;
+    if (p.x < c.bounds.x + c.bounds.width * (floor ? 1 : 0.5)) break;
     xIndex += 1;
   }
 
@@ -885,10 +896,7 @@ export function getDocCompositionInfo(
   ctx: CanvasRenderingContext2D,
   rangeWidth: number,
   rangeHeight: number,
-): {
-  composition: DocCompositionItem[];
-  lines: DocCompositionLine[];
-} {
+): DocCompositionInfo {
   return convertLineWordToComposition(
     applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth),
     rangeWidth,
@@ -993,4 +1001,38 @@ export function getDeltaAndCursorByDelete(
       delta: [{ retain: outputCursor }, { delete: outputCursorPlus1 - outputCursor }],
     };
   }
+}
+
+export function getLocationIndex(lines: DocCompositionLine[], location: IVec2): number {
+  const charIndex = lines.slice(0, location.y).reduce((n, line) => {
+    return n + getLineLength(line);
+  }, 0);
+
+  return charIndex + location.x;
+}
+
+export function getLinkAt(
+  info: DocCompositionInfo,
+  p: IVec2,
+):
+  | {
+      link: string;
+      bounds: IRectangle;
+      docRange: [cursor: number, selection: number];
+    }
+  | undefined {
+  const isOnDoc = isCursorInDoc(info.composition, info.lines, p);
+  if (!isOnDoc) return;
+
+  const location = getCursorLocationAt(info.composition, info.lines, p, true);
+  const item = info.lines[location.y].outputs[location.x];
+  const link = item.attributes?.link;
+  if (!link) return;
+
+  const index = getLocationIndex(info.lines, location);
+  return {
+    link,
+    bounds: info.composition[index].bounds,
+    docRange: [index, 1],
+  };
 }

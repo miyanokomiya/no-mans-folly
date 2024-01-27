@@ -6,13 +6,15 @@ interface Props {
   canvasState: any;
   focusBack?: () => void;
   canvasToView: (v: IVec2) => IVec2;
+  scale: number;
   linkInfo: LinkInfo;
 }
 
-export const LinkMenu: React.FC<Props> = ({ canvasToView, linkInfo }) => {
+export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo }) => {
   const rootStyle = useMemo(() => {
-    const viewP = canvasToView(linkInfo.p);
-    return { transform: `translate(${viewP.x}px, ${viewP.y}px)` };
+    const viewP = canvasToView(linkInfo.bounds);
+    const viewHeight = linkInfo.bounds.height / scale;
+    return { transform: `translate(${viewP.x}px, ${viewP.y + viewHeight}px)` };
   }, [canvasToView]);
 
   return (

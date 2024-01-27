@@ -24,7 +24,6 @@ import {
   sliceDocOutput,
   getRawCursor,
   getDocRawLength,
-  getLineLength,
 } from "../utils/textEditor";
 import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
@@ -115,11 +114,7 @@ export function newTextEditorController() {
   }
 
   function getLocationIndex(location: IVec2): number {
-    const charIndex = _compositionLines.slice(0, location.y).reduce((n, line) => {
-      return n + getLineLength(line);
-    }, 0);
-
-    return charIndex + location.x;
+    return textEditorUtil.getLocationIndex(_compositionLines, location);
   }
 
   function getLocationAt(p: IVec2): IVec2 {
