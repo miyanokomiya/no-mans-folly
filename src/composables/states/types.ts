@@ -30,3 +30,10 @@ export type ToastMessage = {
   text: string;
   type: "info" | "warn" | "error";
 };
+
+export type LinkInfo = {
+  link: string;
+  p: IVec2;
+  shapeId: string;
+  docRange: [cursor: number, selection: number];
+};
