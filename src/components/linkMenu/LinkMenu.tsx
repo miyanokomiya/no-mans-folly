@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LinkInfo } from "../../composables/states/types";
 import { IVec2 } from "okageo";
 import { LINK_STYLE_ATTRS } from "../../utils/textEditor";
+import { OutsideObserver } from "../atoms/OutsideObserver";
 
 interface Props {
   canvasState: any;
@@ -75,22 +76,31 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
     return () => clearTimeout(timer);
   }, [delay, hasPointer, gracefulClose, cancelGracefulClose, linkInfo?.key, localLinkInfo?.key]);
 
-  return localLinkInfo ? (
-    <div
-      className="fixed top-0 left-0 p-2 border bg-white max-w-96 truncate rounded shadow"
-      style={rootStyle}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
-    >
-      <a
-        href={localLinkInfo.link}
-        target="_blank"
-        rel="noopener"
-        className="underline"
-        style={{ color: LINK_STYLE_ATTRS.color ?? undefined }}
-      >
-        {localLinkInfo.link}
-      </a>
-    </div>
-  ) : undefined;
+  const handleGlobalClick = useCallback(() => {
+    cancelGracefulClose();
+    setLocalLinkInfo(linkInfo);
+  }, [linkInfo?.link, cancelGracefulClose]);
+
+  return (
+    <OutsideObserver onClick={handleGlobalClick}>
+      {localLinkInfo ? (
+        <div
+          className="fixed top-0 left-0 p-2 border bg-white max-w-96 truncate rounded shadow"
+          style={rootStyle}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+        >
+          <a
+            href={localLinkInfo.link}
+            target="_blank"
+            rel="noopener"
+            className="underline"
+            style={{ color: LINK_STYLE_ATTRS.color ?? undefined }}
+          >
+            {localLinkInfo.link}
+          </a>
+        </div>
+      ) : undefined}
+    </OutsideObserver>
+  );
 };

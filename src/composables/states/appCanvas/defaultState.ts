@@ -17,7 +17,6 @@ const state: AppCanvasState = {
   },
   onEnd(ctx) {
     ctx.setCommandExams();
-    ctx.setLinkInfo();
     ctx.setCursor();
   },
   handleEvent: (ctx, event) => {
