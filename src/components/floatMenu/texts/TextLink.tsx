@@ -76,7 +76,13 @@ export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange })
     <div className="p-1">
       <form className="flex gap-1 items-center" onSubmit={handleSubmit}>
         <div className="w-80">
-          <TextInput value={draftValue} onChange={handleChange} autofocus={true} keepFocus={true} />
+          <TextInput
+            value={draftValue}
+            onChange={handleChange}
+            autofocus={true}
+            keepFocus={true}
+            placeholder="Attach a link"
+          />
         </div>
         <button type="submit" className="w-8 h-8 p-1 border rounded">
           <img src={iconAdd} alt="Add" />

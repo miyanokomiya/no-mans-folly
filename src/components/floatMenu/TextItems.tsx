@@ -92,6 +92,7 @@ interface Props {
   onBlockChanged?: (val: DocAttributes, draft?: boolean) => void;
   onDocChanged?: (val: DocAttributes, draft?: boolean) => void;
   docAttrInfo: DocAttrInfo;
+  textEditing: boolean;
 }
 
 export const TextItems: React.FC<Props> = ({
@@ -102,6 +103,7 @@ export const TextItems: React.FC<Props> = ({
   onBlockChanged,
   onDocChanged,
   docAttrInfo,
+  textEditing,
 }) => {
   const onAlignClick = useCallback(() => {
     setPopupedKey("align");
@@ -211,13 +213,15 @@ export const TextItems: React.FC<Props> = ({
         value={docAttrInfo.cursor}
         onChange={onInlineChanged}
       />
-      <TextLink
-        popupedKey={popupedKey}
-        setPopupedKey={setPopupedKey}
-        defaultDirection={defaultDirection}
-        value={docAttrInfo.cursor}
-        onChange={onInlineChanged}
-      />
+      {textEditing ? (
+        <TextLink
+          popupedKey={popupedKey}
+          setPopupedKey={setPopupedKey}
+          defaultDirection={defaultDirection}
+          value={docAttrInfo.cursor}
+          onChange={onInlineChanged}
+        />
+      ) : undefined}
       <PopupButton
         name="align"
         opened={popupedKey === "align"}

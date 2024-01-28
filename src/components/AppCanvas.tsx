@@ -660,6 +660,7 @@ export const AppCanvas: React.FC = () => {
       viewOrigin={viewOrigin}
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
+      textEditing={textEditing}
     />
   ) : undefined;
 
