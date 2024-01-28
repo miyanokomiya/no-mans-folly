@@ -36,4 +36,5 @@ export type LinkInfo = {
   bounds: IRectangle;
   shapeId: string;
   docRange: [cursor: number, selection: number];
+  key: string; // Unique key for the same link info
 };

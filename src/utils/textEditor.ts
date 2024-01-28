@@ -37,7 +37,7 @@ type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
 type LineItem = WordItem[];
 type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
 
-export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#0000ee" };
+export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#3b82f6" };
 
 /**
  * "char" must be a character.

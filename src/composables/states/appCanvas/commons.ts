@@ -465,14 +465,9 @@ export function handleCommonPointerhover(
 ): void {
   const shapeComposite = ctx.getShapeComposite();
   const shape = shapeComposite.findShapeAt(event.data.current);
-
-  if (shape) {
-    const linkInfo = getInlineLinkInfoAt(shapeComposite, shape, event.data.current);
-    ctx.setCursor(linkInfo ? "pointer" : undefined);
-    ctx.setLinkInfo(linkInfo);
-  } else {
-    ctx.setCursor(undefined);
-  }
+  const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
+  ctx.setCursor(linkInfo ? "pointer" : undefined);
+  ctx.setLinkInfo(linkInfo);
 }
 
 export function getInlineLinkInfoAt(shapeComposite: ShapeComposite, shape: Shape, p: IVec2): LinkInfo | undefined {
@@ -487,7 +482,13 @@ export function getInlineLinkInfoAt(shapeComposite: ShapeComposite, shape: Shape
   const actualBounds = getOuterRectangle([
     geometry.getRectPoints(info.bounds).map((p) => applyAffine(bounds.affine, p)),
   ]);
-  return { shapeId: shape.id, link: info.link, docRange: info.docRange, bounds: actualBounds };
+  return {
+    shapeId: shape.id,
+    link: info.link,
+    docRange: info.docRange,
+    bounds: actualBounds,
+    key: `${shape.id}_${info.docRange[0]}`,
+  };
 }
 
 export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {

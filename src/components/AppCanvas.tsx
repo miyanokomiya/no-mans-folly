@@ -663,15 +663,16 @@ export const AppCanvas: React.FC = () => {
     />
   ) : undefined;
 
-  const linkMenu = linkInfo ? (
+  const linkMenu = (
     <LinkMenu
       canvasState={canvasState}
       focusBack={focusBackTextEditor}
       canvasToView={canvasToView}
       scale={scale}
       linkInfo={linkInfo}
+      delay={1000}
     />
-  ) : undefined;
+  );
 
   const sheet = useSelectedTmpSheet();
   const wrapperStyle = useMemo<React.CSSProperties>(() => {
