@@ -251,9 +251,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "paste": {
           const clipboard = newDocClipboard([], (doc, plain) => {
-            const count = getDocLength(doc);
-            patchDocument(ctx, textEditorController.getDeltaByPaste(doc, plain || event.data.shift));
-            textEditorController.setCursor(textEditorController.getCursor() + count);
+            const pastedInfo = textEditorController.getDeltaByPaste(doc, plain || event.data.shift);
+            patchDocument(ctx, pastedInfo.delta);
+            textEditorController.setCursor(pastedInfo.cursor, pastedInfo.selection);
           });
           clipboard.onPaste(event.nativeEvent);
           return;

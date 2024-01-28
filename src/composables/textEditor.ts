@@ -223,10 +223,27 @@ export function newTextEditorController() {
     return sliceDocOutput(_doc, cursor, cursor + selection);
   }
 
-  function getDeltaByPaste(pasted: DocOutput, plain = false): DocDelta {
+  function getDeltaByPaste(pasted: DocOutput, plain = false): { delta: DocDelta; cursor: number; selection: number } {
     if (plain) {
       const text = pasted.flatMap((p) => p.insert).join("");
-      return getDeltaByInput(text);
+      const selection = getOutputSelection();
+      if (selection > 0 && textEditorUtil.isUrlText(text)) {
+        // Make current selection link when pasted text is URL
+        return {
+          delta: [
+            { retain: getOutputCursor() },
+            { retain: selection, attributes: { ...textEditorUtil.LINK_STYLE_ATTRS, link: text } },
+          ],
+          cursor: getCursor(),
+          selection: getSelection(),
+        };
+      } else {
+        return {
+          delta: getDeltaByInput(text),
+          cursor: getCursor() + getDocLength(pasted),
+          selection: 0,
+        };
+      }
     }
 
     const ret: DocDelta = [{ retain: getOutputCursor() }];
@@ -244,7 +261,11 @@ export function newTextEditorController() {
       ret.push(getInitialOutput()[0]);
     }
 
-    return ret;
+    return {
+      delta: ret,
+      cursor: getCursor() + getDocLength(pasted),
+      selection: 0,
+    };
   }
 
   function getDeltaByInput(text: string): DocDelta {

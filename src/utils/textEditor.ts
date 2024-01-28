@@ -53,8 +53,8 @@ export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
 }
 
-export const URL_TEXT_REG = /https?:\/\/[^\s]+/;
-export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
+const URL_TEXT_REG = /https?:\/\/[^\s]+/;
+const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
 export function isUrlText(text: string, exact = false): boolean {
   return (exact ? URL_TEXT_EXACT_REG : URL_TEXT_REG).test(text);
 }
