@@ -52,7 +52,6 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
 
   const handlePointerLeave = useCallback(() => {
     setHasPointer(false);
-    gracefulClose(200);
   }, [gracefulClose]);
 
   useEffect(() => {
