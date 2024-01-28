@@ -11,7 +11,7 @@ import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
-import { calcOriginalDocSize, getDocLength, splitToSegments } from "../../../../utils/textEditor";
+import { calcOriginalDocSize, splitToSegments } from "../../../../utils/textEditor";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";

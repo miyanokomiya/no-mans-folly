@@ -15,6 +15,7 @@ import { TextBackgroundPanel } from "./texts/TextBackgroundPanel";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
 import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
+import { TextLink } from "./texts/TextLink";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -204,6 +205,13 @@ export const TextItems: React.FC<Props> = ({
         </div>
       </PopupButton>
       <TextDecoration
+        popupedKey={popupedKey}
+        setPopupedKey={setPopupedKey}
+        defaultDirection={defaultDirection}
+        value={docAttrInfo.cursor}
+        onChange={onInlineChanged}
+      />
+      <TextLink
         popupedKey={popupedKey}
         setPopupedKey={setPopupedKey}
         defaultDirection={defaultDirection}

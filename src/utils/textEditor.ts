@@ -489,6 +489,10 @@ export function getDeltaByScaleTextSize(doc: DocOutput, scale: number, floor = f
   });
 }
 
+/**
+ * Link related attributes are treated as exception.
+ * => Picked only when the position is inside a link.
+ */
 export function getNewInlineAttributesAt(lines: DocOutput[], position: IVec2): DocAttributes | undefined {
   const aroundAttrsInfo = getInlineAttributesAroundAt(lines, position);
   if (aroundAttrsInfo.around.length === 2 && aroundAttrsInfo.around[0]?.link === aroundAttrsInfo.around[1]?.link) {
@@ -1122,4 +1126,11 @@ function getDocItemBounds(composition: DocCompositionItem[], from: number, to: n
     width: maxX - minX,
     height: maxY - minY,
   };
+}
+
+export function clearLinkRelatedAttrubites(src?: DocAttributes): DocAttributes {
+  const keys = Object.keys(LINK_STYLE_ATTRS);
+  const ret = { ...src, link: null };
+  keys.forEach((key) => ((ret as any)[key] = null));
+  return ret;
 }
