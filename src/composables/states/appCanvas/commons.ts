@@ -1,5 +1,12 @@
 import { HistoryEvent, newPanningReadyState } from "../commons";
-import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue, WheelEvent } from "../core";
+import {
+  ChangeStateEvent,
+  KeyDownEvent,
+  PointerDownEvent,
+  PointerHoverEvent,
+  TransitionValue,
+  WheelEvent,
+} from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasState, AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -9,16 +16,18 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
+  getLinkAt,
 } from "../../../utils/textEditor";
 import {
   canHaveText,
   createShape,
+  getShapeTextBounds,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
 } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
-import { IVec2, add, multi } from "okageo";
+import { IVec2, add, applyAffine, getOuterRectangle, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
@@ -31,14 +40,14 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
-import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
+import { ShapeComposite, canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
-import { CommandExam } from "../types";
+import { CommandExam, LinkInfo } from "../types";
 import { handleContextItemEvent } from "./contextMenuItems";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
@@ -320,7 +329,7 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
 
 const APP_DOC_TYPE = "application/no-mans-folly-doc";
 const clipboardDocSerializer = newClipboardSerializer<"doc", { doc: DocOutput }>("doc");
-export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => void) {
+export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput, plain: boolean) => void) {
   return newClipboard(
     () => {
       return {
@@ -333,7 +342,7 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
       if (appItem) {
         const text: any = await appItem.getAsString();
         const restored = clipboardDocSerializer.deserialize(text);
-        onPaste?.(restored.doc);
+        onPaste?.(restored.doc, false);
         return;
       }
 
@@ -341,7 +350,7 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput) => vo
       if (!item) return;
 
       const text: any = await item.getAsString();
-      onPaste?.([{ insert: text }]);
+      onPaste?.([{ insert: text }], true);
     },
   );
 }
@@ -450,16 +459,59 @@ export function handleCommonWheel(
   return ctx.zoomView(event.data.delta.y);
 }
 
+export function handleCommonPointerhover(
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getScale">,
+  event: PointerHoverEvent,
+): void {
+  const shapeComposite = ctx.getShapeComposite();
+  const shape = shapeComposite.findShapeAt(event.data.current);
+  const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
+  ctx.setCursor(linkInfo ? "pointer" : undefined);
+  ctx.setLinkInfo(linkInfo);
+}
+
+export function getInlineLinkInfoAt(shapeComposite: ShapeComposite, shape: Shape, p: IVec2): LinkInfo | undefined {
+  const docInfo = shapeComposite.getDocCompositeCache(shape.id);
+  if (!docInfo) return;
+
+  const bounds = getShapeTextBounds(shapeComposite.getShapeStruct, shape);
+  const adjustedP = applyAffine(bounds.affineReverse, p);
+  const info = getLinkAt(docInfo, adjustedP);
+  if (!info) return;
+
+  const actualBounds = getOuterRectangle([
+    geometry.getRectPoints(info.bounds).map((p) => applyAffine(bounds.affine, p)),
+  ]);
+  return {
+    shapeId: shape.id,
+    link: info.link,
+    docRange: info.docRange,
+    bounds: actualBounds,
+    key: `${shape.id}_${info.docRange[0]}`,
+  };
+}
+
 export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {
   switch (event.type) {
+    case "pointerhover":
+      handleCommonPointerhover(ctx, event);
+      return;
     case "wheel":
       handleCommonWheel(ctx, event);
       return;
+    case "keydown":
+      return handleCommonShortcut(ctx, event);
     case "selection": {
       return newSelectionHubState;
     }
     case "text-style": {
       return handleCommonTextStyle(ctx, event);
+    }
+    case "shape-updated": {
+      if (Object.keys(ctx.getSelectedShapeIdMap()).some((id) => event.data.keys.has(id))) {
+        return newSelectionHubState;
+      }
+      return;
     }
     case "history":
       handleHistoryEvent(ctx, event);

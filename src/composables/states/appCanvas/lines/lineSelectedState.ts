@@ -4,12 +4,7 @@ import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
-  handleCommonShortcut,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
+  handleIntransientEvent,
 } from "../commons";
 import { LineShape, deleteVertex, getLinePath, getRelativePointOn } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
@@ -21,8 +16,7 @@ import { TextShape, patchPosition } from "../../../../shapes/text";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt } from "../../../shapeComposite";
+import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -43,9 +37,9 @@ export function newLineSelectedState(): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
-      ctx.setCursor();
       ctx.setCommandExams();
       ctx.setContextMenuList();
+      ctx.setCursor();
     },
     handleEvent: (ctx, event) => {
       if (!lineShape) return newSelectionHubState;
@@ -114,18 +108,11 @@ export function newLineSelectedState(): AppCanvasState {
           }
         case "pointerhover": {
           const hitResult = lineBounding.hitTest(event.data.current, ctx.getScale());
-          if (lineBounding.saveHitResult(hitResult)) ctx.setTmpShapeMap({});
-          if (hitResult) {
-            ctx.setCursor();
-            return;
+          if (lineBounding.saveHitResult(hitResult)) {
+            ctx.redraw();
           }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, { parentId: lineShape.id }, [
-            lineShape.id,
-          ]);
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -133,23 +120,8 @@ export function newLineSelectedState(): AppCanvasState {
               ctx.deleteShapes([lineShape.id]);
               return;
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
-        case "shape-updated": {
-          if (event.data.keys.has(lineShape.id)) {
-            return newSelectionHubState;
-          }
-          return;
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
         case "state":
           switch (event.data.name) {
             case "AddingLineLabel": {
@@ -170,7 +142,7 @@ export function newLineSelectedState(): AppCanvasState {
               return () => newTextEditingState({ id: textshape.id });
             }
             default:
-              return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+              return handleIntransientEvent(ctx, event);
           }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -178,25 +150,8 @@ export function newLineSelectedState(): AppCanvasState {
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {

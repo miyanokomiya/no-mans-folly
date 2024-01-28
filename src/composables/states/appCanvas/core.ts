@@ -9,6 +9,7 @@ import { CursorPositionInfo } from "../../../stores/documents";
 import { ShapeComposite } from "../../shapeComposite";
 import { Grid } from "../../grid";
 import { ImageStore } from "../../imageStore";
+import { LinkInfo } from "../types";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getShapeComposite: () => ShapeComposite;
@@ -44,6 +45,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   patchDocuments: (val: { [id: string]: DocDelta }, shapes?: { [id: string]: Partial<Shape> }) => void;
   patchDocDryRun: (id: string, val: DocDelta) => DocOutput;
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
+  setLinkInfo: (val?: LinkInfo) => void;
   createCursorPosition: (id: string, index: number) => CursorPositionInfo | undefined;
   retrieveCursorPosition: (info?: CursorPositionInfo) => number;
 

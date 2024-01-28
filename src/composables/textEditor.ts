@@ -14,7 +14,6 @@ import {
   getDocLength,
   getInitialOutput,
   getLineEndIndex,
-  getOutputAt,
   getLineHeadIndex,
   getRangeLines,
   getWordRangeAtCursor,
@@ -25,7 +24,6 @@ import {
   sliceDocOutput,
   getRawCursor,
   getDocRawLength,
-  getLineLength,
 } from "../utils/textEditor";
 import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
@@ -116,11 +114,7 @@ export function newTextEditorController() {
   }
 
   function getLocationIndex(location: IVec2): number {
-    const charIndex = _compositionLines.slice(0, location.y).reduce((n, line) => {
-      return n + getLineLength(line);
-    }, 0);
-
-    return charIndex + location.x;
+    return textEditorUtil.getLocationIndex(_compositionLines, location);
   }
 
   function getLocationAt(p: IVec2): IVec2 {
@@ -205,10 +199,17 @@ export function newTextEditorController() {
 
     // Cursor attributes should be picked from the left side of the cursor.
     // When there's no left side item in the line, pick the right side item.
-    const cursorLeft = getOutputAt(line, Math.max(location.x, 0)).attributes;
+    const cursorLeft = textEditorUtil.getNewInlineAttributesAt(
+      _compositionLines.map((l) => l.outputs),
+      location,
+    );
     const lineEnd = line.outputs[line.outputs.length - 1];
     const docEnd = _doc[_doc.length - 1];
-    return { cursor: cursorLeft, block: lineEnd.attributes, doc: docEnd.attributes };
+    return {
+      cursor: cursorLeft,
+      block: textEditorUtil.deleteInlineExclusiveAttibutes(lineEnd.attributes),
+      doc: textEditorUtil.deleteInlineExclusiveAttibutes(docEnd.attributes),
+    };
   }
 
   function getContentSize(): Size {
@@ -222,10 +223,27 @@ export function newTextEditorController() {
     return sliceDocOutput(_doc, cursor, cursor + selection);
   }
 
-  function getDeltaByPaste(pasted: DocOutput, plain = false): DocDelta {
+  function getDeltaByPaste(pasted: DocOutput, plain = false): { delta: DocDelta; cursor: number; selection: number } {
     if (plain) {
       const text = pasted.flatMap((p) => p.insert).join("");
-      return getDeltaByInput(text);
+      const selection = getOutputSelection();
+      if (selection > 0 && textEditorUtil.isUrlText(text)) {
+        // Make current selection link when pasted text is URL
+        return {
+          delta: [
+            { retain: getOutputCursor() },
+            { retain: selection, attributes: { ...textEditorUtil.LINK_STYLE_ATTRS, link: text } },
+          ],
+          cursor: getCursor(),
+          selection: getSelection(),
+        };
+      } else {
+        return {
+          delta: getDeltaByInput(text),
+          cursor: getCursor() + getDocLength(pasted),
+          selection: 0,
+        };
+      }
     }
 
     const ret: DocDelta = [{ retain: getOutputCursor() }];
@@ -243,7 +261,11 @@ export function newTextEditorController() {
       ret.push(getInitialOutput()[0]);
     }
 
-    return ret;
+    return {
+      delta: ret,
+      cursor: getCursor() + getDocLength(pasted),
+      selection: 0,
+    };
   }
 
   function getDeltaByInput(text: string): DocDelta {
@@ -257,7 +279,14 @@ export function newTextEditorController() {
     const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
     const list = text.split(LINEBREAK);
     list.forEach((block, i) => {
-      if (block) ret.push({ insert: block, attributes: attrs });
+      if (block) {
+        textEditorUtil.splitTextByURL(block).forEach((item) => {
+          ret.push({
+            insert: item.val,
+            attributes: item.isUrl ? { ...attrs, ...textEditorUtil.LINK_STYLE_ATTRS, link: item.val } : attrs,
+          });
+        });
+      }
       if (i !== list.length - 1) {
         ret.push({ insert: "\n", attributes: attrs });
       }

@@ -15,6 +15,7 @@ import { TextBackgroundPanel } from "./texts/TextBackgroundPanel";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
 import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
+import { TextLink } from "./texts/TextLink";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -91,6 +92,7 @@ interface Props {
   onBlockChanged?: (val: DocAttributes, draft?: boolean) => void;
   onDocChanged?: (val: DocAttributes, draft?: boolean) => void;
   docAttrInfo: DocAttrInfo;
+  textEditing: boolean;
 }
 
 export const TextItems: React.FC<Props> = ({
@@ -101,6 +103,7 @@ export const TextItems: React.FC<Props> = ({
   onBlockChanged,
   onDocChanged,
   docAttrInfo,
+  textEditing,
 }) => {
   const onAlignClick = useCallback(() => {
     setPopupedKey("align");
@@ -210,6 +213,15 @@ export const TextItems: React.FC<Props> = ({
         value={docAttrInfo.cursor}
         onChange={onInlineChanged}
       />
+      {textEditing ? (
+        <TextLink
+          popupedKey={popupedKey}
+          setPopupedKey={setPopupedKey}
+          defaultDirection={defaultDirection}
+          value={docAttrInfo.cursor}
+          onChange={onInlineChanged}
+        />
+      ) : undefined}
       <PopupButton
         name="align"
         opened={popupedKey === "align"}

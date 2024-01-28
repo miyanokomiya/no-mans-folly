@@ -1,6 +1,6 @@
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
-import { renderDoc } from "../utils/textEditor";
+import { getDocCompositionInfo, renderDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
@@ -27,7 +27,14 @@ export function newShapeRenderer(option: Option) {
         ctx.save();
         const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
         ctx.transform(...bounds.affine);
-        renderDoc(ctx, doc, bounds.range);
+
+        const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
+        const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
+        if (!infoCache) {
+          option.shapeComposite.setDocCompositeCache(shape.id, info);
+        }
+
+        renderDocByComposition(ctx, info.composition, info.lines);
         ctx.restore();
       }
     });

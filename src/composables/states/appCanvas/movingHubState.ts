@@ -17,6 +17,8 @@ export function newMovingHubState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "MovingHub",
     onStart(ctx) {
+      ctx.setLinkInfo();
+
       const shapeMap = ctx.getShapeComposite().shapeMap;
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
       const count = selectedIds.length;

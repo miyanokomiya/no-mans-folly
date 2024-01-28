@@ -1,4 +1,4 @@
-import type { IVec2 } from "okageo";
+import type { IRectangle, IVec2 } from "okageo";
 import { ModifierOptions } from "../../utils/devices";
 
 export type EditMovement = {
@@ -29,4 +29,12 @@ export type CommandExam = { command?: string; title: string };
 export type ToastMessage = {
   text: string;
   type: "info" | "warn" | "error";
+};
+
+export type LinkInfo = {
+  link: string;
+  bounds: IRectangle;
+  shapeId: string;
+  docRange: [cursor: number, selection: number];
+  key: string; // Unique key for the same link info
 };

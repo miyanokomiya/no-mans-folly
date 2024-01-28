@@ -25,12 +25,19 @@ export interface DocCompositionLine {
   outputs: DocOutput;
 }
 
+export interface DocCompositionInfo {
+  composition: DocCompositionItem[];
+  lines: DocCompositionLine[];
+}
+
 /**
  * A letter refers to a graphme
  */
 type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
 type LineItem = WordItem[];
 type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
+
+export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#3b82f6" };
 
 /**
  * "char" must be a character.
@@ -44,6 +51,17 @@ function isWordbreak(char: string): boolean {
  */
 export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
+}
+
+const URL_TEXT_REG = /https?:\/\/[^\s]+/;
+const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
+export function isUrlText(text: string, exact = false): boolean {
+  return (exact ? URL_TEXT_EXACT_REG : URL_TEXT_REG).test(text);
+}
+
+export function splitTextByURL(text: string): { val: string; isUrl: boolean }[] {
+  const items = text.split(/(https?:\/\/[^\s]+)/);
+  return items.filter((val) => val !== "").map((val) => ({ val, isUrl: URL_TEXT_REG.test(val) }));
 }
 
 const segmenter = new (Intl as any).Segmenter();
@@ -250,10 +268,16 @@ export function getBreakIndicesForWord(
   return ret;
 }
 
+/**
+ * Returns right side item's location when "floor" is false and "p" is at right half of the character.
+ * This function always returns the most probable location even if no character exists at "p".
+ * => "isCursorInDoc" is available to check if any character exists at "p".
+ */
 export function getCursorLocationAt(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
   p: IVec2,
+  floor = false,
 ): IVec2 {
   let lineIndex = 0;
   compositionLines.some((line) => {
@@ -273,7 +297,7 @@ export function getCursorLocationAt(
   // => When the cursor is after line break, it means the cursor is in the next line.
   for (let i = 0; i < compositionInLine.length - 1; i++) {
     const c = compositionInLine[i];
-    if (p.x < c.bounds.x + c.bounds.width / 2) break;
+    if (p.x < c.bounds.x + c.bounds.width * (floor ? 1 : 0.5)) break;
     xIndex += 1;
   }
 
@@ -465,17 +489,75 @@ export function getDeltaByScaleTextSize(doc: DocOutput, scale: number, floor = f
   });
 }
 
-export function getOutputAt(line: DocCompositionLine, x: number): DocDeltaInsert {
-  let count = 0;
-  let ret = line.outputs[line.outputs.length - 1];
-  line.outputs.some((o) => {
-    count += splitToSegments(o.insert).length;
-    if (x <= count) {
-      ret = o;
-      return true;
+/**
+ * Link related attributes are treated as exception.
+ * => Picked only when the position is inside a link.
+ */
+export function getNewInlineAttributesAt(lines: DocOutput[], position: IVec2): DocAttributes | undefined {
+  const aroundAttrsInfo = getInlineAttributesAroundAt(lines, position);
+  if (aroundAttrsInfo.around.length === 2 && aroundAttrsInfo.around[0]?.link === aroundAttrsInfo.around[1]?.link) {
+    // Keep link style when the position is surrounded by link
+    return aroundAttrsInfo.around[aroundAttrsInfo.target];
+  }
+
+  return deleteLinkAttibutes(aroundAttrsInfo.around[aroundAttrsInfo.target]);
+}
+
+/**
+ * Returns inline attributes surrounding the position.
+ */
+function getInlineAttributesAroundAt(
+  lines: DocOutput[],
+  position: IVec2,
+): {
+  around: [DocAttributes | undefined] | [DocAttributes | undefined, DocAttributes | undefined];
+  target: number; // index of "around" array that should be priority for the position
+} {
+  const targetLine = lines[position.y];
+
+  if (position.x === 0) {
+    const targetInfo = targetLine[position.x];
+    // when position is the head of the line
+    if (position.y > 0) {
+      // get the tail item of the above line
+      const beforeLine = lines[position.y - 1];
+      const beforeInfo = beforeLine[beforeLine.length - 1];
+      return { around: [beforeInfo.attributes, targetInfo.attributes], target: isLinebreak(beforeInfo.insert) ? 1 : 0 };
+    } else {
+      return { around: [targetInfo.attributes], target: 0 };
     }
-  });
+  } else if (position.x >= targetLine.length) {
+    const targetInfo = targetLine[targetLine.length - 1];
+    // when position is the tail of the line
+    if (position.y + 1 < lines.length) {
+      // get the head item of the below line
+      const afterLine = lines[position.y + 1];
+      const afterInfo = afterLine[0];
+      return { around: [targetInfo.attributes, afterInfo.attributes], target: isLinebreak(targetInfo.insert) ? 1 : 0 };
+    } else {
+      return { around: [targetInfo.attributes], target: 0 };
+    }
+  } else {
+    const targetInfo = targetLine[position.x];
+    // when position is neither the head nor the tail of the line
+    // get the next item of the target
+    const beforeInfo = targetLine[position.x - 1];
+    return { around: [beforeInfo.attributes, targetInfo.attributes], target: 0 };
+  }
+}
+
+export function deleteLinkAttibutes(src?: DocAttributes): DocAttributes | undefined {
+  if (!src?.link) return src;
+
+  const ret = { ...src };
+  delete ret.link;
+  delete ret.underline;
+  delete ret.color;
   return ret;
+}
+
+export function deleteInlineExclusiveAttibutes(src?: DocAttributes): DocAttributes | undefined {
+  return deleteLinkAttibutes(src);
 }
 
 export function getInitialOutput(attrs: DocAttributes = {}): DocOutput {
@@ -491,11 +573,11 @@ export function getDocAttributes(doc?: DocOutput): DocAttributes | undefined {
 export function mergeDocAttrInfo(info: DocAttrInfo): DocAttributes | undefined {
   if (!info.cursor && !info.block && !info.doc) return;
 
-  // priority: doc < block < inline
-  const ret = { ...(info.doc ?? {}), ...(info.block ?? {}), ...(info.cursor ?? {}) };
+  const ret = info.cursor ? { ...info.cursor } : {};
 
   // block specific
   if (info?.block?.align) ret.align = info.block.align;
+  if (info?.block?.lineheight) ret.lineheight = info.block.lineheight;
 
   // doc specific
   if (info?.doc?.direction) ret.direction = info.doc.direction;
@@ -818,10 +900,7 @@ export function getDocCompositionInfo(
   ctx: CanvasRenderingContext2D,
   rangeWidth: number,
   rangeHeight: number,
-): {
-  composition: DocCompositionItem[];
-  lines: DocCompositionLine[];
-} {
+): DocCompositionInfo {
   return convertLineWordToComposition(
     applyRangeWidthToLineWord(splitOutputsIntoLineWord(doc, getDocLetterWidthMap(doc, ctx)), rangeWidth),
     rangeWidth,
@@ -926,4 +1005,132 @@ export function getDeltaAndCursorByDelete(
       delta: [{ retain: outputCursor }, { delete: outputCursorPlus1 - outputCursor }],
     };
   }
+}
+
+export function getLocationIndex(lines: DocCompositionLine[], location: IVec2): number {
+  const charIndex = lines.slice(0, location.y).reduce((n, line) => {
+    return n + getLineLength(line);
+  }, 0);
+
+  return charIndex + location.x;
+}
+
+export function getLinkAt(
+  info: DocCompositionInfo,
+  p: IVec2,
+):
+  | {
+      link: string;
+      bounds: IRectangle;
+      docRange: [cursor: number, selection: number];
+    }
+  | undefined {
+  const isOnDoc = isCursorInDoc(info.composition, info.lines, p);
+  if (!isOnDoc) return;
+
+  const location = getCursorLocationAt(info.composition, info.lines, p, true);
+  const item = info.lines[location.y].outputs[location.x];
+  const link = item.attributes?.link;
+  if (!link) return;
+
+  const [fromIndex, toIndex] = getDocItemUnitRange(info.lines, location, (val) => val.attributes?.link === link);
+  const bounds = getDocItemBounds(info.composition, fromIndex, toIndex);
+
+  return {
+    link,
+    bounds,
+    docRange: [fromIndex, toIndex - fromIndex + 1],
+  };
+}
+
+function getDocItemUnitRange(
+  lines: DocCompositionLine[],
+  location: IVec2,
+  isUnitFn: (val: DocDeltaInsert) => boolean,
+): [from: number, to: number] {
+  const item = lines[location.y].outputs[location.x];
+  const index = getLocationIndex(lines, location);
+  let fromIndex = index;
+  {
+    let x = location.x;
+    let y = location.y;
+    let current = item;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (x === 0) {
+        if (y === 0) {
+          break;
+        } else {
+          y--;
+          x = lines[y].outputs.length - 1;
+        }
+      } else {
+        x--;
+      }
+
+      current = lines[y].outputs[x];
+      if (isUnitFn(current)) {
+        fromIndex--;
+      } else {
+        break;
+      }
+    }
+  }
+
+  let toIndex = index;
+  {
+    let x = location.x;
+    let y = location.y;
+    let current = item;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (x === lines[y].outputs.length - 1) {
+        if (y === lines.length - 1) {
+          break;
+        } else {
+          y++;
+          x = 0;
+        }
+      } else {
+        x++;
+      }
+
+      current = lines[y].outputs[x];
+      if (isUnitFn(current)) {
+        toIndex++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return [fromIndex, toIndex];
+}
+
+function getDocItemBounds(composition: DocCompositionItem[], from: number, to: number): IRectangle {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (let i = from; i <= to; i++) {
+    const bounds = composition[i].bounds;
+    minX = Math.min(bounds.x, minX);
+    minY = Math.min(bounds.y, minY);
+    maxX = Math.max(bounds.x + bounds.width, maxX);
+    maxY = Math.max(bounds.y + bounds.height, maxY);
+  }
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+export function clearLinkRelatedAttrubites(src?: DocAttributes): DocAttributes {
+  const keys = Object.keys(LINK_STYLE_ATTRS);
+  const ret = { ...src, link: null };
+  keys.forEach((key) => ((ret as any)[key] = null));
+  return ret;
 }

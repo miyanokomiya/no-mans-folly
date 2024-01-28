@@ -16,7 +16,7 @@ import { getDocAttributes } from "../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
-import { CommandExam, ContextMenuItem } from "../composables/states/types";
+import { CommandExam, ContextMenuItem, LinkInfo } from "../composables/states/types";
 import { CommandExamPanel } from "./molecules/CommandExamPanel";
 import { rednerRGBA } from "../utils/color";
 import { useSelectedTmpSheet } from "../composables/storeHooks";
@@ -35,6 +35,7 @@ import { mapReduce, patchPipe } from "../utils/commons";
 import { getDeleteTargetIds } from "../composables/shapeComposite";
 import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
 import { GridBackground } from "./atoms/GridBackground";
+import { LinkMenu } from "./linkMenu/LinkMenu";
 
 export const AppCanvas: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -53,6 +54,7 @@ export const AppCanvas: React.FC = () => {
   const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; point: IVec2 } | undefined>();
+  const [linkInfo, setLinkInfo] = useState<LinkInfo>();
 
   const imageStore = useMemo(() => {
     return newImageStore();
@@ -203,6 +205,7 @@ export const AppCanvas: React.FC = () => {
       setCommandExams: (val) => setCommandExams(val ?? []),
       showToastMessage: pushToastMessage,
       setCursor,
+      setLinkInfo,
 
       undo: acctx.undoManager.undo,
       redo: acctx.undoManager.redo,
@@ -657,8 +660,20 @@ export const AppCanvas: React.FC = () => {
       viewOrigin={viewOrigin}
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
+      textEditing={textEditing}
     />
   ) : undefined;
+
+  const linkMenu = (
+    <LinkMenu
+      canvasState={canvasState}
+      focusBack={focusBackTextEditor}
+      canvasToView={canvasToView}
+      scale={scale}
+      linkInfo={linkInfo}
+      delay={1000}
+    />
+  );
 
   const sheet = useSelectedTmpSheet();
   const wrapperStyle = useMemo<React.CSSProperties>(() => {
@@ -695,6 +710,7 @@ export const AppCanvas: React.FC = () => {
       </div>
       {floatMenu}
       {textEditor}
+      {linkMenu}
       {contextMenu ? (
         <ContextMenu items={contextMenu.items} point={contextMenu.point} onClickItem={onClickContextMenuItem} />
       ) : undefined}

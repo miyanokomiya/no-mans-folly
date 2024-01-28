@@ -3,7 +3,6 @@ import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
-  handleCommonShortcut,
   handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
@@ -14,7 +13,6 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
 import { ArrowHandler, ArrowHitResult, newArrowHandler } from "../../../arrowHandler";
-import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { newMovingArrowTailState } from "./movingArrowTailState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
@@ -34,7 +32,6 @@ export function newArrowSelectedState(): AppCanvasState {
     onStart: (ctx) => {
       ctx.showFloatMenu();
       ctx.setCommandExams([]);
-      ctx.setCursor();
       targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as OneSidedArrowShape;
       shapeHandler = newArrowHandler({ getShapeComposite: ctx.getShapeComposite, targetId: targetShape.id });
 
@@ -138,18 +135,8 @@ export function newArrowSelectedState(): AppCanvasState {
             boundingHitResult = hitBounding;
             ctx.redraw();
           }
-          if (boundingHitResult) {
-            ctx.setCursor();
-            return;
-          }
 
-          const shapeAtPointer = findBetterShapeAt(
-            ctx.getShapeComposite(),
-            event.data.current,
-            ctx.getShapeComposite().getSelectionScope(targetShape),
-          );
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -157,14 +144,8 @@ export function newArrowSelectedState(): AppCanvasState {
               ctx.deleteShapes([targetShape.id]);
               return;
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "shape-updated": {
-          if (event.data.keys.has(targetShape.id)) {
-            return newSelectionHubState;
-          }
-          return;
-        }
         case "contextmenu":
           ctx.setContextMenuList({
             items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],

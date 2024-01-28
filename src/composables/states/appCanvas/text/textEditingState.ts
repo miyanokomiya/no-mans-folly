@@ -11,7 +11,7 @@ import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
-import { calcOriginalDocSize, getDocLength, splitToSegments } from "../../../../utils/textEditor";
+import { calcOriginalDocSize, splitToSegments } from "../../../../utils/textEditor";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
@@ -61,6 +61,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
     onStart: (ctx) => {
       ctx.setCursor();
       ctx.showFloatMenu();
+      ctx.setLinkInfo();
       ctx.startTextEditing();
       ctx.setTmpShapeMap({});
       ctx.setTmpDocMap({});
@@ -250,10 +251,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return;
         }
         case "paste": {
-          const clipboard = newDocClipboard([], (doc) => {
-            const count = getDocLength(doc);
-            patchDocument(ctx, textEditorController.getDeltaByPaste(doc, event.data.shift));
-            textEditorController.setCursor(textEditorController.getCursor() + count);
+          const clipboard = newDocClipboard([], (doc, plain) => {
+            const pastedInfo = textEditorController.getDeltaByPaste(doc, plain || event.data.shift);
+            patchDocument(ctx, pastedInfo.delta);
+            textEditorController.setCursor(pastedInfo.cursor, pastedInfo.selection);
           });
           clipboard.onPaste(event.nativeEvent);
           return;

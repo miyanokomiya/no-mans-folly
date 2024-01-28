@@ -5,13 +5,7 @@ import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
-  handleCommonShortcut,
-  handleCommonTextStyle,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
+  handleIntransientEvent,
   startTextEditingIfPossible,
 } from "./commons";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../boundingBox";
@@ -20,9 +14,8 @@ import { newResizingState } from "./resizingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
 import { getOuterRectangle } from "okageo";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
-import { findBetterShapeAt } from "../../shapeComposite";
 import { ShapeSelectionScope } from "../../../shapes/core";
 
 export function newSingleSelectedState(): AppCanvasState {
@@ -64,6 +57,7 @@ export function newSingleSelectedState(): AppCanvasState {
       ctx.hideFloatMenu();
       ctx.setContextMenuList();
       ctx.setCommandExams();
+      ctx.setCursor();
     },
     handleEvent: (ctx, event) => {
       if (!selectedId) return newSelectionHubState;
@@ -111,6 +105,7 @@ export function newSingleSelectedState(): AppCanvasState {
         case "pointerdoubledown": {
           const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
+            // TODO: It'd be better to make "GroupSelectedState"
             if (isGroupShapeSelected) {
               const shapeComposite = ctx.getShapeComposite();
               const child = shapeComposite.findShapeAt(event.data.point, { parentId: selectedId });
@@ -130,27 +125,20 @@ export function newSingleSelectedState(): AppCanvasState {
             ctx.redraw();
           }
 
-          if (hitResult) {
-            ctx.setCursor();
-            return;
-          } else {
+          if (!hitResult) {
             const shape = ctx.getShapeComposite().shapeMap[selectedId];
             const current = smartBranchHitResult?.index;
 
             if (smartBranchHandler) {
               smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, shape, ctx.getScale());
               if (current !== smartBranchHitResult?.index) {
-                ctx.setTmpShapeMap({});
-                ctx.setCursor();
+                ctx.redraw();
                 return;
               }
             }
           }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, selectionScope);
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -161,53 +149,16 @@ export function newSingleSelectedState(): AppCanvasState {
               event.data.prevent?.();
               return startTextEditingIfPossible(ctx, selectedId);
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "shape-updated": {
-          if (event.data.keys.has(selectedId)) {
-            return newSelectionHubState;
-          }
-          return;
-        }
-        case "text-style": {
-          return handleCommonTextStyle(ctx, event);
-        }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
-        case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
             items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {

@@ -45,9 +45,17 @@ interface Option {
   viewOrigin: IVec2;
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
+  textEditing: boolean;
 }
 
-export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, indexDocAttrInfo, focusBack }) => {
+export const FloatMenu: React.FC<Option> = ({
+  canvasState,
+  scale,
+  viewOrigin,
+  indexDocAttrInfo,
+  focusBack,
+  textEditing,
+}) => {
   const acctx = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
@@ -390,6 +398,7 @@ export const FloatMenu: React.FC<Option> = ({ canvasState, scale, viewOrigin, in
               onBlockChanged={onDocBlockAttributesChanged}
               onDocChanged={onDocAttributesChanged}
               docAttrInfo={indexDocAttrInfo}
+              textEditing={textEditing}
             />
           </>
         ) : undefined}

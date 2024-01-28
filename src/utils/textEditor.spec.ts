@@ -17,15 +17,19 @@ import {
   getLineEndIndex,
   getLineHeadIndex,
   getLineHeight,
+  getLinkAt,
+  getNewInlineAttributesAt,
   getOutputSelection,
   getRawCursor,
   getWordRangeAtCursor,
   isCursorInDoc,
   isLinebreak,
+  isUrlText,
   mergeDocAttrInfo,
   sliceDocOutput,
   splitDocOutputByLineBreak,
   splitOutputsIntoLineWord,
+  splitTextByURL,
   splitToSegments,
 } from "./textEditor";
 
@@ -36,6 +40,39 @@ describe("isLinebreak", () => {
     expect(isLinebreak("a")).toBe(false);
     expect(isLinebreak(" ")).toBe(false);
     expect(isLinebreak("\t")).toBe(false);
+  });
+});
+
+describe("isUrlText", () => {
+  test("should return true when the text can be URL", () => {
+    expect(isUrlText("example.com")).toBe(false);
+    expect(isUrlText("http://example.com")).toBe(true);
+    expect(isUrlText("abc https://example.com abc")).toBe(true);
+  });
+
+  test("should return true when the text is exactly URL", () => {
+    expect(isUrlText("http://example.com", true)).toBe(true);
+    expect(isUrlText("abc https://example.com abc", true)).toBe(false);
+    expect(isUrlText(" https://example.com", true)).toBe(false);
+    // Tail part can be anithing
+    expect(isUrlText("https://example.com ", true)).toBe(true);
+  });
+});
+
+describe("splitTextByURL", () => {
+  test("should return split text with URL information", () => {
+    expect(splitTextByURL("example.com")).toEqual([{ val: "example.com", isUrl: false }]);
+    expect(splitTextByURL("http://example.com")).toEqual([{ val: "http://example.com", isUrl: true }]);
+    expect(splitTextByURL("ab http://example.com cd")).toEqual([
+      { val: "ab ", isUrl: false },
+      { val: "http://example.com", isUrl: true },
+      { val: " cd", isUrl: false },
+    ]);
+    expect(splitTextByURL("http://example.com http://example.com")).toEqual([
+      { val: "http://example.com", isUrl: true },
+      { val: " ", isUrl: false },
+      { val: "http://example.com", isUrl: true },
+    ]);
   });
 });
 
@@ -291,7 +328,7 @@ describe("getDeltaByApplyDocStyle", () => {
   });
 });
 
-describe("getDeltaByApplyInlineStyle", () => {
+describe("getDeltaByApplyInlineStyleToDoc", () => {
   test("should return doc delta to apply the doc attributes", () => {
     expect(
       getDeltaByApplyInlineStyleToDoc([{ insert: "ab\ncd\n" }, { insert: "\n" }, { insert: "e\n" }], {
@@ -304,6 +341,157 @@ describe("getDeltaByApplyInlineStyle", () => {
     expect(getDeltaByApplyInlineStyleToDoc([], { align: "right" })).toEqual([
       { insert: "\n", attributes: { align: "right", direction: "middle" } },
     ]);
+  });
+});
+
+describe("getNewInlineAttributesAt", () => {
+  test("should inherit previous item if it exists: no sibling lines", () => {
+    const attrs0 = { color: "#aaa" };
+    const attrs1 = { color: "#bbb" };
+    const lines = [
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+        { insert: "c", attributes: attrs0 },
+        { insert: "d", attributes: attrs1 },
+        { insert: "e", attributes: attrs0 },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 0 })).toEqual(attrs1);
+    expect(getNewInlineAttributesAt(lines, { x: 3, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 4, y: 0 })).toEqual(attrs1);
+    expect(getNewInlineAttributesAt(lines, { x: 5, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 6, y: 0 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 7, y: 0 })).toEqual(attrs0);
+  });
+
+  test("should inherit previous item if it exists: with sibling lines", () => {
+    const attrs0 = { color: "#aaa" };
+    const attrs1 = { color: "#bbb" };
+    const lines = [
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 1 })).toEqual(attrs1);
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 1 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 1 })).toEqual(attrs1);
+  });
+
+  test("should inherit next item if previous item is line break: with broken lines", () => {
+    const attrs0 = { color: "#aaa" };
+    const attrs1 = { color: "#bbb" };
+    const lines = [
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "\n", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "\n", attributes: attrs1 },
+      ],
+      [
+        { insert: "a", attributes: attrs0 },
+        { insert: "b", attributes: attrs1 },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 1 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 1 })).toEqual(attrs0);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 1 })).toEqual(attrs0);
+  });
+
+  test("should delete link related attributes when the position isn't inside link: no sibling lines", () => {
+    const linkAttrs = { link: "link" };
+    const otherAttrs = { color: "#aaa" };
+    const lines = [
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: linkAttrs },
+        { insert: "c", attributes: linkAttrs },
+        { insert: "d", attributes: otherAttrs },
+        { insert: "e", attributes: otherAttrs },
+        { insert: "\n", attributes: linkAttrs },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines, { x: 0, y: 0 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines, { x: 1, y: 0 })).toEqual(linkAttrs);
+    expect(getNewInlineAttributesAt(lines, { x: 2, y: 0 })).toEqual(linkAttrs);
+    expect(getNewInlineAttributesAt(lines, { x: 3, y: 0 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines, { x: 4, y: 0 })).toEqual(otherAttrs);
+    expect(getNewInlineAttributesAt(lines, { x: 5, y: 0 })).toEqual(otherAttrs);
+    expect(getNewInlineAttributesAt(lines, { x: 6, y: 0 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines, { x: 7, y: 0 })).toEqual({});
+  });
+
+  test("should delete link related attributes when the position isn't inside link: with sibling lines", () => {
+    const linkAttrs = { link: "link" };
+    const otherAttrs = { color: "#aaa" };
+    const lines0 = [
+      [
+        { insert: "a", attributes: otherAttrs },
+        { insert: "b", attributes: linkAttrs },
+      ],
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: linkAttrs },
+        { insert: "c", attributes: otherAttrs },
+      ],
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: otherAttrs },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines0, { x: 0, y: 1 })).toEqual(linkAttrs);
+    expect(getNewInlineAttributesAt(lines0, { x: 2, y: 1 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines0, { x: 3, y: 1 })).toEqual(otherAttrs);
+
+    const lines1 = [
+      [
+        { insert: "a", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
+      ],
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: linkAttrs },
+        { insert: "c", attributes: otherAttrs },
+      ],
+      [
+        { insert: "a", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines1, { x: 0, y: 1 })).toEqual(otherAttrs);
+    expect(getNewInlineAttributesAt(lines1, { x: 2, y: 1 })).toEqual({});
+    expect(getNewInlineAttributesAt(lines1, { x: 3, y: 1 })).toEqual(otherAttrs);
+
+    const lines2 = [
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: otherAttrs },
+      ],
+      [
+        { insert: "a", attributes: otherAttrs },
+        { insert: "b", attributes: otherAttrs },
+        { insert: "c", attributes: otherAttrs },
+      ],
+      [
+        { insert: "a", attributes: linkAttrs },
+        { insert: "b", attributes: otherAttrs },
+      ],
+    ];
+    expect(getNewInlineAttributesAt(lines2, { x: 0, y: 1 })).toEqual(otherAttrs);
+    expect(getNewInlineAttributesAt(lines2, { x: 2, y: 1 })).toEqual(otherAttrs);
   });
 });
 
@@ -1050,5 +1238,98 @@ describe("getDeltaAndCursorByDelete", () => {
       delta: [{ retain: 1 }, { delete: 3 }],
       cursor: 1,
     });
+  });
+});
+
+describe("getLinkAt", () => {
+  const linkAttrs0 = { link: "a" };
+  const linkAttrs1 = { link: "b" };
+  const bounds = { x: 0, y: 0, width: 4, height: 10 };
+
+  test("should return inline link information at the point: link within a line", () => {
+    const composition = [
+      { char: "a", bounds },
+      { char: "b", bounds: { ...bounds, x: 4 } },
+      { char: "c", bounds: { ...bounds, x: 8 } },
+      { char: "\n", bounds: { ...bounds, x: 12 } },
+      { char: "d", bounds: { ...bounds, y: 10 } },
+      { char: "\n", bounds: { ...bounds, x: 4, y: 10 } },
+    ];
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [
+          { insert: "a" },
+          { insert: "b", attributes: linkAttrs0 },
+          { insert: "c", attributes: linkAttrs0 },
+          { insert: "\n" },
+        ],
+      },
+      {
+        y: 10,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d", attributes: linkAttrs0 }, { insert: "e" }, { insert: "\n" }],
+      },
+    ];
+
+    expect(getLinkAt({ composition, lines }, { x: 3, y: 1 })).toEqual(undefined);
+    expect(getLinkAt({ composition, lines }, { x: 5, y: 1 })).toEqual({
+      link: "a",
+      bounds: { x: 4, y: 0, width: 8, height: 10 },
+      docRange: [1, 2],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 1, y: 11 })).toEqual({
+      link: "a",
+      bounds: { x: 0, y: 10, width: 4, height: 10 },
+      docRange: [4, 1],
+    });
+  });
+
+  test("should return inline link information at the point: link over lines", () => {
+    const composition = [
+      { char: "a", bounds },
+      { char: "b", bounds: { ...bounds, x: 4 } },
+      { char: "c", bounds: { ...bounds, x: 8 } },
+      { char: "d", bounds: { ...bounds, x: 0, y: 10 } },
+      { char: "\n", bounds: { ...bounds, x: 4, y: 10 } },
+    ];
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [
+          { insert: "a", attributes: linkAttrs1 },
+          { insert: "b", attributes: linkAttrs0 },
+          { insert: "c", attributes: linkAttrs0 },
+        ],
+      },
+      {
+        y: 10,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d", attributes: linkAttrs0 }, { insert: "\n" }],
+      },
+    ];
+
+    expect(getLinkAt({ composition, lines }, { x: 3, y: 1 })).toEqual({
+      link: "b",
+      bounds: { x: 0, y: 0, width: 4, height: 10 },
+      docRange: [0, 1],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 5, y: 1 })).toEqual({
+      link: "a",
+      bounds: { x: 0, y: 0, width: 12, height: 20 },
+      docRange: [1, 3],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 3, y: 11 })).toEqual({
+      link: "a",
+      bounds: { x: 0, y: 0, width: 12, height: 20 },
+      docRange: [1, 3],
+    });
+    expect(getLinkAt({ composition, lines }, { x: 5, y: 11 })).toEqual(undefined);
   });
 });

@@ -3,18 +3,12 @@ import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
-  handleCommonShortcut,
-  handleCommonTextStyle,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
+  handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
+import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
+import { getNextShapeComposite } from "../../../shapeComposite";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
   TreeHandler,
@@ -192,15 +186,8 @@ export function newTreeNodeSelectedState(): AppCanvasState {
             boundingHitResult = hitBounding;
             ctx.redraw();
           }
-          if (boundingHitResult) {
-            ctx.setCursor();
-            return;
-          }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, { parentId: treeNodeShape.id });
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -208,53 +195,16 @@ export function newTreeNodeSelectedState(): AppCanvasState {
               ctx.deleteShapes(getTreeBranchIds(ctx.getShapeComposite(), [treeNodeShape.id]));
               return;
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
-        case "shape-updated": {
-          if (event.data.keys.has(treeNodeShape.id)) {
-            return newSelectionHubState;
-          }
-          return;
-        }
-        case "text-style": {
-          return handleCommonTextStyle(ctx, event);
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
-        case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
             items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {

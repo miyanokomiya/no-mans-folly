@@ -59,6 +59,7 @@ export function createInitialAppCanvasStateContext(arg: {
     setCommandExams() {},
     showToastMessage() {},
     setCursor() {},
+    setLinkInfo() {},
 
     undo() {},
     redo() {},
