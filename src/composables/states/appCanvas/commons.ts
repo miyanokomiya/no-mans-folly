@@ -1,5 +1,12 @@
 import { HistoryEvent, newPanningReadyState } from "../commons";
-import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue, WheelEvent } from "../core";
+import {
+  ChangeStateEvent,
+  KeyDownEvent,
+  PointerDownEvent,
+  PointerHoverEvent,
+  TransitionValue,
+  WheelEvent,
+} from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasState, AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -33,7 +40,7 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
-import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
+import { ShapeComposite, canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
@@ -452,8 +459,23 @@ export function handleCommonWheel(
   return ctx.zoomView(event.data.delta.y);
 }
 
-export function getInlineLinkInfoAt(ctx: AppCanvasStateContext, shape: Shape, p: IVec2): LinkInfo | undefined {
+export function handleCommonPointerhover(
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getScale">,
+  event: PointerHoverEvent,
+): void {
   const shapeComposite = ctx.getShapeComposite();
+  const shape = shapeComposite.findShapeAt(event.data.current);
+
+  if (shape) {
+    const linkInfo = getInlineLinkInfoAt(shapeComposite, shape, event.data.current);
+    ctx.setCursor(linkInfo ? "pointer" : undefined);
+    ctx.setLinkInfo(linkInfo);
+  } else {
+    ctx.setCursor(undefined);
+  }
+}
+
+export function getInlineLinkInfoAt(shapeComposite: ShapeComposite, shape: Shape, p: IVec2): LinkInfo | undefined {
   const docInfo = shapeComposite.getDocCompositeCache(shape.id);
   if (!docInfo) return;
 
@@ -470,14 +492,25 @@ export function getInlineLinkInfoAt(ctx: AppCanvasStateContext, shape: Shape, p:
 
 export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {
   switch (event.type) {
+    case "pointerhover":
+      handleCommonPointerhover(ctx, event);
+      return;
     case "wheel":
       handleCommonWheel(ctx, event);
       return;
+    case "keydown":
+      return handleCommonShortcut(ctx, event);
     case "selection": {
       return newSelectionHubState;
     }
     case "text-style": {
       return handleCommonTextStyle(ctx, event);
+    }
+    case "shape-updated": {
+      if (Object.keys(ctx.getSelectedShapeIdMap()).some((id) => event.data.keys.has(id))) {
+        return newSelectionHubState;
+      }
+      return;
     }
     case "history":
       handleHistoryEvent(ctx, event);

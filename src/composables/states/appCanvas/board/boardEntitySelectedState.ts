@@ -4,17 +4,11 @@ import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
-  handleCommonShortcut,
-  handleCommonTextStyle,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
+  handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
 import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
@@ -204,19 +198,8 @@ export function newBoardEntitySelectedState(): AppCanvasState {
             boundingHitResult = hitBounding;
             ctx.redraw();
           }
-          if (boundingHitResult) {
-            ctx.setCursor();
-            return;
-          }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(
-            shapeComposite,
-            event.data.current,
-            shapeComposite.getSelectionScope(targetShape),
-          );
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -224,57 +207,23 @@ export function newBoardEntitySelectedState(): AppCanvasState {
               ctx.deleteShapes([targetShape.id]);
               return;
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
         case "shape-updated": {
-          const shapeComposite = ctx.getShapeComposite();
-          const shape = shapeComposite.mergedShapeMap[targetShape.id];
-          if (!shape) return newSelectionHubState;
-
-          if (boardHandler.isBoardChanged(Array.from(event.data.keys))) {
+          const result = handleIntransientEvent(ctx, event);
+          if (!result && boardHandler.isBoardChanged(Array.from(event.data.keys))) {
             initHandler(ctx);
           }
-          return;
+          return result;
         }
-        case "text-style": {
-          return handleCommonTextStyle(ctx, event);
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
-        case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
             items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {

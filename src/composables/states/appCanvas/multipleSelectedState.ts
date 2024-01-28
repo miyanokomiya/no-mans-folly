@@ -1,16 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import {
-  getCommonCommandExams,
-  handleCommonShortcut,
-  handleCommonTextStyle,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
-  startTextEditingIfPossible,
-} from "./commons";
+import { getCommonCommandExams, handleIntransientEvent, startTextEditingIfPossible } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -21,7 +11,7 @@ import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
 import { findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
@@ -95,6 +85,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       ctx.hideFloatMenu();
       ctx.setContextMenuList();
       ctx.setCommandExams();
+      ctx.setCursor();
     },
     handleEvent: (ctx, event) => {
       if (!selectedIdMap) return;
@@ -169,15 +160,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
             hitResult = _hitResult;
             ctx.redraw();
           }
-          if (hitResult) {
-            ctx.setCursor();
-            return;
-          }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.current, scode);
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -185,53 +169,16 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               ctx.deleteShapes(Object.keys(selectedIdMap));
               return;
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "shape-updated": {
-          if (Object.keys(selectedIdMap).some((id) => event.data.keys.has(id))) {
-            return newSelectionHubState;
-          }
-          return;
-        }
-        case "text-style": {
-          return handleCommonTextStyle(ctx, event);
-        }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newMultipleSelectedState;
-        case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
             items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {

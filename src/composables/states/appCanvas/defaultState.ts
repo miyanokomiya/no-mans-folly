@@ -1,15 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
-import {
-  getCommonCommandExams,
-  getInlineLinkInfoAt,
-  handleCommonShortcut,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
-} from "./commons";
+import { getCommonCommandExams, handleIntransientEvent } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
@@ -27,6 +18,7 @@ const state: AppCanvasState = {
   onEnd(ctx) {
     ctx.setCommandExams();
     ctx.setLinkInfo();
+    ctx.setCursor();
   },
   handleEvent: (ctx, event) => {
     switch (event.type) {
@@ -62,39 +54,8 @@ const state: AppCanvasState = {
           default:
             return;
         }
-      case "pointerhover": {
-        const shapeComposite = ctx.getShapeComposite();
-        const shape = shapeComposite.findShapeAt(event.data.current);
-
-        if (shape) {
-          const linkInfo = getInlineLinkInfoAt(ctx, shape, event.data.current);
-          ctx.setCursor(linkInfo ? "pointer" : undefined);
-          ctx.setLinkInfo(linkInfo);
-        } else {
-          ctx.setCursor(undefined);
-        }
-        return;
-      }
-      case "keydown":
-        return handleCommonShortcut(ctx, event);
-      case "wheel":
-        handleCommonWheel(ctx, event);
-        return;
-      case "history":
-        return handleHistoryEvent(ctx, event);
-      case "state":
-        return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
-      case "paste": {
-        const clipboard = newShapeClipboard(ctx);
-        clipboard.onPaste(event.nativeEvent);
-        return;
-      }
-      case "file-drop": {
-        handleFileDrop(ctx, event);
-        return;
-      }
       default:
-        return;
+        return handleIntransientEvent(ctx, event);
     }
   },
 };
