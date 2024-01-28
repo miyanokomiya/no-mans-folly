@@ -61,6 +61,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
     onStart: (ctx) => {
       ctx.setCursor();
       ctx.showFloatMenu();
+      ctx.setLinkInfo();
       ctx.startTextEditing();
       ctx.setTmpShapeMap({});
       ctx.setTmpDocMap({});
