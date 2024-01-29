@@ -14,7 +14,7 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
+import { CONTEXT_MENU_COPY_SHAPE_ITEMS, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
@@ -228,7 +228,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
-            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
             point: event.data.point,
           });
           return;

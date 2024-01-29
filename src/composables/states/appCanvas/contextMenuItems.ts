@@ -14,7 +14,17 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Copy as PNG",
     key: "COPY_AS_PNG",
   },
+  COPY_AS_SVG: {
+    label: "Copy as SVG",
+    key: "COPY_AS_SVG",
+  },
 } satisfies { [key: string]: ContextMenuItem };
+
+export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
+  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG,
+  CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
+  CONTEXT_MENU_ITEM_SRC.COPY_AS_SVG,
+];
 
 export function handleContextItemEvent(
   ctx: AppCanvasStateContext,

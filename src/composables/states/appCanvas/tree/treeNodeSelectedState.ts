@@ -7,7 +7,7 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
+import { CONTEXT_MENU_COPY_SHAPE_ITEMS } from "../contextMenuItems";
 import { getNextShapeComposite } from "../../../shapeComposite";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
@@ -199,7 +199,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
           }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
             point: event.data.point,
           });
           return;

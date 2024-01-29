@@ -11,7 +11,7 @@ import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC } from "./contextMenuItems";
+import { CONTEXT_MENU_COPY_SHAPE_ITEMS } from "./contextMenuItems";
 import { findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
@@ -173,7 +173,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
             point: event.data.point,
           });
           return;
