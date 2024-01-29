@@ -43,3 +43,31 @@ export type ImageBuilder = ReturnType<typeof newImageBuilder>;
 function createCanvas(): HTMLCanvasElement {
   return document.createElement("canvas");
 }
+
+interface SVGOption {
+  render: (renderCtx: CanvasRenderingContext2D) => SVGElement;
+  range: IRectangle;
+}
+
+export function newSVGImageBuilder({ render, range }: SVGOption) {
+  const canvas = createCanvas();
+  const rate = Math.min(1, MAX_SIZE / Math.max(range.width, range.height));
+  canvas.width = Math.ceil(range.width * rate);
+  canvas.height = Math.ceil(range.height * rate);
+  const renderCtx = canvas.getContext("2d")!;
+  const elm = render(renderCtx);
+
+  function toBlob() {
+    const svg = new XMLSerializer().serializeToString(elm);
+    return new Blob([`${XML_PROLONG}\n${svg}`], { type: "image/svg+xml" });
+  }
+
+  function toDataURL(): string {
+    return URL.createObjectURL(toBlob());
+  }
+
+  return { toBlob, toDataURL };
+}
+export type SVGImageBuilder = ReturnType<typeof newSVGImageBuilder>;
+
+const XML_PROLONG = '<?xml version = "1.0" standalone = "no"?>';

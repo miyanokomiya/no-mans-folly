@@ -36,6 +36,7 @@ export interface ShapeStruct<T extends Shape> {
    * "shapeMap" and "treeNode" are used for such purpose.
    */
   render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
+  createSVGElement: (shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => SVGElement;
   getWrapperRect: (shape: T, shapeContext?: ShapeContext, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T, shapeContext?: ShapeContext) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle;

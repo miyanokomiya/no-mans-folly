@@ -67,6 +67,10 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(option.getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
+  function createSVGElement(shape: Shape, imageStore?: ImageStore): SVGElement {
+    return shapeModule.createSVGElement(option.getStruct, shape, mergedShapeContext, imageStore);
+  }
+
   function findShapeAt(
     p: IVec2,
     scope?: ShapeSelectionScope,
@@ -172,6 +176,7 @@ export function newShapeComposite(option: Option) {
     getAllTransformTargets,
 
     render,
+    createSVGElement,
     findShapeAt,
     isPointOn,
     getWrapperRect,

@@ -76,6 +76,16 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeContext, imageStore);
 }
 
+export function createSVGElement<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  shapeContext: ShapeContext,
+  imageStore?: ImageStore,
+): SVGElement {
+  const struct = getStruct(shape.type);
+  return struct.createSVGElement(shape, shapeContext, imageStore);
+}
+
 export function getWrapperRect(
   getStruct: GetShapeStruct,
   shape: Shape,
