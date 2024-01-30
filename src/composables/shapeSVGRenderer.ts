@@ -48,6 +48,33 @@ export function newShapeSVGRenderer(option: Option) {
       }
     });
 
+    // Embed asset files used in this SVG.
+    const usedAssetIdSet = new Set();
+    root.querySelectorAll("use[href]").forEach((elm) => {
+      const assetId = (elm as SVGUseElement).href.baseVal.slice(1);
+      if (usedAssetIdSet.has(assetId)) return;
+
+      usedAssetIdSet.add(assetId);
+      const img = option.imageStore?.getImage(assetId);
+      if (!img) return;
+
+      const assetCanvas = document.createElement("canvas");
+      assetCanvas.width = img.width;
+      assetCanvas.height = img.height;
+      const assetCtx = assetCanvas.getContext("2d");
+      if (!assetCtx) return;
+
+      assetCtx.drawImage(img, 0, 0, img.width, img.height);
+      const base64 = assetCanvas.toDataURL();
+      const imageElm = createSVGElement("image", {
+        id: assetId,
+        href: base64,
+        width: img.width,
+        height: img.height,
+      });
+      root.appendChild(imageElm);
+    });
+
     return root;
   }
 
