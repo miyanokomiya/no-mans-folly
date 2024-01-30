@@ -3,7 +3,7 @@ import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from 
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "../composables/cache";
-import { createSVGElement } from "./svgElements";
+import { SVGElementInfo } from "./svgElements";
 
 export const DEFAULT_FONT_SIZE = 18;
 export const DEFAULT_LINEHEIGHT = 1.2;
@@ -169,20 +169,25 @@ export function renderDocByComposition(
 export function renderSVGDocByComposition(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
-): SVGElement {
-  const rootElement = createSVGElement<SVGGElement>("g", {
-    "alignment-baseline": "alphabetic",
-  });
-  const bgElement = createSVGElement<SVGGElement>("g");
-  const textElement = createSVGElement<SVGTextElement>("text", {
-    stroke: "none",
-    fill: "#000",
-    "font-size": DEFAULT_FONT_SIZE,
-  });
-  const fwElement = createSVGElement<SVGGElement>("g");
-  rootElement.appendChild(bgElement);
-  rootElement.appendChild(textElement);
-  rootElement.appendChild(fwElement);
+): SVGElementInfo {
+  const bgElement: SVGElementInfo = { tag: "g", children: [] };
+  const textElement: SVGElementInfo = {
+    tag: "text",
+    attributes: {
+      stroke: "none",
+      fill: "#000",
+      "font-size": DEFAULT_FONT_SIZE,
+    },
+    children: [],
+  };
+  const fwElement: SVGElementInfo = { tag: "g", children: [] };
+  const rootElement: SVGElementInfo = {
+    tag: "g",
+    attributes: {
+      "alignment-baseline": "alphabetic",
+    },
+    children: [bgElement, textElement, fwElement],
+  };
 
   let index = 0;
   compositionLines.forEach((line) => {
@@ -199,37 +204,43 @@ export function renderSVGDocByComposition(
       const lineComposition = composition[index];
 
       if (op.attributes?.background) {
-        const rectElement = createSVGElement<SVGRectElement>("rect", {
-          x: lineComposition.bounds.x,
-          y: lineComposition.bounds.y,
-          width: lineComposition.bounds.width,
-          height: lineHeight,
-          fill: op.attributes.background,
+        bgElement.children?.push({
+          tag: "rect",
+          attributes: {
+            x: lineComposition.bounds.x,
+            y: lineComposition.bounds.y,
+            width: lineComposition.bounds.width,
+            height: lineHeight,
+            fill: op.attributes.background,
+          },
         });
-        bgElement.appendChild(rectElement);
       }
 
-      const tspanElement = createSVGElement<SVGTSpanElement>("tspan", {
-        x: lineComposition.bounds.x,
-        y: fontTop + fontHeight * 0.8,
-        fill: op.attributes?.color ?? undefined,
-        "font-size": op.attributes?.size ?? undefined,
-        "font-weight": op.attributes?.bold ? "bold" : undefined,
-        "font-style": op.attributes?.italic ? "italic" : undefined,
+      textElement.children?.push({
+        tag: "tspan",
+        attributes: {
+          x: lineComposition.bounds.x,
+          y: fontTop + fontHeight * 0.8,
+          fill: op.attributes?.color ?? undefined,
+          "font-size": op.attributes?.size ?? undefined,
+          "font-weight": op.attributes?.bold ? "bold" : undefined,
+          "font-style": op.attributes?.italic ? "italic" : undefined,
+        },
+        children: [op.insert],
       });
-      tspanElement.textContent = op.insert;
-      textElement.appendChild(tspanElement);
 
       const drawHorizontalLine = (y: number) => {
-        const lineElement = createSVGElement<SVGLineElement>("line", {
-          x1: lineComposition.bounds.x,
-          y1: y,
-          x2: lineComposition.bounds.x + lineComposition.bounds.width,
-          y2: y,
-          stroke: op.attributes?.color ?? "#000",
-          "stroke-width": fontHeight * 0.07,
+        fwElement.children?.push({
+          tag: "line",
+          attributes: {
+            x1: lineComposition.bounds.x,
+            y1: y,
+            x2: lineComposition.bounds.x + lineComposition.bounds.width,
+            y2: y,
+            stroke: op.attributes?.color ?? "#000",
+            "stroke-width": fontHeight * 0.07,
+          },
         });
-        fwElement.appendChild(lineElement);
       };
 
       if (op.attributes?.underline) {

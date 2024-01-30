@@ -37,11 +37,13 @@ export function newShapeSVGRenderer(option: Option) {
           option.shapeComposite.setDocCompositeCache(shape.id, info);
         }
 
-        const docElm = renderSVGDocByComposition(info.composition, info.lines);
+        const docElmInfo = renderSVGDocByComposition(info.composition, info.lines);
         const transform = renderTransform(bounds.affine);
         if (transform) {
-          docElm.setAttribute("transform", transform);
+          docElmInfo.attributes ??= {};
+          docElmInfo.attributes.transform = renderTransform(bounds.affine);
         }
+        const docElm = createSVGElement(docElmInfo.tag, docElmInfo.attributes, docElmInfo.children);
         root.appendChild(docElm);
       }
     });

@@ -3,7 +3,7 @@ import { isIdentityAffine } from "./geometry";
 
 const SVG_URL = "http://www.w3.org/2000/svg";
 
-export type SVGElementInfo = { tag: string; attributes?: SVGAttributes };
+export type SVGElementInfo = { tag: string; attributes?: SVGAttributes; children?: (SVGElementInfo | string)[] };
 
 export type SVGAttributes = { [name: string]: string | number | undefined } | null;
 
@@ -15,21 +15,46 @@ export function createSVGSVGElement(attributes: SVGAttributes = null): SVGSVGEle
   });
 }
 
-export function createSVGElement<T extends SVGElement>(tag: string, attributes: SVGAttributes = null): T {
-  const $el = document.createElementNS(SVG_URL, tag) as T;
-  return createElement($el, attributes);
+export function createSVGElement<T extends SVGElement>(
+  tag: string,
+  attributes: SVGAttributes = null,
+  children: (SVGElementInfo | string)[] = [],
+): T {
+  return createElement(
+    document.createElementNS(SVG_URL, tag) as T,
+    attributes,
+    children?.map((c) => (isPlainText(c) ? new Text(c) : createSVGElement(c.tag, c.attributes, c.children))),
+  );
 }
 
-function createElement<T extends SVGElement>($el: T, attributes: SVGAttributes = null): T {
+function createElement<T extends SVGElement>(
+  $el: T,
+  attributes: SVGAttributes = null,
+  children: (SVGElement | Text)[] = [],
+): T {
   for (const key in attributes) {
     const val = attributes[key];
     if (val != null) {
       $el.setAttribute(key, val.toString());
     }
   }
+  appendChildren($el, children);
   return $el;
 }
 
 export function renderTransform(affine: AffineMatrix): string | undefined {
   return isIdentityAffine(affine) ? undefined : `matrix(${affine.join(" ")})`;
+}
+
+function appendChildren($el: SVGElement, $children: (SVGElement | Text)[]) {
+  const $fragment = document.createDocumentFragment();
+  for (let i = 0; i < $children.length; i++) {
+    const item = $children[i];
+    $fragment.appendChild(item);
+  }
+  $el.appendChild($fragment);
+}
+
+export function isPlainText(elm: unknown): elm is string {
+  return typeof elm === "string";
 }
