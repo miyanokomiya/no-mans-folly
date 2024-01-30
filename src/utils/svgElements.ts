@@ -7,6 +7,14 @@ export type SVGElementInfo = { tag: string; attributes?: SVGAttributes };
 
 export type SVGAttributes = { [name: string]: string | number | undefined } | null;
 
+export function createSVGSVGElement(attributes: SVGAttributes = null): SVGSVGElement {
+  return createSVGElement<SVGSVGElement>("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    "font-family": "Arial",
+    ...attributes,
+  });
+}
+
 export function createSVGElement<T extends SVGElement>(tag: string, attributes: SVGAttributes = null): T {
   const $el = document.createElementNS(SVG_URL, tag) as T;
   return createElement($el, attributes);

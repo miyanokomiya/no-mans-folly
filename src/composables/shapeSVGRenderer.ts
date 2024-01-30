@@ -1,6 +1,6 @@
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
-import { createSVGElement } from "../utils/svgElements";
+import { createSVGElement, createSVGSVGElement } from "../utils/svgElements";
 import { getDocCompositionInfo, renderDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
@@ -17,7 +17,7 @@ export function newShapeSVGRenderer(option: Option) {
   const docMap = option.getDocumentMap();
 
   function render(ctx: CanvasRenderingContext2D): SVGSVGElement {
-    const root = createSVGElement<SVGSVGElement>("svg");
+    const root = createSVGSVGElement();
 
     walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];

@@ -1,5 +1,6 @@
 import { expect, describe, test } from "vitest";
-import { applyFillStyle, createFillStyle } from "./fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "./fillStyle";
+import { COLORS } from "./color";
 
 describe("createFillStyle", () => {
   test("should return new FillStyle", () => {
@@ -19,5 +20,14 @@ describe("applyFillStyle", () => {
       }),
     );
     expect(ctx.fillStyle).toBe("rgba(1,2,3,0.5)");
+  });
+});
+
+describe("renderFillSVGAttributes", () => {
+  test("should return SVG attributes for the stroke style", () => {
+    expect(renderFillSVGAttributes({ color: COLORS.BLACK, disabled: true })).toEqual({ fill: "none" });
+    expect(renderFillSVGAttributes({ color: COLORS.BLACK })).toEqual({
+      fill: "rgba(0,0,0,1)",
+    });
   });
 });
