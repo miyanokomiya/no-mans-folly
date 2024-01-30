@@ -102,6 +102,13 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
 
 async function exportShapesAsSVG(ctx: AppCanvasStateContext): Promise<void> {
   const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
+  if (targetShapes.length === 0) {
+    ctx.showToastMessage({
+      text: "No shape is selected",
+      type: "error",
+    });
+    return;
+  }
 
   const renderer = newShapeSVGRenderer({
     shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),

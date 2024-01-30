@@ -16,13 +16,17 @@ export function newShapeSVGRenderer(option: Option) {
   const { mergedShapeMap, mergedShapeTree } = option.shapeComposite;
   const docMap = option.getDocumentMap();
 
-  function render(ctx: CanvasRenderingContext2D): SVGElement {
-    const root = createSVGElement("svg");
+  function render(ctx: CanvasRenderingContext2D): SVGSVGElement {
+    const root = createSVGElement<SVGSVGElement>("svg");
 
     walkTree(mergedShapeTree, (node) => {
-      // const shape = mergedShapeMap[node.id];
-      // const elm = option.shapeComposite.createSVGElement(shape, option.imageStore);
-      // root.appendChild(elm);
+      const shape = mergedShapeMap[node.id];
+      const info = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
+      console.log(info, shape);
+      if (!info) return;
+
+      const elm = createSVGElement(info.tag, info.attributes);
+      root.appendChild(elm);
 
       // const doc = docMap[shape.id];
       // if (doc) {

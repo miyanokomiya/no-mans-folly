@@ -1,15 +1,27 @@
+import { AffineMatrix } from "okageo";
+import { isIdentityAffine } from "./geometry";
+
 const SVG_URL = "http://www.w3.org/2000/svg";
 
-type Attributes = { [name: string]: string } | null;
+export type SVGElementInfo = { tag: string; attributes?: SVGAttributes };
 
-export function createSVGElement(tag: string, attributes: Attributes = null): SVGElement {
-  const $el = document.createElementNS(SVG_URL, tag);
+export type SVGAttributes = { [name: string]: string | number | undefined } | null;
+
+export function createSVGElement<T extends SVGElement>(tag: string, attributes: SVGAttributes = null): T {
+  const $el = document.createElementNS(SVG_URL, tag) as T;
   return createElement($el, attributes);
 }
 
-function createElement($el: SVGElement, attributes: Attributes = null): SVGElement {
+function createElement<T extends SVGElement>($el: T, attributes: SVGAttributes = null): T {
   for (const key in attributes) {
-    $el.setAttribute(key, attributes[key].toString());
+    const val = attributes[key];
+    if (val != null) {
+      $el.setAttribute(key, val.toString());
+    }
   }
   return $el;
+}
+
+export function renderTransform(affine: AffineMatrix): string | undefined {
+  return isIdentityAffine(affine) ? undefined : `matrix(${affine.join(" ")})`;
 }

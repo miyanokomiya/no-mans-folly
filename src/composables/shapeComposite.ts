@@ -13,6 +13,7 @@ import {
 } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 import { DocCompositionInfo } from "../utils/textEditor";
+import { SVGElementInfo } from "../utils/svgElements";
 
 interface Option {
   shapes: Shape[];
@@ -67,8 +68,8 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(option.getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
-  function createSVGElement(shape: Shape, imageStore?: ImageStore): SVGElement {
-    return shapeModule.createSVGElement(option.getStruct, shape, mergedShapeContext, imageStore);
+  function createSVGElementInfo(shape: Shape, imageStore?: ImageStore): SVGElementInfo | undefined {
+    return shapeModule.createSVGElementInfo(option.getStruct, shape, mergedShapeContext, imageStore);
   }
 
   function findShapeAt(
@@ -176,7 +177,7 @@ export function newShapeComposite(option: Option) {
     getAllTransformTargets,
 
     render,
-    createSVGElement,
+    createSVGElementInfo,
     findShapeAt,
     isPointOn,
     getWrapperRect,

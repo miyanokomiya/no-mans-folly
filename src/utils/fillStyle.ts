@@ -1,5 +1,6 @@
 import { FillStyle } from "../models";
 import { isSameColor, rednerRGBA } from "./color";
+import { SVGAttributes } from "./svgElements";
 
 export function createFillStyle(arg: Partial<FillStyle> = {}): FillStyle {
   return {
@@ -14,4 +15,12 @@ export function isSameFillStyle(a?: FillStyle, b?: FillStyle): boolean {
 
 export function applyFillStyle(ctx: CanvasRenderingContext2D, fill: FillStyle) {
   ctx.fillStyle = rednerRGBA(fill.color);
+}
+
+export function renderFillSVGAttributes(fill: FillStyle): SVGAttributes {
+  return fill.disabled
+    ? { fill: "none" }
+    : {
+        fill: rednerRGBA(fill.color),
+      };
 }

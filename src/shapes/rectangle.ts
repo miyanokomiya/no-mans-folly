@@ -10,7 +10,7 @@ import {
   rotate,
 } from "okageo";
 import { CommonStyle, Shape } from "../models";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   getClosestOutlineOnRectangle,
   getRectPoints,
@@ -19,8 +19,9 @@ import {
   isPointOnRectangleRotated,
   expandRect,
   getIntersectedOutlinesOnPolygon,
+  getRotatedRectAffine,
 } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import {
   ShapeStruct,
   TextContainer,
@@ -30,6 +31,7 @@ import {
   updateCommonStyle,
 } from "./core";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
+import { renderTransform } from "../utils/svgElements";
 
 export type RectangleShape = Shape &
   CommonStyle &
@@ -68,6 +70,21 @@ export const struct: ShapeStruct<RectangleShape> = {
       applyStrokeStyle(ctx, shape.stroke);
       ctx.stroke();
     }
+  },
+  createSVGElementInfo(shape) {
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    return {
+      tag: "rect",
+      attributes: {
+        width: shape.width,
+        height: shape.height,
+        transform: renderTransform(affine),
+        ...renderFillSVGAttributes(shape.fill),
+        ...renderStrokeSVGAttributes(shape.stroke),
+      },
+    };
   },
   getWrapperRect(shape, _, includeBounds) {
     let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };

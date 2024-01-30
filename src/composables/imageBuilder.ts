@@ -45,7 +45,7 @@ function createCanvas(): HTMLCanvasElement {
 }
 
 interface SVGOption {
-  render: (renderCtx: CanvasRenderingContext2D) => SVGElement;
+  render: (renderCtx: CanvasRenderingContext2D) => SVGSVGElement;
   range: IRectangle;
 }
 
@@ -56,6 +56,7 @@ export function newSVGImageBuilder({ render, range }: SVGOption) {
   canvas.height = Math.ceil(range.height * rate);
   const renderCtx = canvas.getContext("2d")!;
   const elm = render(renderCtx);
+  elm.setAttribute("viewBox", `${range.x} ${range.y} ${range.width} ${range.height}`);
 
   function toBlob() {
     const svg = new XMLSerializer().serializeToString(elm);

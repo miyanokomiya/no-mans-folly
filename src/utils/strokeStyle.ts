@@ -1,11 +1,20 @@
 import { LineDash, StrokeStyle } from "../models";
 import { isSameColor, rednerRGBA } from "./color";
+import { SVGAttributes } from "./svgElements";
 
 export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
   return {
     color: { r: 0, g: 0, b: 0, a: 1 },
     ...arg,
   };
+}
+
+function getLineCap(lineCap?: CanvasLineCap): CanvasLineCap {
+  return lineCap ?? "butt";
+}
+
+function getLineJoin(lineJoin?: CanvasLineJoin): CanvasLineJoin {
+  return lineJoin ?? "round";
 }
 
 export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
@@ -17,8 +26,8 @@ export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeSt
   const width = getStrokeWidth(stroke);
   ctx.lineWidth = width;
   ctx.setLineDash(getLineDashArray(stroke.dash, width));
-  ctx.lineCap = stroke.lineCap ?? "butt";
-  ctx.lineJoin = stroke.lineJoin ?? "round";
+  ctx.lineCap = getLineCap(stroke.lineCap);
+  ctx.lineJoin = getLineJoin(stroke.lineJoin);
 }
 
 export function getStrokeWidth(stroke: StrokeStyle): number {
@@ -45,4 +54,16 @@ export function getLineDashArray(lineDash: LineDash, width = 1): number[] {
     default:
       return [];
   }
+}
+
+export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
+  return stroke.disabled
+    ? { stroke: "none" }
+    : {
+        stroke: rednerRGBA(stroke.color),
+        "stroke-width": stroke.width,
+        "stroke-linecap": getLineCap(stroke.lineCap),
+        "stroke-linejoin": getLineJoin(stroke.lineJoin),
+        "stroke-dasharray": stroke.dash ? getLineDashArray(stroke.dash, stroke.width).join(" ") : undefined,
+      };
 }

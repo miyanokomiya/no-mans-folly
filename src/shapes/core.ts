@@ -5,6 +5,7 @@ import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "../composables/imageStore";
 import { isSameBoxPadding } from "../utils/boxPadding";
+import { SVGElementInfo } from "../utils/svgElements";
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
 
@@ -36,7 +37,7 @@ export interface ShapeStruct<T extends Shape> {
    * "shapeMap" and "treeNode" are used for such purpose.
    */
   render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
-  createSVGElement: (shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => SVGElement;
+  createSVGElementInfo?: (shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => SVGElementInfo | undefined;
   getWrapperRect: (shape: T, shapeContext?: ShapeContext, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T, shapeContext?: ShapeContext) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle;
