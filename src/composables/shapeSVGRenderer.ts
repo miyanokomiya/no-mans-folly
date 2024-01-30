@@ -1,7 +1,7 @@
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
-import { createSVGElement, createSVGSVGElement } from "../utils/svgElements";
-import { getDocCompositionInfo, renderDocByComposition } from "../utils/textEditor";
+import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
+import { getDocCompositionInfo, renderSVGDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
@@ -22,25 +22,28 @@ export function newShapeSVGRenderer(option: Option) {
     walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];
       const info = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
-      console.log(info, shape);
       if (!info) return;
 
       const elm = createSVGElement(info.tag, info.attributes);
       root.appendChild(elm);
 
-      // const doc = docMap[shape.id];
-      // if (doc) {
-      //   const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
+      const doc = docMap[shape.id];
+      if (doc) {
+        const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
 
-      //   const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
-      //   const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
-      //   if (!infoCache) {
-      //     option.shapeComposite.setDocCompositeCache(shape.id, info);
-      //   }
+        const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
+        const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
+        if (!infoCache) {
+          option.shapeComposite.setDocCompositeCache(shape.id, info);
+        }
 
-      //   renderDocByComposition(ctx, info.composition, info.lines);
-      //   ctx.restore();
-      // }
+        const docElm = renderSVGDocByComposition(info.composition, info.lines);
+        const transform = renderTransform(bounds.affine);
+        if (transform) {
+          docElm.setAttribute("transform", transform);
+        }
+        root.appendChild(docElm);
+      }
     });
 
     return root;
