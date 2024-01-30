@@ -1,10 +1,11 @@
 import { Shape } from "../models";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { getRotatedRectAffine } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { mapReduce } from "../utils/commons";
+import { renderTransform } from "../utils/svgElements";
 
 export type EmojiShape = RectangleShape & {
   emoji: string;
@@ -52,6 +53,39 @@ export const struct: ShapeStruct<EmojiShape> = {
     }
 
     ctx.restore();
+  },
+  createSVGElementInfo(shape) {
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    return {
+      tag: "g",
+      attributes: {
+        transform: renderTransform(affine),
+      },
+      children: [
+        {
+          tag: "rect",
+          attributes: {
+            width: shape.width,
+            height: shape.height,
+            ...renderFillSVGAttributes(shape.fill),
+            ...renderStrokeSVGAttributes(shape.stroke),
+          },
+        },
+        {
+          tag: "text",
+          attributes: {
+            x: shape.width / 2,
+            y: shape.height / 2,
+            "font-size": shape.height * 0.9,
+            "alignment-baseline": "central",
+            "text-anchor": "middle",
+          },
+          children: [shape.emoji],
+        },
+      ],
+    };
   },
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),

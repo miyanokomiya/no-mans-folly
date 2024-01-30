@@ -24,7 +24,7 @@ export function newShapeSVGRenderer(option: Option) {
       const info = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
       if (!info) return;
 
-      const elm = createSVGElement(info.tag, info.attributes);
+      const elm = createSVGElement(info.tag, info.attributes, info.children);
       root.appendChild(elm);
 
       const doc = docMap[shape.id];
