@@ -198,6 +198,14 @@ export function renderSVGDocByComposition(
     const fontPadding = (line.height - line.fontheight) / 2;
     const fontTop = lineTop + fontPadding;
     const fontHeight = line.fontheight;
+    const lineElement: SVGElementInfo = {
+      tag: "tspan",
+      attributes: {
+        y: fontTop + fontHeight * 0.8,
+      },
+      children: [],
+    };
+    textElement.children!.push(lineElement);
 
     // TODO: Reduce the number element for background, underline and strike.
     line.outputs.forEach((op) => {
@@ -216,11 +224,10 @@ export function renderSVGDocByComposition(
         });
       }
 
-      textElement.children?.push({
+      lineElement.children!.push({
         tag: "tspan",
         attributes: {
           x: lineComposition.bounds.x,
-          y: fontTop + fontHeight * 0.8,
           fill: op.attributes?.color ?? undefined,
           "font-size": op.attributes?.size ?? undefined,
           "font-weight": op.attributes?.bold ? "bold" : undefined,
