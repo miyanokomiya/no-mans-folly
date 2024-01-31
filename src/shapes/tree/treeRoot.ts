@@ -1,12 +1,14 @@
 import { Shape } from "../../models";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
-import { applyFillStyle, createFillStyle } from "../../utils/fillStyle";
-import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
+import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
 import { struct as groupStruct } from "../group";
 import { TreeShapeBase } from "./core";
 import { applyLocalSpace } from "../../utils/renderer";
+import { getRotatedRectAffine } from "../../utils/geometry";
+import { renderTransform } from "../../utils/svgElements";
 
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 60;
@@ -49,6 +51,30 @@ export const struct: ShapeStruct<TreeRootShape> = {
         }
       },
     );
+  },
+  createSVGElementInfo(shape) {
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    return {
+      tag: "g",
+      attributes: {
+        transform: renderTransform(affine),
+        ...renderFillSVGAttributes(shape.fill),
+        ...renderStrokeSVGAttributes(shape.stroke),
+      },
+      children: [
+        {
+          tag: "rect",
+          attributes: {
+            rx: 6,
+            ry: 6,
+            width: shape.width,
+            height: shape.height,
+          },
+        },
+      ],
+    };
   },
   resize(shape, resizingAffine) {
     const ret: Partial<TreeRootShape> = { ...recntagleStruct.resize(shape, resizingAffine) };

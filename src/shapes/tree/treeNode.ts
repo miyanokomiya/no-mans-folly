@@ -1,7 +1,7 @@
 import { IVec2, add } from "okageo";
 import { BoxAlign, Direction4, Shape } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
-import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { TreeRootShape, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase } from "./core";
@@ -54,6 +54,33 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     }
 
     treeRootStruct.render(ctx, shape);
+  },
+  createSVGElementInfo(shape, shapeContext) {
+    const body = treeRootStruct.createSVGElementInfo!(shape, shapeContext)!;
+    const treeRoot = shapeContext?.shapeMap[shape.parentId ?? ""];
+    if (!isTreeRootShape(treeRoot)) return body;
+
+    const treeParent = shapeContext?.shapeMap[shape.treeParentId];
+    if (!treeParent || !isTreeShapeBase(treeParent)) return body;
+
+    const toP = getParentConnectionPoint(treeParent, shape.direction);
+    const fromP = getChildConnectionPoint(shape);
+    return {
+      tag: "g",
+      children: [
+        {
+          tag: "line",
+          attributes: {
+            x1: fromP.x,
+            y1: fromP.y,
+            x2: toP.x,
+            y2: toP.y,
+            ...renderStrokeSVGAttributes(shape.stroke),
+          },
+        },
+        body,
+      ],
+    };
   },
   immigrateShapeIds(shape, oldToNewIdMap) {
     if (!oldToNewIdMap[shape.treeParentId] || !oldToNewIdMap[shape.parentId ?? ""]) {
