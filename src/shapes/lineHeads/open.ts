@@ -1,7 +1,7 @@
-import { applyAffine } from "okageo";
+import { AffineMatrix, applyAffine } from "okageo";
 import { LineHead } from "../../models";
 import { LineHeadStruct } from "./core";
-import { applyPath } from "../../utils/renderer";
+import { applyPath, createSVGCurvePath, pathSegmentRawListToString } from "../../utils/renderer";
 
 export const LineHeadOpen: LineHeadStruct<LineHead> = {
   label: "Open",
@@ -12,38 +12,51 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
     };
   },
   render(ctx, _head, transform, lineWidth) {
-    const height = 16 + lineWidth;
-    const width = 20 + lineWidth;
-
     ctx.beginPath();
-    applyPath(
-      ctx,
-      [
-        { x: -height, y: -width / 2 },
-        { x: 0, y: 0 },
-        { x: -height, y: width / 2 },
-      ].map((p) => applyAffine(transform, p)),
-    );
+    applyPath(ctx, getPath(transform, lineWidth));
     ctx.stroke();
   },
+  createSVGElementInfo(_head, transform, lineWidth) {
+    return {
+      tag: "path",
+      attributes: {
+        d: pathSegmentRawListToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
+        fill: "none",
+      },
+    };
+  },
   clip(region, _head, transform, lineWidth) {
-    const height = 12 + lineWidth;
-    const width = 12 + lineWidth;
-
-    applyPath(
-      region,
-      [
-        { x: 0, y: 0 },
-        { x: 0, y: -width / 2 },
-        { x: -height, y: -width / 2 },
-        { x: 0, y: 0 },
-        { x: -height, y: width / 2 },
-        { x: 0, y: width / 2 },
-      ].map((p) => applyAffine(transform, p)),
-      true,
-    );
+    applyPath(region, getClipPath(transform, lineWidth), true);
+  },
+  createSVGClipPathCommand(_head, transform, lineWidth) {
+    return pathSegmentRawListToString(createSVGCurvePath(getClipPath(transform, lineWidth), []));
   },
   getWrapperRadius(_head, lineWidth) {
     return (20 + lineWidth) * Math.SQRT2;
   },
 };
+
+function getPath(transform: AffineMatrix, lineWidth: number) {
+  const height = 12 + lineWidth;
+  const width = height;
+
+  return [
+    { x: -height, y: -width / 2 },
+    { x: 0, y: 0 },
+    { x: -height, y: width / 2 },
+  ].map((p) => applyAffine(transform, p));
+}
+
+function getClipPath(transform: AffineMatrix, lineWidth: number) {
+  const height = 12 + lineWidth;
+  const width = height;
+
+  return [
+    { x: 0, y: 0 },
+    { x: 0, y: -width / 2 },
+    { x: -height, y: -width / 2 },
+    { x: 0, y: 0 },
+    { x: -height, y: width / 2 },
+    { x: 0, y: width / 2 },
+  ].map((p) => applyAffine(transform, p));
+}
