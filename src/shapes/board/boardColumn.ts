@@ -1,8 +1,10 @@
 import { Shape } from "../../models";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
+import { getRotatedRectAffine } from "../../utils/geometry";
 import { applyLocalSpace } from "../../utils/renderer";
-import { applyStrokeStyle, createStrokeStyle } from "../../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
+import { renderTransform } from "../../utils/svgElements";
 import { ShapeStruct, createBaseShape } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
 
@@ -46,12 +48,45 @@ export const struct: ShapeStruct<BoardColumnShape> = {
         () => {
           applyStrokeStyle(ctx, shape.stroke);
           ctx.beginPath();
-          ctx.moveTo(shape.width * 0.03, titleHeight);
-          ctx.lineTo(shape.width * 0.97, titleHeight);
+          const [from, to] = getDelimiterLine(shape.width);
+          ctx.moveTo(from, titleHeight);
+          ctx.lineTo(to, titleHeight);
           ctx.stroke();
         },
       );
     }
+  },
+  createSVGElementInfo(shape, shapeContext) {
+    if (shape.stroke.disabled) return rectangleStruct.createSVGElementInfo?.(shape);
+
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+    const body = rectangleStruct.createSVGElementInfo!({ ...shape, p: { x: 0, y: 0 }, rotation: 0 })!;
+    const [from, to] = getDelimiterLine(shape.width);
+    const columns = shapeContext
+      ? (shapeContext.treeNodeMap[shape.parentId!]?.children ?? [])
+          .map((t) => shapeContext.shapeMap[t.id])
+          .filter(isBoardColumnShape)
+      : [];
+    const titleHeight = columns.reduce((m, c) => Math.max(m, c.titleHeight ?? 0), 0);
+
+    return {
+      tag: "g",
+      attributes: { transform: renderTransform(affine) },
+      children: [
+        body,
+        {
+          tag: "line",
+          attributes: {
+            x1: from,
+            y1: titleHeight,
+            x2: to,
+            y2: titleHeight,
+            ...renderStrokeSVGAttributes(shape.stroke),
+          },
+        },
+      ],
+    };
   },
   resize(shape, resizingAffine) {
     const resized = rectangleStruct.resize(shape, resizingAffine);
@@ -105,4 +140,8 @@ export const struct: ShapeStruct<BoardColumnShape> = {
 
 export function isBoardColumnShape(shape: Shape): shape is BoardColumnShape {
   return shape.type === "board_column";
+}
+
+function getDelimiterLine(width: number): [number, number] {
+  return [width * 0.03, width * 0.97];
 }
