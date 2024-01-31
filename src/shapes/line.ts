@@ -192,7 +192,7 @@ export const struct: ShapeStruct<LineShape> = {
           : []),
         {
           tag: "g",
-          attributes: { "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
+          attributes: { fill: "none", "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
           children: [
             ...(shape.fill.disabled
               ? [
@@ -200,7 +200,6 @@ export const struct: ShapeStruct<LineShape> = {
                     tag: "path",
                     attributes: {
                       d: pathStr,
-                      fill: "none",
                       ...renderStrokeSVGAttributes(shape.stroke),
                     },
                   },
@@ -210,7 +209,6 @@ export const struct: ShapeStruct<LineShape> = {
                     tag: "path",
                     attributes: {
                       d: pathStr,
-                      fill: "none",
                       ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false, color: shape.fill.color }),
                     },
                   },
@@ -218,7 +216,6 @@ export const struct: ShapeStruct<LineShape> = {
                     tag: "path",
                     attributes: {
                       d: pathStr,
-                      fill: "none",
                       ...renderStrokeSVGAttributes({ ...shape.stroke, width: getLineStrokeWidth(shape) }),
                     },
                   },

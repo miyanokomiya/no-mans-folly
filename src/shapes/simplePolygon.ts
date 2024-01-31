@@ -19,9 +19,10 @@ import {
   getRotateFn,
   getRotatedWrapperRect,
 } from "../utils/geometry";
-import { applyFillStyle } from "../utils/fillStyle";
-import { applyStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
+import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { CommonStyle, Direction4, Shape } from "../models";
+import { createSVGCurvePath, pathSegmentRawListToString } from "../utils/renderer";
 
 export type SimplePolygonShape = Shape &
   CommonStyle &
@@ -37,6 +38,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 ): Pick<
   ShapeStruct<T>,
   | "render"
+  | "createSVGElementInfo"
   | "getWrapperRect"
   | "getLocalRectPolygon"
   | "isPointOn"
@@ -67,6 +69,20 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         applyStrokeStyle(ctx, shape.stroke);
         ctx.stroke();
       }
+    },
+    createSVGElementInfo(shape) {
+      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
+      const rotateFn = getRotateFn(shape.rotation, center);
+      const path = getPath(shape).map((p) => rotateFn(p));
+
+      return {
+        tag: "path",
+        attributes: {
+          d: pathSegmentRawListToString(createSVGCurvePath(path, [], true)),
+          ...renderFillSVGAttributes(shape.fill),
+          ...renderStrokeSVGAttributes(shape.stroke),
+        },
+      };
     },
     getWrapperRect(shape, _, includeBounds) {
       let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
