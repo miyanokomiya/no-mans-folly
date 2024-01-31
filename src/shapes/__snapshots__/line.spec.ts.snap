@@ -1,0 +1,340 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`struct > createSVGElementInfo > should return SVG info > arc spline 1`] = `
+{
+  "children": [
+    {
+      "attributes": {
+        "clip-path": undefined,
+        "fill": "none",
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 A 6.249999999999999 6.249999999999999 0 1 1 10 0 A 14.499999999999998 14.499999999999998 0 0 0 10 20 L 100 100",
+            "stroke": "rgba(0,0,0,1)",
+            "stroke-dasharray": undefined,
+            "stroke-linecap": "butt",
+            "stroke-linejoin": "round",
+            "stroke-width": 2,
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+    {
+      "attributes": {
+        "fill": "rgba(0,0,0,1)",
+        "stroke": "rgba(0,0,0,1)",
+        "stroke-dasharray": undefined,
+        "stroke-linecap": "butt",
+        "stroke-linejoin": "round",
+        "stroke-width": 2,
+      },
+      "children": [],
+      "tag": "g",
+    },
+  ],
+  "tag": "g",
+}
+`;
+
+exports[`struct > createSVGElementInfo > should return SVG info > bezier spline 1`] = `
+{
+  "children": [
+    {
+      "attributes": {
+        "clip-path": undefined,
+        "fill": "none",
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 C 4 -10 8 -10 10 0 C 4 10 8 10 10 20 L 100 100",
+            "stroke": "rgba(0,0,0,1)",
+            "stroke-dasharray": undefined,
+            "stroke-linecap": "butt",
+            "stroke-linejoin": "round",
+            "stroke-width": 2,
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+    {
+      "attributes": {
+        "fill": "rgba(0,0,0,1)",
+        "stroke": "rgba(0,0,0,1)",
+        "stroke-dasharray": undefined,
+        "stroke-linecap": "butt",
+        "stroke-linejoin": "round",
+        "stroke-width": 2,
+      },
+      "children": [],
+      "tag": "g",
+    },
+  ],
+  "tag": "g",
+}
+`;
+
+exports[`struct > createSVGElementInfo > should return SVG info > straight spline 1`] = `
+{
+  "children": [
+    {
+      "attributes": {
+        "clip-path": undefined,
+        "fill": "none",
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 L 10 0 L 10 20 L 100 100",
+            "stroke": "rgba(0,0,0,1)",
+            "stroke-dasharray": undefined,
+            "stroke-linecap": "butt",
+            "stroke-linejoin": "round",
+            "stroke-width": 2,
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+    {
+      "attributes": {
+        "fill": "rgba(0,0,0,1)",
+        "stroke": "rgba(0,0,0,1)",
+        "stroke-dasharray": undefined,
+        "stroke-linecap": "butt",
+        "stroke-linejoin": "round",
+        "stroke-width": 2,
+      },
+      "children": [],
+      "tag": "g",
+    },
+  ],
+  "tag": "g",
+}
+`;
+
+exports[`struct > createSVGElementInfo > should return SVG info of line heads > closed_blank, closed_filled 1`] = `
+{
+  "children": [
+    {
+      "attributes": {
+        "id": "clip-a",
+        "stroke-width": 2,
+      },
+      "children": [
+        {
+          "attributes": {
+            "clip-rule": "evenodd",
+            "d": "M -19.79898987322333 -19.79898987322333 L 139.59797974644667 -19.79898987322333 L 139.59797974644667 139.59797974644667 L -19.79898987322333 139.59797974644667 M 0 0 L 4.949747468305831 14.849242404917497 L 14.849242404917497 4.949747468305834 Z M 100 100 L 95.05025253169417 85.1507575950825 L 85.1507575950825 95.05025253169417 Z",
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "clipPath",
+    },
+    {
+      "attributes": {
+        "clip-path": "url(#clip-a)",
+        "fill": "none",
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 L 100 100",
+            "stroke": "rgba(0,0,0,1)",
+            "stroke-dasharray": undefined,
+            "stroke-linecap": "butt",
+            "stroke-linejoin": "round",
+            "stroke-width": 2,
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+    {
+      "attributes": {
+        "fill": "rgba(0,0,0,1)",
+        "stroke": "rgba(0,0,0,1)",
+        "stroke-dasharray": undefined,
+        "stroke-linecap": "butt",
+        "stroke-linejoin": "round",
+        "stroke-width": 2,
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 L 4.949747468305831 14.849242404917497 L 14.849242404917497 4.949747468305834 Z",
+            "fill": "none",
+          },
+          "tag": "path",
+        },
+        {
+          "attributes": {
+            "d": "M 100 100 L 95.05025253169417 85.1507575950825 L 85.1507575950825 95.05025253169417 Z",
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+  ],
+  "tag": "g",
+}
+`;
+
+exports[`struct > createSVGElementInfo > should return SVG info of line heads > dot_blank, dot_filled 1`] = `
+{
+  "children": [
+    {
+      "attributes": {
+        "id": "clip-a",
+        "stroke-width": 2,
+      },
+      "children": [
+        {
+          "attributes": {
+            "clip-rule": "evenodd",
+            "d": "M -8 -8 L 116 -8 L 116 116 L -8 116 M -7 0 a 7 7 0 0 0 14 0 a 7 7 0 0 0 -14 0 M 93 100 a 7 7 0 0 0 14 0 a 7 7 0 0 0 -14 0",
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "clipPath",
+    },
+    {
+      "attributes": {
+        "clip-path": "url(#clip-a)",
+        "fill": "none",
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 L 100 100",
+            "stroke": "rgba(0,0,0,1)",
+            "stroke-dasharray": undefined,
+            "stroke-linecap": "butt",
+            "stroke-linejoin": "round",
+            "stroke-width": 2,
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+    {
+      "attributes": {
+        "fill": "rgba(0,0,0,1)",
+        "stroke": "rgba(0,0,0,1)",
+        "stroke-dasharray": undefined,
+        "stroke-linecap": "butt",
+        "stroke-linejoin": "round",
+        "stroke-width": 2,
+      },
+      "children": [
+        {
+          "attributes": {
+            "cx": 0,
+            "cy": 0,
+            "fill": "none",
+            "rx": 7,
+            "ry": 7,
+          },
+          "tag": "ellipse",
+        },
+        {
+          "attributes": {
+            "cx": 100,
+            "cy": 100,
+            "rx": 7,
+            "ry": 7,
+          },
+          "tag": "ellipse",
+        },
+      ],
+      "tag": "g",
+    },
+  ],
+  "tag": "g",
+}
+`;
+
+exports[`struct > createSVGElementInfo > should return SVG info of line heads > open 1`] = `
+{
+  "children": [
+    {
+      "attributes": {
+        "id": "clip-a",
+        "stroke-width": 2,
+      },
+      "children": [
+        {
+          "attributes": {
+            "clip-rule": "evenodd",
+            "d": "M -31.112698372208094 -31.112698372208094 L 116 -31.112698372208094 L 116 116 L -31.112698372208094 116 M 0 0 L -4.949747468305833 4.949747468305832 L 4.949747468305831 14.849242404917497 L 0 0 L 14.849242404917497 4.949747468305834 L 4.949747468305833 -4.949747468305832 M 93 100 a 7 7 0 0 0 14 0 a 7 7 0 0 0 -14 0",
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "clipPath",
+    },
+    {
+      "attributes": {
+        "clip-path": "url(#clip-a)",
+        "fill": "none",
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 0 0 L 100 100",
+            "stroke": "rgba(0,0,0,1)",
+            "stroke-dasharray": undefined,
+            "stroke-linecap": "butt",
+            "stroke-linejoin": "round",
+            "stroke-width": 2,
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "g",
+    },
+    {
+      "attributes": {
+        "fill": "rgba(0,0,0,1)",
+        "stroke": "rgba(0,0,0,1)",
+        "stroke-dasharray": undefined,
+        "stroke-linecap": "butt",
+        "stroke-linejoin": "round",
+        "stroke-width": 2,
+      },
+      "children": [
+        {
+          "attributes": {
+            "d": "M 4.949747468305831 14.849242404917497 L 0 0 L 14.849242404917497 4.949747468305834",
+            "fill": "none",
+          },
+          "tag": "path",
+        },
+        {
+          "attributes": {
+            "cx": 100,
+            "cy": 100,
+            "rx": 7,
+            "ry": 7,
+          },
+          "tag": "ellipse",
+        },
+      ],
+      "tag": "g",
+    },
+  ],
+  "tag": "g",
+}
+`;

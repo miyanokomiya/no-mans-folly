@@ -1,7 +1,7 @@
-import { AffineMatrix, applyAffine } from "okageo";
+import { AffineMatrix, applyAffine, pathSegmentRawsToString } from "okageo";
 import { LineHead } from "../../models";
 import { LineHeadStruct } from "./core";
-import { applyPath, createSVGCurvePath, pathSegmentRawListToString } from "../../utils/renderer";
+import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
 export const LineHeadOpen: LineHeadStruct<LineHead> = {
   label: "Open",
@@ -20,7 +20,7 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
     return {
       tag: "path",
       attributes: {
-        d: pathSegmentRawListToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
+        d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
         fill: "none",
       },
     };
@@ -29,7 +29,7 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
     applyPath(region, getClipPath(transform, lineWidth), true);
   },
   createSVGClipPathCommand(_head, transform, lineWidth) {
-    return pathSegmentRawListToString(createSVGCurvePath(getClipPath(transform, lineWidth), []));
+    return pathSegmentRawsToString(createSVGCurvePath(getClipPath(transform, lineWidth), []));
   },
   getWrapperRadius(_head, lineWidth) {
     return (20 + lineWidth) * Math.SQRT2;

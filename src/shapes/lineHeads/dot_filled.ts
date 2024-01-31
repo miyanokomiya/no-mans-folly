@@ -1,7 +1,7 @@
 import { LineHead } from "../../models";
 import { LineHeadStruct } from "./core";
 import { TAU } from "../../utils/geometry";
-import { pathSegmentRawListToString } from "../../utils/renderer";
+import { pathSegmentRawsToString } from "okageo";
 
 export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
   label: "Dot Filled",
@@ -41,7 +41,7 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
   },
   createSVGClipPathCommand(_head, transform, lineWidth) {
     const radius = getRadius(lineWidth);
-    return pathSegmentRawListToString([
+    return pathSegmentRawsToString([
       ["M", transform[4] - radius, transform[5]],
       ["a", radius, radius, 0, false, false, radius * 2, 0],
       ["a", radius, radius, 0, false, false, -radius * 2, 0],

@@ -110,13 +110,6 @@ export function createSVGCurvePath(
   return ret;
 }
 
-export function pathSegmentRawListToString(val: PathSegmentRaw[]): string {
-  return val
-    .flat()
-    .map((v) => (typeof v === "boolean" ? (v ? 1 : 0) : v))
-    .join(" ");
-}
-
 export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, size: number) {
   const v = sub(b, a);
   const n = isSame(a, b) ? { x: size, y: 0 } : multi(getUnit(v), size);

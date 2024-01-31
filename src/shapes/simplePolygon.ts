@@ -7,6 +7,7 @@ import {
   getRectCenter,
   isOnPolygon,
   isSame,
+  pathSegmentRawsToString,
   rotate,
 } from "okageo";
 import { ShapeStruct, TextContainer, getCommonStyle, updateCommonStyle, textContainerModule } from "./core";
@@ -22,7 +23,7 @@ import {
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { CommonStyle, Direction4, Shape } from "../models";
-import { createSVGCurvePath, pathSegmentRawListToString } from "../utils/renderer";
+import { createSVGCurvePath } from "../utils/renderer";
 
 export type SimplePolygonShape = Shape &
   CommonStyle &
@@ -78,7 +79,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       return {
         tag: "path",
         attributes: {
-          d: pathSegmentRawListToString(createSVGCurvePath(path, [], true)),
+          d: pathSegmentRawsToString(createSVGCurvePath(path, [], true)),
           ...renderFillSVGAttributes(shape.fill),
           ...renderStrokeSVGAttributes(shape.stroke),
         },

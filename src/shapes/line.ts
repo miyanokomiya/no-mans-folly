@@ -1,4 +1,13 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getRadian, isSame, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  applyAffine,
+  getRadian,
+  isSame,
+  multiAffines,
+  pathSegmentRawsToString,
+} from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
@@ -20,7 +29,7 @@ import {
   getLineHeadWrapperRadius,
   renderLineHead,
 } from "./lineHeads";
-import { applyCurvePath, applyPath, createSVGCurvePath, pathSegmentRawListToString } from "../utils/renderer";
+import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 
@@ -55,6 +64,8 @@ export const struct: ShapeStruct<LineShape> = {
       fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
       q: arg.q ?? { x: 100, y: 0 },
+      pHead: arg.pHead,
+      qHead: arg.qHead,
       body: arg.body,
       lineType: arg.lineType,
       curves: arg.curves,
@@ -132,7 +143,7 @@ export const struct: ShapeStruct<LineShape> = {
   createSVGElementInfo(shape, shapeContext) {
     const treeNode = shapeContext?.treeNodeMap[shape.id];
     const linePath = getLinePath(shape);
-    const pathStr = pathSegmentRawListToString(createSVGCurvePath(linePath, shape.curves));
+    const pathStr = pathSegmentRawsToString(createSVGCurvePath(linePath, shape.curves));
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
     const defaultWidth = getStrokeWidth({ ...shape.stroke, disabled: false });
@@ -156,9 +167,7 @@ export const struct: ShapeStruct<LineShape> = {
         const label = shapeContext.shapeMap[n.id];
         if (label && isTextShape(label)) {
           clipPathCommandList.push(
-            pathSegmentRawListToString(
-              createSVGCurvePath(textStruct.getLocalRectPolygon(label, shapeContext), [], true),
-            ),
+            pathSegmentRawsToString(createSVGCurvePath(textStruct.getLocalRectPolygon(label, shapeContext), [], true)),
           );
         }
       });
@@ -181,7 +190,7 @@ export const struct: ShapeStruct<LineShape> = {
                     attributes: {
                       "clip-rule": "evenodd",
                       d:
-                        pathSegmentRawListToString(createSVGCurvePath(getRectPoints(outline))) +
+                        pathSegmentRawsToString(createSVGCurvePath(getRectPoints(outline))) +
                         " " +
                         clipPathCommandList.join(" "),
                     },

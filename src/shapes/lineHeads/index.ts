@@ -40,7 +40,11 @@ export function clipLineHead<T extends LineHead>(region: Path2D, head: T, transf
   getLineHeadStruct(head.type).clip(region, head, transform, lineWidth);
 }
 
-export function createLineHeadSVGClipPathCommand<T extends LineHead>(head: T, transform: AffineMatrix, lineWidth: number) {
+export function createLineHeadSVGClipPathCommand<T extends LineHead>(
+  head: T,
+  transform: AffineMatrix,
+  lineWidth: number,
+) {
   return getLineHeadStruct(head.type).createSVGClipPathCommand(head, transform, lineWidth);
 }
 

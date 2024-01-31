@@ -13,6 +13,7 @@ import {
   struct,
 } from "./line";
 import { getCommonStruct } from ".";
+import { createLineHead } from "./lineHeads";
 
 describe("struct", () => {
   describe("create", () => {
@@ -40,6 +41,93 @@ describe("struct", () => {
         getStruct: getCommonStruct,
       });
       expect(ctx.stroke).toHaveBeenCalled();
+    });
+  });
+
+  describe("createSVGElementInfo", () => {
+    test("should return SVG info", () => {
+      const shape0 = struct.create({
+        id: "a",
+        p: { x: 0, y: 0 },
+        body: [{ p: { x: 10, y: 0 } }, { p: { x: 10, y: 20 } }],
+        q: { x: 100, y: 100 },
+      });
+      expect(
+        struct.createSVGElementInfo!(shape0, {
+          shapeMap: { [shape0.id]: shape0 },
+          treeNodeMap: { [shape0.id]: { id: shape0.id, children: [] } },
+          getStruct: getCommonStruct,
+        }),
+      ).toMatchSnapshot("straight spline");
+
+      const shape1 = struct.create({
+        ...shape0,
+        curves: [
+          { c1: { x: 4, y: -10 }, c2: { x: 8, y: -10 } },
+          { c1: { x: 4, y: 10 }, c2: { x: 8, y: 10 } },
+        ],
+      });
+      expect(
+        struct.createSVGElementInfo!(shape1, {
+          shapeMap: { [shape1.id]: shape1 },
+          treeNodeMap: { [shape1.id]: { id: shape1.id, children: [] } },
+          getStruct: getCommonStruct,
+        }),
+      ).toMatchSnapshot("bezier spline");
+
+      const shape2 = struct.create({
+        ...shape0,
+        curves: [{ d: { x: 5, y: -10 } }, { d: { x: 2, y: 4 } }],
+      });
+      expect(
+        struct.createSVGElementInfo!(shape2, {
+          shapeMap: { [shape2.id]: shape2 },
+          treeNodeMap: { [shape2.id]: { id: shape2.id, children: [] } },
+          getStruct: getCommonStruct,
+        }),
+      ).toMatchSnapshot("arc spline");
+    });
+
+    test("should return SVG info of line heads", () => {
+      const shape0 = struct.create({
+        id: "a",
+        p: { x: 0, y: 0 },
+        q: { x: 100, y: 100 },
+        pHead: createLineHead("dot_blank"),
+        qHead: createLineHead("dot_filled"),
+      });
+      expect(
+        struct.createSVGElementInfo!(shape0, {
+          shapeMap: { [shape0.id]: shape0 },
+          treeNodeMap: { [shape0.id]: { id: shape0.id, children: [] } },
+          getStruct: getCommonStruct,
+        }),
+      ).toMatchSnapshot("dot_blank, dot_filled");
+
+      const shape1 = struct.create({
+        ...shape0,
+        pHead: createLineHead("closed_blank"),
+        qHead: createLineHead("closed_filled"),
+      });
+      expect(
+        struct.createSVGElementInfo!(shape1, {
+          shapeMap: { [shape1.id]: shape1 },
+          treeNodeMap: { [shape1.id]: { id: shape1.id, children: [] } },
+          getStruct: getCommonStruct,
+        }),
+      ).toMatchSnapshot("closed_blank, closed_filled");
+
+      const shape2 = struct.create({
+        ...shape0,
+        pHead: createLineHead("open"),
+      });
+      expect(
+        struct.createSVGElementInfo!(shape2, {
+          shapeMap: { [shape2.id]: shape2 },
+          treeNodeMap: { [shape2.id]: { id: shape2.id, children: [] } },
+          getStruct: getCommonStruct,
+        }),
+      ).toMatchSnapshot("open");
     });
   });
 
