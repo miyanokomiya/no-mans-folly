@@ -1,8 +1,10 @@
 import { Shape } from "../../models";
 import { createBoxPadding, getBoxPaddingValue, getPaddingRect } from "../../utils/boxPadding";
-import { applyFillStyle, createFillStyle } from "../../utils/fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
+import { getRotatedRectAffine } from "../../utils/geometry";
 import { applyLocalSpace } from "../../utils/renderer";
 import { createStrokeStyle } from "../../utils/strokeStyle";
+import { renderTransform } from "../../utils/svgElements";
 import { ShapeStruct, createBaseShape } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
 import { isBoardRootShape } from "./boardRoot";
@@ -55,6 +57,36 @@ export const struct: ShapeStruct<BoardCardShape> = {
         },
       );
     }
+  },
+  createSVGElementInfo(shape) {
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+    const body = rectangleStruct.createSVGElementInfo!({ ...shape, p: { x: 0, y: 0 }, rotation: 0 })!;
+    const paddingBottom = getBoxPaddingValue(shape.textPadding, {
+      x: 0,
+      y: 0,
+      width: shape.width,
+      height: shape.height,
+    })[2];
+    const y = shape.height - paddingBottom / 2;
+
+    return {
+      tag: "g",
+      attributes: { transform: renderTransform(affine) },
+      children: [
+        body,
+        {
+          tag: "rect",
+          attributes: {
+            y,
+            width: shape.width,
+            height: paddingBottom / 2,
+            stroke: "none",
+            ...renderFillSVGAttributes(shape.stroke),
+          },
+        },
+      ],
+    };
   },
   resizeOnTextEdit(shape, textBoxSize) {
     const prect = getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.height });

@@ -1,4 +1,6 @@
 import {
+  AffineMatrix,
+  IDENTITY_AFFINE,
   IRectangle,
   IVec2,
   MINVALUE,
@@ -833,4 +835,8 @@ export function isPointCloseToArc(
 function isRadianInside(nfrom: number, nto: number, nr: number): boolean {
   if (nfrom === nto) return true;
   return (nfrom < nr && (nto < nfrom || nr <= nto)) || (nr < nfrom && nr <= nto && nto < nfrom);
+}
+
+export function isIdentityAffine(matrix: AffineMatrix): boolean {
+  return matrix.every((v, i) => v === IDENTITY_AFFINE[i]);
 }

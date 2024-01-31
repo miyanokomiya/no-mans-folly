@@ -1,6 +1,7 @@
-import { newImageBuilder } from "../../imageBuilder";
+import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
 import { newShapeComposite } from "../../shapeComposite";
 import { newShapeRenderer } from "../../shapeRenderer";
+import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import { TransitionValue } from "../core";
 import { ContextMenuItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
@@ -14,7 +15,22 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Copy as PNG",
     key: "COPY_AS_PNG",
   },
+  EXPORT_AS_SVG: {
+    label: "Export as SVG",
+    key: "EXPORT_AS_SVG",
+  },
+  COPY_AS_SVG: {
+    label: "Copy as SVG",
+    key: "COPY_AS_SVG",
+  },
 } satisfies { [key: string]: ContextMenuItem };
+
+export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
+  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG,
+  CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
+  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG,
+  // CONTEXT_MENU_ITEM_SRC.COPY_AS_SVG, // Clipboard API doesn't go with "image/svg+xml"
+];
 
 export function handleContextItemEvent(
   ctx: AppCanvasStateContext,
@@ -27,6 +43,9 @@ export function handleContextItemEvent(
       return;
     case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG.key:
       exportShapesAsPNG(ctx);
+      return;
+    case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG.key:
+      exportShapesAsSVG(ctx);
       return;
   }
 }
@@ -72,6 +91,36 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
   const builder = newImageBuilder({ render: renderer.render, range });
   try {
     saveFileInWeb(builder.toDataURL(), "shapes.png");
+  } catch (e) {
+    ctx.showToastMessage({
+      text: "Failed to create image",
+      type: "error",
+    });
+    console.error(e);
+  }
+}
+
+async function exportShapesAsSVG(ctx: AppCanvasStateContext): Promise<void> {
+  const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
+  if (targetShapes.length === 0) {
+    ctx.showToastMessage({
+      text: "No shape is selected",
+      type: "error",
+    });
+    return;
+  }
+
+  const renderer = newShapeSVGRenderer({
+    shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),
+    getDocumentMap: ctx.getDocumentMap,
+    imageStore: ctx.getImageStore(),
+  });
+
+  const range = ctx.getShapeComposite().getWrapperRectForShapes(targetShapes, true);
+  const builder = newSVGImageBuilder({ render: renderer.render, range });
+
+  try {
+    saveFileInWeb(builder.toDataURL(), "shapes.svg");
   } catch (e) {
     ctx.showToastMessage({
       text: "Failed to create image",

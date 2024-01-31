@@ -1,5 +1,12 @@
 import { expect, describe, test, vi } from "vitest";
-import { applyStrokeStyle, createStrokeStyle, isSameStrokeStyle } from "./strokeStyle";
+import {
+  applyStrokeStyle,
+  createStrokeStyle,
+  getLineDashArray,
+  isSameStrokeStyle,
+  renderStrokeSVGAttributes,
+} from "./strokeStyle";
+import { COLORS } from "./color";
 
 describe("createStrokeStyle", () => {
   test("should return new StrokeStyle", () => {
@@ -41,5 +48,26 @@ describe("applyStrokeStyle", () => {
     expect(ctx.strokeStyle).toBe("rgba(1,2,3,0.5)");
     expect(ctx.lineWidth).toBe(1);
     expect(ctx.setLineDash).toHaveBeenCalledWith([]);
+  });
+});
+
+describe("renderStrokeSVGAttributes", () => {
+  test("should return SVG attributes for the stroke style", () => {
+    expect(renderStrokeSVGAttributes({ color: COLORS.BLACK, disabled: true })).toEqual({ stroke: "none" });
+    expect(renderStrokeSVGAttributes({ color: COLORS.BLACK, width: 10 })).toEqual({
+      stroke: "rgba(0,0,0,1)",
+      "stroke-width": 10,
+      "stroke-linecap": "butt",
+      "stroke-linejoin": "round",
+    });
+    expect(
+      renderStrokeSVGAttributes({ color: COLORS.BLACK, width: 10, lineCap: "round", lineJoin: "bevel", dash: "dot" }),
+    ).toEqual({
+      stroke: "rgba(0,0,0,1)",
+      "stroke-width": 10,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "bevel",
+      "stroke-dasharray": getLineDashArray("dot", 10).join(" "),
+    });
   });
 });

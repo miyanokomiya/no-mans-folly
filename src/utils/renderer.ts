@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, add, getUnit, isSame, multi, rotate, sub } from "okageo";
+import { IRectangle, IVec2, PathSegmentRaw, add, getRadian, getUnit, isSame, multi, rotate, sub } from "okageo";
 import { ISegment, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
@@ -49,6 +49,65 @@ export function applyCurvePath(
   if (closed) {
     ctx.closePath();
   }
+}
+
+export function createSVGCurvePath(
+  path: IVec2[],
+  curves: (CurveControl | undefined)[] = [],
+  closed = false,
+): PathSegmentRaw[] {
+  const ret: PathSegmentRaw[] = [];
+
+  path.forEach((p, i) => {
+    if (i === 0) {
+      ret.push(["M", p.x, p.y]);
+    } else {
+      const control = curves[i - 1];
+      if (!control) {
+        ret.push(["L", p.x, p.y]);
+      } else if ("d" in control) {
+        const prev = path[i - 1];
+        const arcParams = getArcCurveParamsByNormalizedControl([prev, p], control.d);
+        if (arcParams) {
+          if (isSame(prev, p)) {
+            // Need to draw two half arcs for the circle.
+            const rotateFn = getRotateFn(getRadian(p, prev));
+            const d = add(rotateFn(control.d), prev);
+            ret.push([
+              "A",
+              arcParams.radius,
+              arcParams.radius,
+              0,
+              !!arcParams.largearc,
+              !arcParams.counterclockwise,
+              d.x,
+              d.y,
+            ]);
+          }
+
+          ret.push([
+            "A",
+            arcParams.radius,
+            arcParams.radius,
+            0,
+            !!arcParams.largearc,
+            !arcParams.counterclockwise,
+            p.x,
+            p.y,
+          ]);
+        } else {
+          ret.push(["L", p.x, p.y]);
+        }
+      } else {
+        ret.push(["C", control.c1.x, control.c1.y, control.c2.x, control.c2.y, p.x, p.y]);
+      }
+    }
+  });
+  if (closed) {
+    ret.push(["Z"]);
+  }
+
+  return ret;
 }
 
 export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, size: number) {

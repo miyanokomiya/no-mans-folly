@@ -5,16 +5,11 @@ import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleCommonShortcut,
-  handleCommonTextStyle,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
+  handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, handleContextItemEvent } from "../contextMenuItems";
+import { CONTEXT_MENU_COPY_SHAPE_ITEMS } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
@@ -202,55 +197,20 @@ export function newAlignBoxSelectedState(): AppCanvasState {
             default:
               return handleCommonShortcut(ctx, event);
           }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
         case "shape-updated": {
-          const shapeComposite = ctx.getShapeComposite();
-          const shape = shapeComposite.mergedShapeMap[targetShape.id];
-          if (!shape) return newSelectionHubState;
-
           if (event.data.keys.has(targetShape.id)) {
             initHandler(ctx);
           }
-          return;
+          return handleIntransientEvent(ctx, event);
         }
-        case "text-style": {
-          return handleCommonTextStyle(ctx, event);
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
-        case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
-            items: [CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG, CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG],
+            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {

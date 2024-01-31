@@ -1,6 +1,15 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getRadian, isSame, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  applyAffine,
+  getRadian,
+  isSame,
+  multiAffines,
+  pathSegmentRawsToString,
+} from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   ISegment,
   expandRect,
@@ -11,10 +20,16 @@ import {
   getWrapperRect,
   isPointCloseToCurveSpline,
 } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
-import { clipLineHead, getLineHeadWrapperRadius, renderLineHead } from "./lineHeads";
-import { applyCurvePath, applyPath } from "../utils/renderer";
+import {
+  clipLineHead,
+  createLineHeadSVGClipPathCommand,
+  createLineHeadSVGElementInfo,
+  getLineHeadWrapperRadius,
+  renderLineHead,
+} from "./lineHeads";
+import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 
@@ -49,6 +64,8 @@ export const struct: ShapeStruct<LineShape> = {
       fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
       q: arg.q ?? { x: 100, y: 0 },
+      pHead: arg.pHead,
+      qHead: arg.qHead,
       body: arg.body,
       lineType: arg.lineType,
       curves: arg.curves,
@@ -64,30 +81,7 @@ export const struct: ShapeStruct<LineShape> = {
     const treeNode = shapeContext?.treeNodeMap[shape.id];
     const linePath = getLinePath(shape);
     const hasLabels = treeNode && treeNode.children.length > 0;
-
-    let pAffine: AffineMatrix | undefined;
-    if (shape.pHead) {
-      const p = linePath[0];
-      const r = getRadianP(shape);
-      const sin = Math.sin(r);
-      const cos = Math.cos(r);
-      pAffine = multiAffines([
-        [1, 0, 0, 1, p.x, p.y],
-        [cos, sin, -sin, cos, 0, 0],
-      ]);
-    }
-
-    let qAffine: AffineMatrix | undefined;
-    if (shape.qHead) {
-      const q = linePath[linePath.length - 1];
-      const r = getRadianQ(shape);
-      const sin = Math.sin(r);
-      const cos = Math.cos(r);
-      qAffine = multiAffines([
-        [1, 0, 0, 1, q.x, q.y],
-        [cos, sin, -sin, cos, 0, 0],
-      ]);
-    }
+    const { pAffine, qAffine } = getHeadAffines(shape);
 
     let region: Path2D | undefined;
 
@@ -123,10 +117,12 @@ export const struct: ShapeStruct<LineShape> = {
     applyCurvePath(ctx, linePath, shape.curves);
 
     if (!shape.fill.disabled) {
-      applyStrokeStyle(ctx, { ...shape.stroke, color: shape.fill.color, dash: undefined });
+      applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined });
       ctx.stroke();
-      applyStrokeStyle(ctx, { ...shape.stroke, width: ctx.lineWidth * 0.8 });
-      ctx.stroke();
+      if (!shape.stroke.disabled) {
+        applyStrokeStyle(ctx, { ...shape.stroke, width: getLineStrokeWidth(shape) });
+        ctx.stroke();
+      }
     } else {
       applyStrokeStyle(ctx, shape.stroke);
       ctx.stroke();
@@ -144,13 +140,115 @@ export const struct: ShapeStruct<LineShape> = {
       renderLineHead(ctx, shape.qHead!, qAffine, ctx.lineWidth);
     }
   },
+  createSVGElementInfo(shape, shapeContext) {
+    const treeNode = shapeContext?.treeNodeMap[shape.id];
+    const linePath = getLinePath(shape);
+    const pathStr = pathSegmentRawsToString(createSVGCurvePath(linePath, shape.curves));
+    const hasLabels = treeNode && treeNode.children.length > 0;
+    const { pAffine, qAffine } = getHeadAffines(shape);
+    const defaultWidth = getStrokeWidth({ ...shape.stroke, disabled: false });
+    const outline = struct.getWrapperRect(shape, shapeContext, true);
+
+    const clipId = `clip-${shape.id}`;
+    const clipPathCommandList: string[] = [];
+
+    if (pAffine) {
+      const command = createLineHeadSVGClipPathCommand(shape.pHead!, pAffine, defaultWidth);
+      if (command) clipPathCommandList.push(command);
+    }
+
+    if (qAffine) {
+      const command = createLineHeadSVGClipPathCommand(shape.qHead!, qAffine, defaultWidth);
+      if (command) clipPathCommandList.push(command);
+    }
+
+    if (hasLabels) {
+      treeNode.children.forEach((n) => {
+        const label = shapeContext.shapeMap[n.id];
+        if (label && isTextShape(label)) {
+          clipPathCommandList.push(
+            pathSegmentRawsToString(createSVGCurvePath(textStruct.getLocalRectPolygon(label, shapeContext), [], true)),
+          );
+        }
+      });
+    }
+
+    const pHeadInfo = shape.pHead ? createLineHeadSVGElementInfo(shape.pHead, pAffine!, defaultWidth) : undefined;
+    const qHeadInfo = shape.qHead ? createLineHeadSVGElementInfo(shape.qHead, qAffine!, defaultWidth) : undefined;
+
+    return {
+      tag: "g",
+      children: [
+        ...(clipPathCommandList.length > 0
+          ? [
+              {
+                tag: "clipPath",
+                attributes: { id: clipId, "stroke-width": defaultWidth },
+                children: [
+                  {
+                    tag: "path",
+                    attributes: {
+                      "clip-rule": "evenodd",
+                      d:
+                        pathSegmentRawsToString(createSVGCurvePath(getRectPoints(outline))) +
+                        " " +
+                        clipPathCommandList.join(" "),
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+        {
+          tag: "g",
+          attributes: { fill: "none", "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
+          children: [
+            ...(shape.fill.disabled
+              ? [
+                  {
+                    tag: "path",
+                    attributes: {
+                      d: pathStr,
+                      ...renderStrokeSVGAttributes(shape.stroke),
+                    },
+                  },
+                ]
+              : [
+                  {
+                    tag: "path",
+                    attributes: {
+                      d: pathStr,
+                      ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false, color: shape.fill.color }),
+                    },
+                  },
+                  {
+                    tag: "path",
+                    attributes: {
+                      d: pathStr,
+                      ...renderStrokeSVGAttributes({ ...shape.stroke, width: getLineStrokeWidth(shape) }),
+                    },
+                  },
+                ]),
+          ],
+        },
+        {
+          tag: "g",
+          attributes: {
+            ...renderFillSVGAttributes({ ...shape.stroke, disabled: false }),
+            ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false }),
+          },
+          children: [...(pHeadInfo ? [pHeadInfo] : []), ...(qHeadInfo ? [qHeadInfo] : [])],
+        },
+      ],
+    };
+  },
   getWrapperRect(shape, _, includeBounds) {
     const path = getLinePath(shape);
     let rect = getCurveSplineBounds(path, shape.curves);
 
     if (includeBounds) {
       // FIXME: This expanding isn't precise but just large enough.
-      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 1.9);
+      rect = expandRect(rect, getLineWidth(shape) / 1.9);
     }
 
     const headRects: IRectangle[] = [];
@@ -461,4 +559,47 @@ function isSameCurve(a: LineShape["curves"], b: LineShape["curves"]): boolean {
       return false;
     }
   });
+}
+
+function getLineWidth(shape: LineShape): number {
+  if (shape.stroke.disabled) {
+    const base = getStrokeWidth({ ...shape.stroke, disabled: false });
+    return shape.fill.disabled ? 0 : base * 0.8;
+  }
+  return getStrokeWidth(shape.stroke);
+}
+
+function getLineStrokeWidth(shape: LineShape): number {
+  return getStrokeWidth(shape.stroke) * (shape.fill.disabled ? 1 : 0.8);
+}
+
+function getHeadAffines(shape: LineShape): { pAffine?: AffineMatrix; qAffine?: AffineMatrix } {
+  let pAffine: AffineMatrix | undefined;
+  if (shape.pHead) {
+    const p = shape.p;
+    const r = getRadianP(shape);
+    const sin = Math.sin(r);
+    const cos = Math.cos(r);
+    pAffine = multiAffines([
+      [1, 0, 0, 1, p.x, p.y],
+      [cos, sin, -sin, cos, 0, 0],
+    ]);
+  }
+
+  let qAffine: AffineMatrix | undefined;
+  if (shape.qHead) {
+    const q = shape.q;
+    const r = getRadianQ(shape);
+    const sin = Math.sin(r);
+    const cos = Math.cos(r);
+    qAffine = multiAffines([
+      [1, 0, 0, 1, q.x, q.y],
+      [cos, sin, -sin, cos, 0, 0],
+    ]);
+  }
+
+  return {
+    pAffine,
+    qAffine,
+  };
 }

@@ -31,6 +31,7 @@ import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { getPaddingRect } from "../utils/boxPadding";
+import { SVGElementInfo } from "../utils/svgElements";
 
 const SHAPE_STRUCTS: {
   [type: string]: ShapeStruct<any>;
@@ -74,6 +75,16 @@ export function renderShape<T extends Shape>(
 ) {
   const struct = getStruct(shape.type);
   struct.render(ctx, shape, shapeContext, imageStore);
+}
+
+export function createSVGElementInfo<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  shapeContext: ShapeContext,
+  imageStore?: ImageStore,
+): SVGElementInfo | undefined {
+  const struct = getStruct(shape.type);
+  return struct.createSVGElementInfo?.(shape, shapeContext, imageStore);
 }
 
 export function getWrapperRect(

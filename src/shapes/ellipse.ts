@@ -1,6 +1,6 @@
 import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rotate, sub } from "okageo";
 import { CommonStyle, Shape } from "../models";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
   expandRect,
@@ -8,11 +8,12 @@ import {
   getCrossLineAndEllipseRotated,
   getRectPoints,
   getRotateFn,
+  getRotatedRectAffine,
   getRotatedWrapperRect,
   isPointOnEllipseRotated,
   sortPointFrom,
 } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import {
   ShapeStruct,
   TextContainer,
@@ -22,6 +23,7 @@ import {
   updateCommonStyle,
 } from "./core";
 import { getPaddingRect } from "../utils/boxPadding";
+import { renderTransform } from "../utils/svgElements";
 
 export type EllipseShape = Shape &
   CommonStyle &
@@ -53,6 +55,28 @@ export const struct: ShapeStruct<EllipseShape> = {
     ctx.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
     ctx.fill();
     ctx.stroke();
+  },
+  createSVGElementInfo(shape) {
+    const rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    return {
+      tag: "ellipse",
+      attributes: {
+        cx: shape.rx,
+        cy: shape.ry,
+        rx: shape.rx,
+        ry: shape.ry,
+        transform: renderTransform(affine),
+        ...renderFillSVGAttributes(shape.fill),
+        ...renderStrokeSVGAttributes(shape.stroke),
+      },
+    };
   },
   getWrapperRect(shape, _, includeBounds) {
     let rect = {
