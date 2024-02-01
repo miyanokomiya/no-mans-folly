@@ -1,5 +1,5 @@
 import { FillStyle } from "../models";
-import { isSameColor, rednerRGBA } from "./color";
+import { colorToHex, isSameColor, rednerRGBA } from "./color";
 import { SVGAttributes } from "./svgElements";
 
 export function createFillStyle(arg: Partial<FillStyle> = {}): FillStyle {
@@ -21,6 +21,7 @@ export function renderFillSVGAttributes(fill: FillStyle): SVGAttributes {
   return fill.disabled
     ? { fill: "none" }
     : {
-        fill: rednerRGBA(fill.color),
+        fill: colorToHex(fill.color),
+        "fill-opacity": fill.color.a === 1 ? undefined : fill.color.a,
       };
 }

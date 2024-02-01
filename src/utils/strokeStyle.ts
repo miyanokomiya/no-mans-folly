@@ -1,5 +1,5 @@
 import { LineDash, StrokeStyle } from "../models";
-import { isSameColor, rednerRGBA } from "./color";
+import { colorToHex, isSameColor, rednerRGBA } from "./color";
 import { SVGAttributes } from "./svgElements";
 
 export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
@@ -60,7 +60,8 @@ export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
   return stroke.disabled
     ? { stroke: "none" }
     : {
-        stroke: rednerRGBA(stroke.color),
+        stroke: colorToHex(stroke.color),
+        "stroke-opacity": stroke.color.a === 1 ? undefined : stroke.color.a,
         "stroke-width": stroke.width,
         "stroke-linecap": getLineCap(stroke.lineCap),
         "stroke-linejoin": getLineJoin(stroke.lineJoin),

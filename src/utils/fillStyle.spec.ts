@@ -11,7 +11,7 @@ describe("createFillStyle", () => {
 });
 
 describe("applyFillStyle", () => {
-  test("should apply StrokeStyle", () => {
+  test("should apply FillStyle", () => {
     const ctx = { fillStyle: "" };
     applyFillStyle(
       ctx as any,
@@ -24,10 +24,14 @@ describe("applyFillStyle", () => {
 });
 
 describe("renderFillSVGAttributes", () => {
-  test("should return SVG attributes for the stroke style", () => {
+  test("should return SVG attributes for the fill style", () => {
     expect(renderFillSVGAttributes({ color: COLORS.BLACK, disabled: true })).toEqual({ fill: "none" });
     expect(renderFillSVGAttributes({ color: COLORS.BLACK })).toEqual({
-      fill: "rgba(0,0,0,1)",
+      fill: "#000000",
+    });
+    expect(renderFillSVGAttributes({ color: { ...COLORS.WHITE, a: 0.9 } })).toEqual({
+      fill: "#ffffff",
+      "fill-opacity": 0.9,
     });
   });
 });

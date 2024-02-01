@@ -55,15 +55,22 @@ describe("renderStrokeSVGAttributes", () => {
   test("should return SVG attributes for the stroke style", () => {
     expect(renderStrokeSVGAttributes({ color: COLORS.BLACK, disabled: true })).toEqual({ stroke: "none" });
     expect(renderStrokeSVGAttributes({ color: COLORS.BLACK, width: 10 })).toEqual({
-      stroke: "rgba(0,0,0,1)",
+      stroke: "#000000",
       "stroke-width": 10,
       "stroke-linecap": "butt",
       "stroke-linejoin": "round",
     });
     expect(
-      renderStrokeSVGAttributes({ color: COLORS.BLACK, width: 10, lineCap: "round", lineJoin: "bevel", dash: "dot" }),
+      renderStrokeSVGAttributes({
+        color: { ...COLORS.WHITE, a: 0.9 },
+        width: 10,
+        lineCap: "round",
+        lineJoin: "bevel",
+        dash: "dot",
+      }),
     ).toEqual({
-      stroke: "rgba(0,0,0,1)",
+      stroke: "#ffffff",
+      "stroke-opacity": 0.9,
       "stroke-width": 10,
       "stroke-linecap": "round",
       "stroke-linejoin": "bevel",
