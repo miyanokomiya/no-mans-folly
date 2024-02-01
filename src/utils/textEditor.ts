@@ -116,42 +116,54 @@ export function renderDocByComposition(
     const fontTop = lineTop + fontPadding;
     const fontHeight = line.fontheight;
 
+    const lineInitialIndex = index;
+    const getInlineItem = (inlineIndex: number) => composition[lineInitialIndex + inlineIndex].bounds;
+
+    getInlineGroups(line, getInlineItem, (a, b) => a.background === b.background).forEach((group) => {
+      if (!group.attributes.background) return;
+
+      ctx.fillStyle = group.attributes.background;
+      ctx.beginPath();
+      ctx.fillRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
+    });
+
     line.outputs.forEach((op) => {
       const lineComposition = composition[index];
-
-      if (op.attributes?.background) {
-        ctx.fillStyle = op.attributes.background;
-        ctx.beginPath();
-        ctx.fillRect(lineComposition.bounds.x, lineTop, lineComposition.bounds.width, lineHeight);
-      }
-
-      if (op.attributes?.underline || op.attributes?.strike) {
-        applyDefaultStrokeStyle(ctx);
-        if (op.attributes.color) {
-          ctx.strokeStyle = op.attributes.color;
-        }
-        ctx.lineWidth = fontHeight * 0.07;
-      }
-
-      if (op.attributes?.underline) {
-        ctx.beginPath();
-        ctx.moveTo(lineComposition.bounds.x, fontTop + fontHeight * 0.9);
-        ctx.lineTo(lineComposition.bounds.x + lineComposition.bounds.width, fontTop + fontHeight * 0.9);
-        ctx.stroke();
-      }
 
       applyDocAttributesToCtx(ctx, op.attributes);
       // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
       ctx.fillText(op.insert, lineComposition.bounds.x, fontTop + fontHeight * 0.8);
 
-      if (op.attributes?.strike) {
-        ctx.beginPath();
-        ctx.moveTo(lineComposition.bounds.x, fontTop + fontHeight * 0.5);
-        ctx.lineTo(lineComposition.bounds.x + lineComposition.bounds.width, fontTop + fontHeight * 0.5);
-        ctx.stroke();
-      }
-
       index += splitToSegments(op.insert).length;
+    });
+
+    applyDefaultStrokeStyle(ctx);
+    ctx.lineWidth = fontHeight * 0.07;
+
+    getInlineGroups(line, getInlineItem, (a, b) => a.underline === b.underline).forEach((group) => {
+      if (!group.attributes.underline) return;
+
+      if (group.attributes.color) {
+        ctx.strokeStyle = group.attributes.color;
+      }
+      const y = fontTop + fontHeight * 0.9;
+      ctx.beginPath();
+      ctx.moveTo(group.bounds.x, y);
+      ctx.lineTo(group.bounds.x + group.bounds.width, y);
+      ctx.stroke();
+    });
+
+    getInlineGroups(line, getInlineItem, (a, b) => a.strike === b.strike).forEach((group) => {
+      if (!group.attributes.strike) return;
+
+      if (group.attributes.color) {
+        ctx.strokeStyle = group.attributes.color;
+      }
+      const y = fontTop + fontHeight * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(group.bounds.x, y);
+      ctx.lineTo(group.bounds.x + group.bounds.width, y);
+      ctx.stroke();
     });
   });
 
