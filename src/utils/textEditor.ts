@@ -207,22 +207,60 @@ export function renderSVGDocByComposition(
     };
     textElement.children!.push(lineElement);
 
-    // TODO: Reduce the number element for background, underline and strike.
+    const lineInitialIndex = index;
+    const getInlineItem = (inlineIndex: number) => composition[lineInitialIndex + inlineIndex].bounds;
+
+    getInlineGroups(line, getInlineItem, (a, b) => a.background === b.background).forEach((group) => {
+      if (!group.attributes.background) return;
+
+      bgElement.children?.push({
+        tag: "rect",
+        attributes: {
+          x: group.bounds.x,
+          y: group.bounds.y,
+          width: group.bounds.width,
+          height: lineHeight,
+          fill: group.attributes.background,
+        },
+      });
+    });
+
+    getInlineGroups(line, getInlineItem, (a, b) => a.underline === b.underline).forEach((group) => {
+      if (!group.attributes.underline) return;
+
+      const y = fontTop + fontHeight * 0.9;
+      fwElement.children?.push({
+        tag: "line",
+        attributes: {
+          x1: group.bounds.x,
+          y1: y,
+          x2: group.bounds.x + group.bounds.width,
+          y2: y,
+          stroke: group.attributes?.color ?? "#000",
+          "stroke-width": fontHeight * 0.07,
+        },
+      });
+    });
+
+    getInlineGroups(line, getInlineItem, (a, b) => a.strike === b.strike).forEach((group) => {
+      if (!group.attributes.strike) return;
+
+      const y = fontTop + fontHeight * 0.5;
+      fwElement.children?.push({
+        tag: "line",
+        attributes: {
+          x1: group.bounds.x,
+          y1: y,
+          x2: group.bounds.x + group.bounds.width,
+          y2: y,
+          stroke: group.attributes?.color ?? "#000",
+          "stroke-width": fontHeight * 0.07,
+        },
+      });
+    });
+
     line.outputs.forEach((op) => {
       const lineComposition = composition[index];
-
-      if (op.attributes?.background) {
-        bgElement.children?.push({
-          tag: "rect",
-          attributes: {
-            x: lineComposition.bounds.x,
-            y: lineComposition.bounds.y,
-            width: lineComposition.bounds.width,
-            height: lineHeight,
-            fill: op.attributes.background,
-          },
-        });
-      }
 
       lineElement.children!.push({
         tag: "tspan",
@@ -236,33 +274,43 @@ export function renderSVGDocByComposition(
         children: [op.insert],
       });
 
-      const drawHorizontalLine = (y: number) => {
-        fwElement.children?.push({
-          tag: "line",
-          attributes: {
-            x1: lineComposition.bounds.x,
-            y1: y,
-            x2: lineComposition.bounds.x + lineComposition.bounds.width,
-            y2: y,
-            stroke: op.attributes?.color ?? "#000",
-            "stroke-width": fontHeight * 0.07,
-          },
-        });
-      };
-
-      if (op.attributes?.underline) {
-        drawHorizontalLine(fontTop + fontHeight * 0.9);
-      }
-
-      if (op.attributes?.strike) {
-        drawHorizontalLine(fontTop + fontHeight * 0.5);
-      }
-
       index += splitToSegments(op.insert).length;
     });
   });
 
   return rootElement;
+}
+
+function getInlineGroups(
+  line: DocCompositionLine,
+  getBounds: (index: number) => IRectangle,
+  checkFn: (a: DocAttributes, b: DocAttributes) => boolean,
+) {
+  const ret: { bounds: IRectangle; attributes: DocAttributes }[] = [];
+  let bgGroup: [number, IRectangle, DocAttributes] | undefined;
+
+  const saveGroup = () => {
+    if (bgGroup) ret.push({ bounds: bgGroup[1], attributes: bgGroup[2] });
+    bgGroup = undefined;
+  };
+
+  line.outputs.forEach((op, inlineIndex) => {
+    const bounds = getBounds(inlineIndex);
+
+    if (bgGroup && bgGroup[0] + 1 === inlineIndex && checkFn(bgGroup[2], op.attributes ?? {})) {
+      bgGroup[0] = inlineIndex;
+      bgGroup[1] = { ...bgGroup[1], width: bgGroup[1].width + bounds.width };
+    } else {
+      saveGroup();
+      bgGroup = [inlineIndex, bounds, op.attributes ?? {}];
+    }
+
+    if (inlineIndex === line.outputs.length - 1) {
+      saveGroup();
+    }
+  });
+
+  return ret;
 }
 
 export function getRawCursor(composition: DocCompositionItem[], cursor: number): number {
