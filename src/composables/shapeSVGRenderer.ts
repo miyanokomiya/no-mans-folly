@@ -21,31 +21,32 @@ export function newShapeSVGRenderer(option: Option) {
 
     walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];
-      const info = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
-      if (!info) return;
-
-      const elm = createSVGElement(info.tag, info.attributes, info.children);
-      root.appendChild(elm);
+      const shapeElmInfo = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
+      if (!shapeElmInfo) return;
 
       const doc = docMap[shape.id];
-      if (doc) {
-        const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
-
-        const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
-        const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
-        if (!infoCache) {
-          option.shapeComposite.setDocCompositeCache(shape.id, info);
-        }
-
-        const docElmInfo = renderSVGDocByComposition(info.composition, info.lines);
-        const transform = renderTransform(bounds.affine);
-        if (transform) {
-          docElmInfo.attributes ??= {};
-          docElmInfo.attributes.transform = renderTransform(bounds.affine);
-        }
-        const docElm = createSVGElement(docElmInfo.tag, docElmInfo.attributes, docElmInfo.children);
-        root.appendChild(docElm);
+      if (!doc) {
+        const shapeElm = createSVGElement(shapeElmInfo.tag, shapeElmInfo.attributes, shapeElmInfo.children);
+        root.appendChild(shapeElm);
+        return;
       }
+
+      const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
+
+      const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
+      const docInfo = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
+      if (!infoCache) {
+        option.shapeComposite.setDocCompositeCache(shape.id, docInfo);
+      }
+
+      const docElmInfo = renderSVGDocByComposition(docInfo.composition, docInfo.lines);
+      const transform = renderTransform(bounds.affine);
+      if (transform) {
+        docElmInfo.attributes ??= {};
+        docElmInfo.attributes.transform = renderTransform(bounds.affine);
+      }
+      const wrapperElm = createSVGElement("g", undefined, [shapeElmInfo, docElmInfo]);
+      root.appendChild(wrapperElm);
     });
 
     // Embed asset files used in this SVG.
