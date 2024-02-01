@@ -58,3 +58,10 @@ function appendChildren($el: SVGElement, $children: (SVGElement | Text)[]) {
 export function isPlainText(elm: unknown): elm is string {
   return typeof elm === "string";
 }
+
+export function getColorAttributes(
+  type: "fill" | "stroke",
+  val?: [hex: string, alpha: number],
+): SVGAttributes | undefined {
+  return val ? { [type]: val[0], [`${type}-opacity`]: val[1] === 1 ? undefined : val[1] } : undefined;
+}

@@ -3,7 +3,8 @@ import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from 
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "../composables/cache";
-import { SVGElementInfo } from "./svgElements";
+import { SVGElementInfo, getColorAttributes } from "./svgElements";
+import { toHexAndAlpha } from "./color";
 
 export const DEFAULT_FONT_SIZE = 18;
 export const DEFAULT_LINEHEIGHT = 1.2;
@@ -232,7 +233,7 @@ export function renderSVGDocByComposition(
           y: group.bounds.y,
           width: group.bounds.width,
           height: lineHeight,
-          fill: group.attributes.background,
+          ...getColorAttributes("fill", toHexAndAlpha(group.attributes.background)),
         },
       });
     });
@@ -248,7 +249,7 @@ export function renderSVGDocByComposition(
           y1: y,
           x2: group.bounds.x + group.bounds.width,
           y2: y,
-          stroke: group.attributes?.color ?? "#000",
+          ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
           "stroke-width": fontHeight * 0.07,
         },
       });
@@ -265,7 +266,7 @@ export function renderSVGDocByComposition(
           y1: y,
           x2: group.bounds.x + group.bounds.width,
           y2: y,
-          stroke: group.attributes?.color ?? "#000",
+          ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
           "stroke-width": fontHeight * 0.07,
         },
       });
@@ -278,7 +279,7 @@ export function renderSVGDocByComposition(
         tag: "tspan",
         attributes: {
           x: lineComposition.bounds.x,
-          fill: op.attributes?.color ?? undefined,
+          ...getColorAttributes("fill", toHexAndAlpha(op.attributes?.color)),
           "font-size": op.attributes?.size ?? undefined,
           "font-weight": op.attributes?.bold ? "bold" : undefined,
           "font-style": op.attributes?.italic ? "italic" : undefined,

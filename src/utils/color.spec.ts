@@ -11,6 +11,7 @@ import {
   rednerHSVA,
   rednerRGBA,
   rgbaToHsva,
+  toHexAndAlpha,
 } from "./color";
 
 describe("parseHSLA", () => {
@@ -190,5 +191,14 @@ describe("hsvaToHsla", () => {
       l: 0.5,
       a: 0.9,
     });
+  });
+});
+
+describe("toHexAndAlpha", () => {
+  test("should parse RGBA format", () => {
+    expect(toHexAndAlpha("rgba(1,2,3,0.5)")).toEqual(["#010203", 0.5]);
+  });
+  test("should parse HEX format", () => {
+    expect(toHexAndAlpha("#010203")).toEqual(["#010203", 1]);
   });
 });
