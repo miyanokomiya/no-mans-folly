@@ -57,6 +57,8 @@ export function newSVGImageBuilder({ render, range }: SVGOption) {
   const renderCtx = canvas.getContext("2d")!;
   const elm = render(renderCtx);
   elm.setAttribute("viewBox", `${range.x} ${range.y} ${range.width} ${range.height}`);
+  elm.setAttribute("width", `${range.width}`);
+  elm.setAttribute("height", `${range.height}`);
 
   function toBlob() {
     const svg = new XMLSerializer().serializeToString(elm);

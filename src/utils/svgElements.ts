@@ -2,6 +2,7 @@ import { AffineMatrix } from "okageo";
 import { isIdentityAffine } from "./geometry";
 
 const SVG_URL = "http://www.w3.org/2000/svg";
+const SVG_XLINK = "http://www.w3.org/1999/xlink";
 
 export type SVGElementInfo = { tag: string; attributes?: SVGAttributes; children?: (SVGElementInfo | string)[] };
 
@@ -9,7 +10,8 @@ export type SVGAttributes = { [name: string]: string | number | undefined } | nu
 
 export function createSVGSVGElement(attributes: SVGAttributes = null): SVGSVGElement {
   return createSVGElement<SVGSVGElement>("svg", {
-    xmlns: "http://www.w3.org/2000/svg",
+    xmlns: SVG_URL,
+    "xmlns:xlink": SVG_XLINK,
     "font-family": "Arial",
     ...attributes,
   });

@@ -10,6 +10,10 @@ export function newImageStore() {
     imageMap.clear();
   }
 
+  /**
+   * When SVG doesn't have "xmlns:xlink" attribute, it can't be drawn by Canvas API's "drawImage".
+   * Doing "document.body.appendChild(img)" can be a workaround though, not sure if it's worth doing.
+   */
   function loadFromFile(assetId: string, file: File | Blob): Promise<HTMLImageElement> {
     const url = URL.createObjectURL(file);
     const img = new Image();
