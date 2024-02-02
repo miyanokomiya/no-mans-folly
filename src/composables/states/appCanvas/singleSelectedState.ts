@@ -142,9 +142,6 @@ export function newSingleSelectedState(): AppCanvasState {
         }
         case "keydown":
           switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes([selectedId]);
-              return;
             case "Enter":
               event.data.prevent?.();
               return startTextEditingIfPossible(ctx, selectedId);

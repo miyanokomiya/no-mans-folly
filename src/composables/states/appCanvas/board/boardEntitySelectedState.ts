@@ -201,14 +201,6 @@ export function newBoardEntitySelectedState(): AppCanvasState {
 
           return handleIntransientEvent(ctx, event);
         }
-        case "keydown":
-          switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes([targetShape.id]);
-              return;
-            default:
-              return handleIntransientEvent(ctx, event);
-          }
         case "shape-updated": {
           const result = handleIntransientEvent(ctx, event);
           if (!result && boardHandler.isBoardChanged(Array.from(event.data.keys))) {

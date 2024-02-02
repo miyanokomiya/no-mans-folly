@@ -192,6 +192,14 @@ export function handleCommonShortcut(
       ctx.setViewport(geometry.getWrapperRect(rects), 80);
       return;
     }
+    case "Delete":
+    case "Backspace": {
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      if (ids.length > 0) {
+        ctx.deleteShapes(ids);
+      }
+      return;
+    }
   }
 }
 

@@ -146,14 +146,6 @@ export function newTreeRootSelectedState(): AppCanvasState {
 
           return handleIntransientEvent(ctx, event);
         }
-        case "keydown":
-          switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes([treeRootShape.id]);
-              return;
-            default:
-              return handleIntransientEvent(ctx, event);
-          }
         case "contextmenu":
           ctx.setContextMenuList({
             items: CONTEXT_MENU_COPY_SHAPE_ITEMS,

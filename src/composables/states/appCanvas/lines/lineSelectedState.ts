@@ -114,14 +114,6 @@ export function newLineSelectedState(): AppCanvasState {
 
           return handleIntransientEvent(ctx, event);
         }
-        case "keydown":
-          switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes([lineShape.id]);
-              return;
-            default:
-              return handleIntransientEvent(ctx, event);
-          }
         case "state":
           switch (event.data.name) {
             case "AddingLineLabel": {

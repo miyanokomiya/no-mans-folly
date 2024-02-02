@@ -4,7 +4,6 @@ import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
-  handleCommonShortcut,
   handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
@@ -189,14 +188,6 @@ export function newAlignBoxSelectedState(): AppCanvasState {
           ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
           return;
         }
-        case "keydown":
-          switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes([targetShape.id]);
-              return;
-            default:
-              return handleCommonShortcut(ctx, event);
-          }
         case "shape-updated": {
           if (event.data.keys.has(targetShape.id)) {
             initHandler(ctx);

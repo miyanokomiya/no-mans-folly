@@ -192,6 +192,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Delete":
+            case "Backspace":
               ctx.deleteShapes(getTreeBranchIds(ctx.getShapeComposite(), [treeNodeShape.id]));
               return;
             default:

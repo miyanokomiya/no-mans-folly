@@ -154,9 +154,6 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
         }
         case "keydown":
           switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes([shape.id]);
-              return;
             case "Enter":
               event.data.prevent?.();
               return startTextEditingIfPossible(ctx, shape.id);

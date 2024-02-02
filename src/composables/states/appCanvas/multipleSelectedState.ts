@@ -163,14 +163,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
 
           return handleIntransientEvent(ctx, event);
         }
-        case "keydown":
-          switch (event.data.key) {
-            case "Delete":
-              ctx.deleteShapes(Object.keys(selectedIdMap));
-              return;
-            default:
-              return handleIntransientEvent(ctx, event);
-          }
         case "contextmenu":
           ctx.setContextMenuList({
             items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
