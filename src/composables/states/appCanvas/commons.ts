@@ -92,12 +92,13 @@ export function handleCommonShortcut(
   switch (event.data.key) {
     case "a": {
       event.data.prevent?.();
-      const shapeMap = ctx.getShapeComposite().shapeMap;
-      const allIds = Object.keys(shapeMap);
-      if (Object.keys(ctx.getSelectedShapeIdMap()).length === allIds.length) {
+      const shapeComposite = ctx.getShapeComposite();
+      const rootShapeIds = shapeComposite.mergedShapeTree.map((t) => t.id);
+      const selectedMap = ctx.getSelectedShapeIdMap();
+      if (rootShapeIds.every((id) => selectedMap[id])) {
         ctx.clearAllSelected();
       } else {
-        ctx.multiSelectShapes(allIds);
+        ctx.multiSelectShapes(rootShapeIds);
       }
       return newSelectionHubState;
     }
