@@ -459,8 +459,9 @@ export function getCursorLocationAt(
   let xIndex = 0;
   // Omit the line break to keep the cursor in the line.
   // => When the cursor is after line break, it means the cursor is in the next line.
-  for (let i = 0; i < compositionInLine.length - 1; i++) {
+  for (let i = 0; i < compositionInLine.length; i++) {
     const c = compositionInLine[i];
+    if (isLinebreak(c.char)) break;
     if (p.x < c.bounds.x + c.bounds.width * (floor ? 1 : 0.5)) break;
     xIndex += 1;
   }

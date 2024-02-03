@@ -33,7 +33,7 @@ export function newTextSelectingState(option: Option): AppCanvasState {
           const to = textEditorController.getLocationIndex(current);
 
           textEditorController.setCursor(from, to - from);
-          ctx.setTmpShapeMap({});
+          ctx.redraw();
           return;
         }
         case "pointerup": {
