@@ -108,64 +108,71 @@ export function renderDocByComposition(
   compositionLines: DocCompositionLine[],
 ) {
   let index = 0;
+  let lastAttributes: DocAttributes | undefined;
+  applyDocAttributesToCtx(ctx, lastAttributes);
+
   compositionLines.forEach((line) => {
-    if (index === composition.length) return;
+    if (index >= composition.length) return;
 
     const lineTop = line.y;
     const lineHeight = line.height;
     const fontPadding = (line.height - line.fontheight) / 2;
     const fontTop = lineTop + fontPadding;
     const fontHeight = line.fontheight;
+    const groups = getInlineGroups(
+      line,
+      (inlineIndex) => composition[index + inlineIndex].bounds,
+      (a, b) => a === b, // Make sure to keep the original reference as much as possible.
+    );
 
-    const lineInitialIndex = index;
-    const getInlineItem = (inlineIndex: number) => composition[lineInitialIndex + inlineIndex].bounds;
+    groups.forEach((group) => {
+      if (group.attributes.background) {
+        ctx.fillStyle = group.attributes.background;
+        ctx.beginPath();
+        ctx.fillRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
+      }
 
-    getInlineGroups(line, getInlineItem, (a, b) => a.background === b.background).forEach((group) => {
-      if (!group.attributes.background) return;
-
-      ctx.fillStyle = group.attributes.background;
-      ctx.beginPath();
-      ctx.fillRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
-    });
-
-    line.outputs.forEach((op) => {
-      const lineComposition = composition[index];
-
-      applyDocAttributesToCtx(ctx, op.attributes);
+      if (lastAttributes !== group.attributes) {
+        applyDocAttributesToCtx(ctx, group.attributes);
+        lastAttributes = group.attributes;
+      } else {
+        // Need to reset fill style for background at least.
+        ctx.fillStyle = group.attributes.color ?? "#000";
+      }
       // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
-      ctx.fillText(op.insert, lineComposition.bounds.x, fontTop + fontHeight * 0.8);
+      ctx.fillText(group.text, group.bounds.x, fontTop + fontHeight * 0.8);
 
-      index += splitToSegments(op.insert).length;
-    });
-
-    applyDefaultStrokeStyle(ctx);
-    ctx.lineWidth = fontHeight * 0.07;
-
-    getInlineGroups(line, getInlineItem, (a, b) => a.underline === b.underline).forEach((group) => {
-      if (!group.attributes.underline) return;
-
-      if (group.attributes.color) {
-        ctx.strokeStyle = group.attributes.color;
+      if (group.attributes.underline || group.attributes.strike) {
+        applyDefaultStrokeStyle(ctx);
+        ctx.lineWidth = fontHeight * 0.07;
+        if (group.attributes.color) {
+          ctx.strokeStyle = group.attributes.color;
+        }
       }
-      const y = fontTop + fontHeight * 0.9;
-      ctx.beginPath();
-      ctx.moveTo(group.bounds.x, y);
-      ctx.lineTo(group.bounds.x + group.bounds.width, y);
-      ctx.stroke();
-    });
 
-    getInlineGroups(line, getInlineItem, (a, b) => a.strike === b.strike).forEach((group) => {
-      if (!group.attributes.strike) return;
-
-      if (group.attributes.color) {
-        ctx.strokeStyle = group.attributes.color;
+      if (group.attributes.underline) {
+        const y = fontTop + fontHeight * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(group.bounds.x, y);
+        ctx.lineTo(group.bounds.x + group.bounds.width, y);
+        ctx.stroke();
       }
-      const y = fontTop + fontHeight * 0.5;
-      ctx.beginPath();
-      ctx.moveTo(group.bounds.x, y);
-      ctx.lineTo(group.bounds.x + group.bounds.width, y);
-      ctx.stroke();
+
+      if (group.attributes.strike) {
+        const y = fontTop + fontHeight * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(group.bounds.x, y);
+        ctx.lineTo(group.bounds.x + group.bounds.width, y);
+        ctx.stroke();
+      }
+
+      // For debug
+      // ctx.strokeStyle = "red";
+      // ctx.beginPath();
+      // ctx.strokeRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
     });
+
+    index += line.outputs.length;
   });
 
   // For debug
@@ -193,7 +200,7 @@ export function renderSVGDocByComposition(
     },
     children: [],
   };
-  const fwElement: SVGElementInfo = { tag: "g", children: [] };
+  const fwElement: SVGElementInfo = { tag: "g", attributes: { stroke: "#000" }, children: [] };
   const rootElement: SVGElementInfo = {
     tag: "g",
     attributes: {
@@ -211,6 +218,12 @@ export function renderSVGDocByComposition(
     const fontPadding = (line.height - line.fontheight) / 2;
     const fontTop = lineTop + fontPadding;
     const fontHeight = line.fontheight;
+    const groups = getInlineGroups(
+      line,
+      (inlineIndex) => composition[index + inlineIndex].bounds,
+      (a, b) => a === b, // Make sure to keep the original reference as much as possible.
+    );
+
     const lineElement: SVGElementInfo = {
       tag: "tspan",
       attributes: {
@@ -220,102 +233,94 @@ export function renderSVGDocByComposition(
     };
     textElement.children!.push(lineElement);
 
-    const lineInitialIndex = index;
-    const getInlineItem = (inlineIndex: number) => composition[lineInitialIndex + inlineIndex].bounds;
+    groups.forEach((group) => {
+      if (group.attributes.background) {
+        bgElement.children?.push({
+          tag: "rect",
+          attributes: {
+            x: group.bounds.x,
+            y: group.bounds.y,
+            width: group.bounds.width,
+            height: lineHeight,
+            ...getColorAttributes("fill", toHexAndAlpha(group.attributes.background)),
+          },
+        });
+      }
 
-    getInlineGroups(line, getInlineItem, (a, b) => a.background === b.background).forEach((group) => {
-      if (!group.attributes.background) return;
+      if (group.attributes.underline) {
+        const y = fontTop + fontHeight * 0.9;
+        fwElement.children?.push({
+          tag: "line",
+          attributes: {
+            x1: group.bounds.x,
+            y1: y,
+            x2: group.bounds.x + group.bounds.width,
+            y2: y,
+            ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
+            "stroke-width": fontHeight * 0.07,
+          },
+        });
+      }
 
-      bgElement.children?.push({
-        tag: "rect",
-        attributes: {
-          x: group.bounds.x,
-          y: group.bounds.y,
-          width: group.bounds.width,
-          height: lineHeight,
-          ...getColorAttributes("fill", toHexAndAlpha(group.attributes.background)),
-        },
-      });
-    });
-
-    getInlineGroups(line, getInlineItem, (a, b) => a.underline === b.underline).forEach((group) => {
-      if (!group.attributes.underline) return;
-
-      const y = fontTop + fontHeight * 0.9;
-      fwElement.children?.push({
-        tag: "line",
-        attributes: {
-          x1: group.bounds.x,
-          y1: y,
-          x2: group.bounds.x + group.bounds.width,
-          y2: y,
-          ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
-          "stroke-width": fontHeight * 0.07,
-        },
-      });
-    });
-
-    getInlineGroups(line, getInlineItem, (a, b) => a.strike === b.strike).forEach((group) => {
-      if (!group.attributes.strike) return;
-
-      const y = fontTop + fontHeight * 0.5;
-      fwElement.children?.push({
-        tag: "line",
-        attributes: {
-          x1: group.bounds.x,
-          y1: y,
-          x2: group.bounds.x + group.bounds.width,
-          y2: y,
-          ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
-          "stroke-width": fontHeight * 0.07,
-        },
-      });
-    });
-
-    line.outputs.forEach((op) => {
-      const lineComposition = composition[index];
+      if (group.attributes.strike) {
+        const y = fontTop + fontHeight * 0.5;
+        fwElement.children?.push({
+          tag: "line",
+          attributes: {
+            x1: group.bounds.x,
+            y1: y,
+            x2: group.bounds.x + group.bounds.width,
+            y2: y,
+            ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
+            "stroke-width": fontHeight * 0.07,
+          },
+        });
+      }
 
       lineElement.children!.push({
         tag: "tspan",
         attributes: {
-          x: lineComposition.bounds.x,
-          ...getColorAttributes("fill", toHexAndAlpha(op.attributes?.color)),
-          "font-size": op.attributes?.size ?? undefined,
-          "font-weight": op.attributes?.bold ? "bold" : undefined,
-          "font-style": op.attributes?.italic ? "italic" : undefined,
+          x: group.bounds.x,
+          ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
+          "font-size": group.attributes?.size ?? undefined,
+          "font-weight": group.attributes?.bold ? "bold" : undefined,
+          "font-style": group.attributes?.italic ? "italic" : undefined,
         },
-        children: [op.insert],
+        children: [group.text],
       });
-
-      index += splitToSegments(op.insert).length;
     });
+
+    index += line.outputs.length;
   });
 
   return rootElement;
 }
 
+type InlineGroupItem = { bounds: IRectangle; text: string; attributes: DocAttributes };
+
 function getInlineGroups(
   line: DocCompositionLine,
   getBounds: (index: number) => IRectangle,
-  checkFn: (a: DocAttributes, b: DocAttributes) => boolean,
-) {
-  const ret: { bounds: IRectangle; attributes: DocAttributes }[] = [];
-  let bgGroup: [number, IRectangle, DocAttributes] | undefined;
+  checkFn: (a?: DocAttributes, b?: DocAttributes) => boolean,
+): InlineGroupItem[] {
+  const ret: InlineGroupItem[] = [];
+  let bgGroup: [number, IRectangle, string, DocAttributes] | undefined;
 
   const saveGroup = () => {
-    if (bgGroup) ret.push({ bounds: bgGroup[1], attributes: bgGroup[2] });
+    if (bgGroup) ret.push({ bounds: bgGroup[1], text: bgGroup[2], attributes: bgGroup[3] });
     bgGroup = undefined;
   };
 
   line.outputs.forEach((op, inlineIndex) => {
     const bounds = getBounds(inlineIndex);
 
-    if (bgGroup && bgGroup[0] + 1 === inlineIndex && checkFn(bgGroup[2], op.attributes ?? {})) {
+    if (bgGroup && bgGroup[0] + 1 === inlineIndex && checkFn(bgGroup[3], op.attributes)) {
       bgGroup[0] = inlineIndex;
       bgGroup[1] = { ...bgGroup[1], width: bgGroup[1].width + bounds.width };
+      bgGroup[2] = bgGroup[2] + op.insert;
     } else {
       saveGroup();
-      bgGroup = [inlineIndex, bounds, op.attributes ?? {}];
+      bgGroup = [inlineIndex, bounds, op.insert, op.attributes ?? {}];
     }
 
     if (inlineIndex === line.outputs.length - 1) {
