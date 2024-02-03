@@ -436,6 +436,10 @@ export function getBreakIndicesForWord(
  * Returns right side item's location when "floor" is false and "p" is at right half of the character.
  * This function always returns the most probable location even if no character exists at "p".
  * => "isCursorInDoc" is available to check if any character exists at "p".
+ *
+ * When your interest is
+ * - the cursor's location between characters, "floor" should be set false.
+ * - the character's location, "floor" should be set true.
  */
 export function getCursorLocationAt(
   composition: DocCompositionItem[],
@@ -1077,8 +1081,8 @@ export function getWordRangeAtCursor(
   composition: Pick<DocCompositionItem, "char">[],
   cursor: number,
 ): [cursor: number, selection: number] {
-  // Avoid selecting while space characters
-  if (isWordbreak(composition[cursor].char)) return [cursor, 0];
+  // TODO: Select same white space characters near by.
+  if (isWordbreak(composition[cursor].char)) return [cursor, 1];
 
   let from = 0;
   for (let i = cursor - 1; 0 <= i; i--) {

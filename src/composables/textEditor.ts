@@ -117,8 +117,8 @@ export function newTextEditorController() {
     return textEditorUtil.getLocationIndex(_compositionLines, location);
   }
 
-  function getLocationAt(p: IVec2): IVec2 {
-    return getCursorLocationAt(_composition, _compositionLines, p);
+  function getLocationAt(p: IVec2, floor = false): IVec2 {
+    return getCursorLocationAt(_composition, _compositionLines, p, floor);
   }
 
   function isInDoc(p: IVec2): boolean {

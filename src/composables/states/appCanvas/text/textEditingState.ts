@@ -43,7 +43,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
     cursorInfo = ctx.createCursorPosition(option.id, textEditorController.getCursor());
     ctx.setCurrentDocAttrInfo(textEditorController.getCurrentAttributeInfo());
-    ctx.setTmpShapeMap({});
+    ctx.redraw();
   }
 
   function patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, draft?: boolean) {
@@ -78,7 +78,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
         textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
 
         if (option.point) {
-          const location = textEditorController.getLocationAt(applyAffine(textBounds.affineReverse, option.point));
+          const location = textEditorController.getLocationAt(
+            applyAffine(textBounds.affineReverse, option.point),
+            true,
+          );
           textEditorController.setCursor(textEditorController.getLocationIndex(location));
           textEditorController.selectWordAtCursor();
         } else {
@@ -179,6 +182,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
           }
         }
         case "pointerdoubledown": {
+          const location = textEditorController.getLocationAt(
+            applyAffine(textBounds.affineReverse, event.data.point),
+            true,
+          );
+          textEditorController.setCursor(textEditorController.getLocationIndex(location));
           textEditorController.selectWordAtCursor();
           onCursorUpdated(ctx);
           return;

@@ -1079,18 +1079,18 @@ describe("getWordRangeAtCursor", () => {
       { char: "." },
     ];
     expect(getWordRangeAtCursor(comp, 0)).toEqual([0, 1]);
-    expect(getWordRangeAtCursor(comp, 1)).toEqual([1, 0]);
+    expect(getWordRangeAtCursor(comp, 1)).toEqual([1, 1]);
     expect(getWordRangeAtCursor(comp, 2)).toEqual([2, 4]);
     expect(getWordRangeAtCursor(comp, 3)).toEqual([2, 4]);
     expect(getWordRangeAtCursor(comp, 4)).toEqual([2, 4]);
     expect(getWordRangeAtCursor(comp, 5)).toEqual([2, 4]);
-    expect(getWordRangeAtCursor(comp, 6)).toEqual([6, 0]);
+    expect(getWordRangeAtCursor(comp, 6)).toEqual([6, 1]);
 
     const comp1 = [{ char: "a" }, { char: "\n" }, { char: "b" }, { char: "\n" }];
     expect(getWordRangeAtCursor(comp1, 0)).toEqual([0, 1]);
-    expect(getWordRangeAtCursor(comp1, 1)).toEqual([1, 0]);
+    expect(getWordRangeAtCursor(comp1, 1)).toEqual([1, 1]);
     expect(getWordRangeAtCursor(comp1, 2)).toEqual([2, 1]);
-    expect(getWordRangeAtCursor(comp1, 3)).toEqual([3, 0]);
+    expect(getWordRangeAtCursor(comp1, 3)).toEqual([3, 1]);
   });
 });
 
