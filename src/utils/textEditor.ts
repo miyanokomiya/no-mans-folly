@@ -9,7 +9,7 @@ import { toHexAndAlpha } from "./color";
 export const DEFAULT_FONT_SIZE = 18;
 export const DEFAULT_LINEHEIGHT = 1.2;
 
-const WORDBREAK = /\n| |\t|\.|,/;
+const WORDBREAK = /\n|\t|[ -/]|[:-@]|[[-`]/;
 export const LINEBREAK = /\n|\r\n/;
 
 export interface DocCompositionItem {
