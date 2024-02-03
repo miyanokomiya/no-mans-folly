@@ -8,7 +8,7 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_COPY_SHAPE_ITEMS } from "../contextMenuItems";
+import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
 import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
@@ -210,7 +210,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
         }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
+            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
             point: event.data.point,
           });
           return;

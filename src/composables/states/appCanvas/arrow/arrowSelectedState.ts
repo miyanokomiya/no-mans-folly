@@ -7,7 +7,7 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_COPY_SHAPE_ITEMS } from "../contextMenuItems";
+import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
@@ -140,7 +140,7 @@ export function newArrowSelectedState(): AppCanvasState {
         }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
+            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
             point: event.data.point,
           });
           return;

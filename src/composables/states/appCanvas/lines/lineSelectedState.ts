@@ -16,7 +16,7 @@ import { TextShape, patchPosition } from "../../../../shapes/text";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { CONTEXT_MENU_COPY_SHAPE_ITEMS } from "../contextMenuItems";
+import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -138,7 +138,7 @@ export function newLineSelectedState(): AppCanvasState {
           }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
+            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
             point: event.data.point,
           });
           return;

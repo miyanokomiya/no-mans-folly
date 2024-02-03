@@ -11,11 +11,15 @@ interface Props {
 
 export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
   const itemElm = useMemo(() => {
-    return items.map((item) => (
-      <ListButton key={item.key} onClick={() => onClickItem?.(item.key)}>
-        {item.label}
-      </ListButton>
-    ));
+    return items.map((item, i) =>
+      "separator" in item ? (
+        <div key={i} className="mt-1/2 border-b w-full h-1"></div>
+      ) : (
+        <ListButton key={item.key} onClick={() => onClickItem?.(item.key)}>
+          {item.label}
+        </ListButton>
+      ),
+    );
   }, [items, onClickItem]);
 
   return (

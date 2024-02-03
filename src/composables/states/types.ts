@@ -18,11 +18,13 @@ export type MouseOptions = {
   button: number;
 } & ModifierOptions;
 
-export interface ContextMenuItem {
-  label: string;
-  key: string;
-  children?: ContextMenuItem[];
-}
+export type ContextMenuItem =
+  | {
+      label: string;
+      key: string;
+      children?: ContextMenuItem[];
+    }
+  | { separator: true };
 
 export type CommandExam = { command?: string; title: string };
 

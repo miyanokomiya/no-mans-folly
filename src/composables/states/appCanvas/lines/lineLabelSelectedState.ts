@@ -22,7 +22,7 @@ import { newMovingLineLabelState } from "./movingLineLabelState";
 import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
-import { CONTEXT_MENU_COPY_SHAPE_ITEMS, handleContextItemEvent } from "../contextMenuItems";
+import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS, handleContextItemEvent } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 
@@ -182,7 +182,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_COPY_SHAPE_ITEMS,
+            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
             point: event.data.point,
           });
           return;

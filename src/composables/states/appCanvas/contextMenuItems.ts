@@ -7,6 +7,10 @@ import { ContextMenuItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
 
 export const CONTEXT_MENU_ITEM_SRC = {
+  DELETE_SHAPE: {
+    label: "Delete",
+    key: "DELETE_SHAPE",
+  },
   EXPORT_AS_PNG: {
     label: "Export as PNG",
     key: "EXPORT_AS_PNG",
@@ -32,12 +36,25 @@ export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
   // CONTEXT_MENU_ITEM_SRC.COPY_AS_SVG, // Clipboard API doesn't go with "image/svg+xml"
 ];
 
+export const CONTEXT_MENU_SHAPE_SELECTED_ITEMS: ContextMenuItem[] = [
+  CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
+  { separator: true },
+  ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
+];
+
 export function handleContextItemEvent(
   ctx: AppCanvasStateContext,
   event: ContextMenuItemEvent,
 ): TransitionValue<AppCanvasStateContext> {
   ctx.setContextMenuList();
   switch (event.data.key) {
+    case CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE.key: {
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      if (ids.length > 0) {
+        ctx.deleteShapes(ids);
+      }
+      return;
+    }
     case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
       copyShapesAsPNG(ctx);
       return;
