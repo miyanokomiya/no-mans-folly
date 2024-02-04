@@ -63,12 +63,18 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
     [onChange],
   );
 
+  const handleHueChange = useCallback(
+    (val: number, draft = false) => {
+      onChange?.(hsvaToRgba({ ...hsva, h: val }), draft);
+    },
+    [hsva, onChange],
+  );
+
   return (
-    <div className="">
+    <div className="flex flex-col gap-2">
       <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
-      <div className="mt-2">
-        <HSVColorRect hsva={hsva} onChange={handleHSVAChange} />
-      </div>
+      <HSVColorRect hsva={hsva} onChange={handleHSVAChange} />
+      <HueBar value={hsva.h} onChange={handleHueChange} />
     </div>
   );
 };
@@ -85,37 +91,39 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ hsva, onChange }) =>
 
   const rectElm = useRef<HTMLDivElement>(null);
 
-  const emitDraft = useCallback(
-    (e: MouseEvent) => {
+  const emit = useCallback(
+    (e: { pageX: number; pageY: number }, draft = false) => {
       if (!rectElm.current) return;
 
       const bounds = rectElm.current.getBoundingClientRect();
       const rate = { x: (e.pageX - bounds.left) / bounds.width, y: (e.pageY - bounds.top) / bounds.height };
-      onChange?.({ h: hsva.h, s: clamp(0, 1, rate.x), v: clamp(0, 1, 1 - rate.y), a: 1 }, true);
+      onChange?.({ h: hsva.h, s: clamp(0, 1, rate.x), v: clamp(0, 1, 1 - rate.y), a: 1 }, draft);
     },
-    [hsva, onChange],
+    [hsva.h, onChange],
   );
 
-  const handlePointerMove = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      emitDraft(e);
-    },
-    [emitDraft],
+  const { startDragging } = useGlobalDrag(
+    useCallback(
+      (e) => {
+        e.preventDefault();
+        emit(e, true);
+      },
+      [emit],
+    ),
+    useCallback(
+      (e) => {
+        emit(e);
+      },
+      [emit],
+    ),
   );
-
-  const handlePointerUp = useCallback(() => {
-    onChange?.(hsva);
-  }, [hsva, onChange]);
-
-  const { startDragging } = useGlobalDrag(handlePointerMove, handlePointerUp);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       startDragging();
-      emitDraft(e.nativeEvent);
+      emit(e.nativeEvent, true);
     },
-    [startDragging, emitDraft],
+    [startDragging, emit],
   );
 
   return (
@@ -137,6 +145,63 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ hsva, onChange }) =>
           className="bg-white border border-black rounded-full w-3 h-3"
           style={{ transform: `translate(-50%, -50%)` }}
         />
+      </div>
+    </div>
+  );
+};
+
+interface HueBarProps {
+  value: number;
+  onChange?: (val: number, draft?: boolean) => void;
+}
+
+export const HueBar: React.FC<HueBarProps> = ({ value, onChange }) => {
+  const rectElm = useRef<HTMLDivElement>(null);
+
+  const emitDraft = useCallback(
+    (e: MouseEvent) => {
+      if (!rectElm.current) return;
+
+      const bounds = rectElm.current.getBoundingClientRect();
+      const rate = (e.pageX - bounds.left) / bounds.width;
+      onChange?.(clamp(0, 1, rate) * 360, true);
+    },
+    [onChange],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      emitDraft(e);
+    },
+    [emitDraft],
+  );
+
+  const handlePointerUp = useCallback(() => {
+    onChange?.(value);
+  }, [value, onChange]);
+
+  const { startDragging } = useGlobalDrag(handlePointerMove, handlePointerUp);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      startDragging();
+      emitDraft(e.nativeEvent);
+    },
+    [startDragging, emitDraft],
+  );
+
+  return (
+    <div
+      ref={rectElm}
+      className="h-4 w-full"
+      style={{
+        background: "linear-gradient(to right, #f00 0, #ff0 16%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 84%, #ff0004 100%)",
+      }}
+      onPointerDown={handlePointerDown}
+    >
+      <div className="w-full h-full pointer-events-none" style={{ transform: `translateX(${(value / 360) * 100}%)` }}>
+        <div className="bg-white border border-black rounded-full w-1 h-4" style={{ transform: `translateX(-50%)` }} />
       </div>
     </div>
   );

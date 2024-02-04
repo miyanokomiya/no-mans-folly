@@ -71,7 +71,7 @@ export function useGlobalMouseupEffect(fn?: (e: MouseEvent) => void) {
   }, [fn]);
 }
 
-export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: MouseEvent) => void) {
+export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: Pick<MouseEvent, "pageX" | "pageY">) => void) {
   const [dragging, setDragging] = useState(false);
   const startDragging = useCallback(() => setDragging(true), []);
 
