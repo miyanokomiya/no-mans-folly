@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Color } from "../../models";
 import { HSVA, hsvaToRgba, rednerRGBA, rgbaToHsva } from "../../utils/color";
 import { useGlobalDrag } from "../../composables/window";
@@ -56,8 +56,21 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
 
   const hsva = useMemo(() => (color ? rgbaToHsva(color) : { h: 0, s: 0, v: 0, a: 1 }), [color]);
 
+  // Keep HSVA detail as much as possible even if it's lost by RGBA converting.
+  const [hsvaCache, setHsvaCache] = useState(hsva);
+  useLayoutEffect(() => {
+    if (hsva.v === 0) {
+      setHsvaCache((prev) => ({ ...hsva, h: prev.h, s: prev.s }));
+    } else if (hsva.s === 0) {
+      setHsvaCache((prev) => ({ ...hsva, h: prev.h }));
+    } else {
+      setHsvaCache(hsva);
+    }
+  }, [hsva]);
+
   const handleHSVAChange = useCallback(
     (val: HSVA, draft = false) => {
+      setHsvaCache(val);
       onChange?.(hsvaToRgba(val), draft);
     },
     [onChange],
@@ -65,7 +78,9 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
 
   const handleHueChange = useCallback(
     (val: number, draft = false) => {
-      onChange?.(hsvaToRgba({ ...hsva, h: val }), draft);
+      const nextHsva = { ...hsva, h: val };
+      setHsvaCache(nextHsva);
+      onChange?.(hsvaToRgba(nextHsva), draft);
     },
     [hsva, onChange],
   );
@@ -73,8 +88,8 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
-      <HSVColorRect hsva={hsva} onChange={handleHSVAChange} />
-      <HueBar value={hsva.h} onChange={handleHueChange} />
+      <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
+      <HueBar value={hsvaCache.h} onChange={handleHueChange} />
     </div>
   );
 };
