@@ -21,9 +21,9 @@ export const TextColorPanel: React.FC<Props> = ({ value, onChanged }) => {
     [onChanged, color],
   );
 
-  const onColorClick = useCallback(
-    (val: Color) => {
-      onChanged?.(rednerRGBA({ ...val, a: color.a }));
+  const onColorChange = useCallback(
+    (val: Color, draft = false) => {
+      onChanged?.(rednerRGBA({ ...val, a: color.a }), draft);
     },
     [onChanged, color],
   );
@@ -35,7 +35,7 @@ export const TextColorPanel: React.FC<Props> = ({ value, onChanged }) => {
           <SliderInput min={0} max={1} value={color.a} onChanged={onAlphaChanged} />
         </div>
         <div className="mt-2">
-          <ColorPickerPanel onClick={onColorClick} />
+          <ColorPickerPanel color={color} onChange={onColorChange} />
         </div>
       </div>
     </div>

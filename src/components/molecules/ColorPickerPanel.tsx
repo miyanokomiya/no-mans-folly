@@ -40,54 +40,52 @@ const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void
 
 interface Option {
   color?: Color;
-  onClick?: (color: Color, draft?: boolean) => void;
+  onChange?: (color: Color, draft?: boolean) => void;
 }
 
-export const ColorPickerPanel: React.FC<Option> = ({ color, onClick }) => {
+export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
   const table = useMemo(
     () =>
       COLOR_TABLE.map((line) => {
         return line.map((item) => {
           return (
             <div key={rednerRGBA(item)}>
-              <ColorPickerItem color={item} onClick={onClick} />
+              <ColorPickerItem color={item} onClick={onChange} />
             </div>
           );
         });
       }),
-    [onClick],
+    [onChange],
   );
 
   const hsva = useMemo(() => (color ? rgbaToHsva(color) : { h: 0, s: 0, v: 0, a: 1 }), [color]);
 
   const handleHSVAChange = useCallback(
     (val: HSVA, draft = false) => {
-      onClick?.(hsvaToRgba(val), draft);
+      onChange?.(hsvaToRgba(val), draft);
     },
-    [onClick],
+    [onChange],
   );
 
   return (
     <div className="">
       <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
       <div className="mt-2">
-        <HSVColorRect {...hsva} onChange={handleHSVAChange} />
+        <HSVColorRect hsva={hsva} onChange={handleHSVAChange} />
       </div>
     </div>
   );
 };
 
 interface HSVColorRectProps {
-  h: number;
-  s: number;
-  v: number;
+  hsva: HSVA;
   onChange?: (val: HSVA, draft?: boolean) => void;
 }
 
-export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange }) => {
+export const HSVColorRect: React.FC<HSVColorRectProps> = ({ hsva, onChange }) => {
   const baseColor = useMemo(() => {
-    return rednerRGBA(hsvaToRgba({ h, s: 1, v: 1, a: 1 }));
-  }, [h, s, v]);
+    return rednerRGBA(hsvaToRgba({ h: hsva.h, s: 1, v: 1, a: 1 }));
+  }, [hsva]);
 
   const rectElm = useRef<HTMLDivElement>(null);
 
@@ -97,9 +95,9 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange })
 
       const bounds = rectElm.current.getBoundingClientRect();
       const rate = { x: (e.pageX - bounds.left) / bounds.width, y: (e.pageY - bounds.top) / bounds.height };
-      onChange?.({ h, s: clamp(0, 1, rate.x), v: clamp(0, 1, 1 - rate.y), a: 1 }, true);
+      onChange?.({ h: hsva.h, s: clamp(0, 1, rate.x), v: clamp(0, 1, 1 - rate.y), a: 1 }, true);
     },
-    [onChange],
+    [hsva, onChange],
   );
 
   const handlePointerMove = useCallback(
@@ -111,8 +109,8 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange })
   );
 
   const handlePointerUp = useCallback(() => {
-    onChange?.({ h, s, v, a: 1 });
-  }, [onChange]);
+    onChange?.(hsva);
+  }, [hsva, onChange]);
 
   const { startDragging } = useGlobalDrag(handlePointerMove, handlePointerUp);
 
@@ -137,7 +135,7 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange })
     >
       <div
         className="w-full h-full pointer-events-none"
-        style={{ transform: `translate(${s * 100}%,${(1 - v) * 100}%)` }}
+        style={{ transform: `translate(${hsva.s * 100}%,${(1 - hsva.v) * 100}%)` }}
       >
         <div
           className="bg-white border border-black rounded-full w-3 h-3"

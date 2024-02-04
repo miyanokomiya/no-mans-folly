@@ -36,9 +36,16 @@ export const SheetConfigPanel: React.FC = () => {
   }, [tmpSheet?.bgcolor]);
 
   const onColorClick = useCallback(
-    (color: Color) => {
+    (color: Color, draft = false) => {
       if (!sheet) return;
-      acctx.sheetStore.patchEntity(sheet.id, { bgcolor: { ...color, a: sheet.bgcolor?.a ?? 1 } });
+
+      const patch = { bgcolor: { ...color, a: sheet.bgcolor?.a ?? 1 } };
+      if (draft) {
+        acctx.sheetStore.setTmpSheetMap({ [sheet.id]: patch });
+      } else {
+        acctx.sheetStore.patchEntity(sheet.id, patch);
+        acctx.sheetStore.setTmpSheetMap({});
+      }
     },
     [sheet],
   );
@@ -66,7 +73,7 @@ export const SheetConfigPanel: React.FC = () => {
         <div className="mb-2">
           <SliderInput min={0} max={1} value={bgColor.a} onChanged={onAlphaChanged} />
         </div>
-        <ColorPickerPanel onClick={onColorClick} />
+        <ColorPickerPanel color={bgColor} onChange={onColorClick} />
       </div>
     );
   }, [bgColor, sheet]);

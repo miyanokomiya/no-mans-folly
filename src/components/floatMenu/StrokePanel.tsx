@@ -13,9 +13,9 @@ interface Props {
 }
 
 export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
-  const onColorClick = useCallback(
-    (color: Color) => {
-      onChanged?.({ ...stroke, color: { ...color, a: stroke.color.a } });
+  const onColorChange = useCallback(
+    (color: Color, draft = false) => {
+      onChanged?.({ ...stroke, color: { ...color, a: stroke.color.a } }, draft);
     },
     [stroke, onChanged],
   );
@@ -76,7 +76,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           </div>
         </div>
         <div className="mt-2">
-          <ColorPickerPanel onClick={onColorClick} />
+          <ColorPickerPanel color={stroke.color} onChange={onColorChange} />
         </div>
       </div>
     </div>
