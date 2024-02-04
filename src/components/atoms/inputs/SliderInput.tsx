@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../../../composables/window";
+import { useCallback, useRef } from "react";
+import { useGlobalDrag } from "../../../composables/window";
 import { logRoundByDigit, snapNumber } from "../../../utils/geometry";
 import { ModifierOptions, getModifierOptions } from "../../../utils/devices";
 
@@ -13,7 +13,6 @@ interface Props {
 }
 
 export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue, onChanged }) => {
-  const [down, setDown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const draftValue = useRef(value);
 
@@ -37,38 +36,36 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
     [applyStep, onChanged],
   );
 
+  const { startDragging } = useGlobalDrag(
+    useCallback(
+      (e: MouseEvent) => {
+        if (!ref.current) return;
+
+        const bounds = ref.current.getBoundingClientRect();
+        updateDraftValueByRate((e.pageX - bounds.x) / bounds.width, getModifierOptions(e));
+      },
+      [updateDraftValueByRate],
+    ),
+    useCallback(() => {
+      if (!ref.current) return;
+
+      // Use "draftValue", because "value" in this scope can be outdated.
+      onChanged?.(draftValue.current);
+    }, [onChanged]),
+  );
+
   const onDown = useCallback(
     (e: React.MouseEvent) => {
       if (!ref.current) return;
 
       e.preventDefault();
       ref.current.focus();
-      setDown(true);
+      startDragging();
       const bounds = ref.current.getBoundingClientRect();
       updateDraftValueByRate((e.pageX - bounds.x) / bounds.width, getModifierOptions(e));
     },
-    [updateDraftValueByRate],
+    [updateDraftValueByRate, startDragging],
   );
-
-  const onUp = useCallback(() => {
-    if (!ref.current || !down) return;
-
-    setDown(false);
-    // Use "draftValue", because "value" in this scope can be outdated.
-    onChanged?.(draftValue.current);
-  }, [onChanged, down]);
-  useGlobalMouseupEffect(onUp);
-
-  const onMove = useCallback(
-    (e: MouseEvent) => {
-      if (!ref.current || !down) return;
-
-      const bounds = ref.current.getBoundingClientRect();
-      updateDraftValueByRate((e.pageX - bounds.x) / bounds.width, getModifierOptions(e));
-    },
-    [down, updateDraftValueByRate],
-  );
-  useGlobalMousemoveEffect(onMove);
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../../composables/window";
+import { useGlobalDrag } from "../../composables/window";
 import { IVec2, getDistance } from "okageo";
 
 interface Props {
@@ -17,6 +17,42 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
   const [insertion, setInsertion] = useState<[from: number, to: number] | undefined>();
   const containerRed = useRef<HTMLDivElement>(null);
 
+  const { startDragging } = useGlobalDrag(
+    useCallback(
+      (e) => {
+        if (!startP || !containerRed.current) return;
+
+        const p = { x: e.pageX, y: e.pageY };
+        if (getDistance(startP, p) < 10) return;
+
+        const rects = Array.from(containerRed.current.children).map((c) => c.getBoundingClientRect());
+        const index = rects.findIndex((r) => p.y <= r.y + r.height / 2);
+
+        const adjusted = index === -1 ? items.length : index;
+        const fromIndex = items.findIndex((item) => item[0] === targetId);
+        setInsertion([fromIndex, adjusted]);
+        setMovingP(p);
+        setMoving(true);
+      },
+      [targetId, startP, items],
+    ),
+    useCallback(() => {
+      if (moving && insertion) {
+        const [from, to] = insertion;
+        if (to !== from || to !== from + 1) {
+          onChange?.(insertion);
+        }
+      } else if (targetId) {
+        onClick?.(targetId);
+      }
+
+      setTargetId("");
+      setStartP(undefined);
+      setInsertion(undefined);
+      setMoving(false);
+    }, [moving, targetId, insertion, onClick, onChange]),
+  );
+
   const onDown = useCallback(
     (e: React.MouseEvent) => {
       if (e.button !== 0) return;
@@ -27,51 +63,10 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
       e.preventDefault();
       setTargetId(id);
       setStartP({ x: e.pageX, y: e.pageY });
+      startDragging();
     },
-    [anchor],
+    [anchor, startDragging],
   );
-
-  const onMove = useCallback(
-    (e: MouseEvent) => {
-      if (!startP || !containerRed.current) return;
-
-      const p = { x: e.pageX, y: e.pageY };
-      if (!moving && getDistance(startP, p) < 10) return;
-
-      const rects = Array.from(containerRed.current.children).map((c) => c.getBoundingClientRect());
-      const index = rects.findIndex((r) => p.y <= r.y + r.height / 2);
-
-      const adjusted = index === -1 ? items.length : index;
-      const fromIndex = items.findIndex((item) => item[0] === targetId);
-      setInsertion([fromIndex, adjusted]);
-
-      setMoving(true);
-      setMovingP(p);
-    },
-    [startP, moving, targetId, items],
-  );
-  useGlobalMousemoveEffect(onMove);
-
-  const onUp = useCallback(
-    (e: MouseEvent) => {
-      if (moving && insertion) {
-        const [from, to] = insertion;
-        if (to !== from || to !== from + 1) {
-          onChange?.(insertion);
-        }
-      } else if (targetId) {
-        onClick?.(targetId);
-      }
-
-      e.preventDefault();
-      setTargetId("");
-      setMoving(false);
-      setStartP(undefined);
-      setInsertion(undefined);
-    },
-    [moving, targetId, insertion, onChange],
-  );
-  useGlobalMouseupEffect(onUp);
 
   const floatItem = useMemo(() => {
     if (!insertion || !movingP) return;

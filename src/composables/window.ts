@@ -29,15 +29,6 @@ export function useGlobalResizeEffect(fn: () => void) {
   }, [fn]);
 }
 
-export function useGlobalScrollEffect(fn: () => void, capture = false) {
-  useEffect(() => {
-    window.addEventListener("scroll", fn, capture);
-    return () => {
-      window.removeEventListener("scroll", fn, capture);
-    };
-  }, [fn, capture]);
-}
-
 export function useGlobalClickEffect(fn: (e: MouseEvent) => void, capture = false) {
   useEffect(() => {
     window.addEventListener("click", fn, capture);
@@ -47,44 +38,64 @@ export function useGlobalClickEffect(fn: (e: MouseEvent) => void, capture = fals
   }, [fn, capture]);
 }
 
-export function useGlobalMousemoveEffect(fn?: (e: MouseEvent) => void) {
-  useEffect(() => {
-    if (!fn) return;
+export function useGlobalMousemoveEffect(fn: (e: MouseEvent) => void) {
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+  const handle = useCallback((e: MouseEvent) => {
+    fnRef.current?.(e);
+  }, []);
 
-    window.addEventListener("mousemove", fn);
+  useEffect(() => {
+    window.addEventListener("mousemove", handle);
     return () => {
-      window.removeEventListener("mousemove", fn);
+      window.removeEventListener("mousemove", handle);
     };
-  }, [fn]);
+  }, [handle]);
 }
 
-export function useGlobalMouseupEffect(fn?: (e: MouseEvent) => void) {
-  useEffect(() => {
-    if (!fn) return;
+export function useGlobalMouseupEffect(fn: (e: MouseEvent) => void) {
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+  const handle = useCallback((e: MouseEvent) => {
+    fnRef.current?.(e);
+  }, []);
 
-    window.addEventListener("mouseup", fn);
-    window.addEventListener("mouseleave", fn);
+  useEffect(() => {
+    window.addEventListener("mouseup", handle);
+    window.addEventListener("mouseleave", handle);
     return () => {
-      window.removeEventListener("mouseup", fn);
-      window.removeEventListener("mouseleave", fn);
+      window.removeEventListener("mouseup", handle);
+      window.removeEventListener("mouseleave", handle);
     };
-  }, [fn]);
+  }, [handle]);
 }
 
 export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: Pick<MouseEvent, "pageX" | "pageY">) => void) {
-  const [dragging, setDragging] = useState(false);
-  const startDragging = useCallback(() => setDragging(true), []);
+  const draggingRef = useRef(false);
+  const startDragging = useCallback(() => {
+    draggingRef.current = true;
+  }, []);
 
-  useGlobalMousemoveEffect(dragging ? onDrag : undefined);
-
-  const handleUp = useCallback(
-    (e: MouseEvent) => {
-      setDragging(false);
-      onUp(e);
-    },
-    [onUp],
+  useGlobalMousemoveEffect(
+    useCallback(
+      (e: MouseEvent) => {
+        if (!draggingRef.current) return;
+        onDrag(e);
+      },
+      [onDrag],
+    ),
   );
-  useGlobalMouseupEffect(dragging ? handleUp : undefined);
+
+  useGlobalMouseupEffect(
+    useCallback(
+      (e: MouseEvent) => {
+        if (!draggingRef.current) return;
+        draggingRef.current = false;
+        onUp(e);
+      },
+      [onUp],
+    ),
+  );
 
   return { startDragging };
 }
