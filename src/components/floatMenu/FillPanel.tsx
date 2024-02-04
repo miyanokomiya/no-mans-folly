@@ -11,8 +11,8 @@ interface Props {
 
 export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
   const onColorClick = useCallback(
-    (color: Color) => {
-      onChanged?.({ ...fill, color: { ...color, a: fill.color.a } });
+    (color: Color, draft = false) => {
+      onChanged?.({ ...fill, color: { ...color, a: fill.color.a } }, draft);
     },
     [fill, onChanged],
   );
@@ -43,7 +43,7 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
           <SliderInput min={0} max={1} value={fill.color.a} onChanged={onAlphaChanged} />
         </div>
         <div className="mt-2">
-          <ColorPickerPanel onClick={onColorClick} />
+          <ColorPickerPanel color={fill.color} onClick={onColorClick} />
         </div>
       </div>
     </div>

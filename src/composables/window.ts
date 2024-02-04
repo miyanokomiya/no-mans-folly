@@ -47,8 +47,10 @@ export function useGlobalClickEffect(fn: (e: MouseEvent) => void, capture = fals
   }, [fn, capture]);
 }
 
-export function useGlobalMousemoveEffect(fn: (e: MouseEvent) => void) {
+export function useGlobalMousemoveEffect(fn?: (e: MouseEvent) => void) {
   useEffect(() => {
+    if (!fn) return;
+
     window.addEventListener("mousemove", fn);
     return () => {
       window.removeEventListener("mousemove", fn);
@@ -56,8 +58,10 @@ export function useGlobalMousemoveEffect(fn: (e: MouseEvent) => void) {
   }, [fn]);
 }
 
-export function useGlobalMouseupEffect(fn: (e: MouseEvent) => void) {
+export function useGlobalMouseupEffect(fn?: (e: MouseEvent) => void) {
   useEffect(() => {
+    if (!fn) return;
+
     window.addEventListener("mouseup", fn);
     window.addEventListener("mouseleave", fn);
     return () => {
