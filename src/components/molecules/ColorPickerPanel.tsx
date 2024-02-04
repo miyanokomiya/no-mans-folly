@@ -31,7 +31,7 @@ const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void
   return (
     <button
       type="button"
-      className="w-8 h-8 border rounded-full"
+      className="w-6 h-6 border rounded-full"
       style={{ backgroundColor: rednerRGBA(props.color) }}
       onClick={onClick}
     ></button>
@@ -48,11 +48,7 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
     () =>
       COLOR_TABLE.map((line) => {
         return line.map((item) => {
-          return (
-            <div key={rednerRGBA(item)}>
-              <ColorPickerItem color={item} onClick={onChange} />
-            </div>
-          );
+          return <ColorPickerItem key={rednerRGBA(item)} color={item} onClick={onChange} />;
         });
       }),
     [onChange],
