@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Color } from "../../models";
 import { HSVA, hsvaToRgba, rednerRGBA, rgbaToHsva } from "../../utils/color";
-import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../../composables/window";
+import { useGlobalDrag } from "../../composables/window";
 import { clamp } from "okageo";
 
 const v = 51;
@@ -90,7 +90,6 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange })
   }, [h, s, v]);
 
   const rectElm = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
 
   const emitDraft = useCallback(
     (e: MouseEvent) => {
@@ -103,14 +102,6 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange })
     [onChange],
   );
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      setDragging(true);
-      emitDraft(e.nativeEvent);
-    },
-    [emitDraft],
-  );
-
   const handlePointerMove = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
@@ -118,13 +109,20 @@ export const HSVColorRect: React.FC<HSVColorRectProps> = ({ h, s, v, onChange })
     },
     [emitDraft],
   );
-  useGlobalMousemoveEffect(dragging ? handlePointerMove : undefined);
 
   const handlePointerUp = useCallback(() => {
-    setDragging(false);
     onChange?.({ h, s, v, a: 1 });
   }, [onChange]);
-  useGlobalMouseupEffect(dragging ? handlePointerUp : undefined);
+
+  const { startDragging } = useGlobalDrag(handlePointerMove, handlePointerUp);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      startDragging();
+      emitDraft(e.nativeEvent);
+    },
+    [startDragging, emitDraft],
+  );
 
   return (
     <div

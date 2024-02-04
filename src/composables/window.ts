@@ -71,6 +71,24 @@ export function useGlobalMouseupEffect(fn?: (e: MouseEvent) => void) {
   }, [fn]);
 }
 
+export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: MouseEvent) => void) {
+  const [dragging, setDragging] = useState(false);
+  const startDragging = useCallback(() => setDragging(true), []);
+
+  useGlobalMousemoveEffect(dragging ? onDrag : undefined);
+
+  const handleUp = useCallback(
+    (e: MouseEvent) => {
+      setDragging(false);
+      onUp(e);
+    },
+    [onUp],
+  );
+  useGlobalMouseupEffect(dragging ? handleUp : undefined);
+
+  return { startDragging };
+}
+
 export function useGlobalKeydownEffect(fn: (e: KeyboardEvent) => void, capture = false) {
   useEffect(() => {
     window.addEventListener("keydown", fn, capture);
