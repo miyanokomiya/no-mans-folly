@@ -25,11 +25,9 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
       },
     };
   },
-  clip(region, _head, transform, lineWidth) {
-    applyPath(region, getClipPath(transform, lineWidth), true);
-  },
-  createSVGClipPathCommand(_head, transform, lineWidth) {
-    return pathSegmentRawsToString(createSVGCurvePath(getClipPath(transform, lineWidth), []));
+  clip() {},
+  createSVGClipPathCommand() {
+    return undefined;
   },
   getWrapperSrcPath(_head, lineWidth) {
     return getSrcPath(lineWidth);
@@ -49,18 +47,4 @@ function getSrcPath(lineWidth: number) {
 
 function getPath(transform: AffineMatrix, lineWidth: number) {
   return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
-}
-
-function getClipPath(transform: AffineMatrix, lineWidth: number) {
-  const height = 12 + lineWidth;
-  const width = height;
-
-  return [
-    { x: 0, y: 0 },
-    { x: 0, y: -width / 2 },
-    { x: -height, y: -width / 2 },
-    { x: 0, y: 0 },
-    { x: -height, y: width / 2 },
-    { x: 0, y: width / 2 },
-  ].map((p) => applyAffine(transform, p));
 }
