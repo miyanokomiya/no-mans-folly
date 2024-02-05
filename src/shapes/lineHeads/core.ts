@@ -1,4 +1,4 @@
-import { AffineMatrix } from "okageo";
+import { AffineMatrix, IVec2 } from "okageo";
 import { LineHead } from "../../models";
 import { SVGElementInfo } from "../../utils/svgElements";
 
@@ -9,11 +9,7 @@ export interface LineHeadStruct<T extends LineHead> {
   createSVGElementInfo: (head: T, transform: AffineMatrix, lineWidth: number) => SVGElementInfo | undefined;
   clip: (region: Path2D, head: T, transform: AffineMatrix, lineWidth: number) => void;
   createSVGClipPathCommand: (head: T, transform: AffineMatrix, lineWidth: number) => string | undefined;
-  /**
-   * Returns radius bigger enough to accomodate this head.
-   * This value isn't the precisest to omit some complicate parameters such as rotation.
-   */
-  getWrapperRadius: (head: T, lineWidth: number) => number;
+  getWrapperSrcPath: (head: T, lineWidth: number) => IVec2[];
 }
 
 export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
@@ -28,5 +24,5 @@ export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
   createSVGElementInfo: () => undefined,
   clip() {},
   createSVGClipPathCommand: () => undefined,
-  getWrapperRadius: () => 0,
+  getWrapperSrcPath: () => [],
 };

@@ -1,4 +1,4 @@
-import { AffineMatrix } from "okageo";
+import { AffineMatrix, IVec2 } from "okageo";
 import { LineHead } from "../../models";
 import { LineHeadFallbackStruct, LineHeadStruct } from "./core";
 import { LineHeadOpen } from "./open";
@@ -48,6 +48,6 @@ export function createLineHeadSVGClipPathCommand<T extends LineHead>(
   return getLineHeadStruct(head.type).createSVGClipPathCommand(head, transform, lineWidth);
 }
 
-export function getLineHeadWrapperRadius<T extends LineHead>(head: T, lineWidth: number): number {
-  return getLineHeadStruct(head.type).getWrapperRadius(head, lineWidth);
+export function getLineHeadWrapperSrcPath<T extends LineHead>(head: T, lineWidth: number): IVec2[] {
+  return getLineHeadStruct(head.type).getWrapperSrcPath(head, lineWidth);
 }

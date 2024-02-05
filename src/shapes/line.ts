@@ -3,6 +3,7 @@ import {
   IRectangle,
   IVec2,
   applyAffine,
+  getOuterRectangle,
   getRadian,
   isSame,
   multiAffines,
@@ -26,7 +27,7 @@ import {
   clipLineHead,
   createLineHeadSVGClipPathCommand,
   createLineHeadSVGElementInfo,
-  getLineHeadWrapperRadius,
+  getLineHeadWrapperSrcPath,
   renderLineHead,
 } from "./lineHeads";
 import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer";
@@ -247,20 +248,23 @@ export const struct: ShapeStruct<LineShape> = {
     let rect = getCurveSplineBounds(path, shape.curves);
 
     if (includeBounds) {
+      const affines = getHeadAffines(shape);
+      const headRects: IRectangle[] = [];
+      if (shape.pHead && affines.pAffine) {
+        const srcPath = getLineHeadWrapperSrcPath(shape.pHead, shape.stroke.width ?? 1);
+        headRects.push(getOuterRectangle([srcPath.map((p) => applyAffine(affines.pAffine!, p))]));
+      }
+      if (shape.qHead && affines.qAffine) {
+        const srcPath = getLineHeadWrapperSrcPath(shape.qHead, shape.stroke.width ?? 1);
+        headRects.push(getOuterRectangle([srcPath.map((p) => applyAffine(affines.qAffine!, p))]));
+      }
+      rect = headRects.length > 0 ? getWrapperRect([rect, ...headRects]) : rect;
+    }
+
+    if (includeBounds) {
       // FIXME: This expanding isn't precise but just large enough.
       rect = expandRect(rect, getLineWidth(shape) / 1.9);
     }
-
-    const headRects: IRectangle[] = [];
-    if (shape.pHead) {
-      const size = getLineHeadWrapperRadius(shape.pHead, shape.stroke.width ?? 1);
-      headRects.push({ x: shape.p.x - size, y: shape.p.y - size, width: size * 2, height: size * 2 });
-    }
-    if (shape.qHead) {
-      const size = getLineHeadWrapperRadius(shape.qHead, shape.stroke.width ?? 1) * 2;
-      headRects.push({ x: shape.q.x - size, y: shape.q.y - size, width: size * 2, height: size * 2 });
-    }
-    rect = headRects.length > 0 ? getWrapperRect([rect, ...headRects]) : rect;
 
     return rect;
   },
@@ -268,7 +272,7 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(struct.getWrapperRect(shape));
   },
   isPointOn(shape, p, shapeContext) {
-    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 2)))
+    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 3)))
       return true;
     if (!shapeContext) return false;
 

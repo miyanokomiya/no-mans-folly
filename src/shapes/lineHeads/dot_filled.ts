@@ -47,8 +47,14 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
       ["a", radius, radius, 0, false, false, -radius * 2, 0],
     ]);
   },
-  getWrapperRadius(_head, lineWidth) {
-    return 6 + lineWidth;
+  getWrapperSrcPath(_head, lineWidth) {
+    const rad = getRadius(lineWidth);
+    return [
+      { x: -rad, y: -rad },
+      { x: rad, y: -rad },
+      { x: rad, y: rad },
+      { x: -rad, y: rad },
+    ];
   },
 };
 

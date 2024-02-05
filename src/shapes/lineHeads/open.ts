@@ -31,12 +31,12 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
   createSVGClipPathCommand(_head, transform, lineWidth) {
     return pathSegmentRawsToString(createSVGCurvePath(getClipPath(transform, lineWidth), []));
   },
-  getWrapperRadius(_head, lineWidth) {
-    return (20 + lineWidth) * Math.SQRT2;
+  getWrapperSrcPath(_head, lineWidth) {
+    return getSrcPath(lineWidth);
   },
 };
 
-function getPath(transform: AffineMatrix, lineWidth: number) {
+function getSrcPath(lineWidth: number) {
   const height = 12 + lineWidth;
   const width = height;
 
@@ -44,7 +44,11 @@ function getPath(transform: AffineMatrix, lineWidth: number) {
     { x: -height, y: -width / 2 },
     { x: 0, y: 0 },
     { x: -height, y: width / 2 },
-  ].map((p) => applyAffine(transform, p));
+  ];
+}
+
+function getPath(transform: AffineMatrix, lineWidth: number) {
+  return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
 }
 
 function getClipPath(transform: AffineMatrix, lineWidth: number) {
