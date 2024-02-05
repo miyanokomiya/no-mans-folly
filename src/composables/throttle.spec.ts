@@ -22,39 +22,65 @@ describe("newThrottle", () => {
     const fn = vi.fn();
     const t = newThrottle(fn, 10);
     t();
+    expect(fn).toHaveBeenCalledTimes(0);
     await sleep(20);
+    expect(fn).toHaveBeenCalledTimes(1);
     t();
+    expect(fn).toHaveBeenCalledTimes(1);
     await sleep(20);
-
     expect(fn).toHaveBeenCalledTimes(2);
   });
-  test("should pass args", async () => {
+  test("should pass the latest args", async () => {
     const mock = vi.fn();
     const fn = (val1: number, val2: number) => mock(val1, val2);
     const t = newThrottle(fn, 10);
     t(10, 100);
     await sleep(5);
     t(20, 200);
-    await sleep(20);
+    await sleep(6);
     expect(mock).toHaveBeenCalledTimes(1);
     expect(mock).toHaveBeenCalledWith(20, 200);
+    t(30, 300);
+    await sleep(10);
+    expect(mock).toHaveBeenCalledTimes(2);
+    expect(mock).toHaveBeenCalledWith(30, 300);
   });
 
-  describe("if option.leading is true", () => {
+  describe("when leading is true", () => {
     test("should call leading", async () => {
       const mock = vi.fn();
       const fn = (val1: number, val2: number) => mock(val1, val2);
       const t = newThrottle(fn, 10, true);
       t(10, 100);
-      await sleep(20);
+      expect(mock).toHaveBeenNthCalledWith(1, 10, 100);
+      await sleep(3);
       t(20, 200);
+      expect(mock).toHaveBeenCalledTimes(1);
       await sleep(5);
+      expect(mock).toHaveBeenCalledTimes(1);
       t(30, 300);
-      await sleep(20);
+      expect(mock).toHaveBeenCalledTimes(1);
+      await sleep(5);
 
       expect(mock).toHaveBeenCalledTimes(2);
       expect(mock).toHaveBeenNthCalledWith(1, 10, 100);
-      expect(mock).toHaveBeenNthCalledWith(2, 20, 200);
+      expect(mock).toHaveBeenNthCalledWith(2, 30, 300);
+    });
+
+    test("should wait for the next execution", async () => {
+      const mock = vi.fn();
+      const fn = (val1: number) => mock(val1);
+      const t = newThrottle(fn, 10, true);
+      t(10);
+      expect(mock).toHaveBeenCalledTimes(1);
+      await sleep(5);
+      t(20);
+      expect(mock).toHaveBeenCalledTimes(1);
+      await sleep(3);
+      expect(mock).toHaveBeenCalledTimes(1);
+      await sleep(3);
+      expect(mock).toHaveBeenCalledTimes(2);
+      expect(mock).toHaveBeenNthCalledWith(2, 20);
     });
   });
 
