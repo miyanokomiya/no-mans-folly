@@ -103,7 +103,7 @@ export const struct: ShapeStruct<LineShape> = {
       treeNode.children.forEach((n) => {
         const label = shapeContext.shapeMap[n.id];
         if (label && isTextShape(label)) {
-          applyPath(region!, textStruct.getLocalRectPolygon(label, shapeContext));
+          applyPath(region!, textStruct.getLocalRectPolygon(label, shapeContext), true);
         }
       });
     }
@@ -132,11 +132,11 @@ export const struct: ShapeStruct<LineShape> = {
       ctx.restore();
     }
 
-    if (region && pAffine) {
+    if (pAffine) {
       renderLineHead(ctx, shape.pHead!, pAffine, ctx.lineWidth);
     }
 
-    if (region && qAffine) {
+    if (qAffine) {
       renderLineHead(ctx, shape.qHead!, qAffine, ctx.lineWidth);
     }
   },

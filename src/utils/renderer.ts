@@ -5,10 +5,17 @@ import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
 import { CurveControl } from "../models";
 
-export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false) {
-  path.forEach((p, i) => {
-    i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-  });
+export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false, reverse = false) {
+  if (reverse) {
+    for (let i = path.length - 1; i >= 0; i--) {
+      const p = path[i];
+      i === path.length - 1 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+  } else {
+    path.forEach((p, i) => {
+      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    });
+  }
   if (closed) {
     ctx.closePath();
   }
