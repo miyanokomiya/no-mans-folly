@@ -1,8 +1,9 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Color } from "../../models";
-import { HSVA, hsvaToRgba, rednerRGBA, rgbaToHsva } from "../../utils/color";
+import { COLORS, HSVA, colorToHex, hexToColor, hsvaToRgba, rednerRGBA, rgbaToHsva } from "../../utils/color";
 import { useGlobalDrag } from "../../composables/window";
 import { clamp } from "okageo";
+import { TextInput } from "../atoms/inputs/TextInput";
 
 const v = 51;
 const getV = (i: number) => Math.min(Math.max(v * i, 0), 255);
@@ -54,7 +55,8 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
     [onChange],
   );
 
-  const hsva = useMemo(() => (color ? rgbaToHsva(color) : { h: 0, s: 0, v: 0, a: 1 }), [color]);
+  const actualColor = color ?? COLORS.BLACK;
+  const hsva = useMemo(() => rgbaToHsva(actualColor), [actualColor]);
 
   // Keep HSVA detail as much as possible even if it's lost by RGBA converting.
   const [hsvaCache, setHsvaCache] = useState(hsva);
@@ -90,6 +92,9 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
       <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
       <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
       <HueBar value={hsvaCache.h} onChange={handleHueChange} />
+      <div className="flex justify-end">
+        <HexField {...actualColor} onChange={onChange} />
+      </div>
     </div>
   );
 };
@@ -219,5 +224,38 @@ export const HueBar: React.FC<HueBarProps> = ({ value, onChange }) => {
         <div className="bg-white border border-black rounded-full w-1 h-4" style={{ transform: `translateX(-50%)` }} />
       </div>
     </div>
+  );
+};
+
+interface HexFieldProps {
+  r: number;
+  g: number;
+  b: number;
+  onChange?: (color: Color, draft?: boolean) => void;
+}
+
+export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
+  const hex = useMemo(() => colorToHex({ r: Math.round(r), g: Math.round(g), b: Math.round(b), a: 1 }), [r, g, b]);
+  const [draftValue, setDraftValue] = useState(hex);
+  useLayoutEffect(() => {
+    setDraftValue(hex.replace("#", ""));
+  }, [hex]);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      onChange?.(hexToColor(`#${draftValue.replace("#", "")}`));
+    },
+    [onChange, draftValue],
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="flex items-center gap-1">
+      <div className="w-8 h-8 rounded border" style={{ backgroundColor: hex }} />
+      <div className="w-20 flex items-center">
+        <span className="text-lg">#</span>
+        <TextInput value={draftValue} onChange={setDraftValue} keepFocus={true} placeholder="000000" />
+      </div>
+    </form>
   );
 };
