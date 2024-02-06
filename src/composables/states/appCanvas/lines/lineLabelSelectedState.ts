@@ -2,28 +2,19 @@ import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
-  handleCommonShortcut,
-  handleCommonTextStyle,
-  handleCommonWheel,
-  handleFileDrop,
-  handleHistoryEvent,
-  handleStateEvent,
-  newShapeClipboard,
+  handleCommonPointerDownLeftOnSingleSelection,
+  handleCommonPointerDownRightOnSingleSelection,
+  handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
-import { newSingleSelectedByPointerOnState } from "../singleSelectedByPointerOnState";
-import { newRectangleSelectingState } from "../ractangleSelectingState";
-import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { TextShape } from "../../../../shapes/text";
 import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
-import { newMovingLineLabelState } from "./movingLineLabelState";
 import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS, handleContextItemEvent } from "../contextMenuItems";
-import { findBetterShapeAt } from "../../../shapeComposite";
+import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
@@ -84,43 +75,23 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
               }
 
               const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(
-                shapeComposite,
-                event.data.point,
-                shape.parentId ? { parentId: shape.parentId } : undefined,
+              return handleCommonPointerDownLeftOnSingleSelection(
+                ctx,
+                event,
+                shape.id,
+                shapeComposite.getSelectionScope(shape),
               );
-              if (!shapeAtPointer) {
-                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
-              }
-
-              if (!event.data.options.ctrl) {
-                if (event.data.options.alt) {
-                  ctx.selectShape(shapeAtPointer.id);
-                  return newDuplicatingShapesState;
-                } else if (shapeAtPointer.id === shape.id) {
-                  return () => newMovingLineLabelState({ boundingBox });
-                } else {
-                  ctx.selectShape(shapeAtPointer.id);
-                  return newSingleSelectedByPointerOnState;
-                }
-              }
-
-              ctx.selectShape(shapeAtPointer.id, true);
-              return;
             }
             case 1:
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(
-                shapeComposite,
-                event.data.point,
-                shape.parentId ? { parentId: shape.parentId } : undefined,
+              return handleCommonPointerDownRightOnSingleSelection(
+                ctx,
+                event,
+                shape.id,
+                shapeComposite.getSelectionScope(shape),
               );
-              if (!shapeAtPointer || shapeAtPointer.id === shape.id) return;
-
-              ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
-              return;
             }
             default:
               return;
@@ -138,19 +109,8 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
             boundingHitResult = hitBounding;
             ctx.redraw();
           }
-          if (boundingHitResult) {
-            ctx.setCursor();
-            return;
-          }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(
-            shapeComposite,
-            event.data.current,
-            shape.parentId ? { parentId: shape.parentId } : undefined,
-          );
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "keydown":
           switch (event.data.key) {
@@ -158,53 +118,16 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
               event.data.prevent?.();
               return startTextEditingIfPossible(ctx, shape.id);
             default:
-              return handleCommonShortcut(ctx, event);
+              return handleIntransientEvent(ctx, event);
           }
-        case "shape-updated": {
-          if (event.data.keys.has(shape.id)) {
-            return newSelectionHubState;
-          }
-          return;
-        }
-        case "text-style": {
-          return handleCommonTextStyle(ctx, event);
-        }
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return newSelectionHubState;
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
-        case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
         case "contextmenu":
           ctx.setContextMenuList({
             items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
             point: event.data.point,
           });
           return;
-        case "contextmenu-item": {
-          return handleContextItemEvent(ctx, event);
-        }
-        case "copy": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newShapeClipboard(ctx);
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
         default:
-          return;
+          return handleIntransientEvent(ctx, event);
       }
     },
     render: (ctx, renderCtx) => {
