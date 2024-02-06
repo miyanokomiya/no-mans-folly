@@ -27,6 +27,11 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Copy as SVG",
     key: "COPY_AS_SVG",
   },
+
+  DELETE_LINE_VERTEX: {
+    label: "Delete vertex",
+    key: "DELETE_LINE_VERTEX",
+  },
 } satisfies { [key: string]: ContextMenuItem };
 
 export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [

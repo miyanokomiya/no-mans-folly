@@ -6,7 +6,7 @@ import { ListButton } from "./atoms/buttons/ListButton";
 interface Props {
   items: ContextMenuItem[];
   point: IVec2;
-  onClickItem?: (key: string) => void;
+  onClickItem?: (key: string, meta?: any) => void;
 }
 
 export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
@@ -15,7 +15,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
       "separator" in item ? (
         <div key={i} className="mt-1/2 border-b w-full h-1"></div>
       ) : (
-        <ListButton key={item.key} onClick={() => onClickItem?.(item.key)}>
+        <ListButton key={item.key} onClick={() => onClickItem?.(item.key, item.meta)}>
           {item.label}
         </ListButton>
       ),

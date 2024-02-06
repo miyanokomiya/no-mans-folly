@@ -22,6 +22,7 @@ export type ContextMenuItem =
   | {
       label: string;
       key: string;
+      meta?: any;
       children?: ContextMenuItem[];
     }
   | { separator: true };

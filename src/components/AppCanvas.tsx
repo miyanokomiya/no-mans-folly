@@ -583,8 +583,8 @@ export const AppCanvas: React.FC = () => {
   );
 
   const onClickContextMenuItem = useCallback(
-    (key: string) => {
-      sm.handleEvent({ type: "contextmenu-item", data: { key } });
+    (key: string, meta?: any) => {
+      sm.handleEvent({ type: "contextmenu-item", data: { key, meta } });
     },
     [sm],
   );

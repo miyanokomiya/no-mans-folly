@@ -107,6 +107,7 @@ export interface ContextMenuItemEvent extends ModeStateEventBase {
   type: "contextmenu-item";
   data: {
     key: string;
+    meta?: any;
   };
 }
 

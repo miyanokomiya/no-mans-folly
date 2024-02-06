@@ -16,12 +16,16 @@ import { TextShape, patchPosition } from "../../../../shapes/text";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
+
+type DeleteVertexMeta = {
+  index: number;
+};
 
 export function newLineSelectedState(): AppCanvasState {
   let lineShape: LineShape;
@@ -136,12 +140,43 @@ export function newLineSelectedState(): AppCanvasState {
             default:
               return handleIntransientEvent(ctx, event);
           }
-        case "contextmenu":
+        case "contextmenu": {
+          const vertices = getLinePath(lineShape);
+          const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
+          if (hitResult?.type === "vertex" && hitResult.index !== 0 && hitResult.index !== vertices.length - 1) {
+            ctx.setContextMenuList({
+              items: [
+                { ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX, meta: { index: hitResult.index } as DeleteVertexMeta },
+                { separator: true },
+                ...CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+              ],
+              point: event.data.point,
+            });
+            return;
+          }
+
           ctx.setContextMenuList({
             items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
             point: event.data.point,
           });
           return;
+        }
+        case "contextmenu-item": {
+          switch (event.data.key) {
+            case CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX.key: {
+              const patch = deleteVertex(lineShape, (event.data.meta as DeleteVertexMeta).index);
+              if (Object.keys(patch).length > 0) {
+                if (lineShape.curveType === "auto") {
+                  patch.curves = getAutomaticCurve(getLinePath({ ...lineShape, ...patch }));
+                }
+                ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
+              }
+              return newSelectionHubState;
+            }
+            default:
+              return handleIntransientEvent(ctx, event);
+          }
+        }
         default:
           return handleIntransientEvent(ctx, event);
       }
