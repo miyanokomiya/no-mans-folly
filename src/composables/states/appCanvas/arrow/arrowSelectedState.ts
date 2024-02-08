@@ -150,7 +150,7 @@ export function newArrowSelectedState(): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
-      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), shapeHandler.retrieveHitResult());
+      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
 }

@@ -12,18 +12,18 @@ import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../.
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { TwoSidedArrowShape } from "../../../../shapes/twoSidedArrow";
-import { ArrowTwoHandler, ArrowTwoHitResult, newArrowTwoHandler } from "../../../arrowTwoHandler";
+import { newArrowTwoHandler } from "../../../shapeHandlers/arrowTwoHandler";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
 import { getArrowDirection } from "../../../../utils/arrows";
+import { ShapeHandler } from "../../../shapeHandlers/core";
 
 export function newArrowTwoSelectedState(): AppCanvasState {
   let targetShape: TwoSidedArrowShape;
-  let shapeHandler: ArrowTwoHandler;
-  let hitResult: ArrowTwoHitResult | undefined;
+  let shapeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
@@ -57,7 +57,8 @@ export function newArrowTwoSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+              const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+              shapeHandler.saveHitResult(hitResult);
               if (hitResult) {
                 switch (hitResult.type) {
                   case "head":
@@ -122,10 +123,12 @@ export function newArrowTwoSelectedState(): AppCanvasState {
         }
         case "pointerhover": {
           const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
-          if (hitResult?.type !== nextHitResult?.type) {
-            hitResult = nextHitResult;
-            boundingHitResult = undefined;
+          if (shapeHandler.saveHitResult(nextHitResult)) {
             ctx.redraw();
+          }
+
+          if (nextHitResult) {
+            boundingHitResult = undefined;
             return;
           }
 
@@ -165,7 +168,7 @@ export function newArrowTwoSelectedState(): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
-      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), hitResult);
+      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
 }

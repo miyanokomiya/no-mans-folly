@@ -1,19 +1,20 @@
 import { IVec2, add, getDistance, rotate } from "okageo";
-import { TwoSidedArrowShape, getHeadControlPoint } from "../shapes/twoSidedArrow";
-import { StyleScheme } from "../models";
-import { ShapeComposite } from "./shapeComposite";
-import { applyFillStyle } from "../utils/fillStyle";
-import { TAU, getRadianForDirection4 } from "../utils/geometry";
-import { renderArrowUnit } from "../utils/renderer";
-import { COLORS } from "../utils/color";
-import { getArrowDirection, getArrowHeadPoint, getArrowTailPoint } from "../utils/arrows";
+import { TwoSidedArrowShape, getHeadControlPoint } from "../../shapes/twoSidedArrow";
+import { StyleScheme } from "../../models";
+import { ShapeComposite } from "../shapeComposite";
+import { applyFillStyle } from "../../utils/fillStyle";
+import { TAU, getRadianForDirection4 } from "../../utils/geometry";
+import { renderArrowUnit } from "../../utils/renderer";
+import { COLORS } from "../../utils/color";
+import { getArrowDirection, getArrowHeadPoint, getArrowTailPoint } from "../../utils/arrows";
+import { defineShapeHandler } from "./core";
 
 const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;
 
 type AnchorType = "head" | "direction" | "to" | "from";
 
-export interface ArrowTwoHitResult {
+interface ArrowTwoHitResult {
   type: AnchorType;
 }
 
@@ -22,7 +23,7 @@ interface Option {
   targetId: string;
 }
 
-export function newArrowTwoHandler(option: Option) {
+export const newArrowTwoHandler = defineShapeHandler<ArrowTwoHitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as TwoSidedArrowShape;
   const headControlP = getHeadControlPoint(shape);
@@ -100,6 +101,8 @@ export function newArrowTwoHandler(option: Option) {
   return {
     hitTest,
     render,
+    isSameHitResult: (a, b) => {
+      return a?.type === b?.type;
+    },
   };
-}
-export type ArrowTwoHandler = ReturnType<typeof newArrowTwoHandler>;
+});

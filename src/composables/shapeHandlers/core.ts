@@ -5,7 +5,7 @@ interface ShapeHandlerHitResult {}
 
 export interface ShapeHandler<H extends ShapeHandlerHitResult = any> {
   hitTest: (p: IVec2, scale: number) => H | undefined;
-  render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: H) => void;
+  render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number) => void;
   /**
    * Returns true when "val" is different from the previous one.
    */
@@ -16,6 +16,7 @@ export interface ShapeHandler<H extends ShapeHandlerHitResult = any> {
 export function defineShapeHandler<H extends ShapeHandlerHitResult, O>(
   createFn: (option: O) => Pick<ShapeHandler<H>, "hitTest" | "render"> & {
     isSameHitResult: (a?: H, b?: H) => boolean;
+    render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: H) => void;
   },
 ): (option: O) => ShapeHandler<H> {
   return (o) => {
@@ -24,6 +25,9 @@ export function defineShapeHandler<H extends ShapeHandlerHitResult, O>(
 
     return {
       ...handler,
+      render: (ctx, style, scale) => {
+        return handler.render(ctx, style, scale, hitResult);
+      },
       saveHitResult: (val) => {
         const changed = !handler.isSameHitResult(hitResult, val);
         hitResult = val;
