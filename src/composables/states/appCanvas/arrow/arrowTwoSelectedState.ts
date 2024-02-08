@@ -13,7 +13,6 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { TwoSidedArrowShape } from "../../../../shapes/twoSidedArrow";
 import { newArrowTwoHandler } from "../../../shapeHandlers/arrowTwoHandler";
-import { findBetterShapeAt } from "../../../shapeComposite";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
@@ -137,18 +136,12 @@ export function newArrowTwoSelectedState(): AppCanvasState {
             boundingHitResult = hitBounding;
             ctx.redraw();
           }
-          if (boundingHitResult) {
-            ctx.setCursor();
+
+          if (hitBounding) {
             return;
           }
 
-          const shapeAtPointer = findBetterShapeAt(
-            ctx.getShapeComposite(),
-            event.data.current,
-            ctx.getShapeComposite().getSelectionScope(targetShape),
-          );
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "shape-updated": {
           if (event.data.keys.has(targetShape.id)) {

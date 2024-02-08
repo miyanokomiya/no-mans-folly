@@ -125,8 +125,11 @@ export function newArrowSelectedState(): AppCanvasState {
         case "pointerhover": {
           const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
           if (shapeHandler.saveHitResult(nextHitResult)) {
-            boundingHitResult = undefined;
             ctx.redraw();
+          }
+
+          if (nextHitResult) {
+            boundingHitResult = undefined;
             return;
           }
 
@@ -134,6 +137,10 @@ export function newArrowSelectedState(): AppCanvasState {
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
             boundingHitResult = hitBounding;
             ctx.redraw();
+          }
+
+          if (hitBounding) {
+            return;
           }
 
           return handleIntransientEvent(ctx, event);
