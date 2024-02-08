@@ -1,19 +1,20 @@
 import { IVec2, add, getDistance, rotate } from "okageo";
-import { OneSidedArrowShape, getHeadControlPoint, getTailControlPoint } from "../shapes/oneSidedArrow";
-import { StyleScheme } from "../models";
-import { ShapeComposite } from "./shapeComposite";
-import { applyFillStyle } from "../utils/fillStyle";
-import { TAU, getRadianForDirection4 } from "../utils/geometry";
-import { renderArrowUnit } from "../utils/renderer";
-import { COLORS } from "../utils/color";
-import { getArrowHeadPoint, getArrowTailPoint, getArrowDirection } from "../utils/arrows";
+import { OneSidedArrowShape, getHeadControlPoint, getTailControlPoint } from "../../shapes/oneSidedArrow";
+import { StyleScheme } from "../../models";
+import { ShapeComposite } from "../shapeComposite";
+import { applyFillStyle } from "../../utils/fillStyle";
+import { TAU, getRadianForDirection4 } from "../../utils/geometry";
+import { renderArrowUnit } from "../../utils/renderer";
+import { COLORS } from "../../utils/color";
+import { getArrowHeadPoint, getArrowTailPoint, getArrowDirection } from "../../utils/arrows";
+import { defineShapeHandler } from "./core";
 
 const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;
 
 type AnchorType = "head" | "tail" | "direction" | "to" | "from";
 
-export interface ArrowHitResult {
+interface ArrowHitResult {
   type: AnchorType;
 }
 
@@ -22,7 +23,7 @@ interface Option {
   targetId: string;
 }
 
-export function newArrowHandler(option: Option) {
+export const newArrowHandler = defineShapeHandler<ArrowHitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as OneSidedArrowShape;
   const headControlP = getHeadControlPoint(shape);
@@ -105,6 +106,8 @@ export function newArrowHandler(option: Option) {
   return {
     hitTest,
     render,
+    isSameHitResult: (a, b) => {
+      return a?.type === b?.type;
+    },
   };
-}
-export type ArrowHandler = ReturnType<typeof newArrowHandler>;
+});

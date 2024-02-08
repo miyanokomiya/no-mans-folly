@@ -12,18 +12,18 @@ import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../.
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
-import { ArrowHandler, ArrowHitResult, newArrowHandler } from "../../../arrowHandler";
+import { newArrowHandler } from "../../../shapeHandlers/arrowHandler";
 import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { newMovingArrowTailState } from "./movingArrowTailState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
 import { getArrowDirection } from "../../../../utils/arrows";
+import { ShapeHandler } from "../../../shapeHandlers/core";
 
 export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;
-  let shapeHandler: ArrowHandler;
-  let hitResult: ArrowHitResult | undefined;
+  let shapeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
@@ -56,7 +56,8 @@ export function newArrowSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+              const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+              shapeHandler.saveHitResult(hitResult);
               if (hitResult) {
                 switch (hitResult.type) {
                   case "head":
@@ -123,8 +124,7 @@ export function newArrowSelectedState(): AppCanvasState {
         }
         case "pointerhover": {
           const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
-          if (hitResult?.type !== nextHitResult?.type) {
-            hitResult = nextHitResult;
+          if (shapeHandler.saveHitResult(nextHitResult)) {
             boundingHitResult = undefined;
             ctx.redraw();
             return;
@@ -150,7 +150,7 @@ export function newArrowSelectedState(): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
-      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), hitResult);
+      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), shapeHandler.retrieveHitResult());
     },
   };
 }
