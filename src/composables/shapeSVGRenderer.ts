@@ -1,7 +1,7 @@
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
-import { getDocCompositionInfo, renderSVGDocByComposition } from "../utils/textEditor";
+import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
@@ -25,7 +25,7 @@ export function newShapeSVGRenderer(option: Option) {
       if (!shapeElmInfo) return;
 
       const doc = docMap[shape.id];
-      if (!doc) {
+      if (!doc || hasDocNoContent(doc)) {
         const shapeElm = createSVGElement(shapeElmInfo.tag, shapeElmInfo.attributes, shapeElmInfo.children);
         root.appendChild(shapeElm);
         return;

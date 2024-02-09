@@ -89,6 +89,15 @@ export function getDocLength(doc: DocOutput): number {
 }
 
 /**
+ * Returns true when doc has no content.
+ * i.e. There's no items or only one line break.
+ */
+export function hasDocNoContent(doc: DocOutput): boolean {
+  if (doc.length === 0) return true;
+  return doc.length === 1 && doc[0].insert.length === 1 && isLinebreak(doc[0].insert);
+}
+
+/**
  * Returns doc length based on doc delta
  */
 export function getDocRawLength(doc: DocOutput): number {

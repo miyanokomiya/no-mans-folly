@@ -22,6 +22,7 @@ import {
   getOutputSelection,
   getRawCursor,
   getWordRangeAtCursor,
+  hasDocNoContent,
   isCursorInDoc,
   isLinebreak,
   isUrlText,
@@ -86,6 +87,17 @@ describe("getDocLength", () => {
   test("should return doc length based on graphemes", () => {
     expect(getDocLength([{ insert: "a" }, { insert: "b" }, { insert: "c" }])).toBe(3);
     expect(getDocLength([{ insert: "a" }, { insert: "😄" }, { insert: "c" }])).toBe(3);
+  });
+});
+
+describe("hasDocNoContent", () => {
+  test("should return true when doc has no content", () => {
+    expect(hasDocNoContent([])).toBe(true);
+    expect(hasDocNoContent([{ insert: "\n" }])).toBe(true);
+    expect(hasDocNoContent([{ insert: " " }])).toBe(false);
+    expect(hasDocNoContent([{ insert: "a" }])).toBe(false);
+    expect(hasDocNoContent([{ insert: "a" }, { insert: "b" }])).toBe(false);
+    expect(hasDocNoContent([{ insert: "\n" }, { insert: "\n" }])).toBe(false);
   });
 });
 
