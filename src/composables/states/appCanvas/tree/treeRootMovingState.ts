@@ -4,7 +4,12 @@ import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposit
 import { TreeShapeBase } from "../../../../shapes/tree/core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
-import { canBeGraftTarget, getNextTreeLayout, getPatchToGraftBranch, getTreeBranchIds } from "../../../treeHandler";
+import {
+  canBeGraftTarget,
+  getNextTreeLayout,
+  getPatchToGraftBranch,
+  getTreeBranchIds,
+} from "../../../shapeHandlers/treeHandler";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { mergeMap } from "../../../../utils/commons";
 import { newSelectionHubState } from "../selectionHubState";

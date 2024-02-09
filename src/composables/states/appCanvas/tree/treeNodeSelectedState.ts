@@ -11,17 +11,14 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { getNextShapeComposite } from "../../../shapeComposite";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
-  TreeHandler,
-  TreeHitResult,
   generateFindexNextAt,
   generateFindexPreviousAt,
   getNextTreeLayout,
   getPatchToDisconnectBranch,
   getTreeBranchIds,
-  isSameTreeHitResult,
   isValidTreeNode,
   newTreeHandler,
-} from "../../../treeHandler";
+} from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
@@ -29,11 +26,11 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { mergeMap } from "../../../../utils/commons";
 import { newSingleSelectedState } from "../singleSelectedState";
+import { ShapeHandler } from "../../../shapeHandlers/core";
 
 export function newTreeNodeSelectedState(): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
-  let treeHandler: TreeHandler;
-  let treeHitResult: TreeHitResult | undefined;
+  let treeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
@@ -71,7 +68,8 @@ export function newTreeNodeSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              treeHitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
+              const treeHitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
+              treeHandler.saveHitResult(treeHitResult);
               if (treeHitResult) {
                 const shapeComposite = ctx.getShapeComposite();
                 const treeRootId = treeNodeShape.parentId!;
@@ -175,11 +173,10 @@ export function newTreeNodeSelectedState(): AppCanvasState {
         }
         case "pointerhover": {
           const result = treeHandler.hitTest(event.data.current, ctx.getScale());
-          if (!isSameTreeHitResult(treeHitResult, result)) {
+          if (treeHandler.saveHitResult(result)) {
             ctx.redraw();
           }
-          treeHitResult = result;
-          if (treeHitResult) return;
+          if (result) return;
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
@@ -209,7 +206,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), treeHitResult);
+      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
     },
   };

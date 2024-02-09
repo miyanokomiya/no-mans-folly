@@ -11,10 +11,10 @@ import {
   isValidTreeNode,
   newTreeNodeMovingHandler,
 } from "./treeHandler";
-import { newShapeComposite } from "./shapeComposite";
-import { createShape, getCommonStruct } from "../shapes";
-import { TreeNodeShape } from "../shapes/tree/treeNode";
-import { TreeRootShape } from "../shapes/tree/treeRoot";
+import { newShapeComposite } from "../shapeComposite";
+import { createShape, getCommonStruct } from "../../shapes";
+import { TreeNodeShape } from "../../shapes/tree/treeNode";
+import { TreeRootShape } from "../../shapes/tree/treeRoot";
 import { generateKeyBetween } from "fractional-indexing";
 
 const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
@@ -80,12 +80,12 @@ const shapeComposite = newShapeComposite({
 });
 
 describe("newTreeNodeMovingHandler", () => {
-  describe("moveTest: horizontal", () => {
+  describe("hitTest: horizontal", () => {
     test("should return node moving result: move inside the siblings", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 80, y: -10 })).toEqual(undefined);
-      expect(target.moveTest({ x: 50, y: 40 })).toEqual(undefined);
-      expect(target.moveTest({ x: 50, y: 60 })).toEqual({
+      expect(target.hitTest({ x: 80, y: -10 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 50, y: 40 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 50, y: 60 }, 1)).toEqual({
         treeParentId: "root",
         direction: 1,
         findex: generateKeyBetween(b.findex, null),
@@ -94,12 +94,12 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: move to other parent", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 110, y: 50 })).toEqual({
+      expect(target.hitTest({ x: 110, y: 50 }, 1)).toEqual({
         treeParentId: "b",
         direction: 1,
         findex: generateKeyBetween(null, bb.findex),
       });
-      expect(target.moveTest({ x: 110, y: 60 })).toEqual({
+      expect(target.hitTest({ x: 110, y: 60 }, 1)).toEqual({
         treeParentId: "b",
         direction: 1,
         findex: generateKeyBetween(bb.findex, null),
@@ -108,7 +108,7 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: become the first child", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 150, y: 50 })).toEqual({
+      expect(target.hitTest({ x: 150, y: 50 }, 1)).toEqual({
         treeParentId: "bb",
         direction: 1,
         findex: generateKeyBetween(bb.findex, null),
@@ -117,7 +117,7 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: should not move to own children", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 110, y: -50 })).toEqual({
+      expect(target.hitTest({ x: 110, y: -50 }, 1)).toEqual({
         treeParentId: "b",
         direction: 1,
         findex: generateKeyBetween(null, bb.findex),
@@ -126,17 +126,17 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: switch direction", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: -50, y: 10 })).toEqual({
+      expect(target.hitTest({ x: -50, y: 10 }, 1)).toEqual({
         treeParentId: "root",
         direction: 3,
         findex: generateKeyBetween(ia.findex, null),
       });
-      expect(target.moveTest({ x: -50, y: 2 })).toEqual({
+      expect(target.hitTest({ x: -50, y: 2 }, 1)).toEqual({
         treeParentId: "root",
         direction: 3,
         findex: generateKeyBetween(null, ia.findex),
       });
-      expect(target.moveTest({ x: -60, y: 0 })).toEqual({
+      expect(target.hitTest({ x: -60, y: 0 }, 1)).toEqual({
         treeParentId: "ia",
         direction: 3,
         findex: generateKeyBetween(ia.findex, null),
@@ -152,12 +152,12 @@ describe("newTreeNodeMovingHandler", () => {
           }),
         targetId: "a",
       });
-      expect(target1.moveTest({ x: -50, y: 0 })).toEqual({
+      expect(target1.hitTest({ x: -50, y: 0 }, 1)).toEqual({
         treeParentId: "root",
         direction: 3,
         findex: generateKeyBetween(root.findex, null),
       });
-      expect(target1.moveTest({ x: 50, y: 0 })).toEqual(undefined);
+      expect(target1.hitTest({ x: 50, y: 0 }, 1)).toEqual(undefined);
 
       const target2 = newTreeNodeMovingHandler({
         getShapeComposite: () =>
@@ -167,16 +167,16 @@ describe("newTreeNodeMovingHandler", () => {
           }),
         targetId: "ia",
       });
-      expect(target2.moveTest({ x: 50, y: 0 })).toEqual({
+      expect(target2.hitTest({ x: 50, y: 0 }, 1)).toEqual({
         treeParentId: "root",
         direction: 1,
         findex: generateKeyBetween(root.findex, null),
       });
-      expect(target2.moveTest({ x: -50, y: 0 })).toEqual(undefined);
+      expect(target2.hitTest({ x: -50, y: 0 }, 1)).toEqual(undefined);
     });
   });
 
-  describe("moveTest: vertical", () => {
+  describe("hitTest: vertical", () => {
     const a = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
       id: "a",
       findex: generateKeyBetween(root.findex, null),
@@ -234,9 +234,9 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: move inside the siblings", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: -10, y: 80 })).toEqual(undefined);
-      expect(target.moveTest({ x: 40, y: 50 })).toEqual(undefined);
-      expect(target.moveTest({ x: 60, y: 50 })).toEqual({
+      expect(target.hitTest({ x: -10, y: 80 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 40, y: 50 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 60, y: 50 }, 1)).toEqual({
         treeParentId: "root",
         direction: 2,
         findex: generateKeyBetween(b.findex, null),
@@ -245,12 +245,12 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: move to other parent", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 50, y: 110 })).toEqual({
+      expect(target.hitTest({ x: 50, y: 110 }, 1)).toEqual({
         treeParentId: "b",
         direction: 2,
         findex: generateKeyBetween(null, bb.findex),
       });
-      expect(target.moveTest({ x: 60, y: 110 })).toEqual({
+      expect(target.hitTest({ x: 60, y: 110 }, 1)).toEqual({
         treeParentId: "b",
         direction: 2,
         findex: generateKeyBetween(bb.findex, null),
@@ -259,7 +259,7 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: become the first child", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 50, y: 150 })).toEqual({
+      expect(target.hitTest({ x: 50, y: 150 }, 1)).toEqual({
         treeParentId: "bb",
         direction: 2,
         findex: generateKeyBetween(bb.findex, null),
@@ -268,7 +268,7 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: should not move to own children", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: -50, y: 110 })).toEqual({
+      expect(target.hitTest({ x: -50, y: 110 }, 1)).toEqual({
         treeParentId: "b",
         direction: 2,
         findex: generateKeyBetween(null, bb.findex),
@@ -277,17 +277,17 @@ describe("newTreeNodeMovingHandler", () => {
 
     test("should return node moving result: switch direction", () => {
       const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
-      expect(target.moveTest({ x: 10, y: -50 })).toEqual({
+      expect(target.hitTest({ x: 10, y: -50 }, 1)).toEqual({
         treeParentId: "root",
         direction: 0,
         findex: generateKeyBetween(ia.findex, null),
       });
-      expect(target.moveTest({ x: 2, y: -50 })).toEqual({
+      expect(target.hitTest({ x: 2, y: -50 }, 1)).toEqual({
         treeParentId: "root",
         direction: 0,
         findex: generateKeyBetween(null, ia.findex),
       });
-      expect(target.moveTest({ x: 0, y: -60 })).toEqual({
+      expect(target.hitTest({ x: 0, y: -60 }, 1)).toEqual({
         treeParentId: "ia",
         direction: 0,
         findex: generateKeyBetween(ia.findex, null),
@@ -303,12 +303,12 @@ describe("newTreeNodeMovingHandler", () => {
           }),
         targetId: "a",
       });
-      expect(target1.moveTest({ x: 0, y: -50 })).toEqual({
+      expect(target1.hitTest({ x: 0, y: -50 }, 1)).toEqual({
         treeParentId: "root",
         direction: 0,
         findex: generateKeyBetween(root.findex, null),
       });
-      expect(target1.moveTest({ x: 0, y: 50 })).toEqual(undefined);
+      expect(target1.hitTest({ x: 0, y: 50 }, 1)).toEqual(undefined);
 
       const target2 = newTreeNodeMovingHandler({
         getShapeComposite: () =>
@@ -318,28 +318,12 @@ describe("newTreeNodeMovingHandler", () => {
           }),
         targetId: "ia",
       });
-      expect(target2.moveTest({ x: 0, y: 50 })).toEqual({
+      expect(target2.hitTest({ x: 0, y: 50 }, 1)).toEqual({
         treeParentId: "root",
         direction: 2,
         findex: generateKeyBetween(root.findex, null),
       });
-      expect(target2.moveTest({ x: 0, y: -50 })).toEqual(undefined);
-    });
-  });
-
-  describe("branchIds", () => {
-    test("should return branch ids belonging to the target shape", () => {
-      expect(newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" }).branchIds).toEqual([
-        "a",
-        "aa",
-      ]);
-      expect(newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "b" }).branchIds).toEqual([
-        "b",
-        "bb",
-      ]);
-      expect(newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "bb" }).branchIds).toEqual([
-        "bb",
-      ]);
+      expect(target2.hitTest({ x: 0, y: -50 }, 1)).toEqual(undefined);
     });
   });
 });

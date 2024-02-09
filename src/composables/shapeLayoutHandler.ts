@@ -5,7 +5,7 @@ import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
-import { getTreeLayoutPatchFunctions } from "./treeHandler";
+import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
 
 /**
  * Genaral porpus patch function to recalculate all layouts and automatic adjustments.

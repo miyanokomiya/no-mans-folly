@@ -10,13 +10,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { getNextShapeComposite } from "../../../shapeComposite";
 import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
-import {
-  TreeHandler,
-  TreeHitResult,
-  getNextTreeLayout,
-  isSameTreeHitResult,
-  newTreeHandler,
-} from "../../../treeHandler";
+import { getNextTreeLayout, newTreeHandler } from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import { getInitialOutput } from "../../../../utils/textEditor";
@@ -24,11 +18,11 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
+import { ShapeHandler } from "../../../shapeHandlers/core";
 
 export function newTreeRootSelectedState(): AppCanvasState {
   let treeRootShape: TreeRootShape;
-  let treeHandler: TreeHandler;
-  let treeHitResult: TreeHitResult | undefined;
+  let treeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
@@ -61,7 +55,8 @@ export function newTreeRootSelectedState(): AppCanvasState {
 
           switch (event.data.options.button) {
             case 0: {
-              treeHitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
+              const treeHitResult = treeHandler.hitTest(event.data.point, ctx.getScale());
+              treeHandler.saveHitResult(treeHitResult);
               if (treeHitResult) {
                 if (treeHitResult.type === -1) {
                   return;
@@ -132,11 +127,10 @@ export function newTreeRootSelectedState(): AppCanvasState {
         }
         case "pointerhover": {
           const result = treeHandler.hitTest(event.data.current, ctx.getScale());
-          if (!isSameTreeHitResult(treeHitResult, result)) {
+          if (treeHandler.saveHitResult(result)) {
             ctx.redraw();
           }
-          treeHitResult = result;
-          if (treeHitResult) return;
+          if (result) return;
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (!isSameHitResult(boundingHitResult, hitBounding)) {
@@ -164,7 +158,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
       renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
       renderCtx.stroke();
 
-      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), treeHitResult);
+      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
     },
   };

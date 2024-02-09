@@ -1,17 +1,18 @@
 import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
-import { getWrapperRect } from "../shapes";
-import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../shapes/tree/treeNode";
-import { TreeRootShape, isTreeRootShape } from "../shapes/tree/treeRoot";
-import { ShapeComposite } from "./shapeComposite";
-import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../models";
-import { applyFillStyle } from "../utils/fillStyle";
-import { TAU, getDistanceBetweenPointAndRect } from "../utils/geometry";
-import { applyStrokeStyle } from "../utils/strokeStyle";
-import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, treeLayout } from "../utils/layouts/tree";
-import { flatTree, getAllBranchIds, getTree } from "../utils/tree";
-import { TreeShapeBase, isTreeShapeBase } from "../shapes/tree/core";
-import { generateKeyBetweenAllowSame } from "../utils/findex";
-import { pickMinItem } from "../utils/commons";
+import { getWrapperRect } from "../../shapes";
+import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../../shapes/tree/treeNode";
+import { TreeRootShape, isTreeRootShape } from "../../shapes/tree/treeRoot";
+import { ShapeComposite } from "../shapeComposite";
+import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../../models";
+import { applyFillStyle } from "../../utils/fillStyle";
+import { TAU, getDistanceBetweenPointAndRect } from "../../utils/geometry";
+import { applyStrokeStyle } from "../../utils/strokeStyle";
+import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, treeLayout } from "../../utils/layouts/tree";
+import { flatTree, getAllBranchIds, getTree } from "../../utils/tree";
+import { TreeShapeBase, isTreeShapeBase } from "../../shapes/tree/core";
+import { generateKeyBetweenAllowSame } from "../../utils/findex";
+import { pickMinItem } from "../../utils/commons";
+import { defineShapeHandler } from "./core";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
@@ -38,7 +39,7 @@ interface Option {
   targetId: string;
 }
 
-export function newTreeHandler(option: Option) {
+export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as TreeRootShape | TreeNodeShape;
   const isRoot = isTreeRootShape(shape);
@@ -207,17 +208,17 @@ export function newTreeHandler(option: Option) {
     }
   }
 
-  return { hitTest, render };
-}
-export type TreeHandler = ReturnType<typeof newTreeHandler>;
-
-export function isSameTreeHitResult(a?: TreeHitResult, b?: TreeHitResult): boolean {
-  if (a && b) {
-    return a?.direction === b?.direction && isSame(a.p, b.p);
-  }
-
-  return !a && !b;
-}
+  return {
+    hitTest,
+    render,
+    isSameHitResult: (a, b) => {
+      if (a && b) {
+        return a?.direction === b?.direction && isSame(a.p, b.p);
+      }
+      return !a && !b;
+    },
+  };
+});
 
 export interface TreeNodeMovingResult {
   treeParentId: string;
@@ -228,7 +229,7 @@ export interface TreeNodeMovingResult {
 /**
  * Suppose a tree can contain either vertical or horizontal branches.
  */
-export function newTreeNodeMovingHandler(option: Option) {
+export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as TreeNodeShape;
   const root = shapeComposite.shapeMap[shape.parentId!] as TreeRootShape;
@@ -246,7 +247,7 @@ export function newTreeNodeMovingHandler(option: Option) {
     getWrapperRect(shapeComposite.getShapeStruct, shapeComposite.shapeMap[id]),
   ]);
 
-  function moveTest(p: IVec2): TreeNodeMovingResult | undefined {
+  function hitTest(p: IVec2): TreeNodeMovingResult | undefined {
     if (rects.length === 0) return;
 
     const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
@@ -395,9 +396,14 @@ export function newTreeNodeMovingHandler(option: Option) {
     );
   }
 
-  return { moveTest, render, branchIds: Array.from(ownBranchIdSet) };
-}
-export type TreeNodeMovingHandler = ReturnType<typeof newTreeNodeMovingHandler>;
+  return {
+    hitTest,
+    render,
+    isSameHitResult: (a, b) => {
+      return a?.treeParentId === b?.treeParentId && a?.direction === b?.direction && a?.findex === b?.findex;
+    },
+  };
+});
 
 function getTreeNodeMovingResultToInsertSibling(
   shapeComposite: ShapeComposite,
