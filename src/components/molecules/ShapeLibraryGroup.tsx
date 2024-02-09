@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TextInput } from "../atoms/inputs/TextInput";
 
-const baseURL = import.meta.env.BASE_URL;
+const baseURL = process.env.ASSETS_PATH!;
 
 interface Props {
   name: string;
@@ -11,7 +11,7 @@ interface Props {
 export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
   const [loading, setLoading] = useState(true);
   const [indexData, setIndexData] = useState<any>();
-  const basePath = `./${baseURL}shapes/${name}`;
+  const basePath = `${baseURL}shapes/${name}`;
 
   const fetchIndex = useCallback(async () => {
     if (indexData) return;

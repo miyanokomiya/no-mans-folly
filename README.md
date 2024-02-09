@@ -9,12 +9,4 @@
     - TODO: To handle something asynchronously, create dedicated state blocking canvas events.
 
 ## External icons
-- Put icon files at `public/shapes` directory.
-- Run `scripts/shape_icons.js` to generate `index.json` that contains index information of icons.
-
-```
-$ node ./scripts/shape_icons.js ./public/shapes/TARGET_DIRECTORY
-```
-
-- Directory structure is reflected to UI as it is.
-- The script generates unique id for each icon. Those ids change every time it runs.
+https://github.com/miyanokomiya/no-mans-folly-assets
