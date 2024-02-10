@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useGlobalScroll, useWindow } from "../../composables/window";
+import { useGlobalScroll, useWindow } from "../../hooks/window";
 import { IRectangle } from "okageo";
 
 export type PopupDirection = "bottom" | "top";

@@ -1,4 +1,4 @@
-import { useOutsideClickCallback } from "../../composables/window";
+import { useOutsideClickCallback } from "../../hooks/window";
 
 interface Props {
   children: React.ReactNode;

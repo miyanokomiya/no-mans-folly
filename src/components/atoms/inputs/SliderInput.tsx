@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useGlobalDrag } from "../../../composables/window";
+import { useGlobalDrag } from "../../../hooks/window";
 import { logRoundByDigit, snapNumber } from "../../../utils/geometry";
 import { ModifierOptions, getModifierOptions } from "../../../utils/devices";
 

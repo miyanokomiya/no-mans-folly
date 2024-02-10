@@ -13,18 +13,18 @@ import {
   updateCommonStyle,
 } from "../../shapes";
 import { BoxAlign, BoxPadding, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
-import { canvasToView } from "../../composables/canvas";
+import { canvasToView } from "../../hooks/canvas";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
 import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
-import { useWindow } from "../../composables/window";
+import { useWindow } from "../../hooks/window";
 import { LineHeadItems } from "./LineHeadItems";
 import { CurveType, LineShape, LineType, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
-import { useDraggable } from "../../composables/draggable";
+import { useDraggable } from "../../hooks/draggable";
 import { AlignAnchorButton } from "./AlignAnchorButton";
 import { TextShape, isTextShape } from "../../shapes/text";
 import { LineTypeButton } from "./LineTypeButton";

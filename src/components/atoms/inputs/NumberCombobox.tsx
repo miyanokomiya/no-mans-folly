@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useOutsideClickCallback } from "../../../composables/window";
+import { useOutsideClickCallback } from "../../../hooks/window";
 
 interface Props {
   value: number;

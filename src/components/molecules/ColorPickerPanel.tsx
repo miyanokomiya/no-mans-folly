@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Color } from "../../models";
 import { COLORS, HSVA, colorToHex, hexToColor, hsvaToRgba, rednerRGBA, rgbaToHsva } from "../../utils/color";
-import { useGlobalDrag } from "../../composables/window";
+import { useGlobalDrag } from "../../hooks/window";
 import { clamp } from "okageo";
 import { TextInput } from "../atoms/inputs/TextInput";
 

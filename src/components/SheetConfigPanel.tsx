@@ -4,8 +4,8 @@ import { PopupButton } from "./atoms/PopupButton";
 import { ColorPickerPanel } from "./molecules/ColorPickerPanel";
 import { COLORS, rednerRGBA } from "../utils/color";
 import { Color } from "../models";
-import { useOutsideClickCallback } from "../composables/window";
-import { useSelectedSheet, useSelectedTmpSheet } from "../composables/storeHooks";
+import { useOutsideClickCallback } from "../hooks/window";
+import { useSelectedSheet, useSelectedTmpSheet } from "../hooks/storeHooks";
 import { SliderInput } from "./atoms/inputs/SliderInput";
 
 export const SheetConfigPanel: React.FC = () => {

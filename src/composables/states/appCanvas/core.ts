@@ -1,6 +1,6 @@
 import type { ModeStateBase, ModeStateEventBase } from "../core";
 import type { CanvasStateContext, CanvasStateEvent } from "../commons";
-import type { AssetAPI } from "../../persistence";
+import type { AssetAPI } from "../../../hooks/persistence";
 import { Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";

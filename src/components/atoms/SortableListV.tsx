@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useGlobalDrag } from "../../composables/window";
+import { useGlobalDrag } from "../../hooks/window";
 import { IVec2, getDistance } from "okageo";
 
 interface Props {

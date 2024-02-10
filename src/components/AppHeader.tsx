@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
-import { useOutsideClickCallback } from "../composables/window";
+import { useOutsideClickCallback } from "../hooks/window";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
 import { Skillcheck } from "./atoms/Skillcheck";
 

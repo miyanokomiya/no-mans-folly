@@ -1,4 +1,4 @@
-import { AssetAPI } from "./persistence";
+import { AssetAPI } from "../hooks/persistence";
 import { newCallback } from "./reactives";
 
 export function newImageStore() {

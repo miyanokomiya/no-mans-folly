@@ -5,7 +5,7 @@ import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePersistence } from "./composables/persistence";
+import { usePersistence } from "./hooks/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
 import { AppCanvasProvider } from "./contexts/AppContext";

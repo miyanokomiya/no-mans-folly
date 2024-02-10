@@ -1,6 +1,6 @@
 import { IVec2, multi, sub, add, getRectCenter, IRectangle, clamp } from "okageo";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { EditMovement } from "./states/types";
+import { EditMovement } from "../composables/states/types";
 import { expandRect } from "../utils/geometry";
 import { useGlobalResizeEffect } from "./window";
 import { Size } from "../models";

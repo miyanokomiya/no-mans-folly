@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "./Dialog";
-import { useGlobalClickEffect } from "../../composables/window";
+import { useGlobalClickEffect } from "../../hooks/window";
 import { TAU } from "../../utils/geometry";
 
 interface Props {

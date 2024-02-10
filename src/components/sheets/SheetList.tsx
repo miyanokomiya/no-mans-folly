@@ -5,7 +5,7 @@ import { generateUuid } from "../../utils/random";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDelete from "../../assets/icons/delete_filled.svg";
 import { SortableListV } from "../atoms/SortableListV";
-import { useSelectedSheet, useSheets } from "../../composables/storeHooks";
+import { useSelectedSheet, useSheets } from "../../hooks/storeHooks";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 import { Skillcheck } from "../atoms/Skillcheck";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";

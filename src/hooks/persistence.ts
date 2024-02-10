@@ -7,8 +7,8 @@ import { LayerStore, newLayerStore } from "../stores/layers";
 import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
-import { newFileAccess } from "./fileAcess";
-import { newThrottle } from "./throttle";
+import { newFileAccess } from "../composables/fileAcess";
+import { newThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 
 const DIAGRAM_KEY = "test-project-diagram";

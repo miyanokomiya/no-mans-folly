@@ -1,6 +1,6 @@
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import { useGlobalKeydownEffect } from "../../composables/window";
+import { useGlobalKeydownEffect } from "../../hooks/window";
 import { useCallback } from "react";
 import { EmojiData } from "../../models/document";
 
