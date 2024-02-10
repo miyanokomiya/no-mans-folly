@@ -52,7 +52,6 @@ export function newShapeSVGRenderer(option: Option) {
     // Embed asset files used in this SVG.
     const usedAssetIdSet = new Set();
     const assetDef = createSVGElement("def");
-    root.appendChild(assetDef);
     root.querySelectorAll("use[href]").forEach((elm) => {
       const assetId = (elm as SVGUseElement).href.baseVal.slice(1);
       if (usedAssetIdSet.has(assetId)) return;
@@ -77,6 +76,9 @@ export function newShapeSVGRenderer(option: Option) {
       });
       assetDef.appendChild(imageElm);
     });
+    if (assetDef.children.length > 0) {
+      root.prepend(assetDef);
+    }
 
     return root;
   }
