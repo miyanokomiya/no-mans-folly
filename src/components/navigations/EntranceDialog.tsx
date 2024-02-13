@@ -9,7 +9,7 @@ interface Props {
 
 export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace }) => {
   return (
-    <Dialog open={open} onClose={onClose} title="All you need to know befoer diagraming" hideClose required>
+    <Dialog open={open} onClose={onClose} title="All you need to know befoer diagramming" hideClose required>
       <div className="w-96">
         <p>All project data are saved as local files and you have full responsibility to them.</p>
         <p className="mt-2">
