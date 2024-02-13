@@ -121,7 +121,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     },
     getClosestOutline(shape, p, threshold) {
       const path = getPath(shape);
-      const center = getCenter(path[0], path[2]);
+      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotateFn = getRotateFn(shape.rotation, center);
       const rotatedP = rotateFn(p, true);
 

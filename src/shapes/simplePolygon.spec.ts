@@ -90,6 +90,14 @@ describe("getStructForSimplePolygon", () => {
       expect(target.getClosestOutline!(shape, { x: 1, y: 0 }, 2)).toEqual({ x: 0, y: 0 });
       expect(target.getClosestOutline!(shape, { x: 1, y: 2 }, 2)).toEqual({ x: 1.5, y: 1.5 });
       expect(target.getClosestOutline!(shape, { x: 3, y: 2 }, 2)).toEqual({ x: 2.5, y: 2.5 });
+
+      const ret1 = target.getClosestOutline!({ ...shape, rotation: Math.PI }, { x: 3, y: 2 }, 2);
+      expect(ret1!.x).toBeCloseTo(2.5);
+      expect(ret1!.y).toBeCloseTo(2.5);
+
+      const ret2 = target.getClosestOutline!({ ...shape, rotation: Math.PI }, { x: -2, y: 20 }, 10);
+      expect(ret2!.x).toBeCloseTo(0);
+      expect(ret2!.y).toBeCloseTo(20);
     });
   });
 
