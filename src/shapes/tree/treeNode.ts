@@ -17,6 +17,7 @@ const MIN_HEIGHT = 50;
 export type TreeNodeShape = TreeRootShape & {
   treeParentId: string;
   direction: Direction4;
+  dropdown?: Direction4;
 };
 
 export const struct: ShapeStruct<TreeNodeShape> = {
@@ -35,6 +36,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       maxWidth: arg.maxWidth ?? 300,
       treeParentId: arg.treeParentId ?? "",
       direction,
+      dropdown: arg.dropdown,
       ...getBoxAlignByDirection(direction),
     };
   },
@@ -43,12 +45,20 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     if (isTreeRootShape(treeRoot)) {
       const treeParent = shapeContext?.shapeMap[shape.treeParentId];
       if (treeParent && isTreeShapeBase(treeParent)) {
-        const toP = getParentConnectionPoint(treeParent, shape.direction);
-        const fromP = getChildConnectionPoint(shape);
         applyStrokeStyle(ctx, shape.stroke);
+        const fromP = getChildConnectionPoint(shape);
         ctx.beginPath();
         ctx.moveTo(fromP.x, fromP.y);
-        ctx.lineTo(toP.x, toP.y);
+
+        if (shape.dropdown === 2) {
+          const toP = getParentConnectionPoint(treeParent, shape.dropdown);
+          ctx.lineTo(toP.x, fromP.y);
+          ctx.lineTo(toP.x, toP.y);
+        } else {
+          const toP = getParentConnectionPoint(treeParent, shape.direction);
+          ctx.lineTo(toP.x, toP.y);
+        }
+
         ctx.stroke();
       }
     }

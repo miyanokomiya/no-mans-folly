@@ -11,6 +11,7 @@ export interface TreeLayoutNode extends LayoutNode {
   type: "root" | "node"; // root should be unique in a layout
   parentId: string;
   direction: Direction4;
+  dropdown?: Direction4;
 }
 
 export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {

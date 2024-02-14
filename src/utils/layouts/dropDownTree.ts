@@ -1,20 +1,14 @@
 import { IVec2 } from "okageo";
-import { Direction4, Size } from "../../models";
+import { Size } from "../../models";
 import { groupBy, toMap } from "../commons";
 import { TreeNode, getTree } from "../tree";
-import { LayoutFn, LayoutNode } from "./core";
+import { LayoutFn } from "./core";
+import { TreeLayoutNode } from "./tree";
 
 export const SIBLING_MARGIN = 30;
 export const CHILD_MARGIN = 50;
 
-export interface TreeLayoutNode extends LayoutNode {
-  type: "root" | "node"; // root should be unique in a layout
-  parentId: string;
-  direction: Direction4;
-  dropdown: Direction4;
-}
-
-export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {
+export const dropDownTreeLayout: LayoutFn<TreeLayoutNode> = (src) => {
   const srcMap = toMap(src);
   const trees = getTree(src);
   if (trees.length !== 1) {
@@ -101,7 +95,7 @@ export function getTreeBranchSizeMap(
   const rootNode = srcMap[treeRoot.id];
   let rootW = rootNode.rect.width;
   let rootH = rootNode.rect.height;
-  const grouped = groupBy(treeRoot.children, (c) => srcMap[c.id].dropdown);
+  const grouped = groupBy(treeRoot.children, (c) => srcMap[c.id].dropdown ?? 2);
 
   if (grouped["2"]) {
     const targets = grouped["2"];

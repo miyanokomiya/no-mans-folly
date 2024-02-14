@@ -13,10 +13,12 @@ import { TreeShapeBase, isTreeShapeBase } from "../../shapes/tree/core";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { pickMinItem } from "../../utils/commons";
 import { defineShapeHandler } from "./core";
+import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
 
 const ANCHOR_SIZE = 10;
 const ANCHOR_MARGIN = 30;
 const ANCHOR_SIBLING_MARGIN = 18;
+const DROPDOWN_ANCHOR_POSITION_RATE = 0.8;
 
 /**
  * - undefined: insert as a child
@@ -30,9 +32,10 @@ export interface TreeHitResult {
   direction: Direction4;
   p: IVec2;
   type: AnchorType;
+  dropdown?: Direction4;
 }
 
-type AnchorInfo = [Direction4, IVec2, type?: AnchorType];
+type AnchorInfo = [Direction4, IVec2, type?: AnchorType, dropdown?: Direction4];
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -53,21 +56,38 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
       if (tree.children.length > 0) {
         const node = shapeComposite.mergedShapeMap[tree.children[0].id] as TreeNodeShape;
         const vertical = node.direction === 0 || node.direction === 2;
-        return vertical
+        const dropdown = node.dropdown === 2;
+        return dropdown
           ? [
-              [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
-              [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
+              [
+                1,
+                { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y + bounds.height + margin },
+                undefined,
+                2,
+              ],
             ]
-          : [
-              [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
-              [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
-            ];
+          : vertical
+            ? [
+                [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
+                [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
+              ]
+            : [
+                [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
+                [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
+              ];
       } else {
         return [
           [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
           [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
           [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
           [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
+
+          [
+            1,
+            { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y + bounds.height + margin },
+            undefined,
+            2,
+          ],
         ];
       }
     }
@@ -110,7 +130,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 
     const anchor = getAnchors(scale).find((a) => getDistance(a[1], p) <= threshold);
     if (!anchor) return;
-    return { direction: anchor[0], p: anchor[1], type: anchor[2] };
+    return { direction: anchor[0], p: anchor[1], type: anchor[2], dropdown: anchor[3] };
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
@@ -124,7 +144,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 
     anchors
       .filter(([, , t]) => t !== -1)
-      .forEach(([d, p, t]) => {
+      .forEach(([d, p, t, dropdown]) => {
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         switch (d) {
@@ -161,7 +181,11 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
             } else if (t === 1) {
               ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
             } else {
-              ctx.lineTo(bounds.x + bounds.width, p.y);
+              if (dropdown === 2) {
+                ctx.lineTo(bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, bounds.y + bounds.height);
+              } else {
+                ctx.lineTo(bounds.x + bounds.width, p.y);
+              }
             }
             break;
         }
@@ -533,8 +557,15 @@ export function generateFindexNextAt(shapeComposite: ShapeComposite, targetId: s
 }
 
 export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
+  const root = shapeComposite.mergedShapeTreeMap[rootId];
+  if (root.children.length === 0) return {};
+
+  const node = shapeComposite.mergedShapeMap[root.children[0].id] as TreeNodeShape;
+  const isDropdown = node.dropdown === 0 || node.dropdown === 2;
+
   const layoutNodes = toLayoutNodes(shapeComposite, rootId);
-  const result = treeLayout(layoutNodes);
+  const result = isDropdown ? dropDownTreeLayout(layoutNodes) : treeLayout(layoutNodes);
+
   const ret: { [id: string]: Partial<Shape> } = {};
   result.forEach((r) => {
     if (!isSame(r.rect, shapeComposite.shapeMap[r.id].p)) {
@@ -642,21 +673,29 @@ export function getPatchToGraftBranch(
     (s) => isTreeNodeShape(s) && s.treeParentId === branchPatch.treeParentId && s.direction === branchPatch.direction,
   );
   const graftElderId = graftSiblings.length > 0 ? graftSiblings[graftSiblings.length - 1].id : undefined;
-  const branchFIndex = graftElderId
-    ? generateKeyBetweenAllowSame(shapeComposite.mergedShapeMap[graftElderId].findex, null)
-    : undefined;
+  const graftElder = graftElderId ? (shapeComposite.mergedShapeMap[graftElderId] as TreeNodeShape) : undefined;
+  const branchFIndex = graftElder ? generateKeyBetweenAllowSame(graftElder.findex, null) : undefined;
+
+  const dropdown = graftElder?.dropdown ?? branchPatch.dropdown;
 
   return {
     ...branchIds.reduce<{ [id: string]: Partial<TreeNodeShape> }>((p, id) => {
       p[id] = {
         parentId: branchPatch.parentId,
         direction: branchPatch.direction,
+        dropdown,
         vAlign: branchPatch.vAlign,
         hAlign: branchPatch.hAlign,
       };
       return p;
     }, {}),
-    [branchRootId]: branchFIndex ? { ...branchPatch, findex: branchFIndex } : branchPatch,
+    [branchRootId]: branchFIndex
+      ? {
+          ...branchPatch,
+          dropdown,
+          findex: branchFIndex,
+        }
+      : branchPatch,
   };
 }
 
@@ -667,6 +706,7 @@ function getPatchToConvertRootToNode(graftTargetShape: TreeShapeBase): Partial<T
       parentId: graftTargetShape.parentId,
       treeParentId: graftTargetShape.id,
       direction: graftTargetShape.direction,
+      dropdown: graftTargetShape.dropdown,
       vAlign: graftTargetShape.vAlign,
       hAlign: graftTargetShape.hAlign,
     };

@@ -18,11 +18,10 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { ShapeHandler } from "../../../shapeHandlers/core";
 
 export function newTreeRootSelectedState(): AppCanvasState {
   let treeRootShape: TreeRootShape;
-  let treeHandler: ShapeHandler;
+  let treeHandler: ReturnType<typeof newTreeHandler>;
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
@@ -69,6 +68,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
                   parentId: treeRootShape.id,
                   treeParentId: treeRootShape.id,
                   direction: treeHitResult.direction,
+                  dropdown: treeHitResult.dropdown,
                 });
 
                 const nextComposite = getNextShapeComposite(shapeComposite, {

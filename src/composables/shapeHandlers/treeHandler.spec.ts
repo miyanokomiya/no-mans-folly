@@ -440,6 +440,38 @@ describe("getPatchToGraftBranch", () => {
       a1: { parentId: "root", direction: 1, vAlign: "center", hAlign: "left" },
     });
   });
+
+  test("should inherit elder sibling's dropdown attribute", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, { ...a, dropdown: 2 } as TreeNodeShape, { ...b, dropdown: 2 } as TreeNodeShape, root1, a1],
+      getStruct: getCommonStruct,
+    });
+    expect(getPatchToGraftBranch(shapeComposite, "root1", "root")).toEqual({
+      root1: {
+        type: "tree_node",
+        findex: generateKeyBetween(b.findex, null),
+        parentId: "root",
+        treeParentId: "root",
+        direction: 1,
+        dropdown: 2,
+        vAlign: "center",
+        hAlign: "left",
+      },
+      a1: { parentId: "root", direction: 1, dropdown: 2, vAlign: "center", hAlign: "left" },
+    });
+    expect(getPatchToGraftBranch(shapeComposite, "root1", "a")).toEqual({
+      root1: {
+        type: "tree_node",
+        parentId: "root",
+        treeParentId: "a",
+        direction: 1,
+        dropdown: 2,
+        vAlign: "center",
+        hAlign: "left",
+      },
+      a1: { parentId: "root", direction: 1, dropdown: 2, vAlign: "center", hAlign: "left" },
+    });
+  });
 });
 
 describe("isValidTreeNode", () => {

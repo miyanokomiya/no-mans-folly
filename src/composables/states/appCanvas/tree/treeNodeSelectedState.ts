@@ -26,11 +26,10 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { mergeMap } from "../../../../utils/commons";
 import { newSingleSelectedState } from "../singleSelectedState";
-import { ShapeHandler } from "../../../shapeHandlers/core";
 
 export function newTreeNodeSelectedState(): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
-  let treeHandler: ShapeHandler;
+  let treeHandler: ReturnType<typeof newTreeHandler>;
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
@@ -92,7 +91,8 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                     findex: generateFindexPreviousAt(shapeComposite, treeNodeShape.id),
                     parentId: treeRootId,
                     treeParentId: treeNodeShape.treeParentId,
-                    direction: treeHitResult.direction,
+                    direction: treeNodeShape.direction,
+                    dropdown: treeNodeShape.dropdown,
                   });
                 } else if (treeHitResult.type === 1) {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
@@ -101,7 +101,8 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                     findex: generateFindexNextAt(shapeComposite, treeNodeShape.id),
                     parentId: treeRootId,
                     treeParentId: treeNodeShape.treeParentId,
-                    direction: treeHitResult.direction,
+                    direction: treeNodeShape.direction,
+                    dropdown: treeNodeShape.dropdown,
                   });
                 } else {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
@@ -110,7 +111,8 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                     findex: ctx.createLastIndex(),
                     parentId: treeRootId,
                     treeParentId: treeNodeShape.id,
-                    direction: treeHitResult.direction,
+                    direction: treeNodeShape.direction,
+                    dropdown: treeNodeShape.dropdown,
                   });
                 }
 
