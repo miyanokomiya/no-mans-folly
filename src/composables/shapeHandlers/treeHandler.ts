@@ -260,6 +260,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 export interface TreeNodeMovingResult {
   treeParentId: string;
   direction: Direction4;
+  dropdown?: Direction4;
   findex: string;
 }
 
@@ -271,6 +272,10 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
   const shape = shapeComposite.shapeMap[option.targetId] as TreeNodeShape;
   const root = shapeComposite.shapeMap[shape.parentId!] as TreeRootShape;
   const vertical = shape.direction === 0 || shape.direction === 2;
+
+  const indexNode: TreeNodeShape | undefined = shapeComposite.mergedShapeMap[
+    shapeComposite.mergedShapeTreeMap[root.id].children[0].id
+  ] as TreeNodeShape;
 
   const tree = shapeComposite.mergedShapeTreeMap[root.id];
   const allIds = flatTree([shapeComposite.mergedShapeTreeMap[root.id]]).map((t) => t.id);
@@ -317,6 +322,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
         return {
           treeParentId: closestNode.id,
           direction,
+          dropdown: prev.dropdown,
           findex: generateKeyBetweenAllowSame(prev.findex, null),
         };
       } else {
@@ -324,6 +330,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
         return {
           treeParentId: closestNode.id,
           direction,
+          dropdown: indexNode?.dropdown,
           findex: generateKeyBetweenAllowSame(closestNode.findex, null),
         };
       }
@@ -342,6 +349,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
+                dropdown: closestNode.dropdown,
                 findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
@@ -354,6 +362,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
+                dropdown: closestNode.dropdown,
                 findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
@@ -376,6 +385,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
+                dropdown: closestNode.dropdown,
                 findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
@@ -388,6 +398,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
               return {
                 treeParentId: closestNode.id,
                 direction: closestNode.direction,
+                dropdown: closestNode.dropdown,
                 findex: generateKeyBetweenAllowSame(closestNode.findex, null),
               };
             }
@@ -427,6 +438,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
     renderMovingPreview(
       ctx,
       movingResult.direction,
+      movingResult.dropdown,
       treeParentRect,
       nextIndex > 0 ? getWrapperRect(shapeComposite.getShapeStruct, siblings[nextIndex - 1]) : undefined,
       nextIndex < siblings.length ? getWrapperRect(shapeComposite.getShapeStruct, siblings[nextIndex]) : undefined,
@@ -459,6 +471,7 @@ function getTreeNodeMovingResultToInsertSibling(
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
+        dropdown: closestNode.dropdown,
         findex: generateKeyBetweenAllowSame(prev.findex, closestNode.findex),
       };
     } else {
@@ -466,6 +479,7 @@ function getTreeNodeMovingResultToInsertSibling(
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
+        dropdown: closestNode.dropdown,
         findex: generateKeyBetweenAllowSame(null, closestNode.findex),
       };
     }
@@ -478,6 +492,7 @@ function getTreeNodeMovingResultToInsertSibling(
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
+        dropdown: closestNode.dropdown,
         findex: generateKeyBetweenAllowSame(closestNode.findex, next.findex),
       };
     } else {
@@ -485,6 +500,7 @@ function getTreeNodeMovingResultToInsertSibling(
       return {
         treeParentId: closestNode.treeParentId,
         direction: closestNode.direction,
+        dropdown: closestNode.dropdown,
         findex: generateKeyBetweenAllowSame(closestNode.findex, null),
       };
     }
@@ -737,6 +753,7 @@ function getPatchToConvertRootToNode(graftTargetShape: TreeShapeBase): Partial<T
 function renderMovingPreview(
   ctx: CanvasRenderingContext2D,
   direction: Direction4,
+  dropdown: Direction4 | undefined,
   parentRect: IRectangle,
   prevRect?: IRectangle,
   nextRect?: IRectangle,
@@ -745,6 +762,69 @@ function renderMovingPreview(
   const childMargin = CHILD_MARGIN;
   const anchorWidth = 50;
   const anchorHeight = 16;
+
+  if (dropdown !== undefined) {
+    switch (direction) {
+      case 3: {
+        const x = parentRect.x + parentRect.width / 2 - childMargin - anchorWidth;
+        let to: IVec2;
+        if (prevRect && nextRect) {
+          // Case: Insert as an intermediate child
+          to = { x, y: (prevRect.y + prevRect.height + nextRect.y) / 2 };
+        } else if (prevRect) {
+          // Case: Insert as the last child
+          to = { x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
+        } else if (nextRect) {
+          // Case: Insert as the first child
+          to = { x, y: nextRect.y - siblingMargin / 2 };
+        } else {
+          // Case: Insert as a child & The parent has no children
+          to = { x, y: parentRect.y + parentRect.height + siblingMargin / 2 };
+        }
+
+        ctx.beginPath();
+        const px = parentRect.x + parentRect.width / 2;
+        ctx.moveTo(px, parentRect.y + parentRect.height);
+        ctx.lineTo(px, to.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.rect(to.x, to.y - anchorHeight / 2, anchorWidth, anchorHeight);
+        ctx.fill();
+        return;
+      }
+      default: {
+        let to: IVec2;
+        if (prevRect && nextRect) {
+          // Case: Insert as an intermediate child
+          to = { x: nextRect.x, y: (prevRect.y + prevRect.height + nextRect.y) / 2 };
+        } else if (prevRect) {
+          // Case: Insert as the last child
+          to = { x: prevRect.x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
+        } else if (nextRect) {
+          // Case: Insert as the first child
+          to = { x: nextRect.x, y: nextRect.y - siblingMargin / 2 };
+        } else {
+          // Case: Insert as a child & The parent has no children
+          to = {
+            x: parentRect.x + parentRect.width / 2 + childMargin,
+            y: parentRect.y + parentRect.height + siblingMargin / 2,
+          };
+        }
+
+        ctx.beginPath();
+        const px = parentRect.x + parentRect.width / 2;
+        ctx.moveTo(px, parentRect.y + parentRect.height);
+        ctx.lineTo(px, to.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.rect(to.x, to.y - anchorHeight / 2, anchorWidth, anchorHeight);
+        ctx.fill();
+        return;
+      }
+    }
+  }
 
   switch (direction) {
     case 0: {
