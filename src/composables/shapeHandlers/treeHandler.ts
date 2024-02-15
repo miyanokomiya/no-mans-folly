@@ -46,7 +46,8 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as TreeRootShape | TreeNodeShape;
   const isRoot = isTreeRootShape(shape);
-  const direction = isTreeNodeShape(shape) ? shape.direction : 0;
+  const directionSrc = isTreeNodeShape(shape) ? shape.direction : 0;
+  const dropdownSrc = isTreeNodeShape(shape) ? shape.dropdown : undefined;
   const bounds = getWrapperRect(shapeComposite.getShapeStruct, shape);
 
   function getAnchors(scale: number): AnchorInfo[] {
@@ -73,6 +74,16 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
                 },
                 undefined,
                 2,
+              ],
+              [1, { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y - margin }, undefined, 0],
+              [
+                3,
+                {
+                  x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
+                  y: bounds.y - margin,
+                },
+                undefined,
+                0,
               ],
             ]
           : vertical
@@ -102,7 +113,46 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
     }
 
     const siblingMargin = ANCHOR_SIBLING_MARGIN * scale;
-    switch (direction) {
+
+    if (dropdownSrc === 2) {
+      switch (directionSrc) {
+        case 3:
+          return [
+            [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }, undefined, 2],
+            [3, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0, 2],
+            [3, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1, 2],
+            [3, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 2],
+          ];
+        default:
+          return [
+            [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }, undefined, 2],
+            [1, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0, 2],
+            [1, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1, 2],
+            [1, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 2],
+          ];
+      }
+    }
+
+    if (dropdownSrc === 0) {
+      switch (directionSrc) {
+        case 3:
+          return [
+            [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }, undefined, 0],
+            [3, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 1, 0],
+            [3, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 0, 0],
+            [3, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 0],
+          ];
+        default:
+          return [
+            [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }, undefined, 0],
+            [1, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 1, 0],
+            [1, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 0, 0],
+            [1, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 0],
+          ];
+      }
+    }
+
+    switch (directionSrc) {
       case 0:
         return [
           [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
@@ -156,54 +206,84 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
       .forEach(([d, p, t, dropdown]) => {
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        switch (d) {
-          case 0:
-            if (t === 0) {
-              ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
-            } else if (t === 1) {
-              ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
-            } else {
-              ctx.lineTo(p.x, bounds.y);
-            }
-            break;
-          case 2:
-            if (t === 0) {
-              ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
-            } else if (t === 1) {
-              ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
-            } else {
-              ctx.lineTo(p.x, bounds.y + bounds.height);
-            }
-            break;
-          case 3:
-            if (t === 0) {
-              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
-            } else if (t === 1) {
-              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
-            } else {
-              if (dropdown === 2) {
-                ctx.lineTo(bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE), bounds.y + bounds.height);
+
+        if (dropdown !== undefined) {
+          switch (d) {
+            case 3:
+              if (t === 0) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + (dropdown === 0 ? bounds.height : 0));
+              } else if (t === 1) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + (dropdown === 0 ? 0 : bounds.height));
+              } else {
+                if (isRoot) {
+                  ctx.lineTo(
+                    bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
+                    bounds.y + (dropdown === 2 ? bounds.height : 0),
+                  );
+                } else {
+                  ctx.lineTo(bounds.x, p.y);
+                }
+              }
+              break;
+            default:
+              if (t === 0) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + (dropdown === 0 ? bounds.height : 0));
+              } else if (t === 1) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + (dropdown === 0 ? 0 : bounds.height));
+              } else {
+                if (isRoot) {
+                  ctx.lineTo(
+                    bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE,
+                    bounds.y + (dropdown === 2 ? bounds.height : 0),
+                  );
+                } else {
+                  ctx.lineTo(bounds.x + bounds.width, p.y);
+                }
+              }
+              break;
+          }
+        } else {
+          switch (d) {
+            case 0:
+              if (t === 0) {
+                ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
+              } else if (t === 1) {
+                ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
+              } else {
+                ctx.lineTo(p.x, bounds.y);
+              }
+              break;
+            case 2:
+              if (t === 0) {
+                ctx.lineTo(bounds.x, bounds.y + bounds.height / 2);
+              } else if (t === 1) {
+                ctx.lineTo(bounds.x + bounds.width, bounds.y + bounds.height / 2);
+              } else {
+                ctx.lineTo(p.x, bounds.y + bounds.height);
+              }
+              break;
+            case 3:
+              if (t === 0) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
+              } else if (t === 1) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
               } else {
                 ctx.lineTo(bounds.x, p.y);
               }
-            }
-            break;
-          default:
-            if (t === 0) {
-              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
-            } else if (t === 1) {
-              ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
-            } else {
-              if (dropdown === 2) {
-                ctx.lineTo(bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, bounds.y + bounds.height);
+              break;
+            default:
+              if (t === 0) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y);
+              } else if (t === 1) {
+                ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
               } else {
                 ctx.lineTo(bounds.x + bounds.width, p.y);
               }
-            }
-            break;
+              break;
+          }
         }
-        ctx.stroke();
 
+        ctx.stroke();
         ctx.beginPath();
         ctx.arc(p.x, p.y, threshold, 0, TAU);
         ctx.fill();
@@ -524,6 +604,7 @@ function toLayoutNode(shapeComposite: ShapeComposite, shape: TreeShapeBase): Tre
       type: "node",
       rect,
       direction: shape.direction,
+      dropdown: shape.dropdown,
       parentId: shape.treeParentId,
     };
   } else {

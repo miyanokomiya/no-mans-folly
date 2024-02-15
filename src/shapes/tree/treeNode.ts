@@ -50,7 +50,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
         ctx.beginPath();
         ctx.moveTo(fromP.x, fromP.y);
 
-        if (shape.dropdown === 2) {
+        if (shape.dropdown !== undefined) {
           const toP = getParentConnectionPoint(treeParent, shape.dropdown);
           const x =
             treeParent.p.x +
