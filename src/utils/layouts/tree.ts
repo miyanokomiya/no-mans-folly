@@ -109,7 +109,11 @@ export function getTreeBranchPositionMap(
   return positionMap;
 }
 
-export function getSiblingWidthMap(ret: Map<string, number>, srcMap: { [id: string]: TreeLayoutNode }, treeNode: TreeNode) {
+export function getSiblingWidthMap(
+  ret: Map<string, number>,
+  srcMap: { [id: string]: TreeLayoutNode },
+  treeNode: TreeNode,
+) {
   if (treeNode.children.length === 0) return;
 
   const width = treeNode.children.reduce((m, c) => Math.max(m, srcMap[c.id].rect.width), 0);
@@ -117,7 +121,11 @@ export function getSiblingWidthMap(ret: Map<string, number>, srcMap: { [id: stri
   treeNode.children.forEach((c) => getSiblingWidthMap(ret, srcMap, c));
 }
 
-function getSiblingHeightMap(ret: Map<string, number>, srcMap: { [id: string]: TreeLayoutNode }, treeNode: TreeNode) {
+export function getSiblingHeightMap(
+  ret: Map<string, number>,
+  srcMap: { [id: string]: TreeLayoutNode },
+  treeNode: TreeNode,
+) {
   if (treeNode.children.length === 0) return;
 
   const height = treeNode.children.reduce((m, c) => Math.max(m, srcMap[c.id].rect.height), 0);

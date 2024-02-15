@@ -3,7 +3,7 @@ import { Size } from "../../models";
 import { groupBy, toMap } from "../commons";
 import { TreeNode, getTree, walkTree } from "../tree";
 import { LayoutFn } from "./core";
-import { TreeLayoutNode, getSiblingWidthMap } from "./tree";
+import { TreeLayoutNode, getSiblingHeightMap, getSiblingWidthMap } from "./tree";
 
 export const SIBLING_MARGIN = 30;
 export const CHILD_MARGIN = 50;
@@ -45,14 +45,30 @@ export function getTreeBranchPositionMap(
     const top: TreeNode[] = [];
     const bottom: TreeNode[] = [];
     targets.forEach((t) => (srcMap[t.id].dropdown === 0 ? top.push(t) : bottom.push(t)));
-    getChildrenBranchPositionMapRight(
-      positionMap,
-      srcMap,
-      { ...treeRoot, children: bottom },
-      sizeMap,
-      siblingMargin,
-      childMargin,
-    );
+
+    if (top.length > 0) {
+      const localRoot = { ...treeRoot, children: top };
+      getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
+      const originY = rootNode.rect.y + rootNode.rect.height / 2;
+      const siblingHeightMap = new Map<string, number>();
+      getSiblingHeightMap(siblingHeightMap, srcMap, localRoot);
+      walkTree(top, (t) => {
+        if (!t.parentId) return;
+
+        const p = positionMap.get(t.id)!;
+        positionMap.set(t.id, { x: p.x, y: 2 * originY - p.y - srcMap[t.id].rect.height });
+      });
+    }
+    if (bottom.length > 0) {
+      getChildrenBranchPositionMapRight(
+        positionMap,
+        srcMap,
+        { ...treeRoot, children: bottom },
+        sizeMap,
+        siblingMargin,
+        childMargin,
+      );
+    }
   }
 
   if (grouped["3"]) {
@@ -60,20 +76,44 @@ export function getTreeBranchPositionMap(
     const top: TreeNode[] = [];
     const bottom: TreeNode[] = [];
     targets.forEach((t) => (srcMap[t.id].dropdown === 0 ? top.push(t) : bottom.push(t)));
-    const localRoot = { ...treeRoot, children: bottom };
-    getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
-    const originX = rootNode.rect.x + rootNode.rect.width / 2;
-    const siblingWidthMap = new Map<string, number>();
-    getSiblingWidthMap(siblingWidthMap, srcMap, localRoot);
-    walkTree(targets, (t) => {
-      if (!t.parentId) return;
 
-      const p = positionMap.get(t.id)!;
-      const siblingWidth = siblingWidthMap.get(t.parentId)!;
-      // Align to right in the sinblings
-      const wGap = siblingWidth - srcMap[t.id].rect.width;
-      positionMap.set(t.id, { x: 2 * originX - p.x - siblingWidth + wGap, y: p.y });
-    });
+    if (top.length > 0) {
+      const localRoot = { ...treeRoot, children: top };
+      getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
+      const originX = rootNode.rect.x + rootNode.rect.width / 2;
+      const siblingWidthMap = new Map<string, number>();
+      getSiblingWidthMap(siblingWidthMap, srcMap, localRoot);
+      const originY = rootNode.rect.y + rootNode.rect.height / 2;
+      const siblingHeightMap = new Map<string, number>();
+      getSiblingHeightMap(siblingHeightMap, srcMap, localRoot);
+      walkTree(top, (t) => {
+        if (!t.parentId) return;
+
+        const p = positionMap.get(t.id)!;
+        const siblingWidth = siblingWidthMap.get(t.parentId)!;
+        const wGap = siblingWidth - srcMap[t.id].rect.width;
+        positionMap.set(t.id, {
+          x: 2 * originX - p.x - siblingWidth + wGap,
+          y: 2 * originY - p.y - srcMap[t.id].rect.height,
+        });
+      });
+    }
+    if (bottom.length > 0) {
+      const localRoot = { ...treeRoot, children: bottom };
+      getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
+      const originX = rootNode.rect.x + rootNode.rect.width / 2;
+      const siblingWidthMap = new Map<string, number>();
+      getSiblingWidthMap(siblingWidthMap, srcMap, localRoot);
+      walkTree(bottom, (t) => {
+        if (!t.parentId) return;
+
+        const p = positionMap.get(t.id)!;
+        const siblingWidth = siblingWidthMap.get(t.parentId)!;
+        // Align to right in the sinblings
+        const wGap = siblingWidth - srcMap[t.id].rect.width;
+        positionMap.set(t.id, { x: 2 * originX - p.x - siblingWidth + wGap, y: p.y });
+      });
+    }
   }
 
   return positionMap;
@@ -116,16 +156,12 @@ export function getTreeBranchSizeMap(
   const rootNode = srcMap[treeRoot.id];
   let rootW = rootNode.rect.width;
   let rootH = rootNode.rect.height;
-  const grouped = groupBy(treeRoot.children, (c) => srcMap[c.id].dropdown ?? 2);
 
-  if (grouped["2"]) {
-    const targets = grouped["2"];
-    targets.forEach((t) => _getTreeBranchSize(branchSizeMap, srcMap, t, siblingMargin, childMargin));
-    rootW = Math.max(rootW, rootW / 2 + childMargin + Math.max(...targets.map((t) => branchSizeMap.get(t.id)!.width)));
-    rootH =
-      siblingMargin * (targets.length - 1) +
-      Array.from(targets).reduce((m, t) => m + branchSizeMap.get(t.id)!.height, 0);
-  }
+  const targets = treeRoot.children;
+  targets.forEach((t) => _getTreeBranchSize(branchSizeMap, srcMap, t, siblingMargin, childMargin));
+  rootW = Math.max(rootW, rootW / 2 + childMargin + Math.max(...targets.map((t) => branchSizeMap.get(t.id)!.width)));
+  rootH =
+    siblingMargin * (targets.length - 1) + Array.from(targets).reduce((m, t) => m + branchSizeMap.get(t.id)!.height, 0);
 
   branchSizeMap.set(rootNode.id, { width: rootW, height: rootH });
 
