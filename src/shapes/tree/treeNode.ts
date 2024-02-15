@@ -52,8 +52,11 @@ export const struct: ShapeStruct<TreeNodeShape> = {
 
         if (shape.dropdown === 2) {
           const toP = getParentConnectionPoint(treeParent, shape.dropdown);
-          ctx.lineTo(toP.x, fromP.y);
-          ctx.lineTo(toP.x, toP.y);
+          const x =
+            treeParent.p.x +
+            treeParent.width * (treeRoot.id === treeParent.id ? (shape.direction === 3 ? 0.4 : 0.6) : 0.5);
+          ctx.lineTo(x, fromP.y);
+          ctx.lineTo(x, toP.y);
         } else {
           const toP = getParentConnectionPoint(treeParent, shape.direction);
           ctx.lineTo(toP.x, toP.y);

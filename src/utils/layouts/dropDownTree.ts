@@ -1,9 +1,9 @@
 import { IVec2 } from "okageo";
 import { Size } from "../../models";
 import { groupBy, toMap } from "../commons";
-import { TreeNode, getTree } from "../tree";
+import { TreeNode, getTree, walkTree } from "../tree";
 import { LayoutFn } from "./core";
-import { TreeLayoutNode } from "./tree";
+import { TreeLayoutNode, getSiblingWidthMap } from "./tree";
 
 export const SIBLING_MARGIN = 30;
 export const CHILD_MARGIN = 50;
@@ -53,6 +53,27 @@ export function getTreeBranchPositionMap(
       siblingMargin,
       childMargin,
     );
+  }
+
+  if (grouped["3"]) {
+    const targets = grouped["3"];
+    const top: TreeNode[] = [];
+    const bottom: TreeNode[] = [];
+    targets.forEach((t) => (srcMap[t.id].dropdown === 0 ? top.push(t) : bottom.push(t)));
+    const localRoot = { ...treeRoot, children: bottom };
+    getChildrenBranchPositionMapRight(positionMap, srcMap, localRoot, sizeMap, siblingMargin, childMargin);
+    const originX = rootNode.rect.x + rootNode.rect.width / 2;
+    const siblingWidthMap = new Map<string, number>();
+    getSiblingWidthMap(siblingWidthMap, srcMap, localRoot);
+    walkTree(targets, (t) => {
+      if (!t.parentId) return;
+
+      const p = positionMap.get(t.id)!;
+      const siblingWidth = siblingWidthMap.get(t.parentId)!;
+      // Align to right in the sinblings
+      const wGap = siblingWidth - srcMap[t.id].rect.width;
+      positionMap.set(t.id, { x: 2 * originX - p.x - siblingWidth + wGap, y: p.y });
+    });
   }
 
   return positionMap;

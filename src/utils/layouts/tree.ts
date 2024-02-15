@@ -109,7 +109,7 @@ export function getTreeBranchPositionMap(
   return positionMap;
 }
 
-function getSiblingWidthMap(ret: Map<string, number>, srcMap: { [id: string]: TreeLayoutNode }, treeNode: TreeNode) {
+export function getSiblingWidthMap(ret: Map<string, number>, srcMap: { [id: string]: TreeLayoutNode }, treeNode: TreeNode) {
   if (treeNode.children.length === 0) return;
 
   const width = treeNode.children.reduce((m, c) => Math.max(m, srcMap[c.id].rect.width), 0);

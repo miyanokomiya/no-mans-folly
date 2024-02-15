@@ -65,6 +65,15 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
                 undefined,
                 2,
               ],
+              [
+                3,
+                {
+                  x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
+                  y: bounds.y + bounds.height + margin,
+                },
+                undefined,
+                2,
+              ],
             ]
           : vertical
             ? [
@@ -172,7 +181,11 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
             } else if (t === 1) {
               ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + bounds.height);
             } else {
-              ctx.lineTo(bounds.x, p.y);
+              if (dropdown === 2) {
+                ctx.lineTo(bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE), bounds.y + bounds.height);
+              } else {
+                ctx.lineTo(bounds.x, p.y);
+              }
             }
             break;
           default:
