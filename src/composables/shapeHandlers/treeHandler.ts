@@ -812,6 +812,7 @@ function getPatchToConvertRootToNode(graftTargetShape: TreeShapeBase): Partial<T
       parentId: graftTargetShape.id,
       treeParentId: graftTargetShape.id,
       direction: 1,
+      dropdown: undefined,
       ...getBoxAlignByDirection(1),
     };
   }
