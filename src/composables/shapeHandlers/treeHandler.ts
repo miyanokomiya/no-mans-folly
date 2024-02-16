@@ -52,34 +52,16 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 
   function getAnchors(scale: number): AnchorInfo[] {
     const margin = ANCHOR_MARGIN * scale;
+    const siblingMargin = ANCHOR_SIBLING_MARGIN * scale;
+    const dropdownMargin = margin * 0.6;
+
     if (isRoot) {
       const tree = shapeComposite.mergedShapeTreeMap[shape.id];
       const dropdownAnchors: AnchorInfo[] = [
-        [
-          1,
-          { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y + bounds.height + margin },
-          undefined,
-          2,
-        ],
-        [
-          3,
-          {
-            x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
-            y: bounds.y + bounds.height + margin,
-          },
-          undefined,
-          2,
-        ],
-        [1, { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y - margin }, undefined, 0],
-        [
-          3,
-          {
-            x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
-            y: bounds.y - margin,
-          },
-          undefined,
-          0,
-        ],
+        [1, { x: bounds.x + bounds.width, y: bounds.y + bounds.height + dropdownMargin }, undefined, 2],
+        [3, { x: bounds.x, y: bounds.y + bounds.height + dropdownMargin }, undefined, 2],
+        [1, { x: bounds.x + bounds.width, y: bounds.y - dropdownMargin }, undefined, 0],
+        [3, { x: bounds.x, y: bounds.y - dropdownMargin }, undefined, 0],
       ];
 
       if (tree.children.length > 0) {
@@ -107,20 +89,18 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
       }
     }
 
-    const siblingMargin = ANCHOR_SIBLING_MARGIN * scale;
-
     if (dropdownSrc === 2) {
       switch (directionSrc) {
         case 3:
           return [
-            [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }, undefined, 2],
+            [3, { x: bounds.x, y: bounds.y + bounds.height + dropdownMargin }, undefined, 2],
             [3, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0, 2],
             [3, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1, 2],
             [3, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 2],
           ];
         default:
           return [
-            [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }, undefined, 2],
+            [1, { x: bounds.x + bounds.width, y: bounds.y + bounds.height + dropdownMargin }, undefined, 2],
             [1, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 0, 2],
             [1, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 1, 2],
             [1, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 2],
@@ -132,14 +112,14 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
       switch (directionSrc) {
         case 3:
           return [
-            [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }, undefined, 0],
+            [3, { x: bounds.x, y: bounds.y - dropdownMargin }, undefined, 0],
             [3, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 1, 0],
             [3, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 0, 0],
             [3, { x: bounds.x + bounds.width + siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 0],
           ];
         default:
           return [
-            [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }, undefined, 0],
+            [1, { x: bounds.x + bounds.width, y: bounds.y - dropdownMargin }, undefined, 0],
             [1, { x: bounds.x + bounds.width / 2, y: bounds.y - siblingMargin }, 1, 0],
             [1, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + siblingMargin }, 0, 0],
             [1, { x: bounds.x - siblingMargin, y: bounds.y + bounds.height * 0.8 }, -1, 0],
@@ -210,14 +190,10 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
               } else if (t === 1) {
                 ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + (dropdown === 0 ? 0 : bounds.height));
               } else {
-                if (isRoot) {
-                  ctx.lineTo(
-                    bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
-                    bounds.y + (dropdown === 2 ? bounds.height : 0),
-                  );
-                } else {
-                  ctx.lineTo(bounds.x, p.y);
-                }
+                ctx.lineTo(
+                  bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
+                  bounds.y + (dropdown === 2 ? bounds.height : 0),
+                );
               }
               break;
             default:
@@ -226,14 +202,10 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
               } else if (t === 1) {
                 ctx.lineTo(bounds.x + bounds.width / 2, bounds.y + (dropdown === 0 ? 0 : bounds.height));
               } else {
-                if (isRoot) {
-                  ctx.lineTo(
-                    bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE,
-                    bounds.y + (dropdown === 2 ? bounds.height : 0),
-                  );
-                } else {
-                  ctx.lineTo(bounds.x + bounds.width, p.y);
-                }
+                ctx.lineTo(
+                  bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE,
+                  bounds.y + (dropdown === 2 ? bounds.height : 0),
+                );
               }
               break;
           }
