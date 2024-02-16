@@ -1,4 +1,4 @@
-import { IVec2, add } from "okageo";
+import { IVec2, add, pathSegmentRawsToString } from "okageo";
 import { BoxAlign, Direction4, Shape } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
@@ -6,6 +6,7 @@ import { ShapeStruct, createBaseShape } from "../core";
 import { TreeRootShape, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
+import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 50;
@@ -17,6 +18,8 @@ const MIN_HEIGHT = 50;
 export type TreeNodeShape = TreeRootShape & {
   treeParentId: string;
   direction: Direction4;
+  // As for dropdown, only 0 or 2 are valid and other values should be treated as 2.
+  // When dropdown has value, direction can be either 1 or 3 and other values should be treated as 1.
   dropdown?: Direction4;
 };
 
@@ -46,22 +49,8 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       const treeParent = shapeContext?.shapeMap[shape.treeParentId];
       if (treeParent && isTreeShapeBase(treeParent)) {
         applyStrokeStyle(ctx, shape.stroke);
-        const fromP = getChildConnectionPoint(shape);
         ctx.beginPath();
-        ctx.moveTo(fromP.x, fromP.y);
-
-        if (shape.dropdown !== undefined) {
-          const toP = getParentConnectionPoint(treeParent, shape.dropdown);
-          const x =
-            treeParent.p.x +
-            treeParent.width * (treeRoot.id === treeParent.id ? (shape.direction === 3 ? 0.4 : 0.6) : 0.5);
-          ctx.lineTo(x, fromP.y);
-          ctx.lineTo(x, toP.y);
-        } else {
-          const toP = getParentConnectionPoint(treeParent, shape.direction);
-          ctx.lineTo(toP.x, toP.y);
-        }
-
+        applyPath(ctx, getConnectorPath(shape, treeParent));
         ctx.stroke();
       }
     }
@@ -76,18 +65,14 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     const treeParent = shapeContext?.shapeMap[shape.treeParentId];
     if (!treeParent || !isTreeShapeBase(treeParent)) return body;
 
-    const toP = getParentConnectionPoint(treeParent, shape.direction);
-    const fromP = getChildConnectionPoint(shape);
     return {
       tag: "g",
       children: [
         {
-          tag: "line",
+          tag: "path",
           attributes: {
-            x1: fromP.x,
-            y1: fromP.y,
-            x2: toP.x,
-            y2: toP.y,
+            d: pathSegmentRawsToString(createSVGCurvePath(getConnectorPath(shape, treeParent))),
+            fill: "none",
             ...renderStrokeSVGAttributes(shape.stroke),
           },
         },
@@ -155,4 +140,21 @@ export function getBoxAlignByDirection(direction: Direction4): BoxAlign {
     vAlign: direction === 0 ? "bottom" : direction === 2 ? "top" : "center",
     hAlign: direction === 1 ? "left" : direction === 3 ? "right" : "center",
   };
+}
+
+function getConnectorPath(shape: TreeNodeShape, treeParent: TreeShapeBase): IVec2[] {
+  const fromP = getChildConnectionPoint(shape);
+  const path = [fromP];
+
+  if (shape.dropdown !== undefined) {
+    const toP = getParentConnectionPoint(treeParent, shape.dropdown);
+    const x =
+      treeParent.p.x + treeParent.width * (isTreeRootShape(treeParent) ? (shape.direction === 3 ? 0.4 : 0.6) : 0.5);
+    path.push({ x, y: fromP.y });
+    path.push({ x, y: toP.y });
+  } else {
+    path.push(getParentConnectionPoint(treeParent, shape.direction));
+  }
+
+  return path;
 }
