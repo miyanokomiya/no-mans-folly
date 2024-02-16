@@ -15,7 +15,6 @@ import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { TransitionValue } from "../../core";
 import { newTreeRootMovingState } from "./treeRootMovingState";
-import { ShapeHandler } from "../../../shapeHandlers/core";
 
 interface Option {
   targetId: string;
@@ -23,7 +22,7 @@ interface Option {
 
 export function newTreeNodeMovingState(option: Option): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
-  let treeMovingHandler: ShapeHandler;
+  let treeMovingHandler: ReturnType<typeof newTreeNodeMovingHandler>;
   let branchIds: string[];
 
   const initData = (ctx: AppCanvasStateContext): TransitionValue<AppCanvasStateContext> => {
@@ -64,10 +63,11 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
           const movingResult = treeMovingHandler.retrieveHitResult();
           if (movingResult) {
             // All nodes in the branch need to change their direction along with the new direction.
+            // So is dropdown.
             const directionPatch =
-              treeNodeShape.direction !== movingResult.direction
+              treeNodeShape.direction !== movingResult.direction || treeNodeShape.dropdown !== movingResult.dropdown
                 ? branchIds.reduce<{ [id: string]: Partial<TreeNodeShape> }>((p, id) => {
-                    p[id] = { direction: movingResult!.direction };
+                    p[id] = { direction: movingResult!.direction, dropdown: movingResult!.dropdown };
                     return p;
                   }, {})
                 : {};
@@ -78,6 +78,7 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
               [treeNodeShape.id]: {
                 findex: movingResult.findex,
                 direction: movingResult.direction,
+                dropdown: movingResult.dropdown,
                 treeParentId: movingResult.treeParentId,
                 vAlign,
                 hAlign,

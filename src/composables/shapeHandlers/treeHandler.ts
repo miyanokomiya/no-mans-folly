@@ -352,10 +352,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
   const shape = shapeComposite.shapeMap[option.targetId] as TreeNodeShape;
   const root = shapeComposite.shapeMap[shape.parentId!] as TreeRootShape;
   const vertical = shape.direction === 0 || shape.direction === 2;
-
-  const indexNode: TreeNodeShape | undefined = shapeComposite.mergedShapeMap[
-    shapeComposite.mergedShapeTreeMap[root.id].children[0].id
-  ] as TreeNodeShape;
+  const isDropdown = shape.dropdown !== undefined;
 
   const tree = shapeComposite.mergedShapeTreeMap[root.id];
   const allIds = flatTree([shapeComposite.mergedShapeTreeMap[root.id]]).map((t) => t.id);
@@ -393,8 +390,24 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
         : closestRect.x + closestRect.width / 2 < p.x
           ? 1
           : 3;
-      const siblings = allShapeNodes.filter((s) => s.treeParentId === closestNode.id && s.direction === direction);
+      const dropdown = isDropdown ? (closestRect.y + closestRect.height / 2 < p.y ? 2 : 0) : undefined;
+      const siblings = allShapeNodes.filter(
+        (s) => s.treeParentId === closestNode.id && s.direction === direction && s.dropdown === dropdown,
+      );
       if (siblings.length > 0) {
+        if (isDropdown) {
+          // Case: Insert as the first child
+          const next = siblings[0];
+          if (next.id === shape.id) return;
+
+          return {
+            treeParentId: closestNode.id,
+            direction,
+            dropdown: next.dropdown,
+            findex: generateKeyBetweenAllowSame(null, next.findex),
+          };
+        }
+
         // Case: Insert as the last child
         const prev = siblings[siblings.length - 1];
         if (prev.id === shape.id) return;
@@ -410,14 +423,17 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
         return {
           treeParentId: closestNode.id,
           direction,
-          dropdown: indexNode?.dropdown,
+          dropdown,
           findex: generateKeyBetweenAllowSame(closestNode.findex, null),
         };
       }
     } else {
       const closestNode = closest as TreeNodeShape;
       const siblings = allShapeNodes.filter(
-        (s) => s.treeParentId === closestNode.treeParentId && s.direction === closestNode.direction,
+        (s) =>
+          s.treeParentId === closestNode.treeParentId &&
+          s.direction === closestNode.direction &&
+          s.dropdown === closestNode.dropdown,
       );
 
       if (closestNode.direction === 2 || closestNode.direction === 0) {
@@ -490,7 +506,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
           shape.id,
           closestNode,
           siblings,
-          p.y < closestRectCenter.y,
+          closestNode.dropdown === 0 ? p.y > closestRectCenter.y : p.y < closestRectCenter.y,
         );
       }
     }
@@ -510,7 +526,10 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
     const treeParent = shapeComposite.shapeMap[movingResult.treeParentId];
     const treeParentRect = getWrapperRect(shapeComposite.getShapeStruct, treeParent);
     const siblings = allShapeNodes.filter(
-      (s) => s.treeParentId === treeParent.id && s.direction === movingResult.direction,
+      (s) =>
+        s.treeParentId === treeParent.id &&
+        s.direction === movingResult.direction &&
+        s.dropdown === movingResult.dropdown,
     );
     const _nextIndex = siblings.findIndex((s) => movingResult.findex < s.findex);
     const nextIndex = _nextIndex === -1 ? siblings.length : _nextIndex;
@@ -854,18 +873,30 @@ function renderMovingPreview(
           to = { x, y: (prevRect.y + prevRect.height + nextRect.y) / 2 };
         } else if (prevRect) {
           // Case: Insert as the last child
-          to = { x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
+          to =
+            dropdown === 0
+              ? { x, y: prevRect.y - siblingMargin / 2 }
+              : { x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
         } else if (nextRect) {
           // Case: Insert as the first child
-          to = { x, y: nextRect.y - siblingMargin / 2 };
+          to =
+            dropdown === 0
+              ? { x, y: nextRect.y + nextRect.height + siblingMargin / 2 }
+              : { x, y: nextRect.y - siblingMargin / 2 };
         } else {
           // Case: Insert as a child & The parent has no children
-          to = { x, y: parentRect.y + parentRect.height + siblingMargin / 2 };
+          to =
+            dropdown === 0
+              ? {
+                  x,
+                  y: parentRect.y - siblingMargin / 2,
+                }
+              : { x, y: parentRect.y + parentRect.height + siblingMargin / 2 };
         }
 
         ctx.beginPath();
         const px = parentRect.x + parentRect.width / 2;
-        ctx.moveTo(px, parentRect.y + parentRect.height);
+        ctx.moveTo(px, parentRect.y + (dropdown === 0 ? 0 : parentRect.height));
         ctx.lineTo(px, to.y);
         ctx.lineTo(to.x, to.y);
         ctx.stroke();
@@ -881,21 +912,33 @@ function renderMovingPreview(
           to = { x: nextRect.x, y: (prevRect.y + prevRect.height + nextRect.y) / 2 };
         } else if (prevRect) {
           // Case: Insert as the last child
-          to = { x: prevRect.x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
+          to =
+            dropdown === 0
+              ? { x: prevRect.x, y: prevRect.y - siblingMargin / 2 }
+              : { x: prevRect.x, y: prevRect.y + prevRect.height + siblingMargin / 2 };
         } else if (nextRect) {
           // Case: Insert as the first child
-          to = { x: nextRect.x, y: nextRect.y - siblingMargin / 2 };
+          to =
+            dropdown === 0
+              ? { x: nextRect.x, y: nextRect.y + nextRect.height + siblingMargin / 2 }
+              : { x: nextRect.x, y: nextRect.y - siblingMargin / 2 };
         } else {
           // Case: Insert as a child & The parent has no children
-          to = {
-            x: parentRect.x + parentRect.width / 2 + childMargin,
-            y: parentRect.y + parentRect.height + siblingMargin / 2,
-          };
+          to =
+            dropdown === 0
+              ? {
+                  x: parentRect.x + parentRect.width / 2 + childMargin,
+                  y: parentRect.y - siblingMargin / 2,
+                }
+              : {
+                  x: parentRect.x + parentRect.width / 2 + childMargin,
+                  y: parentRect.y + parentRect.height + siblingMargin / 2,
+                };
         }
 
         ctx.beginPath();
         const px = parentRect.x + parentRect.width / 2;
-        ctx.moveTo(px, parentRect.y + parentRect.height);
+        ctx.moveTo(px, parentRect.y + (dropdown === 0 ? 0 : parentRect.height));
         ctx.lineTo(px, to.y);
         ctx.lineTo(to.x, to.y);
         ctx.stroke();
