@@ -15,10 +15,10 @@ import { pickMinItem } from "../../utils/commons";
 import { defineShapeHandler } from "./core";
 import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
 
-const ANCHOR_SIZE = 10;
+const ANCHOR_SIZE = 9;
 const ANCHOR_MARGIN = 30;
 const ANCHOR_SIBLING_MARGIN = 18;
-const DROPDOWN_ANCHOR_POSITION_RATE = 0.8;
+const DROPDOWN_ANCHOR_POSITION_RATE = 0.9;
 
 /**
  * - undefined: insert as a child
@@ -54,38 +54,39 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
     const margin = ANCHOR_MARGIN * scale;
     if (isRoot) {
       const tree = shapeComposite.mergedShapeTreeMap[shape.id];
+      const dropdownAnchors: AnchorInfo[] = [
+        [
+          1,
+          { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y + bounds.height + margin },
+          undefined,
+          2,
+        ],
+        [
+          3,
+          {
+            x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
+            y: bounds.y + bounds.height + margin,
+          },
+          undefined,
+          2,
+        ],
+        [1, { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y - margin }, undefined, 0],
+        [
+          3,
+          {
+            x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
+            y: bounds.y - margin,
+          },
+          undefined,
+          0,
+        ],
+      ];
+
       if (tree.children.length > 0) {
         const node = shapeComposite.mergedShapeMap[tree.children[0].id] as TreeNodeShape;
         const vertical = node.direction === 0 || node.direction === 2;
-        const dropdown = node.dropdown === 2;
-        return dropdown
-          ? [
-              [
-                1,
-                { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y + bounds.height + margin },
-                undefined,
-                2,
-              ],
-              [
-                3,
-                {
-                  x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
-                  y: bounds.y + bounds.height + margin,
-                },
-                undefined,
-                2,
-              ],
-              [1, { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y - margin }, undefined, 0],
-              [
-                3,
-                {
-                  x: bounds.x + bounds.width * (1 - DROPDOWN_ANCHOR_POSITION_RATE),
-                  y: bounds.y - margin,
-                },
-                undefined,
-                0,
-              ],
-            ]
+        return directionSrc !== undefined
+          ? dropdownAnchors
           : vertical
             ? [
                 [0, { x: bounds.x + bounds.width / 2, y: bounds.y - margin }],
@@ -101,13 +102,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
           [2, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin }],
           [1, { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 }],
           [3, { x: bounds.x - margin, y: bounds.y + bounds.height / 2 }],
-
-          [
-            1,
-            { x: bounds.x + bounds.width * DROPDOWN_ANCHOR_POSITION_RATE, y: bounds.y + bounds.height + margin },
-            undefined,
-            2,
-          ],
+          ...dropdownAnchors,
         ];
       }
     }
