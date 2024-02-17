@@ -46,7 +46,7 @@ function App() {
       await initSheet(sheet.id);
       history.replaceState(null, "", getSheetURL(sheet.id));
     });
-  }, [sheetStore, ready]);
+  }, [initSheet, sheetStore, ready]);
 
   const userSetting = useMemo(() => {
     const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
@@ -76,7 +76,7 @@ function App() {
       },
     };
     return context;
-  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager]);
+  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
   const onClickOpen = useCallback(async () => {
     return await openDiagramFromLocal();
