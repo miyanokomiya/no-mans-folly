@@ -9,7 +9,7 @@ import { useSelectedSheet, useSelectedTmpSheet } from "../hooks/storeHooks";
 import { SliderInput } from "./atoms/inputs/SliderInput";
 
 export const SheetConfigPanel: React.FC = () => {
-  const acctx = useContext(AppCanvasContext);
+  const { sheetStore } = useContext(AppCanvasContext);
   const sheet = useSelectedSheet();
   const tmpSheet = useSelectedTmpSheet();
 
@@ -41,13 +41,13 @@ export const SheetConfigPanel: React.FC = () => {
 
       const patch = { bgcolor: { ...color, a: sheet.bgcolor?.a ?? 1 } };
       if (draft) {
-        acctx.sheetStore.setTmpSheetMap({ [sheet.id]: patch });
+        sheetStore.setTmpSheetMap({ [sheet.id]: patch });
       } else {
-        acctx.sheetStore.patchEntity(sheet.id, patch);
-        acctx.sheetStore.setTmpSheetMap({});
+        sheetStore.patchEntity(sheet.id, patch);
+        sheetStore.setTmpSheetMap({});
       }
     },
-    [sheet],
+    [sheet, sheetStore],
   );
 
   const onAlphaChanged = useCallback(
@@ -56,13 +56,13 @@ export const SheetConfigPanel: React.FC = () => {
 
       const patch = { bgcolor: { ...bgColor, a: val } };
       if (draft) {
-        acctx.sheetStore.setTmpSheetMap({ [sheet.id]: patch });
+        sheetStore.setTmpSheetMap({ [sheet.id]: patch });
       } else {
-        acctx.sheetStore.patchEntity(sheet.id, patch);
-        acctx.sheetStore.setTmpSheetMap({});
+        sheetStore.patchEntity(sheet.id, patch);
+        sheetStore.setTmpSheetMap({});
       }
     },
-    [sheet, bgColor],
+    [sheetStore, sheet, bgColor],
   );
 
   const bgColorPanel = useMemo(() => {
@@ -76,7 +76,7 @@ export const SheetConfigPanel: React.FC = () => {
         <ColorPickerPanel color={bgColor} onChange={onColorClick} />
       </div>
     );
-  }, [bgColor, sheet]);
+  }, [bgColor, sheet, onAlphaChanged, onColorClick]);
 
   return (
     <div>

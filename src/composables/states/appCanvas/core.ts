@@ -46,10 +46,11 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   patchDocDryRun: (id: string, val: DocDelta) => DocOutput;
   setCurrentDocAttrInfo: (info: DocAttrInfo) => void;
   setLinkInfo: (val?: LinkInfo) => void;
+  getLinkInfo: () => LinkInfo | undefined;
   createCursorPosition: (id: string, index: number) => CursorPositionInfo | undefined;
   retrieveCursorPosition: (info?: CursorPositionInfo) => number;
 
-  getAssetAPI: () => AssetAPI;
+  assetAPI: AssetAPI;
   getImageStore: () => ImageStore;
 }
 

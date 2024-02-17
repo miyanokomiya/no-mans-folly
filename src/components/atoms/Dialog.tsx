@@ -43,12 +43,9 @@ export const Dialog: React.FC<Props> = ({
     onClose();
   }, [onClose, required]);
 
-  const onClickContent = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-    },
-    [onClose],
-  );
+  const onClickContent = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
 
   return (
     <dialog ref={ref} onClick={onClickBackdrop} className={className}>

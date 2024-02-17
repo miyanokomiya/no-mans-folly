@@ -61,7 +61,7 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
       // => Keeping it requires parent bounds and it would be too complex for this feature.
       onChange?.(createBoxPadding(undefined, val ? "relative" : undefined));
     },
-    [currentValue, onChange],
+    [onChange],
   );
 
   const onChangeTop = useCallback(

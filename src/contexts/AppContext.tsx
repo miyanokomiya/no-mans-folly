@@ -1,26 +1,27 @@
-import { createContext, useCallback, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, IAppCanvasContext, createInitialAppCanvasStateContext } from "./AppCanvasContext";
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { generateUuid } from "../utils/random";
 import { StateMachine, newStateMachine } from "../composables/states/core";
 import { newDefaultState } from "../composables/states/appCanvas/defaultState";
+import { AssetAPI } from "../hooks/persistence";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;
-  getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
+  assetAPI?: AssetAPI;
   acctx: IAppCanvasContext;
 }
 
-export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, getAssetAPI, acctx }) => {
+export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, assetAPI, acctx }) => {
   const initialContext = useMemo(() => {
     return createInitialAppCanvasStateContext({
       getTimestamp: Date.now,
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
       getUserSetting: acctx.userSettingStore.getState,
-      getAssetAPI,
+      assetAPI,
     });
-  }, [acctx, getAssetAPI]);
+  }, [acctx, assetAPI]);
 
   const [stateContext, setStateContext] = useState(initialContext);
   const stateContextRef = useRef(stateContext);
@@ -38,7 +39,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
           getShapeStruct: prev.getShapeStruct,
           getStyleScheme: prev.getStyleScheme,
           getUserSetting: prev.getUserSetting,
-          getAssetAPI: prev.getAssetAPI,
+          assetAPI: prev.assetAPI,
           ...val,
         };
         stateContextRef.current = next;
@@ -47,6 +48,20 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
     },
     [setStateContext],
   );
+
+  useEffect(() => {
+    // Apply props' changes to the context.
+    setStateContext((prev) => {
+      const next = {
+        ...prev,
+        getStyleScheme: acctx.getStyleScheme,
+        getUserSetting: acctx.userSettingStore.getState,
+        assetAPI,
+      } as AppCanvasStateContext;
+      stateContextRef.current = next;
+      return next;
+    });
+  }, [acctx, assetAPI]);
 
   return (
     <AppCanvasContext.Provider value={acctx}>
@@ -65,5 +80,5 @@ export const AppStateMachineContext = createContext<StateMachine<AppCanvasEvent>
 
 type AppCanvasStateContextPart = Omit<
   AppCanvasStateContext,
-  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getUserSetting" | "getAssetAPI"
+  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getUserSetting" | "assetAPI"
 >;

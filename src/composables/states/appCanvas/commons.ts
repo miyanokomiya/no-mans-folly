@@ -365,7 +365,7 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput, plain
 }
 
 export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDropEvent): Promise<void> {
-  const assetAPI = ctx.getAssetAPI();
+  const assetAPI = ctx.assetAPI;
   if (!assetAPI.enabled) {
     ctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
     return;
@@ -469,12 +469,17 @@ export function handleCommonWheel(
 }
 
 export function handleCommonPointerhover(
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getScale">,
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getLinkInfo" | "getScale">,
   event: PointerHoverEvent,
 ): void {
   const shapeComposite = ctx.getShapeComposite();
   const shape = shapeComposite.findShapeAt(event.data.current);
   const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
+
+  // Avoid overriding the same information.
+  const prev = ctx.getLinkInfo();
+  if (prev?.key === linkInfo?.key) return;
+
   ctx.setCursor(linkInfo ? "pointer" : undefined);
   ctx.setLinkInfo(linkInfo);
 }

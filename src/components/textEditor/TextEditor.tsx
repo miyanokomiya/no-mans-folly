@@ -53,17 +53,20 @@ export const TextEditor: React.FC<Props> = ({
     setDraft("");
   }, [draft, onInput]);
 
-  const handleEmojiSelect = useCallback((val: EmojiData) => {
-    onInput?.(val.native);
-    setDraft("");
-    setShowEmojiPicker?.(false);
-    inputRef.current?.focus?.();
-  }, []);
+  const handleEmojiSelect = useCallback(
+    (val: EmojiData) => {
+      onInput?.(val.native);
+      setDraft("");
+      setShowEmojiPicker?.(false);
+      inputRef.current?.focus?.();
+    },
+    [onInput, setShowEmojiPicker],
+  );
 
   const handleEmojiClickOutside = useCallback(() => {
     setShowEmojiPicker?.(false);
     inputRef.current?.focus?.();
-  }, []);
+  }, [setShowEmojiPicker]);
 
   return (
     <>
@@ -104,14 +107,17 @@ interface TextEditorEmojiOnlyProps {
 }
 
 export const TextEditorEmojiOnly: React.FC<TextEditorEmojiOnlyProps> = ({ onInput, position, setShowEmojiPicker }) => {
-  const handleEmojiSelect = useCallback((val: EmojiData) => {
-    onInput?.(val.native);
-    setShowEmojiPicker?.(false);
-  }, []);
+  const handleEmojiSelect = useCallback(
+    (val: EmojiData) => {
+      onInput?.(val.native);
+      setShowEmojiPicker?.(false);
+    },
+    [onInput, setShowEmojiPicker],
+  );
 
   const handleEmojiClickOutside = useCallback(() => {
     setShowEmojiPicker?.(false);
-  }, []);
+  }, [setShowEmojiPicker]);
 
   return (
     <div

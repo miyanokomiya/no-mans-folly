@@ -11,6 +11,7 @@ import { newShapeComposite } from "../composables/shapeComposite";
 import { newGrid } from "../composables/grid";
 import { newImageStore } from "../composables/imageStore";
 import { UserSettingStore } from "../stores/userSettingStore";
+import { AssetAPI } from "../hooks/persistence";
 
 export interface IAppCanvasContext {
   diagramStore: DiagramStore;
@@ -30,14 +31,14 @@ export function createInitialAppCanvasStateContext(arg: {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
   getUserSetting?: () => UserSetting;
-  getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
+  assetAPI?: AssetAPI;
 }): AppCanvasStateContext {
   return {
     getTimestamp: arg.getTimestamp,
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
     getUserSetting: arg.getUserSetting ?? (() => ({})),
-    getAssetAPI: arg.getAssetAPI ?? (() => ({ enabled: false })),
+    assetAPI: arg.assetAPI ?? disabledAssetAPI,
 
     redraw() {},
     getRenderCtx: () => undefined,
@@ -60,6 +61,7 @@ export function createInitialAppCanvasStateContext(arg: {
     showToastMessage() {},
     setCursor() {},
     setLinkInfo() {},
+    getLinkInfo: () => undefined,
 
     undo() {},
     redo() {},
@@ -103,3 +105,5 @@ export function createInitialAppCanvasStateContext(arg: {
     getImageStore: () => newImageStore(),
   };
 }
+
+const disabledAssetAPI = { enabled: false, _time: Date.now() } as const;

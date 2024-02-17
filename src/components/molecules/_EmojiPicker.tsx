@@ -14,11 +14,14 @@ interface Props {
  * Use "EmojiPicker.tsx" instead.
  */
 const _EmojiPicker: React.FC<Props> = ({ onEmojiSelect, onClose }) => {
-  const handleGlobalKeydown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onClose?.();
-    }
-  }, []);
+  const handleGlobalKeydown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose?.();
+      }
+    },
+    [onClose],
+  );
   useGlobalKeydownEffect(handleGlobalKeydown, true);
 
   return (

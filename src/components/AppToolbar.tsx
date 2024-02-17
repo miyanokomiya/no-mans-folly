@@ -104,7 +104,7 @@ export const AppToolbar: React.FC = () => {
       });
       setLineType(type);
     },
-    [sm, smctx],
+    [sm],
   );
 
   const [popup, setPopup] = useState<"" | "shapes" | "lines" | "layouts">("");

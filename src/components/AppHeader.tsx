@@ -113,7 +113,7 @@ export const AppHeader: React.FC<Props> = ({
         </button>
       </div>
     );
-  }, [_onClickOpen, _onClickSave, _onClickMerge]);
+  }, [_onClickOpen, _onClickSave, _onClickMerge, handleClickClear]);
 
   return (
     <div ref={ref} className="h-8 bg-white flex items-center">

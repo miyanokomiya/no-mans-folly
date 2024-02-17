@@ -35,7 +35,7 @@ function App() {
     saveAllToLocal,
     mergeAllWithLocal,
     canSyncoLocal,
-    getAssetAPI,
+    assetAPI,
   } = usePersistence({ generateUuid });
 
   useEffect(() => {
@@ -46,7 +46,7 @@ function App() {
       await initSheet(sheet.id);
       history.replaceState(null, "", getSheetURL(sheet.id));
     });
-  }, [sheetStore, ready]);
+  }, [initSheet, sheetStore, ready]);
 
   const userSetting = useMemo(() => {
     const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
@@ -76,7 +76,7 @@ function App() {
       },
     };
     return context;
-  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager]);
+  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
   const onClickOpen = useCallback(async () => {
     return await openDiagramFromLocal();
@@ -119,7 +119,7 @@ function App() {
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
-    <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
+    <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
       <EntranceDialog open={openEntranceDialog} onClose={closeEntranceDialog} onOpenWorkspace={handleOpenWorkspace} />
       <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>

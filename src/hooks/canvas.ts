@@ -57,25 +57,25 @@ export function useCanvas(
   // Prepare ref for mouse point to reduce recalculation.
   const mousePoint = useRef<IVec2>({ x: 0, y: 0 });
 
-  const viewState = useLocalStorageAdopter({
+  const { state: viewState, setState: setViewState } = useLocalStorageAdopter({
     key: "view_state",
     version: "1",
     initialValue: { scale: 1, viewOrigin: { x: 0, y: 0 } },
   });
-  const { scale, viewOrigin } = viewState.state;
+  const { scale, viewOrigin } = viewState;
   const setScale = useCallback(
     (val: number) => {
       // For safety
       if (isNaN(val)) return;
-      viewState.setState((state) => ({ scale: val, viewOrigin: state.viewOrigin }));
+      setViewState((state) => ({ scale: val, viewOrigin: state.viewOrigin }));
     },
-    [viewState.setState],
+    [setViewState],
   );
   const setViewOrigin = useCallback(
     (val: IVec2) => {
-      viewState.setState((state) => ({ scale: state.scale, viewOrigin: val }));
+      setViewState((state) => ({ scale: state.scale, viewOrigin: val }));
     },
-    [viewState.setState],
+    [setViewState],
   );
 
   function setMousePoint(value: IVec2) {
@@ -128,14 +128,14 @@ export function useCanvas(
       if (!editStartViewOrigin) return;
       setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
     },
-    [editStartViewOrigin],
+    [editStartViewOrigin, setViewOrigin],
   );
 
   const scrollView = useCallback(
     (delta: IVec2) => {
       setViewOrigin(add(viewOrigin, multi(delta, scale)));
     },
-    [viewOrigin, scale],
+    [viewOrigin, scale, setViewOrigin],
   );
 
   const canvasToView = useCallback(
@@ -149,7 +149,7 @@ export function useCanvas(
     const ret = centerizeView({ x: -viewSize.width / 2, y: -viewSize.height / 2, ...viewSize }, viewSize);
     setViewOrigin(ret.viewOrigin);
     setScale(ret.scale);
-  }, [viewSize]);
+  }, [viewSize, setViewOrigin, setScale]);
 
   const removeRootPosition = useCallback(
     (p: IVec2): IVec2 => {
@@ -182,7 +182,7 @@ export function useCanvas(
       setScale(ret.scale);
       setViewOrigin(ret.viewOrigin);
     },
-    [scale, scaleMax, adjustToCenter, viewSize],
+    [scale, scaleMax, adjustToCenter, viewSize, setViewOrigin, setScale],
   );
 
   const zoomView = useCallback(
@@ -195,7 +195,7 @@ export function useCanvas(
       setViewOrigin(nextViewOrigin);
       return nextScale;
     },
-    [viewCenter, scale, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint],
+    [viewCenter, scale, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint, setScale, setViewOrigin],
   );
 
   const setZoom = useCallback(
@@ -208,7 +208,7 @@ export function useCanvas(
       setViewOrigin(nextViewOrigin);
       return nextScale;
     },
-    [viewCenter, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint],
+    [viewCenter, scaleMax, scaleMin, viewOrigin, viewToCanvas, getMousePoint, setScale, setViewOrigin],
   );
 
   const onResize = useCallback(() => {

@@ -34,19 +34,19 @@ interface DecorationPanelProps {
 const DecorationPanel: React.FC<DecorationPanelProps> = ({ value, onChange }) => {
   const onChangeBold = useCallback(() => {
     onChange?.({ bold: !value?.bold });
-  }, [value?.bold]);
+  }, [value?.bold, onChange]);
 
   const onChangeItalic = useCallback(() => {
     onChange?.({ italic: !value?.italic });
-  }, [value?.italic]);
+  }, [value?.italic, onChange]);
 
   const onChangeUnderline = useCallback(() => {
     onChange?.({ underline: !value?.underline });
-  }, [value?.underline]);
+  }, [value?.underline, onChange]);
 
   const onChangeStrike = useCallback(() => {
     onChange?.({ strike: !value?.strike });
-  }, [value?.strike]);
+  }, [value?.strike, onChange]);
 
   return (
     <div className="flex gap-1">

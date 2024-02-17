@@ -17,7 +17,7 @@ export function useLocalStorageAdopter<T>(option: { key: string; version: string
 
   const save = useCallback(() => {
     localStorage.setItem(option.key, JSON.stringify({ value: state, version: option.version } as StoredData<T>));
-  }, [state, option.key, option.version, option.initialValue]);
+  }, [state, option.key, option.version]);
 
   useEffect(() => {
     save();

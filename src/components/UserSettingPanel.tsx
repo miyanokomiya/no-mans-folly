@@ -3,18 +3,21 @@ import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { ToggleInput } from "./atoms/inputs/ToggleInput";
 
 export const UserSettingPanel: React.FC = () => {
-  const acctx = useContext(AppCanvasContext);
-  const [userSetting, setUserSetting] = useState(acctx.userSettingStore.getState());
+  const { userSettingStore } = useContext(AppCanvasContext);
+  const [userSetting, setUserSetting] = useState(userSettingStore.getState());
 
   useEffect(() => {
-    return acctx.userSettingStore.watch(() => {
-      setUserSetting(acctx.userSettingStore.getState());
+    return userSettingStore.watch(() => {
+      setUserSetting(userSettingStore.getState());
     });
-  }, []);
+  }, [userSettingStore]);
 
-  const handleWheelActionChange = useCallback((val: boolean) => {
-    acctx.userSettingStore.patchState({ wheelAction: val ? "pan" : undefined });
-  }, []);
+  const handleWheelActionChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ wheelAction: val ? "pan" : undefined });
+    },
+    [userSettingStore],
+  );
 
   return (
     <div>

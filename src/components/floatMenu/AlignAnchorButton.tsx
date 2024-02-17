@@ -107,7 +107,7 @@ const AnchorPanel: React.FC<AnchorPanelProps> = ({ onClick }) => {
         <img src={icon} alt={altList[i]} className="w-8 h-8" />
       </button>
     ));
-  }, []);
+  }, [onClickButton]);
 
   return <div className="w-max grid grid-cols-3 gap-1">{table}</div>;
 };
