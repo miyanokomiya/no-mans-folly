@@ -20,11 +20,11 @@ export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
     const data = await res.json();
     setIndexData(data);
     setLoading(false);
-  }, [loading, indexData]);
+  }, [indexData, basePath]);
 
   useEffect(() => {
     fetchIndex();
-  }, []);
+  }, [fetchIndex]);
 
   const [keyword, setKeyword] = useState("");
   const handleKeywordChange = useCallback((val: string) => {
@@ -37,7 +37,7 @@ export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
     const ret = new Map<string, { url: string; tag: string; name: string }>();
     makePathMap(ret, basePath, indexData);
     return ret;
-  }, [indexData]);
+  }, [indexData, basePath]);
 
   const filteredIndexData = useMemo(() => {
     if (!keyword || !indexDataForSearch) return;
@@ -173,7 +173,7 @@ export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, onDown })
       e.preventDefault();
       onDown?.(url, id);
     },
-    [onDown],
+    [onDown, id, url],
   );
 
   return (

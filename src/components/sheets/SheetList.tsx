@@ -87,7 +87,7 @@ export const SheetList: React.FC = () => {
         findex: generateKeyBetweenAllowSame(beforeFindex, nextFindex),
       });
     },
-    [sheets],
+    [sheets, acctx.sheetStore],
   );
 
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);

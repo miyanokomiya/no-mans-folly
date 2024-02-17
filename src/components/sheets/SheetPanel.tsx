@@ -56,7 +56,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
       onChangeName?.(sheet.id, draftName);
       setRenaming(false);
     },
-    [sheet, draftName],
+    [sheet, draftName, onChangeName],
   );
 
   const cancelRename = useCallback(() => {
