@@ -50,7 +50,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   createCursorPosition: (id: string, index: number) => CursorPositionInfo | undefined;
   retrieveCursorPosition: (info?: CursorPositionInfo) => number;
 
-  getAssetAPI: () => AssetAPI;
+  assetAPI: AssetAPI;
   getImageStore: () => ImageStore;
 }
 

@@ -364,12 +364,12 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     };
   }, [sheetStores]);
 
-  const getAssetAPI = useMemo<() => AssetAPI>(() => {
-    return () => ({
+  const assetAPI = useMemo<AssetAPI>(() => {
+    return {
       enabled: fileAcess.hasHnadle(),
       saveAsset: fileAcess.saveAsset,
       loadAsset: fileAcess.loadAsset,
-    });
+    };
   }, [fileAcess]);
 
   return {
@@ -386,7 +386,7 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     ...diagramStores,
     ...sheetStores,
 
-    getAssetAPI,
+    assetAPI,
   };
 }
 

@@ -35,7 +35,7 @@ function App() {
     saveAllToLocal,
     mergeAllWithLocal,
     canSyncoLocal,
-    getAssetAPI,
+    assetAPI,
   } = usePersistence({ generateUuid });
 
   useEffect(() => {
@@ -119,7 +119,7 @@ function App() {
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
-    <AppCanvasProvider acctx={acctx} getAssetAPI={getAssetAPI}>
+    <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
       <EntranceDialog open={openEntranceDialog} onClose={closeEntranceDialog} onOpenWorkspace={handleOpenWorkspace} />
       <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>

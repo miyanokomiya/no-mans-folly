@@ -4,23 +4,24 @@ import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/app
 import { generateUuid } from "../utils/random";
 import { StateMachine, newStateMachine } from "../composables/states/core";
 import { newDefaultState } from "../composables/states/appCanvas/defaultState";
+import { AssetAPI } from "../hooks/persistence";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;
-  getAssetAPI?: AppCanvasStateContext["getAssetAPI"];
+  assetAPI?: AssetAPI;
   acctx: IAppCanvasContext;
 }
 
-export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, getAssetAPI, acctx }) => {
+export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, assetAPI, acctx }) => {
   const initialContext = useMemo(() => {
     return createInitialAppCanvasStateContext({
       getTimestamp: Date.now,
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
       getUserSetting: acctx.userSettingStore.getState,
-      getAssetAPI,
+      assetAPI,
     });
-  }, [acctx, getAssetAPI]);
+  }, [acctx, assetAPI]);
 
   const [stateContext, setStateContext] = useState(initialContext);
   const stateContextRef = useRef(stateContext);
@@ -38,7 +39,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
           getShapeStruct: prev.getShapeStruct,
           getStyleScheme: prev.getStyleScheme,
           getUserSetting: prev.getUserSetting,
-          getAssetAPI: prev.getAssetAPI,
+          assetAPI: prev.assetAPI,
           ...val,
         };
         stateContextRef.current = next;
@@ -65,5 +66,5 @@ export const AppStateMachineContext = createContext<StateMachine<AppCanvasEvent>
 
 type AppCanvasStateContextPart = Omit<
   AppCanvasStateContext,
-  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getUserSetting" | "getAssetAPI"
+  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getUserSetting" | "assetAPI"
 >;

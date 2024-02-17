@@ -38,11 +38,10 @@ import { GridBackground } from "./atoms/GridBackground";
 import { LinkMenu } from "./linkMenu/LinkMenu";
 
 export const AppCanvas: React.FC = () => {
-  const acctx = useContext(AppCanvasContext);
+  const { sheetStore, shapeStore, documentStore, undoManager } = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
   const setSmctx = useContext(SetAppStateContext);
-  const assetAPI = smctx.getAssetAPI();
 
   const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
@@ -57,80 +56,81 @@ export const AppCanvas: React.FC = () => {
   const [linkInfo, setLinkInfo] = useState<LinkInfo>();
 
   const imageStore = useMemo(() => {
+    shapeStore; // For exhaustive-deps
     return newImageStore();
-  }, [acctx.shapeStore]);
+  }, [shapeStore]);
 
   const loadShapeAssets = useCallback(
     (shapes: Shape[]) => {
       imageStore.batchLoad(
         shapes.filter(isImageShape).map((s) => s.assetId),
-        assetAPI,
+        smctx.assetAPI,
       );
     },
-    [assetAPI.enabled, imageStore],
+    [smctx.assetAPI, imageStore],
   );
 
   useEffect(() => {
     imageStore.clear();
-    loadShapeAssets(acctx.shapeStore.getEntities());
+    loadShapeAssets(shapeStore.getEntities());
 
     return imageStore.watch(() => {
       setCanvasState({});
     });
-  }, [imageStore, loadShapeAssets, acctx.shapeStore]);
+  }, [imageStore, loadShapeAssets, shapeStore]);
 
   useEffect(() => {
-    return acctx.sheetStore.watchSelected(() => {
+    return sheetStore.watchSelected(() => {
       sm.reset();
       setCanvasState({});
     });
-  }, [acctx.sheetStore, sm, imageStore, loadShapeAssets]);
+  }, [sheetStore, sm, imageStore, loadShapeAssets]);
 
   useEffect(() => {
-    return acctx.shapeStore.watch((keys) => {
+    return shapeStore.watch((keys) => {
       sm.handleEvent({
         type: "shape-updated",
         data: { keys },
       });
       setCanvasState({});
     });
-  }, [acctx.shapeStore, sm]);
+  }, [shapeStore, sm]);
 
   useEffect(() => {
-    return acctx.shapeStore.watchTmpShapeMap(() => {
+    return shapeStore.watchTmpShapeMap(() => {
       sm.handleEvent({
         type: "tmp-shape-updated",
         data: {},
       });
       setCanvasState({});
     });
-  }, [acctx.shapeStore, sm]);
+  }, [shapeStore, sm]);
 
   useEffect(() => {
-    return acctx.shapeStore.watchSelected(() => {
+    return shapeStore.watchSelected(() => {
       setCanvasState({});
     });
-  }, [acctx.shapeStore]);
+  }, [shapeStore]);
 
   useEffect(() => {
-    return acctx.documentStore.watch((keys) => {
+    return documentStore.watch((keys) => {
       sm.handleEvent({
         type: "shape-updated",
         data: { keys, text: true },
       });
       setCanvasState({});
     });
-  }, [acctx.documentStore, sm]);
+  }, [documentStore, sm]);
 
   useEffect(() => {
-    return acctx.documentStore.watchTmpDocMap(() => {
+    return documentStore.watchTmpDocMap(() => {
       sm.handleEvent({
         type: "tmp-shape-updated",
         data: { text: true },
       });
       setCanvasState({});
     });
-  }, [acctx.documentStore, sm]);
+  }, [documentStore, sm]);
 
   useEffect(() => {
     return sm.watch(() => {
@@ -160,22 +160,33 @@ export const AppCanvas: React.FC = () => {
     editStartPoint,
   } = useCanvas(getWrapper);
 
-  const gridDisabled = useLocalStorageAdopter({
+  const { state: gridDisabled, setState: setGridDisabled } = useLocalStorageAdopter({
     key: "grid_disabled",
     version: "1",
     initialValue: false,
   });
   const grid = useMemo(() => {
-    return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: gridDisabled.state });
-  }, [scale, viewCanvasRect, gridDisabled.state]);
+    return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: gridDisabled });
+  }, [scale, viewCanvasRect, gridDisabled]);
 
   const mergedDocMap = useMemo(() => {
-    const tmpDocMap = acctx.documentStore.getTmpDocMap();
-    return mapReduce(acctx.documentStore.getDocMap(), (doc, id) => {
+    canvasState; // For exhaustive-deps
+
+    const tmpDocMap = documentStore.getTmpDocMap();
+    return mapReduce(documentStore.getDocMap(), (doc, id) => {
       if (!tmpDocMap[id]) return doc;
-      return acctx.documentStore.patchDocDryRun(id, tmpDocMap[id]);
+      return documentStore.patchDocDryRun(id, tmpDocMap[id]);
     });
-  }, [acctx.documentStore, canvasState]);
+  }, [documentStore, canvasState]);
+
+  const [focused, setFocused] = useState(false);
+  const focus = useCallback(
+    (force = false) => {
+      if (textEditing || (!force && document.activeElement?.getAttribute("data-keep-focus"))) return;
+      wrapperRef.current?.focus();
+    },
+    [textEditing],
+  );
 
   useEffect(() => {
     // TODO: Make each method via "useCallback" for consistency.
@@ -209,29 +220,29 @@ export const AppCanvas: React.FC = () => {
       setLinkInfo,
       getLinkInfo: () => linkInfo,
 
-      undo: acctx.undoManager.undo,
-      redo: acctx.undoManager.redo,
-      setCaptureTimeout: acctx.undoManager.setCaptureTimeout,
+      undo: undoManager.undo,
+      redo: undoManager.redo,
+      setCaptureTimeout: undoManager.setCaptureTimeout,
 
-      getShapeComposite: () => acctx.shapeStore.shapeComposite,
-      getShapes: () => acctx.shapeStore.shapeComposite.shapes,
+      getShapeComposite: () => shapeStore.shapeComposite,
+      getShapes: () => shapeStore.shapeComposite.shapes,
 
-      getTmpShapeMap: () => acctx.shapeStore.shapeComposite.tmpShapeMap,
-      setTmpShapeMap: acctx.shapeStore.setTmpShapeMap,
+      getTmpShapeMap: () => shapeStore.shapeComposite.tmpShapeMap,
+      setTmpShapeMap: shapeStore.setTmpShapeMap,
 
-      getSelectedShapeIdMap: acctx.shapeStore.getSelected,
-      getLastSelectedShapeId: acctx.shapeStore.getLastSelected,
-      selectShape: acctx.shapeStore.select,
-      multiSelectShapes: acctx.shapeStore.multiSelect,
-      clearAllSelected: acctx.shapeStore.clearAllSelected,
+      getSelectedShapeIdMap: shapeStore.getSelected,
+      getLastSelectedShapeId: shapeStore.getLastSelected,
+      selectShape: shapeStore.select,
+      multiSelectShapes: shapeStore.multiSelect,
+      clearAllSelected: shapeStore.clearAllSelected,
       addShapes: (shapes, docMap, patch) => {
-        acctx.shapeStore.transact(() => {
-          acctx.shapeStore.addEntities(shapes);
+        shapeStore.transact(() => {
+          shapeStore.addEntities(shapes);
           if (patch) {
-            acctx.shapeStore.patchEntities(patch);
+            shapeStore.patchEntities(patch);
           }
           if (docMap) {
-            acctx.documentStore.patchDocs(docMap);
+            documentStore.patchDocs(docMap);
           }
         });
         loadShapeAssets(shapes);
@@ -239,53 +250,53 @@ export const AppCanvas: React.FC = () => {
       deleteShapes: (ids: string[], patch) => {
         // Apply patch before getting branch ids in case tree structure changes by the patch.
         // => e.g. ungrouping
-        const updated = patchPipe([() => patch ?? {}], acctx.shapeStore.getEntityMap());
+        const updated = patchPipe([() => patch ?? {}], shapeStore.getEntityMap());
         const targetIds = getDeleteTargetIds(
-          acctx.shapeStore.shapeComposite,
+          shapeStore.shapeComposite,
           getAllBranchIds(getTree(Object.values(updated.result)), ids),
         );
 
-        const shapePatchInfo = getPatchInfoByLayouts(acctx.shapeStore.shapeComposite, {
+        const shapePatchInfo = getPatchInfoByLayouts(shapeStore.shapeComposite, {
           update: patch,
           delete: targetIds,
         });
 
-        acctx.shapeStore.transact(() => {
+        shapeStore.transact(() => {
           if (shapePatchInfo.update) {
-            acctx.shapeStore.patchEntities(shapePatchInfo.update);
+            shapeStore.patchEntities(shapePatchInfo.update);
           }
           const adjustedTargetIds = shapePatchInfo.delete ?? targetIds;
-          acctx.shapeStore.deleteEntities(adjustedTargetIds);
-          acctx.documentStore.deleteDocs(adjustedTargetIds);
+          shapeStore.deleteEntities(adjustedTargetIds);
+          documentStore.deleteDocs(adjustedTargetIds);
         });
       },
-      patchShapes: acctx.shapeStore.patchEntities,
+      patchShapes: shapeStore.patchEntities,
       pasteShapes: (shapes, docs, p) => {
         const targetP = p ?? viewToCanvas(getMousePoint());
-        const availableIdSet = new Set(acctx.shapeStore.getEntities().map((s) => s.id));
+        const availableIdSet = new Set(shapeStore.getEntities().map((s) => s.id));
         const result = duplicateShapes(
           getCommonStruct,
           shapes,
           docs,
           generateUuid,
-          acctx.shapeStore.createLastIndex(),
+          shapeStore.createLastIndex(),
           availableIdSet,
           targetP,
         );
 
-        acctx.shapeStore.transact(() => {
-          acctx.shapeStore.addEntities(result.shapes);
-          acctx.documentStore.patchDocs(result.docMap);
+        shapeStore.transact(() => {
+          shapeStore.addEntities(result.shapes);
+          documentStore.patchDocs(result.docMap);
         });
-        acctx.shapeStore.multiSelect(result.shapes.map((s) => s.id));
+        shapeStore.multiSelect(result.shapes.map((s) => s.id));
         loadShapeAssets(shapes);
       },
 
-      createFirstIndex: acctx.shapeStore.createFirstIndex,
-      createLastIndex: acctx.shapeStore.createLastIndex,
+      createFirstIndex: shapeStore.createFirstIndex,
+      createLastIndex: shapeStore.createLastIndex,
 
       getGrid: () => grid,
-      setGridDisabled: (val) => gridDisabled.setState(val),
+      setGridDisabled: (val) => setGridDisabled(val),
 
       startTextEditing() {
         setTextEditing(true);
@@ -306,23 +317,23 @@ export const AppCanvas: React.FC = () => {
       setTextEditorPosition: (p) => {
         setTextEditorPosition(canvasToView(p));
       },
-      getDocumentMap: acctx.documentStore.getDocMap,
-      getTmpDocMap: acctx.documentStore.getTmpDocMap,
-      setTmpDocMap: acctx.documentStore.setTmpDocMap,
+      getDocumentMap: documentStore.getDocMap,
+      getTmpDocMap: documentStore.getTmpDocMap,
+      setTmpDocMap: documentStore.setTmpDocMap,
       patchDocuments: (val, shapePatch) => {
         if (shapePatch) {
-          acctx.shapeStore.transact(() => {
-            acctx.shapeStore.patchEntities(shapePatch);
-            acctx.documentStore.patchDocs(val);
+          shapeStore.transact(() => {
+            shapeStore.patchEntities(shapePatch);
+            documentStore.patchDocs(val);
           });
         } else {
-          acctx.documentStore.patchDocs(val);
+          documentStore.patchDocs(val);
         }
       },
-      patchDocDryRun: acctx.documentStore.patchDocDryRun,
+      patchDocDryRun: documentStore.patchDocDryRun,
       setCurrentDocAttrInfo,
-      createCursorPosition: acctx.documentStore.createCursorPosition,
-      retrieveCursorPosition: acctx.documentStore.retrieveCursorPosition,
+      createCursorPosition: documentStore.createCursorPosition,
+      retrieveCursorPosition: documentStore.retrieveCursorPosition,
       getImageStore: () => imageStore,
     });
   }, [
@@ -337,12 +348,20 @@ export const AppCanvas: React.FC = () => {
     viewToCanvas,
     scale,
     viewCanvasRect,
-    acctx,
     getMousePoint,
     grid,
     loadShapeAssets,
     setShowEmojiPicker,
     linkInfo,
+    documentStore,
+    focus,
+    setGridDisabled,
+    imageStore,
+    pushToastMessage,
+    setSmctx,
+    shapeStore,
+    showEmojiPicker,
+    undoManager,
   ]);
 
   useEffect(() => {
@@ -352,12 +371,12 @@ export const AppCanvas: React.FC = () => {
   }, [sm]);
 
   useEffect(() => {
-    return acctx.shapeStore.watchSelected(() => {
+    return shapeStore.watchSelected(() => {
       sm.handleEvent({
         type: "selection",
       });
     });
-  }, [acctx.shapeStore, sm]);
+  }, [shapeStore, sm]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -382,7 +401,7 @@ export const AppCanvas: React.FC = () => {
     const canvasContext = smctx;
     const selectedMap = canvasContext.getSelectedShapeIdMap();
     const renderer = newShapeRenderer({
-      shapeComposite: acctx.shapeStore.shapeComposite,
+      shapeComposite: shapeStore.shapeComposite,
       getDocumentMap: () => mergedDocMap,
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
       imageStore,
@@ -393,8 +412,8 @@ export const AppCanvas: React.FC = () => {
 
     sm.render(ctx);
   }, [
-    acctx.shapeStore.shapeComposite,
-    acctx.documentStore,
+    shapeStore.shapeComposite,
+    documentStore,
     sm,
     smctx,
     viewSize.width,
@@ -408,15 +427,6 @@ export const AppCanvas: React.FC = () => {
     mergedDocMap,
     imageStore,
   ]);
-
-  const [focused, setFocused] = useState(false);
-  const focus = useCallback(
-    (force = false) => {
-      if (textEditing || (!force && document.activeElement?.getAttribute("data-keep-focus"))) return;
-      wrapperRef.current?.focus();
-    },
-    [textEditing],
-  );
 
   const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
   const focusBackTextEditor = useCallback(() => {
@@ -565,15 +575,16 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [sm, acctx, scrollView],
+    [sm],
   );
   useEffect(() => {
     if (!wrapperRef.current) return;
 
+    const refValue = wrapperRef.current;
     // There's no way to proc "preventDefault" in React way.
-    wrapperRef.current.addEventListener("wheel", onWheel);
+    refValue.addEventListener("wheel", onWheel);
     return () => {
-      wrapperRef.current?.removeEventListener("wheel", onWheel);
+      refValue.removeEventListener("wheel", onWheel);
     };
   }, [onWheel]);
 
@@ -606,7 +617,9 @@ export const AppCanvas: React.FC = () => {
   );
 
   const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
-    const lastSelected = acctx.shapeStore.getLastSelected();
+    canvasState; // For exhaustive-deps
+
+    const lastSelected = shapeStore.getLastSelected();
     if (!lastSelected) return;
     if (textEditing) return currentDocAttrInfo;
 
@@ -615,7 +628,7 @@ export const AppCanvas: React.FC = () => {
 
     const attrs = getDocAttributes(doc);
     return { cursor: attrs, block: attrs, doc: attrs };
-  }, [canvasState, currentDocAttrInfo, textEditing, acctx.shapeStore, mergedDocMap]);
+  }, [canvasState, currentDocAttrInfo, textEditing, shapeStore, mergedDocMap]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -624,7 +637,7 @@ export const AppCanvas: React.FC = () => {
         data: { files: e.dataTransfer.files, point: viewToCanvas({ x: e.pageX, y: e.pageY }) },
       });
     },
-    [sm, viewToCanvas, getMousePoint],
+    [sm, viewToCanvas],
   );
 
   const handleSetShowEmojiPicker = useCallback(

@@ -25,7 +25,7 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
   const handleIconDown = useCallback(
     async (url: string, id: string) => {
       const imageStore = smctx.getImageStore();
-      const assetAPI = smctx.getAssetAPI();
+      const assetAPI = smctx.assetAPI;
       if (assetAPI.enabled) {
         const image = imageStore.getImage(id);
         if (!image) {
