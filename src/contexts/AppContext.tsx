@@ -1,4 +1,4 @@
-import { createContext, useCallback, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext, IAppCanvasContext, createInitialAppCanvasStateContext } from "./AppCanvasContext";
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { generateUuid } from "../utils/random";
@@ -48,6 +48,20 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
     },
     [setStateContext],
   );
+
+  useEffect(() => {
+    // Apply props' changes to the context.
+    setStateContext((prev) => {
+      const next = {
+        ...prev,
+        getStyleScheme: acctx.getStyleScheme,
+        getUserSetting: acctx.userSettingStore.getState,
+        assetAPI,
+      } as AppCanvasStateContext;
+      stateContextRef.current = next;
+      return next;
+    });
+  }, [acctx, assetAPI]);
 
   return (
     <AppCanvasContext.Provider value={acctx}>

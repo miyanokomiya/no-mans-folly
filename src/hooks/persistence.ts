@@ -366,11 +366,11 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
 
   const assetAPI = useMemo<AssetAPI>(() => {
     return {
-      enabled: fileAcess.hasHnadle(),
+      enabled: canSyncoLocal && fileAcess.hasHnadle(),
       saveAsset: fileAcess.saveAsset,
       loadAsset: fileAcess.loadAsset,
     };
-  }, [fileAcess]);
+  }, [fileAcess, canSyncoLocal]);
 
   return {
     initSheet,
