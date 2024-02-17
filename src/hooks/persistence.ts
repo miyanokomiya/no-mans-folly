@@ -41,7 +41,7 @@ interface PersistenceOption {
   generateUuid: () => string;
 }
 
-export function usePersistence(option: PersistenceOption) {
+export function usePersistence({ generateUuid }: PersistenceOption) {
   const fileAcess = useMemo(() => newFileAccess(), []);
   const [canSyncoLocal, setCanSyncToLocal] = useState(false);
 
@@ -98,13 +98,13 @@ export function usePersistence(option: PersistenceOption) {
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-    createInitialDiagram(diagramStore, option.generateUuid);
+    createInitialDiagram(diagramStore, generateUuid);
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
     await provider?.whenSynced;
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore, option.generateUuid);
+      createInitialSheet(sheetStore, generateUuid);
     }
 
     const sheet = sheetStore.getEntityMap()[initialSheetIdByQuery] ?? sheetStore.getSelectedSheet()!;
@@ -115,7 +115,7 @@ export function usePersistence(option: PersistenceOption) {
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [fileAcess, diagramStores, initSheet]);
+  }, [generateUuid, initSheet]);
 
   const openDiagramFromLocal = useCallback(async (): Promise<boolean> => {
     const nextDiagramDoc = new Y.Doc();
@@ -132,7 +132,7 @@ export function usePersistence(option: PersistenceOption) {
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore, option.generateUuid);
+      createInitialSheet(sheetStore, generateUuid);
       // Need to save the diagram having new sheet.
       await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
     }
@@ -145,7 +145,7 @@ export function usePersistence(option: PersistenceOption) {
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
     return true;
-  }, [fileAcess, initSheet]);
+  }, [generateUuid, fileAcess, initSheet]);
 
   const clearDiagram = useCallback(async () => {
     await fileAcess.disconnect();
@@ -160,7 +160,7 @@ export function usePersistence(option: PersistenceOption) {
 
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore, option.generateUuid);
+      createInitialSheet(sheetStore, generateUuid);
     }
 
     const sheet = sheetStore.getSelectedSheet()!;
@@ -170,7 +170,7 @@ export function usePersistence(option: PersistenceOption) {
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [fileAcess, initSheet]);
+  }, [generateUuid, fileAcess, initSheet]);
 
   const saveAllToLocal = useCallback(async () => {
     if (!diagramStores) return;
@@ -221,7 +221,7 @@ export function usePersistence(option: PersistenceOption) {
       }
 
       if (nextSheetStore.getEntities().length === 0) {
-        createInitialSheet(nextSheetStore, option.generateUuid);
+        createInitialSheet(nextSheetStore, generateUuid);
       }
 
       if (nextSheetStore.getEntityMap()[diagramStores.sheetStore.getSelectedSheet()?.id ?? ""]) {
@@ -237,7 +237,7 @@ export function usePersistence(option: PersistenceOption) {
     } finally {
       setReady(true);
     }
-  }, [fileAcess, initSheet, diagramStores]);
+  }, [generateUuid, fileAcess, initSheet, diagramStores]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -317,7 +317,7 @@ export function usePersistence(option: PersistenceOption) {
 
   useEffect(() => {
     initDiagram();
-  }, []);
+  }, [initDiagram]);
 
   useEffect(() => {
     return () => {
