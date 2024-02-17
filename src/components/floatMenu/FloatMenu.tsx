@@ -56,42 +56,47 @@ export const FloatMenu: React.FC<Option> = ({
   focusBack,
   textEditing,
 }) => {
-  const acctx = useContext(AppCanvasContext);
-  const sm = useContext(AppStateMachineContext);
-  const smctx = useContext(AppStateContext);
+  const { shapeStore } = useContext(AppCanvasContext);
+  const { handleEvent } = useContext(AppStateMachineContext);
+  const { getShapeStruct, setTmpShapeMap, patchShapes, createLastIndex, createFirstIndex } =
+    useContext(AppStateContext);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [rootSize, setRootSize] = useState<Size>({ width: 0, height: ROOT_HEIGHT });
   const draggable = useDraggable();
 
   const indexShape = useMemo<Shape | undefined>(() => {
-    const id = smctx.getLastSelectedShapeId();
+    canvasState; // For exhaustive-deps
+
+    const id = shapeStore.getLastSelected();
     if (!id) return;
 
-    const shape = acctx.shapeStore.getEntityMap()[id];
+    const shape = shapeStore.getEntityMap()[id];
     if (!shape) return;
 
-    const tmp = acctx.shapeStore.getTmpShapeMap()[id] ?? {};
+    const tmp = shapeStore.getTmpShapeMap()[id] ?? {};
     return tmp ? { ...shape, ...tmp } : shape;
-  }, [canvasState, smctx, acctx.shapeStore]);
+  }, [canvasState, shapeStore]);
 
   const selectedShapes = useMemo(() => {
-    const shapeComposite = smctx.getShapeComposite();
+    canvasState; // For exhaustive-deps
+
+    const shapeComposite = shapeStore.shapeComposite;
     const shapeMap = shapeComposite.shapeMap;
-    const selected = smctx.getSelectedShapeIdMap();
+    const selected = shapeStore.getSelected();
     return Object.keys(selected).map((id) => shapeMap[id]);
-  }, [canvasState, smctx]);
+  }, [canvasState, shapeStore]);
 
   const targetRect = useMemo<IRectangle | undefined>(() => {
     if (selectedShapes.length === 0) return;
 
-    const shapeComposite = smctx.getShapeComposite();
+    const shapeComposite = shapeStore.shapeComposite;
     const rect = shapeComposite.getWrapperRectForShapes(selectedShapes);
     const p = canvasToView(scale, viewOrigin, rect);
     const width = rect.width / scale;
     const height = rect.height / scale;
     return { x: p.x, y: p.y, width, height };
-  }, [viewOrigin, scale, smctx, selectedShapes]);
+  }, [viewOrigin, scale, shapeStore, selectedShapes]);
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -119,7 +124,7 @@ export const FloatMenu: React.FC<Option> = ({
   useEffect(() => {
     if (rootAttrsFixed || !draggable.v) return;
     setRootAttrsFixed(rootAttrs);
-  }, [draggable.v, rootAttrsFixed]);
+  }, [draggable.v, rootAttrsFixed, rootAttrs]);
 
   const popupDefaultDirection: PopupDirection = rootAttrs?.className.includes(TOP_LOCATED_KEY) ? "top" : "bottom";
   const [popupedKey, setPopupedKey] = useState("");
@@ -138,80 +143,80 @@ export const FloatMenu: React.FC<Option> = ({
 
   const indexCommonStyle = useMemo<CommonStyle | undefined>(() => {
     if (!indexShape) return;
-    return getCommonStyle(smctx.getShapeStruct, indexShape);
-  }, [indexShape, smctx]);
+    return getCommonStyle(getShapeStruct, indexShape);
+  }, [indexShape, getShapeStruct]);
 
   const onFillChanged = useCallback(
     (fill: FillStyle, draft = false) => {
-      const ids = Object.keys(smctx.getSelectedShapeIdMap());
-      const shapeMap = smctx.getShapeComposite().shapeMap;
+      const ids = Object.keys(shapeStore.getSelected());
+      const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-        p[id] = updateCommonStyle(smctx.getShapeStruct, shapeMap[id], { fill });
+        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { fill });
         return p;
       }, {});
 
       if (draft) {
-        smctx.setTmpShapeMap(patch);
+        setTmpShapeMap(patch);
       } else {
-        smctx.setTmpShapeMap({});
-        smctx.patchShapes(patch);
+        setTmpShapeMap({});
+        patchShapes(patch);
         focusBack?.();
       }
     },
-    [smctx, focusBack],
+    [shapeStore, focusBack, getShapeStruct, setTmpShapeMap, patchShapes],
   );
 
   const onStrokeChanged = useCallback(
     (stroke: StrokeStyle, draft = false) => {
-      const ids = Object.keys(smctx.getSelectedShapeIdMap());
-      const shapeMap = smctx.getShapeComposite().shapeMap;
+      const ids = Object.keys(shapeStore.getSelected());
+      const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-        p[id] = updateCommonStyle(smctx.getShapeStruct, shapeMap[id], { stroke });
+        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { stroke });
         return p;
       }, {});
 
       if (draft) {
-        smctx.setTmpShapeMap(patch);
+        setTmpShapeMap(patch);
       } else {
-        smctx.setTmpShapeMap({});
-        smctx.patchShapes(patch);
+        setTmpShapeMap({});
+        patchShapes(patch);
         focusBack?.();
       }
     },
-    [smctx, focusBack],
+    [shapeStore, focusBack, getShapeStruct, setTmpShapeMap, patchShapes],
   );
 
   const onDocInlineAttributesChanged = useCallback(
     (attrs: DocAttributes, draft?: boolean) => {
-      sm.handleEvent({
+      handleEvent({
         type: "text-style",
         data: { value: attrs, draft },
       });
       focusBack?.();
     },
-    [sm, focusBack],
+    [handleEvent, focusBack],
   );
 
   const onDocBlockAttributesChanged = useCallback(
     (attrs: DocAttributes, draft?: boolean) => {
-      sm.handleEvent({
+      handleEvent({
         type: "text-style",
         data: { value: attrs, block: true, draft },
       });
       focusBack?.();
     },
-    [sm, focusBack],
+    [handleEvent, focusBack],
   );
 
   const onDocAttributesChanged = useCallback(
     (attrs: DocAttributes, draft?: boolean) => {
-      sm.handleEvent({
+      handleEvent({
         type: "text-style",
         data: { value: attrs, doc: true, draft },
       });
       focusBack?.();
     },
-    [sm, focusBack],
+    [handleEvent, focusBack],
   );
 
   const indexLineShape = useMemo(() => {
@@ -220,8 +225,8 @@ export const FloatMenu: React.FC<Option> = ({
 
   const onLineHeadChanged = useCallback(
     (val: { pHead?: LineHead; qHead?: LineHead }) => {
-      const ids = Object.keys(smctx.getSelectedShapeIdMap());
-      const shapeMap = smctx.getShapeComposite().shapeMap;
+      const ids = Object.keys(shapeStore.getSelected());
+      const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<LineShape> }>((p, id) => {
         const shape = shapeMap[id];
         if (isLineShape(shape)) {
@@ -230,26 +235,26 @@ export const FloatMenu: React.FC<Option> = ({
         return p;
       }, {});
 
-      smctx.patchShapes(patch);
+      patchShapes(patch);
       focusBack?.();
     },
-    [focusBack, smctx],
+    [focusBack, shapeStore, patchShapes],
   );
 
   const onLineTypeChanged = useCallback(
     (lineType: LineType, curveType?: CurveType) => {
-      const shapeComposite = smctx.getShapeComposite();
+      const shapeComposite = shapeStore.shapeComposite;
       const shapeMap = shapeComposite.shapeMap;
-      const lineIds = Object.keys(smctx.getSelectedShapeIdMap());
+      const lineIds = Object.keys(shapeStore.getSelected());
       const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
-      smctx.patchShapes(
+      patchShapes(
         patchPipe(
           [
             (src) => mapReduce(src, () => ({ lineType })),
             (src) => {
               const elbowHandler = newElbowLineHandler({
                 getShapeComposite: () =>
-                  newShapeComposite({ shapes: toList({ ...shapeMap, ...src }), getStruct: smctx.getShapeStruct }),
+                  newShapeComposite({ shapes: toList({ ...shapeMap, ...src }), getStruct: getShapeStruct }),
               });
               return mapReduce(src, (lineShape) => {
                 return lineShape.lineType !== "elbow"
@@ -268,15 +273,15 @@ export const FloatMenu: React.FC<Option> = ({
         ).patch,
       );
     },
-    [smctx],
+    [shapeStore, patchShapes, getShapeStruct],
   );
 
   const onClickLineLabel = useCallback(() => {
-    sm.handleEvent({
+    handleEvent({
       type: "state",
       data: { name: "AddingLineLabel" },
     });
-  }, [sm]);
+  }, [handleEvent]);
 
   const indexTextShape = useMemo(() => {
     return indexShape && isTextShape(indexShape) ? indexShape : undefined;
@@ -284,8 +289,8 @@ export const FloatMenu: React.FC<Option> = ({
 
   const onAlignAnchorChangeed = useCallback(
     (val: BoxAlign) => {
-      const ids = Object.keys(smctx.getSelectedShapeIdMap());
-      const shapeMap = smctx.getShapeComposite().shapeMap;
+      const ids = Object.keys(shapeStore.getSelected());
+      const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<TextShape> }>((p, id) => {
         const shape = shapeMap[id];
         if (isTextShape(shape)) {
@@ -294,59 +299,59 @@ export const FloatMenu: React.FC<Option> = ({
         return p;
       }, {});
 
-      smctx.patchShapes(patch);
+      patchShapes(patch);
       focusBack?.();
     },
-    [focusBack, smctx],
+    [focusBack, shapeStore, patchShapes],
   );
 
   const canChangeStack = useMemo<boolean>(() => {
-    const shapeComposite = smctx.getShapeComposite();
+    const shapeComposite = shapeStore.shapeComposite;
     return !!indexShape && !stackOrderDisabled(shapeComposite.getShapeStruct, indexShape);
-  }, [indexShape, smctx]);
+  }, [indexShape, shapeStore]);
 
   const onClickStackLast = useCallback(() => {
-    const ids = selectedShapes.filter((s) => !stackOrderDisabled(smctx.getShapeStruct, s)).map((s) => s.id);
-    smctx.patchShapes(patchShapesOrderToLast(ids, smctx.createLastIndex()));
+    const ids = selectedShapes.filter((s) => !stackOrderDisabled(getShapeStruct, s)).map((s) => s.id);
+    patchShapes(patchShapesOrderToLast(ids, createLastIndex()));
     focusBack?.();
-  }, [focusBack, smctx, selectedShapes]);
+  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createLastIndex]);
 
   const onClickStackFirst = useCallback(() => {
-    const ids = selectedShapes.filter((s) => !stackOrderDisabled(smctx.getShapeStruct, s)).map((s) => s.id);
-    smctx.patchShapes(patchShapesOrderToFirst(ids, smctx.createFirstIndex()));
+    const ids = selectedShapes.filter((s) => !stackOrderDisabled(getShapeStruct, s)).map((s) => s.id);
+    patchShapes(patchShapesOrderToFirst(ids, createFirstIndex()));
     focusBack?.();
-  }, [focusBack, smctx, selectedShapes]);
+  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createFirstIndex]);
 
   const canIndexShapeHaveTextPadding = useMemo<boolean>(() => {
     if (!indexShape) return false;
-    return canHaveTextPadding(smctx.getShapeStruct, indexShape);
-  }, [indexShape, smctx]);
+    return canHaveTextPadding(getShapeStruct, indexShape);
+  }, [indexShape, getShapeStruct]);
 
   const indexTextPadding = useMemo<BoxPadding | undefined>(() => {
     if (!indexShape) return;
-    return getTextPadding(smctx.getShapeStruct, indexShape);
-  }, [indexShape, smctx]);
+    return getTextPadding(getShapeStruct, indexShape);
+  }, [indexShape, getShapeStruct]);
 
   const onChangeTextPadding = useCallback(
     (value: BoxPadding, draft?: boolean) => {
-      const shapeComposite = smctx.getShapeComposite();
+      const shapeComposite = shapeStore.shapeComposite;
       const shapeMap = shapeComposite.shapeMap;
-      const selected = smctx.getSelectedShapeIdMap();
+      const selected = shapeStore.getSelected();
       const patch = mapReduce(selected, (_, id) => {
         const shape = shapeMap[id];
         return patchTextPadding(shapeComposite.getShapeStruct, shape, value);
       });
 
       if (draft) {
-        smctx.setTmpShapeMap(patch);
+        setTmpShapeMap(patch);
       } else {
-        smctx.patchShapes(patch);
-        smctx.setTmpShapeMap({});
+        patchShapes(patch);
+        setTmpShapeMap({});
       }
       // It's better not to call "focusBack" here.
       // => Number sliders can keep focused and handle arrow-key inputs.
     },
-    [smctx],
+    [shapeStore, setTmpShapeMap, patchShapes],
   );
 
   const popupButtonCommonProps = {

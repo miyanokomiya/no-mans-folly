@@ -84,7 +84,7 @@ export const AppCanvas: React.FC = () => {
       sm.reset();
       setCanvasState({});
     });
-  }, [acctx.shapeStore, sm, imageStore, loadShapeAssets]);
+  }, [acctx.sheetStore, sm, imageStore, loadShapeAssets]);
 
   useEffect(() => {
     return acctx.shapeStore.watch((keys) => {
@@ -178,6 +178,7 @@ export const AppCanvas: React.FC = () => {
   }, [acctx.documentStore, canvasState]);
 
   useEffect(() => {
+    // TODO: Make each method via "useCallback" for consistency.
     setSmctx({
       redraw: () => setCanvasState({}),
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
