@@ -10,15 +10,18 @@ export function useToastMessages(option?: Option) {
   const [toastMessages, setToastMessages] = useState<ToastMessage[]>([]);
   const timers = useRef(new Map<string, number>());
 
-  const pushToastMessage = useCallback((val: ToastMessage) => {
-    setToastMessages((current) => {
-      return [...current.filter((c) => c.text !== val.text), val];
-    });
+  const pushToastMessage = useCallback(
+    (val: ToastMessage) => {
+      setToastMessages((current) => {
+        return [...current.filter((c) => c.text !== val.text), val];
+      });
 
-    if (val.type === "info") {
-      timers.current.set(val.text, Date.now() + (option?.timeout ?? 3000));
-    }
-  }, []);
+      if (val.type === "info") {
+        timers.current.set(val.text, Date.now() + (option?.timeout ?? 3000));
+      }
+    },
+    [option?.timeout],
+  );
 
   const closeToastMessage = useCallback((text: string) => {
     setToastMessages((current) => {

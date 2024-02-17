@@ -1,29 +1,31 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Sheet } from "../models";
 
 export function useSelectedSheet(): Sheet | undefined {
   const acctx = useContext(AppCanvasContext);
 
-  const [sheetState, setSheetState] = useState({});
+  const [selectedSheet, setSelectedSheet] = useState<Sheet>();
+
+  const update = useCallback(() => {
+    setSelectedSheet(acctx.sheetStore.getSelectedSheet());
+  }, [acctx.sheetStore]);
 
   useEffect(() => {
-    return acctx.sheetStore.watch(() => {
-      setSheetState({});
-    });
-  }, [acctx.sheetStore]);
-  useEffect(() => {
-    return acctx.sheetStore.watchSelected(() => {
-      setSheetState({});
-    });
-  }, [acctx.sheetStore]);
-  useEffect(() => {
-    setSheetState({});
-  }, [acctx.sheetStore]);
+    update();
+    const clears = [
+      acctx.sheetStore.watch(() => {
+        update();
+      }),
+      acctx.sheetStore.watchSelected(() => {
+        update();
+      }),
+    ];
 
-  return useMemo<Sheet | undefined>(() => {
-    return acctx.sheetStore.getSelectedSheet();
-  }, [acctx.sheetStore, sheetState]);
+    return () => clears.forEach((f) => f());
+  }, [acctx.sheetStore, update]);
+
+  return selectedSheet;
 }
 
 export function useSelectedTmpSheet(): Sheet | undefined {
@@ -37,36 +39,33 @@ export function useSelectedTmpSheet(): Sheet | undefined {
 export function useSheets(): Sheet[] {
   const acctx = useContext(AppCanvasContext);
 
-  const [sheetState, setSheetState] = useState({});
+  const [sheets, setSheets] = useState<Sheet[]>([]);
+
+  const update = useCallback(() => {
+    setSheets(acctx.sheetStore.getEntities());
+  }, [acctx.sheetStore]);
 
   useEffect(() => {
+    update();
     return acctx.sheetStore.watch(() => {
-      setSheetState({});
+      update();
     });
-  }, [acctx.sheetStore]);
-  useEffect(() => {
-    return acctx.sheetStore.watchSelected(() => {
-      setSheetState({});
-    });
-  }, [acctx.sheetStore]);
+  }, [acctx.sheetStore, update]);
 
-  return useMemo<Sheet[]>(() => {
-    return acctx.sheetStore.getEntities();
-  }, [acctx.sheetStore, sheetState]);
+  return sheets;
 }
 
 export function useTmpSheetMap(): { [id: string]: Partial<Sheet> } {
   const acctx = useContext(AppCanvasContext);
 
-  const [tmpState, setTmpState] = useState({});
+  const [tmpMap, setTmpMap] = useState<{ [id: string]: Partial<Sheet> }>({});
 
   useEffect(() => {
+    setTmpMap(acctx.sheetStore.getTmpSheetMap());
     return acctx.sheetStore.watchTmpSheetMap(() => {
-      setTmpState({});
+      setTmpMap(acctx.sheetStore.getTmpSheetMap());
     });
   }, [acctx.sheetStore]);
 
-  return useMemo<{ [id: string]: Partial<Sheet> }>(() => {
-    return acctx.sheetStore.getTmpSheetMap();
-  }, [acctx.sheetStore, tmpState]);
+  return tmpMap;
 }
