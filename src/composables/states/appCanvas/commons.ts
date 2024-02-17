@@ -469,12 +469,17 @@ export function handleCommonWheel(
 }
 
 export function handleCommonPointerhover(
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getScale">,
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getLinkInfo" | "getScale">,
   event: PointerHoverEvent,
 ): void {
   const shapeComposite = ctx.getShapeComposite();
   const shape = shapeComposite.findShapeAt(event.data.current);
   const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
+
+  // Avoid overriding the same information.
+  const prev = ctx.getLinkInfo();
+  if (prev?.key === linkInfo?.key) return;
+
   ctx.setCursor(linkInfo ? "pointer" : undefined);
   ctx.setLinkInfo(linkInfo);
 }

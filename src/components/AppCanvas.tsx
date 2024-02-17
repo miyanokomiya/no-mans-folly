@@ -206,6 +206,7 @@ export const AppCanvas: React.FC = () => {
       showToastMessage: pushToastMessage,
       setCursor,
       setLinkInfo,
+      getLinkInfo: () => linkInfo,
 
       undo: acctx.undoManager.undo,
       redo: acctx.undoManager.redo,
@@ -340,6 +341,7 @@ export const AppCanvas: React.FC = () => {
     grid,
     loadShapeAssets,
     setShowEmojiPicker,
+    linkInfo,
   ]);
 
   useEffect(() => {

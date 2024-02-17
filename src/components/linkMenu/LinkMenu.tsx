@@ -39,11 +39,11 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
       cancelGracefulClose();
       gracefulCloseTimer.current = setTimeout(() => {
         setLocalLinkInfo((val) => {
-          return val?.key === localLinkInfo?.key ? undefined : val;
+          return val === localLinkInfo ? undefined : val;
         });
       }, closeDelay);
     },
-    [localLinkInfo?.key, cancelGracefulClose],
+    [localLinkInfo, cancelGracefulClose],
   );
 
   const handlePointerEnter = useCallback(() => {
@@ -53,10 +53,10 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
 
   const handlePointerLeave = useCallback(() => {
     setHasPointer(false);
-  }, [gracefulClose]);
+  }, []);
 
   useEffect(() => {
-    if (hasPointer || localLinkInfo?.key === linkInfo?.key) {
+    if (hasPointer || localLinkInfo === linkInfo) {
       cancelGracefulClose();
       return;
     }
@@ -74,12 +74,12 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
     );
     cancelGracefulClose();
     return () => clearTimeout(timer);
-  }, [delay, hasPointer, gracefulClose, cancelGracefulClose, linkInfo?.key, localLinkInfo?.key]);
+  }, [delay, hasPointer, gracefulClose, cancelGracefulClose, linkInfo, localLinkInfo]);
 
   const handleGlobalClick = useCallback(() => {
     cancelGracefulClose();
     setLocalLinkInfo(linkInfo);
-  }, [linkInfo?.link, cancelGracefulClose]);
+  }, [linkInfo, cancelGracefulClose]);
 
   return (
     <OutsideObserver onClick={handleGlobalClick}>

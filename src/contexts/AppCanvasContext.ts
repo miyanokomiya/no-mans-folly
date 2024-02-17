@@ -60,6 +60,7 @@ export function createInitialAppCanvasStateContext(arg: {
     showToastMessage() {},
     setCursor() {},
     setLinkInfo() {},
+    getLinkInfo: () => undefined,
 
     undo() {},
     redo() {},
