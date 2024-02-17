@@ -85,7 +85,9 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
   useGlobalScroll(onGlobalScroll);
 
   const popupAttrs = useMemo(() => {
-    if (!ref.current) return {};
+    if (!ref.current || !opened) return;
+
+    boundsState; // For exhaustive-deps
 
     const bounds = ref.current.getBoundingClientRect();
     const classBase = "z-10 fixed bg-white border rounded p-2 drop-shadow-md ";

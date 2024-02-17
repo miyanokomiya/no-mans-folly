@@ -33,7 +33,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
     const r = Math.random() * TAU;
     setRadian(r);
     setCurrentRadian(r + range * 1.1 + (Math.random() * Math.PI) / 3);
-  }, []);
+  }, [range]);
 
   useEffect(() => {
     if (open) {
@@ -86,7 +86,7 @@ export const Skillcheck: React.FC<Props> = ({ open, onFail, onSuccess }) => {
         setStatus("fail");
       }
     },
-    [onSuccess, onFail, playing, currentRadian, radian, range],
+    [playing, currentRadian, radian, range, greatRange],
   );
   useGlobalClickEffect(onStop);
 

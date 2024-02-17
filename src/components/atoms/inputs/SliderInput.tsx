@@ -33,7 +33,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
       draftValue.current = val;
       onChanged?.(val, true, option);
     },
-    [applyStep, onChanged],
+    [min, max, applyStep, onChanged],
   );
 
   const { startDragging } = useGlobalDrag(
@@ -97,7 +97,7 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
         onChanged?.(v, false, getModifierOptions(e));
       }
     },
-    [value, applyStep, onChanged],
+    [step, value, applyStep, onChanged],
   );
 
   return (
