@@ -46,6 +46,7 @@ import {
   normalizeRadian,
   getArcBounds,
   isPointCloseToArc,
+  lerpRect,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -1142,5 +1143,18 @@ describe("isPointCloseToArc", () => {
     expect(isPointCloseToArc(params1, { x: 99, y: 130 }, 10)).toBe(true);
     expect(isPointCloseToArc(params1, { x: 101, y: 130 }, 10)).toBe(false);
     expect(isPointCloseToArc(params1, { x: 70, y: 100 }, 10)).toBe(true);
+  });
+});
+
+describe("lerpRect", () => {
+  test("should return lerped rectangle", () => {
+    const from = { x: 0, y: 0, width: 10, height: 20 };
+    const to0 = { x: 100, y: 100, width: 10, height: 20 };
+    expect(lerpRect(from, to0, 0)).toEqual(from);
+    expect(lerpRect(from, to0, 0.1)).toEqual({ x: 10, y: 10, width: 10, height: 20 });
+    expect(lerpRect(from, to0, 1)).toEqual(to0);
+
+    const to1 = { x: 100, y: 100, width: 20, height: 40 };
+    expect(lerpRect(from, to1, 0.1)).toEqual({ x: 10, y: 10, width: 11, height: 22 });
   });
 });

@@ -840,3 +840,14 @@ function isRadianInside(nfrom: number, nto: number, nr: number): boolean {
 export function isIdentityAffine(matrix: AffineMatrix): boolean {
   return matrix.every((v, i) => v === IDENTITY_AFFINE[i]);
 }
+
+export function lerpRect(from: IRectangle, to: IRectangle, t: number): IRectangle {
+  const p0 = lerpPoint({ x: from.x, y: from.y }, { x: to.x, y: to.y }, t);
+  const p2 = lerpPoint(
+    { x: from.x + from.width, y: from.y + from.height },
+    { x: to.x + to.width, y: to.y + to.height },
+    t,
+  );
+
+  return { x: p0.x, y: p0.y, width: p2.x - p0.x, height: p2.y - p0.y };
+}
