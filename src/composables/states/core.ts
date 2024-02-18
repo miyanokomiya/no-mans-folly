@@ -16,6 +16,11 @@ export interface ModeStateBase<C, E = ModeStateEvent> {
   onStart?: (ctx: ModeStateContextBase & C) => TransitionValue<C, ModeStateEvent>;
   onResume?: (ctx: ModeStateContextBase & C) => TransitionValue<C, ModeStateEvent>;
   onEnd?: (ctx: C) => void;
+  /**
+   * Don't use this attribute casually.
+   * Consider using "defineAsyncState" instead.
+   */
+  _resolved?: Promise<TransitionValue<C, ModeStateEvent>>;
   handleEvent: (ctx: C, e: E) => TransitionValue<C, ModeStateEvent>;
   render?: (ctx: C, renderCtx: CanvasRenderingContext2D) => void;
 }
@@ -154,6 +159,12 @@ export function newStateMachine<C, E = ModeStateEvent>(
       handleTransition(result);
       return;
     }
+
+    nextState._resolved?.then((nextTransition) => {
+      if (getCurrentState()?.state === nextState) {
+        handleTransition(nextTransition);
+      }
+    });
 
     callback.dispatch();
   }

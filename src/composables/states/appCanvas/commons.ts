@@ -27,7 +27,7 @@ import {
   shouldResizeOnTextEdit,
 } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
-import { IVec2, add, applyAffine, getOuterRectangle, multi } from "okageo";
+import { IVec2, add, applyAffine, getOuterRectangle, getRectCenter, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
@@ -49,6 +49,7 @@ import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam, LinkInfo } from "../types";
 import { handleContextItemEvent } from "./contextMenuItems";
+import { newAutoPanningState } from "../autoPanningState";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
 
@@ -190,8 +191,10 @@ export function handleCommonShortcut(
       const shapeComposite = ctx.getShapeComposite();
       const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
       if (rects.length === 0) return;
-      ctx.setViewport(geometry.getWrapperRect(rects), 80);
-      return;
+
+      // ctx.setViewport(geometry.getWrapperRect(rects), 80);
+      const viewRect = geometry.getWrapperRect(rects);
+      return { type: "stack-resume", getState: () => newAutoPanningState({ viewRect, duration: 100 }) };
     }
     case "Delete":
     case "Backspace": {
@@ -553,3 +556,19 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
       return;
   }
 };
+
+export function panViewToShape(
+  ctx: Pick<AppCanvasStateContext, "panView" | "getViewRect" | "getScale" | "getShapeComposite">,
+  shapeId: string,
+) {
+  const shapeComposite = ctx.getShapeComposite();
+  const shape = shapeComposite.mergedShapeMap[shapeId];
+  if (!shape) return;
+
+  const viewRect = ctx.getViewRect();
+  ctx.panView({
+    start: getRectCenter(viewRect),
+    current: shape.p,
+    scale: ctx.getScale(),
+  });
+}

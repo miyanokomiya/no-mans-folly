@@ -8,7 +8,7 @@
     - Place them into `src/composables`.
 - `state` generally refers to the state pattern.
 - All state transition and handling should be shynchronous.
-    - TODO: To handle something asynchronously, create dedicated state blocking canvas events.
+    - Use `defineAsyncState` to make a state handling something asynchronously.
 - `react` related packages are available only in `src/components`, `src/hooks` and `src/contexts`.
 
 ## External icons
