@@ -34,4 +34,7 @@ export const COMMAND_EXAM_SRC = {
 
   SELECT_PARENT: { command: "p", title: "Select parent" },
   SELECT_CHILD: { command: "c", title: "Select child" },
+
+  TREE_NEW_CHILD: { command: "Tab", title: "New child" },
+  TREE_NEW_SIBLING: { command: "Shift + Enter", title: "New sibling" },
 } satisfies { [key: string]: CommandExam };

@@ -1,4 +1,4 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -26,6 +26,7 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { mergeMap } from "../../../../utils/commons";
 import { newSingleSelectedState } from "../singleSelectedState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 export function newTreeNodeSelectedState(): AppCanvasState {
   let treeNodeShape: TreeNodeShape;
@@ -33,11 +34,33 @@ export function newTreeNodeSelectedState(): AppCanvasState {
   let boundingBox: BoundingBox;
   let boundingHitResult: HitResult | undefined;
 
+  function addNewNode(ctx: AppCanvasStateContext, treeNode: TreeNodeShape) {
+    if (!treeNodeShape.parentId) return;
+
+    const shapeComposite = ctx.getShapeComposite();
+    const nextComposite = getNextShapeComposite(shapeComposite, {
+      add: [treeNode],
+    });
+    const patch = getNextTreeLayout(nextComposite, treeNodeShape.parentId);
+    treeNode = { ...treeNode, ...patch[treeNode.id] };
+    delete patch[treeNode.id];
+
+    const treeNodeShapeDoc = ctx.getDocumentMap()[treeNodeShape.id];
+    ctx.addShapes(
+      [treeNode],
+      canHaveText(ctx.getShapeStruct, treeNode)
+        ? { [treeNode.id]: getInitialOutput(getDocAttributes(treeNodeShapeDoc)) }
+        : undefined,
+      patch,
+    );
+    ctx.selectShape(treeNode.id);
+  }
+
   return {
     getLabel: () => "TreeNodeSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
-      ctx.setCommandExams([]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.TREE_NEW_CHILD, COMMAND_EXAM_SRC.TREE_NEW_SIBLING]);
 
       const shapeComposite = ctx.getShapeComposite();
       treeNodeShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as TreeNodeShape;
@@ -89,49 +112,23 @@ export function newTreeNodeSelectedState(): AppCanvasState {
                     ...treeNodeShape,
                     id: ctx.generateUuid(),
                     findex: generateFindexPreviousAt(shapeComposite, treeNodeShape.id),
-                    parentId: treeRootId,
-                    treeParentId: treeNodeShape.treeParentId,
-                    direction: treeNodeShape.direction,
-                    dropdown: treeNodeShape.dropdown,
                   });
                 } else if (treeHitResult.type === 1) {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
                     ...treeNodeShape,
                     id: ctx.generateUuid(),
                     findex: generateFindexNextAt(shapeComposite, treeNodeShape.id),
-                    parentId: treeRootId,
-                    treeParentId: treeNodeShape.treeParentId,
-                    direction: treeNodeShape.direction,
-                    dropdown: treeNodeShape.dropdown,
                   });
                 } else {
                   treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
                     ...treeNodeShape,
                     id: ctx.generateUuid(),
                     findex: ctx.createLastIndex(),
-                    parentId: treeRootId,
                     treeParentId: treeNodeShape.id,
-                    direction: treeNodeShape.direction,
-                    dropdown: treeNodeShape.dropdown,
                   });
                 }
 
-                const nextComposite = getNextShapeComposite(shapeComposite, {
-                  add: [treeNode],
-                });
-                const patch = getNextTreeLayout(nextComposite, treeRootId);
-                treeNode = { ...treeNode, ...patch[treeNode.id] };
-                delete patch[treeNode.id];
-
-                const treeNodeShapeDoc = ctx.getDocumentMap()[treeNodeShape.id];
-                ctx.addShapes(
-                  [treeNode],
-                  canHaveText(ctx.getShapeStruct, treeNode)
-                    ? { [treeNode.id]: getInitialOutput(getDocAttributes(treeNodeShapeDoc)) }
-                    : undefined,
-                  patch,
-                );
-                ctx.selectShape(treeNode.id);
+                addNewNode(ctx, treeNode);
                 return;
               }
 
@@ -190,6 +187,33 @@ export function newTreeNodeSelectedState(): AppCanvasState {
         }
         case "keydown":
           switch (event.data.key) {
+            case "Tab": {
+              event.data.prevent?.();
+              const shapeComposite = ctx.getShapeComposite();
+              const treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                ...treeNodeShape,
+                id: ctx.generateUuid(),
+                findex: ctx.createLastIndex(),
+                treeParentId: treeNodeShape.id,
+              });
+              addNewNode(ctx, treeNode);
+              return;
+            }
+            case "Enter": {
+              event.data.prevent?.();
+              if (event.data.shift) {
+                const shapeComposite = ctx.getShapeComposite();
+                const treeNode = createShape<TreeNodeShape>(shapeComposite.getShapeStruct, "tree_node", {
+                  ...treeNodeShape,
+                  id: ctx.generateUuid(),
+                  findex: generateFindexNextAt(shapeComposite, treeNodeShape.id),
+                });
+                addNewNode(ctx, treeNode);
+              } else {
+                return startTextEditingIfPossible(ctx, treeNodeShape.id);
+              }
+              return;
+            }
             case "Delete":
             case "Backspace":
               ctx.deleteShapes(getTreeBranchIds(ctx.getShapeComposite(), [treeNodeShape.id]));
