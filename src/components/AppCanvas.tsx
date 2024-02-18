@@ -189,6 +189,12 @@ export const AppCanvas: React.FC = () => {
   );
 
   useEffect(() => {
+    if (!textEditing) {
+      focus();
+    }
+  }, [textEditing, focus]);
+
+  useEffect(() => {
     // TODO: Make each method via "useCallback" for consistency.
     setSmctx({
       redraw: () => setCanvasState({}),
