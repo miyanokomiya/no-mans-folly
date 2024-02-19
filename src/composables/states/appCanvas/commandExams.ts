@@ -25,6 +25,8 @@ export const COMMAND_EXAM_SRC = {
 
   TOGGLE_GRID: { command: "g", title: "Grid on/off" },
   RESET_VIEWPORT: { command: "Home, !", title: "Reset viewport" },
+  PAN_TO_AREA: { command: "Home, !", title: "Pan to area" },
+
   NEW_TEXT: { command: "t", title: "New Text" },
   NEW_LINE: { command: "l", title: "New Line" },
   NEW_EMOJI: { command: `${getCtrlOrMetaStr()} + ":"`, title: "New Emoji" },

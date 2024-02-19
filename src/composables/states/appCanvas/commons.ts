@@ -192,7 +192,6 @@ export function handleCommonShortcut(
       const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
       if (rects.length === 0) return;
 
-      // ctx.setViewport(geometry.getWrapperRect(rects), 80);
       const viewRect = geometry.getWrapperRect(rects);
       return { type: "stack-resume", getState: () => newAutoPanningState({ viewRect, duration: 100 }) };
     }

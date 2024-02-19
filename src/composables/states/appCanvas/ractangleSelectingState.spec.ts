@@ -9,6 +9,7 @@ import { TreeNodeShape } from "../../../shapes/tree/treeNode";
 
 function getMockCtx() {
   return {
+    setCommandExams: vi.fn(),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
     clearAllSelected: vi.fn(),

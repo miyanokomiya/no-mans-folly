@@ -7,6 +7,8 @@ import { newSelectionHubState } from "./selectionHubState";
 import { isTransparentSelection } from "../../../shapes";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "./commons";
+import { newAutoPanningState } from "../autoPanningState";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option {
   keepSelection?: boolean;
@@ -26,6 +28,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
   return {
     getLabel: () => "RectangleSelecting",
     onStart: (ctx) => {
+      ctx.setCommandExams([COMMAND_EXAM_SRC.PAN_TO_AREA]);
       ctx.startDragging();
       if (!keepSelection) {
         ctx.clearAllSelected();
@@ -39,6 +42,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
+      ctx.setCommandExams();
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
@@ -107,6 +111,16 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         case "wheel":
           handleCommonWheel(ctx, event);
           return;
+        case "keydown": {
+          switch (event.data.key) {
+            case "!":
+            case "Home": {
+              return () => newAutoPanningState({ viewRect: rectangle, duration: 100 });
+            }
+            default:
+              return;
+          }
+        }
         default:
           return;
       }
