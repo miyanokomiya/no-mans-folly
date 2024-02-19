@@ -2,13 +2,14 @@ import { IRectangle, getOuterRectangle } from "okageo";
 import type { AppCanvasState } from "./core";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
-import { applyPath } from "../../../utils/renderer";
+import { applyPath, scaleGlobalAlpha } from "../../../utils/renderer";
 import { newSelectionHubState } from "./selectionHubState";
 import { isTransparentSelection } from "../../../shapes";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "./commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { applyFillStyle } from "../../../utils/fillStyle";
 
 interface Option {
   keepSelection?: boolean;
@@ -126,6 +127,8 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      if (!rectangle) return;
+
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const composite = ctx.getShapeComposite();
@@ -139,8 +142,11 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
       shapes.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
-      if (!rectangle) return;
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary });
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
+      scaleGlobalAlpha(renderCtx, 0.05, () => {
+        renderCtx.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+      });
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
       renderCtx.strokeRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
     },
   };
