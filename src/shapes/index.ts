@@ -9,6 +9,7 @@ import {
 } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
+import { struct as trapezoidStruct } from "./polygons/trapezoid";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 import { struct as twoSidedArrowStruct } from "./twoSidedArrow";
 import { struct as textStruct } from "./text";
@@ -38,6 +39,7 @@ const SHAPE_STRUCTS: {
 } = {
   rectangle: rectangleStruct,
   rhombus: rhombusStruct,
+  trapezoid: trapezoidStruct,
   one_sided_arrow: oneSidedArrowStruct,
   two_sided_arrow: twoSidedArrowStruct,
   text: textStruct,
