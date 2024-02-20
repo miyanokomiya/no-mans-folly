@@ -64,6 +64,10 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
           ctx.patchShapes(ctx.getTmpShapeMap());
           return newSelectionHubState;
         }
+        case "shape-updated": {
+          if (event.data.keys.has(targetShape.id)) return newSelectionHubState;
+          return;
+        }
         default:
           return;
       }
