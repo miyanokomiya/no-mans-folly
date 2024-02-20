@@ -49,12 +49,18 @@ export const struct: ShapeStruct<EllipseShape> = {
     };
   },
   render(ctx, shape) {
-    applyFillStyle(ctx, shape.fill);
-    applyStrokeStyle(ctx, shape.stroke);
+    if (shape.fill.disabled && shape.stroke.disabled) return;
+
     ctx.beginPath();
     ctx.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
-    ctx.fill();
-    ctx.stroke();
+    if (!shape.fill.disabled) {
+      applyFillStyle(ctx, shape.fill);
+      ctx.fill();
+    }
+    if (!shape.stroke.disabled) {
+      applyStrokeStyle(ctx, shape.stroke);
+      ctx.stroke();
+    }
   },
   createSVGElementInfo(shape) {
     const rect = {
