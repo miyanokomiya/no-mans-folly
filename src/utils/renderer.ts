@@ -217,9 +217,15 @@ export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, r
 
 export function applyLocalSpace(ctx: CanvasRenderingContext2D, rect: IRectangle, rotation: number, fn: () => void) {
   ctx.save();
-  ctx.translate(rect.x + rect.width / 2, rect.y + rect.height / 2);
-  ctx.rotate(rotation);
-  ctx.translate(-rect.width / 2, -rect.height / 2);
+
+  if (rotation === 0) {
+    ctx.translate(rect.x, rect.y);
+  } else {
+    ctx.translate(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    ctx.rotate(rotation);
+    ctx.translate(-rect.width / 2, -rect.height / 2);
+  }
+
   fn();
   ctx.restore();
 }

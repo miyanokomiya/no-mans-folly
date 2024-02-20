@@ -12,6 +12,7 @@ import { newBoardEntitySelectedState } from "./board/boardEntitySelectedState";
 import { newAlignBoxSelectedState } from "./align/alignBoxSelectedState";
 import { newArrowSelectedState } from "./arrow/arrowSelectedState";
 import { newArrowTwoSelectedState } from "./arrow/arrowTwoSelectedState";
+import { newTrapezoidSelectedState } from "./trapezoid/trapezoidSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -39,6 +40,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newArrowSelectedState;
           case "two_sided_arrow":
             return newArrowTwoSelectedState;
+          case "trapezoid":
+            return newTrapezoidSelectedState;
           case "tree_root":
             return newTreeRootSelectedState;
           case "tree_node":

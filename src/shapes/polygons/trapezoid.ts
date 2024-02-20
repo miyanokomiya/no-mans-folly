@@ -5,7 +5,7 @@ import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 
-type TrapezoidShape = SimplePolygonShape & {
+export type TrapezoidShape = SimplePolygonShape & {
   c0: IVec2; // Relative rate from "p"
   c1: IVec2; // Same as c0
 };
