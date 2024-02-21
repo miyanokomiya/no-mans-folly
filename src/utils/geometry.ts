@@ -107,6 +107,21 @@ export function expandRect(rect: IRectangle, padding: number): IRectangle {
   };
 }
 
+export function getPathTotalLength(points: IVec2[], closed = false): number {
+  if (points.length < 2) return 0;
+
+  let ret = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    ret += getDistance(points[i], points[i + 1]);
+  }
+
+  if (closed) {
+    ret += getDistance(points[points.length - 1], points[0]);
+  }
+
+  return ret;
+}
+
 export function isPointOnRectangle(rect: IRectangle, p: IVec2): boolean {
   return rect.x <= p.x && p.x <= rect.x + rect.width && rect.y <= p.y && p.y <= rect.y + rect.height;
 }
@@ -171,8 +186,17 @@ export function getClosestOutlineOnEllipse(
 }
 
 export function getClosestOutlineOnPolygon(path: IVec2[], p: IVec2, threshold: number): IVec2 | undefined {
+  return getClosestOutlineOnPolygonWithLength(path, p, threshold)?.[0];
+}
+
+export function getClosestOutlineOnPolygonWithLength(
+  path: IVec2[],
+  p: IVec2,
+  threshold: number,
+): [IVec2, number] | undefined {
   let candidate: IVec2 | undefined = undefined;
   let d = Infinity;
+  let index = -1;
 
   for (let i = 0; i < path.length; i++) {
     const seg = [path[i], path[i + 1 < path.length ? i + 1 : 0]];
@@ -181,11 +205,17 @@ export function getClosestOutlineOnPolygon(path: IVec2[], p: IVec2, threshold: n
     if (v < d && isOnSeg(pedal, seg)) {
       candidate = pedal;
       d = v;
+      index = i;
     }
   }
-  if (d === undefined || threshold < Math.sqrt(d)) return;
+  if (!candidate || d === undefined || threshold < Math.sqrt(d)) return;
 
-  return candidate;
+  let len = getDistance(path[index], candidate);
+  for (let i = 0; i < index; i++) {
+    len += getDistance(path[i], path[i + 1 < path.length ? i + 1 : 0]);
+  }
+
+  return [candidate, len];
 }
 
 export function getIntersectedOutlinesOnPolygon(polygon: IVec2[], from: IVec2, to: IVec2): IVec2[] | undefined {
@@ -528,12 +558,27 @@ export function getRelativePointOnCurvePath(
   rate: number,
 ): IVec2 {
   if (points.length <= 1) return points[0];
-  if (points.length !== controls.length + 1) return getRelativePointOnPath(points, rate);
+  if (controls.length === 0) return getRelativePointOnPath(points, rate);
 
-  const pathStructs: {
-    lerpFn: (t: number) => IVec2;
-    length: number;
-  }[] = [];
+  const pathStructs = getCurvePathStructs(points, controls);
+  return getRelativePointOnCurvePathFromStruct(pathStructs, rate);
+}
+
+export function getRelativePointOnCurvePathFromStruct(pathStructs: CurvePathStruct[], rate: number): IVec2 {
+  const totalLength = getPathTotalLengthFromStructs(pathStructs);
+  return getPathPointAtLengthFromStructs(pathStructs, totalLength * rate);
+}
+
+type CurvePathStruct = {
+  lerpFn: (t: number) => IVec2;
+  length: number;
+  curve?: boolean;
+};
+
+export function getCurvePathStructs(points: IVec2[], controls: (CurveControl | undefined)[] = []): CurvePathStruct[] {
+  if (points.length <= 1) return [];
+
+  const pathStructs: CurvePathStruct[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     const seg: ISegment = [points[i], points[i + 1]];
     const c = controls[i];
@@ -543,11 +588,10 @@ export function getRelativePointOnCurvePath(
       pathStructs.push({ lerpFn, length });
     } else {
       const length = getPolylineLength(getApproPoints(lerpFn, BEZIER_APPROX_SIZE));
-      pathStructs.push({ lerpFn, length });
+      pathStructs.push({ lerpFn, length, curve: true });
     }
   }
-  const totalLength = getPathTotalLengthFromStructs(pathStructs);
-  return getPathPointAtLengthFromStructs(pathStructs, totalLength * rate);
+  return pathStructs;
 }
 
 /**
@@ -785,6 +829,28 @@ export function getCurveLerpFn(segment: ISegment, control?: CurveControl | undef
   } else {
     return getBezier3LerpFn([segment[0], control.c1, control.c2, segment[1]]);
   }
+}
+
+export function getApproxCurvePoints(points: IVec2[], controls: (CurveControl | undefined)[] = []): IVec2[] {
+  return getApproxCurvePointsFromStruct(getCurvePathStructs(points, controls));
+}
+
+export function getApproxCurvePointsFromStruct(curvePathStructs: CurvePathStruct[]): IVec2[] {
+  if (curvePathStructs.length === 0) return [];
+
+  const ret: IVec2[] = [curvePathStructs[0].lerpFn(0)];
+
+  curvePathStructs.forEach((s) => {
+    if (s.curve) {
+      for (let k = 1; k <= BEZIER_APPROX_SIZE; k++) {
+        ret.push(s.lerpFn(k / BEZIER_APPROX_SIZE));
+      }
+    } else {
+      ret.push(s.lerpFn(1));
+    }
+  });
+
+  return ret;
 }
 
 export function getArcBounds({ c, radius, to, from, counterclockwise }: ArcCurveParams): IRectangle {

@@ -47,6 +47,9 @@ import {
   getArcBounds,
   isPointCloseToArc,
   lerpRect,
+  getApproxCurvePoints,
+  getClosestOutlineOnPolygonWithLength,
+  getPathTotalLength,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -119,6 +122,29 @@ describe("expandRect", () => {
       width: 20,
       height: 30,
     });
+  });
+});
+
+describe("getPathTotalLength", () => {
+  test("should return total length of the path", () => {
+    expect(
+      getPathTotalLength([
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ]),
+    ).toBe(20);
+    expect(
+      getPathTotalLength(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+          { x: 10, y: 10 },
+          { x: 0, y: 10 },
+        ],
+        true,
+      ),
+    ).toBe(40);
   });
 });
 
@@ -205,6 +231,19 @@ describe("getClosestOutlineOnPolygon", () => {
     expect(getClosestOutlineOnPolygon(path, { x: -1, y: -1 }, 2)).toEqual(undefined);
     expect(getClosestOutlineOnPolygon(path, { x: 1, y: -1 }, 2)).toEqual({ x: 1, y: 0 });
     expect(getClosestOutlineOnPolygon(path, { x: 9, y: 10 }, 2)).toEqual({ x: 9.5, y: 9.5 });
+  });
+});
+
+describe("getClosestOutlineOnPolygonWithLength", () => {
+  test("should return the closest point on the polygon outline", () => {
+    const path = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    expect(getClosestOutlineOnPolygonWithLength(path, { x: -1, y: -1 }, 2)).toEqual(undefined);
+    expect(getClosestOutlineOnPolygonWithLength(path, { x: 1, y: -1 }, 2)).toEqual([{ x: 1, y: 0 }, 1]);
+    expect(getClosestOutlineOnPolygonWithLength(path, { x: 12, y: 7 }, 2)).toEqual([{ x: 10, y: 7 }, 17]);
   });
 });
 
@@ -1065,6 +1104,59 @@ describe("getCurveLerpFn", () => {
     expect(ret0(0.5).y).toBeCloseTo(3.75, 3);
     expect(ret0(1).x).toBeCloseTo(10, 3);
     expect(ret0(1).y).toBeCloseTo(0, 3);
+  });
+});
+
+describe("getApproxCurvePoints", () => {
+  test("should return straight segments as they are", () => {
+    const ret0 = getApproxCurvePoints([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ]);
+    expect(ret0).toEqual([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ]);
+  });
+
+  test("should approximate arc curve", () => {
+    const ret0 = getApproxCurvePoints(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [{ d: { x: 5, y: 5 } }],
+    );
+    expect(ret0.length).toBe(11);
+    expect(ret0[0].x).toBeCloseTo(0, 3);
+    expect(ret0[0].y).toBeCloseTo(0, 3);
+    expect(ret0[3].x).toBeCloseTo(2.061, 3);
+    expect(ret0[3].y).toBeCloseTo(4.045, 3);
+    expect(ret0[5].x).toBeCloseTo(5, 3);
+    expect(ret0[5].y).toBeCloseTo(5, 3);
+    expect(ret0[10].x).toBeCloseTo(10, 3);
+    expect(ret0[10].y).toBeCloseTo(0, 3);
+  });
+
+  test("should getApproxCurvePoints bezier curve", () => {
+    const ret0 = getApproxCurvePoints(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [{ c1: { x: 2, y: 5 }, c2: { x: 8, y: 5 } }],
+    );
+    expect(ret0.length).toBe(11);
+    expect(ret0[0].x).toBeCloseTo(0, 3);
+    expect(ret0[0].y).toBeCloseTo(0, 3);
+    expect(ret0[3].x).toBeCloseTo(2.664, 3);
+    expect(ret0[3].y).toBeCloseTo(3.15, 3);
+    expect(ret0[5].x).toBeCloseTo(5, 3);
+    expect(ret0[5].y).toBeCloseTo(3.75, 3);
+    expect(ret0[10].x).toBeCloseTo(10, 3);
+    expect(ret0[10].y).toBeCloseTo(0, 3);
   });
 });
 
