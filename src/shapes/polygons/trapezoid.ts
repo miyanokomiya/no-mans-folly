@@ -28,10 +28,12 @@ export const struct: ShapeStruct<TrapezoidShape> = {
   },
   getTextRangeRect(shape) {
     const path = getPath(shape);
+    const innerLeft = Math.max(path[0].x, path[3].x);
+    const innerRight = Math.min(path[1].x, path[2].x);
     const rect = {
-      x: path[0].x,
+      x: innerLeft,
       y: shape.p.y,
-      width: path[1].x - path[0].x,
+      width: innerRight - innerLeft,
       height: shape.height,
     };
     return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
