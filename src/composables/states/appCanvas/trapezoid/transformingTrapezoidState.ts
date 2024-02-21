@@ -6,6 +6,7 @@ import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { renderMovingTrapezoidAnchor } from "../../../shapeHandlers/trapezoidHandler";
 import { renderValueLabel } from "../../../../utils/renderer";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   targetId: string;
@@ -32,10 +33,13 @@ export function newTransformingTrapezoidState(option: Option): AppCanvasState {
         x: targetShape.p.x + targetShape.width * targetShape[option.controlKey].x,
         y: targetShape.p.y,
       });
+
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
       ctx.startDragging();
     },
     onEnd: (ctx) => {
       ctx.setTmpShapeMap({});
+      ctx.setCommandExams();
       ctx.stopDragging();
     },
     handleEvent: (ctx, event) => {
