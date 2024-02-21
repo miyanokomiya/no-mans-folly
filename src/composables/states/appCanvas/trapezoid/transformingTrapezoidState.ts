@@ -1,10 +1,11 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { getRotateFn } from "../../../../utils/geometry";
-import { IVec2, add, sub } from "okageo";
+import { getCrossLineAndLine, getRotateFn, snapAngle } from "../../../../utils/geometry";
+import { IVec2, add, getRadian, rotate, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { renderMovingTrapezoidAnchor } from "../../../shapeHandlers/trapezoidHandler";
+import { renderValueLabel } from "../../../../utils/renderer";
 
 interface Option {
   targetId: string;
@@ -15,6 +16,7 @@ export function newTransformingTrapezoidState(option: Option): AppCanvasState {
   let targetShape: TrapezoidShape;
   let srcControlP: IVec2;
   let rotateFn: ReturnType<typeof getRotateFn>;
+  let snappedAngle: number | undefined;
 
   return {
     getLabel: () => "TransformingTrapezoid",
@@ -43,8 +45,35 @@ export function newTransformingTrapezoidState(option: Option): AppCanvasState {
 
           const diff = sub(event.data.current, event.data.start);
 
+          const { width, height } = targetShape;
           const nextControlP = rotateFn(add(diff, srcControlP), true);
-          const nextControl = { x: (nextControlP.x - targetShape.p.x) / targetShape.width, y: 0 };
+          let nextControl = { x: (nextControlP.x - targetShape.p.x) / width, y: 0 };
+
+          if (event.data.ctrl) {
+            snappedAngle = undefined;
+          } else {
+            const rad =
+              option.controlKey === "c0"
+                ? -getRadian(nextControlP, { x: targetShape.p.x, y: targetShape.p.y + height })
+                : getRadian(nextControlP, {
+                    x: targetShape.p.x + width,
+                    y: targetShape.p.y + height,
+                  }) + Math.PI;
+            snappedAngle = snapAngle((rad * 180) / Math.PI, 1);
+            const snappedRad = (snappedAngle / 180) * Math.PI;
+            const snappedControlRelativeP = getCrossLineAndLine(
+              [
+                { x: 0, y: 0 },
+                { x: width, y: 0 },
+              ],
+              option.controlKey === "c0"
+                ? [{ x: 0, y: height }, rotate({ x: 1, y: height }, -snappedRad, { x: 0, y: height })]
+                : [{ x: width, y: height }, rotate({ x: -1, y: height }, snappedRad, { x: width, y: height })],
+            );
+            if (snappedControlRelativeP) {
+              nextControl = { x: snappedControlRelativeP.x / width, y: snappedControlRelativeP.y / height };
+            }
+          }
 
           const shapeComposite = ctx.getShapeComposite();
           const patch = { [option.controlKey]: nextControl } as Partial<TrapezoidShape>;
@@ -69,6 +98,20 @@ export function newTransformingTrapezoidState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape: TrapezoidShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       renderMovingTrapezoidAnchor(renderCtx, ctx.getStyleScheme(), ctx.getScale(), tmpShape, option.controlKey);
+
+      if (snappedAngle !== undefined) {
+        renderValueLabel(
+          renderCtx,
+          snappedAngle,
+          rotateFn(
+            option.controlKey === "c0"
+              ? { x: targetShape.p.x, y: targetShape.p.y + targetShape.height }
+              : { x: targetShape.p.x + targetShape.width, y: targetShape.p.y + targetShape.height },
+          ),
+          0,
+          ctx.getScale(),
+        );
+      }
     },
   };
 }
