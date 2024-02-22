@@ -13,6 +13,7 @@ import { newAlignBoxSelectedState } from "./align/alignBoxSelectedState";
 import { newArrowSelectedState } from "./arrow/arrowSelectedState";
 import { newArrowTwoSelectedState } from "./arrow/arrowTwoSelectedState";
 import { newTrapezoidSelectedState } from "./trapezoid/trapezoidSelectedState";
+import { newCylinderSelectedState } from "./cylinder/cylinderSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -42,6 +43,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newArrowTwoSelectedState;
           case "trapezoid":
             return newTrapezoidSelectedState;
+          case "cylinder":
+            return newCylinderSelectedState;
           case "tree_root":
             return newTreeRootSelectedState;
           case "tree_node":
