@@ -1,4 +1,5 @@
 import {
+  AffineMatrix,
   IVec2,
   applyAffine,
   getCenter,
@@ -9,6 +10,7 @@ import {
   getRectCenter,
   isOnPolygon,
   isSame,
+  multiAffines,
   pathSegmentRawsToString,
   rotate,
   sub,
@@ -225,4 +227,17 @@ function getNormalizedAttrsForVertical(shape: SimplePolygonShape): Partial<Simpl
     height: shape.width,
     direction: 1,
   };
+}
+
+export function getShapeTransform(shape: SimplePolygonShape): AffineMatrix {
+  const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  const center = getRectCenter(rect);
+  const sin = Math.sin(shape.rotation);
+  const cos = Math.cos(shape.rotation);
+
+  return multiAffines([
+    [1, 0, 0, 1, center.x, center.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, 1, rect.x - center.x, rect.y - center.y],
+  ]);
 }
