@@ -48,7 +48,6 @@ import {
   isPointCloseToArc,
   lerpRect,
   getApproxCurvePoints,
-  getClosestOutlineOnPolygonWithLength,
   getPathTotalLength,
 } from "./geometry";
 import { IRectangle } from "okageo";
@@ -231,23 +230,6 @@ describe("getClosestOutlineOnPolygon", () => {
     expect(getClosestOutlineOnPolygon(path, { x: -1, y: -1 }, 2)).toEqual(undefined);
     expect(getClosestOutlineOnPolygon(path, { x: 1, y: -1 }, 2)).toEqual({ x: 1, y: 0 });
     expect(getClosestOutlineOnPolygon(path, { x: 9, y: 10 }, 2)).toEqual({ x: 9.5, y: 9.5 });
-  });
-});
-
-describe("getClosestOutlineOnPolygonWithLength", () => {
-  test("should return the closest point on the polygon outline", () => {
-    const path = [
-      { x: 0, y: 0 },
-      { x: 10, y: 0 },
-      { x: 10, y: 10 },
-    ];
-    expect(getClosestOutlineOnPolygonWithLength(path, { x: -1, y: -1 }, 2)).toEqual(undefined);
-    expect(getClosestOutlineOnPolygonWithLength(path, { x: 1, y: -1 }, 2)).toEqual([{ x: 1, y: 0 }, path[0], 0.1]);
-    expect(getClosestOutlineOnPolygonWithLength(path, { x: 12, y: 7 }, 2)).toEqual([{ x: 10, y: 7 }, path[1], 0.7]);
-
-    expect(getClosestOutlineOnPolygonWithLength(path, { x: 1, y: -1 }, 2)?.[1], "should keep the same reference").toBe(
-      path[0],
-    );
   });
 });
 
