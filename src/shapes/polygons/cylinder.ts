@@ -31,9 +31,8 @@ export const struct: ShapeStruct<CylinderShape> = {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    const normalShape = { ...shape, p: { x: 0, y: 0 } };
-    const path = getPath(normalShape);
-    const curves = getCurves(normalShape);
+    const path = getPath(shape);
+    const curves = getCurves(shape);
 
     applyLocalSpace(ctx, rect, shape.rotation, () => {
       if (!shape.fill.disabled) {
@@ -43,6 +42,8 @@ export const struct: ShapeStruct<CylinderShape> = {
         ctx.fill();
       }
       if (!shape.stroke.disabled) {
+        applyStrokeStyle(ctx, shape.stroke);
+
         const upperC = curves[0]!;
         const upperY = (shape.c0.y * shape.height) / 2;
         ctx.beginPath();
@@ -58,22 +59,19 @@ export const struct: ShapeStruct<CylinderShape> = {
           ],
           true,
         );
-        applyStrokeStyle(ctx, shape.stroke);
         ctx.stroke();
 
         const lowerC = curves[2]!;
         ctx.beginPath();
         applyCurvePath(ctx, [path[1], path[2], path[3], path[0]], [undefined, lowerC]);
-        applyStrokeStyle(ctx, shape.stroke);
         ctx.stroke();
       }
     });
   },
   createSVGElementInfo(shape) {
     const transform = getShapeTransform(shape);
-    const normalShape = { ...shape, p: { x: 0, y: 0 } };
-    const path = getPath(normalShape);
-    const curves = getCurves?.(normalShape);
+    const path = getPath(shape);
+    const curves = getCurves?.(shape);
 
     const innerPath = [path[0], path[1], path[0]];
     const upperC = curves[0]!;
@@ -114,25 +112,25 @@ function getPath(shape: CylinderShape): IVec2[] {
   const ry = getRadiusY(shape);
 
   return [
-    { x: shape.p.x, y: shape.p.y + ry },
-    { x: shape.p.x + shape.width, y: shape.p.y + ry },
-    { x: shape.p.x + shape.width, y: shape.p.y + shape.height - ry },
-    { x: shape.p.x, y: shape.p.y + shape.height - ry },
+    { x: 0, y: ry },
+    { x: shape.width, y: ry },
+    { x: shape.width, y: shape.height - ry },
+    { x: 0, y: shape.height - ry },
   ];
 }
 
 function getCurves(shape: CylinderShape): (BezierCurveControl | undefined)[] {
   const ry = getRadiusY(shape);
   const v = ry / 0.75; // Magical number to approximate ellipse by cubic bezier.
-  const upperY = shape.p.y + ry - v;
-  const lowerY = shape.p.y + shape.height - ry + v;
+  const upperY = ry - v;
+  const lowerY = shape.height - ry + v;
 
   return [
-    { c1: { x: shape.p.x, y: upperY }, c2: { x: shape.p.x + shape.width, y: upperY } },
+    { c1: { x: 0, y: upperY }, c2: { x: shape.width, y: upperY } },
     undefined,
     {
-      c1: { x: shape.p.x + shape.width, y: lowerY },
-      c2: { x: shape.p.x, y: lowerY },
+      c1: { x: shape.width, y: lowerY },
+      c2: { x: 0, y: lowerY },
     },
     undefined,
   ];

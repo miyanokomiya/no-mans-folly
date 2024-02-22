@@ -43,9 +43,9 @@ export const struct: ShapeStruct<TrapezoidShape> = {
 
 function getPath(shape: TrapezoidShape): IVec2[] {
   return [
-    { x: shape.p.x + shape.width * shape.c0.x, y: shape.p.y + shape.height * shape.c0.y },
-    { x: shape.p.x + shape.width * shape.c1.x, y: shape.p.y + shape.height * shape.c1.y },
-    { x: shape.p.x + shape.width, y: shape.p.y + shape.height },
-    { x: shape.p.x, y: shape.p.y + shape.height },
+    { x: shape.width * shape.c0.x, y: shape.height * shape.c0.y },
+    { x: shape.width * shape.c1.x, y: shape.height * shape.c1.y },
+    { x: shape.width, y: shape.height },
+    { x: 0, y: shape.height },
   ];
 }

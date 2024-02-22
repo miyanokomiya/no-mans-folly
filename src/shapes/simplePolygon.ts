@@ -34,8 +34,9 @@ import {
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { BezierCurveControl, CommonStyle, Direction4, Shape } from "../models";
-import { applyCurvePath, createSVGCurvePath } from "../utils/renderer";
+import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/renderer";
 import { pickMinItem } from "../utils/commons";
+import { renderTransform } from "../utils/svgElements";
 
 export type SimplePolygonShape = Shape &
   CommonStyle &
@@ -46,6 +47,9 @@ export type SimplePolygonShape = Shape &
     direction?: Direction4;
   };
 
+/**
+ * "getPath" and "getCurves" shoud points on the local space of a shape.
+ */
 export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   getPath: (shape: T) => IVec2[],
   getCurves?: (shape: T) => (BezierCurveControl | undefined)[],
@@ -66,31 +70,32 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     render(ctx, shape) {
       if (shape.fill.disabled && shape.stroke.disabled) return;
 
-      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
-      const rotateFn = getRotateFn(shape.rotation, center);
-      const path = getPath(shape).map((p) => rotateFn(p));
-      const curves = getCurves?.(shape).map((c) => (c ? { c1: rotateFn(c.c1), c2: rotateFn(c.c2) } : undefined));
+      const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+      const path = getPath(shape);
+      const curves = getCurves?.(shape);
 
-      ctx.beginPath();
-      applyCurvePath(ctx, path, curves, true);
-      if (!shape.fill.disabled) {
-        applyFillStyle(ctx, shape.fill);
-        ctx.fill();
-      }
-      if (!shape.stroke.disabled) {
-        applyStrokeStyle(ctx, shape.stroke);
-        ctx.stroke();
-      }
+      applyLocalSpace(ctx, rect, shape.rotation, () => {
+        ctx.beginPath();
+        applyCurvePath(ctx, path, curves, true);
+        if (!shape.fill.disabled) {
+          applyFillStyle(ctx, shape.fill);
+          ctx.fill();
+        }
+        if (!shape.stroke.disabled) {
+          applyStrokeStyle(ctx, shape.stroke);
+          ctx.stroke();
+        }
+      });
     },
     createSVGElementInfo(shape) {
-      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
-      const rotateFn = getRotateFn(shape.rotation, center);
-      const path = getPath(shape).map((p) => rotateFn(p));
-      const curves = getCurves?.(shape).map((c) => (c ? { c1: rotateFn(c.c1), c2: rotateFn(c.c2) } : undefined));
+      const transform = getShapeTransform(shape);
+      const path = getPath(shape);
+      const curves = getCurves?.(shape);
 
       return {
         tag: "path",
         attributes: {
+          transform: renderTransform(transform),
           d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)),
           ...renderFillSVGAttributes(shape.fill),
           ...renderStrokeSVGAttributes(shape.stroke),
@@ -111,16 +116,16 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       return getRectPoints(rect).map((p) => rotateFn(p));
     },
     isPointOn(shape, p) {
-      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
-      const rotatedP = rotate(p, -shape.rotation, center);
+      const detransform = getShapeDetransform(shape);
+      const localP = applyAffine(detransform, p);
       const path = getPath(shape);
       const curves = getCurves?.(shape);
 
-      if (!curves) return isOnPolygon(rotatedP, path);
-      if (!isPointOnRectangle(getCurveSplineBounds(path, curves), rotatedP)) return false;
+      if (!curves) return isOnPolygon(localP, path);
+      if (!isPointOnRectangle(getCurveSplineBounds(path, curves), localP)) return false;
 
       const points = getApproxCurvePoints(path, curves);
-      return isOnPolygon(rotatedP, points);
+      return isOnPolygon(localP, points);
     },
     resize(shape, resizingAffine) {
       const localRectPolygon = this.getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
@@ -141,16 +146,16 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     getClosestOutline(shape, p, threshold) {
       const path = getPath(shape);
       const curves = getCurves?.(shape);
-      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
-      const rotateFn = getRotateFn(shape.rotation, center);
-      const rotatedP = rotateFn(p, true);
+      const transform = getShapeTransform(shape);
+      const detransform = getShapeDetransform(shape);
+      const localP = applyAffine(detransform, p);
 
       // Ignore conventional markers when the shape has a curve.
       // TODO: Some markers for straight segments may be available.
       // TODO: Prepare some way to declare custom markers from inheritant structs.
       if (!curves) {
-        const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, rotatedP) <= threshold);
-        if (rotatedClosest) return rotateFn(rotatedClosest);
+        const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, localP) <= threshold);
+        if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 
       {
@@ -159,36 +164,38 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
           const seg: ISegment = [p, path[i + 1 < path.length ? i + 1 : 0]];
           const curve = curves?.[i];
           if (curve) {
-            points.push(getClosestPointOnBezier3([seg[0], curve.c1, curve.c2, seg[1]], rotatedP, 0.01));
+            points.push(getClosestPointOnBezier3([seg[0], curve.c1, curve.c2, seg[1]], localP, 0.01));
           } else {
-            points.push(getClosestPointOnSegment(seg, rotatedP));
+            points.push(getClosestPointOnSegment(seg, localP));
           }
         });
-        const closest = pickMinItem(points, (a) => getD2(sub(a, rotatedP)));
-        return closest && getDistance(closest, rotatedP) <= threshold ? rotateFn(closest) : undefined;
+        const closest = pickMinItem(points, (a) => getD2(sub(a, localP)));
+        return closest && getDistance(closest, localP) <= threshold ? applyAffine(transform, closest) : undefined;
       }
     },
     getIntersectedOutlines(shape, from, to) {
-      const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
-      const rotateFn = getRotateFn(shape.rotation, center);
       const path = getPath(shape);
       const curves = getCurves?.(shape);
-      const rotatedFrom = rotateFn(from, true);
-      const rotatedTo = rotateFn(to, true);
+      const transform = getShapeTransform(shape);
+      const detransform = getShapeDetransform(shape);
+      const localFrom = applyAffine(detransform, from);
+      const localTo = applyAffine(detransform, to);
 
       const intersections: IVec2[] = [];
       path.forEach((p, i) => {
         const seg: ISegment = [p, path[i + 1 < path.length ? i + 1 : 0]];
         const curve = curves?.[i];
         if (curve) {
-          const inter = getCrossSegAndBezier3([rotatedFrom, rotatedTo], [seg[0], curve.c1, curve.c2, seg[1]]);
+          const inter = getCrossSegAndBezier3([localFrom, localTo], [seg[0], curve.c1, curve.c2, seg[1]]);
           if (inter.length > 0) intersections.push(...inter);
         } else {
-          const inter = getCrossSegAndSeg([rotatedFrom, rotatedTo], seg);
+          const inter = getCrossSegAndSeg([localFrom, localTo], seg);
           if (inter) intersections.push(inter);
         }
       });
-      return intersections.length > 0 ? sortPointFrom(rotatedFrom, intersections).map((p) => rotateFn(p)) : undefined;
+      return intersections.length > 0
+        ? sortPointFrom(localFrom, intersections).map((p) => applyAffine(transform, p))
+        : undefined;
     },
     getCommonStyle,
     updateCommonStyle,
@@ -239,5 +246,18 @@ export function getShapeTransform(shape: SimplePolygonShape): AffineMatrix {
     [1, 0, 0, 1, center.x, center.y],
     [cos, sin, -sin, cos, 0, 0],
     [1, 0, 0, 1, rect.x - center.x, rect.y - center.y],
+  ]);
+}
+
+export function getShapeDetransform(shape: SimplePolygonShape): AffineMatrix {
+  const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  const center = getRectCenter(rect);
+  const sin = Math.sin(shape.rotation);
+  const cos = Math.cos(shape.rotation);
+
+  return multiAffines([
+    [1, 0, 0, 1, -(rect.x - center.x), -(rect.y - center.y)],
+    [cos, -sin, sin, cos, 0, 0],
+    [1, 0, 0, 1, -center.x, -center.y],
   ]);
 }

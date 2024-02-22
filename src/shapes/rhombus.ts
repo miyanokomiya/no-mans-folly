@@ -37,9 +37,9 @@ function getPath(shape: RhombusShape): IVec2[] {
   const halfW = shape.width / 2;
   const halfH = shape.height / 2;
   return [
-    { x: shape.p.x + halfW, y: shape.p.y },
-    { x: shape.p.x + shape.width, y: shape.p.y + halfH },
-    { x: shape.p.x + halfW, y: shape.p.y + shape.height },
-    { x: shape.p.x, y: shape.p.y + halfH },
+    { x: halfW, y: 0 },
+    { x: shape.width, y: halfH },
+    { x: halfW, y: shape.height },
+    { x: 0, y: halfH },
   ];
 }
