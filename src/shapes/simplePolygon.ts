@@ -13,17 +13,23 @@ import {
 import { ShapeStruct, TextContainer, getCommonStyle, updateCommonStyle, textContainerModule } from "./core";
 import {
   expandRect,
-  getClosestOutlineOnPolygon,
+  getApproxCurvePoints,
+  getApproxCurvePointsFromStruct,
+  getClosestOutlineOnPolygonWithLength,
+  getCurvePathStructs,
+  getCurveSplineBounds,
   getIntersectedOutlinesOnPolygon,
+  getIntersectedOutlinesOnPolygonWIthSrc,
   getMarkersOnPolygon,
   getRectPoints,
   getRotateFn,
   getRotatedWrapperRect,
+  isPointOnRectangle,
 } from "../utils/geometry";
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
-import { CommonStyle, Direction4, Shape } from "../models";
-import { createSVGCurvePath } from "../utils/renderer";
+import { BezierCurveControl, CommonStyle, Direction4, Shape } from "../models";
+import { applyCurvePath, createSVGCurvePath } from "../utils/renderer";
 
 export type SimplePolygonShape = Shape &
   CommonStyle &
@@ -36,6 +42,7 @@ export type SimplePolygonShape = Shape &
 
 export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   getPath: (shape: T) => IVec2[],
+  getCurves?: (shape: T) => (BezierCurveControl | undefined)[],
 ): Pick<
   ShapeStruct<T>,
   | "render"
@@ -56,12 +63,10 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotateFn = getRotateFn(shape.rotation, center);
       const path = getPath(shape).map((p) => rotateFn(p));
+      const curves = getCurves?.(shape).map((c) => (c ? { c1: rotateFn(c.c1), c2: rotateFn(c.c2) } : undefined));
 
       ctx.beginPath();
-      path.forEach((p) => {
-        ctx.lineTo(p.x, p.y);
-      });
-      ctx.closePath();
+      applyCurvePath(ctx, path, curves, true);
       if (!shape.fill.disabled) {
         applyFillStyle(ctx, shape.fill);
         ctx.fill();
@@ -75,11 +80,12 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotateFn = getRotateFn(shape.rotation, center);
       const path = getPath(shape).map((p) => rotateFn(p));
+      const curves = getCurves?.(shape).map((c) => (c ? { c1: rotateFn(c.c1), c2: rotateFn(c.c2) } : undefined));
 
       return {
         tag: "path",
         attributes: {
-          d: pathSegmentRawsToString(createSVGCurvePath(path, [], true)),
+          d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)),
           ...renderFillSVGAttributes(shape.fill),
           ...renderStrokeSVGAttributes(shape.stroke),
         },
@@ -101,7 +107,14 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     isPointOn(shape, p) {
       const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotatedP = rotate(p, -shape.rotation, center);
-      return isOnPolygon(rotatedP, getPath(shape));
+      const path = getPath(shape);
+      const curves = getCurves?.(shape);
+
+      if (!curves) return isOnPolygon(rotatedP, path);
+      if (!isPointOnRectangle(getCurveSplineBounds(path, curves), rotatedP)) return false;
+
+      const points = getApproxCurvePoints(path, curves);
+      return isOnPolygon(rotatedP, points);
     },
     resize(shape, resizingAffine) {
       const localRectPolygon = this.getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
@@ -121,25 +134,69 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     },
     getClosestOutline(shape, p, threshold) {
       const path = getPath(shape);
+      const curves = getCurves?.(shape);
       const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotateFn = getRotateFn(shape.rotation, center);
       const rotatedP = rotateFn(p, true);
 
-      {
+      // Ignore conventional markers when the shape has a curve.
+      // TODO: Some markers for straight segments may be available.
+      // TODO: Prepare some way to declare custom markers for inheritant shapes.
+      if (!curves) {
         const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, rotatedP) <= threshold);
         if (rotatedClosest) return rotateFn(rotatedClosest);
       }
 
       {
-        const rotatedClosest = getClosestOutlineOnPolygon(path, rotatedP, threshold);
-        if (rotatedClosest) return rotateFn(rotatedClosest);
+        const pathStructs = getCurvePathStructs([...path, path[0]], curves);
+        const pointInfos = getApproxCurvePointsFromStruct(pathStructs);
+        const pointInfoMap = new Map(pointInfos.map((info) => [info[0], info]));
+
+        const closestInfo = getClosestOutlineOnPolygonWithLength(
+          pointInfos.map(([p]) => p),
+          rotatedP,
+          threshold,
+        );
+        if (closestInfo) {
+          const pointInfo = pointInfoMap.get(closestInfo[1])!;
+          const segmentStruct = pathStructs[pointInfo[1]];
+          if (!segmentStruct.curve) return rotateFn(closestInfo[0]);
+
+          const rate = pointInfo[2] + closestInfo[2] / pointInfo[3];
+          return rotateFn(segmentStruct.lerpFn(rate));
+        }
       }
     },
     getIntersectedOutlines(shape, from, to) {
       const center = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
       const rotateFn = getRotateFn(shape.rotation, center);
-      const path = getPath(shape).map((p) => rotateFn(p));
-      return getIntersectedOutlinesOnPolygon(path, from, to);
+      const path = getPath(shape);
+      const curves = getCurves?.(shape);
+      const rotatedFrom = rotateFn(from, true);
+      const rotatedTo = rotateFn(to, true);
+
+      if (!curves) return getIntersectedOutlinesOnPolygon(path, rotatedFrom, rotatedTo)?.map((p) => rotateFn(p));
+
+      const pathStructs = getCurvePathStructs([...path, path[0]], curves);
+      const pointInfos = getApproxCurvePointsFromStruct(pathStructs);
+      const pointInfoMap = new Map(pointInfos.map((info) => [info[0], info]));
+      const approxOutlines = getIntersectedOutlinesOnPolygonWIthSrc(
+        pointInfos.map(([p]) => p),
+        rotatedFrom,
+        rotatedTo,
+      );
+      if (!approxOutlines) return;
+
+      return approxOutlines.map((a) => {
+        const pointInfo = pointInfoMap.get(a[1])!;
+        const segmentStruct = pathStructs[pointInfo[1]];
+        if (!segmentStruct.curve) return a[0];
+
+        // TODO
+        const remainderRate = getDistance(a[1], a[0]) / getDistance(a[1], a[2]);
+        const rate = pointInfo[2] + remainderRate / pointInfo[3];
+        return rotateFn(segmentStruct.lerpFn(rate));
+      });
     },
     getCommonStyle,
     updateCommonStyle,

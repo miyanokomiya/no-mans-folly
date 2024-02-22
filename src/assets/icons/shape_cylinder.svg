@@ -1,0 +1,2 @@
+<?xml version = "1.0" standalone = "no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" font-family="sans-serif" xmlns:xlink="http://www.w3.org/1999/xlink"><path fill="rgb(0,0,0)" fill-opacity="0" stroke="rgb(0,0,0)" stroke-opacity="1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6,8 l0,16 a10 4 0 0 0 20,0 l0,-15"/><ellipse transform="matrix(1,0,0,1,16,8)" fill="rgb(0,0,0)" fill-opacity="0" stroke="rgb(0,0,0)" stroke-opacity="1" stroke-width="2" cx="0" cy="0" rx="10" ry="4" stroke-linecap="round" stroke-linejoin="round"/></svg>

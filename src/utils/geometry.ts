@@ -220,16 +220,25 @@ export function getClosestOutlineOnPolygonWithLength(
 }
 
 export function getIntersectedOutlinesOnPolygon(polygon: IVec2[], from: IVec2, to: IVec2): IVec2[] | undefined {
+  return getIntersectedOutlinesOnPolygonWIthSrc(polygon, from, to)?.map(([s]) => s);
+}
+
+export function getIntersectedOutlinesOnPolygonWIthSrc(
+  polygon: IVec2[],
+  from: IVec2,
+  to: IVec2,
+): [IVec2, srcP: IVec2, srcQ: IVec2][] | undefined {
   const seg: ISegment = [from, to];
-  const ret: IVec2[] = [];
+  const ret: [IVec2, src: IVec2, q: IVec2, d: number][] = [];
 
   polygon.forEach((p, i) => {
-    const s = getCrossSegAndSeg([p, polygon[(i + 1) % polygon.length]], seg);
+    const q = polygon[(i + 1) % polygon.length];
+    const s = getCrossSegAndSeg([p, q], seg);
     if (!s) return;
-    ret.push(s);
+    ret.push([s, p, q, getD2(sub(s, from))]);
   });
 
-  return ret.length === 0 ? undefined : sortPointFrom(from, ret);
+  return ret.length === 0 ? undefined : ret.sort((a, b) => a[3] - b[3]).map(([s, p, q]) => [s, p, q]);
 }
 
 export function getMarkersOnPolygon(path: IVec2[]): IVec2[] {
