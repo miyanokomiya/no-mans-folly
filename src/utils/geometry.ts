@@ -189,14 +189,19 @@ export function getClosestOutlineOnPolygon(path: IVec2[], p: IVec2, threshold: n
   return getClosestOutlineOnPolygonWithLength(path, p, threshold)?.[0];
 }
 
+/**
+ * "src" in the returned value keeps the original reference of a point in "path".
+ * "remainderRate" means (the distance between "src" and the target point) / (the distance between "src" and the next point).
+ */
 export function getClosestOutlineOnPolygonWithLength(
   path: IVec2[],
   p: IVec2,
   threshold: number,
-): [IVec2, number] | undefined {
+): [p: IVec2, src: IVec2, remainderRate: number] | undefined {
   let candidate: IVec2 | undefined = undefined;
   let d = Infinity;
   let index = -1;
+  let remainderRate = 0;
 
   for (let i = 0; i < path.length; i++) {
     const seg = [path[i], path[i + 1 < path.length ? i + 1 : 0]];
@@ -206,16 +211,12 @@ export function getClosestOutlineOnPolygonWithLength(
       candidate = pedal;
       d = v;
       index = i;
+      remainderRate = getDistance(seg[0], pedal) / getDistance(seg[0], seg[1]);
     }
   }
   if (!candidate || d === undefined || threshold < Math.sqrt(d)) return;
 
-  let len = getDistance(path[index], candidate);
-  for (let i = 0; i < index; i++) {
-    len += getDistance(path[i], path[i + 1 < path.length ? i + 1 : 0]);
-  }
-
-  return [candidate, len];
+  return [candidate, path[index], remainderRate];
 }
 
 export function getIntersectedOutlinesOnPolygon(polygon: IVec2[], from: IVec2, to: IVec2): IVec2[] | undefined {
@@ -832,21 +833,43 @@ export function getCurveLerpFn(segment: ISegment, control?: CurveControl | undef
 }
 
 export function getApproxCurvePoints(points: IVec2[], controls: (CurveControl | undefined)[] = []): IVec2[] {
-  return getApproxCurvePointsFromStruct(getCurvePathStructs(points, controls));
+  return getApproxCurvePointsFromStruct(getCurvePathStructs(points, controls)).map(([p]) => p);
 }
 
-export function getApproxCurvePointsFromStruct(curvePathStructs: CurvePathStruct[]): IVec2[] {
+export function getApproxCurvePointsFromStruct(
+  curvePathStructs: CurvePathStruct[],
+): [p: IVec2, index: number, t: number, split: number][] {
   if (curvePathStructs.length === 0) return [];
 
-  const ret: IVec2[] = [curvePathStructs[0].lerpFn(0)];
+  const approxSize = BEZIER_APPROX_SIZE;
+  const ret: [p: IVec2, index: number, t: number, split: number][] = [
+    [curvePathStructs[0].lerpFn(0), 0, 0, curvePathStructs[0].curve ? approxSize : 1],
+  ];
 
-  curvePathStructs.forEach((s) => {
+  curvePathStructs.forEach((s, i) => {
+    const isLastItem = i === curvePathStructs.length - 1;
+    const nextIndex = isLastItem ? i : i + 1;
+    const nextApproxSize = curvePathStructs[nextIndex].curve ? approxSize : 1;
+    // Use the first value of the next item instead of the last value of this item.
+    // When this item is the last one, use the last value of it.
+    const tailItem: [p: IVec2, index: number, t: number, split: number] = [
+      s.lerpFn(1),
+      nextIndex,
+      isLastItem ? 1 : 0,
+      nextApproxSize,
+    ];
+
     if (s.curve) {
-      for (let k = 1; k <= BEZIER_APPROX_SIZE; k++) {
-        ret.push(s.lerpFn(k / BEZIER_APPROX_SIZE));
+      for (let k = 1; k <= approxSize; k++) {
+        if (k === approxSize) {
+          ret.push(tailItem);
+        } else {
+          const t = k / approxSize;
+          ret.push([s.lerpFn(t), i, t, approxSize]);
+        }
       }
     } else {
-      ret.push(s.lerpFn(1));
+      ret.push(tailItem);
     }
   });
 
