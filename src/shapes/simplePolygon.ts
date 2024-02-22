@@ -2,6 +2,8 @@ import {
   IVec2,
   applyAffine,
   getCenter,
+  getClosestPointOnBezier3,
+  getCrossSegAndBezier3,
   getDistance,
   getRadian,
   getRectCenter,
@@ -9,27 +11,29 @@ import {
   isSame,
   pathSegmentRawsToString,
   rotate,
+  sub,
 } from "okageo";
 import { ShapeStruct, TextContainer, getCommonStyle, updateCommonStyle, textContainerModule } from "./core";
 import {
+  ISegment,
   expandRect,
   getApproxCurvePoints,
-  getApproxCurvePointsFromStruct,
-  getClosestOutlineOnPolygonWithLength,
-  getCurvePathStructs,
+  getClosestPointOnSegment,
+  getCrossSegAndSeg,
   getCurveSplineBounds,
-  getIntersectedOutlinesOnPolygon,
-  getIntersectedOutlinesOnPolygonWIthSrc,
+  getD2,
   getMarkersOnPolygon,
   getRectPoints,
   getRotateFn,
   getRotatedWrapperRect,
   isPointOnRectangle,
+  sortPointFrom,
 } from "../utils/geometry";
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { BezierCurveControl, CommonStyle, Direction4, Shape } from "../models";
 import { applyCurvePath, createSVGCurvePath } from "../utils/renderer";
+import { pickMinItem } from "../utils/commons";
 
 export type SimplePolygonShape = Shape &
   CommonStyle &
@@ -141,30 +145,25 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       // Ignore conventional markers when the shape has a curve.
       // TODO: Some markers for straight segments may be available.
-      // TODO: Prepare some way to declare custom markers for inheritant shapes.
+      // TODO: Prepare some way to declare custom markers from inheritant structs.
       if (!curves) {
         const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, rotatedP) <= threshold);
         if (rotatedClosest) return rotateFn(rotatedClosest);
       }
 
       {
-        const pathStructs = getCurvePathStructs([...path, path[0]], curves);
-        const pointInfos = getApproxCurvePointsFromStruct(pathStructs);
-        const pointInfoMap = new Map(pointInfos.map((info) => [info[0], info]));
-
-        const closestInfo = getClosestOutlineOnPolygonWithLength(
-          pointInfos.map(([p]) => p),
-          rotatedP,
-          threshold,
-        );
-        if (closestInfo) {
-          const pointInfo = pointInfoMap.get(closestInfo[1])!;
-          const segmentStruct = pathStructs[pointInfo[1]];
-          if (!segmentStruct.curve) return rotateFn(closestInfo[0]);
-
-          const rate = pointInfo[2] + closestInfo[2] / pointInfo[3];
-          return rotateFn(segmentStruct.lerpFn(rate));
-        }
+        const points: IVec2[] = [];
+        path.forEach((p, i) => {
+          const seg: ISegment = [p, path[i + 1 < path.length ? i + 1 : 0]];
+          const curve = curves?.[i];
+          if (curve) {
+            points.push(getClosestPointOnBezier3([seg[0], curve.c1, curve.c2, seg[1]], rotatedP, 0.01));
+          } else {
+            points.push(getClosestPointOnSegment(seg, rotatedP));
+          }
+        });
+        const closest = pickMinItem(points, (a) => getD2(sub(a, rotatedP)));
+        return closest && getDistance(closest, rotatedP) <= threshold ? rotateFn(closest) : undefined;
       }
     },
     getIntersectedOutlines(shape, from, to) {
@@ -175,28 +174,19 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const rotatedFrom = rotateFn(from, true);
       const rotatedTo = rotateFn(to, true);
 
-      if (!curves) return getIntersectedOutlinesOnPolygon(path, rotatedFrom, rotatedTo)?.map((p) => rotateFn(p));
-
-      const pathStructs = getCurvePathStructs([...path, path[0]], curves);
-      const pointInfos = getApproxCurvePointsFromStruct(pathStructs);
-      const pointInfoMap = new Map(pointInfos.map((info) => [info[0], info]));
-      const approxOutlines = getIntersectedOutlinesOnPolygonWIthSrc(
-        pointInfos.map(([p]) => p),
-        rotatedFrom,
-        rotatedTo,
-      );
-      if (!approxOutlines) return;
-
-      return approxOutlines.map((a) => {
-        const pointInfo = pointInfoMap.get(a[1])!;
-        const segmentStruct = pathStructs[pointInfo[1]];
-        if (!segmentStruct.curve) return a[0];
-
-        // TODO
-        const remainderRate = getDistance(a[1], a[0]) / getDistance(a[1], a[2]);
-        const rate = pointInfo[2] + remainderRate / pointInfo[3];
-        return rotateFn(segmentStruct.lerpFn(rate));
+      const intersections: IVec2[] = [];
+      path.forEach((p, i) => {
+        const seg: ISegment = [p, path[i + 1 < path.length ? i + 1 : 0]];
+        const curve = curves?.[i];
+        if (curve) {
+          const inter = getCrossSegAndBezier3([rotatedFrom, rotatedTo], [seg[0], curve.c1, curve.c2, seg[1]]);
+          if (inter.length > 0) intersections.push(...inter);
+        } else {
+          const inter = getCrossSegAndSeg([rotatedFrom, rotatedTo], seg);
+          if (inter) intersections.push(inter);
+        }
       });
+      return intersections.length > 0 ? sortPointFrom(rotatedFrom, intersections).map((p) => rotateFn(p)) : undefined;
     },
     getCommonStyle,
     updateCommonStyle,

@@ -186,22 +186,8 @@ export function getClosestOutlineOnEllipse(
 }
 
 export function getClosestOutlineOnPolygon(path: IVec2[], p: IVec2, threshold: number): IVec2 | undefined {
-  return getClosestOutlineOnPolygonWithLength(path, p, threshold)?.[0];
-}
-
-/**
- * "src" in the returned value keeps the original reference of a point in "path".
- * "remainderRate" means (the distance between "src" and the target point) / (the distance between "src" and the next point).
- */
-export function getClosestOutlineOnPolygonWithLength(
-  path: IVec2[],
-  p: IVec2,
-  threshold: number,
-): [p: IVec2, src: IVec2, remainderRate: number] | undefined {
   let candidate: IVec2 | undefined = undefined;
   let d = Infinity;
-  let index = -1;
-  let remainderRate = 0;
 
   for (let i = 0; i < path.length; i++) {
     const seg = [path[i], path[i + 1 < path.length ? i + 1 : 0]];
@@ -210,35 +196,25 @@ export function getClosestOutlineOnPolygonWithLength(
     if (v < d && isOnSeg(pedal, seg)) {
       candidate = pedal;
       d = v;
-      index = i;
-      remainderRate = getDistance(seg[0], pedal) / getDistance(seg[0], seg[1]);
     }
   }
   if (!candidate || d === undefined || threshold < Math.sqrt(d)) return;
 
-  return [candidate, path[index], remainderRate];
+  return candidate;
 }
 
 export function getIntersectedOutlinesOnPolygon(polygon: IVec2[], from: IVec2, to: IVec2): IVec2[] | undefined {
-  return getIntersectedOutlinesOnPolygonWIthSrc(polygon, from, to)?.map(([s]) => s);
-}
-
-export function getIntersectedOutlinesOnPolygonWIthSrc(
-  polygon: IVec2[],
-  from: IVec2,
-  to: IVec2,
-): [IVec2, srcP: IVec2, srcQ: IVec2][] | undefined {
   const seg: ISegment = [from, to];
-  const ret: [IVec2, src: IVec2, q: IVec2, d: number][] = [];
+  const ret: [IVec2, d: number][] = [];
 
   polygon.forEach((p, i) => {
     const q = polygon[(i + 1) % polygon.length];
     const s = getCrossSegAndSeg([p, q], seg);
     if (!s) return;
-    ret.push([s, p, q, getD2(sub(s, from))]);
+    ret.push([s, getD2(sub(s, from))]);
   });
 
-  return ret.length === 0 ? undefined : ret.sort((a, b) => a[3] - b[3]).map(([s, p, q]) => [s, p, q]);
+  return ret.length === 0 ? undefined : ret.sort((a, b) => a[1] - b[1]).map(([s]) => s);
 }
 
 export function getMarkersOnPolygon(path: IVec2[]): IVec2[] {
@@ -368,6 +344,15 @@ export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number)
   if (d > threshold) return false;
 
   return isOnSeg(pedal, seg);
+}
+
+export function getClosestPointOnSegment(seg: IVec2[], p: IVec2): IVec2 {
+  const pedal = getPedal(p, seg);
+  if (isOnSeg(pedal, seg)) return pedal;
+
+  const d0 = getD2(sub(p, seg[0]));
+  const d1 = getD2(sub(p, seg[1]));
+  return d0 <= d1 ? seg[0] : seg[1];
 }
 
 // Likewise "isPointCloseToSegment"
