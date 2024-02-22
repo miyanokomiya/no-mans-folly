@@ -99,6 +99,22 @@ describe("getStructForSimplePolygon", () => {
       expect(ret2!.x).toBeCloseTo(0);
       expect(ret2!.y).toBeCloseTo(20);
     });
+
+    test("should return the closest outline on a bezier segment", () => {
+      const target = getStructForSimplePolygon(
+        () => path,
+        () => [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
+      );
+      expect(target.getClosestOutline!(shape, { x: 10, y: -10 }, 2)).toEqual(undefined);
+
+      const ret1 = target.getClosestOutline!(shape, { x: 20, y: -5 }, 2);
+      expect(ret1?.x).toBeCloseTo(20.036);
+      expect(ret1?.y).toBeCloseTo(-5.7);
+
+      const ret2 = target.getClosestOutline!(shape, { x: 101, y: 30 }, 2);
+      expect(ret2?.x).toBeCloseTo(100);
+      expect(ret2?.y).toBeCloseTo(30);
+    });
   });
 
   describe("getIntersectedOutlines", () => {
@@ -106,6 +122,22 @@ describe("getStructForSimplePolygon", () => {
       expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: -3, y: 10 })).toEqual(undefined);
       expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 3, y: 0 })).toEqual([{ x: 0, y: 0 }]);
       expect(target.getIntersectedOutlines!(shape, { x: 3, y: 2 }, { x: 3, y: 5 })).toEqual([{ x: 3, y: 3 }]);
+    });
+
+    test("should regard bezier segments", () => {
+      const target = getStructForSimplePolygon(
+        () => path,
+        () => [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
+      );
+      expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: -3, y: 10 })).toEqual(undefined);
+      const res0 = target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 3, y: 0 });
+      expect(res0).toHaveLength(3);
+      expect(res0?.[0].x).toBeCloseTo(0);
+      expect(res0?.[0].y).toBeCloseTo(0);
+      expect(res0?.[1].x).toBeCloseTo(50);
+      expect(res0?.[1].y).toBeCloseTo(0);
+      expect(res0?.[2].x).toBeCloseTo(100);
+      expect(res0?.[2].y).toBeCloseTo(0);
     });
   });
 });
