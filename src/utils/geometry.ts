@@ -655,6 +655,15 @@ export function getRotationAffines(rotation: number, origin: IVec2) {
   };
 }
 
+export function getRotationAffine(rotation: number, origin?: IVec2) {
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const ra: AffineMatrix = [cos, sin, -sin, cos, 0, 0];
+  if (!origin) return ra;
+
+  return multiAffines([[1, 0, 0, 1, origin.x, origin.y], ra, [1, 0, 0, 1, -origin.x, -origin.y]]);
+}
+
 export function getCurveSplineBounds(points: IVec2[], controls: (CurveControl | undefined)[] = []): IRectangle {
   const segments = getSegments(points);
   const rects = segments.map((seg, i) => {

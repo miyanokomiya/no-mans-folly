@@ -15,10 +15,10 @@ import { CylinderShape, getCylinderRadiusY } from "../../../../shapes/polygons/c
 import { newCylinderHandler } from "../../../shapeHandlers/cylinderHandler";
 import { newTransformingCylinderState } from "./transformingCylinderState";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
-import { applyAffine } from "okageo";
+import { getShapeTransform } from "../../../../shapes/simplePolygon";
+import { applyAffine, getDistance, getRadian, multiAffines } from "okageo";
 import { resizeShape } from "../../../../shapes";
-import { getGlobalAffine } from "../../../../utils/geometry";
+import { getGlobalAffine, getRotationAffine } from "../../../../utils/geometry";
 
 export function newCylinderSelectedState(): AppCanvasState {
   let targetShape: CylinderShape;
@@ -67,17 +67,20 @@ export function newCylinderSelectedState(): AppCanvasState {
                         targetId: targetShape.id,
                         patchFn: (s, p) => {
                           const ry = getCylinderRadiusY(s);
-                          const top = Math.min(applyAffine(getShapeDetransform(s), p).y, s.height - 2 * ry);
+                          const origin = applyAffine(getShapeTransform(s), {
+                            x: s.width / 2,
+                            y: s.height,
+                          });
+                          const distance = getDistance(p, origin);
+                          const top = Math.min(s.height - distance, s.height - 2 * ry);
+                          const radDiff = getRadian(p, origin) + Math.PI / 2 - s.rotation;
                           const resized = resizeShape(
                             ctx.getShapeComposite().getShapeStruct,
                             s,
                             getGlobalAffine(
-                              applyAffine(getShapeTransform(s), {
-                                x: s.width / 2,
-                                y: s.height,
-                              }),
+                              origin,
                               s.rotation,
-                              [1, 0, 0, (s.height - top) / s.height, 0, 0],
+                              multiAffines([getRotationAffine(radDiff), [1, 0, 0, (s.height - top) / s.height, 0, 0]]),
                             ),
                           );
                           return {
@@ -93,7 +96,13 @@ export function newCylinderSelectedState(): AppCanvasState {
                         targetId: targetShape.id,
                         patchFn: (s, p) => {
                           const ry = getCylinderRadiusY(s);
-                          const bottom = Math.max(applyAffine(getShapeDetransform(s), p).y, 2 * ry);
+                          const origin = applyAffine(getShapeTransform(s), {
+                            x: s.width / 2,
+                            y: 0,
+                          });
+                          const distance = getDistance(p, origin);
+                          const bottom = Math.max(distance, 2 * ry);
+                          const radDiff = getRadian(p, origin) - Math.PI / 2 - s.rotation;
                           const resized = resizeShape(
                             ctx.getShapeComposite().getShapeStruct,
                             s,
@@ -103,7 +112,7 @@ export function newCylinderSelectedState(): AppCanvasState {
                                 y: 0,
                               }),
                               s.rotation,
-                              [1, 0, 0, bottom / s.height, 0, 0],
+                              multiAffines([getRotationAffine(radDiff), [1, 0, 0, bottom / s.height, 0, 0]]),
                             ),
                           );
                           return {

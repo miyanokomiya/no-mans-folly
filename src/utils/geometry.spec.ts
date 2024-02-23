@@ -50,8 +50,9 @@ import {
   getApproxCurvePoints,
   getPathTotalLength,
   getGlobalAffine,
+  getRotationAffine,
 } from "./geometry";
-import { IRectangle } from "okageo";
+import { IRectangle, applyAffine } from "okageo";
 
 describe("getRotateFn", () => {
   test("should return function to rotate", () => {
@@ -845,6 +846,18 @@ describe("measurePointAndRect", () => {
 
     // Inside the rect
     expect(getDistanceBetweenPointAndRect({ x: 10, y: 20 }, rect)).toBeCloseTo(0);
+  });
+});
+
+describe("getRotationAffine", () => {
+  test("should return rotation affine", () => {
+    const res0 = applyAffine(getRotationAffine(Math.PI / 2), { x: 1, y: 0 });
+    expect(res0.x).toBeCloseTo(0);
+    expect(res0.y).toBeCloseTo(1);
+
+    const res1 = applyAffine(getRotationAffine(Math.PI / 2, { x: 10, y: 0 }), { x: 1, y: 0 });
+    expect(res1.x).toBeCloseTo(10);
+    expect(res1.y).toBeCloseTo(-9);
   });
 });
 
