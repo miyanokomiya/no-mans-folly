@@ -48,7 +48,7 @@ export const struct: ShapeStruct<CylinderShape> = {
       if (!shape.stroke.disabled) {
         applyStrokeStyle(ctx, shape.stroke);
 
-        const ry = getRadiusY(shape);
+        const ry = getCylinderRadiusY(shape);
         if (ry >= 0) {
           const upperC = curves[0]!;
 
@@ -105,7 +105,7 @@ export const struct: ShapeStruct<CylinderShape> = {
 
     let innerPath: IVec2[];
     let innerCurve: BezierCurveControl[];
-    const ry = getRadiusY(shape);
+    const ry = getCylinderRadiusY(shape);
     if (ry >= 0) {
       innerPath = [path[0], path[1], path[0]];
       const upperC = curves[0]!;
@@ -142,7 +142,7 @@ export const struct: ShapeStruct<CylinderShape> = {
     };
   },
   getTextRangeRect(shape) {
-    const ry = getRadiusY(shape);
+    const ry = getCylinderRadiusY(shape);
     const ary = Math.abs(ry);
 
     const rect = {
@@ -157,7 +157,7 @@ export const struct: ShapeStruct<CylinderShape> = {
 };
 
 function getPath(shape: CylinderShape): IVec2[] {
-  const ry = Math.abs(getRadiusY(shape));
+  const ry = Math.abs(getCylinderRadiusY(shape));
 
   return [
     { x: 0, y: ry },
@@ -168,7 +168,7 @@ function getPath(shape: CylinderShape): IVec2[] {
 }
 
 function getCurves(shape: CylinderShape): (BezierCurveControl | undefined)[] {
-  const ry = Math.abs(getRadiusY(shape));
+  const ry = Math.abs(getCylinderRadiusY(shape));
   const v = ry / 0.75; // Magical number to approximate ellipse by cubic bezier.
   const upperY = ry - v;
   const lowerY = shape.height - ry + v;
@@ -184,6 +184,6 @@ function getCurves(shape: CylinderShape): (BezierCurveControl | undefined)[] {
   ];
 }
 
-function getRadiusY(shape: CylinderShape): number {
-  return Math.min(shape.height * shape.c0.y, shape.width) / 2;
+export function getCylinderRadiusY(shape: CylinderShape): number {
+  return (Math.sign(shape.c0.y) * Math.min(shape.height * Math.abs(shape.c0.y), shape.width)) / 2;
 }

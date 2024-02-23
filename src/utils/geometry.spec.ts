@@ -49,6 +49,7 @@ import {
   lerpRect,
   getApproxCurvePoints,
   getPathTotalLength,
+  getGlobalAffine,
 } from "./geometry";
 import { IRectangle } from "okageo";
 
@@ -1234,5 +1235,20 @@ describe("lerpRect", () => {
 
     const to1 = { x: 100, y: 100, width: 20, height: 40 };
     expect(lerpRect(from, to1, 0.1)).toEqual({ x: 10, y: 10, width: 11, height: 22 });
+  });
+});
+
+describe("getGlobalAffine", () => {
+  test("should convert local affine to global affine", () => {
+    const res0 = getGlobalAffine({ x: 100, y: 100 }, Math.PI / 2, [1, 0, 0, 1, 10, 0]);
+    expect(res0).toEqual([1, 0, 0, 1, 0, 10]);
+
+    const res1 = getGlobalAffine({ x: 100, y: 100 }, Math.PI / 2, [2, 0, 0, 1, 0, 0]);
+    expect(res1[0]).toBeCloseTo(1);
+    expect(res1[1]).toBeCloseTo(0);
+    expect(res1[2]).toBeCloseTo(0);
+    expect(res1[3]).toBeCloseTo(2);
+    expect(res1[4]).toBeCloseTo(0);
+    expect(res1[5]).toBeCloseTo(-100);
   });
 });

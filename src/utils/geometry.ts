@@ -934,3 +934,19 @@ export function lerpRect(from: IRectangle, to: IRectangle, t: number): IRectangl
 
   return { x: p0.x, y: p0.y, width: p2.x - p0.x, height: p2.y - p0.y };
 }
+
+export function getGlobalAffine(origin: IVec2, rotation: number, localAffine: AffineMatrix): AffineMatrix {
+  if (rotation === 0) {
+    return multiAffines([[1, 0, 0, 1, origin.x, origin.y], localAffine, [1, 0, 0, 1, -origin.x, -origin.y]]);
+  }
+
+  const sin = Math.sin(rotation);
+  const cos = Math.cos(rotation);
+  return multiAffines([
+    [1, 0, 0, 1, origin.x, origin.y],
+    [cos, sin, -sin, cos, 0, 0],
+    localAffine,
+    [cos, -sin, sin, cos, 0, 0],
+    [1, 0, 0, 1, -origin.x, -origin.y],
+  ]);
+}

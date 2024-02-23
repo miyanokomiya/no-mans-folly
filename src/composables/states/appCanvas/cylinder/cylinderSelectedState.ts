@@ -11,9 +11,14 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { CylinderShape } from "../../../../shapes/polygons/cylinder";
+import { CylinderShape, getCylinderRadiusY } from "../../../../shapes/polygons/cylinder";
 import { newCylinderHandler } from "../../../shapeHandlers/cylinderHandler";
 import { newTransformingCylinderState } from "./transformingCylinderState";
+import { movingShapeControlState } from "../movingShapeControlState";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
+import { applyAffine } from "okageo";
+import { resizeShape } from "../../../../shapes";
+import { getGlobalAffine } from "../../../../utils/geometry";
 
 export function newCylinderSelectedState(): AppCanvasState {
   let targetShape: CylinderShape;
@@ -56,6 +61,58 @@ export function newCylinderSelectedState(): AppCanvasState {
                 switch (hitResult.type) {
                   case "c0":
                     return () => newTransformingCylinderState({ targetId: targetShape.id });
+                  case "top":
+                    return () =>
+                      movingShapeControlState<CylinderShape>({
+                        targetId: targetShape.id,
+                        patchFn: (s, p) => {
+                          const ry = getCylinderRadiusY(s);
+                          const top = Math.min(applyAffine(getShapeDetransform(s), p).y, s.height - 2 * ry);
+                          const resized = resizeShape(
+                            ctx.getShapeComposite().getShapeStruct,
+                            s,
+                            getGlobalAffine(
+                              applyAffine(getShapeTransform(s), {
+                                x: s.width / 2,
+                                y: s.height,
+                              }),
+                              s.rotation,
+                              [1, 0, 0, (s.height - top) / s.height, 0, 0],
+                            ),
+                          );
+                          return {
+                            ...resized,
+                            c0: { x: s.c0.x, y: (2 * ry) / (resized.height ?? s.height) },
+                          };
+                        },
+                        getControlFn: (s) => applyAffine(getShapeTransform(s), { x: s.width / 2, y: 0 }),
+                      });
+                  case "bottom":
+                    return () =>
+                      movingShapeControlState<CylinderShape>({
+                        targetId: targetShape.id,
+                        patchFn: (s, p) => {
+                          const ry = getCylinderRadiusY(s);
+                          const bottom = Math.max(applyAffine(getShapeDetransform(s), p).y, 2 * ry);
+                          const resized = resizeShape(
+                            ctx.getShapeComposite().getShapeStruct,
+                            s,
+                            getGlobalAffine(
+                              applyAffine(getShapeTransform(s), {
+                                x: s.width / 2,
+                                y: 0,
+                              }),
+                              s.rotation,
+                              [1, 0, 0, bottom / s.height, 0, 0],
+                            ),
+                          );
+                          return {
+                            ...resized,
+                            c0: { x: s.c0.x, y: (2 * ry) / (resized.height ?? s.height) },
+                          };
+                        },
+                        getControlFn: (s) => applyAffine(getShapeTransform(s), { x: s.width / 2, y: s.height }),
+                      });
                   default:
                     return;
                 }

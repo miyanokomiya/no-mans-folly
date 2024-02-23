@@ -10,7 +10,7 @@ import { getShapeDetransform } from "../../shapes/simplePolygon";
 
 const ANCHOR_SIZE = 6;
 
-type AnchorType = "c0";
+type AnchorType = "c0" | "top" | "bottom";
 
 interface CylinderHitResult {
   type: AnchorType;
@@ -26,7 +26,10 @@ export const newCylinderHandler = defineShapeHandler<CylinderHitResult, Option>(
   const shape = shapeComposite.shapeMap[option.targetId] as CylinderShape;
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const detransform = getShapeDetransform(shape);
+
   const control0P = { x: shape.width * shape.c0.x, y: shape.height * shape.c0.y };
+  const topP = { x: shape.width / 2, y: 0 };
+  const bottomP = { x: shape.width / 2, y: shape.height };
 
   function hitTest(p: IVec2, scale = 1): CylinderHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -35,12 +38,24 @@ export const newCylinderHandler = defineShapeHandler<CylinderHitResult, Option>(
     if (getDistance(control0P, adjustedP) <= threshold) {
       return { type: "c0" };
     }
+    if (getDistance(topP, adjustedP) <= threshold) {
+      return { type: "top" };
+    }
+    if (getDistance(bottomP, adjustedP) <= threshold) {
+      return { type: "bottom" };
+    }
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: CylinderHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
-      ([[control0P, hitResult?.type === "c0"]] as const).forEach(([p, highlight]) => {
+      (
+        [
+          [control0P, hitResult?.type === "c0"],
+          [topP, hitResult?.type === "top"],
+          [bottomP, hitResult?.type === "bottom"],
+        ] as const
+      ).forEach(([p, highlight]) => {
         if (highlight) {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
         } else {

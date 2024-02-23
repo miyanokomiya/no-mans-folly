@@ -141,7 +141,11 @@ export function isTransparentSelection(getStruct: GetShapeStruct, shape: Shape):
   return !!struct.transparentSelection;
 }
 
-export function resizeShape(getStruct: GetShapeStruct, shape: Shape, resizingAffine: AffineMatrix): Partial<Shape> {
+export function resizeShape<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  resizingAffine: AffineMatrix,
+): Partial<T> {
   const struct = getStruct(shape.type);
   return struct.resize(shape, resizingAffine);
 }
