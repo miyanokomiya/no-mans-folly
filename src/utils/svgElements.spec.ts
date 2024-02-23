@@ -4,7 +4,7 @@ import { createSVGElement, createSVGSVGElement, renderTransform } from "./svgEle
 describe("createSVGSVGElement", () => {
   test("should return <svg> element", () => {
     const result0 = createSVGSVGElement({ id: "a", width: 10 });
-    expect(result0.tagName).toBe("SVG");
+    expect(result0.tagName.toUpperCase()).toBe("SVG");
     expect(result0.id).toBe("a");
     expect(result0.getAttribute("width")).toBe("10");
   });
@@ -13,7 +13,7 @@ describe("createSVGSVGElement", () => {
 describe("createSVGElement", () => {
   test("should return SVG element", () => {
     const result0 = createSVGElement<SVGRectElement>("rect", { id: "a", width: 10 });
-    expect(result0.tagName).toBe("RECT");
+    expect(result0.tagName.toUpperCase()).toBe("RECT");
     expect(result0.id).toBe("a");
     expect(result0.getAttribute("width")).toBe("10");
   });
