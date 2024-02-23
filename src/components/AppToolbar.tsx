@@ -7,6 +7,7 @@ import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
+import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
 import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
@@ -29,6 +30,7 @@ const shapeList = [
   { type: "rhombus", icon: iconRhombus },
   { type: "trapezoid", icon: iconTrapezoid },
   { type: "cylinder", icon: iconCylinder },
+  { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
   { type: "two_sided_arrow", icon: iconTwoSidedArrow },
 ];
@@ -165,13 +167,13 @@ export const AppToolbar: React.FC = () => {
       case "shapes":
         return (
           <div
-            className="bg-white absolute left-0 border p-1 rounded shadow"
+            className="bg-white absolute left-0 border p-1 rounded shadow w-max grid grid-cols-2"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             {shapeList.map((shape) => (
               <div
                 key={shape.type}
-                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-grab"
+                className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab"
                 data-type={shape.type}
                 onMouseDown={onDownShapeElm}
               >
