@@ -6,6 +6,7 @@ import { IVec2, add } from "okageo";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { Shape } from "../../../models";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option<T extends Shape> {
   targetId: string;
@@ -31,6 +32,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -43,6 +45,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
     },
     onEnd: (ctx) => {
       ctx.setTmpShapeMap({});
+      ctx.setCommandExams();
       ctx.stopDragging();
     },
     handleEvent: (ctx, event) => {
