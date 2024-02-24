@@ -24,12 +24,16 @@ import { pickMinItem } from "../../utils/commons";
 export type BubbleShape = SimplePolygonShape & {
   /**
    * Relative rate from "p".
-   * The tip position of the beak.
+   * Represents the tip position of the beak.
    */
   beakTipC: IVec2;
   /**
+   * Represents the size (radius of the root arc) of the beak.
+   */
+  beakSizeRate: number;
+  /**
    * Relative rate from "p".
-   * For corner radius.
+   * Represents the corner radius of top-left one.
    */
   cornerC: IVec2;
 };
@@ -52,38 +56,39 @@ export const struct: ShapeStruct<BubbleShape> = {
       height: arg.height ?? 100,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       beakTipC: arg.beakTipC ?? { x: 0.3, y: 1.2 },
-      cornerC: arg.cornerC ?? { x: 0.1, y: 0.1 },
+      beakSizeRate: arg.beakSizeRate ?? 0.5,
+      cornerC: arg.cornerC ?? { x: 0.2, y: 0.2 },
     };
   },
-  render(ctx, shape) {
-    baseStruct.render(ctx, shape);
+  // render(ctx, shape) {
+  //   baseStruct.render(ctx, shape);
 
-    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    applyLocalSpace(ctx, rect, shape.rotation, () => {
-      const outline = combineBeakAndOutline(shape);
-      ctx.strokeStyle = "yellow";
-      ctx.beginPath();
-      applyCurvePath(ctx, outline.path, outline.curves);
-      ctx.stroke();
+  //   const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  //   applyLocalSpace(ctx, rect, shape.rotation, () => {
+  //     const outline = combineBeakAndOutline(shape);
+  //     ctx.strokeStyle = "yellow";
+  //     ctx.beginPath();
+  //     applyCurvePath(ctx, outline.path, outline.curves);
+  //     ctx.stroke();
 
-      const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
-      const [p, q] = getBeakRoots(shape);
-      ctx.strokeStyle = "green";
-      ctx.lineWidth = 0.4;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(beakTip.x, beakTip.y);
-      ctx.lineTo(q.x, q.y);
-      ctx.stroke();
+  //     const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
+  //     const [p, q] = getBeakRoots(shape);
+  //     ctx.strokeStyle = "green";
+  //     ctx.lineWidth = 0.4;
+  //     ctx.beginPath();
+  //     ctx.moveTo(p.x, p.y);
+  //     ctx.lineTo(beakTip.x, beakTip.y);
+  //     ctx.lineTo(q.x, q.y);
+  //     ctx.stroke();
 
-      getBeakIntersections(shape).forEach((p, i) => {
-        ctx.fillStyle = i === 0 ? "red" : "green";
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, TAU);
-        ctx.fill();
-      });
-    });
-  },
+  //     getBeakIntersections(shape).forEach((p, i) => {
+  //       ctx.fillStyle = i === 0 ? "red" : "green";
+  //       ctx.beginPath();
+  //       ctx.arc(p.x, p.y, 2, 0, TAU);
+  //       ctx.fill();
+  //     });
+  //   });
+  // },
   getTextRangeRect(shape) {
     const { x: rx, y: ry } = getCornerRadius(shape);
     const rect = {
@@ -138,6 +143,11 @@ function getCornerRadius(shape: BubbleShape): IVec2 {
   };
 }
 
+export function getBeakSize(shape: BubbleShape): number {
+  // Avoid getting close to the maximam because intersection calculation is a bit of edge sensitive.
+  return (Math.min(shape.width, shape.height) / 2) * 0.99 * shape.beakSizeRate;
+}
+
 /**
  * Returned roots and the tip always keep the below formation.
  *   root 0
@@ -149,7 +159,7 @@ function getCornerRadius(shape: BubbleShape): IVec2 {
 function getBeakRoots(shape: BubbleShape): [IVec2, IVec2] {
   const c = { x: shape.width / 2, y: shape.height / 2 };
   const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
-  const radius = Math.min(shape.width, shape.height) / 4;
+  const radius = getBeakSize(shape);
   const d = getDistance(beakTip, c);
   if (d <= MINVALUE) return [c, c];
 

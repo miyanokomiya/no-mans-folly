@@ -11,7 +11,7 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { newBubbleHandler } from "../../../shapeHandlers/bubbleHandler";
+import { getLocalBeakControls, newBubbleHandler } from "../../../shapeHandlers/bubbleHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   getLocalAbsolutePoint,
@@ -19,8 +19,8 @@ import {
   getShapeDetransform,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
-import { applyAffine, clamp } from "okageo";
-import { BubbleShape } from "../../../../shapes/polygons/bubble";
+import { applyAffine, clamp, getDistance, getPedal, isOnSeg, rotate } from "okageo";
+import { BubbleShape, getBeakSize } from "../../../../shapes/polygons/bubble";
 
 export function newBubbleSelectedState(): AppCanvasState {
   let targetShape: BubbleShape;
@@ -70,6 +70,24 @@ export function newBubbleSelectedState(): AppCanvasState {
                         },
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.beakTipC)),
                       });
+                  case "beakSizeC":
+                    return () =>
+                      movingShapeControlState<BubbleShape>({
+                        targetId: targetShape.id,
+                        patchFn: (s, p) => {
+                          const detransform = getShapeDetransform(s);
+                          const localCenter = getLocalAbsolutePoint(s, { x: 0.5, y: 0.5 });
+                          const { tip } = getLocalBeakControls(s);
+                          const sizeSeg = [rotate(tip, -Math.PI / 2, localCenter), localCenter];
+                          const localPedal = getPedal(applyAffine(detransform, p), sizeSeg);
+                          const nextSize = isOnSeg(localPedal, sizeSeg) ? getDistance(localPedal, localCenter) : 0;
+                          const baseSize = getBeakSize(s) / s.beakSizeRate;
+                          const nextRate = clamp(0, 1, nextSize / baseSize);
+                          return { beakSizeRate: nextRate };
+                        },
+                        getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalBeakControls(s).size),
+                        disableSnap: true,
+                      });
                   case "cornerC":
                     return () =>
                       movingShapeControlState<BubbleShape>({
@@ -84,6 +102,7 @@ export function newBubbleSelectedState(): AppCanvasState {
                           };
                         },
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.cornerC)),
+                        disableSnap: true,
                       });
                   default:
                     return;
