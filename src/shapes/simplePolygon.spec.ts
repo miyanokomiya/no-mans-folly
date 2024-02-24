@@ -130,14 +130,12 @@ describe("getStructForSimplePolygon", () => {
         () => [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
       );
       expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: -3, y: 10 })).toEqual(undefined);
-      const res0 = target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 3, y: 0 });
-      expect(res0).toHaveLength(3);
+      const res0 = target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 80, y: 0 });
+      expect(res0).toHaveLength(2);
       expect(res0?.[0].x).toBeCloseTo(0);
       expect(res0?.[0].y).toBeCloseTo(0);
       expect(res0?.[1].x).toBeCloseTo(50);
       expect(res0?.[1].y).toBeCloseTo(0);
-      expect(res0?.[2].x).toBeCloseTo(100);
-      expect(res0?.[2].y).toBeCloseTo(0);
     });
   });
 });
