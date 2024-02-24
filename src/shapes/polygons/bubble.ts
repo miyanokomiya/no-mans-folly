@@ -130,7 +130,7 @@ function getCurves(shape: BubbleShape): (BezierCurveControl | undefined)[] {
     undefined,
     { c1: { x: shape.width, y: shape.height - by }, c2: { x: shape.width - bx, y: shape.height } },
     undefined,
-    { c1: { x: bx, y: shape.height }, c2: { x: 0, y: shape.height - bx } },
+    { c1: { x: bx, y: shape.height }, c2: { x: 0, y: shape.height - by } },
     undefined,
     { c1: { x: 0, y: by }, c2: { x: bx, y: 0 } },
   ];
