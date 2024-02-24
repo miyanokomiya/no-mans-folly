@@ -6,6 +6,7 @@ import {
   getCrossSegAndBezier3,
   getCrossSegAndBezier3WithT,
   getDistance,
+  getRadian,
   getUnit,
   multi,
   rotate,
@@ -167,18 +168,33 @@ export function getMaxBeakSize(shape: BubbleShape): number {
  *   root 1
  */
 function getBeakRoots(shape: BubbleShape): [IVec2, IVec2] {
-  const c = getLocalAbsolutePoint(shape, shape.beakOriginC);
-  const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
+  const beakOrigin = getLocalAbsolutePoint(shape, shape.beakOriginC);
+  const beakTip = getLocalAbsolutePoint(shape, shape.beakTipC);
   const radius = getBeakSize(shape);
-  const d = getDistance(beakTip, c);
-  if (d <= MINVALUE) return [c, c];
+  const d = getDistance(beakTip, beakOrigin);
+  if (d <= MINVALUE) return [beakOrigin, beakOrigin];
 
   const r = Math.asin(radius / d);
-  const unit = getUnit(sub(c, beakTip));
+  const unit = getUnit(sub(beakOrigin, beakTip));
   const rootD = Math.sqrt(d * d - radius * radius);
   const root0 = add(multi(rotate(unit, r), rootD), beakTip);
   const root1 = add(multi(rotate(unit, -r), rootD), beakTip);
   return [root0, root1];
+}
+
+export function getBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2; roots: [IVec2, IVec2] } {
+  const beakOrigin = getLocalAbsolutePoint(shape, shape.beakOriginC);
+  const beakTip = getLocalAbsolutePoint(shape, shape.beakTipC);
+  const radius = getBeakSize(shape);
+  const d = getDistance(beakTip, beakOrigin);
+  if (d <= MINVALUE) return { tip: beakTip, origin: beakOrigin, roots: [beakOrigin, beakOrigin] };
+
+  const r = Math.asin(radius / d);
+  const unit = getUnit(sub(beakOrigin, beakTip));
+  const rootD = Math.sqrt(d * d - radius * radius);
+  const root0 = add(multi(rotate(unit, r), rootD), beakTip);
+  const root1 = add(multi(rotate(unit, -r), rootD), beakTip);
+  return { tip: beakTip, origin: beakOrigin, roots: [root0, root1] };
 }
 
 function getBeakIntersections(shape: BubbleShape): IVec2[] {
@@ -189,7 +205,8 @@ function getBeakIntersections(shape: BubbleShape): IVec2[] {
   const ret: IVec2[] = [];
 
   roots.forEach((root) => {
-    const beakSeg: ISegment = [beakTip, root];
+    // Extending this segment is harmless and allows more flexible intersections.
+    const beakSeg = extendSegment([beakTip, root], 2);
     const candidates: IVec2[] = [];
 
     for (let i = 0; i < path.length - 1; i++) {

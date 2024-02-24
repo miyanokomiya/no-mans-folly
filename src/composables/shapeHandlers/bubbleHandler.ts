@@ -1,10 +1,10 @@
-import { IVec2, add, applyAffine, getDistance, getRadian, getSymmetry, rotate } from "okageo";
+import { IVec2, add, applyAffine, getDistance, getRadian } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { BubbleShape, getBeakSize } from "../../shapes/polygons/bubble";
+import { BubbleShape, getBeakControls, getBeakSize } from "../../shapes/polygons/bubble";
 import { applyLocalSpace } from "../../utils/renderer";
 import { getLocalAbsolutePoint, getShapeDetransform, getShapeTransform } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
@@ -29,7 +29,8 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const detransform = getShapeDetransform(shape);
 
-  const { tip: beakTipC, origin: beakOriginC, size: beakSizeC } = getLocalBeakControls(shape);
+  const { tip: beakTipC, origin: beakOriginC, roots: beakRoots } = getBeakControls(shape);
+  const beakSizeC = beakRoots[0];
 
   function hitTest(p: IVec2, scale = 1): BubbleHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -107,17 +108,6 @@ export function renderMovingBubbleAnchor(
   });
 }
 
-export function getLocalBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2; size: IVec2 } {
-  const beakOrigin = getLocalAbsolutePoint(shape, shape.beakOriginC);
-  const beakTipC = getLocalAbsolutePoint(shape, shape.beakTipC);
-  const beakRad = getRadian(beakTipC, beakOrigin);
-  return {
-    tip: beakTipC,
-    origin: beakOrigin,
-    size: rotate({ x: beakOrigin.x + getBeakSize(shape), y: beakOrigin.y }, beakRad - Math.PI / 2, beakOrigin),
-  };
-}
-
 export function getLocalCornerControl(shape: BubbleShape, scale: number): [IVec2, IVec2] {
   const margin = 16 * scale;
   const cornerXC = add(getLocalAbsolutePoint(shape, { x: shape.cornerC.x, y: 0 }), { x: 0, y: -margin });
@@ -130,27 +120,46 @@ export function renderBeakGuidlines(
   shape: BubbleShape,
   style: StyleScheme,
   scale: number,
+  showRootGuid = false,
 ) {
-  applyStrokeStyle(renderCtx, {
-    color: style.selectionSecondaly,
-    width: 2 * scale,
-  });
-
-  const controls = getLocalBeakControls(shape);
+  const controls = getBeakControls(shape);
   const transfrom = getShapeTransform(shape);
   const radius = getBeakSize(shape);
 
   const origin = applyAffine(transfrom, controls.origin);
   const tip = applyAffine(transfrom, controls.tip);
-  const size0 = applyAffine(transfrom, controls.size);
-  const size1 = getSymmetry(size0, origin);
-  const size0Radian = getRadian(size0, origin);
-  const size1Radian = getRadian(size1, origin);
+  const root0 = applyAffine(transfrom, controls.roots[0]);
+  const root1 = applyAffine(transfrom, controls.roots[1]);
+  const size0Radian = getRadian(root0, origin);
+  const size1Radian = getRadian(root1, origin);
 
+  applyStrokeStyle(renderCtx, {
+    color: style.selectionSecondaly,
+    width: 2 * scale,
+  });
   renderCtx.beginPath();
   renderCtx.moveTo(tip.x, tip.y);
-  renderCtx.lineTo(size0.x, size0.y);
+  renderCtx.lineTo(root0.x, root0.y);
   renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
   renderCtx.closePath();
   renderCtx.stroke();
+
+  if (showRootGuid) {
+    applyFillStyle(renderCtx, {
+      color: style.selectionSecondaly,
+    });
+    applyStrokeStyle(renderCtx, {
+      color: style.selectionSecondaly,
+      width: 2 * scale,
+      dash: "short",
+    });
+    renderCtx.beginPath();
+    renderCtx.moveTo(origin.x, origin.y);
+    renderCtx.lineTo(root0.x, root0.y);
+    renderCtx.stroke();
+
+    renderCtx.beginPath();
+    renderCtx.arc(origin.x, origin.y, 4 * scale, 0, TAU, true);
+    renderCtx.fill();
+  }
 }

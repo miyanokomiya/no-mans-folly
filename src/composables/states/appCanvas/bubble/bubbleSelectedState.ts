@@ -11,12 +11,7 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import {
-  getLocalBeakControls,
-  getLocalCornerControl,
-  newBubbleHandler,
-  renderBeakGuidlines,
-} from "../../../shapeHandlers/bubbleHandler";
+import { getLocalCornerControl, newBubbleHandler, renderBeakGuidlines } from "../../../shapeHandlers/bubbleHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   getLocalAbsolutePoint,
@@ -24,8 +19,8 @@ import {
   getShapeDetransform,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
-import { applyAffine, clamp, getDistance, getPedal, isOnSeg, rotate } from "okageo";
-import { BubbleShape, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
+import { applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
+import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 
 export function newBubbleSelectedState(): AppCanvasState {
@@ -74,6 +69,9 @@ export function newBubbleSelectedState(): AppCanvasState {
                         patchFn: (s, p) => {
                           return { beakTipC: getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p)) };
                         },
+                        renderFn: (stateCtx, renderCtx, latestShape) => {
+                          renderBeakGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale());
+                        },
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.beakTipC)),
                       });
                   case "beakOriginC":
@@ -96,18 +94,24 @@ export function newBubbleSelectedState(): AppCanvasState {
                         targetId: targetShape.id,
                         patchFn: (s, p) => {
                           const detransform = getShapeDetransform(s);
-                          const beakOrigin = getLocalAbsolutePoint(s, s.beakOriginC);
-                          const { tip } = getLocalBeakControls(s);
-                          const sizeSeg = [rotate(tip, -Math.PI / 2, beakOrigin), beakOrigin];
-                          const localPedal = getPedal(applyAffine(detransform, p), sizeSeg);
-                          const nextSize = isOnSeg(localPedal, sizeSeg) ? getDistance(localPedal, beakOrigin) : 0;
-                          const baseSize = getMaxBeakSize(s);
-                          const nextRate = clamp(0, 1, nextSize / baseSize);
+                          const { origin: beakOrigin, roots } = getBeakControls(s);
+                          const guideLine = [beakOrigin, roots[0]];
+                          const localPedal = getPedal(applyAffine(detransform, p), guideLine);
+                          const maxSize = getMaxBeakSize(s);
+                          const isValid = getInner(sub(guideLine[1], guideLine[0]), sub(localPedal, guideLine[0])) >= 0;
+                          const nextSize = isValid ? getDistance(localPedal, beakOrigin) : 0;
+                          const nextRate = clamp(0, 1, nextSize / maxSize);
                           return { beakSizeRate: nextRate };
                         },
-                        getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalBeakControls(s).size),
+                        getControlFn: (s) => applyAffine(getShapeTransform(s), getBeakControls(s).roots[0]),
                         renderFn: (stateCtx, renderCtx, latestShape) => {
-                          renderBeakGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale());
+                          renderBeakGuidlines(
+                            renderCtx,
+                            latestShape,
+                            stateCtx.getStyleScheme(),
+                            stateCtx.getScale(),
+                            true,
+                          );
                         },
                         snapType: "disabled",
                       });
