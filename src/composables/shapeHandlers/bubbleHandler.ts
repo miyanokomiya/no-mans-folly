@@ -1,4 +1,4 @@
-import { IVec2, add, applyAffine, getDistance, getRadian, rotate } from "okageo";
+import { IVec2, add, applyAffine, getDistance, getRadian, getSymmetry, rotate } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
@@ -6,11 +6,12 @@ import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { BubbleShape, getBeakSize } from "../../shapes/polygons/bubble";
 import { applyLocalSpace } from "../../utils/renderer";
-import { getLocalAbsolutePoint, getShapeDetransform } from "../../shapes/simplePolygon";
+import { getLocalAbsolutePoint, getShapeDetransform, getShapeTransform } from "../../shapes/simplePolygon";
+import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 const ANCHOR_SIZE = 6;
 
-type AnchorType = "beakTipC" | "beakSizeC" | "cornerXC" | "cornerYC";
+type AnchorType = "beakTipC" | "beakOriginC" | "beakSizeC" | "cornerXC" | "cornerYC";
 
 interface BubbleHitResult {
   type: AnchorType;
@@ -27,7 +28,7 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const detransform = getShapeDetransform(shape);
 
-  const { tip: beakTipC, size: beakSizeC } = getLocalBeakControls(shape);
+  const { tip: beakTipC, origin: beakOriginC, size: beakSizeC } = getLocalBeakControls(shape);
 
   function hitTest(p: IVec2, scale = 1): BubbleHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -35,6 +36,9 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
 
     if (getDistance(beakTipC, adjustedP) <= threshold) {
       return { type: "beakTipC" };
+    }
+    if (getDistance(beakOriginC, adjustedP) <= threshold) {
+      return { type: "beakOriginC" };
     }
     if (getDistance(beakSizeC, adjustedP) <= threshold) {
       return { type: "beakSizeC" };
@@ -56,6 +60,7 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
       (
         [
           [beakTipC, hitResult?.type === "beakTipC"],
+          [beakOriginC, hitResult?.type === "beakOriginC"],
           [beakSizeC, hitResult?.type === "beakSizeC"],
           [cornerXC, hitResult?.type === "cornerXC"],
           [cornerYC, hitResult?.type === "cornerYC"],
@@ -99,13 +104,14 @@ export function renderMovingBubbleAnchor(
   });
 }
 
-export function getLocalBeakControls(shape: BubbleShape): { tip: IVec2; size: IVec2 } {
-  const localCenter = getLocalAbsolutePoint(shape, { x: 0.5, y: 0.5 });
+export function getLocalBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2; size: IVec2 } {
+  const beakOrigin = getLocalAbsolutePoint(shape, shape.beakOriginC);
   const beakTipC = getLocalAbsolutePoint(shape, shape.beakTipC);
-  const beakRad = getRadian(beakTipC, localCenter);
+  const beakRad = getRadian(beakTipC, beakOrigin);
   return {
     tip: beakTipC,
-    size: rotate({ x: shape.width / 2 + getBeakSize(shape), y: shape.height / 2 }, beakRad - Math.PI / 2, localCenter),
+    origin: beakOrigin,
+    size: rotate({ x: beakOrigin.x + getBeakSize(shape), y: beakOrigin.y }, beakRad - Math.PI / 2, beakOrigin),
   };
 }
 
@@ -114,4 +120,34 @@ export function getLocalCornerControl(shape: BubbleShape, scale: number): [IVec2
   const cornerXC = add(getLocalAbsolutePoint(shape, { x: shape.cornerC.x, y: 0 }), { x: 0, y: -margin });
   const cornerYC = add(getLocalAbsolutePoint(shape, { x: 0, y: shape.cornerC.y }), { x: -margin, y: 0 });
   return [cornerXC, cornerYC];
+}
+
+export function renderBeakGuidlines(
+  renderCtx: CanvasRenderingContext2D,
+  shape: BubbleShape,
+  style: StyleScheme,
+  scale: number,
+) {
+  applyStrokeStyle(renderCtx, {
+    color: style.selectionSecondaly,
+    width: 2 * scale,
+  });
+
+  const controls = getLocalBeakControls(shape);
+  const transfrom = getShapeTransform(shape);
+  const radius = getBeakSize(shape);
+
+  const origin = applyAffine(transfrom, controls.origin);
+  const tip = applyAffine(transfrom, controls.tip);
+  const size0 = applyAffine(transfrom, controls.size);
+  const size1 = getSymmetry(size0, origin);
+  const size0Radian = getRadian(size0, origin);
+  const size1Radian = getRadian(size1, origin);
+
+  renderCtx.beginPath();
+  renderCtx.moveTo(tip.x, tip.y);
+  renderCtx.lineTo(size0.x, size0.y);
+  renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
+  renderCtx.closePath();
+  renderCtx.stroke();
 }

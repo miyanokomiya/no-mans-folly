@@ -1,4 +1,4 @@
-import type { AppCanvasState } from "./core";
+import type { AppCanvasState, AppCanvasStateContext } from "./core";
 import { newSelectionHubState } from "./selectionHubState";
 import { applyFillStyle } from "../../../utils/fillStyle";
 import { TAU } from "../../../utils/geometry";
@@ -18,7 +18,8 @@ interface Option<T extends Shape> {
    * Should return a point in the global space.
    */
   getControlFn: (s: T, scale: number) => IVec2;
-  disableSnap?: boolean;
+  snapType?: "disabled" | "self";
+  renderFn?: (ctx: AppCanvasStateContext, renderCtx: CanvasRenderingContext2D, latestShape: T) => void;
 }
 
 export function movingShapeControlState<T extends Shape>(option: Option<T>): AppCanvasState {
@@ -33,13 +34,16 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
-      if (!option.disableSnap) ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      if (!option.snapType) ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
-      const snappableLines = shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+      const snappableShapes =
+        option.snapType === "self"
+          ? [targetShape]
+          : shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -53,7 +57,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          snappingResult = option.disableSnap || event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
+          snappingResult = event.data.ctrl || !option.snapType ? undefined : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
           const patch = option.patchFn(targetShape, p);
           const shapeComposite = ctx.getShapeComposite();
@@ -86,6 +90,8 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
           result: snappingResult,
         });
       }
+
+      option.renderFn?.(ctx, renderCtx, tmpShape);
     },
   };
 }

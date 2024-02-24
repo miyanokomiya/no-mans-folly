@@ -12,7 +12,7 @@ import {
   sub,
 } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePolygonShape, getStructForSimplePolygon } from "../simplePolygon";
+import { SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
@@ -27,6 +27,11 @@ export type BubbleShape = SimplePolygonShape & {
    * Represents the tip position of the beak.
    */
   beakTipC: IVec2;
+  /**
+   * Relative rate from "p".
+   * Represents the origin position of the beak.
+   */
+  beakOriginC: IVec2;
   /**
    * Represents the size (radius of the root arc) of the beak.
    */
@@ -56,6 +61,7 @@ export const struct: ShapeStruct<BubbleShape> = {
       height: arg.height ?? 100,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       beakTipC: arg.beakTipC ?? { x: 0.3, y: 1.2 },
+      beakOriginC: arg.beakOriginC ?? { x: 0.5, y: 0.5 },
       beakSizeRate: arg.beakSizeRate ?? 0.5,
       cornerC: arg.cornerC ?? { x: 0.2, y: 0.2 },
     };
@@ -157,7 +163,7 @@ export function getBeakSize(shape: BubbleShape): number {
  *   root 1
  */
 function getBeakRoots(shape: BubbleShape): [IVec2, IVec2] {
-  const c = { x: shape.width / 2, y: shape.height / 2 };
+  const c = getLocalAbsolutePoint(shape, shape.beakOriginC)
   const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
   const radius = getBeakSize(shape);
   const d = getDistance(beakTip, c);
