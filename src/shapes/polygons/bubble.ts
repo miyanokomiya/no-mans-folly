@@ -1,11 +1,23 @@
-import { IVec2, MINVALUE, add, getCrossSegAndBezier3, getDistance, getUnit, multi, rotate, sub } from "okageo";
+import {
+  IVec2,
+  MINVALUE,
+  add,
+  divideBezier3,
+  getCrossSegAndBezier3,
+  getCrossSegAndBezier3WithT,
+  getDistance,
+  getUnit,
+  multi,
+  rotate,
+  sub,
+} from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import { SimplePolygonShape, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { BezierCurveControl } from "../../models";
-import { applyLocalSpace } from "../../utils/renderer";
+import { applyCurvePath, applyLocalSpace } from "../../utils/renderer";
 import { ISegment, TAU, getCrossSegAndSeg, getD2 } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
 
@@ -22,7 +34,10 @@ export type BubbleShape = SimplePolygonShape & {
   cornerC: IVec2;
 };
 
-const baseStruct = getStructForSimplePolygon<BubbleShape>(getPath, getCurves);
+const baseStruct = getStructForSimplePolygon<BubbleShape>(
+  (s) => combineBeakAndOutline(s).path,
+  (s) => combineBeakAndOutline(s).curves,
+);
 
 export const struct: ShapeStruct<BubbleShape> = {
   ...baseStruct,
@@ -45,17 +60,24 @@ export const struct: ShapeStruct<BubbleShape> = {
 
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     applyLocalSpace(ctx, rect, shape.rotation, () => {
+      const outline = combineBeakAndOutline(shape);
+      ctx.strokeStyle = "yellow";
+      ctx.beginPath();
+      applyCurvePath(ctx, outline.path, outline.curves);
+      ctx.stroke();
+
       const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
       const [p, q] = getBeakRoots(shape);
       ctx.strokeStyle = "green";
+      ctx.lineWidth = 0.4;
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(beakTip.x, beakTip.y);
       ctx.lineTo(q.x, q.y);
       ctx.stroke();
 
-      getBeakIntersections(shape).forEach((p) => {
-        ctx.fillStyle = "red";
+      getBeakIntersections(shape).forEach((p, i) => {
+        ctx.fillStyle = i === 0 ? "red" : "green";
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2, 0, TAU);
         ctx.fill();
@@ -116,6 +138,14 @@ function getCornerRadius(shape: BubbleShape): IVec2 {
   };
 }
 
+/**
+ * Returned roots and the tip always keep the below formation.
+ *   root 0
+ *          \
+ *            tip
+ *          /
+ *   root 1
+ */
 function getBeakRoots(shape: BubbleShape): [IVec2, IVec2] {
   const c = { x: shape.width / 2, y: shape.height / 2 };
   const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
@@ -156,6 +186,144 @@ function getBeakIntersections(shape: BubbleShape): IVec2[] {
     const closestCross = pickMinItem(candidates, (p) => getD2(sub(p, beakTip)));
     if (closestCross) ret.push(closestCross);
   });
+
+  return ret;
+}
+
+function combineBeakAndOutline(shape: BubbleShape): { path: IVec2[]; curves: (BezierCurveControl | undefined)[] } {
+  const path = getPath(shape);
+  const curves = getCurves(shape);
+  const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
+  const roots = getBeakRoots(shape);
+
+  type Cross = [IVec2, index0: number, t?: number];
+  let cross0: Cross | undefined;
+  let cross1: Cross | undefined;
+
+  roots.forEach((root) => {
+    const beakSeg: ISegment = [beakTip, root];
+    const candidates: [IVec2, index0: number, t?: number][] = [];
+
+    for (let i = 0; i < path.length - 1; i++) {
+      const seg: ISegment = [path[i], path[i + 1]];
+      const c = curves[i];
+      if (c) {
+        candidates.push(
+          ...getCrossSegAndBezier3WithT(beakSeg, [seg[0], c.c1, c.c2, seg[1]]).map<[IVec2, number, number]>(
+            ([p, t]) => [p, i, t],
+          ),
+        );
+      } else {
+        const cross = getCrossSegAndSeg(beakSeg, seg);
+        if (cross) candidates.push([cross, i]);
+      }
+    }
+
+    const closestCross = pickMinItem(candidates, ([p]) => getD2(sub(p, beakTip)));
+    if (closestCross) {
+      if (!cross0) {
+        cross0 = closestCross;
+      } else {
+        cross1 = closestCross;
+      }
+    }
+  });
+
+  if (!cross0 || !cross1) return { path, curves };
+
+  const ret: { path: IVec2[]; curves: (BezierCurveControl | undefined)[] } = { path: [], curves: [] };
+
+  if (cross0[1] === cross1[1]) {
+    // When both intersections are on the same segment
+    for (let i = 0; i < path.length - 1; i++) {
+      const p = path[i];
+      const q = path[i + 1];
+      const c = curves[i];
+
+      ret.path.push(p);
+
+      if (i === cross0[1]) {
+        if (c && cross0[2] !== undefined && cross1[2] !== undefined) {
+          const [b0] = divideBezier3([p, c.c1, c.c2, q], cross0[2]);
+          ret.curves.push({ c1: b0[1], c2: b0[2] });
+          ret.path.push(cross0[0]);
+          ret.curves.push(undefined);
+          ret.path.push(beakTip);
+          ret.curves.push(undefined);
+
+          const [, d1] = divideBezier3([p, c.c1, c.c2, q], cross1[2]);
+          ret.path.push(cross1[0]);
+          ret.curves.push({ c1: d1[1], c2: d1[2] });
+        } else {
+          ret.curves.push(undefined);
+          ret.path.push(cross0[0]);
+          ret.curves.push(undefined);
+          ret.path.push(beakTip);
+          ret.curves.push(undefined);
+          ret.path.push(cross1[0]);
+          ret.curves.push(undefined);
+        }
+      } else {
+        ret.curves.push(c);
+      }
+
+      if (i === path.length - 2) {
+        ret.path.push(q);
+      }
+    }
+  } else {
+    // When each intersection is on the deferrent segment
+    let insideBeak = false;
+
+    // New path may have extra redundant point.
+    // => FIXME: Because of technical reason for redarding intersections over segments.
+    for (let i = 0; i < path.length; i++) {
+      const adjustedIndex = i + cross0[1];
+      const realIndex = adjustedIndex % path.length;
+      const realNextIndex = (adjustedIndex + 1) % path.length;
+      const p = path[realIndex];
+      const q = path[realNextIndex];
+      const c = curves[realIndex];
+
+      if (realIndex === cross0[1]) {
+        ret.path.push(p);
+        if (c && cross0[2] !== undefined) {
+          const [b0] = divideBezier3([p, c.c1, c.c2, q], cross0[2]);
+          ret.curves.push({ c1: b0[1], c2: b0[2] });
+          ret.path.push(cross0[0]);
+          ret.curves.push(undefined);
+          ret.path.push(beakTip);
+          ret.curves.push(undefined);
+        } else {
+          ret.curves.push(undefined);
+          ret.path.push(cross0[0]);
+          ret.curves.push(undefined);
+          ret.path.push(beakTip);
+          ret.curves.push(undefined);
+        }
+        insideBeak = true;
+      } else if (realIndex === cross1[1]) {
+        ret.path.push(cross1[0]);
+
+        if (c && cross1[2] !== undefined) {
+          const [, d1] = divideBezier3([p, c.c1, c.c2, q], cross1[2]);
+          ret.curves.push({ c1: d1[1], c2: d1[2] });
+        } else {
+          ret.curves.push(undefined);
+        }
+        insideBeak = false;
+      } else if (insideBeak) {
+        // Skip segments covered by beak.
+      } else {
+        ret.path.push(p);
+        ret.curves.push(c);
+      }
+
+      if (i === path.length - 1) {
+        ret.path.push(q);
+      }
+    }
+  }
 
   return ret;
 }
