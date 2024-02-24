@@ -18,7 +18,7 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { BezierCurveControl } from "../../models";
 import { applyCurvePath, applyLocalSpace } from "../../utils/renderer";
-import { ISegment, TAU, getCrossSegAndSeg, getD2 } from "../../utils/geometry";
+import { ISegment, TAU, extendSegment, getCrossSegAndSeg, getD2 } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
 
 export type BubbleShape = SimplePolygonShape & {
@@ -221,7 +221,8 @@ function combineBeakAndOutline(shape: BubbleShape): { path: IVec2[]; curves: (Be
   let cross1: Cross | undefined;
 
   roots.forEach((root) => {
-    const beakSeg: ISegment = [beakTip, root];
+    // Extending this segment is harmless and allows more flexible intersections.
+    const beakSeg = extendSegment([beakTip, root], 2);
     const candidates: [IVec2, index0: number, t?: number][] = [];
 
     for (let i = 0; i < path.length - 1; i++) {
