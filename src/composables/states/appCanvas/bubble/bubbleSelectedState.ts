@@ -11,7 +11,7 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { getLocalBeakControls, newBubbleHandler } from "../../../shapeHandlers/bubbleHandler";
+import { getLocalBeakControls, getLocalCornerControl, newBubbleHandler } from "../../../shapeHandlers/bubbleHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   getLocalAbsolutePoint,
@@ -88,20 +88,28 @@ export function newBubbleSelectedState(): AppCanvasState {
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalBeakControls(s).size),
                         disableSnap: true,
                       });
-                  case "cornerC":
+                  case "cornerXC":
                     return () =>
                       movingShapeControlState<BubbleShape>({
                         targetId: targetShape.id,
                         patchFn: (s, p) => {
                           const rate = getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p));
-                          return {
-                            cornerC: {
-                              x: clamp(0, 0.5, rate.x),
-                              y: clamp(0, 0.5, rate.y),
-                            },
-                          };
+                          return { cornerC: { x: clamp(0, 0.5, rate.x), y: s.cornerC.y } };
                         },
-                        getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.cornerC)),
+                        getControlFn: (s, scale) =>
+                          applyAffine(getShapeTransform(s), getLocalCornerControl(s, scale)[0]),
+                        disableSnap: true,
+                      });
+                  case "cornerYC":
+                    return () =>
+                      movingShapeControlState<BubbleShape>({
+                        targetId: targetShape.id,
+                        patchFn: (s, p) => {
+                          const rate = getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p));
+                          return { cornerC: { x: s.cornerC.x, y: clamp(0, 0.5, rate.y) } };
+                        },
+                        getControlFn: (s, scale) =>
+                          applyAffine(getShapeTransform(s), getLocalCornerControl(s, scale)[1]),
                         disableSnap: true,
                       });
                   default:

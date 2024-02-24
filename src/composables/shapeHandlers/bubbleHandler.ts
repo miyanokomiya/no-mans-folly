@@ -1,4 +1,4 @@
-import { IVec2, applyAffine, getDistance, getRadian, rotate } from "okageo";
+import { IVec2, add, applyAffine, getDistance, getRadian, rotate } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
@@ -10,7 +10,7 @@ import { getLocalAbsolutePoint, getShapeDetransform } from "../../shapes/simpleP
 
 const ANCHOR_SIZE = 6;
 
-type AnchorType = "beakTipC" | "beakSizeC" | "cornerC";
+type AnchorType = "beakTipC" | "beakSizeC" | "cornerXC" | "cornerYC";
 
 interface BubbleHitResult {
   type: AnchorType;
@@ -28,7 +28,6 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
   const detransform = getShapeDetransform(shape);
 
   const { tip: beakTipC, size: beakSizeC } = getLocalBeakControls(shape);
-  const cornerC = getLocalAbsolutePoint(shape, shape.cornerC);
 
   function hitTest(p: IVec2, scale = 1): BubbleHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -40,19 +39,26 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
     if (getDistance(beakSizeC, adjustedP) <= threshold) {
       return { type: "beakSizeC" };
     }
-    if (getDistance(cornerC, adjustedP) <= threshold) {
-      return { type: "cornerC" };
+
+    const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
+    if (getDistance(cornerXC, adjustedP) <= threshold) {
+      return { type: "cornerXC" };
+    }
+    if (getDistance(cornerYC, adjustedP) <= threshold) {
+      return { type: "cornerYC" };
     }
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BubbleHitResult) {
     const threshold = ANCHOR_SIZE * scale;
+    const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       (
         [
           [beakTipC, hitResult?.type === "beakTipC"],
           [beakSizeC, hitResult?.type === "beakSizeC"],
-          [cornerC, hitResult?.type === "cornerC"],
+          [cornerXC, hitResult?.type === "cornerXC"],
+          [cornerYC, hitResult?.type === "cornerYC"],
         ] as const
       ).forEach(([p, highlight]) => {
         if (highlight) {
@@ -101,4 +107,11 @@ export function getLocalBeakControls(shape: BubbleShape): { tip: IVec2; size: IV
     tip: beakTipC,
     size: rotate({ x: shape.width / 2 + getBeakSize(shape), y: shape.height / 2 }, beakRad - Math.PI / 2, localCenter),
   };
+}
+
+export function getLocalCornerControl(shape: BubbleShape, scale: number): [IVec2, IVec2] {
+  const margin = 16 * scale;
+  const cornerXC = add(getLocalAbsolutePoint(shape, { x: shape.cornerC.x, y: 0 }), { x: 0, y: -margin });
+  const cornerYC = add(getLocalAbsolutePoint(shape, { x: 0, y: shape.cornerC.y }), { x: -margin, y: 0 });
+  return [cornerXC, cornerYC];
 }

@@ -17,7 +17,7 @@ interface Option<T extends Shape> {
   /**
    * Should return a point in the global space.
    */
-  getControlFn: (s: T) => IVec2;
+  getControlFn: (s: T, scale: number) => IVec2;
   disableSnap?: boolean;
 }
 
@@ -73,7 +73,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
     },
     render: (ctx, renderCtx) => {
       const tmpShape: T = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
-      const control = option.getControlFn(tmpShape);
+      const control = option.getControlFn(tmpShape, ctx.getScale());
       applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
       renderCtx.beginPath();
       renderCtx.arc(control.x, control.y, 6 * ctx.getScale(), 0, TAU);
