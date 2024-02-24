@@ -10,6 +10,7 @@ import { getLocalAbsolutePoint, getShapeDetransform, getShapeTransform } from ".
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 const ANCHOR_SIZE = 6;
+const ANCHOR_SIZE_L = 10;
 
 type AnchorType = "beakTipC" | "beakOriginC" | "beakSizeC" | "cornerXC" | "cornerYC";
 
@@ -32,16 +33,17 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
 
   function hitTest(p: IVec2, scale = 1): BubbleHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
+    const thresholdL = ANCHOR_SIZE_L * scale;
     const adjustedP = applyAffine(detransform, p);
 
-    if (getDistance(beakTipC, adjustedP) <= threshold) {
-      return { type: "beakTipC" };
-    }
-    if (getDistance(beakOriginC, adjustedP) <= threshold) {
-      return { type: "beakOriginC" };
-    }
     if (getDistance(beakSizeC, adjustedP) <= threshold) {
       return { type: "beakSizeC" };
+    }
+    if (getDistance(beakTipC, adjustedP) <= thresholdL) {
+      return { type: "beakTipC" };
+    }
+    if (getDistance(beakOriginC, adjustedP) <= thresholdL) {
+      return { type: "beakOriginC" };
     }
 
     const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
@@ -55,17 +57,18 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BubbleHitResult) {
     const threshold = ANCHOR_SIZE * scale;
+    const thresholdL = ANCHOR_SIZE_L * scale;
     const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       (
         [
-          [beakTipC, hitResult?.type === "beakTipC"],
-          [beakOriginC, hitResult?.type === "beakOriginC"],
+          [beakOriginC, hitResult?.type === "beakOriginC", thresholdL],
+          [beakTipC, hitResult?.type === "beakTipC", thresholdL],
           [beakSizeC, hitResult?.type === "beakSizeC"],
           [cornerXC, hitResult?.type === "cornerXC"],
           [cornerYC, hitResult?.type === "cornerYC"],
         ] as const
-      ).forEach(([p, highlight]) => {
+      ).forEach(([p, highlight, size = threshold]) => {
         if (highlight) {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
         } else {
@@ -73,7 +76,7 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
         }
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, threshold, 0, TAU);
+        ctx.arc(p.x, p.y, size, 0, TAU);
         ctx.fill();
       });
     });

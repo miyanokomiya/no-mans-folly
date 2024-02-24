@@ -150,8 +150,12 @@ function getCornerRadius(shape: BubbleShape): IVec2 {
 }
 
 export function getBeakSize(shape: BubbleShape): number {
+  return getMaxBeakSize(shape) * shape.beakSizeRate;
+}
+
+export function getMaxBeakSize(shape: BubbleShape): number {
   // Avoid getting close to the maximam because intersection calculation is a bit of edge sensitive.
-  return (Math.min(shape.width, shape.height) / 2) * 0.99 * shape.beakSizeRate;
+  return (Math.min(shape.width, shape.height) / 2) * 0.99;
 }
 
 /**
@@ -163,7 +167,7 @@ export function getBeakSize(shape: BubbleShape): number {
  *   root 1
  */
 function getBeakRoots(shape: BubbleShape): [IVec2, IVec2] {
-  const c = getLocalAbsolutePoint(shape, shape.beakOriginC)
+  const c = getLocalAbsolutePoint(shape, shape.beakOriginC);
   const beakTip = { x: shape.width * shape.beakTipC.x, y: shape.height * shape.beakTipC.y };
   const radius = getBeakSize(shape);
   const d = getDistance(beakTip, c);

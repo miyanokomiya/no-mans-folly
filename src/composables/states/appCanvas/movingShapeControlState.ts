@@ -57,7 +57,8 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          snappingResult = event.data.ctrl || !option.snapType ? undefined : shapeSnapping.testPoint(point);
+          snappingResult =
+            event.data.ctrl || option.snapType === "disabled" ? undefined : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
           const patch = option.patchFn(targetShape, p);
           const shapeComposite = ctx.getShapeComposite();

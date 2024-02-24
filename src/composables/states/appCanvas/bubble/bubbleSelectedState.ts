@@ -25,7 +25,7 @@ import {
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
 import { applyAffine, clamp, getDistance, getPedal, isOnSeg, rotate } from "okageo";
-import { BubbleShape, getBeakSize } from "../../../../shapes/polygons/bubble";
+import { BubbleShape, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 
 export function newBubbleSelectedState(): AppCanvasState {
@@ -101,7 +101,7 @@ export function newBubbleSelectedState(): AppCanvasState {
                           const sizeSeg = [rotate(tip, -Math.PI / 2, beakOrigin), beakOrigin];
                           const localPedal = getPedal(applyAffine(detransform, p), sizeSeg);
                           const nextSize = isOnSeg(localPedal, sizeSeg) ? getDistance(localPedal, beakOrigin) : 0;
-                          const baseSize = getBeakSize(s) / s.beakSizeRate;
+                          const baseSize = getMaxBeakSize(s);
                           const nextRate = clamp(0, 1, nextSize / baseSize);
                           return { beakSizeRate: nextRate };
                         },
