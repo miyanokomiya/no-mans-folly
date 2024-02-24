@@ -176,14 +176,16 @@ function combineBeakAndOutline(shape: BubbleShape): { path: IVec2[]; curves: (Be
   const path = getPath(shape);
   const curves = getCurves(shape);
   const { tip: beakTip, roots } = getBeakControls(shape);
+  const longSegmentSize = Math.max(shape.width, shape.height);
 
   type Cross = [IVec2, index0: number, t?: number];
   let cross0: Cross | undefined;
   let cross1: Cross | undefined;
 
-  roots.forEach((root) => {
-    // Extending this segment is harmless and allows more flexible intersections.
-    const beakSeg = extendSegment([beakTip, root], 2);
+  for (let k = 0; k < roots.length; k++) {
+    const root = roots[k];
+    // Extending this segment long enough to intersect all candidate segments.
+    const beakSeg = extendSegment([beakTip, root], 1 + longSegmentSize);
     const candidates: [IVec2, index0: number, t?: number][] = [];
 
     for (let i = 0; i < path.length - 1; i++) {
@@ -201,6 +203,9 @@ function combineBeakAndOutline(shape: BubbleShape): { path: IVec2[]; curves: (Be
       }
     }
 
+    // When the number of candidates is less than 2, the tip is within the shape.
+    if (candidates.length < 2) return { path, curves };
+
     const closestCross = pickMinItem(candidates, ([p]) => getD2(sub(p, beakTip)));
     if (closestCross) {
       if (!cross0) {
@@ -209,7 +214,7 @@ function combineBeakAndOutline(shape: BubbleShape): { path: IVec2[]; curves: (Be
         cross1 = closestCross;
       }
     }
-  });
+  }
 
   if (!cross0 || !cross1) return { path, curves };
 
