@@ -14,9 +14,17 @@ import { ShapeStruct, createBaseShape } from "../core";
 import { SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
-import { createStrokeStyle } from "../../utils/strokeStyle";
+import { createStrokeStyle, getStrokeWidth } from "../../utils/strokeStyle";
 import { BezierCurveControl } from "../../models";
-import { ISegment, extendSegment, getCrossSegAndSeg, getD2 } from "../../utils/geometry";
+import {
+  ISegment,
+  expandRect,
+  extendSegment,
+  getCrossSegAndSeg,
+  getD2,
+  getRotatedWrapperRect,
+  getWrapperRect,
+} from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
 
 export type BubbleShape = SimplePolygonShape & {
@@ -63,6 +71,15 @@ export const struct: ShapeStruct<BubbleShape> = {
       beakSizeRate: arg.beakSizeRate ?? 0.5,
       cornerC: arg.cornerC ?? { x: 0.2, y: 0.2 },
     };
+  },
+  getWrapperRect(shape, _, includeBounds) {
+    let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    if (includeBounds) {
+      const beakTip = getLocalAbsolutePoint(shape, shape.beakTipC);
+      const beakTipRect = { x: shape.p.x + beakTip.x, y: shape.p.y + beakTip.y, width: 0, height: 0 };
+      rect = expandRect(getWrapperRect([rect, beakTipRect]), getStrokeWidth(shape.stroke) / 2);
+    }
+    return getRotatedWrapperRect(rect, shape.rotation);
   },
   getTextRangeRect(shape) {
     const radius = getCornerRadius(shape);
