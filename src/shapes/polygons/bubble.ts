@@ -65,12 +65,15 @@ export const struct: ShapeStruct<BubbleShape> = {
     };
   },
   getTextRangeRect(shape) {
-    const { x: rx, y: ry } = getCornerRadius(shape);
+    const radius = getCornerRadius(shape);
+    const r = Math.atan(radius.y / radius.x);
+    const rx = (1 - Math.cos(r)) * radius.x;
+    const ry = (1 - Math.sin(r)) * radius.y;
     const rect = {
-      x: shape.p.x + rx / 2,
-      y: shape.p.y + ry / 2,
-      width: shape.width - rx,
-      height: shape.height - ry,
+      x: shape.p.x + rx,
+      y: shape.p.y + ry,
+      width: shape.width - rx * 2,
+      height: shape.height - ry * 2,
     };
     return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
   },
@@ -93,12 +96,14 @@ function getPath(shape: BubbleShape): IVec2[] {
   ];
 }
 
-function getCurves(shape: BubbleShape): (BezierCurveControl | undefined)[] {
+function getCornerValue(shape: BubbleShape): IVec2 {
   const { x: rx, y: ry } = getCornerRadius(shape);
   const rate = 0.44772; // Magic value to approximate border-radius via cubic-bezier
-  const bx = rx * rate;
-  const by = ry * rate;
+  return { x: rx * rate, y: ry * rate };
+}
 
+function getCurves(shape: BubbleShape): (BezierCurveControl | undefined)[] {
+  const { x: bx, y: by } = getCornerValue(shape);
   return [
     undefined,
     { c1: { x: shape.width - bx, y: 0 }, c2: { x: shape.width, y: by } },
