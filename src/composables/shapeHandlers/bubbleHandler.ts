@@ -137,6 +137,15 @@ export function renderBeakGuidlines(
     color: style.selectionSecondaly,
     width: 2 * scale,
   });
+
+  if (getDistance(tip, origin) < radius) {
+    // Cannot make a beak when its tip is within the arc.
+    renderCtx.beginPath();
+    renderCtx.arc(origin.x, origin.y, radius, 0, TAU);
+    renderCtx.stroke();
+    return;
+  }
+
   renderCtx.beginPath();
   renderCtx.moveTo(tip.x, tip.y);
   renderCtx.lineTo(root0.x, root0.y);
