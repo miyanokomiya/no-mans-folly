@@ -261,3 +261,17 @@ export function getShapeDetransform(shape: SimplePolygonShape): AffineMatrix {
     [1, 0, 0, 1, -center.x, -center.y],
   ]);
 }
+
+export function getLocalAbsolutePoint(shape: SimplePolygonShape, relativeRate: IVec2): IVec2 {
+  return {
+    x: shape.width * relativeRate.x,
+    y: shape.height * relativeRate.y,
+  };
+}
+
+export function getLocalRelativeRate(shape: SimplePolygonShape, absP: IVec2): IVec2 {
+  return {
+    x: absP.x / shape.width,
+    y: absP.y / shape.height,
+  };
+}
