@@ -146,11 +146,11 @@ export function renderBeakGuidlines(
     renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
     renderCtx.closePath();
     renderCtx.stroke();
-  });
 
-  if (showRootGuid) {
-    renderRootGuid(renderCtx, style, scale, origin, tip, root0);
-  }
+    if (showRootGuid) {
+      renderRootGuid(renderCtx, style, scale, origin, tip, root0);
+    }
+  });
 }
 
 function renderRootGuid(

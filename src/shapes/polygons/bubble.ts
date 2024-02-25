@@ -1,4 +1,4 @@
-import { IVec2, MINVALUE, add, getDistance, getUnit, multi, rotate, sub } from "okageo";
+import { IVec2, add, getDistance, getUnit, multi, rotate, sub } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import { SimplePath, SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
@@ -139,7 +139,7 @@ export function getBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2
   const beakTip = getLocalAbsolutePoint(shape, shape.beakTipC);
   const radius = getBeakSize(shape);
   const d = getDistance(beakTip, beakOrigin);
-  if (d <= MINVALUE) return { tip: beakTip, origin: beakOrigin, roots: [beakOrigin, beakOrigin] };
+  if (d <= radius) return { tip: beakTip, origin: beakOrigin, roots: [beakOrigin, beakOrigin] };
 
   const r = Math.asin(radius / d);
   const unit = getUnit(sub(beakOrigin, beakTip));
