@@ -94,11 +94,14 @@ export function newBubbleSelectedState(): AppCanvasState {
                         targetId: targetShape.id,
                         patchFn: (s, p) => {
                           const detransform = getShapeDetransform(s);
-                          const { origin: beakOrigin, roots } = getBeakControls(s);
-                          const guideLine = [beakOrigin, roots[0]];
+                          const {
+                            origin: beakOrigin,
+                            roots: [maxSizeRoot],
+                          } = getBeakControls({ ...s, beakSizeRate: 1 });
+                          const guideLine = [beakOrigin, maxSizeRoot];
                           const localPedal = getPedal(applyAffine(detransform, p), guideLine);
-                          const maxSize = getMaxBeakSize(s);
                           const isValid = getInner(sub(guideLine[1], guideLine[0]), sub(localPedal, guideLine[0])) >= 0;
+                          const maxSize = getMaxBeakSize(s);
                           const nextSize = isValid ? getDistance(localPedal, beakOrigin) : 0;
                           const nextRate = clamp(0, 1, nextSize / maxSize);
                           return { beakSizeRate: nextRate };
