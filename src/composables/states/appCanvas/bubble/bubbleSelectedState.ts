@@ -11,7 +11,12 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { getLocalCornerControl, newBubbleHandler, renderBeakGuidlines } from "../../../shapeHandlers/bubbleHandler";
+import {
+  getLocalCornerControl,
+  newBubbleHandler,
+  renderBeakGuidlines,
+  renderCornerGuidlines,
+} from "../../../shapeHandlers/bubbleHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   getLocalAbsolutePoint,
@@ -140,6 +145,9 @@ export function newBubbleSelectedState(): AppCanvasState {
                         },
                         getControlFn: (s, scale) =>
                           applyAffine(getShapeTransform(s), getLocalCornerControl(s, scale)[0]),
+                        renderFn: (stateCtx, renderCtx, latestShape) => {
+                          renderCornerGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale());
+                        },
                         snapType: "disabled",
                       });
                   case "cornerYC":
@@ -152,6 +160,9 @@ export function newBubbleSelectedState(): AppCanvasState {
                         },
                         getControlFn: (s, scale) =>
                           applyAffine(getShapeTransform(s), getLocalCornerControl(s, scale)[1]),
+                        renderFn: (stateCtx, renderCtx, latestShape) => {
+                          renderCornerGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale());
+                        },
                         snapType: "disabled",
                       });
                   default:

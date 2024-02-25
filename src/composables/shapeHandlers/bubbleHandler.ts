@@ -85,6 +85,10 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
         renderRootGuid(ctx, style, scale, beakOriginC, beakTipC, beakSizeC);
       }
     });
+
+    if (hitResult?.type === "cornerXC" || hitResult?.type === "cornerYC") {
+      renderCornerGuidlines(ctx, shape, style, scale);
+    }
   }
 
   return {
@@ -171,4 +175,25 @@ function renderRootGuid(
   renderCtx.beginPath();
   renderCtx.arc(origin.x, origin.y, 4 * scale, 0, TAU, true);
   renderCtx.fill();
+}
+
+export function renderCornerGuidlines(
+  renderCtx: CanvasRenderingContext2D,
+  shape: BubbleShape,
+  style: StyleScheme,
+  scale: number,
+) {
+  applyStrokeStyle(renderCtx, {
+    color: style.selectionSecondaly,
+    width: 2 * scale,
+    dash: "short",
+  });
+
+  const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+  applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
+    const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
+    renderCtx.beginPath();
+    renderCtx.rect(0, 0, cornerXC.x, cornerYC.y);
+    renderCtx.stroke();
+  });
 }
