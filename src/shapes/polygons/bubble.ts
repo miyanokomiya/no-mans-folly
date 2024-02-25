@@ -89,6 +89,7 @@ function getPath(shape: BubbleShape): SimplePath {
       { x: rx, y: shape.height },
       { x: 0, y: shape.height - ry },
       { x: 0, y: ry },
+      { x: rx, y: 0 },
     ],
     curves: [
       undefined,
