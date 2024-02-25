@@ -1,31 +1,13 @@
-import {
-  IVec2,
-  MINVALUE,
-  add,
-  divideBezier3,
-  getCrossSegAndBezier3WithT,
-  getDistance,
-  getUnit,
-  multi,
-  rotate,
-  sub,
-} from "okageo";
+import { IVec2, MINVALUE, add, divideBezier3, getDistance, getUnit, multi, rotate, sub } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import { SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle, getStrokeWidth } from "../../utils/strokeStyle";
 import { BezierCurveControl } from "../../models";
-import {
-  ISegment,
-  expandRect,
-  extendSegment,
-  getCrossSegAndSeg,
-  getD2,
-  getRotatedWrapperRect,
-  getWrapperRect,
-} from "../../utils/geometry";
+import { expandRect, extendSegment, getD2, getRotatedWrapperRect, getWrapperRect } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
+import { BezierPath, PathLocation, getCrossBezierPathAndSegment } from "../../utils/path";
 
 export type BubbleShape = SimplePolygonShape & {
   /**
@@ -172,53 +154,34 @@ export function getBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2
   return { tip: beakTip, origin: beakOrigin, roots: [root0, root1] };
 }
 
-function combineBeakAndOutline(shape: BubbleShape): { path: IVec2[]; curves: (BezierCurveControl | undefined)[] } {
+function combineBeakAndOutline(shape: BubbleShape): BezierPath {
   const path = getPath(shape);
   const curves = getCurves(shape);
   const { tip: beakTip, roots } = getBeakControls(shape);
   const longSegmentSize = Math.max(shape.width, shape.height);
 
-  type Cross = [IVec2, index0: number, t?: number];
-  let cross0: Cross | undefined;
-  let cross1: Cross | undefined;
+  const intersections: PathLocation[] = [];
 
   for (let k = 0; k < roots.length; k++) {
     const root = roots[k];
-    // Extending this segment long enough to intersect all candidate segments.
+    // Extending this segment long enough to intersect all candidate segments of the path.
     const beakSeg = extendSegment([beakTip, root], 1 + longSegmentSize);
-    const candidates: [IVec2, index0: number, t?: number][] = [];
-
-    for (let i = 0; i < path.length - 1; i++) {
-      const seg: ISegment = [path[i], path[i + 1]];
-      const c = curves[i];
-      if (c) {
-        candidates.push(
-          ...getCrossSegAndBezier3WithT(beakSeg, [seg[0], c.c1, c.c2, seg[1]]).map<[IVec2, number, number]>(
-            ([p, t]) => [p, i, t],
-          ),
-        );
-      } else {
-        const cross = getCrossSegAndSeg(beakSeg, seg);
-        if (cross) candidates.push([cross, i]);
-      }
-    }
+    const candidates = getCrossBezierPathAndSegment({ path, curves }, beakSeg);
 
     // When the number of candidates is less than 2, the tip is within the shape.
+    // => Needless to make a beak.
     if (candidates.length < 2) return { path, curves };
 
     const closestCross = pickMinItem(candidates, ([p]) => getD2(sub(p, beakTip)));
     if (closestCross) {
-      if (!cross0) {
-        cross0 = closestCross;
-      } else {
-        cross1 = closestCross;
-      }
+      intersections.push(closestCross);
     }
   }
 
-  if (!cross0 || !cross1) return { path, curves };
+  if (intersections.length < 2) return { path, curves };
 
-  const ret: { path: IVec2[]; curves: (BezierCurveControl | undefined)[] } = { path: [], curves: [] };
+  const [cross0, cross1] = intersections;
+  const ret: BezierPath = { path: [], curves: [] };
 
   if (cross0[1] === cross1[1]) {
     // When both intersections are on the same segment
