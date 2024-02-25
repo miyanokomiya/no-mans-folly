@@ -171,11 +171,7 @@ function combineBeakAndOutline(shape: BubbleShape): BezierPath {
     // When the number of candidates is less than 2, the tip is within the shape.
     // => Needless to make a beak.
     if (candidates.length < 2) return bezierPath;
-
-    const closestCross = pickMinItem(candidates, ([p]) => getD2(sub(p, beakTip)));
-    if (closestCross) {
-      intersections.push(closestCross);
-    }
+    intersections.push(pickMinItem(candidates, ([p]) => getD2(sub(p, beakTip)))!);
   }
 
   if (intersections.length < 2) return bezierPath;
