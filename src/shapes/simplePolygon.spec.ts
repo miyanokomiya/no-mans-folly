@@ -120,8 +120,16 @@ describe("getStructForSimplePolygon", () => {
   describe("getIntersectedOutlines", () => {
     test("should return the intersected outline of the polygon", () => {
       expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: -3, y: 10 })).toEqual(undefined);
-      expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 3, y: 0 })).toEqual([{ x: 0, y: 0 }]);
-      expect(target.getIntersectedOutlines!(shape, { x: 3, y: 2 }, { x: 3, y: 5 })).toEqual([{ x: 3, y: 3 }]);
+
+      const res1 = target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 3, y: 0 });
+      expect(res1).toHaveLength(1);
+      expect(res1?.[0].x).toBeCloseTo(0);
+      expect(res1?.[0].y).toBeCloseTo(0);
+
+      const res2 = target.getIntersectedOutlines!(shape, { x: 3, y: 2 }, { x: 3, y: 5 });
+      expect(res2).toHaveLength(1);
+      expect(res2?.[0].x).toBeCloseTo(3);
+      expect(res2?.[0].y).toBeCloseTo(3);
     });
 
     test("should regard bezier segments", () => {

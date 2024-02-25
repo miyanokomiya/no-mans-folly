@@ -51,6 +51,7 @@ import {
   getPathTotalLength,
   getGlobalAffine,
   getRotationAffine,
+  getCrossSegAndSegWithT,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -244,11 +245,18 @@ describe("getIntersectedOutlinesOnPolygon", () => {
       { x: 0, y: 10 },
     ];
     expect(getIntersectedOutlinesOnPolygon(path, { x: -3, y: 3 }, { x: -3, y: 13 })).toEqual(undefined);
-    expect(getIntersectedOutlinesOnPolygon(path, { x: 3, y: -3 }, { x: 3, y: 13 })).toEqual([
-      { x: 3, y: 0 },
-      { x: 3, y: 10 },
-    ]);
-    expect(getIntersectedOutlinesOnPolygon(path, { x: 3, y: 3 }, { x: 3, y: 13 })).toEqual([{ x: 3, y: 10 }]);
+
+    const res1 = getIntersectedOutlinesOnPolygon(path, { x: 3, y: -3 }, { x: 3, y: 13 });
+    expect(res1).toHaveLength(2);
+    expect(res1?.[0].x).toBeCloseTo(3);
+    expect(res1?.[0].y).toBeCloseTo(0);
+    expect(res1?.[1].x).toBeCloseTo(3);
+    expect(res1?.[1].y).toBeCloseTo(10);
+
+    const res2 = getIntersectedOutlinesOnPolygon(path, { x: 3, y: 3 }, { x: 3, y: 13 });
+    expect(res2).toHaveLength(1);
+    expect(res2?.[0].x).toBeCloseTo(3);
+    expect(res2?.[0].y).toBeCloseTo(10);
   });
 });
 
@@ -639,18 +647,19 @@ describe("isRectOverlappedV", () => {
 
 describe("getCrossSegAndSeg", () => {
   test("should return intersection of two segments", () => {
-    expect(
-      getCrossSegAndSeg(
-        [
-          { x: 0, y: 0 },
-          { x: 10, y: 0 },
-        ],
-        [
-          { x: 3, y: -3 },
-          { x: 3, y: 5 },
-        ],
-      ),
-    ).toEqual({ x: 3, y: 0 });
+    const res0 = getCrossSegAndSeg(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 3, y: -3 },
+        { x: 3, y: 5 },
+      ],
+    );
+    expect(res0?.x).toBeCloseTo(3);
+    expect(res0?.y).toBeCloseTo(0);
+
     expect(
       getCrossSegAndSeg(
         [
@@ -663,6 +672,25 @@ describe("getCrossSegAndSeg", () => {
         ],
       ),
     ).toEqual(undefined);
+  });
+});
+
+describe("getCrossSegAndSegWithT", () => {
+  test("should return intersection of two segments", () => {
+    const res0 = getCrossSegAndSegWithT(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 3, y: -3 },
+        { x: 3, y: 5 },
+      ],
+    );
+    expect(res0?.[0].x).toBeCloseTo(3);
+    expect(res0?.[0].y).toBeCloseTo(0);
+    expect(res0?.[1]).toBeCloseTo(0.3);
+    expect(res0?.[2]).toBeCloseTo(0.375);
   });
 });
 

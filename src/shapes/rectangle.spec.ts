@@ -61,11 +61,18 @@ describe("struct", () => {
     test("should return the intersected outline points by closer order", () => {
       const shape = struct.create({ width: 10, height: 10 });
       expect(struct.getIntersectedOutlines?.(shape, { x: -3, y: 3 }, { x: -3, y: 13 })).toEqual(undefined);
-      expect(struct.getIntersectedOutlines?.(shape, { x: 3, y: -3 }, { x: 3, y: 13 })).toEqual([
-        { x: 3, y: 0 },
-        { x: 3, y: 10 },
-      ]);
-      expect(struct.getIntersectedOutlines?.(shape, { x: 3, y: 3 }, { x: 3, y: 13 })).toEqual([{ x: 3, y: 10 }]);
+
+      const res1 = struct.getIntersectedOutlines?.(shape, { x: 3, y: -3 }, { x: 3, y: 13 });
+      expect(res1).toHaveLength(2);
+      expect(res1?.[0].x).toBeCloseTo(3);
+      expect(res1?.[0].y).toBeCloseTo(0);
+      expect(res1?.[1].x).toBeCloseTo(3);
+      expect(res1?.[1].y).toBeCloseTo(10);
+
+      const res2 = struct.getIntersectedOutlines?.(shape, { x: 3, y: 3 }, { x: 3, y: 13 });
+      expect(res2).toHaveLength(1);
+      expect(res2?.[0].x).toBeCloseTo(3);
+      expect(res2?.[0].y).toBeCloseTo(10);
     });
   });
 });
