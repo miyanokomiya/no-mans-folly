@@ -6,7 +6,7 @@ import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { BubbleShape, getBeakControls, getBeakSize } from "../../shapes/polygons/bubble";
 import { applyLocalSpace } from "../../utils/renderer";
-import { getLocalAbsolutePoint, getShapeDetransform, getShapeTransform } from "../../shapes/simplePolygon";
+import { getLocalAbsolutePoint, getShapeDetransform } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 const ANCHOR_SIZE = 6;
@@ -114,36 +114,39 @@ export function renderBeakGuidlines(
   scale: number,
   showRootGuid = false,
 ) {
-  const controls = getBeakControls(shape);
-  const transfrom = getShapeTransform(shape);
-  const radius = getBeakSize(shape);
-
-  const origin = applyAffine(transfrom, controls.origin);
-  const tip = applyAffine(transfrom, controls.tip);
-  const root0 = applyAffine(transfrom, controls.roots[0]);
-  const root1 = applyAffine(transfrom, controls.roots[1]);
-  const size0Radian = getRadian(root0, origin);
-  const size1Radian = getRadian(root1, origin);
-
   applyStrokeStyle(renderCtx, {
     color: style.selectionSecondaly,
     width: 2 * scale,
   });
 
+  const {
+    origin,
+    tip,
+    roots: [root0, root1],
+  } = getBeakControls(shape);
+  const radius = getBeakSize(shape);
+  const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+
   if (getDistance(tip, origin) < radius) {
     // Cannot make a beak when its tip is within the arc.
-    renderCtx.beginPath();
-    renderCtx.arc(origin.x, origin.y, radius, 0, TAU);
-    renderCtx.stroke();
+    applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
+      renderCtx.beginPath();
+      renderCtx.arc(origin.x, origin.y, radius, 0, TAU);
+      renderCtx.stroke();
+    });
     return;
   }
 
-  renderCtx.beginPath();
-  renderCtx.moveTo(tip.x, tip.y);
-  renderCtx.lineTo(root0.x, root0.y);
-  renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
-  renderCtx.closePath();
-  renderCtx.stroke();
+  const size0Radian = getRadian(root0, origin);
+  const size1Radian = getRadian(root1, origin);
+  applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
+    renderCtx.beginPath();
+    renderCtx.moveTo(tip.x, tip.y);
+    renderCtx.lineTo(root0.x, root0.y);
+    renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
+    renderCtx.closePath();
+    renderCtx.stroke();
+  });
 
   if (showRootGuid) {
     renderRootGuid(renderCtx, style, scale, origin, tip, root0);

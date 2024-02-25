@@ -8,6 +8,12 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { Shape } from "../../../models";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 
+export type RenderShapeControlFn<T extends Shape> = (
+  ctx: AppCanvasStateContext,
+  renderCtx: CanvasRenderingContext2D,
+  latestShape: T,
+) => void;
+
 interface Option<T extends Shape> {
   targetId: string;
   /**
@@ -19,7 +25,7 @@ interface Option<T extends Shape> {
    */
   getControlFn: (s: T, scale: number) => IVec2;
   snapType?: "disabled" | "self";
-  renderFn?: (ctx: AppCanvasStateContext, renderCtx: CanvasRenderingContext2D, latestShape: T) => void;
+  renderFn?: RenderShapeControlFn<T>;
 }
 
 export function movingShapeControlState<T extends Shape>(option: Option<T>): AppCanvasState {

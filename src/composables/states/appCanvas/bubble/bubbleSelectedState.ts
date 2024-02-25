@@ -17,14 +17,14 @@ import {
   renderBeakGuidlines,
   renderCornerGuidlines,
 } from "../../../shapeHandlers/bubbleHandler";
-import { movingShapeControlState } from "../movingShapeControlState";
+import { RenderShapeControlFn, movingShapeControlState } from "../movingShapeControlState";
 import {
   getLocalAbsolutePoint,
   getLocalRelativeRate,
   getShapeDetransform,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
-import { applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
+import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
 import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 
@@ -74,15 +74,7 @@ export function newBubbleSelectedState(): AppCanvasState {
                         patchFn: (s, p) => {
                           return { beakTipC: getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p)) };
                         },
-                        renderFn: (stateCtx, renderCtx, latestShape) => {
-                          renderBeakGuidlines(
-                            renderCtx,
-                            latestShape,
-                            stateCtx.getStyleScheme(),
-                            stateCtx.getScale(),
-                            true,
-                          );
-                        },
+                        renderFn: renderBeakControls,
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.beakTipC)),
                       });
                   case "beakOriginC":
@@ -94,45 +86,16 @@ export function newBubbleSelectedState(): AppCanvasState {
                           return { beakOriginC: { x: clamp(0, 1, rate.x), y: clamp(0, 1, rate.y) } };
                         },
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.beakOriginC)),
-                        renderFn: (stateCtx, renderCtx, latestShape) => {
-                          renderBeakGuidlines(
-                            renderCtx,
-                            latestShape,
-                            stateCtx.getStyleScheme(),
-                            stateCtx.getScale(),
-                            true,
-                          );
-                        },
+                        renderFn: renderBeakControls,
                         snapType: "self",
                       });
                   case "beakSizeC":
                     return () =>
                       movingShapeControlState<BubbleShape>({
                         targetId: targetShape.id,
-                        patchFn: (s, p) => {
-                          const detransform = getShapeDetransform(s);
-                          const {
-                            origin: beakOrigin,
-                            roots: [maxSizeRoot],
-                          } = getBeakControls({ ...s, beakSizeRate: 1 });
-                          const guideLine = [beakOrigin, maxSizeRoot];
-                          const localPedal = getPedal(applyAffine(detransform, p), guideLine);
-                          const isValid = getInner(sub(guideLine[1], guideLine[0]), sub(localPedal, guideLine[0])) >= 0;
-                          const maxSize = getMaxBeakSize(s);
-                          const nextSize = isValid ? getDistance(localPedal, beakOrigin) : 0;
-                          const nextRate = clamp(0, 1, nextSize / maxSize);
-                          return { beakSizeRate: nextRate };
-                        },
+                        patchFn: patchBeakSize,
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getBeakControls(s).roots[0]),
-                        renderFn: (stateCtx, renderCtx, latestShape) => {
-                          renderBeakGuidlines(
-                            renderCtx,
-                            latestShape,
-                            stateCtx.getStyleScheme(),
-                            stateCtx.getScale(),
-                            true,
-                          );
-                        },
+                        renderFn: renderBeakControls,
                         snapType: "disabled",
                       });
                   case "cornerXC":
@@ -249,4 +212,23 @@ export function newBubbleSelectedState(): AppCanvasState {
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
+}
+
+const renderBeakControls: RenderShapeControlFn<BubbleShape> = (stateCtx, renderCtx, latestShape) => {
+  renderBeakGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale(), true);
+};
+
+function patchBeakSize(shape: BubbleShape, p: IVec2): Partial<BubbleShape> {
+  const detransform = getShapeDetransform(shape);
+  const {
+    origin: beakOrigin,
+    roots: [maxSizeRoot],
+  } = getBeakControls({ ...shape, beakSizeRate: 1 });
+  const guideLine = [beakOrigin, maxSizeRoot];
+  const localPedal = getPedal(applyAffine(detransform, p), guideLine);
+  const isValid = getInner(sub(guideLine[1], guideLine[0]), sub(localPedal, guideLine[0])) >= 0;
+  const maxSize = getMaxBeakSize(shape);
+  const nextSize = isValid ? getDistance(localPedal, beakOrigin) : 0;
+  const nextRate = clamp(0, 1, nextSize / maxSize);
+  return { beakSizeRate: nextRate };
 }
