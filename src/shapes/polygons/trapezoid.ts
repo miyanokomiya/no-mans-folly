@@ -1,6 +1,6 @@
 import { IVec2 } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePolygonShape, getStructForSimplePolygon } from "../simplePolygon";
+import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
@@ -27,7 +27,7 @@ export const struct: ShapeStruct<TrapezoidShape> = {
     };
   },
   getTextRangeRect(shape) {
-    const path = getPath(shape);
+    const { path } = getPath(shape);
     const innerLeft = Math.max(path[0].x, path[3].x);
     const innerRight = Math.min(path[1].x, path[2].x);
     const rect = {
@@ -41,11 +41,13 @@ export const struct: ShapeStruct<TrapezoidShape> = {
   canAttachSmartBranch: true,
 };
 
-function getPath(shape: TrapezoidShape): IVec2[] {
-  return [
-    { x: shape.width * shape.c0.x, y: shape.height * shape.c0.y },
-    { x: shape.width * shape.c1.x, y: shape.height * shape.c1.y },
-    { x: shape.width, y: shape.height },
-    { x: 0, y: shape.height },
-  ];
+function getPath(shape: TrapezoidShape): SimplePath {
+  return {
+    path: [
+      { x: shape.width * shape.c0.x, y: shape.height * shape.c0.y },
+      { x: shape.width * shape.c1.x, y: shape.height * shape.c1.y },
+      { x: shape.width, y: shape.height },
+      { x: 0, y: shape.height },
+    ],
+  };
 }

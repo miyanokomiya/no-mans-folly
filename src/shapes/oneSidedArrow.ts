@@ -1,6 +1,11 @@
 import { IRectangle, IVec2, add, multi, rotate, sub } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
-import { SimplePolygonShape, getNormalizedSimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
+import {
+  SimplePath,
+  SimplePolygonShape,
+  getNormalizedSimplePolygonShape,
+  getStructForSimplePolygon,
+} from "./simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
@@ -76,7 +81,7 @@ export const struct: ShapeStruct<OneSidedArrowShape> = {
   },
 };
 
-function getPath(src: OneSidedArrowShape): IVec2[] {
+function getPath(src: OneSidedArrowShape): SimplePath {
   const shape = getNormalizedSimplePolygonShape(src);
   const halfWidth = shape.width / 2;
   const halfHeight = shape.height / 2;
@@ -99,7 +104,7 @@ function getPath(src: OneSidedArrowShape): IVec2[] {
   ];
   // "src.rotation" should be removed here because this function should return original path.
   const rotateFn = getRotateFn(shape.rotation - src.rotation, c);
-  return path.map((p) => sub(rotateFn(p), src.p));
+  return { path: path.map((p) => sub(rotateFn(p), src.p)) };
 }
 
 export function getHeadControlPoint(src: OneSidedArrowShape): IVec2 {

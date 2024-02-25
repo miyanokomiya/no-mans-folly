@@ -10,7 +10,7 @@ import {
   getApproPoints,
   getBezier3LerpFn,
   getCenter,
-  getCrossSegAndLine,
+  getCross,
   getDistance,
   getNorm,
   getOuterRectangle,
@@ -477,10 +477,21 @@ export function getCrossLineAndLine(line0: IVec2[], line1: IVec2[]): IVec2 | und
 }
 
 export function getCrossSegAndSeg(seg0: ISegment, seg1: ISegment): IVec2 | undefined {
-  const s = getCrossSegAndLine(seg0, seg1);
-  if (!s) return;
-  if (!isOnSeg(s, seg1)) return;
-  return s;
+  return getCrossSegAndSegWithT(seg0, seg1)?.[0];
+}
+
+/**
+ * Returns the intersection and rate of it on each segment.
+ */
+export function getCrossSegAndSegWithT(seg0: ISegment, seg1: ISegment): [IVec2, t0: number, t1: number] | undefined {
+  const p = seg0[0];
+  const v = sub(seg0[1], seg0[0]);
+  const q = seg1[0];
+  const u = sub(seg1[1], seg1[0]);
+  const invCross = 1 / getCross(v, u);
+  const t = getCross(sub(q, p), multi(u, invCross));
+  const s = getCross(sub(p, q), multi(v, -invCross));
+  return 0 <= t && t <= 1 && 0 <= s && s <= 1 ? [add(p, multi(v, t)), t, s] : undefined;
 }
 
 export function sortPointFrom(p: IVec2, points: IVec2[]): IVec2[] {

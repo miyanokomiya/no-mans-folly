@@ -38,6 +38,11 @@ import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/re
 import { pickMinItem } from "../utils/commons";
 import { renderTransform } from "../utils/svgElements";
 
+export type SimplePath = {
+  path: IVec2[];
+  curves?: (BezierCurveControl | undefined)[];
+};
+
 export type SimplePolygonShape = Shape &
   CommonStyle &
   TextContainer & {
@@ -51,8 +56,7 @@ export type SimplePolygonShape = Shape &
  * "getPath" and "getCurves" shoud points on the local space of a shape.
  */
 export function getStructForSimplePolygon<T extends SimplePolygonShape>(
-  getPath: (shape: T) => IVec2[],
-  getCurves?: (shape: T) => (BezierCurveControl | undefined)[],
+  getPath: (s: T) => SimplePath,
 ): Pick<
   ShapeStruct<T>,
   | "render"
@@ -71,8 +75,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       if (shape.fill.disabled && shape.stroke.disabled) return;
 
       const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-      const path = getPath(shape);
-      const curves = getCurves?.(shape);
+      const { path, curves } = getPath(shape);
 
       applyLocalSpace(ctx, rect, shape.rotation, () => {
         ctx.beginPath();
@@ -89,8 +92,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     },
     createSVGElementInfo(shape) {
       const transform = getShapeTransform(shape);
-      const path = getPath(shape);
-      const curves = getCurves?.(shape);
+      const { path, curves } = getPath(shape);
 
       return {
         tag: "path",
@@ -118,8 +120,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     isPointOn(shape, p) {
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
-      const path = getPath(shape);
-      const curves = getCurves?.(shape);
+      const { path, curves } = getPath(shape);
 
       if (!curves) return isOnPolygon(localP, path);
       if (!isPointOnRectangle(getCurveSplineBounds(path, curves), localP)) return false;
@@ -144,8 +145,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       return ret;
     },
     getClosestOutline(shape, p, threshold) {
-      const path = getPath(shape);
-      const curves = getCurves?.(shape);
+      const { path, curves } = getPath(shape);
       const transform = getShapeTransform(shape);
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
@@ -174,8 +174,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       }
     },
     getIntersectedOutlines(shape, from, to) {
-      const path = getPath(shape);
-      const curves = getCurves?.(shape);
+      const { path, curves } = getPath(shape);
       const transform = getShapeTransform(shape);
       const detransform = getShapeDetransform(shape);
       const localFrom = applyAffine(detransform, from);
@@ -260,4 +259,18 @@ export function getShapeDetransform(shape: SimplePolygonShape): AffineMatrix {
     [cos, -sin, sin, cos, 0, 0],
     [1, 0, 0, 1, -center.x, -center.y],
   ]);
+}
+
+export function getLocalAbsolutePoint(shape: SimplePolygonShape, relativeRate: IVec2): IVec2 {
+  return {
+    x: shape.width * relativeRate.x,
+    y: shape.height * relativeRate.y,
+  };
+}
+
+export function getLocalRelativeRate(shape: SimplePolygonShape, absP: IVec2): IVec2 {
+  return {
+    x: absP.x / shape.width,
+    y: absP.y / shape.height,
+  };
 }
