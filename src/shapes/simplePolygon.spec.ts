@@ -10,7 +10,7 @@ describe("getStructForSimplePolygon", () => {
     { x: 100, y: 0 },
     { x: 100, y: 100 },
   ];
-  const target = getStructForSimplePolygon(() => path);
+  const target = getStructForSimplePolygon(() => ({ path }));
 
   describe("getWrapperRect", () => {
     test("should return wrapper rect", () => {
@@ -101,10 +101,10 @@ describe("getStructForSimplePolygon", () => {
     });
 
     test("should return the closest outline on a bezier segment", () => {
-      const target = getStructForSimplePolygon(
-        () => path,
-        () => [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
-      );
+      const target = getStructForSimplePolygon(() => ({
+        path,
+        curves: [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
+      }));
       expect(target.getClosestOutline!(shape, { x: 10, y: -10 }, 2)).toEqual(undefined);
 
       const ret1 = target.getClosestOutline!(shape, { x: 20, y: -5 }, 2);
@@ -133,10 +133,10 @@ describe("getStructForSimplePolygon", () => {
     });
 
     test("should regard bezier segments", () => {
-      const target = getStructForSimplePolygon(
-        () => path,
-        () => [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
-      );
+      const target = getStructForSimplePolygon(() => ({
+        path,
+        curves: [{ c1: { x: 20, y: -20 }, c2: { x: 80, y: 20 } }],
+      }));
       expect(target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: -3, y: 10 })).toEqual(undefined);
       const res0 = target.getIntersectedOutlines!(shape, { x: -3, y: 0 }, { x: 80, y: 0 });
       expect(res0).toHaveLength(2);

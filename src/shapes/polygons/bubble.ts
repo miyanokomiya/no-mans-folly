@@ -1,10 +1,9 @@
 import { IVec2, MINVALUE, add, getDistance, getUnit, multi, rotate, sub } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
+import { SimplePath, SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle, getStrokeWidth } from "../../utils/strokeStyle";
-import { BezierCurveControl } from "../../models";
 import { expandRect, extendSegment, getD2, getRotatedWrapperRect, getWrapperRect } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
 import { BezierPath, PathLocation, combineBezierPathAndPath, getCrossBezierPathAndSegment } from "../../utils/path";
@@ -31,10 +30,7 @@ export type BubbleShape = SimplePolygonShape & {
   cornerC: IVec2;
 };
 
-const baseStruct = getStructForSimplePolygon<BubbleShape>(
-  (s) => combineBeakAndOutline(s).path,
-  (s) => combineBeakAndOutline(s).curves,
-);
+const baseStruct = getStructForSimplePolygon<BubbleShape>(combineBeakAndOutline);
 
 export const struct: ShapeStruct<BubbleShape> = {
   ...baseStruct,
@@ -79,39 +75,38 @@ export const struct: ShapeStruct<BubbleShape> = {
   canAttachSmartBranch: true,
 };
 
-function getPath(shape: BubbleShape): IVec2[] {
+function getPath(shape: BubbleShape): SimplePath {
   const { x: rx, y: ry } = getCornerRadius(shape);
+  const { x: bx, y: by } = getCornerValue(shape);
 
-  return [
-    { x: rx, y: 0 },
-    { x: shape.width - rx, y: 0 },
-    { x: shape.width, y: ry },
-    { x: shape.width, y: shape.height - ry },
-    { x: shape.width - rx, y: shape.height },
-    { x: rx, y: shape.height },
-    { x: 0, y: shape.height - ry },
-    { x: 0, y: ry },
-  ];
+  return {
+    path: [
+      { x: rx, y: 0 },
+      { x: shape.width - rx, y: 0 },
+      { x: shape.width, y: ry },
+      { x: shape.width, y: shape.height - ry },
+      { x: shape.width - rx, y: shape.height },
+      { x: rx, y: shape.height },
+      { x: 0, y: shape.height - ry },
+      { x: 0, y: ry },
+    ],
+    curves: [
+      undefined,
+      { c1: { x: shape.width - bx, y: 0 }, c2: { x: shape.width, y: by } },
+      undefined,
+      { c1: { x: shape.width, y: shape.height - by }, c2: { x: shape.width - bx, y: shape.height } },
+      undefined,
+      { c1: { x: bx, y: shape.height }, c2: { x: 0, y: shape.height - by } },
+      undefined,
+      { c1: { x: 0, y: by }, c2: { x: bx, y: 0 } },
+    ],
+  };
 }
 
 function getCornerValue(shape: BubbleShape): IVec2 {
   const { x: rx, y: ry } = getCornerRadius(shape);
   const rate = 0.44772; // Magic value to approximate border-radius via cubic-bezier
   return { x: rx * rate, y: ry * rate };
-}
-
-function getCurves(shape: BubbleShape): (BezierCurveControl | undefined)[] {
-  const { x: bx, y: by } = getCornerValue(shape);
-  return [
-    undefined,
-    { c1: { x: shape.width - bx, y: 0 }, c2: { x: shape.width, y: by } },
-    undefined,
-    { c1: { x: shape.width, y: shape.height - by }, c2: { x: shape.width - bx, y: shape.height } },
-    undefined,
-    { c1: { x: bx, y: shape.height }, c2: { x: 0, y: shape.height - by } },
-    undefined,
-    { c1: { x: 0, y: by }, c2: { x: bx, y: 0 } },
-  ];
 }
 
 function getCornerRadius(shape: BubbleShape): IVec2 {
@@ -154,9 +149,8 @@ export function getBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2
 }
 
 function combineBeakAndOutline(shape: BubbleShape): BezierPath {
-  const path = getPath(shape);
-  const curves = getCurves(shape);
-  const bezierPath = { path, curves };
+  const { path, curves } = getPath(shape);
+  const bezierPath = { path, curves: curves ?? [] };
   const { tip: beakTip, roots } = getBeakControls(shape);
   const longSegmentSize = Math.max(shape.width, shape.height);
 

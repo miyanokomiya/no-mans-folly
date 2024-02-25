@@ -1,6 +1,6 @@
 import { IVec2, pathSegmentRawsToString } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePolygonShape, getShapeTransform, getStructForSimplePolygon } from "../simplePolygon";
+import { SimplePath, SimplePolygonShape, getShapeTransform, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
@@ -17,7 +17,7 @@ export type CylinderShape = SimplePolygonShape & {
 };
 
 export const struct: ShapeStruct<CylinderShape> = {
-  ...getStructForSimplePolygon<CylinderShape>(getPath, getCurves),
+  ...getStructForSimplePolygon<CylinderShape>(getPath),
   label: "Cylinder",
   create(arg = {}) {
     return {
@@ -35,7 +35,7 @@ export const struct: ShapeStruct<CylinderShape> = {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    const path = getPath(shape);
+    const { path } = getPath(shape);
     const curves = getCurves(shape);
 
     applyLocalSpace(ctx, rect, shape.rotation, () => {
@@ -100,7 +100,7 @@ export const struct: ShapeStruct<CylinderShape> = {
   },
   createSVGElementInfo(shape) {
     const transform = getShapeTransform(shape);
-    const path = getPath(shape);
+    const { path } = getPath(shape);
     const curves = getCurves?.(shape);
 
     let innerPath: IVec2[];
@@ -156,15 +156,17 @@ export const struct: ShapeStruct<CylinderShape> = {
   canAttachSmartBranch: true,
 };
 
-function getPath(shape: CylinderShape): IVec2[] {
+function getPath(shape: CylinderShape): SimplePath {
   const ry = Math.abs(getCylinderRadiusY(shape));
 
-  return [
-    { x: 0, y: ry },
-    { x: shape.width, y: ry },
-    { x: shape.width, y: shape.height - ry },
-    { x: 0, y: shape.height - ry },
-  ];
+  return {
+    path: [
+      { x: 0, y: ry },
+      { x: shape.width, y: ry },
+      { x: shape.width, y: shape.height - ry },
+      { x: 0, y: shape.height - ry },
+    ],
+  };
 }
 
 function getCurves(shape: CylinderShape): (BezierCurveControl | undefined)[] {

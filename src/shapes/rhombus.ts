@@ -1,6 +1,5 @@
-import { IVec2 } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
-import { SimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
+import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "./simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
@@ -33,13 +32,15 @@ export const struct: ShapeStruct<RhombusShape> = {
   canAttachSmartBranch: true,
 };
 
-function getPath(shape: RhombusShape): IVec2[] {
+function getPath(shape: RhombusShape): SimplePath {
   const halfW = shape.width / 2;
   const halfH = shape.height / 2;
-  return [
-    { x: halfW, y: 0 },
-    { x: shape.width, y: halfH },
-    { x: halfW, y: shape.height },
-    { x: 0, y: halfH },
-  ];
+  return {
+    path: [
+      { x: halfW, y: 0 },
+      { x: shape.width, y: halfH },
+      { x: halfW, y: shape.height },
+      { x: 0, y: halfH },
+    ],
+  };
 }
