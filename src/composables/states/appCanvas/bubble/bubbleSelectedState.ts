@@ -24,7 +24,7 @@ import {
   getShapeDetransform,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
-import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, rotate, sub } from "okageo";
+import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
 import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 
@@ -94,7 +94,7 @@ export function newBubbleSelectedState(): AppCanvasState {
                       movingShapeControlState<BubbleShape>({
                         targetId: targetShape.id,
                         patchFn: patchBeakSize,
-                        getControlFn: (s) => applyAffine(getShapeTransform(s), getBeakControls(s).roots[0]),
+                        getControlFn: (s) => applyAffine(getShapeTransform(s), getBeakControls(s).sizeControl),
                         renderFn: renderBeakControls,
                         snapType: "disabled",
                       });
@@ -220,8 +220,8 @@ const renderBeakControls: RenderShapeControlFn<BubbleShape> = (stateCtx, renderC
 
 function patchBeakSize(shape: BubbleShape, p: IVec2): Partial<BubbleShape> {
   const detransform = getShapeDetransform(shape);
-  const { origin: beakOrigin, tip } = getBeakControls(shape);
-  const guideLine = [beakOrigin, rotate(tip, -Math.PI / 2, beakOrigin)];
+  const { origin: beakOrigin, sizeControl: sizeC } = getBeakControls({ ...shape, beakSizeRate: 1 });
+  const guideLine = [beakOrigin, sizeC];
   const localPedal = getPedal(applyAffine(detransform, p), guideLine);
   const isValid = getInner(sub(guideLine[1], guideLine[0]), sub(localPedal, guideLine[0])) >= 0;
   const maxSize = getMaxBeakSize(shape);

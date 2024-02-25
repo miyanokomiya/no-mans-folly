@@ -1,4 +1,4 @@
-import { IVec2, add, getDistance, getUnit, multi, rotate, sub } from "okageo";
+import { IVec2, MINVALUE, add, getNorm, getUnit, multi, rotate, sub } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import { SimplePath, SimplePolygonShape, getLocalAbsolutePoint, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
@@ -128,25 +128,34 @@ export function getMaxBeakSize(shape: BubbleShape): number {
 
 /**
  * Returned roots and the tip always keep the below formation.
- *   root0
- *          \
- *            tip
- *          /
- *   root1
+ *   sizeControl
+ *     |     root0
+ *     |           \
+ *   origin -------- tip
+ *                 /
+ *           root1
  */
-export function getBeakControls(shape: BubbleShape): { tip: IVec2; origin: IVec2; roots: [IVec2, IVec2] } {
+export function getBeakControls(shape: BubbleShape): {
+  tip: IVec2;
+  origin: IVec2;
+  roots: [root0: IVec2, root1: IVec2];
+  sizeControl: IVec2;
+} {
   const beakOrigin = getLocalAbsolutePoint(shape, shape.beakOriginC);
   const beakTip = getLocalAbsolutePoint(shape, shape.beakTipC);
-  const radius = getBeakSize(shape);
-  const d = getDistance(beakTip, beakOrigin);
-  if (d <= radius) return { tip: beakTip, origin: beakOrigin, roots: [beakOrigin, beakOrigin] };
+  const tipToOrigin = sub(beakOrigin, beakTip);
+  const d = getNorm(tipToOrigin);
+  if (d <= MINVALUE)
+    return { tip: beakTip, origin: beakOrigin, roots: [beakOrigin, beakOrigin], sizeControl: beakOrigin };
 
+  const radius = getBeakSize(shape);
+  const sizeControl = add(multi(getUnit(rotate(tipToOrigin, Math.PI / 2)), radius), beakOrigin);
   const r = Math.asin(radius / d);
-  const unit = getUnit(sub(beakOrigin, beakTip));
+  const tipToOriginUnit = multi(tipToOrigin, 1 / d);
   const rootD = Math.sqrt(d * d - radius * radius);
-  const root0 = add(multi(rotate(unit, r), rootD), beakTip);
-  const root1 = add(multi(rotate(unit, -r), rootD), beakTip);
-  return { tip: beakTip, origin: beakOrigin, roots: [root0, root1] };
+  const root0 = add(multi(rotate(tipToOriginUnit, r), rootD), beakTip);
+  const root1 = add(multi(rotate(tipToOriginUnit, -r), rootD), beakTip);
+  return { tip: beakTip, origin: beakOrigin, roots: [root0, root1], sizeControl };
 }
 
 function combineBeakAndOutline(shape: BubbleShape): BezierPath {

@@ -29,8 +29,7 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const detransform = getShapeDetransform(shape);
 
-  const { tip: beakTipC, origin: beakOriginC, roots: beakRoots } = getBeakControls(shape);
-  const beakSizeC = beakRoots[0];
+  const { tip: beakTipC, origin: beakOriginC, sizeControl: beakSizeC } = getBeakControls(shape);
 
   function hitTest(p: IVec2, scale = 1): BubbleHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -122,33 +121,33 @@ export function renderBeakGuidlines(
   const {
     origin,
     tip,
+    sizeControl,
     roots: [root0, root1],
   } = getBeakControls(shape);
-  const radius = getBeakSize(shape);
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-
-  if (getDistance(tip, origin) < radius) {
-    // Cannot make a beak when its tip is within the arc.
-    applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
-      renderCtx.beginPath();
-      renderCtx.arc(origin.x, origin.y, radius, 0, TAU);
-      renderCtx.stroke();
-    });
-    return;
-  }
-
-  const size0Radian = getRadian(root0, origin);
-  const size1Radian = getRadian(root1, origin);
   applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
-    renderCtx.beginPath();
-    renderCtx.moveTo(tip.x, tip.y);
-    renderCtx.lineTo(root0.x, root0.y);
-    renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
-    renderCtx.closePath();
-    renderCtx.stroke();
+    const radius = getBeakSize(shape);
+
+    if (getDistance(tip, origin) < radius) {
+      // Cannot make a beak when its tip is within the arc.
+      applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
+        renderCtx.beginPath();
+        renderCtx.arc(origin.x, origin.y, radius, 0, TAU);
+        renderCtx.stroke();
+      });
+    } else {
+      const size0Radian = getRadian(root0, origin);
+      const size1Radian = getRadian(root1, origin);
+      renderCtx.beginPath();
+      renderCtx.moveTo(tip.x, tip.y);
+      renderCtx.lineTo(root0.x, root0.y);
+      renderCtx.arc(origin.x, origin.y, radius, size0Radian, size1Radian, true);
+      renderCtx.closePath();
+      renderCtx.stroke();
+    }
 
     if (showRootGuid) {
-      renderRootGuid(renderCtx, style, scale, origin, tip, root0);
+      renderRootGuid(renderCtx, style, scale, origin, tip, sizeControl);
     }
   });
 }
@@ -159,7 +158,7 @@ function renderRootGuid(
   scale: number,
   origin: IVec2,
   tip: IVec2,
-  root: IVec2,
+  sizeControl: IVec2,
 ) {
   applyFillStyle(renderCtx, {
     color: style.selectionSecondaly,
@@ -170,14 +169,16 @@ function renderRootGuid(
     dash: "short",
   });
   renderCtx.beginPath();
-  renderCtx.moveTo(root.x, root.y);
+  renderCtx.moveTo(sizeControl.x, sizeControl.y);
   renderCtx.lineTo(origin.x, origin.y);
   renderCtx.lineTo(tip.x, tip.y);
   renderCtx.stroke();
 
-  renderCtx.beginPath();
-  renderCtx.arc(origin.x, origin.y, 4 * scale, 0, TAU, true);
-  renderCtx.fill();
+  [origin, tip, sizeControl].forEach((p) => {
+    renderCtx.beginPath();
+    renderCtx.arc(p.x, p.y, 4 * scale, 0, TAU, true);
+    renderCtx.fill();
+  });
 }
 
 export function renderCornerGuidlines(
