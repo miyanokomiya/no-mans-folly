@@ -80,6 +80,10 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
         ctx.arc(p.x, p.y, size, 0, TAU);
         ctx.fill();
       });
+
+      if (hitResult?.type === "beakOriginC" || hitResult?.type === "beakTipC" || hitResult?.type === "beakSizeC") {
+        renderRootGuid(ctx, style, scale, beakOriginC, beakTipC, beakSizeC);
+      }
     });
   }
 
@@ -91,22 +95,6 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
     },
   };
 });
-
-export function renderMovingBubbleAnchor(
-  ctx: CanvasRenderingContext2D,
-  style: StyleScheme,
-  scale: number,
-  shape: BubbleShape,
-) {
-  const nextControlP = getLocalAbsolutePoint(shape, shape.beakTipC);
-  applyLocalSpace(ctx, { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, shape.rotation, () => {
-    applyFillStyle(ctx, { color: style.selectionSecondaly });
-    applyFillStyle(ctx, { color: style.selectionSecondaly });
-    ctx.beginPath();
-    ctx.arc(nextControlP.x, nextControlP.y, 6 * scale, 0, TAU);
-    ctx.fill();
-  });
-}
 
 export function getLocalCornerControl(shape: BubbleShape, scale: number): [IVec2, IVec2] {
   const margin = 16 * scale;
@@ -154,21 +142,33 @@ export function renderBeakGuidlines(
   renderCtx.stroke();
 
   if (showRootGuid) {
-    applyFillStyle(renderCtx, {
-      color: style.selectionSecondaly,
-    });
-    applyStrokeStyle(renderCtx, {
-      color: style.selectionSecondaly,
-      width: 2 * scale,
-      dash: "short",
-    });
-    renderCtx.beginPath();
-    renderCtx.moveTo(origin.x, origin.y);
-    renderCtx.lineTo(root0.x, root0.y);
-    renderCtx.stroke();
-
-    renderCtx.beginPath();
-    renderCtx.arc(origin.x, origin.y, 4 * scale, 0, TAU, true);
-    renderCtx.fill();
+    renderRootGuid(renderCtx, style, scale, origin, tip, root0);
   }
+}
+
+function renderRootGuid(
+  renderCtx: CanvasRenderingContext2D,
+  style: StyleScheme,
+  scale: number,
+  origin: IVec2,
+  tip: IVec2,
+  root: IVec2,
+) {
+  applyFillStyle(renderCtx, {
+    color: style.selectionSecondaly,
+  });
+  applyStrokeStyle(renderCtx, {
+    color: style.selectionSecondaly,
+    width: 2 * scale,
+    dash: "short",
+  });
+  renderCtx.beginPath();
+  renderCtx.moveTo(root.x, root.y);
+  renderCtx.lineTo(origin.x, origin.y);
+  renderCtx.lineTo(tip.x, tip.y);
+  renderCtx.stroke();
+
+  renderCtx.beginPath();
+  renderCtx.arc(origin.x, origin.y, 4 * scale, 0, TAU, true);
+  renderCtx.fill();
 }

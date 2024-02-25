@@ -70,7 +70,13 @@ export function newBubbleSelectedState(): AppCanvasState {
                           return { beakTipC: getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p)) };
                         },
                         renderFn: (stateCtx, renderCtx, latestShape) => {
-                          renderBeakGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale());
+                          renderBeakGuidlines(
+                            renderCtx,
+                            latestShape,
+                            stateCtx.getStyleScheme(),
+                            stateCtx.getScale(),
+                            true,
+                          );
                         },
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.beakTipC)),
                       });
@@ -84,7 +90,13 @@ export function newBubbleSelectedState(): AppCanvasState {
                         },
                         getControlFn: (s) => applyAffine(getShapeTransform(s), getLocalAbsolutePoint(s, s.beakOriginC)),
                         renderFn: (stateCtx, renderCtx, latestShape) => {
-                          renderBeakGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale());
+                          renderBeakGuidlines(
+                            renderCtx,
+                            latestShape,
+                            stateCtx.getStyleScheme(),
+                            stateCtx.getScale(),
+                            true,
+                          );
                         },
                         snapType: "self",
                       });
