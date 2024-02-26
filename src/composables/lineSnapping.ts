@@ -102,7 +102,7 @@ export function newLineSnapping(option: Option) {
       }) ?? [];
 
     // Try snapping to other shapes' outline
-    let outline: { p: IVec2; d: number; shape: Shape; optimized?: boolean } | undefined;
+    let outline: { p: IVec2; d: number; shape: Shape; optimized?: boolean; guideLine?: ISegment } | undefined;
     {
       const shapeComposite = newShapeComposite({
         shapes: reversedSnappableShapes,
@@ -111,12 +111,18 @@ export function newLineSnapping(option: Option) {
       reversedSnappableShapes.some((shape) => {
         // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
         let intersection: IVec2 | undefined;
+        let priorityGuidline: ISegment | undefined;
         if (selfSnapped) {
-          extendedGuideLines.some((guide) => {
+          extendedGuideLines.some((guide, i) => {
             const candidates = getIntersectedOutlines(option.getShapeStruct, shape, guide[0], guide[1]);
             if (candidates) {
               intersection = candidates.find((c) => getDistance(c, selfSnapped!.p) <= threshold);
-              return true;
+              if (intersection) {
+                priorityGuidline = selfSnapped?.guidLines?.[i];
+                return true;
+              } else {
+                priorityGuidline = undefined;
+              }
             }
           });
         }
@@ -144,7 +150,7 @@ export function newLineSnapping(option: Option) {
 
         const d = getDistance(p, point);
         if (!outline || d < outline.d) {
-          outline = { p, d, shape };
+          outline = { p, d, shape, guideLine: priorityGuidline };
           return true;
         }
       });
@@ -160,7 +166,9 @@ export function newLineSnapping(option: Option) {
       return {
         connection,
         p: outline.p,
-        guidLines: selfSnapped?.guidLines?.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
+        guidLines: outline.guideLine
+          ? [outline.guideLine]
+          : selfSnapped?.guidLines?.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
         optimized: outline.optimized,
       };
     }
