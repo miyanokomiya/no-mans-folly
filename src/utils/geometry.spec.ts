@@ -52,7 +52,7 @@ import {
   getGlobalAffine,
   getRotationAffine,
   getCrossSegAndSegWithT,
-  getClosestOutlineOnPolyline,
+  pickLongSegment,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -1292,5 +1292,18 @@ describe("getGlobalAffine", () => {
     expect(res1[3]).toBeCloseTo(2);
     expect(res1[4]).toBeCloseTo(0);
     expect(res1[5]).toBeCloseTo(-100);
+  });
+});
+
+describe("pickLongSegment", () => {
+  test("should return long segment consists of given points", () => {
+    const a = { x: 0, y: 0 };
+    const b = { x: 10, y: 0 };
+    const c = { x: 20, y: 0 };
+    expect(pickLongSegment(a, b, c)).toEqual([a, c]);
+    expect(pickLongSegment(c, a, b)).toEqual([c, a]);
+    expect(pickLongSegment(b, c, a)).toEqual([c, a]);
+    expect(pickLongSegment(a, c, b)).toEqual([a, c]);
+    expect(pickLongSegment(b, a, c)).toEqual([a, c]);
   });
 });

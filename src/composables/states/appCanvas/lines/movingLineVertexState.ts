@@ -52,6 +52,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         movingLine: option.lineShape,
         movingIndex: option.index,
         snappableShapes,
+        gridSnapping: ctx.getGrid().getSnappingLines(),
         getShapeStruct: ctx.getShapeStruct,
       });
 

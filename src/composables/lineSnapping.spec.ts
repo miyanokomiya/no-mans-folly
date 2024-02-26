@@ -53,10 +53,6 @@ describe("newLineSnapping", () => {
             { x: 100, y: 100 },
             { x: -20.5, y: -20.5 },
           ],
-          [
-            { x: 0, y: 0 },
-            { x: -20.5, y: -20.5 },
-          ],
         ],
       });
 
@@ -79,10 +75,114 @@ describe("newLineSnapping", () => {
         guidLines: [
           [
             { x: 0, y: 0 },
-            { x: 150, y: 0 },
+            { x: 160, y: 0 },
           ],
         ],
       });
+    });
+
+    test("should regard grid lines when self snapping happens", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 50 } });
+      const target = newLineSnapping({
+        snappableShapes: [],
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+        gridSnapping: {
+          h: [...Array(10)].map((_, i) => [
+            { x: -40, y: -40 + 10 * i },
+            { x: 240, y: -40 + 10 * i },
+          ]),
+          v: [...Array(10)].map((_, i) => [
+            { x: -40 + 10 * i, y: -40 },
+            { x: -40 + 10 * i, y: 240 },
+          ]),
+        },
+      });
+
+      // No grid near by
+      expect(target.testConnection({ x: -6, y: -3 }, 0.1)).toEqual({
+        p: { x: -6, y: -3 },
+        guidLines: [
+          [
+            { x: 100, y: 50 },
+            { x: -6, y: -3 },
+          ],
+        ],
+      });
+
+      // "Hit both vertical and horizontal grid lines"
+      const res1 = target.testConnection({ x: -20, y: -11 }, 1);
+      expect(res1?.p.x).toBeCloseTo(-20);
+      expect(res1?.p.y).toBeCloseTo(-10);
+      expect(res1?.guidLines).toHaveLength(3);
+      expect(res1?.guidLines?.[1]).toEqual([
+        { x: -40, y: -10 },
+        { x: 240, y: -10 },
+      ]);
+      expect(res1?.guidLines?.[2]).toEqual([
+        { x: -20, y: -40 },
+        { x: -20, y: 240 },
+      ]);
+    });
+
+    test("should regard grid lines when self snapping happens: hit vertical grid line", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 50 } });
+      const target = newLineSnapping({
+        snappableShapes: [],
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+        gridSnapping: {
+          h: [...Array(10)].map((_, i) => [
+            { x: -40, y: -40 + 10 * i },
+            { x: 240, y: -40 + 10 * i },
+          ]),
+          v: [...Array(10)].map((_, i) => [
+            { x: -40 + 10 * i, y: -40 },
+            { x: -40 + 10 * i, y: 240 },
+          ]),
+        },
+      });
+
+      // "Hit vertical grid lines"
+      const res2 = target.testConnection({ x: -11, y: -11 }, 1);
+      expect(res2?.p.x).toBeCloseTo(-10);
+      expect(res2?.p.y).toBeCloseTo(-5);
+      expect(res2?.guidLines).toHaveLength(2);
+      expect(res2?.guidLines?.[1]).toEqual([
+        { x: -10, y: -40 },
+        { x: -10, y: 240 },
+      ]);
+    });
+
+    test("should regard grid lines when self snapping happens: hit horizontal grid line", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 50, y: 100 } });
+      const target = newLineSnapping({
+        snappableShapes: [],
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+        gridSnapping: {
+          h: [...Array(10)].map((_, i) => [
+            { x: -40, y: -40 + 10 * i },
+            { x: 240, y: -40 + 10 * i },
+          ]),
+          v: [...Array(10)].map((_, i) => [
+            { x: -40 + 10 * i, y: -40 },
+            { x: -40 + 10 * i, y: 240 },
+          ]),
+        },
+      });
+
+      const res2 = target.testConnection({ x: -11, y: -11 }, 1);
+      expect(res2?.p.x).toBeCloseTo(-5);
+      expect(res2?.p.y).toBeCloseTo(-10);
+      expect(res2?.guidLines).toHaveLength(2);
+      expect(res2?.guidLines?.[1]).toEqual([
+        { x: -40, y: -10 },
+        { x: 240, y: -10 },
+      ]);
     });
 
     test("should return connection result: body vertex", () => {

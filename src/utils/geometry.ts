@@ -12,6 +12,7 @@ import {
   getCenter,
   getCross,
   getDistance,
+  getInner,
   getNorm,
   getOuterRectangle,
   getPathPointAtLengthFromStructs,
@@ -969,4 +970,19 @@ export function getGlobalAffine(origin: IVec2, rotation: number, localAffine: Af
     [cos, -sin, sin, cos, 0, 0],
     [1, 0, 0, 1, -origin.x, -origin.y],
   ]);
+}
+
+/**
+ * Suppose all points are on the same line.
+ * Returns segment respects the original points' order.
+ */
+export function pickLongSegment(a: IVec2, b: IVec2, c: IVec2): ISegment {
+  const ab = sub(b, a);
+  const cb = sub(b, c);
+  if (getInner(ab, cb) < 0) {
+    return [a, c];
+  }
+
+  const ac = sub(c, a);
+  return getInner(ab, ac) < 0 ? [b, c] : [a, b];
 }
