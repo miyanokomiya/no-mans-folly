@@ -52,6 +52,7 @@ import {
   getGlobalAffine,
   getRotationAffine,
   getCrossSegAndSegWithT,
+  getClosestOutlineOnPolyline,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 

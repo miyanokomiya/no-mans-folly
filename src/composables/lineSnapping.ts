@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
+import { IRectangle, IVec2, getDistance, getPedal, getRectCenter, isSame } from "okageo";
 import {
   GetShapeStruct,
   getIntersectedOutlines,
@@ -15,6 +15,7 @@ import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { isLineLabelShape } from "../shapes/text";
+import { pickMinItem } from "../utils/commons";
 
 const SNAP_THRESHOLD = 10;
 
@@ -43,9 +44,31 @@ export function newLineSnapping(option: Option) {
   function testConnection(point: IVec2, scale: number): ConnectionResult | undefined {
     const threshold = SNAP_THRESHOLD * scale;
 
-    // Try snapping to adjacent vertices
     let selfSnapped: ConnectionResult | undefined;
-    {
+    // Try snapping to adjacent vertices: On a line.
+    if (option.movingLine && option.movingIndex !== undefined) {
+      const targetVertex = vertices[option.movingIndex];
+      const candidates = adjacentVertices.map<[IVec2, ISegment, number]>((adjacent) => {
+        const guidLine: ISegment = [targetVertex, adjacent];
+        const p = getPedal(point, guidLine);
+        return [p, guidLine, getDistance(p, point)];
+      });
+
+      const closest = pickMinItem(candidates, (c) => c[2]);
+      if (closest && closest[2] < threshold) {
+        selfSnapped = {
+          p: closest[0],
+          guidLines: [
+            [closest[1][0], closest[0]],
+            [closest[1][1], closest[0]],
+          ],
+        };
+      }
+    }
+
+    // Try snapping to adjacent vertices: Vertically or horizontally.
+    // Prioritize "On a line" result.
+    if (!selfSnapped) {
       const closeX = adjacentVertices.find((v) => Math.abs(point.x - v.x) < threshold);
       const closeY = adjacentVertices.find((v) => Math.abs(point.y - v.y) < threshold);
 

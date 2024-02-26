@@ -19,17 +19,43 @@ describe("newLineSnapping", () => {
           height: 100,
         }),
       ];
-      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 0 } });
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 100 } });
       const target = newLineSnapping({ snappableShapes, getShapeStruct: getCommonStruct, movingLine, movingIndex: 1 });
-      expect(target.testConnection({ x: -20, y: -10 }, 1)).toEqual(undefined);
+      expect(target.testConnection({ x: -20, y: 10 }, 1)).toEqual(undefined);
 
-      // Self snapped
+      // Self snapped: Horizontally
       expect(target.testConnection({ x: -20, y: 2 }, 1)).toEqual({
         p: { x: -20, y: 0 },
         guidLines: [
           [
             { x: 0, y: 0 },
             { x: -20, y: 0 },
+          ],
+        ],
+      });
+
+      // Self snapped: Vertically
+      expect(target.testConnection({ x: 2, y: -20 }, 1)).toEqual({
+        p: { x: 0, y: -20 },
+        guidLines: [
+          [
+            { x: 0, y: 0 },
+            { x: 0, y: -20 },
+          ],
+        ],
+      });
+
+      // Self snapped: On a line formed by each adjacent vertex and the original point
+      expect(target.testConnection({ x: -20, y: -21 }, 1)).toEqual({
+        p: { x: -20.5, y: -20.5 },
+        guidLines: [
+          [
+            { x: 100, y: 100 },
+            { x: -20.5, y: -20.5 },
+          ],
+          [
+            { x: 0, y: 0 },
+            { x: -20.5, y: -20.5 },
           ],
         ],
       });
@@ -63,7 +89,7 @@ describe("newLineSnapping", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", {
         id: "a",
         q: { x: 100, y: 100 },
-        body: [{ p: { x: 50, y: 50 } }],
+        body: [{ p: { x: 50, y: -50 } }],
       });
       const target = newLineSnapping({
         snappableShapes: [],
