@@ -3100,7 +3100,7 @@ __metadata:
     fractional-indexing: "npm:^3.2.0"
     happy-dom: "npm:^13.4.1"
     nanoid: "npm:^5.0.6"
-    okageo: "npm:^3.1.4"
+    okageo: "npm:^3.1.6"
     okaselect: "npm:^0.1.0"
     postcss: "npm:^8.4.35"
     prettier: "npm:^3.2.5"
@@ -3190,10 +3190,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"okageo@npm:^3.1.4":
-  version: 3.1.4
-  resolution: "okageo@npm:3.1.4"
-  checksum: d656e4e76ed52ecc4b0dafd83b0d87eeeecdf510c95fd88d8a61c04536d5256fe1809f0b66f0a64fddcbf3cbf943b1f75a5986182e6553f3d7698b7c164d8d1e
+"okageo@npm:^3.1.6":
+  version: 3.1.6
+  resolution: "okageo@npm:3.1.6"
+  checksum: 119ea27b8e5a58e7d4566fa0151f5751171f07718d169c6bf97a416068712018f50af845f2ac8ecf5d8b59113c5f19482ce8bd7534b8ac7fbea100f6688d9204
   languageName: node
   linkType: hard
 

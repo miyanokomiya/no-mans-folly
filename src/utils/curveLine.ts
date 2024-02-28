@@ -1,9 +1,14 @@
-import { IVec2, getBezierInterpolation } from "okageo";
+import { IVec2, getBezierInterpolation, getPeriodicBezierInterpolation, isSame } from "okageo";
 import { BezierCurveControl } from "../models";
 import { CurveType, LineShape, getLinePath } from "../shapes/line";
 
 export function getAutomaticCurve(path: IVec2[]): BezierCurveControl[] | undefined {
   if (path.length <= 2) return;
+
+  if (isSame(path[0], path[path.length - 1])) {
+    return getPeriodicBezierInterpolation(path).map(([c1, c2]) => ({ c1, c2 }));
+  }
+
   return getBezierInterpolation(path).map(([c1, c2]) => ({ c1, c2 }));
 }
 
