@@ -1,4 +1,15 @@
-import { IVec2, getBezierInterpolation, getPeriodicBezierInterpolation, isSame } from "okageo";
+import {
+  IVec2,
+  MINVALUE,
+  add,
+  getBezierInterpolation,
+  getCenter,
+  getNorm,
+  getPeriodicBezierInterpolation,
+  isSame,
+  multi,
+  sub,
+} from "okageo";
 import { BezierCurveControl } from "../models";
 import { CurveType, LineShape, getLinePath } from "../shapes/line";
 
@@ -30,4 +41,16 @@ export function getPatchByChangingCurveType(
   } else {
     return { curves: undefined, curveType: undefined };
   }
+}
+
+export function getDefaultCurveBody(p: IVec2, q: IVec2): LineShape["body"] {
+  const pq = sub(q, p);
+  const d = getNorm(pq);
+  if (d < MINVALUE) return;
+
+  const c = getCenter(p, q);
+  // Use arbitrary rate that makes a curve look good.
+  const rate = 1 / 5;
+  const v = multi({ x: -pq.y, y: pq.x }, rate);
+  return [{ p: add(c, v) }];
 }

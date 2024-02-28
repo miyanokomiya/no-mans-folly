@@ -4,7 +4,7 @@ import { handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
-import { LineShape, LineType, isLineShape } from "../../../../shapes/line";
+import { CurveType, LineShape, LineType, isLineShape } from "../../../../shapes/line";
 import {
   ConnectionResult,
   LineSnapping,
@@ -21,6 +21,7 @@ import { TAU } from "../../../../utils/geometry";
 
 interface Option {
   type: LineType;
+  curveType?: CurveType;
 }
 
 export function newLineReadyState(option: Option): AppCanvasState {
@@ -87,6 +88,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
                 q: vertex,
                 findex: ctx.createLastIndex(),
                 lineType: option.type,
+                curveType: option.curveType,
                 pConnection: connectionResult?.connection,
               });
               return () => newLineDrawingState({ shape: lineshape });

@@ -12,7 +12,9 @@ import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
 import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
+import iconLineCurve from "../assets/icons/shape_line_curve.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
+import iconLineElbowCurve from "../assets/icons/shape_line_elbow_curve.svg";
 import iconText from "../assets/icons/text.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayoutBoard from "../assets/icons/layout_board.svg";
@@ -23,6 +25,7 @@ import { Shape } from "../models";
 import { generateBoardTemplate } from "../composables/boardHandler";
 import { DocOutput } from "../models/document";
 import { generateAlignTemplate } from "../composables/alignHandler";
+import { CurveType, LineType } from "../shapes/line";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
@@ -37,7 +40,9 @@ const shapeList = [
 
 const lineList = [
   { type: "straight", icon: iconLineStraight },
+  { type: "curve", icon: iconLineCurve },
   { type: "elbow", icon: iconLineElbow },
+  { type: "elbow_curve", icon: iconLineElbowCurve },
 ];
 
 const layoutList = [
@@ -103,10 +108,7 @@ export const AppToolbar: React.FC = () => {
       const type = e.currentTarget.getAttribute("data-type")!;
       sm.handleEvent({
         type: "state",
-        data: {
-          name: "LineReady",
-          options: { type },
-        },
+        data: { name: "LineReady", options: getLineOptions(type) },
       });
       setLineType(type);
     },
@@ -140,7 +142,7 @@ export const AppToolbar: React.FC = () => {
         type: "state",
         data: {
           name: "LineReady",
-          options: { type: lineType },
+          options: getLineOptions(lineType),
         },
       });
       setPopup("lines");
@@ -246,3 +248,16 @@ export const AppToolbar: React.FC = () => {
     </OutsideObserver>
   );
 };
+
+function getLineOptions(type: string): { type?: LineType; curveType?: CurveType } {
+  switch (type) {
+    case "curve":
+      return { curveType: "auto" };
+    case "elbow":
+      return { type: "elbow" };
+    case "elbow_curve":
+      return { type: "elbow", curveType: "auto" };
+    default:
+      return {};
+  }
+}

@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
-import { LineShape, isLineShape, patchVertex } from "../../../../shapes/line";
+import { LineShape, getLinePath, isLineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import {
   ConnectionResult,
@@ -19,6 +19,7 @@ import { add } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
 import { handleCommonWheel } from "../commons";
+import { getAutomaticCurve, getDefaultCurveBody } from "../../../../utils/curveLine";
 
 interface Option {
   shape: LineShape;
@@ -93,12 +94,19 @@ export function newLineDrawingState(option: Option): AppCanvasState {
 
           if (elbowHandler) {
             const body = elbowHandler.optimizeElbow({ ...option.shape, ...patch });
-            shape = { ...option.shape, ...patch, body };
-          } else {
-            shape = { ...option.shape, ...patch };
+            patch = { ...patch, body };
+          } else if (option.shape.curveType === "auto") {
+            // Append middle vertex to make a curve
+            getDefaultCurveBody(shape.p, shape.q);
+            patch = { ...patch, body: getDefaultCurveBody(shape.p, shape.q) };
           }
 
-          ctx.setTmpShapeMap({});
+          if (option.shape.curveType === "auto") {
+            patch.curves = getAutomaticCurve(getLinePath({ ...option.shape, ...patch }));
+          }
+
+          shape = { ...option.shape, ...patch };
+          ctx.redraw();
           return;
         }
         case "pointerup":
