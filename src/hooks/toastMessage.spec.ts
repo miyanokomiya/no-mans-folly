@@ -1,5 +1,5 @@
 import { expect, describe, test, beforeEach } from "vitest";
-import { renderHook, act, cleanup } from "@testing-library/react-hooks";
+import { renderHook, act, cleanup } from "@testing-library/react";
 import { useToastMessages } from "./toastMessage";
 
 function sleep(timeout: number) {
