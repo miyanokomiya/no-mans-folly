@@ -123,10 +123,18 @@ export const AppToolbar: React.FC = () => {
   }, []);
 
   const onClickShapeButton = useCallback(() => {
+    sm.handleEvent({
+      type: "state",
+      data: { name: "Break" },
+    });
     setPopup(popup === "shapes" ? "" : "shapes");
   }, [popup]);
 
   const onClickLayoutButton = useCallback(() => {
+    sm.handleEvent({
+      type: "state",
+      data: { name: "Break" },
+    });
     setPopup(popup === "layouts" ? "" : "layouts");
   }, [popup]);
 
