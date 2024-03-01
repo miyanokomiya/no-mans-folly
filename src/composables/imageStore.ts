@@ -1,8 +1,12 @@
 import { AssetAPI } from "../hooks/persistence";
 import { newCallback } from "./reactives";
 
+interface ImageData {
+  img: HTMLImageElement;
+}
+
 export function newImageStore() {
-  const imageMap = new Map<string, HTMLImageElement>();
+  const imageMap = new Map<string, ImageData>();
   const callback = newCallback<[string, HTMLImageElement]>();
   const processing = new Set<string>();
 
@@ -15,22 +19,24 @@ export function newImageStore() {
    * Doing "document.body.appendChild(img)" can be a workaround though, not sure if it's worth doing.
    */
   function loadFromFile(assetId: string, file: File | Blob): Promise<HTMLImageElement> {
-    const url = URL.createObjectURL(file);
+    const objectURL = URL.createObjectURL(file);
     const img = new Image();
 
     processing.add(assetId);
     return new Promise((resolve, reject) => {
       img.onload = () => {
+        URL.revokeObjectURL(objectURL);
         processing.delete(assetId);
-        imageMap.set(assetId, img);
+        imageMap.set(assetId, { img });
         resolve(img);
         callback.dispatch([assetId, img]);
       };
       img.onerror = (e) => {
+        URL.revokeObjectURL(objectURL);
         processing.delete(assetId);
         reject(e);
       };
-      img.src = url;
+      img.src = objectURL;
     });
   }
 
@@ -53,7 +59,7 @@ export function newImageStore() {
   }
 
   function getImage(assetId: string): HTMLImageElement | undefined {
-    return imageMap.get(assetId);
+    return imageMap.get(assetId)?.img;
   }
 
   return {
