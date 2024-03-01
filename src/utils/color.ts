@@ -139,7 +139,7 @@ export function isSameColor(a?: RGBA, b?: RGBA): boolean {
 }
 
 function componentToHex(c: number) {
-  const hex = c.toString(16);
+  const hex = Math.round(c).toString(16);
   return hex.length == 1 ? "0" + hex : hex;
 }
 

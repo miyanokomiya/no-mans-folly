@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 
 import {
+  colorToHex,
   hslaToHsva,
   hsvaToHsla,
   hsvaToRgba,
@@ -191,6 +192,14 @@ describe("hsvaToHsla", () => {
       l: 0.5,
       a: 0.9,
     });
+  });
+});
+
+describe("colorToHex", () => {
+  test("should return hex value", () => {
+    expect(colorToHex({ r: 1, g: 2, b: 3, a: 1 })).toBe("#010203");
+    expect(colorToHex({ r: 1, g: 2, b: 3, a: 0.5 }), "ignore alpha value").toBe("#010203");
+    expect(colorToHex({ r: 1.4, g: 2.3, b: 2.9, a: 1 }), "round float value").toBe("#010203");
   });
 });
 
