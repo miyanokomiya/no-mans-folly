@@ -35,8 +35,7 @@ export const struct: ShapeStruct<CylinderShape> = {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    const { path } = getPath(shape);
-    const curves = getCurves(shape);
+    const { path, curves } = getPath(shape);
 
     applyLocalSpace(ctx, rect, shape.rotation, () => {
       if (!shape.fill.disabled) {
@@ -100,8 +99,7 @@ export const struct: ShapeStruct<CylinderShape> = {
   },
   createSVGElementInfo(shape) {
     const transform = getShapeTransform(shape);
-    const { path } = getPath(shape);
-    const curves = getCurves?.(shape);
+    const { path, curves } = getPath(shape);
 
     let innerPath: IVec2[];
     let innerCurve: BezierCurveControl[];
@@ -156,8 +154,11 @@ export const struct: ShapeStruct<CylinderShape> = {
   canAttachSmartBranch: true,
 };
 
-function getPath(shape: CylinderShape): SimplePath {
+function getPath(shape: CylinderShape): SimplePath & Required<Pick<SimplePath, "curves">> {
   const ry = Math.abs(getCylinderRadiusY(shape));
+  const v = ry / 0.75; // Magical number to approximate ellipse by cubic bezier.
+  const upperY = ry - v;
+  const lowerY = shape.height - ry + v;
 
   return {
     path: [
@@ -166,24 +167,16 @@ function getPath(shape: CylinderShape): SimplePath {
       { x: shape.width, y: shape.height - ry },
       { x: 0, y: shape.height - ry },
     ],
+    curves: [
+      { c1: { x: 0, y: upperY }, c2: { x: shape.width, y: upperY } },
+      undefined,
+      {
+        c1: { x: shape.width, y: lowerY },
+        c2: { x: 0, y: lowerY },
+      },
+      undefined,
+    ],
   };
-}
-
-function getCurves(shape: CylinderShape): (BezierCurveControl | undefined)[] {
-  const ry = Math.abs(getCylinderRadiusY(shape));
-  const v = ry / 0.75; // Magical number to approximate ellipse by cubic bezier.
-  const upperY = ry - v;
-  const lowerY = shape.height - ry + v;
-
-  return [
-    { c1: { x: 0, y: upperY }, c2: { x: shape.width, y: upperY } },
-    undefined,
-    {
-      c1: { x: shape.width, y: lowerY },
-      c2: { x: 0, y: lowerY },
-    },
-    undefined,
-  ];
 }
 
 export function getCylinderRadiusY(shape: CylinderShape): number {
