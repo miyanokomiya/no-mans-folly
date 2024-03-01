@@ -53,12 +53,21 @@ export function newShapeSVGRenderer(option: Option) {
     const usedAssetIdSet = new Set();
     const assetDef = createSVGElement("def");
     root.querySelectorAll("use[href]").forEach((elm) => {
-      const assetId = (elm as SVGUseElement).href.baseVal.slice(1);
-      if (usedAssetIdSet.has(assetId)) return;
-
-      usedAssetIdSet.add(assetId);
+      const useElm = elm as SVGUseElement;
+      const assetId = useElm.href.baseVal.slice(1);
       const img = option.imageStore?.getImage(assetId);
       if (!img) return;
+
+      // Resize the element via "transform" attribute here since its "width" and "height" don't affect its size.
+      const width = useElm.width.baseVal.value;
+      const height = useElm.height.baseVal.value;
+      const tranform = renderTransform([width / img.width, 0, 0, height / img.height, 0, 0]);
+      if (tranform) {
+        useElm.setAttribute("transform", tranform);
+      }
+
+      if (usedAssetIdSet.has(assetId)) return;
+      usedAssetIdSet.add(assetId);
 
       const assetCanvas = document.createElement("canvas");
       assetCanvas.width = img.width;

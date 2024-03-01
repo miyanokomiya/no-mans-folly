@@ -81,9 +81,11 @@ export const struct: ShapeStruct<ImageShape> = {
         {
           tag: "use",
           attributes: {
+            href: `#${shape.assetId}`,
+            // "width" and "height" do nothing for this element but they are used afterwards to derive "transform".
+            // => "transform" attribute should be empty here. See: "shapeSVGRenderer.ts".
             width: shape.width,
             height: shape.height,
-            href: `#${shape.assetId}`,
           },
         },
         ...(shape.stroke.disabled
