@@ -49,15 +49,15 @@ export function newShapeSVGRenderer(option: Option) {
       root.appendChild(wrapperElm);
     });
 
-    // Embed asset files used in this SVG.
-    const usedAssetIdSet = new Set();
-    const assetDef = createSVGElement("def");
+    // Gather asset files used in the SVG.
+    const assetDataMap = new Map<string, { width: number; height: number; img: HTMLImageElement }>();
     root.querySelectorAll("use[href]").forEach((elm) => {
       const useElm = elm as SVGUseElement;
       const assetId = useElm.href.baseVal.slice(1);
-      const img = option.imageStore?.getImage(assetId);
-      if (!img) return;
+      const imageData = option.imageStore?.getImageData(assetId);
+      if (!imageData) return;
 
+      const { img, type } = imageData;
       // Resize the element via "transform" attribute here since its "width" and "height" don't affect its size.
       const width = useElm.width.baseVal.value;
       const height = useElm.height.baseVal.value;
@@ -66,25 +66,40 @@ export function newShapeSVGRenderer(option: Option) {
         useElm.setAttribute("transform", tranform);
       }
 
-      if (usedAssetIdSet.has(assetId)) return;
-      usedAssetIdSet.add(assetId);
+      if (type !== "image/svg+xml") {
+        assetDataMap.set(assetId, { width: img.width, height: img.height, img });
+        return;
+      }
 
+      // When the image is SVG, save the widest shape size.
+      // => Use this size to expand SVG when it's drawn to "canvas".
+      const data = assetDataMap.get(assetId);
+      const { width: currentWidth, height: currentHeight } = data ?? img;
+      if (currentWidth * currentHeight < width * height) {
+        assetDataMap.set(assetId, { width, height, img });
+      } else {
+        assetDataMap.set(assetId, { width: currentWidth, height: currentHeight, img });
+      }
+    });
+
+    // Embed asset files in a def tag.
+    const assetDef = createSVGElement("def");
+    for (const [assetId, data] of assetDataMap.entries()) {
       const assetCanvas = document.createElement("canvas");
-      assetCanvas.width = img.width;
-      assetCanvas.height = img.height;
-      const assetCtx = assetCanvas.getContext("2d");
-      if (!assetCtx) return;
-
-      assetCtx.drawImage(img, 0, 0, img.width, img.height);
+      assetCanvas.width = data.width;
+      assetCanvas.height = data.height;
+      const assetCtx = assetCanvas.getContext("2d")!;
+      assetCtx.drawImage(data.img, 0, 0, assetCanvas.width, assetCanvas.height);
       const base64 = assetCanvas.toDataURL();
       const imageElm = createSVGElement("image", {
         id: assetId,
         href: base64,
-        width: img.width,
-        height: img.height,
+        width: data.img.width,
+        height: data.img.height,
       });
       assetDef.appendChild(imageElm);
-    });
+    }
+
     if (assetDef.children.length > 0) {
       root.prepend(assetDef);
     }

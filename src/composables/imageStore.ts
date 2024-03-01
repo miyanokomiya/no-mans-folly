@@ -3,6 +3,7 @@ import { newCallback } from "./reactives";
 
 interface ImageData {
   img: HTMLImageElement;
+  type: "image/png" | "image/svg+xml" | string;
 }
 
 export function newImageStore() {
@@ -19,6 +20,7 @@ export function newImageStore() {
    * Doing "document.body.appendChild(img)" can be a workaround though, not sure if it's worth doing.
    */
   function loadFromFile(assetId: string, file: File | Blob): Promise<HTMLImageElement> {
+    const type = file.type;
     const objectURL = URL.createObjectURL(file);
     const img = new Image();
 
@@ -27,7 +29,7 @@ export function newImageStore() {
       img.onload = () => {
         URL.revokeObjectURL(objectURL);
         processing.delete(assetId);
-        imageMap.set(assetId, { img });
+        imageMap.set(assetId, { img, type });
         resolve(img);
         callback.dispatch([assetId, img]);
       };
@@ -59,13 +61,18 @@ export function newImageStore() {
   }
 
   function getImage(assetId: string): HTMLImageElement | undefined {
-    return imageMap.get(assetId)?.img;
+    return getImageData(assetId)?.img;
+  }
+
+  function getImageData(assetId: string): ImageData | undefined {
+    return imageMap.get(assetId);
   }
 
   return {
     loadFromFile,
     batchLoad,
     getImage,
+    getImageData,
     clear,
     watch: callback.bind,
   };
