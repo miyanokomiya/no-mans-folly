@@ -50,8 +50,9 @@ import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam, LinkInfo } from "../types";
 import { handleContextItemEvent } from "./contextMenuItems";
 import { newAutoPanningState } from "../autoPanningState";
+import { newShapeInspectionState } from "./shapeInspectionState";
 
-type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady";
+type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "ShapeInspection";
 
 export function handleStateEvent(
   _ctx: unknown,
@@ -75,6 +76,10 @@ export function handleStateEvent(
 
   if (event.data.name === "TextReady") {
     return () => newTextReadyState();
+  }
+
+  if (event.data.name === "ShapeInspection") {
+    return () => newShapeInspectionState();
   }
 }
 
@@ -533,7 +538,7 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
       handleHistoryEvent(ctx, event);
       return newSelectionHubState;
     case "state":
-      return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+      return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady", "ShapeInspection"]);
     case "contextmenu-item": {
       return handleContextItemEvent(ctx, event);
     }

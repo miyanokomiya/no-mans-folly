@@ -2,13 +2,28 @@ import { useCallback, useContext } from "react";
 import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
-import { AppStateContext } from "../../contexts/AppContext";
+import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
 
 export const ShapeInspectorPanel: React.FC = () => {
+  const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
   const { shapeStore } = useContext(AppCanvasContext);
   const targetShape = useSelectedShape();
   const targetTmpShape = useSelectedTmpShape();
+
+  const readyState = useCallback(() => {
+    sm.handleEvent({
+      type: "state",
+      data: { name: "ShapeInspection" },
+    });
+  }, [sm]);
+
+  const breakState = useCallback(() => {
+    sm.handleEvent({
+      type: "state",
+      data: { name: "Break" },
+    });
+  }, [sm]);
 
   /**
    * Expected behavior of input field.
@@ -22,6 +37,7 @@ export const ShapeInspectorPanel: React.FC = () => {
     const tmpMap = shapeStore.getTmpShapeMap();
     // Make sure to always clear tmp map.
     shapeStore.setTmpShapeMap({});
+    breakState();
 
     if (!targetShape) return;
 
@@ -29,7 +45,7 @@ export const ShapeInspectorPanel: React.FC = () => {
     if (!tmp) return;
 
     smctx.patchShapes({ [targetShape.id]: tmp });
-  }, [shapeStore, targetShape, smctx]);
+  }, [shapeStore, targetShape, smctx, breakState]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -44,6 +60,7 @@ export const ShapeInspectorPanel: React.FC = () => {
       if (!targetShape) return;
 
       if (draft) {
+        readyState();
         shapeStore.setTmpShapeMap({
           [targetShape.id]: { p: { x: val, y: targetShape.p.y } },
         });
@@ -51,7 +68,7 @@ export const ShapeInspectorPanel: React.FC = () => {
         commit();
       }
     },
-    [shapeStore, targetShape, commit],
+    [shapeStore, targetShape, commit, readyState],
   );
 
   const handleChangeY = useCallback(
@@ -59,6 +76,7 @@ export const ShapeInspectorPanel: React.FC = () => {
       if (!targetShape) return;
 
       if (draft) {
+        readyState();
         shapeStore.setTmpShapeMap({
           [targetShape.id]: { p: { x: targetShape.p.x, y: val } },
         });
@@ -66,7 +84,7 @@ export const ShapeInspectorPanel: React.FC = () => {
         commit();
       }
     },
-    [shapeStore, targetShape, commit],
+    [shapeStore, targetShape, commit, readyState],
   );
 
   return targetTmpShape ? (
@@ -82,6 +100,7 @@ export const ShapeInspectorPanel: React.FC = () => {
           <NumberInput value={targetTmpShape.p.y} onChange={handleChangeY} onBlur={commit} keepFocus slider />
         </div>
         <span>)</span>
+        <button type="submit" className="hidden" />
       </form>
     </div>
   ) : (
