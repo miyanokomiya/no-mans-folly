@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { Sheet } from "../models";
+import { Shape, Sheet } from "../models";
 
 export function useSelectedSheet(): Sheet | undefined {
   const acctx = useContext(AppCanvasContext);
@@ -68,4 +68,69 @@ export function useTmpSheetMap(): { [id: string]: Partial<Sheet> } {
   }, [acctx.sheetStore]);
 
   return tmpMap;
+}
+
+export function useSelectedTmpShape(): Shape | undefined {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [selectedShape, setSelectedShape] = useState<Shape>();
+
+  const update = useCallback(() => {
+    const id = shapeStore.getLastSelected();
+    if (!id) {
+      setSelectedShape(undefined);
+      return;
+    }
+
+    setSelectedShape(shapeStore.shapeComposite.mergedShapeMap[id]);
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+      shapeStore.watchTmpShapeMap(() => {
+        update();
+      }),
+      shapeStore.watchSelected(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return selectedShape;
+}
+
+export function useSelectedShape(): Shape | undefined {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [selectedShape, setSelectedShape] = useState<Shape>();
+
+  const update = useCallback(() => {
+    const id = shapeStore.getLastSelected();
+    if (!id) {
+      setSelectedShape(undefined);
+      return;
+    }
+
+    setSelectedShape(shapeStore.shapeComposite.shapeMap[id]);
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+      shapeStore.watchSelected(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return selectedShape;
 }

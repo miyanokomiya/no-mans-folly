@@ -39,7 +39,7 @@ export const NumberInput: React.FC<Props> = ({
       setTextValue(v);
       if (!/^[+-]?((\d+(\.\d*)?)|(\.\d+))$/.test(v)) return;
 
-      onChange?.(parseFloat(v));
+      onChange?.(parseFloat(v), true);
     },
     [onChange],
   );
