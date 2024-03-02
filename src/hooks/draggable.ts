@@ -11,9 +11,9 @@ export function useDraggable() {
   const { startDragging } = useGlobalDrag(
     useCallback(
       (e: MouseEvent) => {
-        e.preventDefault();
         if (!dragFrom) return;
 
+        e.preventDefault();
         const to = { x: e.clientX, y: e.clientY };
         vRef.current = sub(to, dragFrom);
         setDragTo(to);

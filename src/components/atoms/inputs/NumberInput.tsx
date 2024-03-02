@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDraggable } from "../../../hooks/draggable";
+import { IVec2, sub } from "okageo";
+import { useGlobalDrag } from "../../../hooks/window";
 
 interface Props {
   value: number;
-  onChange?: (val: number) => void;
+  onChange?: (val: number, draft?: boolean) => void;
   onBlur?: () => void;
   autofocus?: boolean;
   keepFocus?: boolean;
@@ -43,23 +44,51 @@ export const NumberInput: React.FC<Props> = ({
     [onChange],
   );
 
-  const { startDrag, v: dragV } = useDraggable();
-  const [startValue, setStartValue] = useState(value);
+  const startValue = useRef(value);
+  const dragFrom = useRef<IVec2>();
+  const dragTo = useRef<IVec2>();
+  const dragV = useRef<IVec2>();
+
+  const handleDragMove = useCallback(() => {
+    if (!dragV.current) return;
+
+    const next = Math.round(startValue.current + dragV.current.x);
+    onChange?.(next, true);
+  }, [onChange]);
+
+  const handleDragEnd = useCallback(() => {
+    if (!dragV.current) return;
+
+    const next = Math.round(startValue.current + dragV.current.x);
+    onChange?.(next);
+  }, [onChange]);
+
+  const { startDragging } = useGlobalDrag(
+    useCallback(
+      (e: MouseEvent) => {
+        if (!dragFrom.current) return;
+
+        e.preventDefault();
+        dragV.current = sub({ x: e.pageX, y: e.pageX }, dragFrom.current);
+        handleDragMove();
+      },
+      [handleDragMove],
+    ),
+    useCallback(() => {
+      handleDragEnd();
+      dragFrom.current = undefined;
+      dragTo.current = undefined;
+    }, [handleDragEnd]),
+  );
 
   const handleDownSlider = useCallback(
     (e: React.MouseEvent) => {
-      setStartValue(value);
-      startDrag(e);
+      startValue.current = value;
+      dragFrom.current = { x: e.pageX, y: e.pageY };
+      startDragging();
     },
-    [value, startDrag],
+    [value, startDragging],
   );
-
-  useEffect(() => {
-    if (!dragV) return;
-
-    const next = Math.round(startValue + dragV.x);
-    onChange?.(next);
-  }, [dragV, startValue, onChange]);
 
   return (
     <div className="w-full flex items-center border">
