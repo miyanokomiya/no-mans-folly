@@ -82,6 +82,7 @@ interface UpdateShapeEvent extends ModeStateEventBase {
 interface UpdateTmpShapeEvent extends ModeStateEventBase {
   type: "tmp-shape-updated";
   data: {
+    keys: Set<string>;
     text?: boolean;
   };
 }

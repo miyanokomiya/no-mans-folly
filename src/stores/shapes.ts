@@ -26,14 +26,14 @@ export function newShapeStore(option: Option) {
 
   function setTmpShapeMap(val: { [id: string]: Partial<Shape> }) {
     tmpShapeMap = val;
-    tmpShapeMapCallback.dispatch();
+    tmpShapeMapCallback.dispatch(new Set(Object.keys(val)));
   }
 
   function getTmpShapeMap(): { [id: string]: Partial<Shape> } {
     return tmpShapeMap;
   }
 
-  const tmpShapeMapCallback = newCallback();
+  const tmpShapeMapCallback = newCallback<Set<string>>();
 
   function refresh(_ydoc: Y.Doc) {
     shapeSelectable.clearAllSelected();

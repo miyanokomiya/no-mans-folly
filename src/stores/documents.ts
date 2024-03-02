@@ -22,14 +22,14 @@ export function newDocumentStore(option: Option) {
 
   function setTmpDocMap(val: { [id: string]: DocDelta }) {
     tmpDocMap = val;
-    tmpDocMapCallback.dispatch();
+    tmpDocMapCallback.dispatch(new Set(Object.keys(val)));
   }
 
   function getTmpDocMap(): { [id: string]: DocDelta } {
     return tmpDocMap;
   }
 
-  const tmpDocMapCallback = newCallback();
+  const tmpDocMapCallback = newCallback<Set<string>>();
 
   const _entitiesCache = newCache(() => {
     const ret: { [id: string]: DocOutput } = {};

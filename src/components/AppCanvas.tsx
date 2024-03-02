@@ -97,10 +97,10 @@ export const AppCanvas: React.FC = () => {
   }, [shapeStore, sm]);
 
   useEffect(() => {
-    return shapeStore.watchTmpShapeMap(() => {
+    return shapeStore.watchTmpShapeMap((keys) => {
       sm.handleEvent({
         type: "tmp-shape-updated",
-        data: {},
+        data: { keys },
       });
       setCanvasState({});
     });
@@ -123,10 +123,10 @@ export const AppCanvas: React.FC = () => {
   }, [documentStore, sm]);
 
   useEffect(() => {
-    return documentStore.watchTmpDocMap(() => {
+    return documentStore.watchTmpDocMap((keys) => {
       sm.handleEvent({
         type: "tmp-shape-updated",
-        data: { text: true },
+        data: { keys, text: true },
       });
       setCanvasState({});
     });
