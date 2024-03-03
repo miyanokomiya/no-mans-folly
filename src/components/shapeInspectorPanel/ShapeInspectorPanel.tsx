@@ -6,6 +6,7 @@ import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { Shape } from "../../models";
+import { resizeShape } from "../../shapes";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -68,14 +69,27 @@ export const ShapeInspectorPanel: React.FC = () => {
 
   const handleChangeP = useCallback(
     (val: IVec2, draft = false) => {
+      if (!targetShape) return;
+
       if (draft) {
         readyState();
-        updateTmpTargetShape({ p: val });
+
+        const shapeComposite = smctx.getShapeComposite();
+        updateTmpTargetShape(
+          resizeShape(shapeComposite.getShapeStruct, targetShape, [
+            1,
+            0,
+            0,
+            1,
+            val.x - targetShape.p.x,
+            val.y - targetShape.p.y,
+          ]),
+        );
       } else {
         commit();
       }
     },
-    [commit, readyState, updateTmpTargetShape],
+    [commit, readyState, updateTmpTargetShape, smctx, targetShape],
   );
 
   return targetTmpShape ? (
