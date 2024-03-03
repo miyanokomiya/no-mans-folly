@@ -11,10 +11,10 @@ interface Props {
 
 export const AppRightPanel: React.FC<Props> = ({ selected, onSelect }) => {
   const items: [{ name: string }, React.ReactNode][] = [
-    [{ name: "Icons" }, <ShapeLibraryPanel />],
+    [{ name: "Inspect" }, <ShapeInspectorPanel />],
     [{ name: "Sheet" }, <SheetConfigPanel />],
-    [{ name: "Shape" }, <ShapeInspectorPanel />],
-    [{ name: "Settings" }, <UserSettingPanel />],
+    [{ name: "Icons" }, <ShapeLibraryPanel />],
+    [{ name: "Setting" }, <UserSettingPanel />],
   ];
   return <TabPanelV selected={selected} onSelect={onSelect} items={items} />;
 };
