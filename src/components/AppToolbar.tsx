@@ -128,7 +128,7 @@ export const AppToolbar: React.FC = () => {
       data: { name: "Break" },
     });
     setPopup(popup === "shapes" ? "" : "shapes");
-  }, [popup]);
+  }, [sm, popup]);
 
   const onClickLayoutButton = useCallback(() => {
     sm.handleEvent({
@@ -136,7 +136,7 @@ export const AppToolbar: React.FC = () => {
       data: { name: "Break" },
     });
     setPopup(popup === "layouts" ? "" : "layouts");
-  }, [popup]);
+  }, [sm, popup]);
 
   const onClickLineButton = useCallback(() => {
     if (popup === "lines" && stateLabel === "LineReady") {
