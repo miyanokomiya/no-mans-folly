@@ -4,6 +4,8 @@ import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
+import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
+import { Shape } from "../../models";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -35,18 +37,13 @@ export const ShapeInspectorPanel: React.FC = () => {
    * - Commit tmp data on slider mouseup.
    */
   const commit = useCallback(() => {
-    const tmpMap = shapeStore.getTmpShapeMap();
-    // Make sure to always clear tmp map.
+    const tmp = shapeStore.getTmpShapeMap();
+    if (Object.keys(tmp).length === 0) return;
+
     shapeStore.setTmpShapeMap({});
     breakState();
-
-    if (!targetShape) return;
-
-    const tmp = tmpMap[targetShape.id];
-    if (!tmp) return;
-
-    smctx.patchShapes({ [targetShape.id]: tmp });
-  }, [shapeStore, targetShape, smctx, breakState]);
+    smctx.patchShapes(tmp);
+  }, [shapeStore, smctx, breakState]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -56,18 +53,29 @@ export const ShapeInspectorPanel: React.FC = () => {
     [commit],
   );
 
-  const handleChangeP = useCallback(
-    (val: IVec2, draft = false) => {
+  const updateTmpTargetShape = useCallback(
+    (patch: Partial<Shape>) => {
       if (!targetShape) return;
 
+      const shapeComposite = smctx.getShapeComposite();
+      const layoutPatch = getPatchByLayouts(shapeComposite, {
+        update: { [targetShape.id]: patch },
+      });
+      smctx.setTmpShapeMap(layoutPatch);
+    },
+    [smctx, targetShape],
+  );
+
+  const handleChangeP = useCallback(
+    (val: IVec2, draft = false) => {
       if (draft) {
         readyState();
-        shapeStore.setTmpShapeMap({ [targetShape.id]: { p: val } });
+        updateTmpTargetShape({ p: val });
       } else {
         commit();
       }
     },
-    [shapeStore, targetShape, commit, readyState],
+    [commit, readyState, updateTmpTargetShape],
   );
 
   return targetTmpShape ? (
