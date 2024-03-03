@@ -27,22 +27,22 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
   targetShape,
   targetTmpShape,
 }) => {
-  const sm = useContext(AppStateMachineContext);
-  const smctx = useContext(AppStateContext);
+  const { handleEvent } = useContext(AppStateMachineContext);
+  const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(AppStateContext);
 
   const readyState = useCallback(() => {
-    sm.handleEvent({
+    handleEvent({
       type: "state",
       data: { name: "ShapeInspection" },
     });
-  }, [sm]);
+  }, [handleEvent]);
 
   const breakState = useCallback(() => {
-    sm.handleEvent({
+    handleEvent({
       type: "state",
       data: { name: "Break" },
     });
-  }, [sm]);
+  }, [handleEvent]);
 
   /**
    * Expected behavior of input field.
@@ -53,13 +53,13 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
    * - Commit tmp data on slider mouseup.
    */
   const commit = useCallback(() => {
-    const tmp = smctx.getTmpShapeMap();
+    const tmp = getTmpShapeMap();
     if (Object.keys(tmp).length === 0) return;
 
-    smctx.setTmpShapeMap({});
+    setTmpShapeMap({});
     breakState();
-    smctx.patchShapes(tmp);
-  }, [smctx, breakState]);
+    patchShapes(tmp);
+  }, [getTmpShapeMap, setTmpShapeMap, patchShapes, breakState]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -71,13 +71,13 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
 
   const updateTmpTargetShape = useCallback(
     (patch: Partial<Shape>) => {
-      const shapeComposite = smctx.getShapeComposite();
+      const shapeComposite = getShapeComposite();
       const layoutPatch = getPatchByLayouts(shapeComposite, {
         update: { [targetShape.id]: patch },
       });
-      smctx.setTmpShapeMap(layoutPatch);
+      setTmpShapeMap(layoutPatch);
     },
-    [smctx, targetShape],
+    [targetShape, getShapeComposite, setTmpShapeMap],
   );
 
   const handleChangeP = useCallback(
@@ -85,7 +85,7 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
       if (draft) {
         readyState();
 
-        const shapeComposite = smctx.getShapeComposite();
+        const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
           resizeShape(shapeComposite.getShapeStruct, targetShape, [
             1,
@@ -100,7 +100,7 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
         commit();
       }
     },
-    [commit, readyState, updateTmpTargetShape, smctx, targetShape],
+    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
   );
 
   return (
