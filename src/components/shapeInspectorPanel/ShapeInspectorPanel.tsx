@@ -1,8 +1,9 @@
 import { useCallback, useContext } from "react";
 import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
-import { NumberInput } from "../atoms/inputs/NumberInput";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
+import { PointField } from "./PointField";
+import { IVec2 } from "okageo";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -55,31 +56,13 @@ export const ShapeInspectorPanel: React.FC = () => {
     [commit],
   );
 
-  const handleChangeX = useCallback(
-    (val: number, draft = false) => {
+  const handleChangeP = useCallback(
+    (val: IVec2, draft = false) => {
       if (!targetShape) return;
 
       if (draft) {
         readyState();
-        shapeStore.setTmpShapeMap({
-          [targetShape.id]: { p: { x: val, y: targetShape.p.y } },
-        });
-      } else {
-        commit();
-      }
-    },
-    [shapeStore, targetShape, commit, readyState],
-  );
-
-  const handleChangeY = useCallback(
-    (val: number, draft = false) => {
-      if (!targetShape) return;
-
-      if (draft) {
-        readyState();
-        shapeStore.setTmpShapeMap({
-          [targetShape.id]: { p: { x: targetShape.p.x, y: val } },
-        });
+        shapeStore.setTmpShapeMap({ [targetShape.id]: { p: val } });
       } else {
         commit();
       }
@@ -88,21 +71,13 @@ export const ShapeInspectorPanel: React.FC = () => {
   );
 
   return targetTmpShape ? (
-    <div className="">
-      <form className="flex items-center gap-2" onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit}>
+      <div className="flex items-center gap-2">
         <span className="mr-auto">Position:</span>
-        <span>(</span>
-        <div className="w-20">
-          <NumberInput value={targetTmpShape.p.x} onChange={handleChangeX} onBlur={commit} keepFocus slider />
-        </div>
-        <span>,</span>
-        <div className="w-20">
-          <NumberInput value={targetTmpShape.p.y} onChange={handleChangeY} onBlur={commit} keepFocus slider />
-        </div>
-        <span>)</span>
-        <button type="submit" className="hidden" />
-      </form>
-    </div>
+        <PointField value={targetTmpShape.p} onChange={handleChangeP} />
+      </div>
+      <button type="submit" className="hidden" />
+    </form>
   ) : (
     <div>No shape selected</div>
   );
