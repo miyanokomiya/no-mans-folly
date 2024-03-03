@@ -9,6 +9,7 @@ interface Props {
 
 export const PointField: React.FC<Props> = ({ value, onChange }) => {
   const latestValue = useRef(value);
+  latestValue.current = value;
 
   const commit = useCallback(() => {
     onChange?.(latestValue.current);
