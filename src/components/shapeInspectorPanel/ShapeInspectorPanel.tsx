@@ -1,6 +1,5 @@
 import { useCallback, useContext } from "react";
 import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
-import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
@@ -9,11 +8,27 @@ import { Shape } from "../../models";
 import { resizeShape } from "../../shapes";
 
 export const ShapeInspectorPanel: React.FC = () => {
-  const sm = useContext(AppStateMachineContext);
-  const smctx = useContext(AppStateContext);
-  const { shapeStore } = useContext(AppCanvasContext);
   const targetShape = useSelectedShape();
   const targetTmpShape = useSelectedTmpShape();
+
+  return targetShape && targetTmpShape ? (
+    <ShapeInspectorPanelWithShape targetShape={targetShape} targetTmpShape={targetTmpShape} />
+  ) : (
+    <div>No shape selected</div>
+  );
+};
+
+interface ShapeInspectorPanelWithShapeProps {
+  targetShape: Shape;
+  targetTmpShape: Shape;
+}
+
+export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({
+  targetShape,
+  targetTmpShape,
+}) => {
+  const sm = useContext(AppStateMachineContext);
+  const smctx = useContext(AppStateContext);
 
   const readyState = useCallback(() => {
     sm.handleEvent({
@@ -38,13 +53,13 @@ export const ShapeInspectorPanel: React.FC = () => {
    * - Commit tmp data on slider mouseup.
    */
   const commit = useCallback(() => {
-    const tmp = shapeStore.getTmpShapeMap();
+    const tmp = smctx.getTmpShapeMap();
     if (Object.keys(tmp).length === 0) return;
 
-    shapeStore.setTmpShapeMap({});
+    smctx.setTmpShapeMap({});
     breakState();
     smctx.patchShapes(tmp);
-  }, [shapeStore, smctx, breakState]);
+  }, [smctx, breakState]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -56,8 +71,6 @@ export const ShapeInspectorPanel: React.FC = () => {
 
   const updateTmpTargetShape = useCallback(
     (patch: Partial<Shape>) => {
-      if (!targetShape) return;
-
       const shapeComposite = smctx.getShapeComposite();
       const layoutPatch = getPatchByLayouts(shapeComposite, {
         update: { [targetShape.id]: patch },
@@ -69,8 +82,6 @@ export const ShapeInspectorPanel: React.FC = () => {
 
   const handleChangeP = useCallback(
     (val: IVec2, draft = false) => {
-      if (!targetShape) return;
-
       if (draft) {
         readyState();
 
@@ -92,7 +103,7 @@ export const ShapeInspectorPanel: React.FC = () => {
     [commit, readyState, updateTmpTargetShape, smctx, targetShape],
   );
 
-  return targetTmpShape ? (
+  return (
     <form onSubmit={handleSubmit}>
       <div className="flex items-center gap-2">
         <span className="mr-auto">Position:</span>
@@ -100,7 +111,5 @@ export const ShapeInspectorPanel: React.FC = () => {
       </div>
       <button type="submit" className="hidden" />
     </form>
-  ) : (
-    <div>No shape selected</div>
   );
 };
