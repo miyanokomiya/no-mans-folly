@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PointerMoveArgs, usePointerLock } from "../../../hooks/pointerLock";
+import { clamp } from "okageo";
 
 interface Props {
   value: number;
@@ -9,6 +10,8 @@ interface Props {
   keepFocus?: boolean;
   placeholder?: string;
   slider?: boolean;
+  max?: number;
+  min?: number;
 }
 
 export const NumberInput: React.FC<Props> = ({
@@ -19,6 +22,8 @@ export const NumberInput: React.FC<Props> = ({
   keepFocus,
   placeholder,
   slider,
+  max,
+  min,
 }) => {
   const ref = useRef<HTMLInputElement>(null);
 
@@ -32,15 +37,22 @@ export const NumberInput: React.FC<Props> = ({
     setTextValue(value.toString());
   }, [value]);
 
+  const adjustValue = useCallback(
+    (v: number) => {
+      return clamp(min, max, v);
+    },
+    [min, max],
+  );
+
   const handleChange = useCallback(
     (e: any) => {
       const v = e.target.value;
       setTextValue(v);
       if (!/^[+-]?((\d+(\.\d*)?)|(\.\d+))$/.test(v)) return;
 
-      onChange?.(parseFloat(v), true);
+      onChange?.(adjustValue(parseFloat(v)), true);
     },
-    [onChange],
+    [onChange, adjustValue],
   );
 
   const startValue = useRef(value);
@@ -48,9 +60,9 @@ export const NumberInput: React.FC<Props> = ({
   const handlePointerLockMove = useCallback(
     (args: PointerMoveArgs) => {
       const next = Math.round(startValue.current + args.totalDelta.x);
-      onChange?.(next, true);
+      onChange?.(adjustValue(next), true);
     },
-    [onChange],
+    [onChange, adjustValue],
   );
 
   const handlePointerLockEnd = useCallback(
@@ -58,9 +70,9 @@ export const NumberInput: React.FC<Props> = ({
       if (!args) return;
 
       const next = Math.round(startValue.current + args.totalDelta.x);
-      onChange?.(next);
+      onChange?.(adjustValue(next));
     },
-    [onChange],
+    [onChange, adjustValue],
   );
 
   const [startLock, stopLock, locked] = usePointerLock({

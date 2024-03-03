@@ -5,9 +5,11 @@ import { useCallback, useRef } from "react";
 interface Props {
   value: IVec2;
   onChange?: (val: IVec2, draft?: boolean) => void;
+  max?: number;
+  min?: number;
 }
 
-export const PointField: React.FC<Props> = ({ value, onChange }) => {
+export const PointField: React.FC<Props> = ({ value, onChange, min, max }) => {
   const latestValue = useRef(value);
   latestValue.current = value;
 
@@ -33,11 +35,11 @@ export const PointField: React.FC<Props> = ({ value, onChange }) => {
     <div className="flex items-center gap-2">
       <span>(</span>
       <div className="w-20">
-        <NumberInput value={value.x} onChange={handleChangeX} onBlur={commit} keepFocus slider />
+        <NumberInput value={value.x} onChange={handleChangeX} onBlur={commit} min={min} max={max} keepFocus slider />
       </div>
       <span>,</span>
       <div className="w-20">
-        <NumberInput value={value.y} onChange={handleChangeY} onBlur={commit} keepFocus slider />
+        <NumberInput value={value.y} onChange={handleChangeY} onBlur={commit} min={min} max={max} keepFocus slider />
       </div>
       <span>)</span>
     </div>

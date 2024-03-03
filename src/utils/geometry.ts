@@ -338,6 +338,37 @@ export function getRotatedWrapperRect(rect: IRectangle, rotation: number): IRect
   return getOuterRectangle([getRectPoints(rect).map((p) => rotate(p, rotation, c))]);
 }
 
+/**
+ * Suppose "rectPolygon" composes a rectangle.
+ * => [tl, tr, br, bl]
+ */
+export function getRectWithRotationFromRectPolygon(rectPolygon: IVec2[]): [rect: IRectangle, rotation: number] {
+  const r = getRadian(rectPolygon[1], rectPolygon[0]);
+  if (r === 0) {
+    return [
+      {
+        x: rectPolygon[0].x,
+        y: rectPolygon[0].y,
+        width: rectPolygon[1].x - rectPolygon[0].x,
+        height: rectPolygon[3].y - rectPolygon[0].y,
+      },
+      0,
+    ];
+  }
+
+  const c = getCenter(rectPolygon[0], rectPolygon[2]);
+  const p = rotate(rectPolygon[0], -r, c);
+  return [
+    {
+      x: p.x,
+      y: p.y,
+      width: getDistance(rectPolygon[0], rectPolygon[1]),
+      height: getDistance(rectPolygon[0], rectPolygon[3]),
+    },
+    r,
+  ];
+}
+
 // When the pedal point isn't on the segment, this always returns false.
 export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number): boolean {
   const pedal = getPedal(p, seg);

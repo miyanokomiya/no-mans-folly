@@ -1,11 +1,13 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
 import { PointField } from "./PointField";
-import { IVec2 } from "okageo";
+import { AffineMatrix, IVec2, multiAffines } from "okageo";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { Shape } from "../../models";
 import { resizeShape } from "../../shapes";
+import { ShapeComposite } from "../../composables/shapeComposite";
+import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -87,14 +89,29 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
 
         const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
-          resizeShape(shapeComposite.getShapeStruct, targetShape, [
-            1,
-            0,
-            0,
-            1,
-            val.x - targetShape.p.x,
-            val.y - targetShape.p.y,
-          ]),
+          resizeShape(shapeComposite.getShapeStruct, targetShape, getMoveToAffine(targetShape.p, val)),
+        );
+      } else {
+        commit();
+      }
+    },
+    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
+  );
+
+  const targetSize = useMemo<IVec2>(() => {
+    const shapeComposite = getShapeComposite();
+    const [rect] = getRectWithRotationFromRectPolygon(shapeComposite.getLocalRectPolygon(targetTmpShape));
+    return { x: rect.width, y: rect.height };
+  }, [targetTmpShape, getShapeComposite]);
+
+  const handleChangeSize = useCallback(
+    (val: IVec2, draft = false) => {
+      if (draft) {
+        readyState();
+
+        const shapeComposite = getShapeComposite();
+        updateTmpTargetShape(
+          resizeShape(shapeComposite.getShapeStruct, targetShape, getScaleToAffine(shapeComposite, targetShape, val)),
         );
       } else {
         commit();
@@ -109,7 +126,31 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
         <span className="mr-auto">Position:</span>
         <PointField value={targetTmpShape.p} onChange={handleChangeP} />
       </div>
+      <div className="flex items-center gap-2">
+        <span className="mr-auto">Size:</span>
+        <PointField value={targetSize} onChange={handleChangeSize} min={1} />
+      </div>
       <button type="submit" className="hidden" />
     </form>
   );
 };
+
+function getMoveToAffine(from: IVec2, to: IVec2): AffineMatrix {
+  return [1, 0, 0, 1, to.x - from.x, to.y - from.y];
+}
+
+function getScaleToAffine(shapeComposite: ShapeComposite, shape: Shape, to: IVec2): AffineMatrix {
+  const polygon = shapeComposite.getLocalRectPolygon(shape);
+  const [rect] = getRectWithRotationFromRectPolygon(polygon);
+  const origin = polygon[0];
+  const sin = Math.sin(shape.rotation);
+  const cos = Math.cos(shape.rotation);
+
+  return multiAffines([
+    [1, 0, 0, 1, origin.x, origin.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [to.x / rect.width, 0, 0, to.y / rect.height, 0, 0],
+    [cos, -sin, sin, cos, 0, 0],
+    [1, 0, 0, 1, -origin.x, -origin.y],
+  ]);
+}

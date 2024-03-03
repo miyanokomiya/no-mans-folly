@@ -30,7 +30,7 @@ export function newShapeInspectionState(): AppCanvasState {
 
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: scale });
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
 
       const polygon = shapeComposite.getLocalRectPolygon(shape);
       renderCtx.beginPath();

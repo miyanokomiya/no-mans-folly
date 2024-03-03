@@ -53,6 +53,7 @@ import {
   getRotationAffine,
   getCrossSegAndSegWithT,
   pickLongSegment,
+  getRectWithRotationFromRectPolygon,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -453,6 +454,31 @@ describe("getRotatedWrapperRect", () => {
     expect(res1.y).toBeCloseTo(5);
     expect(res1.width).toBeCloseTo(20);
     expect(res1.height).toBeCloseTo(10);
+  });
+});
+
+describe("getRectWithRotationFromRectPolygon", () => {
+  test("should return a rectangle and rotation derived from a rect polygon", () => {
+    const res0 = getRectWithRotationFromRectPolygon([
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+      { x: 20, y: 10 },
+      { x: 0, y: 10 },
+    ]);
+    expect(res0[0]).toEqual({ x: 0, y: 0, width: 20, height: 10 });
+    expect(res0[1]).toEqual(0);
+
+    const res1 = getRectWithRotationFromRectPolygon([
+      { x: 20, y: 0 },
+      { x: 20, y: 10 },
+      { x: 0, y: 10 },
+      { x: 0, y: 0 },
+    ]);
+    expect(res1[0].x).toBeCloseTo(5);
+    expect(res1[0].y).toBeCloseTo(-5);
+    expect(res1[0].width).toBeCloseTo(10);
+    expect(res1[0].height).toBeCloseTo(20);
+    expect(res1[1]).toBeCloseTo(Math.PI / 2);
   });
 });
 
