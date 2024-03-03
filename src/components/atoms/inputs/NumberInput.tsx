@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PointerMoveArgs, usePointerLock } from "../../../hooks/pointerLock";
 import { clamp } from "okageo";
+import { logRoundByDigit } from "../../../utils/geometry";
 
 interface Props {
   value: number;
@@ -34,7 +35,8 @@ export const NumberInput: React.FC<Props> = ({
   const [textValue, setTextValue] = useState(value.toString());
 
   useEffect(() => {
-    setTextValue(value.toString());
+    // Trim to avoid showing floating-point error.
+    setTextValue(logRoundByDigit(6, value).toString());
   }, [value]);
 
   const adjustValue = useCallback(
