@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { IVec2, sub } from "okageo";
-import { useGlobalDrag } from "../../../hooks/window";
+import { PointerMoveArgs, usePointerLock } from "../../../hooks/pointerLock";
 
 interface Props {
   value: number;
@@ -45,53 +44,41 @@ export const NumberInput: React.FC<Props> = ({
   );
 
   const startValue = useRef(value);
-  const dragFrom = useRef<IVec2>();
-  const dragTo = useRef<IVec2>();
-  const dragV = useRef<IVec2>();
 
-  const handleDragMove = useCallback(() => {
-    if (!dragV.current) return;
-
-    const next = Math.round(startValue.current + dragV.current.x);
-    onChange?.(next, true);
-  }, [onChange]);
-
-  const handleDragEnd = useCallback(() => {
-    if (!dragV.current) return;
-
-    const next = Math.round(startValue.current + dragV.current.x);
-    onChange?.(next);
-  }, [onChange]);
-
-  const { startDragging } = useGlobalDrag(
-    useCallback(
-      (e: MouseEvent) => {
-        if (!dragFrom.current) return;
-
-        e.preventDefault();
-        dragV.current = sub({ x: e.pageX, y: e.pageX }, dragFrom.current);
-        handleDragMove();
-      },
-      [handleDragMove],
-    ),
-    useCallback(() => {
-      handleDragEnd();
-      dragFrom.current = undefined;
-      dragTo.current = undefined;
-    }, [handleDragEnd]),
+  const handlePointerLockMove = useCallback(
+    (args: PointerMoveArgs) => {
+      const next = Math.round(startValue.current + args.totalDelta.x);
+      onChange?.(next, true);
+    },
+    [onChange],
   );
+
+  const handlePointerLockEnd = useCallback(
+    (args?: PointerMoveArgs) => {
+      if (!args) return;
+
+      const next = Math.round(startValue.current + args.totalDelta.x);
+      onChange?.(next);
+    },
+    [onChange],
+  );
+
+  const [startLock, stopLock, locked] = usePointerLock({
+    onMove: handlePointerLockMove,
+    onEnd: handlePointerLockEnd,
+    onEscape: handlePointerLockEnd,
+  });
 
   const handleDownSlider = useCallback(
     (e: React.MouseEvent) => {
       startValue.current = value;
-      dragFrom.current = { x: e.pageX, y: e.pageY };
-      startDragging();
+      startLock(e.nativeEvent);
     },
-    [value, startDragging],
+    [value, startLock],
   );
 
   return (
-    <div className="w-full flex items-center border">
+    <div className={"w-full flex items-center border" + (locked ? " border-blue-400" : "")}>
       <input
         ref={ref}
         type="text"
@@ -103,7 +90,11 @@ export const NumberInput: React.FC<Props> = ({
         placeholder={placeholder}
       />
       {slider ? (
-        <div className="w-4 h-8 bg-gray-300 cursor-col-resize rounded-r" onMouseDown={handleDownSlider} />
+        <div
+          className="w-4 h-8 bg-gray-300 cursor-col-resize rounded-r"
+          onMouseDown={handleDownSlider}
+          onMouseUp={stopLock}
+        />
       ) : undefined}
     </div>
   );
