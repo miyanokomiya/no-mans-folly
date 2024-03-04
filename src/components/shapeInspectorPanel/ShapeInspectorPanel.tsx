@@ -130,16 +130,23 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex items-center gap-2">
-        <span className="mr-auto">Position:</span>
+      <BlockField label={"Position"}>
         <PointField value={targetLocation} onChange={handleChangePosition} />
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="mr-auto">Size:</span>
+      </BlockField>
+      <BlockField label={"Size"}>
         <PointField value={targetSize} onChange={handleChangeSize} min={1} />
-      </div>
+      </BlockField>
       <button type="submit" className="hidden" />
     </form>
+  );
+};
+
+const BlockField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
+  return (
+    <div className="flex flex-col">
+      <span>{label}:</span>
+      <div className="ml-auto">{children}</div>
+    </div>
   );
 };
 
