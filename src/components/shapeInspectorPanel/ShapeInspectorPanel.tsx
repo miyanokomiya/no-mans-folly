@@ -83,6 +83,11 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
     [targetShape, getShapeComposite, setTmpShapeMap],
   );
 
+  const shapeType = useMemo<string>(() => {
+    const shapeComposite = getShapeComposite();
+    return shapeComposite.getShapeStruct(targetShape.type).label;
+  }, [getShapeComposite, targetShape]);
+
   const targetLocation = useMemo<IVec2>(() => {
     const shapeComposite = getShapeComposite();
     return shapeComposite.getLocalRectPolygon(targetTmpShape)[0];
@@ -151,6 +156,9 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      <InlineField label={"Shape type"}>
+        <span>{shapeType}</span>
+      </InlineField>
       <BlockField label={"Position"}>
         <PointField value={targetLocation} onChange={handleChangePosition} />
       </BlockField>
