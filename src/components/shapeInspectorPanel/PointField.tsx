@@ -33,15 +33,12 @@ export const PointField: React.FC<Props> = ({ value, onChange, min, max }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <span>(</span>
       <div className="w-24">
         <NumberInput value={value.x} onChange={handleChangeX} onBlur={commit} min={min} max={max} keepFocus slider />
       </div>
-      <span>,</span>
       <div className="w-24">
         <NumberInput value={value.y} onChange={handleChangeY} onBlur={commit} min={min} max={max} keepFocus slider />
       </div>
-      <span>)</span>
     </div>
   );
 };

@@ -159,13 +159,13 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
       <InlineField label={"Shape type"}>
         <span>{shapeType}</span>
       </InlineField>
-      <BlockField label={"Position"}>
+      <BlockField label={"Position (x, y)"}>
         <PointField value={targetLocation} onChange={handleChangePosition} />
       </BlockField>
-      <BlockField label={"Size"}>
+      <BlockField label={"Size (width, height)"}>
         <PointField value={targetSize} onChange={handleChangeSize} min={1} />
       </BlockField>
-      <InlineField label={"Rotation"}>
+      <InlineField label={"Rotation (degree)"}>
         <div className="w-24">
           <NumberInput
             value={(targetLocalBounds[1] * 180) / Math.PI}
@@ -183,7 +183,7 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
 
 const BlockField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       <span>{label}:</span>
       <div className="ml-auto">{children}</div>
     </div>
