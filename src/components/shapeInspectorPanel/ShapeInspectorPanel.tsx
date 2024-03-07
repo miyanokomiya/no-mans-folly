@@ -1,14 +1,12 @@
 import { useCallback, useContext, useMemo } from "react";
 import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
-import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
-import { PointField } from "./PointField";
-import { AffineMatrix, IRectangle, IVec2, getCenter, multiAffines } from "okageo";
+import { ConventionalShapeInspector } from "./ConventionalShapeInspector";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
+import { InlineField } from "../atoms/InlineField";
+import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
 import { Shape } from "../../models";
-import { resizeShape } from "../../shapes";
-import { ShapeComposite } from "../../composables/shapeComposite";
-import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
-import { NumberInput } from "../atoms/inputs/NumberInput";
+import { LineShapeInspector } from "./LineShapeInspector";
+import { LineShape, isLineShape } from "../../shapes/line";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -26,10 +24,7 @@ interface ShapeInspectorPanelWithShapeProps {
   targetTmpShape: Shape;
 }
 
-export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({
-  targetShape,
-  targetTmpShape,
-}) => {
+const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({ targetShape, targetTmpShape }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(AppStateContext);
 
@@ -83,152 +78,34 @@ export const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShape
     [targetShape, getShapeComposite, setTmpShapeMap],
   );
 
-  const shapeType = useMemo<string>(() => {
+  const shapeLabel = useMemo<string>(() => {
     const shapeComposite = getShapeComposite();
     return shapeComposite.getShapeStruct(targetShape.type).label;
   }, [getShapeComposite, targetShape]);
 
-  const targetLocation = useMemo<IVec2>(() => {
-    const shapeComposite = getShapeComposite();
-    return shapeComposite.getLocalRectPolygon(targetTmpShape)[0];
-  }, [getShapeComposite, targetTmpShape]);
-
-  const handleChangePosition = useCallback(
-    (val: IVec2, draft = false) => {
-      if (draft) {
-        readyState();
-
-        const shapeComposite = getShapeComposite();
-        updateTmpTargetShape(
-          resizeShape(shapeComposite.getShapeStruct, targetShape, getMoveToAffine(shapeComposite, targetShape, val)),
-        );
-      } else {
-        commit();
-      }
-    },
-    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
-  );
-
-  const targetLocalBounds = useMemo<[IRectangle, rotation: number]>(() => {
-    const shapeComposite = getShapeComposite();
-    return getRectWithRotationFromRectPolygon(shapeComposite.getLocalRectPolygon(targetTmpShape));
-  }, [targetTmpShape, getShapeComposite]);
-
-  const targetSize = useMemo<IVec2>(() => {
-    return { x: targetLocalBounds[0].width, y: targetLocalBounds[0].height };
-  }, [targetLocalBounds]);
-
-  const handleChangeSize = useCallback(
-    (val: IVec2, draft = false) => {
-      if (draft) {
-        readyState();
-
-        const shapeComposite = getShapeComposite();
-        updateTmpTargetShape(
-          resizeShape(shapeComposite.getShapeStruct, targetShape, getScaleToAffine(shapeComposite, targetShape, val)),
-        );
-      } else {
-        commit();
-      }
-    },
-    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
-  );
-
-  const handleChangeRotation = useCallback(
-    (val: number, draft = false) => {
-      if (draft) {
-        readyState();
-
-        const shapeComposite = getShapeComposite();
-        updateTmpTargetShape(
-          resizeShape(
-            shapeComposite.getShapeStruct,
-            targetShape,
-            getRotateToAffine(shapeComposite, targetShape, (val * Math.PI) / 180),
-          ),
-        );
-      } else {
-        commit();
-      }
-    },
-    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
-  );
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
       <InlineField label={"Shape type"}>
-        <span>{shapeType}</span>
+        <span>{shapeLabel}</span>
       </InlineField>
-      <BlockField label={"Position (x, y)"}>
-        <PointField value={targetLocation} onChange={handleChangePosition} />
-      </BlockField>
-      <BlockField label={"Size (width, height)"}>
-        <PointField value={targetSize} onChange={handleChangeSize} min={1} />
-      </BlockField>
-      <InlineField label={"Rotation (degree)"}>
-        <div className="w-24">
-          <NumberInput
-            value={(targetLocalBounds[1] * 180) / Math.PI}
-            onChange={handleChangeRotation}
-            onBlur={commit}
-            keepFocus
-            slider
-          />
-        </div>
-      </InlineField>
+      {isLineShape(targetShape) ? (
+        <LineShapeInspector
+          targetShape={targetShape}
+          targetTmpShape={targetTmpShape as LineShape}
+          commit={commit}
+          updateTmpTargetShape={updateTmpTargetShape}
+          readyState={readyState}
+        />
+      ) : (
+        <ConventionalShapeInspector
+          targetShape={targetShape}
+          targetTmpShape={targetTmpShape}
+          commit={commit}
+          updateTmpTargetShape={updateTmpTargetShape}
+          readyState={readyState}
+        />
+      )}
       <button type="submit" className="hidden" />
     </form>
   );
 };
-
-const BlockField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
-  return (
-    <div className="flex flex-col gap-1">
-      <span>{label}:</span>
-      <div className="ml-auto">{children}</div>
-    </div>
-  );
-};
-
-const InlineField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
-  return (
-    <div className="flex items-center">
-      <span>{label}:</span>
-      <div className="ml-auto">{children}</div>
-    </div>
-  );
-};
-
-function getMoveToAffine(shapeComposite: ShapeComposite, shape: Shape, to: IVec2): AffineMatrix {
-  const [origin] = shapeComposite.getLocalRectPolygon(shape);
-  return [1, 0, 0, 1, to.x - origin.x, to.y - origin.y];
-}
-
-function getScaleToAffine(shapeComposite: ShapeComposite, shape: Shape, to: IVec2): AffineMatrix {
-  const polygon = shapeComposite.getLocalRectPolygon(shape);
-  const [rect] = getRectWithRotationFromRectPolygon(polygon);
-  const origin = polygon[0];
-  const sin = Math.sin(shape.rotation);
-  const cos = Math.cos(shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, origin.x, origin.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [to.x / rect.width, 0, 0, to.y / rect.height, 0, 0],
-    [cos, -sin, sin, cos, 0, 0],
-    [1, 0, 0, 1, -origin.x, -origin.y],
-  ]);
-}
-
-function getRotateToAffine(shapeComposite: ShapeComposite, shape: Shape, to: number): AffineMatrix {
-  const polygon = shapeComposite.getLocalRectPolygon(shape);
-  const origin = getCenter(polygon[0], polygon[2]);
-  const sin = Math.sin(to - shape.rotation);
-  const cos = Math.cos(to - shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, origin.x, origin.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [1, 0, 0, 1, -origin.x, -origin.y],
-  ]);
-}
