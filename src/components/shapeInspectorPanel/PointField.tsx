@@ -7,9 +7,10 @@ interface Props {
   onChange?: (val: IVec2, draft?: boolean) => void;
   max?: number;
   min?: number;
+  disabled?: boolean;
 }
 
-export const PointField: React.FC<Props> = ({ value, onChange, min, max }) => {
+export const PointField: React.FC<Props> = ({ value, onChange, min, max, disabled }) => {
   const latestValue = useRef(value);
   latestValue.current = value;
 
@@ -34,10 +35,28 @@ export const PointField: React.FC<Props> = ({ value, onChange, min, max }) => {
   return (
     <div className="flex items-center gap-2">
       <div className="w-24">
-        <NumberInput value={value.x} onChange={handleChangeX} onBlur={commit} min={min} max={max} keepFocus slider />
+        <NumberInput
+          value={value.x}
+          onChange={handleChangeX}
+          onBlur={commit}
+          min={min}
+          max={max}
+          disabled={disabled}
+          keepFocus
+          slider
+        />
       </div>
       <div className="w-24">
-        <NumberInput value={value.y} onChange={handleChangeY} onBlur={commit} min={min} max={max} keepFocus slider />
+        <NumberInput
+          value={value.y}
+          onChange={handleChangeY}
+          onBlur={commit}
+          min={min}
+          max={max}
+          disabled={disabled}
+          keepFocus
+          slider
+        />
       </div>
     </div>
   );

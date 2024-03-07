@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from "react";
-import { LineShape, getLinePath, patchVertex } from "../../shapes/line";
+import { LineShape, getConnection, getLinePath, patchVertex } from "../../shapes/line";
 import { BlockField } from "../atoms/BlockField";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
+import { ConnectionPoint } from "../../models";
 
 interface Props {
   targetShape: LineShape;
@@ -23,6 +24,10 @@ export const LineShapeInspector: React.FC<Props> = ({
     return getLinePath(targetTmpShape);
   }, [targetTmpShape]);
 
+  const targetTmpConnections = useMemo(() => {
+    return targetTmpVertices.map((_, i) => getConnection(targetTmpShape, i));
+  }, [targetTmpShape, targetTmpVertices]);
+
   const handleVertexChange = useCallback(
     (index: number, val: IVec2, draft = false) => {
       if (draft) {
@@ -39,8 +44,8 @@ export const LineShapeInspector: React.FC<Props> = ({
   return (
     <>
       {targetTmpVertices.map((v, i) => (
-        <BlockField key={i} label={getVertexLabel(i, targetTmpVertices.length)}>
-          <VertexField index={i} value={v} onChange={handleVertexChange} />
+        <BlockField key={i} label={getVertexLabel(i, targetTmpVertices.length, !!targetTmpConnections[i])}>
+          <VertexField index={i} value={v} onChange={handleVertexChange} connection={targetTmpConnections[i]} />
         </BlockField>
       ))}
     </>
@@ -51,9 +56,10 @@ interface VertexFieldProps {
   index: number;
   value: IVec2;
   onChange?: (index: number, val: IVec2, draft?: boolean) => void;
+  connection?: ConnectionPoint;
 }
 
-export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange }) => {
+export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange, connection }) => {
   const handleChange = useCallback(
     (val: IVec2, draft = false) => {
       onChange?.(index, val, draft);
@@ -61,16 +67,21 @@ export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange
     [index, onChange],
   );
 
-  return <PointField value={value} onChange={handleChange} />;
+  return <PointField value={value} onChange={handleChange} disabled={!!connection} />;
 };
 
-function getVertexLabel(index: number, size: number): string {
+function getVertexLabel(index: number, size: number, connected?: boolean): string {
+  let ret: string;
   switch (index) {
     case 0:
-      return "Start";
+      ret = "Start";
+      break;
     case size - 1:
-      return "End";
+      ret = "End";
+      break;
     default:
-      return `Body ${index}`;
+      ret = `Body ${index}`;
   }
+
+  return ret + (connected ? " (connected)" : "");
 }

@@ -13,6 +13,7 @@ interface Props {
   slider?: boolean;
   max?: number;
   min?: number;
+  disabled?: boolean;
 }
 
 export const NumberInput: React.FC<Props> = ({
@@ -25,6 +26,7 @@ export const NumberInput: React.FC<Props> = ({
   slider,
   max,
   min,
+  disabled,
 }) => {
   const ref = useRef<HTMLInputElement>(null);
 
@@ -85,11 +87,20 @@ export const NumberInput: React.FC<Props> = ({
 
   const handleDownSlider = useCallback(
     (e: React.MouseEvent) => {
+      if (disabled) return;
+
       startValue.current = value;
       startLock(e.nativeEvent);
     },
-    [value, startLock],
+    [value, startLock, disabled],
   );
+
+  const siderView = slider && !disabled;
+  const inputClass = [
+    "py-1 px-2 w-full text-right",
+    siderView ? "rounded-l" : "rounded",
+    disabled ? " bg-gray-100" : "",
+  ].join(" ");
 
   return (
     <div className={"w-full flex items-center border" + (locked ? " border-blue-400" : "")}>
@@ -100,10 +111,11 @@ export const NumberInput: React.FC<Props> = ({
         value={textValue}
         onChange={handleChange}
         onBlur={onBlur}
-        className={"py-1 px-2 w-full text-right" + (slider ? " rounded-l" : " rounded")}
+        className={inputClass}
         placeholder={placeholder}
+        disabled={disabled}
       />
-      {slider ? (
+      {siderView ? (
         <div
           className="w-4 h-8 bg-gray-300 cursor-col-resize rounded-r"
           onMouseDown={handleDownSlider}
