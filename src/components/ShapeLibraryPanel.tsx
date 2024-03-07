@@ -70,6 +70,7 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
   return (
     <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
       <GroupAccordion selectedName={selected} name="AWS" onClick={handleClickAccordion} onIconDown={handleIconDown} />
+      <GroupAccordion selectedName={selected} name="GCP" onClick={handleClickAccordion} onIconDown={handleIconDown} />
     </div>
   );
 };
@@ -93,7 +94,7 @@ export const GroupAccordion: React.FC<GroupAccordionProps> = ({ selectedName, na
       </button>
       {selectedName === name ? (
         <div className="pl-2">
-          <ShapeLibraryGroup name="aws" onIconDown={onIconDown} />
+          <ShapeLibraryGroup name={name.toLowerCase()} onIconDown={onIconDown} />
         </div>
       ) : undefined}
     </div>
