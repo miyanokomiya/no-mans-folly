@@ -129,7 +129,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+      boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), affine);
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
         const shapeMap = shapeComposite.shapeMap;
