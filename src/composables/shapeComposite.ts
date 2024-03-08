@@ -77,19 +77,20 @@ export function newShapeComposite(option: Option) {
     scope?: ShapeSelectionScope,
     excludeIds?: string[],
     parentScopeCheckOnly = false,
+    scale = 1,
   ): Shape | undefined {
     const excludeSet = new Set(excludeIds ?? []);
     const candidates = getMergedShapesInSelectionScope(scope, parentScopeCheckOnly);
     const candidate = findBackward(
       candidates,
-      (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext),
+      (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext, scale),
     );
     if (!candidate) return;
     if (!excludeSet.has(candidate.id) && !shapeModule.isTransparentSelection(option.getStruct, candidate))
       return candidate;
 
     // When the candidate is transparent for selection, try seeking its children.
-    const childCandidate = findShapeAt(p, { parentId: candidate.id }, excludeIds, true);
+    const childCandidate = findShapeAt(p, { parentId: candidate.id }, excludeIds, true, scale);
     return childCandidate ?? candidate;
   }
 
@@ -207,15 +208,16 @@ export function findBetterShapeAt(
   p: IVec2,
   scope?: ShapeSelectionScope,
   excludeIds?: string[],
+  scale = 1,
 ): Shape | undefined {
-  if (!scope) return shapeComposite.findShapeAt(p, undefined, excludeIds);
+  if (!scope) return shapeComposite.findShapeAt(p, undefined, excludeIds, undefined, scale);
 
   // Seek in the parent scope
-  const result2 = shapeComposite.findShapeAt(p, { parentId: scope.parentId }, excludeIds);
+  const result2 = shapeComposite.findShapeAt(p, { parentId: scope.parentId }, excludeIds, undefined, scale);
   if (result2) return result2;
 
   // Lift the scope
-  return shapeComposite.findShapeAt(p, undefined, excludeIds);
+  return shapeComposite.findShapeAt(p, undefined, excludeIds, undefined, scale);
 }
 
 /**

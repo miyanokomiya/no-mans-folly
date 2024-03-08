@@ -106,7 +106,13 @@ export function newSingleSelectedState(): AppCanvasState {
             // TODO: It'd be better to make "GroupSelectedState"
             if (isGroupShapeSelected) {
               const shapeComposite = ctx.getShapeComposite();
-              const child = shapeComposite.findShapeAt(event.data.point, { parentId: selectedId });
+              const child = shapeComposite.findShapeAt(
+                event.data.point,
+                { parentId: selectedId },
+                undefined,
+                undefined,
+                ctx.getScale(),
+              );
               if (child) {
                 ctx.selectShape(child.id);
               }

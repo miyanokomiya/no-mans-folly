@@ -133,9 +133,15 @@ export function canHaveTextPadding(getStruct: GetShapeStruct, shape: Shape): boo
   return !!struct.getTextPadding && !!struct.patchTextPadding;
 }
 
-export function isPointOn(getStruct: GetShapeStruct, shape: Shape, p: IVec2, shapeContext: ShapeContext): boolean {
+export function isPointOn(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  p: IVec2,
+  shapeContext: ShapeContext,
+  scale = 1,
+): boolean {
   const struct = getStruct(shape.type);
-  return struct.isPointOn(shape, p, shapeContext);
+  return struct.isPointOn(shape, p, shapeContext, scale);
 }
 
 export function isTransparentSelection(getStruct: GetShapeStruct, shape: Shape): boolean {

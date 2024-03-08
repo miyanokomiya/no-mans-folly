@@ -105,7 +105,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               }
 
               const shapeComposite = ctx.getShapeComposite();
-              const shape = findBetterShapeAt(shapeComposite, event.data.point, scode);
+              const shape = findBetterShapeAt(shapeComposite, event.data.point, scode, undefined, ctx.getScale());
               if (!shape) {
                 return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
               }
@@ -134,7 +134,13 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
               return { type: "stack-resume", getState: newPanningState };
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
-              const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, scode);
+              const shapeAtPointer = findBetterShapeAt(
+                shapeComposite,
+                event.data.point,
+                scode,
+                undefined,
+                ctx.getScale(),
+              );
               if (!shapeAtPointer || selectedIdMap[shapeAtPointer.id]) return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);

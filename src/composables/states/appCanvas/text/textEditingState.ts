@@ -156,6 +156,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
                   shapeComposite,
                   event.data.point,
                   shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]),
+                  undefined,
+                  ctx.getScale(),
                 );
 
                 // If the shape is the doc owner, keep editing it.

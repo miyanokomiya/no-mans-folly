@@ -271,15 +271,15 @@ export const struct: ShapeStruct<LineShape> = {
   getLocalRectPolygon(shape) {
     return getRectPoints(struct.getWrapperRect(shape));
   },
-  isPointOn(shape, p, shapeContext) {
-    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 3)))
+  isPointOn(shape, p, shapeContext, scale = 1) {
+    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 4 * scale)))
       return true;
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
     return treeNode.children.some((c) => {
       const s = shapeContext.shapeMap[c.id];
-      return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
+      return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext, scale);
     });
   },
   resize(shape, resizingAffine) {

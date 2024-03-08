@@ -20,6 +20,7 @@ function getMockCtx() {
     getLastSelectedShapeId: vi.fn().mockReturnValue("a"),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     setCursor: vi.fn(),
+    getScale: () => 1,
   };
 }
 

@@ -25,7 +25,7 @@ const state: AppCanvasState = {
         switch (event.data.options.button) {
           case 0: {
             const shapeComposite = ctx.getShapeComposite();
-            const shape = shapeComposite.findShapeAt(event.data.point);
+            const shape = shapeComposite.findShapeAt(event.data.point, undefined, undefined, undefined, ctx.getScale());
             if (shape) {
               ctx.selectShape(shape.id, event.data.options.ctrl);
               if (!event.data.options.ctrl) {
@@ -44,7 +44,7 @@ const state: AppCanvasState = {
             return newPanningState;
           case 2: {
             const shapeComposite = ctx.getShapeComposite();
-            const shape = shapeComposite.findShapeAt(event.data.point);
+            const shape = shapeComposite.findShapeAt(event.data.point, undefined, undefined, undefined, ctx.getScale());
             if (!shape) return;
 
             ctx.selectShape(shape.id);

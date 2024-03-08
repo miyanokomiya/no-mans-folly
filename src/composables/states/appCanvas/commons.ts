@@ -423,7 +423,13 @@ export function handleCommonPointerDownLeftOnSingleSelection(
   excludeIds?: string[],
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
-  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope, excludeIds);
+  const shapeAtPointer = findBetterShapeAt(
+    shapeComposite,
+    event.data.point,
+    selectionScope,
+    excludeIds,
+    ctx.getScale(),
+  );
   if (!shapeAtPointer) {
     return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
   }
@@ -452,7 +458,13 @@ export function handleCommonPointerDownRightOnSingleSelection(
   excludeIds?: string[],
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
-  const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, selectionScope, excludeIds);
+  const shapeAtPointer = findBetterShapeAt(
+    shapeComposite,
+    event.data.point,
+    selectionScope,
+    excludeIds,
+    ctx.getScale(),
+  );
   if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
 
   ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
@@ -480,7 +492,7 @@ export function handleCommonPointerhover(
   event: PointerHoverEvent,
 ): void {
   const shapeComposite = ctx.getShapeComposite();
-  const shape = shapeComposite.findShapeAt(event.data.current);
+  const shape = shapeComposite.findShapeAt(event.data.current, undefined, undefined, undefined, ctx.getScale());
   const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
 
   // Avoid overriding the same information.

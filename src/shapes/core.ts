@@ -43,7 +43,10 @@ export interface ShapeStruct<T extends Shape> {
   getTextRangeRect?: (shape: T) => IRectangle;
   getTextPadding?: (shape: T) => BoxPadding | undefined;
   patchTextPadding?: (shape: T, value: BoxPadding) => Partial<T>;
-  isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext) => boolean;
+  /**
+   * "scale" should be used to adjust threshold for non-area items: points and lines
+   */
+  isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext, scale?: number) => boolean;
   resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
   /**
    * "textBoxSize" refers to the eventual text box size including text padding.
