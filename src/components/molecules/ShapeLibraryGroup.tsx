@@ -10,7 +10,7 @@ interface Props {
 
 export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
   const [loading, setLoading] = useState(true);
-  const [indexData, setIndexData] = useState<any>();
+  const [indexData, setIndexData] = useState<ListItemData>();
   const basePath = `${baseURL}shapes/${name}`;
 
   const fetchIndex = useCallback(async () => {
@@ -31,11 +31,20 @@ export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
     setKeyword(val);
   }, []);
 
+  const sortedIndexData = useSortedObjectItems(indexData);
+
   const indexDataForSearch = useMemo(() => {
     if (!indexData) return;
 
+    const base = new Map<string, { url: string; tag: string; name: string }>();
+    makePathMap(base, basePath, indexData);
+
     const ret = new Map<string, { url: string; tag: string; name: string }>();
-    makePathMap(ret, basePath, indexData);
+    Array.from(base.entries())
+      .sort(([, a], [, b]) => a.url.localeCompare(b.url))
+      .forEach(([key, value]) => {
+        ret.set(key, value);
+      });
     return ret;
   }, [indexData, basePath]);
 
@@ -77,7 +86,7 @@ export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
               </ul>
             )
           ) : (
-            Object.entries(indexData).map(([key, item]) => (
+            sortedIndexData.map(([key, item]) => (
               <ListItem
                 key={key}
                 name={key}
@@ -116,7 +125,7 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, onIconDown
   const currentPath = `${path}/${name}`;
   const items: string[] = [];
   const groups: string[] = [];
-  Object.entries(item).forEach(([key, data]) => {
+  useSortedObjectItems(item).forEach(([key, data]) => {
     if (typeof data === "string") {
       items.push(key);
     } else {
@@ -196,4 +205,16 @@ function makePathMap(
       makePathMap(ret, currentPath + "/" + key, obj);
     }
   });
+}
+
+function useSortedObjectItems<T>(data?: { [key: string]: T }): [string, T][] {
+  return useMemo(
+    () =>
+      data
+        ? Object.keys(data)
+            .sort()
+            .map((key) => [key, data[key]])
+        : [],
+    [data],
+  );
 }
