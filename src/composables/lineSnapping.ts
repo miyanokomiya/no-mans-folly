@@ -341,12 +341,13 @@ export function optimizeLinePath(
   // When the line is elbow, always optimize it based on "p" and "q"
   const elbow = lineShape.lineType === "elbow";
 
-  if (lineShape.pConnection?.optimized) {
-    if (lineShape.qConnection?.optimized) {
+  const shapeMap = shapeComposite.shapeMap;
+  const shapeP = lineShape.pConnection ? shapeMap[lineShape.pConnection.id] : undefined;
+  const shapeQ = lineShape.qConnection ? shapeMap[lineShape.qConnection.id] : undefined;
+
+  if (shapeP && lineShape.pConnection?.optimized) {
+    if (shapeQ && lineShape.qConnection?.optimized) {
       if (vertices.length === 2 || elbow) {
-        const shapeMap = shapeComposite.shapeMap;
-        const shapeP = shapeMap[lineShape.pConnection.id];
-        const shapeQ = shapeMap[lineShape.qConnection.id];
         const seg = getOptimizedSegment(shapeComposite, shapeP, shapeQ);
         if (!seg) return;
 
@@ -377,9 +378,7 @@ export function optimizeLinePath(
 
   const ret: Partial<LineShape> = {};
 
-  if (lineShape.pConnection?.optimized) {
-    const shapeMap = shapeComposite.shapeMap;
-    const shapeP = shapeMap[lineShape.pConnection.id];
+  if (shapeP && lineShape.pConnection?.optimized) {
     const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeP, vertices[1]);
     if (!seg) return;
 
@@ -393,9 +392,7 @@ export function optimizeLinePath(
     }
   }
 
-  if (lineShape.qConnection?.optimized) {
-    const shapeMap = shapeComposite.shapeMap;
-    const shapeQ = shapeMap[lineShape.qConnection.id];
+  if (shapeQ && lineShape.qConnection?.optimized) {
     const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeQ, vertices[vertices.length - 2]);
     if (!seg) return;
 
@@ -407,6 +404,13 @@ export function optimizeLinePath(
         rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeQ, q),
       };
     }
+  }
+
+  if (!shapeP && lineShape.pConnection) {
+    ret.pConnection = undefined;
+  }
+  if (!shapeQ && lineShape.qConnection) {
+    ret.qConnection = undefined;
   }
 
   return Object.keys(ret).length > 0 ? ret : undefined;

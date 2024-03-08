@@ -551,6 +551,49 @@ describe("optimizeLinePath", () => {
       });
     });
   });
+
+  test("should disconnect when connected a shape isn't found", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line",
+      p: { x: 0, y: 0 },
+      q: { x: 300, y: 300 },
+      pConnection: { id: "a", rate: { x: 1, y: 0 }, optimized: true },
+      qConnection: { id: "b", rate: { x: 1, y: 1 }, optimized: true },
+    });
+    const res0 = optimizeLinePath(
+      {
+        getShapeComposite: () => newShapeComposite({ shapes: [a, line], getStruct: getCommonStruct }),
+      },
+      line,
+    );
+    expect(res0).toEqual({
+      p: { x: 100, y: 100 },
+      pConnection: { id: "a", rate: { x: 1, y: 1 }, optimized: true },
+    });
+    expect(res0).toHaveProperty("qConnection");
+
+    const res1 = optimizeLinePath(
+      {
+        getShapeComposite: () => newShapeComposite({ shapes: [b, line], getStruct: getCommonStruct }),
+      },
+      line,
+    );
+    expect(res1).toEqual({
+      q: { x: 200, y: 200 },
+      qConnection: { id: "b", rate: { x: 0, y: 0 }, optimized: true },
+    });
+    expect(res1).toHaveProperty("pConnection");
+
+    const res2 = optimizeLinePath(
+      {
+        getShapeComposite: () => newShapeComposite({ shapes: [line], getStruct: getCommonStruct }),
+      },
+      line,
+    );
+    expect(res2).toEqual({});
+    expect(res2).toHaveProperty("pConnection");
+    expect(res2).toHaveProperty("qConnection");
+  });
 });
 
 describe("isLineSnappableShape", () => {
