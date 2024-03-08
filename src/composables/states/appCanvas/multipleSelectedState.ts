@@ -5,7 +5,7 @@ import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
@@ -26,7 +26,6 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
   let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
   let scode: ShapeSelectionScope | undefined;
-  let hitResult: HitResult | undefined;
 
   return {
     getLabel: () => "MultipleSelected",
@@ -70,14 +69,12 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
         // => Also, need to conserve the rotation.
         boundingBox = newBoundingBox({
           path: getRotatedTargetBounds(shapeComposite, selectedIds, option.boundingBox.getRotation()),
-          styleScheme: ctx.getStyleScheme(),
         });
       } else {
         const shapeRects = selectedIds.map((id) => shapeMap[id]).map((s) => shapeComposite.getWrapperRect(s));
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
-          styleScheme: ctx.getStyleScheme(),
         });
       }
     },
@@ -155,9 +152,8 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           return;
         }
         case "pointerhover": {
-          const _hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(hitResult, _hitResult)) {
-            hitResult = _hitResult;
+          const hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
+          if (boundingBox.saveHitResult(hitResult)) {
             ctx.redraw();
           }
 
@@ -185,7 +181,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
-      boundingBox.render(renderCtx, undefined, hitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
 }

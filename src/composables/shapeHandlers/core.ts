@@ -14,7 +14,7 @@ export interface ShapeHandler<H extends ShapeHandlerHitResult = any> {
 }
 
 export function defineShapeHandler<H extends ShapeHandlerHitResult, O>(
-  createFn: (option: O) => Pick<ShapeHandler<H>, "hitTest" | "render"> & {
+  createFn: (option: O) => Pick<ShapeHandler<H>, "hitTest"> & {
     isSameHitResult: (a?: H, b?: H) => boolean;
     render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: H) => void;
   },

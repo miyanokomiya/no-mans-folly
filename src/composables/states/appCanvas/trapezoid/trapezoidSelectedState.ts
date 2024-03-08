@@ -8,7 +8,7 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
@@ -19,7 +19,6 @@ export function newTrapezoidSelectedState(): AppCanvasState {
   let targetShape: TrapezoidShape;
   let shapeHandler: ReturnType<typeof newTrapezoidHandler>;
   let boundingBox: BoundingBox;
-  let boundingHitResult: HitResult | undefined;
 
   return {
     getLabel: () => "TrapezoidSelected",
@@ -32,7 +31,6 @@ export function newTrapezoidSelectedState(): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
-        styleScheme: ctx.getStyleScheme(),
       });
     },
     onEnd: (ctx) => {
@@ -108,13 +106,12 @@ export function newTrapezoidSelectedState(): AppCanvasState {
           }
 
           if (nextHitResult) {
-            boundingHitResult = undefined;
+            boundingBox.saveHitResult();
             return;
           }
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(boundingHitResult, hitBounding)) {
-            boundingHitResult = hitBounding;
+          if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
 
@@ -135,7 +132,7 @@ export function newTrapezoidSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };

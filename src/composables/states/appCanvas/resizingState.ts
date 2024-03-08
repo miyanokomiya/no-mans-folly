@@ -236,7 +236,7 @@ export function newResizingState(option: Option): AppCanvasState {
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
-      option.boundingBox.render(renderCtx, resizingAffine, undefined, ctx.getScale());
+      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), resizingAffine);
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();

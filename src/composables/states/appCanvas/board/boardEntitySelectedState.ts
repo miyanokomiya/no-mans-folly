@@ -17,7 +17,7 @@ import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor
 import { Shape } from "../../../../models";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
@@ -31,7 +31,6 @@ export function newBoardEntitySelectedState(): AppCanvasState {
   let boardHandler: BoardHandler;
   let boardHitResult: BoardHitResult | undefined;
   let boundingBox: BoundingBox;
-  let boundingHitResult: HitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
     boardHandler = newBoardHandler({
@@ -63,7 +62,6 @@ export function newBoardEntitySelectedState(): AppCanvasState {
 
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
-        styleScheme: ctx.getStyleScheme(),
         noRotation: true,
       });
 
@@ -194,8 +192,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
           }
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(boundingHitResult, hitBounding)) {
-            boundingHitResult = hitBounding;
+          if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
 
@@ -221,7 +218,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       boardHandler.render(renderCtx, style, scale, boardHitResult);
     },
   };

@@ -73,7 +73,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
-          styleScheme: ctx.getStyleScheme(),
         });
       }
 
@@ -130,7 +129,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, affine, undefined, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
         const shapeMap = shapeComposite.shapeMap;

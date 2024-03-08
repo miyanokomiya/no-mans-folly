@@ -10,7 +10,7 @@ import {
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { newRotatingState } from "../rotatingState";
@@ -24,14 +24,12 @@ export function newAlignBoxSelectedState(): AppCanvasState {
   let boundingBox: BoundingBox;
   let alignBoxHandler: AlignBoxHandler;
   let alignBoxHitResult: AlignBoxHitResult | undefined;
-  let boundingHitResult: HitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
     const shapeComposite = ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(shapeMap[targetId]),
-      styleScheme: ctx.getStyleScheme(),
     });
     alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,
@@ -170,23 +168,15 @@ export function newAlignBoxSelectedState(): AppCanvasState {
           }
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(boundingHitResult, hitBounding)) {
-            boundingHitResult = hitBounding;
+          if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-          if (boundingHitResult) {
+          if (hitBounding) {
             ctx.setCursor();
             return;
           }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(
-            shapeComposite,
-            event.data.current,
-            shapeComposite.getSelectionScope(targetShape),
-          );
-          ctx.setCursor(shapeAtPointer ? "pointer" : undefined);
-          return;
+          return handleIntransientEvent(ctx, event);
         }
         case "shape-updated": {
           if (event.data.keys.has(targetShape.id)) {
@@ -207,7 +197,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
     },
   };

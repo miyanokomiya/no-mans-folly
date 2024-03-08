@@ -32,7 +32,6 @@ export function newMovingHubState(option?: Option): AppCanvasState {
           option?.boundingBox ??
           newBoundingBox({
             path: shapeComposite.getLocalRectPolygon(shape),
-            styleScheme: ctx.getStyleScheme(),
           });
 
         if (isLineLabelShape(shape)) {

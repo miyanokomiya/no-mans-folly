@@ -8,7 +8,7 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
@@ -25,7 +25,6 @@ export function newArrowSelectedState(): AppCanvasState {
   let targetShape: OneSidedArrowShape;
   let shapeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
-  let boundingHitResult: HitResult | undefined;
 
   return {
     getLabel: () => "ArrowSelected",
@@ -38,7 +37,6 @@ export function newArrowSelectedState(): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
-        styleScheme: ctx.getStyleScheme(),
       });
     },
     onEnd: (ctx) => {
@@ -129,13 +127,12 @@ export function newArrowSelectedState(): AppCanvasState {
           }
 
           if (nextHitResult) {
-            boundingHitResult = undefined;
+            boundingBox.saveHitResult();
             return;
           }
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(boundingHitResult, hitBounding)) {
-            boundingHitResult = hitBounding;
+          if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
 
@@ -156,7 +153,7 @@ export function newArrowSelectedState(): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };

@@ -75,7 +75,7 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape = ctx.getTmpShapeMap()[labelShape.id] ?? {};
       renderParentLineRelation(ctx, renderCtx, { ...labelShape, ...tmpShape }, parentLineShape);
-      option.boundingBox.render(renderCtx, affine, undefined, ctx.getScale());
+      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), affine);
     },
   };
 }

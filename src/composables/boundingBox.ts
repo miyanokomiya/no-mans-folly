@@ -21,6 +21,7 @@ import { ISegment, TAU, getCrossLineAndLine, getRotateFn, isPointCloseToSegment,
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
+import { ShapeHandler, defineShapeHandler } from "./shapeHandlers/core";
 
 const ANCHOR_SIZE = 5;
 
@@ -37,15 +38,27 @@ interface ResizingBase {
 
 interface Option {
   path: IVec2[];
-  styleScheme: StyleScheme;
   noRotation?: boolean;
 }
 
-export function newBoundingBox(option: Option) {
+export type BoundingBox = ShapeHandler<HitResult> & {
+  path: IVec2[];
+  getRotation: () => number;
+  getCenter: () => IVec2;
+  renderResizedBounding: (
+    ctx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    scale: number,
+    resizingAffine?: AffineMatrix,
+  ) => void;
+  getResizingBase: (hitResult: HitResult) => ResizingBase;
+  getTransformedBoundingBox: (affine: AffineMatrix) => BoundingBox;
+};
+
+export function newBoundingBox(option: Option): BoundingBox {
   const [tl, tr, br, bl] = option.path;
   const rotation = getRadian(tr, tl);
   const center = getCenter(tl, br);
-
   const segments = [
     [tl, tr],
     [tr, br],
@@ -53,102 +66,90 @@ export function newBoundingBox(option: Option) {
     [bl, tl],
   ];
 
-  function getAnchors(scale = 1): IVec2[][] {
-    const scaledAnchorSize = ANCHOR_SIZE * scale;
-    return option.path.map((p) => {
-      const x0 = p.x - scaledAnchorSize;
-      const x1 = p.x + scaledAnchorSize;
-      const y0 = p.y - scaledAnchorSize;
-      const y1 = p.y + scaledAnchorSize;
-      const rect = [
-        { x: x0, y: y0 },
-        { x: x1, y: y0 },
-        { x: x1, y: y1 },
-        { x: x0, y: y1 },
-      ];
+  const getHandler = defineShapeHandler<HitResult, Option>((option) => {
+    function getAnchors(scale = 1): IVec2[][] {
+      const scaledAnchorSize = ANCHOR_SIZE * scale;
+      return option.path.map((p) => {
+        const x0 = p.x - scaledAnchorSize;
+        const x1 = p.x + scaledAnchorSize;
+        const y0 = p.y - scaledAnchorSize;
+        const y1 = p.y + scaledAnchorSize;
+        const rect = [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: x1, y: y1 },
+          { x: x0, y: y1 },
+        ];
 
-      if (rotation === 0) return rect;
+        if (rotation === 0) return rect;
 
-      const c = getCenter(rect[0], rect[2]);
-      return rect.map((q) => rotate(q, rotation, c));
-    });
-  }
+        const c = getCenter(rect[0], rect[2]);
+        return rect.map((q) => rotate(q, rotation, c));
+      });
+    }
 
-  function getRotationAnchor(scale = 1): { c: IVec2; r: number } | undefined {
-    const scaledAnchorSize = ANCHOR_SIZE * scale;
-    return option.noRotation
-      ? undefined
-      : {
-          c: add(tr, multi(rotate({ x: 20, y: -20 }, rotation), scale)),
-          r: scaledAnchorSize * 2,
-        };
-  }
+    function getRotationAnchor(scale = 1): { c: IVec2; r: number } | undefined {
+      const scaledAnchorSize = ANCHOR_SIZE * scale;
+      return option.noRotation
+        ? undefined
+        : {
+            c: add(tr, multi(rotate({ x: 20, y: -20 }, rotation), scale)),
+            r: scaledAnchorSize * 2,
+          };
+    }
 
-  function hitTest(p: IVec2, scale = 1): HitResult | undefined {
-    const scaledAnchorSize = ANCHOR_SIZE * scale;
+    function hitTest(p: IVec2, scale = 1): HitResult | undefined {
+      const scaledAnchorSize = ANCHOR_SIZE * scale;
 
-    const rotationAnchor = getRotationAnchor(scale);
-    if (rotationAnchor) {
-      const rotationHitTest = newCircleHitTest(rotationAnchor.c, rotationAnchor.r);
-      if (rotationHitTest.test(p)) {
-        return { type: "rotation", index: 0 };
+      const rotationAnchor = getRotationAnchor(scale);
+      if (rotationAnchor) {
+        const rotationHitTest = newCircleHitTest(rotationAnchor.c, rotationAnchor.r);
+        if (rotationHitTest.test(p)) {
+          return { type: "rotation", index: 0 };
+        }
+      }
+
+      const anchors = getAnchors(scale);
+      const cornerIndex = anchors.findIndex((a) => isOnPolygon(p, a));
+      if (cornerIndex > -1) {
+        return { type: "corner", index: cornerIndex };
+      }
+
+      const segIndex = segments.findIndex((s) => isPointCloseToSegment(s, p, scaledAnchorSize));
+      if (segIndex > -1) {
+        return { type: "segment", index: segIndex };
+      }
+
+      if (isOnPolygon(p, option.path)) {
+        return { type: "area", index: 0 };
       }
     }
 
-    const anchors = getAnchors(scale);
-    const cornerIndex = anchors.findIndex((a) => isOnPolygon(p, a));
-    if (cornerIndex > -1) {
-      return { type: "corner", index: cornerIndex };
-    }
+    function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+      const anchors = getAnchors(scale);
+      const rotationAnchor = getRotationAnchor(scale);
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
 
-    const segIndex = segments.findIndex((s) => isPointCloseToSegment(s, p, scaledAnchorSize));
-    if (segIndex > -1) {
-      return { type: "segment", index: segIndex };
-    }
+      ctx.beginPath();
+      applyPath(ctx, option.path, true);
+      if (hitResult?.type === "area") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+      }
+      ctx.stroke();
 
-    if (isOnPolygon(p, option.path)) {
-      return { type: "area", index: 0 };
-    }
-  }
-
-  function render(ctx: CanvasRenderingContext2D, resizingAffine?: AffineMatrix, hitResult?: HitResult, scale = 1) {
-    const style = option.styleScheme;
-    const anchors = getAnchors(scale);
-    const rotationAnchor = getRotationAnchor(scale);
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
-
-    function resize(p: IVec2): IVec2 {
-      return resizingAffine ? applyAffine(resizingAffine, p) : p;
-    }
-
-    ctx.beginPath();
-    applyPath(ctx, option.path.map(resize), true);
-    if (!resizingAffine && hitResult?.type === "area") {
-      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
-    }
-    ctx.stroke();
-
-    if (!resizingAffine) {
       if (hitResult?.type === "segment") {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
         ctx.beginPath();
         applyPath(ctx, segments[hitResult.index]);
         ctx.stroke();
       }
-    }
 
-    if (!resizingAffine) {
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
       applyFillStyle(ctx, { color: COLORS.WHITE });
       ctx.lineWidth = 2 * scale;
-      anchors.forEach((anchor, i) => {
-        const diff = sub(resize(option.path[i]), option.path[i]);
+      anchors.forEach((anchor) => {
         ctx.beginPath();
-        applyPath(
-          ctx,
-          anchor.map((p) => add(p, diff)),
-          true,
-        );
+        applyPath(ctx, anchor, true);
         ctx.fill();
         ctx.stroke();
       });
@@ -159,9 +160,7 @@ export function newBoundingBox(option: Option) {
         ctx.fill();
         ctx.stroke();
       }
-    }
 
-    if (!resizingAffine) {
       if (hitResult?.type === "corner") {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
         applyFillStyle(ctx, { color: COLORS.WHITE });
@@ -178,6 +177,31 @@ export function newBoundingBox(option: Option) {
         ctx.stroke();
       }
     }
+
+    return {
+      hitTest,
+      render,
+      isSameHitResult,
+    };
+  });
+
+  const handler = getHandler(option);
+
+  function renderResizedBounding(
+    ctx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    scale: number,
+    resizingAffine?: AffineMatrix,
+  ) {
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
+
+    function resize(p: IVec2): IVec2 {
+      return resizingAffine ? applyAffine(resizingAffine, p) : p;
+    }
+
+    ctx.beginPath();
+    applyPath(ctx, option.path.map(resize), true);
+    ctx.stroke();
   }
 
   function getResizingBase(hitResult: HitResult): ResizingBase {
@@ -187,23 +211,21 @@ export function newBoundingBox(option: Option) {
   function getTransformedBoundingBox(affine: AffineMatrix): BoundingBox {
     return newBoundingBox({
       path: option.path.map((p) => applyAffine(affine, p)),
-      styleScheme: option.styleScheme,
     });
   }
 
   return {
+    ...handler,
     path: option.path,
     getRotation: () => rotation,
     getCenter: () => center,
-    hitTest,
-    render,
+    renderResizedBounding,
     getResizingBase,
     getTransformedBoundingBox,
   };
 }
-export type BoundingBox = ReturnType<typeof newBoundingBox>;
 
-export function isSameHitResult(a?: HitResult, b?: HitResult): boolean {
+function isSameHitResult(a?: HitResult, b?: HitResult): boolean {
   if (a && b) {
     return a.type === b.type && a.index === b.index;
   } else {

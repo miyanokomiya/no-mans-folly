@@ -15,7 +15,7 @@ import { canHaveText, createShape } from "../../../../shapes";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import { getInitialOutput } from "../../../../utils/textEditor";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 
@@ -23,7 +23,6 @@ export function newTreeRootSelectedState(): AppCanvasState {
   let treeRootShape: TreeRootShape;
   let treeHandler: ReturnType<typeof newTreeHandler>;
   let boundingBox: BoundingBox;
-  let boundingHitResult: HitResult | undefined;
 
   return {
     getLabel: () => "TreeRootSelected",
@@ -36,7 +35,6 @@ export function newTreeRootSelectedState(): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(treeRootShape),
-        styleScheme: ctx.getStyleScheme(),
       });
     },
     onEnd: (ctx) => {
@@ -133,8 +131,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
           if (result) return;
 
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(boundingHitResult, hitBounding)) {
-            boundingHitResult = hitBounding;
+          if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
 
@@ -159,7 +156,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
       renderCtx.stroke();
 
       treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      boundingBox.render(renderCtx, undefined, boundingHitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
 }

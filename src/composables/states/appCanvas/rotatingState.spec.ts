@@ -35,7 +35,6 @@ describe("newRotatingState", () => {
       const ctx = getMockCtx();
       const boundingBox = newBoundingBox({
         path: getRectPoints({ x: 0, y: 0, width: 50, height: 50 }),
-        styleScheme: ctx.getStyleScheme(),
       });
       const target = newRotatingState({
         boundingBox,

@@ -8,7 +8,7 @@ import {
   handleIntransientEvent,
   startTextEditingIfPossible,
 } from "./commons";
-import { BoundingBox, HitResult, isSameHitResult, newBoundingBox } from "../../boundingBox";
+import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
@@ -25,7 +25,6 @@ export function newSingleSelectedState(): AppCanvasState {
   let smartBranchHitResult: SmartBranchHitResult | undefined;
   let selectionScope: ShapeSelectionScope | undefined;
   let isGroupShapeSelected: boolean;
-  let hitResult: HitResult | undefined;
 
   return {
     getLabel: () => "SingleSelected",
@@ -43,7 +42,6 @@ export function newSingleSelectedState(): AppCanvasState {
 
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(shape),
-        styleScheme: ctx.getStyleScheme(),
       });
 
       if (!shapeComposite.hasParent(shape) && canAttachSmartBranch(ctx.getShapeStruct, shape)) {
@@ -120,12 +118,11 @@ export function newSingleSelectedState(): AppCanvasState {
         }
         case "pointerhover": {
           const _hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (!isSameHitResult(hitResult, _hitResult)) {
-            hitResult = _hitResult;
+          if (boundingBox.saveHitResult(_hitResult)) {
             ctx.redraw();
           }
 
-          if (!hitResult) {
+          if (!_hitResult) {
             const shape = ctx.getShapeComposite().shapeMap[selectedId];
             const current = smartBranchHitResult?.index;
 
@@ -162,7 +159,7 @@ export function newSingleSelectedState(): AppCanvasState {
       const shape = ctx.getShapeComposite().shapeMap[selectedId ?? ""];
       if (!shape) return;
 
-      boundingBox.render(renderCtx, undefined, hitResult, ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
       smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
     },
   };
