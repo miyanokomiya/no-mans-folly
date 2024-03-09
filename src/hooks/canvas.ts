@@ -51,6 +51,7 @@ export function useCanvas(
 
   const [viewSize, setViewSize] = useState<Size>({ width: 600, height: 100 });
   const [moveType, setMoveType] = useState<"move" | "drag" | undefined>();
+  // In the view space
   const [editStartPoint, setEditStartPoint] = useState<IVec2>();
   const [editStartViewOrigin, setEditStartViewOrigin] = useState<IVec2>();
 
@@ -86,6 +87,13 @@ export function useCanvas(
     return mousePoint.current;
   }, []);
 
+  const viewToCanvas = useCallback(
+    (v: IVec2): IVec2 => {
+      return _viewToCanvas(scale, viewOrigin, v);
+    },
+    [scale, viewOrigin],
+  );
+
   const endMoving = useCallback(() => {
     setMoveType(undefined);
     setEditStartPoint(undefined);
@@ -115,13 +123,6 @@ export function useCanvas(
   );
 
   const viewCenter = useMemo(() => getRectCenter({ x: 0, y: 0, ...viewSize }), [viewSize]);
-
-  const viewToCanvas = useCallback(
-    (v: IVec2): IVec2 => {
-      return _viewToCanvas(scale, viewOrigin, v);
-    },
-    [scale, viewOrigin],
-  );
 
   const panView = useCallback(
     (editMovement: EditMovement) => {

@@ -46,9 +46,9 @@ export function useGlobalMousemoveEffect(fn: (e: MouseEvent) => void) {
   }, []);
 
   useEffect(() => {
-    window.addEventListener("mousemove", handle);
+    window.addEventListener("pointermove", handle);
     return () => {
-      window.removeEventListener("mousemove", handle);
+      window.removeEventListener("pointermove", handle);
     };
   }, [handle]);
 }
@@ -61,11 +61,9 @@ export function useGlobalMouseupEffect(fn: (e: MouseEvent) => void) {
   }, []);
 
   useEffect(() => {
-    window.addEventListener("mouseup", handle);
-    window.addEventListener("mouseleave", handle);
+    window.addEventListener("pointerup", handle);
     return () => {
-      window.removeEventListener("mouseup", handle);
-      window.removeEventListener("mouseleave", handle);
+      window.removeEventListener("pointerup", handle);
     };
   }, [handle]);
 }

@@ -445,8 +445,10 @@ export const AppCanvas: React.FC = () => {
       e.preventDefault();
       focus(true);
 
+      const p = removeRootPosition({ x: e.pageX, y: e.pageY });
+      setMousePoint(p);
       const data = {
-        point: viewToCanvas(getMousePoint()),
+        point: viewToCanvas(p),
         options: getMouseOptions(e),
       };
 
@@ -459,25 +461,26 @@ export const AppCanvas: React.FC = () => {
         downInfo.current = { timestamp, button: e.button };
       }
     },
-    [getMousePoint, viewToCanvas, sm, focus],
+    [viewToCanvas, sm, focus, removeRootPosition, setMousePoint],
   );
 
   const onMouseMove = useCallback(
     (e: MouseEvent) => {
-      setMousePoint(removeRootPosition({ x: e.pageX, y: e.pageY }));
+      const p = removeRootPosition({ x: e.pageX, y: e.pageY });
+      setMousePoint(p);
       if (!editStartPoint) return;
 
       sm.handleEvent({
         type: "pointermove",
         data: {
           start: viewToCanvas(editStartPoint),
-          current: viewToCanvas(getMousePoint()),
+          current: viewToCanvas(p),
           scale: scale,
           ...getMouseOptions(e),
         },
       });
     },
-    [editStartPoint, getMousePoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm],
+    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm],
   );
   useGlobalMousemoveEffect(onMouseMove);
 
@@ -706,9 +709,9 @@ export const AppCanvas: React.FC = () => {
     <>
       <div
         ref={wrapperRef}
-        className="box-border border border-black relative w-full h-full"
+        className="box-border border border-black relative w-full h-full touch-none"
         style={wrapperStyle}
-        onMouseDown={onMouseDown}
+        onPointerDown={onMouseDown}
         onMouseMove={onMouseHover}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
