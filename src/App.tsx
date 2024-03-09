@@ -13,6 +13,7 @@ import { AppRightPanel } from "./components/AppRightPanel";
 import { EntranceDialog } from "./components/navigations/EntranceDialog";
 import { newUserSettingStore } from "./stores/userSettingStore";
 import { IAppCanvasContext } from "./contexts/AppCanvasContext";
+import { isTouchDevice } from "./utils/devices";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -50,7 +51,15 @@ function App() {
 
   const userSetting = useMemo(() => {
     const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
-    return newUserSettingStore({ initialValue: userSettingStr ? JSON.parse(userSettingStr) : {} });
+    const touchDevice = isTouchDevice();
+    return newUserSettingStore({
+      initialValue: userSettingStr
+        ? JSON.parse(userSettingStr)
+        : {
+            leftDragAction: touchDevice ? "pan" : undefined,
+            wheelAction: touchDevice ? "pan" : undefined,
+          },
+    });
   }, []);
   useEffect(() => {
     return userSetting.watch(() => {
