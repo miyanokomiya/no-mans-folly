@@ -1,15 +1,22 @@
 import { expect, test, describe, vi } from "vitest";
 import { newDefaultState } from "./defaultState";
-import { newPanningState } from "../commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
 import { newShapeComposite } from "../../shapeComposite";
+import { newPointerDownEmptyState } from "./pointerDownEmptyState";
+import { newStateMachine } from "../core";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getShapeComposite: () =>
       newShapeComposite({
         shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
@@ -54,19 +61,19 @@ describe("newDefaultState", () => {
         data: { point: { x: -1, y: -2 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).not.toHaveBeenCalled();
-      expect(result).toEqual(newRectangleSelectingState);
+      expect(result).toEqual(newPointerDownEmptyState);
     });
   });
 
   describe("handle pointerdown: middle", () => {
     test("should move to panning state", () => {
       const ctx = getMockCtx();
-      const target = newDefaultState();
-      const result = target.handleEvent(ctx as any, {
+      const sm = newStateMachine(() => ctx as any, newDefaultState);
+      sm.handleEvent({
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 1, ctrl: false } },
       });
-      expect(result).toBe(newPanningState);
+      expect(sm.getStateSummary().label).toBe("Panning");
     });
   });
 });

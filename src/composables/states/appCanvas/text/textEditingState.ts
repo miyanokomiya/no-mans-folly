@@ -5,7 +5,6 @@ import { handleCommonWheel, handleFileDrop, handleHistoryEvent, handleStateEvent
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { newPanningState } from "../../commons";
 import { isMac } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
@@ -16,6 +15,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 interface Option {
   id: string;
@@ -178,7 +178,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
               };
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return {
+                type: "stack-resume",
+                getState: () => newPointerDownEmptyState(event.data.options),
+              };
             default:
               return;
           }

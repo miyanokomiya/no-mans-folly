@@ -1,4 +1,3 @@
-import { newPanningState } from "../commons";
 import { getCommonCommandExams, handleIntransientEvent, startTextEditingIfPossible } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
@@ -7,7 +6,6 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
@@ -15,6 +13,7 @@ import { findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite"
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
+import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -107,7 +106,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               const shapeComposite = ctx.getShapeComposite();
               const shape = findBetterShapeAt(shapeComposite, event.data.point, scode, undefined, ctx.getScale());
               if (!shape) {
-                return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
+                return () => newPointerDownEmptyState(event.data.options);
               }
 
               if (!event.data.options.ctrl) {
@@ -131,7 +130,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               return;
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
               const shapeAtPointer = findBetterShapeAt(

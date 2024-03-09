@@ -1,4 +1,3 @@
-import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
@@ -27,6 +26,7 @@ import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, sub } from 
 import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 export const newBubbleSelectedState = defineIntransientState(() => {
   let targetShape: BubbleShape;
@@ -150,7 +150,7 @@ export const newBubbleSelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

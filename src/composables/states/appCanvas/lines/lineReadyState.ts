@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { newPanningState } from "../../commons";
 import { handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
@@ -18,6 +17,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 interface Option {
   type: LineType;
@@ -94,7 +94,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
               return () => newLineDrawingState({ shape: lineshape });
             }
             case 1:
-              return newPanningState;
+              return () => newPointerDownEmptyState(event.data.options);
             default:
               return;
           }

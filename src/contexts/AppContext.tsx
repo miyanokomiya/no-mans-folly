@@ -3,8 +3,8 @@ import { AppCanvasContext, IAppCanvasContext, createInitialAppCanvasStateContext
 import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { generateUuid } from "../utils/random";
 import { StateMachine, newStateMachine } from "../composables/states/core";
-import { newDefaultState } from "../composables/states/appCanvas/defaultState";
 import { AssetAPI } from "../hooks/persistence";
+import { newSelectionHubState } from "../composables/states/appCanvas/selectionHubState";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;
@@ -27,7 +27,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
   const stateContextRef = useRef(stateContext);
 
   const stateMachine = useMemo(() => {
-    return newStateMachine(() => stateContextRef.current, newDefaultState);
+    return newStateMachine(() => stateContextRef.current, newSelectionHubState);
   }, []);
 
   const handleSetStateContext = useCallback<React.Dispatch<AppCanvasStateContextPart>>(

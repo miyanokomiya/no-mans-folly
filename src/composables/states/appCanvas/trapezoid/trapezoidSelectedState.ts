@@ -1,4 +1,3 @@
-import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
@@ -14,6 +13,7 @@ import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { newTrapezoidHandler } from "../../../shapeHandlers/trapezoidHandler";
 import { newTransformingTrapezoidState } from "./transformingTrapezoidState";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 export const newTrapezoidSelectedState = defineIntransientState(() => {
   let targetShape: TrapezoidShape;
@@ -80,7 +80,7 @@ export const newTrapezoidSelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

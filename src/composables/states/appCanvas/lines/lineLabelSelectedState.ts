@@ -1,4 +1,3 @@
-import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
@@ -16,6 +15,7 @@ import { newRotatingLineLabelState } from "./rotatingLineLabelState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -81,7 +81,7 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
               return handleCommonPointerDownRightOnSingleSelection(

@@ -1,5 +1,4 @@
 import type { AppCanvasStateContext } from "../core";
-import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
@@ -21,6 +20,7 @@ import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 /**
  * General selected state for any board entity
@@ -157,7 +157,7 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

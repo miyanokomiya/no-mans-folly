@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { newPanningState } from "../../commons";
 import { handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { createShape } from "../../../../shapes";
@@ -12,6 +11,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { isLineShape } from "../../../../shapes/line";
 import { TAU } from "../../../../utils/geometry";
 import { getInitialOutput } from "../../../../utils/textEditor";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 export function newTextReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -58,7 +58,7 @@ export function newTextReadyState(): AppCanvasState {
               return () => newTextEditingState({ id: textshape.id });
             }
             case 1:
-              return newPanningState;
+              return () => newPointerDownEmptyState(event.data.options);
             default:
               return;
           }

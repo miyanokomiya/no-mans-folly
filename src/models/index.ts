@@ -112,4 +112,5 @@ export interface EntityPatchInfo<T extends Entity> {
 
 export interface UserSetting {
   wheelAction?: "zoom" | "pan"; // should be "zoom" when it's undefined
+  leftDragAction?: "rect-select" | "pan"; // should be "rect-select" when it's undefined
 }

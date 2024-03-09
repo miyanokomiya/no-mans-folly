@@ -1,4 +1,3 @@
-import { newPanningState } from "../commons";
 import { canAttachSmartBranch } from "../../../shapes";
 import {
   getCommonCommandExams,
@@ -17,6 +16,7 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
+import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 
 export const newSingleSelectedState = defineIntransientState(() => {
   let selectedId: string | undefined;
@@ -93,7 +93,7 @@ export const newSingleSelectedState = defineIntransientState(() => {
               return handleCommonPointerDownLeftOnSingleSelection(ctx, event, selectedId, selectionScope);
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(ctx, event, selectedId, selectionScope);
             }

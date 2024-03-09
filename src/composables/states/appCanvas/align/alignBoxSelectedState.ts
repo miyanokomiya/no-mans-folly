@@ -1,5 +1,4 @@
 import type { AppCanvasStateContext } from "../core";
-import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
@@ -19,6 +18,7 @@ import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
 import { newAlignBoxGapState } from "./alignBoxGapState";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 export const newAlignBoxSelectedState = defineIntransientState(() => {
   let targetId: string;
@@ -136,7 +136,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

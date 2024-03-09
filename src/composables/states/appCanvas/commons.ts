@@ -32,7 +32,6 @@ import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
 import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newMovingHubState } from "./movingHubState";
@@ -42,6 +41,7 @@ import { CommandExam } from "../types";
 import { handleContextItemEvent } from "./contextMenuItems";
 import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
+import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "ShapeInspection";
 
@@ -422,7 +422,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
     ctx.getScale(),
   );
   if (!shapeAtPointer) {
-    return () => newRectangleSelectingState({ keepSelection: event.data.options.ctrl });
+    return () => newPointerDownEmptyState(event.data.options);
   }
 
   if (!event.data.options.ctrl) {

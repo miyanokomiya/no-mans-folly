@@ -1,6 +1,5 @@
 import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { newPanningState } from "../commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
@@ -8,6 +7,7 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { newSelectionHubState } from "./selectionHubState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { newShapeComposite } from "../../shapeComposite";
+import { newStateMachine } from "../core";
 
 function getMockCtx() {
   return {
@@ -88,27 +88,25 @@ describe("newSingleSelectedState", () => {
 
     test("should move to RectangleSelecting state if there's no shape at the point", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedState();
-      target.onStart?.(ctx as any);
-      const result = target.handleEvent(ctx as any, {
+      const sm = newStateMachine(() => ctx as any, newSingleSelectedState);
+      sm.handleEvent({
         type: "pointerdown",
         data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: false } },
-      }) as any;
+      });
       expect(ctx.selectShape).not.toHaveBeenCalled();
-      expect(result().getLabel()).toBe("RectangleSelecting");
+      expect(sm.getStateSummary().label).toBe("RectangleSelecting");
     });
   });
 
   describe("handle pointerdown: middle", () => {
     test("should move to panning state", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedState();
-      target.onStart?.(ctx as any);
-      const result = target.handleEvent(ctx as any, {
+      const sm = newStateMachine(() => ctx as any, newSingleSelectedState);
+      sm.handleEvent({
         type: "pointerdown",
         data: { point: { x: -10, y: -20 }, options: { button: 1, ctrl: false } },
       });
-      expect(result).toEqual({ type: "stack-resume", getState: newPanningState });
+      expect(sm.getStateSummary().label).toBe("Panning");
     });
   });
 

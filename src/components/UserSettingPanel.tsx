@@ -19,11 +19,21 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handleLeftDragActionChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ leftDragAction: val ? "pan" : undefined });
+    },
+    [userSettingStore],
+  );
+
   return (
     <div>
       <div className="flex flex-col">
         <ToggleInput value={userSetting.wheelAction === "pan"} onChange={handleWheelActionChange}>
           Pan by wheeling
+        </ToggleInput>
+        <ToggleInput value={userSetting.leftDragAction === "pan"} onChange={handleLeftDragActionChange}>
+          Pan by left dragging
         </ToggleInput>
       </div>
     </div>

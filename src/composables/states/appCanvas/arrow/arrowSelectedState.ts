@@ -1,4 +1,3 @@
-import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
@@ -20,6 +19,7 @@ import { newMovingArrowFromState } from "./movingArrowFromState";
 import { getArrowDirection } from "../../../../utils/arrows";
 import { ShapeHandler } from "../../../shapeHandlers/core";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 export const newArrowSelectedState = defineIntransientState(() => {
   let targetShape: OneSidedArrowShape;
@@ -101,7 +101,7 @@ export const newArrowSelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

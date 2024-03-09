@@ -1,5 +1,4 @@
 import type { AppCanvasStateContext } from "../core";
-import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
@@ -28,6 +27,7 @@ import { mergeMap } from "../../../../utils/commons";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 export const newTreeNodeSelectedState = defineIntransientState(() => {
   let treeNodeShape: TreeNodeShape;
@@ -150,7 +150,7 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

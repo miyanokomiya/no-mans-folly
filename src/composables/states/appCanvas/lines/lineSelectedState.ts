@@ -1,4 +1,3 @@
-import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
@@ -22,6 +21,7 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
 import { defineIntransientState } from "../intransientState";
+import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 
 type DeleteVertexMeta = {
   index: number;
@@ -97,7 +97,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               );
             }
             case 1:
-              return { type: "stack-resume", getState: newPanningState };
+              return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,

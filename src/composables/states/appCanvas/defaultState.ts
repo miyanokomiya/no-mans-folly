@@ -1,11 +1,10 @@
 import type { AppCanvasState } from "./core";
-import { newPanningState } from "../commons";
 import { getCommonCommandExams, handleIntransientEvent } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
 import { defineIntransientState } from "./intransientState";
+import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 
 export const newDefaultState = defineIntransientState(() => {
   return state;
@@ -39,10 +38,10 @@ const state: AppCanvasState = {
               return newSelectionHubState;
             }
 
-            return newRectangleSelectingState;
+            return newPointerDownEmptyState;
           }
           case 1:
-            return newPanningState;
+            return () => newPointerDownEmptyState(event.data.options);
           case 2: {
             const shapeComposite = ctx.getShapeComposite();
             const shape = shapeComposite.findShapeAt(event.data.point, undefined, undefined, undefined, ctx.getScale());
