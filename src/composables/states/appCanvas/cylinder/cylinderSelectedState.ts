@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -19,8 +18,9 @@ import { getShapeTransform } from "../../../../shapes/simplePolygon";
 import { applyAffine, getDistance, getRadian, multiAffines } from "okageo";
 import { resizeShape } from "../../../../shapes";
 import { getGlobalAffine, getRotationAffine } from "../../../../utils/geometry";
+import { defineIntransientState } from "../intransientState";
 
-export function newCylinderSelectedState(): AppCanvasState {
+export const newCylinderSelectedState = defineIntransientState(() => {
   let targetShape: CylinderShape;
   let shapeHandler: ReturnType<typeof newCylinderHandler>;
   let boundingBox: BoundingBox;
@@ -178,12 +178,7 @@ export function newCylinderSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          if (hitBounding) {
-            return;
-          }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -200,4 +195,4 @@ export function newCylinderSelectedState(): AppCanvasState {
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

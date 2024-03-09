@@ -1,4 +1,4 @@
-import type { AppCanvasState, AppCanvasStateContext } from "../core";
+import type { AppCanvasStateContext } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
@@ -18,8 +18,9 @@ import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../..
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
 import { newAlignBoxGapState } from "./alignBoxGapState";
+import { defineIntransientState } from "../intransientState";
 
-export function newAlignBoxSelectedState(): AppCanvasState {
+export const newAlignBoxSelectedState = defineIntransientState(() => {
   let targetId: string;
   let boundingBox: BoundingBox;
   let alignBoxHandler: AlignBoxHandler;
@@ -175,8 +176,7 @@ export function newAlignBoxSelectedState(): AppCanvasState {
             ctx.setCursor();
             return;
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "shape-updated": {
           if (event.data.keys.has(targetShape.id)) {
@@ -201,4 +201,4 @@ export function newAlignBoxSelectedState(): AppCanvasState {
       alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
     },
   };
-}
+});

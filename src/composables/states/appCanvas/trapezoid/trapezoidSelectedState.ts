@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -14,8 +13,9 @@ import { newRotatingState } from "../rotatingState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { newTrapezoidHandler } from "../../../shapeHandlers/trapezoidHandler";
 import { newTransformingTrapezoidState } from "./transformingTrapezoidState";
+import { defineIntransientState } from "../intransientState";
 
-export function newTrapezoidSelectedState(): AppCanvasState {
+export const newTrapezoidSelectedState = defineIntransientState(() => {
   let targetShape: TrapezoidShape;
   let shapeHandler: ReturnType<typeof newTrapezoidHandler>;
   let boundingBox: BoundingBox;
@@ -114,12 +114,7 @@ export function newTrapezoidSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          if (hitBounding) {
-            return;
-          }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -136,4 +131,4 @@ export function newTrapezoidSelectedState(): AppCanvasState {
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

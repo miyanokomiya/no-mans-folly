@@ -1,4 +1,4 @@
-import type { AppCanvasState, AppCanvasStateContext } from "../core";
+import type { AppCanvasStateContext } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -27,8 +27,9 @@ import { newRotatingState } from "../rotatingState";
 import { mergeMap } from "../../../../utils/commons";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { defineIntransientState } from "../intransientState";
 
-export function newTreeNodeSelectedState(): AppCanvasState {
+export const newTreeNodeSelectedState = defineIntransientState(() => {
   let treeNodeShape: TreeNodeShape;
   let treeHandler: ReturnType<typeof newTreeHandler>;
   let boundingBox: BoundingBox;
@@ -179,8 +180,7 @@ export function newTreeNodeSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "keydown":
           switch (event.data.key) {
@@ -233,4 +233,4 @@ export function newTreeNodeSelectedState(): AppCanvasState {
       boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

@@ -5,10 +5,11 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
+import { defineIntransientState } from "./intransientState";
 
-export function newDefaultState(): AppCanvasState {
+export const newDefaultState = defineIntransientState(() => {
   return state;
-}
+});
 
 const state: AppCanvasState = {
   getLabel: () => "Default",

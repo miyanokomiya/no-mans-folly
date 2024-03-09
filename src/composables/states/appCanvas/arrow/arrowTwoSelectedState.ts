@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -19,8 +18,9 @@ import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
 import { getArrowDirection } from "../../../../utils/arrows";
 import { ShapeHandler } from "../../../shapeHandlers/core";
+import { defineIntransientState } from "../intransientState";
 
-export function newArrowTwoSelectedState(): AppCanvasState {
+export const newArrowTwoSelectedState = defineIntransientState(() => {
   let targetShape: TwoSidedArrowShape;
   let shapeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
@@ -133,12 +133,7 @@ export function newArrowTwoSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          if (hitBounding) {
-            return;
-          }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "shape-updated": {
           if (event.data.keys.has(targetShape.id)) {
@@ -161,4 +156,4 @@ export function newArrowTwoSelectedState(): AppCanvasState {
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

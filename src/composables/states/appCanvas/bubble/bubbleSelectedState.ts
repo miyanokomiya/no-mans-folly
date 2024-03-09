@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -27,8 +26,9 @@ import {
 import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
 import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { defineIntransientState } from "../intransientState";
 
-export function newBubbleSelectedState(): AppCanvasState {
+export const newBubbleSelectedState = defineIntransientState(() => {
   let targetShape: BubbleShape;
   let shapeHandler: ReturnType<typeof newBubbleHandler>;
   let boundingBox: BoundingBox;
@@ -184,12 +184,7 @@ export function newBubbleSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          if (hitBounding) {
-            return;
-          }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -209,7 +204,7 @@ export function newBubbleSelectedState(): AppCanvasState {
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});
 
 const renderBeakControls: RenderShapeControlFn<BubbleShape> = (stateCtx, renderCtx, latestShape) => {
   renderBeakGuidlines(renderCtx, latestShape, stateCtx.getStyleScheme(), stateCtx.getScale(), true);

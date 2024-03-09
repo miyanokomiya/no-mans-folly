@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
@@ -16,12 +15,13 @@ import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { defineIntransientState } from "../intransientState";
 
 interface Option {
   boundingBox?: BoundingBox;
 }
 
-export function newLineLabelSelectedState(option?: Option): AppCanvasState {
+export const newLineLabelSelectedState = defineIntransientState((option?: Option) => {
   let shape: TextShape;
   let parentLineShape: LineShape;
   let boundingBox: BoundingBox;
@@ -106,8 +106,7 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "keydown":
           switch (event.data.key) {
@@ -132,4 +131,4 @@ export function newLineLabelSelectedState(option?: Option): AppCanvasState {
       boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

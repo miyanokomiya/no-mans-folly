@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -18,8 +17,9 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
+import { defineIntransientState } from "../intransientState";
 
-export function newTreeRootSelectedState(): AppCanvasState {
+export const newTreeRootSelectedState = defineIntransientState(() => {
   let treeRootShape: TreeRootShape;
   let treeHandler: ReturnType<typeof newTreeHandler>;
   let boundingBox: BoundingBox;
@@ -134,8 +134,7 @@ export function newTreeRootSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -159,4 +158,4 @@ export function newTreeRootSelectedState(): AppCanvasState {
       boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

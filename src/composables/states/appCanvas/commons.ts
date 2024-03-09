@@ -1,12 +1,5 @@
 import { HistoryEvent, newPanningReadyState } from "../commons";
-import {
-  ChangeStateEvent,
-  KeyDownEvent,
-  PointerDownEvent,
-  PointerHoverEvent,
-  TransitionValue,
-  WheelEvent,
-} from "../core";
+import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue, WheelEvent } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasState, AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -16,18 +9,16 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
-  getLinkAt,
 } from "../../../utils/textEditor";
 import {
   canHaveText,
   createShape,
-  getShapeTextBounds,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
 } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
-import { IVec2, add, applyAffine, getOuterRectangle, getRectCenter, multi } from "okageo";
+import { IVec2, add, getRectCenter, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
 import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
@@ -40,14 +31,14 @@ import { COMMAND_EXAM_SRC } from "./commandExams";
 import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
-import { ShapeComposite, canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
+import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
-import { CommandExam, LinkInfo } from "../types";
+import { CommandExam } from "../types";
 import { handleContextItemEvent } from "./contextMenuItems";
 import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
@@ -487,48 +478,8 @@ export function handleCommonWheel(
   return ctx.zoomView(event.data.delta.y);
 }
 
-export function handleCommonPointerhover(
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "setCursor" | "setLinkInfo" | "getLinkInfo" | "getScale">,
-  event: PointerHoverEvent,
-): void {
-  const shapeComposite = ctx.getShapeComposite();
-  const shape = shapeComposite.findShapeAt(event.data.current, undefined, undefined, undefined, ctx.getScale());
-  const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
-
-  // Avoid overriding the same information.
-  const prev = ctx.getLinkInfo();
-  if (prev?.key === linkInfo?.key) return;
-
-  ctx.setCursor(linkInfo ? "pointer" : undefined);
-  ctx.setLinkInfo(linkInfo);
-}
-
-export function getInlineLinkInfoAt(shapeComposite: ShapeComposite, shape: Shape, p: IVec2): LinkInfo | undefined {
-  const docInfo = shapeComposite.getDocCompositeCache(shape.id);
-  if (!docInfo) return;
-
-  const bounds = getShapeTextBounds(shapeComposite.getShapeStruct, shape);
-  const adjustedP = applyAffine(bounds.affineReverse, p);
-  const info = getLinkAt(docInfo, adjustedP);
-  if (!info) return;
-
-  const actualBounds = getOuterRectangle([
-    geometry.getRectPoints(info.bounds).map((p) => applyAffine(bounds.affine, p)),
-  ]);
-  return {
-    shapeId: shape.id,
-    link: info.link,
-    docRange: info.docRange,
-    bounds: actualBounds,
-    key: `${shape.id}_${info.docRange[0]}`,
-  };
-}
-
 export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {
   switch (event.type) {
-    case "pointerhover":
-      handleCommonPointerhover(ctx, event);
-      return;
     case "wheel":
       handleCommonWheel(ctx, event);
       return;

@@ -1,4 +1,4 @@
-import type { AppCanvasState, AppCanvasStateContext } from "../core";
+import type { AppCanvasStateContext } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
@@ -20,12 +20,13 @@ import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { defineIntransientState } from "../intransientState";
 
 /**
  * General selected state for any board entity
  * - BoardRootShape, BoardColumnShape, BoardLaneShape, BoardCardShape
  */
-export function newBoardEntitySelectedState(): AppCanvasState {
+export const newBoardEntitySelectedState = defineIntransientState(() => {
   let boardId: string;
   let targetShape: Shape;
   let boardHandler: BoardHandler;
@@ -195,8 +196,7 @@ export function newBoardEntitySelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "shape-updated": {
           const result = handleIntransientEvent(ctx, event);
@@ -222,4 +222,4 @@ export function newBoardEntitySelectedState(): AppCanvasState {
       boardHandler.render(renderCtx, style, scale, boardHitResult);
     },
   };
-}
+});

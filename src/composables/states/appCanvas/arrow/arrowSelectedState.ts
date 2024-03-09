@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -20,8 +19,9 @@ import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
 import { getArrowDirection } from "../../../../utils/arrows";
 import { ShapeHandler } from "../../../shapeHandlers/core";
+import { defineIntransientState } from "../intransientState";
 
-export function newArrowSelectedState(): AppCanvasState {
+export const newArrowSelectedState = defineIntransientState(() => {
   let targetShape: OneSidedArrowShape;
   let shapeHandler: ShapeHandler;
   let boundingBox: BoundingBox;
@@ -135,12 +135,7 @@ export function newArrowSelectedState(): AppCanvasState {
           if (boundingBox.saveHitResult(hitBounding)) {
             ctx.redraw();
           }
-
-          if (hitBounding) {
-            return;
-          }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -157,4 +152,4 @@ export function newArrowSelectedState(): AppCanvasState {
       shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

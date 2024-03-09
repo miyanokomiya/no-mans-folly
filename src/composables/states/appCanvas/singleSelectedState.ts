@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { canAttachSmartBranch } from "../../../shapes";
 import {
@@ -17,8 +16,9 @@ import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
 import { ShapeSelectionScope } from "../../../shapes/core";
+import { defineIntransientState } from "./intransientState";
 
-export function newSingleSelectedState(): AppCanvasState {
+export const newSingleSelectedState = defineIntransientState(() => {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
@@ -140,8 +140,7 @@ export function newSingleSelectedState(): AppCanvasState {
               }
             }
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "keydown":
           switch (event.data.key) {
@@ -169,4 +168,4 @@ export function newSingleSelectedState(): AppCanvasState {
       smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
     },
   };
-}
+});

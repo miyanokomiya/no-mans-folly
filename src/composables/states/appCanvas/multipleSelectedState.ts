@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "./core";
 import { newPanningState } from "../commons";
 import { getCommonCommandExams, handleIntransientEvent, startTextEditingIfPossible } from "./commons";
 import * as geometry from "../../../utils/geometry";
@@ -15,6 +14,7 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
 import { findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
+import { defineIntransientState } from "./intransientState";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -22,7 +22,7 @@ interface Option {
   boundingBox?: BoundingBox;
 }
 
-export function newMultipleSelectedState(option?: Option): AppCanvasState {
+export const newMultipleSelectedState = defineIntransientState((option?: Option) => {
   let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
   let scode: ShapeSelectionScope | undefined;
@@ -162,8 +162,7 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
           if (boundingBox.saveHitResult(hitResult)) {
             ctx.redraw();
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "contextmenu":
           ctx.setContextMenuList({
@@ -190,4 +189,4 @@ export function newMultipleSelectedState(option?: Option): AppCanvasState {
       boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
-}
+});

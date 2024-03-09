@@ -1,4 +1,3 @@
-import type { AppCanvasState } from "../core";
 import { newPanningState } from "../../commons";
 import {
   getCommonCommandExams,
@@ -22,12 +21,13 @@ import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
+import { defineIntransientState } from "../intransientState";
 
 type DeleteVertexMeta = {
   index: number;
 };
 
-export function newLineSelectedState(): AppCanvasState {
+export const newLineSelectedState = defineIntransientState(() => {
   let lineShape: LineShape;
   let lineBounding: LineBounding;
 
@@ -115,8 +115,7 @@ export function newLineSelectedState(): AppCanvasState {
           if (lineBounding.saveHitResult(hitResult)) {
             ctx.redraw();
           }
-
-          return handleIntransientEvent(ctx, event);
+          break;
         }
         case "state":
           switch (event.data.name) {
@@ -185,4 +184,4 @@ export function newLineSelectedState(): AppCanvasState {
       lineBounding.render(renderCtx, ctx.getScale());
     },
   };
-}
+});
