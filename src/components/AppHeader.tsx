@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
 import { useOutsideClickCallback } from "../hooks/window";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
-import { Skillcheck } from "./atoms/Skillcheck";
 
 interface Props {
   onClickOpen: () => void;
@@ -76,18 +75,9 @@ export const AppHeader: React.FC<Props> = ({
     setOpenClearConfirm(false);
   }, []);
 
-  const [openClearSkillcheck, setOpenClearSkillcheck] = useState(false);
-  const onFailClearSkillcheck = useCallback(() => {
-    setOpenClearSkillcheck(false);
-  }, []);
-  const onSucessClearSkillcheck = useCallback(() => {
-    setOpenClearSkillcheck(false);
+  const handleClickClear = useCallback(() => {
     setOpenClearConfirm(true);
   }, []);
-
-  const handleClickClear = useCallback(() => {
-    setOpenClearSkillcheck(true);
-  }, [setOpenClearSkillcheck]);
 
   const clearDiagram = useCallback(() => {
     setPopupedKey("");
@@ -129,7 +119,6 @@ export const AppHeader: React.FC<Props> = ({
       <div className="px-2 text-sm">
         <span>{storageMessage}</span>
       </div>
-      <Skillcheck open={openClearSkillcheck} onSuccess={onSucessClearSkillcheck} onFail={onFailClearSkillcheck} />
       <Dialog
         open={openClearConfirm}
         onClose={closeClearConfirm}

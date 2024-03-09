@@ -7,7 +7,6 @@ import iconDelete from "../../assets/icons/delete_filled.svg";
 import { SortableListV } from "../atoms/SortableListV";
 import { useSelectedSheet, useSheets } from "../../hooks/storeHooks";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
-import { Skillcheck } from "../atoms/Skillcheck";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 
 export const SheetList: React.FC = () => {
@@ -39,7 +38,7 @@ export const SheetList: React.FC = () => {
   }, [acctx.sheetStore, selectedSheet]);
 
   const onClickDelete = useCallback(() => {
-    setOpenDeleteSkillcheck(true);
+    setOpenDeleteConfirm(true);
   }, []);
 
   const deleteSheet = useCallback(() => {
@@ -94,14 +93,6 @@ export const SheetList: React.FC = () => {
   const closeDeleteConfirm = useCallback(() => {
     setOpenDeleteConfirm(false);
   }, []);
-  const [openDeleteSkillcheck, setOpenDeleteSkillcheck] = useState(false);
-  const onFailDeleteSkillcheck = useCallback(() => {
-    setOpenDeleteSkillcheck(false);
-  }, []);
-  const onSucessDeleteSkillcheck = useCallback(() => {
-    setOpenDeleteSkillcheck(false);
-    setOpenDeleteConfirm(true);
-  }, []);
 
   return (
     <div className="bg-white border rounded flex flex-col p-1 gap-1">
@@ -116,7 +107,6 @@ export const SheetList: React.FC = () => {
       <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
         <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
       </div>
-      <Skillcheck open={openDeleteSkillcheck} onSuccess={onSucessDeleteSkillcheck} onFail={onFailDeleteSkillcheck} />
       <Dialog
         open={openDeleteConfirm}
         onClose={closeDeleteConfirm}
