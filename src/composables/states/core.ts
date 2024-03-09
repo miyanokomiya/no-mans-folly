@@ -44,7 +44,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
   getCtx: () => ModeStateContextBase & C,
   getInitialState: () => ModeStateBase<C, E>,
 ): StateMachine<E> {
-  const stateStack: StateStackItem<C, E>[] = [{ state: getInitialState() }];
+  const stateStack: StateStackItem<C, E>[] = [];
   const callback = newCallback();
   let eventBlocked = false;
 
@@ -60,9 +60,6 @@ export function newStateMachine<C, E = ModeStateEvent>(
   function getCurrentState(): StateStackItem<C, E> {
     return stateStack[stateStack.length - 1];
   }
-  blockEvent(() => {
-    getCurrentState().state.onStart?.(getCtx());
-  });
 
   function getStateSummary() {
     return {
@@ -185,6 +182,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
     stateStack.length = 0;
   }
 
+  reset();
   return {
     getStateSummary,
     handleEvent,

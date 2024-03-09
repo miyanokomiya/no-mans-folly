@@ -44,7 +44,7 @@ describe("useToastMessages", () => {
   });
 
   test("should close automatically when an item type is info", async () => {
-    const rendered = renderHook(() => useToastMessages({ timeout: 10 }));
+    const rendered = renderHook(() => useToastMessages({ timeout: 5 }));
     act(() => {
       rendered.result.current.pushToastMessage({ text: "a", type: "info" });
       rendered.result.current.pushToastMessage({ text: "b", type: "error" });
