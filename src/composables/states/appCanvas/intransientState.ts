@@ -9,6 +9,13 @@ import { getShapeTextBounds } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 
+/**
+ * Event flow specifications.
+ * - "handleEvent" of this factory function is always called first.
+ *   - No state transition can take place here.
+ * - "handleEvent" of the target state is always called afterwards.
+ *   - Its state transition takes place here.
+ */
 export function defineIntransientState<A extends any[]>(
   createFn: (...o: A) => AppCanvasState,
 ): (...o: A) => AppCanvasState {
