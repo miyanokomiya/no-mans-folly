@@ -31,7 +31,7 @@ export const struct: ShapeStruct<TrapezoidShape> = {
     const innerLeft = Math.max(path[0].x, path[3].x);
     const innerRight = Math.min(path[1].x, path[2].x);
     const rect = {
-      x: innerLeft,
+      x: shape.p.x + innerLeft,
       y: shape.p.y,
       width: innerRight - innerLeft,
       height: shape.height,
