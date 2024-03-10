@@ -196,6 +196,11 @@ export const AppCanvas: React.FC = () => {
     }
   }, [textEditing, focus]);
 
+  const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
+  const focusBackTextEditor = useCallback(() => {
+    setTextEditorFocusKey({});
+  }, []);
+
   useEffect(() => {
     // TODO: Make each method via "useCallback" for consistency.
     setSmctx({
@@ -324,6 +329,7 @@ export const AppCanvas: React.FC = () => {
       },
       setTextEditorPosition: (p) => {
         setTextEditorPosition(canvasToView(p));
+        focusBackTextEditor();
       },
       getDocumentMap: documentStore.getDocMap,
       getTmpDocMap: documentStore.getTmpDocMap,
@@ -370,6 +376,7 @@ export const AppCanvas: React.FC = () => {
     shapeStore,
     showEmojiPicker,
     undoManager,
+    focusBackTextEditor,
   ]);
 
   useEffect(() => {
@@ -435,11 +442,6 @@ export const AppCanvas: React.FC = () => {
     mergedDocMap,
     imageStore,
   ]);
-
-  const [textEditorFocusKey, setTextEditorFocusKey] = useState({});
-  const focusBackTextEditor = useCallback(() => {
-    setTextEditorFocusKey({});
-  }, []);
 
   const { handlePointerDown, handlePointerUp } = useClickable({
     onDown: useCallback(

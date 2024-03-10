@@ -7,6 +7,9 @@ interface Props {
   onDoubleClick?: (e: MouseEvent) => void;
 }
 
+/**
+ * Follows the spec of "PointerDoubleClickEvent" in "src/composables/states/core.ts".
+ */
 export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
   const downInfo = useRef<{ timestamp: number; button: number }>();
   const isDoubleDown = useRef(false);
@@ -14,6 +17,7 @@ export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
     (e: MouseEvent) => {
       const timestamp = Date.now();
       if (downInfo.current && timestamp - downInfo.current.timestamp < 300 && e.button === downInfo.current.button) {
+        e.preventDefault();
         downInfo.current = undefined;
         isDoubleDown.current = true;
       } else {
@@ -28,6 +32,7 @@ export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
   const handlePointerUp = useCallback(
     (e: MouseEvent) => {
       if (isDoubleDown.current) {
+        e.preventDefault();
         isDoubleDown.current = false;
         onDoubleClick?.(e);
       } else {
