@@ -23,7 +23,7 @@ img {
    * Prevent showing the context menu on touch devices.
    * => <img> element itself shouldn't have event listener.
    */
-  pointer-event: none;
+  pointer-events: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
