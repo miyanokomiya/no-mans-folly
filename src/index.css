@@ -17,3 +17,12 @@ input::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+img {
+  /*
+   * Prevent showing the context menu on touch devices.
+   * => <img> element itself shouldn't have event listener.
+   */
+  pointer-event: none;
+  user-select: none;
+}
