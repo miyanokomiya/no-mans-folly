@@ -148,7 +148,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
             default:
               return;
           }
-        case "pointerdoubledown": {
+        case "pointerdoubleclick": {
           const shapeComposite = ctx.getShapeComposite();
           const shapeAtPointer = findBetterShapeAt(
             shapeComposite,

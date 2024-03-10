@@ -2,7 +2,6 @@ import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
-  startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
@@ -92,13 +91,6 @@ export const newTrapezoidSelectedState = defineIntransientState(() => {
             default:
               return;
           }
-        case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
-          if (hitResult) {
-            return startTextEditingIfPossible(ctx, targetShape.id, event.data.point);
-          }
-          return;
-        }
         case "pointerhover": {
           const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
           if (shapeHandler.saveHitResult(nextHitResult)) {

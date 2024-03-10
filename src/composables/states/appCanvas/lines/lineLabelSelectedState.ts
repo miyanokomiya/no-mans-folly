@@ -94,13 +94,6 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
             default:
               return;
           }
-        case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
-          if (hitResult) {
-            return startTextEditingIfPossible(ctx, shape.id, event.data.point);
-          }
-          return;
-        }
         case "pointerhover": {
           const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (boundingBox.saveHitResult(hitBounding)) {

@@ -441,6 +441,7 @@ export const AppCanvas: React.FC = () => {
   }, []);
 
   const downInfo = useRef<{ timestamp: number; button: number }>();
+  const isDoubleDown = useRef(false);
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -455,15 +456,34 @@ export const AppCanvas: React.FC = () => {
 
       const timestamp = Date.now();
       if (downInfo.current && timestamp - downInfo.current.timestamp < 300 && e.button === downInfo.current.button) {
-        sm.handleEvent({ type: "pointerdoubledown", data });
         downInfo.current = undefined;
+        isDoubleDown.current = true;
       } else {
-        sm.handleEvent({ type: "pointerdown", data });
         downInfo.current = { timestamp, button: e.button };
+        isDoubleDown.current = false;
+        sm.handleEvent({ type: "pointerdown", data });
       }
     },
     [viewToCanvas, sm, focus, removeRootPosition, setMousePoint],
   );
+
+  const onMouseUp = useCallback(
+    (e: MouseEvent) => {
+      const data = {
+        point: viewToCanvas(getMousePoint()),
+        options: getMouseOptions(e),
+      };
+
+      if (isDoubleDown.current) {
+        sm.handleEvent({ type: "pointerdoubleclick", data });
+        isDoubleDown.current = false;
+      } else {
+        sm.handleEvent({ type: "pointerup", data });
+      }
+    },
+    [viewToCanvas, getMousePoint, sm],
+  );
+  useGlobalMouseupEffect(onMouseUp);
 
   const onMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -532,20 +552,6 @@ export const AppCanvas: React.FC = () => {
     },
     [getMousePoint, scale, viewToCanvas, sm, focus],
   );
-
-  const onMouseUp = useCallback(
-    (e: MouseEvent) => {
-      sm.handleEvent({
-        type: "pointerup",
-        data: {
-          point: viewToCanvas(getMousePoint()),
-          options: getMouseOptions(e),
-        },
-      });
-    },
-    [viewToCanvas, getMousePoint, sm],
-  );
-  useGlobalMouseupEffect(onMouseUp);
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

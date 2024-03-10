@@ -186,7 +186,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
               return;
           }
         }
-        case "pointerdoubledown": {
+        case "pointerdoubleclick": {
           const location = textEditorController.getLocationAt(
             applyAffine(textBounds.affineReverse, event.data.point),
             true,

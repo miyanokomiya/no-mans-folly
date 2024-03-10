@@ -162,13 +162,6 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
             default:
               return;
           }
-        case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
-          if (hitResult) {
-            return startTextEditingIfPossible(ctx, treeNodeShape.id, event.data.point);
-          }
-          return;
-        }
         case "pointerhover": {
           const result = treeHandler.hitTest(event.data.current, ctx.getScale());
           if (treeHandler.saveHitResult(result)) {

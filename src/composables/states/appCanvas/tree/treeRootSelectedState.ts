@@ -2,7 +2,6 @@ import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
-  startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
@@ -116,13 +115,6 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
             default:
               return;
           }
-        case "pointerdoubledown": {
-          const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
-          if (hitResult) {
-            return startTextEditingIfPossible(ctx, treeRootShape.id, event.data.point);
-          }
-          return;
-        }
         case "pointerhover": {
           const result = treeHandler.hitTest(event.data.current, ctx.getScale());
           if (treeHandler.saveHitResult(result)) {

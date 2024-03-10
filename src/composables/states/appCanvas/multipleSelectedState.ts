@@ -1,4 +1,4 @@
-import { getCommonCommandExams, handleIntransientEvent, startTextEditingIfPossible } from "./commons";
+import { getCommonCommandExams, handleIntransientEvent } from "./commons";
 import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -148,14 +148,6 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
             default:
               return;
           }
-        case "pointerdoubledown": {
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeAtPointer = findBetterShapeAt(shapeComposite, event.data.point, scode);
-          if (shapeAtPointer && selectedIdMap[shapeAtPointer.id]) {
-            return startTextEditingIfPossible(ctx, shapeAtPointer.id, event.data.point);
-          }
-          return;
-        }
         case "pointerhover": {
           const hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
           if (boundingBox.saveHitResult(hitResult)) {

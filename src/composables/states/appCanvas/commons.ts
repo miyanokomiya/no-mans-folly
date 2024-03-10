@@ -480,6 +480,14 @@ export function handleCommonWheel(
 
 export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event) => {
   switch (event.type) {
+    case "pointerdoubleclick": {
+      const shapeComposite = ctx.getShapeComposite();
+      const shape = shapeComposite.findShapeAt(event.data.point, undefined, undefined, undefined, ctx.getScale());
+      if (shape) {
+        return startTextEditingIfPossible(ctx, shape.id, event.data.point);
+      }
+      return;
+    }
     case "wheel":
       handleCommonWheel(ctx, event);
       return;

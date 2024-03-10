@@ -202,7 +202,7 @@ export type ModeStateEvent =
   | PointerHoverEvent
   | PointerDragEvent
   | PointerDownEvent
-  | PointerDoubleDownEvent
+  | PointerDoubleClickEvent
   | PointerUpEvent
   | KeyDownEvent
   | KeyUpEvent
@@ -241,8 +241,13 @@ export interface PointerDownEvent extends ModeStateEventBase {
   };
 }
 
-export interface PointerDoubleDownEvent extends ModeStateEventBase {
-  type: "pointerdoubledown";
+/**
+ * When "pointerdown" is detected twice within short period,
+ * this event is triggered and the second "pointerdown" and "pointerup" are canceled.
+ * i.e. "pointerdown" -> "pointerup" -> "pointerdoubleclick" on double-click.
+ */
+export interface PointerDoubleClickEvent extends ModeStateEventBase {
+  type: "pointerdoubleclick";
   data: {
     point: IVec2;
     options: MouseOptions;

@@ -100,7 +100,7 @@ export const newSingleSelectedState = defineIntransientState(() => {
             default:
               return;
           }
-        case "pointerdoubledown": {
+        case "pointerdoubleclick": {
           const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
             // TODO: It'd be better to make "GroupSelectedState"
