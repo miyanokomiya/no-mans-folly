@@ -25,7 +25,10 @@ export const AppFootbar: React.FC = () => {
   }, [setZoom, getScale]);
   const handleScaleFit = useCallback(() => {
     const shapeComposite = getShapeComposite();
-    setViewport(getWrapperRect(shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s))), 80);
+    const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
+    if (rects.length === 0) return;
+
+    setViewport(getWrapperRect(rects), 80);
   }, [getShapeComposite, setViewport]);
   const handleScale100 = useCallback(() => {
     setZoom(1, true);
