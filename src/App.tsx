@@ -109,7 +109,7 @@ function App() {
 
   const [rightPanel, setRightPanel] = useState("");
   const rightPanelWidth = 300;
-  const floatRightStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth + 16}px)` } : {};
+  const floatRightStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth}px)` } : {};
   const floatRightPanelStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth}px)` } : {};
   const handleRightPanel = useCallback((key: string) => {
     setRightPanel((v) => (v === key ? "" : key));
@@ -139,7 +139,7 @@ function App() {
           <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
         </div>
         <div
-          className="absolute right-4 transition-transform"
+          className="absolute right-7 transition-transform"
           style={{ top: "50%", transform: "translateY(-50%)" + (floatRightStyle.transform ?? "") }}
         >
           <AppToolbar />
