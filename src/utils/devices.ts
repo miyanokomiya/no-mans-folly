@@ -9,6 +9,10 @@ export function isTouchDevice() {
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
 
+export function isFileAccessAvailable() {
+  return "showDirectoryPicker" in window;
+}
+
 export type ModifierOptions = {
   // "Command" key is also treated as Ctrl key
   // When those keys need to be distinguished, check "command" value and use "isMac" in "devices.ts"

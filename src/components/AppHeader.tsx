@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
 import { useOutsideClickCallback } from "../hooks/window";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
+import { isFileAccessAvailable } from "../utils/devices";
 
 interface Props {
   onClickOpen: () => void;
@@ -105,37 +106,47 @@ export const AppHeader: React.FC<Props> = ({
     );
   }, [_onClickOpen, _onClickSave, _onClickMerge, handleClickClear]);
 
+  const fileAccessAvailable = isFileAccessAvailable();
+
   return (
     <div ref={ref} className="h-8 bg-white flex items-center">
-      <PopupButton
-        name="file"
-        opened={popupedKey === "file"}
-        popup={fileItems}
-        onClick={onClickPopupButton}
-        popupPosition="right"
-      >
-        <div className="px-2">File</div>
-      </PopupButton>
-      <div className="px-2 text-sm">
-        <span>{storageMessage}</span>
-      </div>
-      <Dialog
-        open={openClearConfirm}
-        onClose={closeClearConfirm}
-        title="Clear diagram"
-        actions={
-          <>
-            <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
-            <DialogButtonAlert onClick={clearDiagram}>Clear</DialogButtonAlert>
-          </>
-        }
-      >
-        <div>
-          <p>All data stored in IndexedDB will be cleared.</p>
-          <p>Workspace files will not be affected.</p>
-          <p>This action cannot be undone.</p>
+      {fileAccessAvailable ? (
+        <>
+          <PopupButton
+            name="file"
+            opened={popupedKey === "file"}
+            popup={fileItems}
+            onClick={onClickPopupButton}
+            popupPosition="right"
+          >
+            <div className="px-2">File</div>
+          </PopupButton>
+          <div className="px-2 text-sm">
+            <span>{storageMessage}</span>
+          </div>
+          <Dialog
+            open={openClearConfirm}
+            onClose={closeClearConfirm}
+            title="Clear diagram"
+            actions={
+              <>
+                <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
+                <DialogButtonAlert onClick={clearDiagram}>Clear</DialogButtonAlert>
+              </>
+            }
+          >
+            <div>
+              <p>All data stored in IndexedDB will be cleared.</p>
+              <p>Workspace files will not be affected.</p>
+              <p>This action cannot be undone.</p>
+            </div>
+          </Dialog>
+        </>
+      ) : (
+        <div className="px-2">
+          <p className="text-red-500 font-bold text-center">This device or browser doesn't support data persistence.</p>
         </div>
-      </Dialog>
+      )}
     </div>
   );
 };
