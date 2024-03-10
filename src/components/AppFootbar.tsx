@@ -9,6 +9,7 @@ import iconRedo from "../assets/icons/redo.svg";
 import iconHelp from "../assets/icons/help.svg";
 import iconPlus from "../assets/icons/plus.svg";
 import iconMinus from "../assets/icons/minus.svg";
+import { useGlobalMouseupEffect } from "../hooks/window";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -149,12 +150,13 @@ const ZoomButton: React.FC<ZoomButtonProps> = ({ children, onZoom }) => {
     return () => cancelAnimationFrame(animRef.current);
   }, [down]);
 
+  useGlobalMouseupEffect(handleUp);
+
   return (
     <button
       type="button"
       className="w-8 h-8 rounded border select-none touch-none text-xl flex items-center justify-center"
       onPointerDown={handleDown}
-      onPointerUp={handleUp}
       onContextMenu={handleContextMenu}
     >
       {children}
