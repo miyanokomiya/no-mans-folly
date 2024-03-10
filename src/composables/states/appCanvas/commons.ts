@@ -167,10 +167,16 @@ export function handleCommonShortcut(
       if (event.data.ctrl) ctx.undo();
       return () => newTextReadyState();
     case "z":
-      if (event.data.ctrl) ctx.undo();
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        ctx.undo();
+      }
       return newSelectionHubState;
     case "Z":
-      if (event.data.ctrl) ctx.redo();
+      if (event.data.ctrl) {
+        event.data.prevent?.();
+        ctx.redo();
+      }
       return newSelectionHubState;
     case ";":
     case ":":
@@ -184,6 +190,7 @@ export function handleCommonShortcut(
     }
     case "!":
     case "Home": {
+      event.data.prevent?.();
       const shapeComposite = ctx.getShapeComposite();
       const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
       if (rects.length === 0) return;
@@ -193,6 +200,7 @@ export function handleCommonShortcut(
     }
     case "Delete":
     case "Backspace": {
+      event.data.prevent?.();
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
       if (ids.length > 0) {
         ctx.deleteShapes(ids);
