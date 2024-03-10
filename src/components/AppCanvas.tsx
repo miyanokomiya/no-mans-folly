@@ -35,6 +35,7 @@ import { getDeleteTargetIds } from "../composables/shapeComposite";
 import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
 import { GridBackground } from "./atoms/GridBackground";
 import { LinkMenu } from "./linkMenu/LinkMenu";
+import { useClickable } from "../hooks/clickable";
 
 export const AppCanvas: React.FC = () => {
   const { sheetStore, shapeStore, documentStore, undoManager, userSettingStore } = useContext(AppCanvasContext);
@@ -440,50 +441,52 @@ export const AppCanvas: React.FC = () => {
     setTextEditorFocusKey({});
   }, []);
 
-  const downInfo = useRef<{ timestamp: number; button: number }>();
-  const isDoubleDown = useRef(false);
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      focus(true);
+  const { handlePointerDown, handlePointerUp } = useClickable({
+    onDown: useCallback(
+      (e: MouseEvent) => {
+        e.preventDefault();
+        focus(true);
 
-      const p = removeRootPosition({ x: e.pageX, y: e.pageY });
-      setMousePoint(p);
-      const data = {
-        point: viewToCanvas(p),
-        options: getMouseOptions(e),
-      };
+        const p = removeRootPosition({ x: e.pageX, y: e.pageY });
+        setMousePoint(p);
+        sm.handleEvent({
+          type: "pointerdown",
+          data: {
+            point: viewToCanvas(p),
+            options: getMouseOptions(e),
+          },
+        });
+      },
+      [viewToCanvas, sm, focus, removeRootPosition, setMousePoint],
+    ),
+    onUp: useCallback(
+      (e: MouseEvent) => {
+        sm.handleEvent({
+          type: "pointerup",
+          data: {
+            point: viewToCanvas(getMousePoint()),
+            options: getMouseOptions(e),
+          },
+        });
+      },
+      [viewToCanvas, getMousePoint, sm],
+    ),
+    onDoubleClick: useCallback(
+      (e: MouseEvent) => {
+        sm.handleEvent({
+          type: "pointerdoubleclick",
+          data: {
+            point: viewToCanvas(getMousePoint()),
+            options: getMouseOptions(e),
+          },
+        });
+      },
+      [viewToCanvas, getMousePoint, sm],
+    ),
+  });
 
-      const timestamp = Date.now();
-      if (downInfo.current && timestamp - downInfo.current.timestamp < 300 && e.button === downInfo.current.button) {
-        downInfo.current = undefined;
-        isDoubleDown.current = true;
-      } else {
-        downInfo.current = { timestamp, button: e.button };
-        isDoubleDown.current = false;
-        sm.handleEvent({ type: "pointerdown", data });
-      }
-    },
-    [viewToCanvas, sm, focus, removeRootPosition, setMousePoint],
-  );
-
-  const onMouseUp = useCallback(
-    (e: MouseEvent) => {
-      const data = {
-        point: viewToCanvas(getMousePoint()),
-        options: getMouseOptions(e),
-      };
-
-      if (isDoubleDown.current) {
-        sm.handleEvent({ type: "pointerdoubleclick", data });
-        isDoubleDown.current = false;
-      } else {
-        sm.handleEvent({ type: "pointerup", data });
-      }
-    },
-    [viewToCanvas, getMousePoint, sm],
-  );
-  useGlobalMouseupEffect(onMouseUp);
+  const onMouseDown = useCallback((e: React.MouseEvent) => handlePointerDown(e.nativeEvent), [handlePointerDown]);
+  useGlobalMouseupEffect(handlePointerUp);
 
   const onMouseMove = useCallback(
     (e: MouseEvent) => {
