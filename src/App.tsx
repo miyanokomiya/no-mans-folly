@@ -135,26 +135,26 @@ function App() {
       <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
         <div
-          className={"absolute top-2 bottom-2 left-full bg-white transition-transform"}
+          className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
           style={{ width: rightPanelWidth, ...floatRightPanelStyle }}
         >
           <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
         </div>
         <div
-          className="absolute right-7 transition-transform"
+          className="fixed right-7 transition-transform"
           style={{ top: "50%", transform: "translateY(-50%)" + (floatRightStyle.transform ?? "") }}
         >
           <AppToolbar />
         </div>
-        <div className="absolute bottom-2 right-4 transition-transform" style={floatRightStyle}>
+        <div className="fixed bottom-2 right-4 transition-transform" style={floatRightStyle}>
           <AppFootbar />
         </div>
         {fileAccessAvailable ? (
-          <div className="absolute top-8 flex">
+          <div className="fixed top-8 flex">
             <SheetList />
           </div>
         ) : undefined}
-        <div className="absolute left-0 top-0 flex">
+        <div className="fixed left-0 top-0 flex">
           <AppHeader
             onClickOpen={onClickOpen}
             onClickSave={onClickSave}

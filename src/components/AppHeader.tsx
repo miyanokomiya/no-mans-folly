@@ -140,11 +140,7 @@ export const AppHeader: React.FC<Props> = ({
             </div>
           </Dialog>
         </>
-      ) : (
-        <div className="px-2">
-          <p className="text-red-500 font-bold text-center">This device or browser doesn't support data persistence.</p>
-        </div>
-      )}
+      ) : undefined}
     </OutsideObserver>
   );
 };
