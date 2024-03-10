@@ -103,7 +103,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
           </FixedPopupButton>
         </OutsideObserver>
       </div>
-      <div className="w-24 h-8 text-sm whitespace-nowrap">{content}</div>
+      <div className="w-24 h-6 text-sm whitespace-nowrap">{content}</div>
     </div>
   );
 };

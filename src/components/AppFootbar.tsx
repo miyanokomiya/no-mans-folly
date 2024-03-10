@@ -7,6 +7,8 @@ import { OutsideObserver } from "./atoms/OutsideObserver";
 import iconUndo from "../assets/icons/undo.svg";
 import iconRedo from "../assets/icons/redo.svg";
 import iconHelp from "../assets/icons/help.svg";
+import iconPlus from "../assets/icons/plus.svg";
+import iconMinus from "../assets/icons/minus.svg";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -55,7 +57,9 @@ export const AppFootbar: React.FC = () => {
   return (
     <div className="p-1 border rounded bg-white flex gap-2 items-center">
       <div className="flex gap-1 items-center">
-        <ZoomButton onZoom={handleZoomOut}>-</ZoomButton>
+        <ZoomButton onZoom={handleZoomOut}>
+          <img src={iconMinus} alt="Zoom out" className="w-4 h-4" />
+        </ZoomButton>
         <OutsideObserver onClick={handleCloseScalePopup}>
           <PopupButton
             name="scale"
@@ -71,7 +75,9 @@ export const AppFootbar: React.FC = () => {
             <div className="flex items-center justify-center w-12">{scale}%</div>
           </PopupButton>
         </OutsideObserver>
-        <ZoomButton onZoom={handleZoomIn}>+</ZoomButton>
+        <ZoomButton onZoom={handleZoomIn}>
+          <img src={iconPlus} alt="Zoom In" className="w-4 h-4" />
+        </ZoomButton>
       </div>
       <div className="flex gap-1 items-center">
         <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onUndo}>
