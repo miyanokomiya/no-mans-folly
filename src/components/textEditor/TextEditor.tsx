@@ -22,13 +22,21 @@ export const TextEditor: React.FC<Props> = ({
   showEmojiPicker,
   setShowEmojiPicker,
 }) => {
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>();
   const [draft, setDraft] = useState("");
   const [composition, setComposition] = useState(false);
 
   useEffect(() => {
     inputRef.current?.focus?.();
   }, [focusKey]);
+
+  // In order to let iOS devices show the keyboard
+  // - "focus" has to be called when ref is set.
+  // - this function must not be wrapped by "useCallback" for some reason.
+  function setTextareaRef(elm: HTMLTextAreaElement) {
+    elm?.focus();
+    inputRef.current = elm;
+  }
 
   const onChange = useCallback(
     (e: any) => {
@@ -77,7 +85,7 @@ export const TextEditor: React.FC<Props> = ({
         }}
       >
         <textarea
-          ref={inputRef}
+          ref={setTextareaRef}
           value={draft}
           onChange={onChange}
           onKeyDown={onKeyDown}
