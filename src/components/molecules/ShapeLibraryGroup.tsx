@@ -186,7 +186,7 @@ export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, onDown })
   );
 
   return (
-    <button type="button" onMouseDown={handleDown} className="cursor-grab" title={name}>
+    <button type="button" onPointerDown={handleDown} className="cursor-grab touch-none" title={name}>
       <img src={url} alt={name} className="w-10 h-10" />
     </button>
   );

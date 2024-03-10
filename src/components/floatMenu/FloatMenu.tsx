@@ -363,7 +363,7 @@ export const FloatMenu: React.FC<Option> = ({
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
-        <div className="w-2 h-8 border rounded bg-gray-300" onMouseDown={draggable.startDrag}></div>
+        <div className="w-2 h-8 border rounded bg-gray-300 touch-none" onPointerDown={draggable.startDrag}></div>
         {indexCommonStyle?.fill ? (
           <PopupButton
             name="fill"

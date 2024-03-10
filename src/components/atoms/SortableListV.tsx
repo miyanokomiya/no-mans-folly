@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useGlobalDrag } from "../../hooks/window";
 import { IVec2, getDistance } from "okageo";
+import { LongPressStarter } from "./LongPressStarter";
 
 interface Props {
   items: [id: string, element: React.ReactNode][];
@@ -87,14 +88,16 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
 
   const borderElm = <div className="border-4 border-blue-400"></div>;
 
+  // FIXME: On touch environment, dragging works only when "pointermove" takes place immediately after "pointerdown".
+  // => Touching for a while in place then moving doesn't work. Presumably something related touch events interrupts it.
   return (
     <div ref={containerRed} className="flex flex-col gap-1">
       {items.map((item, i) => (
         <div key={item[0]}>
           {insertion?.[1] === i ? borderElm : undefined}
-          <div data-id={item[0]} onMouseDown={onDown}>
+          <LongPressStarter data-id={item[0]} onPointerDown={onDown}>
             {item[1]}
-          </div>
+          </LongPressStarter>
         </div>
       ))}
       {insertion?.[1] === items.length ? borderElm : undefined}

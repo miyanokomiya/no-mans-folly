@@ -94,9 +94,11 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType: currentType, on
     <button
       key={item.type}
       type="button"
-      className={"w-10 h-10 border p-1 rounded" + (currentType === item.type ? " border-2 border-cyan-400" : "")}
+      className={
+        "w-10 h-10 border p-1 rounded touch-none" + (currentType === item.type ? " border-2 border-cyan-400" : "")
+      }
       data-type={item.type}
-      onMouseDown={onDownLineElm}
+      onPointerDown={onDownLineElm}
     >
       <img src={item.icon} alt={item.type} />
     </button>

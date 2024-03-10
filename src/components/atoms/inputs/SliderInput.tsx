@@ -104,10 +104,10 @@ export const SliderInput: React.FC<Props> = ({ value, min, max, step, showValue,
     <div className="relative">
       <div
         ref={ref}
-        className="relative bg-white border rounded-full overflow-hidden h-4 cursor-pointer"
+        className="relative bg-white border rounded-full overflow-hidden h-4 cursor-pointer touch-none"
         tabIndex={0}
         data-keep-focus
-        onMouseDown={onDown}
+        onPointerDown={onDown}
         onKeyDown={onKeyDown}
       >
         <div

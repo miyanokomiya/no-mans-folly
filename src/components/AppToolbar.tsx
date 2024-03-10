@@ -183,9 +183,9 @@ export const AppToolbar: React.FC = () => {
             {shapeList.map((shape) => (
               <div
                 key={shape.type}
-                className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab"
+                className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab touch-none"
                 data-type={shape.type}
-                onMouseDown={onDownShapeElm}
+                onPointerDown={onDownShapeElm}
               >
                 <img src={shape.icon} alt={shape.type} />
               </div>
@@ -202,11 +202,11 @@ export const AppToolbar: React.FC = () => {
               <div
                 key={shape.type}
                 className={
-                  "w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-pointer" +
+                  "w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-pointer touch-none" +
                   (lineType === shape.type ? " border-2 border-cyan-400" : "")
                 }
                 data-type={shape.type}
-                onMouseDown={onDownLineElm}
+                onPointerDown={onDownLineElm}
               >
                 <img src={shape.icon} alt={shape.type} />
               </div>
@@ -222,9 +222,9 @@ export const AppToolbar: React.FC = () => {
             {layoutList.map((shape) => (
               <div
                 key={shape.type}
-                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-grab"
+                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-grab touch-none"
                 data-type={shape.type}
-                onMouseDown={onDownShapeElm}
+                onPointerDown={onDownShapeElm}
               >
                 <img src={shape.icon} alt={shape.type} />
               </div>
