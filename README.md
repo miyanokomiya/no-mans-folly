@@ -13,3 +13,8 @@
 
 ## External icons
 https://github.com/miyanokomiya/no-mans-folly-assets
+
+## Development
+
+### Data persistence via Indexed DB 
+Diagram data can be saved and restored via Indexed DB without opening a workspace. Add `indexeddb=1` to URL query to turn on this functionality.
