@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useOutsideClickCallback } from "../../../hooks/window";
+import { OutsideObserver } from "../OutsideObserver";
 
 interface Props {
   value: number;
@@ -31,8 +31,6 @@ export const NumberCombobox: React.FC<Props> = ({
   const close = useCallback(() => {
     setOpened(false);
   }, []);
-  const { ref } = useOutsideClickCallback<HTMLDivElement>(close);
-
   const onSelected = useCallback(
     (e: React.MouseEvent) => {
       close();
@@ -76,7 +74,7 @@ export const NumberCombobox: React.FC<Props> = ({
   }, [defaultDirection]);
 
   return (
-    <div ref={ref} className="relative w-full">
+    <OutsideObserver className="relative w-full" onClick={close}>
       <form action="" className="w-full" onSubmit={onSubmit}>
         <input
           type="number"
@@ -105,6 +103,6 @@ export const NumberCombobox: React.FC<Props> = ({
           </div>
         </div>
       ) : undefined}
-    </div>
+    </OutsideObserver>
   );
 };

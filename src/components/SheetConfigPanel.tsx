@@ -4,9 +4,9 @@ import { PopupButton } from "./atoms/PopupButton";
 import { ColorPickerPanel } from "./molecules/ColorPickerPanel";
 import { COLORS, rednerRGBA } from "../utils/color";
 import { Color } from "../models";
-import { useOutsideClickCallback } from "../hooks/window";
 import { useSelectedSheet, useSelectedTmpSheet } from "../hooks/storeHooks";
 import { SliderInput } from "./atoms/inputs/SliderInput";
+import { OutsideObserver } from "./atoms/OutsideObserver";
 
 export const SheetConfigPanel: React.FC = () => {
   const { sheetStore } = useContext(AppCanvasContext);
@@ -29,8 +29,6 @@ export const SheetConfigPanel: React.FC = () => {
   const onClickOutside = useCallback(() => {
     setPopupedKey("");
   }, []);
-  const outside = useOutsideClickCallback<HTMLDivElement>(onClickOutside);
-
   const bgColor = useMemo<Color>(() => {
     return tmpSheet?.bgcolor ?? COLORS.WHITE;
   }, [tmpSheet?.bgcolor]);
@@ -82,7 +80,7 @@ export const SheetConfigPanel: React.FC = () => {
     <div>
       <div className="flex justify-between items-center">
         <p className="text-lg">Background color</p>
-        <div ref={outside.ref}>
+        <OutsideObserver onClick={onClickOutside}>
           <PopupButton
             name="bgColor"
             opened={popupedKey === "bgColor"}
@@ -92,7 +90,7 @@ export const SheetConfigPanel: React.FC = () => {
           >
             <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
           </PopupButton>
-        </div>
+        </OutsideObserver>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
-import { useOutsideClickCallback } from "../hooks/window";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
 import { isFileAccessAvailable } from "../utils/devices";
+import { OutsideObserver } from "./atoms/OutsideObserver";
 
 interface Props {
   onClickOpen: () => void;
@@ -36,8 +36,6 @@ export const AppHeader: React.FC<Props> = ({
   const closePopup = useCallback(() => {
     setPopupedKey("");
   }, []);
-  const { ref } = useOutsideClickCallback<HTMLDivElement>(closePopup);
-
   const storageMessage = useMemo(() => {
     if (!canSyncoLocal) {
       return (
@@ -109,7 +107,7 @@ export const AppHeader: React.FC<Props> = ({
   const fileAccessAvailable = isFileAccessAvailable();
 
   return (
-    <div ref={ref} className="h-8 bg-white flex items-center">
+    <OutsideObserver className="h-8 bg-white flex items-center" onClick={closePopup}>
       {fileAccessAvailable ? (
         <>
           <PopupButton
@@ -147,6 +145,6 @@ export const AppHeader: React.FC<Props> = ({
           <p className="text-red-500 font-bold text-center">This device or browser doesn't support data persistence.</p>
         </div>
       )}
-    </div>
+    </OutsideObserver>
   );
 };
