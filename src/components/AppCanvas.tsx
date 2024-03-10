@@ -30,7 +30,6 @@ import { FileDropArea } from "./atoms/FileDropArea";
 import { newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
-import { useLocalStorageAdopter } from "../hooks/localStorage";
 import { mapReduce, patchPipe } from "../utils/commons";
 import { getDeleteTargetIds } from "../composables/shapeComposite";
 import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
@@ -38,7 +37,7 @@ import { GridBackground } from "./atoms/GridBackground";
 import { LinkMenu } from "./linkMenu/LinkMenu";
 
 export const AppCanvas: React.FC = () => {
-  const { sheetStore, shapeStore, documentStore, undoManager } = useContext(AppCanvasContext);
+  const { sheetStore, shapeStore, documentStore, undoManager, userSettingStore } = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
   const setSmctx = useContext(SetAppStateContext);
@@ -54,6 +53,7 @@ export const AppCanvas: React.FC = () => {
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; point: IVec2 } | undefined>();
   const [linkInfo, setLinkInfo] = useState<LinkInfo>();
+  const [userSetting, setUserSetting] = useState(userSettingStore.getState());
 
   const imageStore = useMemo(() => {
     shapeStore; // For exhaustive-deps
@@ -138,6 +138,12 @@ export const AppCanvas: React.FC = () => {
     });
   }, [sm]);
 
+  useEffect(() => {
+    return userSettingStore.watch(() => {
+      setUserSetting(userSettingStore.getState());
+    });
+  }, [userSettingStore]);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
   const {
@@ -160,14 +166,9 @@ export const AppCanvas: React.FC = () => {
     editStartPoint,
   } = useCanvas(getWrapper);
 
-  const { state: gridDisabled, setState: setGridDisabled } = useLocalStorageAdopter({
-    key: "grid_disabled",
-    version: "1",
-    initialValue: false,
-  });
   const grid = useMemo(() => {
-    return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: gridDisabled });
-  }, [scale, viewCanvasRect, gridDisabled]);
+    return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: userSetting.grid === "off" });
+  }, [scale, viewCanvasRect, userSetting]);
 
   const mergedDocMap = useMemo(() => {
     canvasState; // For exhaustive-deps
@@ -302,7 +303,7 @@ export const AppCanvas: React.FC = () => {
       createLastIndex: shapeStore.createLastIndex,
 
       getGrid: () => grid,
-      setGridDisabled: (val) => setGridDisabled(val),
+      setGridDisabled: (val) => userSettingStore.patchState({ grid: val ? "off" : "on" }),
 
       startTextEditing() {
         setTextEditing(true);
@@ -361,7 +362,7 @@ export const AppCanvas: React.FC = () => {
     linkInfo,
     documentStore,
     focus,
-    setGridDisabled,
+    userSettingStore,
     imageStore,
     pushToastMessage,
     setSmctx,

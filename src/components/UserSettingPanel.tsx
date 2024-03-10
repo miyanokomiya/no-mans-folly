@@ -26,6 +26,13 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handleGridChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ grid: val ? "on" : "off" });
+    },
+    [userSettingStore],
+  );
+
   return (
     <div>
       <div className="flex flex-col">
@@ -34,6 +41,9 @@ export const UserSettingPanel: React.FC = () => {
         </ToggleInput>
         <ToggleInput value={userSetting.leftDragAction === "pan"} onChange={handleLeftDragActionChange}>
           Pan by left dragging
+        </ToggleInput>
+        <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
+          Grid
         </ToggleInput>
       </div>
     </div>
