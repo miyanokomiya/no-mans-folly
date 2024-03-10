@@ -13,7 +13,7 @@ import { AppRightPanel } from "./components/AppRightPanel";
 import { EntranceDialog } from "./components/navigations/EntranceDialog";
 import { newUserSettingStore } from "./stores/userSettingStore";
 import { IAppCanvasContext } from "./contexts/AppCanvasContext";
-import { isTouchDevice } from "./utils/devices";
+import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -126,6 +126,8 @@ function App() {
     }
   }, [onClickOpen, closeEntranceDialog]);
 
+  const fileAccessAvailable = isFileAccessAvailable();
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
@@ -147,9 +149,11 @@ function App() {
         <div className="absolute bottom-2 right-4 transition-transform" style={floatRightStyle}>
           <AppFootbar />
         </div>
-        <div className="absolute top-8 flex">
-          <SheetList />
-        </div>
+        {fileAccessAvailable ? (
+          <div className="absolute top-8 flex">
+            <SheetList />
+          </div>
+        ) : undefined}
         <div className="absolute left-0 top-0 flex">
           <AppHeader
             onClickOpen={onClickOpen}

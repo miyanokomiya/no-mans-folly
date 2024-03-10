@@ -12,14 +12,18 @@ export const ToastMessages: React.FC<Props> = ({ messages, closeToastMessage }) 
     return messages.map((m) => (
       <div key={m.text} className={"py-2 pl-4 pr-6 rounded shadow relative " + getToastClass(m)}>
         {m.text}
-        <button type="button" onClick={() => closeToastMessage?.(m.text)} className="absolute top-0 right-0 w-4 h-4">
+        <button
+          type="button"
+          onClick={() => closeToastMessage?.(m.text)}
+          className="absolute top-0 right-0 w-6 h-6 p-1"
+        >
           <img src={iconDelete} alt="Close" />
         </button>
       </div>
     ));
   }, [messages, closeToastMessage]);
   return (
-    <div className="fixed top-2 left-1/2" style={{ transform: "translateX(-50%)" }}>
+    <div className="z-50 fixed top-2 left-1/2" style={{ transform: "translateX(-50%)" }}>
       <div className="flex flex-col gap-2">{messageElm}</div>
     </div>
   );
