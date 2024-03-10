@@ -1,6 +1,6 @@
 export const TextColorIcon: React.FC = () => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 32 32">
       <g strokeLinecap="round" strokeLinejoin="round">
         <g fill="none" stroke="#000">
           <rect transform="matrix(1,0,0,1,16,16)" strokeWidth="2" x="-5" y="-0.75" width="10" height="1.5" />
@@ -19,7 +19,7 @@ export const TextColorIcon: React.FC = () => {
 
 export const TextColorBgIcon: React.FC<{ color?: string }> = ({ color }) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 32 32">
       <g strokeLinecap="round" strokeLinejoin="round">
         <g>
           <g fill="currentColor" stroke="#000">
