@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
-import { isFileAccessAvailable } from "../utils/devices";
+import { isCtrlOrMeta, isFileAccessAvailable } from "../utils/devices";
 import { OutsideObserver } from "./atoms/OutsideObserver";
+import { useGlobalKeydownEffect } from "../hooks/window";
 
 interface Props {
   onClickOpen: () => void;
@@ -21,7 +22,9 @@ export const AppHeader: React.FC<Props> = ({
   canSyncoLocal,
   saving,
 }) => {
+  const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
+
   const onClickPopupButton = useCallback(
     (name: string) => {
       if (popupedKey === name) {
@@ -50,9 +53,11 @@ export const AppHeader: React.FC<Props> = ({
     }
 
     return (
-      <span className="border rounded py-1 px-2 bg-lime-500 text-white">{saving ? "Synching..." : "Synched"}</span>
+      <span className="border rounded py-1 px-2 bg-lime-500 text-white">
+        {saving || ctrlS ? "Synching..." : "Synched"}
+      </span>
     );
-  }, [canSyncoLocal, onClickPopupButton, saving]);
+  }, [canSyncoLocal, onClickPopupButton, saving, ctrlS]);
 
   const _onClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -83,6 +88,30 @@ export const AppHeader: React.FC<Props> = ({
     setOpenClearConfirm(false);
     onClickClear();
   }, [onClickClear]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "s" && isCtrlOrMeta(e)) {
+        e.preventDefault();
+        if (canSyncoLocal) {
+          setCtrlS(true);
+        } else {
+          onClickPopupButton("file");
+        }
+      }
+    },
+    [canSyncoLocal, onClickPopupButton],
+  );
+  useGlobalKeydownEffect(handleKeyDown);
+
+  useEffect(() => {
+    if (!ctrlS) return;
+
+    const timer = setTimeout(() => {
+      setCtrlS(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [ctrlS]);
 
   const fileItems = useMemo(() => {
     const className = "p-2 border hover:bg-gray-200";
