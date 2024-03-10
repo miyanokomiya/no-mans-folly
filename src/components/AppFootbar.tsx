@@ -59,7 +59,7 @@ export const AppFootbar: React.FC = () => {
   }, [sm]);
 
   return (
-    <div className="p-1 border rounded bg-white flex gap-2 items-center">
+    <div className="p-1 border rounded bg-white flex gap-2 items-center select-none">
       <div className="flex gap-1 items-center">
         <ZoomButton onZoom={handleZoomOut}>
           <img src={iconMinus} alt="Zoom out" className="w-4 h-4" />
