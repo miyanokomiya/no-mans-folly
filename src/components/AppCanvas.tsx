@@ -739,7 +739,9 @@ export const AppCanvas: React.FC = () => {
             )}
           </div>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-          <div className="absolute right-16 top-0">{sm.getStateSummary().label}</div>
+          {userSetting.debug === "on" ? (
+            <div className="absolute right-16 top-0">{sm.getStateSummary().label}</div>
+          ) : undefined}
           <div className="absolute bottom-2 left-2 pointer-events-none">
             <CommandExamPanel commandExams={commandExams} />
           </div>

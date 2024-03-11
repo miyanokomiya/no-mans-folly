@@ -12,6 +12,13 @@ export const UserSettingPanel: React.FC = () => {
     });
   }, [userSettingStore]);
 
+  const handleDebugChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ debug: val ? "on" : undefined });
+    },
+    [userSettingStore],
+  );
+
   const handleWheelActionChange = useCallback(
     (val: boolean) => {
       userSettingStore.patchState({ wheelAction: val ? "pan" : undefined });
@@ -36,6 +43,11 @@ export const UserSettingPanel: React.FC = () => {
   return (
     <div>
       <div className="flex flex-col">
+        {import.meta.env.DEV ? (
+          <ToggleInput value={userSetting.debug === "on"} onChange={handleDebugChange}>
+            Debug mode
+          </ToggleInput>
+        ) : undefined}
         <ToggleInput value={userSetting.wheelAction === "pan"} onChange={handleWheelActionChange}>
           Pan by wheeling
         </ToggleInput>
