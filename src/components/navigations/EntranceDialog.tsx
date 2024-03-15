@@ -21,13 +21,19 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
-      setGoogleMode("");
       onGoogleFolderSelect?.(folder);
     },
     [onGoogleFolderSelect],
   );
+  const handleGoogleFolderClose = useCallback(() => {
+    setGoogleMode("");
+  }, []);
 
-  const openGoogleDrivePicker = useDrivePicker({ token: googleToken, onFolderPick: handleGoogleFolderSelect });
+  const openGoogleDrivePicker = useDrivePicker({
+    token: googleToken,
+    onFolderPick: handleGoogleFolderSelect,
+    onClose: handleGoogleFolderClose,
+  });
 
   const handleGoogleClick = useCallback(() => {
     if (googleMode) return;

@@ -5,9 +5,10 @@ import { GoogleDriveFolder } from "../types";
 interface Props {
   token?: string;
   onFolderPick?: (folder: GoogleDriveFolder) => void;
+  onClose?: () => void;
 }
 
-export function useDrivePicker({ token, onFolderPick }: Props) {
+export function useDrivePicker({ token, onFolderPick, onClose }: Props) {
   const [_openPicker] = useGoogleDrivePicker();
   const pickerRef = useRef(_openPicker);
   pickerRef.current = _openPicker;
@@ -20,14 +21,21 @@ export function useDrivePicker({ token, onFolderPick }: Props) {
       developerKey: process.env.GOOGLE_API_KEY ?? "",
       viewId: "FOLDERS",
       token,
+      setIncludeFolders: true,
+      showUploadView: true,
+      showUploadFolders: true,
       setSelectFolderEnabled: true,
       callbackFunction: (data) => {
-        if (data.action !== "picked" || data.docs?.length === 0) return;
+        if (data.action === "loaded") return;
 
-        onFolderPick?.(data.docs[0]);
+        if (data.action === "picked" || data.docs?.length > 0) {
+          onFolderPick?.(data.docs[0]);
+        }
+
+        onClose?.();
       },
     });
-  }, [token, onFolderPick]);
+  }, [token, onFolderPick, onClose]);
 
   return openPicker;
 }

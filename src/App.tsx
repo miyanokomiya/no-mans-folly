@@ -18,7 +18,6 @@ import { GoogleDriveFolder } from "./google/types";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
-// const googleMode = queryParameters.get("auth") === "google";
 
 const USER_SETTING_KEY = "userSetting";
 
