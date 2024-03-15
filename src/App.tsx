@@ -14,9 +14,11 @@ import { EntranceDialog } from "./components/navigations/EntranceDialog";
 import { newUserSettingStore } from "./stores/userSettingStore";
 import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
+import { GoogleDriveFolder } from "./google/types";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
+// const googleMode = queryParameters.get("auth") === "google";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -128,10 +130,20 @@ function App() {
 
   const fileAccessAvailable = isFileAccessAvailable();
 
+  const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder) => {
+    console.log(folder);
+    setOpenEntranceDialog(false);
+  }, []);
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
-      <EntranceDialog open={openEntranceDialog} onClose={closeEntranceDialog} onOpenWorkspace={handleOpenWorkspace} />
+      <EntranceDialog
+        open={openEntranceDialog}
+        onClose={closeEntranceDialog}
+        onOpenWorkspace={handleOpenWorkspace}
+        onGoogleFolderSelect={handleGoogleFolderSelect}
+      />
       <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
         <div

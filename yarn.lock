@@ -3523,6 +3523,7 @@ __metadata:
     prettier: "npm:^3.2.5"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    react-google-drive-picker: "npm:^1.2.2"
     tailwindcss: "npm:^3.4.1"
     typescript: "npm:^5.3.3"
     vite: "npm:^5.1.4"
@@ -4036,6 +4037,16 @@ __metadata:
   peerDependencies:
     react: ^18.2.0
   checksum: 66dfc5f93e13d0674e78ef41f92ed21dfb80f9c4ac4ac25a4b51046d41d4d2186abc915b897f69d3d0ebbffe6184e7c5876f2af26bfa956f179225d921be713a
+  languageName: node
+  linkType: hard
+
+"react-google-drive-picker@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "react-google-drive-picker@npm:1.2.2"
+  peerDependencies:
+    react: ">=17.0.0"
+    react-dom: ">=17.0.0"
+  checksum: 6b2752f36185a72dd288f21edcc7f34cf0f933d7c1a8b8b4293648002bd4b893a9b669b7a7c7432fe9b4b48255b9badf442ab19bc02b2277547981b72daf1a52
   languageName: node
   linkType: hard
 
