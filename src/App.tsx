@@ -17,6 +17,7 @@ import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
 import { GoogleDriveFolder } from "./google/types";
 import { newDriveAccess } from "./google/composables/driveAccess";
 import { FileAccess, newFileAccess } from "./composables/fileAcess";
+import { LoadingDialog } from "./components/navigations/LoadingDialog";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -26,7 +27,7 @@ const USER_SETTING_KEY = "userSetting";
 function App() {
   const localFileAcess = useMemo(() => newFileAccess(), []);
   const [fileAcess, setFileAcess] = useState<FileAccess>(localFileAcess);
-  const [googleMode, setGoogleMode] = useState(false);
+  const [googleMode, setGoogleMode] = useState<"" | "picked" | "loading" | "loaded">("");
 
   const {
     diagramStore,
@@ -139,14 +140,24 @@ function App() {
     setOpenEntranceDialog(false);
     const access = newDriveAccess({ folderId: folder.id, token });
     setFileAcess(access);
-    setGoogleMode(true);
+    setGoogleMode("picked");
   }, []);
 
   useEffect(() => {
-    if (!googleMode) return;
+    if (googleMode !== "picked") return;
 
-    openDiagramFromLocal();
+    setGoogleMode("loading");
+    openDiagramFromLocal()
+      .then(() => {
+        setGoogleMode("loaded");
+      })
+      .catch((e) => {
+        console.error(e);
+        setGoogleMode("");
+      });
   }, [googleMode, openDiagramFromLocal]);
+
+  const loading = !ready || googleMode === "loading";
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
@@ -157,7 +168,8 @@ function App() {
         onOpenWorkspace={handleOpenWorkspace}
         onGoogleFolderSelect={handleGoogleFolderSelect}
       />
-      <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
+      <LoadingDialog open={loading} />
+      <div className="relative">
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
         <div
           className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}

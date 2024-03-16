@@ -191,61 +191,49 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 }
 
 async function postFile(data: Blob, metadata: { [key: string]: any }) {
-  const base64 = await blobToBase64(data);
-  const { boundary, delimiter, close_delim } = getMultipartItems();
-  const contentType = metadata.mimeType ?? "application/octet-stream";
-
-  const multipartRequestBody =
-    delimiter +
-    "Content-Type: application/json\r\n\r\n" +
-    JSON.stringify(metadata) +
-    delimiter +
-    "Content-Type: " +
-    contentType +
-    "\r\n" +
-    "Content-Transfer-Encoding: base64" +
-    "\r\n\r\n" +
-    base64 +
-    close_delim;
-
+  const { body, headers } = await getMultipartRequest(data, metadata);
   return gapi.client.request({
     path: "/upload/drive/v3/files",
     method: "POST",
     params: { uploadType: "multipart" },
-    headers: {
-      "Content-Type": 'multipart/related; boundary="' + boundary + '"',
-    },
-    body: multipartRequestBody,
+    headers,
+    body,
   });
 }
 
 async function patchFile(googleFileId: string, data: Blob, metadata: { [key: string]: any }) {
-  const base64 = await blobToBase64(data);
-  const { boundary, delimiter, close_delim } = getMultipartItems();
-  const contentType = metadata.mimeType ?? "application/octet-stream";
-
-  const multipartRequestBody =
-    delimiter +
-    "Content-Type: application/json\r\n\r\n" +
-    JSON.stringify(metadata) +
-    delimiter +
-    "Content-Type: " +
-    contentType +
-    "\r\n" +
-    "Content-Transfer-Encoding: base64" +
-    "\r\n\r\n" +
-    base64 +
-    close_delim;
-
+  const { body, headers } = await getMultipartRequest(data, metadata);
   return gapi.client.request({
     path: `/upload/drive/v3/files/${googleFileId}`,
     method: "PATCH",
     params: { uploadType: "multipart" },
+    headers,
+    body,
+  });
+}
+
+async function getMultipartRequest(data: Blob, metadata: { [key: string]: any }) {
+  // Google Drive never recognizes "metadata" when the reqeust takes place with "FormData".
+  const base64 = await blobToBase64(data);
+  const { boundary, delimiter, close_delim } = getMultipartItems();
+  const contentType = metadata.mimeType ?? "application/octet-stream";
+  return {
+    body:
+      delimiter +
+      "Content-Type: application/json\r\n\r\n" +
+      JSON.stringify(metadata) +
+      delimiter +
+      "Content-Type: " +
+      contentType +
+      "\r\n" +
+      "Content-Transfer-Encoding: base64" +
+      "\r\n\r\n" +
+      base64 +
+      close_delim,
     headers: {
       "Content-Type": 'multipart/related; boundary="' + boundary + '"',
     },
-    body: multipartRequestBody,
-  });
+  };
 }
 
 async function createFolder(parentFolderId: string, folderName: string) {

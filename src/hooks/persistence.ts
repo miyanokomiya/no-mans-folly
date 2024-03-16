@@ -119,12 +119,15 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
   }, [generateUuid, initSheet]);
 
   const openDiagramFromLocal = useCallback(async (): Promise<boolean> => {
+    setReady(false);
     const nextDiagramDoc = new Y.Doc();
     const result = await fileAcess.openDiagram(nextDiagramDoc);
     setCanSyncToLocal(fileAcess.hasHnadle());
-    if (!result) return false;
+    if (!result) {
+      setReady(true);
+      return false;
+    }
 
-    setReady(false);
     await clearIndexeddbPersistenceAll();
 
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
