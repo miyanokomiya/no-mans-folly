@@ -11,11 +11,12 @@ interface Props {
 }
 
 export function newDriveAccess({ folderId, token }: Props): FileAccess {
-  let files: GoogleDriveFile[] = [];
+  let files: GoogleDriveFile[] | undefined;
   let assetFolderId: string = "";
 
   function loadClient() {
     // Suppose "gapi" has been loaded.
+    // => It's been loaded along with Google Drive Picker.
     gapi.load("client", async () => {
       await gapi.client.init({
         apiKey: process.env.GOOGLE_API_KEY,
@@ -48,23 +49,20 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   loadClient();
 
   function hasHnadle(): boolean {
-    return !!token;
+    return !!files;
   }
 
-  async function openDirectory(): Promise<true | undefined> {}
-
-  async function openAssetDirectory(): Promise<true | undefined> {}
-
-  async function openDoc(name: string, doc: Y.Doc): Promise<true | undefined> {}
+  async function openDirectory(): Promise<true | undefined> {
+    await loadDiagram();
+    return true;
+  }
 
   async function openDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {}
 
   async function openSheet(sheetId: string, sheetDoc: Y.Doc): Promise<true | undefined> {}
 
-  async function overwriteDoc(name: string, doc: Y.Doc): Promise<true | undefined> {}
-
   async function overwriteDiagramDoc(doc: Y.Doc): Promise<true | undefined> {
-    if (!token) return;
+    if (!hasHnadle()) return;
 
     const update = Y.encodeStateAsUpdate(doc);
     const name = DIAGRAM_FILE_NAME;
@@ -77,11 +75,25 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     };
 
     const request = await postFile(data, metadata);
+    if (request.status === 200) return true;
   }
 
   async function overwriteSheetDoc(sheetId: string, doc: Y.Doc): Promise<true | undefined> {}
 
-  async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {}
+  async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {
+    if (!hasHnadle()) return;
+
+    const name = assetId;
+    const data = blob;
+
+    const metadata = {
+      name,
+      mimeType: blob.type,
+      parents: [assetFolderId],
+    };
+
+    await postFile(data, metadata);
+  }
 
   async function loadAsset(assetId: string): Promise<File | undefined> {}
 
