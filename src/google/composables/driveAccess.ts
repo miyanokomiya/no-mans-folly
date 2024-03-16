@@ -2,6 +2,7 @@ import * as Y from "yjs";
 import { FileAccess } from "../../composables/fileAcess";
 import { GoogleDriveFile } from "../types";
 import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../models/file";
+import { fetchGoogleAuthToken } from "../utils/auth";
 
 const GOOGLE_API_URI = "https://www.googleapis.com/drive/v3";
 
@@ -33,13 +34,36 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     });
   }
 
+  async function requestWrapper<T>(requestFn: () => Promise<T>) {
+    try {
+      const res = await requestFn();
+      return res;
+    } catch (e: any) {
+      if (e.status === 401) {
+        const [, newToken] = await fetchGoogleAuthToken();
+        if (newToken) {
+          gapi.client.setToken({ access_token: newToken });
+          const res = await requestFn();
+          return res;
+        } else {
+          throw e;
+        }
+      } else {
+        throw e;
+      }
+    }
+  }
+
   async function loadDiagram() {
     await loadClient();
     files = await fetchFilesInFolder();
 
     const assetFolder = files.find((f) => f.name === ASSET_DIRECTORY_NAME);
     if (!assetFolder) {
-      const res = await createFolder(folderId, ASSET_DIRECTORY_NAME);
+      const res = await requestWrapper(async () => {
+        const res = await createFolder(folderId, ASSET_DIRECTORY_NAME);
+        return res;
+      });
       if (res.status === 200) {
         const file = res.result as GoogleDriveFile;
         files ??= [];
@@ -53,8 +77,11 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   async function fetchFilesInFolder(): Promise<GoogleDriveFile[]> {
     if (!token) return [];
 
-    const res = await gapi.client.request({
-      path: `${GOOGLE_API_URI}/files?q='${folderId}' in parents and trashed=false`,
+    const res = await requestWrapper(async () => {
+      const res = await gapi.client.request({
+        path: `${GOOGLE_API_URI}/files?q='${folderId}' in parents and trashed=false`,
+      });
+      return res;
     });
     return (res.result?.files ?? []) as GoogleDriveFile[];
   }
@@ -64,8 +91,11 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     const file = files?.find((f) => f.name === ASSET_DIRECTORY_NAME);
     if (!file) return [];
 
-    const res = await gapi.client.request({
-      path: `${GOOGLE_API_URI}/files?q='${file.id}' in parents and trashed=false`,
+    const res = await requestWrapper(async () => {
+      const res = await gapi.client.request({
+        path: `${GOOGLE_API_URI}/files?q='${file.id}' in parents and trashed=false`,
+      });
+      return res;
     });
     return (res.result?.files ?? []) as GoogleDriveFile[];
   }
@@ -124,10 +154,16 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
     const file = files?.find((f) => f.name === id);
     if (file) {
-      const res = await patchFile(file.id, data, metadata);
+      const res = await requestWrapper(async () => {
+        const res = await patchFile(file.id, data, metadata);
+        return res;
+      });
       if (res.status === 200) return true;
     } else {
-      const res = await postFile(data, { ...metadata, parents: [folderId] });
+      const res = await requestWrapper(async () => {
+        const res = await postFile(data, { ...metadata, parents: [folderId] });
+        return res;
+      });
       if (res.status === 200) {
         const file = res.result as GoogleDriveFile;
         files ??= [];
@@ -160,7 +196,10 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
       parents: [assetFolder.id],
     };
 
-    const res = await postFile(data, metadata);
+    const res = await requestWrapper(async () => {
+      const res = await postFile(data, metadata);
+      return res;
+    });
     if (res.status === 200) {
       const file = res.result as GoogleDriveFile;
       assetFiles ??= [];
@@ -183,11 +222,15 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function getFile(fileId: string): Promise<Blob> {
-    // "gapi.client.request" can't return Blob body.
-    const res = await fetch(`${GOOGLE_API_URI}/files/${fileId}?alt=media&key=${process.env.GOOGLE_API_KEY}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await requestWrapper(async () => {
+      // "gapi.client.request" can't return Blob body.
+      const res = await fetch(`${GOOGLE_API_URI}/files/${fileId}?alt=media&key=${process.env.GOOGLE_API_KEY}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return res;
     });
 
     return await res.blob();

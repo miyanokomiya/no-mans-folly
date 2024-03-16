@@ -1,4 +1,4 @@
-async function fetchGoogleAuthToken(): Promise<[status: number, token?: string]> {
+export async function fetchGoogleAuthToken(): Promise<[status: number, token?: string]> {
   const res = await fetch(`${process.env.API_HOST}api/google/token/`, { credentials: "include" });
   if (res.status === 200) {
     const data = await res.json();
