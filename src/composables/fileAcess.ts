@@ -15,7 +15,7 @@ export interface FileAccess {
   saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
   loadAsset: (assetId: string) => Promise<File | undefined>;
 
-  disconnect: () => void;
+  disconnect: () => Promise<void>;
 }
 
 export function newFileAccess(): FileAccess {
@@ -61,7 +61,12 @@ export function newFileAccess(): FileAccess {
     await openDirectory();
     if (!handle) return;
 
-    return openDoc(DIAGRAM_FILE_NAME, diagramDoc);
+    const res = await openDoc(DIAGRAM_FILE_NAME, diagramDoc);
+    if (!res) {
+      return overwriteDiagramDoc(diagramDoc);
+    } else {
+      return res;
+    }
   }
 
   async function openSheet(sheetId: string, sheetDoc: Y.Doc): Promise<true | undefined> {
