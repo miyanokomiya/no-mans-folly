@@ -15,6 +15,7 @@ import { newUserSettingStore } from "./stores/userSettingStore";
 import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
 import { GoogleDriveFolder } from "./google/types";
+import { newDriveAccess } from "./google/composables/driveAccess";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -129,9 +130,11 @@ function App() {
 
   const fileAccessAvailable = isFileAccessAvailable();
 
-  const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder) => {
+  const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder, token: string) => {
     console.log(folder);
     setOpenEntranceDialog(false);
+    const access = newDriveAccess({ folderId: folder.id, token });
+    // await access.overwriteDiagramDoc(diagramStore.getScope);
   }, []);
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.

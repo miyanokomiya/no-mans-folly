@@ -1,11 +1,24 @@
 import * as Y from "yjs";
-
-const DIAGRAM_FILE_NAME = "diagram.folly";
-const ASSET_DIRECTORY_NAME = "assets";
+import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../models/file";
 
 let hasMoveAPI = true;
 
-export function newFileAccess() {
+export interface FileAccess {
+  hasHnadle: () => boolean;
+  openDirectory: () => Promise<true | undefined>;
+  openDiagram: (diagramDoc: Y.Doc) => Promise<true | undefined>;
+  openSheet: (sheetId: string, sheetDoc: Y.Doc) => Promise<true | undefined>;
+
+  overwriteDiagramDoc: (doc: Y.Doc) => Promise<true | undefined>;
+  overwriteSheetDoc: (sheetId: string, doc: Y.Doc) => Promise<true | undefined>;
+
+  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
+  loadAsset: (assetId: string) => Promise<File | undefined>;
+
+  disconnect: () => void;
+}
+
+export function newFileAccess(): FileAccess {
   let handle: FileSystemDirectoryHandle | undefined;
   let assetHandle: FileSystemDirectoryHandle | undefined;
 

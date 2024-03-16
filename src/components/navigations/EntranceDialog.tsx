@@ -10,7 +10,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onOpenWorkspace: () => void;
-  onGoogleFolderSelect?: (folder: GoogleDriveFolder) => void;
+  onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
 }
 
 export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace, onGoogleFolderSelect }) => {
@@ -21,9 +21,11 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
-      onGoogleFolderSelect?.(folder);
+      if (!googleToken) return;
+
+      onGoogleFolderSelect?.(folder, googleToken);
     },
-    [onGoogleFolderSelect],
+    [onGoogleFolderSelect, googleToken],
   );
   const handleGoogleFolderClose = useCallback(() => {
     setGoogleMode("");
