@@ -17,13 +17,14 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   const fileAccessAvailable = isFileAccessAvailable();
 
   const [googleToken, setGoogleToken] = useState<string>();
-  const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opened">("");
+  const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
       if (!googleToken) return;
 
       onGoogleFolderSelect?.(folder, googleToken);
+      setGoogleMode("ready");
     },
     [onGoogleFolderSelect, googleToken],
   );
@@ -44,7 +45,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
     fetchGoogleAuthTokenOrRedirect()
       .then((token) => {
         setGoogleToken(token);
-        setGoogleMode("ready");
+        setGoogleMode("opening");
       })
       .catch((e) => {
         console.error(e);
@@ -53,11 +54,11 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   }, [googleMode]);
 
   useEffect(() => {
-    if (!googleToken) return;
+    if (!googleToken || googleMode !== "opening") return;
 
     setGoogleMode("opened");
     openGoogleDrivePicker();
-  }, [googleToken, openGoogleDrivePicker]);
+  }, [googleToken, googleMode, openGoogleDrivePicker]);
 
   if (googleMode === "opened") {
     return <></>;
