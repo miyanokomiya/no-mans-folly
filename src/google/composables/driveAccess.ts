@@ -12,6 +12,7 @@ interface Props {
 
 export function newDriveAccess({ folderId, token }: Props): FileAccess {
   let files: GoogleDriveFile[] | undefined;
+  let assetFiles: GoogleDriveFile[] | undefined;
 
   async function loadClient() {
     return new Promise<void>((resolve, reject) => {
@@ -44,6 +45,8 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
         files ??= [];
         files.push(file);
       }
+    } else {
+      assetFiles = await fetchFilesInAssetFolder();
     }
   }
 
@@ -52,6 +55,17 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
     const res = await gapi.client.request({
       path: `${GOOGLE_API_URI}/files?q='${folderId}' in parents and trashed=false`,
+    });
+    return (res.result?.files ?? []) as GoogleDriveFile[];
+  }
+
+  async function fetchFilesInAssetFolder(): Promise<GoogleDriveFile[]> {
+    if (!token) return [];
+    const file = files?.find((f) => f.name === ASSET_DIRECTORY_NAME);
+    if (!file) return [];
+
+    const res = await gapi.client.request({
+      path: `${GOOGLE_API_URI}/files?q='${file.id}' in parents and trashed=false`,
     });
     return (res.result?.files ?? []) as GoogleDriveFile[];
   }
@@ -146,13 +160,18 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
       parents: [assetFolder.id],
     };
 
-    await postFile(data, metadata);
+    const res = await postFile(data, metadata);
+    if (res.status === 200) {
+      const file = res.result as GoogleDriveFile;
+      assetFiles ??= [];
+      assetFiles.push(file);
+    }
   }
 
   async function loadAsset(assetId: string): Promise<File | undefined> {
     if (!hasHnadle()) return;
 
-    const file = files?.find((f) => f.name === assetId);
+    const file = assetFiles?.find((f) => f.name === assetId);
     if (!file) return;
 
     const blob = await getFile(file.id);
