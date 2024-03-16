@@ -16,6 +16,7 @@ import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
 import { GoogleDriveFolder } from "./google/types";
 import { newDriveAccess } from "./google/composables/driveAccess";
+import { FileAccess, newFileAccess } from "./composables/fileAcess";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -23,6 +24,10 @@ const noIndexedDB = !queryParameters.get("indexeddb");
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
+  const localFileAcess = useMemo(() => newFileAccess(), []);
+  const [fileAcess, setFileAcess] = useState<FileAccess>(localFileAcess);
+  const [googleMode, setGoogleMode] = useState(false);
+
   const {
     diagramStore,
     sheetStore,
@@ -39,7 +44,7 @@ function App() {
     mergeAllWithLocal,
     canSyncoLocal,
     assetAPI,
-  } = usePersistence({ generateUuid });
+  } = usePersistence({ generateUuid, fileAcess });
 
   useEffect(() => {
     return sheetStore.watchSelected(async () => {
@@ -131,11 +136,17 @@ function App() {
   const fileAccessAvailable = isFileAccessAvailable();
 
   const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder, token: string) => {
-    console.log(folder);
     setOpenEntranceDialog(false);
     const access = newDriveAccess({ folderId: folder.id, token });
-    // await access.overwriteDiagramDoc(diagramStore.getScope);
+    setFileAcess(access);
+    setGoogleMode(true);
   }, []);
+
+  useEffect(() => {
+    if (!googleMode) return;
+
+    openDiagramFromLocal();
+  }, [googleMode, openDiagramFromLocal]);
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (

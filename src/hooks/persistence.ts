@@ -7,7 +7,7 @@ import { LayerStore, newLayerStore } from "../stores/layers";
 import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
-import { newFileAccess } from "../composables/fileAcess";
+import { FileAccess } from "../composables/fileAcess";
 import { newThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 
@@ -39,10 +39,11 @@ const defaultSheetStores = {
 
 interface PersistenceOption {
   generateUuid: () => string;
+  fileAcess: FileAccess;
 }
 
-export function usePersistence({ generateUuid }: PersistenceOption) {
-  const fileAcess = useMemo(() => newFileAccess(), []);
+export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
+  // const fileAcess = useMemo(() => newFileAccess(), []);
   const [canSyncoLocal, setCanSyncToLocal] = useState(false);
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
