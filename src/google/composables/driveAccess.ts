@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { FileAccess } from "../../composables/fileAcess";
+import { FileAccess } from "../../composables/fileAccess";
 import { GoogleDriveFile } from "../types";
 import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../models/file";
 import { fetchGoogleAuthToken } from "../utils/auth";
@@ -223,7 +223,8 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
   async function getFile(fileId: string): Promise<Blob> {
     const res = await requestWrapper(async () => {
-      // "gapi.client.request" can't return Blob body.
+      // "gapi.client.request" isn't good at dealing with blob.
+      // => It returns blob as string in body.
       const res = await fetch(`${GOOGLE_API_URI}/files/${fileId}?alt=media&key=${process.env.GOOGLE_API_KEY}`, {
         headers: {
           Authorization: `Bearer ${token}`,

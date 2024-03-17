@@ -7,7 +7,7 @@ import { LayerStore, newLayerStore } from "../stores/layers";
 import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
-import { FileAccess } from "../composables/fileAcess";
+import { FileAccess } from "../composables/fileAccess";
 import { newThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 
@@ -39,11 +39,11 @@ const defaultSheetStores = {
 
 interface PersistenceOption {
   generateUuid: () => string;
-  fileAcess: FileAccess;
+  fileAccess: FileAccess;
 }
 
-export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
-  // const fileAcess = useMemo(() => newFileAccess(), []);
+export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
+  // const fileAccess = useMemo(() => newFileAccess(), []);
   const [canSyncoLocal, setCanSyncToLocal] = useState(false);
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
@@ -71,11 +71,11 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
       // => the doc doens't always refer to selected sheet in the store during swiching sheets.
       nextSheetDoc.meta = { sheetId };
 
-      if (fileAcess.hasHnadle()) {
+      if (fileAccess.hasHnadle()) {
         try {
-          await fileAcess.openSheet(sheetId, nextSheetDoc);
+          await fileAccess.openSheet(sheetId, nextSheetDoc);
           await clearIndexeddbPersistence(sheetId);
-          setCanSyncToLocal(fileAcess.hasHnadle());
+          setCanSyncToLocal(fileAccess.hasHnadle());
         } catch (e) {
           console.log("Failed to load local sheet: ", sheetId, e);
         }
@@ -92,7 +92,7 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
         documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
       });
     },
-    [fileAcess],
+    [fileAccess],
   );
 
   const initDiagram = useCallback(async () => {
@@ -121,8 +121,8 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
   const openDiagramFromLocal = useCallback(async (): Promise<boolean> => {
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
-    const result = await fileAcess.openDiagram(nextDiagramDoc);
-    setCanSyncToLocal(fileAcess.hasHnadle());
+    const result = await fileAccess.openDiagram(nextDiagramDoc);
+    setCanSyncToLocal(fileAccess.hasHnadle());
     if (!result) {
       setReady(true);
       return false;
@@ -138,7 +138,7 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
     if (sheetStore.getEntities().length === 0) {
       createInitialSheet(sheetStore, generateUuid);
       // Need to save the diagram having new sheet.
-      await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
+      await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
     }
 
     const sheet = sheetStore.getSelectedSheet()!;
@@ -149,11 +149,11 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
     return true;
-  }, [generateUuid, fileAcess, initSheet]);
+  }, [generateUuid, fileAccess, initSheet]);
 
   const clearDiagram = useCallback(async () => {
-    await fileAcess.disconnect();
-    setCanSyncToLocal(fileAcess.hasHnadle());
+    await fileAccess.disconnect();
+    setCanSyncToLocal(fileAccess.hasHnadle());
     setReady(false);
     await clearIndexeddbPersistenceAll();
 
@@ -174,12 +174,12 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [generateUuid, fileAcess, initSheet]);
+  }, [generateUuid, fileAccess, initSheet]);
 
   const saveAllToLocal = useCallback(async () => {
     if (!diagramStores) return;
 
-    const result = await fileAcess.openDirectory();
+    const result = await fileAccess.openDirectory();
     if (!result) return;
 
     const sheets = diagramStores.sheetStore.getEntities();
@@ -187,20 +187,20 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
       const sheetDoc = new Y.Doc();
       const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
       await sheetProvider?.whenSynced;
-      await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
+      await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
       await sheetProvider?.destroy();
       sheetDoc.destroy();
     }
-    await fileAcess.overwriteDiagramDoc(diagramDoc);
-    setCanSyncToLocal(fileAcess.hasHnadle());
-  }, [fileAcess, diagramDoc, diagramStores]);
+    await fileAccess.overwriteDiagramDoc(diagramDoc);
+    setCanSyncToLocal(fileAccess.hasHnadle());
+  }, [fileAccess, diagramDoc, diagramStores]);
 
   const mergeAllWithLocal = useCallback(async () => {
     const nextDiagramDoc = new Y.Doc();
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
     await provider?.whenSynced;
 
-    const result = await fileAcess.openDiagram(nextDiagramDoc);
+    const result = await fileAccess.openDiagram(nextDiagramDoc);
     if (!result) {
       nextDiagramDoc.destroy();
       await provider?.destroy();
@@ -209,7 +209,7 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
 
     setReady(false);
     try {
-      await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
+      await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
       const nextDiagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
       const nextSheetStore = newSheetStore({ ydoc: nextDiagramDoc });
 
@@ -218,8 +218,8 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
         const sheetDoc = new Y.Doc();
         const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
         await sheetProvider?.whenSynced;
-        await fileAcess.openSheet(sheet.id, sheetDoc);
-        await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
+        await fileAccess.openSheet(sheet.id, sheetDoc);
+        await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
         await sheetProvider?.destroy();
         sheetDoc.destroy();
       }
@@ -241,7 +241,7 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
     } finally {
       setReady(true);
     }
-  }, [generateUuid, fileAcess, initSheet, diagramStores]);
+  }, [generateUuid, fileAccess, initSheet, diagramStores]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -257,12 +257,12 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
     return newThrottle(
       () => {
         if (!canSyncoLocal) return;
-        fileAcess.overwriteDiagramDoc(diagramDoc);
+        fileAccess.overwriteDiagramDoc(diagramDoc);
       },
       5000,
       true,
     );
-  }, [fileAcess, canSyncoLocal, diagramDoc]);
+  }, [fileAccess, canSyncoLocal, diagramDoc]);
 
   useEffect(() => {
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
@@ -288,12 +288,12 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
     return newThrottle(
       (sheetId: string) => {
         if (!canSyncoLocal) return;
-        fileAcess.overwriteSheetDoc(sheetId, sheetDoc);
+        fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
       },
       5000,
       true,
     );
-  }, [fileAcess, canSyncoLocal, sheetDoc]);
+  }, [fileAccess, canSyncoLocal, sheetDoc]);
 
   useEffect(() => {
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
@@ -370,11 +370,11 @@ export function usePersistence({ generateUuid, fileAcess }: PersistenceOption) {
 
   const assetAPI = useMemo<AssetAPI>(() => {
     return {
-      enabled: canSyncoLocal && fileAcess.hasHnadle(),
-      saveAsset: fileAcess.saveAsset,
-      loadAsset: fileAcess.loadAsset,
+      enabled: canSyncoLocal && fileAccess.hasHnadle(),
+      saveAsset: fileAccess.saveAsset,
+      loadAsset: fileAccess.loadAsset,
     };
-  }, [fileAcess, canSyncoLocal]);
+  }, [fileAccess, canSyncoLocal]);
 
   return {
     initSheet,

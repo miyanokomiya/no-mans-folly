@@ -16,7 +16,7 @@ import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
 import { GoogleDriveFolder } from "./google/types";
 import { newDriveAccess } from "./google/composables/driveAccess";
-import { FileAccess, newFileAccess } from "./composables/fileAcess";
+import { FileAccess, newFileAccess } from "./composables/fileAccess";
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 
 const queryParameters = new URLSearchParams(window.location.search);
@@ -25,8 +25,8 @@ const noIndexedDB = !queryParameters.get("indexeddb");
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
-  const localFileAcess = useMemo(() => newFileAccess(), []);
-  const [fileAcess, setFileAcess] = useState<FileAccess>(localFileAcess);
+  const localFileAccess = useMemo(() => newFileAccess(), []);
+  const [fileAccess, setFileAccess] = useState<FileAccess>(localFileAccess);
   const [googleMode, setGoogleMode] = useState<"" | "picked" | "loading" | "loaded">("");
 
   const {
@@ -45,7 +45,7 @@ function App() {
     mergeAllWithLocal,
     canSyncoLocal,
     assetAPI,
-  } = usePersistence({ generateUuid, fileAcess });
+  } = usePersistence({ generateUuid, fileAccess });
 
   useEffect(() => {
     return sheetStore.watchSelected(async () => {
@@ -139,7 +139,7 @@ function App() {
   const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder, token: string) => {
     setOpenEntranceDialog(false);
     const access = newDriveAccess({ folderId: folder.id, token });
-    setFileAcess(access);
+    setFileAccess(access);
     setGoogleMode("picked");
   }, []);
 
