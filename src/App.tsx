@@ -14,13 +14,22 @@ import { EntranceDialog } from "./components/navigations/EntranceDialog";
 import { newUserSettingStore } from "./stores/userSettingStore";
 import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
+import { GoogleDriveFolder } from "./google/types";
+import { newDriveAccess } from "./google/composables/driveAccess";
+import { FileAccess, newFileAccess } from "./composables/fileAccess";
+import { LoadingDialog } from "./components/navigations/LoadingDialog";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
+const googleAvailable = !!queryParameters.get("google");
 
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
+  const localFileAccess = useMemo(() => newFileAccess(), []);
+  const [fileAccess, setFileAccess] = useState<FileAccess>(localFileAccess);
+  const [googleMode, setGoogleMode] = useState<"" | "picked" | "loading" | "loaded">("");
+
   const {
     diagramStore,
     sheetStore,
@@ -35,9 +44,10 @@ function App() {
     clearDiagram,
     saveAllToLocal,
     mergeAllWithLocal,
-    canSyncoLocal,
+    canSyncLocal,
     assetAPI,
-  } = usePersistence({ generateUuid });
+    syncStatus,
+  } = usePersistence({ generateUuid, fileAccess });
 
   useEffect(() => {
     return sheetStore.watchSelected(async () => {
@@ -128,11 +138,41 @@ function App() {
 
   const fileAccessAvailable = isFileAccessAvailable();
 
+  const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder, token: string) => {
+    setOpenEntranceDialog(false);
+    const access = newDriveAccess({ folderId: folder.id, token });
+    setFileAccess(access);
+    setGoogleMode("picked");
+  }, []);
+
+  useEffect(() => {
+    if (googleMode !== "picked") return;
+
+    setGoogleMode("loading");
+    openDiagramFromLocal()
+      .then(() => {
+        setGoogleMode("loaded");
+      })
+      .catch((e) => {
+        console.error(e);
+        setGoogleMode("");
+      });
+  }, [googleMode, openDiagramFromLocal]);
+
+  const loading = !ready || googleMode === "loading";
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
-      <EntranceDialog open={openEntranceDialog} onClose={closeEntranceDialog} onOpenWorkspace={handleOpenWorkspace} />
-      <div className={"relative" + (openEntranceDialog ? " opacity-50" : "")}>
+      <EntranceDialog
+        open={openEntranceDialog}
+        onClose={closeEntranceDialog}
+        onOpenWorkspace={handleOpenWorkspace}
+        onGoogleFolderSelect={handleGoogleFolderSelect}
+        googleAvailable={googleAvailable}
+      />
+      <LoadingDialog open={loading} />
+      <div className="relative">
         <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
         <div
           className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
@@ -160,8 +200,10 @@ function App() {
             onClickSave={onClickSave}
             onClickMerge={onClickMerge}
             onClickClear={onClickClear}
-            canSyncoLocal={canSyncoLocal}
+            canSyncLocal={canSyncLocal}
             saving={saving}
+            syncStatus={syncStatus}
+            workspaceType={googleMode ? "google" : "local"}
           />
         </div>
       </div>

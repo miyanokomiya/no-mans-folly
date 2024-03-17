@@ -4,7 +4,7 @@ import iconDelete from "../../assets/icons/delete_filled.svg";
 interface Props {
   open: boolean;
   children: React.ReactNode;
-  onClose: () => void;
+  onClose?: () => void;
   title?: string;
   actions?: React.ReactNode;
   className?: string;
@@ -35,12 +35,12 @@ export const Dialog: React.FC<Props> = ({
   }, [open]);
 
   const closeDialog = useCallback(() => {
-    onClose();
+    onClose?.();
   }, [onClose]);
 
   const onClickBackdrop = useCallback(() => {
     if (required) return;
-    onClose();
+    onClose?.();
   }, [onClose, required]);
 
   const onClickContent = useCallback((e: React.MouseEvent) => {

@@ -27,3 +27,7 @@ img {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+dialog::backdrop {
+  background: rgba(255, 255, 255, 0.5);
+}

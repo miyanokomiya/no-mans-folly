@@ -921,6 +921,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/gapi@npm:^0.0.47":
+  version: 0.0.47
+  resolution: "@types/gapi@npm:0.0.47"
+  checksum: 014d7326b6182d260c33ae5b7317d7c0271263dde83b9d24fccd78481dce8877f0ec7a110467a626bf9e1c0b73f2b1935c31f5ef66f71f1328ae0926f6e8b0fe
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:^7.0.12":
   version: 7.0.13
   resolution: "@types/json-schema@npm:7.0.13"
@@ -3501,6 +3508,7 @@ __metadata:
     "@emoji-mart/data": "npm:^1.1.2"
     "@emoji-mart/react": "npm:^1.1.1"
     "@testing-library/react": "npm:^14.2.1"
+    "@types/gapi": "npm:^0.0.47"
     "@types/node": "npm:^20.11.24"
     "@types/react": "npm:^18.2.61"
     "@types/react-dom": "npm:^18.2.19"
@@ -3523,6 +3531,7 @@ __metadata:
     prettier: "npm:^3.2.5"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    react-google-drive-picker: "npm:^1.2.2"
     tailwindcss: "npm:^3.4.1"
     typescript: "npm:^5.3.3"
     vite: "npm:^5.1.4"
@@ -4036,6 +4045,16 @@ __metadata:
   peerDependencies:
     react: ^18.2.0
   checksum: 66dfc5f93e13d0674e78ef41f92ed21dfb80f9c4ac4ac25a4b51046d41d4d2186abc915b897f69d3d0ebbffe6184e7c5876f2af26bfa956f179225d921be713a
+  languageName: node
+  linkType: hard
+
+"react-google-drive-picker@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "react-google-drive-picker@npm:1.2.2"
+  peerDependencies:
+    react: ">=17.0.0"
+    react-dom: ">=17.0.0"
+  checksum: 6b2752f36185a72dd288f21edcc7f34cf0f933d7c1a8b8b4293648002bd4b893a9b669b7a7c7432fe9b4b48255b9badf442ab19bc02b2277547981b72daf1a52
   languageName: node
   linkType: hard
 

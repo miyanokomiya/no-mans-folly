@@ -7,11 +7,12 @@ import { LayerStore, newLayerStore } from "../stores/layers";
 import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
-import { newFileAccess } from "../composables/fileAcess";
+import { FileAccess } from "../composables/fileAccess";
 import { newThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 
 const DIAGRAM_KEY = "test-project-diagram";
+const SYNC_THROTTLE_INTERVAL = 10000;
 
 export type AssetAPI =
   | {
@@ -39,11 +40,11 @@ const defaultSheetStores = {
 
 interface PersistenceOption {
   generateUuid: () => string;
+  fileAccess: FileAccess;
 }
 
-export function usePersistence({ generateUuid }: PersistenceOption) {
-  const fileAcess = useMemo(() => newFileAccess(), []);
-  const [canSyncoLocal, setCanSyncToLocal] = useState(false);
+export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
+  const [canSyncLocal, setCanSyncToLocal] = useState(false);
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
@@ -51,6 +52,7 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
   const [dbProviderSheet, setDbProviderSheet] = useState<IndexeddbPersistence | undefined>();
   const [ready, setReady] = useState(false);
   const [savePending, setSavePending] = useState({ diagram: false, sheet: false });
+  const [syncStatus, setSyncStatus] = useState<"ok" | "autherror" | "unknownerror">("ok");
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
@@ -63,6 +65,14 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     documentStore: DocumentStore;
   }>(defaultSheetStores);
 
+  const handleSyncError = useCallback((e: any) => {
+    if ("status" in e && e.status === 401) {
+      setSyncStatus("autherror");
+    } else {
+      setSyncStatus("unknownerror");
+    }
+  }, []);
+
   const initSheet = useCallback(
     async (sheetId: string) => {
       const nextSheetDoc = new Y.Doc();
@@ -70,13 +80,15 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
       // => the doc doens't always refer to selected sheet in the store during swiching sheets.
       nextSheetDoc.meta = { sheetId };
 
-      if (fileAcess.hasHnadle()) {
+      if (fileAccess.hasHnadle()) {
         try {
-          await fileAcess.openSheet(sheetId, nextSheetDoc);
+          await fileAccess.openSheet(sheetId, nextSheetDoc);
+          setSyncStatus("ok");
           await clearIndexeddbPersistence(sheetId);
-          setCanSyncToLocal(fileAcess.hasHnadle());
+          setCanSyncToLocal(fileAccess.hasHnadle());
         } catch (e) {
-          console.log("Failed to load local sheet: ", sheetId, e);
+          handleSyncError(e);
+          console.error("Failed to load local sheet: ", sheetId, e);
         }
       }
 
@@ -91,7 +103,7 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
         documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
       });
     },
-    [fileAcess],
+    [fileAccess, handleSyncError],
   );
 
   const initDiagram = useCallback(async () => {
@@ -118,12 +130,23 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
   }, [generateUuid, initSheet]);
 
   const openDiagramFromLocal = useCallback(async (): Promise<boolean> => {
-    const nextDiagramDoc = new Y.Doc();
-    const result = await fileAcess.openDiagram(nextDiagramDoc);
-    setCanSyncToLocal(fileAcess.hasHnadle());
-    if (!result) return false;
-
     setReady(false);
+    const nextDiagramDoc = new Y.Doc();
+    try {
+      const result = await fileAccess.openDiagram(nextDiagramDoc);
+      setSyncStatus("ok");
+      setCanSyncToLocal(fileAccess.hasHnadle());
+      if (!result) {
+        setReady(true);
+        return false;
+      }
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to open diagram", e);
+      setReady(true);
+      return false;
+    }
+
     await clearIndexeddbPersistenceAll();
 
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
@@ -133,8 +156,14 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
       createInitialSheet(sheetStore, generateUuid);
-      // Need to save the diagram having new sheet.
-      await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
+      try {
+        // Need to save the diagram having new sheet.
+        await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
+        setSyncStatus("ok");
+      } catch (e) {
+        handleSyncError(e);
+        console.error("Failed to sync diagram", e);
+      }
     }
 
     const sheet = sheetStore.getSelectedSheet()!;
@@ -145,11 +174,11 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
     return true;
-  }, [generateUuid, fileAcess, initSheet]);
+  }, [generateUuid, fileAccess, handleSyncError, initSheet]);
 
   const clearDiagram = useCallback(async () => {
-    await fileAcess.disconnect();
-    setCanSyncToLocal(fileAcess.hasHnadle());
+    await fileAccess.disconnect();
+    setCanSyncToLocal(fileAccess.hasHnadle());
     setReady(false);
     await clearIndexeddbPersistenceAll();
 
@@ -170,34 +199,62 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [generateUuid, fileAcess, initSheet]);
+  }, [generateUuid, fileAccess, initSheet]);
 
   const saveAllToLocal = useCallback(async () => {
     if (!diagramStores) return;
 
-    const result = await fileAcess.openDirectory();
-    if (!result) return;
+    try {
+      const result = await fileAccess.openDirectory();
+      setSyncStatus("ok");
+      if (!result) return;
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to open directory", e);
+      return;
+    }
 
     const sheets = diagramStores.sheetStore.getEntities();
     for (const sheet of sheets) {
       const sheetDoc = new Y.Doc();
       const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
       await sheetProvider?.whenSynced;
-      await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
+      try {
+        await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
+        setSyncStatus("ok");
+      } catch (e) {
+        handleSyncError(e);
+        console.error("Failed to sync sheet: ", sheet.id, e);
+      }
       await sheetProvider?.destroy();
       sheetDoc.destroy();
     }
-    await fileAcess.overwriteDiagramDoc(diagramDoc);
-    setCanSyncToLocal(fileAcess.hasHnadle());
-  }, [fileAcess, diagramDoc, diagramStores]);
+    try {
+      await fileAccess.overwriteDiagramDoc(diagramDoc);
+      setSyncStatus("ok");
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to sync diagram", e);
+    }
+    setCanSyncToLocal(fileAccess.hasHnadle());
+  }, [fileAccess, handleSyncError, diagramDoc, diagramStores]);
 
   const mergeAllWithLocal = useCallback(async () => {
     const nextDiagramDoc = new Y.Doc();
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
     await provider?.whenSynced;
 
-    const result = await fileAcess.openDiagram(nextDiagramDoc);
-    if (!result) {
+    try {
+      const result = await fileAccess.openDiagram(nextDiagramDoc);
+      setSyncStatus("ok");
+      if (!result) {
+        nextDiagramDoc.destroy();
+        await provider?.destroy();
+        return;
+      }
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to load diagram", e);
       nextDiagramDoc.destroy();
       await provider?.destroy();
       return;
@@ -205,7 +262,17 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
 
     setReady(false);
     try {
-      await fileAcess.overwriteDiagramDoc(nextDiagramDoc);
+      try {
+        await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
+        setSyncStatus("ok");
+      } catch (e) {
+        handleSyncError(e);
+        console.error("Failed to merge diagram", e);
+        nextDiagramDoc.destroy();
+        await provider?.destroy();
+        return;
+      }
+
       const nextDiagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
       const nextSheetStore = newSheetStore({ ydoc: nextDiagramDoc });
 
@@ -214,8 +281,14 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
         const sheetDoc = new Y.Doc();
         const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
         await sheetProvider?.whenSynced;
-        await fileAcess.openSheet(sheet.id, sheetDoc);
-        await fileAcess.overwriteSheetDoc(sheet.id, sheetDoc);
+        try {
+          await fileAccess.openSheet(sheet.id, sheetDoc);
+          await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
+          setSyncStatus("ok");
+        } catch (e) {
+          handleSyncError(e);
+          console.error("Failed to merge sheet: ", sheet.id, e);
+        }
         await sheetProvider?.destroy();
         sheetDoc.destroy();
       }
@@ -237,7 +310,7 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     } finally {
       setReady(true);
     }
-  }, [generateUuid, fileAcess, initSheet, diagramStores]);
+  }, [generateUuid, fileAccess, handleSyncError, initSheet, diagramStores]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -252,13 +325,19 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
   const saveDiagramUpdateThrottle = useMemo(() => {
     return newThrottle(
       () => {
-        if (!canSyncoLocal) return;
-        fileAcess.overwriteDiagramDoc(diagramDoc);
+        if (!canSyncLocal) return;
+        try {
+          fileAccess.overwriteDiagramDoc(diagramDoc);
+          setSyncStatus("ok");
+        } catch (e) {
+          handleSyncError(e);
+          console.error("Failed to sync diagram", e);
+        }
       },
-      5000,
+      SYNC_THROTTLE_INTERVAL,
       true,
     );
-  }, [fileAcess, canSyncoLocal, diagramDoc]);
+  }, [fileAccess, handleSyncError, canSyncLocal, diagramDoc]);
 
   useEffect(() => {
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
@@ -271,25 +350,31 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
   }, [saveDiagramUpdateThrottle]);
 
   useEffect(() => {
-    if (!canSyncoLocal) return;
+    if (!canSyncLocal) return;
 
     diagramDoc.on("update", saveDiagramUpdateThrottle);
     return () => {
       diagramDoc.off("update", saveDiagramUpdateThrottle);
       saveDiagramUpdateThrottle.flush();
     };
-  }, [canSyncoLocal, saveDiagramUpdateThrottle, diagramDoc]);
+  }, [canSyncLocal, saveDiagramUpdateThrottle, diagramDoc]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
     return newThrottle(
       (sheetId: string) => {
-        if (!canSyncoLocal) return;
-        fileAcess.overwriteSheetDoc(sheetId, sheetDoc);
+        if (!canSyncLocal) return;
+        try {
+          fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
+          setSyncStatus("ok");
+        } catch (e) {
+          handleSyncError(e);
+          console.error("Failed to sync sheet: ", sheetId, e);
+        }
       },
-      5000,
+      SYNC_THROTTLE_INTERVAL,
       true,
     );
-  }, [fileAcess, canSyncoLocal, sheetDoc]);
+  }, [fileAccess, handleSyncError, canSyncLocal, sheetDoc]);
 
   useEffect(() => {
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
@@ -302,7 +387,7 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
   }, [saveSheetUpdateThrottle]);
 
   useEffect(() => {
-    if (!canSyncoLocal) return;
+    if (!canSyncLocal) return;
 
     const fn = () => {
       saveSheetUpdateThrottle(sheetDoc.meta.sheetId);
@@ -313,7 +398,7 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
       sheetDoc.off("update", fn);
       saveSheetUpdateThrottle.flush();
     };
-  }, [canSyncoLocal, saveSheetUpdateThrottle, sheetDoc]);
+  }, [canSyncLocal, saveSheetUpdateThrottle, sheetDoc]);
 
   useEffect(() => {
     initDiagram();
@@ -366,11 +451,11 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
 
   const assetAPI = useMemo<AssetAPI>(() => {
     return {
-      enabled: canSyncoLocal && fileAcess.hasHnadle(),
-      saveAsset: fileAcess.saveAsset,
-      loadAsset: fileAcess.loadAsset,
+      enabled: canSyncLocal && fileAccess.hasHnadle(),
+      saveAsset: fileAccess.saveAsset,
+      loadAsset: fileAccess.loadAsset,
     };
-  }, [fileAcess, canSyncoLocal]);
+  }, [fileAccess, canSyncLocal]);
 
   return {
     initSheet,
@@ -382,11 +467,12 @@ export function usePersistence({ generateUuid }: PersistenceOption) {
     savePending,
     saveAllToLocal,
     mergeAllWithLocal,
-    canSyncoLocal,
+    canSyncLocal,
     ...diagramStores,
     ...sheetStores,
 
     assetAPI,
+    syncStatus,
   };
 }
 
