@@ -30,6 +30,9 @@ export const AppHeader: React.FC<Props> = ({
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
 
+  const fileAccessAvailable = isFileAccessAvailable();
+  const noPersistence = !fileAccessAvailable && workspaceType === "local";
+
   const onClickPopupButton = useCallback(
     (name: string) => {
       if (popupedKey === name) {
@@ -171,43 +174,41 @@ export const AppHeader: React.FC<Props> = ({
     );
   }, [_onClickOpen, _onClickSave, _onClickMerge, handleClickClear, disconnectWorkspace, workspaceType]);
 
-  const fileAccessAvailable = isFileAccessAvailable();
+  if (noPersistence) {
+    return <></>;
+  }
 
   return (
     <OutsideObserver className="h-8 bg-white flex items-center" onClick={closePopup}>
-      {fileAccessAvailable ? (
-        <>
-          <PopupButton
-            name="file"
-            opened={popupedKey === "file"}
-            popup={fileItems}
-            onClick={onClickPopupButton}
-            popupPosition="right"
-          >
-            <div className="px-2">File</div>
-          </PopupButton>
-          <div className="px-2 text-sm">
-            <span>{storageMessage}</span>
-          </div>
-          <Dialog
-            open={openClearConfirm}
-            onClose={closeClearConfirm}
-            title="Clear diagram"
-            actions={
-              <>
-                <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
-                <DialogButtonAlert onClick={clearDiagram}>Clear</DialogButtonAlert>
-              </>
-            }
-          >
-            <div>
-              <p>All data stored in IndexedDB will be cleared.</p>
-              <p>Workspace files will not be affected.</p>
-              <p>This action cannot be undone.</p>
-            </div>
-          </Dialog>
-        </>
-      ) : undefined}
+      <PopupButton
+        name="file"
+        opened={popupedKey === "file"}
+        popup={fileItems}
+        onClick={onClickPopupButton}
+        popupPosition="right"
+      >
+        <div className="px-2">File</div>
+      </PopupButton>
+      <div className="px-2 text-sm">
+        <span>{storageMessage}</span>
+      </div>
+      <Dialog
+        open={openClearConfirm}
+        onClose={closeClearConfirm}
+        title="Clear diagram"
+        actions={
+          <>
+            <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
+            <DialogButtonAlert onClick={clearDiagram}>Clear</DialogButtonAlert>
+          </>
+        }
+      >
+        <div>
+          <p>All data stored in IndexedDB will be cleared.</p>
+          <p>Workspace files will not be affected.</p>
+          <p>This action cannot be undone.</p>
+        </div>
+      </Dialog>
     </OutsideObserver>
   );
 };
