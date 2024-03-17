@@ -21,6 +21,7 @@ import { LoadingDialog } from "./components/navigations/LoadingDialog";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
+const googleAvailable = !!queryParameters.get("google");
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -168,6 +169,7 @@ function App() {
         onClose={closeEntranceDialog}
         onOpenWorkspace={handleOpenWorkspace}
         onGoogleFolderSelect={handleGoogleFolderSelect}
+        googleAvailable={googleAvailable}
       />
       <LoadingDialog open={loading} />
       <div className="relative">
