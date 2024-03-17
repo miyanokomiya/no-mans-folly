@@ -10,7 +10,7 @@ interface Props {
   onClickSave: () => void;
   onClickMerge: () => void;
   onClickClear: () => void;
-  canSyncoLocal: boolean;
+  canSyncLocal: boolean;
   saving: boolean;
 }
 
@@ -19,7 +19,7 @@ export const AppHeader: React.FC<Props> = ({
   onClickSave,
   onClickMerge,
   onClickClear,
-  canSyncoLocal,
+  canSyncLocal,
   saving,
 }) => {
   const [ctrlS, setCtrlS] = useState(false);
@@ -40,7 +40,7 @@ export const AppHeader: React.FC<Props> = ({
     setPopupedKey("");
   }, []);
   const storageMessage = useMemo(() => {
-    if (!canSyncoLocal) {
+    if (!canSyncLocal) {
       return (
         <button
           className="border rounded py-1 px-2 bg-red-500 text-white"
@@ -57,7 +57,7 @@ export const AppHeader: React.FC<Props> = ({
         {saving || ctrlS ? "Synching..." : "Synched"}
       </span>
     );
-  }, [canSyncoLocal, onClickPopupButton, saving, ctrlS]);
+  }, [canSyncLocal, onClickPopupButton, saving, ctrlS]);
 
   const _onClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -93,14 +93,14 @@ export const AppHeader: React.FC<Props> = ({
     (e: KeyboardEvent) => {
       if (e.key === "s" && isCtrlOrMeta(e)) {
         e.preventDefault();
-        if (canSyncoLocal) {
+        if (canSyncLocal) {
           setCtrlS(true);
         } else {
           onClickPopupButton("file");
         }
       }
     },
-    [canSyncoLocal, onClickPopupButton],
+    [canSyncLocal, onClickPopupButton],
   );
   useGlobalKeydownEffect(handleKeyDown);
 

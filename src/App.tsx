@@ -43,7 +43,7 @@ function App() {
     clearDiagram,
     saveAllToLocal,
     mergeAllWithLocal,
-    canSyncoLocal,
+    canSyncLocal,
     assetAPI,
   } = usePersistence({ generateUuid, fileAccess });
 
@@ -197,7 +197,7 @@ function App() {
             onClickSave={onClickSave}
             onClickMerge={onClickMerge}
             onClickClear={onClickClear}
-            canSyncoLocal={canSyncoLocal}
+            canSyncLocal={canSyncLocal}
             saving={saving}
           />
         </div>

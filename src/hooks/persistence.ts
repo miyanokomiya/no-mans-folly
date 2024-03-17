@@ -43,8 +43,7 @@ interface PersistenceOption {
 }
 
 export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
-  // const fileAccess = useMemo(() => newFileAccess(), []);
-  const [canSyncoLocal, setCanSyncToLocal] = useState(false);
+  const [canSyncLocal, setCanSyncToLocal] = useState(false);
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
@@ -256,13 +255,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const saveDiagramUpdateThrottle = useMemo(() => {
     return newThrottle(
       () => {
-        if (!canSyncoLocal) return;
+        if (!canSyncLocal) return;
         fileAccess.overwriteDiagramDoc(diagramDoc);
       },
       5000,
       true,
     );
-  }, [fileAccess, canSyncoLocal, diagramDoc]);
+  }, [fileAccess, canSyncLocal, diagramDoc]);
 
   useEffect(() => {
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
@@ -275,25 +274,25 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveDiagramUpdateThrottle]);
 
   useEffect(() => {
-    if (!canSyncoLocal) return;
+    if (!canSyncLocal) return;
 
     diagramDoc.on("update", saveDiagramUpdateThrottle);
     return () => {
       diagramDoc.off("update", saveDiagramUpdateThrottle);
       saveDiagramUpdateThrottle.flush();
     };
-  }, [canSyncoLocal, saveDiagramUpdateThrottle, diagramDoc]);
+  }, [canSyncLocal, saveDiagramUpdateThrottle, diagramDoc]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
     return newThrottle(
       (sheetId: string) => {
-        if (!canSyncoLocal) return;
+        if (!canSyncLocal) return;
         fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
       },
       5000,
       true,
     );
-  }, [fileAccess, canSyncoLocal, sheetDoc]);
+  }, [fileAccess, canSyncLocal, sheetDoc]);
 
   useEffect(() => {
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
@@ -306,7 +305,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveSheetUpdateThrottle]);
 
   useEffect(() => {
-    if (!canSyncoLocal) return;
+    if (!canSyncLocal) return;
 
     const fn = () => {
       saveSheetUpdateThrottle(sheetDoc.meta.sheetId);
@@ -317,7 +316,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       sheetDoc.off("update", fn);
       saveSheetUpdateThrottle.flush();
     };
-  }, [canSyncoLocal, saveSheetUpdateThrottle, sheetDoc]);
+  }, [canSyncLocal, saveSheetUpdateThrottle, sheetDoc]);
 
   useEffect(() => {
     initDiagram();
@@ -370,11 +369,11 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const assetAPI = useMemo<AssetAPI>(() => {
     return {
-      enabled: canSyncoLocal && fileAccess.hasHnadle(),
+      enabled: canSyncLocal && fileAccess.hasHnadle(),
       saveAsset: fileAccess.saveAsset,
       loadAsset: fileAccess.loadAsset,
     };
-  }, [fileAccess, canSyncoLocal]);
+  }, [fileAccess, canSyncLocal]);
 
   return {
     initSheet,
@@ -386,7 +385,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     savePending,
     saveAllToLocal,
     mergeAllWithLocal,
-    canSyncoLocal,
+    canSyncLocal,
     ...diagramStores,
     ...sheetStores,
 
