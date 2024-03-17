@@ -4,7 +4,7 @@ import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
 import { isCtrlOrMeta, isFileAccessAvailable } from "../utils/devices";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { useGlobalKeydownEffect } from "../hooks/window";
-import { GOOGLE_AUTH_URL } from "../google/utils/auth";
+import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
 
 interface Props {
   onClickOpen: () => void;
@@ -65,7 +65,7 @@ export const AppHeader: React.FC<Props> = ({
       return (
         <a
           className="border rounded py-1 px-2 bg-orange-500 text-white"
-          href={GOOGLE_AUTH_URL}
+          href={GOOGLE_AUTH_RETIEVAL_URL}
           target="_blank"
           rel="noreferrer"
         >
@@ -76,7 +76,7 @@ export const AppHeader: React.FC<Props> = ({
 
     return (
       <span className="border rounded py-1 px-2 bg-lime-500 text-white">
-        {saving || ctrlS ? "Synching..." : "Synched"}
+        {saving || ctrlS ? "Pending..." : "Synched"}
       </span>
     );
   }, [canSyncLocal, onClickPopupButton, saving, ctrlS, syncStatus, workspaceType]);

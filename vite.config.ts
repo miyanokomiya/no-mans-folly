@@ -1,8 +1,22 @@
+import { resolve } from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const root = resolve(__dirname, "src", "pages");
+const outDir = resolve(__dirname, "dist");
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  root,
+  build: {
+    outDir,
+    rollupOptions: {
+      input: {
+        index: resolve(__dirname, "src", "pages", "index.html"),
+        "auth-retrieved": resolve(__dirname, "src", "pages", "auth-retrieved", "index.html"),
+      },
+    },
+  },
   plugins: [react()],
   define: {
     "process.env.APP_VERSION": JSON.stringify(process.env.npm_package_version),
