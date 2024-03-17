@@ -45,6 +45,7 @@ function App() {
     mergeAllWithLocal,
     canSyncLocal,
     assetAPI,
+    syncStatus,
   } = usePersistence({ generateUuid, fileAccess });
 
   useEffect(() => {
@@ -199,6 +200,8 @@ function App() {
             onClickClear={onClickClear}
             canSyncLocal={canSyncLocal}
             saving={saving}
+            syncStatus={syncStatus}
+            workspaceType={googleMode ? "google" : "local"}
           />
         </div>
       </div>
