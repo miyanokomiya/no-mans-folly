@@ -2,7 +2,7 @@ import { Dialog } from "../atoms/Dialog";
 import folderIcon from "../../assets/icons/folder.svg";
 import { isFileAccessAvailable } from "../../utils/devices";
 import { useCallback, useEffect, useState } from "react";
-import { fetchGoogleAuthTokenOrRedirect } from "../../google/hooks/auth";
+import { fetchGoogleAuthTokenOrRedirect } from "../../google/utils/auth";
 import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
 
