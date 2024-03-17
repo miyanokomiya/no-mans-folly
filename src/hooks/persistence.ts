@@ -12,6 +12,7 @@ import { newThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 
 const DIAGRAM_KEY = "test-project-diagram";
+const SYNC_THROTTLE_INTERVAL = 10000;
 
 export type AssetAPI =
   | {
@@ -333,7 +334,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
           console.error("Failed to sync diagram", e);
         }
       },
-      5000,
+      SYNC_THROTTLE_INTERVAL,
       true,
     );
   }, [fileAccess, handleSyncError, canSyncLocal, diagramDoc]);
@@ -370,7 +371,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
           console.error("Failed to sync sheet: ", sheetId, e);
         }
       },
-      5000,
+      SYNC_THROTTLE_INTERVAL,
       true,
     );
   }, [fileAccess, handleSyncError, canSyncLocal, sheetDoc]);
