@@ -1,11 +1,11 @@
 import { Dialog } from "../atoms/Dialog";
-import folderIcon from "../../assets/icons/folder.svg";
 import { isFileAccessAvailable } from "../../utils/devices";
 import { useCallback, useEffect, useState } from "react";
 import { fetchGoogleAuthTokenOrRedirect } from "../../google/utils/auth";
 import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
+import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 
 interface Props {
   open: boolean;
@@ -74,6 +74,8 @@ export const EntranceDialog: React.FC<Props> = ({
     return <></>;
   }
 
+  const loading = !!googleMode;
+
   return (
     <Dialog open={open} onClose={onClose} title="All you need to know befoer diagramming" hideClose required>
       <div className="w-96">
@@ -85,8 +87,9 @@ export const EntranceDialog: React.FC<Props> = ({
               type="button"
               className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
               onClick={onOpenWorkspace}
+              disabled={loading}
             >
-              <img src={folderIcon} alt="" className="w-8 h-8 bg-white rounded" />
+              <img src={folderColoredIcon} alt="" className="w-8 h-8 bg-white rounded" />
               <span className="w-full text-center text-lg">Local folder</span>
             </button>
           ) : (
@@ -95,24 +98,15 @@ export const EntranceDialog: React.FC<Props> = ({
         </div>
         {googleAvailable ? (
           <div className="mt-4 flex flex-col items-center">
-            {googleMode ? (
-              <button
-                type="button"
-                className="h-12 w-52 p-2 rounded bg-blue-400 text-white flex items-center justify-center"
-                disabled
-              >
-                <span>Loading...</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
-                onClick={handleGoogleClick}
-              >
-                <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
-                <span className="w-full text-center text-lg">Google Drive</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+              onClick={handleGoogleClick}
+              disabled={loading}
+            >
+              <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
+              <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
+            </button>
           </div>
         ) : undefined}
         <p className="mt-4">You can start without a workspace, but your data will be gone when you leave this page.</p>
@@ -122,6 +116,7 @@ export const EntranceDialog: React.FC<Props> = ({
             type="button"
             className="w-52 p-2 rounded border flex items-center justify-center gap-2"
             onClick={onClose}
+            disabled={loading}
           >
             <span>Start without workspace</span>
           </button>
