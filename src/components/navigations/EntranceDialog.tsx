@@ -50,7 +50,9 @@ export const EntranceDialog: React.FC<Props> = ({
     if (googleMode) return;
 
     setGoogleMode("loading");
-    fetchGoogleAuthTokenOrRedirect()
+    fetchGoogleAuthTokenOrRedirect(() => {
+      setGoogleMode("");
+    })
       .then((token) => {
         setGoogleToken(token);
         setGoogleMode("opening");
