@@ -68,11 +68,16 @@ export function newImageStore() {
     return imageMap.get(assetId);
   }
 
+  function removeImage(assetId: string) {
+    return imageMap.delete(assetId);
+  }
+
   return {
     loadFromFile,
     batchLoad,
     getImage,
     getImageData,
+    removeImage,
     clear,
     watch: callback.bind,
   };

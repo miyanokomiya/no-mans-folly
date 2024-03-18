@@ -30,15 +30,28 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
         const image = imageStore.getImage(id);
         if (!image) {
           // When the asset isn't yet stored, fetch and save it.
+          let blob: Blob;
           try {
             const res = await fetch(url);
-            const blob = await res.blob();
-            await assetAPI.saveAsset(id, blob);
-            await imageStore.loadFromFile(id, blob);
+            blob = await res.blob();
           } catch (e) {
-            smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
+            console.error(e);
+            smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
             return;
           }
+
+          // Save and load the asset without waiting here.
+          // => Remove the asset if either of them fails.
+          assetAPI.saveAsset(id, blob).catch((e) => {
+            console.error(e);
+            imageStore.removeImage(id);
+            smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
+          });
+          imageStore.loadFromFile(id, blob).catch((e) => {
+            console.error(e);
+            imageStore.removeImage(id);
+            smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
+          });
         }
 
         const template = {
