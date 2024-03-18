@@ -254,46 +254,13 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 }
 
 async function postFile(data: Blob, metadata: { [key: string]: any }) {
-  if (import.meta.env.DEV) {
-    const { body, headers } = await getMultipartRequest(data, metadata);
-    return gapi.client.request({
-      path: "/upload/drive/v3/files",
-      method: "POST",
-      params: { uploadType: "multipart" },
-      headers,
-      body,
-    });
-  }
-
-  return postLargeFile(data, metadata);
-}
-
-async function postLargeFile(data: Blob, metadata: { [key: string]: any }) {
-  const resumableRes = await gapi.client.request({
+  const { body, headers } = await getMultipartRequest(data, metadata);
+  return gapi.client.request({
     path: "/upload/drive/v3/files",
     method: "POST",
-    params: { uploadType: "resumable" },
-    headers: {
-      "Content-Type": "application/json; charset=UTF-8",
-    },
-    body: JSON.stringify(metadata),
-  });
-  if (resumableRes.status !== 200) {
-    throw new Error(`Failed to get resumable URI status: ${resumableRes.status} body: ${resumableRes.body}`);
-  }
-
-  const location: string = (resumableRes.headers as any).location;
-  // Have to use "fetch" because "gapi.client.request" can't send blob body.
-  // This request fails on dev env because the location doens't regard port in "Access-Control-Allow-Origin".
-  // => Although it fails to get the response because of CORS, the uploading succeeds.
-  return fetch(location, {
-    method: "PUT",
-    headers: {
-      Origin: "http://localhost:5173",
-      "Content-Length": data.size.toString(),
-    },
-    body: data,
-    mode: "cors",
+    params: { uploadType: "multipart" },
+    headers,
+    body,
   });
 }
 
@@ -332,19 +299,15 @@ async function getMultipartRequest(data: Blob, metadata: { [key: string]: any })
   };
 }
 
-async function getMultipartRequestForMetadata(metadata: { [key: string]: any }) {
-  const { delimiter, close_delim } = getMultipartItems();
-  return delimiter + "Content-Type: application/json\r\n\r\n" + JSON.stringify(metadata) + close_delim;
-}
-
 async function createFolder(parentFolderId: string, folderName: string) {
-  const { boundary } = getMultipartItems();
+  const { boundary, delimiter, close_delim } = getMultipartItems();
   const metadata = {
     name: folderName,
     mimeType: "application/vnd.google-apps.folder",
     parents: [parentFolderId],
   };
-  const multipartRequestBody = getMultipartRequestForMetadata(metadata);
+  const multipartRequestBody =
+    delimiter + "Content-Type: application/json\r\n\r\n" + JSON.stringify(metadata) + close_delim;
 
   return gapi.client.request({
     path: "/upload/drive/v3/files",
