@@ -13,7 +13,7 @@ import { AppRightPanel } from "./components/AppRightPanel";
 import { EntranceDialog } from "./components/navigations/EntranceDialog";
 import { newUserSettingStore } from "./stores/userSettingStore";
 import { IAppCanvasContext } from "./contexts/AppCanvasContext";
-import { isFileAccessAvailable, isTouchDevice } from "./utils/devices";
+import { isTouchDevice } from "./utils/devices";
 import { GoogleDriveFolder } from "./google/types";
 import { newDriveAccess } from "./google/composables/driveAccess";
 import { FileAccess, newFileAccess } from "./composables/fileAccess";
@@ -136,8 +136,6 @@ function App() {
     }
   }, [onClickOpen, closeEntranceDialog]);
 
-  const fileAccessAvailable = isFileAccessAvailable();
-
   const handleGoogleFolderSelect = useCallback((folder: GoogleDriveFolder, token: string) => {
     setOpenEntranceDialog(false);
     const access = newDriveAccess({ folderId: folder.id, token });
@@ -160,6 +158,7 @@ function App() {
   }, [googleMode, openDiagramFromLocal]);
 
   const loading = !ready || googleMode === "loading";
+  const canPersist = fileAccess.hasHnadle() || !noIndexedDB;
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
@@ -189,8 +188,8 @@ function App() {
         <div className="fixed bottom-2 right-4 transition-transform" style={floatRightStyle}>
           <AppFootbar />
         </div>
-        {fileAccessAvailable ? (
-          <div className="fixed top-8 flex">
+        {canPersist ? (
+          <div className="fixed top-10 flex">
             <SheetList />
           </div>
         ) : undefined}

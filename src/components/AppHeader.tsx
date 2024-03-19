@@ -179,7 +179,7 @@ export const AppHeader: React.FC<Props> = ({
   }
 
   return (
-    <OutsideObserver className="h-8 bg-white flex items-center" onClick={closePopup}>
+    <OutsideObserver className="h-10 px-1 bg-white rounded-b flex items-center" onClick={closePopup}>
       <PopupButton
         name="file"
         opened={popupedKey === "file"}
@@ -189,7 +189,7 @@ export const AppHeader: React.FC<Props> = ({
       >
         <div className="px-2">File</div>
       </PopupButton>
-      <div className="px-2 text-sm">
+      <div className="ml-2 text-sm">
         <span>{storageMessage}</span>
       </div>
       <Dialog
