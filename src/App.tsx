@@ -258,7 +258,9 @@ function App() {
       />
       <LoadingDialog open={loading} />
       <div className="relative">
-        <div className="w-screen h-screen bg-gray">{ready ? <AppCanvas /> : undefined}</div>
+        <div className="w-screen h-screen bg-gray">
+          <AppCanvas />
+        </div>
         <div
           className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
           style={{ width: rightPanelWidth, ...floatRightPanelStyle }}
