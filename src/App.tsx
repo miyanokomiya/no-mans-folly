@@ -233,6 +233,13 @@ function App() {
     [resetLoadingEffect],
   );
 
+  // Use this value to recreate <AppCanvas> whenever a sheet is loaded or switched.
+  // => It's safer to recreate it since it has complicated state.
+  const sheetUniqueState = useMemo(() => {
+    shapeStore;
+    return generateUuid();
+  }, [shapeStore]);
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
@@ -253,7 +260,7 @@ function App() {
       <LoadingDialog open={loading} />
       <div className="relative">
         <div className="w-screen h-screen bg-gray">
-          <AppCanvas />
+          <AppCanvas key={sheetUniqueState} />
         </div>
         <div
           className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
