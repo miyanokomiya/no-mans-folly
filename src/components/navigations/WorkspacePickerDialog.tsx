@@ -77,7 +77,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const loading = !!googleMode;
 
   return (
-    <Dialog open={open} onClose={onClose} title="Open workspace" hideClose required>
+    <Dialog open={open} onClose={onClose} title="Open workspace">
       <div className="w-96">
         <p className="mt-2">Select a folder as a workspace, then all updates are automatically saved there.</p>
         <div className="mt-4 flex flex-col items-center">

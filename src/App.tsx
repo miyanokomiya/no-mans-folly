@@ -173,6 +173,10 @@ function App() {
   >();
   const [openWorkspacePicker, setOpenWorkspacePicker] = useState<"open" | "save">();
 
+  const closeWorkspacePickerDialog = useCallback(() => {
+    setOpenWorkspaceState(undefined);
+  }, []);
+
   const handleFolderSelect = useCallback(async () => {
     switch (openWorkspacePicker) {
       case "open":
@@ -247,7 +251,7 @@ function App() {
       />
       <WorkspacePickerDialog
         open={openWorkspaceState === "selecting"}
-        onClose={closeEntranceDialog}
+        onClose={closeWorkspacePickerDialog}
         onLocalFolderSelect={handleLocalFolderSelect}
         onGoogleFolderSelect={handleGoogleFolderSelect}
         googleAvailable={googleAvailable}
