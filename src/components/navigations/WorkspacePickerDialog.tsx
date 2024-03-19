@@ -1,11 +1,13 @@
 import { Dialog } from "../atoms/Dialog";
 import { isFileAccessAvailable } from "../../utils/devices";
 import { useCallback, useEffect, useState } from "react";
-import { fetchGoogleAuthTokenOrRedirect } from "../../google/utils/auth";
+import { GOOGLE_AUTH_RETIEVAL_URL, fetchGoogleAuthToken } from "../../google/utils/auth";
 import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
+import linkIcon from "../../assets/icons/link.svg";
+import googleSignInButton from "../../assets/externals/google_sign_in_light.svg";
 
 interface Props {
   open: boolean;
@@ -26,6 +28,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
 
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
+  const [error, setError] = useState<"google_401" | "google_unknown">();
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
@@ -49,16 +52,24 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const handleGoogleClick = useCallback(() => {
     if (googleMode) return;
 
+    setError(undefined);
     setGoogleMode("loading");
-    fetchGoogleAuthTokenOrRedirect(() => {
-      setGoogleMode("");
-    })
-      .then((token) => {
-        setGoogleToken(token);
-        setGoogleMode("opening");
+    fetchGoogleAuthToken()
+      .then(([status, token]) => {
+        if (token) {
+          setGoogleToken(token);
+          setGoogleMode("opening");
+        } else if (status === 401) {
+          setError("google_401");
+          setGoogleMode("");
+        } else {
+          setError("google_unknown");
+          setGoogleMode("");
+        }
       })
       .catch((e) => {
         console.error(e);
+        setError("google_unknown");
         setGoogleMode("");
       });
   }, [googleMode]);
@@ -92,7 +103,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
               <span className="w-full text-center text-lg">Local folder</span>
             </button>
           ) : (
-            <p className="text-red-500 font-bold text-center">This browser doesn't support local folder.</p>
+            <p className="text-red-500 font-semibold">This browser doesn't support local folder.</p>
           )}
         </div>
         {googleAvailable ? (
@@ -107,6 +118,21 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
               <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
             </button>
           </div>
+        ) : undefined}
+        {error === "google_401" ? (
+          <div className="mt-4 flex flex-col items-center gap-4">
+            <p className="text-red-500 font-semibold">
+              Google Drive is yet to be connected. Click below button to sing in with Google and connect Google Drive,
+              then try again.
+            </p>
+            <a href={GOOGLE_AUTH_RETIEVAL_URL} target="_blank" rel="noopener" className="flex items-center gap-2">
+              <div className="w-4 h-4" />
+              <img src={googleSignInButton} alt="Sign in with Google" className="" />
+              <img src={linkIcon} className="w-4 h-4" />
+            </a>
+          </div>
+        ) : error === "google_unknown" ? (
+          <p className="mt-4 text-red-500 font-semibold text-center">Failed to get connection to Google Drive.</p>
         ) : undefined}
       </div>
     </Dialog>
