@@ -4,7 +4,7 @@ import { AppToolbar } from "./components/AppToolbar";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePersistence } from "./hooks/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
@@ -19,6 +19,7 @@ import { newDriveAccess } from "./google/composables/driveAccess";
 import { FileAccess, newFileAccess } from "./composables/fileAccess";
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
+import { useEffectOnce } from "./hooks/utils";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -50,14 +51,9 @@ function App() {
     syncStatus,
   } = usePersistence({ generateUuid, fileAccess });
 
-  // Create initial diagram data once here.
-  const initRef = useRef(false);
-  useEffect(() => {
-    if (initRef.current) return;
-
-    initRef.current = true;
+  useEffectOnce(() => {
     initDiagram();
-  }, [initDiagram]);
+  });
 
   useEffect(() => {
     return sheetStore.watchSelected(async () => {
@@ -190,24 +186,7 @@ function App() {
     }
   }, [openWorkspacePicker, openDiagramFromLocal, saveAllToLocal]);
 
-  const folderEffectRef = useRef(false);
-
-  const handleLocalFolderSelect = useCallback(async () => {
-    setFileAccess(newFileAccess());
-    setOpenWorkspaceState("loading-local");
-    folderEffectRef.current = true;
-  }, []);
-
-  const handleGoogleFolderSelect = useCallback(async (folder: GoogleDriveFolder, token: string) => {
-    setFileAccess(newDriveAccess({ folderId: folder.id, token }));
-    setOpenWorkspaceState("loading-google");
-    folderEffectRef.current = true;
-  }, []);
-
-  useEffect(() => {
-    if (!folderEffectRef.current) return;
-
-    folderEffectRef.current = false;
+  const resetLoadingEffect = useEffectOnce(() => {
     switch (openWorkspaceState) {
       case "loading-local":
         setOpenWorkspaceState("processing");
@@ -237,7 +216,22 @@ function App() {
         })();
         return;
     }
-  }, [openWorkspaceState, handleFolderSelect]);
+  }, true);
+
+  const handleLocalFolderSelect = useCallback(async () => {
+    setFileAccess(newFileAccess());
+    setOpenWorkspaceState("loading-local");
+    resetLoadingEffect();
+  }, [resetLoadingEffect]);
+
+  const handleGoogleFolderSelect = useCallback(
+    async (folder: GoogleDriveFolder, token: string) => {
+      setFileAccess(newDriveAccess({ folderId: folder.id, token }));
+      setOpenWorkspaceState("loading-google");
+      resetLoadingEffect();
+    },
+    [resetLoadingEffect],
+  );
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
