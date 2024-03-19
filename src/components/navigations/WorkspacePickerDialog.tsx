@@ -90,7 +90,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   return (
     <Dialog open={open} onClose={onClose} title="Open workspace">
       <div className="w-96">
-        <p className="mt-2">Select a folder as a workspace, then all updates are automatically saved there.</p>
+        <p>Select a folder as a workspace, then all updates are automatically saved there.</p>
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (
             <button

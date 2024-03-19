@@ -77,10 +77,9 @@ export const EntranceDialog: React.FC<Props> = ({
   const loading = !!googleMode;
 
   return (
-    <Dialog open={open} onClose={onClose} title="All you need to know befoer diagramming" hideClose required>
+    <Dialog open={open} onClose={onClose} title="Open workspace" hideClose required>
       <div className="w-96">
-        <p>Your diagram data is saved as files to your folder so you have full responsibility to them.</p>
-        <p className="mt-2">Select a folder as a workspace, then all updates are automatically saved there.</p>
+        <p>Select a folder as a workspace, then all updates are automatically saved there.</p>
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (
             <button
@@ -109,12 +108,14 @@ export const EntranceDialog: React.FC<Props> = ({
             </button>
           </div>
         ) : undefined}
-        <p className="mt-4">You can start without a workspace, but your data will be gone when you leave this page.</p>
-        {fileAccessAvailable ? <p>You can save this data afterwards only to local folder.</p> : undefined}
+        <p className="mt-4">
+          You can start without a workspace, but your data will be gone unless it's saved to a workspace before you
+          leave this page.
+        </p>
         <div className="mt-4 flex flex-col items-center">
           <button
             type="button"
-            className="w-52 p-2 rounded border flex items-center justify-center gap-2"
+            className="w-52 p-2 rounded border border-gray-400 flex items-center justify-center gap-2"
             onClick={onClose}
             disabled={loading}
           >
