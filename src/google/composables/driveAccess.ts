@@ -136,6 +136,17 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     }
   }
 
+  async function reopenDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {
+    if (!hasHnadle()) return;
+
+    const file = files?.find((f) => f.name === DIAGRAM_FILE_NAME);
+    if (!file) {
+      return await overwriteDiagramDoc(diagramDoc);
+    } else {
+      return await openDoc(DIAGRAM_FILE_NAME, diagramDoc);
+    }
+  }
+
   async function openSheet(sheetId: string, sheetDoc: Y.Doc): Promise<true | undefined> {
     return openDoc(sheetId, sheetDoc);
   }
@@ -241,6 +252,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     hasHnadle,
     openDirectory,
     openDiagram,
+    reopenDiagram,
     openSheet,
 
     overwriteDiagramDoc,

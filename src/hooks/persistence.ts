@@ -201,6 +201,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setReady(true);
   }, [generateUuid, fileAccess, initSheet]);
 
+  /**
+   * This method is intended for the case that the diagram has one sheet without workspace in the app.
+   * => Not intended for duplicating the the diagram and the all sheets to other workspace.
+   *
+   * When the target workspace is empty, just save current diagram there.
+   * When the target workspace has data, merge current diagram to it and save merged diagram there.
+   */
   const saveAllToLocal = useCallback(async () => {
     if (!diagramStores) return;
 
@@ -214,103 +221,28 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       return;
     }
 
-    const sheets = diagramStores.sheetStore.getEntities();
-    for (const sheet of sheets) {
-      const sheetDoc = new Y.Doc();
-      const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
-      await sheetProvider?.whenSynced;
+    const sheet = diagramStores.sheetStore.getSelectedSheet();
+    if (sheet) {
       try {
+        await fileAccess.openSheet(sheet.id, sheetDoc);
         await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
         console.error("Failed to sync sheet: ", sheet.id, e);
       }
-      await sheetProvider?.destroy();
-      sheetDoc.destroy();
     }
     try {
+      await fileAccess.reopenDiagram(diagramDoc);
       await fileAccess.overwriteDiagramDoc(diagramDoc);
       setSyncStatus("ok");
     } catch (e) {
       handleSyncError(e);
       console.error("Failed to sync diagram", e);
     }
+
     setCanSyncToLocal(fileAccess.hasHnadle());
-  }, [fileAccess, handleSyncError, diagramDoc, diagramStores]);
-
-  const mergeAllWithLocal = useCallback(async () => {
-    const nextDiagramDoc = new Y.Doc();
-    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider?.whenSynced;
-
-    try {
-      const result = await fileAccess.openDiagram(nextDiagramDoc);
-      setSyncStatus("ok");
-      if (!result) {
-        nextDiagramDoc.destroy();
-        await provider?.destroy();
-        return;
-      }
-    } catch (e) {
-      handleSyncError(e);
-      console.error("Failed to load diagram", e);
-      nextDiagramDoc.destroy();
-      await provider?.destroy();
-      return;
-    }
-
-    setReady(false);
-    try {
-      try {
-        await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
-        setSyncStatus("ok");
-      } catch (e) {
-        handleSyncError(e);
-        console.error("Failed to merge diagram", e);
-        nextDiagramDoc.destroy();
-        await provider?.destroy();
-        return;
-      }
-
-      const nextDiagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-      const nextSheetStore = newSheetStore({ ydoc: nextDiagramDoc });
-
-      const sheets = nextSheetStore.getEntities();
-      for (const sheet of sheets) {
-        const sheetDoc = new Y.Doc();
-        const sheetProvider = newIndexeddbPersistence(sheet.id, sheetDoc);
-        await sheetProvider?.whenSynced;
-        try {
-          await fileAccess.openSheet(sheet.id, sheetDoc);
-          await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
-          setSyncStatus("ok");
-        } catch (e) {
-          handleSyncError(e);
-          console.error("Failed to merge sheet: ", sheet.id, e);
-        }
-        await sheetProvider?.destroy();
-        sheetDoc.destroy();
-      }
-
-      if (nextSheetStore.getEntities().length === 0) {
-        createInitialSheet(nextSheetStore, generateUuid);
-      }
-
-      if (nextSheetStore.getEntityMap()[diagramStores.sheetStore.getSelectedSheet()?.id ?? ""]) {
-        nextSheetStore.selectSheet(diagramStores.sheetStore.getSelectedSheet()!.id);
-      }
-
-      const sheet = nextSheetStore.getSelectedSheet()!;
-      await initSheet(sheet.id);
-
-      setDbProviderDiagram(provider);
-      setDiagramDoc(nextDiagramDoc);
-      setDiagramStores({ diagramStore: nextDiagramStore, sheetStore: nextSheetStore });
-    } finally {
-      setReady(true);
-    }
-  }, [generateUuid, fileAccess, handleSyncError, initSheet, diagramStores]);
+  }, [fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -401,10 +333,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [canSyncLocal, saveSheetUpdateThrottle, sheetDoc]);
 
   useEffect(() => {
-    initDiagram();
-  }, [initDiagram]);
-
-  useEffect(() => {
     return () => {
       diagramDoc.destroy();
     };
@@ -466,7 +394,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     ready,
     savePending,
     saveAllToLocal,
-    mergeAllWithLocal,
     canSyncLocal,
     ...diagramStores,
     ...sheetStores,

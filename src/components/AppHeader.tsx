@@ -9,7 +9,6 @@ import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
 interface Props {
   onClickOpen: () => void;
   onClickSave: () => void;
-  onClickMerge: () => void;
   onClickClear: () => void;
   canSyncLocal: boolean;
   saving: boolean;
@@ -20,7 +19,6 @@ interface Props {
 export const AppHeader: React.FC<Props> = ({
   onClickOpen,
   onClickSave,
-  onClickMerge,
   onClickClear,
   canSyncLocal,
   saving,
@@ -94,11 +92,6 @@ export const AppHeader: React.FC<Props> = ({
     onClickSave();
   }, [onClickSave]);
 
-  const _onClickMerge = useCallback(() => {
-    setPopupedKey("");
-    onClickMerge();
-  }, [onClickMerge]);
-
   const [openClearConfirm, setOpenClearConfirm] = useState(false);
   const closeClearConfirm = useCallback(() => {
     setOpenClearConfirm(false);
@@ -164,15 +157,12 @@ export const AppHeader: React.FC<Props> = ({
         <button type="button" className={className} onClick={_onClickSave}>
           Save & Sync workspace
         </button>
-        <button type="button" className={className} onClick={_onClickMerge}>
-          Merge & Sync workspace
-        </button>
         <button type="button" className={className} onClick={handleClickClear}>
           Clear diagram
         </button>
       </div>
     );
-  }, [_onClickOpen, _onClickSave, _onClickMerge, handleClickClear, disconnectWorkspace, workspaceType]);
+  }, [_onClickOpen, _onClickSave, handleClickClear, disconnectWorkspace, workspaceType]);
 
   if (noPersistence) {
     return <></>;

@@ -7,6 +7,7 @@ export interface FileAccess {
   hasHnadle: () => boolean;
   openDirectory: () => Promise<true | undefined>;
   openDiagram: (diagramDoc: Y.Doc) => Promise<true | undefined>;
+  reopenDiagram: (diagramDoc: Y.Doc) => Promise<true | undefined>;
   openSheet: (sheetId: string, sheetDoc: Y.Doc) => Promise<true | undefined>;
 
   overwriteDiagramDoc: (doc: Y.Doc) => Promise<true | undefined>;
@@ -59,6 +60,20 @@ export function newFileAccess(): FileAccess {
 
   async function openDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {
     await openDirectory();
+    if (!handle) return;
+
+    const res = await openDoc(DIAGRAM_FILE_NAME, diagramDoc);
+    if (!res) {
+      return overwriteDiagramDoc(diagramDoc);
+    } else {
+      return res;
+    }
+  }
+
+  async function reopenDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {
+    if (!handle) {
+      await openDirectory();
+    }
     if (!handle) return;
 
     const res = await openDoc(DIAGRAM_FILE_NAME, diagramDoc);
@@ -122,6 +137,7 @@ export function newFileAccess(): FileAccess {
     hasHnadle,
     openDirectory,
     openDiagram,
+    reopenDiagram,
     openSheet,
 
     overwriteDiagramDoc,
