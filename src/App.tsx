@@ -197,6 +197,24 @@ function App() {
     [handleGoogleFolderSelect],
   );
 
+  const [revoking, setRevoking] = useState(false);
+  const handleRevokeExternalConnections = useCallback(async () => {
+    setRevoking(true);
+    setOpenDialog(undefined);
+    try {
+      const res = await fetch(`${process.env.API_HOST}api/auth/revoke/`, { credentials: "include" });
+      if (res.status !== 200) {
+        const content = await res.json();
+        throw new Error(content.error);
+      }
+    } catch (e: any) {
+      alert(`Failed to revoke connections. ${e.message}`);
+    } finally {
+      setRevoking(false);
+      setOpenDialog("entrance");
+    }
+  }, []);
+
   // Use this value to recreate <AppCanvas> whenever a sheet is loaded or switched.
   // => It's safer than using the same incstance since it has complicated state.
   const sheetUniqueState = useIncrementalKeyMemo("sheet", [shapeStore]);
@@ -206,6 +224,8 @@ function App() {
 
   useUnloadWarning(!userSetting.getState().debug && (saving || hasTemporaryDiagram));
 
+  const loading = !ready || revoking;
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
@@ -214,6 +234,7 @@ function App() {
         onClose={closeDialog}
         onOpenWorkspace={handleOpenWorkspaceOnEntrance}
         onGoogleFolderSelect={handleGoogleFolderSelectOnEntrace}
+        onRevoke={handleRevokeExternalConnections}
       />
       <WorkspacePickerDialog
         open={openDialog === "workspace"}
@@ -223,7 +244,7 @@ function App() {
         actionType={workspaceActionType}
         hasTemporaryDiagram={hasTemporaryDiagram}
       />
-      <LoadingDialog open={!ready} />
+      <LoadingDialog open={loading} />
       <div className="relative">
         <div className="w-screen h-screen bg-gray">
           <AppCanvas key={sheetUniqueState} />

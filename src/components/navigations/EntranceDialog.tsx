@@ -13,9 +13,10 @@ interface Props {
   onClose: () => void;
   onOpenWorkspace: () => void;
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
+  onRevoke?: () => void;
 }
 
-export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace, onGoogleFolderSelect }) => {
+export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace, onGoogleFolderSelect, onRevoke }) => {
   const fileAccessAvailable = isFileAccessAvailable();
 
   const [googleToken, setGoogleToken] = useState<string>();
@@ -107,19 +108,35 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
           </div>
         ) : undefined}
         <p className="mt-4">
-          You can start without a workspace, but your data will be gone unless it's saved to a workspace before you
-          leave this page.
+          You can start with no workspace, but your data will be gone unless it's saved to a workspace before you leave
+          this page.
         </p>
         <div className="mt-4 flex flex-col items-center">
           <button
             type="button"
-            className="w-52 p-2 rounded border border-gray-400 flex items-center justify-center gap-2"
+            className="w-52 p-2 rounded border border-gray-500 font-semibold flex items-center justify-center gap-2"
             onClick={onClose}
             disabled={loading}
           >
-            <span>Start without workspace</span>
+            <span>Start with no workspace</span>
           </button>
         </div>
+        {googleAvailable ? (
+          <>
+            <p className="mt-4">You can revoke external connections via below button.</p>
+            <p>(This button is visible even if there's no connection.)</p>
+            <div className="mt-4 flex flex-col items-center">
+              <button
+                type="button"
+                className="w-52 p-2 rounded border border-red-400 text-red-500 font-semibold flex items-center gap-2"
+                onClick={onRevoke}
+                disabled={loading}
+              >
+                <span className="w-full text-center">Revoke connections</span>
+              </button>
+            </div>
+          </>
+        ) : undefined}
       </div>
     </Dialog>
   );
