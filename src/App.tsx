@@ -40,6 +40,7 @@ function App() {
     undoManager,
     ready,
     savePending,
+    saving,
     initSheet,
     initDiagram,
     openDiagramFromWorkspace,
@@ -48,6 +49,7 @@ function App() {
     canSyncWorkspace,
     assetAPI,
     syncStatus,
+    flushSaveThrottles,
   } = usePersistence({ generateUuid, fileAccess });
 
   useEffectOnce(() => {
@@ -118,9 +120,13 @@ function App() {
     setWorkspaceType(undefined);
   }, [clearDiagram]);
 
-  const saving = useMemo(() => {
+  const savePendingFlag = useMemo(() => {
     return Object.values(savePending).some((v) => v);
   }, [savePending]);
+
+  const savingFlag = useMemo(() => {
+    return Object.values(saving).some((v) => v);
+  }, [saving]);
 
   const [rightPanel, setRightPanel] = useState("");
   const rightPanelWidth = 300;
@@ -222,7 +228,7 @@ function App() {
   const hasShape = useHasShape(shapeStore);
   const hasTemporaryDiagram = !workspaceType && hasShape;
 
-  useUnloadWarning(!userSetting.getState().debug && (saving || hasTemporaryDiagram));
+  useUnloadWarning(!userSetting.getState().debug && (savePendingFlag || hasTemporaryDiagram));
 
   const loading = !ready || revoking;
 
@@ -274,8 +280,10 @@ function App() {
             onClickOpen={handleOpenWorkspace}
             onClickSave={handleSaveWorkspace}
             onClickClear={handleClearWorkspace}
+            onClickFlush={flushSaveThrottles}
             canSyncWorkspace={canSyncWorkspace}
-            saving={saving}
+            savePending={savePendingFlag}
+            saving={savingFlag}
             syncStatus={syncStatus}
             workspaceType={workspaceType}
             hasTemporaryDiagram={hasTemporaryDiagram}

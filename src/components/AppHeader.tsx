@@ -11,7 +11,9 @@ interface Props {
   onClickOpen: () => void;
   onClickSave: () => void;
   onClickClear: () => void;
+  onClickFlush: () => void;
   canSyncWorkspace: boolean;
+  savePending: boolean;
   saving: boolean;
   syncStatus: "ok" | "autherror" | "unknownerror";
   workspaceType?: "local" | "google";
@@ -22,12 +24,15 @@ export const AppHeader: React.FC<Props> = ({
   onClickOpen,
   onClickSave,
   onClickClear,
+  onClickFlush,
   canSyncWorkspace,
+  savePending,
   saving,
   syncStatus,
   workspaceType,
   hasTemporaryDiagram,
 }) => {
+  // Used for pretending to save
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
 
@@ -79,12 +84,20 @@ export const AppHeader: React.FC<Props> = ({
       );
     }
 
-    return (
-      <span className="border rounded py-1 px-2 bg-lime-500 text-white">
-        {saving || ctrlS ? "Pending..." : "Synched"}
-      </span>
-    );
-  }, [canSyncWorkspace, onClickPopupButton, saving, ctrlS, syncStatus, workspaceType]);
+    if (saving || ctrlS) {
+      return <span className="border rounded py-1 px-2 bg-lime-500 text-white">Saving...</span>;
+    }
+
+    if (savePending) {
+      return (
+        <button type="button" className="border rounded py-1 px-2 bg-lime-500 text-white" onClick={onClickFlush}>
+          Pending...
+        </button>
+      );
+    }
+
+    return <span className="border rounded py-1 px-2 bg-lime-500 text-white">Synched</span>;
+  }, [canSyncWorkspace, onClickPopupButton, savePending, saving, ctrlS, syncStatus, workspaceType, onClickFlush]);
 
   const handleClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -115,14 +128,17 @@ export const AppHeader: React.FC<Props> = ({
     (e: KeyboardEvent) => {
       if (e.key === "s" && isCtrlOrMeta(e)) {
         e.preventDefault();
-        if (canSyncWorkspace) {
+
+        if (savePending) {
+          onClickFlush?.();
+        } else if (canSyncWorkspace) {
           setCtrlS(true);
         } else {
           onClickPopupButton("file");
         }
       }
     },
-    [canSyncWorkspace, onClickPopupButton],
+    [canSyncWorkspace, onClickPopupButton, onClickFlush, savePending],
   );
   useGlobalKeydownEffect(handleKeyDown);
 

@@ -54,6 +54,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const [ready, setReady] = useState(false);
   const [savePending, setSavePending] = useState({ diagram: false, sheet: false });
   const [syncStatus, setSyncStatus] = useState<"ok" | "autherror" | "unknownerror">("ok");
+  const [saving, setSaving] = useState({ diagram: false, sheet: false });
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
@@ -258,14 +259,18 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [sheetStores]);
 
   const saveDiagramUpdateThrottle = useMemo(() => {
-    return newLeveledThrottle(() => {
+    return newLeveledThrottle(async () => {
       if (!canSyncWorkspace) return;
+
+      setSaving((v) => ({ ...v, diagram: true }));
       try {
-        fileAccess.overwriteDiagramDoc(diagramDoc);
+        await fileAccess.overwriteDiagramDoc(diagramDoc);
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
         console.error("Failed to sync diagram", e);
+      } finally {
+        setSaving((v) => ({ ...v, diagram: false }));
       }
     }, SYNC_THROTTLE_INTERVALS);
   }, [fileAccess, handleSyncError, canSyncWorkspace, diagramDoc]);
@@ -291,14 +296,18 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [canSyncWorkspace, saveDiagramUpdateThrottle, diagramDoc]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
-    return newLeveledThrottle((sheetId: string) => {
+    return newLeveledThrottle(async (sheetId: string) => {
       if (!canSyncWorkspace) return;
+
+      setSaving((v) => ({ ...v, sheet: true }));
       try {
-        fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
+        await fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
         console.error("Failed to sync sheet: ", sheetId, e);
+      } finally {
+        setSaving((v) => ({ ...v, sheet: false }));
       }
     }, SYNC_THROTTLE_INTERVALS);
   }, [fileAccess, handleSyncError, canSyncWorkspace, sheetDoc]);
@@ -372,6 +381,11 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     };
   }, [sheetStores]);
 
+  const flushSaveThrottles = useCallback(() => {
+    saveDiagramUpdateThrottle.flush();
+    saveSheetUpdateThrottle.flush();
+  }, [saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
+
   const assetAPI = useMemo<AssetAPI>(() => {
     return {
       enabled: canSyncWorkspace && fileAccess.hasHnadle(),
@@ -390,11 +404,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     savePending,
     saveToWorkspace,
     canSyncWorkspace,
+    flushSaveThrottles,
     ...diagramStores,
     ...sheetStores,
 
     assetAPI,
     syncStatus,
+    saving,
   };
 }
 
