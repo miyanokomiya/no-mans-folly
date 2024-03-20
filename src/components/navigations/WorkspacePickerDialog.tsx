@@ -16,6 +16,7 @@ interface Props {
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
   googleAvailable?: boolean;
   actionType?: "open" | "save";
+  hasTemporaryDiagram?: boolean;
 }
 
 export const WorkspacePickerDialog: React.FC<Props> = ({
@@ -25,6 +26,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   onGoogleFolderSelect,
   googleAvailable,
   actionType,
+  hasTemporaryDiagram,
 }) => {
   const fileAccessAvailable = isFileAccessAvailable();
 
@@ -105,6 +107,11 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
           Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
           there.
         </p>
+        {hasTemporaryDiagram && actionType === "open" ? (
+          <p className="text-red-500 font-semibold">
+            Current diagram will be cleared by this action and it cannot be undone.
+          </p>
+        ) : undefined}
         {actionType === "save" ? (
           <p>When a diagram exists in selected workspace, this diagram will be merged to it.</p>
         ) : undefined}

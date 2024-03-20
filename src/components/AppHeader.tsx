@@ -14,6 +14,7 @@ interface Props {
   saving: boolean;
   syncStatus: "ok" | "autherror" | "unknownerror";
   workspaceType?: "local" | "google";
+  hasTemporaryDiagram?: boolean;
 }
 
 export const AppHeader: React.FC<Props> = ({
@@ -24,6 +25,7 @@ export const AppHeader: React.FC<Props> = ({
   saving,
   syncStatus,
   workspaceType,
+  hasTemporaryDiagram,
 }) => {
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
@@ -152,12 +154,14 @@ export const AppHeader: React.FC<Props> = ({
         <button type="button" className={className} onClick={handleClickSave}>
           Save & Sync workspace
         </button>
-        <button type="button" className={className} onClick={handleClickClear}>
-          Clear diagram
-        </button>
+        {hasTemporaryDiagram ? (
+          <button type="button" className={className} onClick={handleClickClear}>
+            Clear diagram
+          </button>
+        ) : undefined}
       </div>
     );
-  }, [handleClickOpen, handleClickSave, handleClickClear, workspaceType]);
+  }, [handleClickOpen, handleClickSave, handleClickClear, workspaceType, hasTemporaryDiagram]);
 
   if (noPersistence) {
     return <></>;
@@ -196,7 +200,7 @@ export const AppHeader: React.FC<Props> = ({
         ) : (
           <div>
             <p>This diagram is yet to be saved to any workspace.</p>
-            <p>This action clears the diagram and it cannot be undone.</p>
+            <p>This action will clear this diagram and it cannot be undone.</p>
           </div>
         )}
       </Dialog>

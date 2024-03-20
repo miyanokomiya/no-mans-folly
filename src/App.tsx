@@ -20,6 +20,7 @@ import { FileAccess, newFileAccess } from "./composables/fileAccess";
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
 import { useEffectOnce, useIncrementalKeyMemo } from "./hooks/utils";
+import { useHasShape } from "./hooks/storeHooks";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -201,6 +202,9 @@ function App() {
   // => It's safer than using the same incstance since it has complicated state.
   const sheetUniqueState = useIncrementalKeyMemo("sheet", [shapeStore]);
 
+  const hasShape = useHasShape(shapeStore);
+  const hasTemporaryDiagram = !workspaceType && hasShape;
+
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
@@ -218,6 +222,7 @@ function App() {
         onGoogleFolderSelect={handleGoogleFolderSelect}
         googleAvailable={googleAvailable}
         actionType={workspaceActionType}
+        hasTemporaryDiagram={hasTemporaryDiagram}
       />
       <LoadingDialog open={!ready} />
       <div className="relative">
@@ -253,6 +258,7 @@ function App() {
             saving={saving}
             syncStatus={syncStatus}
             workspaceType={workspaceType}
+            hasTemporaryDiagram={hasTemporaryDiagram}
           />
         </div>
       </div>

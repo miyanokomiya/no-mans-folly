@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Shape, Sheet } from "../models";
+import { ShapeStore } from "../stores/shapes";
 
 export function useSelectedSheet(): Sheet | undefined {
   const acctx = useContext(AppCanvasContext);
@@ -133,4 +134,19 @@ export function useSelectedShape(): Shape | undefined {
   }, [shapeStore, update]);
 
   return selectedShape;
+}
+
+/**
+ * Note: Just having a flag saves state update compared to having the actual count.
+ */
+export function useHasShape(shapeStore: ShapeStore): boolean {
+  const [hasShape, setHasShape] = useState(false);
+  useEffect(() => {
+    setHasShape(shapeStore.getEntities().length > 0);
+    return shapeStore.watch(() => {
+      setHasShape(shapeStore.getEntities().length > 0);
+    });
+  }, [shapeStore]);
+
+  return hasShape;
 }
