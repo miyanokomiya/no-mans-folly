@@ -6,26 +6,21 @@ import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
+import { newFeatureFlags } from "../../composables/featureFlags";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onOpenWorkspace: () => void;
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
-  googleAvailable?: boolean;
 }
 
-export const EntranceDialog: React.FC<Props> = ({
-  open,
-  onClose,
-  onOpenWorkspace,
-  onGoogleFolderSelect,
-  googleAvailable,
-}) => {
+export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace, onGoogleFolderSelect }) => {
   const fileAccessAvailable = isFileAccessAvailable();
 
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
+  const { googleAvailable } = newFeatureFlags();
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {

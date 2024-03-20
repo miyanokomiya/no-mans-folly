@@ -10,6 +10,8 @@ import { generateKeyBetween } from "fractional-indexing";
 import { FileAccess } from "../composables/fileAccess";
 import { newThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
+import { newFeatureFlags } from "../composables/featureFlags";
+import { getSheetIdFromQuery } from "../utils/route";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVAL = 10000;
@@ -22,9 +24,8 @@ export type AssetAPI =
     }
   | { enabled: false };
 
-const queryParameters = new URLSearchParams(window.location.search);
-const initialSheetIdByQuery = queryParameters.get("sheet") ?? "";
-const noIndexedDB = !queryParameters.get("indexeddb");
+const initialSheetIdByQuery = getSheetIdFromQuery();
+const { indexedDBMode } = newFeatureFlags();
 
 const defaultDiagramDoc = new Y.Doc();
 const defaultSheetDoc = new Y.Doc();
@@ -436,5 +437,5 @@ function createInitialSheet(sheetStore: SheetStore, generateUuid: () => string) 
 }
 
 function newIndexeddbPersistence(key: string, doc: Y.Doc): IndexeddbPersistence | undefined {
-  return noIndexedDB ? undefined : new IndexeddbPersistence(key, doc);
+  return !indexedDBMode ? undefined : new IndexeddbPersistence(key, doc);
 }

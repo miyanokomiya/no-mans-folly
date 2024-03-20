@@ -21,16 +21,14 @@ import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
 import { useEffectOnce, useIncrementalKeyMemo } from "./hooks/utils";
 import { useHasShape } from "./hooks/storeHooks";
-
-const queryParameters = new URLSearchParams(window.location.search);
-const noIndexedDB = !queryParameters.get("indexeddb");
-const googleAvailable = !!queryParameters.get("google");
+import { newFeatureFlags } from "./composables/featureFlags";
 
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
   const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
-  const canPersist = fileAccess.hasHnadle() || !noIndexedDB;
+  const { indexedDBMode } = newFeatureFlags();
+  const canPersist = fileAccess.hasHnadle() || indexedDBMode;
 
   const {
     diagramStore,
@@ -134,7 +132,7 @@ function App() {
   const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save">();
   const [openDialog, setOpenDialog] = useState<undefined | "entrance" | "workspace">(
-    noIndexedDB ? "entrance" : undefined,
+    !indexedDBMode ? "entrance" : undefined,
   );
 
   const closeDialog = useCallback(() => {
@@ -213,14 +211,12 @@ function App() {
         onClose={closeDialog}
         onOpenWorkspace={handleOpenWorkspaceOnEntrance}
         onGoogleFolderSelect={handleGoogleFolderSelectOnEntrace}
-        googleAvailable={googleAvailable}
       />
       <WorkspacePickerDialog
         open={openDialog === "workspace"}
         onClose={closeDialog}
         onLocalFolderSelect={handleLocalFolderSelect}
         onGoogleFolderSelect={handleGoogleFolderSelect}
-        googleAvailable={googleAvailable}
         actionType={workspaceActionType}
         hasTemporaryDiagram={hasTemporaryDiagram}
       />

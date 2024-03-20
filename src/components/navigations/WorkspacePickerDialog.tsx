@@ -8,13 +8,13 @@ import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import linkIcon from "../../assets/icons/link.svg";
 import googleSignInButton from "../../assets/externals/google_sign_in_light.svg";
+import { newFeatureFlags } from "../../composables/featureFlags";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onLocalFolderSelect?: () => void;
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
-  googleAvailable?: boolean;
   actionType?: "open" | "save";
   hasTemporaryDiagram?: boolean;
 }
@@ -24,7 +24,6 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   onClose,
   onLocalFolderSelect,
   onGoogleFolderSelect,
-  googleAvailable,
   actionType,
   hasTemporaryDiagram,
 }) => {
@@ -33,6 +32,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
   const [error, setError] = useState<"google_401" | "google_unknown">();
+  const { googleAvailable } = newFeatureFlags();
 
   const title = useMemo(() => {
     switch (actionType) {

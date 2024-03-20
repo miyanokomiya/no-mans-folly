@@ -25,3 +25,6 @@ You can turn on this flag in other than develop environment by directly modifyin
 
 Debug information list
 - Current state name at the top right of the canvas
+
+### Feature flags
+Add feature flags in `src/composables/featureFlags.ts` if necessary.
