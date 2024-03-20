@@ -8,13 +8,13 @@ import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
 import { FileAccess } from "../composables/fileAccess";
-import { newThrottle } from "../composables/throttle";
+import { newLeveledThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
 
 const DIAGRAM_KEY = "test-project-diagram";
-const SYNC_THROTTLE_INTERVAL = 10000;
+const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
 
 export type AssetAPI =
   | {
@@ -258,20 +258,16 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [sheetStores]);
 
   const saveDiagramUpdateThrottle = useMemo(() => {
-    return newThrottle(
-      () => {
-        if (!canSyncWorkspace) return;
-        try {
-          fileAccess.overwriteDiagramDoc(diagramDoc);
-          setSyncStatus("ok");
-        } catch (e) {
-          handleSyncError(e);
-          console.error("Failed to sync diagram", e);
-        }
-      },
-      SYNC_THROTTLE_INTERVAL,
-      true,
-    );
+    return newLeveledThrottle(() => {
+      if (!canSyncWorkspace) return;
+      try {
+        fileAccess.overwriteDiagramDoc(diagramDoc);
+        setSyncStatus("ok");
+      } catch (e) {
+        handleSyncError(e);
+        console.error("Failed to sync diagram", e);
+      }
+    }, SYNC_THROTTLE_INTERVALS);
   }, [fileAccess, handleSyncError, canSyncWorkspace, diagramDoc]);
 
   useEffect(() => {
@@ -295,20 +291,16 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [canSyncWorkspace, saveDiagramUpdateThrottle, diagramDoc]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
-    return newThrottle(
-      (sheetId: string) => {
-        if (!canSyncWorkspace) return;
-        try {
-          fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
-          setSyncStatus("ok");
-        } catch (e) {
-          handleSyncError(e);
-          console.error("Failed to sync sheet: ", sheetId, e);
-        }
-      },
-      SYNC_THROTTLE_INTERVAL,
-      true,
-    );
+    return newLeveledThrottle((sheetId: string) => {
+      if (!canSyncWorkspace) return;
+      try {
+        fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
+        setSyncStatus("ok");
+      } catch (e) {
+        handleSyncError(e);
+        console.error("Failed to sync sheet: ", sheetId, e);
+      }
+    }, SYNC_THROTTLE_INTERVALS);
   }, [fileAccess, handleSyncError, canSyncWorkspace, sheetDoc]);
 
   useEffect(() => {
