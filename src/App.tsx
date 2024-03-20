@@ -103,12 +103,12 @@ function App() {
   }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
   const onClickOpen = useCallback(() => {
-    setOpenWorkspacePicker(true);
+    setOpenDialog("workspace");
     setWorkspaceActionType("open");
   }, []);
 
   const onClickSave = useCallback(() => {
-    setOpenWorkspacePicker(true);
+    setOpenDialog("workspace");
     setWorkspaceActionType("save");
   }, []);
 
@@ -128,17 +128,14 @@ function App() {
     setRightPanel((v) => (v === key ? "" : key));
   }, []);
 
-  const [openEntranceDialog, setOpenEntranceDialog] = useState(noIndexedDB);
-  const closeEntranceDialog = useCallback(() => {
-    setOpenEntranceDialog(false);
-  }, []);
-
   const [workspaceType, setWorkspaceType] = useState<"local" | "google">("local");
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save">();
-  const [openWorkspacePicker, setOpenWorkspacePicker] = useState(false);
+  const [openDialog, setOpenDialog] = useState<undefined | "entrance" | "workspace">(
+    noIndexedDB ? "entrance" : undefined,
+  );
 
-  const closeWorkspacePickerDialog = useCallback(() => {
-    setOpenWorkspacePicker(false);
+  const closeDialog = useCallback(() => {
+    setOpenDialog(undefined);
   }, []);
 
   const handleFolderSelect = useCallback(async () => {
@@ -165,7 +162,7 @@ function App() {
   const handleLocalFolderSelect = useCallback(() => {
     setFileAccess(newFileAccess());
     setWorkspaceType("local");
-    setOpenWorkspacePicker(false);
+    setOpenDialog(undefined);
     resetLoadingEffect();
   }, [resetLoadingEffect]);
 
@@ -173,21 +170,21 @@ function App() {
     async (folder: GoogleDriveFolder, token: string) => {
       setFileAccess(newDriveAccess({ folderId: folder.id, token }));
       setWorkspaceType("google");
-      setOpenWorkspacePicker(false);
+      setOpenDialog(undefined);
       resetLoadingEffect();
     },
     [resetLoadingEffect],
   );
 
   const handleOpenWorkspaceOnEntrance = useCallback(() => {
-    setOpenEntranceDialog(false);
+    setOpenDialog(undefined);
     setWorkspaceActionType("open");
     handleLocalFolderSelect();
   }, [handleLocalFolderSelect]);
 
   const handleGoogleFolderSelectOnEntrace = useCallback(
     (folder: GoogleDriveFolder, token: string) => {
-      setOpenEntranceDialog(false);
+      setOpenDialog(undefined);
       setWorkspaceActionType("open");
       handleGoogleFolderSelect(folder, token);
     },
@@ -202,15 +199,15 @@ function App() {
   return (
     <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
       <EntranceDialog
-        open={openEntranceDialog}
-        onClose={closeEntranceDialog}
+        open={openDialog === "entrance"}
+        onClose={closeDialog}
         onOpenWorkspace={handleOpenWorkspaceOnEntrance}
         onGoogleFolderSelect={handleGoogleFolderSelectOnEntrace}
         googleAvailable={googleAvailable}
       />
       <WorkspacePickerDialog
-        open={openWorkspacePicker}
-        onClose={closeWorkspacePickerDialog}
+        open={openDialog === "workspace"}
+        onClose={closeDialog}
         onLocalFolderSelect={handleLocalFolderSelect}
         onGoogleFolderSelect={handleGoogleFolderSelect}
         googleAvailable={googleAvailable}
