@@ -22,6 +22,7 @@ import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerD
 import { useEffectOnce, useIncrementalKeyMemo } from "./hooks/utils";
 import { useHasShape } from "./hooks/storeHooks";
 import { newFeatureFlags } from "./composables/featureFlags";
+import { useUnloadWarning } from "./hooks/window";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -202,6 +203,8 @@ function App() {
 
   const hasShape = useHasShape(shapeStore);
   const hasTemporaryDiagram = !workspaceType && hasShape;
+
+  useUnloadWarning(!userSetting.getState().debug && (saving || hasTemporaryDiagram));
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (

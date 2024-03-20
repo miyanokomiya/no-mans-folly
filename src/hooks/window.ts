@@ -191,3 +191,23 @@ export function useOutsideClickCallback<T extends HTMLElement>(fn: () => void) {
 
   return { ref };
 }
+
+/**
+ * This hook cannot be distributed because "window.onbeforeunload" must be set directly.
+ * => Make sure not to use this hook simultaneously
+ */
+export function useUnloadWarning(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+
+    const handleUnload = (e: Event) => {
+      e.preventDefault();
+      e.returnValue = true;
+      return true;
+    };
+    window.onbeforeunload = handleUnload;
+    return () => {
+      window.onbeforeunload = null;
+    };
+  }, [active]);
+}
