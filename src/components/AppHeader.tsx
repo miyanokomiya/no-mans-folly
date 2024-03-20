@@ -5,6 +5,7 @@ import { isCtrlOrMeta, isFileAccessAvailable } from "../utils/devices";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { useGlobalKeydownEffect } from "../hooks/window";
 import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
+import { newFeatureFlags } from "../composables/featureFlags";
 
 interface Props {
   onClickOpen: () => void;
@@ -30,8 +31,9 @@ export const AppHeader: React.FC<Props> = ({
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
 
+  const { googleAvailable } = newFeatureFlags();
   const fileAccessAvailable = isFileAccessAvailable();
-  const noPersistence = !fileAccessAvailable && !workspaceType;
+  const noPersistence = !fileAccessAvailable && !workspaceType && !googleAvailable;
 
   const onClickPopupButton = useCallback(
     (name: string) => {

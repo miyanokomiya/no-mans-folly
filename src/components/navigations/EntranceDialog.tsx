@@ -90,7 +90,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
               <span className="w-full text-center text-lg">Local folder</span>
             </button>
           ) : (
-            <p className="text-red-500 font-bold text-center">This device or browser doesn't support local folder.</p>
+            <p className="text-red-500 font-bold text-center">This browser doesn't support local folder.</p>
           )}
         </div>
         {googleAvailable ? (
