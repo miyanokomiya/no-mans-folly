@@ -140,21 +140,29 @@ function App() {
     setOpenDialog(undefined);
   }, []);
 
-  const handleFolderSelect = useCallback(async () => {
+  const handleFolderSelect = useCallback(async (): Promise<boolean> => {
     switch (workspaceActionType) {
-      case "open":
-        await openDiagramFromWorkspace();
-        return;
+      case "open": {
+        const result = await openDiagramFromWorkspace();
+        return result;
+      }
       case "save":
         await saveToWorkspace();
-        return;
+        return true;
+      default:
+        return false;
     }
   }, [workspaceActionType, openDiagramFromWorkspace, saveToWorkspace]);
 
   const resetLoadingEffect = useEffectOnce(() => {
     (async () => {
       try {
-        await handleFolderSelect();
+        const result = await handleFolderSelect();
+        if (result) {
+          setOpenDialog(undefined);
+        } else {
+          setWorkspaceType(undefined);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -164,29 +172,25 @@ function App() {
   const handleLocalFolderSelect = useCallback(() => {
     setFileAccess(newFileAccess());
     setWorkspaceType("local");
-    setOpenDialog(undefined);
     resetLoadingEffect();
   }, [resetLoadingEffect]);
 
   const handleGoogleFolderSelect = useCallback(
-    async (folder: GoogleDriveFolder, token: string) => {
+    (folder: GoogleDriveFolder, token: string) => {
       setFileAccess(newDriveAccess({ folderId: folder.id, token }));
       setWorkspaceType("google");
-      setOpenDialog(undefined);
       resetLoadingEffect();
     },
     [resetLoadingEffect],
   );
 
   const handleOpenWorkspaceOnEntrance = useCallback(() => {
-    setOpenDialog(undefined);
     setWorkspaceActionType("open");
     handleLocalFolderSelect();
   }, [handleLocalFolderSelect]);
 
   const handleGoogleFolderSelectOnEntrace = useCallback(
     (folder: GoogleDriveFolder, token: string) => {
-      setOpenDialog(undefined);
       setWorkspaceActionType("open");
       handleGoogleFolderSelect(folder, token);
     },
