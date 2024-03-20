@@ -211,3 +211,24 @@ export function useUnloadWarning(active: boolean) {
     };
   }, [active]);
 }
+
+/**
+ * Calls the function when this page shows back without page reload.
+ * => It can happen thanks to "BFCache".
+ */
+export function usePageShowBackEffect(fn: () => void) {
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+
+  useEffect(() => {
+    const handler = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        fnRef.current();
+      }
+    };
+    window.addEventListener("pageshow", handler);
+    return () => {
+      window.removeEventListener("pageshow", handler);
+    };
+  }, []);
+}

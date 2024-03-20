@@ -12,12 +12,11 @@ export async function fetchGoogleAuthToken(): Promise<[status: number, token?: s
 }
 
 /**
- * Should clean up state to take care of "bfcache" via "onBeforeRedirect".
+ * Use "usePageShowBackEffect" to clean up state against "BFCache".
  */
-export async function fetchGoogleAuthTokenOrRedirect(onBeforeRedirect?: () => void): Promise<string | undefined> {
+export async function fetchGoogleAuthTokenOrRedirect(): Promise<string | undefined> {
   const [status, token] = await fetchGoogleAuthToken();
   if (status === 401 && !token) {
-    onBeforeRedirect?.();
     document.location.href = GOOGLE_AUTH_URL;
   }
   return token;

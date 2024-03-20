@@ -7,6 +7,7 @@ import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import { newFeatureFlags } from "../../composables/featureFlags";
+import { usePageShowBackEffect } from "../../hooks/window";
 
 interface Props {
   open: boolean;
@@ -46,9 +47,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
     if (googleMode) return;
 
     setGoogleMode("loading");
-    fetchGoogleAuthTokenOrRedirect(() => {
-      setGoogleMode("");
-    })
+    fetchGoogleAuthTokenOrRedirect()
       .then((token) => {
         setGoogleToken(token);
         setGoogleMode("opening");
@@ -58,6 +57,12 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
         setGoogleMode("");
       });
   }, [googleMode]);
+
+  usePageShowBackEffect(
+    useCallback(() => {
+      setGoogleMode("");
+    }, []),
+  );
 
   useEffect(() => {
     if (!googleToken || googleMode !== "opening") return;
