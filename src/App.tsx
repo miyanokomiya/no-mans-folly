@@ -19,7 +19,7 @@ import { newDriveAccess } from "./google/composables/driveAccess";
 import { FileAccess, newFileAccess } from "./composables/fileAccess";
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
-import { useEffectOnce } from "./hooks/utils";
+import { useEffectOnce, useIncrementalKeyMemo } from "./hooks/utils";
 
 const queryParameters = new URLSearchParams(window.location.search);
 const noIndexedDB = !queryParameters.get("indexeddb");
@@ -235,10 +235,7 @@ function App() {
 
   // Use this value to recreate <AppCanvas> whenever a sheet is loaded or switched.
   // => It's safer to recreate it since it has complicated state.
-  const sheetUniqueState = useMemo(() => {
-    shapeStore;
-    return generateUuid();
-  }, [shapeStore]);
+  const sheetUniqueState = useIncrementalKeyMemo("sheet", [shapeStore]);
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
