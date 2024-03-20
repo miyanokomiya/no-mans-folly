@@ -13,7 +13,7 @@ interface Props {
   canSyncWorkspace: boolean;
   saving: boolean;
   syncStatus: "ok" | "autherror" | "unknownerror";
-  workspaceType: "local" | "google";
+  workspaceType?: "local" | "google";
 }
 
 export const AppHeader: React.FC<Props> = ({
@@ -29,7 +29,7 @@ export const AppHeader: React.FC<Props> = ({
   const [popupedKey, setPopupedKey] = useState("");
 
   const fileAccessAvailable = isFileAccessAvailable();
-  const noPersistence = !fileAccessAvailable && workspaceType === "local";
+  const noPersistence = !fileAccessAvailable && !workspaceType;
 
   const onClickPopupButton = useCallback(
     (name: string) => {
@@ -193,11 +193,16 @@ export const AppHeader: React.FC<Props> = ({
           </>
         }
       >
-        <div>
-          <p>All data stored in IndexedDB will be cleared.</p>
-          <p>Workspace files will not be affected.</p>
-          <p>This action cannot be undone.</p>
-        </div>
+        {workspaceType ? (
+          <div>
+            <p>Workspace files will not be affected by this action.</p>
+          </div>
+        ) : (
+          <div>
+            <p>This diagram isn't saved to any workspace.</p>
+            <p>This action clears the diagram and it cannot be undone.</p>
+          </div>
+        )}
       </Dialog>
     </OutsideObserver>
   );

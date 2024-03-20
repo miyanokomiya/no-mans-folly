@@ -115,7 +115,7 @@ function App() {
   const handleClearWorkspace = useCallback(async () => {
     await clearDiagram();
     setFileAccess(newFileAccess());
-    setWorkspaceType("local");
+    setWorkspaceType(undefined);
   }, [clearDiagram]);
 
   const saving = useMemo(() => {
@@ -130,7 +130,7 @@ function App() {
     setRightPanel((v) => (v === key ? "" : key));
   }, []);
 
-  const [workspaceType, setWorkspaceType] = useState<"local" | "google">("local");
+  const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save">();
   const [openDialog, setOpenDialog] = useState<undefined | "entrance" | "workspace">(
     noIndexedDB ? "entrance" : undefined,
