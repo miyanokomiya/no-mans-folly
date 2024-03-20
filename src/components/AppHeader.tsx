@@ -57,7 +57,7 @@ export const AppHeader: React.FC<Props> = ({
           type="button"
           onClick={() => onClickPopupButton("file")}
         >
-          Sync workspace for persistence
+          No workspace
         </button>
       );
     }
@@ -151,10 +151,10 @@ export const AppHeader: React.FC<Props> = ({
     return (
       <div className="flex flex-col w-max">
         <button type="button" className={className} onClick={handleClickOpen}>
-          Open & Sync workspace
+          Open workspace
         </button>
         <button type="button" className={className} onClick={handleClickSave}>
-          Save & Sync workspace
+          Save & Open workspace
         </button>
         {hasTemporaryDiagram ? (
           <button type="button" className={className} onClick={handleClickClear}>
