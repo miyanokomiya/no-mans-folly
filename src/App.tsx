@@ -28,9 +28,8 @@ const googleAvailable = !!queryParameters.get("google");
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
-  const localFileAccess = useMemo(() => newFileAccess(), []);
-  const [fileAccess, setFileAccess] = useState<FileAccess>(localFileAccess);
-  const [googleMode, setGoogleMode] = useState<"" | "picked" | "loading" | "loaded">("");
+  const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
+  const canPersist = fileAccess.hasHnadle() || !noIndexedDB;
 
   const {
     diagramStore,
@@ -104,13 +103,13 @@ function App() {
   }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
   const onClickOpen = useCallback(() => {
-    setOpenWorkspaceState("selecting");
-    setOpenWorkspacePicker("open");
+    setOpenWorkspacePicker(true);
+    setWorkspaceActionType("open");
   }, []);
 
   const onClickSave = useCallback(() => {
-    setOpenWorkspaceState("selecting");
-    setOpenWorkspacePicker("save");
+    setOpenWorkspacePicker(true);
+    setWorkspaceActionType("save");
   }, []);
 
   const onClickClear = useCallback(async () => {
@@ -133,108 +132,70 @@ function App() {
   const closeEntranceDialog = useCallback(() => {
     setOpenEntranceDialog(false);
   }, []);
-  const handleOpenWorkspaceOnEntrance = useCallback(async () => {
-    const result = await openDiagramFromWorkspace();
-    if (result) {
-      closeEntranceDialog();
-    }
-  }, [openDiagramFromWorkspace, closeEntranceDialog]);
 
-  const handleGoogleFolderSelectOnEntrace = useCallback((folder: GoogleDriveFolder, token: string) => {
-    setOpenEntranceDialog(false);
-    const access = newDriveAccess({ folderId: folder.id, token });
-    setFileAccess(access);
-    setGoogleMode("picked");
-  }, []);
-
-  useEffect(() => {
-    if (googleMode !== "picked") return;
-
-    setGoogleMode("loading");
-    openDiagramFromWorkspace()
-      .then(() => {
-        setGoogleMode("loaded");
-      })
-      .catch((e) => {
-        console.error(e);
-        setGoogleMode("");
-      });
-  }, [googleMode, openDiagramFromWorkspace]);
-
-  const loading = !ready || googleMode === "loading";
-  const canPersist = fileAccess.hasHnadle() || !noIndexedDB;
-
-  const [openWorkspaceState, setOpenWorkspaceState] = useState<
-    "selecting" | "loading-local" | "loading-google" | "processing"
-  >();
-  const [openWorkspacePicker, setOpenWorkspacePicker] = useState<"open" | "save">();
+  const [workspaceType, setWorkspaceType] = useState<"local" | "google">("local");
+  const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save">();
+  const [openWorkspacePicker, setOpenWorkspacePicker] = useState(false);
 
   const closeWorkspacePickerDialog = useCallback(() => {
-    setOpenWorkspaceState(undefined);
+    setOpenWorkspacePicker(false);
   }, []);
 
   const handleFolderSelect = useCallback(async () => {
-    switch (openWorkspacePicker) {
+    switch (workspaceActionType) {
       case "open":
         await openDiagramFromWorkspace();
         return;
       case "save":
         await saveToWorkspace();
         return;
-      default:
-        return;
     }
-  }, [openWorkspacePicker, openDiagramFromWorkspace, saveToWorkspace]);
+  }, [workspaceActionType, openDiagramFromWorkspace, saveToWorkspace]);
 
   const resetLoadingEffect = useEffectOnce(() => {
-    switch (openWorkspaceState) {
-      case "loading-local":
-        setOpenWorkspaceState("processing");
-        (async () => {
-          try {
-            await handleFolderSelect();
-          } catch (e) {
-            console.error(e);
-          } finally {
-            setOpenWorkspaceState(undefined);
-          }
-        })();
-        return;
-      case "loading-google":
-        setOpenWorkspaceState("processing");
-        (async () => {
-          try {
-            setGoogleMode("loading");
-            await handleFolderSelect();
-            setGoogleMode("loaded");
-          } catch (e) {
-            console.error(e);
-            setGoogleMode("");
-          } finally {
-            setOpenWorkspaceState(undefined);
-          }
-        })();
-        return;
-    }
+    (async () => {
+      try {
+        await handleFolderSelect();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   }, true);
 
-  const handleLocalFolderSelect = useCallback(async () => {
+  const handleLocalFolderSelect = useCallback(() => {
     setFileAccess(newFileAccess());
-    setOpenWorkspaceState("loading-local");
+    setWorkspaceType("local");
+    setOpenWorkspacePicker(false);
     resetLoadingEffect();
   }, [resetLoadingEffect]);
 
   const handleGoogleFolderSelect = useCallback(
     async (folder: GoogleDriveFolder, token: string) => {
       setFileAccess(newDriveAccess({ folderId: folder.id, token }));
-      setOpenWorkspaceState("loading-google");
+      setWorkspaceType("google");
+      setOpenWorkspacePicker(false);
       resetLoadingEffect();
     },
     [resetLoadingEffect],
   );
 
+  const handleOpenWorkspaceOnEntrance = useCallback(() => {
+    setOpenEntranceDialog(false);
+    setWorkspaceActionType("open");
+    handleLocalFolderSelect();
+  }, [handleLocalFolderSelect]);
+
+  const handleGoogleFolderSelectOnEntrace = useCallback(
+    (folder: GoogleDriveFolder, token: string) => {
+      setOpenEntranceDialog(false);
+      setWorkspaceActionType("open");
+      handleGoogleFolderSelect(folder, token);
+    },
+    [handleGoogleFolderSelect],
+  );
+
   // Use this value to recreate <AppCanvas> whenever a sheet is loaded or switched.
-  // => It's safer to recreate it since it has complicated state.
+  // => It's safer than using the same incstance since it has complicated state.
   const sheetUniqueState = useIncrementalKeyMemo("sheet", [shapeStore]);
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
@@ -248,13 +209,13 @@ function App() {
         googleAvailable={googleAvailable}
       />
       <WorkspacePickerDialog
-        open={openWorkspaceState === "selecting"}
+        open={openWorkspacePicker}
         onClose={closeWorkspacePickerDialog}
         onLocalFolderSelect={handleLocalFolderSelect}
         onGoogleFolderSelect={handleGoogleFolderSelect}
         googleAvailable={googleAvailable}
       />
-      <LoadingDialog open={loading} />
+      <LoadingDialog open={!ready} />
       <div className="relative">
         <div className="w-screen h-screen bg-gray">
           <AppCanvas key={sheetUniqueState} />
@@ -287,7 +248,7 @@ function App() {
             canSyncWorkspace={canSyncWorkspace}
             saving={saving}
             syncStatus={syncStatus}
-            workspaceType={googleMode ? "google" : "local"}
+            workspaceType={workspaceType}
           />
         </div>
       </div>
