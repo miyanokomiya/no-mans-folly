@@ -79,7 +79,10 @@ export const EntranceDialog: React.FC<Props> = ({
   return (
     <Dialog open={open} onClose={onClose} title="Open workspace" hideClose required>
       <div className="w-96">
-        <p>Select a folder as a workspace, then all updates are automatically saved there.</p>
+        <p>
+          Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
+          there.
+        </p>
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (
             <button

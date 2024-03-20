@@ -217,6 +217,7 @@ function App() {
         onLocalFolderSelect={handleLocalFolderSelect}
         onGoogleFolderSelect={handleGoogleFolderSelect}
         googleAvailable={googleAvailable}
+        actionType={workspaceActionType}
       />
       <LoadingDialog open={!ready} />
       <div className="relative">

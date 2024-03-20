@@ -1,6 +1,6 @@
 import { Dialog } from "../atoms/Dialog";
 import { isFileAccessAvailable } from "../../utils/devices";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GOOGLE_AUTH_RETIEVAL_URL, fetchGoogleAuthToken } from "../../google/utils/auth";
 import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
@@ -15,6 +15,7 @@ interface Props {
   onLocalFolderSelect?: () => void;
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
   googleAvailable?: boolean;
+  actionType?: "open" | "save";
 }
 
 export const WorkspacePickerDialog: React.FC<Props> = ({
@@ -23,12 +24,22 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   onLocalFolderSelect,
   onGoogleFolderSelect,
   googleAvailable,
+  actionType,
 }) => {
   const fileAccessAvailable = isFileAccessAvailable();
 
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
   const [error, setError] = useState<"google_401" | "google_unknown">();
+
+  const title = useMemo(() => {
+    switch (actionType) {
+      case "save":
+        return "Save and open workspace";
+      default:
+        return "Open workspace";
+    }
+  }, [actionType]);
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
@@ -88,9 +99,15 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const loading = !!googleMode;
 
   return (
-    <Dialog open={open} onClose={onClose} title="Open workspace">
+    <Dialog open={open} onClose={onClose} title={title}>
       <div className="w-96">
-        <p>Select a folder as a workspace, then all updates are automatically saved there.</p>
+        <p>
+          Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
+          there.
+        </p>
+        {actionType === "save" ? (
+          <p>When a diagram exists in selected workspace, this diagram will be merged to it.</p>
+        ) : undefined}
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (
             <button
