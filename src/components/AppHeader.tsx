@@ -55,48 +55,41 @@ export const AppHeader: React.FC<Props> = ({
     setPopupedKey("");
   }, []);
   const storageMessage = useMemo(() => {
+    const baseClass = "border rounded py-1 px-2 text-white select-none ";
+
     if (!canSyncWorkspace) {
       return (
-        <button
-          className="border rounded py-1 px-2 bg-red-500 text-white"
-          type="button"
-          onClick={() => onClickPopupButton("file")}
-        >
+        <button className={baseClass + "bg-red-500"} type="button" onClick={() => onClickPopupButton("file")}>
           No workspace
         </button>
       );
     }
 
     if (syncStatus === "unknownerror") {
-      return <span className="border rounded py-1 px-2 bg-red-500 text-white">Failed to sync</span>;
+      return <span className={baseClass + "bg-red-500"}>Failed to sync</span>;
     }
 
     if (workspaceType === "google" && syncStatus === "autherror") {
       return (
-        <a
-          className="border rounded py-1 px-2 bg-orange-500 text-white"
-          href={GOOGLE_AUTH_RETIEVAL_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a className={baseClass + "bg-orange-500"} href={GOOGLE_AUTH_RETIEVAL_URL} target="_blank" rel="noreferrer">
           Auth expired. Click here to open sign in page. Data will be synced on next update after auth recovered.
         </a>
       );
     }
 
     if (saving || ctrlS) {
-      return <span className="border rounded py-1 px-2 bg-lime-500 text-white">Saving...</span>;
+      return <span className={baseClass + "bg-lime-500"}>Saving...</span>;
     }
 
     if (savePending) {
       return (
-        <button type="button" className="border rounded py-1 px-2 bg-lime-500 text-white" onClick={onClickFlush}>
+        <button type="button" className={baseClass + "bg-lime-500"} onClick={onClickFlush}>
           Pending...
         </button>
       );
     }
 
-    return <span className="border rounded py-1 px-2 bg-lime-500 text-white">Synched</span>;
+    return <span className={baseClass + "bg-lime-500"}>Synched</span>;
   }, [canSyncWorkspace, onClickPopupButton, savePending, saving, ctrlS, syncStatus, workspaceType, onClickFlush]);
 
   const handleClickOpen = useCallback(() => {
