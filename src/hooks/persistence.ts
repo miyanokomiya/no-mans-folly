@@ -82,6 +82,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       nextSheetDoc.meta = { sheetId };
 
       if (fileAccess.hasHnadle()) {
+        setReady(false);
         try {
           await fileAccess.openSheet(sheetId, nextSheetDoc);
           setSyncStatus("ok");
@@ -91,6 +92,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
           handleSyncError(e);
           console.error("Failed to load local sheet: ", sheetId, e);
         }
+        setReady(true);
       }
 
       const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
