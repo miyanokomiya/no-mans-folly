@@ -1,91 +1,92 @@
 import { expect, describe, test, vi, afterEach, beforeEach } from "vitest";
 import { newLeveledThrottle, newThrottle } from "./throttle";
 
-async function sleep(time: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time);
-  });
-}
-
 describe("newThrottle", () => {
-  test("should omit internal calling", async () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("should omit internal calling", () => {
     const fn = vi.fn();
     const t = newThrottle(fn, 10);
     t();
     t();
     t();
-    await sleep(20);
+    vi.advanceTimersByTime(20);
 
     expect(fn).toHaveBeenCalledTimes(1);
   });
-  test("should recall after waiting the interval", async () => {
+  test("should recall after waiting the interval", () => {
     const fn = vi.fn();
     const t = newThrottle(fn, 10);
     t();
     expect(fn).toHaveBeenCalledTimes(0);
-    await sleep(20);
+    vi.advanceTimersByTime(20);
     expect(fn).toHaveBeenCalledTimes(1);
     t();
     expect(fn).toHaveBeenCalledTimes(1);
-    await sleep(20);
+    vi.advanceTimersByTime(20);
     expect(fn).toHaveBeenCalledTimes(2);
   });
-  test("should pass the latest args", async () => {
+  test("should pass the latest args", () => {
     const mock = vi.fn();
     const fn = (val1: number, val2: number) => mock(val1, val2);
     const t = newThrottle(fn, 10);
     t(10, 100);
-    await sleep(5);
+    vi.advanceTimersByTime(5);
     t(20, 200);
-    await sleep(6);
+    vi.advanceTimersByTime(6);
     expect(mock).toHaveBeenCalledTimes(1);
     expect(mock).toHaveBeenCalledWith(20, 200);
     t(30, 300);
-    await sleep(10);
+    vi.advanceTimersByTime(10);
     expect(mock).toHaveBeenCalledTimes(2);
     expect(mock).toHaveBeenCalledWith(30, 300);
   });
 
   describe("when leading is true", () => {
-    test("should call leading", async () => {
+    test("should call leading", () => {
       const mock = vi.fn();
       const fn = (val1: number, val2: number) => mock(val1, val2);
       const t = newThrottle(fn, 10, true);
       t(10, 100);
       expect(mock).toHaveBeenNthCalledWith(1, 10, 100);
-      await sleep(3);
+      vi.advanceTimersByTime(3);
       t(20, 200);
       expect(mock).toHaveBeenCalledTimes(1);
-      await sleep(5);
+      vi.advanceTimersByTime(5);
       expect(mock).toHaveBeenCalledTimes(1);
       t(30, 300);
       expect(mock).toHaveBeenCalledTimes(1);
-      await sleep(5);
+      vi.advanceTimersByTime(5);
 
       expect(mock).toHaveBeenCalledTimes(2);
       expect(mock).toHaveBeenNthCalledWith(1, 10, 100);
       expect(mock).toHaveBeenNthCalledWith(2, 30, 300);
     });
 
-    test("should wait for the next execution", async () => {
+    test("should wait for the next execution", () => {
       const mock = vi.fn();
       const fn = (val1: number) => mock(val1);
       const t = newThrottle(fn, 10, true);
       t(10);
       expect(mock).toHaveBeenCalledTimes(1);
-      await sleep(5);
+      vi.advanceTimersByTime(5);
       t(20);
       expect(mock).toHaveBeenCalledTimes(1);
-      await sleep(3);
+      vi.advanceTimersByTime(3);
       expect(mock).toHaveBeenCalledTimes(1);
-      await sleep(3);
+      vi.advanceTimersByTime(3);
       expect(mock).toHaveBeenCalledTimes(2);
       expect(mock).toHaveBeenNthCalledWith(2, 20);
     });
   });
 
   describe("flush", () => {
-    test("should flush current throttled item", async () => {
+    test("should flush current throttled item", () => {
       const mock = vi.fn();
       const fn = (val1: number) => mock(val1);
       const t = newThrottle(fn, 10);
@@ -93,21 +94,21 @@ describe("newThrottle", () => {
       t.flush();
       expect(mock).toHaveBeenCalledTimes(1);
       expect(mock).toHaveBeenNthCalledWith(1, 10);
-      await sleep(15);
+      vi.advanceTimersByTime(15);
       expect(mock).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("clear", () => {
-    test("should clear current throttled item", async () => {
+    test("should clear current throttled item", () => {
       const mock = vi.fn();
       const fn = (val1: number) => mock(val1);
       const t = newThrottle(fn, 10);
       t(10);
       t.clear();
-      await sleep(15);
+      vi.advanceTimersByTime(15);
       t(20);
-      await sleep(15);
+      vi.advanceTimersByTime(15);
 
       expect(mock).toHaveBeenCalledTimes(1);
       expect(mock).toHaveBeenNthCalledWith(1, 20);
