@@ -102,18 +102,20 @@ function App() {
     return context;
   }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
-  const onClickOpen = useCallback(() => {
+  const handleOpenWorkspace = useCallback(() => {
     setOpenDialog("workspace");
     setWorkspaceActionType("open");
   }, []);
 
-  const onClickSave = useCallback(() => {
+  const handleSaveWorkspace = useCallback(() => {
     setOpenDialog("workspace");
     setWorkspaceActionType("save");
   }, []);
 
-  const onClickClear = useCallback(async () => {
+  const handleClearWorkspace = useCallback(async () => {
     await clearDiagram();
+    setFileAccess(newFileAccess());
+    setWorkspaceType("local");
   }, [clearDiagram]);
 
   const saving = useMemo(() => {
@@ -239,9 +241,9 @@ function App() {
         ) : undefined}
         <div className="fixed left-0 top-0 flex">
           <AppHeader
-            onClickOpen={onClickOpen}
-            onClickSave={onClickSave}
-            onClickClear={onClickClear}
+            onClickOpen={handleOpenWorkspace}
+            onClickSave={handleSaveWorkspace}
+            onClickClear={handleClearWorkspace}
             canSyncWorkspace={canSyncWorkspace}
             saving={saving}
             syncStatus={syncStatus}

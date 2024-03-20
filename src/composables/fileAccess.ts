@@ -16,6 +16,10 @@ export interface FileAccess {
   saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
   loadAsset: (assetId: string) => Promise<File | undefined>;
 
+  /**
+   * Once the instance is disconnected, it shouldn't be reused.
+   * Exception: Local file access can be reused because it can retrieve file handlers itself.
+   */
   disconnect: () => Promise<void>;
 }
 

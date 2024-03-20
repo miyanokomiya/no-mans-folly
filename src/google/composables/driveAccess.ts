@@ -228,8 +228,13 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     return new File([blob], assetId, { type: blob.type });
   }
 
+  /**
+   * This instance can't be reused after disconnected.
+   */
   async function disconnect() {
     files = undefined;
+    folderId = "";
+    token = "";
   }
 
   async function getFile(fileId: string): Promise<Blob> {
