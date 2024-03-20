@@ -43,10 +43,10 @@ function App() {
     savePending,
     initSheet,
     initDiagram,
-    openDiagramFromLocal,
+    openDiagramFromWorkspace,
     clearDiagram,
-    saveAllToLocal,
-    canSyncLocal,
+    saveToWorkspace,
+    canSyncWorkspace,
     assetAPI,
     syncStatus,
   } = usePersistence({ generateUuid, fileAccess });
@@ -134,11 +134,11 @@ function App() {
     setOpenEntranceDialog(false);
   }, []);
   const handleOpenWorkspaceOnEntrance = useCallback(async () => {
-    const result = await openDiagramFromLocal();
+    const result = await openDiagramFromWorkspace();
     if (result) {
       closeEntranceDialog();
     }
-  }, [openDiagramFromLocal, closeEntranceDialog]);
+  }, [openDiagramFromWorkspace, closeEntranceDialog]);
 
   const handleGoogleFolderSelectOnEntrace = useCallback((folder: GoogleDriveFolder, token: string) => {
     setOpenEntranceDialog(false);
@@ -151,7 +151,7 @@ function App() {
     if (googleMode !== "picked") return;
 
     setGoogleMode("loading");
-    openDiagramFromLocal()
+    openDiagramFromWorkspace()
       .then(() => {
         setGoogleMode("loaded");
       })
@@ -159,7 +159,7 @@ function App() {
         console.error(e);
         setGoogleMode("");
       });
-  }, [googleMode, openDiagramFromLocal]);
+  }, [googleMode, openDiagramFromWorkspace]);
 
   const loading = !ready || googleMode === "loading";
   const canPersist = fileAccess.hasHnadle() || !noIndexedDB;
@@ -176,15 +176,15 @@ function App() {
   const handleFolderSelect = useCallback(async () => {
     switch (openWorkspacePicker) {
       case "open":
-        await openDiagramFromLocal();
+        await openDiagramFromWorkspace();
         return;
       case "save":
-        await saveAllToLocal();
+        await saveToWorkspace();
         return;
       default:
         return;
     }
-  }, [openWorkspacePicker, openDiagramFromLocal, saveAllToLocal]);
+  }, [openWorkspacePicker, openDiagramFromWorkspace, saveToWorkspace]);
 
   const resetLoadingEffect = useEffectOnce(() => {
     switch (openWorkspaceState) {
@@ -284,7 +284,7 @@ function App() {
             onClickOpen={onClickOpen}
             onClickSave={onClickSave}
             onClickClear={onClickClear}
-            canSyncLocal={canSyncLocal}
+            canSyncWorkspace={canSyncWorkspace}
             saving={saving}
             syncStatus={syncStatus}
             workspaceType={googleMode ? "google" : "local"}

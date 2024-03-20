@@ -10,7 +10,7 @@ interface Props {
   onClickOpen: () => void;
   onClickSave: () => void;
   onClickClear: () => void;
-  canSyncLocal: boolean;
+  canSyncWorkspace: boolean;
   saving: boolean;
   syncStatus: "ok" | "autherror" | "unknownerror";
   workspaceType: "local" | "google";
@@ -20,7 +20,7 @@ export const AppHeader: React.FC<Props> = ({
   onClickOpen,
   onClickSave,
   onClickClear,
-  canSyncLocal,
+  canSyncWorkspace,
   saving,
   syncStatus,
   workspaceType,
@@ -46,7 +46,7 @@ export const AppHeader: React.FC<Props> = ({
     setPopupedKey("");
   }, []);
   const storageMessage = useMemo(() => {
-    if (!canSyncLocal) {
+    if (!canSyncWorkspace) {
       return (
         <button
           className="border rounded py-1 px-2 bg-red-500 text-white"
@@ -80,7 +80,7 @@ export const AppHeader: React.FC<Props> = ({
         {saving || ctrlS ? "Pending..." : "Synched"}
       </span>
     );
-  }, [canSyncLocal, onClickPopupButton, saving, ctrlS, syncStatus, workspaceType]);
+  }, [canSyncWorkspace, onClickPopupButton, saving, ctrlS, syncStatus, workspaceType]);
 
   const _onClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -116,14 +116,14 @@ export const AppHeader: React.FC<Props> = ({
     (e: KeyboardEvent) => {
       if (e.key === "s" && isCtrlOrMeta(e)) {
         e.preventDefault();
-        if (canSyncLocal) {
+        if (canSyncWorkspace) {
           setCtrlS(true);
         } else {
           onClickPopupButton("file");
         }
       }
     },
-    [canSyncLocal, onClickPopupButton],
+    [canSyncWorkspace, onClickPopupButton],
   );
   useGlobalKeydownEffect(handleKeyDown);
 

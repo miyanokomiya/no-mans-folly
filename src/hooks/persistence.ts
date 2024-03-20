@@ -44,7 +44,7 @@ interface PersistenceOption {
 }
 
 export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
-  const [canSyncLocal, setCanSyncToLocal] = useState(false);
+  const [canSyncWorkspace, setCanSyncWorkspace] = useState(false);
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
@@ -85,7 +85,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
           await fileAccess.openSheet(sheetId, nextSheetDoc);
           setSyncStatus("ok");
           await clearIndexeddbPersistence(sheetId);
-          setCanSyncToLocal(fileAccess.hasHnadle());
+          setCanSyncWorkspace(fileAccess.hasHnadle());
         } catch (e) {
           handleSyncError(e);
           console.error("Failed to load local sheet: ", sheetId, e);
@@ -129,13 +129,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setReady(true);
   }, [generateUuid, initSheet]);
 
-  const openDiagramFromLocal = useCallback(async (): Promise<boolean> => {
+  const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
     try {
       const result = await fileAccess.openDiagram(nextDiagramDoc);
       setSyncStatus("ok");
-      setCanSyncToLocal(fileAccess.hasHnadle());
+      setCanSyncWorkspace(fileAccess.hasHnadle());
       if (!result) {
         setReady(true);
         return false;
@@ -178,7 +178,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const clearDiagram = useCallback(async () => {
     await fileAccess.disconnect();
-    setCanSyncToLocal(fileAccess.hasHnadle());
+    setCanSyncWorkspace(fileAccess.hasHnadle());
     setReady(false);
     await clearIndexeddbPersistenceAll();
 
@@ -208,7 +208,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
    * When the target workspace is empty, just save current diagram there.
    * When the target workspace has data, merge current diagram to it and save merged diagram there.
    */
-  const saveAllToLocal = useCallback(async () => {
+  const saveToWorkspace = useCallback(async () => {
     if (!diagramStores) return;
 
     try {
@@ -241,7 +241,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       console.error("Failed to sync diagram", e);
     }
 
-    setCanSyncToLocal(fileAccess.hasHnadle());
+    setCanSyncWorkspace(fileAccess.hasHnadle());
   }, [fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores]);
 
   const undoManager = useMemo(() => {
@@ -257,7 +257,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const saveDiagramUpdateThrottle = useMemo(() => {
     return newThrottle(
       () => {
-        if (!canSyncLocal) return;
+        if (!canSyncWorkspace) return;
         try {
           fileAccess.overwriteDiagramDoc(diagramDoc);
           setSyncStatus("ok");
@@ -269,7 +269,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       SYNC_THROTTLE_INTERVAL,
       true,
     );
-  }, [fileAccess, handleSyncError, canSyncLocal, diagramDoc]);
+  }, [fileAccess, handleSyncError, canSyncWorkspace, diagramDoc]);
 
   useEffect(() => {
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
@@ -282,19 +282,19 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveDiagramUpdateThrottle]);
 
   useEffect(() => {
-    if (!canSyncLocal) return;
+    if (!canSyncWorkspace) return;
 
     diagramDoc.on("update", saveDiagramUpdateThrottle);
     return () => {
       diagramDoc.off("update", saveDiagramUpdateThrottle);
       saveDiagramUpdateThrottle.flush();
     };
-  }, [canSyncLocal, saveDiagramUpdateThrottle, diagramDoc]);
+  }, [canSyncWorkspace, saveDiagramUpdateThrottle, diagramDoc]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
     return newThrottle(
       (sheetId: string) => {
-        if (!canSyncLocal) return;
+        if (!canSyncWorkspace) return;
         try {
           fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
           setSyncStatus("ok");
@@ -306,7 +306,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       SYNC_THROTTLE_INTERVAL,
       true,
     );
-  }, [fileAccess, handleSyncError, canSyncLocal, sheetDoc]);
+  }, [fileAccess, handleSyncError, canSyncWorkspace, sheetDoc]);
 
   useEffect(() => {
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
@@ -319,7 +319,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveSheetUpdateThrottle]);
 
   useEffect(() => {
-    if (!canSyncLocal) return;
+    if (!canSyncWorkspace) return;
 
     const fn = () => {
       saveSheetUpdateThrottle(sheetDoc.meta.sheetId);
@@ -330,7 +330,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       sheetDoc.off("update", fn);
       saveSheetUpdateThrottle.flush();
     };
-  }, [canSyncLocal, saveSheetUpdateThrottle, sheetDoc]);
+  }, [canSyncWorkspace, saveSheetUpdateThrottle, sheetDoc]);
 
   useEffect(() => {
     return () => {
@@ -379,22 +379,22 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const assetAPI = useMemo<AssetAPI>(() => {
     return {
-      enabled: canSyncLocal && fileAccess.hasHnadle(),
+      enabled: canSyncWorkspace && fileAccess.hasHnadle(),
       saveAsset: fileAccess.saveAsset,
       loadAsset: fileAccess.loadAsset,
     };
-  }, [fileAccess, canSyncLocal]);
+  }, [fileAccess, canSyncWorkspace]);
 
   return {
     initSheet,
     initDiagram,
-    openDiagramFromLocal,
+    openDiagramFromWorkspace,
     clearDiagram,
     undoManager,
     ready,
     savePending,
-    saveAllToLocal,
-    canSyncLocal,
+    saveToWorkspace,
+    canSyncWorkspace,
     ...diagramStores,
     ...sheetStores,
 
