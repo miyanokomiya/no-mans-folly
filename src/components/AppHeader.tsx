@@ -82,12 +82,12 @@ export const AppHeader: React.FC<Props> = ({
     );
   }, [canSyncWorkspace, onClickPopupButton, saving, ctrlS, syncStatus, workspaceType]);
 
-  const _onClickOpen = useCallback(() => {
+  const handleClickOpen = useCallback(() => {
     setPopupedKey("");
     onClickOpen();
   }, [onClickOpen]);
 
-  const _onClickSave = useCallback(() => {
+  const handleClickSave = useCallback(() => {
     setPopupedKey("");
     onClickSave();
   }, [onClickSave]);
@@ -98,19 +98,14 @@ export const AppHeader: React.FC<Props> = ({
   }, []);
 
   const handleClickClear = useCallback(() => {
+    setPopupedKey("");
     setOpenClearConfirm(true);
   }, []);
 
   const clearDiagram = useCallback(() => {
-    setPopupedKey("");
     setOpenClearConfirm(false);
     onClickClear();
   }, [onClickClear]);
-
-  const disconnectWorkspace = useCallback(() => {
-    // TODO: Polish this process
-    location.reload();
-  }, []);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -139,10 +134,10 @@ export const AppHeader: React.FC<Props> = ({
   const fileItems = useMemo(() => {
     const className = "p-2 border hover:bg-gray-200";
 
-    if (workspaceType === "google") {
+    if (workspaceType) {
       return (
         <div className="flex flex-col w-max">
-          <button type="button" className={className} onClick={disconnectWorkspace}>
+          <button type="button" className={className} onClick={handleClickClear}>
             Disconnect workspace
           </button>
         </div>
@@ -151,10 +146,10 @@ export const AppHeader: React.FC<Props> = ({
 
     return (
       <div className="flex flex-col w-max">
-        <button type="button" className={className} onClick={_onClickOpen}>
+        <button type="button" className={className} onClick={handleClickOpen}>
           Open & Sync workspace
         </button>
-        <button type="button" className={className} onClick={_onClickSave}>
+        <button type="button" className={className} onClick={handleClickSave}>
           Save & Sync workspace
         </button>
         <button type="button" className={className} onClick={handleClickClear}>
@@ -162,7 +157,7 @@ export const AppHeader: React.FC<Props> = ({
         </button>
       </div>
     );
-  }, [_onClickOpen, _onClickSave, handleClickClear, disconnectWorkspace, workspaceType]);
+  }, [handleClickOpen, handleClickSave, handleClickClear, workspaceType]);
 
   if (noPersistence) {
     return <></>;
@@ -185,7 +180,7 @@ export const AppHeader: React.FC<Props> = ({
       <Dialog
         open={openClearConfirm}
         onClose={closeClearConfirm}
-        title="Clear diagram"
+        title={workspaceType ? "Disconnect workspace" : "Clear diagram"}
         actions={
           <>
             <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
@@ -195,11 +190,12 @@ export const AppHeader: React.FC<Props> = ({
       >
         {workspaceType ? (
           <div>
+            <p>This action closes this diagram.</p>
             <p>Workspace files will not be affected by this action.</p>
           </div>
         ) : (
           <div>
-            <p>This diagram isn't saved to any workspace.</p>
+            <p>This diagram is yet to be saved to any workspace.</p>
             <p>This action clears the diagram and it cannot be undone.</p>
           </div>
         )}
