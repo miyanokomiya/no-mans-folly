@@ -1,8 +1,12 @@
-import { expect, describe, test } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { expect, describe, test, beforeEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { NumberInput } from "./NumberInput";
 
 describe("NumberInput", () => {
+  beforeEach(() => {
+    cleanup();
+  });
+
   test("should accept any text input but emit value only when it's valid", () => {
     let value = 123;
     render(<NumberInput value={value} onChange={(v) => (value = v)} />);

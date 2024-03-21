@@ -9,7 +9,9 @@ export function getSheetIdFromQuery(): string {
   return queryParameters.get("sheet") ?? "";
 }
 
-export function getCallbackAction(): "" | "auth_error" | "retrieval" | "no_google_drive_scope" {
+export type AuthCallbackAction = "" | "auth_error" | "retrieval" | "no_google_drive_scope";
+
+export function getCallbackAction(): AuthCallbackAction {
   const queryParameters = new URLSearchParams(window.location.search);
   return (queryParameters.get("action") as any) ?? "";
 }
