@@ -22,13 +22,11 @@ export function useDrivePicker({ token, onFolderPick, onClose }: Props) {
       viewId: "FOLDERS",
       token,
       setIncludeFolders: true,
-      showUploadView: true,
-      showUploadFolders: true,
       setSelectFolderEnabled: true,
       callbackFunction: (data) => {
         if (data.action === "loaded") return;
 
-        if (data.action === "picked" || data.docs?.length > 0) {
+        if (data.action === "picked" && data.docs?.length > 0 && data.docs[0].type === "folder") {
           onFolderPick?.(data.docs[0]);
         }
 
