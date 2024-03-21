@@ -124,14 +124,14 @@ export const AppHeader: React.FC<Props> = ({
 
         if (savePending) {
           onClickFlush?.();
-        } else if (canSyncWorkspace) {
+        } else if (canSyncWorkspace && syncStatus === "ok") {
           setCtrlS(true);
         } else {
           onClickPopupButton("file");
         }
       }
     },
-    [canSyncWorkspace, onClickPopupButton, onClickFlush, savePending],
+    [canSyncWorkspace, onClickPopupButton, onClickFlush, savePending, syncStatus],
   );
   useGlobalKeydownEffect(handleKeyDown);
 
