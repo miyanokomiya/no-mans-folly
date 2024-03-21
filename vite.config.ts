@@ -13,7 +13,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, "src", "pages", "index.html"),
-        "auth-retrieved": resolve(__dirname, "src", "pages", "auth-retrieved", "index.html"),
+        "auth-result": resolve(__dirname, "src", "pages", "auth-result", "index.html"),
       },
     },
   },

@@ -9,9 +9,9 @@ export function getSheetIdFromQuery(): string {
   return queryParameters.get("sheet") ?? "";
 }
 
-export function getCallbackAction(): string {
+export function getCallbackAction(): "" | "auth_error" | "retrieval" | "no_google_drive_scope" {
   const queryParameters = new URLSearchParams(window.location.search);
-  return queryParameters.get("action") ?? "";
+  return (queryParameters.get("action") as any) ?? "";
 }
 
 export function getBackHomeFlag(): boolean {
