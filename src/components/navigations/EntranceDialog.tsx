@@ -6,7 +6,6 @@ import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
-import { newFeatureFlags } from "../../composables/featureFlags";
 import { usePageShowBackEffect } from "../../hooks/window";
 
 interface Props {
@@ -22,7 +21,6 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
 
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
-  const { googleAvailable } = newFeatureFlags();
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
@@ -99,19 +97,17 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
             <p className="text-red-500 font-bold text-center">This browser doesn't support local folder.</p>
           )}
         </div>
-        {googleAvailable ? (
-          <div className="mt-4 flex flex-col items-center">
-            <button
-              type="button"
-              className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
-              onClick={handleGoogleClick}
-              disabled={loading}
-            >
-              <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
-              <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
-            </button>
-          </div>
-        ) : undefined}
+        <div className="mt-4 flex flex-col items-center">
+          <button
+            type="button"
+            className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+            onClick={handleGoogleClick}
+            disabled={loading}
+          >
+            <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
+            <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
+          </button>
+        </div>
         <p className="mt-4">
           You can start with no workspace, but your data will be gone unless it's saved to a workspace before you leave
           this page.
@@ -126,22 +122,18 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
             <span>Start with no workspace</span>
           </button>
         </div>
-        {googleAvailable ? (
-          <>
-            <p className="mt-4">You can revoke external connections via below button.</p>
-            <p>(This button is visible even if there's no connection.)</p>
-            <div className="mt-4 flex flex-col items-center">
-              <button
-                type="button"
-                className="w-52 p-2 rounded border border-red-400 text-red-500 font-semibold flex items-center gap-2"
-                onClick={onRevoke}
-                disabled={loading}
-              >
-                <span className="w-full text-center">Revoke connections</span>
-              </button>
-            </div>
-          </>
-        ) : undefined}
+        <p className="mt-4">You can revoke external connections via below button.</p>
+        <p>(This button is visible even if there's no connection.)</p>
+        <div className="mt-4 flex flex-col items-center">
+          <button
+            type="button"
+            className="w-52 p-2 rounded border border-red-400 text-red-500 font-semibold flex items-center gap-2"
+            onClick={onRevoke}
+            disabled={loading}
+          >
+            <span className="w-full text-center">Revoke connections</span>
+          </button>
+        </div>
       </div>
     </Dialog>
   );

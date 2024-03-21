@@ -8,7 +8,6 @@ import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import linkIcon from "../../assets/icons/link.svg";
 import googleSignInButton from "../../assets/externals/google_sign_in_light.svg";
-import { newFeatureFlags } from "../../composables/featureFlags";
 
 interface Props {
   open: boolean;
@@ -32,7 +31,6 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
   const [error, setError] = useState<"google_401" | "google_unknown">();
-  const { googleAvailable } = newFeatureFlags();
 
   const title = useMemo(() => {
     switch (actionType) {
@@ -130,19 +128,17 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
             <p className="text-red-500 font-semibold">This browser doesn't support local folder.</p>
           )}
         </div>
-        {googleAvailable ? (
-          <div className="mt-4 flex flex-col items-center">
-            <button
-              type="button"
-              className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
-              onClick={handleGoogleClick}
-              disabled={loading}
-            >
-              <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
-              <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
-            </button>
-          </div>
-        ) : undefined}
+        <div className="mt-4 flex flex-col items-center">
+          <button
+            type="button"
+            className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+            onClick={handleGoogleClick}
+            disabled={loading}
+          >
+            <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
+            <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
+          </button>
+        </div>
         {error === "google_401" ? (
           <div className="mt-4 flex flex-col items-center gap-4">
             <p className="text-red-500 font-semibold">

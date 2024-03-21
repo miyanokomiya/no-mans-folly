@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PopupButton } from "./atoms/PopupButton";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "./atoms/Dialog";
-import { isCtrlOrMeta, isFileAccessAvailable } from "../utils/devices";
+import { isCtrlOrMeta } from "../utils/devices";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { useGlobalKeydownEffect } from "../hooks/window";
 import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
-import { newFeatureFlags } from "../composables/featureFlags";
 
 interface Props {
   onClickOpen: () => void;
@@ -35,10 +34,6 @@ export const AppHeader: React.FC<Props> = ({
   // Used for pretending to save
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
-
-  const { googleAvailable } = newFeatureFlags();
-  const fileAccessAvailable = isFileAccessAvailable();
-  const noPersistence = !fileAccessAvailable && !workspaceType && !googleAvailable;
 
   const onClickPopupButton = useCallback(
     (name: string) => {
@@ -173,10 +168,6 @@ export const AppHeader: React.FC<Props> = ({
       </div>
     );
   }, [handleClickOpen, handleClickSave, handleClickClear, workspaceType, hasTemporaryDiagram]);
-
-  if (noPersistence) {
-    return <></>;
-  }
 
   return (
     <OutsideObserver className="h-10 px-1 bg-white rounded-b flex items-center" onClick={closePopup}>

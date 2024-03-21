@@ -30,7 +30,7 @@ export const AuthResult: React.FC<Props> = ({ callbackAction, backHome }) => {
     );
 
   const buttonBlock = backHome ? (
-    <a href="/?google=1" className="w-52 p-2 rounded bg-blue-400 text-white flex items-center justify-center gap-2">
+    <a href="/" className="w-52 p-2 rounded bg-blue-400 text-white flex items-center justify-center gap-2">
       Back
     </a>
   ) : (
