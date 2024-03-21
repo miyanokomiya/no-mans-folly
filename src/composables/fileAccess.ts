@@ -16,6 +16,10 @@ export interface FileAccess {
   saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
   loadAsset: (assetId: string) => Promise<File | undefined>;
 
+  openDoc: (name: string, doc: Y.Doc) => Promise<true | undefined>;
+  getFileNameList: () => Promise<{ root: string[]; assets: string[] } | undefined>;
+  mergeDoc: (name: string, doc: Y.Doc) => Promise<void>;
+
   /**
    * Once the instance is disconnected, it shouldn't be reused.
    * Exception: Local file access can be reused because it can retrieve file handlers itself.
@@ -47,6 +51,29 @@ export function newFileAccess(): FileAccess {
     if (!handle) return;
     assetHandle = await handle.getDirectoryHandle(ASSET_DIRECTORY_NAME, { create: true });
     return !!assetHandle;
+  }
+
+  async function getFileNameList(): Promise<{ root: string[]; assets: string[] } | undefined> {
+    if (!handle || !assetHandle) {
+      await openAssetDirectory();
+    }
+    if (!handle || !assetHandle) return;
+
+    const root: string[] = [];
+    for await (const entry of (handle as any).values()) {
+      if (entry.kind === "file") {
+        root.push(entry.name);
+      }
+    }
+
+    const assets: string[] = [];
+    for await (const entry of (assetHandle as any).values()) {
+      if (entry.kind === "file") {
+        assets.push(entry.name);
+      }
+    }
+
+    return { root, assets };
   }
 
   async function openDoc(name: string, doc: Y.Doc): Promise<true | undefined> {
@@ -112,6 +139,16 @@ export function newFileAccess(): FileAccess {
     return overwriteDoc(getSheetFileName(sheetId), doc);
   }
 
+  async function mergeDoc(name: string, doc: Y.Doc): Promise<void> {
+    if (!handle) throw new Error(`No file handler: ${name}`);
+
+    const res0 = await openDoc(name, doc);
+    if (!res0) throw new Error(`Failed to open file: ${name}`);
+
+    const res1 = await overwriteDoc(name, doc);
+    if (!res1) throw new Error(`Failed to save file: ${name}`);
+  }
+
   async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {
     if (!assetHandle) {
       await openAssetDirectory();
@@ -149,6 +186,10 @@ export function newFileAccess(): FileAccess {
 
     saveAsset,
     loadAsset,
+
+    openDoc,
+    getFileNameList,
+    mergeDoc,
 
     disconnect,
   };
@@ -226,6 +267,6 @@ async function readFile(handle: FileSystemFileHandle): Promise<File | undefined>
   return file;
 }
 
-function getSheetFileName(sheetId: string): string {
+export function getSheetFileName(sheetId: string): string {
   return `${sheetId}.folly`;
 }

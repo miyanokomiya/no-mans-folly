@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { FileAccess } from "../../composables/fileAccess";
+import { FileAccess, getSheetFileName } from "../../composables/fileAccess";
 import { GoogleDriveFile } from "../types";
 import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../models/file";
 import { fetchGoogleAuthToken } from "../utils/auth";
@@ -100,6 +100,15 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     return (res.result?.files ?? []) as GoogleDriveFile[];
   }
 
+  async function getFileNameList(): Promise<{ root: string[]; assets: string[] } | undefined> {
+    if (!hasHnadle()) {
+      await openDirectory();
+    }
+    if (!files || !assetFiles) return;
+
+    return { root: files.map((f) => f.name), assets: assetFiles.map((f) => f.name) };
+  }
+
   function hasHnadle(): boolean {
     return !!files;
   }
@@ -113,7 +122,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     if (!hasHnadle()) return;
 
     const file = files?.find((f) => f.name === id);
-    if (!file) return;
+    if (!file) return true;
 
     const blob = await getFile(file.id);
     const buffer = await blob.arrayBuffer();
@@ -148,7 +157,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function openSheet(sheetId: string, sheetDoc: Y.Doc): Promise<true | undefined> {
-    return openDoc(sheetId, sheetDoc);
+    return openDoc(getSheetFileName(sheetId), sheetDoc);
   }
 
   async function overwriteDoc(id: string, doc: Y.Doc): Promise<true | undefined> {
@@ -189,7 +198,17 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function overwriteSheetDoc(sheetId: string, doc: Y.Doc): Promise<true | undefined> {
-    return overwriteDoc(sheetId, doc);
+    return overwriteDoc(getSheetFileName(sheetId), doc);
+  }
+
+  async function mergeDoc(name: string, doc: Y.Doc): Promise<void> {
+    if (!hasHnadle()) throw new Error(`No file handler: ${name}`);
+
+    const res0 = await openDoc(name, doc);
+    if (!res0) throw new Error(`Failed to open file: ${name}`);
+
+    const res1 = await overwriteDoc(name, doc);
+    if (!res1) throw new Error(`Failed to save file: ${name}`);
   }
 
   async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {
@@ -201,20 +220,33 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     const name = assetId;
     const data = blob;
 
-    const metadata = {
-      name,
-      mimeType: blob.type,
-      parents: [assetFolder.id],
-    };
+    const current = assetFiles?.find((f) => f.name === name);
+    if (current) {
+      const metadata = {
+        name,
+        mimeType: blob.type,
+      };
 
-    const res = await requestWrapper(async () => {
-      const res = await postFile(data, metadata);
-      return res;
-    });
-    if (res.status === 200) {
-      const file = res.result as GoogleDriveFile;
-      assetFiles ??= [];
-      assetFiles.push(file);
+      await requestWrapper(async () => {
+        const res = await patchFile(current.id, data, metadata);
+        return res;
+      });
+    } else {
+      const metadata = {
+        name,
+        mimeType: blob.type,
+        parents: [assetFolder.id],
+      };
+
+      const res = await requestWrapper(async () => {
+        const res = await postFile(data, metadata);
+        return res;
+      });
+      if (res.status === 200) {
+        const file = res.result as GoogleDriveFile;
+        assetFiles ??= [];
+        assetFiles.push(file);
+      }
     }
   }
 
@@ -265,6 +297,10 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
     saveAsset,
     loadAsset,
+
+    openDoc,
+    getFileNameList,
+    mergeDoc,
 
     disconnect,
   };
