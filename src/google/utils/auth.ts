@@ -1,5 +1,6 @@
 export const GOOGLE_AUTH_URL = `${process.env.API_HOST}api/google/auth/`;
-export const GOOGLE_AUTH_RETIEVAL_URL = `${GOOGLE_AUTH_URL}?retrieval=1`;
+export const GOOGLE_AUTH_RETIEVAL_URL = `${GOOGLE_AUTH_URL}?callback_action=retrieval`;
+export const GOOGLE_AUTH_INITIATE_URL = `${GOOGLE_AUTH_URL}?callback_action=initiate`;
 
 export async function fetchGoogleAuthToken(): Promise<[status: number, token?: string]> {
   const res = await fetch(`${process.env.API_HOST}api/google/token/`, { credentials: "include" });

@@ -1,7 +1,7 @@
 import { Dialog } from "../atoms/Dialog";
 import { isFileAccessAvailable } from "../../utils/devices";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { GOOGLE_AUTH_RETIEVAL_URL, fetchGoogleAuthToken } from "../../google/utils/auth";
+import { GOOGLE_AUTH_INITIATE_URL, fetchGoogleAuthToken } from "../../google/utils/auth";
 import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
@@ -149,7 +149,7 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
               Google Drive is yet to be connected. Click below button to sing in with Google and connect Google Drive,
               then try again.
             </p>
-            <a href={GOOGLE_AUTH_RETIEVAL_URL} target="_blank" rel="noopener" className="flex items-center gap-2">
+            <a href={GOOGLE_AUTH_INITIATE_URL} target="_blank" rel="noopener" className="flex items-center gap-2">
               <div className="w-4 h-4" />
               <img src={googleSignInButton} alt="Sign in with Google" className="" />
               <img src={linkIcon} className="w-4 h-4" />
