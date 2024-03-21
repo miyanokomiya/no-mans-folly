@@ -23,7 +23,7 @@ export const LoadingDialog: React.FC<Props> = ({ open }) => {
 
   return (
     <Dialog open={open} hideClose required className={"bg-transparent outline-none" + (opening ? " fade-in" : "")}>
-      <div>{opening ? undefined : <p>Loading...</p>}</div>
+      <div className="p-4 rounded-lg bg-white">{opening ? undefined : <p>Loading...</p>}</div>
     </Dialog>
   );
 };
