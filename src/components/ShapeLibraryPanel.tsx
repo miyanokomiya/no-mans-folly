@@ -27,32 +27,35 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
       const imageStore = smctx.getImageStore();
       const assetAPI = smctx.assetAPI;
       if (assetAPI.enabled) {
-        const image = imageStore.getImage(id);
-        if (!image) {
-          // When the asset isn't yet stored, fetch and save it.
-          let blob: Blob;
-          try {
-            const res = await fetch(url);
-            blob = await res.blob();
-          } catch (e) {
-            console.error(e);
-            smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
-            return;
-          }
+        const loadAsset = async () => {
+          const image = imageStore.getImage(id);
+          if (!image) {
+            // When the asset isn't yet stored, fetch and save it.
+            let blob: Blob;
+            try {
+              blob = await imageStore.lazyLoadFromFile(id, async () => {
+                const res = await fetch(url);
+                return res.blob();
+              });
+            } catch (e) {
+              console.error(e);
+              imageStore.removeImage(id);
+              smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
+              return;
+            }
 
-          // Save and load the asset without waiting here.
-          // => Remove the asset if either of them fails.
-          assetAPI.saveAsset(id, blob).catch((e) => {
-            console.error(e);
-            imageStore.removeImage(id);
-            smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
-          });
-          imageStore.loadFromFile(id, blob).catch((e) => {
-            console.error(e);
-            imageStore.removeImage(id);
-            smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
-          });
-        }
+            try {
+              await assetAPI.saveAsset(id, blob);
+            } catch (e) {
+              console.error(e);
+              imageStore.removeImage(id);
+              smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
+            }
+          }
+        };
+
+        // Fetch, load and save the asset without waiting.
+        loadAsset();
 
         const template = {
           shapes: [

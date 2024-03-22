@@ -42,6 +42,13 @@ export function newImageStore() {
     });
   }
 
+  async function lazyLoadFromFile<T extends File | Blob>(assetId: string, loadFn: () => Promise<T>): Promise<T> {
+    processing.add(assetId);
+    const file = await loadFn();
+    await loadFromFile(assetId, file);
+    return file;
+  }
+
   async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<void> {
     if (!assetAPI.enabled) return;
 
@@ -74,6 +81,7 @@ export function newImageStore() {
 
   return {
     loadFromFile,
+    lazyLoadFromFile,
     batchLoad,
     getImage,
     getImageData,
