@@ -36,6 +36,8 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
     switch (actionType) {
       case "save":
         return "Save and open workspace";
+      case "export":
+        return "Export workspace";
       default:
         return "Open workspace";
     }
@@ -101,16 +103,22 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   return (
     <Dialog open={open} onClose={onClose} title={title}>
       <div className="w-96">
-        <p>
-          Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
-          there.
-        </p>
+        {actionType === "export" ? (
+          <p>
+            Select <span className="font-bold">a folder</span> as a workspace, then this diagram is exported there.
+          </p>
+        ) : (
+          <p>
+            Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
+            there.
+          </p>
+        )}
         {hasTemporaryDiagram && actionType === "open" ? (
           <p className="text-red-500 font-semibold">
             Current diagram will be cleared by this action and it cannot be undone.
           </p>
         ) : undefined}
-        {actionType === "save" ? (
+        {actionType === "save" || actionType === "export" ? (
           <p>When a diagram exists in selected workspace, this diagram will be merged to it.</p>
         ) : undefined}
         <div className="mt-4 flex flex-col items-center">
