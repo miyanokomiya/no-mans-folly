@@ -100,13 +100,11 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     return (res.result?.files ?? []) as GoogleDriveFile[];
   }
 
-  async function getFileNameList(): Promise<{ root: string[]; assets: string[] } | undefined> {
+  async function getAssetFileNameList(): Promise<string[] | undefined> {
     if (!hasHnadle()) {
       await openDirectory();
     }
-    if (!files || !assetFiles) return;
-
-    return { root: files.map((f) => f.name), assets: assetFiles.map((f) => f.name) };
+    return assetFiles?.map((f) => f.name);
   }
 
   function hasHnadle(): boolean {
@@ -299,7 +297,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
     loadAsset,
 
     openDoc,
-    getFileNameList,
+    getAssetFileNameList,
     mergeDoc,
 
     disconnect,

@@ -29,18 +29,11 @@ export function newFileAccess(): FileAccess {
     return !!assetHandle;
   }
 
-  async function getFileNameList(): Promise<{ root: string[]; assets: string[] } | undefined> {
-    if (!handle || !assetHandle) {
+  async function getAssetFileNameList(): Promise<string[] | undefined> {
+    if (!assetHandle) {
       await openAssetDirectory();
     }
-    if (!handle || !assetHandle) return;
-
-    const root: string[] = [];
-    for await (const entry of (handle as any).values()) {
-      if (entry.kind === "file") {
-        root.push(entry.name);
-      }
-    }
+    if (!assetHandle) return;
 
     const assets: string[] = [];
     for await (const entry of (assetHandle as any).values()) {
@@ -49,7 +42,7 @@ export function newFileAccess(): FileAccess {
       }
     }
 
-    return { root, assets };
+    return assets;
   }
 
   async function openDoc(name: string, doc: Y.Doc): Promise<true | undefined> {
@@ -164,7 +157,7 @@ export function newFileAccess(): FileAccess {
     loadAsset,
 
     openDoc,
-    getFileNameList,
+    getAssetFileNameList,
     mergeDoc,
 
     disconnect,

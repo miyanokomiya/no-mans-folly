@@ -1,4 +1,5 @@
 import * as Y from "yjs";
+import { newSheetStore } from "../stores/sheets";
 
 /**
  * Never change these values otherwise workspace structure becomes invalid.
@@ -24,7 +25,7 @@ export interface FileAccess {
   loadAsset: (assetId: string) => Promise<File | undefined>;
 
   openDoc: (name: string, doc: Y.Doc) => Promise<true | undefined>;
-  getFileNameList: () => Promise<{ root: string[]; assets: string[] } | undefined>;
+  getAssetFileNameList: () => Promise<string[] | undefined>;
   mergeDoc: (name: string, doc: Y.Doc) => Promise<void>;
 
   /**
@@ -40,21 +41,37 @@ export async function exportWorkspaceToAnother(
   onProgress?: (rate: number) => void,
 ) {
   try {
-    const files = await srcAccess.getFileNameList();
-    if (!files) return;
+    const assetFiles = await srcAccess.getAssetFileNameList();
+    if (!assetFiles) return;
 
     const res = await distAccess.openDirectory();
     if (!res) throw new Error("Failed to open target workspace");
 
-    const totalFileCount = files.root.length + files.assets.length;
-    let finishedFileCount = 0;
+    let sheetIds: string[] = [];
+    {
+      const diagramDoc = new Y.Doc();
+      try {
+        const res = await srcAccess.openDoc(DIAGRAM_FILE_NAME, diagramDoc);
+        if (!res) throw new Error("Failed to open src diagram file");
+        await distAccess.mergeDoc(DIAGRAM_FILE_NAME, diagramDoc);
+
+        const sheetStore = newSheetStore({ ydoc: diagramDoc });
+        sheetIds = sheetStore.getEntities().map((s) => s.id);
+      } finally {
+        diagramDoc.destroy();
+      }
+    }
+
+    const totalFileCount = sheetIds.length + assetFiles.length + 1;
+    let finishedFileCount = 1;
 
     const handleFinishFile = () => {
       finishedFileCount++;
       onProgress?.(finishedFileCount / totalFileCount);
     };
 
-    for (const name of files.root) {
+    for (const sheetId of sheetIds) {
+      const name = getSheetFileName(sheetId);
       const doc = new Y.Doc();
       try {
         const res = await srcAccess.openDoc(name, doc);
@@ -66,7 +83,8 @@ export async function exportWorkspaceToAnother(
       }
     }
 
-    for (const name of files.assets) {
+    // Exporting all files in asset folder rather than narrowing down used ones because it's quite tough.
+    for (const name of assetFiles) {
       const file = await srcAccess.loadAsset(name);
       if (!file) throw new Error(`Failed to open src asset file: ${name}`);
       await distAccess.saveAsset(name, file);
