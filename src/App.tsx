@@ -153,20 +153,20 @@ function App() {
   }, []);
 
   const [exportAccess, setExportAccess] = useState<FileAccess>();
-  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<number>();
 
   const handleExportWorkspaceToAnother = useCallback(async () => {
     if (!exportAccess) return;
 
-    setExporting(true);
+    setExportProgress(0);
     try {
-      await exportWorkspaceToAnother(fileAccess, exportAccess);
+      await exportWorkspaceToAnother(fileAccess, exportAccess, setExportProgress);
     } catch (e: any) {
       alert(`Failed to export: ${e.message}`);
     } finally {
       await exportAccess.disconnect();
       setExportAccess(undefined);
-      setExporting(false);
+      setExportProgress(undefined);
     }
   }, [fileAccess, exportAccess]);
 
@@ -267,7 +267,7 @@ function App() {
 
   useUnloadWarning(!userSetting.getState().debug && (savePendingFlag || hasTemporaryDiagram));
 
-  const loading = !ready || revoking || exporting;
+  const loading = !ready || revoking || exportProgress !== undefined;
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
@@ -287,7 +287,7 @@ function App() {
         actionType={workspaceActionType}
         hasTemporaryDiagram={hasTemporaryDiagram}
       />
-      <LoadingDialog open={loading} />
+      <LoadingDialog open={loading} progress={exportProgress} />
       <div className="relative">
         <div className="w-screen h-screen bg-gray">
           <AppCanvas key={sheetUniqueState} />

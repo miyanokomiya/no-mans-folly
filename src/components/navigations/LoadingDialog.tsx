@@ -3,9 +3,10 @@ import { Dialog } from "../atoms/Dialog";
 
 interface Props {
   open: boolean;
+  progress?: number; // 0 to 1
 }
 
-export const LoadingDialog: React.FC<Props> = ({ open }) => {
+export const LoadingDialog: React.FC<Props> = ({ open, progress }) => {
   const [opening, setOpening] = useState(false);
 
   useLayoutEffect(() => {
@@ -21,9 +22,23 @@ export const LoadingDialog: React.FC<Props> = ({ open }) => {
     };
   }, [open]);
 
+  const content = opening ? undefined : progress === undefined ? (
+    <p>Loading...</p>
+  ) : (
+    <div className="w-60 rounded border bg-white flex justify-start">
+      <div
+        className="h-4 w-full rounded bg-lime-300 transition-transform"
+        style={{
+          transform: `scaleX(${progress})`,
+          transformOrigin: "left center",
+        }}
+      ></div>
+    </div>
+  );
+
   return (
     <Dialog open={open} hideClose required className={"bg-transparent outline-none" + (opening ? " fade-in" : "")}>
-      <div className="p-4 rounded-lg bg-white">{opening ? undefined : <p>Loading...</p>}</div>
+      <div className="p-4 rounded-lg bg-white">{content}</div>
     </Dialog>
   );
 };

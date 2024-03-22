@@ -34,7 +34,11 @@ export interface FileAccess {
   disconnect: () => Promise<void>;
 }
 
-export async function exportWorkspaceToAnother(srcAccess: FileAccess, distAccess: FileAccess) {
+export async function exportWorkspaceToAnother(
+  srcAccess: FileAccess,
+  distAccess: FileAccess,
+  onProgress?: (rate: number) => void,
+) {
   try {
     const files = await srcAccess.getFileNameList();
     if (!files) return;
@@ -42,12 +46,21 @@ export async function exportWorkspaceToAnother(srcAccess: FileAccess, distAccess
     const res = await distAccess.openDirectory();
     if (!res) throw new Error("Failed to open target workspace");
 
+    const totalFileCount = files.root.length + files.assets.length;
+    let finishedFileCount = 0;
+
+    const handleFinishFile = () => {
+      finishedFileCount++;
+      onProgress?.(finishedFileCount / totalFileCount);
+    };
+
     for (const name of files.root) {
       const doc = new Y.Doc();
       try {
         const res = await srcAccess.openDoc(name, doc);
         if (!res) throw new Error(`Failed to open src file: ${name}`);
         await distAccess.mergeDoc(name, doc);
+        handleFinishFile();
       } finally {
         doc.destroy();
       }
@@ -57,6 +70,7 @@ export async function exportWorkspaceToAnother(srcAccess: FileAccess, distAccess
       const file = await srcAccess.loadAsset(name);
       if (!file) throw new Error(`Failed to open src asset file: ${name}`);
       await distAccess.saveAsset(name, file);
+      handleFinishFile();
     }
   } catch (e: any) {
     alert(`Failed to export: ${e.message}`);
