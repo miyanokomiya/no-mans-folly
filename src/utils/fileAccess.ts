@@ -63,12 +63,15 @@ export async function exportWorkspaceToAnother(
     }
 
     const totalFileCount = sheetIds.length + assetFiles.length + 1;
-    let finishedFileCount = 1;
+    let finishedFileCount = 0;
 
     const handleFinishFile = () => {
       finishedFileCount++;
       onProgress?.(finishedFileCount / totalFileCount);
     };
+
+    // The diagram file has been finished.
+    handleFinishFile();
 
     for (const sheetId of sheetIds) {
       const name = getSheetFileName(sheetId);
