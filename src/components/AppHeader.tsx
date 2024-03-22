@@ -153,7 +153,7 @@ export const AppHeader: React.FC<Props> = ({
       return (
         <div className="flex flex-col w-max">
           <button type="button" className={className} onClick={handleClickExport}>
-            Export
+            Export workspace
           </button>
           <button type="button" className={className} onClick={handleClickClear}>
             Disconnect workspace
