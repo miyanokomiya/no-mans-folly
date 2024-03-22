@@ -146,15 +146,21 @@ export const AppHeader: React.FC<Props> = ({
     return () => clearTimeout(timer);
   }, [ctrlS]);
 
+  const canExportWorkspace = !saving && !savePending;
+
   const fileItems = useMemo(() => {
     const className = "p-2 border hover:bg-gray-200 text-left";
 
     if (workspaceType) {
       return (
         <div className="flex flex-col w-max">
-          <button type="button" className={className} onClick={handleClickExport}>
-            Export workspace
-          </button>
+          {canExportWorkspace ? (
+            <button type="button" className={className} onClick={handleClickExport}>
+              Export workspace
+            </button>
+          ) : (
+            <span className={className + " line-through"}>Export workspace</span>
+          )}
           <button type="button" className={className} onClick={handleClickClear}>
             Disconnect workspace
           </button>
@@ -177,7 +183,15 @@ export const AppHeader: React.FC<Props> = ({
         ) : undefined}
       </div>
     );
-  }, [handleClickOpen, handleClickSave, handleClickExport, handleClickClear, workspaceType, hasTemporaryDiagram]);
+  }, [
+    handleClickOpen,
+    handleClickSave,
+    handleClickExport,
+    handleClickClear,
+    workspaceType,
+    hasTemporaryDiagram,
+    canExportWorkspace,
+  ]);
 
   return (
     <OutsideObserver className="h-10 px-1 bg-white rounded-b flex items-center" onClick={closePopup}>
