@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void;
   onLocalFolderSelect?: () => void;
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
-  actionType?: "open" | "save";
+  actionType?: "open" | "save" | "export";
   hasTemporaryDiagram?: boolean;
 }
 

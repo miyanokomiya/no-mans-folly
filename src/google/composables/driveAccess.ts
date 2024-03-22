@@ -1,7 +1,7 @@
 import * as Y from "yjs";
-import { FileAccess, getSheetFileName } from "../../composables/fileAccess";
+import { FileAccess, getSheetFileName } from "../../utils/fileAccess";
 import { GoogleDriveFile } from "../types";
-import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../models/file";
+import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../utils/fileAccess";
 import { fetchGoogleAuthToken } from "../utils/auth";
 
 const GOOGLE_API_URI = "https://www.googleapis.com/drive/v3";

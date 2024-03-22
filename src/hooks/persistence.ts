@@ -7,7 +7,7 @@ import { LayerStore, newLayerStore } from "../stores/layers";
 import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
-import { FileAccess } from "../composables/fileAccess";
+import { FileAccess } from "../utils/fileAccess";
 import { newLeveledThrottle } from "../composables/throttle";
 import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";

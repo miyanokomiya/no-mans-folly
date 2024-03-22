@@ -9,6 +9,7 @@ import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
 interface Props {
   onClickOpen: () => void;
   onClickSave: () => void;
+  onClickExport: () => void;
   onClickClear: () => void;
   onClickFlush: () => void;
   canSyncWorkspace: boolean;
@@ -22,6 +23,7 @@ interface Props {
 export const AppHeader: React.FC<Props> = ({
   onClickOpen,
   onClickSave,
+  onClickExport,
   onClickClear,
   onClickFlush,
   canSyncWorkspace,
@@ -97,6 +99,11 @@ export const AppHeader: React.FC<Props> = ({
     onClickSave();
   }, [onClickSave]);
 
+  const handleClickExport = useCallback(() => {
+    setPopupedKey("");
+    onClickExport();
+  }, [onClickExport]);
+
   const [openClearConfirm, setOpenClearConfirm] = useState(false);
   const closeClearConfirm = useCallback(() => {
     setOpenClearConfirm(false);
@@ -140,11 +147,14 @@ export const AppHeader: React.FC<Props> = ({
   }, [ctrlS]);
 
   const fileItems = useMemo(() => {
-    const className = "p-2 border hover:bg-gray-200";
+    const className = "p-2 border hover:bg-gray-200 text-left";
 
     if (workspaceType) {
       return (
         <div className="flex flex-col w-max">
+          <button type="button" className={className} onClick={handleClickExport}>
+            Export
+          </button>
           <button type="button" className={className} onClick={handleClickClear}>
             Disconnect workspace
           </button>
@@ -167,7 +177,7 @@ export const AppHeader: React.FC<Props> = ({
         ) : undefined}
       </div>
     );
-  }, [handleClickOpen, handleClickSave, handleClickClear, workspaceType, hasTemporaryDiagram]);
+  }, [handleClickOpen, handleClickSave, handleClickExport, handleClickClear, workspaceType, hasTemporaryDiagram]);
 
   return (
     <OutsideObserver className="h-10 px-1 bg-white rounded-b flex items-center" onClick={closePopup}>

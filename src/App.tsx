@@ -16,7 +16,8 @@ import { IAppCanvasContext } from "./contexts/AppCanvasContext";
 import { isTouchDevice } from "./utils/devices";
 import { GoogleDriveFolder } from "./google/types";
 import { newDriveAccess } from "./google/composables/driveAccess";
-import { FileAccess, newFileAccess } from "./composables/fileAccess";
+import { FileAccess, exportWorkspaceToAnother } from "./utils/fileAccess";
+import { newFileAccess } from "./composables/fileAccess";
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
 import { useEffectOnce, useIncrementalKeyMemo } from "./hooks/utils";
@@ -114,6 +115,11 @@ function App() {
     setWorkspaceActionType("save");
   }, []);
 
+  const handleExportWorkspace = useCallback(() => {
+    setOpenDialog("workspace");
+    setWorkspaceActionType("export");
+  }, []);
+
   const handleClearWorkspace = useCallback(async () => {
     await clearDiagram();
     setFileAccess(newFileAccess());
@@ -137,7 +143,7 @@ function App() {
   }, []);
 
   const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
-  const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save">();
+  const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save" | "export">();
   const [openDialog, setOpenDialog] = useState<undefined | "entrance" | "workspace">(
     !indexedDBMode ? "entrance" : undefined,
   );
@@ -145,6 +151,24 @@ function App() {
   const closeDialog = useCallback(() => {
     setOpenDialog(undefined);
   }, []);
+
+  const [exportAccess, setExportAccess] = useState<FileAccess>();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportWorkspaceToAnother = useCallback(async () => {
+    if (!exportAccess) return;
+
+    setExporting(true);
+    try {
+      await exportWorkspaceToAnother(fileAccess, exportAccess);
+    } catch (e: any) {
+      alert(`Failed to export: ${e.message}`);
+    } finally {
+      await exportAccess.disconnect();
+      setExportAccess(undefined);
+      setExporting(false);
+    }
+  }, [fileAccess, exportAccess]);
 
   const handleFolderSelect = useCallback(async (): Promise<boolean> => {
     switch (workspaceActionType) {
@@ -155,12 +179,15 @@ function App() {
       case "save":
         await saveToWorkspace();
         return true;
+      case "export":
+        await handleExportWorkspaceToAnother();
+        return true;
       default:
         return false;
     }
-  }, [workspaceActionType, openDiagramFromWorkspace, saveToWorkspace]);
+  }, [workspaceActionType, openDiagramFromWorkspace, saveToWorkspace, handleExportWorkspaceToAnother]);
 
-  const resetLoadingEffect = useEffectOnce(() => {
+  const resetSelectFolderEffect = useEffectOnce(() => {
     (async () => {
       try {
         const result = await handleFolderSelect();
@@ -175,19 +202,29 @@ function App() {
     })();
   }, true);
 
-  const handleLocalFolderSelect = useCallback(() => {
-    setFileAccess(newFileAccess());
-    setWorkspaceType("local");
-    resetLoadingEffect();
-  }, [resetLoadingEffect]);
+  const handleLocalFolderSelect = useCallback(async () => {
+    if (workspaceActionType === "export") {
+      setExportAccess(newFileAccess());
+    } else {
+      setFileAccess(newFileAccess());
+      setWorkspaceType("local");
+    }
+
+    resetSelectFolderEffect();
+  }, [resetSelectFolderEffect, workspaceActionType]);
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder, token: string) => {
-      setFileAccess(newDriveAccess({ folderId: folder.id, token }));
-      setWorkspaceType("google");
-      resetLoadingEffect();
+      if (workspaceActionType === "export") {
+        setExportAccess(newDriveAccess({ folderId: folder.id, token }));
+      } else {
+        setFileAccess(newDriveAccess({ folderId: folder.id, token }));
+        setWorkspaceType("google");
+      }
+
+      resetSelectFolderEffect();
     },
-    [resetLoadingEffect],
+    [resetSelectFolderEffect, workspaceActionType],
   );
 
   const handleOpenWorkspaceOnEntrance = useCallback(() => {
@@ -230,7 +267,7 @@ function App() {
 
   useUnloadWarning(!userSetting.getState().debug && (savePendingFlag || hasTemporaryDiagram));
 
-  const loading = !ready || revoking;
+  const loading = !ready || revoking || exporting;
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
@@ -279,6 +316,7 @@ function App() {
           <AppHeader
             onClickOpen={handleOpenWorkspace}
             onClickSave={handleSaveWorkspace}
+            onClickExport={handleExportWorkspace}
             onClickClear={handleClearWorkspace}
             onClickFlush={flushSaveThrottles}
             canSyncWorkspace={canSyncWorkspace}

@@ -1,31 +1,7 @@
 import * as Y from "yjs";
-import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../models/file";
+import { FileAccess, ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME, getSheetFileName } from "../utils/fileAccess";
 
 let hasMoveAPI = true;
-
-export interface FileAccess {
-  hasHnadle: () => boolean;
-  openDirectory: () => Promise<true | undefined>;
-  openDiagram: (diagramDoc: Y.Doc) => Promise<true | undefined>;
-  reopenDiagram: (diagramDoc: Y.Doc) => Promise<true | undefined>;
-  openSheet: (sheetId: string, sheetDoc: Y.Doc) => Promise<true | undefined>;
-
-  overwriteDiagramDoc: (doc: Y.Doc) => Promise<true | undefined>;
-  overwriteSheetDoc: (sheetId: string, doc: Y.Doc) => Promise<true | undefined>;
-
-  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
-  loadAsset: (assetId: string) => Promise<File | undefined>;
-
-  openDoc: (name: string, doc: Y.Doc) => Promise<true | undefined>;
-  getFileNameList: () => Promise<{ root: string[]; assets: string[] } | undefined>;
-  mergeDoc: (name: string, doc: Y.Doc) => Promise<void>;
-
-  /**
-   * Once the instance is disconnected, it shouldn't be reused.
-   * Exception: Local file access can be reused because it can retrieve file handlers itself.
-   */
-  disconnect: () => Promise<void>;
-}
 
 export function newFileAccess(): FileAccess {
   let handle: FileSystemDirectoryHandle | undefined;
@@ -265,8 +241,4 @@ async function readFileAsUnit8Array(handle: FileSystemFileHandle): Promise<Uint8
 async function readFile(handle: FileSystemFileHandle): Promise<File | undefined> {
   const file = await handle.getFile();
   return file;
-}
-
-export function getSheetFileName(sheetId: string): string {
-  return `${sheetId}.folly`;
 }
