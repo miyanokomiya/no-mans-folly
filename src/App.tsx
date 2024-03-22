@@ -20,7 +20,7 @@ import { FileAccess, exportWorkspaceToAnother } from "./utils/fileAccess";
 import { newFileAccess } from "./composables/fileAccess";
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
-import { useEffectOnce, useIncrementalKeyMemo } from "./hooks/utils";
+import { useEffectOnce } from "./hooks/utils";
 import { useHasShape } from "./hooks/storeHooks";
 import { newFeatureFlags } from "./composables/featureFlags";
 import { useUnloadWarning } from "./hooks/window";
@@ -258,10 +258,6 @@ function App() {
     }
   }, []);
 
-  // Use this value to recreate <AppCanvas> whenever a sheet is loaded or switched.
-  // => It's safer than using the same incstance since it has complicated state.
-  const sheetUniqueState = useIncrementalKeyMemo("sheet", [shapeStore]);
-
   const hasShape = useHasShape(shapeStore);
   const hasTemporaryDiagram = !workspaceType && hasShape;
 
@@ -289,8 +285,8 @@ function App() {
       />
       <LoadingDialog open={loading} progress={exportProgress} />
       <div className="relative">
-        <div className="w-screen h-screen bg-gray">
-          <AppCanvas key={sheetUniqueState} />
+        <div className="w-screen h-screen bg-gray-500">
+          <AppCanvas />
         </div>
         <div
           className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}

@@ -30,6 +30,11 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
     return newStateMachine(() => stateContextRef.current, newSelectionHubState);
   }, []);
 
+  useEffect(() => {
+    acctx;
+    stateMachine.reset();
+  }, [stateMachine, acctx]);
+
   const handleSetStateContext = useCallback<React.Dispatch<AppCanvasStateContextPart>>(
     (val) => {
       setStateContext((prev) => {

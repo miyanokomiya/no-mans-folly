@@ -380,12 +380,6 @@ export const AppCanvas: React.FC = () => {
   ]);
 
   useEffect(() => {
-    // Need to call reset once here.
-    // The sm has initial mock context until "smctx.setCtx" is called once.
-    sm.reset();
-  }, [sm]);
-
-  useEffect(() => {
     return shapeStore.watchSelected(() => {
       sm.handleEvent({
         type: "selection",
@@ -397,7 +391,7 @@ export const AppCanvas: React.FC = () => {
 
   const canvasAttrs = useMemo(
     () => ({
-      className: "w-max h-max absolute top-0 left-0",
+      className: "w-max h-max absolute top-0 left-0 display-none",
       width: viewSize.width,
       height: viewSize.height,
     }),
