@@ -44,29 +44,23 @@ interface ModifierButtonProps {
 }
 
 const ModifierButton: React.FC<ModifierButtonProps> = ({ modifier, value, onChange, children }) => {
-  const handleDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onChange?.(modifier, true);
-    },
-    [modifier, onChange],
-  );
+  const handleDown = useCallback(() => {
+    onChange?.(modifier, true);
+  }, [modifier, onChange]);
 
-  const handleUp = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onChange?.(modifier, false);
-    },
-    [modifier, onChange],
-  );
+  const handleUp = useCallback(() => {
+    onChange?.(modifier, false);
+  }, [modifier, onChange]);
 
   return (
     <LongPressStarter>
       <button
         type="button"
-        className={"border rounded w-14 h-12 touch-none " + (value ? "bg-lime-200" : "bg-gray-200")}
-        onPointerDown={handleDown}
-        onPointerUp={handleUp}
+        className={"border rounded w-14 h-14 touch-none " + (value ? "bg-lime-200" : "bg-gray-200")}
+        onMouseDown={handleDown}
+        onTouchStart={handleDown}
+        onMouseUp={handleUp}
+        onTouchEnd={handleUp}
       >
         {children}
       </button>
