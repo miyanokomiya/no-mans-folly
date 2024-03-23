@@ -295,7 +295,7 @@ function App() {
       />
       <LoadingDialog open={loading} progress={exportProgress} />
       <div className="relative">
-        <div className="w-screen h-screen bg-gray-500">
+        <div className="w-screen h-screen bg-gray-500 touch-none">
           <AppCanvas />
         </div>
         <div
