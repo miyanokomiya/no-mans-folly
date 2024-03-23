@@ -13,8 +13,18 @@ interface Props {
 export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
   const downInfo = useRef<{ timestamp: number; button: number }>();
   const isDoubleDown = useRef(false);
+
+  // Use the first pointer and ignore others
+  const pointerId = useRef<number>();
+  const isValidPointer = useCallback((e: PointerEvent) => {
+    return pointerId.current === undefined || pointerId.current === e.pointerId;
+  }, []);
+
   const handlePointerDown = useCallback(
     (e: PointerEvent) => {
+      if (!isValidPointer(e)) return;
+      pointerId.current = e.pointerId;
+
       const timestamp = Date.now();
       if (downInfo.current && timestamp - downInfo.current.timestamp < 300 && e.button === downInfo.current.button) {
         e.preventDefault();
@@ -26,11 +36,14 @@ export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
         onDown?.(e);
       }
     },
-    [onDown],
+    [onDown, isValidPointer],
   );
 
   const handlePointerUp = useCallback(
     (e: PointerEvent) => {
+      if (!isValidPointer(e)) return;
+      pointerId.current = undefined;
+
       if (isDoubleDown.current) {
         e.preventDefault();
         isDoubleDown.current = false;
@@ -40,11 +53,12 @@ export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
         onClick?.(e);
       }
     },
-    [onUp, onClick, onDoubleClick],
+    [onUp, onClick, onDoubleClick, isValidPointer],
   );
 
   return {
     handlePointerDown,
     handlePointerUp,
+    isValidPointer,
   };
 }

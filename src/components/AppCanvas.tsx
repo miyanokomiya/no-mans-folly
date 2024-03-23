@@ -441,7 +441,7 @@ export const AppCanvas: React.FC = () => {
     [modifierOptions],
   );
 
-  const { handlePointerDown, handlePointerUp } = useClickable({
+  const { handlePointerDown, handlePointerUp, isValidPointer } = useClickable({
     onDown: useCallback(
       (e: PointerEvent) => {
         e.preventDefault();
@@ -490,6 +490,8 @@ export const AppCanvas: React.FC = () => {
 
   const onMouseMove = useCallback(
     (e: PointerEvent) => {
+      if (!isValidPointer(e)) return;
+
       const p = removeRootPosition({ x: e.pageX, y: e.pageY });
       setMousePoint(p);
       if (!editStartPoint) return;
@@ -504,7 +506,7 @@ export const AppCanvas: React.FC = () => {
         },
       });
     },
-    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, getMouseOptionsCustom],
+    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, getMouseOptionsCustom, isValidPointer],
   );
   useGlobalMousemoveEffect(onMouseMove);
 
