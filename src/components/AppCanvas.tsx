@@ -687,6 +687,7 @@ export const AppCanvas: React.FC = () => {
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
       textEditing={textEditing}
+      onContextMenu={onContextMenu}
     />
   ) : undefined;
 

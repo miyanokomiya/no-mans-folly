@@ -34,6 +34,7 @@ import { newShapeComposite } from "../../composables/shapeComposite";
 import { BoxPaddingButton } from "./BoxPaddingButton";
 import { getPatchByChangingCurveType } from "../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
+import menuIcon from "../../assets/icons/three_dots_v.svg";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -46,6 +47,7 @@ interface Option {
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
   textEditing: boolean;
+  onContextMenu: (e: React.MouseEvent) => void;
 }
 
 export const FloatMenu: React.FC<Option> = ({
@@ -55,6 +57,7 @@ export const FloatMenu: React.FC<Option> = ({
   indexDocAttrInfo,
   focusBack,
   textEditing,
+  onContextMenu,
 }) => {
   const { shapeStore } = useContext(AppCanvasContext);
   const { handleEvent } = useContext(AppStateMachineContext);
@@ -436,6 +439,13 @@ export const FloatMenu: React.FC<Option> = ({
         {canChangeStack ? (
           <StackButton {...popupButtonCommonProps} onClickLast={onClickStackLast} onClickFirst={onClickStackFirst} />
         ) : undefined}
+        <button
+          type="button"
+          className="w-10 h-10 border rounded bg-white p-1 flex justify-center items-center"
+          onClick={onContextMenu}
+        >
+          <img src={menuIcon} alt="Context menu" className="w-6 h-6" />
+        </button>
       </div>
     </div>
   ) : undefined;
