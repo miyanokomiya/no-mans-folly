@@ -82,7 +82,7 @@ export function newTextReadyState(): AppCanvasState {
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape", "LineReady"]);
+          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape", "LineReady", "RectSelectReady"]);
         default:
           return;
       }

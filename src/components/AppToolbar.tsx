@@ -20,6 +20,7 @@ import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayout from "../assets/icons/layout.svg";
 import iconLayoutAlignBox from "../assets/icons/layout_align_box.svg";
+import iconSelectArea from "../assets/icons/select_area.svg";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { Shape } from "../models";
 import { generateBoardTemplate } from "../composables/boardHandler";
@@ -121,6 +122,14 @@ export const AppToolbar: React.FC = () => {
   const handleClosePopup = useCallback(() => {
     setPopup("");
   }, []);
+
+  const handleDownAreaSelect = useCallback(() => {
+    sm.handleEvent({
+      type: "state",
+      data: { name: "RectSelectReady" },
+    });
+    setPopup("");
+  }, [sm]);
 
   const onClickShapeButton = useCallback(() => {
     sm.handleEvent({
@@ -239,6 +248,13 @@ export const AppToolbar: React.FC = () => {
   return (
     <OutsideObserver onClick={handleClosePopup}>
       <div className="bg-white relative border border-1 p-1 rounded shadow flex flex-col">
+        <button
+          type="button"
+          className={getButtonClass(stateLabel === "RectangleSelectingReady")}
+          onClick={handleDownAreaSelect}
+        >
+          <img src={iconSelectArea} alt="Select area" />
+        </button>
         <button type="button" className={getButtonClass(popup === "shapes")} onClick={onClickShapeButton}>
           <img src={iconShapeSet} alt="shapes" />
         </button>

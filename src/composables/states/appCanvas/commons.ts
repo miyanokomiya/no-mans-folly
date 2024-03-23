@@ -42,8 +42,9 @@ import { handleContextItemEvent } from "./contextMenuItems";
 import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
+import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState";
 
-type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "ShapeInspection";
+type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "RectSelectReady" | "ShapeInspection";
 
 export function handleStateEvent(
   _ctx: unknown,
@@ -67,6 +68,10 @@ export function handleStateEvent(
 
   if (event.data.name === "TextReady") {
     return () => newTextReadyState();
+  }
+
+  if (event.data.name === "RectSelectReady") {
+    return () => newRactangleSelectingReadyState();
   }
 
   if (event.data.name === "ShapeInspection") {
@@ -517,7 +522,13 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
       handleHistoryEvent(ctx, event);
       return newSelectionHubState;
     case "state":
-      return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady", "ShapeInspection"]);
+      return handleStateEvent(ctx, event, [
+        "DroppingNewShape",
+        "LineReady",
+        "TextReady",
+        "RectSelectReady",
+        "ShapeInspection",
+      ]);
     case "contextmenu-item": {
       return handleContextItemEvent(ctx, event);
     }

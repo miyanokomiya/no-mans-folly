@@ -257,7 +257,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return newSelectionHubState;
         case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady"]);
+          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady", "RectSelectReady"]);
         case "copy": {
           const clipboard = newDocClipboard(textEditorController.getSelectedDocOutput());
           clipboard.onCopy(event.nativeEvent);
