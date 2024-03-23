@@ -4,11 +4,14 @@ import { newSelectionHubState } from "./selectionHubState";
 import { newMovingHubState } from "./movingHubState";
 
 export function newSingleSelectedByPointerOnState(): AppCanvasState {
+  let timestamp = 0;
+
   return {
     getLabel: () => "SingleSelectedByPointerOn",
     onStart: (ctx) => {
       ctx.hideFloatMenu();
       ctx.startDragging();
+      timestamp = Date.now();
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -16,7 +19,8 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          if (getDistance(event.data.current, event.data.start) < 4 * ctx.getScale()) return;
+          if (Date.now() - timestamp < 100 || getDistance(event.data.current, event.data.start) < 8 * ctx.getScale())
+            return;
 
           const shapeComposite = ctx.getShapeComposite();
           const shape = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
