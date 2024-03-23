@@ -34,6 +34,7 @@ import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
 import { GridBackground } from "./atoms/GridBackground";
 import { LinkMenu } from "./linkMenu/LinkMenu";
 import { useClickable } from "../hooks/clickable";
+import { ModifierSupportPanel } from "./molecules/ModifierSupportPanel";
 
 export const AppCanvas: React.FC = () => {
   const { sheetStore, shapeStore, documentStore, undoManager, userSettingStore } = useContext(AppCanvasContext);
@@ -52,6 +53,7 @@ export const AppCanvas: React.FC = () => {
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; point: IVec2 } | undefined>();
   const [linkInfo, setLinkInfo] = useState<LinkInfo>();
   const [userSetting, setUserSetting] = useState(userSettingStore.getState());
+  const [modifierOptions, setModifierOptions] = useState<ModifierOptions>({});
 
   const imageStore = useMemo(() => {
     shapeStore; // For exhaustive-deps
@@ -432,6 +434,13 @@ export const AppCanvas: React.FC = () => {
     imageStore,
   ]);
 
+  const getMouseOptionsCustom = useCallback(
+    (e: MouseEvent | React.MouseEvent) => {
+      return { ...getMouseOptions(e), ...modifierOptions };
+    },
+    [modifierOptions],
+  );
+
   const { handlePointerDown, handlePointerUp } = useClickable({
     onDown: useCallback(
       (e: MouseEvent) => {
@@ -444,11 +453,11 @@ export const AppCanvas: React.FC = () => {
           type: "pointerdown",
           data: {
             point: viewToCanvas(p),
-            options: getMouseOptions(e),
+            options: getMouseOptionsCustom(e),
           },
         });
       },
-      [viewToCanvas, sm, focus, removeRootPosition, setMousePoint],
+      [viewToCanvas, sm, focus, removeRootPosition, setMousePoint, getMouseOptionsCustom],
     ),
     onUp: useCallback(
       (e: MouseEvent) => {
@@ -456,11 +465,11 @@ export const AppCanvas: React.FC = () => {
           type: "pointerup",
           data: {
             point: viewToCanvas(getMousePoint()),
-            options: getMouseOptions(e),
+            options: getMouseOptionsCustom(e),
           },
         });
       },
-      [viewToCanvas, getMousePoint, sm],
+      [viewToCanvas, getMousePoint, sm, getMouseOptionsCustom],
     ),
     onDoubleClick: useCallback(
       (e: MouseEvent) => {
@@ -468,11 +477,11 @@ export const AppCanvas: React.FC = () => {
           type: "pointerdoubleclick",
           data: {
             point: viewToCanvas(getMousePoint()),
-            options: getMouseOptions(e),
+            options: getMouseOptionsCustom(e),
           },
         });
       },
-      [viewToCanvas, getMousePoint, sm],
+      [viewToCanvas, getMousePoint, sm, getMouseOptionsCustom],
     ),
   });
 
@@ -491,11 +500,11 @@ export const AppCanvas: React.FC = () => {
           start: viewToCanvas(editStartPoint),
           current: viewToCanvas(p),
           scale: scale,
-          ...getMouseOptions(e),
+          ...getMouseOptionsCustom(e),
         },
       });
     },
-    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm],
+    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, getMouseOptionsCustom],
   );
   useGlobalMousemoveEffect(onMouseMove);
 
@@ -540,11 +549,11 @@ export const AppCanvas: React.FC = () => {
         data: {
           current: viewToCanvas(getMousePoint()),
           scale: scale,
-          ...getMouseOptions(e),
+          ...getMouseOptionsCustom(e),
         },
       });
     },
-    [getMousePoint, scale, viewToCanvas, sm, focus],
+    [getMousePoint, scale, viewToCanvas, sm, focus, getMouseOptionsCustom],
   );
 
   const onKeyDown = useCallback(
@@ -581,11 +590,11 @@ export const AppCanvas: React.FC = () => {
         type: "wheel",
         data: {
           delta: { x: e.deltaX, y: e.deltaY },
-          options: getMouseOptions(e),
+          options: getMouseOptionsCustom(e),
         },
       });
     },
-    [sm],
+    [sm, getMouseOptionsCustom],
   );
   useEffect(() => {
     if (!wrapperRef.current) return;
@@ -729,14 +738,19 @@ export const AppCanvas: React.FC = () => {
             )}
           </div>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
-          {userSetting.debug === "on" ? (
-            <div className="absolute right-16 top-0">{sm.getStateSummary().label}</div>
-          ) : undefined}
-          <div className="absolute bottom-2 left-2 pointer-events-none">
-            <CommandExamPanel commandExams={commandExams} />
-          </div>
         </FileDropArea>
       </div>
+      {userSetting.debug === "on" ? (
+        <div className="fixed right-16 top-0 pointer-events-none">{sm.getStateSummary().label}</div>
+      ) : undefined}
+      <div className="fixed bottom-2 left-2 flex flex-col pointer-events-none">
+        <CommandExamPanel commandExams={commandExams} />
+      </div>
+      {userSetting.virtualKeyboard !== "off" ? (
+        <div className="pointer-events-auto fixed bottom-2 left-1/2 -translate-x-1/2">
+          <ModifierSupportPanel value={modifierOptions} onChange={setModifierOptions} />
+        </div>
+      ) : undefined}
       {floatMenu}
       {textEditor}
       {linkMenu}

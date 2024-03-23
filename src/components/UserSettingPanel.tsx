@@ -1,6 +1,13 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { ToggleInput } from "./atoms/inputs/ToggleInput";
+import { SelectInput } from "./atoms/inputs/SelectInput";
+import { InlineField } from "./atoms/InlineField";
+
+const modifierSupportOptions = [
+  { value: "off", label: "Off" },
+  { value: "modifiers", label: "Modifiers" },
+] as const;
 
 export const UserSettingPanel: React.FC = () => {
   const { userSettingStore } = useContext(AppCanvasContext);
@@ -33,6 +40,14 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handleModifierSupportChange = useCallback(
+    (val: string) => {
+      const v = modifierSupportOptions.find((m) => m.value === val);
+      userSettingStore.patchState({ virtualKeyboard: v?.value });
+    },
+    [userSettingStore],
+  );
+
   const handleGridChange = useCallback(
     (val: boolean) => {
       userSettingStore.patchState({ grid: val ? "on" : "off" });
@@ -42,7 +57,7 @@ export const UserSettingPanel: React.FC = () => {
 
   return (
     <div>
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-1">
         {import.meta.env.DEV ? (
           <ToggleInput value={userSetting.debug === "on"} onChange={handleDebugChange}>
             Debug mode
@@ -54,6 +69,13 @@ export const UserSettingPanel: React.FC = () => {
         <ToggleInput value={userSetting.leftDragAction === "pan"} onChange={handleLeftDragActionChange}>
           Pan by left dragging
         </ToggleInput>
+        <InlineField label="Virtual keyboard">
+          <SelectInput
+            value={userSetting.virtualKeyboard ?? "off"}
+            options={modifierSupportOptions}
+            onChange={handleModifierSupportChange}
+          />
+        </InlineField>
         <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
           Grid
         </ToggleInput>
