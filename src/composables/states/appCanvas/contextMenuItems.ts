@@ -1,3 +1,4 @@
+import { duplicateShapes } from "../../../shapes";
 import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
 import { newShapeComposite } from "../../shapeComposite";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -11,6 +12,11 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Delete",
     key: "DELETE_SHAPE",
   },
+  DUPLICATE_SHAPE: {
+    label: "Duplicate",
+    key: "DUPLICATE_SHAPE",
+  },
+
   EXPORT_AS_PNG: {
     label: "Export as PNG",
     key: "EXPORT_AS_PNG",
@@ -42,9 +48,11 @@ export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
 ];
 
 export const CONTEXT_MENU_SHAPE_SELECTED_ITEMS: ContextMenuItem[] = [
-  CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
+  CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
   { separator: true },
   ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
+  { separator: true },
+  CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
 ];
 
 export function handleContextItemEvent(
@@ -58,6 +66,30 @@ export function handleContextItemEvent(
       if (ids.length > 0) {
         ctx.deleteShapes(ids);
       }
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE.key: {
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      if (ids.length === 0) return;
+
+      const scale = ctx.getScale();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
+      const docMap = ctx.getDocumentMap();
+      const srcShapes = ids.map((id) => shapeMap[id]);
+      const srcBounds = shapeComposite.getWrapperRectForShapes(srcShapes);
+      const duplicated = duplicateShapes(
+        ctx.getShapeStruct,
+        srcShapes,
+        ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
+        ctx.generateUuid,
+        ctx.createLastIndex(),
+        new Set(Object.keys(shapeMap)),
+        { x: srcBounds.x + 20 * scale, y: srcBounds.y + 20 * scale },
+      );
+
+      ctx.addShapes(duplicated.shapes, duplicated.docMap);
+      ctx.multiSelectShapes(duplicated.shapes.map((s) => s.id));
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
