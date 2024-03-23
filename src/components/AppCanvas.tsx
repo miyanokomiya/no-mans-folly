@@ -435,7 +435,7 @@ export const AppCanvas: React.FC = () => {
   ]);
 
   const getMouseOptionsCustom = useCallback(
-    (e: MouseEvent | React.MouseEvent) => {
+    (e: PointerEvent | WheelEvent | React.PointerEvent) => {
       return { ...getMouseOptions(e), ...modifierOptions };
     },
     [modifierOptions],
@@ -443,7 +443,7 @@ export const AppCanvas: React.FC = () => {
 
   const { handlePointerDown, handlePointerUp } = useClickable({
     onDown: useCallback(
-      (e: MouseEvent) => {
+      (e: PointerEvent) => {
         e.preventDefault();
         focus(true);
 
@@ -460,7 +460,7 @@ export const AppCanvas: React.FC = () => {
       [viewToCanvas, sm, focus, removeRootPosition, setMousePoint, getMouseOptionsCustom],
     ),
     onUp: useCallback(
-      (e: MouseEvent) => {
+      (e: PointerEvent) => {
         sm.handleEvent({
           type: "pointerup",
           data: {
@@ -472,7 +472,7 @@ export const AppCanvas: React.FC = () => {
       [viewToCanvas, getMousePoint, sm, getMouseOptionsCustom],
     ),
     onDoubleClick: useCallback(
-      (e: MouseEvent) => {
+      (e: PointerEvent) => {
         sm.handleEvent({
           type: "pointerdoubleclick",
           data: {
@@ -485,11 +485,11 @@ export const AppCanvas: React.FC = () => {
     ),
   });
 
-  const onMouseDown = useCallback((e: React.MouseEvent) => handlePointerDown(e.nativeEvent), [handlePointerDown]);
+  const onMouseDown = useCallback((e: React.PointerEvent) => handlePointerDown(e.nativeEvent), [handlePointerDown]);
   useGlobalMouseupEffect(handlePointerUp);
 
   const onMouseMove = useCallback(
-    (e: MouseEvent) => {
+    (e: PointerEvent) => {
       const p = removeRootPosition({ x: e.pageX, y: e.pageY });
       setMousePoint(p);
       if (!editStartPoint) return;
@@ -542,7 +542,7 @@ export const AppCanvas: React.FC = () => {
   useGlobalPasteEffect(onPaste);
 
   const onMouseHover = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       focus();
       sm.handleEvent({
         type: "pointerhover",
@@ -723,7 +723,7 @@ export const AppCanvas: React.FC = () => {
         className="box-border border border-black relative w-full h-full select-none"
         style={wrapperStyle}
         onPointerDown={onMouseDown}
-        onMouseMove={onMouseHover}
+        onPointerMove={onMouseHover}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
         onFocus={onFocus}

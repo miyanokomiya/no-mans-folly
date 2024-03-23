@@ -38,10 +38,10 @@ export function useGlobalClickEffect(fn: (e: MouseEvent) => void, capture = fals
   }, [fn, capture]);
 }
 
-export function useGlobalMousemoveEffect(fn: (e: MouseEvent) => void) {
+export function useGlobalMousemoveEffect(fn: (e: PointerEvent) => void) {
   const fnRef = useRef(fn);
   fnRef.current = fn;
-  const handle = useCallback((e: MouseEvent) => {
+  const handle = useCallback((e: PointerEvent) => {
     fnRef.current?.(e);
   }, []);
 
@@ -53,10 +53,10 @@ export function useGlobalMousemoveEffect(fn: (e: MouseEvent) => void) {
   }, [handle]);
 }
 
-export function useGlobalMouseupEffect(fn: (e: MouseEvent) => void) {
+export function useGlobalMouseupEffect(fn: (e: PointerEvent) => void) {
   const fnRef = useRef(fn);
   fnRef.current = fn;
-  const handle = useCallback((e: MouseEvent) => {
+  const handle = useCallback((e: PointerEvent) => {
     fnRef.current?.(e);
   }, []);
 
@@ -68,7 +68,10 @@ export function useGlobalMouseupEffect(fn: (e: MouseEvent) => void) {
   }, [handle]);
 }
 
-export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: Pick<MouseEvent, "pageX" | "pageY">) => void) {
+export function useGlobalDrag(
+  onDrag: (e: PointerEvent) => void,
+  onUp: (e: Pick<PointerEvent, "pageX" | "pageY">) => void,
+) {
   const draggingRef = useRef(false);
   const startDragging = useCallback(() => {
     draggingRef.current = true;
@@ -76,7 +79,7 @@ export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: Pick<Mo
 
   useGlobalMousemoveEffect(
     useCallback(
-      (e: MouseEvent) => {
+      (e: PointerEvent) => {
         if (!draggingRef.current) return;
         onDrag(e);
       },
@@ -86,7 +89,7 @@ export function useGlobalDrag(onDrag: (e: MouseEvent) => void, onUp: (e: Pick<Mo
 
   useGlobalMouseupEffect(
     useCallback(
-      (e: MouseEvent) => {
+      (e: PointerEvent) => {
         if (!draggingRef.current) return;
         draggingRef.current = false;
         onUp(e);
