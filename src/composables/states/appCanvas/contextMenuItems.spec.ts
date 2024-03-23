@@ -20,6 +20,7 @@ function getMockCtx() {
       }),
     getDocumentMap: () => ({ a: [{ insert: "text" }] }),
     addShapes: vi.fn(),
+    deleteShapes: vi.fn(),
     multiSelectShapes: vi.fn(),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({ a: true }),
     generateUuid: () => "duplicated",
@@ -29,6 +30,18 @@ function getMockCtx() {
 }
 
 describe("handleContextItemEvent", () => {
+  describe("DELETE_SHAPE", () => {
+    test("should call deleteShapes to delete selected shapes", () => {
+      const ctx = getMockCtx();
+
+      handleContextItemEvent(ctx, {
+        type: "contextmenu-item",
+        data: { key: CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE.key },
+      });
+      expect(ctx.deleteShapes).toHaveBeenNthCalledWith(1, ["a"]);
+    });
+  });
+
   describe("DUPLICATE_SHAPE", () => {
     test("should call addShapes and multiSelectShapes to duplicate selected shapes", () => {
       const ctx = getMockCtx();
