@@ -7,7 +7,7 @@ interface Props {
 export const ListButton: React.FC<Props> = ({ onClick, type, children }) => {
   return (
     <button
-      className="w-full p-2 border-b last:border-none hover:bg-gray-200"
+      className="w-full p-2 border-b last:border-none hover:bg-gray-200 flex items-center justify-start"
       type={type ?? "button"}
       onClick={onClick}
     >
