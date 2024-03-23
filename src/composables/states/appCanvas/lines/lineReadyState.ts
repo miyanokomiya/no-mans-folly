@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { handleCommonWheel, handleStateEvent } from "../commons";
+import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
@@ -126,13 +126,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(ctx, event, [
-            "Break",
-            "DroppingNewShape",
-            "LineReady",
-            "TextReady",
-            "RectSelectReady",
-          ]);
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["LineReady"]));
         default:
           return;
       }

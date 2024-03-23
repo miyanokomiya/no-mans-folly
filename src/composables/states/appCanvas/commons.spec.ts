@@ -1,5 +1,5 @@
 import { expect, test, describe, vi } from "vitest";
-import { handleCommonWheel, handleHistoryEvent, handleStateEvent } from "./commons";
+import { getCommonAcceptableEvents, handleCommonWheel, handleHistoryEvent, handleStateEvent } from "./commons";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { UserSetting } from "../../../models";
@@ -12,6 +12,13 @@ function getMockCtx() {
     }),
   };
 }
+
+describe("getCommonAcceptableEvents", () => {
+  test("should return common acceptable events without excluded ones", () => {
+    expect(getCommonAcceptableEvents([])).contains("Break");
+    expect(getCommonAcceptableEvents(["Break"])).not.contains("Break");
+  });
+});
 
 describe("handleStateEvent", () => {
   describe("DroppingNewShape", () => {

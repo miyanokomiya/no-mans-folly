@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { handleCommonWheel, handleStateEvent } from "../commons";
+import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { createShape } from "../../../../shapes";
 import { IVec2, add } from "okageo";
@@ -82,7 +82,7 @@ export function newTextReadyState(): AppCanvasState {
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape", "LineReady", "RectSelectReady"]);
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["TextReady"]));
         default:
           return;
       }

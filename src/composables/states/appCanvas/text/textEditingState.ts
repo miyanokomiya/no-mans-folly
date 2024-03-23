@@ -1,7 +1,14 @@
 import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
-import { handleCommonWheel, handleFileDrop, handleHistoryEvent, handleStateEvent, newDocClipboard } from "../commons";
+import {
+  getCommonAcceptableEvents,
+  handleCommonWheel,
+  handleFileDrop,
+  handleHistoryEvent,
+  handleStateEvent,
+  newDocClipboard,
+} from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -257,7 +264,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           handleHistoryEvent(ctx, event);
           return newSelectionHubState;
         case "state":
-          return handleStateEvent(ctx, event, ["DroppingNewShape", "LineReady", "TextReady", "RectSelectReady"]);
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["Break", "ShapeInspection"]));
         case "copy": {
           const clipboard = newDocClipboard(textEditorController.getSelectedDocOutput());
           clipboard.onCopy(event.nativeEvent);

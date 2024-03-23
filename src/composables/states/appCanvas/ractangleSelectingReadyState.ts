@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "./core";
-import { handleCommonWheel, handleStateEvent } from "./commons";
+import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "./commons";
 import { newSelectionHubState } from "./selectionHubState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
@@ -35,7 +35,7 @@ export function newRactangleSelectingReadyState(): AppCanvasState {
               return;
           }
         case "state":
-          return handleStateEvent(ctx, event, ["Break", "DroppingNewShape", "LineReady", "TextReady"]);
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["RectSelectReady"]));
         default:
           return;
       }

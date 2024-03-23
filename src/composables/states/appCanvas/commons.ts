@@ -46,6 +46,19 @@ import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState"
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "RectSelectReady" | "ShapeInspection";
 
+export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): AcceptableEvent[] {
+  const ex = new Set(excludes);
+  const list: AcceptableEvent[] = [
+    "Break",
+    "DroppingNewShape",
+    "LineReady",
+    "TextReady",
+    "RectSelectReady",
+    "ShapeInspection",
+  ];
+  return list.filter((s) => !ex.has(s));
+}
+
 export function handleStateEvent(
   _ctx: unknown,
   event: ChangeStateEvent,
