@@ -78,6 +78,7 @@ function App() {
         : {
             leftDragAction: touchDevice ? "pan" : undefined,
             wheelAction: touchDevice ? "pan" : undefined,
+            virtualKeyboard: touchDevice ? "modifiers" : undefined,
           },
     });
   }, []);
