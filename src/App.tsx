@@ -24,6 +24,8 @@ import { useEffectOnce } from "./hooks/utils";
 import { useHasShape } from "./hooks/storeHooks";
 import { newFeatureFlags } from "./composables/featureFlags";
 import { useUnloadWarning } from "./hooks/window";
+import { useToastMessages } from "./hooks/toastMessage";
+import { ToastMessages } from "./components/ToastMessages";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -84,6 +86,8 @@ function App() {
       localStorage.setItem(USER_SETTING_KEY, JSON.stringify(userSetting.getState()));
     });
   }, [userSetting]);
+
+  const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
 
   const acctx = useMemo<IAppCanvasContext>(() => {
     const context = {
@@ -267,7 +271,12 @@ function App() {
 
   // FIXME: Reduce screen blinking due to sheets transition. "bg-black" mitigates it a bit.
   return (
-    <AppCanvasProvider acctx={acctx} assetAPI={assetAPI}>
+    <AppCanvasProvider
+      acctx={acctx}
+      assetAPI={assetAPI}
+      toastMessages={toastMessages}
+      showToastMessage={pushToastMessage}
+    >
       <EntranceDialog
         open={openDialog === "entrance"}
         onClose={closeDialog}
@@ -324,6 +333,7 @@ function App() {
           />
         </div>
       </div>
+      <ToastMessages messages={toastMessages} closeToastMessage={closeToastMessage} />
     </AppCanvasProvider>
   );
 }

@@ -5,23 +5,34 @@ import { generateUuid } from "../utils/random";
 import { StateMachine, newStateMachine } from "../composables/states/core";
 import { AssetAPI } from "../hooks/persistence";
 import { newSelectionHubState } from "../composables/states/appCanvas/selectionHubState";
+import { ToastMessage } from "../composables/states/types";
+import { ToastMessageContext } from "./ToastMessageContext";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;
   assetAPI?: AssetAPI;
+  toastMessages: ToastMessage[];
+  showToastMessage: (val: ToastMessage) => void;
   acctx: IAppCanvasContext;
 }
 
-export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, assetAPI, acctx }) => {
+export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
+  children,
+  assetAPI,
+  toastMessages,
+  showToastMessage,
+  acctx,
+}) => {
   const initialContext = useMemo(() => {
     return createInitialAppCanvasStateContext({
       getTimestamp: Date.now,
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
       getUserSetting: acctx.userSettingStore.getState,
+      showToastMessage,
       assetAPI,
     });
-  }, [acctx, assetAPI]);
+  }, [acctx, assetAPI, showToastMessage]);
 
   const [stateContext, setStateContext] = useState(initialContext);
   const stateContextRef = useRef(stateContext);
@@ -45,6 +56,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
           getStyleScheme: prev.getStyleScheme,
           getUserSetting: prev.getUserSetting,
           assetAPI: prev.assetAPI,
+          showToastMessage: prev.showToastMessage,
           ...val,
         };
         stateContextRef.current = next;
@@ -72,7 +84,9 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({ children, 
     <AppCanvasContext.Provider value={acctx}>
       <AppStateMachineContext.Provider value={stateMachine}>
         <SetAppStateContext.Provider value={handleSetStateContext}>
-          <AppStateContext.Provider value={stateContext}>{children}</AppStateContext.Provider>
+          <ToastMessageContext.Provider value={toastMessages}>
+            <AppStateContext.Provider value={stateContext}>{children}</AppStateContext.Provider>
+          </ToastMessageContext.Provider>
         </SetAppStateContext.Provider>
       </AppStateMachineContext.Provider>
     </AppCanvasContext.Provider>
@@ -85,5 +99,11 @@ export const AppStateMachineContext = createContext<StateMachine<AppCanvasEvent>
 
 type AppCanvasStateContextPart = Omit<
   AppCanvasStateContext,
-  "getTimestamp" | "generateUuid" | "getShapeStruct" | "getStyleScheme" | "getUserSetting" | "assetAPI"
+  | "getTimestamp"
+  | "generateUuid"
+  | "getShapeStruct"
+  | "getStyleScheme"
+  | "getUserSetting"
+  | "showToastMessage"
+  | "assetAPI"
 >;

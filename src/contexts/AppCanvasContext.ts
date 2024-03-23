@@ -12,6 +12,7 @@ import { newGrid } from "../composables/grid";
 import { newImageStore } from "../composables/imageStore";
 import { UserSettingStore } from "../stores/userSettingStore";
 import { AssetAPI } from "../hooks/persistence";
+import { ToastMessage } from "../composables/states/types";
 
 export interface IAppCanvasContext {
   diagramStore: DiagramStore;
@@ -31,6 +32,7 @@ export function createInitialAppCanvasStateContext(arg: {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
   getUserSetting?: () => UserSetting;
+  showToastMessage?: (val: ToastMessage) => void;
   assetAPI?: AssetAPI;
 }): AppCanvasStateContext {
   return {
@@ -38,6 +40,7 @@ export function createInitialAppCanvasStateContext(arg: {
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
     getUserSetting: arg.getUserSetting ?? (() => ({})),
+    showToastMessage: arg.showToastMessage ?? (() => ({})),
     assetAPI: arg.assetAPI ?? disabledAssetAPI,
 
     redraw() {},
@@ -58,7 +61,6 @@ export function createInitialAppCanvasStateContext(arg: {
     hideFloatMenu() {},
     setContextMenuList() {},
     setCommandExams() {},
-    showToastMessage() {},
     setCursor() {},
     setLinkInfo() {},
     getLinkInfo: () => undefined,

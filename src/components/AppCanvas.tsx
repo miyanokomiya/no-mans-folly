@@ -23,8 +23,6 @@ import { useSelectedTmpSheet } from "../hooks/storeHooks";
 import { newShapeRenderer } from "../composables/shapeRenderer";
 import { getAllBranchIds, getTree } from "../utils/tree";
 import { ContextMenu } from "./ContextMenu";
-import { ToastMessages } from "./ToastMessages";
-import { useToastMessages } from "../hooks/toastMessage";
 import { getGridSize, newGrid } from "../composables/grid";
 import { FileDropArea } from "./atoms/FileDropArea";
 import { newImageStore } from "../composables/imageStore";
@@ -51,7 +49,6 @@ export const AppCanvas: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [currentDocAttrInfo, setCurrentDocAttrInfo] = useState<DocAttrInfo>({});
   const [commandExams, setCommandExams] = useState<CommandExam[]>([]);
-  const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; point: IVec2 } | undefined>();
   const [linkInfo, setLinkInfo] = useState<LinkInfo>();
   const [userSetting, setUserSetting] = useState(userSettingStore.getState());
@@ -228,7 +225,6 @@ export const AppCanvas: React.FC = () => {
         }
       },
       setCommandExams: (val) => setCommandExams(val ?? []),
-      showToastMessage: pushToastMessage,
       setCursor,
       setLinkInfo,
       getLinkInfo: () => linkInfo,
@@ -371,7 +367,6 @@ export const AppCanvas: React.FC = () => {
     focus,
     userSettingStore,
     imageStore,
-    pushToastMessage,
     setSmctx,
     shapeStore,
     showEmojiPicker,
@@ -747,7 +742,6 @@ export const AppCanvas: React.FC = () => {
       {contextMenu ? (
         <ContextMenu items={contextMenu.items} point={contextMenu.point} onClickItem={onClickContextMenuItem} />
       ) : undefined}
-      <ToastMessages messages={toastMessages} closeToastMessage={closeToastMessage} />
     </>
   );
 };
