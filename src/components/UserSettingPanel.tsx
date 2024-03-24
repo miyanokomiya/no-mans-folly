@@ -55,6 +55,8 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const virtualKeyboardValue = userSetting.virtualKeyboard ?? "off";
+
   return (
     <div>
       <div className="flex flex-col gap-1">
@@ -69,13 +71,18 @@ export const UserSettingPanel: React.FC = () => {
         <ToggleInput value={userSetting.leftDragAction === "pan"} onChange={handleLeftDragActionChange}>
           Pan by left dragging
         </ToggleInput>
-        <InlineField label="Virtual keyboard">
-          <SelectInput
-            value={userSetting.virtualKeyboard ?? "off"}
-            options={modifierSupportOptions}
-            onChange={handleModifierSupportChange}
-          />
-        </InlineField>
+        <div>
+          <InlineField label="Virtual keyboard">
+            <SelectInput
+              value={virtualKeyboardValue}
+              options={modifierSupportOptions}
+              onChange={handleModifierSupportChange}
+            />
+          </InlineField>
+          {virtualKeyboardValue !== "off" ? (
+            <p className="text-red-500 font-sm text-right">(Not work well with stylus pens)</p>
+          ) : undefined}
+        </div>
         <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
           Grid
         </ToggleInput>
