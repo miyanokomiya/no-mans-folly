@@ -1,12 +1,10 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { ShapeLibraryGroup } from "./molecules/ShapeLibraryGroup";
+import { GroupAccordion } from "./molecules/ShapeLibraryGroup";
 import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
 import { ImageShape } from "../shapes/image";
 
-interface Props {}
-
-export const ShapeLibraryPanel: React.FC<Props> = () => {
+export const ShapeLibraryPanel: React.FC = () => {
   const smctx = useContext(AppStateContext);
   const sm = useContext(AppStateMachineContext);
 
@@ -85,34 +83,20 @@ export const ShapeLibraryPanel: React.FC<Props> = () => {
 
   return (
     <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
-      <GroupAccordion selectedName={selected} name="AWS" onClick={handleClickAccordion} onIconDown={handleIconDown} />
-      <GroupAccordion selectedName={selected} name="GCP" onClick={handleClickAccordion} onIconDown={handleIconDown} />
-    </div>
-  );
-};
-
-interface GroupAccordionProps {
-  selectedName: string;
-  name: string;
-  onClick?: (name: string) => void;
-  onIconDown?: (url: string, id: string) => void;
-}
-
-export const GroupAccordion: React.FC<GroupAccordionProps> = ({ selectedName, name, onClick, onIconDown }) => {
-  const handleClick = useCallback(() => {
-    onClick?.(name);
-  }, [name, onClick]);
-
-  return (
-    <div>
-      <button type="button" onClick={handleClick} className="border rounded p-2 w-full text-left">
-        {name}
-      </button>
-      {selectedName === name ? (
-        <div className="pl-2">
-          <ShapeLibraryGroup name={name.toLowerCase()} onIconDown={onIconDown} />
-        </div>
-      ) : undefined}
+      <GroupAccordion
+        selectedName={selected}
+        name="AWS"
+        type="shapes"
+        onClick={handleClickAccordion}
+        onIconDown={handleIconDown}
+      />
+      <GroupAccordion
+        selectedName={selected}
+        name="GCP"
+        type="shapes"
+        onClick={handleClickAccordion}
+        onIconDown={handleIconDown}
+      />
     </div>
   );
 };

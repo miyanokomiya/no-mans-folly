@@ -3,15 +3,52 @@ import { TextInput } from "../atoms/inputs/TextInput";
 
 const baseURL = process.env.ASSETS_PATH!;
 
-interface Props {
+interface GroupAccordionProps {
+  selectedName: string;
   name: string;
+  type: "shapes" | "templates";
+  size?: "md" | "lg";
+  onClick?: (name: string) => void;
   onIconDown?: (url: string, id: string) => void;
 }
 
-export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
+export const GroupAccordion: React.FC<GroupAccordionProps> = ({
+  selectedName,
+  name,
+  type,
+  size,
+  onClick,
+  onIconDown,
+}) => {
+  const handleClick = useCallback(() => {
+    onClick?.(name);
+  }, [name, onClick]);
+
+  return (
+    <div>
+      <button type="button" onClick={handleClick} className="border rounded p-2 w-full text-left">
+        {name}
+      </button>
+      {selectedName === name ? (
+        <div className="pl-2">
+          <ShapeLibraryGroup name={name.toLowerCase()} type={type} size={size} onIconDown={onIconDown} />
+        </div>
+      ) : undefined}
+    </div>
+  );
+};
+
+interface ShapeLibraryGroupProps {
+  name: string;
+  type: "shapes" | "templates";
+  size?: "md" | "lg";
+  onIconDown?: (url: string, id: string) => void;
+}
+
+export const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size, onIconDown }) => {
   const [loading, setLoading] = useState(true);
   const [indexData, setIndexData] = useState<ListItemData>();
-  const basePath = `${baseURL}shapes/${name}`;
+  const basePath = `${baseURL}${type}/${name}`;
 
   const fetchIndex = useCallback(async () => {
     if (indexData) return;
@@ -62,6 +99,19 @@ export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
     return ret;
   }, [keyword, indexDataForSearch]);
 
+  const rootItems = useMemo(() => {
+    if (!indexDataForSearch) return;
+    if (filteredIndexData) return filteredIndexData;
+
+    const items = sortedIndexData.filter((data): data is [string, string] => typeof data[1] === "string");
+    if (items.length === 0) return;
+
+    return items.map((data) => {
+      const item = indexDataForSearch.get(data[1])!;
+      return { id: data[1], url: item.url, name: item.name };
+    });
+  }, [filteredIndexData, indexDataForSearch, sortedIndexData]);
+
   return (
     <div>
       {loading ? (
@@ -69,17 +119,17 @@ export const ShapeLibraryGroup: React.FC<Props> = ({ name, onIconDown }) => {
       ) : (
         <div>
           <div className="py-1">
-            <TextInput value={keyword} onChange={handleKeywordChange} placeholder="Search icons" autofocus keepFocus />
+            <TextInput value={keyword} onChange={handleKeywordChange} placeholder="Search items" autofocus keepFocus />
           </div>
-          {filteredIndexData ? (
-            filteredIndexData.length === 0 ? (
-              <div>No result</div>
+          {rootItems ? (
+            rootItems.length === 0 ? (
+              <div className="p-4 text-center">No result</div>
             ) : (
               <ul className="p-1 flex flex-wrap gap-1">
-                {filteredIndexData.map(({ url, id, name }) => {
+                {rootItems.map(({ url, id, name }) => {
                   return (
                     <li key={url}>
-                      <IconButton url={url} name={name} id={id} onDown={onIconDown} />
+                      <IconButton url={url} name={name} id={id} size={size} onDown={onIconDown} />
                     </li>
                   );
                 })}
@@ -112,10 +162,11 @@ interface ListItemProps {
   item: ListItemData;
   level: number;
   path: string;
+  size?: "md" | "lg";
   onIconDown?: (url: string, id: string) => void;
 }
 
-const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, onIconDown }) => {
+const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIconDown }) => {
   const [expanded, setExpanded] = useState(false);
 
   const toggle = useCallback(() => {
@@ -145,7 +196,13 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, onIconDown
               {items.map((key) => {
                 return (
                   <li key={key}>
-                    <IconButton url={currentPath + "/" + key} name={key} id={item[key] as string} onDown={onIconDown} />
+                    <IconButton
+                      url={currentPath + "/" + key}
+                      name={key}
+                      id={item[key] as string}
+                      size={size}
+                      onDown={onIconDown}
+                    />
                   </li>
                 );
               })}
@@ -173,10 +230,11 @@ interface IconButtonProps {
   url: string;
   name: string;
   id: string;
+  size?: "md" | "lg";
   onDown?: (url: string, id: string) => void;
 }
 
-export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, onDown }) => {
+export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, size, onDown }) => {
   const handleDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -185,9 +243,11 @@ export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, onDown })
     [onDown, id, url],
   );
 
+  const imgClass = size === "lg" ? "w-full h-auto" : "w-10 h-10";
+
   return (
     <button type="button" onPointerDown={handleDown} className="cursor-grab touch-none" title={name}>
-      <img src={url} alt={name} className="w-10 h-10" />
+      <img src={url} alt={name} className={imgClass} />
     </button>
   );
 };
