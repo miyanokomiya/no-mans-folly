@@ -15,7 +15,7 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
 
   return (
     <div className="w-full h-full">
-      <div className="absolute top-0 left-0">
+      <div className="absolute top-0 left-0 select-none touch-none">
         <div className="origin-top-left rotate-90 flex gap-1">{tabs}</div>
       </div>
       <div className="w-full h-full overflow-auto p-2 border border-l-gray-500">{panel}</div>
@@ -43,7 +43,7 @@ const TabButton: React.FC<TabButtonProps> = ({ name, selected, onClick }) => {
       }
       onClick={handleClick}
     >
-      <span className="">{name}</span>
+      {name}
     </button>
   );
 };
