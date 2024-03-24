@@ -10,6 +10,11 @@ export interface LineHeadStruct<T extends LineHead> {
   clip: (region: Path2D, head: T, transform: AffineMatrix, lineWidth: number) => void;
   createSVGClipPathCommand: (head: T, transform: AffineMatrix, lineWidth: number) => string | undefined;
   getWrapperSrcPath: (head: T, lineWidth: number) => IVec2[];
+  /**
+   * Returns the distance between the vertex and the point that is used as the origin to calculate radian of the head.
+   * When undefined, it means radian of the head doesn't matter to the head type.
+   */
+  getRotationOriginDistance?: (head: T, lineWidth: number) => number;
 }
 
 export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {

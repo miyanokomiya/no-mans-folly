@@ -603,6 +603,19 @@ describe("getRadianP", () => {
       ),
     ).toBeCloseTo(-1.581, 3);
   });
+
+  test("should return radian from the vicinity of p to p: specific vicinity distance", () => {
+    expect(
+      getRadianP(
+        struct.create({
+          p: { x: 0, y: 0 },
+          q: { x: 10, y: 0 },
+          curves: [{ d: { x: 5, y: 5 } }],
+        }),
+        5,
+      ),
+    ).toBeCloseTo(-2.073, 3);
+  });
 });
 
 describe("getRadianQ", () => {
@@ -622,5 +635,18 @@ describe("getRadianQ", () => {
         }),
       ),
     ).toBeCloseTo(-1.581, 3);
+  });
+
+  test("should return radian from the vicinity of q to q: specific vicinity distance", () => {
+    expect(
+      getRadianQ(
+        struct.create({
+          p: { x: 10, y: 0 },
+          q: { x: 0, y: 0 },
+          curves: [{ d: { x: 5, y: 5 } }],
+        }),
+        5,
+      ),
+    ).toBeCloseTo(2.073, 3);
   });
 });

@@ -32,6 +32,9 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
   getWrapperSrcPath(_head, lineWidth) {
     return getSrcPath(lineWidth);
   },
+  getRotationOriginDistance(_head, lineWidth) {
+    return 12 + lineWidth;
+  },
 };
 
 function getSrcPath(lineWidth: number) {

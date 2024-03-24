@@ -4,6 +4,7 @@ import {
   IVec2,
   applyAffine,
   getOuterRectangle,
+  getPathPointAtLengthFromStructs,
   getRadian,
   isSame,
   multiAffines,
@@ -20,6 +21,7 @@ import {
   getRelativePointOnCurvePath,
   getWrapperRect,
   isPointCloseToCurveSpline,
+  getCurvePathStructs,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -27,6 +29,7 @@ import {
   clipLineHead,
   createLineHeadSVGClipPathCommand,
   createLineHeadSVGElementInfo,
+  getLineHeadRotationOriginDistance,
   getLineHeadWrapperSrcPath,
   renderLineHead,
 } from "./lineHeads";
@@ -524,26 +527,36 @@ export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
   return getRelativePointOnCurvePath(getLinePath(shape), shape.curves, rate);
 }
 
-export function getRadianP(shape: LineShape): number {
+export function getRadianP(shape: LineShape, originDistance?: number): number {
   const linePath = getLinePath(shape);
   const p = linePath[0];
 
   let pVicinity = linePath[1];
   if (shape.curves && shape.curves[0]) {
-    const lerpFn = getCurveLerpFn([p, linePath[1]], shape.curves[0]);
-    pVicinity = lerpFn(0.01);
+    if (originDistance === undefined) {
+      const lerpFn = getCurveLerpFn([p, linePath[1]], shape.curves[0]);
+      pVicinity = lerpFn(0.01);
+    } else {
+      const pathStructs = getCurvePathStructs([p, linePath[1]], [shape.curves[0]]);
+      pVicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
+    }
   }
   return getRadian(p, pVicinity);
 }
 
-export function getRadianQ(shape: LineShape): number {
+export function getRadianQ(shape: LineShape, originDistance?: number): number {
   const linePath = getLinePath(shape);
   const q = linePath[linePath.length - 1];
 
   let qVicinity = linePath[linePath.length - 2];
   if (shape.curves && shape.curves[linePath.length - 2]) {
-    const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[linePath.length - 2]);
-    qVicinity = lerpFn(0.99);
+    if (originDistance === undefined) {
+      const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[linePath.length - 2]);
+      qVicinity = lerpFn(0.99);
+    } else {
+      const pathStructs = getCurvePathStructs([linePath[linePath.length - 2], q], [shape.curves[linePath.length - 2]]);
+      qVicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
+    }
   }
   return getRadian(q, qVicinity);
 }
@@ -581,7 +594,7 @@ function getHeadAffines(shape: LineShape): { pAffine?: AffineMatrix; qAffine?: A
   let pAffine: AffineMatrix | undefined;
   if (shape.pHead) {
     const p = shape.p;
-    const r = getRadianP(shape);
+    const r = getRadianP(shape, getLineHeadRotationOriginDistance(shape.pHead, getLineStrokeWidth(shape)));
     const sin = Math.sin(r);
     const cos = Math.cos(r);
     pAffine = multiAffines([
@@ -593,7 +606,7 @@ function getHeadAffines(shape: LineShape): { pAffine?: AffineMatrix; qAffine?: A
   let qAffine: AffineMatrix | undefined;
   if (shape.qHead) {
     const q = shape.q;
-    const r = getRadianQ(shape);
+    const r = getRadianQ(shape, getLineHeadRotationOriginDistance(shape.qHead, getLineStrokeWidth(shape)));
     const sin = Math.sin(r);
     const cos = Math.cos(r);
     qAffine = multiAffines([

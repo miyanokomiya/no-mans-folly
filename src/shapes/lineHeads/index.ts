@@ -51,3 +51,7 @@ export function createLineHeadSVGClipPathCommand<T extends LineHead>(
 export function getLineHeadWrapperSrcPath<T extends LineHead>(head: T, lineWidth: number): IVec2[] {
   return getLineHeadStruct(head.type).getWrapperSrcPath(head, lineWidth);
 }
+
+export function getLineHeadRotationOriginDistance<T extends LineHead>(head: T, lineWidth: number): number | undefined {
+  return getLineHeadStruct(head.type).getRotationOriginDistance?.(head, lineWidth);
+}
