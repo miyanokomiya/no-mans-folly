@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { canHaveText, getWrapperRect } from "../../../shapes";
-import { IRectangle, IVec2, add, sub } from "okageo";
+import { canHaveText, getWrapperRect, resizeShape } from "../../../shapes";
+import { AffineMatrix, IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import { getInitialOutput } from "../../../utils/textEditor";
@@ -72,13 +72,15 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           const adjustedCurrent = snappingResult ? add(event.data.current, snappingResult.diff) : event.data.current;
 
           updateP(adjustedCurrent);
-          ctx.setTmpShapeMap({});
+          ctx.redraw();
           return;
         }
         case "pointerup": {
+          const shapeComposite = ctx.getShapeComposite();
           const diff = getDiff();
+          const affine: AffineMatrix = [1, 0, 0, 1, diff.x, diff.y];
           ctx.addShapes(
-            shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
+            shapes.map((s) => ({ ...s, ...resizeShape(shapeComposite.getShapeStruct, s, affine) })),
             // Newly created shapes should have doc by default.
             // => It useful to apply text style even it has no content.
             mapReduce(
@@ -99,7 +101,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
     render(ctx, renderCtx) {
       const diff = getDiff();
       const shapeComposite = newShapeComposite({
-        shapes: shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
+        shapes,
         getStruct: ctx.getShapeStruct,
       });
       const renderer = newShapeRenderer({
@@ -107,7 +109,10 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         getDocumentMap: () => option.docMap ?? {},
         imageStore: ctx.getImageStore(),
       });
+      renderCtx.save();
+      renderCtx.translate(diff.x, diff.y);
       renderer.render(renderCtx);
+      renderCtx.restore();
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
