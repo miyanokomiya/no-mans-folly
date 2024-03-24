@@ -22,6 +22,7 @@ export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
 
   const handlePointerDown = useCallback(
     (e: PointerEvent) => {
+      e.preventDefault();
       if (!isValidPointer(e)) return;
       pointerId.current = e.pointerId;
 
@@ -41,6 +42,7 @@ export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
 
   const handlePointerUp = useCallback(
     (e: PointerEvent) => {
+      e.preventDefault();
       if (!isValidPointer(e)) return;
       pointerId.current = undefined;
 
