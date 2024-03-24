@@ -22,7 +22,7 @@ function getMockCtx() {
       }),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
-    setTmpShapeMap: vi.fn(),
+    redraw: vi.fn(),
     addShapes: vi.fn(),
     selectShape: vi.fn(),
   };
@@ -45,7 +45,7 @@ describe("newDroppingNewShapeState", () => {
   });
 
   describe("handle pointermove", () => {
-    test("should call setTmpShapeMap", () => {
+    test("should call redraw", () => {
       const ctx = getMockCtx();
       const target = newDroppingNewShapeState(getOption());
       target.onStart?.(ctx as any);
@@ -53,7 +53,7 @@ describe("newDroppingNewShapeState", () => {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
-      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {});
+      expect(ctx.redraw).toHaveBeenNthCalledWith(1);
       expect(result).toBe(undefined);
     });
   });
