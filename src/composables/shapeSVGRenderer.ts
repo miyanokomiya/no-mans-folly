@@ -2,7 +2,7 @@ import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
 import { isImageShape } from "../shapes/image";
-import { FOLLY_SVG_META_ATTRIBUTE, ShapeTemplateInfo } from "../utils/shapeTemplateUtil";
+import { createTemplateShapeEmbedElement } from "../utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
 import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
@@ -105,10 +105,7 @@ export function newShapeSVGRenderer(option: Option) {
 
     const targets = option.shapeComposite.getAllBranchMergedShapes(mergedShapeTree.map((t) => t.id));
     const docs: [string, DocOutput][] = targets.filter((s) => !!docMap[s.id]).map((s) => [s.id, docMap[s.id]]);
-    const meta: ShapeTemplateInfo = { shapes: targets, docs };
-    const metaDef = createSVGElement("def");
-    metaDef.setAttribute(FOLLY_SVG_META_ATTRIBUTE, JSON.stringify(meta));
-    root.appendChild(metaDef);
+    root.appendChild(createTemplateShapeEmbedElement({ shapes: targets, docs }));
 
     return root;
   }

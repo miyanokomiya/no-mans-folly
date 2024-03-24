@@ -1,8 +1,9 @@
 import { Shape } from "../models";
 import { DocOutput } from "../models/document";
+import { createSVGElement } from "./svgElements";
 
 export const FOLLY_SVG_PREFIX = ".folly.svg";
-export const FOLLY_SVG_META_ATTRIBUTE = "data-folly-template";
+const FOLLY_SVG_META_ATTRIBUTE = "data-folly-template";
 
 export interface ShapeTemplateInfo {
   shapes: Shape[];
@@ -14,6 +15,10 @@ export function parseTemplateShapes(svgText: string): ShapeTemplateInfo | undefi
   const svg = parser.parseFromString(svgText, "image/svg+xml").getElementsByTagName("svg")[0];
   if (!svg) return;
 
+  return parseTemplateShapesFromSVG(svg);
+}
+
+export function parseTemplateShapesFromSVG(svg: SVGSVGElement): ShapeTemplateInfo | undefined {
   const meta = svg.querySelector(`[${FOLLY_SVG_META_ATTRIBUTE}]`)?.getAttribute(FOLLY_SVG_META_ATTRIBUTE);
   if (!meta) return;
 
@@ -21,4 +26,10 @@ export function parseTemplateShapes(svgText: string): ShapeTemplateInfo | undefi
   if (data.shapes.length === 0) return;
 
   return data;
+}
+
+export function createTemplateShapeEmbedElement(data: ShapeTemplateInfo): SVGElement {
+  return createSVGElement("def", {
+    [FOLLY_SVG_META_ATTRIBUTE]: JSON.stringify(data),
+  });
 }
