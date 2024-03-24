@@ -124,12 +124,20 @@ export const AppToolbar: React.FC = () => {
   }, []);
 
   const handleDownAreaSelect = useCallback(() => {
-    sm.handleEvent({
-      type: "state",
-      data: { name: "RectSelectReady" },
-    });
+    if (stateLabel === "RectangleSelectingReady") {
+      sm.handleEvent({
+        type: "state",
+        data: { name: "Break" },
+      });
+    } else {
+      sm.handleEvent({
+        type: "state",
+        data: { name: "RectSelectReady" },
+      });
+    }
+
     setPopup("");
-  }, [sm]);
+  }, [sm, stateLabel]);
 
   const onClickShapeButton = useCallback(() => {
     sm.handleEvent({
