@@ -1,12 +1,18 @@
 import { useCallback } from "react";
 
-interface Props {
-  value: string;
-  options: Readonly<{ value: string; label: string }[]>;
-  onChange?: (val: string) => void;
+type ValueType = string;
+
+interface Props<T extends ValueType> {
+  value: T;
+  options: Readonly<{ value: T; label: string }[]>;
+  onChange?: (val: T) => void;
 }
 
-export const SelectInput: React.FC<Props> = ({ value, options, onChange }) => {
+export function SelectInput<T extends ValueType>({
+  value,
+  options,
+  onChange,
+}: React.PropsWithChildren<Props<T>>): React.ReactElement {
   const handleChange = useCallback(
     (e: any) => {
       const v = e.target.value;
@@ -24,4 +30,4 @@ export const SelectInput: React.FC<Props> = ({ value, options, onChange }) => {
       ))}
     </select>
   );
-};
+}

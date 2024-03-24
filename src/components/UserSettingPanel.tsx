@@ -3,11 +3,12 @@ import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { ToggleInput } from "./atoms/inputs/ToggleInput";
 import { SelectInput } from "./atoms/inputs/SelectInput";
 import { InlineField } from "./atoms/InlineField";
+import { UserSetting } from "../models";
 
-const modifierSupportOptions = [
+const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], undefined>; label: string }[] = [
   { value: "off", label: "Off" },
   { value: "modifiers", label: "Modifiers" },
-] as const;
+];
 
 export const UserSettingPanel: React.FC = () => {
   const { userSettingStore } = useContext(AppCanvasContext);
@@ -41,9 +42,8 @@ export const UserSettingPanel: React.FC = () => {
   );
 
   const handleModifierSupportChange = useCallback(
-    (val: string) => {
-      const v = modifierSupportOptions.find((m) => m.value === val);
-      userSettingStore.patchState({ virtualKeyboard: v?.value });
+    (val: UserSetting["virtualKeyboard"]) => {
+      userSettingStore.patchState({ virtualKeyboard: val });
     },
     [userSettingStore],
   );
