@@ -4,6 +4,8 @@ import { COLORS, HSVA, colorToHex, hexToColor, hsvaToRgba, rednerRGBA, rgbaToHsv
 import { useGlobalDrag } from "../../hooks/window";
 import { clamp } from "okageo";
 import { TextInput } from "../atoms/inputs/TextInput";
+import eyeDropperIcon from "../../assets/icons/eyedropper.svg";
+import { isEyedropperAvailable } from "../../utils/devices";
 
 const v = 51;
 const getV = (i: number) => Math.min(Math.max(v * i, 0), 255);
@@ -39,12 +41,12 @@ const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void
   );
 };
 
-interface Option {
+interface ColorPickerPanelProps {
   color?: Color;
   onChange?: (color: Color, draft?: boolean) => void;
 }
 
-export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
+export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onChange }) => {
   const table = useMemo(
     () =>
       COLOR_TABLE.map((line) => {
@@ -87,13 +89,39 @@ export const ColorPickerPanel: React.FC<Option> = ({ color, onChange }) => {
     [hsva, onChange],
   );
 
+  const handleEyedropperClick = useCallback(async () => {
+    let hex: string | undefined;
+    try {
+      const eyedropper = new (window as any).EyeDropper();
+      const result = await eyedropper.open();
+      hex = result.sRGBHex;
+    } catch (e) {
+      // DOMException happens when the user cancels the operation.
+      if (!(e instanceof DOMException)) throw e;
+    }
+    if (!hex) return;
+
+    onChange?.(hexToColor(hex));
+  }, [onChange]);
+
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
       <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
       <HueBar value={hsvaCache.h} onChange={handleHueChange} />
-      <div className="flex justify-end">
-        <HexField {...actualColor} onChange={onChange} />
+      <div className="flex items-center">
+        {isEyedropperAvailable() ? (
+          <button
+            type="button"
+            className="w-8 h-8 border rounded flex items-center justify-center"
+            onClick={handleEyedropperClick}
+          >
+            <img src={eyeDropperIcon} alt="Eyedropper" className="w-6 h-6" />
+          </button>
+        ) : undefined}
+        <div className="ml-auto">
+          <HexField {...actualColor} onChange={onChange} />
+        </div>
       </div>
     </div>
   );
