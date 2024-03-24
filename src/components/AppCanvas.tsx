@@ -748,7 +748,7 @@ export const AppCanvas: React.FC = () => {
       <div className="fixed bottom-2 left-2 flex flex-col pointer-events-none">
         <CommandExamPanel commandExams={commandExams} />
       </div>
-      {userSetting.virtualKeyboard !== "off" ? (
+      {userSetting.virtualKeyboard === "modifiers" ? (
         <div className="pointer-events-auto fixed bottom-2 left-1/2 -translate-x-1/2">
           <ModifierSupportPanel value={modifierOptions} onChange={setModifierOptions} />
         </div>
