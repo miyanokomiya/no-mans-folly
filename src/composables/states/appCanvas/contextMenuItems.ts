@@ -1,4 +1,5 @@
 import { duplicateShapes } from "../../../shapes";
+import { FOLLY_SVG_PREFIX } from "../../../utils/shapeTemplateUtil";
 import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
 import { newShapeComposite } from "../../shapeComposite";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -33,6 +34,10 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Copy as SVG",
     key: "COPY_AS_SVG",
   },
+  EXPORT_AS_FOLLY_SVG: {
+    label: "Export as Folly SVG",
+    key: "EXPORT_AS_FOLLY_SVG",
+  },
 
   DELETE_LINE_VERTEX: {
     label: "Delete vertex",
@@ -45,6 +50,7 @@ export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
   CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG,
   // CONTEXT_MENU_ITEM_SRC.COPY_AS_SVG, // Clipboard API doesn't go with "image/svg+xml"
+  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_FOLLY_SVG,
 ];
 
 export const CONTEXT_MENU_SHAPE_SELECTED_ITEMS: ContextMenuItem[] = [
@@ -101,6 +107,9 @@ export function handleContextItemEvent(
     case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG.key:
       exportShapesAsSVG(ctx);
       return;
+    case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_FOLLY_SVG.key:
+      exportShapesAsSVG(ctx, true);
+      return;
   }
 }
 
@@ -154,7 +163,7 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
   }
 }
 
-async function exportShapesAsSVG(ctx: AppCanvasStateContext): Promise<void> {
+async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): Promise<void> {
   const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
   if (targetShapes.length === 0) {
     ctx.showToastMessage({
@@ -171,13 +180,13 @@ async function exportShapesAsSVG(ctx: AppCanvasStateContext): Promise<void> {
   });
 
   const range = ctx.getShapeComposite().getWrapperRectForShapes(targetShapes, true);
-  const builder = newSVGImageBuilder({ render: renderer.render, range });
 
   try {
-    saveFileInWeb(builder.toDataURL(), "shapes.svg");
-  } catch (e) {
+    const builder = newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
+    saveFileInWeb(builder.toDataURL(), withMeta ? `shapes${FOLLY_SVG_PREFIX}` : "shapes.svg");
+  } catch (e: any) {
     ctx.showToastMessage({
-      text: "Failed to create image",
+      text: `Failed to create image. ${e.message}`,
       type: "error",
     });
     console.error(e);

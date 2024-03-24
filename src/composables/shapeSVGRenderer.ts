@@ -1,5 +1,8 @@
+import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
+import { isImageShape } from "../shapes/image";
+import { FOLLY_SVG_META_ATTRIBUTE, ShapeTemplateInfo } from "../utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
 import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";
@@ -21,32 +24,11 @@ export function newShapeSVGRenderer(option: Option) {
 
     walkTree(mergedShapeTree, (node) => {
       const shape = mergedShapeMap[node.id];
-      const shapeElmInfo = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
-      if (!shapeElmInfo) return;
-
       const doc = docMap[shape.id];
-      if (!doc || hasDocNoContent(doc)) {
-        const shapeElm = createSVGElement(shapeElmInfo.tag, shapeElmInfo.attributes, shapeElmInfo.children);
-        root.appendChild(shapeElm);
-        return;
+      const elm = createShapeElement(option, ctx, shape, doc);
+      if (elm) {
+        root.appendChild(elm);
       }
-
-      const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
-
-      const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
-      const docInfo = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
-      if (!infoCache) {
-        option.shapeComposite.setDocCompositeCache(shape.id, docInfo);
-      }
-
-      const docElmInfo = renderSVGDocByComposition(docInfo.composition, docInfo.lines);
-      const transform = renderTransform(bounds.affine);
-      if (transform) {
-        docElmInfo.attributes ??= {};
-        docElmInfo.attributes.transform = renderTransform(bounds.affine);
-      }
-      const wrapperElm = createSVGElement("g", undefined, [shapeElmInfo, docElmInfo]);
-      root.appendChild(wrapperElm);
     });
 
     // Gather asset files used in the SVG.
@@ -107,6 +89,62 @@ export function newShapeSVGRenderer(option: Option) {
     return root;
   }
 
-  return { render };
+  function renderWithMeta(ctx: CanvasRenderingContext2D): SVGSVGElement {
+    const root = createSVGSVGElement();
+
+    walkTree(mergedShapeTree, (node) => {
+      const shape = mergedShapeMap[node.id];
+      if (isImageShape(shape)) throw new Error("Image shapes can't be included.");
+
+      const doc = docMap[shape.id];
+      const elm = createShapeElement(option, ctx, shape, doc);
+      if (elm) {
+        root.appendChild(elm);
+      }
+    });
+
+    const targets = option.shapeComposite.getAllBranchMergedShapes(mergedShapeTree.map((t) => t.id));
+    const docs: [string, DocOutput][] = targets.filter((s) => !!docMap[s.id]).map((s) => [s.id, docMap[s.id]]);
+    const meta: ShapeTemplateInfo = { shapes: targets, docs };
+    const metaDef = createSVGElement("def");
+    metaDef.setAttribute(FOLLY_SVG_META_ATTRIBUTE, JSON.stringify(meta));
+    root.appendChild(metaDef);
+
+    return root;
+  }
+
+  return { render, renderWithMeta };
 }
 export type ShapeSVGRenderer = ReturnType<typeof newShapeSVGRenderer>;
+
+function createShapeElement(
+  option: Option,
+  ctx: CanvasRenderingContext2D,
+  shape: Shape,
+  doc?: DocOutput,
+): SVGElement | undefined {
+  const shapeElmInfo = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
+  if (!shapeElmInfo) return;
+
+  if (!doc || hasDocNoContent(doc)) {
+    const shapeElm = createSVGElement(shapeElmInfo.tag, shapeElmInfo.attributes, shapeElmInfo.children);
+    return shapeElm;
+  }
+
+  const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
+
+  const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
+  const docInfo = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
+  if (!infoCache) {
+    option.shapeComposite.setDocCompositeCache(shape.id, docInfo);
+  }
+
+  const docElmInfo = renderSVGDocByComposition(docInfo.composition, docInfo.lines);
+  const transform = renderTransform(bounds.affine);
+  if (transform) {
+    docElmInfo.attributes ??= {};
+    docElmInfo.attributes.transform = renderTransform(bounds.affine);
+  }
+  const wrapperElm = createSVGElement("g", undefined, [shapeElmInfo, docElmInfo]);
+  return wrapperElm;
+}

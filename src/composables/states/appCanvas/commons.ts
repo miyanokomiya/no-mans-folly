@@ -13,6 +13,7 @@ import {
 import {
   canHaveText,
   createShape,
+  duplicateShapes,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
@@ -20,7 +21,6 @@ import {
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2, add, getRectCenter, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
-import { Shape } from "../../../models";
 import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
 import { TextShape } from "../../../shapes/text";
@@ -43,6 +43,8 @@ import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState";
+import { FOLLY_SVG_PREFIX, ShapeTemplateInfo, parseTemplateShapes } from "../../../utils/shapeTemplateUtil";
+import { Shape } from "../../../models";
 
 type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "RectSelectReady" | "ShapeInspection";
 
@@ -324,13 +326,7 @@ export function startTextEditingIfPossible(
   }
 }
 
-const clipboardShapeSerializer = newClipboardSerializer<
-  "shapes",
-  {
-    shapes: Shape[];
-    docs: [id: string, doc: DocOutput][];
-  }
->("shapes");
+const clipboardShapeSerializer = newClipboardSerializer<"shapes", ShapeTemplateInfo>("shapes");
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
   return newClipboard(
     () => {
@@ -389,6 +385,22 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput, plain
 }
 
 export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDropEvent): Promise<void> {
+  const follySvgFiles: File[] = [];
+  const assetFiles: File[] = [];
+  for (const file of event.data.files) {
+    if (file.name.toLowerCase().endsWith(FOLLY_SVG_PREFIX)) {
+      follySvgFiles.push(file);
+    } else {
+      assetFiles.push(file);
+    }
+  }
+
+  if (follySvgFiles.length > 0) {
+    await loadFollySvgFiles(ctx, follySvgFiles, event.data.point);
+    // Ignore other files when template files eixst.
+    return;
+  }
+
   const assetAPI = ctx.assetAPI;
   if (!assetAPI.enabled) {
     ctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
@@ -398,7 +410,7 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
   const imageStore = ctx.getImageStore();
 
   const assetMap = new Map<string, HTMLImageElement>();
-  for (const file of event.data.files) {
+  for (const file of assetFiles) {
     const splitted = file.name.split(".");
     const ex = splitted.length > 1 ? splitted[splitted.length - 1] : "";
     const str = ctx.generateUuid();
@@ -430,6 +442,46 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
     });
   });
   ctx.addShapes(shapes);
+}
+
+async function loadFollySvgFiles(ctx: AppCanvasStateContext, follySvgFiles: File[], point: IVec2) {
+  const newShapes: Shape[] = [];
+  const newDocMap: { [key: string]: DocOutput } = {};
+  const lastIndex = ctx.createLastIndex();
+  const drift = { x: 20, y: 20 };
+  let position = point;
+  for (const file of follySvgFiles) {
+    const svgText = await file.text();
+    const data = parseTemplateShapes(svgText);
+    if (data && data.shapes.length > 0) {
+      const duplicated = duplicateShapes(
+        ctx.getShapeStruct,
+        data.shapes,
+        data.docs,
+        ctx.generateUuid,
+        lastIndex, // This is just a temprorary value and adjusted later.
+        new Set(),
+        position,
+      );
+      duplicated.shapes.forEach((s) => {
+        newShapes.push(s);
+      });
+      Object.entries(duplicated.docMap).forEach(([id, doc]) => {
+        newDocMap[id] = doc;
+      });
+      position = add(position, drift);
+    }
+  }
+
+  if (newShapes.length > 0) {
+    const ids = newShapes.map((s) => s.id);
+    const patch = patchShapesOrderToLast(ids, ctx.createLastIndex());
+    const adjustedNewShapes = newShapes.map((s) => {
+      return { ...s, ...patch[s.id] };
+    });
+    ctx.addShapes(adjustedNewShapes, newDocMap);
+    ctx.multiSelectShapes(adjustedNewShapes.map((s) => s.id));
+  }
 }
 
 export function handleCommonPointerDownLeftOnSingleSelection(
