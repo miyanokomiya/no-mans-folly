@@ -3,6 +3,7 @@ import { FileAccess, getSheetFileName } from "../../utils/fileAccess";
 import { GoogleDriveFile } from "../types";
 import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../utils/fileAccess";
 import { fetchGoogleAuthToken } from "../utils/auth";
+import { encodeStateAsUpdateWithGC } from "../../utils/yjs";
 
 const GOOGLE_API_URI = "https://www.googleapis.com/drive/v3";
 
@@ -161,7 +162,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   async function overwriteDoc(id: string, doc: Y.Doc): Promise<true | undefined> {
     if (!hasHnadle()) return;
 
-    const update = Y.encodeStateAsUpdate(doc);
+    const update = encodeStateAsUpdateWithGC(doc);
     const name = id;
     const data = new Blob([update]);
 

@@ -1,5 +1,6 @@
 import * as Y from "yjs";
 import { FileAccess, ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME, getSheetFileName } from "../utils/fileAccess";
+import { encodeStateAsUpdateWithGC } from "../utils/yjs";
 
 let hasMoveAPI = true;
 
@@ -94,7 +95,7 @@ export function newFileAccess(): FileAccess {
     }
     if (!handle) return;
 
-    const update = Y.encodeStateAsUpdate(doc);
+    const update = encodeStateAsUpdateWithGC(doc);
     await writeFileBySwap(handle, name, update);
 
     return true;
