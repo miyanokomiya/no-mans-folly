@@ -5,6 +5,7 @@ import { isCtrlOrMeta } from "../utils/devices";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { useGlobalKeydownEffect } from "../hooks/window";
 import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
+import { CleanSheetDialog } from "./navigations/CleanSheetDialog";
 
 interface Props {
   onClickOpen: () => void;
@@ -12,6 +13,7 @@ interface Props {
   onClickExport: () => void;
   onClickClear: () => void;
   onClickFlush: () => void;
+  onClickCleanSheet: () => void;
   canSyncWorkspace: boolean;
   savePending: boolean;
   saving: boolean;
@@ -26,6 +28,7 @@ export const AppHeader: React.FC<Props> = ({
   onClickExport,
   onClickClear,
   onClickFlush,
+  onClickCleanSheet,
   canSyncWorkspace,
   savePending,
   saving,
@@ -114,6 +117,21 @@ export const AppHeader: React.FC<Props> = ({
     setOpenClearConfirm(true);
   }, []);
 
+  const [openCleanConfirm, setOpenCleanConfirm] = useState(false);
+  const closeCleanConfirm = useCallback(() => {
+    setOpenCleanConfirm(false);
+  }, []);
+
+  const handleClickCleanSheet = useCallback(() => {
+    setPopupedKey("");
+    setOpenCleanConfirm(true);
+  }, []);
+
+  const handleProcCleanSheet = useCallback(() => {
+    setOpenCleanConfirm(false);
+    onClickCleanSheet();
+  }, [onClickCleanSheet]);
+
   const clearDiagram = useCallback(() => {
     setOpenClearConfirm(false);
     onClickClear();
@@ -146,15 +164,16 @@ export const AppHeader: React.FC<Props> = ({
     return () => clearTimeout(timer);
   }, [ctrlS]);
 
-  const canExportWorkspace = !saving && !savePending;
+  const isWorkspaceStable = !saving && !savePending;
 
   const fileItems = useMemo(() => {
     const className = "p-2 border hover:bg-gray-200 text-left";
+    const spacer = <div className="h-1 w-full border" />;
 
     if (workspaceType) {
       return (
         <div className="flex flex-col w-max">
-          {canExportWorkspace ? (
+          {isWorkspaceStable ? (
             <button type="button" className={className} onClick={handleClickExport}>
               Export workspace
             </button>
@@ -164,6 +183,14 @@ export const AppHeader: React.FC<Props> = ({
           <button type="button" className={className} onClick={handleClickClear}>
             Disconnect workspace
           </button>
+          {spacer}
+          {isWorkspaceStable ? (
+            <button type="button" className={className} onClick={handleClickCleanSheet}>
+              Clean sheet
+            </button>
+          ) : (
+            <span className={className + " line-through"}>Clean sheet</span>
+          )}
         </div>
       );
     }
@@ -176,6 +203,7 @@ export const AppHeader: React.FC<Props> = ({
         <button type="button" className={className} onClick={handleClickSave}>
           Save & Open workspace
         </button>
+        {spacer}
         {hasTemporaryDiagram ? (
           <button type="button" className={className} onClick={handleClickClear}>
             Clear diagram
@@ -188,9 +216,10 @@ export const AppHeader: React.FC<Props> = ({
     handleClickSave,
     handleClickExport,
     handleClickClear,
+    handleClickCleanSheet,
     workspaceType,
     hasTemporaryDiagram,
-    canExportWorkspace,
+    isWorkspaceStable,
   ]);
 
   return (
@@ -230,6 +259,7 @@ export const AppHeader: React.FC<Props> = ({
           </div>
         )}
       </Dialog>
+      <CleanSheetDialog open={openCleanConfirm} onClickOK={handleProcCleanSheet} onClose={closeCleanConfirm} />
     </OutsideObserver>
   );
 };

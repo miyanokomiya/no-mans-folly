@@ -77,10 +77,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const initSheet = useCallback(
     async (sheetId: string) => {
-      const nextSheetDoc = new Y.Doc();
-      // Attach sheet id
-      // => the doc doens't always refer to selected sheet in the store during swiching sheets.
-      nextSheetDoc.meta = { sheetId };
+      const nextSheetDoc = createSheetDoc(sheetId);
 
       if (fileAccess.hasHnadle()) {
         setReady(false);
@@ -109,6 +106,37 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     },
     [fileAccess, handleSyncError],
   );
+
+  const cleanCurrentSheet = useCallback(async () => {
+    const sheetId = getSheetId(sheetDoc);
+    if (!sheetId) return;
+
+    const nextSheetDoc = createSheetDoc(sheetId);
+    const layerStore = newLayerStore({ ydoc: nextSheetDoc });
+    const shapeStore = newShapeStore({ ydoc: nextSheetDoc });
+    const documentStore = newDocumentStore({ ydoc: nextSheetDoc });
+
+    layerStore.addEntities(sheetStores.layerStore.getEntities());
+    shapeStore.addEntities(sheetStores.shapeStore.getEntities());
+    Object.entries(sheetStores.documentStore.getDocMap()).forEach(([id, doc]) => {
+      documentStore.addDoc(id, doc);
+    });
+
+    if (fileAccess.hasHnadle()) {
+      try {
+        await fileAccess.overwriteSheetDoc(sheetId, nextSheetDoc);
+      } catch (e) {
+        handleSyncError(e);
+      }
+    }
+
+    const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
+    await sheetProvider?.whenSynced;
+
+    setDbProviderSheet(sheetProvider);
+    setSheetDoc(nextSheetDoc);
+    setSheetStores({ layerStore, shapeStore, documentStore });
+  }, [fileAccess, handleSyncError, sheetDoc, sheetStores]);
 
   const initDiagram = useCallback(async () => {
     setReady(false);
@@ -326,7 +354,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     if (!canSyncWorkspace) return;
 
     const fn = () => {
-      saveSheetUpdateThrottle(sheetDoc.meta.sheetId);
+      saveSheetUpdateThrottle(getSheetId(sheetDoc));
     };
 
     sheetDoc.on("update", fn);
@@ -396,6 +424,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   return {
     initSheet,
+    cleanCurrentSheet,
     initDiagram,
     openDiagramFromWorkspace,
     clearDiagram,
@@ -448,4 +477,16 @@ function createInitialSheet(sheetStore: SheetStore, generateUuid: () => string) 
 
 function newIndexeddbPersistence(key: string, doc: Y.Doc): IndexeddbPersistence | undefined {
   return !indexedDBMode ? undefined : new IndexeddbPersistence(key, doc);
+}
+
+function createSheetDoc(sheetId: string): Y.Doc {
+  const nextSheetDoc = new Y.Doc();
+  // Attach sheet id
+  // => the doc doens't always refer to selected sheet in the store during swiching sheets.
+  nextSheetDoc.meta = { sheetId };
+  return nextSheetDoc;
+}
+
+function getSheetId(sheetDoc: Y.Doc): string {
+  return sheetDoc.meta.sheetId;
 }

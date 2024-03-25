@@ -45,6 +45,7 @@ function App() {
     savePending,
     saving,
     initSheet,
+    cleanCurrentSheet,
     initDiagram,
     openDiagramFromWorkspace,
     clearDiagram,
@@ -130,6 +131,10 @@ function App() {
     setFileAccess(newFileAccess());
     setWorkspaceType(undefined);
   }, [clearDiagram]);
+
+  const handleCleanSheet = useCallback(async () => {
+    await cleanCurrentSheet();
+  }, [cleanCurrentSheet]);
 
   const savePendingFlag = useMemo(() => {
     return Object.values(savePending).some((v) => v);
@@ -325,6 +330,7 @@ function App() {
             onClickExport={handleExportWorkspace}
             onClickClear={handleClearWorkspace}
             onClickFlush={flushSaveThrottles}
+            onClickCleanSheet={handleCleanSheet}
             canSyncWorkspace={canSyncWorkspace}
             savePending={savePendingFlag}
             saving={savingFlag}
