@@ -6,6 +6,7 @@ import { OutsideObserver } from "./atoms/OutsideObserver";
 import { useGlobalKeydownEffect } from "../hooks/window";
 import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
 import { CleanSheetDialog } from "./navigations/CleanSheetDialog";
+import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
 
 interface Props {
   onClickOpen: () => void;
@@ -167,47 +168,32 @@ export const AppHeader: React.FC<Props> = ({
   const isWorkspaceStable = !saving && !savePending;
 
   const fileItems = useMemo(() => {
-    const className = "p-2 border hover:bg-gray-200 text-left";
-    const spacer = <div className="h-1 w-full border" />;
-
     if (workspaceType) {
       return (
         <div className="flex flex-col w-max">
-          {isWorkspaceStable ? (
-            <button type="button" className={className} onClick={handleClickExport}>
-              Export workspace
-            </button>
-          ) : (
-            <span className={className + " line-through"}>Export workspace</span>
-          )}
-          <button type="button" className={className} onClick={handleClickClear}>
+          <ListButton disabled={!isWorkspaceStable} onClick={handleClickExport}>
+            Export workspace
+          </ListButton>
+          <ListButton disabled={!isWorkspaceStable} onClick={handleClickClear}>
             Disconnect workspace
-          </button>
-          {spacer}
-          {isWorkspaceStable ? (
-            <button type="button" className={className} onClick={handleClickCleanSheet}>
-              Clean sheet
-            </button>
-          ) : (
-            <span className={className + " line-through"}>Clean sheet</span>
-          )}
+          </ListButton>
+          <ListSpacer />
+          <ListButton disabled={!isWorkspaceStable} onClick={handleClickCleanSheet}>
+            Clean sheet
+          </ListButton>
         </div>
       );
     }
 
     return (
       <div className="flex flex-col w-max">
-        <button type="button" className={className} onClick={handleClickOpen}>
-          Open workspace
-        </button>
-        <button type="button" className={className} onClick={handleClickSave}>
-          Save & Open workspace
-        </button>
-        {spacer}
+        <ListButton onClick={handleClickOpen}>Open workspace</ListButton>
+        <ListButton onClick={handleClickSave}>Save & Open workspace</ListButton>
         {hasTemporaryDiagram ? (
-          <button type="button" className={className} onClick={handleClickClear}>
-            Clear diagram
-          </button>
+          <>
+            <ListSpacer />
+            <ListButton onClick={handleClickClear}>Clear diagram</ListButton>
+          </>
         ) : undefined}
       </div>
     );
