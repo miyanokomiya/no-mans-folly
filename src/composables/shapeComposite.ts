@@ -1,5 +1,6 @@
 import {
   AffineMatrix,
+  IDENTITY_AFFINE,
   IRectangle,
   IVec2,
   applyAffine,
@@ -8,7 +9,7 @@ import {
   getRectCenter,
   multiAffines,
 } from "okageo";
-import { EntityPatchInfo, Shape } from "../models";
+import { EntityPatchInfo, GroupConstraint, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
@@ -434,33 +435,22 @@ export function resizeShapeTrees(
 
       const adjustmentAffines: AffineMatrix[] = [];
 
-      if (shape.gcV === 1) {
-        const targetTopMargin = normalizedSrcRect.y - data.parentDerotatedRect.y;
-        const resizedTopMargin = normalizedResizedRect.y - data.parentDerotatedResizedRect.y;
-        const diff = targetTopMargin - resizedTopMargin;
-        adjustmentAffines.push(
-          multiAffines([
-            [1, 0, 0, 1, 0, diff + normalizedResizedRect.y],
-            [1, 0, 0, (normalizedResizedRect.height - diff) / normalizedResizedRect.height, 0, 0],
-            [1, 0, 0, 1, 0, -normalizedResizedRect.y],
-          ]),
-        );
-      } else if (shape.gcV === 2) {
-        const targetHeight = normalizedSrcRect.height;
-        adjustmentAffines.push(
-          multiAffines([
-            [1, 0, 0, 1, 0, resizedCenter.y],
-            [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
-            [1, 0, 0, 1, 0, -resizedCenter.y],
-          ]),
-        );
+      const verticalAdjustmentAffine = getVerticalConstraintAdjustmentAffine(
+        shape.gcV,
+        normalizedSrcRect,
+        normalizedResizedRect,
+        resizedCenter,
+        data.parentDerotatedRect,
+        data.parentDerotatedResizedRect,
+      );
+      if (verticalAdjustmentAffine) {
+        adjustmentAffines.push(verticalAdjustmentAffine);
       }
 
-      const adjustmentAffine: AffineMatrix = multiAffines([
-        data.parentResizedRotationAffine,
-        ...adjustmentAffines,
-        data.parentDerotationResizedAffine,
-      ]);
+      const adjustmentAffine: AffineMatrix =
+        adjustmentAffines.length === 0
+          ? IDENTITY_AFFINE
+          : multiAffines([data.parentResizedRotationAffine, ...adjustmentAffines, data.parentDerotationResizedAffine]);
 
       const adjustmentPatch = resizedComposite.transformShape(rowResizedInfo.shape, adjustmentAffine);
 
@@ -496,4 +486,34 @@ export function resizeShapeTrees(
   );
 
   return ret;
+}
+
+function getVerticalConstraintAdjustmentAffine(
+  gcV: GroupConstraint | undefined,
+  normalizedSrcRect: IRectangle,
+  normalizedResizedRect: IRectangle,
+  resizedCenter: IVec2,
+  parentDerotatedRect: IRectangle,
+  parentDerotatedResizedRect: IRectangle,
+): AffineMatrix | undefined {
+  switch (gcV) {
+    case 1: {
+      const targetTopMargin = normalizedSrcRect.y - parentDerotatedRect.y;
+      const resizedTopMargin = normalizedResizedRect.y - parentDerotatedResizedRect.y;
+      const diff = targetTopMargin - resizedTopMargin;
+      return multiAffines([
+        [1, 0, 0, 1, 0, diff + normalizedResizedRect.y],
+        [1, 0, 0, (normalizedResizedRect.height - diff) / normalizedResizedRect.height, 0, 0],
+        [1, 0, 0, 1, 0, -normalizedResizedRect.y],
+      ]);
+    }
+    case 2: {
+      const targetHeight = normalizedSrcRect.height;
+      return multiAffines([
+        [1, 0, 0, 1, 0, resizedCenter.y],
+        [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
+        [1, 0, 0, 1, 0, -resizedCenter.y],
+      ]);
+    }
+  }
 }
