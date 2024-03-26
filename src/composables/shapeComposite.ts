@@ -445,6 +445,15 @@ export function resizeShapeTrees(
             [1, 0, 0, 1, 0, -normalizedResizedRect.y],
           ]),
         );
+      } else if (shape.gcV === 2) {
+        const targetHeight = normalizedSrcRect.height;
+        adjustmentAffines.push(
+          multiAffines([
+            [1, 0, 0, 1, 0, resizedCenter.y],
+            [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
+            [1, 0, 0, 1, 0, -resizedCenter.y],
+          ]),
+        );
       }
 
       const adjustmentAffine: AffineMatrix = multiAffines([
