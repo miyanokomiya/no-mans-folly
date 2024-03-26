@@ -1,9 +1,9 @@
-import { AffineMatrix, IRectangle, IVec2, getRectCenter, multiAffines } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
-import { flatTree, getAllBranchIds, getBranchPath, getTree } from "../utils/tree";
+import { flatTree, getAllBranchIds, getBranchPath, getTree, walkTreeWithValue } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
   ShapeSelectionScope,
@@ -318,4 +318,109 @@ export function getClosestShapeByType<T extends Shape>(
     return shape.type === type;
   });
   return id ? (shapeComposite.mergedShapeMap[id] as T) : undefined;
+}
+
+export function resizeShapeTrees(
+  shapeComposite: ShapeComposite,
+  targetIds: string[],
+  affine: AffineMatrix,
+): { [id: string]: Partial<Shape> } {
+  const shapeMap = shapeComposite.shapeMap;
+  const targetTrees = targetIds.map((id) => shapeComposite.mergedShapeTreeMap[id]);
+
+  const ret: { [id: string]: Partial<Shape> } = {};
+
+  walkTreeWithValue<
+    | {
+        affine: AffineMatrix;
+        parentRotationAffine: AffineMatrix;
+        parentDerotationAffine: AffineMatrix;
+        parentDerotatedRect: IRectangle;
+        parentDerotatedResizedRect: IRectangle;
+      }
+    | undefined
+  >(
+    targetTrees,
+    (node, _, data) => {
+      const resizingAffine = data?.affine ?? affine;
+      const shape = shapeMap[node.id];
+
+      const rect = shapeComposite.getWrapperRect(shape);
+
+      const patch = shapeModule.resizeShape(shapeComposite.getShapeStruct, shape, resizingAffine);
+      const resized = { ...shape, ...patch };
+      const resizedRect = shapeComposite.getWrapperRect(resized);
+      const resizedCenter = getRectCenter(resizedRect);
+
+      if (!data) {
+        const patch = shapeModule.resizeShape(shapeComposite.getShapeStruct, shape, resizingAffine);
+        ret[node.id] = patch;
+        if (isGroupShape(shape)) {
+          const rotationAffine = geometry.getRotatedAtAffine(resizedCenter, resized.rotation);
+          const derotationAffine = geometry.getRotatedAtAffine(resizedCenter, -resized.rotation);
+          const derotatedRect = shapeComposite.getWrapperRect({ ...shape, rotation: 0 });
+          const localRectPolygon = shapeComposite.getLocalRectPolygon(shape);
+          const derotatedResizedRect = getOuterRectangle([
+            localRectPolygon.map((p) => applyAffine(multiAffines([derotationAffine, resizingAffine]), p)),
+          ]);
+
+          return {
+            affine: resizingAffine,
+            parentDerotatedRect: derotatedRect,
+            parentDerotatedResizedRect: derotatedResizedRect,
+            parentRotationAffine: rotationAffine,
+            parentDerotationAffine: derotationAffine,
+          };
+        }
+        return;
+      }
+
+      const normalizedSrcRect = getOuterRectangle([
+        geometry.getRectPoints(rect).map((p) => applyAffine(data.parentDerotationAffine, p)),
+      ]);
+
+      const normalizedResizedRect = getOuterRectangle([
+        geometry.getRectPoints(resizedRect).map((p) => applyAffine(data.parentDerotationAffine, p)),
+      ]);
+
+      const adjustmentAffines: AffineMatrix[] = [];
+
+      if (shape.gcV === 1) {
+        const targetTopMargin = normalizedSrcRect.y - data.parentDerotatedRect.y;
+        const resizedTopMargin = normalizedResizedRect.y - data.parentDerotatedResizedRect.y;
+        const diff = targetTopMargin - resizedTopMargin;
+        adjustmentAffines.push([1, 0, 0, 1, 0, diff]);
+      }
+
+      const adjustmentAffine: AffineMatrix = multiAffines([
+        data.parentRotationAffine,
+        ...adjustmentAffines,
+        data.parentDerotationAffine,
+      ]);
+
+      const adjustmentPatch = shapeModule.resizeShape(shapeComposite.getShapeStruct, resized, adjustmentAffine);
+
+      ret[node.id] = { ...patch, ...adjustmentPatch };
+
+      if (isGroupShape(shape)) {
+        const rotationAffine = geometry.getRotatedAtAffine(resizedCenter, resized.rotation);
+        const derotationAffine = geometry.getRotatedAtAffine(resizedCenter, -resized.rotation);
+        const derotatedRect = shapeComposite.getWrapperRect({ ...shape, rotation: 0 });
+        const localRectPolygon = shapeComposite.getLocalRectPolygon(shape);
+        const derotatedResizedRect = getOuterRectangle([
+          localRectPolygon.map((p) => applyAffine(multiAffines([derotationAffine, resizingAffine]), p)),
+        ]);
+        return {
+          affine: multiAffines([adjustmentAffine, data.affine]),
+          parentDerotatedRect: derotatedRect,
+          parentDerotatedResizedRect: derotatedResizedRect,
+          parentRotationAffine: rotationAffine,
+          parentDerotationAffine: derotationAffine,
+        };
+      }
+    },
+    undefined,
+  );
+
+  return ret;
 }

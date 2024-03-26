@@ -632,9 +632,6 @@ export function getCurvePathStructs(points: IVec2[], controls: (CurveControl | u
   return pathStructs;
 }
 
-/**
- * "rectPath" must be rectangluar
- */
 export function getRotatedRectAffine(rect: IRectangle, rotation: number) {
   const width = rect.width;
   const height = rect.height;
@@ -646,6 +643,17 @@ export function getRotatedRectAffine(rect: IRectangle, rotation: number) {
     [1, 0, 0, 1, center.x, center.y],
     [cos, sin, -sin, cos, 0, 0],
     [1, 0, 0, 1, -width / 2, -height / 2],
+  ]);
+}
+
+export function getRotatedAtAffine(origin: IVec2, rotation: number) {
+  const sin = Math.sin(rotation);
+  const cos = Math.cos(rotation);
+
+  return multiAffines([
+    [1, 0, 0, 1, origin.x, origin.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, 1, -origin.x, -origin.y],
   ]);
 }
 

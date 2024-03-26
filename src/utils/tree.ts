@@ -49,6 +49,15 @@ function walkTreeStep(node: TreeNode, fn: (node: TreeNode, i: number) => void, i
   node.children.forEach((c, j) => walkTreeStep(c, fn, j));
 }
 
+export function walkTreeWithValue<T>(treeNodes: TreeNode[], fn: (node: TreeNode, i: number, t: T) => T, t: T) {
+  treeNodes.forEach((n, i) => walkTreeStepWithValue(n, fn, i, t));
+}
+
+function walkTreeStepWithValue<T>(node: TreeNode, fn: (node: TreeNode, i: number, t: T) => T, i: number, t: T) {
+  const nextVal = fn(node, i, t);
+  node.children.forEach((c, j) => walkTreeStepWithValue(c, fn, j, nextVal));
+}
+
 /**
  * Depth first ordered
  */
