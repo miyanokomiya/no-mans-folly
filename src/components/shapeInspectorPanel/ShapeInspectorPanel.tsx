@@ -7,6 +7,7 @@ import { AppStateContext, AppStateMachineContext } from "../../contexts/AppConte
 import { Shape } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
+import { GroupConstraintInspector } from "./GroupConstraintInspector";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -78,6 +79,17 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShape, getShapeComposite, setTmpShapeMap],
   );
 
+  const updateTargetShape = useCallback(
+    (patch: Partial<Shape>) => {
+      const shapeComposite = getShapeComposite();
+      const layoutPatch = getPatchByLayouts(shapeComposite, {
+        update: { [targetShape.id]: patch },
+      });
+      patchShapes(layoutPatch);
+    },
+    [targetShape, getShapeComposite, patchShapes],
+  );
+
   const shapeLabel = useMemo<string>(() => {
     const shapeComposite = getShapeComposite();
     return shapeComposite.getShapeStruct(targetShape.type).label;
@@ -105,6 +117,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
           readyState={readyState}
         />
       )}
+      <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShape} />
       <button type="submit" className="hidden" />
     </form>
   );

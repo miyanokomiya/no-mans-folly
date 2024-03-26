@@ -126,7 +126,7 @@ export interface UserSetting {
  * 2: fixed content
  * 3: fixed bottom / right
  * 4: fixed top / left and content
- * 6: fixed top / left and bottom / right
- * 7: fixed content and bottom / right
+ * 5: fixed top / left and bottom / right
+ * 6: fixed content and bottom / right
  */
-export type GroupConstraint = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type GroupConstraint = 0 | 1 | 2 | 3 | 4 | 5 | 6;
