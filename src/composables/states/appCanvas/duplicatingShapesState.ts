@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { duplicateShapes, resizeShape } from "../../../shapes";
+import { duplicateShapes } from "../../../shapes";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
@@ -73,9 +73,10 @@ export function newDuplicatingShapesState(): AppCanvasState {
           snappingResult = shapeSnapping.test(moveRect(movingRect, d));
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           const affine: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
+          const shapeComposite = ctx.getShapeComposite();
           tmpShapeMap = {};
           duplicated.shapes.forEach((s) => {
-            tmpShapeMap[s.id] = resizeShape(ctx.getShapeStruct, s, affine);
+            tmpShapeMap[s.id] = shapeComposite.transformShape(s, affine);
           });
           ctx.setTmpShapeMap({});
           return;

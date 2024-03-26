@@ -98,6 +98,10 @@ export function newShapeComposite(option: Option) {
     return shapeModule.isPointOn(option.getStruct, shape, p, mergedShapeContext);
   }
 
+  function transformShape<T extends Shape>(shape: T, resizingAffine: AffineMatrix): Partial<T> {
+    return shapeModule.resizeShape(option.getStruct, shape, resizingAffine, mergedShapeContext);
+  }
+
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
     return shapeModule.getWrapperRect(option.getStruct, shape, mergedShapeContext, includeBounds);
   }
@@ -181,6 +185,7 @@ export function newShapeComposite(option: Option) {
     createSVGElementInfo,
     findShapeAt,
     isPointOn,
+    transformShape,
     getWrapperRect,
     getWrapperRectForShapes,
     getLocalRectPolygon,
@@ -295,7 +300,7 @@ export function getRotatedTargetBounds(
   ]);
   const rotatedWrapperRect = geometry.getWrapperRect(
     shapes
-      .map((s) => ({ ...s, ...shapeModule.resizeShape(shapeComposite.getShapeStruct, s, affine) }))
+      .map((s) => ({ ...s, ...shapeComposite.transformShape(s, affine) }))
       .map((s) => shapeComposite.getWrapperRect(s)),
   );
   const rotateFn = geometry.getRotateFn(r, c);

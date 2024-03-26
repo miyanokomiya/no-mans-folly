@@ -1,7 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { BoundingBox, newBoundingBoxRotating } from "../../boundingBox";
 import { IDENTITY_AFFINE } from "okageo";
-import { resizeShape } from "../../../shapes";
 import { Shape } from "../../../models";
 import {
   ConnectedLineHandler,
@@ -55,11 +54,12 @@ export function newRotatingState(option: Option): AppCanvasState {
         case "pointermove": {
           resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);
 
+          const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;
           const patchMap = targets.reduce<{ [id: string]: Partial<Shape> }>((m, s) => {
             const shape = shapeMap[s.id];
             if (shape) {
-              m[s.id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
+              m[s.id] = shapeComposite.transformShape(shape, resizingAffine);
             }
             return m;
           }, {});

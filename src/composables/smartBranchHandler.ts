@@ -1,6 +1,6 @@
 import { AffineMatrix, IRectangle, IVec2, getDistance, getRectCenter, moveRect } from "okageo";
 import { Shape, StyleScheme } from "../models";
-import { cloneShapes, createShape, getIntersectedOutlines, getLocationRateOnShape, resizeShape } from "../shapes";
+import { cloneShapes, createShape, getIntersectedOutlines, getLocationRateOnShape } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
@@ -60,7 +60,7 @@ export function newSmartBranchHandler(option: Option) {
       });
     const baseQ = getTargetPosition(hitResult.index, option.bounds, obstacles);
     const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - option.bounds.x, baseQ.y - option.bounds.y];
-    const moved = { ...shape, ...resizeShape(getShapeStruct, shape, affine) };
+    const moved = { ...shape, ...shapeComposite.transformShape(shape, affine) };
 
     const pRect = shapeComposite.getWrapperRect(src);
     const qRect = moveRect(pRect, { x: baseQ.x - option.bounds.x, y: baseQ.y - option.bounds.y });

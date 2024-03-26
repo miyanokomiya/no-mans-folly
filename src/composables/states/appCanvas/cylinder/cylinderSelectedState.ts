@@ -14,7 +14,6 @@ import { newTransformingCylinderState } from "./transformingCylinderState";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { getShapeTransform } from "../../../../shapes/simplePolygon";
 import { applyAffine, getDistance, getRadian, multiAffines } from "okageo";
-import { resizeShape } from "../../../../shapes";
 import { getGlobalAffine, getRotationAffine } from "../../../../utils/geometry";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
@@ -52,6 +51,7 @@ export const newCylinderSelectedState = defineIntransientState(() => {
 
           switch (event.data.options.button) {
             case 0: {
+              const shapeComposite = ctx.getShapeComposite();
               const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
               shapeHandler.saveHitResult(hitResult);
               if (hitResult) {
@@ -71,8 +71,7 @@ export const newCylinderSelectedState = defineIntransientState(() => {
                           const distance = getDistance(p, origin);
                           const top = Math.min(s.height - distance, s.height - 2 * ry);
                           const radDiff = getRadian(p, origin) + Math.PI / 2 - s.rotation;
-                          const resized = resizeShape(
-                            ctx.getShapeComposite().getShapeStruct,
+                          const resized = shapeComposite.transformShape(
                             s,
                             getGlobalAffine(
                               origin,
@@ -100,8 +99,7 @@ export const newCylinderSelectedState = defineIntransientState(() => {
                           const distance = getDistance(p, origin);
                           const bottom = Math.max(distance, 2 * ry);
                           const radDiff = getRadian(p, origin) - Math.PI / 2 - s.rotation;
-                          const resized = resizeShape(
-                            ctx.getShapeComposite().getShapeStruct,
+                          const resized = shapeComposite.transformShape(
                             s,
                             getGlobalAffine(
                               applyAffine(getShapeTransform(s), {

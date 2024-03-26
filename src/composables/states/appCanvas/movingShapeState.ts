@@ -2,7 +2,6 @@ import type { AppCanvasState } from "./core";
 import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { resizeShape } from "../../../shapes";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import {
@@ -100,10 +99,11 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
 
+          const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;
           const patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
             const s = shapeMap[id];
-            if (s) m[id] = resizeShape(ctx.getShapeStruct, s, affine);
+            if (s) m[id] = shapeComposite.transformShape(s, affine);
             return m;
           }, {});
 

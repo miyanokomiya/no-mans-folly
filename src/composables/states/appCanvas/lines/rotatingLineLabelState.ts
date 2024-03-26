@@ -2,7 +2,6 @@ import type { AppCanvasState } from "../core";
 import { IDENTITY_AFFINE, multiAffine } from "okageo";
 import { mergeMap } from "../../../../utils/commons";
 import { LineLabelHandler, newLineLabelHandler, renderParentLineRelation } from "../../../lineLabelHandler";
-import { resizeShape } from "../../../../shapes";
 import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, newBoundingBoxRotating } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
@@ -44,8 +43,9 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const shapeComposite = ctx.getShapeComposite();
           const affineSrc = boundingBoxRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);
-          const patch = { [labelShape.id]: resizeShape(ctx.getShapeStruct, labelShape, affineSrc) };
+          const patch = { [labelShape.id]: shapeComposite.transformShape(labelShape, affineSrc) };
           const labelPatch = lineLabelHandler.onModified(patch);
           const mergedPatch = mergeMap(patch, labelPatch);
           ctx.setTmpShapeMap(mergedPatch);

@@ -7,13 +7,7 @@ import {
   newBoundingBoxResizing,
 } from "../../boundingBox";
 import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
-import {
-  getTextRangeRect,
-  resizeOnTextEdit,
-  resizeShape,
-  shouldKeepAspect,
-  shouldResizeOnTextEdit,
-} from "../../../shapes";
+import { getTextRangeRect, resizeOnTextEdit, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
 import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { renderPatchedVertices } from "../../connectedLineHandler";
@@ -163,7 +157,7 @@ export function newResizingState(option: Option): AppCanvasState {
                 return Object.keys(targetShapeMap).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
                   const shape = current[id];
                   if (shape) {
-                    m[id] = resizeShape(ctx.getShapeStruct, shape, resizingAffine);
+                    m[id] = shapeComposite.transformShape(shape, resizingAffine);
                   }
                   return m;
                 }, {});

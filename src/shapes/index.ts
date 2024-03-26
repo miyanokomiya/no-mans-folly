@@ -149,13 +149,17 @@ export function isTransparentSelection(getStruct: GetShapeStruct, shape: Shape):
   return !!struct.transparentSelection;
 }
 
+/**
+ * This function doesn't regard shape trees unless "shapeContext" is provided.
+ */
 export function resizeShape<T extends Shape>(
   getStruct: GetShapeStruct,
   shape: T,
   resizingAffine: AffineMatrix,
+  shapeContext?: ShapeContext,
 ): Partial<T> {
   const struct = getStruct(shape.type);
-  return struct.resize(shape, resizingAffine);
+  return struct.resize(shape, resizingAffine, shapeContext);
 }
 
 export function resizeOnTextEdit(

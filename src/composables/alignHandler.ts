@@ -18,7 +18,7 @@ import { flatTree, getBranchPath } from "../utils/tree";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
-import { createShape, resizeShape } from "../shapes";
+import { createShape } from "../shapes";
 import { generateKeyBetween } from "fractional-indexing";
 import { RectangleShape } from "../shapes/rectangle";
 import {
@@ -67,7 +67,7 @@ export function newAlignHandler(option: AlignHandlerOption) {
 
   const siblingRects = siblingIds.map<[string, IRectangle]>((id) => {
     const shape = shapeMap[id];
-    const derotatedShape = { ...shape, ...resizeShape(shapeComposite.getShapeStruct, shape, derotateAffine) };
+    const derotatedShape = { ...shape, ...shapeComposite.transformShape(shape, derotateAffine) };
     return [id, shapeComposite.getWrapperRect(derotatedShape)];
   });
 
@@ -739,7 +739,7 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
 
     // Get rotated patch info
     updated.forEach((s) => {
-      rotatedPatchMap[s.id] = resizeShape(shapeComposite.getShapeStruct, s, affine);
+      rotatedPatchMap[s.id] = shapeComposite.transformShape(s, affine);
     });
   }
 

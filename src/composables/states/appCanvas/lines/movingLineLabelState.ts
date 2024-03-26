@@ -7,7 +7,6 @@ import {
   newLineLabelHandler,
   renderParentLineRelation,
 } from "../../../lineLabelHandler";
-import { resizeShape } from "../../../../shapes";
 import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
@@ -72,9 +71,10 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
           } else {
             const d = sub(event.data.current, event.data.start);
             const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
+            const shapeComposite = ctx.getShapeComposite();
             patch = patchPipe(
               [
-                (src) => mapReduce(src, (s) => resizeShape(ctx.getShapeStruct, s, affineSrc)),
+                (src) => mapReduce(src, (s) => shapeComposite.transformShape(s, affineSrc)),
                 (_src, patch) => lineLabelHandler.onModified(patch),
               ],
               { [labelShape.id]: labelShape },

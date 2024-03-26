@@ -47,7 +47,7 @@ export interface ShapeStruct<T extends Shape> {
    * "scale" should be used to adjust threshold for non-area items: points and lines
    */
   isPointOn: (shape: T, p: IVec2, shapeContext?: ShapeContext, scale?: number) => boolean;
-  resize: (shape: T, resizingAffine: AffineMatrix) => Partial<T>;
+  resize: (shape: T, resizingAffine: AffineMatrix, shapeContext?: ShapeContext) => Partial<T>;
   /**
    * "textBoxSize" refers to the eventual text box size including text padding.
    */

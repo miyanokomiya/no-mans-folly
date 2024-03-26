@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { canHaveText, getWrapperRect, resizeShape } from "../../../shapes";
+import { canHaveText, getWrapperRect } from "../../../shapes";
 import { AffineMatrix, IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
@@ -80,7 +80,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           const diff = getDiff();
           const affine: AffineMatrix = [1, 0, 0, 1, diff.x, diff.y];
           ctx.addShapes(
-            shapes.map((s) => ({ ...s, ...resizeShape(shapeComposite.getShapeStruct, s, affine) })),
+            shapes.map((s) => ({ ...s, ...shapeComposite.transformShape(s, affine) })),
             // Newly created shapes should have doc by default.
             // => It useful to apply text style even it has no content.
             mapReduce(

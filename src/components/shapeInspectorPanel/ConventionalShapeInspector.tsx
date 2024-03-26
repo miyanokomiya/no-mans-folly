@@ -3,7 +3,6 @@ import { AppStateContext } from "../../contexts/AppContext";
 import { PointField } from "./PointField";
 import { AffineMatrix, IRectangle, IVec2, getCenter, multiAffines } from "okageo";
 import { Shape } from "../../models";
-import { resizeShape } from "../../shapes";
 import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { ShapeComposite } from "../../composables/shapeComposite";
@@ -39,7 +38,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 
         const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
-          resizeShape(shapeComposite.getShapeStruct, targetShape, getMoveToAffine(shapeComposite, targetShape, val)),
+          shapeComposite.transformShape(targetShape, getMoveToAffine(shapeComposite, targetShape, val)),
         );
       } else {
         commit();
@@ -64,7 +63,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 
         const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
-          resizeShape(shapeComposite.getShapeStruct, targetShape, getScaleToAffine(shapeComposite, targetShape, val)),
+          shapeComposite.transformShape(targetShape, getScaleToAffine(shapeComposite, targetShape, val)),
         );
       } else {
         commit();
@@ -80,8 +79,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 
         const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
-          resizeShape(
-            shapeComposite.getShapeStruct,
+          shapeComposite.transformShape(
             targetShape,
             getRotateToAffine(shapeComposite, targetShape, (val * Math.PI) / 180),
           ),
