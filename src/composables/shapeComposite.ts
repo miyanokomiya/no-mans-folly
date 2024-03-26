@@ -1,4 +1,13 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  applyAffine,
+  getCenter,
+  getOuterRectangle,
+  getRectCenter,
+  multiAffines,
+} from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
@@ -327,14 +336,46 @@ export function resizeShapeTrees(
 ): { [id: string]: Partial<Shape> } {
   const shapeMap = shapeComposite.shapeMap;
   const targetTrees = targetIds.map((id) => shapeComposite.mergedShapeTreeMap[id]);
+  const allBranchIds = shapeComposite.getAllBranchMergedShapes(targetIds).map((s) => s.id);
+  const allBranchShsapes = allBranchIds.map((id) => shapeMap[id]);
+
+  const minShapeComposite = newShapeComposite({
+    getStruct: shapeComposite.getShapeStruct,
+    shapes: allBranchShsapes,
+  });
+
+  const srcInfoMap: { [id: string]: { localPolygon: IVec2[] } } = {};
+
+  const rowResizedList = allBranchIds.map<[Shape, Partial<Shape>]>((id) => {
+    const s = shapeMap[id];
+    srcInfoMap[id] = { localPolygon: minShapeComposite.getLocalRectPolygon(s) };
+    const patch = minShapeComposite.transformShape(s, affine);
+    return [{ ...s, ...patch }, patch];
+  });
+
+  const resizedComposite = newShapeComposite({
+    getStruct: minShapeComposite.getShapeStruct,
+    shapes: rowResizedList.map(([s]) => s),
+  });
+
+  const rowResizedInfoMap: { [id: string]: { localPolygon: IVec2[]; shape: Shape; patch: Partial<Shape> } } = {};
+
+  rowResizedList.forEach(([resized, patch]) => {
+    rowResizedInfoMap[resized.id] = {
+      localPolygon: resizedComposite.getLocalRectPolygon(resized),
+      shape: resized,
+      patch,
+    };
+  });
 
   const ret: { [id: string]: Partial<Shape> } = {};
 
   walkTreeWithValue<
     | {
         affine: AffineMatrix;
-        parentRotationAffine: AffineMatrix;
+        parentResizedRotationAffine: AffineMatrix;
         parentDerotationAffine: AffineMatrix;
+        parentDerotationResizedAffine: AffineMatrix;
         parentDerotatedRect: IRectangle;
         parentDerotatedResizedRect: IRectangle;
       }
@@ -345,42 +386,43 @@ export function resizeShapeTrees(
       const resizingAffine = data?.affine ?? affine;
       const shape = shapeMap[node.id];
 
-      const rect = shapeComposite.getWrapperRect(shape);
+      const localPolygon = srcInfoMap[shape.id].localPolygon;
+      const center = getCenter(localPolygon[0], localPolygon[2]);
 
-      const patch = shapeModule.resizeShape(shapeComposite.getShapeStruct, shape, resizingAffine);
-      const resized = { ...shape, ...patch };
-      const resizedRect = shapeComposite.getWrapperRect(resized);
-      const resizedCenter = getRectCenter(resizedRect);
+      const rowResizedInfo = rowResizedInfoMap[shape.id];
+      const resizedLocalPolygon = localPolygon.map((p) => applyAffine(resizingAffine, p));
+      const resizedCenter = getCenter(resizedLocalPolygon[0], resizedLocalPolygon[2]);
 
       if (!data) {
-        const patch = shapeModule.resizeShape(shapeComposite.getShapeStruct, shape, resizingAffine);
-        ret[node.id] = patch;
-        if (isGroupShape(shape)) {
-          const rotationAffine = geometry.getRotatedAtAffine(resizedCenter, resized.rotation);
-          const derotationAffine = geometry.getRotatedAtAffine(resizedCenter, -resized.rotation);
-          const derotatedRect = shapeComposite.getWrapperRect({ ...shape, rotation: 0 });
-          const localRectPolygon = shapeComposite.getLocalRectPolygon(shape);
-          const derotatedResizedRect = getOuterRectangle([
-            localRectPolygon.map((p) => applyAffine(multiAffines([derotationAffine, resizingAffine]), p)),
-          ]);
+        ret[node.id] = rowResizedInfo.patch;
+        if (!isGroupShape(shape)) return;
 
-          return {
-            affine: resizingAffine,
-            parentDerotatedRect: derotatedRect,
-            parentDerotatedResizedRect: derotatedResizedRect,
-            parentRotationAffine: rotationAffine,
-            parentDerotationAffine: derotationAffine,
-          };
-        }
-        return;
+        const rotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, shape.rotation);
+
+        const derotationAffine = geometry.getRotatedAtAffine(center, -shape.rotation);
+        const derotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, -shape.rotation);
+
+        const derotatedRect = minShapeComposite.getWrapperRect({ ...shape, rotation: 0 });
+        const derotatedResizedRect = getOuterRectangle([
+          resizedLocalPolygon.map((p) => applyAffine(derotationResizedAffine, p)),
+        ]);
+
+        return {
+          affine: resizingAffine,
+          parentResizedRotationAffine: rotationResizedAffine,
+          parentDerotationAffine: derotationAffine,
+          parentDerotationResizedAffine: derotationResizedAffine,
+          parentDerotatedRect: derotatedRect,
+          parentDerotatedResizedRect: derotatedResizedRect,
+        };
       }
 
       const normalizedSrcRect = getOuterRectangle([
-        geometry.getRectPoints(rect).map((p) => applyAffine(data.parentDerotationAffine, p)),
+        localPolygon.map((p) => applyAffine(data.parentDerotationAffine, p)),
       ]);
 
       const normalizedResizedRect = getOuterRectangle([
-        geometry.getRectPoints(resizedRect).map((p) => applyAffine(data.parentDerotationAffine, p)),
+        resizedLocalPolygon.map((p) => applyAffine(data.parentDerotationResizedAffine, p)),
       ]);
 
       const adjustmentAffines: AffineMatrix[] = [];
@@ -389,32 +431,46 @@ export function resizeShapeTrees(
         const targetTopMargin = normalizedSrcRect.y - data.parentDerotatedRect.y;
         const resizedTopMargin = normalizedResizedRect.y - data.parentDerotatedResizedRect.y;
         const diff = targetTopMargin - resizedTopMargin;
-        adjustmentAffines.push([1, 0, 0, 1, 0, diff]);
+        adjustmentAffines.push(
+          multiAffines([
+            [1, 0, 0, 1, 0, diff + normalizedResizedRect.y],
+            [1, 0, 0, (normalizedResizedRect.height - diff) / normalizedResizedRect.height, 0, 0],
+            [1, 0, 0, 1, 0, -normalizedResizedRect.y],
+          ]),
+        );
       }
 
       const adjustmentAffine: AffineMatrix = multiAffines([
-        data.parentRotationAffine,
+        data.parentResizedRotationAffine,
         ...adjustmentAffines,
-        data.parentDerotationAffine,
+        data.parentDerotationResizedAffine,
       ]);
 
-      const adjustmentPatch = shapeModule.resizeShape(shapeComposite.getShapeStruct, resized, adjustmentAffine);
+      const adjustmentPatch = resizedComposite.transformShape(rowResizedInfo.shape, adjustmentAffine);
 
-      ret[node.id] = { ...patch, ...adjustmentPatch };
+      ret[node.id] = { ...rowResizedInfo.patch, ...adjustmentPatch };
+
+      const adjustedLocalPolygon = resizedLocalPolygon.map((p) => applyAffine(adjustmentAffine, p));
+      const adjustedCenter = getCenter(adjustedLocalPolygon[0], adjustedLocalPolygon[2]);
 
       if (isGroupShape(shape)) {
-        const rotationAffine = geometry.getRotatedAtAffine(resizedCenter, resized.rotation);
-        const derotationAffine = geometry.getRotatedAtAffine(resizedCenter, -resized.rotation);
-        const derotatedRect = shapeComposite.getWrapperRect({ ...shape, rotation: 0 });
-        const localRectPolygon = shapeComposite.getLocalRectPolygon(shape);
+        const rotationResizedAffine = geometry.getRotatedAtAffine(adjustedCenter, shape.rotation);
+
+        const derotationAffine = geometry.getRotatedAtAffine(center, -shape.rotation);
+        const derotationResizedAffine = geometry.getRotatedAtAffine(adjustedCenter, -shape.rotation);
+
+        const derotatedRect = minShapeComposite.getWrapperRect({ ...shape, rotation: 0 });
         const derotatedResizedRect = getOuterRectangle([
-          localRectPolygon.map((p) => applyAffine(multiAffines([derotationAffine, resizingAffine]), p)),
+          adjustedLocalPolygon.map((p) => applyAffine(derotationResizedAffine, p)),
         ]);
+
         return {
-          affine: multiAffines([adjustmentAffine, data.affine]),
+          // affine: multiAffines([adjustmentAffine, resizingAffine]),
+          affine: resizingAffine,
+          parentResizedRotationAffine: rotationResizedAffine,
+          parentDerotationResizedAffine: derotationResizedAffine,
           parentDerotatedRect: derotatedRect,
           parentDerotatedResizedRect: derotatedResizedRect,
-          parentRotationAffine: rotationAffine,
           parentDerotationAffine: derotationAffine,
         };
       }
