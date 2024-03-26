@@ -24,6 +24,8 @@ export interface Shape extends Entity {
   type: string;
   p: IVec2; // should always represent the top left position
   rotation: number;
+  gcV?: GroupConstraint;
+  gcH?: GroupConstraint;
 }
 
 export interface Size {
@@ -117,3 +119,14 @@ export interface UserSetting {
   debug?: "on" | "off"; // should be "off" when it's undefined
   virtualKeyboard?: "modifiers" | "off"; // should be "off" when it's undefined
 }
+
+/**
+ * 0: No constraint
+ * 1: fixed top / left
+ * 2: fixed content
+ * 3: fixed bottom / right
+ * 4: fixed top / left and content
+ * 6: fixed top / left and bottom / right
+ * 7: fixed content and bottom / right
+ */
+export type GroupConstraint = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
