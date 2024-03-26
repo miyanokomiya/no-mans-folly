@@ -379,13 +379,20 @@ export function resizeShapeTrees(
         parentDerotatedRect: IRectangle;
         parentDerotatedResizedRect: IRectangle;
       }
+    | { inheritedAffine: AffineMatrix }
     | undefined
   >(
     targetTrees,
     (node, _, data) => {
-      const resizingAffine = data?.affine ?? affine;
       const shape = shapeMap[node.id];
 
+      if (data && "inheritedAffine" in data) {
+        const patch = minShapeComposite.transformShape(shape, data.inheritedAffine);
+        ret[node.id] = patch;
+        return data;
+      }
+
+      const resizingAffine = data?.affine ?? affine;
       const localPolygon = srcInfoMap[shape.id].localPolygon;
       const center = getCenter(localPolygon[0], localPolygon[2]);
 
@@ -465,7 +472,6 @@ export function resizeShapeTrees(
         ]);
 
         return {
-          // affine: multiAffines([adjustmentAffine, resizingAffine]),
           affine: resizingAffine,
           parentResizedRotationAffine: rotationResizedAffine,
           parentDerotationResizedAffine: derotationResizedAffine,
@@ -474,6 +480,8 @@ export function resizeShapeTrees(
           parentDerotationAffine: derotationAffine,
         };
       }
+
+      return { inheritedAffine: multiAffines([adjustmentAffine, resizingAffine]) };
     },
     undefined,
   );

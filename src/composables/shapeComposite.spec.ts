@@ -774,4 +774,40 @@ describe("resizeShapeTrees", () => {
     expect(polygon3[3].y).toBeCloseTo(60);
     expect(res0[child3.id].rotation).toBe(undefined);
   });
+
+  test("should regard group constraints: 1, child within non-group should inherit parent resizing", () => {
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      p: { x: 10, y: 10 },
+      width: 10,
+      height: 10,
+      gcV: 1,
+    });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: child0.id,
+      p: { x: 10, y: 10 },
+      width: 10,
+      height: 10,
+    });
+    const shapes = [group0, frame, child0, child1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
+    const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
+    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
+    expect(polygon1[0].x).toBeCloseTo(10);
+    expect(polygon1[0].y).toBeCloseTo(10);
+    expect(polygon1[1].x).toBeCloseTo(20);
+    expect(polygon1[1].y).toBeCloseTo(10);
+    expect(polygon1[2].x).toBeCloseTo(20);
+    expect(polygon1[2].y).toBeCloseTo(40);
+    expect(polygon1[3].x).toBeCloseTo(10);
+    expect(polygon1[3].y).toBeCloseTo(40);
+    expect(res0[child1.id].rotation).toBe(undefined);
+  });
 });
