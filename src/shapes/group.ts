@@ -1,6 +1,7 @@
 import { ShapeStruct, createBaseShape } from "./core";
 import { Shape } from "../models";
-import { getRectPoints, getWrapperRect } from "../utils/geometry";
+import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
+import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
 
 type GroupShape = Shape;
 
@@ -30,7 +31,23 @@ export const struct: ShapeStruct<GroupShape> = {
     return getWrapperRect(rects);
   },
   getLocalRectPolygon(shape, shapeContext) {
-    return getRectPoints(struct.getWrapperRect(shape, shapeContext));
+    if (!shapeContext) return getRectPoints(struct.getWrapperRect(shape, shapeContext));
+
+    const tree = shapeContext.treeNodeMap[shape.id];
+    if (tree.children.length === 0) return getRectPoints(struct.getWrapperRect(shape, shapeContext));
+
+    const innerPoints: IVec2[] = [];
+    tree.children.forEach((ct) => {
+      const cn = shapeContext.shapeMap[ct.id];
+      const points = shapeContext.getStruct(cn.type).getLocalRectPolygon(cn, shapeContext);
+      innerPoints.push(...points);
+    });
+
+    const wrapper = getOuterRectangle([innerPoints]);
+    const c = getRectCenter(wrapper);
+    const rotateFn = getRotateFn(shape.rotation, c);
+    const rotatedInnserPoints = innerPoints.map((p) => rotateFn(p, true));
+    return getRectPoints(getOuterRectangle([rotatedInnserPoints])).map((p) => rotateFn(p));
   },
   isPointOn(shape, p, shapeContext) {
     const children = shapeContext?.treeNodeMap[shape.id].children;
@@ -41,8 +58,20 @@ export const struct: ShapeStruct<GroupShape> = {
       return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
     });
   },
-  resize() {
-    return {};
+  resize(shape, resizingAffine, shapeContext) {
+    if (!shapeContext) return {};
+
+    const localRect = struct.getLocalRectPolygon(shape, shapeContext);
+    const resizedLocalRect = localRect.map((p) => applyAffine(resizingAffine, p));
+    const rotation = getRadian(resizedLocalRect[1], resizedLocalRect[0]);
+
+    const ret: Partial<GroupShape> = {};
+
+    if (shape.rotation !== rotation) {
+      ret.rotation = rotation;
+    }
+
+    return ret;
   },
   getSnappingLines() {
     return { v: [], h: [] };

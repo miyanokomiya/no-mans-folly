@@ -3,6 +3,7 @@ import { struct } from "./group";
 import { struct as rectangleStruct } from "./rectangle";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { getCommonStruct } from ".";
+import { getRotationAffine } from "../utils/geometry";
 
 describe("struct", () => {
   describe("create", () => {
@@ -78,6 +79,39 @@ describe("struct", () => {
       ]);
     });
 
+    test("should return the local rectangle derived from children: rotated", () => {
+      const group = struct.create({ id: "group", rotation: Math.PI / 2 });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 0, y: 0 },
+        width: 10,
+        height: 10,
+        rotation: Math.PI / 2,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 10, y: 0 },
+        width: 20,
+        height: 10,
+        rotation: Math.PI / 2,
+      });
+
+      const res = newShapeComposite({
+        shapes: [group, child0, child1],
+        getStruct: getCommonStruct,
+      }).getLocalRectPolygon(group);
+      expect(res[0].x).toBeCloseTo(25);
+      expect(res[0].y).toBeCloseTo(-5);
+      expect(res[1].x).toBeCloseTo(25);
+      expect(res[1].y).toBeCloseTo(15);
+      expect(res[2].x).toBeCloseTo(0);
+      expect(res[2].y).toBeCloseTo(15);
+      expect(res[3].x).toBeCloseTo(0);
+      expect(res[3].y).toBeCloseTo(-5);
+    });
+
     test("empty fallback: should return empty rectangle when there's no child", () => {
       const group = struct.create({ id: "group" });
       expect(
@@ -127,6 +161,34 @@ describe("struct", () => {
       });
       expect(shapeComposite.findShapeAt({ x: 0, y: 0 })).toEqual(undefined);
       expect(shapeComposite.findShapeAt({ x: -0, y: -0 })).toEqual(undefined);
+    });
+  });
+
+  describe("resize", () => {
+    test("should patch rotation", () => {
+      const group = struct.create({ id: "group", rotation: Math.PI / 2 });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 0, y: 0 },
+        width: 10,
+        height: 10,
+        rotation: Math.PI / 2,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 10, y: 0 },
+        width: 20,
+        height: 10,
+        rotation: Math.PI / 2,
+      });
+
+      const res = newShapeComposite({
+        shapes: [group, child0, child1],
+        getStruct: getCommonStruct,
+      }).transformShape(group, getRotationAffine(Math.PI / 2));
+      expect(res.rotation).toBeCloseTo(Math.PI);
     });
   });
 
