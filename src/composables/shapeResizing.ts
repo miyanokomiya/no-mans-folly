@@ -1,18 +1,18 @@
-import {
-  AffineMatrix,
-  IDENTITY_AFFINE,
-  IRectangle,
-  IVec2,
-  applyAffine,
-  getCenter,
-  getOuterRectangle,
-  multiAffines,
-} from "okageo";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getCenter, getOuterRectangle, multiAffines } from "okageo";
 import { GroupConstraint, Shape } from "../models";
 import * as geometry from "../utils/geometry";
 import { walkTreeWithValue } from "../utils/tree";
 import { isGroupShape } from "../shapes/group";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
+
+type TreeStepGroupValue = {
+  affine: AffineMatrix;
+  parentResizedRotationAffine: AffineMatrix;
+  parentDerotationAffine: AffineMatrix;
+  parentDerotationResizedAffine: AffineMatrix;
+  parentDerotatedRect: IRectangle;
+  parentDerotatedResizedRect: IRectangle;
+};
 
 export function resizeShapeTrees(
   shapeComposite: ShapeComposite,
@@ -55,18 +55,7 @@ export function resizeShapeTrees(
 
   const ret: { [id: string]: Partial<Shape> } = {};
 
-  walkTreeWithValue<
-    | {
-        affine: AffineMatrix;
-        parentResizedRotationAffine: AffineMatrix;
-        parentDerotationAffine: AffineMatrix;
-        parentDerotationResizedAffine: AffineMatrix;
-        parentDerotatedRect: IRectangle;
-        parentDerotatedResizedRect: IRectangle;
-      }
-    | { inheritedAffine: AffineMatrix }
-    | undefined
-  >(
+  walkTreeWithValue<TreeStepGroupValue | { inheritedAffine: AffineMatrix } | undefined>(
     targetTrees,
     (node, _, data) => {
       const shape = shapeMap[node.id];
@@ -79,34 +68,15 @@ export function resizeShapeTrees(
 
       const resizingAffine = data?.affine ?? affine;
       const localPolygon = srcInfoMap[shape.id].localPolygon;
-      const center = getCenter(localPolygon[0], localPolygon[2]);
 
       const rowResizedInfo = rowResizedInfoMap[shape.id];
       const resizedLocalPolygon = localPolygon.map((p) => applyAffine(resizingAffine, p));
-      const resizedCenter = getCenter(resizedLocalPolygon[0], resizedLocalPolygon[2]);
 
       if (!data) {
         ret[node.id] = rowResizedInfo.patch;
         if (!isGroupShape(shape)) return;
 
-        const rotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, shape.rotation);
-
-        const derotationAffine = geometry.getRotatedAtAffine(center, -shape.rotation);
-        const derotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, -shape.rotation);
-
-        const derotatedRect = minShapeComposite.getWrapperRect({ ...shape, rotation: 0 });
-        const derotatedResizedRect = getOuterRectangle([
-          resizedLocalPolygon.map((p) => applyAffine(derotationResizedAffine, p)),
-        ]);
-
-        return {
-          affine: resizingAffine,
-          parentResizedRotationAffine: rotationResizedAffine,
-          parentDerotationAffine: derotationAffine,
-          parentDerotationResizedAffine: derotationResizedAffine,
-          parentDerotatedRect: derotatedRect,
-          parentDerotatedResizedRect: derotatedResizedRect,
-        };
+        return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, resizedLocalPolygon);
       }
 
       const normalizedSrcRect = getOuterRectangle([
@@ -116,10 +86,9 @@ export function resizeShapeTrees(
       const normalizedResizedRect = getOuterRectangle([
         resizedLocalPolygon.map((p) => applyAffine(data.parentDerotationResizedAffine, p)),
       ]);
+      const resizedCenter = getCenter(resizedLocalPolygon[0], resizedLocalPolygon[2]);
 
-      const adjustmentAffines: AffineMatrix[] = [];
-
-      const verticalAdjustmentAffine = getConstraintAdjustmentAffine(
+      const constraintAffine = getConstraintAdjustmentAffine(
         shape.gcV,
         shape.gcH,
         normalizedSrcRect,
@@ -128,49 +97,60 @@ export function resizeShapeTrees(
         data.parentDerotatedRect,
         data.parentDerotatedResizedRect,
       );
-      if (verticalAdjustmentAffine) {
-        adjustmentAffines.push(verticalAdjustmentAffine);
+
+      if (!constraintAffine) {
+        ret[node.id] = rowResizedInfo.patch;
+        if (!isGroupShape(shape)) return { inheritedAffine: resizingAffine };
+
+        return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, resizedLocalPolygon);
       }
 
-      const adjustmentAffine: AffineMatrix =
-        adjustmentAffines.length === 0
-          ? IDENTITY_AFFINE
-          : multiAffines([data.parentResizedRotationAffine, ...adjustmentAffines, data.parentDerotationResizedAffine]);
+      const adjustmentAffine = multiAffines([
+        data.parentResizedRotationAffine,
+        constraintAffine,
+        data.parentDerotationResizedAffine,
+      ]);
 
       const adjustmentPatch = resizedComposite.transformShape(rowResizedInfo.shape, adjustmentAffine);
-
       ret[node.id] = { ...rowResizedInfo.patch, ...adjustmentPatch };
+      if (!isGroupShape(shape)) return { inheritedAffine: multiAffines([adjustmentAffine, resizingAffine]) };
 
       const adjustedLocalPolygon = resizedLocalPolygon.map((p) => applyAffine(adjustmentAffine, p));
-      const adjustedCenter = getCenter(adjustedLocalPolygon[0], adjustedLocalPolygon[2]);
-
-      if (isGroupShape(shape)) {
-        const rotationResizedAffine = geometry.getRotatedAtAffine(adjustedCenter, shape.rotation);
-
-        const derotationAffine = geometry.getRotatedAtAffine(center, -shape.rotation);
-        const derotationResizedAffine = geometry.getRotatedAtAffine(adjustedCenter, -shape.rotation);
-
-        const derotatedRect = minShapeComposite.getWrapperRect({ ...shape, rotation: 0 });
-        const derotatedResizedRect = getOuterRectangle([
-          adjustedLocalPolygon.map((p) => applyAffine(derotationResizedAffine, p)),
-        ]);
-
-        return {
-          affine: resizingAffine,
-          parentResizedRotationAffine: rotationResizedAffine,
-          parentDerotationResizedAffine: derotationResizedAffine,
-          parentDerotatedRect: derotatedRect,
-          parentDerotatedResizedRect: derotatedResizedRect,
-          parentDerotationAffine: derotationAffine,
-        };
-      }
-
-      return { inheritedAffine: multiAffines([adjustmentAffine, resizingAffine]) };
+      return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, adjustedLocalPolygon);
     },
     undefined,
   );
 
   return ret;
+}
+
+function createTreeStepGroupValue(
+  affine: AffineMatrix,
+  shapeComposite: ShapeComposite,
+  shape: Shape,
+  localPolygon: IVec2[],
+  resizedLocalPolygon: IVec2[],
+): TreeStepGroupValue {
+  const srcCenter = getCenter(localPolygon[0], localPolygon[2]);
+  const resizedCenter = getCenter(resizedLocalPolygon[0], resizedLocalPolygon[2]);
+  const rotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, shape.rotation);
+
+  const derotationAffine = geometry.getRotatedAtAffine(srcCenter, -shape.rotation);
+  const derotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, -shape.rotation);
+
+  const derotatedRect = shapeComposite.getWrapperRect({ ...shape, rotation: 0 });
+  const derotatedResizedRect = getOuterRectangle([
+    resizedLocalPolygon.map((p) => applyAffine(derotationResizedAffine, p)),
+  ]);
+
+  return {
+    affine,
+    parentResizedRotationAffine: rotationResizedAffine,
+    parentDerotationResizedAffine: derotationResizedAffine,
+    parentDerotatedRect: derotatedRect,
+    parentDerotatedResizedRect: derotatedResizedRect,
+    parentDerotationAffine: derotationAffine,
+  };
 }
 
 function getConstraintAdjustmentAffine(
