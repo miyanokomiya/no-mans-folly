@@ -538,5 +538,34 @@ function getVerticalConstraintAdjustmentAffine(
         [1, 0, 0, 1, 0, -normalizedResizedRect.y],
       ]);
     }
+    case 5: {
+      const targetTopMargin = normalizedSrcRect.y - parentDerotatedRect.y;
+      const resizedTopMargin = normalizedResizedRect.y - parentDerotatedResizedRect.y;
+      const topDiff = targetTopMargin - resizedTopMargin;
+
+      const origin = normalizedResizedRect.y + normalizedResizedRect.height;
+      const targetBottomMargin =
+        normalizedSrcRect.y + normalizedSrcRect.height - (parentDerotatedRect.y + parentDerotatedRect.height);
+      const resizedBottomMargin = origin - (parentDerotatedResizedRect.y + parentDerotatedResizedRect.height);
+      const bottomDiff = targetBottomMargin - resizedBottomMargin;
+      return multiAffines([
+        [1, 0, 0, 1, 0, topDiff + normalizedResizedRect.y],
+        [1, 0, 0, (normalizedResizedRect.height - topDiff + bottomDiff) / normalizedResizedRect.height, 0, 0],
+        [1, 0, 0, 1, 0, -normalizedResizedRect.y],
+      ]);
+    }
+    case 6: {
+      const origin = normalizedResizedRect.y + normalizedResizedRect.height;
+      const targetBottomMargin =
+        normalizedSrcRect.y + normalizedSrcRect.height - (parentDerotatedRect.y + parentDerotatedRect.height);
+      const resizedBottomMargin = origin - (parentDerotatedResizedRect.y + parentDerotatedResizedRect.height);
+      const diff = targetBottomMargin - resizedBottomMargin;
+      const targetHeight = normalizedSrcRect.height;
+      return multiAffines([
+        [1, 0, 0, 1, 0, diff + origin],
+        [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
+        [1, 0, 0, 1, 0, -origin],
+      ]);
+    }
   }
 }
