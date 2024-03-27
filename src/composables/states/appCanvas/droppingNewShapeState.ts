@@ -1,13 +1,12 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { canHaveText, getWrapperRect } from "../../../shapes";
+import { canHaveText } from "../../../shapes";
 import { AffineMatrix, IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import { getInitialOutput } from "../../../utils/textEditor";
-import { newShapeComposite } from "../../shapeComposite";
+import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { newSelectionHubState } from "./selectionHubState";
-import * as geometry from "../../../utils/geometry";
 import { mapReduce, toMap } from "../../../utils/commons";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -20,6 +19,7 @@ interface Option {
 
 export function newDroppingNewShapeState(option: Option): AppCanvasState {
   const shapes = option.shapes;
+  let minShapeComposite: ShapeComposite;
   let p: IVec2; // represents the center of the shapes
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
@@ -52,7 +52,13 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
-      movingRect = geometry.getWrapperRect(shapes.map((s) => getWrapperRect(shapeComposite.getShapeStruct, s)));
+
+      minShapeComposite = newShapeComposite({
+        getStruct: shapeComposite.getShapeStruct,
+        shapes: shapes,
+      });
+
+      movingRect = minShapeComposite.getWrapperRectForShapes(shapes);
       updateP(ctx.getCursorPoint());
     },
     onEnd: (ctx) => {
@@ -76,11 +82,10 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
-          const shapeComposite = ctx.getShapeComposite();
           const diff = getDiff();
           const affine: AffineMatrix = [1, 0, 0, 1, diff.x, diff.y];
           ctx.addShapes(
-            shapes.map((s) => ({ ...s, ...shapeComposite.transformShape(s, affine) })),
+            shapes.map((s) => ({ ...s, ...minShapeComposite.transformShape(s, affine) })),
             // Newly created shapes should have doc by default.
             // => It useful to apply text style even it has no content.
             mapReduce(
@@ -100,12 +105,8 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
     },
     render(ctx, renderCtx) {
       const diff = getDiff();
-      const shapeComposite = newShapeComposite({
-        shapes,
-        getStruct: ctx.getShapeStruct,
-      });
       const renderer = newShapeRenderer({
-        shapeComposite,
+        shapeComposite: minShapeComposite,
         getDocumentMap: () => option.docMap ?? {},
         imageStore: ctx.getImageStore(),
       });

@@ -4,7 +4,6 @@ import { duplicateShapes } from "../../../shapes";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
-import * as geometry from "../../../utils/geometry";
 import { newSelectionHubState } from "./selectionHubState";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -43,8 +42,6 @@ export function newDuplicatingShapesState(): AppCanvasState {
       });
 
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-      movingRect = geometry.getWrapperRect(selectedIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
-
       // Collect all related shape ids
       const targetIds = getAllBranchIds(getTree(Object.values(shapeMap)), selectedIds);
 
@@ -61,6 +58,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
         getStruct: shapeComposite.getShapeStruct,
         shapes: duplicated.shapes,
       });
+      movingRect = duplicatedShapeComposite.getWrapperRectForShapes(duplicated.shapes);
 
       ctx.clearAllSelected();
     },

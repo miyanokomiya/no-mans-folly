@@ -17,7 +17,7 @@ function getMockCtx() {
     }),
     getShapeComposite: () =>
       newShapeComposite({
-        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        shapes: [],
         getStruct: getCommonStruct,
       }),
     startDragging: vi.fn(),
@@ -30,7 +30,14 @@ function getMockCtx() {
 
 describe("newDroppingNewShapeState", () => {
   const getOption = () => ({
-    shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 })],
+    shapes: [
+      createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "a",
+        p: { x: 10, y: 20 },
+        width: 100,
+        height: 100,
+      }),
+    ],
   });
 
   describe("lifecycle", () => {
