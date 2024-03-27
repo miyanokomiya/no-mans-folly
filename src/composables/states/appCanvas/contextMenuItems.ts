@@ -1,7 +1,9 @@
-import { duplicateShapes } from "../../../shapes";
+import { createShape, duplicateShapes } from "../../../shapes";
+import { isGroupShape } from "../../../shapes/group";
+import { mapFilter, mapReduce } from "../../../utils/commons";
 import { FOLLY_SVG_PREFIX } from "../../../utils/shapeTemplateUtil";
 import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
-import { newShapeComposite } from "../../shapeComposite";
+import { canGroupShapes, newShapeComposite } from "../../shapeComposite";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import { TransitionValue } from "../core";
@@ -16,6 +18,15 @@ export const CONTEXT_MENU_ITEM_SRC = {
   DUPLICATE_SHAPE: {
     label: "Duplicate",
     key: "DUPLICATE_SHAPE",
+  },
+
+  GROUP: {
+    label: "Group",
+    key: "GROUP",
+  },
+  UNGROUP: {
+    label: "Ungroup",
+    key: "UNGROUP",
   },
 
   EXPORT_AS_PNG: {
@@ -43,6 +54,8 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Delete vertex",
     key: "DELETE_LINE_VERTEX",
   },
+
+  SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };
 
 export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
@@ -55,9 +68,9 @@ export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
 
 export const CONTEXT_MENU_SHAPE_SELECTED_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
-  { separator: true },
+  CONTEXT_MENU_ITEM_SRC.SEPARATOR,
   ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
-  { separator: true },
+  CONTEXT_MENU_ITEM_SRC.SEPARATOR,
   CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
 ];
 
@@ -96,6 +109,14 @@ export function handleContextItemEvent(
 
       ctx.addShapes(duplicated.shapes, duplicated.docMap);
       ctx.multiSelectShapes(duplicated.shapes.map((s) => s.id));
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.GROUP.key: {
+      groupShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.UNGROUP.key: {
+      ungroupShapes(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
@@ -199,4 +220,36 @@ function saveFileInWeb(file: string, filename: string) {
   a.download = filename;
   a.style.display = "none";
   a.click();
+}
+
+export function groupShapes(ctx: AppCanvasStateContext): boolean {
+  const shapeComposite = ctx.getShapeComposite();
+  const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (targetIds.length === 0 || !canGroupShapes(shapeComposite, targetIds)) return false;
+
+  const group = createShape(shapeComposite.getShapeStruct, "group", { id: ctx.generateUuid() });
+  ctx.addShapes(
+    [group],
+    undefined,
+    mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id })),
+  );
+  ctx.selectShape(group.id);
+  return true;
+}
+
+export function ungroupShapes(ctx: AppCanvasStateContext): boolean {
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  const shapeMap = ctx.getShapeComposite().shapeMap;
+  const groups = ids.map((id) => shapeMap[id]).filter(isGroupShape);
+  if (groups.length === 0) return false;
+
+  const groupIdSet = new Set(groups.map((s) => s.id));
+  const patch = mapReduce(
+    mapFilter(shapeMap, (s) => !!s.parentId && groupIdSet.has(s.parentId)),
+    () => ({ parentId: undefined }),
+  );
+
+  ctx.deleteShapes(Array.from(groupIdSet), patch);
+  ctx.multiSelectShapes(Object.keys(patch));
+  return true;
 }

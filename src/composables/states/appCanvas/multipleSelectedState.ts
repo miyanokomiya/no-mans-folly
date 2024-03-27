@@ -8,12 +8,14 @@ import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
-import { findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
+import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
+import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
+import { ContextMenuItem } from "../types";
+import { isGroupShape } from "../../../shapes/group";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -155,12 +157,31 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
           }
           break;
         }
-        case "contextmenu":
+        case "contextmenu": {
+          const shapeComposite = ctx.getShapeComposite();
+          const shapeMap = shapeComposite.shapeMap;
+          const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+          const items: ContextMenuItem[] = [];
+
+          if (canGroupShapes(shapeComposite, targetIds)) {
+            items.push(CONTEXT_MENU_ITEM_SRC.GROUP);
+          }
+
+          const groups = targetIds.map((id) => shapeMap[id]).filter(isGroupShape);
+          if (groups.length > 0) {
+            items.push(CONTEXT_MENU_ITEM_SRC.UNGROUP);
+          }
+
+          if (items.length > 0) {
+            items.push(CONTEXT_MENU_ITEM_SRC.SEPARATOR);
+          }
+
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+            items: [...items, ...CONTEXT_MENU_SHAPE_SELECTED_ITEMS],
             point: event.data.point,
           });
           return;
+        }
         default:
           return handleIntransientEvent(ctx, event);
       }

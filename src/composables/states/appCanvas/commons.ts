@@ -28,7 +28,6 @@ import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ImageShape } from "../../../shapes/image";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { mapFilter, mapReduce } from "../../../utils/commons";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
 import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
@@ -38,7 +37,7 @@ import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam } from "../types";
-import { handleContextItemEvent } from "./contextMenuItems";
+import { groupShapes, handleContextItemEvent, ungroupShapes } from "./contextMenuItems";
 import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
@@ -145,18 +144,8 @@ export function handleCommonShortcut(
       if (event.data.ctrl) {
         event.data.prevent?.();
 
-        const shapeComposite = ctx.getShapeComposite();
-        const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
-        if (!canGroupShapes(shapeComposite, targetIds)) return;
-
-        const group = createShape(shapeComposite.getShapeStruct, "group", { id: ctx.generateUuid() });
-        ctx.addShapes(
-          [group],
-          undefined,
-          mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id })),
-        );
-        ctx.selectShape(group.id);
-        return newSelectionHubState;
+        const grouped = groupShapes(ctx);
+        return grouped ? newSelectionHubState : undefined;
       } else {
         ctx.setGridDisabled(!ctx.getGrid().disabled);
       }
@@ -164,20 +153,9 @@ export function handleCommonShortcut(
     case "G":
       if (event.data.ctrl) {
         event.data.prevent?.();
-        const ids = Object.keys(ctx.getSelectedShapeIdMap());
-        const shapeMap = ctx.getShapeComposite().shapeMap;
-        const groups = ids.map((id) => shapeMap[id]).filter(isGroupShape);
-        if (groups.length === 0) return;
 
-        const groupIdSet = new Set(groups.map((s) => s.id));
-        const patch = mapReduce(
-          mapFilter(shapeMap, (s) => !!s.parentId && groupIdSet.has(s.parentId)),
-          () => ({ parentId: undefined }),
-        );
-
-        ctx.deleteShapes(Array.from(groupIdSet), patch);
-        ctx.multiSelectShapes(Object.keys(patch));
-        return newSelectionHubState;
+        const ungrouped = ungroupShapes(ctx);
+        return ungrouped ? newSelectionHubState : undefined;
       }
       return;
     case "l":
