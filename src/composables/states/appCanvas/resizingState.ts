@@ -21,7 +21,7 @@ import { calcOriginalDocSize, getDeltaByScaleTextSize } from "../../../utils/tex
 import { applyPath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
-import { resizeShapeTrees } from "../../shapeComposite";
+import { resizeShapeTrees } from "../../shapeResizing";
 import { getTree } from "../../../utils/tree";
 
 interface Option {
