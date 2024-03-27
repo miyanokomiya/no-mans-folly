@@ -119,8 +119,9 @@ export function resizeShapeTrees(
 
       const adjustmentAffines: AffineMatrix[] = [];
 
-      const verticalAdjustmentAffine = getVerticalConstraintAdjustmentAffine(
+      const verticalAdjustmentAffine = getConstraintAdjustmentAffine(
         shape.gcV,
+        shape.gcH,
         normalizedSrcRect,
         normalizedResizedRect,
         resizedCenter,
@@ -172,84 +173,126 @@ export function resizeShapeTrees(
   return ret;
 }
 
-function getVerticalConstraintAdjustmentAffine(
+function getConstraintAdjustmentAffine(
   gcV: GroupConstraint | undefined,
+  gcH: GroupConstraint | undefined,
   normalizedSrcRect: IRectangle,
   normalizedResizedRect: IRectangle,
   resizedCenter: IVec2,
   parentDerotatedRect: IRectangle,
   parentDerotatedResizedRect: IRectangle,
 ): AffineMatrix | undefined {
+  const vAffine = getVerticalConstraintAdjustmentAffine(
+    gcV,
+    [normalizedSrcRect.y, normalizedSrcRect.height],
+    [normalizedResizedRect.y, normalizedResizedRect.height],
+    resizedCenter.y,
+    [parentDerotatedRect.y, parentDerotatedRect.height],
+    [parentDerotatedResizedRect.y, parentDerotatedResizedRect.height],
+  );
+
+  const hAffine = swapSimpleAffineDirection(
+    getVerticalConstraintAdjustmentAffine(
+      gcH,
+      [normalizedSrcRect.x, normalizedSrcRect.width],
+      [normalizedResizedRect.x, normalizedResizedRect.width],
+      resizedCenter.x,
+      [parentDerotatedRect.x, parentDerotatedRect.width],
+      [parentDerotatedResizedRect.x, parentDerotatedResizedRect.width],
+    ),
+  );
+
+  if (vAffine && hAffine) {
+    return multiAffines([vAffine, hAffine]);
+  } else {
+    return vAffine || hAffine;
+  }
+}
+
+type RectRange = [from: number, size: number];
+
+function getVerticalConstraintAdjustmentAffine(
+  gcV: GroupConstraint | undefined,
+  normalizedSrcRange: RectRange,
+  normalizedResizedRange: RectRange,
+  resizedCenter: number,
+  parentDerotatedRange: RectRange,
+  parentDerotatedResizedRange: RectRange,
+): AffineMatrix | undefined {
   switch (gcV) {
     case 1: {
-      const targetTopMargin = normalizedSrcRect.y - parentDerotatedRect.y;
-      const resizedTopMargin = normalizedResizedRect.y - parentDerotatedResizedRect.y;
+      const targetTopMargin = normalizedSrcRange[0] - parentDerotatedRange[0];
+      const resizedTopMargin = normalizedResizedRange[0] - parentDerotatedResizedRange[0];
       const diff = targetTopMargin - resizedTopMargin;
       return multiAffines([
-        [1, 0, 0, 1, 0, diff + normalizedResizedRect.y],
-        [1, 0, 0, (normalizedResizedRect.height - diff) / normalizedResizedRect.height, 0, 0],
-        [1, 0, 0, 1, 0, -normalizedResizedRect.y],
+        [1, 0, 0, 1, 0, diff + normalizedResizedRange[0]],
+        [1, 0, 0, (normalizedResizedRange[1] - diff) / normalizedResizedRange[1], 0, 0],
+        [1, 0, 0, 1, 0, -normalizedResizedRange[0]],
       ]);
     }
     case 2: {
-      const targetHeight = normalizedSrcRect.height;
+      const targetSize = normalizedSrcRange[1];
       return multiAffines([
-        [1, 0, 0, 1, 0, resizedCenter.y],
-        [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
-        [1, 0, 0, 1, 0, -resizedCenter.y],
+        [1, 0, 0, 1, 0, resizedCenter],
+        [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],
+        [1, 0, 0, 1, 0, -resizedCenter],
       ]);
     }
     case 3: {
-      const origin = normalizedResizedRect.y + normalizedResizedRect.height;
+      const origin = normalizedResizedRange[0] + normalizedResizedRange[1];
       const targetBottomMargin =
-        normalizedSrcRect.y + normalizedSrcRect.height - (parentDerotatedRect.y + parentDerotatedRect.height);
-      const resizedBottomMargin = origin - (parentDerotatedResizedRect.y + parentDerotatedResizedRect.height);
+        normalizedSrcRange[0] + normalizedSrcRange[1] - (parentDerotatedRange[0] + parentDerotatedRange[1]);
+      const resizedBottomMargin = origin - (parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1]);
       const diff = targetBottomMargin - resizedBottomMargin;
       return multiAffines([
         [1, 0, 0, 1, 0, diff + origin],
-        [1, 0, 0, (normalizedResizedRect.height + diff) / normalizedResizedRect.height, 0, 0],
+        [1, 0, 0, (normalizedResizedRange[1] + diff) / normalizedResizedRange[1], 0, 0],
         [1, 0, 0, 1, 0, -origin],
       ]);
     }
     case 4: {
-      const targetTopMargin = normalizedSrcRect.y - parentDerotatedRect.y;
-      const resizedTopMargin = normalizedResizedRect.y - parentDerotatedResizedRect.y;
+      const targetTopMargin = normalizedSrcRange[0] - parentDerotatedRange[0];
+      const resizedTopMargin = normalizedResizedRange[0] - parentDerotatedResizedRange[0];
       const diff = targetTopMargin - resizedTopMargin;
-      const targetHeight = normalizedSrcRect.height;
+      const targetSize = normalizedSrcRange[1];
       return multiAffines([
-        [1, 0, 0, 1, 0, diff + normalizedResizedRect.y],
-        [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
-        [1, 0, 0, 1, 0, -normalizedResizedRect.y],
+        [1, 0, 0, 1, 0, diff + normalizedResizedRange[0]],
+        [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],
+        [1, 0, 0, 1, 0, -normalizedResizedRange[0]],
       ]);
     }
     case 5: {
-      const targetTopMargin = normalizedSrcRect.y - parentDerotatedRect.y;
-      const resizedTopMargin = normalizedResizedRect.y - parentDerotatedResizedRect.y;
+      const targetTopMargin = normalizedSrcRange[0] - parentDerotatedRange[0];
+      const resizedTopMargin = normalizedResizedRange[0] - parentDerotatedResizedRange[0];
       const topDiff = targetTopMargin - resizedTopMargin;
 
-      const origin = normalizedResizedRect.y + normalizedResizedRect.height;
+      const origin = normalizedResizedRange[0] + normalizedResizedRange[1];
       const targetBottomMargin =
-        normalizedSrcRect.y + normalizedSrcRect.height - (parentDerotatedRect.y + parentDerotatedRect.height);
-      const resizedBottomMargin = origin - (parentDerotatedResizedRect.y + parentDerotatedResizedRect.height);
+        normalizedSrcRange[0] + normalizedSrcRange[1] - (parentDerotatedRange[0] + parentDerotatedRange[1]);
+      const resizedBottomMargin = origin - (parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1]);
       const bottomDiff = targetBottomMargin - resizedBottomMargin;
       return multiAffines([
-        [1, 0, 0, 1, 0, topDiff + normalizedResizedRect.y],
-        [1, 0, 0, (normalizedResizedRect.height - topDiff + bottomDiff) / normalizedResizedRect.height, 0, 0],
-        [1, 0, 0, 1, 0, -normalizedResizedRect.y],
+        [1, 0, 0, 1, 0, topDiff + normalizedResizedRange[0]],
+        [1, 0, 0, (normalizedResizedRange[1] - topDiff + bottomDiff) / normalizedResizedRange[1], 0, 0],
+        [1, 0, 0, 1, 0, -normalizedResizedRange[0]],
       ]);
     }
     case 6: {
-      const origin = normalizedResizedRect.y + normalizedResizedRect.height;
+      const origin = normalizedResizedRange[0] + normalizedResizedRange[1];
       const targetBottomMargin =
-        normalizedSrcRect.y + normalizedSrcRect.height - (parentDerotatedRect.y + parentDerotatedRect.height);
-      const resizedBottomMargin = origin - (parentDerotatedResizedRect.y + parentDerotatedResizedRect.height);
+        normalizedSrcRange[0] + normalizedSrcRange[1] - (parentDerotatedRange[0] + parentDerotatedRange[1]);
+      const resizedBottomMargin = origin - (parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1]);
       const diff = targetBottomMargin - resizedBottomMargin;
-      const targetHeight = normalizedSrcRect.height;
+      const targetSize = normalizedSrcRange[1];
       return multiAffines([
         [1, 0, 0, 1, 0, diff + origin],
-        [1, 0, 0, targetHeight / normalizedResizedRect.height, 0, 0],
+        [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],
         [1, 0, 0, 1, 0, -origin],
       ]);
     }
   }
+}
+
+function swapSimpleAffineDirection(affine?: AffineMatrix): AffineMatrix | undefined {
+  return affine ? [affine[3], 0, 0, affine[0], affine[5], affine[4]] : undefined;
 }
