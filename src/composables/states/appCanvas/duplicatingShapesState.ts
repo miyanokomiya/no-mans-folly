@@ -9,18 +9,19 @@ import { newSelectionHubState } from "./selectionHubState";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
-import { newShapeComposite } from "../../shapeComposite";
+import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { handleCommonWheel } from "./commons";
+import { scaleGlobalAlpha } from "../../../utils/renderer";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;
 
 export function newDuplicatingShapesState(): AppCanvasState {
   let duplicated: { shapes: Shape[]; docMap: { [id: string]: DocOutput } };
+  let duplicatedShapeComposite: ShapeComposite;
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
   let snappingResult: SnappingResult | undefined;
-  let tmpShapeMap: { [id: string]: Partial<Shape> } = {};
 
   return {
     getLabel: () => "DuplicatingShapes",
@@ -56,6 +57,10 @@ export function newDuplicatingShapesState(): AppCanvasState {
         ctx.createLastIndex(),
         new Set(Object.keys(shapeMap)),
       );
+      duplicatedShapeComposite = newShapeComposite({
+        getStruct: shapeComposite.getShapeStruct,
+        shapes: duplicated.shapes,
+      });
 
       ctx.clearAllSelected();
     },
@@ -70,19 +75,23 @@ export function newDuplicatingShapesState(): AppCanvasState {
             { x: event.data.current.x + EXTRA_DISTANCE, y: event.data.current.y + EXTRA_DISTANCE },
             event.data.start,
           );
-          snappingResult = shapeSnapping.test(moveRect(movingRect, d));
+          snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           const affine: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
-          const shapeComposite = ctx.getShapeComposite();
-          tmpShapeMap = {};
+          const tmpShapeMap: { [id: string]: Partial<Shape> } = {};
           duplicated.shapes.forEach((s) => {
-            tmpShapeMap[s.id] = shapeComposite.transformShape(s, affine);
+            tmpShapeMap[s.id] = duplicatedShapeComposite.transformShape(s, affine);
           });
-          ctx.setTmpShapeMap({});
+          duplicatedShapeComposite = newShapeComposite({
+            getStruct: duplicatedShapeComposite.getShapeStruct,
+            shapes: duplicated.shapes,
+            tmpShapeMap,
+          });
+          ctx.redraw();
           return;
         }
         case "pointerup": {
-          const moved = duplicated.shapes.map((s) => ({ ...s, ...(tmpShapeMap[s.id] ?? {}) }));
+          const moved = duplicatedShapeComposite.mergedShapes;
           ctx.addShapes(moved, duplicated.docMap);
           ctx.multiSelectShapes(moved.map((s) => s.id));
           return newSelectionHubState;
@@ -96,13 +105,13 @@ export function newDuplicatingShapesState(): AppCanvasState {
     },
     render(ctx, renderCtx) {
       const renderer = newShapeRenderer({
-        shapeComposite: newShapeComposite({ shapes: duplicated.shapes, tmpShapeMap, getStruct: ctx.getShapeStruct }),
+        shapeComposite: duplicatedShapeComposite,
         getDocumentMap: () => duplicated.docMap,
         imageStore: ctx.getImageStore(),
       });
-      renderCtx.globalAlpha = 0.5;
-      renderer.render(renderCtx);
-      renderCtx.globalAlpha = 1;
+      scaleGlobalAlpha(renderCtx, 0.5, () => {
+        renderer.render(renderCtx);
+      });
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
