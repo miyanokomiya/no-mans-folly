@@ -153,7 +153,7 @@ export function handleCommonShortcut(
         ctx.addShapes(
           [group],
           undefined,
-          mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id, gcV: 1 })),
+          mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: group.id })),
         );
         ctx.selectShape(group.id);
         return newSelectionHubState;

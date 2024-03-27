@@ -162,13 +162,6 @@ export function newResizingState(option: Option): AppCanvasState {
                   trees.map((t) => t.id),
                   resizingAffine,
                 );
-                // return Object.keys(targetShapeMap).reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
-                //   const shape = current[id];
-                //   if (shape) {
-                //     m[id] = shapeComposite.transformShape(shape, resizingAffine);
-                //   }
-                //   return m;
-                // }, {});
               },
               (patchedSrc, patch) => {
                 // Scale each text size along with height scaling
