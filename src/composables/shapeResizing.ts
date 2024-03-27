@@ -86,14 +86,12 @@ export function resizeShapeTrees(
       const normalizedResizedRect = getOuterRectangle([
         resizedLocalPolygon.map((p) => applyAffine(data.parentDerotationResizedAffine, p)),
       ]);
-      const resizedCenter = getCenter(resizedLocalPolygon[0], resizedLocalPolygon[2]);
 
       const constraintAffine = getConstraintAdjustmentAffine(
         shape.gcV,
         shape.gcH,
         normalizedSrcRect,
         normalizedResizedRect,
-        resizedCenter,
         data.parentDerotatedRect,
         data.parentDerotatedResizedRect,
       );
@@ -158,7 +156,6 @@ function getConstraintAdjustmentAffine(
   gcH: GroupConstraint | undefined,
   normalizedSrcRect: IRectangle,
   normalizedResizedRect: IRectangle,
-  resizedCenter: IVec2,
   parentDerotatedRect: IRectangle,
   parentDerotatedResizedRect: IRectangle,
 ): AffineMatrix | undefined {
@@ -166,7 +163,6 @@ function getConstraintAdjustmentAffine(
     gcV,
     [normalizedSrcRect.y, normalizedSrcRect.height],
     [normalizedResizedRect.y, normalizedResizedRect.height],
-    resizedCenter.y,
     [parentDerotatedRect.y, parentDerotatedRect.height],
     [parentDerotatedResizedRect.y, parentDerotatedResizedRect.height],
   );
@@ -176,7 +172,6 @@ function getConstraintAdjustmentAffine(
       gcH,
       [normalizedSrcRect.x, normalizedSrcRect.width],
       [normalizedResizedRect.x, normalizedResizedRect.width],
-      resizedCenter.x,
       [parentDerotatedRect.x, parentDerotatedRect.width],
       [parentDerotatedResizedRect.x, parentDerotatedResizedRect.width],
     ),
@@ -195,7 +190,6 @@ function getVerticalConstraintAdjustmentAffine(
   gcV: GroupConstraint | undefined,
   normalizedSrcRange: RectRange,
   normalizedResizedRange: RectRange,
-  resizedCenter: number,
   parentDerotatedRange: RectRange,
   parentDerotatedResizedRange: RectRange,
 ): AffineMatrix | undefined {
@@ -211,6 +205,7 @@ function getVerticalConstraintAdjustmentAffine(
       ]);
     }
     case 2: {
+      const resizedCenter = normalizedResizedRange[0] + normalizedResizedRange[1] / 2;
       const targetSize = normalizedSrcRange[1];
       return multiAffines([
         [1, 0, 0, 1, 0, resizedCenter],
