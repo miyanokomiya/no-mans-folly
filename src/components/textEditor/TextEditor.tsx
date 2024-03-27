@@ -92,6 +92,7 @@ export const TextEditor: React.FC<Props> = ({
           onKeyUp={onKeyUp}
           onCompositionStart={onCompositionStart}
           onCompositionEnd={onCompositionEnd}
+          autoCapitalize="none"
         />
       </div>
       {showEmojiPicker ? (
