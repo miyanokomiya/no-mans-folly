@@ -69,8 +69,9 @@ export function newDuplicatingShapesState(): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const extraDistance = EXTRA_DISTANCE * ctx.getScale();
           const d = sub(
-            { x: event.data.current.x + EXTRA_DISTANCE, y: event.data.current.y + EXTRA_DISTANCE },
+            { x: event.data.current.x + extraDistance, y: event.data.current.y + extraDistance },
             event.data.start,
           );
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
