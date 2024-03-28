@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { ImageWithSkeleton } from "../atoms/ImageWithSkeleton";
 import { getAssetSearchTag } from "../../utils/route";
+import { newKeywordFilter } from "../../composables/keywordFilter";
 
 const baseURL = process.env.ASSETS_PATH!;
 
@@ -90,15 +91,9 @@ export const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type
   const filteredIndexData = useMemo(() => {
     if (!keyword || !indexDataForSearch) return;
 
-    const reg = new RegExp(keyword.toLowerCase());
-    const ret: { url: string; id: string; name: string }[] = [];
-    for (const [id, item] of indexDataForSearch) {
-      if (reg.test(item.tag)) {
-        ret.push({ id, url: item.url, name: item.name });
-        if (40 <= ret.length) break;
-      }
-    }
-    return ret;
+    const filterFn = newKeywordFilter({ keyword, maxHit: 40 });
+    const hit = filterFn(indexDataForSearch, ([, item]) => item.tag);
+    return hit.result.map(([id, item]) => ({ id, url: item.url, name: item.name }));
   }, [keyword, indexDataForSearch]);
 
   const rootItems = useMemo(() => {
