@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TextInput } from "../atoms/inputs/TextInput";
+import { ImageWithSkeleton } from "../atoms/ImageWithSkeleton";
 
 const baseURL = process.env.ASSETS_PATH!;
 
@@ -127,11 +128,7 @@ export const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type
             ) : (
               <ul className="p-1 flex flex-wrap gap-1">
                 {rootItems.map(({ url, id, name }) => {
-                  return (
-                    <li key={url}>
-                      <IconButton url={url} name={name} id={id} size={size} onDown={onIconDown} />
-                    </li>
-                  );
+                  return <IconItem key={url} url={url} name={name} id={id} size={size} onDown={onIconDown} />;
                 })}
               </ul>
             )
@@ -195,15 +192,14 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIc
             <ul className="p-1 flex flex-wrap gap-1">
               {items.map((key) => {
                 return (
-                  <li key={key}>
-                    <IconButton
-                      url={currentPath + "/" + key}
-                      name={key}
-                      id={item[key] as string}
-                      size={size}
-                      onDown={onIconDown}
-                    />
-                  </li>
+                  <IconItem
+                    key={key}
+                    url={currentPath + "/" + key}
+                    name={key}
+                    id={item[key] as string}
+                    size={size}
+                    onDown={onIconDown}
+                  />
                 );
               })}
             </ul>
@@ -234,7 +230,7 @@ interface IconButtonProps {
   onDown?: (url: string, id: string) => void;
 }
 
-export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, size, onDown }) => {
+export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDown }) => {
   const handleDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -243,12 +239,20 @@ export const IconButton: React.FC<IconButtonProps> = ({ url, name, id, size, onD
     [onDown, id, url],
   );
 
-  const imgClass = size === "lg" ? "w-full h-auto" : "w-10 h-10";
+  const wrapperClass = size === "lg" ? "w-full h-auto max-h-32" : "w-10 h-10";
+  const skeletonClass = size === "lg" ? "w-full h-32" : "w-full h-full";
 
   return (
-    <button type="button" onPointerDown={handleDown} className="cursor-grab touch-none" title={name}>
-      <img src={url} alt={name} className={imgClass} />
-    </button>
+    <li className={wrapperClass}>
+      <button type="button" onPointerDown={handleDown} className="w-full h-full cursor-grab touch-none" title={name}>
+        <ImageWithSkeleton
+          src={url}
+          alt={name}
+          className="w-full max-h-full object-contain"
+          skeletonClassName={skeletonClass}
+        />
+      </button>
+    </li>
   );
 };
 
