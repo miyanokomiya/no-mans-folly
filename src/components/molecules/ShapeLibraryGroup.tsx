@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { ImageWithSkeleton } from "../atoms/ImageWithSkeleton";
+import { getAssetSearchTag } from "../../utils/route";
 
 const baseURL = process.env.ASSETS_PATH!;
 
@@ -264,7 +265,7 @@ function makePathMap(
   Object.entries(data).forEach(([key, obj]) => {
     if (typeof obj === "string") {
       const url = currentPath + "/" + key;
-      ret.set(obj, { url, tag: url.substring(0, url.lastIndexOf(".") ?? url).toLowerCase(), name: key });
+      ret.set(obj, { url, tag: getAssetSearchTag(url), name: key });
     } else {
       makePathMap(ret, currentPath + "/" + key, obj);
     }

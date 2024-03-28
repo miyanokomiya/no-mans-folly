@@ -20,3 +20,8 @@ export function getBackHomeFlag(): boolean {
   const queryParameters = new URLSearchParams(window.location.search);
   return queryParameters.get("back_home") === "1";
 }
+
+export function getAssetSearchTag(url: string): string {
+  const urlObj = new URL(url);
+  return urlObj.pathname.toLowerCase().replace(/.folly.svg|.svg/g, "");
+}
