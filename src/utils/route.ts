@@ -21,7 +21,13 @@ export function getBackHomeFlag(): boolean {
   return queryParameters.get("back_home") === "1";
 }
 
+/**
+ * URL example: https://example.com/type/category/dir/image.svg
+ * => Returns "dir image"
+ */
 export function getAssetSearchTag(url: string): string {
   const urlObj = new URL(url);
-  return urlObj.pathname.toLowerCase().replace(/.folly.svg|.svg/g, "");
+  const split = urlObj.pathname.split(/\//);
+  const body = split.slice(3).join(" ");
+  return body.toLowerCase().replace(/.folly.svg|.svg/g, "");
 }
