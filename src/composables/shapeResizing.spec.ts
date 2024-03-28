@@ -139,48 +139,33 @@ describe("resizeShapeTrees", () => {
   });
 
   test("should regard group constraints: 1, deep nested constraints", () => {
-    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 1 });
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child0",
-      parentId: group1.id,
+      parentId: group0.id,
       p: { x: 0, y: 0 },
       width: 10,
       height: 10,
-      gcV: 1,
+      gcV: 4,
     });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 1 });
     const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child1",
       parentId: group1.id,
-      p: { x: 10, y: 10 },
+      p: { x: 0, y: 10 },
       width: 10,
       height: 10,
-      gcV: 1,
-    });
-    const group2 = createShape(getCommonStruct, "group", {
-      id: "group2",
-      parentId: group0.id,
-      gcV: 1,
-      rotation: Math.PI / 2,
     });
     const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child2",
-      parentId: group2.id,
-      p: { x: 20, y: 20 },
+      parentId: group1.id,
+      p: { x: 0, y: 20 },
       width: 10,
       height: 10,
       gcV: 1,
-      rotation: Math.PI / 2,
     });
-    const child3 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "child3",
-      parentId: group2.id,
-      p: { x: 30, y: 30 },
-      width: 10,
-      height: 10,
-      gcV: 1,
-      rotation: Math.PI / 2,
-    });
-    const shapes = [group0, group1, child0, child1, group2, child2, child3];
+
+    const shapes = [group0, child0, group1, child1, child2];
     const target = newShapeComposite({
       shapes,
       getStruct: getCommonStruct,
@@ -188,27 +173,8 @@ describe("resizeShapeTrees", () => {
 
     const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
     const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
-    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
-    expect(polygon1[0].x).toBeCloseTo(10);
-    expect(polygon1[0].y).toBeCloseTo(10);
-    expect(polygon1[1].x).toBeCloseTo(20);
-    expect(polygon1[1].y).toBeCloseTo(10);
-    expect(polygon1[2].x).toBeCloseTo(20);
-    expect(polygon1[2].y).toBeCloseTo(40);
-    expect(polygon1[3].x).toBeCloseTo(10);
-    expect(polygon1[3].y).toBeCloseTo(40);
-    expect(res0[child1.id].rotation).toBe(undefined);
-
-    const polygon3 = target.getLocalRectPolygon({ ...child3, ...res0[child3.id] });
-    expect(polygon3[0].x).toBeCloseTo(40);
-    expect(polygon3[0].y).toBeCloseTo(60);
-    expect(polygon3[1].x).toBeCloseTo(40);
-    expect(polygon3[1].y).toBeCloseTo(80);
-    expect(polygon3[2].x).toBeCloseTo(30);
-    expect(polygon3[2].y).toBeCloseTo(80);
-    expect(polygon3[3].x).toBeCloseTo(30);
-    expect(polygon3[3].y).toBeCloseTo(60);
-    expect(res0[child3.id].rotation).toBe(undefined);
+    expect({ ...child1, ...res0[child1.id] }).toEqual({ ...child1, p: { x: 0, y: 10 }, height: 25 });
+    expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 20 }, height: 40 });
   });
 
   test("should regard group constraints: 1, child within non-group should inherit parent resizing", () => {
@@ -292,170 +258,33 @@ describe("resizeShapeTrees", () => {
   });
 
   test("should regard group constraints: 2, deep nested constraints", () => {
-    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 2 });
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child0",
-      parentId: group1.id,
-      p: { x: 0, y: 0 },
-      width: 10,
-      height: 10,
-      gcV: 2,
-    });
-    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child1",
-      p: { x: 10, y: 10 },
-    });
-    const group2 = createShape(getCommonStruct, "group", {
-      ...group1,
-      id: "group2",
-      rotation: Math.PI / 2,
-    });
-    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child2",
-      parentId: group2.id,
-      p: { x: 20, y: 20 },
-      rotation: Math.PI / 2,
-    });
-    const child3 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child3",
-      parentId: group2.id,
-      p: { x: 30, y: 30 },
-      rotation: Math.PI / 2,
-    });
-    const shapes = [group0, group1, child0, child1, group2, child2, child3];
-    const target = newShapeComposite({
-      shapes,
-      getStruct: getCommonStruct,
-    });
-
-    const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
-    const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
-    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
-    expect(polygon1[0].x).toBeCloseTo(10);
-    expect(polygon1[0].y).toBeCloseTo(25);
-    expect(polygon1[1].x).toBeCloseTo(20);
-    expect(polygon1[1].y).toBeCloseTo(25);
-    expect(polygon1[2].x).toBeCloseTo(20);
-    expect(polygon1[2].y).toBeCloseTo(35);
-    expect(polygon1[3].x).toBeCloseTo(10);
-    expect(polygon1[3].y).toBeCloseTo(35);
-    expect(res0[child1.id].rotation).toBe(undefined);
-
-    const polygon3 = target.getLocalRectPolygon({ ...child3, ...res0[child3.id] });
-    expect(polygon3[0].x).toBeCloseTo(40);
-    expect(polygon3[0].y).toBeCloseTo(60);
-    expect(polygon3[1].x).toBeCloseTo(40);
-    expect(polygon3[1].y).toBeCloseTo(80);
-    expect(polygon3[2].x).toBeCloseTo(30);
-    expect(polygon3[2].y).toBeCloseTo(80);
-    expect(polygon3[3].x).toBeCloseTo(30);
-    expect(polygon3[3].y).toBeCloseTo(60);
-    expect(res0[child3.id].rotation).toBe(undefined);
-  });
-
-  test("should regard group constraints: 3, deep nested constraints", () => {
-    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 3 });
-    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "child0",
-      parentId: group1.id,
-      p: { x: 0, y: 0 },
-      width: 10,
-      height: 10,
-      gcV: 3,
-    });
-    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child1",
-      p: { x: 10, y: 10 },
-    });
-    const group2 = createShape(getCommonStruct, "group", {
-      ...group1,
-      id: "group2",
-      rotation: Math.PI / 2,
-    });
-    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child2",
-      parentId: group2.id,
-      p: { x: 20, y: 20 },
-      rotation: Math.PI / 2,
-    });
-    const child3 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child3",
-      parentId: group2.id,
-      p: { x: 30, y: 30 },
-      rotation: Math.PI / 2,
-    });
-    const shapes = [group0, group1, child0, child1, group2, child2, child3];
-    const target = newShapeComposite({
-      shapes,
-      getStruct: getCommonStruct,
-    });
-
-    const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
-    const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
-    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
-    expect(polygon1[0].x).toBeCloseTo(10);
-    expect(polygon1[0].y).toBeCloseTo(20);
-    expect(polygon1[1].x).toBeCloseTo(20);
-    expect(polygon1[1].y).toBeCloseTo(20);
-    expect(polygon1[2].x).toBeCloseTo(20);
-    expect(polygon1[2].y).toBeCloseTo(60);
-    expect(polygon1[3].x).toBeCloseTo(10);
-    expect(polygon1[3].y).toBeCloseTo(60);
-    expect(res0[child1.id].rotation).toBe(undefined);
-
-    const polygon3 = target.getLocalRectPolygon({ ...child3, ...res0[child3.id] });
-    expect(polygon3[0].x).toBeCloseTo(40);
-    expect(polygon3[0].y).toBeCloseTo(60);
-    expect(polygon3[1].x).toBeCloseTo(40);
-    expect(polygon3[1].y).toBeCloseTo(80);
-    expect(polygon3[2].x).toBeCloseTo(30);
-    expect(polygon3[2].y).toBeCloseTo(80);
-    expect(polygon3[3].x).toBeCloseTo(30);
-    expect(polygon3[3].y).toBeCloseTo(60);
-    expect(res0[child3.id].rotation).toBe(undefined);
-  });
-
-  test("should regard group constraints: 4, deep nested constraints", () => {
-    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 4 });
-    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "child0",
-      parentId: group1.id,
+      parentId: group0.id,
       p: { x: 0, y: 0 },
       width: 10,
       height: 10,
       gcV: 4,
     });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 2 });
     const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
       id: "child1",
-      p: { x: 10, y: 10 },
-    });
-    const group2 = createShape(getCommonStruct, "group", {
-      ...group1,
-      id: "group2",
-      rotation: Math.PI / 2,
+      parentId: group1.id,
+      p: { x: 0, y: 10 },
+      width: 10,
+      height: 10,
     });
     const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
       id: "child2",
-      parentId: group2.id,
-      p: { x: 20, y: 20 },
-      rotation: Math.PI / 2,
+      parentId: group1.id,
+      p: { x: 0, y: 20 },
+      width: 10,
+      height: 10,
+      gcV: 2,
     });
-    const child3 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child3",
-      parentId: group2.id,
-      p: { x: 30, y: 30 },
-      rotation: Math.PI / 2,
-    });
-    const shapes = [group0, group1, child0, child1, group2, child2, child3];
+
+    const shapes = [group0, child0, group1, child1, child2];
     const target = newShapeComposite({
       shapes,
       getStruct: getCommonStruct,
@@ -463,64 +292,116 @@ describe("resizeShapeTrees", () => {
 
     const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
     const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
-    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
-    expect(polygon1[0].x).toBeCloseTo(10);
-    expect(polygon1[0].y).toBeCloseTo(10);
-    expect(polygon1[1].x).toBeCloseTo(20);
-    expect(polygon1[1].y).toBeCloseTo(10);
-    expect(polygon1[2].x).toBeCloseTo(20);
-    expect(polygon1[2].y).toBeCloseTo(20);
-    expect(polygon1[3].x).toBeCloseTo(10);
-    expect(polygon1[3].y).toBeCloseTo(20);
-    expect(res0[child1.id].rotation).toBe(undefined);
+    expect({ ...child1, ...res0[child1.id] }).toEqual({ ...child1, p: { x: 0, y: 30 }, height: 10 });
+    expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 40 }, height: 10 });
+  });
 
-    const polygon3 = target.getLocalRectPolygon({ ...child3, ...res0[child3.id] });
-    expect(polygon3[0].x).toBeCloseTo(40);
-    expect(polygon3[0].y).toBeCloseTo(60);
-    expect(polygon3[1].x).toBeCloseTo(40);
-    expect(polygon3[1].y).toBeCloseTo(80);
-    expect(polygon3[2].x).toBeCloseTo(30);
-    expect(polygon3[2].y).toBeCloseTo(80);
-    expect(polygon3[3].x).toBeCloseTo(30);
-    expect(polygon3[3].y).toBeCloseTo(60);
-    expect(res0[child3.id].rotation).toBe(undefined);
+  test("should regard group constraints: 3, deep nested constraints", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+      gcV: 4,
+    });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 3 });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group1.id,
+      p: { x: 0, y: 10 },
+      width: 10,
+      height: 10,
+    });
+    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: group1.id,
+      p: { x: 0, y: 20 },
+      width: 10,
+      height: 10,
+      gcV: 3,
+    });
+
+    const shapes = [group0, child0, group1, child1, child2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
+    const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
+    expect({ ...child1, ...res0[child1.id] }).toEqual({ ...child1, p: { x: 0, y: 20 }, height: 20 });
+    expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 40 }, height: 20 });
+  });
+
+  test("should regard group constraints: 4, deep nested constraints", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+      gcV: 4,
+    });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 4 });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group1.id,
+      p: { x: 0, y: 10 },
+      width: 10,
+      height: 10,
+    });
+    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: group1.id,
+      p: { x: 0, y: 20 },
+      width: 10,
+      height: 10,
+      gcV: 4,
+    });
+
+    const shapes = [group0, child0, group1, child1, child2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
+    const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
+    expect({ ...child1, ...res0[child1.id] }).toEqual({ ...child1, p: { x: 0, y: 10 }, height: 10 });
+    expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 20 }, height: 10 });
   });
 
   test("should regard group constraints: 5, deep nested constraints", () => {
-    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 5 });
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child0",
-      parentId: group1.id,
+      parentId: group0.id,
       p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+      gcV: 4,
+    });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 5 });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group1.id,
+      p: { x: 0, y: 10 },
+      width: 10,
+      height: 10,
+    });
+    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: group1.id,
+      p: { x: 0, y: 20 },
       width: 10,
       height: 10,
       gcV: 5,
     });
-    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child1",
-      p: { x: 10, y: 10 },
-    });
-    const group2 = createShape(getCommonStruct, "group", {
-      ...group1,
-      id: "group2",
-      rotation: Math.PI / 2,
-    });
-    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child2",
-      parentId: group2.id,
-      p: { x: 20, y: 20 },
-      rotation: Math.PI / 2,
-    });
-    const child3 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child3",
-      parentId: group2.id,
-      p: { x: 30, y: 30 },
-      rotation: Math.PI / 2,
-    });
-    const shapes = [group0, group1, child0, child1, group2, child2, child3];
+
+    const shapes = [group0, child0, group1, child1, child2];
     const target = newShapeComposite({
       shapes,
       getStruct: getCommonStruct,
@@ -528,64 +409,38 @@ describe("resizeShapeTrees", () => {
 
     const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
     const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
-    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
-    expect(polygon1[0].x).toBeCloseTo(10);
-    expect(polygon1[0].y).toBeCloseTo(10);
-    expect(polygon1[1].x).toBeCloseTo(20);
-    expect(polygon1[1].y).toBeCloseTo(10);
-    expect(polygon1[2].x).toBeCloseTo(20);
-    expect(polygon1[2].y).toBeCloseTo(60);
-    expect(polygon1[3].x).toBeCloseTo(10);
-    expect(polygon1[3].y).toBeCloseTo(60);
-    expect(res0[child1.id].rotation).toBe(undefined);
-
-    const polygon3 = target.getLocalRectPolygon({ ...child3, ...res0[child3.id] });
-    expect(polygon3[0].x).toBeCloseTo(40);
-    expect(polygon3[0].y).toBeCloseTo(60);
-    expect(polygon3[1].x).toBeCloseTo(40);
-    expect(polygon3[1].y).toBeCloseTo(80);
-    expect(polygon3[2].x).toBeCloseTo(30);
-    expect(polygon3[2].y).toBeCloseTo(80);
-    expect(polygon3[3].x).toBeCloseTo(30);
-    expect(polygon3[3].y).toBeCloseTo(60);
-    expect(res0[child3.id].rotation).toBe(undefined);
+    expect({ ...child1, ...res0[child1.id] }).toEqual({ ...child1, p: { x: 0, y: 10 }, height: 25 });
+    expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 20 }, height: 40 });
   });
 
   test("should regard group constraints: 6, deep nested constraints", () => {
-    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 6 });
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child0",
-      parentId: group1.id,
+      parentId: group0.id,
       p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+      gcV: 4,
+    });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1", parentId: group0.id, gcV: 6 });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group1.id,
+      p: { x: 0, y: 10 },
+      width: 10,
+      height: 10,
+    });
+    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: group1.id,
+      p: { x: 0, y: 20 },
       width: 10,
       height: 10,
       gcV: 6,
     });
-    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child1",
-      p: { x: 10, y: 10 },
-    });
-    const group2 = createShape(getCommonStruct, "group", {
-      ...group1,
-      id: "group2",
-      rotation: Math.PI / 2,
-    });
-    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child2",
-      parentId: group2.id,
-      p: { x: 20, y: 20 },
-      rotation: Math.PI / 2,
-    });
-    const child3 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      ...child0,
-      id: "child3",
-      parentId: group2.id,
-      p: { x: 30, y: 30 },
-      rotation: Math.PI / 2,
-    });
-    const shapes = [group0, group1, child0, child1, group2, child2, child3];
+
+    const shapes = [group0, child0, group1, child1, child2];
     const target = newShapeComposite({
       shapes,
       getStruct: getCommonStruct,
@@ -593,26 +448,7 @@ describe("resizeShapeTrees", () => {
 
     const affine0 = multiAffines([[1, 0, 0, 2, 0, 0]]);
     const res0 = resizeShapeTrees(target, [group0.id], affine0) as any;
-    const polygon1 = target.getLocalRectPolygon({ ...child1, ...res0[child1.id] });
-    expect(polygon1[0].x).toBeCloseTo(10);
-    expect(polygon1[0].y).toBeCloseTo(50);
-    expect(polygon1[1].x).toBeCloseTo(20);
-    expect(polygon1[1].y).toBeCloseTo(50);
-    expect(polygon1[2].x).toBeCloseTo(20);
-    expect(polygon1[2].y).toBeCloseTo(60);
-    expect(polygon1[3].x).toBeCloseTo(10);
-    expect(polygon1[3].y).toBeCloseTo(60);
-    expect(res0[child1.id].rotation).toBe(undefined);
-
-    const polygon3 = target.getLocalRectPolygon({ ...child3, ...res0[child3.id] });
-    expect(polygon3[0].x).toBeCloseTo(40);
-    expect(polygon3[0].y).toBeCloseTo(60);
-    expect(polygon3[1].x).toBeCloseTo(40);
-    expect(polygon3[1].y).toBeCloseTo(80);
-    expect(polygon3[2].x).toBeCloseTo(30);
-    expect(polygon3[2].y).toBeCloseTo(80);
-    expect(polygon3[3].x).toBeCloseTo(30);
-    expect(polygon3[3].y).toBeCloseTo(60);
-    expect(res0[child3.id].rotation).toBe(undefined);
+    expect({ ...child1, ...res0[child1.id] }).toEqual({ ...child1, p: { x: 0, y: 40 }, height: 10 });
+    expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 50 }, height: 10 });
   });
 });

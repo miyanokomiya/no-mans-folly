@@ -7,7 +7,7 @@ import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 
 type TreeStepGroupValue = {
   affine: AffineMatrix;
-  parentResizedRotationAffine: AffineMatrix;
+  parentRotationResiezedAffine: AffineMatrix;
   parentDerotationAffine: AffineMatrix;
   parentDerotationResizedAffine: AffineMatrix;
   parentDerotatedRect: IRectangle;
@@ -97,24 +97,31 @@ export function resizeShapeTrees(
       );
 
       if (!constraintAffine) {
-        ret[node.id] = rowResizedInfo.patch;
+        const patch = minShapeComposite.transformShape(shape, resizingAffine);
+        ret[node.id] = patch;
         if (!isGroupShape(shape)) return { inheritedAffine: resizingAffine };
 
         return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, resizedLocalPolygon);
       }
 
       const adjustmentAffine = multiAffines([
-        data.parentResizedRotationAffine,
+        data.parentRotationResiezedAffine,
         constraintAffine,
         data.parentDerotationResizedAffine,
       ]);
 
-      const adjustmentPatch = resizedComposite.transformShape(rowResizedInfo.shape, adjustmentAffine);
-      ret[node.id] = { ...rowResizedInfo.patch, ...adjustmentPatch };
-      if (!isGroupShape(shape)) return { inheritedAffine: multiAffines([adjustmentAffine, resizingAffine]) };
+      const adjustedResizedAffine = multiAffines([adjustmentAffine, resizingAffine]);
+      ret[node.id] = minShapeComposite.transformShape(shape, adjustedResizedAffine);
+      if (!isGroupShape(shape)) return { inheritedAffine: adjustedResizedAffine };
 
       const adjustedLocalPolygon = resizedLocalPolygon.map((p) => applyAffine(adjustmentAffine, p));
-      return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, adjustedLocalPolygon);
+      return createTreeStepGroupValue(
+        adjustedResizedAffine,
+        minShapeComposite,
+        shape,
+        localPolygon,
+        adjustedLocalPolygon,
+      );
     },
     undefined,
   );
@@ -143,7 +150,7 @@ function createTreeStepGroupValue(
 
   return {
     affine,
-    parentResizedRotationAffine: rotationResizedAffine,
+    parentRotationResiezedAffine: rotationResizedAffine,
     parentDerotationResizedAffine: derotationResizedAffine,
     parentDerotatedRect: derotatedRect,
     parentDerotatedResizedRect: derotatedResizedRect,
@@ -159,21 +166,25 @@ function getConstraintAdjustmentAffine(
   parentDerotatedRect: IRectangle,
   parentDerotatedResizedRect: IRectangle,
 ): AffineMatrix | undefined {
-  const vAffine = getVerticalConstraintAdjustmentAffine(
-    gcV,
-    [normalizedSrcRect.y, normalizedSrcRect.height],
-    [normalizedResizedRect.y, normalizedResizedRect.height],
-    [parentDerotatedRect.y, parentDerotatedRect.height],
-    [parentDerotatedResizedRect.y, parentDerotatedResizedRect.height],
+  const vAffine = ignoreIdentityAffine(
+    getVerticalConstraintAdjustmentAffine(
+      gcV,
+      [normalizedSrcRect.y, normalizedSrcRect.height],
+      [normalizedResizedRect.y, normalizedResizedRect.height],
+      [parentDerotatedRect.y, parentDerotatedRect.height],
+      [parentDerotatedResizedRect.y, parentDerotatedResizedRect.height],
+    ),
   );
 
   const hAffine = swapSimpleAffineDirection(
-    getVerticalConstraintAdjustmentAffine(
-      gcH,
-      [normalizedSrcRect.x, normalizedSrcRect.width],
-      [normalizedResizedRect.x, normalizedResizedRect.width],
-      [parentDerotatedRect.x, parentDerotatedRect.width],
-      [parentDerotatedResizedRect.x, parentDerotatedResizedRect.width],
+    ignoreIdentityAffine(
+      getVerticalConstraintAdjustmentAffine(
+        gcH,
+        [normalizedSrcRect.x, normalizedSrcRect.width],
+        [normalizedResizedRect.x, normalizedResizedRect.width],
+        [parentDerotatedRect.x, parentDerotatedRect.width],
+        [parentDerotatedResizedRect.x, parentDerotatedResizedRect.width],
+      ),
     ),
   );
 
@@ -185,6 +196,11 @@ function getConstraintAdjustmentAffine(
 }
 
 type RectRange = [from: number, size: number];
+
+function ignoreIdentityAffine(affine?: AffineMatrix): AffineMatrix | undefined {
+  if (!affine) return;
+  return geometry.isIdentityAffine(affine) ? undefined : affine;
+}
 
 function getVerticalConstraintAdjustmentAffine(
   gcV: GroupConstraint | undefined,
@@ -205,10 +221,13 @@ function getVerticalConstraintAdjustmentAffine(
       ]);
     }
     case 2: {
+      const center = normalizedSrcRange[0] + normalizedSrcRange[1] / 2;
       const resizedCenter = normalizedResizedRange[0] + normalizedResizedRange[1] / 2;
+      const centerRate = (center - parentDerotatedRange[0]) / parentDerotatedRange[1];
+      const targetCenter = parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1] * centerRate;
       const targetSize = normalizedSrcRange[1];
       return multiAffines([
-        [1, 0, 0, 1, 0, resizedCenter],
+        [1, 0, 0, 1, 0, targetCenter],
         [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],
         [1, 0, 0, 1, 0, -resizedCenter],
       ]);
