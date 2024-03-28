@@ -76,7 +76,7 @@ export function resizeShapeTrees(
         ret[node.id] = rowResizedInfo.patch;
         if (!isGroupShape(shape)) return;
 
-        return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, resizedLocalPolygon);
+        return createTreeStepGroupValue(resizingAffine, shape, localPolygon, resizedLocalPolygon);
       }
 
       const normalizedSrcRect = getOuterRectangle([
@@ -101,7 +101,7 @@ export function resizeShapeTrees(
         ret[node.id] = patch;
         if (!isGroupShape(shape)) return { inheritedAffine: resizingAffine };
 
-        return createTreeStepGroupValue(resizingAffine, minShapeComposite, shape, localPolygon, resizedLocalPolygon);
+        return createTreeStepGroupValue(resizingAffine, shape, localPolygon, resizedLocalPolygon);
       }
 
       const adjustmentAffine = multiAffines([
@@ -115,13 +115,7 @@ export function resizeShapeTrees(
       if (!isGroupShape(shape)) return { inheritedAffine: adjustedResizedAffine };
 
       const adjustedLocalPolygon = resizedLocalPolygon.map((p) => applyAffine(adjustmentAffine, p));
-      return createTreeStepGroupValue(
-        adjustedResizedAffine,
-        minShapeComposite,
-        shape,
-        localPolygon,
-        adjustedLocalPolygon,
-      );
+      return createTreeStepGroupValue(adjustedResizedAffine, shape, localPolygon, adjustedLocalPolygon);
     },
     undefined,
   );
@@ -131,7 +125,6 @@ export function resizeShapeTrees(
 
 function createTreeStepGroupValue(
   affine: AffineMatrix,
-  shapeComposite: ShapeComposite,
   shape: Shape,
   localPolygon: IVec2[],
   resizedLocalPolygon: IVec2[],
@@ -143,7 +136,7 @@ function createTreeStepGroupValue(
   const derotationAffine = geometry.getRotatedAtAffine(srcCenter, -shape.rotation);
   const derotationResizedAffine = geometry.getRotatedAtAffine(resizedCenter, -shape.rotation);
 
-  const derotatedRect = shapeComposite.getWrapperRect({ ...shape, rotation: 0 });
+  const derotatedRect = getOuterRectangle([localPolygon.map((p) => applyAffine(derotationAffine, p))]);
   const derotatedResizedRect = getOuterRectangle([
     resizedLocalPolygon.map((p) => applyAffine(derotationResizedAffine, p)),
   ]);

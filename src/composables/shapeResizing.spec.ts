@@ -452,3 +452,61 @@ describe("resizeShapeTrees", () => {
     expect({ ...child2, ...res0[child2.id] }).toEqual({ ...child2, p: { x: 0, y: 50 }, height: 10 });
   });
 });
+
+describe("resizeShapeTrees: actual case 1", () => {
+  const group0 = createShape(getCommonStruct, "group", { id: "group0", rotation: Math.PI / 2 });
+  const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "child0",
+    parentId: group0.id,
+    p: { x: 20, y: 0 },
+    width: 10,
+    height: 10,
+    gcV: 4,
+    rotation: Math.PI / 2,
+  });
+  const group1 = createShape(getCommonStruct, "group", {
+    id: "group1",
+    parentId: group0.id,
+    gcV: 1,
+    rotation: Math.PI / 2,
+  });
+  const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "child1",
+    parentId: group1.id,
+    p: { x: 10, y: 0 },
+    width: 10,
+    height: 10,
+    rotation: Math.PI / 2,
+  });
+  const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "child2",
+    parentId: group1.id,
+    p: { x: 0, y: 0 },
+    width: 10,
+    height: 10,
+    rotation: Math.PI / 2,
+  });
+
+  test("rotated nested group", () => {
+    const shapes = [group0, child0, group1, child1, child2];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    const affine = multiAffines([[2, 0, 0, 1, 0, 0]]);
+    const res0 = resizeShapeTrees(target, [group0.id], affine);
+
+    const resChild0 = { ...child0, ...res0[child0.id] };
+    expect(resChild0.p.x).toBeCloseTo(50);
+    expect(resChild0.p.y).toBeCloseTo(0);
+    expect(resChild0.width).toBeCloseTo(10);
+    expect(resChild0.height).toBeCloseTo(10);
+
+    const resChild1 = { ...child1, ...res0[child1.id] };
+    expect(resChild1.p.x).toBeCloseTo(32.5);
+    expect(resChild1.p.y).toBeCloseTo(-7.5);
+    expect(resChild1.width).toBeCloseTo(10);
+    expect(resChild1.height).toBeCloseTo(25);
+  });
+});
