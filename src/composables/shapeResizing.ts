@@ -19,16 +19,18 @@ export function resizeShapeTrees(
   targetIds: string[],
   affine: AffineMatrix,
 ): { [id: string]: Partial<Shape> } {
+  // Prepare minimal shape composite to remove any effect of temporary shapes.
   const shapeMap = shapeComposite.shapeMap;
   const targetTrees = targetIds.map((id) => shapeComposite.mergedShapeTreeMap[id]);
   const allBranchIds = shapeComposite.getAllBranchMergedShapes(targetIds).map((s) => s.id);
   const allBranchShsapes = allBranchIds.map((id) => shapeMap[id]);
-
   const minShapeComposite = newShapeComposite({
     getStruct: shapeComposite.getShapeStruct,
     shapes: allBranchShsapes,
   });
 
+  // Gather current and resized bounds information of all shapes in advance.
+  // Certain shape types, in particular group shape, need whole shape tree to derive their bounds.
   const srcInfoMap: { [id: string]: { localPolygon: IVec2[] } } = {};
 
   const rowResizedList = allBranchIds.map<[Shape, Partial<Shape>]>((id) => {
@@ -55,29 +57,29 @@ export function resizeShapeTrees(
 
   const ret: { [id: string]: Partial<Shape> } = {};
 
-  walkTreeWithValue<TreeStepGroupValue | { inheritedAffine: AffineMatrix } | undefined>(
+  walkTreeWithValue<TreeStepGroupValue | { affine: AffineMatrix } | undefined>(
     targetTrees,
     (node, _, data) => {
       const shape = shapeMap[node.id];
-
-      if (data && "inheritedAffine" in data) {
-        const patch = minShapeComposite.transformShape(shape, data.inheritedAffine);
-        ret[node.id] = patch;
-        return data;
-      }
-
-      const resizingAffine = data?.affine ?? affine;
       const localPolygon = srcInfoMap[shape.id].localPolygon;
-
       const rowResizedInfo = rowResizedInfoMap[shape.id];
-      const resizedLocalPolygon = localPolygon.map((p) => applyAffine(resizingAffine, p));
 
       if (!data) {
         ret[node.id] = rowResizedInfo.patch;
         if (!isGroupShape(shape)) return;
 
-        return createTreeStepGroupValue(resizingAffine, shape, localPolygon, resizedLocalPolygon);
+        return createTreeStepGroupValue(affine, shape, localPolygon, rowResizedInfo.localPolygon);
       }
+
+      const resizingAffine = data.affine;
+
+      if (!("parentRotationResiezedAffine" in data)) {
+        const patch = minShapeComposite.transformShape(shape, resizingAffine);
+        ret[node.id] = patch;
+        return data;
+      }
+
+      const resizedLocalPolygon = localPolygon.map((p) => applyAffine(resizingAffine, p));
 
       const normalizedSrcRect = getOuterRectangle([
         localPolygon.map((p) => applyAffine(data.parentDerotationAffine, p)),
@@ -99,7 +101,7 @@ export function resizeShapeTrees(
       if (!constraintAffine) {
         const patch = minShapeComposite.transformShape(shape, resizingAffine);
         ret[node.id] = patch;
-        if (!isGroupShape(shape)) return { inheritedAffine: resizingAffine };
+        if (!isGroupShape(shape)) return { affine: resizingAffine };
 
         return createTreeStepGroupValue(resizingAffine, shape, localPolygon, resizedLocalPolygon);
       }
@@ -112,7 +114,7 @@ export function resizeShapeTrees(
 
       const adjustedResizedAffine = multiAffines([adjustmentAffine, resizingAffine]);
       ret[node.id] = minShapeComposite.transformShape(shape, adjustedResizedAffine);
-      if (!isGroupShape(shape)) return { inheritedAffine: adjustedResizedAffine };
+      if (!isGroupShape(shape)) return { affine: adjustedResizedAffine };
 
       const adjustedLocalPolygon = resizedLocalPolygon.map((p) => applyAffine(adjustmentAffine, p));
       return createTreeStepGroupValue(adjustedResizedAffine, shape, localPolygon, adjustedLocalPolygon);
