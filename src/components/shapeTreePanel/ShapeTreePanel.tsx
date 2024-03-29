@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect, useRef } from "react";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
@@ -61,8 +61,16 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, sel
     onClick(id);
   }, [id, onClick]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!prime || !rootRef.current) return;
+
+    rootRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }, [prime]);
+
   return (
-    <div className="ml-2">
+    <div ref={rootRef} className="ml-2">
       <div className="flex items-center">
         <div className="w-4 h-4 mr-1 border border-gray-400 rounded" />
         <button type="button" className={"px-1 rounded w-full text-left" + selectedClass} onClick={handleClickNode}>
