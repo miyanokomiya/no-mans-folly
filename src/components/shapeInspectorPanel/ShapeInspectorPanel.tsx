@@ -1,9 +1,9 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext } from "react";
 import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
 import { ConventionalShapeInspector } from "./ConventionalShapeInspector";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { InlineField } from "../atoms/InlineField";
-import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
+import { AppStateContext, AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { Shape } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
@@ -90,16 +90,9 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShape, getShapeComposite, patchShapes],
   );
 
-  const shapeLabel = useMemo<string>(() => {
-    const shapeComposite = getShapeComposite();
-    return shapeComposite.getShapeStruct(targetShape.type).label;
-  }, [getShapeComposite, targetShape]);
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <InlineField label={"Shape type"}>
-        <span>{shapeLabel}</span>
-      </InlineField>
+      <ShapeTypeBlock type={targetShape.type} />
       {isLineShape(targetShape) ? (
         <LineShapeInspector
           targetShape={targetShape}
@@ -120,5 +113,21 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShape} />
       <button type="submit" className="hidden" />
     </form>
+  );
+};
+
+interface ShapeTypeBlockProps {
+  type: string;
+}
+
+const ShapeTypeBlock: React.FC<ShapeTypeBlockProps> = ({ type }) => {
+  const { getShapeComposite } = useContext(AppStateContext);
+  const shapeComposite = getShapeComposite();
+  const shapeLabel = shapeComposite.getShapeStruct(type).label;
+
+  return (
+    <InlineField label="Shape type">
+      <span>{shapeLabel}</span>
+    </InlineField>
   );
 };
