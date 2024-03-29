@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 interface Props {
   selected: string;
-  items: [{ name: string }, React.ReactNode][];
+  items: [{ name: string }, React.ReactNode, noPadding?: boolean][];
   onSelect?: (name: string) => void;
 }
 
@@ -11,14 +11,18 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
     const name = item[0].name;
     return <TabButton key={name} name={name} selected={name === selected} onClick={onSelect} />;
   });
-  const panel = items.find((item) => item[0].name === selected)?.[1];
+  const item = items.find((item) => item[0].name === selected);
+  if (!item) return undefined;
+
+  const panel = item[1];
+  const wrapperClassName = item[2] ? "" : " p-2";
 
   return (
     <div className="w-full h-full">
       <div className="absolute top-0 left-0 select-none touch-none">
         <div className="origin-top-left rotate-90 flex gap-1">{tabs}</div>
       </div>
-      <div className="w-full h-full overflow-auto p-2 border border-l-gray-500">{panel}</div>
+      <div className={"w-full h-full overflow-auto border border-l-gray-500" + wrapperClassName}>{panel}</div>
     </div>
   );
 };
