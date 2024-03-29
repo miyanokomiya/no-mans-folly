@@ -184,6 +184,30 @@ export function useSelectedShape(): Shape | undefined {
   return selectedShape;
 }
 
+export function useSelectedShapeInfo(): { idMap: { [id: string]: true }; lastId?: string } {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [selectedMap, setSelectedMap] = useState<{ [id: string]: true }>({});
+  const [lastId, setLastId] = useState<string>();
+
+  const update = useCallback(() => {
+    setSelectedMap(shapeStore.getSelected());
+    setLastId(shapeStore.getLastSelected());
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watchSelected(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return { idMap: selectedMap, lastId };
+}
+
 /**
  * Note: Just having a flag saves state update compared to having the actual count.
  */
