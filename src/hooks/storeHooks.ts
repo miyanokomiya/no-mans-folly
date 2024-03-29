@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Shape, Sheet } from "../models";
 import { ShapeStore } from "../stores/shapes";
+import { ShapeComposite } from "../composables/shapeComposite";
 
 export function useSelectedSheet(): Sheet | undefined {
   const acctx = useContext(AppCanvasContext);
@@ -69,6 +70,53 @@ export function useTmpSheetMap(): { [id: string]: Partial<Sheet> } {
   }, [acctx.sheetStore]);
 
   return tmpMap;
+}
+
+export function useShapes(): Shape[] {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [shapes, setShapes] = useState<Shape[]>([]);
+
+  const update = useCallback(() => {
+    setShapes(shapeStore.getEntities());
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return shapes;
+}
+
+export function useShapeComposite(): ShapeComposite {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [shapeComposite, setShapeComposite] = useState<ShapeComposite>(shapeStore.shapeComposite);
+
+  const update = useCallback(() => {
+    setShapeComposite(shapeStore.shapeComposite);
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+      shapeStore.watchTmpShapeMap(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return shapeComposite;
 }
 
 export function useSelectedTmpShape(): Shape | undefined {
