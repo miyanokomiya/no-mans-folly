@@ -309,7 +309,7 @@ function App() {
         </div>
       </div>
       <div
-        className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
+        className={"fixed top-0 bottom-0 left-full bg-white transition-transform"}
         style={{ width: rightPanelWidth, ...floatRightPanelStyle }}
       >
         <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
