@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useRef } from "react";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
-import { AppStateContext } from "../../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 
 interface Props {}
 
@@ -14,13 +14,25 @@ export const ShapeTreePanel: React.FC<Props> = () => {
     getUITreeNodeProps(shapeComposite, selectedInfo.idMap, selectedInfo.lastId, n, 0),
   );
 
-  const { selectShape } = useContext(AppStateContext);
+  const { handleEvent } = useContext(AppStateMachineContext);
+  const { selectShape } = useContext(GetAppStateContext)();
 
   const handleClickNode = useCallback(
     (id: string) => {
       selectShape(id);
+
+      handleEvent({
+        type: "state",
+        data: {
+          name: "PanToShape",
+          options: {
+            ids: [id],
+            duration: 150,
+          },
+        },
+      });
     },
-    [selectShape],
+    [selectShape, handleEvent],
   );
 
   return (

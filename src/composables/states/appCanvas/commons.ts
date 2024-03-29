@@ -44,8 +44,16 @@ import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState";
 import { FOLLY_SVG_PREFIX, ShapeTemplateInfo, parseTemplateShapes } from "../../../utils/shapeTemplateUtil";
 import { Shape } from "../../../models";
+import { newPanToShapeState } from "./panToShapeState";
 
-type AcceptableEvent = "Break" | "DroppingNewShape" | "LineReady" | "TextReady" | "RectSelectReady" | "ShapeInspection";
+type AcceptableEvent =
+  | "Break"
+  | "DroppingNewShape"
+  | "LineReady"
+  | "TextReady"
+  | "RectSelectReady"
+  | "ShapeInspection"
+  | "PanToShape";
 
 export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): AcceptableEvent[] {
   const ex = new Set(excludes);
@@ -56,6 +64,7 @@ export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): Acc
     "TextReady",
     "RectSelectReady",
     "ShapeInspection",
+    "PanToShape",
   ];
   return list.filter((s) => !ex.has(s));
 }
@@ -68,28 +77,21 @@ export function handleStateEvent(
   const name = event.data.name;
   if (!acceptable.includes(name as AcceptableEvent)) return;
 
-  if (event.data.name === "Break") {
-    return newSelectionHubState;
-  }
-
-  if (event.data.name === "DroppingNewShape") {
-    return () => newDroppingNewShapeState(event.data.options);
-  }
-
-  if (event.data.name === "LineReady") {
-    return () => newLineReadyState(event.data.options);
-  }
-
-  if (event.data.name === "TextReady") {
-    return () => newTextReadyState();
-  }
-
-  if (event.data.name === "RectSelectReady") {
-    return () => newRactangleSelectingReadyState();
-  }
-
-  if (event.data.name === "ShapeInspection") {
-    return () => newShapeInspectionState();
+  switch (event.data.name) {
+    case "Break":
+      return newSelectionHubState;
+    case "DroppingNewShape":
+      return () => newDroppingNewShapeState(event.data.options);
+    case "LineReady":
+      return () => newLineReadyState(event.data.options);
+    case "TextReady":
+      return () => newTextReadyState();
+    case "RectSelectReady":
+      return () => newRactangleSelectingReadyState();
+    case "ShapeInspection":
+      return () => newShapeInspectionState();
+    case "PanToShape":
+      return () => newPanToShapeState(event.data.options);
   }
 }
 
@@ -571,6 +573,7 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
         "TextReady",
         "RectSelectReady",
         "ShapeInspection",
+        "PanToShape",
       ]);
     case "contextmenu-item": {
       return handleContextItemEvent(ctx, event);

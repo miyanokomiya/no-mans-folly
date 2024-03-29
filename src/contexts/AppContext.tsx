@@ -80,13 +80,19 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
     });
   }, [acctx, assetAPI]);
 
+  const getStateContext = useCallback(() => {
+    return stateContextRef.current;
+  }, []);
+
   return (
     <AppCanvasContext.Provider value={acctx}>
       <AppStateMachineContext.Provider value={stateMachine}>
         <SetAppStateContext.Provider value={handleSetStateContext}>
-          <ToastMessageContext.Provider value={toastMessages}>
-            <AppStateContext.Provider value={stateContext}>{children}</AppStateContext.Provider>
-          </ToastMessageContext.Provider>
+          <GetAppStateContext.Provider value={getStateContext}>
+            <ToastMessageContext.Provider value={toastMessages}>
+              <AppStateContext.Provider value={stateContext}>{children}</AppStateContext.Provider>
+            </ToastMessageContext.Provider>
+          </GetAppStateContext.Provider>
         </SetAppStateContext.Provider>
       </AppStateMachineContext.Provider>
     </AppCanvasContext.Provider>
@@ -95,6 +101,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
 
 export const AppStateContext = createContext<AppCanvasStateContext>(undefined as any);
 export const SetAppStateContext = createContext<React.Dispatch<AppCanvasStateContextPart>>(() => undefined);
+export const GetAppStateContext = createContext<() => AppCanvasStateContextPart>(() => undefined as any);
 export const AppStateMachineContext = createContext<StateMachine<AppCanvasEvent>>(undefined as any);
 
 type AppCanvasStateContextPart = Omit<
