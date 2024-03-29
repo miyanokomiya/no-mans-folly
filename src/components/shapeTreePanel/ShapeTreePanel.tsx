@@ -1,6 +1,8 @@
+import { useCallback, useContext } from "react";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
+import { AppStateContext } from "../../contexts/AppContext";
 
 interface Props {}
 
@@ -10,6 +12,15 @@ export const ShapeTreePanel: React.FC<Props> = () => {
   const rootNodes = shapeComposite.mergedShapeTree;
   const rootNodeProps = rootNodes.map((n) =>
     getUITreeNodeProps(shapeComposite, selectedInfo.idMap, selectedInfo.lastId, n, 0),
+  );
+
+  const { selectShape } = useContext(AppStateContext);
+
+  const handleClickNode = useCallback(
+    (id: string) => {
+      selectShape(id);
+    },
+    [selectShape],
   );
 
   return (
@@ -24,6 +35,7 @@ export const ShapeTreePanel: React.FC<Props> = () => {
               selected={n.selected}
               prime={n.prime}
               childNode={n.childNode}
+              onClick={handleClickNode}
             />
           </li>
         ))}
@@ -39,16 +51,23 @@ interface UITreeNodeProps {
   level: number;
   selected: boolean;
   prime: boolean;
+  onClick: (id: string) => void;
 }
 
-const UITreeNode: React.FC<UITreeNodeProps> = ({ name, childNode, level, selected, prime }) => {
+const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, selected, prime, onClick }) => {
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
+
+  const handleClickNode = useCallback(() => {
+    onClick(id);
+  }, [id, onClick]);
 
   return (
     <div className="ml-2">
       <div className="flex items-center">
         <div className="w-4 h-4 mr-1 border border-gray-400 rounded" />
-        <div className={"px-1 rounded" + selectedClass}>{name}</div>
+        <button type="button" className={"px-1 rounded w-full text-left" + selectedClass} onClick={handleClickNode}>
+          {name}
+        </button>
       </div>
       <ul className={"ml-1 border-l-2 border-gray-400" + (level === 0 && childNode.length > 0 ? "" : "")}>
         {childNode.map((c) => (
@@ -60,6 +79,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ name, childNode, level, selecte
               selected={c.selected}
               prime={c.prime}
               childNode={c.childNode}
+              onClick={onClick}
             />
           </li>
         ))}
