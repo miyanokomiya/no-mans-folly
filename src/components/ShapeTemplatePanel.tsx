@@ -1,11 +1,11 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { GroupAccordion } from "./molecules/ShapeLibraryGroup";
-import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { parseTemplateShapes } from "../utils/shapeTemplateUtil";
 import { duplicateShapes } from "../shapes";
 
 export const ShapeTemplatePanel: React.FC = () => {
-  const smctx = useContext(AppStateContext);
+  const getCtx = useContext(GetAppStateContext);
   const sm = useContext(AppStateMachineContext);
 
   const [selected, setSelected] = useState<string>("");
@@ -27,6 +27,7 @@ export const ShapeTemplatePanel: React.FC = () => {
       const template = parseTemplateShapes(svgText);
       if (!template) return;
 
+      const smctx = getCtx();
       const duplicated = duplicateShapes(
         smctx.getShapeStruct,
         template.shapes,
@@ -43,7 +44,7 @@ export const ShapeTemplatePanel: React.FC = () => {
         },
       });
     },
-    [sm, smctx],
+    [sm, getCtx],
   );
 
   return (

@@ -101,7 +101,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
 
 export const AppStateContext = createContext<AppCanvasStateContext>(undefined as any);
 export const SetAppStateContext = createContext<React.Dispatch<AppCanvasStateContextPart>>(() => undefined);
-export const GetAppStateContext = createContext<() => AppCanvasStateContextPart>(() => undefined as any);
+export const GetAppStateContext = createContext<() => AppCanvasStateContext>(() => undefined as any);
 export const AppStateMachineContext = createContext<StateMachine<AppCanvasEvent>>(undefined as any);
 
 type AppCanvasStateContextPart = Omit<

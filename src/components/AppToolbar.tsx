@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
 import iconShapeSet from "../assets/icons/shape_set.svg";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
@@ -59,7 +59,7 @@ function getButtonClass(highlight = false) {
 export const AppToolbar: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
-  const smctx = useContext(AppStateContext);
+  const getCtx = useContext(GetAppStateContext);
 
   const [stateLabel, setStateLabel] = useState("");
   useEffect(() => {
@@ -71,7 +71,7 @@ export const AppToolbar: React.FC = () => {
   const onDownShapeElm = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      const ctx = smctx;
+      const ctx = getCtx();
       const type = e.currentTarget.getAttribute("data-type")!;
 
       let template: { shapes: Shape[]; docMap?: { [id: string]: DocOutput } };
@@ -100,7 +100,7 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("");
     },
-    [sm, smctx, acctx],
+    [sm, getCtx, acctx],
   );
 
   const onDownLineElm = useCallback(

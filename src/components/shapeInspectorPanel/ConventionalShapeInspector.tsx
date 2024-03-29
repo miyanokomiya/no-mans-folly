@@ -1,5 +1,4 @@
-import { useCallback, useContext, useMemo } from "react";
-import { AppStateContext } from "../../contexts/AppContext";
+import { useCallback, useMemo } from "react";
 import { PointField } from "./PointField";
 import { AffineMatrix, IRectangle, IVec2, getCenter, multiAffines } from "okageo";
 import { Shape } from "../../models";
@@ -8,6 +7,7 @@ import { NumberInput } from "../atoms/inputs/NumberInput";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { InlineField } from "../atoms/InlineField";
 import { BlockField } from "../atoms/BlockField";
+import { useShapeComposite } from "../../hooks/storeHooks";
 
 interface Props {
   targetShape: Shape;
@@ -24,19 +24,17 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   updateTmpTargetShape,
   readyState,
 }) => {
-  const { getShapeComposite } = useContext(AppStateContext);
+  const shapeComposite = useShapeComposite();
 
   const targetLocation = useMemo<IVec2>(() => {
-    const shapeComposite = getShapeComposite();
     return shapeComposite.getLocalRectPolygon(targetTmpShape)[0];
-  }, [getShapeComposite, targetTmpShape]);
+  }, [shapeComposite, targetTmpShape]);
 
   const handleChangePosition = useCallback(
     (val: IVec2, draft = false) => {
       if (draft) {
         readyState();
 
-        const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
           shapeComposite.transformShape(targetShape, getMoveToAffine(shapeComposite, targetShape, val)),
         );
@@ -44,13 +42,12 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
         commit();
       }
     },
-    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
+    [commit, readyState, updateTmpTargetShape, targetShape, shapeComposite],
   );
 
   const targetLocalBounds = useMemo<[IRectangle, rotation: number]>(() => {
-    const shapeComposite = getShapeComposite();
     return getRectWithRotationFromRectPolygon(shapeComposite.getLocalRectPolygon(targetTmpShape));
-  }, [targetTmpShape, getShapeComposite]);
+  }, [targetTmpShape, shapeComposite]);
 
   const targetSize = useMemo<IVec2>(() => {
     return { x: targetLocalBounds[0].width, y: targetLocalBounds[0].height };
@@ -61,7 +58,6 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
       if (draft) {
         readyState();
 
-        const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
           shapeComposite.transformShape(targetShape, getScaleToAffine(shapeComposite, targetShape, val)),
         );
@@ -69,7 +65,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
         commit();
       }
     },
-    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
+    [commit, readyState, updateTmpTargetShape, targetShape, shapeComposite],
   );
 
   const handleChangeRotation = useCallback(
@@ -77,7 +73,6 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
       if (draft) {
         readyState();
 
-        const shapeComposite = getShapeComposite();
         updateTmpTargetShape(
           shapeComposite.transformShape(
             targetShape,
@@ -88,7 +83,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
         commit();
       }
     },
-    [commit, readyState, updateTmpTargetShape, targetShape, getShapeComposite],
+    [commit, readyState, updateTmpTargetShape, targetShape, shapeComposite],
   );
 
   return (

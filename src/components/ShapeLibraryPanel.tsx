@@ -1,11 +1,11 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { GroupAccordion } from "./molecules/ShapeLibraryGroup";
-import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
 import { ImageShape } from "../shapes/image";
 
 export const ShapeLibraryPanel: React.FC = () => {
-  const smctx = useContext(AppStateContext);
+  const getCtx = useContext(GetAppStateContext);
   const sm = useContext(AppStateMachineContext);
 
   const [selected, setSelected] = useState<string>("");
@@ -22,6 +22,7 @@ export const ShapeLibraryPanel: React.FC = () => {
 
   const handleIconDown = useCallback(
     async (url: string, id: string) => {
+      const smctx = getCtx();
       const imageStore = smctx.getImageStore();
       const assetAPI = smctx.assetAPI;
       if (assetAPI.enabled) {
@@ -78,7 +79,7 @@ export const ShapeLibraryPanel: React.FC = () => {
         smctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
       }
     },
-    [sm, smctx],
+    [sm, getCtx],
   );
 
   return (

@@ -3,7 +3,7 @@ import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
 import { ConventionalShapeInspector } from "./ConventionalShapeInspector";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { InlineField } from "../atoms/InlineField";
-import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { Shape } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
@@ -27,7 +27,7 @@ interface ShapeInspectorPanelWithShapeProps {
 
 const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({ targetShape, targetTmpShape }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
-  const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(AppStateContext);
+  const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(GetAppStateContext)();
 
   const readyState = useCallback(() => {
     handleEvent({
