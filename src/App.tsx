@@ -146,7 +146,7 @@ function App() {
 
   const [rightPanel, setRightPanel] = useState("");
   const rightPanelWidth = 300;
-  const floatRightStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth}px)` } : {};
+  const canvasStyle = rightPanel ? { width: `calc(100% - ${rightPanelWidth}px)` } : { width: "" };
   const floatRightPanelStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth}px)` } : {};
   const handleRightPanel = useCallback((key: string) => {
     setRightPanel((v) => (v === key ? "" : key));
@@ -299,46 +299,41 @@ function App() {
         hasTemporaryDiagram={hasTemporaryDiagram}
       />
       <LoadingDialog open={loading} progress={exportProgress} />
-      <div className="relative">
-        <div className="w-screen h-screen bg-gray-500 touch-none">
-          <AppCanvas />
-        </div>
-        <div
-          className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
-          style={{ width: rightPanelWidth, ...floatRightPanelStyle }}
-        >
-          <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
-        </div>
-        <div
-          className="fixed right-7 transition-transform"
-          style={{ top: "50%", transform: "translateY(-50%)" + (floatRightStyle.transform ?? "") }}
-        >
+      <div className="relative w-screen h-screen bg-gray-500 touch-none transition-all" style={canvasStyle}>
+        <AppCanvas />
+        <div className="absolute right-7" style={{ top: "50%", transform: "translateY(-50%)" }}>
           <AppToolbar />
         </div>
-        <div className="fixed bottom-2 right-4 transition-transform" style={floatRightStyle}>
+        <div className="absolute bottom-2 right-4">
           <AppFootbar />
         </div>
-        {canPersist ? (
-          <div className="fixed top-10 flex">
-            <SheetList />
-          </div>
-        ) : undefined}
-        <div className="fixed left-0 top-0 flex">
-          <AppHeader
-            onClickOpen={handleOpenWorkspace}
-            onClickSave={handleSaveWorkspace}
-            onClickExport={handleExportWorkspace}
-            onClickClear={handleClearWorkspace}
-            onClickFlush={flushSaveThrottles}
-            onClickCleanSheet={handleCleanSheet}
-            canSyncWorkspace={canSyncWorkspace}
-            savePending={savePendingFlag}
-            saving={savingFlag}
-            syncStatus={syncStatus}
-            workspaceType={workspaceType}
-            hasTemporaryDiagram={hasTemporaryDiagram}
-          />
+      </div>
+      <div
+        className={"fixed top-2 bottom-2 left-full bg-white transition-transform"}
+        style={{ width: rightPanelWidth, ...floatRightPanelStyle }}
+      >
+        <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
+      </div>
+      {canPersist ? (
+        <div className="fixed top-10 flex">
+          <SheetList />
         </div>
+      ) : undefined}
+      <div className="fixed left-0 top-0 flex">
+        <AppHeader
+          onClickOpen={handleOpenWorkspace}
+          onClickSave={handleSaveWorkspace}
+          onClickExport={handleExportWorkspace}
+          onClickClear={handleClearWorkspace}
+          onClickFlush={flushSaveThrottles}
+          onClickCleanSheet={handleCleanSheet}
+          canSyncWorkspace={canSyncWorkspace}
+          savePending={savePendingFlag}
+          saving={savingFlag}
+          syncStatus={syncStatus}
+          workspaceType={workspaceType}
+          hasTemporaryDiagram={hasTemporaryDiagram}
+        />
       </div>
       <ToastMessages messages={toastMessages} closeToastMessage={closeToastMessage} />
     </AppCanvasProvider>

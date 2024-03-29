@@ -1,8 +1,7 @@
 import { IVec2, multi, sub, add, getRectCenter, IRectangle, clamp } from "okageo";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditMovement } from "../composables/states/types";
 import { expandRect } from "../utils/geometry";
-import { useGlobalResizeEffect } from "./window";
 import { Size } from "../models";
 import { useLocalStorageAdopter } from "./localStorage";
 
@@ -38,9 +37,7 @@ function centerizeView(
 }
 
 export function useCanvas(
-  getWrapper: () => {
-    getBoundingClientRect: () => IRectangle;
-  } | null,
+  getWrapper: () => HTMLElement | null,
   options: {
     scaleMin?: number;
     scaleMax?: number;
@@ -218,7 +215,17 @@ export function useCanvas(
     const rect = wrapperElm.getBoundingClientRect();
     setViewSize({ width: rect.width, height: rect.height });
   }, [getWrapper]);
-  useGlobalResizeEffect(onResize);
+
+  useEffect(() => {
+    const wrapper = getWrapper();
+    if (!wrapper) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      onResize();
+    });
+    resizeObserver.observe(wrapper);
+    return () => resizeObserver.disconnect();
+  }, [getWrapper, onResize]);
 
   return {
     viewSize,

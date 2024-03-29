@@ -388,7 +388,7 @@ export const AppCanvas: React.FC = () => {
 
   const canvasAttrs = useMemo(
     () => ({
-      className: "w-max h-max absolute top-0 left-0 display-none",
+      className: "absolute top-0 left-0 display-none",
       width: viewSize.width,
       height: viewSize.height,
     }),
@@ -722,7 +722,7 @@ export const AppCanvas: React.FC = () => {
     <>
       <div
         ref={wrapperRef}
-        className="box-border border border-black relative w-full h-full select-none"
+        className="relative w-full h-full select-none"
         style={wrapperStyle}
         onPointerDown={onMouseDown}
         onPointerMove={onMouseHover}
