@@ -3,9 +3,10 @@ import { renderHook, act, cleanup } from "@testing-library/react";
 import { useCanvas } from "./canvas";
 
 describe("useCanvas", () => {
-  const getWrapper = () => ({
-    getBoundingClientRect: () => ({ x: 10, y: 20, width: 100, height: 200 }),
-  });
+  const getWrapper = () =>
+    ({
+      getBoundingClientRect: () => ({ x: 10, y: 20, width: 100, height: 200 }),
+    }) as any;
 
   beforeEach(() => {
     cleanup();
