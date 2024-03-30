@@ -2,16 +2,16 @@ import { CanvasState } from "./commons";
 import { TransitionValue } from "./core";
 
 // iOS hasn't supported it.
-const withResolvers =
-  (Promise as any).withResolvers ??
-  (() => {
-    let a, b;
-    const c = new Promise((resolve, reject) => {
-      a = resolve;
-      b = reject;
-    });
-    return { resolve: a, reject: b, promise: c };
-  });
+const withResolvers = (Promise as any).withResolvers
+  ? () => (Promise as any).withResolvers()
+  : () => {
+      let a, b;
+      const c = new Promise((resolve, reject) => {
+        a = resolve;
+        b = reject;
+      });
+      return { resolve: a, reject: b, promise: c };
+    };
 
 interface AsyncContext {
   resolve: (transition: TransitionValue<never>) => void;
