@@ -82,14 +82,14 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, sel
   }, [prime]);
 
   return (
-    <div ref={rootRef} className="ml-2">
+    <div ref={rootRef}>
       <div className="flex items-center">
-        <div className="w-2 border-t-2 border-gray-400" />
+        <div className="ml-1 w-2 border-t-2 border-gray-400" />
         <button type="button" className={"px-1 rounded w-full text-left" + selectedClass} onClick={handleClickNode}>
           {name}
         </button>
       </div>
-      <ul className={"ml-1 border-l-2 border-gray-400" + (level === 0 && childNode.length > 0 ? "" : "")}>
+      <ul className="ml-2 border-l-2 border-gray-400">
         {childNode.map((c) => (
           <li key={c.id}>
             <UITreeNode
