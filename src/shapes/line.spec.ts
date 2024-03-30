@@ -14,6 +14,8 @@ import {
 } from "./line";
 import { getCommonStruct } from ".";
 import { createLineHead } from "./lineHeads";
+import { struct as groupStruct } from "./group";
+import { newShapeComposite } from "../composables/shapeComposite";
 
 describe("struct", () => {
   describe("create", () => {
@@ -135,6 +137,42 @@ describe("struct", () => {
     test("should return the rect", () => {
       const shape = struct.create({ p: { x: 1, y: 2 }, q: { x: 10, y: -20 } });
       expect(struct.getWrapperRect(shape)).toEqual({ x: 1, y: -20, width: 9, height: 22 });
+    });
+  });
+
+  describe("getLocalRectPolygon", () => {
+    test("should return the bounds when shapeContext isn't provided", () => {
+      const shape = struct.create({
+        p: { x: 0, y: 0 },
+        body: [{ p: { x: 10, y: 10 } }, { p: { x: 0, y: 20 } }],
+        q: { x: -10, y: 10 },
+      });
+      expect(struct.getLocalRectPolygon(shape)).toEqualPoints([
+        { x: -10, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 20 },
+        { x: -10, y: 20 },
+      ]);
+    });
+
+    test("should inherit parent's rotation when shapeContext is provided and the parent is rotated", () => {
+      const parent = groupStruct.create({
+        id: "parent",
+        rotation: Math.PI / 4,
+      });
+      const shape = struct.create({
+        p: { x: 0, y: 0 },
+        body: [{ p: { x: 10, y: 10 } }, { p: { x: 0, y: 20 } }],
+        q: { x: -10, y: 10 },
+        parentId: parent.id,
+      });
+      const composite = newShapeComposite({ getStruct: getCommonStruct, shapes: [parent, shape] });
+      expect(composite.getLocalRectPolygon(shape)).toEqualPoints([
+        { x: 0, y: 0 },
+        { x: 10, y: 10 },
+        { x: 0, y: 20 },
+        { x: -10, y: 10 },
+      ]);
     });
   });
 

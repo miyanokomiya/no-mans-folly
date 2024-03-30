@@ -6,6 +6,7 @@ import {
   getOuterRectangle,
   getPathPointAtLengthFromStructs,
   getRadian,
+  getRectCenter,
   isSame,
   multiAffines,
   pathSegmentRawsToString,
@@ -22,6 +23,7 @@ import {
   getWrapperRect,
   isPointCloseToCurveSpline,
   getCurvePathStructs,
+  getRotatedAtAffine,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -271,8 +273,19 @@ export const struct: ShapeStruct<LineShape> = {
 
     return rect;
   },
-  getLocalRectPolygon(shape) {
-    return getRectPoints(struct.getWrapperRect(shape));
+  getLocalRectPolygon(shape, shapeContext) {
+    const wrapper = struct.getWrapperRect(shape);
+    if (!shapeContext || !shape.parentId) return getRectPoints(wrapper);
+
+    const parent = shapeContext.shapeMap[shape.parentId];
+    if (parent.rotation === 0) return getRectPoints(wrapper);
+
+    const c = getRectCenter(wrapper);
+    const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
+    const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
+    const derotatedWrapper = struct.getWrapperRect(derotated);
+    const rotateAffine = getRotatedAtAffine(c, parent.rotation);
+    return getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p));
   },
   isPointOn(shape, p, shapeContext, scale = 1) {
     if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 4 * scale)))
