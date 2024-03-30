@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
@@ -8,18 +8,20 @@ interface Props {}
 
 export const ShapeTreePanel: React.FC<Props> = () => {
   const shapeComposite = useShapeComposite();
-  const selectedInfo = useSelectedShapeInfo();
-  const rootNodes = shapeComposite.mergedShapeTree;
-  const rootNodeProps = rootNodes.map((n) =>
-    getUITreeNodeProps(shapeComposite, selectedInfo.idMap, selectedInfo.lastId, n, 0),
-  );
+  const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
+  const rootNodeProps = useMemo(() => {
+    return shapeComposite.mergedShapeTree.map((n) =>
+      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, n, 0),
+    );
+  }, [shapeComposite, selectedIdMap, selectedLastId]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
-  const { selectShape } = useContext(GetAppStateContext)();
+  const getCtx = useContext(GetAppStateContext);
 
   const handleClickNode = useCallback(
     (id: string) => {
-      selectShape(id);
+      const ctx = getCtx();
+      ctx.selectShape(id);
 
       handleEvent({
         type: "state",
@@ -32,7 +34,7 @@ export const ShapeTreePanel: React.FC<Props> = () => {
         },
       });
     },
-    [selectShape, handleEvent],
+    [getCtx, handleEvent],
   );
 
   return (
@@ -63,14 +65,14 @@ interface UITreeNodeProps {
   level: number;
   selected: boolean;
   prime: boolean;
-  onClick: (id: string) => void;
+  onClick?: (id: string) => void;
 }
 
 const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, selected, prime, onClick }) => {
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
   const handleClickNode = useCallback(() => {
-    onClick(id);
+    onClick?.(id);
   }, [id, onClick]);
 
   const rootRef = useRef<HTMLDivElement>(null);
