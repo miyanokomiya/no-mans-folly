@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PointerMoveArgs, usePointerLock } from "../../../hooks/pointerLock";
 import { clamp } from "okageo";
 import { logRoundByDigit } from "../../../utils/geometry";
+import { isPointerLockAvailable } from "../../../utils/devices";
 
 interface Props {
   value: number;
@@ -95,7 +96,7 @@ export const NumberInput: React.FC<Props> = ({
     [value, startLock, disabled],
   );
 
-  const siderView = slider && !disabled;
+  const siderView = slider && !disabled && isPointerLockAvailable();
   const inputClass = [
     "py-1 px-2 w-full text-right",
     siderView ? "rounded-l" : "rounded",

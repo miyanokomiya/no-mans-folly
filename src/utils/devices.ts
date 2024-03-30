@@ -17,6 +17,10 @@ export function isEyedropperAvailable() {
   return "EyeDropper" in window;
 }
 
+export function isPointerLockAvailable() {
+  return !!Element.prototype.requestPointerLock;
+}
+
 export type ModifierOptions = {
   // "Command" key is also treated as Ctrl key
   // When those keys need to be distinguished, check "command" value and use "isMac" in "devices.ts"
