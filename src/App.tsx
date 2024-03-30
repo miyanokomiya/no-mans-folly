@@ -26,6 +26,7 @@ import { newFeatureFlags } from "./composables/featureFlags";
 import { useUnloadWarning } from "./hooks/window";
 import { useToastMessages } from "./hooks/toastMessage";
 import { ToastMessages } from "./components/ToastMessages";
+import { useLocalStorageAdopter } from "./hooks/localStorage";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -144,13 +145,20 @@ function App() {
     return Object.values(saving).some((v) => v);
   }, [saving]);
 
-  const [rightPanel, setRightPanel] = useState("");
+  const { state: rightPanel, setState: setRightPanel } = useLocalStorageAdopter({
+    key: "right_panel",
+    version: "1",
+    initialValue: "",
+  });
   const rightPanelWidth = 300;
   const canvasStyle = rightPanel ? { width: `calc(100% - ${rightPanelWidth}px)` } : { width: "" };
   const floatRightPanelStyle = rightPanel ? { transform: `translateX(${-rightPanelWidth}px)` } : {};
-  const handleRightPanel = useCallback((key: string) => {
-    setRightPanel((v) => (v === key ? "" : key));
-  }, []);
+  const handleRightPanel = useCallback(
+    (key: string) => {
+      setRightPanel((v) => (v === key ? "" : key));
+    },
+    [setRightPanel],
+  );
 
   const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save" | "export">();

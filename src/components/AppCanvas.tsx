@@ -722,7 +722,7 @@ export const AppCanvas: React.FC = () => {
     <>
       <div
         ref={wrapperRef}
-        className="relative w-full h-full select-none"
+        className="relative w-full h-full select-none outline-none"
         style={wrapperStyle}
         onPointerDown={onMouseDown}
         onPointerMove={onMouseHover}
