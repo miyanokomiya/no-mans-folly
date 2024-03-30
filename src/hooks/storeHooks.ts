@@ -119,6 +119,32 @@ export function useShapeComposite(): ShapeComposite {
   return shapeComposite;
 }
 
+export function useShapeCompositeWithoutTmpInfo(targetIds?: string[]): ShapeComposite {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [shapeComposite, setShapeComposite] = useState<ShapeComposite>(shapeStore.shapeComposite);
+
+  const update = useCallback(() => {
+    setShapeComposite(
+      targetIds
+        ? shapeStore.shapeComposite.getSubShapeComposite(targetIds)
+        : shapeStore.shapeComposite.getShapeCompositeWithoutTmpInfo(),
+    );
+  }, [shapeStore, targetIds]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return shapeComposite;
+}
+
 export function useSelectedTmpShape(): Shape | undefined {
   const { shapeStore } = useContext(AppCanvasContext);
   const [selectedShape, setSelectedShape] = useState<Shape>();

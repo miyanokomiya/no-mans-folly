@@ -249,6 +249,63 @@ describe("newShapeComposite", () => {
       expect(target.hasParent(child1)).toBe(false);
     });
   });
+
+  describe("getShapeCompositeWithoutTmpInfo", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group0.id,
+    });
+
+    test("should return new shape composite without having tmp shapes", () => {
+      const shapes = [group0, child0, child1];
+      const target = newShapeComposite({
+        shapes,
+        tmpShapeMap: { [child0.id]: { p: { x: 10, y: 10 } } },
+        getStruct: getCommonStruct,
+      }).getShapeCompositeWithoutTmpInfo();
+      expect(target.shapes).toEqual(shapes);
+      expect(target.tmpShapeMap).toEqual({});
+    });
+  });
+
+  describe("getShapeCompositeWithoutTmpInfo", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = createShape(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group0.id,
+    });
+    const group10 = createShape(getCommonStruct, "group", { id: "group10" });
+    const child10 = createShape(getCommonStruct, "rectangle", {
+      id: "child10",
+      parentId: group10.id,
+    });
+
+    test("should return new shape composite only containing shapes belonging to target trees", () => {
+      const shapes = [group0, child0, child1, group10, child10];
+      const composite = newShapeComposite({
+        shapes,
+        tmpShapeMap: { [child0.id]: { p: { x: 10, y: 10 } } },
+        getStruct: getCommonStruct,
+      });
+
+      const target0 = composite.getSubShapeComposite([group10.id]);
+      expect(target0.shapes).toEqual([group10, child10]);
+      expect(target0.tmpShapeMap).toEqual({});
+
+      const target1 = composite.getSubShapeComposite([group0.id, group10.id]);
+      expect(target1.shapes).toEqual(shapes);
+      expect(target1.tmpShapeMap).toEqual({});
+    });
+  });
 });
 
 describe("findBetterShapeAt", () => {

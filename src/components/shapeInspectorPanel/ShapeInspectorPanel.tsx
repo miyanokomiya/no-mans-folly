@@ -56,8 +56,8 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     if (Object.keys(tmp).length === 0) return;
 
     setTmpShapeMap({});
-    breakState();
     patchShapes(tmp);
+    breakState();
   }, [getTmpShapeMap, setTmpShapeMap, patchShapes, breakState]);
 
   const handleSubmit = useCallback(
@@ -77,6 +77,17 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       setTmpShapeMap(layoutPatch);
     },
     [targetShape, getShapeComposite, setTmpShapeMap],
+  );
+
+  const updateTmpShapes = useCallback(
+    (patch: { [id: string]: Partial<Shape> }) => {
+      const shapeComposite = getShapeComposite();
+      const layoutPatch = getPatchByLayouts(shapeComposite, {
+        update: patch,
+      });
+      setTmpShapeMap(layoutPatch);
+    },
+    [getShapeComposite, setTmpShapeMap],
   );
 
   const updateTargetShape = useCallback(
@@ -106,7 +117,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
           targetShape={targetShape}
           targetTmpShape={targetTmpShape}
           commit={commit}
-          updateTmpTargetShape={updateTmpTargetShape}
+          updateTmpShapes={updateTmpShapes}
           readyState={readyState}
         />
       )}

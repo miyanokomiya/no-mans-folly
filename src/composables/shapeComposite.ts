@@ -169,6 +169,21 @@ export function newShapeComposite(option: Option) {
     return docCompositeCacheMap[id];
   }
 
+  function getShapeCompositeWithoutTmpInfo(): ShapeComposite {
+    return newShapeComposite({
+      getStruct: option.getStruct,
+      shapes: option.shapes,
+    });
+  }
+
+  function getSubShapeComposite(ids: string[]): ShapeComposite {
+    const allIds = getAllBranchIds(mergedShapeTree, ids);
+    return newShapeComposite({
+      getStruct: option.getStruct,
+      shapes: allIds.map((id) => shapeMap[id]),
+    });
+  }
+
   return {
     getShapeStruct: option.getStruct,
     shapes: option.shapes,
@@ -199,6 +214,9 @@ export function newShapeComposite(option: Option) {
 
     setDocCompositeCache,
     getDocCompositeCache,
+
+    getShapeCompositeWithoutTmpInfo,
+    getSubShapeComposite,
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
