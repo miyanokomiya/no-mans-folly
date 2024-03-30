@@ -27,7 +27,7 @@ describe("newPanToShapeState", () => {
       const ctx = getMockCtx();
       const target = newPanToShapeState({ ids: [] });
       const res = target.onStart?.(ctx) as any;
-      expect(res).toBe(undefined);
+      expect(res).toEqual({ type: "break" });
     });
 
     test("should move to AutoPanning state when ids are provided", () => {

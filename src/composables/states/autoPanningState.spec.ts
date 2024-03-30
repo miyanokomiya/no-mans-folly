@@ -7,17 +7,6 @@ async function sleep(time: number) {
   });
 }
 
-// TODO: Remove this polyfill when Node.js implements "withResolvers".
-(Promise as any).withResolvers ||
-  ((Promise as any).withResolvers = function withResolvers() {
-    let a, b;
-    const c = new this(function (resolve: any, reject: any) {
-      a = resolve;
-      b = reject;
-    });
-    return { resolve: a, reject: b, promise: c };
-  });
-
 function getMockCtx() {
   return {
     setViewport: vi.fn(),

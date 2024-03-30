@@ -11,14 +11,13 @@ export function newPanToShapeState(option: Option): AppCanvasState {
   return {
     getLabel: () => "PanToShape",
     onStart(ctx) {
-      if (option.ids.length === 0) return;
+      if (option.ids.length === 0) return { type: "break" };
 
       const shapeComposite = ctx.getShapeComposite();
       const shapes = option.ids.map((id) => shapeComposite.mergedShapeMap[id]);
       const rect = shapeComposite.getWrapperRectForShapes(shapes);
       const viewRect = ctx.getViewRect();
       const diff = sub(getRectCenter(rect), getRectCenter(viewRect));
-
       return () =>
         newAutoPanningState({
           viewRect: {
