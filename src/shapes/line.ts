@@ -280,6 +280,9 @@ export const struct: ShapeStruct<LineShape> = {
     const parent = shapeContext.shapeMap[shape.parentId];
     if (parent.rotation === 0) return getRectPoints(wrapper);
 
+    // Lines basically don't have the concept of rotation.
+    // When a line has a rotated parent, let the line inherit the rotation to derive its local-rect polygon.
+    // => This behavior can optimize the bounds of parent group shape.
     const c = getRectCenter(wrapper);
     const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
     const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
