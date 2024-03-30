@@ -10,7 +10,7 @@ export function useDraggable() {
 
   const { startDragging } = useGlobalDrag(
     useCallback(
-      (e: MouseEvent) => {
+      (e: PointerEvent) => {
         if (!dragFrom) return;
 
         e.preventDefault();
@@ -38,7 +38,7 @@ export function useDraggable() {
   );
 
   const startDrag = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       e.preventDefault();
       setDragFrom({ x: e.clientX, y: e.clientY });
       startDragging();

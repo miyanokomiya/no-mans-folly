@@ -12,10 +12,8 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
     return <TabButton key={name} name={name} selected={name === selected} onClick={onSelect} />;
   });
   const item = items.find((item) => item[0].name === selected);
-  if (!item) return undefined;
-
-  const panel = item[1];
-  const wrapperClassName = item[2] ? "" : " p-2";
+  const panel = item?.[1];
+  const wrapperClassName = item?.[2] ? "" : " p-2";
 
   return (
     <div className="w-full h-full">

@@ -5,17 +5,23 @@ type StoredData<T> = {
   value: T;
 };
 
-export function useLocalStorageAdopter<T>(option: { key: string; version: string; initialValue: T }) {
+export function useLocalStorageAdopter<T>(option: { key?: string; version: string; initialValue: T }) {
   const initialRef = useRef<T>();
 
   // Restore the value at the first occation without delay.
   if (!initialRef.current) {
-    initialRef.current = getFromLocalStorage<T>(option.key, option.version) ?? option.initialValue;
+    if (option.key) {
+      initialRef.current = getFromLocalStorage<T>(option.key, option.version) ?? option.initialValue;
+    } else {
+      initialRef.current = option.initialValue;
+    }
   }
 
   const [state, setState] = useState<T>(initialRef.current);
 
   const save = useCallback(() => {
+    if (!option.key) return;
+
     localStorage.setItem(option.key, JSON.stringify({ value: state, version: option.version } as StoredData<T>));
   }, [state, option.key, option.version]);
 
