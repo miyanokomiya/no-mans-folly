@@ -14,7 +14,7 @@ interface Props {
 export const ResizablePanelV: React.FC<Props> = ({ top, bottom, initialRate, storageKey }) => {
   const baseRate = initialRate ?? 0.5;
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
+  const draggingY = useRef<number>();
 
   const { state: rate, setState: setRate } = useLocalStorageAdopter({
     key: storageKey,
@@ -25,24 +25,28 @@ export const ResizablePanelV: React.FC<Props> = ({ top, bottom, initialRate, sto
   const { startDragging } = useGlobalDrag(
     useCallback(
       (e: PointerEvent) => {
-        if (!wrapperRef.current || !dragging.current) return;
+        if (!wrapperRef.current || !draggingY.current) return;
 
         e.preventDefault();
         const rect = wrapperRef.current.getBoundingClientRect();
-        const diff = e.movementY / rect.height;
+        const diff = (e.screenY - draggingY.current) / rect.height;
         setRate((r) => clamp(0.1, 0.9, r + diff));
+        draggingY.current = e.screenY;
       },
       [setRate],
     ),
     useCallback(() => {
-      dragging.current = false;
+      draggingY.current = undefined;
     }, []),
   );
 
-  const handleDown = useCallback(() => {
-    dragging.current = true;
-    startDragging();
-  }, [startDragging]);
+  const handleDown = useCallback(
+    (e: React.PointerEvent) => {
+      draggingY.current = e.screenY;
+      startDragging();
+    },
+    [startDragging],
+  );
 
   return (
     <div ref={wrapperRef} className="relative h-full">
