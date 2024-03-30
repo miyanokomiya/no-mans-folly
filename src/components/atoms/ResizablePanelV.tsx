@@ -58,7 +58,7 @@ export const ResizablePanelV: React.FC<Props> = ({ top, bottom, initialRate, sto
           style={{ top: `${rate * 100}%` }}
           onPointerDown={handleDown}
         >
-          <div className="m-auto w-1/2 h-0 border border-gray-400" />
+          <div className="m-auto w-1/2 border border-gray-400" />
         </div>
       </LongPressStarter>
     </div>
