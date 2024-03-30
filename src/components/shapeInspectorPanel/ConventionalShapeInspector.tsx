@@ -8,6 +8,7 @@ import { ShapeComposite } from "../../composables/shapeComposite";
 import { InlineField } from "../atoms/InlineField";
 import { BlockField } from "../atoms/BlockField";
 import { useShapeComposite, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { resizeShapeTrees } from "../../composables/shapeResizing";
 
 interface Props {
   targetShape: Shape;
@@ -27,9 +28,17 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   const shapeComposite = useShapeComposite();
   const subShapeComposite = useShapeCompositeWithoutTmpInfo(useMemo(() => [targetShape.id], [targetShape.id]));
 
+  const targetLocalBounds = useMemo<[IRectangle, rotation: number]>(() => {
+    return getRectWithRotationFromRectPolygon(shapeComposite.getLocalRectPolygon(targetTmpShape));
+  }, [targetTmpShape, shapeComposite]);
+
   const targetLocation = useMemo<IVec2>(() => {
-    return shapeComposite.getLocalRectPolygon(targetTmpShape)[0];
-  }, [shapeComposite, targetTmpShape]);
+    return targetLocalBounds[0];
+  }, [targetLocalBounds]);
+
+  const targetSize = useMemo<IVec2>(() => {
+    return { x: targetLocalBounds[0].width, y: targetLocalBounds[0].height };
+  }, [targetLocalBounds]);
 
   const handleResize = useCallback(
     (affine: AffineMatrix, draft = false) => {
@@ -58,20 +67,19 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
     [targetShape, subShapeComposite, handleResize],
   );
 
-  const targetLocalBounds = useMemo<[IRectangle, rotation: number]>(() => {
-    return getRectWithRotationFromRectPolygon(subShapeComposite.getLocalRectPolygon(targetTmpShape));
-  }, [targetTmpShape, subShapeComposite]);
-
-  const targetSize = useMemo<IVec2>(() => {
-    return { x: targetLocalBounds[0].width, y: targetLocalBounds[0].height };
-  }, [targetLocalBounds]);
-
   const handleChangeSize = useCallback(
     (val: IVec2, draft = false) => {
-      const affine = getScaleToAffine(subShapeComposite, targetShape, val);
-      handleResize(affine, draft);
+      if (draft) {
+        readyState();
+
+        const affine = getScaleToAffine(subShapeComposite, targetShape, val);
+        const patch = resizeShapeTrees(subShapeComposite, [targetShape.id], affine);
+        updateTmpShapes(patch);
+      } else {
+        commit();
+      }
     },
-    [targetShape, subShapeComposite, handleResize],
+    [commit, readyState, updateTmpShapes, targetShape, subShapeComposite],
   );
 
   const handleChangeRotation = useCallback(
@@ -106,7 +114,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 };
 
 function getMoveToAffine(subShapeComposite: ShapeComposite, shape: Shape, to: IVec2): AffineMatrix {
-  const [origin] = subShapeComposite.getLocalRectPolygon(shape);
+  const [origin] = getRectWithRotationFromRectPolygon(subShapeComposite.getLocalRectPolygon(shape));
   return [1, 0, 0, 1, to.x - origin.x, to.y - origin.y];
 }
 
