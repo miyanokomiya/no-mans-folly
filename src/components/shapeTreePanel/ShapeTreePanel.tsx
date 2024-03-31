@@ -1,11 +1,17 @@
-import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
-import { ShapeComposite } from "../../composables/shapeComposite";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import plusIcon from "../../assets/icons/plus.svg";
 import minusIcon from "../../assets/icons/minus.svg";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
+import { useGlobalDrag } from "../../hooks/window";
+import { IVec2 } from "okageo";
+import { isGroupShape } from "../../shapes/group";
+import { getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
+
+type DropOperation = "group" | "above" | "below";
 
 interface Props {}
 
@@ -50,9 +56,73 @@ export const ShapeTreePanel: React.FC<Props> = () => {
     [getCtx, handleEvent],
   );
 
+  const handleDrop = useCallback(
+    (targetId: string, toId: string, operation: DropOperation) => {
+      const targetShape = shapeComposite.shapeMap[targetId];
+      const toShape = shapeComposite.shapeMap[toId];
+      if (targetShape.parentId === toShape.parentId) return;
+
+      const ctx = getCtx();
+      const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
+      const layoutPatch = getPatchInfoByLayouts(shapeComposite, patchInfo);
+      // TODO: Take care of deletion => There's no method to do them all at once.
+      ctx.addShapes(layoutPatch.add ?? [], {}, layoutPatch.update);
+    },
+    [shapeComposite, getCtx],
+  );
+
+  const [draggingTarget, setDraggingTarget] = useState<[Element, id: string, IVec2]>();
+  const [dropTo, setDropTo] = useState<[id: string, operation: DropOperation]>();
+
+  const { startDragging } = useGlobalDrag(
+    useCallback((e: PointerEvent) => {
+      e.preventDefault();
+      if (!e.currentTarget) return;
+
+      setDraggingTarget((val) => (val ? [e.currentTarget as Element, val[1], { x: e.clientX, y: e.clientY }] : val));
+    }, []),
+    useCallback(() => {
+      if (draggingTarget && dropTo) {
+        handleDrop(draggingTarget[1], dropTo[0], dropTo[1]);
+      }
+
+      setDraggingTarget(undefined);
+      setDropTo(undefined);
+    }, [draggingTarget, dropTo, handleDrop]),
+  );
+
+  const handleStartDragging = useCallback(
+    (e: React.PointerEvent, id: string) => {
+      if (!e.currentTarget) return;
+
+      setDraggingTarget([e.currentTarget, id, { x: e.clientX, y: e.clientY }]);
+      startDragging();
+    },
+    [startDragging],
+  );
+
+  useEffect(() => {
+    if (!draggingTarget) {
+      setDropTo(undefined);
+      return;
+    }
+
+    const anchorElm = document.elementFromPoint(draggingTarget[2].x, draggingTarget[2].y);
+    const wrapperElm = anchorElm?.closest("[data-id]");
+    if (!wrapperElm || !wrapperElm.getAttribute("data-draggable")) {
+      setDropTo(undefined);
+      return;
+    }
+
+    const id = wrapperElm.getAttribute("data-id")!;
+    const rect = wrapperElm.querySelector("[data-anchor]")!.getBoundingClientRect();
+    const above = draggingTarget[2].y < rect.top + rect.height / 2;
+    setDropTo([id, above ? "above" : "below"]);
+  }, [draggingTarget]);
+
   return (
     <div>
-      <ul>
+      <ul className="relative">
         {rootNodeProps.map((n) => (
           <li key={n.id}>
             <UITreeNode
@@ -62,11 +132,24 @@ export const ShapeTreePanel: React.FC<Props> = () => {
               selected={n.selected}
               prime={n.prime}
               primeSibling={n.primeSibling}
+              draggable={n.draggable}
               childNode={n.childNode}
+              dropTo={dropTo}
               onSelect={handleNodeSelect}
+              onDragStart={handleStartDragging}
             />
           </li>
         ))}
+        {draggingTarget ? (
+          <div
+            className="fixed left-6 px-1 w-40 rounded left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+            style={{
+              top: `${draggingTarget[2].y}px`,
+            }}
+          >
+            <span>{draggingTarget[1]}</span>
+          </div>
+        ) : undefined}
       </ul>
     </div>
   );
@@ -80,7 +163,10 @@ interface UITreeNodeProps {
   selected: boolean;
   prime: boolean;
   primeSibling: boolean;
+  draggable: boolean;
+  dropTo?: [string, DropOperation];
   onSelect?: (id: string, multi?: boolean) => void;
+  onDragStart?: (e: React.PointerEvent, id: string) => void;
 }
 
 const UITreeNode: React.FC<UITreeNodeProps> = ({
@@ -91,16 +177,21 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   selected,
   prime,
   primeSibling,
+  draggable,
+  dropTo,
   onSelect,
+  onDragStart,
 }) => {
-  const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
-
   const handleNodeDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
       onSelect?.(id);
+
+      if (draggable) {
+        onDragStart?.(e, id);
+      }
     },
-    [id, onSelect],
+    [id, onSelect, draggable, onDragStart],
   );
 
   const handleNodeSelectDown = useCallback(
@@ -119,10 +210,12 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     rootRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   }, [prime]);
 
+  const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
+
   return (
-    <div ref={rootRef}>
-      <div className="flex items-center">
-        <div className="ml-1 w-2 border-t-2 border-gray-400" />
+    <div ref={rootRef} data-id={id} data-draggable={draggable || undefined}>
+      <div data-anchor className="flex items-center relative">
+        <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
         <button
           type="button"
           className={"px-1 rounded w-full text-left" + selectedClass}
@@ -143,6 +236,13 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             )}
           </button>
         ) : undefined}
+        {dropTo && dropTo[0] === id ? (
+          <div
+            className={
+              "absolute w-full h-1 bg-green-500 rounded left-0 " + (dropTo[1] === "above" ? "top-0" : "top-full")
+            }
+          />
+        ) : undefined}
       </div>
       <ul className="ml-2 border-l-2 border-gray-400">
         {childNode.map((c) => (
@@ -154,8 +254,11 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
               selected={c.selected}
               prime={c.prime}
               primeSibling={c.primeSibling}
+              draggable={c.draggable}
+              dropTo={dropTo}
               childNode={c.childNode}
               onSelect={onSelect}
+              onDragStart={onDragStart}
             />
           </li>
         ))}
@@ -175,6 +278,7 @@ function getUITreeNodeProps(
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = shapeComposite.getShapeStruct(shape.type).label;
   const primeSibling = isSameShapeSelectionScope(selectedScope, shapeComposite.getSelectionScope(shape));
+  const draggable = isDraggableShape(shapeComposite, shape.id);
 
   return {
     id: shapeNode.id,
@@ -183,8 +287,19 @@ function getUITreeNodeProps(
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
     primeSibling: primeSibling,
+    draggable,
     childNode: shapeNode.children.map((c) =>
       getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, level + 1),
     ),
   };
+}
+
+/**
+ * Only shapes that are children of a group shape or have no parent are draggable.
+ * This ristriction can be loosen, but things will become more complicated for sure.
+ */
+function isDraggableShape(shapeComposite: ShapeComposite, id: string): boolean {
+  const shape = shapeComposite.shapeMap[id];
+  const parent = shape.parentId ? shapeComposite.shapeMap[shape.parentId] : undefined;
+  return !parent || isGroupShape(parent);
 }
