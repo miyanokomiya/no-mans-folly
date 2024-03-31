@@ -14,6 +14,8 @@ import {
 import { isGroupShape } from "../shapes/group";
 import { DocCompositionInfo } from "../utils/textEditor";
 import { SVGElementInfo } from "../utils/svgElements";
+import { generateNKeysBetween } from "fractional-indexing";
+import { generateKeyBetweenAllowSame } from "../utils/findex";
 
 interface Option {
   shapes: Shape[];
@@ -336,4 +338,89 @@ export function getClosestShapeByType<T extends Shape>(
     return shape.type === type;
   });
   return id ? (shapeComposite.mergedShapeMap[id] as T) : undefined;
+}
+
+/**
+ * Suppose the swapping is valid.
+ */
+export function swapShapeParent(
+  shapeComposite: ShapeComposite,
+  targetId: string,
+  toId: string,
+  operation: "group" | "above" | "below",
+  generateUuid: () => string,
+): EntityPatchInfo<Shape> {
+  const target = shapeComposite.shapeMap[targetId];
+  const to = shapeComposite.shapeMap[toId];
+  const targetParent = target.parentId ? shapeComposite.shapeMap[target.parentId] : undefined;
+  const toParent = to.parentId ? shapeComposite.shapeMap[to.parentId] : undefined;
+
+  const ret: EntityPatchInfo<Shape> = {};
+
+  if (operation === "group") {
+    const group = shapeModule.createShape(shapeComposite.getShapeStruct, "group", {
+      id: generateUuid(),
+      parentId: to.parentId,
+      findex: to.findex,
+    });
+
+    const findexList = generateNKeysBetween(null, null, 2);
+    ret.add = [group];
+    ret.update = {
+      [toId]: { parentId: group.id, findex: findexList[0] },
+      [targetId]: { parentId: group.id, findex: findexList[1] },
+    };
+  } else if (toParent) {
+    const toParentTree = shapeComposite.mergedShapeTreeMap[toParent.id];
+
+    switch (operation) {
+      case "above": {
+        const aboveIndex = toParentTree.children.findIndex((c) => c.id === toId);
+        const aboveTree = aboveIndex >= 1 ? toParentTree.children[aboveIndex - 1] : undefined;
+        const above = aboveTree ? shapeComposite.shapeMap[aboveTree.id] : undefined;
+        const findex = generateKeyBetweenAllowSame(above?.findex ?? null, to.findex);
+        ret.update = { [targetId]: { parentId: to.parentId, findex } };
+        break;
+      }
+      case "below": {
+        const belowIndex = toParentTree.children.findIndex((c) => c.id === toId);
+        const belowTree =
+          belowIndex < toParentTree.children.length - 1 ? toParentTree.children[belowIndex + 1] : undefined;
+        const below = belowTree ? shapeComposite.shapeMap[belowTree.id] : undefined;
+        const findex = generateKeyBetweenAllowSame(to.findex, below?.findex ?? null);
+        ret.update = { [targetId]: { parentId: to.parentId, findex } };
+        break;
+      }
+    }
+  } else {
+    const roots = shapeComposite.mergedShapeTree;
+
+    switch (operation) {
+      case "above": {
+        const aboveIndex = roots.findIndex((c) => c.id === toId);
+        const aboveTree = aboveIndex >= 1 ? roots[aboveIndex - 1] : undefined;
+        const above = aboveTree ? shapeComposite.shapeMap[aboveTree.id] : undefined;
+        const findex = generateKeyBetweenAllowSame(above?.findex ?? null, to.findex);
+        ret.update = { [targetId]: { parentId: to.parentId, findex } };
+        break;
+      }
+      case "below": {
+        const belowIndex = roots.findIndex((c) => c.id === toId);
+        const belowTree = belowIndex < roots.length - 1 ? roots[belowIndex + 1] : undefined;
+        const below = belowTree ? shapeComposite.shapeMap[belowTree.id] : undefined;
+        const findex = generateKeyBetweenAllowSame(to.findex, below?.findex ?? null);
+        ret.update = { [targetId]: { parentId: to.parentId, findex } };
+        break;
+      }
+    }
+  }
+
+  if (targetParent) {
+    const targetParentTree = shapeComposite.mergedShapeTreeMap[targetParent.id];
+    if (targetParentTree.children.length <= 1) {
+      ret.delete = [targetParentTree.id];
+    }
+  }
+
+  return ret;
 }
