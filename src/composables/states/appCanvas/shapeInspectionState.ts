@@ -5,13 +5,13 @@ import { AppCanvasState } from "./core";
 import { newSelectionHubState } from "./selectionHubState";
 
 export function newShapeInspectionState(): AppCanvasState {
-  let selectedId: string | undefined;
+  let selectedIds: string[];
 
   return {
     getLabel: () => "ShapeInspection",
     onStart: (ctx) => {
-      selectedId = ctx.getLastSelectedShapeId();
-      if (!selectedId) return newSelectionHubState;
+      selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+      if (selectedIds.length === 0) return newSelectionHubState;
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
@@ -22,20 +22,30 @@ export function newShapeInspectionState(): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      if (!selectedId) return;
-
-      const shapeComposite = ctx.getShapeComposite();
-      const shape = shapeComposite.mergedShapeMap[selectedId];
-      if (!shape) return;
+      if (selectedIds.length === 0) return;
 
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
       applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
 
-      const polygon = shapeComposite.getLocalRectPolygon(shape);
-      renderCtx.beginPath();
-      applyPath(renderCtx, polygon, true);
-      renderCtx.stroke();
+      const shapeComposite = ctx.getShapeComposite();
+
+      if (selectedIds.length === 1) {
+        const shape = shapeComposite.mergedShapeMap[selectedIds[0]];
+
+        const polygon = shapeComposite.getLocalRectPolygon(shape);
+        shapeComposite.getWrapperRectForShapes;
+        renderCtx.beginPath();
+        applyPath(renderCtx, polygon, true);
+        renderCtx.stroke();
+      } else {
+        const shapes = selectedIds.map((id) => shapeComposite.mergedShapeMap[id]);
+
+        const rect = shapeComposite.getWrapperRectForShapes(shapes);
+        renderCtx.beginPath();
+        renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
+        renderCtx.stroke();
+      }
     },
   };
 }

@@ -1,5 +1,5 @@
 import { useCallback, useContext } from "react";
-import { useSelectedShape, useSelectedTmpShape } from "../../hooks/storeHooks";
+import { useSelectedShape, useSelectedShapes, useSelectedTmpShape, useSelectedTmpShapes } from "../../hooks/storeHooks";
 import { ConventionalShapeInspector } from "./ConventionalShapeInspector";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { InlineField } from "../atoms/InlineField";
@@ -8,6 +8,7 @@ import { Shape } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { GroupConstraintInspector } from "./GroupConstraintInspector";
+import { MultipleShapesInspector } from "./MultipleShapesInspector";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -28,6 +29,9 @@ interface ShapeInspectorPanelWithShapeProps {
 const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({ targetShape, targetTmpShape }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(GetAppStateContext)();
+
+  const targetShapes = useSelectedShapes();
+  const targetTmpShapes = useSelectedTmpShapes();
 
   const readyState = useCallback(() => {
     handleEvent({
@@ -90,38 +94,55 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [getShapeComposite, setTmpShapeMap],
   );
 
-  const updateTargetShape = useCallback(
+  // Intended for patching common attributes rather than transforming.
+  const updateTargetShapesBySamePatch = useCallback(
     (patch: Partial<Shape>) => {
       const shapeComposite = getShapeComposite();
+
       const layoutPatch = getPatchByLayouts(shapeComposite, {
-        update: { [targetShape.id]: patch },
+        update: targetShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
+          p[s.id] = patch;
+          return p;
+        }, {}),
       });
       patchShapes(layoutPatch);
     },
-    [targetShape, getShapeComposite, patchShapes],
+    [targetShapes, getShapeComposite, patchShapes],
   );
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <ShapeTypeBlock type={targetShape.type} />
-      {isLineShape(targetShape) ? (
-        <LineShapeInspector
-          targetShape={targetShape}
-          targetTmpShape={targetTmpShape as LineShape}
-          commit={commit}
-          updateTmpTargetShape={updateTmpTargetShape}
-          readyState={readyState}
-        />
-      ) : (
-        <ConventionalShapeInspector
-          targetShape={targetShape}
-          targetTmpShape={targetTmpShape}
+      {targetShapes.length >= 2 ? (
+        <MultipleShapesInspector
+          targetShapes={targetShapes}
+          targetTmpShapes={targetTmpShapes}
           commit={commit}
           updateTmpShapes={updateTmpShapes}
           readyState={readyState}
         />
+      ) : (
+        <>
+          <ShapeTypeBlock type={targetShape.type} />
+          {isLineShape(targetShape) ? (
+            <LineShapeInspector
+              targetShape={targetShape}
+              targetTmpShape={targetTmpShape as LineShape}
+              commit={commit}
+              updateTmpTargetShape={updateTmpTargetShape}
+              readyState={readyState}
+            />
+          ) : (
+            <ConventionalShapeInspector
+              targetShape={targetShape}
+              targetTmpShape={targetTmpShape}
+              commit={commit}
+              updateTmpShapes={updateTmpShapes}
+              readyState={readyState}
+            />
+          )}
+        </>
       )}
-      <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShape} />
+      <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
       <button type="submit" className="hidden" />
     </form>
   );

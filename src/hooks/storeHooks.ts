@@ -210,6 +210,61 @@ export function useSelectedShape(): Shape | undefined {
   return selectedShape;
 }
 
+export function useSelectedShapes(): Shape[] {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [selectedShapes, setSelectedShapes] = useState<Shape[]>([]);
+
+  const update = useCallback(() => {
+    const shapeMap = shapeStore.getEntityMap();
+    setSelectedShapes(Object.keys(shapeStore.getSelected()).map((id) => shapeMap[id]));
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+      shapeStore.watchSelected(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return selectedShapes;
+}
+
+export function useSelectedTmpShapes(): Shape[] {
+  const { shapeStore } = useContext(AppCanvasContext);
+  const [selectedTmpShapes, setSelectedTmpShapes] = useState<Shape[]>([]);
+
+  const update = useCallback(() => {
+    const shapeMap = shapeStore.shapeComposite.mergedShapeMap;
+    setSelectedTmpShapes(Object.keys(shapeStore.getSelected()).map((id) => shapeMap[id]));
+  }, [shapeStore]);
+
+  useEffect(() => {
+    update();
+    const clears = [
+      shapeStore.watch(() => {
+        update();
+      }),
+      shapeStore.watchTmpShapeMap(() => {
+        update();
+      }),
+      shapeStore.watchSelected(() => {
+        update();
+      }),
+    ];
+
+    return () => clears.forEach((f) => f());
+  }, [shapeStore, update]);
+
+  return selectedTmpShapes;
+}
+
 export function useSelectedShapeInfo(): { idMap: { [id: string]: true }; lastId?: string } {
   const { shapeStore } = useContext(AppCanvasContext);
   const [selectedMap, setSelectedMap] = useState<{ [id: string]: true }>({});
