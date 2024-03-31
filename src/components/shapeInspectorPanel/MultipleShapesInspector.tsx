@@ -83,6 +83,8 @@ export const MultipleShapesInspector: React.FC<Props> = ({
     [commit, readyState, updateTmpShapes, targetLocalBounds, targetIds, subShapeComposite],
   );
 
+  // Rotation of multiple shapes isn't supported.
+  // => There's no good way to keep the rotation in component realm unlike Rotating state.
   return (
     <>
       <BlockField label={"Position (x, y)"}>
