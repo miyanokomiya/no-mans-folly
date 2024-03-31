@@ -18,7 +18,7 @@ export const ShapeTreePanel: React.FC<Props> = () => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const getCtx = useContext(GetAppStateContext);
 
-  const handleClickNode = useCallback(
+  const handleNodeSelect = useCallback(
     (id: string) => {
       const ctx = getCtx();
       ctx.selectShape(id);
@@ -49,7 +49,7 @@ export const ShapeTreePanel: React.FC<Props> = () => {
               selected={n.selected}
               prime={n.prime}
               childNode={n.childNode}
-              onClick={handleClickNode}
+              onSelect={handleNodeSelect}
             />
           </li>
         ))}
@@ -65,15 +65,19 @@ interface UITreeNodeProps {
   level: number;
   selected: boolean;
   prime: boolean;
-  onClick?: (id: string) => void;
+  onSelect?: (id: string) => void;
 }
 
-const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, selected, prime, onClick }) => {
+const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, selected, prime, onSelect }) => {
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
-  const handleClickNode = useCallback(() => {
-    onClick?.(id);
-  }, [id, onClick]);
+  const handleNodeDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault();
+      onSelect?.(id);
+    },
+    [id, onSelect],
+  );
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +91,11 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, sel
     <div ref={rootRef}>
       <div className="flex items-center">
         <div className="ml-1 w-2 border-t-2 border-gray-400" />
-        <button type="button" className={"px-1 rounded w-full text-left" + selectedClass} onClick={handleClickNode}>
+        <button
+          type="button"
+          className={"px-1 rounded w-full text-left" + selectedClass}
+          onPointerDown={handleNodeDown}
+        >
           {name}
         </button>
       </div>
@@ -101,7 +109,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, sel
               selected={c.selected}
               prime={c.prime}
               childNode={c.childNode}
-              onClick={onClick}
+              onSelect={onSelect}
             />
           </li>
         ))}
