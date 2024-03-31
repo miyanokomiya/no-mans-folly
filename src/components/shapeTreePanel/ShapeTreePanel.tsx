@@ -5,18 +5,24 @@ import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import plusIcon from "../../assets/icons/plus.svg";
 import minusIcon from "../../assets/icons/minus.svg";
+import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
 
 interface Props {}
 
 export const ShapeTreePanel: React.FC<Props> = () => {
   const shapeComposite = useShapeComposite();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
+  const selectionScope = useMemo(() => {
+    if (!selectedLastId) return;
+
+    return shapeComposite.getSelectionScope(shapeComposite.shapeMap[selectedLastId]);
+  }, [shapeComposite, selectedLastId]);
+
   const rootNodeProps = useMemo(() => {
-    const selected = selectedLastId ? shapeComposite.mergedShapeMap[selectedLastId]?.parentId : undefined;
     return shapeComposite.mergedShapeTree.map((n) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selected, n, 0),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, 0),
     );
-  }, [shapeComposite, selectedIdMap, selectedLastId]);
+  }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
   const getCtx = useContext(GetAppStateContext);
@@ -127,7 +133,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         {primeSibling ? (
           <button
             type="button"
-            className="border border-gray-400 rounded-full flex items-center justify-center"
+            className="ml-1 border border-gray-400 rounded-full flex items-center justify-center"
             onPointerDown={handleNodeSelectDown}
           >
             {selected ? (
@@ -162,11 +168,13 @@ function getUITreeNodeProps(
   shapeComposite: ShapeComposite,
   selectedIdMap: { [id: string]: true },
   lastSelectedId: string | undefined,
-  selectedScope: string | undefined,
+  selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
   level: number,
 ): UITreeNodeProps {
-  const label = shapeComposite.getShapeStruct(shapeComposite.shapeMap[shapeNode.id].type).label;
+  const shape = shapeComposite.shapeMap[shapeNode.id];
+  const label = shapeComposite.getShapeStruct(shape.type).label;
+  const primeSibling = isSameShapeSelectionScope(selectedScope, shapeComposite.getSelectionScope(shape));
 
   return {
     id: shapeNode.id,
@@ -174,7 +182,7 @@ function getUITreeNodeProps(
     level,
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
-    primeSibling: selectedScope === shapeNode.parentId,
+    primeSibling: primeSibling,
     childNode: shapeNode.children.map((c) =>
       getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, level + 1),
     ),
