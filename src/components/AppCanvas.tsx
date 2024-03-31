@@ -282,6 +282,43 @@ export const AppCanvas: React.FC = () => {
         });
       },
       patchShapes: shapeStore.patchEntities,
+      updateShapes: (update, docMap) => {
+        // Apply patch before getting branch ids in case tree structure changes by the patch.
+        // => e.g. ungrouping
+        const updated = patchPipe([() => update.update ?? {}], shapeStore.getEntityMap());
+        const targetIds = update.delete
+          ? getDeleteTargetIds(
+              shapeStore.shapeComposite,
+              getAllBranchIds(getTree(Object.values(updated.result)), update.delete),
+            )
+          : [];
+
+        const shapePatchInfo = getPatchInfoByLayouts(shapeStore.shapeComposite, {
+          add: update.add,
+          update: update.update,
+          delete: targetIds,
+        });
+
+        shapeStore.transact(() => {
+          if (shapePatchInfo.add) {
+            shapeStore.addEntities(shapePatchInfo.add);
+          }
+          if (shapePatchInfo.update) {
+            shapeStore.patchEntities(shapePatchInfo.update);
+          }
+          if (docMap) {
+            documentStore.patchDocs(docMap);
+          }
+          if (shapePatchInfo.delete) {
+            shapeStore.deleteEntities(shapePatchInfo.delete);
+            documentStore.deleteDocs(shapePatchInfo.delete);
+          }
+        });
+
+        if (update.add) {
+          loadShapeAssets(update.add);
+        }
+      },
       pasteShapes: (shapes, docs, p) => {
         const targetP = p ?? viewToCanvas(getMousePoint());
         const availableIdSet = new Set(shapeStore.getEntities().map((s) => s.id));

@@ -1,7 +1,7 @@
 import type { ModeStateBase, ModeStateEventBase } from "../core";
 import type { CanvasStateContext, CanvasStateEvent } from "../commons";
 import type { AssetAPI } from "../../../hooks/persistence";
-import { Shape } from "../../../models";
+import { EntityPatchInfo, Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
 import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models/document";
@@ -22,6 +22,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   addShapes: (shapes: Shape[], docMap?: { [id: string]: DocDelta }, patch?: { [id: string]: Partial<Shape> }) => void;
   deleteShapes: (ids: string[], patch?: { [id: string]: Partial<Shape> }) => void;
   patchShapes: (val: { [id: string]: Partial<Shape> }) => void;
+  updateShapes: (update: EntityPatchInfo<Shape>, docMap?: { [id: string]: DocOutput }) => void;
   getTmpShapeMap: () => { [id: string]: Partial<Shape> };
   setTmpShapeMap: (val: { [id: string]: Partial<Shape> }) => void;
   // Argument shapes have concurrent ids.

@@ -9,7 +9,6 @@ import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/cor
 import { useGlobalDrag } from "../../hooks/window";
 import { IVec2 } from "okageo";
 import { isGroupShape } from "../../shapes/group";
-import { getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -58,9 +57,7 @@ export const ShapeTreePanel: React.FC = () => {
     (targetId: string, toId: string, operation: DropOperation) => {
       const ctx = getCtx();
       const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
-      const layoutPatch = getPatchInfoByLayouts(shapeComposite, patchInfo);
-      // TODO: Take care of deletion => There's no method to do them all at once.
-      ctx.addShapes(layoutPatch.add ?? [], {}, layoutPatch.update);
+      ctx.updateShapes(patchInfo);
     },
     [shapeComposite, getCtx],
   );

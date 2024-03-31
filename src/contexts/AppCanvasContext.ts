@@ -79,6 +79,7 @@ export function createInitialAppCanvasStateContext(arg: {
     addShapes() {},
     deleteShapes() {},
     patchShapes() {},
+    updateShapes() {},
     setTmpShapeMap() {},
     getTmpShapeMap: () => ({}),
     pasteShapes() {},
