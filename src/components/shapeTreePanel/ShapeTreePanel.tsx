@@ -3,6 +3,8 @@ import { ShapeComposite } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
+import plusIcon from "../../assets/icons/plus.svg";
+import minusIcon from "../../assets/icons/minus.svg";
 
 interface Props {}
 
@@ -10,8 +12,9 @@ export const ShapeTreePanel: React.FC<Props> = () => {
   const shapeComposite = useShapeComposite();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const rootNodeProps = useMemo(() => {
+    const selected = selectedLastId ? shapeComposite.mergedShapeMap[selectedLastId]?.parentId : undefined;
     return shapeComposite.mergedShapeTree.map((n) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, n, 0),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selected, n, 0),
     );
   }, [shapeComposite, selectedIdMap, selectedLastId]);
 
@@ -19,20 +22,24 @@ export const ShapeTreePanel: React.FC<Props> = () => {
   const getCtx = useContext(GetAppStateContext);
 
   const handleNodeSelect = useCallback(
-    (id: string) => {
+    (id: string, multi = false) => {
       const ctx = getCtx();
-      ctx.selectShape(id);
 
-      handleEvent({
-        type: "state",
-        data: {
-          name: "PanToShape",
-          options: {
-            ids: [id],
-            duration: 150,
+      if (multi) {
+        ctx.multiSelectShapes([id], true);
+      } else {
+        ctx.selectShape(id);
+        handleEvent({
+          type: "state",
+          data: {
+            name: "PanToShape",
+            options: {
+              ids: [id],
+              duration: 150,
+            },
           },
-        },
-      });
+        });
+      }
     },
     [getCtx, handleEvent],
   );
@@ -48,6 +55,7 @@ export const ShapeTreePanel: React.FC<Props> = () => {
               level={n.level}
               selected={n.selected}
               prime={n.prime}
+              primeSibling={n.primeSibling}
               childNode={n.childNode}
               onSelect={handleNodeSelect}
             />
@@ -65,16 +73,34 @@ interface UITreeNodeProps {
   level: number;
   selected: boolean;
   prime: boolean;
-  onSelect?: (id: string) => void;
+  primeSibling: boolean;
+  onSelect?: (id: string, multi?: boolean) => void;
 }
 
-const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, selected, prime, onSelect }) => {
+const UITreeNode: React.FC<UITreeNodeProps> = ({
+  id,
+  name,
+  childNode,
+  level,
+  selected,
+  prime,
+  primeSibling,
+  onSelect,
+}) => {
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
   const handleNodeDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
       onSelect?.(id);
+    },
+    [id, onSelect],
+  );
+
+  const handleNodeSelectDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault();
+      onSelect?.(id, true);
     },
     [id, onSelect],
   );
@@ -98,6 +124,19 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, sel
         >
           {name}
         </button>
+        {primeSibling ? (
+          <button
+            type="button"
+            className="border border-gray-400 rounded-full flex items-center justify-center"
+            onPointerDown={handleNodeSelectDown}
+          >
+            {selected ? (
+              <img className="w-4 h-4" src={minusIcon} alt="Deselect" />
+            ) : (
+              <img className="w-4 h-4" src={plusIcon} alt="Select" />
+            )}
+          </button>
+        ) : undefined}
       </div>
       <ul className="ml-2 border-l-2 border-gray-400">
         {childNode.map((c) => (
@@ -108,6 +147,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({ id, name, childNode, level, sel
               level={level + 1}
               selected={c.selected}
               prime={c.prime}
+              primeSibling={c.primeSibling}
               childNode={c.childNode}
               onSelect={onSelect}
             />
@@ -122,6 +162,7 @@ function getUITreeNodeProps(
   shapeComposite: ShapeComposite,
   selectedIdMap: { [id: string]: true },
   lastSelectedId: string | undefined,
+  selectedScope: string | undefined,
   shapeNode: TreeNode,
   level: number,
 ): UITreeNodeProps {
@@ -133,8 +174,9 @@ function getUITreeNodeProps(
     level,
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
+    primeSibling: selectedScope === shapeNode.parentId,
     childNode: shapeNode.children.map((c) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, c, level + 1),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, level + 1),
     ),
   };
 }
