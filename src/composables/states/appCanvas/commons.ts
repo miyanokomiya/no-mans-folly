@@ -33,7 +33,6 @@ import { newEmojiPickerState } from "./emojiPickerState";
 import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
-import { newMovingHubState } from "./movingHubState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam } from "../types";
@@ -488,7 +487,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
       ctx.selectShape(shapeAtPointer.id);
       return newDuplicatingShapesState;
     } else if (shapeAtPointer.id === selectedId) {
-      return newMovingHubState;
+      return () => newSingleSelectedByPointerOnState({ concurrent: true });
     } else {
       ctx.selectShape(shapeAtPointer.id, false);
       return newSingleSelectedByPointerOnState;

@@ -56,6 +56,13 @@ describe("newSingleSelectedByPointerOnState", () => {
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       }) as any;
       expect(result?.().getLabel()).toBe("MovingHub");
+
+      target.onStart?.(ctx as any);
+      const result1 = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      }) as any;
+      expect(result1, "in early time").toBe(undefined);
     });
   });
 
@@ -63,8 +70,29 @@ describe("newSingleSelectedByPointerOnState", () => {
     test("should move to SelectionHub state", () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedByPointerOnState();
-      const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      target.onStart?.(ctx as any);
+      const result = target.handleEvent(ctx as any, {
+        type: "pointerup",
+        data: { point: { x: 0, y: 0 }, options: { button: 0 } },
+      });
       expect(result).toBe(newSelectionHubState);
+    });
+
+    test("should move to TextEditing state when concurrent option is set true", () => {
+      const ctx = getMockCtx();
+      const target = newSingleSelectedByPointerOnState({ concurrent: true });
+      const result0 = target.handleEvent(ctx as any, {
+        type: "pointerup",
+        data: { point: { x: 0, y: 0 }, options: { button: 0 } },
+      }) as any;
+      expect(result0, "timeout").toEqual(newSelectionHubState);
+
+      target.onStart?.(ctx as any);
+      const result1 = target.handleEvent(ctx as any, {
+        type: "pointerup",
+        data: { point: { x: 0, y: 0 }, options: { button: 0 } },
+      }) as any;
+      expect(result1.toString(), "in time").contains("newTextEditingState");
     });
   });
 

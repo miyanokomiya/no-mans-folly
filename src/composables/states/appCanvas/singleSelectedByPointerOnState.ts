@@ -2,8 +2,13 @@ import type { AppCanvasState } from "./core";
 import { getDistance } from "okageo";
 import { newSelectionHubState } from "./selectionHubState";
 import { newMovingHubState } from "./movingHubState";
+import { startTextEditingIfPossible } from "./commons";
 
-export function newSingleSelectedByPointerOnState(): AppCanvasState {
+interface Option {
+  concurrent?: boolean; // Set true, when the target shape has already been selected.
+}
+
+export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasState {
   let timestamp = 0;
 
   return {
@@ -30,8 +35,14 @@ export function newSingleSelectedByPointerOnState(): AppCanvasState {
 
           return newMovingHubState;
         }
-        case "pointerup":
+        case "pointerup": {
+          if (option?.concurrent && Date.now() - timestamp < 200) {
+            const result = startTextEditingIfPossible(ctx, ctx.getLastSelectedShapeId(), event.data.point);
+            if (result) return result;
+          }
+
           return newSelectionHubState;
+        }
         case "selection": {
           return newSelectionHubState;
         }
