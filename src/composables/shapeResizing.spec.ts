@@ -3,7 +3,6 @@ import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { multiAffines } from "okageo";
-import { GroupShape } from "../shapes/group";
 import { resizeShapeTrees } from "./shapeResizing";
 
 describe("resizeShapeTrees", () => {
@@ -70,7 +69,7 @@ describe("resizeShapeTrees", () => {
   });
 
   test("should regard group constraints: 1, rotated", () => {
-    const group1: GroupShape = { ...group0, rotation: Math.PI / 2 };
+    const group1 = { ...group0, rotation: Math.PI / 2 };
     const child1: RectangleShape = { ...child0, gcV: 1, rotation: Math.PI / 2 };
     const shapes = [group1, frame, child1];
     const target = newShapeComposite({
@@ -114,8 +113,8 @@ describe("resizeShapeTrees", () => {
   });
 
   test("should regard group constraints: 1, deep nest", () => {
-    const group1: GroupShape = { ...group0, id: "group1", parentId: group0.id, rotation: Math.PI / 2 };
-    const group2: GroupShape = { ...group1, id: "group2", parentId: group1.id, rotation: Math.PI };
+    const group1 = { ...group0, id: "group1", parentId: group0.id, rotation: Math.PI / 2 };
+    const group2 = { ...group1, id: "group2", parentId: group1.id, rotation: Math.PI };
     const child1: RectangleShape = { ...child0, parentId: group2.id, gcV: 1, rotation: Math.PI };
     const frame1: RectangleShape = { ...frame, parentId: group2.id };
     const shapes = [group0, group1, group2, frame1, child1];
@@ -214,7 +213,7 @@ describe("resizeShapeTrees", () => {
   });
 
   test("should regard group constraints: 2, rotated", () => {
-    const group1: GroupShape = { ...group0, rotation: Math.PI / 2 };
+    const group1 = { ...group0, rotation: Math.PI / 2 };
     const child1: RectangleShape = { ...child0, gcV: 2, rotation: Math.PI / 2 };
     const shapes = [group1, frame, child1];
     const target = newShapeComposite({

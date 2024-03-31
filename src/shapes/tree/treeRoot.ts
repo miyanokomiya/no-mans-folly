@@ -4,7 +4,7 @@ import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
-import { struct as groupStruct } from "../group";
+import { isPointOnGroup } from "../group";
 import { TreeShapeBase } from "./core";
 import { applyLocalSpace } from "../../utils/renderer";
 import { getRotatedRectAffine } from "../../utils/geometry";
@@ -114,7 +114,7 @@ export const struct: ShapeStruct<TreeRootShape> = {
   },
   isPointOn(shape, p, shapeContext) {
     const selfResult = recntagleStruct.isPointOn(shape, p, shapeContext);
-    return selfResult || groupStruct.isPointOn(shape, p, shapeContext);
+    return selfResult || (!!shapeContext && isPointOnGroup(shape, p, shapeContext));
   },
   transparentSelection: true,
 };

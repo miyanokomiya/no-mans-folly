@@ -1,4 +1,4 @@
-import { ShapeStruct, createBaseShape } from "./core";
+import { ShapeContext, ShapeStruct, createBaseShape } from "./core";
 import { Shape } from "../models";
 import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
 import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
@@ -50,13 +50,7 @@ export const struct: ShapeStruct<GroupShape> = {
     return getRectPoints(getOuterRectangle([rotatedInnserPoints])).map((p) => rotateFn(p));
   },
   isPointOn(shape, p, shapeContext) {
-    const children = shapeContext?.treeNodeMap[shape.id].children;
-    if (!children || children.length === 0) return false;
-
-    return children.some((c) => {
-      const s = shapeContext.shapeMap[c.id];
-      return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
-    });
+    return shapeContext ? isPointOnGroup(shape, p, shapeContext) : false;
   },
   resize(shape, resizingAffine, shapeContext) {
     if (!shapeContext) return {};
@@ -92,4 +86,14 @@ export const struct: ShapeStruct<GroupShape> = {
 
 export function isGroupShape(shape: Shape): shape is GroupShape {
   return shape.type === "group";
+}
+
+export function isPointOnGroup(shape: Shape, p: IVec2, shapeContext: ShapeContext) {
+  const children = shapeContext?.treeNodeMap[shape.id].children;
+  if (!children || children.length === 0) return false;
+
+  return children.some((c) => {
+    const s = shapeContext.shapeMap[c.id];
+    return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
+  });
 }
