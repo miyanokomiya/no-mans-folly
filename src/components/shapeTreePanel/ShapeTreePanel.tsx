@@ -13,9 +13,7 @@ import { getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 
 type DropOperation = "group" | "above" | "below";
 
-interface Props {}
-
-export const ShapeTreePanel: React.FC<Props> = () => {
+export const ShapeTreePanel: React.FC = () => {
   const shapeComposite = useShapeComposite();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const selectionScope = useMemo(() => {
@@ -26,7 +24,7 @@ export const ShapeTreePanel: React.FC<Props> = () => {
 
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree.map((n) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, 0),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n),
     );
   }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope]);
 
@@ -127,30 +125,16 @@ export const ShapeTreePanel: React.FC<Props> = () => {
       <ul className="relative">
         {rootNodeProps.map((n) => (
           <li key={n.id}>
-            <UITreeNode
-              id={n.id}
-              name={n.name}
-              level={n.level}
-              selected={n.selected}
-              prime={n.prime}
-              primeSibling={n.primeSibling}
-              draggable={n.draggable}
-              childNode={n.childNode}
-              dropTo={dropTo}
-              onSelect={handleNodeSelect}
-              onDragStart={handleStartDragging}
-            />
+            <UITreeNode {...n} dropTo={dropTo} onSelect={handleNodeSelect} onDragStart={handleStartDragging} />
           </li>
         ))}
         {draggingTarget ? (
           <div
-            className="fixed left-6 px-1 w-40 rounded left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+            className="fixed left-6 px-1 w-40 h-4 rounded left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
             style={{
               top: `${draggingTarget[2].y}px`,
             }}
-          >
-            <span>{draggingTarget[1]}</span>
-          </div>
+          />
         ) : undefined}
       </ul>
     </div>
@@ -161,7 +145,6 @@ interface UITreeNodeProps {
   id: string;
   name: string;
   childNode: UITreeNodeProps[];
-  level: number;
   selected: boolean;
   prime: boolean;
   primeSibling: boolean;
@@ -175,7 +158,6 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   id,
   name,
   childNode,
-  level,
   selected,
   prime,
   primeSibling,
@@ -220,7 +202,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
         <button
           type="button"
-          className={"px-1 rounded w-full text-left" + selectedClass}
+          className={"px-1 rounded w-full text-left select-none touch-none" + selectedClass}
           onPointerDown={handleNodeDown}
         >
           {name}
@@ -238,13 +220,13 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             )}
           </button>
         ) : undefined}
-        {dropTo && dropTo[0] === id ? (
+        {dropTo?.[0] === id ? (
           dropTo[1] === "group" ? (
-            <div className="absolute inset-0 border-2 border-green-500 rounded" />
+            <div className="absolute inset-0 border-2 border-green-500 rounded pointer-events-none" />
           ) : (
             <div
               className={
-                "absolute w-full h-1 bg-green-500 rounded -translate-y-1/2 left-0 " +
+                "absolute w-full h-1 bg-green-500 rounded -translate-y-1/2 left-0 pointer-events-none " +
                 (dropTo[1] === "above" ? "top-0" : "top-full")
               }
             />
@@ -254,19 +236,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
       <ul className="ml-2 border-l-2 border-gray-400">
         {childNode.map((c) => (
           <li key={c.id}>
-            <UITreeNode
-              id={c.id}
-              name={c.name}
-              level={level + 1}
-              selected={c.selected}
-              prime={c.prime}
-              primeSibling={c.primeSibling}
-              draggable={c.draggable}
-              dropTo={dropTo}
-              childNode={c.childNode}
-              onSelect={onSelect}
-              onDragStart={onDragStart}
-            />
+            <UITreeNode {...c} dropTo={dropTo} onSelect={onSelect} onDragStart={onDragStart} />
           </li>
         ))}
       </ul>
@@ -280,7 +250,6 @@ function getUITreeNodeProps(
   lastSelectedId: string | undefined,
   selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
-  level: number,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = shapeComposite.getShapeStruct(shape.type).label;
@@ -290,13 +259,12 @@ function getUITreeNodeProps(
   return {
     id: shapeNode.id,
     name: label,
-    level,
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
     primeSibling: primeSibling,
     draggable,
     childNode: shapeNode.children.map((c) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, level + 1),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c),
     ),
   };
 }
