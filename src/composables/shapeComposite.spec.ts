@@ -736,6 +736,40 @@ describe("swapShapeParent", () => {
     });
   });
 
+  test("should swap the parent: become a child of a group", () => {
+    const target = createShape(getCommonStruct, "rectangle", {
+      id: "target",
+      findex: "aF",
+    });
+    const empty = createShape(getCommonStruct, "group", {
+      id: "empty",
+      findex: "aG",
+    });
+
+    const shapes = [first, group0, child0, child1, child2, target, empty, last];
+    const composite = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+    expect(
+      swapShapeParent(composite, target.id, empty.id, "group", () => ""),
+      "to empty group",
+    ).toEqual({
+      update: {
+        [target.id]: { parentId: empty.id },
+      },
+    });
+
+    expect(
+      swapShapeParent(composite, target.id, group0.id, "group", () => ""),
+      "to a group having children",
+    ).toEqual({
+      update: {
+        [target.id]: { parentId: group0.id, findex: "aE" },
+      },
+    });
+  });
+
   test("should delete the original group when it no longer has children", () => {
     const group1 = createShape(getCommonStruct, "group", { id: "group1", findex: "aE" });
     const target = createShape(getCommonStruct, "rectangle", {

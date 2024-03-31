@@ -58,10 +58,6 @@ export const ShapeTreePanel: React.FC<Props> = () => {
 
   const handleDrop = useCallback(
     (targetId: string, toId: string, operation: DropOperation) => {
-      const targetShape = shapeComposite.shapeMap[targetId];
-      const toShape = shapeComposite.shapeMap[toId];
-      if (targetShape.parentId === toShape.parentId) return;
-
       const ctx = getCtx();
       const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
       const layoutPatch = getPatchInfoByLayouts(shapeComposite, patchInfo);
@@ -115,9 +111,15 @@ export const ShapeTreePanel: React.FC<Props> = () => {
     }
 
     const id = wrapperElm.getAttribute("data-id")!;
+    if (id === draggingTarget[1]) {
+      setDropTo(undefined);
+      return;
+    }
+
     const rect = wrapperElm.querySelector("[data-anchor]")!.getBoundingClientRect();
-    const above = draggingTarget[2].y < rect.top + rect.height / 2;
-    setDropTo([id, above ? "above" : "below"]);
+    const offsetRate = (draggingTarget[2].y - rect.top) / rect.height;
+    const operation = offsetRate < 0.4 ? "above" : offsetRate < 0.6 ? "group" : "below";
+    setDropTo([id, operation]);
   }, [draggingTarget]);
 
   return (
@@ -237,11 +239,16 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
           </button>
         ) : undefined}
         {dropTo && dropTo[0] === id ? (
-          <div
-            className={
-              "absolute w-full h-1 bg-green-500 rounded left-0 " + (dropTo[1] === "above" ? "top-0" : "top-full")
-            }
-          />
+          dropTo[1] === "group" ? (
+            <div className="absolute inset-0 border-2 border-green-500 rounded" />
+          ) : (
+            <div
+              className={
+                "absolute w-full h-1 bg-green-500 rounded -translate-y-1/2 left-0 " +
+                (dropTo[1] === "above" ? "top-0" : "top-full")
+              }
+            />
+          )
         ) : undefined}
       </div>
       <ul className="ml-2 border-l-2 border-gray-400">

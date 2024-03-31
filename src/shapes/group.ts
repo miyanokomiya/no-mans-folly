@@ -3,7 +3,7 @@ import { Shape } from "../models";
 import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
 import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
 
-export type GroupShape = Shape;
+export type GroupShape = Shape & { type: "group" };
 
 /**
  * This shape doesn't have own stable bounds.

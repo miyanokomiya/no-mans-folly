@@ -358,18 +358,33 @@ export function swapShapeParent(
   const ret: EntityPatchInfo<Shape> = {};
 
   if (operation === "group") {
-    const group = shapeModule.createShape(shapeComposite.getShapeStruct, "group", {
-      id: generateUuid(),
-      parentId: to.parentId,
-      findex: to.findex,
-    });
+    if (isGroupShape(to)) {
+      const toTree = shapeComposite.mergedShapeTreeMap[toId];
+      const lastSiblingTree = toTree.children.length > 0 ? toTree.children[toTree.children.length - 1] : undefined;
+      if (lastSiblingTree) {
+        const lastSibling = shapeComposite.shapeMap[lastSiblingTree.id];
+        ret.update = {
+          [targetId]: { parentId: to.id, findex: generateKeyBetweenAllowSame(lastSibling.findex, null) },
+        };
+      } else {
+        ret.update = {
+          [targetId]: { parentId: to.id },
+        };
+      }
+    } else {
+      const group = shapeModule.createShape(shapeComposite.getShapeStruct, "group", {
+        id: generateUuid(),
+        parentId: to.parentId,
+        findex: to.findex,
+      });
 
-    const findexList = generateNKeysBetween(null, null, 2);
-    ret.add = [group];
-    ret.update = {
-      [toId]: { parentId: group.id, findex: findexList[0] },
-      [targetId]: { parentId: group.id, findex: findexList[1] },
-    };
+      const findexList = generateNKeysBetween(null, null, 2);
+      ret.add = [group];
+      ret.update = {
+        [toId]: { parentId: group.id, findex: findexList[0] },
+        [targetId]: { parentId: group.id, findex: findexList[1] },
+      };
+    }
   } else if (toParent) {
     const toParentTree = shapeComposite.mergedShapeTreeMap[toParent.id];
 
