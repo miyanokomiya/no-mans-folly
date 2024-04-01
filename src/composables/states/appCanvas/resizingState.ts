@@ -40,9 +40,12 @@ export function newResizingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "Resizing",
     onStart: (ctx) => {
-      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()), true);
-      targetShapeMap = toMap(targets);
       ctx.startDragging();
+
+      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+      const targets = ctx.getShapeComposite().getAllTransformTargets(selectedIds, true);
+      targetShapeMap = toMap(targets);
+      const directlySelectedTargets = selectedIds.map((id) => targetShapeMap[id]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -60,9 +63,11 @@ export function newResizingState(option: Option): AppCanvasState {
         rotation: option.boundingBox.getRotation(),
         hitResult: option.hitResult,
         resizingBase: option.boundingBox.getResizingBase(option.hitResult),
-        mode: targets.some((s) => shouldKeepAspect(shapeComposite.getShapeStruct, s))
+        // Only directly selected shapes should be resized via special modes.
+        // => Otherwise, they won't go with group resizing.
+        mode: directlySelectedTargets.some((s) => shouldKeepAspect(shapeComposite.getShapeStruct, s))
           ? "keepAspect"
-          : targets.some((s) => shouldResizeOnTextEdit(shapeComposite.getShapeStruct, s))
+          : directlySelectedTargets.some((s) => shouldResizeOnTextEdit(shapeComposite.getShapeStruct, s))
             ? "text"
             : undefined,
       });
@@ -83,10 +88,11 @@ export function newResizingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const diff = sub(event.data.current, event.data.start);
+          const keepAspect = event.data.shift;
 
           // Apply plain resizing
           resizingAffine = boundingBoxResizing.getAffine(diff, {
-            keepAspect: event.data.shift,
+            keepAspect,
             centralize: event.data.alt,
           });
 
@@ -149,6 +155,7 @@ export function newResizingState(option: Option): AppCanvasState {
             }
           }
 
+          const selectedIdMap = ctx.getSelectedShapeIdMap();
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
           const docMap = ctx.getDocumentMap();
@@ -166,6 +173,9 @@ export function newResizingState(option: Option): AppCanvasState {
               (patchedSrc, patch) => {
                 // Scale each text size along with height scaling
                 Object.keys(patch).forEach((id) => {
+                  // Only directly selected shapes can be the targets of this adjustment unless "keepAspect" is true.
+                  if (!selectedIdMap[id] && !keepAspect) return;
+
                   const src = shapeMap[id];
                   const shapeDoc = docMap[id];
                   if (!shapeDoc || !shouldResizeOnTextEdit(shapeComposite.getShapeStruct, src)) return;
