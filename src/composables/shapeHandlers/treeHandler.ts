@@ -67,7 +67,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
       if (tree.children.length > 0) {
         const node = shapeComposite.mergedShapeMap[tree.children[0].id] as TreeNodeShape;
         const vertical = node.direction === 0 || node.direction === 2;
-        return directionSrc !== undefined
+        return node.dropdown !== undefined
           ? dropdownAnchors
           : vertical
             ? [
