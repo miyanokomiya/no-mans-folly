@@ -230,13 +230,16 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
           )
         ) : undefined}
       </div>
-      <ul className="ml-2 border-l-2 border-gray-400">
-        {childNode.map((c) => (
-          <li key={c.id}>
-            <UITreeNode {...c} dropTo={dropTo} onSelect={onSelect} onDragStart={onDragStart} />
-          </li>
-        ))}
-      </ul>
+      {childNode.length > 0 ? (
+        <ul className="ml-2 relative border-l-2 border-gray-400">
+          {childNode.map((c) => (
+            <li key={c.id}>
+              <UITreeNode {...c} dropTo={dropTo} onSelect={onSelect} onDragStart={onDragStart} />
+            </li>
+          ))}
+          <div className="absolute left-0 right-0 border-t border-gray-400" />
+        </ul>
+      ) : undefined}
     </div>
   );
 };
