@@ -126,24 +126,46 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 80 }, scale: 1 },
+        data: { start: { x: -200, y: 10 }, current: { x: 10, y: 80 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).not.toHaveBeenCalled();
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 180 }, scale: 1 },
+        data: { start: { x: -200, y: 10 }, current: { x: 10, y: 180 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0"], true);
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
+        data: { start: { x: -200, y: 10 }, current: { x: 10, y: 280 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], true);
+    });
+
+    test("should prioritize the parent scope when the parent is covered by the range", () => {
+      const ctx = getMockCtx();
+      ctx.getSelectedShapeIdMap.mockReturnValue({});
+      ctx.getLastSelectedShapeId.mockReturnValue(undefined);
+      const target = newRectangleSelectingState();
+      target.onStart?.(ctx as any);
+
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: -200, y: 210 }, current: { x: 10, y: 80 }, scale: 1 },
+      });
+      target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0"], false);
+
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: -200, y: 210 }, current: { x: 10, y: -10 }, scale: 1 },
+      });
+      target.handleEvent(ctx as any, { type: "pointerup" } as any);
+      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_root"], false);
     });
   });
 

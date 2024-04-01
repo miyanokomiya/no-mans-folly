@@ -53,7 +53,17 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           const composite = ctx.getShapeComposite();
           const shapeMap = composite.mergedShapeMap;
 
-          const currentScope = getScope();
+          let currentScope = getScope();
+
+          if (currentScope?.parentId) {
+            // Prioritize the parent scope when the parent of the current scope is covered by the range.
+            const scopeParent = composite.shapeMap[currentScope.parentId];
+            if (hitTest.test(composite.getWrapperRect(scopeParent))) {
+              selectionScope = composite.getSelectionScope(scopeParent);
+              currentScope = selectionScope;
+            }
+          }
+
           const candidateIds = currentScope
             ? composite.getMergedShapesInSelectionScope(currentScope).map((s) => s.id)
             : composite.mergedShapeTree.flatMap((t) => {
