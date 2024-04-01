@@ -278,7 +278,7 @@ export const struct: ShapeStruct<LineShape> = {
     if (!shapeContext || !shape.parentId) return getRectPoints(wrapper);
 
     const parent = shapeContext.shapeMap[shape.parentId];
-    if (parent.rotation === 0) return getRectPoints(wrapper);
+    if (!parent || parent.rotation === 0) return getRectPoints(wrapper);
 
     // Lines basically don't have the concept of rotation.
     // When a line has a rotated parent, let the line inherit the rotation to derive its local-rect polygon.

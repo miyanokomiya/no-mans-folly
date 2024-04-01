@@ -174,6 +174,22 @@ describe("struct", () => {
         { x: -10, y: 10 },
       ]);
     });
+
+    test("should take care of invalid parent", () => {
+      const shape = struct.create({
+        p: { x: 0, y: 0 },
+        body: [{ p: { x: 10, y: 10 } }, { p: { x: 0, y: 20 } }],
+        q: { x: -10, y: 10 },
+        parentId: "invalid",
+      });
+      const composite = newShapeComposite({ getStruct: getCommonStruct, shapes: [shape] });
+      expect(composite.getLocalRectPolygon(shape)).toEqualPoints([
+        { x: -10, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 20 },
+        { x: -10, y: 20 },
+      ]);
+    });
   });
 
   describe("isPointOn", () => {
