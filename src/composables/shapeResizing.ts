@@ -1,4 +1,13 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getCenter, getOuterRectangle, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  MINVALUE,
+  applyAffine,
+  getCenter,
+  getOuterRectangle,
+  multiAffines,
+} from "okageo";
 import { GroupConstraint, Shape } from "../models";
 import * as geometry from "../utils/geometry";
 import { walkTreeWithValue } from "../utils/tree";
@@ -209,6 +218,9 @@ function getVerticalConstraintAdjustmentAffine(
       const targetTopMargin = normalizedSrcRange[0] - parentDerotatedRange[0];
       const resizedTopMargin = normalizedResizedRange[0] - parentDerotatedResizedRange[0];
       const diff = targetTopMargin - resizedTopMargin;
+
+      if (Math.abs(normalizedResizedRange[1]) < MINVALUE) return [1, 0, 0, 1, 0, diff];
+
       return multiAffines([
         [1, 0, 0, 1, 0, diff + normalizedResizedRange[0]],
         [1, 0, 0, (normalizedResizedRange[1] - diff) / normalizedResizedRange[1], 0, 0],
@@ -221,6 +233,9 @@ function getVerticalConstraintAdjustmentAffine(
       const centerRate = (center - parentDerotatedRange[0]) / parentDerotatedRange[1];
       const targetCenter = parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1] * centerRate;
       const targetSize = normalizedSrcRange[1];
+
+      if (Math.abs(normalizedResizedRange[1]) < MINVALUE) return [1, 0, 0, 1, 0, targetCenter - resizedCenter];
+
       return multiAffines([
         [1, 0, 0, 1, 0, targetCenter],
         [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],
@@ -233,6 +248,9 @@ function getVerticalConstraintAdjustmentAffine(
         normalizedSrcRange[0] + normalizedSrcRange[1] - (parentDerotatedRange[0] + parentDerotatedRange[1]);
       const resizedBottomMargin = origin - (parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1]);
       const diff = targetBottomMargin - resizedBottomMargin;
+
+      if (Math.abs(normalizedResizedRange[1]) < MINVALUE) return [1, 0, 0, 1, 0, diff];
+
       return multiAffines([
         [1, 0, 0, 1, 0, diff + origin],
         [1, 0, 0, (normalizedResizedRange[1] + diff) / normalizedResizedRange[1], 0, 0],
@@ -244,6 +262,9 @@ function getVerticalConstraintAdjustmentAffine(
       const resizedTopMargin = normalizedResizedRange[0] - parentDerotatedResizedRange[0];
       const diff = targetTopMargin - resizedTopMargin;
       const targetSize = normalizedSrcRange[1];
+
+      if (Math.abs(normalizedResizedRange[1]) < MINVALUE) return [1, 0, 0, 1, 0, diff];
+
       return multiAffines([
         [1, 0, 0, 1, 0, diff + normalizedResizedRange[0]],
         [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],
@@ -260,6 +281,9 @@ function getVerticalConstraintAdjustmentAffine(
         normalizedSrcRange[0] + normalizedSrcRange[1] - (parentDerotatedRange[0] + parentDerotatedRange[1]);
       const resizedBottomMargin = origin - (parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1]);
       const bottomDiff = targetBottomMargin - resizedBottomMargin;
+
+      if (Math.abs(normalizedResizedRange[1]) < MINVALUE) return [1, 0, 0, 1, 0, topDiff];
+
       return multiAffines([
         [1, 0, 0, 1, 0, topDiff + normalizedResizedRange[0]],
         [1, 0, 0, (normalizedResizedRange[1] - topDiff + bottomDiff) / normalizedResizedRange[1], 0, 0],
@@ -273,6 +297,9 @@ function getVerticalConstraintAdjustmentAffine(
       const resizedBottomMargin = origin - (parentDerotatedResizedRange[0] + parentDerotatedResizedRange[1]);
       const diff = targetBottomMargin - resizedBottomMargin;
       const targetSize = normalizedSrcRange[1];
+
+      if (Math.abs(normalizedResizedRange[1]) < MINVALUE) return [1, 0, 0, 1, 0, diff];
+
       return multiAffines([
         [1, 0, 0, 1, 0, diff + origin],
         [1, 0, 0, targetSize / normalizedResizedRange[1], 0, 0],

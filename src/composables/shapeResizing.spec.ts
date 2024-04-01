@@ -4,6 +4,7 @@ import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { multiAffines } from "okageo";
 import { resizeShapeTrees } from "./shapeResizing";
+import { LineShape, getLinePath } from "../shapes/line";
 
 describe("resizeShapeTrees", () => {
   const group0 = createShape(getCommonStruct, "group", { id: "group0" });
@@ -453,40 +454,40 @@ describe("resizeShapeTrees", () => {
 });
 
 describe("resizeShapeTrees: actual case 1", () => {
-  const group0 = createShape(getCommonStruct, "group", { id: "group0", rotation: Math.PI / 2 });
-  const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-    id: "child0",
-    parentId: group0.id,
-    p: { x: 20, y: 0 },
-    width: 10,
-    height: 10,
-    gcV: 4,
-    rotation: Math.PI / 2,
-  });
-  const group1 = createShape(getCommonStruct, "group", {
-    id: "group1",
-    parentId: group0.id,
-    gcV: 1,
-    rotation: Math.PI / 2,
-  });
-  const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-    id: "child1",
-    parentId: group1.id,
-    p: { x: 10, y: 0 },
-    width: 10,
-    height: 10,
-    rotation: Math.PI / 2,
-  });
-  const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-    id: "child2",
-    parentId: group1.id,
-    p: { x: 0, y: 0 },
-    width: 10,
-    height: 10,
-    rotation: Math.PI / 2,
-  });
-
   test("rotated nested group", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0", rotation: Math.PI / 2 });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+      p: { x: 20, y: 0 },
+      width: 10,
+      height: 10,
+      gcV: 4,
+      rotation: Math.PI / 2,
+    });
+    const group1 = createShape(getCommonStruct, "group", {
+      id: "group1",
+      parentId: group0.id,
+      gcV: 1,
+      rotation: Math.PI / 2,
+    });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: group1.id,
+      p: { x: 10, y: 0 },
+      width: 10,
+      height: 10,
+      rotation: Math.PI / 2,
+    });
+    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: group1.id,
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+      rotation: Math.PI / 2,
+    });
+
     const shapes = [group0, child0, group1, child1, child2];
     const target = newShapeComposite({
       shapes,
@@ -507,5 +508,94 @@ describe("resizeShapeTrees: actual case 1", () => {
     expect(resChild1.p.y).toBeCloseTo(-7.5);
     expect(resChild1.width).toBeCloseTo(10);
     expect(resChild1.height).toBeCloseTo(25);
+  });
+
+  test("lines that have zero height or width", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const line0 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line0",
+      parentId: group0.id,
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      gcV: 1,
+    });
+    const line1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line1",
+      parentId: group0.id,
+      p: { x: 0, y: 10 },
+      q: { x: 10, y: 10 },
+      gcV: 1,
+    });
+    const line2 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line2",
+      parentId: group0.id,
+      p: { x: 0, y: 10 },
+      q: { x: 10, y: 10 },
+      gcV: 2,
+    });
+    const line3 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line3",
+      parentId: group0.id,
+      p: { x: 0, y: 20 },
+      q: { x: 10, y: 20 },
+      gcV: 3,
+    });
+    const line4 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line4",
+      parentId: group0.id,
+      p: { x: 0, y: 10 },
+      q: { x: 10, y: 10 },
+      gcV: 4,
+    });
+    const line5 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line5",
+      parentId: group0.id,
+      p: { x: 0, y: 10 },
+      q: { x: 10, y: 10 },
+      gcV: 5,
+    });
+    const line6 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line6",
+      parentId: group0.id,
+      p: { x: 0, y: 10 },
+      q: { x: 10, y: 10 },
+      gcV: 6,
+    });
+    const shapes = [group0, line0, line1, line2, line3, line4, line5, line6];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    const affine = multiAffines([[1, 0, 0, 2, 0, 0]]);
+    const res0 = resizeShapeTrees(target, [group0.id], affine);
+    expect(getLinePath({ ...line0, ...res0[line0.id] })).toEqualPoints([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ]);
+    expect(getLinePath({ ...line1, ...res0[line1.id] })).toEqualPoints([
+      { x: 0, y: 10 },
+      { x: 10, y: 10 },
+    ]);
+    expect(getLinePath({ ...line2, ...res0[line2.id] })).toEqualPoints([
+      { x: 0, y: 20 },
+      { x: 10, y: 20 },
+    ]);
+    expect(getLinePath({ ...line3, ...res0[line3.id] })).toEqualPoints([
+      { x: 0, y: 40 },
+      { x: 10, y: 40 },
+    ]);
+    expect(getLinePath({ ...line4, ...res0[line4.id] })).toEqualPoints([
+      { x: 0, y: 10 },
+      { x: 10, y: 10 },
+    ]);
+    expect(getLinePath({ ...line5, ...res0[line5.id] })).toEqualPoints([
+      { x: 0, y: 10 },
+      { x: 10, y: 10 },
+    ]);
+    expect(getLinePath({ ...line6, ...res0[line6.id] })).toEqualPoints([
+      { x: 0, y: 30 },
+      { x: 10, y: 30 },
+    ]);
   });
 });
