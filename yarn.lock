@@ -3325,6 +3325,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimatrix-polyroots@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "minimatrix-polyroots@npm:3.0.5"
+  dependencies:
+    typescript: "npm:^3.7.3"
+  checksum: a43270e68c83c25a0dd9ba3d13587e022f35bbc1503f2715d78fefca43ed1c7c8a217462ae9d37088032c37b4e7be2dc5ff4093f1d51b000e98d4c39da5d3087
+  languageName: node
+  linkType: hard
+
 "minipass-collect@npm:^2.0.1":
   version: 2.0.1
   resolution: "minipass-collect@npm:2.0.1"
@@ -3524,6 +3533,7 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.4.5"
     fractional-indexing: "npm:^3.2.0"
     happy-dom: "npm:^13.6.2"
+    minimatrix-polyroots: "npm:^3.0.5"
     nanoid: "npm:^5.0.6"
     okageo: "npm:^3.1.6"
     okaselect: "npm:^0.1.0"
@@ -4694,6 +4704,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:^3.7.3":
+  version: 3.9.10
+  resolution: "typescript@npm:3.9.10"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 863cc06070fa18a0f9c6a83265fb4922a8b51bf6f2c6760fb0b73865305ce617ea4bc6477381f9f4b7c3a8cb4a455b054f5469e6e41307733fe6a2bd9aae82f8
+  languageName: node
+  linkType: hard
+
 "typescript@npm:^5.3.3":
   version: 5.3.3
   resolution: "typescript@npm:5.3.3"
@@ -4701,6 +4721,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: e33cef99d82573624fc0f854a2980322714986bc35b9cb4d1ce736ed182aeab78e2cb32b385efa493b2a976ef52c53e20d6c6918312353a91850e2b76f1ea44f
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A^3.7.3#optional!builtin<compat/typescript>":
+  version: 3.9.10
+  resolution: "typescript@patch:typescript@npm%3A3.9.10#optional!builtin<compat/typescript>::version=3.9.10&hash=3bd3d3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 9041fb3886e7d6a560f985227b8c941d17a750f2edccb5f9b3a15a2480574654d9be803ad4a14aabcc2f2553c4d272a25fd698a7c42692f03f66b009fb46883c
   languageName: node
   linkType: hard
 

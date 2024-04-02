@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
+
 import iconShapeSet from "../assets/icons/shape_set.svg";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
@@ -11,16 +12,21 @@ import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
 import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
+import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
+
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineCurve from "../assets/icons/shape_line_curve.svg";
 import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
 import iconLineElbowCurve from "../assets/icons/shape_line_elbow_curve.svg";
+
 import iconText from "../assets/icons/text.svg";
+
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayout from "../assets/icons/layout.svg";
 import iconLayoutAlignBox from "../assets/icons/layout_align_box.svg";
 import iconSelectArea from "../assets/icons/select_area.svg";
+
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { Shape } from "../models";
 import { generateBoardTemplate } from "../composables/boardHandler";
@@ -37,6 +43,7 @@ const shapeList = [
   { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
   { type: "two_sided_arrow", icon: iconTwoSidedArrow },
+  { type: "diagonal_cross", icon: iconDiagonalCross },
 ];
 
 const lineList = [

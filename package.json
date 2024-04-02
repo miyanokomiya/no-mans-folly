@@ -20,6 +20,7 @@
     "@emoji-mart/react": "^1.1.1",
     "emoji-mart": "^5.5.2",
     "fractional-indexing": "^3.2.0",
+    "minimatrix-polyroots": "^3.0.5",
     "nanoid": "^5.0.6",
     "okageo": "^3.1.6",
     "okaselect": "^0.1.0",
