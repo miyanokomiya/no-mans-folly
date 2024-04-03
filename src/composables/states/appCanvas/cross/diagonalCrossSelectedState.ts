@@ -15,6 +15,7 @@ import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
 import { applyAffine, clamp } from "okageo";
+import { snapNumber } from "../../../../utils/geometry";
 
 export const newDiagonalCrossSelectedState = defineIntransientState(() => {
   let targetShape: DiagonalCrossShape;
@@ -54,21 +55,35 @@ export const newDiagonalCrossSelectedState = defineIntransientState(() => {
               if (hitResult) {
                 switch (hitResult.type) {
                   case "crossSize":
-                    return () =>
-                      movingShapeControlState<DiagonalCrossShape>({
+                    return () => {
+                      let showLabel = false;
+                      return movingShapeControlState<DiagonalCrossShape>({
                         targetId: targetShape.id,
                         snapType: "disabled",
-                        patchFn: (s, p) => {
+                        patchFn: (s, p, movement) => {
                           const localP = applyAffine(getShapeDetransform(s), p);
-                          const nextSize = clamp(1, Math.min(s.width / 2, s.height / 2), localP.x - s.width / 2) * 2;
+                          let nextSize = clamp(1, Math.min(s.width / 2, s.height / 2), localP.x - s.width / 2) * 2;
+                          if (movement.ctrl) {
+                            showLabel = false;
+                          } else {
+                            nextSize = snapNumber(nextSize, 1);
+                            showLabel = true;
+                          }
                           return { crossSize: nextSize };
                         },
                         getControlFn: (s) =>
                           applyAffine(getShapeTransform(s), { x: s.width / 2 + s.crossSize / 2, y: s.height / 2 }),
                         renderFn: (ctx, renderCtx, s) => {
-                          renderMovingDiagonalCrossAnchor(renderCtx, ctx.getStyleScheme(), ctx.getScale(), s);
+                          renderMovingDiagonalCrossAnchor(
+                            renderCtx,
+                            ctx.getStyleScheme(),
+                            ctx.getScale(),
+                            s,
+                            showLabel,
+                          );
                         },
                       });
+                    };
                   default:
                     return;
                 }

@@ -7,6 +7,7 @@ import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { Shape } from "../../../models";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { EditMovement } from "../types";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -19,7 +20,7 @@ interface Option<T extends Shape> {
   /**
    * "p" is in the global space.
    */
-  patchFn: (s: T, p: IVec2) => Partial<T>;
+  patchFn: (s: T, p: IVec2, movement: EditMovement) => Partial<T>;
   /**
    * Should return a point in the global space.
    */
@@ -66,7 +67,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
           snappingResult =
             event.data.ctrl || option.snapType === "disabled" ? undefined : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
-          const patch = option.patchFn(targetShape, p);
+          const patch = option.patchFn(targetShape, p, event.data);
           const shapeComposite = ctx.getShapeComposite();
           const layoutPatch = getPatchByLayouts(shapeComposite, {
             update: { [targetShape.id]: patch },

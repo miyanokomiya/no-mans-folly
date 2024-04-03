@@ -5,7 +5,7 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { DiagonalCrossShape } from "../../shapes/polygons/diagonalCross";
-import { applyLocalSpace } from "../../utils/renderer";
+import { applyLocalSpace, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 const ANCHOR_SIZE = 6;
@@ -84,14 +84,17 @@ export function renderMovingDiagonalCrossAnchor(
   style: StyleScheme,
   scale: number,
   shape: DiagonalCrossShape,
+  showLabel = false,
 ) {
   const threshold = ANCHOR_SIZE * scale;
-  const p = {
-    x: shape.width / 2 + shape.crossSize / 2,
-    y: shape.height / 2,
-  };
+  const c = { x: shape.width / 2, y: shape.height / 2 };
+  const p = { x: c.x + shape.crossSize / 2, y: c.y };
 
   applyLocalSpace(ctx, { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, shape.rotation, () => {
+    if (showLabel) {
+      renderValueLabel(ctx, shape.crossSize, c, -shape.rotation, scale);
+    }
+
     applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot" });
     ctx.beginPath();
     ctx.arc(shape.width / 2, shape.height / 2, shape.crossSize / 2, 0, TAU);
