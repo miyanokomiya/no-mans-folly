@@ -11,7 +11,7 @@ export const GridBackground: React.FC<Props> = ({ x, y, size }) => {
       style={{
         backgroundPosition: `${size / 2 - x}px ${size / 2 - y}px`,
         backgroundSize: `${size}px ${size}px`,
-        backgroundImage: "radial-gradient(circle, #000 2px, transparent 2px)",
+        backgroundImage: "radial-gradient(circle, #555 2px, transparent 2px)",
       }}
     />
   );
