@@ -21,6 +21,22 @@ describe("refreshRelation", () => {
     expect(result).toHaveProperty("hAlign");
     expect(result).toHaveProperty("vAlign");
   });
+
+  test("should patch object to refresh line connection whenever it has no valid parent but has lineAttached", () => {
+    const shape = struct.create({ hAlign: "center", vAlign: "center", lineAttached: 0.5 });
+    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual({
+      lineAttached: undefined,
+      hAlign: undefined,
+      vAlign: undefined,
+    });
+  });
+
+  test("should patch object to refresh parent when it has valid parent but doesn't have lineAttached", () => {
+    const shape = struct.create({ parentId: "a", hAlign: "center", vAlign: "center", lineAttached: undefined });
+    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual({
+      lineAttached: undefined,
+    });
+  });
 });
 
 describe("isTextShape", () => {

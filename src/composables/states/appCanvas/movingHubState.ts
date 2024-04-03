@@ -34,7 +34,7 @@ export function newMovingHubState(option?: Option): AppCanvasState {
             path: shapeComposite.getLocalRectPolygon(shape),
           });
 
-        if (isLineLabelShape(shape)) {
+        if (isLineLabelShape(shape) && shapeMap[shape.parentId ?? ""]) {
           return () => newMovingLineLabelState({ boundingBox });
         }
 

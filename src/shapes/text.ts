@@ -38,7 +38,9 @@ export const struct: ShapeStruct<TextShape> = {
     return ret;
   },
   refreshRelation(shape, availableIdSet) {
-    if (!shape.parentId || availableIdSet.has(shape.parentId)) return;
+    if (shape.parentId && availableIdSet.has(shape.parentId)) {
+      return shape.lineAttached === undefined ? { parentId: undefined } : undefined;
+    }
 
     const ret: Partial<TextShape> = { lineAttached: undefined };
     if (shape.hAlign && shape.hAlign !== "left") ret.hAlign = undefined;

@@ -19,7 +19,9 @@ function getMockCtx() {
       newShapeComposite({
         shapes: [
           createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-          createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
+          createShape(getCommonStruct, "line", { id: "line" }),
+          createShape<TextShape>(getCommonStruct, "text", { id: "label", parentId: "line", lineAttached: 0.5 }),
+          createShape<TextShape>(getCommonStruct, "text", { id: "label2", parentId: "unknow", lineAttached: 0.5 }),
         ],
         getStruct: getCommonStruct,
       }),
@@ -55,5 +57,12 @@ describe("newMovingHubState", () => {
     ctx.getSelectedShapeIdMap.mockReturnValue({ label: true });
     const result = newMovingHubState().onStart?.(ctx as any);
     expect((result as any)().getLabel()).toEqual("MovingLineLabel");
+  });
+
+  test("should not move to MovingLineLabel state if selected line label has invalid parent", () => {
+    const ctx = getMockCtx();
+    ctx.getSelectedShapeIdMap.mockReturnValue({ label2: true });
+    const result = newMovingHubState().onStart?.(ctx as any);
+    expect((result as any)().getLabel()).toEqual("MovingShape");
   });
 });
