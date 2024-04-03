@@ -243,15 +243,23 @@ export function applyDefaultTextStyle(
   ctx: CanvasRenderingContext2D,
   fontSize = 18,
   textAlign: CanvasTextAlign = "left",
+  middle = false,
 ) {
   ctx.font = `${fontSize}px Arial`;
   ctx.setLineDash([]);
-  ctx.textBaseline = "alphabetic";
+  ctx.textBaseline = middle ? "middle" : "alphabetic";
   ctx.textAlign = textAlign;
 }
 
-export function renderValueLabel(ctx: CanvasRenderingContext2D, value: number, p: IVec2, rotation = 0, scale = 1) {
-  applyDefaultTextStyle(ctx, 18 * scale, "center");
+export function renderValueLabel(
+  ctx: CanvasRenderingContext2D,
+  value: number,
+  p: IVec2,
+  rotation = 0,
+  scale = 1,
+  middle = false,
+) {
+  applyDefaultTextStyle(ctx, 18 * scale, "center", middle);
   applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 2 * scale });
   applyFillStyle(ctx, { color: COLORS.BLACK });
   applyRotation(ctx, rotation, p, () => {

@@ -16,6 +16,7 @@ import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 import { struct as twoSidedArrowStruct } from "./twoSidedArrow";
 import { struct as textStruct } from "./text";
 import { struct as ellipseStruct } from "./ellipse";
+import { struct as crossStruct } from "./polygons/cross";
 import { struct as diagonalCrossStruct } from "./polygons/diagonalCross";
 import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
@@ -49,6 +50,7 @@ const SHAPE_STRUCTS: {
   two_sided_arrow: twoSidedArrowStruct,
   text: textStruct,
   ellipse: ellipseStruct,
+  cross: crossStruct,
   diagonal_cross: diagonalCrossStruct,
   line: lineStruct,
   image: imageStruct,

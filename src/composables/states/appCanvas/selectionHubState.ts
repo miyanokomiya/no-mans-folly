@@ -45,6 +45,7 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newArrowTwoSelectedState;
           case "trapezoid":
             return newTrapezoidSelectedState;
+          case "cross":
           case "diagonal_cross":
             return newDiagonalCrossSelectedState;
           case "cylinder":

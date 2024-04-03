@@ -12,6 +12,7 @@ import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
 import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
+import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
@@ -43,6 +44,7 @@ const shapeList = [
   { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
   { type: "two_sided_arrow", icon: iconTwoSidedArrow },
+  { type: "cross", icon: iconCross },
   { type: "diagonal_cross", icon: iconDiagonalCross },
 ];
 

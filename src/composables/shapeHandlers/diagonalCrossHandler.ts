@@ -90,7 +90,7 @@ export function renderMovingDiagonalCrossAnchor(
 
   applyLocalSpace(ctx, { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, shape.rotation, () => {
     if (showLabel) {
-      renderValueLabel(ctx, shape.crossSize, c, -shape.rotation, scale);
+      renderValueLabel(ctx, shape.crossSize, c, -shape.rotation, scale, true);
     }
 
     applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot" });
