@@ -4,12 +4,12 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getQuarticRoots } from "minimatrix-polyroots";
 
-export type CrossShape = SimplePolygonShape & {
+export type DiagonalCrossShape = SimplePolygonShape & {
   crossSize: number;
 };
 
-export const struct: ShapeStruct<CrossShape> = {
-  ...getStructForSimplePolygon<CrossShape>(getDiagonalCrossPath),
+export const struct: ShapeStruct<DiagonalCrossShape> = {
+  ...getStructForSimplePolygon<DiagonalCrossShape>(getDiagonalCrossPath),
   label: "DiagonalCross",
   create(arg = {}) {
     return {
@@ -27,12 +27,12 @@ export const struct: ShapeStruct<CrossShape> = {
   patchTextPadding: undefined,
 };
 
-export function getDiagonalCrossPath(shape: CrossShape): SimplePath {
+export function getDiagonalCrossPath(shape: DiagonalCrossShape): SimplePath {
   const cx = shape.width / 2;
   const cy = shape.height / 2;
 
   const size = shape.crossSize;
-  if (size >= shape.width && size >= shape.height) {
+  if ((size >= shape.width && size >= shape.height) || size <= 0) {
     // Fallback to rectangle when the cross size is too big.
     const tl = { x: 0, y: 0 };
     const tr = { x: shape.width, y: 0 };

@@ -15,6 +15,7 @@ import { newArrowTwoSelectedState } from "./arrow/arrowTwoSelectedState";
 import { newTrapezoidSelectedState } from "./trapezoid/trapezoidSelectedState";
 import { newCylinderSelectedState } from "./cylinder/cylinderSelectedState";
 import { newBubbleSelectedState } from "./bubble/bubbleSelectedState";
+import { newDiagonalCrossSelectedState } from "./cross/diagonalCrossSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -44,6 +45,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newArrowTwoSelectedState;
           case "trapezoid":
             return newTrapezoidSelectedState;
+          case "diagonal_cross":
+            return newDiagonalCrossSelectedState;
           case "cylinder":
             return newCylinderSelectedState;
           case "bubble":

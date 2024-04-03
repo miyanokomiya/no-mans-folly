@@ -47,4 +47,12 @@ describe("getDiagonalCrossPath", () => {
     expect(path2[2].y).toBeCloseTo(0);
     expect(path2[8].y).toBeCloseTo(30);
   });
+
+  test("should regard zero cross size", () => {
+    const path0 = getDiagonalCrossPath(struct.create({ width: 40, height: 30, crossSize: 0 })).path;
+    expect(path0[11].x).toBeCloseTo(0);
+    expect(path0[5].x).toBeCloseTo(40);
+    expect(path0[2].y).toBeCloseTo(0);
+    expect(path0[8].y).toBeCloseTo(30);
+  });
 });
