@@ -59,7 +59,7 @@ export const newDiagonalCrossSelectedState = defineIntransientState(() => {
                       let showLabel = false;
                       return movingShapeControlState<DiagonalCrossShape>({
                         targetId: targetShape.id,
-                        snapType: "disabled",
+                        snapType: "custom",
                         patchFn: (s, p, movement) => {
                           const localP = applyAffine(getShapeDetransform(s), p);
                           let nextSize = clamp(1, Math.min(s.width / 2, s.height / 2), localP.x - s.width / 2) * 2;

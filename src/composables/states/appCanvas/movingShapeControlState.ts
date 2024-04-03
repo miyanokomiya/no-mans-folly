@@ -25,7 +25,7 @@ interface Option<T extends Shape> {
    * Should return a point in the global space.
    */
   getControlFn: (s: T, scale: number) => IVec2;
-  snapType?: "disabled" | "self";
+  snapType?: "disabled" | "self" | "custom";
   renderFn?: RenderShapeControlFn<T>;
 }
 
@@ -41,7 +41,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
-      if (!option.snapType) ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      if (!option.snapType || option.snapType === "custom") ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -65,7 +65,9 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
         case "pointermove": {
           const point = event.data.current;
           snappingResult =
-            event.data.ctrl || option.snapType === "disabled" ? undefined : shapeSnapping.testPoint(point);
+            event.data.ctrl || option.snapType === "disabled" || option.snapType === "custom"
+              ? undefined
+              : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
           const patch = option.patchFn(targetShape, p, event.data);
           const shapeComposite = ctx.getShapeComposite();

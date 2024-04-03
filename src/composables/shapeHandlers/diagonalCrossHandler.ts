@@ -51,22 +51,20 @@ export const newDiagonalCrossHandler = defineShapeHandler<DiagonalCrossHitResult
     const threshold = ANCHOR_SIZE * scale;
     const { controlSizeP } = getAnchors();
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
-      ([[controlSizeP, hitResult?.type === "crossSize"]] as const).forEach(([p, highlight]) => {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot" });
-        ctx.beginPath();
-        ctx.arc(shape.width / 2, shape.height / 2, shape.crossSize / 2, 0, TAU);
-        ctx.stroke();
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot" });
+      ctx.beginPath();
+      ctx.arc(shape.width / 2, shape.height / 2, shape.crossSize / 2, 0, TAU);
+      ctx.stroke();
 
-        if (highlight) {
-          applyFillStyle(ctx, { color: style.selectionSecondaly });
-        } else {
-          applyFillStyle(ctx, { color: style.selectionPrimary });
-        }
+      if (hitResult) {
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+      } else {
+        applyFillStyle(ctx, { color: style.selectionPrimary });
+      }
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, threshold, 0, TAU);
-        ctx.fill();
-      });
+      ctx.beginPath();
+      ctx.arc(controlSizeP.x, controlSizeP.y, threshold, 0, TAU);
+      ctx.fill();
     });
   }
 
