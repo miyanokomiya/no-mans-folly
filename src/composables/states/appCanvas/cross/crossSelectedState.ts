@@ -8,7 +8,7 @@ import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { DiagonalCrossShape } from "../../../../shapes/polygons/diagonalCross";
+import { CrossShape } from "../../../../shapes/polygons/cross";
 import { newCrossHandler, renderMovingCrossAnchor } from "../../../shapeHandlers/crossHandler";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
@@ -17,17 +17,17 @@ import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simpl
 import { applyAffine, clamp } from "okageo";
 import { snapNumber } from "../../../../utils/geometry";
 
-export const newDiagonalCrossSelectedState = defineIntransientState(() => {
-  let targetShape: DiagonalCrossShape;
+export const newCrossSelectedState = defineIntransientState(() => {
+  let targetShape: CrossShape;
   let shapeHandler: ReturnType<typeof newCrossHandler>;
   let boundingBox: BoundingBox;
 
   return {
-    getLabel: () => "DiagonalCrossSelected",
+    getLabel: () => "CrossSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
       ctx.setCommandExams([]);
-      targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as DiagonalCrossShape;
+      targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as CrossShape;
       shapeHandler = newCrossHandler({ getShapeComposite: ctx.getShapeComposite, targetId: targetShape.id });
 
       const shapeComposite = ctx.getShapeComposite();
@@ -57,7 +57,7 @@ export const newDiagonalCrossSelectedState = defineIntransientState(() => {
                   case "crossSize":
                     return () => {
                       let showLabel = false;
-                      return movingShapeControlState<DiagonalCrossShape>({
+                      return movingShapeControlState<CrossShape>({
                         targetId: targetShape.id,
                         snapType: "custom",
                         patchFn: (s, p, movement) => {

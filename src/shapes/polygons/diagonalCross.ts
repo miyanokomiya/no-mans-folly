@@ -1,12 +1,11 @@
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "../simplePolygon";
+import { SimplePath, getStructForSimplePolygon } from "../simplePolygon";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getQuarticRoots } from "minimatrix-polyroots";
+import { CrossShape } from "./cross";
 
-export type DiagonalCrossShape = SimplePolygonShape & {
-  crossSize: number;
-};
+export type DiagonalCrossShape = CrossShape;
 
 export const struct: ShapeStruct<DiagonalCrossShape> = {
   ...getStructForSimplePolygon<DiagonalCrossShape>(getDiagonalCrossPath),

@@ -4,15 +4,15 @@ import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { DiagonalCrossShape } from "../../shapes/polygons/diagonalCross";
 import { applyLocalSpace, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
+import { CrossShape } from "../../shapes/polygons/cross";
 
 const ANCHOR_SIZE = 6;
 
 type AnchorType = "crossSize";
 
-interface DiagonalCrossHitResult {
+interface CrossHitResult {
   type: AnchorType;
 }
 
@@ -21,9 +21,9 @@ interface Option {
   targetId: string;
 }
 
-export const newDiagonalCrossHandler = defineShapeHandler<DiagonalCrossHitResult, Option>((option) => {
+export const newCrossHandler = defineShapeHandler<CrossHitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
-  const shape = shapeComposite.shapeMap[option.targetId] as DiagonalCrossShape;
+  const shape = shapeComposite.shapeMap[option.targetId] as CrossShape;
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const rotateFn = getRotateFn(shape.rotation, getRectCenter(shapeRect));
 
@@ -32,7 +32,7 @@ export const newDiagonalCrossHandler = defineShapeHandler<DiagonalCrossHitResult
     return { controlSizeP };
   }
 
-  function hitTest(p: IVec2, scale = 1): DiagonalCrossHitResult | undefined {
+  function hitTest(p: IVec2, scale = 1): CrossHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
     const { controlSizeP } = getAnchors();
     const adjustedP = sub(rotateFn(p, true), shape.p);
@@ -42,12 +42,7 @@ export const newDiagonalCrossHandler = defineShapeHandler<DiagonalCrossHitResult
     }
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    scale: number,
-    hitResult?: DiagonalCrossHitResult,
-  ) {
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: CrossHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const { controlSizeP } = getAnchors();
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
@@ -77,11 +72,11 @@ export const newDiagonalCrossHandler = defineShapeHandler<DiagonalCrossHitResult
   };
 });
 
-export function renderMovingDiagonalCrossAnchor(
+export function renderMovingCrossAnchor(
   ctx: CanvasRenderingContext2D,
   style: StyleScheme,
   scale: number,
-  shape: DiagonalCrossShape,
+  shape: CrossShape,
   showLabel = false,
 ) {
   const threshold = ANCHOR_SIZE * scale;
