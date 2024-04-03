@@ -115,6 +115,15 @@ describe("getStructForSimplePolygon", () => {
       expect(ret2?.x).toBeCloseTo(100);
       expect(ret2?.y).toBeCloseTo(30);
     });
+
+    test("should return the closest point of the four directions when the option is provided", () => {
+      const target = getStructForSimplePolygon(() => ({ path }), { outlineSnap: "trbl" });
+      expect(target.getClosestOutline!(shape, { x: -3, y: 0 }, 2)).toEqual(undefined);
+      expect(target.getClosestOutline!(shape, { x: 49, y: -1 }, 2)).toEqual({ x: 50, y: 0 });
+
+      const ret1 = target.getClosestOutline!({ ...shape, rotation: Math.PI }, { x: 101, y: 51 }, 2);
+      expect(ret1).toEqualPoint({ x: 100, y: 50 });
+    });
   });
 
   describe("getIntersectedOutlines", () => {

@@ -57,6 +57,7 @@ export type SimplePolygonShape = Shape &
  */
 export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   getPath: (s: T) => SimplePath,
+  options?: { outlineSnap?: "trbl" },
 ): Pick<
   ShapeStruct<T>,
   | "render"
@@ -149,6 +150,18 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const transform = getShapeTransform(shape);
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
+
+      if (options?.outlineSnap === "trbl") {
+        const cx = shape.width / 2;
+        const cy = shape.height / 2;
+        const rotatedClosest = [
+          { x: cx, y: 0 },
+          { x: shape.width, y: cy },
+          { x: cx, y: shape.height },
+          { x: 0, y: cy },
+        ].find((m) => getDistance(m, localP) <= threshold);
+        if (rotatedClosest) return applyAffine(transform, rotatedClosest);
+      }
 
       // Ignore conventional markers when the shape has a curve.
       // TODO: Some markers for straight segments may be available.

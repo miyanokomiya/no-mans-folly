@@ -17,7 +17,7 @@ export type CylinderShape = SimplePolygonShape & {
 };
 
 export const struct: ShapeStruct<CylinderShape> = {
-  ...getStructForSimplePolygon<CylinderShape>(getPath),
+  ...getStructForSimplePolygon<CylinderShape>(getPath, { outlineSnap: "trbl" }),
   label: "Cylinder",
   create(arg = {}) {
     return {

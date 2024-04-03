@@ -30,7 +30,7 @@ export type BubbleShape = SimplePolygonShape & {
   cornerC: IVec2;
 };
 
-const baseStruct = getStructForSimplePolygon<BubbleShape>(combineBeakAndOutline);
+const baseStruct = getStructForSimplePolygon<BubbleShape>(combineBeakAndOutline, { outlineSnap: "trbl" });
 
 export const struct: ShapeStruct<BubbleShape> = {
   ...baseStruct,
