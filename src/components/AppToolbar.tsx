@@ -5,6 +5,7 @@ import { createShape } from "../shapes";
 
 import iconShapeSet from "../assets/icons/shape_set.svg";
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
+import iconRoundedRectangle from "../assets/icons/shape_rounded_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
@@ -37,6 +38,7 @@ import { CurveType, LineType } from "../shapes/line";
 
 const shapeList = [
   { type: "rectangle", icon: iconRectangle },
+  { type: "rounded_rectangle", icon: iconRoundedRectangle },
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
   { type: "trapezoid", icon: iconTrapezoid },

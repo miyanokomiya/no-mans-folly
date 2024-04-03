@@ -9,6 +9,7 @@ import {
 } from "./core";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
+import { struct as roundedRectangleStruct } from "./polygons/roundedRectangle";
 import { struct as trapezoidStruct } from "./polygons/trapezoid";
 import { struct as cylinderStruct } from "./polygons/cylinder";
 import { struct as bubbleStruct } from "./polygons/bubble";
@@ -43,6 +44,7 @@ const SHAPE_STRUCTS: {
 } = {
   rectangle: rectangleStruct,
   rhombus: rhombusStruct,
+  rounded_rectangle: roundedRectangleStruct,
   trapezoid: trapezoidStruct,
   cylinder: cylinderStruct,
   bubble: bubbleStruct,

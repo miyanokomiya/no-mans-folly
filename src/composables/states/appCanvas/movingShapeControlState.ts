@@ -7,7 +7,7 @@ import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { Shape } from "../../../models";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { EditMovement } from "../types";
+import { CommandExam, EditMovement } from "../types";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -27,6 +27,7 @@ interface Option<T extends Shape> {
   getControlFn: (s: T, scale: number) => IVec2;
   snapType?: "disabled" | "self" | "custom";
   renderFn?: RenderShapeControlFn<T>;
+  extraCommands?: CommandExam[];
 }
 
 export function movingShapeControlState<T extends Shape>(option: Option<T>): AppCanvasState {
@@ -41,7 +42,9 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       if (!targetShape) return newSelectionHubState;
 
       ctx.startDragging();
-      if (!option.snapType || option.snapType === "custom") ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      const commands = option.extraCommands ?? [];
+      if (!option.snapType || option.snapType === "custom") commands.unshift(COMMAND_EXAM_SRC.DISABLE_SNAP);
+      ctx.setCommandExams(commands);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
