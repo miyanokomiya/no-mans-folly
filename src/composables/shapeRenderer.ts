@@ -10,6 +10,7 @@ interface Option {
   getDocumentMap: () => { [id: string]: DocOutput };
   ignoreDocIds?: string[];
   imageStore?: ImageStore;
+  scale?: number;
 }
 
 export function newShapeRenderer(option: Option) {
@@ -34,7 +35,7 @@ export function newShapeRenderer(option: Option) {
           option.shapeComposite.setDocCompositeCache(shape.id, info);
         }
 
-        renderDocByComposition(ctx, info.composition, info.lines);
+        renderDocByComposition(ctx, info.composition, info.lines, option.scale);
         ctx.restore();
       }
     });

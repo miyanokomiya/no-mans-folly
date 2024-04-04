@@ -448,6 +448,7 @@ export const AppCanvas: React.FC = () => {
       getDocumentMap: () => mergedDocMap,
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
       imageStore,
+      scale,
     });
     renderer.render(ctx);
 

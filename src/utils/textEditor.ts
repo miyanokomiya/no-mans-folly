@@ -111,10 +111,13 @@ export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: 
   renderDocByComposition(ctx, composition, lines);
 }
 
+const LOD_THRESHOLD = 6;
+
 export function renderDocByComposition(
   ctx: CanvasRenderingContext2D,
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
+  scale?: number, // If provided, text may be simplified when the visual size is too small.
 ) {
   let index = 0;
   let lastAttributes: DocAttributes | undefined;
@@ -135,6 +138,16 @@ export function renderDocByComposition(
     );
 
     groups.forEach((group) => {
+      const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
+      if (scale !== undefined && fontSize / scale < LOD_THRESHOLD) {
+        ctx.fillStyle = group.attributes.color ?? "#000";
+        const size = fontSize / 3;
+        ctx.beginPath();
+        ctx.rect(group.bounds.x, group.bounds.y + (group.bounds.height - size) / 2, group.bounds.width, size);
+        ctx.fill();
+        return;
+      }
+
       if (group.attributes.background) {
         ctx.fillStyle = group.attributes.background;
         ctx.beginPath();
