@@ -1,7 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { getStructForSimplePolygon, getNormalizedSimplePolygonShape, migrateRelativePoint } from "./simplePolygon";
+import {
+  getStructForSimplePolygon,
+  getNormalizedSimplePolygonShape,
+  migrateRelativePoint,
+  getAffineByRightExpansion,
+  getAffineByLeftExpansion,
+} from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
+import { applyAffine } from "okageo";
 
 describe("getStructForSimplePolygon", () => {
   const shape = rectangleStruct.create({ width: 100, height: 100 });
@@ -202,5 +209,54 @@ describe("migrateRelativePoint", () => {
     expect(
       migrateRelativePoint({ x: 0.1, y: 0.2 }, { width: 10, height: 20 }, { width: 20, height: 40 }, { x: 1, y: 1 }),
     ).toEqualPoint({ x: 0.55, y: 0.6 });
+  });
+});
+
+describe("getAffineByRightExpansion", () => {
+  test("should retrun affine matrix to expand the shape by moving right anchor", () => {
+    const shape = rectangleStruct.create({ width: 100, height: 100 });
+    expect(
+      applyAffine(getAffineByRightExpansion(shape, { x: 5, y: 50 }, 20), { x: 100, y: 50 }),
+      "minimum ristriction",
+    ).toEqualPoint({ x: 20, y: 50 });
+    expect(applyAffine(getAffineByRightExpansion(shape, { x: 50, y: 50 }), { x: 100, y: 50 }), "shrink").toEqualPoint({
+      x: 50,
+      y: 50,
+    });
+    expect(applyAffine(getAffineByRightExpansion(shape, { x: 150, y: 50 }), { x: 100, y: 50 }), "expand").toEqualPoint({
+      x: 150,
+      y: 50,
+    });
+    expect(
+      applyAffine(getAffineByRightExpansion(shape, { x: 200, y: -50 }), { x: 100, y: 50 }),
+      "rotation",
+    ).toEqualPoint({
+      x: 200,
+      y: -50,
+    });
+  });
+});
+
+describe("getAffineByLeftExpansion", () => {
+  test("should retrun affine matrix to expand the shape by moving right anchor", () => {
+    const shape = rectangleStruct.create({ width: 100, height: 100 });
+    expect(
+      applyAffine(getAffineByLeftExpansion(shape, { x: 95, y: 50 }, 20), { x: 0, y: 50 }),
+      "minimum ristriction",
+    ).toEqualPoint({ x: 80, y: 50 });
+    expect(applyAffine(getAffineByLeftExpansion(shape, { x: 50, y: 50 }), { x: 0, y: 50 }), "shrink").toEqualPoint({
+      x: 50,
+      y: 50,
+    });
+    expect(applyAffine(getAffineByLeftExpansion(shape, { x: -50, y: 50 }), { x: 0, y: 50 }), "expand").toEqualPoint({
+      x: -50,
+      y: 50,
+    });
+    expect(applyAffine(getAffineByLeftExpansion(shape, { x: -100, y: -50 }), { x: 0, y: 50 }), "rotation").toEqualPoint(
+      {
+        x: -100,
+        y: -50,
+      },
+    );
   });
 });

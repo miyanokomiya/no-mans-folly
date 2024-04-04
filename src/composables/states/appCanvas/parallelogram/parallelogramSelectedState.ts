@@ -1,9 +1,15 @@
 import { ParallelogramShape } from "../../../../shapes/polygons/parallelogram";
 import { newParallelogramHandler, renderMovingParallelogramAnchor } from "../../../shapeHandlers/parallelogramHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { getShapeDetransform, getShapeTransform, migrateRelativePoint } from "../../../../shapes/simplePolygon";
-import { add, applyAffine, clamp, getDistance, getRadian, multiAffines, rotate } from "okageo";
-import { getCrossLineAndLine, getGlobalAffine, getRotationAffine, snapAngle } from "../../../../utils/geometry";
+import {
+  getAffineByLeftExpansion,
+  getAffineByRightExpansion,
+  getShapeDetransform,
+  getShapeTransform,
+  migrateRelativePoint,
+} from "../../../../shapes/simplePolygon";
+import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
+import { getCrossLineAndLine, snapAngle } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -79,21 +85,7 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                         return movingShapeControlState<ParallelogramShape>({
                           targetId: targetShape.id,
                           patchFn: (s, p) => {
-                            const origin = applyAffine(getShapeTransform(s), {
-                              x: s.width,
-                              y: s.height / 2,
-                            });
-                            const distance = getDistance(p, origin);
-                            const left = Math.min(s.width - distance, s.width - 10);
-                            const radDiff = getRadian(p, origin) + Math.PI - s.rotation;
-                            const resized = shapeComposite.transformShape(
-                              s,
-                              getGlobalAffine(
-                                origin,
-                                s.rotation,
-                                multiAffines([getRotationAffine(radDiff), [(s.width - left) / s.width, 0, 0, 1, 0, 0]]),
-                              ),
-                            );
+                            const resized = shapeComposite.transformShape(s, getAffineByLeftExpansion(s, p));
                             return {
                               ...resized,
                               c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0.5, y: 0 }),
@@ -118,21 +110,7 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                         return movingShapeControlState<ParallelogramShape>({
                           targetId: targetShape.id,
                           patchFn: (s, p) => {
-                            const origin = applyAffine(getShapeTransform(s), {
-                              x: 0,
-                              y: s.height / 2,
-                            });
-                            const distance = getDistance(p, origin);
-                            const right = Math.max(distance, 10);
-                            const radDiff = getRadian(p, origin) - s.rotation;
-                            const resized = shapeComposite.transformShape(
-                              s,
-                              getGlobalAffine(
-                                origin,
-                                s.rotation,
-                                multiAffines([getRotationAffine(radDiff), [right / s.width, 0, 0, 1, 0, 0]]),
-                              ),
-                            );
+                            const resized = shapeComposite.transformShape(s, getAffineByRightExpansion(s, p));
                             return {
                               ...resized,
                               c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0.5, y: 0 }),

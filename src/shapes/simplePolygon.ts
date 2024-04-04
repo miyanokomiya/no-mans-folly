@@ -24,10 +24,12 @@ import {
   getCrossSegAndSeg,
   getCurveSplineBounds,
   getD2,
+  getGlobalAffine,
   getMarkersOnPolygon,
   getRectPoints,
   getRotateFn,
   getRotatedWrapperRect,
+  getRotationAffine,
   isPointOnRectangle,
   sortPointFrom,
 } from "../utils/geometry";
@@ -293,4 +295,34 @@ export function migrateRelativePoint(src: IVec2, srcSize: Size, nextSize: Partia
   const nextW = nextSize.width ?? srcSize.width;
   const nextH = nextSize.height ?? srcSize.height;
   return { x: d.x / nextW + origin.x, y: d.y / nextH + origin.y };
+}
+
+export function getAffineByRightExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  const origin = applyAffine(getShapeTransform(src), {
+    x: 0,
+    y: src.height / 2,
+  });
+  const distance = getDistance(p, origin);
+  const right = Math.max(distance, min);
+  const radDiff = getRadian(p, origin) - src.rotation;
+  return getGlobalAffine(
+    origin,
+    src.rotation,
+    multiAffines([getRotationAffine(radDiff), [right / src.width, 0, 0, 1, 0, 0]]),
+  );
+}
+
+export function getAffineByLeftExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  const origin = applyAffine(getShapeTransform(src), {
+    x: src.width,
+    y: src.height / 2,
+  });
+  const distance = getDistance(p, origin);
+  const left = Math.min(src.width - distance, src.width - min);
+  const radDiff = getRadian(p, origin) + Math.PI - src.rotation;
+  return getGlobalAffine(
+    origin,
+    src.rotation,
+    multiAffines([getRotationAffine(radDiff), [(src.width - left) / src.width, 0, 0, 1, 0, 0]]),
+  );
 }
