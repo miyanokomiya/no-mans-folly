@@ -189,11 +189,13 @@ export function getConnectedLineInfoMap(
         connectedLineInfoMap[line.qConnection.id].push(line);
       }
 
-      line.body?.some((b) => {
-        if (b.c && targetIds.has(b.c.id)) {
+      // Gather connected lines without duplication
+      const saved = new Set<string>();
+      line.body?.forEach((b) => {
+        if (b.c && targetIds.has(b.c.id) && !saved.has(b.c.id)) {
           connectedLineInfoMap[b.c.id] ??= [];
           connectedLineInfoMap[b.c.id].push(line);
-          return true;
+          saved.add(b.c.id);
         }
       });
     });

@@ -295,10 +295,12 @@ describe("getConnectedLineInfoMap", () => {
       body: [
         { p: { x: 0, y: 0 }, c: { rate: { x: 0.5, y: 0.5 }, id: "a" } },
         { p: { x: 10, y: 10 }, c: { rate: { x: 0.2, y: 0.8 }, id: "b" } },
+        { p: { x: 20, y: 20 }, c: { rate: { x: 0.6, y: 0.6 }, id: "a" } },
       ],
     });
     const l1 = struct.create({
       id: "l1",
+      body: [{ p: { x: 0, y: 0 }, c: { rate: { x: 0.5, y: 0.5 }, id: "a" } }],
     });
     const l2 = struct.create({
       id: "l2",
@@ -316,5 +318,18 @@ describe("getConnectedLineInfoMap", () => {
         ["b"],
       ),
     ).toEqual({ b: [l0] });
+
+    expect(
+      getConnectedLineInfoMap(
+        {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0, l1, l2],
+              getStruct: getCommonStruct,
+            }),
+        },
+        ["a", "b"],
+      ),
+    ).toEqual({ a: [l0, l1], b: [l0] });
   });
 });
