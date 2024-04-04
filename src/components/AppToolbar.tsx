@@ -8,6 +8,7 @@ import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRoundedRectangle from "../assets/icons/shape_rounded_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
+import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
 import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
@@ -42,6 +43,7 @@ const shapeList = [
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
   { type: "trapezoid", icon: iconTrapezoid },
+  { type: "parallelogram", icon: iconParallelogram },
   { type: "cylinder", icon: iconCylinder },
   { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },

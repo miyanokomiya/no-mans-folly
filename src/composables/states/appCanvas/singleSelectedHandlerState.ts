@@ -14,19 +14,19 @@ import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { Shape } from "../../../models";
 import { ShapeHandler } from "../../shapeHandlers/core";
 
-interface SingleSelectedHandlerStateGetters {
-  getTargetShape: () => Shape;
-  getShapeHandler: () => ShapeHandler;
+interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHandler> {
+  getTargetShape: () => S;
+  getShapeHandler: () => H;
   getBoundingBox: () => BoundingBox;
 }
 
-export function defineSingleSelectedHandlerState<A extends any[]>(
-  createFn: (getters: SingleSelectedHandlerStateGetters, ...o: A) => AppCanvasState,
-  newHandlerFn: (ctx: AppCanvasStateContext, targetShape: Shape) => ShapeHandler,
+export function defineSingleSelectedHandlerState<S extends Shape, H extends ShapeHandler, A extends any[]>(
+  createFn: (getters: SingleSelectedHandlerStateGetters<S, H>, ...o: A) => AppCanvasState,
+  newHandlerFn: (ctx: AppCanvasStateContext, targetShape: S) => H,
 ): (...o: A) => AppCanvasState {
   return defineIntransientState((...o: A) => {
-    let targetShape: Shape;
-    let shapeHandler: ShapeHandler;
+    let targetShape: S;
+    let shapeHandler: H;
     let boundingBox: BoundingBox;
 
     const src = createFn(
@@ -43,7 +43,7 @@ export function defineSingleSelectedHandlerState<A extends any[]>(
       onStart: (ctx) => {
         ctx.showFloatMenu();
         ctx.setCommandExams([]);
-        targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""];
+        targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as S;
         shapeHandler = newHandlerFn(ctx, targetShape);
 
         const shapeComposite = ctx.getShapeComposite();
