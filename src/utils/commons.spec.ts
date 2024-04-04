@@ -74,6 +74,15 @@ describe("mergeMap", () => {
       a: { aa: { aab: 20 } },
     });
   });
+  test("should return the same instance when either of items is undefined", () => {
+    const b = { bb: 21 };
+    const res0 = target.mergeMap<any>({}, { b: b });
+    expect(res0.b).toBe(b);
+    const res1 = target.mergeMap<any>({ b: b }, {});
+    expect(res1.b).toBe(b);
+    const res2 = target.mergeMap<any>({ b: b }, { b: b });
+    expect(res2.b).not.toBe(b);
+  });
 });
 
 describe("remap", () => {

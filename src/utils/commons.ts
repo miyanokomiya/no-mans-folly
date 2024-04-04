@@ -30,7 +30,15 @@ export function findBackward<T>(list: T[], predicate: (value: T, index: number, 
 
 export function mergeMap<T>(src: { [key: string]: T }, override: { [key: string]: T }): { [key: string]: T } {
   return Object.keys({ ...src, ...override }).reduce<{ [key: string]: T }>((p, c) => {
-    p[c] = { ...(src[c] ?? {}), ...(override[c] ?? {}) } as T;
+    const s = src[c];
+    const o = override[c];
+    if (!s) {
+      p[c] = o;
+    } else if (!o) {
+      p[c] = s;
+    } else {
+      p[c] = { ...s, ...o } as T;
+    }
     return p;
   }, {});
 }
