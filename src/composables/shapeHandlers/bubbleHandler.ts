@@ -5,7 +5,7 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { BubbleShape, getBeakControls, getBeakSize } from "../../shapes/polygons/bubble";
-import { applyLocalSpace } from "../../utils/renderer";
+import { applyLocalSpace, scaleGlobalAlpha } from "../../utils/renderer";
 import { getLocalAbsolutePoint, getShapeDetransform } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 
@@ -59,6 +59,11 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
     const threshold = ANCHOR_SIZE * scale;
     const thresholdL = ANCHOR_SIZE_L * scale;
     const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
+
+    scaleGlobalAlpha(ctx, 0.5, () => {
+      renderBeakGuidlines(ctx, shape, style, scale);
+    });
+
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       (
         [
