@@ -46,8 +46,6 @@ export const newCrossSelectedState = defineSingleSelectedHandlerState(
                           },
                         });
                       };
-                    default:
-                      return;
                   }
                 }
               }
