@@ -2,7 +2,7 @@ import { ParallelogramShape } from "../../../../shapes/polygons/parallelogram";
 import { newParallelogramHandler, renderMovingParallelogramAnchor } from "../../../shapeHandlers/parallelogramHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
-import { IVec2, add, applyAffine, clamp, getDistance, getRadian, multiAffines, rotate } from "okageo";
+import { add, applyAffine, clamp, getDistance, getRadian, multiAffines, rotate } from "okageo";
 import { getCrossLineAndLine, getGlobalAffine, getRotationAffine, snapAngle } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { applyPath } from "../../../../utils/renderer";
@@ -94,9 +94,12 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                                 multiAffines([getRotationAffine(radDiff), [(s.width - left) / s.width, 0, 0, 1, 0, 0]]),
                               ),
                             );
+                            const d = targetShape.width * (targetShape.c0.x - 0.5);
+                            const nextW = resized.width ?? targetShape.width;
+                            const nextCX = d / nextW + 0.5;
                             return {
                               ...resized,
-                              c0: getNextC0ByRad({ ...targetShape, ...resized }, getEdgeRadian(targetShape)),
+                              c0: { x: nextCX, y: 0 },
                             };
                           },
                           getControlFn: (s) =>
@@ -133,9 +136,12 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                                 multiAffines([getRotationAffine(radDiff), [right / s.width, 0, 0, 1, 0, 0]]),
                               ),
                             );
+                            const d = targetShape.width * (targetShape.c0.x - 0.5);
+                            const nextW = resized.width ?? targetShape.width;
+                            const nextCX = d / nextW + 0.5;
                             return {
                               ...resized,
-                              c0: getNextC0ByRad({ ...targetShape, ...resized }, getEdgeRadian(targetShape)),
+                              c0: { x: nextCX, y: 0 },
                             };
                           },
                           getControlFn: (s) =>
@@ -162,21 +168,3 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
   },
   (ctx, target) => newParallelogramHandler({ getShapeComposite: ctx.getShapeComposite, targetId: target.id }),
 );
-
-function getEdgeRadian(shape: ParallelogramShape): number {
-  const orign = { x: shape.width / 2, y: shape.height };
-  return getRadian({ x: shape.c0.x * shape.width, y: 0 }, orign);
-}
-
-function getNextC0ByRad(shape: ParallelogramShape, rad: number): IVec2 {
-  const orign = { x: shape.width / 2, y: shape.height };
-  const candidate = getCrossLineAndLine(
-    [
-      { x: 0, y: 0 },
-      { x: shape.width, y: 0 },
-    ],
-    [orign, add(orign, rotate({ x: 1, y: 0 }, rad))],
-  );
-
-  return candidate ? { x: clamp(0, 1, candidate.x / shape.width), y: 0 } : shape.c0;
-}
