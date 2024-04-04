@@ -33,7 +33,7 @@ import {
 } from "../utils/geometry";
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
-import { BezierCurveControl, CommonStyle, Direction4, Shape } from "../models";
+import { BezierCurveControl, CommonStyle, Direction4, Shape, Size } from "../models";
 import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/renderer";
 import { pickMinItem } from "../utils/commons";
 import { renderTransform } from "../utils/svgElements";
@@ -286,4 +286,11 @@ export function getLocalRelativeRate(shape: SimplePolygonShape, absP: IVec2): IV
     x: absP.x / shape.width,
     y: absP.y / shape.height,
   };
+}
+
+export function migrateRelativePoint(src: IVec2, srcSize: Size, nextSize: Partial<Size>, origin: IVec2) {
+  const d = { x: srcSize.width * (src.x - origin.x), y: srcSize.height * (src.y - origin.y) };
+  const nextW = nextSize.width ?? srcSize.width;
+  const nextH = nextSize.height ?? srcSize.height;
+  return { x: d.x / nextW + origin.x, y: d.y / nextH + origin.y };
 }

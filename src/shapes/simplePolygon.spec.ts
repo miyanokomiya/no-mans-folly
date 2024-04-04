@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getStructForSimplePolygon, getNormalizedSimplePolygonShape } from "./simplePolygon";
+import { getStructForSimplePolygon, getNormalizedSimplePolygonShape, migrateRelativePoint } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 
@@ -191,5 +191,16 @@ describe("getNormalizedSimplePolygonShape", () => {
     expect(result.width).toBeCloseTo(shape.width);
     expect(result.height).toBeCloseTo(shape.height);
     expect(result.rotation).toBeCloseTo(Math.PI * 1.25);
+  });
+});
+
+describe("migrateRelativePoint", () => {
+  test("should return relative point having the same distance away from the origin", () => {
+    expect(
+      migrateRelativePoint({ x: 0.1, y: 0.2 }, { width: 10, height: 20 }, { width: 20, height: 40 }, { x: 0, y: 0 }),
+    ).toEqualPoint({ x: 0.05, y: 0.1 });
+    expect(
+      migrateRelativePoint({ x: 0.1, y: 0.2 }, { width: 10, height: 20 }, { width: 20, height: 40 }, { x: 1, y: 1 }),
+    ).toEqualPoint({ x: 0.55, y: 0.6 });
   });
 });

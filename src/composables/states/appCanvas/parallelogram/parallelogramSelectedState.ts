@@ -1,7 +1,7 @@
 import { ParallelogramShape } from "../../../../shapes/polygons/parallelogram";
 import { newParallelogramHandler, renderMovingParallelogramAnchor } from "../../../shapeHandlers/parallelogramHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform, migrateRelativePoint } from "../../../../shapes/simplePolygon";
 import { add, applyAffine, clamp, getDistance, getRadian, multiAffines, rotate } from "okageo";
 import { getCrossLineAndLine, getGlobalAffine, getRotationAffine, snapAngle } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
@@ -94,12 +94,9 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                                 multiAffines([getRotationAffine(radDiff), [(s.width - left) / s.width, 0, 0, 1, 0, 0]]),
                               ),
                             );
-                            const d = targetShape.width * (targetShape.c0.x - 0.5);
-                            const nextW = resized.width ?? targetShape.width;
-                            const nextCX = d / nextW + 0.5;
                             return {
                               ...resized,
-                              c0: { x: nextCX, y: 0 },
+                              c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0.5, y: 0 }),
                             };
                           },
                           getControlFn: (s) =>
@@ -136,12 +133,9 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                                 multiAffines([getRotationAffine(radDiff), [right / s.width, 0, 0, 1, 0, 0]]),
                               ),
                             );
-                            const d = targetShape.width * (targetShape.c0.x - 0.5);
-                            const nextW = resized.width ?? targetShape.width;
-                            const nextCX = d / nextW + 0.5;
                             return {
                               ...resized,
-                              c0: { x: nextCX, y: 0 },
+                              c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0.5, y: 0 }),
                             };
                           },
                           getControlFn: (s) =>
