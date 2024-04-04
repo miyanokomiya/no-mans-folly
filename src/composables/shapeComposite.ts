@@ -16,12 +16,22 @@ import { DocCompositionInfo } from "../utils/textEditor";
 import { SVGElementInfo } from "../utils/svgElements";
 import { generateNKeysBetween } from "fractional-indexing";
 import { generateKeyBetweenAllowSame } from "../utils/findex";
+import { newObjectWeakCache } from "./cache";
 
 interface Option {
   shapes: Shape[];
   getStruct: shapeModule.GetShapeStruct;
   tmpShapeMap?: { [id: string]: Partial<Shape> };
 }
+
+const cacheMap = newObjectWeakCache<
+  Shape,
+  {
+    wrapperRect: IRectangle;
+    "wrapperRect:bounds": IRectangle;
+    localRectPolygon: IVec2[];
+  }
+>();
 
 export function newShapeComposite(option: Option) {
   const shapeMap = toMap(option.shapes);
@@ -105,7 +115,9 @@ export function newShapeComposite(option: Option) {
   }
 
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
-    return shapeModule.getWrapperRect(option.getStruct, shape, mergedShapeContext, includeBounds);
+    return cacheMap.getValue(shape, includeBounds ? "wrapperRect:bounds" : "wrapperRect", () => {
+      return shapeModule.getWrapperRect(option.getStruct, shape, mergedShapeContext, includeBounds);
+    });
   }
 
   function getWrapperRectForShapes(shapes: Shape[], includeBounds?: boolean): IRectangle {
@@ -114,7 +126,9 @@ export function newShapeComposite(option: Option) {
   }
 
   function getLocalRectPolygon(shape: Shape): IVec2[] {
-    return shapeModule.getLocalRectPolygon(option.getStruct, shape, mergedShapeContext);
+    return cacheMap.getValue(shape, "localRectPolygon", () => {
+      return shapeModule.getLocalRectPolygon(option.getStruct, shape, mergedShapeContext);
+    });
   }
 
   function getShapesOverlappingRect(shapes: Shape[], rect: IRectangle): Shape[] {

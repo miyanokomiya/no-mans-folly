@@ -1,5 +1,5 @@
 import { expect, describe, test, vi, afterEach, beforeEach } from "vitest";
-import { newCache, newChronoCache } from "./cache";
+import { newCache, newChronoCache, newObjectWeakCache } from "./cache";
 
 describe("newCache", () => {
   beforeEach(() => {
@@ -45,5 +45,26 @@ describe("newChronoCache", () => {
     vi.advanceTimersByTime(20);
     expect(target.getValue("a")).toEqual(undefined);
     expect(target.getValue("b")).toEqual(2);
+  });
+});
+
+describe("newObjectWeakCache", () => {
+  test("should return cached value when it exists", () => {
+    let count = 0;
+    const getFn = () => {
+      count++;
+      return count;
+    };
+    const cache = newObjectWeakCache<{ x: number }, { x: number }>();
+    const a = { x: 0 };
+    expect(cache.getValue(a, "x", getFn)).toBe(1);
+    expect(cache.getValue(a, "x", getFn)).toBe(1);
+    expect(cache.getValue(a, "x", getFn)).toBe(1);
+    expect(count).toBe(1);
+
+    const b = { x: 0 };
+    expect(cache.getValue(b, "x", getFn)).toBe(2);
+    expect(cache.getValue(b, "x", getFn)).toBe(2);
+    expect(count).toBe(2);
   });
 });

@@ -55,3 +55,27 @@ export function newChronoCache<Key, T>(option: { duration: number; getTimestamp:
 
   return { getValue, setValue };
 }
+
+export function newObjectWeakCache<K extends object, T extends object>() {
+  const cacheMap = new WeakMap<K, Partial<T>>();
+
+  function getValue<V>(obj: K, key: keyof T, getFn: () => V): V {
+    const cache = cacheMap.get(obj);
+    if (cache) {
+      const v = cache[key];
+      if (v) return v as V;
+
+      const newV = getFn();
+      cache[key] = newV as any;
+      return newV;
+    } else {
+      const newV = getFn();
+      cacheMap.set(obj, { [key]: newV } as any);
+      return newV;
+    }
+  }
+
+  return {
+    getValue,
+  };
+}
