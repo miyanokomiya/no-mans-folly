@@ -10,7 +10,7 @@ import { ParallelogramShape } from "../../shapes/polygons/parallelogram";
 
 const ANCHOR_SIZE = 6;
 
-type AnchorType = "c0";
+type AnchorType = "c0" | "left" | "right";
 
 interface ParallelogramHitResult {
   type: AnchorType;
@@ -29,16 +29,24 @@ export const newParallelogramHandler = defineShapeHandler<ParallelogramHitResult
 
   function getAnchors() {
     const controlSizeP = { x: shape.width * shape.c0.x, y: 0 };
-    return { controlSizeP };
+    const controlLeftP = { x: 0, y: shape.height / 2 };
+    const controlRightP = { x: shape.width, y: shape.height / 2 };
+    return { controlSizeP, controlLeftP, controlRightP };
   }
 
   function hitTest(p: IVec2, scale = 1): ParallelogramHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
-    const { controlSizeP } = getAnchors();
+    const { controlSizeP, controlLeftP, controlRightP } = getAnchors();
     const adjustedP = sub(rotateFn(p, true), shape.p);
 
     if (getDistance(controlSizeP, adjustedP) <= threshold) {
       return { type: "c0" };
+    }
+    if (getDistance(controlLeftP, adjustedP) <= threshold) {
+      return { type: "left" };
+    }
+    if (getDistance(controlRightP, adjustedP) <= threshold) {
+      return { type: "right" };
     }
   }
 
@@ -49,18 +57,27 @@ export const newParallelogramHandler = defineShapeHandler<ParallelogramHitResult
     hitResult?: ParallelogramHitResult,
   ) {
     const threshold = ANCHOR_SIZE * scale;
-    const { controlSizeP } = getAnchors();
+    const { controlSizeP, controlLeftP, controlRightP } = getAnchors();
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
-      applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot" });
-      if (hitResult) {
-        applyFillStyle(ctx, { color: style.selectionSecondaly });
-      } else {
-        applyFillStyle(ctx, { color: style.selectionPrimary });
-      }
+      (
+        [
+          [controlSizeP, hitResult?.type === "c0"],
+          [controlLeftP, hitResult?.type === "left"],
+          [controlRightP, hitResult?.type === "right"],
+        ] as const
+      ).forEach(([p, highlight]) => {
+        if (highlight) {
+          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly });
+        } else {
+          applyFillStyle(ctx, { color: style.selectionPrimary });
+          applyStrokeStyle(ctx, { color: style.selectionPrimary });
+        }
 
-      ctx.beginPath();
-      ctx.arc(controlSizeP.x, controlSizeP.y, threshold, 0, TAU);
-      ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, threshold, 0, TAU);
+        ctx.fill();
+      });
     });
   }
 
