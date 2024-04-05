@@ -54,6 +54,7 @@ import {
   getCrossSegAndSegWithT,
   pickLongSegment,
   getRectWithRotationFromRectPolygon,
+  snapRadianByAngle,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -542,6 +543,13 @@ describe("isPointCloseToBezierSegment", () => {
     expect(
       isPointCloseToBezierSegment(points[0], points[1], controls[0].c1, controls[0].c2, { x: 0.1, y: -6 }, 1),
     ).toBe(false);
+  });
+});
+
+describe("snapRadianByAngle", () => {
+  test("should return snapped radian based on angle", () => {
+    expect(snapRadianByAngle((11 * Math.PI) / 180, 5)).toBeCloseTo((10 * Math.PI) / 180);
+    expect(snapRadianByAngle((11 * Math.PI) / 180, 3)).toBeCloseTo((12 * Math.PI) / 180);
   });
 });
 

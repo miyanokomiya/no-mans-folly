@@ -4,7 +4,8 @@ import { movingShapeControlState } from "../movingShapeControlState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
-import { getCrossLineAndLine, snapAngle } from "../../../../utils/geometry";
+import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
   TrapezoidShape,
@@ -33,15 +34,18 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                         return movingShapeControlState<TrapezoidShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
+                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
                           patchFn: (s, p, movement) => {
                             const localP = applyAffine(getShapeDetransform(s), p);
-                            let nextCX = clamp(0, 1, localP.x / s.width);
+                            let nextCX = movement.shift
+                              ? clamp(0, 0.5, localP.x / s.width)
+                              : clamp(0, 1, localP.x / s.width);
                             if (movement.ctrl) {
                               showLabel = false;
                             } else {
                               const orign = { x: 0, y: targetShape.height };
                               const rad = getRadian({ x: nextCX * targetShape.width, y: 0 }, orign);
-                              const snappedRad = (snapAngle((rad * 180) / Math.PI, 1) * Math.PI) / 180;
+                              const snappedRad = snapRadianByAngle(rad, 1);
                               const snappedC = getCrossLineAndLine(
                                 [
                                   { x: 0, y: 0 },
@@ -54,7 +58,9 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                                 showLabel = true;
                               }
                             }
-                            return { c0: { x: nextCX, y: 0 } };
+                            return movement.shift
+                              ? { c0: { x: nextCX, y: 0 }, c1: { x: 1 - nextCX, y: 0 } }
+                              : { c0: { x: nextCX, y: 0 } };
                           },
                           getControlFn: (s) =>
                             applyAffine(getShapeTransform(s), {
@@ -79,15 +85,18 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                         return movingShapeControlState<TrapezoidShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
+                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
                           patchFn: (s, p, movement) => {
                             const localP = applyAffine(getShapeDetransform(s), p);
-                            let nextCX = clamp(0, 1, localP.x / s.width);
+                            let nextCX = movement.shift
+                              ? clamp(0.5, 1, localP.x / s.width)
+                              : clamp(0, 1, localP.x / s.width);
                             if (movement.ctrl) {
                               showLabel = false;
                             } else {
                               const orign = { x: targetShape.width, y: targetShape.height };
                               const rad = getRadian({ x: nextCX * targetShape.width, y: 0 }, orign);
-                              const snappedRad = (snapAngle((rad * 180) / Math.PI, 1) * Math.PI) / 180;
+                              const snappedRad = snapRadianByAngle(rad, 1);
                               const snappedC = getCrossLineAndLine(
                                 [
                                   { x: 0, y: 0 },
@@ -100,7 +109,9 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                                 showLabel = true;
                               }
                             }
-                            return { c1: { x: nextCX, y: 0 } };
+                            return movement.shift
+                              ? { c0: { x: 1 - nextCX, y: 0 }, c1: { x: nextCX, y: 0 } }
+                              : { c1: { x: nextCX, y: 0 } };
                           },
                           getControlFn: (s) =>
                             applyAffine(getShapeTransform(s), {

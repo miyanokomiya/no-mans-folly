@@ -455,6 +455,10 @@ export function snapAngle(rotate: number, angle = 15): number {
   return snapNumber(rotate, angle);
 }
 
+export function snapRadianByAngle(rad: number, angle = 15): number {
+  return (snapNumber((rad * 180) / Math.PI, angle) * Math.PI) / 180;
+}
+
 export function snapScale(scale: IVec2, step = 0.1): IVec2 {
   return {
     x: snapNumber(scale.x, step),
