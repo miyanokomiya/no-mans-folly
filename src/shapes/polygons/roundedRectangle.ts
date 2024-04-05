@@ -12,7 +12,7 @@ export type RoundedRectangleShape = SimplePolygonShape & {
 
 export const struct: ShapeStruct<RoundedRectangleShape> = {
   ...getStructForSimplePolygon(getPath, { outlineSnap: "trbl" }),
-  label: "Rounded Rectangle",
+  label: "RoundedRectangle",
   create(arg = {}) {
     return {
       ...createBaseShape(arg),
