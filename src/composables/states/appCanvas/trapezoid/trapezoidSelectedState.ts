@@ -7,7 +7,7 @@ import {
   getDirectionalLocalAbsolutePoints,
   getExpansionFn,
   getMigrateRelativePointFn,
-  getNextDirection,
+  getNextDirection4,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
   getShapeDirection,
@@ -207,7 +207,7 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                       };
                     case "direction4": {
                       const patch = {
-                        direction: getNextDirection(getShapeDirection(targetShape)),
+                        direction: getNextDirection4(getShapeDirection(targetShape)),
                       } as Partial<SimplePolygonShape>;
                       const layoutPatch = getPatchByLayouts(shapeComposite, {
                         update: { [targetShape.id]: patch },

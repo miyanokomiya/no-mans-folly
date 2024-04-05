@@ -85,6 +85,8 @@ export const struct: ShapeStruct<TrapezoidShape> = {
 };
 
 function getPath(src: TrapezoidShape): SimplePath {
+  if (src.direction === undefined || src.direction === 1) return getRawPath(src);
+
   const shape = getNormalizedSimplePolygonShape(src);
   const { path } = getRawPath(shape);
   const c = { x: src.width / 2, y: src.height / 2 };

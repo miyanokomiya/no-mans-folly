@@ -10,7 +10,7 @@ import {
   getMigrateRelativePointFn,
   getShapeDirection,
   SimplePolygonShape,
-  getNextDirection,
+  getNextDirection4,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
@@ -339,10 +339,10 @@ describe("getShapeDirection", () => {
 
 describe("getNextDirection", () => {
   test("should return next direction", () => {
-    expect(getNextDirection(undefined)).toBe(2);
-    expect(getNextDirection(0)).toBe(1);
-    expect(getNextDirection(1)).toBe(2);
-    expect(getNextDirection(2)).toBe(3);
-    expect(getNextDirection(3)).toBe(0);
+    expect(getNextDirection4(undefined)).toBe(2);
+    expect(getNextDirection4(0)).toBe(1);
+    expect(getNextDirection4(1)).toBe(2);
+    expect(getNextDirection4(2)).toBe(3);
+    expect(getNextDirection4(3)).toBe(0);
   });
 });

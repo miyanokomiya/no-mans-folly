@@ -1,22 +1,31 @@
 import { ParallelogramShape } from "../../../../shapes/polygons/parallelogram";
-import { newParallelogramHandler, renderMovingParallelogramAnchor } from "../../../shapeHandlers/parallelogramHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
-  getAffineByLeftExpansion,
-  getAffineByRightExpansion,
+  SimplePolygonShape,
+  getDirectionalLocalAbsolutePoints,
+  getExpansionFn,
+  getMigrateRelativePointFn,
+  getNextDirection2,
+  getNormalizedSimplePolygonShape,
   getShapeDetransform,
+  getShapeDirection,
   getShapeTransform,
-  migrateRelativePoint,
 } from "../../../../shapes/simplePolygon";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
 import { getCrossLineAndLine, snapAngle } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
-import { applyPath } from "../../../../utils/renderer";
-import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { renderValueLabel } from "../../../../utils/renderer";
+import {
+  SimplePolygonHandler,
+  newSimplePolygonHandler,
+  renderShapeBounds,
+} from "../../../shapeHandlers/simplePolygonHandler";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { newSelectionHubState } from "../selectionHubState";
 
 export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
   ParallelogramShape,
-  ReturnType<typeof newParallelogramHandler>,
+  SimplePolygonHandler,
   never
 >(
   (getters) => {
@@ -41,7 +50,8 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                         return movingShapeControlState<ParallelogramShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
-                          patchFn: (s, p, movement) => {
+                          patchFn: (shape, p, movement) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
                             const localP = applyAffine(getShapeDetransform(s), p);
                             let nextCX = clamp(0, 1, localP.x / s.width);
                             if (movement.ctrl) {
@@ -64,18 +74,23 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                             }
                             return { c0: { x: nextCX, y: 0 } };
                           },
-                          getControlFn: (s) =>
-                            applyAffine(getShapeTransform(s), {
-                              x: s.width * s.c0.x,
-                              y: 0,
-                            }),
-                          renderFn: (ctx, renderCtx, s) => {
-                            renderMovingParallelogramAnchor(
+                          getControlFn: (shape) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), { x: s.width * s.c0.x, y: 0 });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
+
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const origin = { x: s.width / 2, y: s.height };
+                            const rad = getRadian({ x: s.width * s.c0.x, y: 0 }, origin);
+                            const angle = Math.round((-rad * 180) / Math.PI);
+                            renderValueLabel(
                               renderCtx,
-                              ctx.getStyleScheme(),
+                              angle,
+                              applyAffine(getShapeTransform(s), origin),
+                              0,
                               ctx.getScale(),
-                              s,
-                              showLabel,
                             );
                           },
                         });
@@ -84,24 +99,24 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                       return () => {
                         return movingShapeControlState<ParallelogramShape>({
                           targetId: targetShape.id,
-                          patchFn: (s, p) => {
-                            const resized = shapeComposite.transformShape(s, getAffineByLeftExpansion(s, p));
+                          patchFn: (shape, p) => {
+                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 3)(shape, p));
+                            const migrateFn = getMigrateRelativePointFn(shape, resized);
                             return {
                               ...resized,
-                              c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0.5, y: 0 }),
+                              c0: migrateFn(targetShape.c0, { x: 0.5, y: 0 }),
                             };
                           },
-                          getControlFn: (s) =>
-                            applyAffine(getShapeTransform(s), {
-                              x: 0,
-                              y: s.height / 2,
-                            }),
-                          renderFn: (ctx, renderCtx, s) => {
-                            const path = shapeComposite.getLocalRectPolygon(s);
-                            applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
-                            renderCtx.beginPath();
-                            applyPath(renderCtx, path, true);
-                            renderCtx.stroke();
+                          getControlFn: (shape) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), { x: 0, y: s.height / 2 });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            renderShapeBounds(
+                              renderCtx,
+                              ctx.getStyleScheme(),
+                              shapeComposite.getLocalRectPolygon(shape),
+                            );
                           },
                         });
                       };
@@ -109,27 +124,37 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                       return () => {
                         return movingShapeControlState<ParallelogramShape>({
                           targetId: targetShape.id,
-                          patchFn: (s, p) => {
-                            const resized = shapeComposite.transformShape(s, getAffineByRightExpansion(s, p));
+                          patchFn: (shape, p) => {
+                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 1)(shape, p));
+                            const migrateFn = getMigrateRelativePointFn(shape, resized);
                             return {
                               ...resized,
-                              c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0.5, y: 0 }),
+                              c0: migrateFn(targetShape.c0, { x: 0.5, y: 0 }),
                             };
                           },
-                          getControlFn: (s) =>
-                            applyAffine(getShapeTransform(s), {
-                              x: s.width,
-                              y: s.height / 2,
-                            }),
-                          renderFn: (ctx, renderCtx, s) => {
-                            const path = shapeComposite.getLocalRectPolygon(s);
-                            applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
-                            renderCtx.beginPath();
-                            applyPath(renderCtx, path, true);
-                            renderCtx.stroke();
+                          getControlFn: (shape) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), { x: s.width, y: s.height / 2 });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            renderShapeBounds(
+                              renderCtx,
+                              ctx.getStyleScheme(),
+                              shapeComposite.getLocalRectPolygon(shape),
+                            );
                           },
                         });
                       };
+                    case "direction4": {
+                      const patch = {
+                        direction: getNextDirection2(getShapeDirection(targetShape)),
+                      } as Partial<SimplePolygonShape>;
+                      const layoutPatch = getPatchByLayouts(shapeComposite, {
+                        update: { [targetShape.id]: patch },
+                      });
+                      ctx.patchShapes(layoutPatch);
+                      return newSelectionHubState;
+                    }
                   }
                 }
               }
@@ -138,5 +163,19 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
       },
     };
   },
-  (ctx, target) => newParallelogramHandler({ getShapeComposite: ctx.getShapeComposite, targetId: target.id }),
+  (ctx, target) =>
+    newSimplePolygonHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      targetId: target.id,
+      getAnchors: () => {
+        const s = getNormalizedSimplePolygonShape(target);
+        const list = getDirectionalLocalAbsolutePoints(target, s, [s.c0, { x: 0, y: 0.5 }, { x: 1, y: 0.5 }]);
+        return [
+          ["c0", list[0]],
+          ["left", list[1]],
+          ["right", list[2]],
+        ];
+      },
+      direction4: true,
+    }),
 );

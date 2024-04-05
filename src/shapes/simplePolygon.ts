@@ -431,6 +431,10 @@ export function getShapeDirection(shape: SimplePolygonShape): Direction4 {
   return shape.direction ?? 1;
 }
 
-export function getNextDirection(val: Direction4 | undefined): Direction4 {
+export function getNextDirection4(val: Direction4 | undefined): Direction4 {
   return (((val ?? 1) + 1) % 4) as Direction4;
+}
+
+export function getNextDirection2(val: Direction4 | undefined): Direction4 {
+  return (((val ?? 1) + 1) % 2) as Direction4;
 }
