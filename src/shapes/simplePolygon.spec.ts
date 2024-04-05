@@ -11,6 +11,7 @@ import {
   getShapeDirection,
   SimplePolygonShape,
   getNextDirection4,
+  getNextDirection2,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
@@ -337,12 +338,22 @@ describe("getShapeDirection", () => {
   });
 });
 
-describe("getNextDirection", () => {
-  test("should return next direction", () => {
+describe("getNextDirection4", () => {
+  test("should return next direction4", () => {
     expect(getNextDirection4(undefined)).toBe(2);
     expect(getNextDirection4(0)).toBe(1);
     expect(getNextDirection4(1)).toBe(2);
     expect(getNextDirection4(2)).toBe(3);
     expect(getNextDirection4(3)).toBe(0);
+  });
+});
+
+describe("getNextDirection2", () => {
+  test("should return next direction2", () => {
+    expect(getNextDirection2(undefined)).toBe(0);
+    expect(getNextDirection2(0)).toBe(1);
+    expect(getNextDirection2(1)).toBe(0);
+    expect(getNextDirection2(2)).toBe(1);
+    expect(getNextDirection2(3)).toBe(0);
   });
 });
