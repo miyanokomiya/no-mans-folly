@@ -2,13 +2,15 @@ import { IVec2, getDistance, getRectCenter, sub } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
-import { TAU, getRotateFn } from "../../utils/geometry";
+import { TAU, getRadianForDirection4, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace } from "../../utils/renderer";
+import { applyLocalSpace, renderArrowUnit } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { SimplePolygonShape } from "../../shapes/simplePolygon";
+import { COLORS } from "../../utils/color";
 
 export const ANCHOR_SIZE = 6;
+const DIRECTION_ANCHOR_SIZE = 10;
 
 type HitAnchor = [type: string, IVec2];
 
@@ -20,6 +22,7 @@ interface Option {
   getShapeComposite: () => ShapeComposite;
   targetId: string;
   getAnchors: (scale: number) => HitAnchor[];
+  direction4?: boolean;
 }
 
 export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult, Option>((option) => {
@@ -30,6 +33,11 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
 
   const getAnchors = option.getAnchors;
 
+  function getDirection4Anchor(scale: number): HitAnchor | undefined {
+    const d = DIRECTION_ANCHOR_SIZE * 2 * scale;
+    return option.direction4 ? ["direction4", { x: shapeRect.width + d, y: shapeRect.height + d }] : undefined;
+  }
+
   function hitTest(p: IVec2, scale = 1): SimplePolygonHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
     const anchors = getAnchors(scale);
@@ -38,6 +46,12 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
     const hit = anchors.find((a) => getDistance(a[1], adjustedP) <= threshold);
     if (hit) {
       return { type: hit[0] };
+    }
+
+    const direction4Anchor = getDirection4Anchor(scale);
+    const directionThreshold = DIRECTION_ANCHOR_SIZE * scale;
+    if (direction4Anchor && getDistance(direction4Anchor[1], adjustedP) <= directionThreshold) {
+      return { type: direction4Anchor[0] };
     }
   }
 
@@ -48,7 +62,10 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
     hitResult?: SimplePolygonHitResult,
   ) {
     const threshold = ANCHOR_SIZE * scale;
+    const directionThreshold = DIRECTION_ANCHOR_SIZE * scale;
     const anchors = getAnchors(scale);
+    const direction4Anchor = getDirection4Anchor(scale);
+
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       anchors
         .map<[IVec2, boolean]>((a) => [a[1], a[0] === hitResult?.type])
@@ -64,6 +81,24 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
           ctx.arc(p.x, p.y, threshold, 0, TAU);
           ctx.fill();
         });
+
+      if (direction4Anchor) {
+        if (hitResult?.type === direction4Anchor[0]) {
+          applyFillStyle(ctx, { color: style.selectionSecondaly });
+        } else {
+          applyFillStyle(ctx, { color: style.selectionPrimary });
+        }
+        ctx.beginPath();
+        ctx.arc(direction4Anchor[1].x, direction4Anchor[1].y, directionThreshold, 0, TAU);
+        ctx.fill();
+        applyFillStyle(ctx, { color: COLORS.WHITE });
+        renderArrowUnit(
+          ctx,
+          direction4Anchor[1],
+          getRadianForDirection4(shape.direction ?? 1) + Math.PI / 2,
+          directionThreshold * 0.8,
+        );
+      }
     });
   }
 

@@ -250,6 +250,18 @@ function getNormalizedAttrsForVertical(shape: SimplePolygonShape): Partial<Simpl
   };
 }
 
+export function getDirectionalLocalAbsolutePoints<T extends SimplePolygonShape>(
+  src: T,
+  normalized: T,
+  points: IVec2[],
+): IVec2[] {
+  const c = { x: src.p.x + src.width / 2, y: src.p.y + src.height / 2 };
+  const rotateFn = getRotateFn(normalized.rotation - src.rotation, c);
+  return points.map((p) =>
+    sub(rotateFn({ x: normalized.p.x + normalized.width * p.x, y: normalized.p.y + normalized.height * p.y }), src.p),
+  );
+}
+
 export function getShapeTransform(shape: SimplePolygonShape): AffineMatrix {
   const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const center = getRectCenter(rect);
@@ -325,4 +337,61 @@ export function getAffineByLeftExpansion(src: SimplePolygonShape, p: IVec2, min 
     src.rotation,
     multiAffines([getRotationAffine(radDiff), [(src.width - left) / src.width, 0, 0, 1, 0, 0]]),
   );
+}
+
+export function getAffineByTopExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  const origin = applyAffine(getShapeTransform(src), {
+    x: src.width / 2,
+    y: src.height,
+  });
+  const distance = getDistance(p, origin);
+  const top = Math.min(src.height - distance, src.height - min);
+  const radDiff = getRadian(p, origin) + Math.PI / 2 - src.rotation;
+  return getGlobalAffine(
+    origin,
+    src.rotation,
+    multiAffines([getRotationAffine(radDiff), [1, 0, 0, (src.height - top) / src.height, 0, 0]]),
+  );
+}
+
+export function getAffineByBottomExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  const origin = applyAffine(getShapeTransform(src), {
+    x: src.width / 2,
+    y: 0,
+  });
+  const distance = getDistance(p, origin);
+  const bottom = Math.max(distance, min);
+  const radDiff = getRadian(p, origin) - Math.PI / 2 - src.rotation;
+  return getGlobalAffine(
+    origin,
+    src.rotation,
+    multiAffines([getRotationAffine(radDiff), [1, 0, 0, bottom / src.height, 0, 0]]),
+  );
+}
+
+export function getExpansionFn(src: SimplePolygonShape, targetDirection: Direction4) {
+  switch (src.direction) {
+    case 2:
+      switch (targetDirection) {
+        case 0:
+          return getAffineByLeftExpansion;
+        case 2:
+          return getAffineByRightExpansion;
+        case 3:
+          return getAffineByTopExpansion;
+        default:
+          return getAffineByBottomExpansion;
+      }
+    default:
+      switch (targetDirection) {
+        case 0:
+          return getAffineByTopExpansion;
+        case 2:
+          return getAffineByBottomExpansion;
+        case 3:
+          return getAffineByLeftExpansion;
+        default:
+          return getAffineByLeftExpansion;
+      }
+  }
 }

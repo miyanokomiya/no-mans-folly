@@ -5,6 +5,8 @@ import {
   migrateRelativePoint,
   getAffineByRightExpansion,
   getAffineByLeftExpansion,
+  getAffineByTopExpansion,
+  getAffineByBottomExpansion,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
@@ -258,5 +260,54 @@ describe("getAffineByLeftExpansion", () => {
         y: -50,
       },
     );
+  });
+});
+
+describe("getAffineByTopExpansion", () => {
+  test("should retrun affine matrix to expand the shape by moving top anchor", () => {
+    const shape = rectangleStruct.create({ width: 100, height: 100 });
+    expect(
+      applyAffine(getAffineByTopExpansion(shape, { x: 50, y: 95 }, 20), { x: 50, y: 0 }),
+      "minimum ristriction",
+    ).toEqualPoint({ x: 50, y: 80 });
+    expect(applyAffine(getAffineByTopExpansion(shape, { x: 50, y: 50 }), { x: 50, y: 0 }), "shrink").toEqualPoint({
+      x: 50,
+      y: 50,
+    });
+    expect(applyAffine(getAffineByTopExpansion(shape, { x: 50, y: -50 }), { x: 50, y: 0 }), "expand").toEqualPoint({
+      x: 50,
+      y: -50,
+    });
+    expect(applyAffine(getAffineByTopExpansion(shape, { x: -50, y: -100 }), { x: 50, y: 0 }), "rotation").toEqualPoint({
+      x: -50,
+      y: -100,
+    });
+  });
+});
+
+describe("getAffineByBottomExpansion", () => {
+  test("should retrun affine matrix to expand the shape by moving bottom anchor", () => {
+    const shape = rectangleStruct.create({ width: 100, height: 100 });
+    expect(
+      applyAffine(getAffineByBottomExpansion(shape, { x: 50, y: 5 }, 20), { x: 50, y: 100 }),
+      "minimum ristriction",
+    ).toEqualPoint({ x: 50, y: 20 });
+    expect(applyAffine(getAffineByBottomExpansion(shape, { x: 50, y: 50 }), { x: 50, y: 100 }), "shrink").toEqualPoint({
+      x: 50,
+      y: 50,
+    });
+    expect(applyAffine(getAffineByBottomExpansion(shape, { x: 50, y: 150 }), { x: 50, y: 100 }), "expand").toEqualPoint(
+      {
+        x: 50,
+        y: 150,
+      },
+    );
+    expect(
+      applyAffine(getAffineByBottomExpansion(shape, { x: -50, y: 200 }), { x: 50, y: 100 }),
+      "rotation",
+    ).toEqualPoint({
+      x: -50,
+      y: 200,
+    });
   });
 });
