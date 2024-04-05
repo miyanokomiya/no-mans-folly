@@ -4,7 +4,7 @@ import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, applyPath, renderArrowUnit } from "../../utils/renderer";
+import { applyLocalSpace, applyPath, renderSwitchDirection } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { SimplePolygonShape, getShapeDirection } from "../../shapes/simplePolygon";
 import { COLORS } from "../../utils/color";
@@ -92,11 +92,11 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
         ctx.arc(direction4Anchor[1].x, direction4Anchor[1].y, directionThreshold, 0, TAU);
         ctx.fill();
         applyFillStyle(ctx, { color: COLORS.WHITE });
-        renderArrowUnit(
+        renderSwitchDirection(
           ctx,
           direction4Anchor[1],
-          getRadianForDirection4(getShapeDirection(shape)) + Math.PI / 2,
-          directionThreshold * 0.8,
+          getRadianForDirection4(getShapeDirection(shape)),
+          directionThreshold,
         );
       }
     });

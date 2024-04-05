@@ -4,7 +4,7 @@ import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4 } from "../../utils/geometry";
-import { renderArrowUnit } from "../../utils/renderer";
+import { renderSwitchDirection } from "../../utils/renderer";
 import { COLORS } from "../../utils/color";
 import { getArrowHeadPoint, getArrowTailPoint } from "../../utils/arrows";
 import { defineShapeHandler } from "./core";
@@ -96,12 +96,7 @@ export const newArrowHandler = defineShapeHandler<ArrowHitResult, Option>((optio
     ctx.arc(directionAnchor.x, directionAnchor.y, directionThreshold, 0, TAU);
     ctx.fill();
     applyFillStyle(ctx, { color: COLORS.WHITE });
-    renderArrowUnit(
-      ctx,
-      directionAnchor,
-      getRadianForDirection4(getShapeDirection(shape)) + Math.PI / 2,
-      directionThreshold * 0.8,
-    );
+    renderSwitchDirection(ctx, directionAnchor, getRadianForDirection4(getShapeDirection(shape)), directionThreshold);
   }
 
   return {
