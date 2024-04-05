@@ -3,9 +3,17 @@ import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState"
 import { movingShapeControlState } from "../movingShapeControlState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
-import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
+import {
+  getAffineByLeftExpansion,
+  getAffineByRightExpansion,
+  getShapeDetransform,
+  getShapeTransform,
+  migrateRelativePoint,
+} from "../../../../shapes/simplePolygon";
 import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { applyPath } from "../../../../utils/renderer";
 
 export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
   TrapezoidShape,
@@ -24,6 +32,8 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
               case 0: {
                 const targetShape = getters.getTargetShape();
                 const shapeHandler = getters.getShapeHandler();
+                const shapeComposite = ctx.getShapeComposite();
+
                 const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
                 shapeHandler.saveHitResult(hitResult);
                 if (hitResult) {
@@ -127,6 +137,58 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                               "c1",
                               showLabel,
                             );
+                          },
+                        });
+                      };
+                    case "left":
+                      return () => {
+                        return movingShapeControlState<TrapezoidShape>({
+                          targetId: targetShape.id,
+                          patchFn: (s, p) => {
+                            const resized = shapeComposite.transformShape(s, getAffineByLeftExpansion(s, p));
+                            return {
+                              ...resized,
+                              c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0, y: 0 }),
+                              c1: migrateRelativePoint(targetShape.c1, targetShape, resized, { x: 1, y: 0 }),
+                            };
+                          },
+                          getControlFn: (s) =>
+                            applyAffine(getShapeTransform(s), {
+                              x: 0,
+                              y: s.height / 2,
+                            }),
+                          renderFn: (ctx, renderCtx, s) => {
+                            const path = shapeComposite.getLocalRectPolygon(s);
+                            applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
+                            renderCtx.beginPath();
+                            applyPath(renderCtx, path, true);
+                            renderCtx.stroke();
+                          },
+                        });
+                      };
+                    case "right":
+                      return () => {
+                        return movingShapeControlState<TrapezoidShape>({
+                          targetId: targetShape.id,
+                          patchFn: (s, p) => {
+                            const resized = shapeComposite.transformShape(s, getAffineByRightExpansion(s, p));
+                            return {
+                              ...resized,
+                              c0: migrateRelativePoint(targetShape.c0, targetShape, resized, { x: 0, y: 0 }),
+                              c1: migrateRelativePoint(targetShape.c1, targetShape, resized, { x: 1, y: 0 }),
+                            };
+                          },
+                          getControlFn: (s) =>
+                            applyAffine(getShapeTransform(s), {
+                              x: s.width,
+                              y: s.height / 2,
+                            }),
+                          renderFn: (ctx, renderCtx, s) => {
+                            const path = shapeComposite.getLocalRectPolygon(s);
+                            applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
+                            renderCtx.beginPath();
+                            applyPath(renderCtx, path, true);
+                            renderCtx.stroke();
                           },
                         });
                       };

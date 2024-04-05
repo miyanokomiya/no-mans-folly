@@ -10,7 +10,7 @@ import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 const ANCHOR_SIZE = 6;
 
-type AnchorType = "c0" | "c1";
+type AnchorType = "c0" | "c1" | "left" | "right";
 
 interface TrapezoidHitResult {
   type: AnchorType;
@@ -30,12 +30,14 @@ export const newTrapezoidHandler = defineShapeHandler<TrapezoidHitResult, Option
   function getAnchors() {
     const control0P = { x: shape.width * shape.c0.x, y: shape.height * shape.c0.y };
     const control1P = { x: shape.width * shape.c1.x, y: shape.height * shape.c1.y };
-    return { control0P, control1P };
+    const controlLeftP = { x: 0, y: shape.height / 2 };
+    const controlRightP = { x: shape.width, y: shape.height / 2 };
+    return { control0P, control1P, controlLeftP, controlRightP };
   }
 
   function hitTest(p: IVec2, scale = 1): TrapezoidHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
-    const { control0P, control1P } = getAnchors();
+    const { control0P, control1P, controlLeftP, controlRightP } = getAnchors();
     const adjustedP = sub(rotateFn(p, true), shape.p);
 
     if (getDistance(control1P, adjustedP) <= threshold) {
@@ -44,16 +46,24 @@ export const newTrapezoidHandler = defineShapeHandler<TrapezoidHitResult, Option
     if (getDistance(control0P, adjustedP) <= threshold) {
       return { type: "c0" };
     }
+    if (getDistance(controlLeftP, adjustedP) <= threshold) {
+      return { type: "left" };
+    }
+    if (getDistance(controlRightP, adjustedP) <= threshold) {
+      return { type: "right" };
+    }
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TrapezoidHitResult) {
     const threshold = ANCHOR_SIZE * scale;
-    const { control0P, control1P } = getAnchors();
+    const { control0P, control1P, controlLeftP, controlRightP } = getAnchors();
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       (
         [
           [control0P, hitResult?.type === "c0"],
           [control1P, hitResult?.type === "c1"],
+          [controlLeftP, hitResult?.type === "left"],
+          [controlRightP, hitResult?.type === "right"],
         ] as const
       ).forEach(([p, highlight]) => {
         if (highlight) {
@@ -63,11 +73,6 @@ export const newTrapezoidHandler = defineShapeHandler<TrapezoidHitResult, Option
           applyFillStyle(ctx, { color: style.selectionPrimary });
           applyStrokeStyle(ctx, { color: style.selectionPrimary });
         }
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x, 0);
-        ctx.stroke();
-
         ctx.beginPath();
         ctx.arc(p.x, p.y, threshold, 0, TAU);
         ctx.fill();
