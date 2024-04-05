@@ -4,9 +4,9 @@ import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderArrowUnit } from "../../utils/renderer";
+import { applyLocalSpace, applyPath, renderArrowUnit } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { SimplePolygonShape } from "../../shapes/simplePolygon";
+import { SimplePolygonShape, getShapeDirection } from "../../shapes/simplePolygon";
 import { COLORS } from "../../utils/color";
 
 export const ANCHOR_SIZE = 6;
@@ -95,7 +95,7 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
         renderArrowUnit(
           ctx,
           direction4Anchor[1],
-          getRadianForDirection4(shape.direction ?? 1) + Math.PI / 2,
+          getRadianForDirection4(getShapeDirection(shape)) + Math.PI / 2,
           directionThreshold * 0.8,
         );
       }
@@ -111,3 +111,10 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
   };
 });
 export type SimplePolygonHandler = ReturnType<typeof newSimplePolygonHandler>;
+
+export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleScheme, path: IVec2[]) {
+  applyStrokeStyle(ctx, { color: style.selectionPrimary });
+  ctx.beginPath();
+  applyPath(ctx, path, true);
+  ctx.stroke();
+}

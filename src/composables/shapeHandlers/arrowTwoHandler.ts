@@ -6,8 +6,9 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4 } from "../../utils/geometry";
 import { renderArrowUnit } from "../../utils/renderer";
 import { COLORS } from "../../utils/color";
-import { getArrowDirection, getArrowHeadPoint, getArrowTailPoint } from "../../utils/arrows";
+import { getArrowHeadPoint, getArrowTailPoint } from "../../utils/arrows";
 import { defineShapeHandler } from "./core";
+import { getShapeDirection } from "../../shapes/simplePolygon";
 
 const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;
@@ -93,7 +94,7 @@ export const newArrowTwoHandler = defineShapeHandler<ArrowTwoHitResult, Option>(
     renderArrowUnit(
       ctx,
       directionAnchor,
-      getRadianForDirection4(getArrowDirection(shape)) + Math.PI / 2,
+      getRadianForDirection4(getShapeDirection(shape)) + Math.PI / 2,
       directionThreshold * 0.8,
     );
   }

@@ -2,7 +2,6 @@ import { IVec2, add, getDistance, getRadian, isSame, rotate, sub } from "okageo"
 import * as arrowModule from "../shapes/oneSidedArrow";
 import * as arrowTwoModule from "../shapes/twoSidedArrow";
 import { getNormalizedSimplePolygonShape } from "../shapes/simplePolygon";
-import { Direction4 } from "../models";
 
 export type ArrowCommonShape = arrowModule.OneSidedArrowShape | arrowTwoModule.TwoSidedArrowShape;
 
@@ -42,10 +41,6 @@ export function getMinLength(shape: ArrowCommonShape): number {
   const headLength = getArrowHeadLength(shape);
   if (arrowModule.isOneSidedArrowShape(shape)) return headLength;
   return headLength * 2;
-}
-
-export function getArrowDirection(shape: ArrowCommonShape): Direction4 {
-  return shape.direction ?? 1;
 }
 
 export function patchToMoveHead(shape: ArrowCommonShape, p: IVec2) {

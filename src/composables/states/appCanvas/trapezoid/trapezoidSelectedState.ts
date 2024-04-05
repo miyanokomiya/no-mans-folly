@@ -7,15 +7,20 @@ import {
   getDirectionalLocalAbsolutePoints,
   getExpansionFn,
   getMigrateRelativePointFn,
+  getNextDirection,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
+  getShapeDirection,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
 import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { applyPath, renderValueLabel } from "../../../../utils/renderer";
-import { SimplePolygonHandler, newSimplePolygonHandler } from "../../../shapeHandlers/simplePolygonHandler";
+import { renderValueLabel } from "../../../../utils/renderer";
+import {
+  SimplePolygonHandler,
+  newSimplePolygonHandler,
+  renderShapeBounds,
+} from "../../../shapeHandlers/simplePolygonHandler";
 import { newSelectionHubState } from "../selectionHubState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
@@ -166,12 +171,11 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                             return applyAffine(getShapeTransform(s), { x: 0, y: s.height / 2 });
                           },
                           renderFn: (ctx, renderCtx, shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            const path = shapeComposite.getLocalRectPolygon(s);
-                            applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
-                            renderCtx.beginPath();
-                            applyPath(renderCtx, path, true);
-                            renderCtx.stroke();
+                            renderShapeBounds(
+                              renderCtx,
+                              ctx.getStyleScheme(),
+                              shapeComposite.getLocalRectPolygon(shape),
+                            );
                           },
                         });
                       };
@@ -193,18 +197,17 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                             return applyAffine(getShapeTransform(s), { x: s.width, y: s.height / 2 });
                           },
                           renderFn: (ctx, renderCtx, shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            const path = shapeComposite.getLocalRectPolygon(s);
-                            applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionPrimary });
-                            renderCtx.beginPath();
-                            applyPath(renderCtx, path, true);
-                            renderCtx.stroke();
+                            renderShapeBounds(
+                              renderCtx,
+                              ctx.getStyleScheme(),
+                              shapeComposite.getLocalRectPolygon(shape),
+                            );
                           },
                         });
                       };
                     case "direction4": {
                       const patch = {
-                        direction: ((targetShape.direction ?? 1) + 1) % 4,
+                        direction: getNextDirection(getShapeDirection(targetShape)),
                       } as Partial<SimplePolygonShape>;
                       const layoutPatch = getPatchByLayouts(shapeComposite, {
                         update: { [targetShape.id]: patch },

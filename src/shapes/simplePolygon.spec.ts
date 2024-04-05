@@ -8,6 +8,9 @@ import {
   getAffineByTopExpansion,
   getAffineByBottomExpansion,
   getMigrateRelativePointFn,
+  getShapeDirection,
+  SimplePolygonShape,
+  getNextDirection,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
@@ -320,5 +323,26 @@ describe("getAffineByBottomExpansion", () => {
       x: -50,
       y: 200,
     });
+  });
+});
+
+describe("getShapeDirection", () => {
+  test("should return shape direction", () => {
+    const shape = createShape<SimplePolygonShape>(getCommonStruct, "trapezoid", { direction: undefined });
+    expect(getShapeDirection(shape)).toBe(1);
+    expect(getShapeDirection({ ...shape, direction: 0 })).toBe(0);
+    expect(getShapeDirection({ ...shape, direction: 1 })).toBe(1);
+    expect(getShapeDirection({ ...shape, direction: 2 })).toBe(2);
+    expect(getShapeDirection({ ...shape, direction: 3 })).toBe(3);
+  });
+});
+
+describe("getNextDirection", () => {
+  test("should return next direction", () => {
+    expect(getNextDirection(undefined)).toBe(2);
+    expect(getNextDirection(0)).toBe(1);
+    expect(getNextDirection(1)).toBe(2);
+    expect(getNextDirection(2)).toBe(3);
+    expect(getNextDirection(3)).toBe(0);
   });
 });

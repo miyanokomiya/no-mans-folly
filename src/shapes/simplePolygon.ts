@@ -50,7 +50,7 @@ export type SimplePolygonShape = Shape &
   TextContainer & {
     width: number;
     height: number;
-    // Default direction can depend on each shape type.
+    // Default direction should be 1: undefined should mean 1.
     direction?: Direction4;
   };
 
@@ -425,4 +425,12 @@ export function getExpansionFn(src: SimplePolygonShape, targetDirection: Directi
           return getAffineByRightExpansion;
       }
   }
+}
+
+export function getShapeDirection(shape: SimplePolygonShape): Direction4 {
+  return shape.direction ?? 1;
+}
+
+export function getNextDirection(val: Direction4 | undefined): Direction4 {
+  return (((val ?? 1) + 1) % 4) as Direction4;
 }

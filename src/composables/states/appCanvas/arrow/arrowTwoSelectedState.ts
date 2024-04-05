@@ -14,10 +14,10 @@ import { newMovingArrowHeadState } from "./movingArrowHeadState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingArrowToState } from "./movingArrowToState";
 import { newMovingArrowFromState } from "./movingArrowFromState";
-import { getArrowDirection } from "../../../../utils/arrows";
 import { ShapeHandler } from "../../../shapeHandlers/core";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { getShapeDirection } from "../../../../shapes/simplePolygon";
 
 export const newArrowTwoSelectedState = defineIntransientState(() => {
   let targetShape: TwoSidedArrowShape;
@@ -66,7 +66,7 @@ export const newArrowTwoSelectedState = defineIntransientState(() => {
                   case "direction": {
                     const shapeComposite = ctx.getShapeComposite();
                     const patch = {
-                      direction: (getArrowDirection(targetShape) + 1) % 2,
+                      direction: (getShapeDirection(targetShape) + 1) % 2,
                     } as Partial<TwoSidedArrowShape>;
                     const layoutPatch = getPatchByLayouts(shapeComposite, {
                       update: { [targetShape.id]: patch },
