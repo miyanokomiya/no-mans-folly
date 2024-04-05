@@ -7,10 +7,13 @@ import {
   getAffineByLeftExpansion,
   getAffineByTopExpansion,
   getAffineByBottomExpansion,
+  getMigrateRelativePointFn,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 import { applyAffine } from "okageo";
+import { createShape, getCommonStruct } from ".";
+import { TrapezoidShape } from "./polygons/trapezoid";
 
 describe("getStructForSimplePolygon", () => {
   const shape = rectangleStruct.create({ width: 100, height: 100 });
@@ -200,6 +203,14 @@ describe("getNormalizedSimplePolygonShape", () => {
     expect(result.width).toBeCloseTo(shape.width);
     expect(result.height).toBeCloseTo(shape.height);
     expect(result.rotation).toBeCloseTo(Math.PI * 1.25);
+  });
+});
+
+describe("getMigrateRelativePointFn", () => {
+  test("should return a function to migrate ralative point of the shape: regard direction", () => {
+    const shape = createShape<TrapezoidShape>(getCommonStruct, "trapezoid", { direction: 2 });
+    const target = getMigrateRelativePointFn(shape, { width: 50 });
+    expect(target({ x: 0.1, y: 0.2 }, { x: 0, y: 0 })).toEqualPoint({ x: 0.1, y: 0.4 });
   });
 });
 

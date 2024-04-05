@@ -6,10 +6,10 @@ import {
   SimplePolygonShape,
   getDirectionalLocalAbsolutePoints,
   getExpansionFn,
+  getMigrateRelativePointFn,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
   getShapeTransform,
-  migrateRelativePoint,
 } from "../../../../shapes/simplePolygon";
 import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -73,10 +73,7 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                           },
                           getControlFn: (shape) => {
                             const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), {
-                              x: s.width * s.c0.x,
-                              y: 0,
-                            });
+                            return applyAffine(getShapeTransform(s), { x: s.width * s.c0.x, y: 0 });
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
@@ -132,10 +129,7 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                           },
                           getControlFn: (shape) => {
                             const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), {
-                              x: s.width * s.c1.x,
-                              y: 0,
-                            });
+                            return applyAffine(getShapeTransform(s), { x: s.width * s.c1.x, y: 0 });
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
@@ -160,20 +154,16 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                           targetId: targetShape.id,
                           patchFn: (shape, p) => {
                             const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 3)(shape, p));
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            const resizedS = getNormalizedSimplePolygonShape({ ...shape, ...resized });
+                            const migrateFn = getMigrateRelativePointFn(shape, resized);
                             return {
                               ...resized,
-                              c0: migrateRelativePoint(s.c0, s, resizedS, { x: 0, y: 0 }),
-                              c1: migrateRelativePoint(s.c1, s, resizedS, { x: 1, y: 0 }),
+                              c0: migrateFn(shape.c0, { x: 0, y: 0 }),
+                              c1: migrateFn(shape.c1, { x: 1, y: 0 }),
                             };
                           },
                           getControlFn: (shape) => {
                             const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), {
-                              x: 0,
-                              y: s.height / 2,
-                            });
+                            return applyAffine(getShapeTransform(s), { x: 0, y: s.height / 2 });
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             const s = getNormalizedSimplePolygonShape(shape);
@@ -191,20 +181,16 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                           targetId: targetShape.id,
                           patchFn: (shape, p) => {
                             const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 1)(shape, p));
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            const resizedS = getNormalizedSimplePolygonShape({ ...shape, ...resized });
+                            const migrateFn = getMigrateRelativePointFn(shape, resized);
                             return {
                               ...resized,
-                              c0: migrateRelativePoint(s.c0, s, resizedS, { x: 0, y: 0 }),
-                              c1: migrateRelativePoint(s.c1, s, resizedS, { x: 1, y: 0 }),
+                              c0: migrateFn(shape.c0, { x: 0, y: 0 }),
+                              c1: migrateFn(shape.c1, { x: 1, y: 0 }),
                             };
                           },
                           getControlFn: (shape) => {
                             const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), {
-                              x: s.width,
-                              y: s.height / 2,
-                            });
+                            return applyAffine(getShapeTransform(s), { x: s.width, y: s.height / 2 });
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             const s = getNormalizedSimplePolygonShape(shape);

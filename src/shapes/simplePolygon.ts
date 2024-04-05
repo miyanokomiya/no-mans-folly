@@ -302,6 +302,15 @@ export function getLocalRelativeRate(shape: SimplePolygonShape, absP: IVec2): IV
   };
 }
 
+export function getMigrateRelativePointFn(
+  src: SimplePolygonShape,
+  resized: Partial<SimplePolygonShape>,
+): (srcC: IVec2, origin: IVec2) => IVec2 {
+  const s = getNormalizedSimplePolygonShape(src);
+  const resizedS = getNormalizedSimplePolygonShape({ ...src, ...resized });
+  return (srcC, origin) => migrateRelativePoint(srcC, s, resizedS, origin);
+}
+
 export function migrateRelativePoint(src: IVec2, srcSize: Size, nextSize: Partial<Size>, origin: IVec2) {
   const d = { x: srcSize.width * (src.x - origin.x), y: srcSize.height * (src.y - origin.y) };
   const nextW = nextSize.width ?? srcSize.width;
@@ -371,6 +380,17 @@ export function getAffineByBottomExpansion(src: SimplePolygonShape, p: IVec2, mi
 
 export function getExpansionFn(src: SimplePolygonShape, targetDirection: Direction4) {
   switch (src.direction) {
+    case 0:
+      switch (targetDirection) {
+        case 0:
+          return getAffineByRightExpansion;
+        case 2:
+          return getAffineByLeftExpansion;
+        case 3:
+          return getAffineByBottomExpansion;
+        default:
+          return getAffineByTopExpansion;
+      }
     case 2:
       switch (targetDirection) {
         case 0:
@@ -382,6 +402,17 @@ export function getExpansionFn(src: SimplePolygonShape, targetDirection: Directi
         default:
           return getAffineByBottomExpansion;
       }
+    case 3:
+      switch (targetDirection) {
+        case 0:
+          return getAffineByBottomExpansion;
+        case 2:
+          return getAffineByTopExpansion;
+        case 3:
+          return getAffineByRightExpansion;
+        default:
+          return getAffineByLeftExpansion;
+      }
     default:
       switch (targetDirection) {
         case 0:
@@ -391,7 +422,7 @@ export function getExpansionFn(src: SimplePolygonShape, targetDirection: Directi
         case 3:
           return getAffineByLeftExpansion;
         default:
-          return getAffineByLeftExpansion;
+          return getAffineByRightExpansion;
       }
   }
 }
