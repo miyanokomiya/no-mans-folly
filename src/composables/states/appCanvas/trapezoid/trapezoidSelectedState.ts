@@ -1,4 +1,3 @@
-import { newTrapezoidHandler, renderMovingTrapezoidAnchor } from "../../../shapeHandlers/trapezoidHandler";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
@@ -13,21 +12,16 @@ import {
 import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { applyPath } from "../../../../utils/renderer";
+import { applyPath, renderValueLabel } from "../../../../utils/renderer";
+import { SimplePolygonHandler, newSimplePolygonHandler } from "../../../shapeHandlers/simplePolygonHandler";
 
-export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
-  TrapezoidShape,
-  ReturnType<typeof newTrapezoidHandler>,
-  never
->(
+export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<TrapezoidShape, SimplePolygonHandler, never>(
   (getters) => {
     return {
       getLabel: () => "TrapezoidSelected",
       handleEvent: (ctx, event) => {
         switch (event.type) {
           case "pointerdown":
-            ctx.setContextMenuList();
-
             switch (event.data.options.button) {
               case 0: {
                 const targetShape = getters.getTargetShape();
@@ -78,13 +72,17 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                               y: 0,
                             }),
                           renderFn: (ctx, renderCtx, s) => {
-                            renderMovingTrapezoidAnchor(
+                            if (!showLabel) return;
+
+                            const origin = { x: 0, y: s.height };
+                            const rad = getRadian({ x: s.width * s.c0.x, y: 0 }, origin);
+                            const angle = Math.round((-rad * 180) / Math.PI);
+                            renderValueLabel(
                               renderCtx,
-                              ctx.getStyleScheme(),
+                              angle,
+                              applyAffine(getShapeTransform(s), origin),
+                              0,
                               ctx.getScale(),
-                              s,
-                              "c0",
-                              showLabel,
                             );
                           },
                         });
@@ -129,13 +127,17 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
                               y: 0,
                             }),
                           renderFn: (ctx, renderCtx, s) => {
-                            renderMovingTrapezoidAnchor(
+                            if (!showLabel) return;
+
+                            const origin = { x: s.width, y: s.height };
+                            const rad = getRadian({ x: s.width * s.c1.x, y: 0 }, origin);
+                            const angle = 180 - Math.round((-rad * 180) / Math.PI);
+                            renderValueLabel(
                               renderCtx,
-                              ctx.getStyleScheme(),
+                              angle,
+                              applyAffine(getShapeTransform(s), origin),
+                              0,
                               ctx.getScale(),
-                              s,
-                              "c1",
-                              showLabel,
                             );
                           },
                         });
@@ -200,5 +202,15 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<
       },
     };
   },
-  (ctx, target) => newTrapezoidHandler({ getShapeComposite: ctx.getShapeComposite, targetId: target.id }),
+  (ctx, target) =>
+    newSimplePolygonHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      targetId: target.id,
+      getAnchors: () => [
+        ["c0", { x: target.width * target.c0.x, y: 0 }],
+        ["c1", { x: target.width * target.c1.x, y: 0 }],
+        ["left", { x: 0, y: target.height / 2 }],
+        ["right", { x: target.width, y: target.height / 2 }],
+      ],
+    }),
 );
