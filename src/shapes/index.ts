@@ -1,39 +1,7 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines, sub } from "okageo";
 import { BoxPadding, CommonStyle, Shape, Size } from "../models";
-import {
-  GetShapeStruct as _GetShapeStruct,
-  ShapeContext,
-  ShapeSnappingLines,
-  ShapeStruct,
-  TextContainer,
-} from "./core";
+import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
 import { struct as unknownStruct } from "./unknown";
-import { struct as rectangleStruct } from "./rectangle";
-import { struct as rhombusStruct } from "./rhombus";
-import { struct as roundedRectangleStruct } from "./polygons/roundedRectangle";
-import { struct as trapezoidStruct } from "./polygons/trapezoid";
-import { struct as parallelogramStruct } from "./polygons/parallelogram";
-import { struct as cylinderStruct } from "./polygons/cylinder";
-import { struct as documentSymbolStruct } from "./polygons/documentSymbol";
-import { struct as bubbleStruct } from "./polygons/bubble";
-import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
-import { struct as twoSidedArrowStruct } from "./twoSidedArrow";
-import { struct as textStruct } from "./text";
-import { struct as ellipseStruct } from "./ellipse";
-import { struct as crossStruct } from "./polygons/cross";
-import { struct as diagonalCrossStruct } from "./polygons/diagonalCross";
-import { struct as waveStruct } from "./polygons/wave";
-import { struct as lineStruct } from "./line";
-import { struct as imageStruct } from "./image";
-import { struct as emojiStruct } from "./emoji";
-import { struct as groupStruct } from "./group";
-import { struct as treeRootStruct } from "./tree/treeRoot";
-import { struct as treeNodeStruct } from "./tree/treeNode";
-import { struct as boardRootStruct } from "./board/boardRoot";
-import { struct as boardColumnStruct } from "./board/boardColumn";
-import { struct as boardLaneStruct } from "./board/boardLane";
-import { struct as boardCardStruct } from "./board/boardCard";
-import { struct as alignBoxStruct } from "./align/alignBox";
 import * as geometry from "../utils/geometry";
 import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
@@ -42,42 +10,12 @@ import { ImageStore } from "../composables/imageStore";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { getPaddingRect } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
-
-const SHAPE_STRUCTS: {
-  [type: string]: ShapeStruct<any>;
-} = {
-  rectangle: rectangleStruct,
-  rhombus: rhombusStruct,
-  rounded_rectangle: roundedRectangleStruct,
-  trapezoid: trapezoidStruct,
-  parallelogram: parallelogramStruct,
-  cylinder: cylinderStruct,
-  document_symbol: documentSymbolStruct,
-  bubble: bubbleStruct,
-  one_sided_arrow: oneSidedArrowStruct,
-  two_sided_arrow: twoSidedArrowStruct,
-  text: textStruct,
-  ellipse: ellipseStruct,
-  cross: crossStruct,
-  diagonal_cross: diagonalCrossStruct,
-  wave: waveStruct,
-  line: lineStruct,
-  image: imageStruct,
-  emoji: emojiStruct,
-  group: groupStruct,
-  tree_root: treeRootStruct,
-  tree_node: treeNodeStruct,
-  board_root: boardRootStruct,
-  board_column: boardColumnStruct,
-  board_lane: boardLaneStruct,
-  board_card: boardCardStruct,
-  align_box: alignBoxStruct,
-};
+import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
 
 export type GetShapeStruct = _GetShapeStruct;
 
 export const getCommonStruct: GetShapeStruct = (type: string) => {
-  return SHAPE_STRUCTS[type] ?? unknownStruct;
+  return SHAPE_COMMON_STRUCTS[type] ?? unknownStruct;
 };
 
 export function createShape<T extends Shape>(getStruct: GetShapeStruct, type: string, arg: Partial<T>): T {
