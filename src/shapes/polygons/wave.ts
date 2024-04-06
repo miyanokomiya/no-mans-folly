@@ -20,9 +20,9 @@ export const struct: ShapeStruct<WaveShape> = {
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
-      height: arg.height ?? 100,
-      waveSize: arg.waveSize ?? 20,
-      waveDepth: arg.waveDepth ?? 10,
+      height: arg.height ?? 40,
+      waveSize: arg.waveSize ?? 100,
+      waveDepth: arg.waveDepth ?? 20,
     };
   },
   getTextRangeRect: undefined,

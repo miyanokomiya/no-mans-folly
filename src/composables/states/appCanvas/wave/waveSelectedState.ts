@@ -1,7 +1,7 @@
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { WaveShape } from "../../../../shapes/polygons/wave";
-import { applyAffine, clamp } from "okageo";
+import { IVec2, applyAffine, clamp } from "okageo";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
 import { renderValueLabel } from "../../../../utils/renderer";
 import { SimplePolygonHandler, newSimplePolygonHandler } from "../../../shapeHandlers/simplePolygonHandler";
@@ -40,7 +40,7 @@ export const newWaveSelectedState = defineSingleSelectedHandlerState<WaveShape, 
                             return { waveSize: nextValue };
                           },
                           getControlFn: (shape) => {
-                            return applyAffine(getShapeTransform(shape), { x: shape.waveSize, y: 0 });
+                            return applyAffine(getShapeTransform(shape), getSizeControl(shape));
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
@@ -48,7 +48,7 @@ export const newWaveSelectedState = defineSingleSelectedHandlerState<WaveShape, 
                             renderValueLabel(
                               renderCtx,
                               shape.waveSize,
-                              applyAffine(getShapeTransform(shape), { x: shape.waveSize, y: 0 }),
+                              applyAffine(getShapeTransform(shape), getSizeControl(shape)),
                               0,
                               ctx.getScale(),
                             );
@@ -73,7 +73,7 @@ export const newWaveSelectedState = defineSingleSelectedHandlerState<WaveShape, 
                             return { waveDepth: nextValue };
                           },
                           getControlFn: (shape) => {
-                            return applyAffine(getShapeTransform(shape), { x: 0, y: shape.waveDepth });
+                            return applyAffine(getShapeTransform(shape), getDepthControl(shape));
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
@@ -81,7 +81,7 @@ export const newWaveSelectedState = defineSingleSelectedHandlerState<WaveShape, 
                             renderValueLabel(
                               renderCtx,
                               shape.waveDepth,
-                              applyAffine(getShapeTransform(shape), { x: 0, y: shape.waveDepth }),
+                              applyAffine(getShapeTransform(shape), getDepthControl(shape)),
                               0,
                               ctx.getScale(),
                             );
@@ -102,9 +102,17 @@ export const newWaveSelectedState = defineSingleSelectedHandlerState<WaveShape, 
       targetId: target.id,
       getAnchors: () => {
         return [
-          ["waveSize", { x: target.waveSize, y: 0 }],
-          ["waveDepth", { x: 0, y: target.waveDepth }],
+          ["waveSize", getSizeControl(target)],
+          ["waveDepth", getDepthControl(target)],
         ];
       },
     }),
 );
+
+function getSizeControl(shape: WaveShape): IVec2 {
+  return { x: shape.waveSize, y: shape.height / 4 };
+}
+
+function getDepthControl(shape: WaveShape): IVec2 {
+  return { x: shape.waveSize / 4, y: shape.waveDepth };
+}
