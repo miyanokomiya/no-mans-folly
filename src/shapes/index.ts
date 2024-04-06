@@ -13,6 +13,7 @@ import { struct as roundedRectangleStruct } from "./polygons/roundedRectangle";
 import { struct as trapezoidStruct } from "./polygons/trapezoid";
 import { struct as parallelogramStruct } from "./polygons/parallelogram";
 import { struct as cylinderStruct } from "./polygons/cylinder";
+import { struct as documentSymbolStruct } from "./polygons/documentSymbol";
 import { struct as bubbleStruct } from "./polygons/bubble";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 import { struct as twoSidedArrowStruct } from "./twoSidedArrow";
@@ -49,6 +50,7 @@ const SHAPE_STRUCTS: {
   trapezoid: trapezoidStruct,
   parallelogram: parallelogramStruct,
   cylinder: cylinderStruct,
+  document_symbol: documentSymbolStruct,
   bubble: bubbleStruct,
   one_sided_arrow: oneSidedArrowStruct,
   two_sided_arrow: twoSidedArrowStruct,
