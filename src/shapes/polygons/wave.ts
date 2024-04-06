@@ -3,7 +3,7 @@ import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "../si
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getWavePathControl } from "../../utils/path";
-import { divideBezier3, getCrossLineAndBezier3WithT } from "okageo";
+import { clamp, divideBezier3, getCrossLineAndBezier3WithT } from "okageo";
 
 export type WaveShape = SimplePolygonShape & {
   waveSize: number; // represents the length of unit wave
@@ -35,32 +35,32 @@ function getPath(shape: WaveShape): SimplePath {
 }
 
 function getRawPath(shape: WaveShape): SimplePath {
-  const depth = Math.min(shape.waveDepth, shape.height);
-  const rawLoopCount = shape.width / shape.waveSize;
+  const depth = clamp(0, shape.height, shape.waveDepth);
+  const size = clamp(10, undefined, shape.waveSize);
+  const rawLoopCount = shape.width / size;
   const loopCount = Math.floor(rawLoopCount);
 
   const path: SimplePath["path"] = [];
   const curves: SimplePath["curves"] = [];
 
   const upperY = depth / 2;
-  const upperBaseC = getWavePathControl({ x: 0, y: upperY }, { x: shape.waveSize, y: upperY }, depth);
+  const upperBaseC = getWavePathControl({ x: 0, y: upperY }, { x: size, y: upperY }, depth);
   path.push({ x: 0, y: upperY });
   for (let i = 1; i <= loopCount; i++) {
-    path.push({ x: shape.waveSize * i, y: upperY });
+    path.push({ x: size * i, y: upperY });
   }
   for (let i = 0; i < loopCount; i++) {
     curves.push({
-      c1: { x: upperBaseC.c1.x + shape.waveSize * i, y: upperBaseC.c1.y },
-      c2: { x: upperBaseC.c2.x + shape.waveSize * i, y: upperBaseC.c2.y },
+      c1: { x: upperBaseC.c1.x + size * i, y: upperBaseC.c1.y },
+      c2: { x: upperBaseC.c2.x + size * i, y: upperBaseC.c2.y },
     });
   }
 
   if (rawLoopCount > loopCount) {
-    const index = path.length;
     const p = path[path.length - 1];
-    const q = { x: shape.waveSize * index, y: upperY };
-    const c1 = { x: upperBaseC.c1.x + shape.waveSize * (index - 1), y: upperBaseC.c1.y };
-    const c2 = { x: upperBaseC.c2.x + shape.waveSize * (index - 1), y: upperBaseC.c2.y };
+    const q = { x: size * path.length, y: upperY };
+    const c1 = { x: upperBaseC.c1.x + size * (path.length - 1), y: upperBaseC.c1.y };
+    const c2 = { x: upperBaseC.c2.x + size * (path.length - 1), y: upperBaseC.c2.y };
     const bezier = [p, c1, c2, q] as const;
     const cross = getCrossLineAndBezier3WithT(
       [
@@ -70,9 +70,11 @@ function getRawPath(shape: WaveShape): SimplePath {
       bezier,
     )[0];
 
-    const divided = divideBezier3(bezier, cross[1])[0];
-    path.push(divided[3]);
-    curves.push({ c1: divided[1], c2: divided[2] });
+    if (cross) {
+      const divided = divideBezier3(bezier, cross[1])[0];
+      path.push(divided[3]);
+      curves.push({ c1: divided[1], c2: divided[2] });
+    }
   }
 
   const dy = shape.height - 1 * depth;

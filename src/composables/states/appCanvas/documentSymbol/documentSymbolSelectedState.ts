@@ -13,7 +13,6 @@ import {
   getShapeDirection,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
-import { COMMAND_EXAM_SRC } from "../commandExams";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
   SimplePolygonHandler,
@@ -50,7 +49,6 @@ export const newDocumentSymbolSelectedState = defineSingleSelectedHandlerState<
                         return movingShapeControlState<DocumentSymbolShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
-                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
                           patchFn: (shape, p, movement) => {
                             const s = getNormalizedSimplePolygonShape(shape);
                             const localP = applyAffine(getShapeDetransform(s), p);

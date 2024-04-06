@@ -19,6 +19,7 @@ import { newDiagonalCrossSelectedState } from "./cross/diagonalCrossSelectedStat
 import { newRoundedRectangleSelectedState } from "./roundedRectangle/roundedRectangleSelectedState";
 import { newParallelogramSelectedState } from "./parallelogram/parallelogramSelectedState";
 import { newDocumentSymbolSelectedState } from "./documentSymbol/documentSymbolSelectedState";
+import { newWaveSelectedState } from "./wave/waveSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -53,6 +54,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newTrapezoidSelectedState;
           case "document_symbol":
             return newDocumentSymbolSelectedState;
+          case "wave":
+            return newWaveSelectedState;
           case "parallelogram":
             return newParallelogramSelectedState;
           case "cross":
