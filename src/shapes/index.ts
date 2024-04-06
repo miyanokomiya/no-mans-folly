@@ -7,6 +7,7 @@ import {
   ShapeStruct,
   TextContainer,
 } from "./core";
+import { struct as unknownStruct } from "./unknown";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as rhombusStruct } from "./rhombus";
 import { struct as roundedRectangleStruct } from "./polygons/roundedRectangle";
@@ -76,7 +77,7 @@ const SHAPE_STRUCTS: {
 export type GetShapeStruct = _GetShapeStruct;
 
 export const getCommonStruct: GetShapeStruct = (type: string) => {
-  return SHAPE_STRUCTS[type];
+  return SHAPE_STRUCTS[type] ?? unknownStruct;
 };
 
 export function createShape<T extends Shape>(getStruct: GetShapeStruct, type: string, arg: Partial<T>): T {

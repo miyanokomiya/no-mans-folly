@@ -13,12 +13,22 @@ import {
   renderShape,
   shouldResizeOnTextEdit,
 } from ".";
-import { RectangleShape } from "./rectangle";
+import { RectangleShape, struct as rectangleStruct } from "./rectangle";
 import { LineShape } from "./line";
 import { TextShape } from "./text";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { createBoxPadding } from "../utils/boxPadding";
 import { TreeRootShape } from "./tree/treeRoot";
+import { struct as unknownStruct } from "./unknown";
+
+describe("getCommonStruct", () => {
+  test("should return the struct of the type", () => {
+    expect(getCommonStruct("rectangle")).toBe(rectangleStruct);
+  });
+  test("should return fallback struct when the type is unknown", () => {
+    expect(getCommonStruct("unexpected")).toBe(unknownStruct);
+  });
+});
 
 describe("createShape", () => {
   test("should return new shape", () => {
