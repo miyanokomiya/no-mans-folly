@@ -384,9 +384,9 @@ export function getExpansionFn(src: SimplePolygonShape, targetDirection: Directi
     case 0:
       switch (targetDirection) {
         case 0:
-          return getAffineByRightExpansion;
-        case 2:
           return getAffineByLeftExpansion;
+        case 2:
+          return getAffineByRightExpansion;
         case 3:
           return getAffineByBottomExpansion;
         default:
@@ -395,9 +395,9 @@ export function getExpansionFn(src: SimplePolygonShape, targetDirection: Directi
     case 2:
       switch (targetDirection) {
         case 0:
-          return getAffineByLeftExpansion;
-        case 2:
           return getAffineByRightExpansion;
+        case 2:
+          return getAffineByLeftExpansion;
         case 3:
           return getAffineByTopExpansion;
         default:
