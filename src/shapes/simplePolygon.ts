@@ -176,11 +176,13 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 
-      // Ignore conventional markers when the shape has a curve.
-      // TODO: Some markers for straight segments may be available.
-      // TODO: Prepare some way to declare custom markers from inheritant structs.
       if (!curves) {
+        // Ignore conventional markers when the shape has a curve.
         const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, localP) <= threshold);
+        if (rotatedClosest) return applyAffine(transform, rotatedClosest);
+      } else {
+        // Check each point when the shape doesn't have a curve.
+        const rotatedClosest = path.find((m) => getDistance(m, localP) <= threshold);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 
