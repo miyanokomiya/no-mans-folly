@@ -1,0 +1,113 @@
+import iconRectangle from "../assets/icons/shape_rectangle.svg";
+import iconRoundedRectangle from "../assets/icons/shape_rounded_rectangle.svg";
+import iconRhombus from "../assets/icons/shape_rhombus.svg";
+import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
+import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
+import iconCylinder from "../assets/icons/shape_cylinder.svg";
+import iconDocumentSymbol from "../assets/icons/shape_document_symbol.svg";
+import iconBubble from "../assets/icons/shape_bubble.svg";
+import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
+import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
+import iconEllipse from "../assets/icons/shape_ellipse.svg";
+import iconCross from "../assets/icons/shape_cross.svg";
+import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
+import iconWave from "../assets/icons/shape_wave.svg";
+
+import iconLineStraight from "../assets/icons/shape_line_straight.svg";
+import iconLineCurve from "../assets/icons/shape_line_curve.svg";
+import iconLineElbow from "../assets/icons/shape_line_elbow.svg";
+import iconLineElbowCurve from "../assets/icons/shape_line_elbow_curve.svg";
+
+import iconLayoutBranch from "../assets/icons/layout_branch.svg";
+import iconLayoutBoard from "../assets/icons/layout_board.svg";
+import iconLayoutAlignBox from "../assets/icons/layout_align_box.svg";
+
+import { newLineSelectedState } from "./states/appCanvas/lines/lineSelectedState";
+import { newRoundedRectangleSelectedState } from "./states/appCanvas/roundedRectangle/roundedRectangleSelectedState";
+import { newArrowSelectedState } from "./states/appCanvas/arrow/arrowSelectedState";
+import { newArrowTwoSelectedState } from "./states/appCanvas/arrow/arrowTwoSelectedState";
+import { newTrapezoidSelectedState } from "./states/appCanvas/trapezoid/trapezoidSelectedState";
+import { newDocumentSymbolSelectedState } from "./states/appCanvas/documentSymbol/documentSymbolSelectedState";
+import { newWaveSelectedState } from "./states/appCanvas/wave/waveSelectedState";
+import { newParallelogramSelectedState } from "./states/appCanvas/parallelogram/parallelogramSelectedState";
+import { newDiagonalCrossSelectedState } from "./states/appCanvas/cross/diagonalCrossSelectedState";
+import { newCylinderSelectedState } from "./states/appCanvas/cylinder/cylinderSelectedState";
+import { newBubbleSelectedState } from "./states/appCanvas/bubble/bubbleSelectedState";
+import { newTreeRootSelectedState } from "./states/appCanvas/tree/treeRootSelectedState";
+import { newTreeNodeSelectedState } from "./states/appCanvas/tree/treeNodeSelectedState";
+import { newBoardEntitySelectedState } from "./states/appCanvas/board/boardEntitySelectedState";
+import { newAlignBoxSelectedState } from "./states/appCanvas/align/alignBoxSelectedState";
+import { newSingleSelectedState } from "./states/appCanvas/singleSelectedState";
+
+type ShapeTypeItem = { type: string; icon: string };
+
+export const shapeTypeList: ShapeTypeItem[] = [
+  { type: "rectangle", icon: iconRectangle },
+  { type: "rounded_rectangle", icon: iconRoundedRectangle },
+  { type: "ellipse", icon: iconEllipse },
+  { type: "rhombus", icon: iconRhombus },
+  { type: "trapezoid", icon: iconTrapezoid },
+  { type: "parallelogram", icon: iconParallelogram },
+  { type: "cylinder", icon: iconCylinder },
+  { type: "document_symbol", icon: iconDocumentSymbol },
+  { type: "bubble", icon: iconBubble },
+  { type: "one_sided_arrow", icon: iconOneSidedArrow },
+  { type: "two_sided_arrow", icon: iconTwoSidedArrow },
+  { type: "cross", icon: iconCross },
+  { type: "diagonal_cross", icon: iconDiagonalCross },
+  { type: "wave", icon: iconWave },
+];
+
+export const lineTypeList: ShapeTypeItem[] = [
+  { type: "straight", icon: iconLineStraight },
+  { type: "curve", icon: iconLineCurve },
+  { type: "elbow", icon: iconLineElbow },
+  { type: "elbow_curve", icon: iconLineElbowCurve },
+];
+
+export const layoutTypeList: ShapeTypeItem[] = [
+  { type: "align_box", icon: iconLayoutAlignBox },
+  { type: "tree_root", icon: iconLayoutBranch },
+  { type: "board_root", icon: iconLayoutBoard },
+];
+
+export function getSingleShapeSelectedStateFn(type: string) {
+  switch (type) {
+    case "line":
+      return newLineSelectedState;
+    case "rounded_rectangle":
+      return newRoundedRectangleSelectedState;
+    case "one_sided_arrow":
+      return newArrowSelectedState;
+    case "two_sided_arrow":
+      return newArrowTwoSelectedState;
+    case "trapezoid":
+      return newTrapezoidSelectedState;
+    case "document_symbol":
+      return newDocumentSymbolSelectedState;
+    case "wave":
+      return newWaveSelectedState;
+    case "parallelogram":
+      return newParallelogramSelectedState;
+    case "cross":
+    case "diagonal_cross":
+      return newDiagonalCrossSelectedState;
+    case "cylinder":
+      return newCylinderSelectedState;
+    case "bubble":
+      return newBubbleSelectedState;
+    case "tree_root":
+      return newTreeRootSelectedState;
+    case "tree_node":
+      return newTreeNodeSelectedState;
+    case "board_root":
+    case "board_column":
+    case "board_lane":
+    case "board_card":
+      return newBoardEntitySelectedState;
+    case "align_box":
+      return newAlignBoxSelectedState;
+    default:
+      return newSingleSelectedState;
+  }
+}
