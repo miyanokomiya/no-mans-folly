@@ -1,15 +1,9 @@
-import { IVec2, add, sub } from "okageo";
+import { IVec2 } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import {
-  SimplePath,
-  SimplePolygonShape,
-  getNormalizedSimplePolygonShape,
-  getStructForSimplePolygon,
-} from "../simplePolygon";
+import { SimplePath, SimplePolygonShape, getDirectionalSimplePath, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
-import { getRotateFn } from "../../utils/geometry";
 
 export type TrapezoidShape = SimplePolygonShape & {
   c0: IVec2; // Relative rate from "p"
@@ -85,13 +79,7 @@ export const struct: ShapeStruct<TrapezoidShape> = {
 };
 
 function getPath(src: TrapezoidShape): SimplePath {
-  if (src.direction === undefined || src.direction === 1) return getRawPath(src);
-
-  const shape = getNormalizedSimplePolygonShape(src);
-  const { path } = getRawPath(shape);
-  const c = { x: src.width / 2, y: src.height / 2 };
-  const rotateFn = getRotateFn(shape.rotation - src.rotation, add(c, src.p));
-  return { path: path.map((p) => sub(rotateFn(add(p, shape.p)), src.p)) };
+  return getDirectionalSimplePath(src, getRawPath);
 }
 
 function getRawPath(shape: TrapezoidShape): SimplePath {

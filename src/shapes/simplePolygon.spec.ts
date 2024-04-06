@@ -12,6 +12,8 @@ import {
   SimplePolygonShape,
   getNextDirection4,
   getNextDirection2,
+  getDirectionalSimplePath,
+  SimplePath,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
@@ -355,5 +357,55 @@ describe("getNextDirection2", () => {
     expect(getNextDirection2(1)).toBe(0);
     expect(getNextDirection2(2)).toBe(1);
     expect(getNextDirection2(3)).toBe(0);
+  });
+});
+
+describe("getDirectionalSimplePath", () => {
+  test("should return directional simple path", () => {
+    const shape = createShape<SimplePolygonShape>(getCommonStruct, "trapezoid", { direction: undefined });
+    const getRawPath = () =>
+      ({
+        path: [
+          { x: 0, y: 0 },
+          { x: 200, y: 0 },
+          { x: 200, y: 100 },
+          { x: 0, y: 100 },
+        ],
+        curves: [{ c1: { x: 0, y: 0 }, c2: { x: 50, y: 100 } }],
+      }) as SimplePath;
+
+    const res0 = getDirectionalSimplePath(shape, getRawPath);
+    expect(res0.path).toEqual(getRawPath().path);
+    expect(res0.curves).toEqual(getRawPath().curves);
+
+    const res1 = getDirectionalSimplePath({ ...shape, direction: 2 }, getRawPath);
+    expect(res1.path).toEqualPoints([
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+      { x: 0, y: 200 },
+      { x: 0, y: 0 },
+    ]);
+    expect(res1.curves?.[0]?.c1).toEqualPoint({ x: 100, y: 0 });
+    expect(res1.curves?.[0]?.c2).toEqualPoint({ x: 0, y: 50 });
+
+    const res2 = getDirectionalSimplePath({ ...shape, direction: 3 }, getRawPath);
+    expect(res2.path).toEqualPoints([
+      { x: 100, y: 100 },
+      { x: -100, y: 100 },
+      { x: -100, y: 0 },
+      { x: 100, y: 0 },
+    ]);
+    expect(res2.curves?.[0]?.c1).toEqualPoint({ x: 100, y: 100 });
+    expect(res2.curves?.[0]?.c2).toEqualPoint({ x: 50, y: 0 });
+
+    const res3 = getDirectionalSimplePath({ ...shape, direction: 0 }, getRawPath);
+    expect(res3.path).toEqualPoints([
+      { x: 0, y: 100 },
+      { x: 0, y: -100 },
+      { x: 100, y: -100 },
+      { x: 100, y: 100 },
+    ]);
+    expect(res3.curves?.[0]?.c1).toEqualPoint({ x: 0, y: 100 });
+    expect(res3.curves?.[0]?.c2).toEqualPoint({ x: 100, y: 50 });
   });
 });

@@ -1,6 +1,7 @@
 import {
   AffineMatrix,
   IVec2,
+  add,
   applyAffine,
   getCenter,
   getClosestPointOnBezier3,
@@ -437,4 +438,21 @@ export function getNextDirection4(val: Direction4 | undefined): Direction4 {
 
 export function getNextDirection2(val: Direction4 | undefined): Direction4 {
   return (((val ?? 1) + 1) % 2) as Direction4;
+}
+
+export function getDirectionalSimplePath<S extends SimplePolygonShape>(
+  src: S,
+  getRawPath: (s: S) => SimplePath,
+): SimplePath {
+  if (src.direction === undefined || src.direction === 1) return getRawPath(src);
+
+  const shape = getNormalizedSimplePolygonShape(src);
+  const simplePath = getRawPath(shape);
+  const c = { x: src.width / 2, y: src.height / 2 };
+  const rotateFn = getRotateFn(shape.rotation - src.rotation, add(c, src.p));
+  const convertFn = (p: IVec2) => sub(rotateFn(add(p, shape.p)), src.p);
+  return {
+    path: simplePath.path.map((p) => convertFn(p)),
+    curves: simplePath.curves?.map((c) => (c ? { c1: convertFn(c.c1), c2: convertFn(c.c2) } : undefined)),
+  };
 }
