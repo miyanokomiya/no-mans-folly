@@ -41,6 +41,7 @@ export const struct: ShapeStruct<Shape> = {
       tag: "g",
       attributes: {
         transform: renderTransform([1, 0, 0, 1, shape.p.x, shape.p.y]),
+        ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: lineWidth }),
       },
       children: [
         {
@@ -49,7 +50,6 @@ export const struct: ShapeStruct<Shape> = {
             rx: radius,
             ry: radius,
             ...renderFillSVGAttributes({ color: COLORS.GRAY_1 }),
-            ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: lineWidth }),
           },
         },
         {
@@ -59,7 +59,6 @@ export const struct: ShapeStruct<Shape> = {
             y1: -size,
             x2: size,
             y2: size,
-            ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: lineWidth }),
           },
         },
         {
@@ -69,7 +68,6 @@ export const struct: ShapeStruct<Shape> = {
             y1: size,
             x2: size,
             y2: -size,
-            ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: lineWidth }),
           },
         },
       ],
