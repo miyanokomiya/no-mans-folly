@@ -60,7 +60,11 @@ export type SimplePolygonShape = Shape &
  */
 export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   getPath: (s: T) => SimplePath,
-  options?: { outlineSnap?: "trbl" },
+  options?: {
+    outlineSnap?: "trbl";
+    // Should return local points
+    getOutlineSnaps?: (s: T) => IVec2[];
+  },
 ): Pick<
   ShapeStruct<T>,
   | "render"
@@ -163,6 +167,12 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
           { x: cx, y: shape.height },
           { x: 0, y: cy },
         ].find((m) => getDistance(m, localP) <= threshold);
+        if (rotatedClosest) return applyAffine(transform, rotatedClosest);
+      }
+
+      if (options?.getOutlineSnaps) {
+        const points = options.getOutlineSnaps(shape);
+        const rotatedClosest = points.find((m) => getDistance(m, localP) <= threshold);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 

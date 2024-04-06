@@ -10,7 +10,33 @@ export type DocumentSymbolShape = SimplePolygonShape & {
 };
 
 export const struct: ShapeStruct<DocumentSymbolShape> = {
-  ...getStructForSimplePolygon<DocumentSymbolShape>(getPath, { outlineSnap: "trbl" }),
+  ...getStructForSimplePolygon<DocumentSymbolShape>(getPath, {
+    getOutlineSnaps: (shape) => {
+      const l = { x: 0, y: shape.height / 2 };
+      const t = { x: shape.width / 2, y: 0 };
+      const r = { x: shape.width, y: shape.height / 2 };
+      const b = { x: shape.width / 2, y: shape.height };
+
+      switch (shape.direction) {
+        case 0: {
+          const size = shape.width * (1 - shape.c0.y);
+          return [b, t, l, { x: shape.width - size / 2, y: l.y }];
+        }
+        case 2: {
+          const size = shape.width * (1 - shape.c0.y);
+          return [t, b, r, { x: size / 2, y: l.y }];
+        }
+        case 3: {
+          const size = shape.height * (1 - shape.c0.y);
+          return [l, b, r, { x: b.x, y: size / 2 }];
+        }
+        default: {
+          const size = shape.height * (1 - shape.c0.y);
+          return [l, t, r, { x: b.x, y: shape.height - size / 2 }];
+        }
+      }
+    },
+  }),
   label: "Document",
   create(arg = {}) {
     return {

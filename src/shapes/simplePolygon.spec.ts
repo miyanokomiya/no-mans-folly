@@ -142,6 +142,12 @@ describe("getStructForSimplePolygon", () => {
       const ret1 = target.getClosestOutline!({ ...shape, rotation: Math.PI }, { x: 101, y: 51 }, 2);
       expect(ret1).toEqualPoint({ x: 100, y: 50 });
     });
+
+    test("should return the closest point of the custom points when the option is provided", () => {
+      const target = getStructForSimplePolygon(() => ({ path }), { getOutlineSnaps: () => [{ x: 0, y: 30 }] });
+      expect(target.getClosestOutline!(shape, { x: 1, y: 20 }, 2)).toEqual(undefined);
+      expect(target.getClosestOutline!(shape, { x: 1, y: 31 }, 2)).toEqual({ x: 0, y: 30 });
+    });
   });
 
   describe("getIntersectedOutlines", () => {
