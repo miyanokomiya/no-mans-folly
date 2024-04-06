@@ -21,6 +21,7 @@ import { struct as textStruct } from "./text";
 import { struct as ellipseStruct } from "./ellipse";
 import { struct as crossStruct } from "./polygons/cross";
 import { struct as diagonalCrossStruct } from "./polygons/diagonalCross";
+import { struct as waveStruct } from "./polygons/wave";
 import { struct as lineStruct } from "./line";
 import { struct as imageStruct } from "./image";
 import { struct as emojiStruct } from "./emoji";
@@ -58,6 +59,7 @@ const SHAPE_STRUCTS: {
   ellipse: ellipseStruct,
   cross: crossStruct,
   diagonal_cross: diagonalCrossStruct,
+  wave: waveStruct,
   line: lineStruct,
   image: imageStruct,
   emoji: emojiStruct,
