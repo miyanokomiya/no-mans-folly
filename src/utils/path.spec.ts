@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { combineBezierPathAndPath, getCrossBezierPathAndSegment } from "./path";
+import { combineBezierPathAndPath, getCrossBezierPathAndSegment, getWavePathControl } from "./path";
+import { getBezierBounds } from "./geometry";
 
 describe("getCrossBezierPathAndSegment", () => {
   const path = [
@@ -253,5 +254,26 @@ describe("combineBezierPathAndPath", () => {
     );
     expect(res1.path).toEqual([...res0.path.slice(0, 7), { x: 2, y: 0 }, ...res0.path.slice(7)]);
     expect(res1.curves).toEqual([...res0.curves.slice(0, 7), undefined, ...res0.curves.slice(7)]);
+  });
+});
+
+describe("getWavePathControl", () => {
+  test("should return curve control for wave", () => {
+    const p = { x: 0, y: 0 };
+    const q = { x: 10, y: 0 };
+    const res0 = getWavePathControl(p, q, 5);
+    const bounds0 = getBezierBounds(p, q, res0.c1, res0.c2);
+    expect(bounds0.x).toBeCloseTo(0);
+    expect(bounds0.y).toBeCloseTo(-2.5);
+    expect(bounds0.width).toBeCloseTo(10);
+    expect(bounds0.height).toBeCloseTo(5);
+
+    const q1 = { x: 0, y: 10 };
+    const res1 = getWavePathControl(p, q1, 5);
+    const bounds1 = getBezierBounds(p, q1, res1.c1, res1.c2);
+    expect(bounds1.x).toBeCloseTo(-2.5);
+    expect(bounds1.y).toBeCloseTo(0);
+    expect(bounds1.width).toBeCloseTo(5);
+    expect(bounds1.height).toBeCloseTo(10);
   });
 });

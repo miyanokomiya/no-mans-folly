@@ -4,6 +4,7 @@ import { SimplePath, SimplePolygonShape, getDirectionalSimplePath, getStructForS
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
+import { getWavePathControl } from "../../utils/path";
 
 export type DocumentSymbolShape = SimplePolygonShape & {
   c0: IVec2;
@@ -104,9 +105,6 @@ function getPath(src: DocumentSymbolShape): SimplePath {
   return getDirectionalSimplePath(src, getRawPath);
 }
 
-// Ref: https://math.stackexchange.com/questions/4235124/getting-the-most-accurate-bezier-curve-that-plots-a-sine-wave
-const v = Math.sqrt(3) * 2;
-const u = (8 / 3 - Math.sqrt(3)) / 2;
 function getRawPath(shape: DocumentSymbolShape): SimplePath {
   const size = shape.height * (1 - shape.c0.y);
   const halfSize = size / 2;
@@ -119,13 +117,6 @@ function getRawPath(shape: DocumentSymbolShape): SimplePath {
       { x: shape.width, y: baseY },
       { x: 0, y: baseY },
     ],
-    curves: [
-      undefined,
-      undefined,
-      {
-        c1: { x: shape.width * (1 - u), y: baseY - halfSize * v },
-        c2: { x: shape.width * u, y: baseY + halfSize * v },
-      },
-    ],
+    curves: [undefined, undefined, getWavePathControl({ x: shape.width, y: baseY }, { x: 0, y: baseY }, size)],
   };
 }

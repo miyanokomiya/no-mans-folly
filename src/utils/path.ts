@@ -1,6 +1,6 @@
-import { IVec2, divideBezier3, getCrossSegAndBezier3WithT } from "okageo";
+import { IVec2, add, divideBezier3, getCrossSegAndBezier3WithT, getDistance, getRadian } from "okageo";
 import { BezierCurveControl } from "../models";
-import { ISegment, getCrossSegAndSegWithT } from "./geometry";
+import { ISegment, getCrossSegAndSegWithT, getRotateFn } from "./geometry";
 
 export type BezierPath = { path: IVec2[]; curves: (BezierCurveControl | undefined)[] };
 
@@ -164,4 +164,18 @@ function completeBezierPath(bezierPath: BezierPath): BezierPath {
   }
 
   return bezierPath;
+}
+
+// Ref: https://math.stackexchange.com/questions/4235124/getting-the-most-accurate-bezier-curve-that-plots-a-sine-wave
+const v = Math.sqrt(3) * 2;
+const u = (8 / 3 - Math.sqrt(3)) / 2;
+export function getWavePathControl(from: IVec2, to: IVec2, waveBoundsHeight: number): BezierCurveControl {
+  const halfSize = waveBoundsHeight / 2;
+  const len = getDistance(from, to);
+  const rotateFn = getRotateFn(getRadian(to, from));
+
+  return {
+    c1: add(from, rotateFn({ x: len * u, y: halfSize * v })),
+    c2: add(from, rotateFn({ x: len * (1 - u), y: -halfSize * v })),
+  };
 }
