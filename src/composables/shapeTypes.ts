@@ -1,6 +1,7 @@
 import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRoundedRectangle from "../assets/icons/shape_rounded_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
+import iconHexagon from "../assets/icons/shape_hexagon.svg";
 import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
 import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
@@ -46,6 +47,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "rounded_rectangle", icon: iconRoundedRectangle },
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
+  { type: "hexagon", icon: iconHexagon },
   { type: "trapezoid", icon: iconTrapezoid },
   { type: "parallelogram", icon: iconParallelogram },
   { type: "cylinder", icon: iconCylinder },

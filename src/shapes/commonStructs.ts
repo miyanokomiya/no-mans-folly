@@ -8,6 +8,7 @@ import { struct as emoji } from "./emoji";
 import { struct as group } from "./group";
 
 import { struct as rhombus } from "./rhombus";
+import { struct as hexagon } from "./polygons/hexagon";
 import { struct as rounded_rectangle } from "./polygons/roundedRectangle";
 import { struct as trapezoid } from "./polygons/trapezoid";
 import { struct as parallelogram } from "./polygons/parallelogram";
@@ -40,6 +41,7 @@ export const SHAPE_COMMON_STRUCTS: {
   group,
 
   rhombus,
+  hexagon,
   rounded_rectangle,
   trapezoid,
   parallelogram,
