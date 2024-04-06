@@ -18,6 +18,7 @@ import { newBubbleSelectedState } from "./bubble/bubbleSelectedState";
 import { newDiagonalCrossSelectedState } from "./cross/diagonalCrossSelectedState";
 import { newRoundedRectangleSelectedState } from "./roundedRectangle/roundedRectangleSelectedState";
 import { newParallelogramSelectedState } from "./parallelogram/parallelogramSelectedState";
+import { newDocumentSymbolSelectedState } from "./documentSymbol/documentSymbolSelectedState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -50,6 +51,8 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
             return newArrowTwoSelectedState;
           case "trapezoid":
             return newTrapezoidSelectedState;
+          case "document_symbol":
+            return newDocumentSymbolSelectedState;
           case "parallelogram":
             return newParallelogramSelectedState;
           case "cross":
