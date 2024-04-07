@@ -231,3 +231,7 @@ export function getBezierControlForArc(c: IVec2, p0: IVec2, p1: IVec2): BezierCu
   const y3 = c.y + by - k2 * bx;
   return { c1: { x: x2, y: y2 }, c2: { x: x3, y: y3 } };
 }
+
+export function shiftBezierCurveControl(c: BezierCurveControl, v: IVec2): BezierCurveControl {
+  return { c1: add(c.c1, v), c2: add(c.c2, v) };
+}

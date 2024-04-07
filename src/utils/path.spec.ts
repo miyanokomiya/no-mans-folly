@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { combineBezierPathAndPath, getCornerRadiusArc, getCrossBezierPathAndSegment, getWavePathControl } from "./path";
+import {
+  combineBezierPathAndPath,
+  getBezierControlForArc,
+  getCornerRadiusArc,
+  getCrossBezierPathAndSegment,
+  getWavePathControl,
+  shiftBezierCurveControl,
+} from "./path";
 import { getBezierBounds } from "./geometry";
 import { getDistance, getPedal } from "okageo";
 
@@ -318,5 +325,30 @@ describe("getCornerRadiusArc", () => {
       { x: 0, y: 0 },
       { x: 10, y: 10 },
     ]);
+  });
+});
+
+describe("getBezierControlForArc", () => {
+  test("should avoid zero division", () => {
+    const p = { x: 10, y: 10 };
+    const res0 = getBezierControlForArc({ x: 0, y: 0 }, p, p);
+    expect(res0.c1).toEqual(p);
+    expect(res0.c2).toEqual(p);
+  });
+
+  test("should return bezier control to approximate the arc", () => {
+    const res0 = getBezierControlForArc({ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 0, y: 10 });
+    expect(res0.c1.x).toBeCloseTo(10);
+    expect(res0.c1.y).toBeCloseTo(5.523);
+    expect(res0.c2.x).toBeCloseTo(5.523);
+    expect(res0.c2.y).toBeCloseTo(10);
+  });
+});
+
+describe("shiftBezierCurveControl", () => {
+  test("should shift the control", () => {
+    const res0 = shiftBezierCurveControl({ c1: { x: 0, y: 0 }, c2: { x: 10, y: 20 } }, { x: 100, y: 200 });
+    expect(res0.c1).toEqualPoint({ x: 100, y: 200 });
+    expect(res0.c2).toEqualPoint({ x: 110, y: 220 });
   });
 });

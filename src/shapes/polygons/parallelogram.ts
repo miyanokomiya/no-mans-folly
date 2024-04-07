@@ -10,7 +10,7 @@ import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getRotateFn } from "../../utils/geometry";
-import { getBezierControlForArc, getCornerRadiusArc } from "../../utils/path";
+import { getBezierControlForArc, getCornerRadiusArc, shiftBezierCurveControl } from "../../utils/path";
 
 export type ParallelogramShape = SimplePolygonShape & {
   c0: IVec2;
@@ -101,7 +101,7 @@ function getRawPath(shape: ParallelogramShape): SimplePath {
     ];
   }
 
-  if (shape.cr !== undefined && shape.cr > 0) {
+  if (shape.cr) {
     const srcPath = path;
     const cr = clamp(0, getMaxParallelogramCornerRadius(shape), shape.cr);
     const info0 = getCornerRadiusArc(srcPath[0], srcPath[1], srcPath[2], cr);
@@ -112,30 +112,29 @@ function getRawPath(shape: ParallelogramShape): SimplePath {
     const trTobl = (p: IVec2) => ({ x: srcPath[1].x - p.x + srcPath[3].x, y: srcPath[1].y - p.y + srcPath[3].y });
     const brTotl = (p: IVec2) => ({ x: srcPath[2].x - p.x + srcPath[0].x, y: srcPath[2].y - p.y + srcPath[0].y });
 
+    // Fulfill the corner gap by expanding tha path.
+    const gap = shape.width - (shape.c0.x > 0.5 ? info0 : info1)[0].x - cr;
+    const toRight = { x: gap, y: 0 };
+    const toLeft = { x: -gap, y: 0 };
+
     path = [
-      info0[1],
-      info0[2],
-      info1[1],
-      info1[2],
-      trTobl(info0[1]),
-      trTobl(info0[2]),
-      brTotl(info1[1]),
-      brTotl(info1[2]),
+      add(info0[1], toRight),
+      add(info0[2], toRight),
+      add(info1[1], toRight),
+      add(info1[2], toRight),
+      add(trTobl(info0[1]), toLeft),
+      add(trTobl(info0[2]), toLeft),
+      add(brTotl(info1[1]), toLeft),
+      add(brTotl(info1[2]), toLeft),
     ];
     curves = [
-      control0,
+      shiftBezierCurveControl(control0, toRight),
       undefined,
-      control1,
+      shiftBezierCurveControl(control1, toRight),
       undefined,
-      {
-        c1: trTobl(control0.c1),
-        c2: trTobl(control0.c2),
-      },
+      shiftBezierCurveControl({ c1: trTobl(control0.c1), c2: trTobl(control0.c2) }, toLeft),
       undefined,
-      {
-        c1: brTotl(control1.c1),
-        c2: brTotl(control1.c2),
-      },
+      shiftBezierCurveControl({ c1: brTotl(control1.c1), c2: brTotl(control1.c2) }, toLeft),
     ];
   }
 
