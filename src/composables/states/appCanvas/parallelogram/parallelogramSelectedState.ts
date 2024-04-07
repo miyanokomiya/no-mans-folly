@@ -87,8 +87,8 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                             const angle = Math.round((-rad * 180) / Math.PI);
                             renderValueLabel(
                               renderCtx,
-                              angle,
-                              applyAffine(getShapeTransform(s), origin),
+                              `${angle}°`,
+                              applyAffine(getShapeTransform(s), { x: 0, y: s.height }),
                               0,
                               ctx.getScale(),
                             );

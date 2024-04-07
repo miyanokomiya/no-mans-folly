@@ -89,7 +89,7 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                             const angle = Math.round((-rad * 180) / Math.PI);
                             renderValueLabel(
                               renderCtx,
-                              angle,
+                              `${angle}°`,
                               applyAffine(getShapeTransform(s), origin),
                               0,
                               ctx.getScale(),
@@ -145,7 +145,7 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                             const angle = 180 - Math.round((-rad * 180) / Math.PI);
                             renderValueLabel(
                               renderCtx,
-                              angle,
+                              `${angle}°`,
                               applyAffine(getShapeTransform(s), origin),
                               0,
                               ctx.getScale(),

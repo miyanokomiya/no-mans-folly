@@ -274,7 +274,7 @@ export function applyDefaultTextStyle(
 
 export function renderValueLabel(
   ctx: CanvasRenderingContext2D,
-  value: number,
+  value: number | string,
   p: IVec2,
   rotation = 0,
   scale = 1,
