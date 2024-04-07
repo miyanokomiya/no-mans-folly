@@ -23,7 +23,7 @@ export const struct: ShapeStruct<TextShape> = {
       fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle({ disabled: true }),
       width: arg.width ?? 10,
-      height: arg.height ?? 18,
+      height: arg.height ?? 14,
       maxWidth: arg.maxWidth ?? 600,
       vAlign: arg.vAlign,
       hAlign: arg.hAlign,

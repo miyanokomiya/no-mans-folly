@@ -13,7 +13,7 @@ import { TextColorPanel } from "./texts/TextColorPanel";
 import { TextDecoration } from "./texts/TextDecoration";
 import { TextBackgroundPanel } from "./texts/TextBackgroundPanel";
 import { SliderInput } from "../atoms/inputs/SliderInput";
-import { DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
+import { DEFAULT_FONT_SIZE, DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
 import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
 import { TextLink } from "./texts/TextLink";
 
@@ -168,7 +168,7 @@ export const TextItems: React.FC<Props> = ({
     <div className="flex gap-1 items-center">
       <div className="w-12 h-full flex items-center">
         <NumberCombobox
-          value={docAttrInfo.cursor?.size ?? 18}
+          value={docAttrInfo.cursor?.size ?? DEFAULT_FONT_SIZE}
           options={FONT_SIZE_OPTIONS}
           min={1}
           onChanged={onSizeChanged}

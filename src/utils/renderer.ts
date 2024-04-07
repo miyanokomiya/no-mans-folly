@@ -4,6 +4,7 @@ import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
 import { CurveControl } from "../models";
+import { DEFAULT_FONT_SIZE } from "./textEditor";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false, reverse = false) {
   if (reverse) {
@@ -261,7 +262,7 @@ export function applyRotation(ctx: CanvasRenderingContext2D, rotation: number, o
 
 export function applyDefaultTextStyle(
   ctx: CanvasRenderingContext2D,
-  fontSize = 18,
+  fontSize = DEFAULT_FONT_SIZE,
   textAlign: CanvasTextAlign = "left",
   middle = false,
 ) {

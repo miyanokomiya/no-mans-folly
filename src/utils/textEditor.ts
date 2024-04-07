@@ -6,7 +6,7 @@ import { newChronoCache } from "../composables/cache";
 import { SVGElementInfo, getColorAttributes } from "./svgElements";
 import { toHexAndAlpha } from "./color";
 
-export const DEFAULT_FONT_SIZE = 18;
+export const DEFAULT_FONT_SIZE = 14;
 export const DEFAULT_LINEHEIGHT = 1.2;
 
 const WORDBREAK = /\n|\t|[ -/]|[:-@]|[[-`]/;
