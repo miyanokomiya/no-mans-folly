@@ -3,14 +3,9 @@ import { movingShapeControlState } from "../movingShapeControlState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
 import {
-  SimplePolygonShape,
   getDirectionalLocalAbsolutePoints,
-  getExpansionFn,
-  getMigrateRelativePointFn,
-  getNextDirection4,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
-  getShapeDirection,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
 import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
@@ -18,11 +13,10 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
   SimplePolygonHandler,
+  getResizeByState,
+  handleSwitchDirection4,
   newSimplePolygonHandler,
-  renderShapeBounds,
 } from "../../../shapeHandlers/simplePolygonHandler";
-import { newSelectionHubState } from "../selectionHubState";
-import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<TrapezoidShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -154,66 +148,19 @@ export const newTrapezoidSelectedState = defineSingleSelectedHandlerState<Trapez
                         });
                       };
                     case "left":
-                      return () => {
-                        return movingShapeControlState<TrapezoidShape>({
-                          targetId: targetShape.id,
-                          patchFn: (shape, p) => {
-                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 3)(shape, p));
-                            const migrateFn = getMigrateRelativePointFn(shape, resized);
-                            return {
-                              ...resized,
-                              c0: migrateFn(shape.c0, { x: 0, y: 0 }),
-                              c1: migrateFn(shape.c1, { x: 1, y: 0 }),
-                            };
-                          },
-                          getControlFn: (shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), { x: 0, y: s.height / 2 });
-                          },
-                          renderFn: (ctx, renderCtx, shape) => {
-                            renderShapeBounds(
-                              renderCtx,
-                              ctx.getStyleScheme(),
-                              shapeComposite.getLocalRectPolygon(shape),
-                            );
-                          },
-                        });
-                      };
+                      return () =>
+                        getResizeByState(3, shapeComposite, targetShape, [
+                          ["c0", { x: 0, y: 0 }],
+                          ["c1", { x: 1, y: 0 }],
+                        ]);
                     case "right":
-                      return () => {
-                        return movingShapeControlState<TrapezoidShape>({
-                          targetId: targetShape.id,
-                          patchFn: (shape, p) => {
-                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 1)(shape, p));
-                            const migrateFn = getMigrateRelativePointFn(shape, resized);
-                            return {
-                              ...resized,
-                              c0: migrateFn(shape.c0, { x: 0, y: 0 }),
-                              c1: migrateFn(shape.c1, { x: 1, y: 0 }),
-                            };
-                          },
-                          getControlFn: (shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), { x: s.width, y: s.height / 2 });
-                          },
-                          renderFn: (ctx, renderCtx, shape) => {
-                            renderShapeBounds(
-                              renderCtx,
-                              ctx.getStyleScheme(),
-                              shapeComposite.getLocalRectPolygon(shape),
-                            );
-                          },
-                        });
-                      };
+                      return () =>
+                        getResizeByState(1, shapeComposite, targetShape, [
+                          ["c0", { x: 0, y: 0 }],
+                          ["c1", { x: 1, y: 0 }],
+                        ]);
                     case "direction4": {
-                      const patch = {
-                        direction: getNextDirection4(getShapeDirection(targetShape)),
-                      } as Partial<SimplePolygonShape>;
-                      const layoutPatch = getPatchByLayouts(shapeComposite, {
-                        update: { [targetShape.id]: patch },
-                      });
-                      ctx.patchShapes(layoutPatch);
-                      return newSelectionHubState;
+                      return handleSwitchDirection4(ctx, targetShape);
                     }
                   }
                 }

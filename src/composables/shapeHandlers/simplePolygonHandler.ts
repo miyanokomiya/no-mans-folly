@@ -11,6 +11,7 @@ import {
   getExpansionFn,
   getMigrateRelativePointFn,
   getNextDirection2,
+  getNextDirection4,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
   getShapeDirection,
@@ -373,6 +374,20 @@ export function handleSwitchDirection2(
 ) {
   const patch = {
     direction: getNextDirection2(getShapeDirection(shape)),
+  } as Partial<SimplePolygonShape>;
+  const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
+    update: { [shape.id]: patch },
+  });
+  ctx.patchShapes(layoutPatch);
+  return newSelectionHubState;
+}
+
+export function handleSwitchDirection4(
+  ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite">,
+  shape: SimplePolygonShape,
+) {
+  const patch = {
+    direction: getNextDirection4(getShapeDirection(shape)),
   } as Partial<SimplePolygonShape>;
   const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
     update: { [shape.id]: patch },

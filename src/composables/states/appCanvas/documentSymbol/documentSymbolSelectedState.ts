@@ -3,24 +3,18 @@ import { movingShapeControlState } from "../movingShapeControlState";
 import { DocumentSymbolShape } from "../../../../shapes/polygons/documentSymbol";
 import { applyAffine, clamp } from "okageo";
 import {
-  SimplePolygonShape,
   getDirectionalLocalAbsolutePoints,
-  getExpansionFn,
-  getMigrateRelativePointFn,
-  getNextDirection4,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
-  getShapeDirection,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
   SimplePolygonHandler,
+  getResizeByState,
+  handleSwitchDirection4,
   newSimplePolygonHandler,
-  renderShapeBounds,
 } from "../../../shapeHandlers/simplePolygonHandler";
-import { newSelectionHubState } from "../selectionHubState";
-import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 export const newDocumentSymbolSelectedState = defineSingleSelectedHandlerState<
   DocumentSymbolShape,
@@ -82,64 +76,11 @@ export const newDocumentSymbolSelectedState = defineSingleSelectedHandlerState<
                         });
                       };
                     case "top":
-                      return () => {
-                        return movingShapeControlState<DocumentSymbolShape>({
-                          targetId: targetShape.id,
-                          patchFn: (shape, p) => {
-                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 0)(shape, p));
-                            const migrateFn = getMigrateRelativePointFn(shape, resized);
-                            return {
-                              ...resized,
-                              c0: migrateFn(shape.c0, { x: 0.75, y: 1 }),
-                            };
-                          },
-                          getControlFn: (shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), { x: s.width / 2, y: 0 });
-                          },
-                          renderFn: (ctx, renderCtx, shape) => {
-                            renderShapeBounds(
-                              renderCtx,
-                              ctx.getStyleScheme(),
-                              shapeComposite.getLocalRectPolygon(shape),
-                            );
-                          },
-                        });
-                      };
+                      return () => getResizeByState(0, shapeComposite, targetShape, [["c0", { x: 0.75, y: 1 }]]);
                     case "bottom":
-                      return () => {
-                        return movingShapeControlState<DocumentSymbolShape>({
-                          targetId: targetShape.id,
-                          patchFn: (shape, p) => {
-                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 2)(shape, p));
-                            const migrateFn = getMigrateRelativePointFn(shape, resized);
-                            return {
-                              ...resized,
-                              c0: migrateFn(shape.c0, { x: 0.75, y: 1 }),
-                            };
-                          },
-                          getControlFn: (shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), { x: s.width / 2, y: s.height });
-                          },
-                          renderFn: (ctx, renderCtx, shape) => {
-                            renderShapeBounds(
-                              renderCtx,
-                              ctx.getStyleScheme(),
-                              shapeComposite.getLocalRectPolygon(shape),
-                            );
-                          },
-                        });
-                      };
+                      return () => getResizeByState(2, shapeComposite, targetShape, [["c0", { x: 0.75, y: 1 }]]);
                     case "direction4": {
-                      const patch = {
-                        direction: getNextDirection4(getShapeDirection(targetShape)),
-                      } as Partial<SimplePolygonShape>;
-                      const layoutPatch = getPatchByLayouts(shapeComposite, {
-                        update: { [targetShape.id]: patch },
-                      });
-                      ctx.patchShapes(layoutPatch);
-                      return newSelectionHubState;
+                      return handleSwitchDirection4(ctx, targetShape);
                     }
                   }
                 }

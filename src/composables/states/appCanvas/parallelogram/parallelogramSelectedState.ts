@@ -1,14 +1,9 @@
 import { ParallelogramShape, getMaxParallelogramCornerRadius } from "../../../../shapes/polygons/parallelogram";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
-  SimplePolygonShape,
   getDirectionalLocalAbsolutePoints,
-  getExpansionFn,
-  getMigrateRelativePointFn,
-  getNextDirection2,
   getNormalizedSimplePolygonShape,
   getShapeDetransform,
-  getShapeDirection,
   getShapeTransform,
 } from "../../../../shapes/simplePolygon";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
@@ -18,11 +13,10 @@ import { renderValueLabel } from "../../../../utils/renderer";
 import {
   EDGE_ANCHOR_MARGIN,
   SimplePolygonHandler,
+  getResizeByState,
+  handleSwitchDirection2,
   newSimplePolygonHandler,
-  renderShapeBounds,
 } from "../../../shapeHandlers/simplePolygonHandler";
-import { getPatchByLayouts } from "../../../shapeLayoutHandler";
-import { newSelectionHubState } from "../selectionHubState";
 
 export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
   ParallelogramShape,
@@ -140,64 +134,11 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                         });
                       };
                     case "left":
-                      return () => {
-                        return movingShapeControlState<ParallelogramShape>({
-                          targetId: targetShape.id,
-                          patchFn: (shape, p) => {
-                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 3)(shape, p));
-                            const migrateFn = getMigrateRelativePointFn(shape, resized);
-                            return {
-                              ...resized,
-                              c0: migrateFn(targetShape.c0, { x: 0.5, y: 0 }),
-                            };
-                          },
-                          getControlFn: (shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), { x: 0, y: s.height / 2 });
-                          },
-                          renderFn: (ctx, renderCtx, shape) => {
-                            renderShapeBounds(
-                              renderCtx,
-                              ctx.getStyleScheme(),
-                              shapeComposite.getLocalRectPolygon(shape),
-                            );
-                          },
-                        });
-                      };
+                      return () => getResizeByState(3, shapeComposite, targetShape, [["c0", { x: 0.5, y: 0 }]]);
                     case "right":
-                      return () => {
-                        return movingShapeControlState<ParallelogramShape>({
-                          targetId: targetShape.id,
-                          patchFn: (shape, p) => {
-                            const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, 1)(shape, p));
-                            const migrateFn = getMigrateRelativePointFn(shape, resized);
-                            return {
-                              ...resized,
-                              c0: migrateFn(targetShape.c0, { x: 0.5, y: 0 }),
-                            };
-                          },
-                          getControlFn: (shape) => {
-                            const s = getNormalizedSimplePolygonShape(shape);
-                            return applyAffine(getShapeTransform(s), { x: s.width, y: s.height / 2 });
-                          },
-                          renderFn: (ctx, renderCtx, shape) => {
-                            renderShapeBounds(
-                              renderCtx,
-                              ctx.getStyleScheme(),
-                              shapeComposite.getLocalRectPolygon(shape),
-                            );
-                          },
-                        });
-                      };
+                      return () => getResizeByState(1, shapeComposite, targetShape, [["c0", { x: 0.5, y: 0 }]]);
                     case "direction4": {
-                      const patch = {
-                        direction: getNextDirection2(getShapeDirection(targetShape)),
-                      } as Partial<SimplePolygonShape>;
-                      const layoutPatch = getPatchByLayouts(shapeComposite, {
-                        update: { [targetShape.id]: patch },
-                      });
-                      ctx.patchShapes(layoutPatch);
-                      return newSelectionHubState;
+                      return handleSwitchDirection2(ctx, targetShape);
                     }
                   }
                 }
