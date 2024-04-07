@@ -51,6 +51,14 @@ export const ShapeTemplatePanel: React.FC = () => {
     <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
       <GroupAccordion
         selectedName={selected}
+        name="Flowchart"
+        type="templates"
+        size="lg"
+        onClick={handleClickAccordion}
+        onIconDown={handleIconDown}
+      />
+      <GroupAccordion
+        selectedName={selected}
         name="Sequence"
         type="templates"
         size="lg"

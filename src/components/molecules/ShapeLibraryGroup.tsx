@@ -235,11 +235,11 @@ export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDow
     [onDown, id, url],
   );
 
-  const wrapperClass = size === "lg" ? "w-full h-auto max-h-32" : "w-10 h-10";
+  const wrapperClass = size === "lg" ? "w-full h-auto max-h-32 p-1" : "w-10 h-10";
   const skeletonClass = size === "lg" ? "w-full h-32" : "w-full h-full";
 
   return (
-    <li className={wrapperClass}>
+    <li className={"rounded hover:bg-gray-200 " + wrapperClass}>
       <button type="button" onPointerDown={handleDown} className="w-full h-full cursor-grab touch-none" title={name}>
         <ImageWithSkeleton
           src={url}
