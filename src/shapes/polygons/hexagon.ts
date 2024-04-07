@@ -1,4 +1,4 @@
-import { IVec2 } from "okageo";
+import { IVec2, clamp } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import { SimplePath, SimplePolygonShape, getDirectionalSimplePath, getStructForSimplePolygon } from "../simplePolygon";
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
@@ -28,7 +28,7 @@ export const struct: ShapeStruct<HexagonShape> = {
   getTextRangeRect(shape) {
     switch (shape.direction) {
       case 0: {
-        const dy = shape.height * shape.c0.y;
+        const dy = shape.height * clamp(0, 0.5, shape.c0.x);
         const innerTop = dy;
         const innerBottom = shape.height - dy;
         const rect = {
@@ -40,7 +40,7 @@ export const struct: ShapeStruct<HexagonShape> = {
         return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
       }
       default: {
-        const dx = shape.width * shape.c0.x;
+        const dx = shape.width * clamp(0, 0.5, shape.c0.x);
         const innerLeft = dx;
         const innerRight = shape.width - dx;
         const rect = {
@@ -61,21 +61,21 @@ function getPath(src: HexagonShape): SimplePath {
 }
 
 function getRawPath(shape: HexagonShape): SimplePath {
-  const dx = shape.width * shape.c0.x;
-  const dy = shape.height * shape.c0.y;
+  const dx = shape.width * clamp(0, 0.5, shape.c0.x);
+  const dy = shape.height * clamp(0, 0.5, shape.c0.y);
 
   const path = [
     { x: dx, y: 0 },
     { x: shape.width - dx, y: 0 },
 
     { x: shape.width, y: dy },
-    ...(dy !== 0.5 ? [{ x: shape.width, y: shape.height - dy }] : []),
+    ...(shape.c0.y !== 0.5 ? [{ x: shape.width, y: shape.height - dy }] : []),
 
     { x: shape.width - dx, y: shape.height },
     { x: dx, y: shape.height },
 
-    { x: 0, y: dy },
-    ...(dy !== 0.5 ? [{ x: 0, y: shape.height - dy }] : []),
+    { x: 0, y: shape.height - dy },
+    ...(shape.c0.y !== 0.5 ? [{ x: 0, y: dy }] : []),
   ];
   return { path };
 }

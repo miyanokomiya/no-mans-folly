@@ -39,6 +39,7 @@ import { newTreeNodeSelectedState } from "./states/appCanvas/tree/treeNodeSelect
 import { newBoardEntitySelectedState } from "./states/appCanvas/board/boardEntitySelectedState";
 import { newAlignBoxSelectedState } from "./states/appCanvas/align/alignBoxSelectedState";
 import { newSingleSelectedState } from "./states/appCanvas/singleSelectedState";
+import { newHexagonSelectedState } from "./states/appCanvas/hexagon/hexagonSelectedState";
 
 type ShapeTypeItem = { type: string; icon: string };
 
@@ -85,6 +86,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newArrowTwoSelectedState;
     case "trapezoid":
       return newTrapezoidSelectedState;
+    case "hexagon":
+      return newHexagonSelectedState;
     case "document_symbol":
       return newDocumentSymbolSelectedState;
     case "wave":
