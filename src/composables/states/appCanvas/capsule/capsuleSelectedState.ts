@@ -40,7 +40,7 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
                 shapeHandler.saveHitResult(hitResult);
                 if (hitResult) {
                   switch (hitResult.type) {
-                    case "c0":
+                    case "c0x":
                       return () => {
                         let showLabel = !event.data.options.ctrl;
                         return movingShapeControlState<CapsuleShape>({
@@ -56,7 +56,7 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
                               nextCX = Math.round(nextCX * s.width) / s.width;
                               showLabel = true;
                             }
-                            return { c0: { x: nextCX, y: 0 } };
+                            return { c0: { x: nextCX, y: s.c0.y } };
                           },
                           getControlFn: (shape, scale) => {
                             const s = getNormalizedSimplePolygonShape(shape);
@@ -79,7 +79,7 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
                           },
                         });
                       };
-                    case "c1":
+                    case "c1x":
                       return () => {
                         let showLabel = !event.data.options.ctrl;
                         return movingShapeControlState<CapsuleShape>({
@@ -95,7 +95,7 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
                               nextCX = Math.round(nextCX * s.width) / s.width;
                               showLabel = true;
                             }
-                            return { c1: { x: nextCX, y: 0 } };
+                            return { c1: { x: nextCX, y: s.c1.y } };
                           },
                           getControlFn: (shape, scale) => {
                             const s = getNormalizedSimplePolygonShape(shape);
@@ -112,6 +112,84 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
                               renderCtx,
                               Math.round((1 - s.c1.x) * s.width),
                               applyAffine(getShapeTransform(s), { x: s.c1.x * s.width, y: 0 }),
+                              0,
+                              ctx.getScale(),
+                            );
+                          },
+                        });
+                      };
+                    case "c0y":
+                      return () => {
+                        let showLabel = !event.data.options.ctrl;
+                        return movingShapeControlState<CapsuleShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            let nextCY = clamp(0, 0.5, localP.y / s.height);
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextCY = Math.round(nextCY * s.height) / s.height;
+                              showLabel = true;
+                            }
+                            return { c0: { x: s.c0.x, y: nextCY } };
+                          },
+                          getControlFn: (shape, scale) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), {
+                              x: -EDGE_ANCHOR_MARGIN * scale,
+                              y: s.height * s.c0.y,
+                            });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
+
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            renderValueLabel(
+                              renderCtx,
+                              Math.round(s.c0.y * s.height),
+                              applyAffine(getShapeTransform(s), { x: 0, y: s.c0.y * s.height }),
+                              0,
+                              ctx.getScale(),
+                            );
+                          },
+                        });
+                      };
+                    case "c1y":
+                      return () => {
+                        let showLabel = !event.data.options.ctrl;
+                        return movingShapeControlState<CapsuleShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            let nextCY = clamp(0, 0.5, localP.y / s.height);
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextCY = Math.round(nextCY * s.height) / s.height;
+                              showLabel = true;
+                            }
+                            return { c1: { x: s.c1.x, y: nextCY } };
+                          },
+                          getControlFn: (shape, scale) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), {
+                              x: s.width + EDGE_ANCHOR_MARGIN * scale,
+                              y: s.height * s.c1.y,
+                            });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
+
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            renderValueLabel(
+                              renderCtx,
+                              Math.round(s.c1.y * s.height),
+                              applyAffine(getShapeTransform(s), { x: s.width, y: s.c1.y * s.height }),
                               0,
                               ctx.getScale(),
                             );
@@ -197,14 +275,18 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
         const list = getDirectionalLocalAbsolutePoints(target, s, [
           { x: s.c0.x, y: (-EDGE_ANCHOR_MARGIN / s.height) * scale },
           { x: s.c1.x, y: (-EDGE_ANCHOR_MARGIN / s.height) * scale },
+          { x: (-EDGE_ANCHOR_MARGIN / s.width) * scale, y: s.c0.y },
+          { x: 1 + (EDGE_ANCHOR_MARGIN / s.width) * scale, y: s.c1.y },
           { x: 0, y: 0.5 },
           { x: 1, y: 0.5 },
         ]);
         return [
-          ["c0", list[0]],
-          ["c1", list[1]],
-          ["left", list[2]],
-          ["right", list[3]],
+          ["c0x", list[0]],
+          ["c1x", list[1]],
+          ["c0y", list[2]],
+          ["c1y", list[3]],
+          ["left", list[4]],
+          ["right", list[5]],
         ];
       },
       direction4: true,

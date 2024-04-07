@@ -97,7 +97,7 @@ function getCornerValue(shape: CapsuleShape): [IVec2, IVec2] {
 
 function getCornerRadius(shape: CapsuleShape): [IVec2, IVec2] {
   return [
-    { x: shape.width * clamp(0, 0.5, shape.c0.x), y: shape.height / 2 },
-    { x: shape.width * clamp(0, 0.5, 1 - shape.c1.x), y: shape.height / 2 },
+    { x: shape.width * clamp(0, 0.5, shape.c0.x), y: shape.height * clamp(0, 0.5, shape.c0.y) },
+    { x: shape.width * clamp(0, 0.5, 1 - shape.c1.x), y: shape.height * clamp(0, 0.5, shape.c1.y) },
   ];
 }
