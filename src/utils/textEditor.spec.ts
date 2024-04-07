@@ -291,6 +291,13 @@ describe("isCursorInDoc", () => {
     expect(isCursorInDoc(composition, compositionLines, { x: 16, y: 1 })).toBe(true);
     expect(isCursorInDoc(composition, compositionLines, { x: 17, y: 1 })).toBe(false);
   });
+
+  test("should return true when the cursor in the doc: empty doc", () => {
+    const composition: DocCompositionItem[] = [{ char: "\n", bounds: { x: 0, y: 0, width: 0, height: 0 } }];
+    const compositionLines: DocCompositionLine[] = [{ y: 0, height: 0, fontheight: 10, outputs: [{ insert: "\n" }] }];
+    expect(isCursorInDoc(composition, compositionLines, { x: -1, y: -1 })).toBe(false);
+    expect(isCursorInDoc(composition, compositionLines, { x: 1, y: 1 })).toBe(false);
+  });
 });
 
 describe("getLineEndIndex", () => {

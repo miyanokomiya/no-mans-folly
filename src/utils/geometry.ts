@@ -1029,3 +1029,24 @@ export function pickLongSegment(a: IVec2, b: IVec2, c: IVec2): ISegment {
   const ac = sub(c, a);
   return getInner(ab, ac) < 0 ? [b, c] : [a, b];
 }
+
+export function getRoundedRectInnerBounds(rect: IRectangle, radiusX: number, radiusY: number): IRectangle {
+  if (Math.abs(radiusX * radiusY) < MINVALUE) {
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    };
+  } else {
+    const r = Math.atan(radiusY / radiusX);
+    const rx = (1 - Math.cos(r)) * radiusX;
+    const ry = (1 - Math.sin(r)) * radiusY;
+    return {
+      x: rect.x + rx,
+      y: rect.y + ry,
+      width: rect.width - rx * 2,
+      height: rect.height - ry * 2,
+    };
+  }
+}

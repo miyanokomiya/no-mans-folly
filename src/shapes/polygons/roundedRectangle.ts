@@ -4,6 +4,7 @@ import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "../si
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
+import { getRoundedRectInnerBounds } from "../../utils/geometry";
 
 export type RoundedRectangleShape = SimplePolygonShape & {
   rx: number;
@@ -28,15 +29,16 @@ export const struct: ShapeStruct<RoundedRectangleShape> = {
   },
   getTextRangeRect(shape) {
     const radius = getCornerRadius(shape);
-    const r = Math.atan(radius.y / radius.x);
-    const rx = (1 - Math.cos(r)) * radius.x;
-    const ry = (1 - Math.sin(r)) * radius.y;
-    const rect = {
-      x: shape.p.x + rx,
-      y: shape.p.y + ry,
-      width: shape.width - rx * 2,
-      height: shape.height - ry * 2,
-    };
+    const rect = getRoundedRectInnerBounds(
+      {
+        x: shape.p.x,
+        y: shape.p.y,
+        width: shape.width,
+        height: shape.height,
+      },
+      radius.x,
+      radius.y,
+    );
     return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
   },
   canAttachSmartBranch: true,

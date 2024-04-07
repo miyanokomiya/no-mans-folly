@@ -4,7 +4,14 @@ import { SimplePath, SimplePolygonShape, getLocalAbsolutePoint, getStructForSimp
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle, getStrokeWidth } from "../../utils/strokeStyle";
-import { expandRect, extendSegment, getD2, getRotatedWrapperRect, getWrapperRect } from "../../utils/geometry";
+import {
+  expandRect,
+  extendSegment,
+  getD2,
+  getRotatedWrapperRect,
+  getRoundedRectInnerBounds,
+  getWrapperRect,
+} from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
 import { BezierPath, PathLocation, combineBezierPathAndPath, getCrossBezierPathAndSegment } from "../../utils/path";
 
@@ -61,15 +68,16 @@ export const struct: ShapeStruct<BubbleShape> = {
   },
   getTextRangeRect(shape) {
     const radius = getCornerRadius(shape);
-    const r = Math.atan(radius.y / radius.x);
-    const rx = (1 - Math.cos(r)) * radius.x;
-    const ry = (1 - Math.sin(r)) * radius.y;
-    const rect = {
-      x: shape.p.x + rx,
-      y: shape.p.y + ry,
-      width: shape.width - rx * 2,
-      height: shape.height - ry * 2,
-    };
+    const rect = getRoundedRectInnerBounds(
+      {
+        x: shape.p.x,
+        y: shape.p.y,
+        width: shape.width,
+        height: shape.height,
+      },
+      radius.x,
+      radius.y,
+    );
     return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
   },
   canAttachSmartBranch: true,

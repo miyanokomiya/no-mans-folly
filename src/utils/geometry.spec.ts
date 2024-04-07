@@ -55,6 +55,7 @@ import {
   pickLongSegment,
   getRectWithRotationFromRectPolygon,
   snapRadianByAngle,
+  getRoundedRectInnerBounds,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -1339,5 +1340,26 @@ describe("pickLongSegment", () => {
     expect(pickLongSegment(b, c, a)).toEqual([c, a]);
     expect(pickLongSegment(a, c, b)).toEqual([a, c]);
     expect(pickLongSegment(b, a, c)).toEqual([a, c]);
+  });
+});
+
+describe("getRoundedRectInnerBounds", () => {
+  const rect = { x: 0, y: 0, width: 20, height: 10 };
+
+  test("should regard 0 radius", () => {
+    expect(getRoundedRectInnerBounds(rect, 0, 0)).toEqual(rect);
+    expect(getRoundedRectInnerBounds(rect, 0, 10)).toEqual(rect);
+    expect(getRoundedRectInnerBounds(rect, 10, 0)).toEqual(rect);
+  });
+  test("should return inner bounds of the rouded rectangle", () => {
+    const res0 = getRoundedRectInnerBounds(rect, 4, 2);
+    expect(res0.x).toBeGreaterThan(0);
+    expect(res0.x).toBeLessThan(1);
+    expect(res0.y).toBeGreaterThan(0);
+    expect(res0.y).toBeLessThan(2);
+    expect(res0.width).toBeGreaterThan(19);
+    expect(res0.width).toBeLessThan(20);
+    expect(res0.height).toBeGreaterThan(7);
+    expect(res0.height).toBeLessThan(8);
   });
 });
