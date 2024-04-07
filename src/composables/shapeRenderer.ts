@@ -29,10 +29,10 @@ export function newShapeRenderer(option: Option) {
         const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
         ctx.transform(...bounds.affine);
 
-        const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
+        const infoCache = option.shapeComposite.getDocCompositeCache(shape.id, doc);
         const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
         if (!infoCache) {
-          option.shapeComposite.setDocCompositeCache(shape.id, info);
+          option.shapeComposite.setDocCompositeCache(shape.id, info, doc);
         }
 
         renderDocByComposition(ctx, info.composition, info.lines, option.scale);

@@ -130,11 +130,8 @@ function createShapeElement(
 
   const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
 
-  const infoCache = option.shapeComposite.getDocCompositeCache(shape.id);
+  const infoCache = option.shapeComposite.getDocCompositeCache(shape.id, doc);
   const docInfo = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
-  if (!infoCache) {
-    option.shapeComposite.setDocCompositeCache(shape.id, docInfo);
-  }
 
   const docElmInfo = renderSVGDocByComposition(docInfo.composition, docInfo.lines);
   const transform = renderTransform(bounds.affine);

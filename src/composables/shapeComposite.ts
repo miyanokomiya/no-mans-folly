@@ -17,6 +17,7 @@ import { SVGElementInfo } from "../utils/svgElements";
 import { generateNKeysBetween } from "fractional-indexing";
 import { generateKeyBetweenAllowSame } from "../utils/findex";
 import { newObjectWeakCache } from "./cache";
+import { DocOutput } from "../models/document";
 
 interface Option {
   shapes: Shape[];
@@ -48,7 +49,7 @@ export function newShapeComposite(option: Option) {
     getStruct: option.getStruct,
   };
 
-  const docCompositeCacheMap: { [id: string]: DocCompositionInfo } = {};
+  const docCompositeCacheMap: { [id: string]: [info: DocCompositionInfo, src: DocOutput] } = {};
 
   function getAllBranchMergedShapes(ids: string[]): Shape[] {
     return getAllBranchIds(mergedShapeTree, ids).map((id) => mergedShapeMap[id]);
@@ -177,12 +178,19 @@ export function newShapeComposite(option: Option) {
     return !!shapeMap[shape.parentId ?? ""];
   }
 
-  function setDocCompositeCache(id: string, val: DocCompositionInfo) {
-    docCompositeCacheMap[id] = val;
+  function setDocCompositeCache(id: string, val: DocCompositionInfo, src: DocOutput) {
+    docCompositeCacheMap[id] = [val, src];
   }
 
-  function getDocCompositeCache(id: string): DocCompositionInfo | undefined {
-    return docCompositeCacheMap[id];
+  // When "src" is passed, returns cache only when its source matches the "src".
+  // Note: Doc composite denepds on both a shape and its doc that can change respectively.
+  // => This cache has to regard both of them.
+  // When "src" isn't passed, just returns cache without checking its source.
+  function getDocCompositeCache(id: string, src?: DocOutput): DocCompositionInfo | undefined {
+    const cache = docCompositeCacheMap[id];
+    if (!cache) return;
+
+    return !src || cache[1] === src ? cache[0] : undefined;
   }
 
   function getShapeCompositeWithoutTmpInfo(): ShapeComposite {
