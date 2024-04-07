@@ -10,9 +10,11 @@ import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getRotateFn } from "../../utils/geometry";
+import { getBezierControlForArc, getCornerRadiusArc } from "../../utils/path";
 
 export type ParallelogramShape = SimplePolygonShape & {
   c0: IVec2;
+  cr?: number; // 0 by default
 };
 
 export const struct: ShapeStruct<ParallelogramShape> = {
@@ -28,6 +30,7 @@ export const struct: ShapeStruct<ParallelogramShape> = {
       height: arg.height ?? 100,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       c0: arg.c0 ?? { x: 0.7, y: 0 },
+      cr: arg.cr ?? 10,
       direction: arg.direction,
     };
   },
@@ -68,14 +71,19 @@ function getPath(src: ParallelogramShape): SimplePath {
   const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: src.width / 2, y: src.height / 2 };
   const rotateFn = getRotateFn(shape.rotation - src.rotation, add(c, src.p));
-  const { path } = getRawPath(shape);
-  return { path: path.map((p) => sub(rotateFn(add(p, shape.p)), src.p)) };
+  const adjustFn = (p: IVec2) => sub(rotateFn(add(p, shape.p)), src.p);
+  const { path, curves } = getRawPath(shape);
+  return {
+    path: path.map((p) => adjustFn(p)),
+    curves: curves?.map((c) => (c ? { c1: adjustFn(c.c1), c2: adjustFn(c.c2) } : undefined)),
+  };
 }
 
 function getRawPath(shape: ParallelogramShape): SimplePath {
   const dx = (clamp(0, 1, shape.c0.x) - 0.5) * shape.width;
 
   let path: IVec2[];
+  let curves: SimplePath["curves"];
 
   if (dx < 0) {
     path = [
@@ -93,5 +101,47 @@ function getRawPath(shape: ParallelogramShape): SimplePath {
     ];
   }
 
-  return { path };
+  if (shape.cr !== undefined && shape.cr > 0) {
+    const srcPath = path;
+    const cr = clamp(0, getMaxParallelogramCornerRadius(shape), shape.cr);
+    const info0 = getCornerRadiusArc(srcPath[0], srcPath[1], srcPath[2], cr);
+    const control0 = getBezierControlForArc(info0[0], info0[1], info0[2]);
+    const info1 = getCornerRadiusArc(srcPath[1], srcPath[2], srcPath[3], cr);
+    const control1 = getBezierControlForArc(info1[0], info1[1], info1[2]);
+
+    const trTobl = (p: IVec2) => ({ x: srcPath[1].x - p.x + srcPath[3].x, y: srcPath[1].y - p.y + srcPath[3].y });
+    const brTotl = (p: IVec2) => ({ x: srcPath[2].x - p.x + srcPath[0].x, y: srcPath[2].y - p.y + srcPath[0].y });
+
+    path = [
+      info0[1],
+      info0[2],
+      info1[1],
+      info1[2],
+      trTobl(info0[1]),
+      trTobl(info0[2]),
+      brTotl(info1[1]),
+      brTotl(info1[2]),
+    ];
+    curves = [
+      control0,
+      undefined,
+      control1,
+      undefined,
+      {
+        c1: trTobl(control0.c1),
+        c2: trTobl(control0.c2),
+      },
+      undefined,
+      {
+        c1: brTotl(control1.c1),
+        c2: brTotl(control1.c2),
+      },
+    ];
+  }
+
+  return { path, curves };
+}
+
+export function getMaxParallelogramCornerRadius(shape: ParallelogramShape): number {
+  return (Math.min(shape.width, shape.height) * (1 - Math.abs(shape.c0.x - 0.5))) / 2;
 }

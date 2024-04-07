@@ -211,3 +211,23 @@ export function getCornerRadiusArc(p0: IVec2, p1: IVec2, p2: IVec2, radius: numb
   const c = add(p1, multi(getUnit(add(u0, u1)), d / Math.cos(rad)));
   return [c, q0, q1];
 }
+
+// Ref: https://stackoverflow.com/questions/734076/how-to-best-approximate-a-geometrical-arc-with-a-bezier-curve
+export function getBezierControlForArc(c: IVec2, p0: IVec2, p1: IVec2): BezierCurveControl {
+  const ax = p0.x - c.x;
+  const ay = p0.y - c.y;
+  const bx = p1.x - c.x;
+  const by = p1.y - c.y;
+  const divider = ax * by - ay * bx;
+  if (Math.abs(divider) < MINVALUE) return { c1: p0, c2: p1 };
+
+  const q1 = ax * ax + ay * ay;
+  const q2 = q1 + ax * bx + ay * by;
+  const k2 = ((4 / 3) * (Math.sqrt(2 * q1 * q2) - q2)) / divider;
+
+  const x2 = c.x + ax - k2 * ay;
+  const y2 = c.y + ay + k2 * ax;
+  const x3 = c.x + bx + k2 * by;
+  const y3 = c.y + by - k2 * bx;
+  return { c1: { x: x2, y: y2 }, c2: { x: x3, y: y3 } };
+}

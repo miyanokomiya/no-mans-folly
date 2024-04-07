@@ -1,4 +1,4 @@
-import { ParallelogramShape } from "../../../../shapes/polygons/parallelogram";
+import { ParallelogramShape, getMaxParallelogramCornerRadius } from "../../../../shapes/polygons/parallelogram";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   SimplePolygonShape,
@@ -95,6 +95,49 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
                           },
                         });
                       };
+                    case "cr":
+                      return () => {
+                        let showLabel = !event.data.options.ctrl;
+                        return movingShapeControlState<ParallelogramShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            const originXRate = getCrControlOriginXRate(s);
+                            let nextCX = clamp(0, getMaxParallelogramCornerRadius(s), localP.x - originXRate * s.width);
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextCX = Math.round(nextCX);
+                              showLabel = true;
+                            }
+                            return { cr: nextCX };
+                          },
+                          getControlFn: (shape, scale) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const rateX = getCrControlXRate(s);
+                            const rateY = getCrControlYRate(s, scale);
+                            return applyAffine(getShapeTransform(s), { x: s.width * rateX, y: s.height * rateY });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
+
+                            const scale = ctx.getScale();
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const rateX = getCrControlXRate(s);
+                            const rateY = getCrControlYRate(s, scale);
+                            const origin = { x: s.width * rateX, y: s.height * rateY };
+                            renderValueLabel(
+                              renderCtx,
+                              Math.round(s.cr ?? 0),
+                              applyAffine(getShapeTransform(s), origin),
+                              0,
+                              scale,
+                            );
+                          },
+                        });
+                      };
                     case "left":
                       return () => {
                         return movingShapeControlState<ParallelogramShape>({
@@ -167,15 +210,33 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
     newSimplePolygonHandler({
       getShapeComposite: ctx.getShapeComposite,
       targetId: target.id,
-      getAnchors: () => {
+      getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
-        const list = getDirectionalLocalAbsolutePoints(target, s, [s.c0, { x: 0, y: 0.5 }, { x: 1, y: 0.5 }]);
+        const list = getDirectionalLocalAbsolutePoints(target, s, [
+          s.c0,
+          { x: getCrControlXRate(s), y: (-20 / s.height) * scale },
+          { x: 0, y: 0.5 },
+          { x: 1, y: 0.5 },
+        ]);
         return [
           ["c0", list[0]],
-          ["left", list[1]],
-          ["right", list[2]],
+          ["cr", list[1]],
+          ["left", list[2]],
+          ["right", list[3]],
         ];
       },
       direction4: true,
     }),
 );
+
+function getCrControlYRate(shape: ParallelogramShape, scale: number) {
+  return (-20 / shape.height) * scale;
+}
+
+function getCrControlXRate(shape: ParallelogramShape) {
+  return getCrControlOriginXRate(shape) + (shape.cr ?? 0) / shape.width;
+}
+
+function getCrControlOriginXRate(shape: ParallelogramShape) {
+  return Math.max(0, shape.c0.x - 0.5);
+}
