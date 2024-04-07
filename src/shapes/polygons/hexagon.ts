@@ -19,9 +19,9 @@ export const struct: ShapeStruct<HexagonShape> = {
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
-      height: arg.height ?? 100,
+      height: arg.height ?? 100 * (Math.sqrt(3) / 2),
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
-      c0: arg.c0 ?? { x: 1 / (2 + Math.sqrt(3)), y: 0.5 },
+      c0: arg.c0 ?? { x: 1 / 4, y: 0.5 },
       direction: arg.direction,
     };
   },
