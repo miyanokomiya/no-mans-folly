@@ -1,13 +1,28 @@
-import { IVec2, getDistance, getRectCenter, sub } from "okageo";
-import { StyleScheme } from "../../models";
+import { IVec2, applyAffine, clamp, getDistance, getRectCenter, sub } from "okageo";
+import { Direction4, StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, applyPath, renderSwitchDirection } from "../../utils/renderer";
+import { applyLocalSpace, applyPath, renderSwitchDirection, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { SimplePolygonShape, getShapeDirection } from "../../shapes/simplePolygon";
+import {
+  SimplePolygonShape,
+  getExpansionFn,
+  getMigrateRelativePointFn,
+  getNextDirection2,
+  getNormalizedSimplePolygonShape,
+  getShapeDetransform,
+  getShapeDirection,
+  getShapeTransform,
+} from "../../shapes/simplePolygon";
 import { COLORS } from "../../utils/color";
+import { MouseOptions } from "../states/types";
+import { movingShapeControlState } from "../states/appCanvas/movingShapeControlState";
+import { COMMAND_EXAM_SRC } from "../states/appCanvas/commandExams";
+import { AppCanvasStateContext } from "../states/appCanvas/core";
+import { newSelectionHubState } from "../states/appCanvas/selectionHubState";
+import { getPatchByLayouts } from "../shapeLayoutHandler";
 
 export const ANCHOR_SIZE = 6;
 const DIRECTION_ANCHOR_SIZE = 10;
@@ -118,4 +133,250 @@ export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleSch
   ctx.beginPath();
   applyPath(ctx, path, true);
   ctx.stroke();
+}
+
+export function getCornerRadiusLXMovingState<S extends SimplePolygonShape>(
+  shape: S,
+  key: keyof S,
+  mouseOptions: MouseOptions,
+) {
+  const getC = (s: S) => s[key] as IVec2;
+
+  let showLabel = !mouseOptions.ctrl;
+  return movingShapeControlState<S>({
+    targetId: shape.id,
+    snapType: "custom",
+    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    patchFn: (shape, p, movement) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      const localP = applyAffine(getShapeDetransform(s), p);
+      let nextCX = clamp(0, 0.5, localP.x / s.width);
+      if (movement.ctrl) {
+        showLabel = false;
+      } else {
+        nextCX = Math.round(nextCX * s.width) / s.width;
+        showLabel = true;
+      }
+      return { [key]: { x: nextCX, y: movement.shift ? (nextCX * s.width) / s.height : getC(s).y } } as Partial<S>;
+    },
+    getControlFn: (shape, scale) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      return applyAffine(getShapeTransform(s), {
+        x: s.width * getC(s).x,
+        y: -EDGE_ANCHOR_MARGIN * scale,
+      });
+    },
+    renderFn: (ctx, renderCtx, shape) => {
+      if (!showLabel) return;
+
+      const s = getNormalizedSimplePolygonShape(shape);
+      renderValueLabel(
+        renderCtx,
+        Math.round(getC(s).x * s.width),
+        applyAffine(getShapeTransform(s), { x: getC(s).x * s.width, y: -EDGE_ANCHOR_MARGIN * ctx.getScale() }),
+        0,
+        ctx.getScale(),
+      );
+    },
+  });
+}
+
+export function getCornerRadiusRXMovingState<S extends SimplePolygonShape>(
+  shape: S,
+  key: keyof S,
+  mouseOptions: MouseOptions,
+) {
+  const getC = (s: S) => s[key] as IVec2;
+
+  let showLabel = !mouseOptions.ctrl;
+  return movingShapeControlState<S>({
+    targetId: shape.id,
+    snapType: "custom",
+    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    patchFn: (shape, p, movement) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      const localP = applyAffine(getShapeDetransform(s), p);
+      let nextCX = clamp(0.5, 1, localP.x / s.width);
+      if (movement.ctrl) {
+        showLabel = false;
+      } else {
+        nextCX = Math.round(nextCX * s.width) / s.width;
+        showLabel = true;
+      }
+      return {
+        [key]: { x: nextCX, y: movement.shift ? (s.width - nextCX * s.width) / s.height : getC(s).y },
+      } as Partial<S>;
+    },
+    getControlFn: (shape, scale) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      return applyAffine(getShapeTransform(s), {
+        x: s.width * getC(s).x,
+        y: -EDGE_ANCHOR_MARGIN * scale,
+      });
+    },
+    renderFn: (ctx, renderCtx, shape) => {
+      if (!showLabel) return;
+
+      const s = getNormalizedSimplePolygonShape(shape);
+      renderValueLabel(
+        renderCtx,
+        Math.round((1 - getC(s).x) * s.width),
+        applyAffine(getShapeTransform(s), { x: getC(s).x * s.width, y: -EDGE_ANCHOR_MARGIN * ctx.getScale() }),
+        0,
+        ctx.getScale(),
+      );
+    },
+  });
+}
+
+export function getCornerRadiusLYMovingState<S extends SimplePolygonShape>(
+  shape: S,
+  key: keyof S,
+  mouseOptions: MouseOptions,
+) {
+  const getC = (s: S) => s[key] as IVec2;
+
+  let showLabel = !mouseOptions.ctrl;
+  return movingShapeControlState<S>({
+    targetId: shape.id,
+    snapType: "custom",
+    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    patchFn: (shape, p, movement) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      const localP = applyAffine(getShapeDetransform(s), p);
+      let nextCY = clamp(0, 0.5, localP.y / s.height);
+      if (movement.ctrl) {
+        showLabel = false;
+      } else {
+        nextCY = Math.round(nextCY * s.height) / s.height;
+        showLabel = true;
+      }
+      return { [key]: { x: movement.shift ? (nextCY * s.height) / s.width : getC(s).x, y: nextCY } } as Partial<S>;
+    },
+    getControlFn: (shape, scale) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      return applyAffine(getShapeTransform(s), {
+        x: -EDGE_ANCHOR_MARGIN * scale,
+        y: s.height * getC(s).y,
+      });
+    },
+    renderFn: (ctx, renderCtx, shape) => {
+      if (!showLabel) return;
+
+      const s = getNormalizedSimplePolygonShape(shape);
+      renderValueLabel(
+        renderCtx,
+        Math.round(getC(s).y * s.height),
+        applyAffine(getShapeTransform(s), { x: 0, y: getC(s).y * s.height }),
+        0,
+        ctx.getScale(),
+      );
+    },
+  });
+}
+
+export function getCornerRadiusRYMovingState<S extends SimplePolygonShape>(
+  shape: S,
+  key: keyof S,
+  mouseOptions: MouseOptions,
+) {
+  const getC = (s: S) => s[key] as IVec2;
+
+  let showLabel = !mouseOptions.ctrl;
+  return movingShapeControlState<S>({
+    targetId: shape.id,
+    snapType: "custom",
+    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    patchFn: (shape, p, movement) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      const localP = applyAffine(getShapeDetransform(s), p);
+      let nextCY = clamp(0, 0.5, localP.y / s.height);
+      if (movement.ctrl) {
+        showLabel = false;
+      } else {
+        nextCY = Math.round(nextCY * s.height) / s.height;
+        showLabel = true;
+      }
+      return { [key]: { x: movement.shift ? (nextCY * s.height) / s.width : getC(s).x, y: nextCY } } as Partial<S>;
+    },
+    getControlFn: (shape, scale) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      return applyAffine(getShapeTransform(s), {
+        x: s.width + EDGE_ANCHOR_MARGIN * scale,
+        y: s.height * getC(s).y,
+      });
+    },
+    renderFn: (ctx, renderCtx, shape) => {
+      if (!showLabel) return;
+
+      const s = getNormalizedSimplePolygonShape(shape);
+      renderValueLabel(
+        renderCtx,
+        Math.round(getC(s).y * s.height),
+        applyAffine(getShapeTransform(s), { x: s.width, y: getC(s).y * s.height }),
+        0,
+        ctx.getScale(),
+      );
+    },
+  });
+}
+
+export function getResizeByState<S extends SimplePolygonShape, K = keyof S>(
+  by: Direction4,
+  shapeComposite: ShapeComposite,
+  shape: S,
+  migrationPoints: [key: K, origin: IVec2][],
+) {
+  const getC = (s: S, key: K) => (s as any)[key] as IVec2;
+
+  return movingShapeControlState<S>({
+    targetId: shape.id,
+    patchFn: (shape, p) => {
+      const resized = shapeComposite.transformShape(shape, getExpansionFn(shape, by)(shape, p));
+      const migrateFn = getMigrateRelativePointFn(shape, resized);
+      return {
+        ...resized,
+        ...migrationPoints.reduce<any>((map, [key, origin]) => {
+          map[key] = migrateFn(getC(shape, key), origin);
+          return map;
+        }, {}),
+      };
+    },
+    getControlFn: (shape) => {
+      const s = getNormalizedSimplePolygonShape(shape);
+      let p: IVec2;
+      switch (by) {
+        case 0:
+          p = { x: s.width / 2, y: 0 };
+          break;
+        case 2:
+          p = { x: s.width / 2, y: s.height };
+          break;
+        case 3:
+          p = { x: 0, y: s.height / 2 };
+          break;
+        default:
+          p = { x: s.width, y: s.height / 2 };
+          break;
+      }
+      return applyAffine(getShapeTransform(s), p);
+    },
+    renderFn: (ctx, renderCtx, shape) => {
+      renderShapeBounds(renderCtx, ctx.getStyleScheme(), shapeComposite.getLocalRectPolygon(shape));
+    },
+  });
+}
+
+export function handleSwitchDirection2(
+  ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite">,
+  shape: SimplePolygonShape,
+) {
+  const patch = {
+    direction: getNextDirection2(getShapeDirection(shape)),
+  } as Partial<SimplePolygonShape>;
+  const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
+    update: { [shape.id]: patch },
+  });
+  ctx.patchShapes(layoutPatch);
+  return newSelectionHubState;
 }
