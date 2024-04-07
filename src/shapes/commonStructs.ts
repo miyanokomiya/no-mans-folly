@@ -12,6 +12,7 @@ import { struct as hexagon } from "./polygons/hexagon";
 import { struct as rounded_rectangle } from "./polygons/roundedRectangle";
 import { struct as trapezoid } from "./polygons/trapezoid";
 import { struct as parallelogram } from "./polygons/parallelogram";
+import { struct as capsule } from "./polygons/capsule";
 import { struct as cylinder } from "./polygons/cylinder";
 import { struct as document_symbol } from "./polygons/documentSymbol";
 import { struct as bubble } from "./polygons/bubble";
@@ -45,6 +46,7 @@ export const SHAPE_COMMON_STRUCTS: {
   rounded_rectangle,
   trapezoid,
   parallelogram,
+  capsule,
   cylinder,
   document_symbol,
   bubble,

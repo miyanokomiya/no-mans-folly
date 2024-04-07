@@ -4,6 +4,7 @@ import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconHexagon from "../assets/icons/shape_hexagon.svg";
 import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
 import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
+import iconCapsule from "../assets/icons/shape_capsule.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
 import iconDocumentSymbol from "../assets/icons/shape_document_symbol.svg";
 import iconBubble from "../assets/icons/shape_bubble.svg";
@@ -40,6 +41,7 @@ import { newBoardEntitySelectedState } from "./states/appCanvas/board/boardEntit
 import { newAlignBoxSelectedState } from "./states/appCanvas/align/alignBoxSelectedState";
 import { newSingleSelectedState } from "./states/appCanvas/singleSelectedState";
 import { newHexagonSelectedState } from "./states/appCanvas/hexagon/hexagonSelectedState";
+import { newCapsuleSelectedState } from "./states/appCanvas/capsule/capsuleSelectedState";
 
 type ShapeTypeItem = { type: string; icon: string };
 
@@ -51,6 +53,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "hexagon", icon: iconHexagon },
   { type: "trapezoid", icon: iconTrapezoid },
   { type: "parallelogram", icon: iconParallelogram },
+  { type: "capsule", icon: iconCapsule },
   { type: "cylinder", icon: iconCylinder },
   { type: "document_symbol", icon: iconDocumentSymbol },
   { type: "bubble", icon: iconBubble },
@@ -94,6 +97,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newWaveSelectedState;
     case "parallelogram":
       return newParallelogramSelectedState;
+    case "capsule":
+      return newCapsuleSelectedState;
     case "cross":
     case "diagonal_cross":
       return newDiagonalCrossSelectedState;
