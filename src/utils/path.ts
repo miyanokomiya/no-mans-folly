@@ -1,4 +1,17 @@
-import { IVec2, add, divideBezier3, getCrossSegAndBezier3WithT, getDistance, getRadian } from "okageo";
+import {
+  IVec2,
+  MINVALUE,
+  add,
+  divideBezier3,
+  getCrossSegAndBezier3WithT,
+  getDistance,
+  getInner,
+  getNorm,
+  getRadian,
+  getUnit,
+  multi,
+  sub,
+} from "okageo";
 import { BezierCurveControl } from "../models";
 import { ISegment, getCrossSegAndSegWithT, getRotateFn } from "./geometry";
 
@@ -178,4 +191,23 @@ export function getWavePathControl(from: IVec2, to: IVec2, waveBoundsHeight: num
     c1: add(from, rotateFn({ x: len * u, y: halfSize * v })),
     c2: add(from, rotateFn({ x: len * (1 - u), y: -halfSize * v })),
   };
+}
+
+export function getCornerRadiusArc(p0: IVec2, p1: IVec2, p2: IVec2, radius: number): [c: IVec2, q1: IVec2, q2: IVec2] {
+  if (Math.abs(radius) < MINVALUE) return [p1, p1, p1];
+
+  const v0 = sub(p0, p1);
+  const v1 = sub(p2, p1);
+  const d0 = getNorm(v0);
+  const d1 = getNorm(v1);
+  if (Math.abs(d0 * d1 * radius) < MINVALUE) return [p1, p1, p1];
+
+  const u0 = multi(v0, 1 / d0);
+  const u1 = multi(v1, 1 / d1);
+  const rad = Math.acos(getInner(u0, u1)) / 2;
+  const d = Math.min(radius / Math.tan(rad), d0, d1);
+  const q0 = add(p1, multi(u0, d));
+  const q1 = add(p1, multi(u1, d));
+  const c = add(p1, multi(getUnit(add(u0, u1)), d / Math.cos(rad)));
+  return [c, q0, q1];
 }

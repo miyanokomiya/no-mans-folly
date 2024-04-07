@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { combineBezierPathAndPath, getCrossBezierPathAndSegment, getWavePathControl } from "./path";
+import { combineBezierPathAndPath, getCornerRadiusArc, getCrossBezierPathAndSegment, getWavePathControl } from "./path";
 import { getBezierBounds } from "./geometry";
+import { getDistance, getPedal } from "okageo";
 
 describe("getCrossBezierPathAndSegment", () => {
   const path = [
@@ -275,5 +276,47 @@ describe("getWavePathControl", () => {
     expect(bounds1.y).toBeCloseTo(0);
     expect(bounds1.width).toBeCloseTo(5);
     expect(bounds1.height).toBeCloseTo(10);
+  });
+});
+
+describe("getCornerRadiusArc", () => {
+  test("should return corner point when the corner isn't rounded", () => {
+    const p1 = { x: 0, y: 0 };
+    expect(getCornerRadiusArc({ x: 0, y: 0 }, p1, { x: 0, y: 10 }, 4)).toEqual([p1, p1, p1]);
+    expect(getCornerRadiusArc({ x: -10, y: 0 }, p1, { x: 0, y: 10 }, 0)).toEqual([p1, p1, p1]);
+  });
+  test("should return arc info of the corner radius", () => {
+    expect(getCornerRadiusArc({ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, 3)).toEqualPoints([
+      { x: 7, y: 3 },
+      { x: 7, y: 0 },
+      { x: 10, y: 3 },
+    ]);
+
+    const res1 = getCornerRadiusArc({ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 0, y: 10 }, 3);
+    expect(
+      getDistance(
+        res1[0],
+        getPedal(res1[0], [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+        ]),
+      ),
+    ).toBeCloseTo(3);
+    expect(
+      getDistance(
+        res1[0],
+        getPedal(res1[0], [
+          { x: 10, y: 0 },
+          { x: 0, y: 10 },
+        ]),
+      ),
+    ).toBeCloseTo(3);
+  });
+  test("should restrict radius up to the minimum length of edges", () => {
+    expect(getCornerRadiusArc({ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, 20)).toEqualPoints([
+      { x: 0, y: 10 },
+      { x: 0, y: 0 },
+      { x: 10, y: 10 },
+    ]);
   });
 });
