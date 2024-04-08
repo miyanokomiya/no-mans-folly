@@ -59,7 +59,7 @@ export const newCylinderHandler = defineShapeHandler<CylinderHitResult, Option>(
         if (highlight) {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
         } else {
-          applyFillStyle(ctx, { color: style.selectionPrimary });
+          applyFillStyle(ctx, { color: style.transformAnchor });
         }
 
         ctx.beginPath();

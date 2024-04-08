@@ -54,7 +54,7 @@ export const newCrossHandler = defineShapeHandler<CrossHitResult, Option>((optio
       if (hitResult) {
         applyFillStyle(ctx, { color: style.selectionSecondaly });
       } else {
-        applyFillStyle(ctx, { color: style.selectionPrimary });
+        applyFillStyle(ctx, { color: style.transformAnchor });
       }
 
       ctx.beginPath();
