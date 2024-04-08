@@ -30,7 +30,7 @@ export const struct: ShapeStruct<ParallelogramShape> = {
       height: arg.height ?? 100,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       c0: arg.c0 ?? { x: 0.7, y: 0 },
-      cr: arg.cr ?? 10,
+      cr: arg.cr,
       direction: arg.direction,
     };
   },
