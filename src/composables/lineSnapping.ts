@@ -1,11 +1,5 @@
 import { IRectangle, IVec2, getDistance, getPedal, getRectCenter, isSame } from "okageo";
-import {
-  GetShapeStruct,
-  getIntersectedOutlines,
-  getClosestOutline,
-  getLocationRateOnShape,
-  isRectangularOptimizedSegment,
-} from "../shapes";
+import { GetShapeStruct, getIntersectedOutlines, getClosestOutline, isRectangularOptimizedSegment } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
@@ -102,13 +96,14 @@ export function newLineSnapping(option: Option) {
         return extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
       }) ?? [];
 
+    const shapeComposite = newShapeComposite({
+      shapes: reversedSnappableShapes,
+      getStruct: option.getShapeStruct,
+    });
+
     // Try snapping to other shapes' outline
     let outline: { p: IVec2; d: number; shape: Shape; guideLine?: ISegment } | undefined;
     {
-      const shapeComposite = newShapeComposite({
-        shapes: reversedSnappableShapes,
-        getStruct: option.getShapeStruct,
-      });
       reversedSnappableShapes.some((shape) => {
         // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
         let intersection: IVec2 | undefined;
@@ -159,7 +154,7 @@ export function newLineSnapping(option: Option) {
 
     if (outline) {
       const connection: ConnectionPoint = {
-        rate: getLocationRateOnShape(option.getShapeStruct, outline.shape, outline.p),
+        rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
         id: outline.shape.id,
       };
 
@@ -357,7 +352,7 @@ export function optimizeLinePath(
               p,
               pConnection: {
                 ...lineShape.pConnection,
-                rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeP, p),
+                rate: shapeComposite.getLocationRateOnShape(shapeP, p),
               },
             };
         const patchQ: Partial<LineShape> = isSame(q, lineShape.q)
@@ -366,7 +361,7 @@ export function optimizeLinePath(
               q,
               qConnection: {
                 ...lineShape.qConnection,
-                rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeQ, q),
+                rate: shapeComposite.getLocationRateOnShape(shapeQ, q),
               },
             };
         const ret = { ...patchP, ...patchQ };
@@ -386,7 +381,7 @@ export function optimizeLinePath(
       ret.p = p;
       ret.pConnection = {
         ...lineShape.pConnection,
-        rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeP, p),
+        rate: shapeComposite.getLocationRateOnShape(shapeP, p),
       };
     }
   }
@@ -400,7 +395,7 @@ export function optimizeLinePath(
       ret.q = q;
       ret.qConnection = {
         ...lineShape.qConnection,
-        rate: getLocationRateOnShape(shapeComposite.getShapeStruct, shapeQ, q),
+        rate: shapeComposite.getLocationRateOnShape(shapeQ, q),
       };
     }
   }

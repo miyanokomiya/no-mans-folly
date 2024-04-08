@@ -1,6 +1,6 @@
 import { AffineMatrix, IRectangle, IVec2, getDistance, getRectCenter, moveRect } from "okageo";
 import { Shape, StyleScheme } from "../models";
-import { cloneShapes, createShape, getIntersectedOutlines, getLocationRateOnShape } from "../shapes";
+import { cloneShapes, createShape, getIntersectedOutlines } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
@@ -73,14 +73,14 @@ export function newSmartBranchHandler(option: Option) {
       getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter)?.[0] ??
       qCenter;
 
-    getLocationRateOnShape(getShapeStruct, src, p);
+    shapeComposite.getLocationRateOnShape(src, p);
     const elbow = createShape<LineShape>(getShapeStruct, "line", {
       id: generateId(),
       lineType: "elbow",
       p,
       q,
-      pConnection: { id: src.id, rate: getLocationRateOnShape(getShapeStruct, src, p) },
-      qConnection: { id: moved.id, rate: getLocationRateOnShape(getShapeStruct, moved, q) },
+      pConnection: { id: src.id, rate: shapeComposite.getLocationRateOnShape(src, p) },
+      qConnection: { id: moved.id, rate: shapeComposite.getLocationRateOnShape(moved, q) },
       body: getOptimalElbowBody(p, q, pRect, qRect, 30).map((a) => ({ p: a })),
     });
 

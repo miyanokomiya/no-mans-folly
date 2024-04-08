@@ -4,7 +4,6 @@ import {
   canHaveTextPadding,
   createShape,
   getCommonStruct,
-  getLocationRateOnShape,
   getShapeTextBounds,
   getWrapperRect,
   isPointOn,
@@ -124,23 +123,6 @@ describe("shouldResizeOnTextEdit", () => {
     expect(shouldResizeOnTextEdit(getCommonStruct, shape0)).toEqual({
       maxWidth: 14,
     });
-  });
-});
-
-describe("getLocationRateOnShape", () => {
-  test("should return location rate on the shape", () => {
-    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
-    const result0 = getLocationRateOnShape(getCommonStruct, shape, { x: 0, y: 0 });
-    expect(result0.x).toBeCloseTo(0);
-    expect(result0.y).toBeCloseTo(0);
-
-    const result1 = getLocationRateOnShape(getCommonStruct, shape, { x: 2, y: 15 });
-    expect(result1.x).toBeCloseTo(0.2);
-    expect(result1.y).toBeCloseTo(3 / 4);
-
-    const result2 = getLocationRateOnShape(getCommonStruct, { ...shape, rotation: Math.PI / 2 }, { x: 5, y: 14 });
-    expect(result2.x).toBeCloseTo(0.9);
-    expect(result2.y).toBeCloseTo(0.5);
   });
 });
 

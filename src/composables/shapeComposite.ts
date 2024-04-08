@@ -132,6 +132,10 @@ export function newShapeComposite(option: Option) {
     });
   }
 
+  function getLocationRateOnShape(shape: Shape, p: IVec2): IVec2 {
+    return geometry.getLocationRateOnRectPath(getLocalRectPolygon(shape), shape.rotation, p);
+  }
+
   function getShapesOverlappingRect(shapes: Shape[], rect: IRectangle): Shape[] {
     const checkFn = geometry.getIsRectHitRectFn(rect);
     return shapes.filter((s) => checkFn(getWrapperRect(s)));
@@ -228,6 +232,7 @@ export function newShapeComposite(option: Option) {
     getWrapperRect,
     getWrapperRectForShapes,
     getLocalRectPolygon,
+    getLocationRateOnShape,
     getShapesOverlappingRect,
     getSnappingLines,
     shouldDelete,

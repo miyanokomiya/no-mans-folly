@@ -182,10 +182,6 @@ export function getIntersectedOutlines(
   if (struct.getIntersectedOutlines) return struct.getIntersectedOutlines(shape, from, to);
 }
 
-export function getLocationRateOnShape(getStruct: GetShapeStruct, shape: Shape, p: IVec2) {
-  return geometry.getLocationRateOnRectPath(getLocalRectPolygon(getStruct, shape), shape.rotation, p);
-}
-
 export function getShapeTextBounds(
   getStruct: GetShapeStruct,
   shape: Shape,
