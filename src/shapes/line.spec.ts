@@ -204,6 +204,14 @@ describe("struct", () => {
       expect(struct.isPointOn(shape, { x: 5, y: 4.5 }, undefined, 1)).toBe(false);
       expect(struct.isPointOn(shape, { x: 5, y: 4.5 }, undefined, 2)).toBe(true);
     });
+
+    test("should return true when the point is on a head", () => {
+      const shape = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
+      expect(struct.isPointOn(shape, { x: -4, y: -4 })).toBe(false);
+      expect(struct.isPointOn({ ...shape, pHead: { type: "dot_blank" } }, { x: -4, y: -4 })).toBe(true);
+      expect(struct.isPointOn(shape, { x: 14, y: -4 })).toBe(false);
+      expect(struct.isPointOn({ ...shape, qHead: { type: "dot_blank" } }, { x: 14, y: -4 })).toBe(true);
+    });
   });
 
   describe("resize", () => {

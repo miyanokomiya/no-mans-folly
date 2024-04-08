@@ -7,6 +7,7 @@ import {
   getPathPointAtLengthFromStructs,
   getRadian,
   getRectCenter,
+  isOnPolygon,
   isSame,
   multiAffines,
   pathSegmentRawsToString,
@@ -291,6 +292,18 @@ export const struct: ShapeStruct<LineShape> = {
     return getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p));
   },
   isPointOn(shape, p, shapeContext, scale = 1) {
+    const affines = getHeadAffines(shape);
+    if (shape.pHead && affines.pAffine) {
+      const srcPath = getLineHeadWrapperSrcPath(shape.pHead, shape.stroke.width ?? 1);
+      const polygon = srcPath.map((p) => applyAffine(affines.pAffine!, p));
+      if (isOnPolygon(p, polygon)) return true;
+    }
+    if (shape.qHead && affines.qAffine) {
+      const srcPath = getLineHeadWrapperSrcPath(shape.qHead, shape.stroke.width ?? 1);
+      const polygon = srcPath.map((p) => applyAffine(affines.qAffine!, p));
+      if (isOnPolygon(p, polygon)) return true;
+    }
+
     if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 4 * scale)))
       return true;
     if (!shapeContext) return false;
