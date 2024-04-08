@@ -4,7 +4,14 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
 } from "../commons";
-import { LineShape, deleteVertex, getLinePath, getRelativePointOn } from "../../../../shapes/line";
+import {
+  LineShape,
+  deleteVertex,
+  getConnection,
+  getLinePath,
+  getRelativePointOn,
+  patchConnection,
+} from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
@@ -17,11 +24,12 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
 import { getAutomaticCurve } from "../../../../utils/curveLine";
-import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { getPatchAfterLayouts, getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { optimizeLinePath } from "../../../lineSnapping";
 
 type DeleteVertexMeta = {
   index: number;
@@ -61,6 +69,19 @@ export const newLineSelectedState = defineIntransientState(() => {
                 }
 
                 switch (hitResult.type) {
+                  case "optimize": {
+                    const c = getConnection(lineShape, hitResult.index);
+                    if (!c) return;
+
+                    let patch = patchConnection(lineShape, hitResult.index, { optimized: true, ...c });
+                    const optimized = optimizeLinePath(ctx, { ...lineShape, ...patch });
+                    patch = optimized ? { ...patch, ...optimized } : patch;
+                    const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
+                      update: { [lineShape.id]: patch },
+                    });
+                    ctx.patchShapes(layoutPatch);
+                    return newSelectionHubState;
+                  }
                   case "move-anchor":
                     return newMovingHubState;
                   case "vertex":

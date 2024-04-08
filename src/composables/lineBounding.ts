@@ -1,6 +1,6 @@
-import { IVec2, add, multi, rotate } from "okageo";
+import { IVec2, add, isSame, multi, rotate } from "okageo";
 import { StyleScheme } from "../models";
-import { LineShape, getEdges, getLinePath, getRadianP, isCurveLine } from "../shapes/line";
+import { LineShape, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
@@ -11,7 +11,7 @@ const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
 const MOVE_ANCHOR_RATE = 1.4;
 
-type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor" | "arc-anchor";
+type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor" | "arc-anchor" | "optimize";
 export interface LineHitResult {
   type: LineHitType;
   index: number;
@@ -38,7 +38,6 @@ export function newLineBounding(option: Option) {
     const lerpFn = getCurveLerpFn(edge, curves?.[i]);
     return lerpFn(0.25);
   });
-  const moveAnchorV = rotate({ x: 30, y: 0 }, getRadianP(lineShape));
 
   const elbow = isElbow(lineShape);
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
@@ -46,7 +45,24 @@ export function newLineBounding(option: Option) {
   let hitResult: LineHitResult | undefined;
 
   function getMoveAnchor(scale: number): IVec2 {
-    return add(vertices[0], multi(moveAnchorV, scale));
+    const v = rotate({ x: 30, y: 0 }, getRadianP(lineShape));
+    return add(vertices[0], multi(v, scale));
+  }
+
+  function getOptimizeAnchorP(scale: number): IVec2 | undefined {
+    if (!lineShape.pConnection) return;
+    const rate = lineShape.pConnection.rate;
+    if (lineShape.pConnection.id === lineShape.qConnection?.id || !isSame(rate, { x: 0.5, y: 0.5 })) return;
+    const v = rotate({ x: 0, y: 20 }, getRadianP(lineShape));
+    return add(lineShape.p, multi(v, scale));
+  }
+
+  function getOptimizeAnchorQ(scale: number): IVec2 | undefined {
+    if (!lineShape.qConnection) return;
+    const rate = lineShape.qConnection.rate;
+    if (lineShape.qConnection.id === lineShape.pConnection?.id || !isSame(rate, { x: 0.5, y: 0.5 })) return;
+    const v = rotate({ x: 0, y: 20 }, getRadianQ(lineShape));
+    return add(lineShape.q, multi(v, scale));
   }
 
   // Returns true when something changes
@@ -68,6 +84,26 @@ export function newLineBounding(option: Option) {
       const testFn = newCircleHitTest(moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
       if (testFn.test(p)) {
         return { type: "move-anchor", index: 0 };
+      }
+    }
+
+    {
+      const optimizeAnchorP = getOptimizeAnchorP(scale);
+      if (optimizeAnchorP) {
+        const testFn = newCircleHitTest(optimizeAnchorP, vertexSize * ADD_VERTEX_ANCHOR_RATE);
+        if (testFn.test(p)) {
+          return { type: "optimize", index: 0 };
+        }
+      }
+    }
+
+    {
+      const optimizeAnchorQ = getOptimizeAnchorQ(scale);
+      if (optimizeAnchorQ) {
+        const testFn = newCircleHitTest(optimizeAnchorQ, vertexSize * ADD_VERTEX_ANCHOR_RATE);
+        if (testFn.test(p)) {
+          return { type: "optimize", index: vertices.length - 1 };
+        }
       }
     }
 
@@ -177,9 +213,35 @@ export function newLineBounding(option: Option) {
     applyFillStyle(ctx, { color: style.selectionPrimary });
     renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
 
+    const optimizeAnchorP = getOptimizeAnchorP(scale);
+    if (optimizeAnchorP) {
+      applyFillStyle(ctx, { color: style.selectionPrimary });
+      ctx.beginPath();
+      ctx.ellipse(optimizeAnchorP.x, optimizeAnchorP.y, vertexSize, vertexSize, 0, 0, TAU);
+      ctx.fill();
+    }
+
+    const optimizeAnchorQ = getOptimizeAnchorQ(scale);
+    if (optimizeAnchorQ) {
+      applyFillStyle(ctx, { color: style.selectionPrimary });
+      ctx.beginPath();
+      ctx.ellipse(optimizeAnchorQ.x, optimizeAnchorQ.y, vertexSize, vertexSize, 0, 0, TAU);
+      ctx.fill();
+    }
+
     if (hitResult) {
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
       switch (hitResult.type) {
+        case "optimize": {
+          const p = hitResult.index === 0 ? optimizeAnchorP : optimizeAnchorQ;
+          if (p) {
+            applyFillStyle(ctx, { color: style.selectionSecondaly });
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+            ctx.fill();
+          }
+          break;
+        }
         case "move-anchor": {
           applyFillStyle(ctx, { color: style.selectionPrimary });
           ctx.beginPath();

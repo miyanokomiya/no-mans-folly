@@ -36,7 +36,7 @@ interface Option {
   getShapeStruct: GetShapeStruct;
 }
 
-export type ConnectionResult = { connection?: ConnectionPoint; p: IVec2; guidLines?: ISegment[]; optimized?: boolean };
+export type ConnectionResult = { connection?: ConnectionPoint; p: IVec2; guidLines?: ISegment[] };
 
 export function newLineSnapping(option: Option) {
   const reversedSnappableShapes = option.snappableShapes.concat().reverse();
@@ -102,7 +102,7 @@ export function newLineSnapping(option: Option) {
       }) ?? [];
 
     // Try snapping to other shapes' outline
-    let outline: { p: IVec2; d: number; shape: Shape; optimized?: boolean; guideLine?: ISegment } | undefined;
+    let outline: { p: IVec2; d: number; shape: Shape; guideLine?: ISegment } | undefined;
     {
       const shapeComposite = newShapeComposite({
         shapes: reversedSnappableShapes,
@@ -135,7 +135,7 @@ export function newLineSnapping(option: Option) {
             const c = getRectCenter(rect);
             const d = getDistance(c, point);
             if (d < threshold) {
-              outline = { p: c, d, shape, optimized: true };
+              outline = { p: c, d, shape };
               selfSnapped = undefined;
               return true;
             }
@@ -161,7 +161,6 @@ export function newLineSnapping(option: Option) {
         rate: getLocationRateOnShape(option.getShapeStruct, outline.shape, outline.p),
         id: outline.shape.id,
       };
-      if (outline.optimized) connection.optimized = true;
 
       return {
         connection,
@@ -169,7 +168,6 @@ export function newLineSnapping(option: Option) {
         guidLines: outline.guideLine
           ? [outline.guideLine]
           : selfSnapped?.guidLines?.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
-        optimized: outline.optimized,
       };
     }
 
