@@ -603,5 +603,6 @@ describe("isLineSnappableShape", () => {
 
     expect(isLineSnappableShape(createShape(getCommonStruct, "line", {}))).toBe(false);
     expect(isLineSnappableShape(createShape<TextShape>(getCommonStruct, "text", { lineAttached: 0.5 }))).toBe(false);
+    expect(isLineSnappableShape(createShape(getCommonStruct, "group", {}))).toBe(false);
   });
 });

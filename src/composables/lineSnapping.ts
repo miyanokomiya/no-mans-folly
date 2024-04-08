@@ -25,6 +25,7 @@ import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { isLineLabelShape } from "../shapes/text";
 import { pickMinItem } from "../utils/commons";
 import { ShapeSnappingLines } from "../shapes/core";
+import { isGroupShape } from "../shapes/group";
 
 const SNAP_THRESHOLD = 10;
 
@@ -415,5 +416,5 @@ export function optimizeLinePath(
 }
 
 export function isLineSnappableShape(shape: Shape): boolean {
-  return !isLineShape(shape) && !isLineLabelShape(shape);
+  return !isLineShape(shape) && !isLineLabelShape(shape) && !isGroupShape(shape);
 }

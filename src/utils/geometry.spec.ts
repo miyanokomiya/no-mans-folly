@@ -56,6 +56,7 @@ import {
   getRectWithRotationFromRectPolygon,
   snapRadianByAngle,
   getRoundedRectInnerBounds,
+  getLocationRateOnRectPath,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -743,6 +744,27 @@ describe("sortPointFrom", () => {
       { x: 0, y: 10 },
       { x: 11, y: 0 },
     ]);
+  });
+});
+
+describe("getLocationRateOnRectPath", () => {
+  test("should return zero point when a rect has zero size", () => {
+    const rect0 = [
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ];
+    expect(getLocationRateOnRectPath(rect0, 0, { x: 10, y: 20 })).toEqual({ x: 0, y: 0 });
+  });
+  test("should return rate of the point within the rect", () => {
+    const rect0 = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+      { x: 0, y: 100 },
+    ];
+    expect(getLocationRateOnRectPath(rect0, 0, { x: 10, y: 20 })).toEqual({ x: 0.1, y: 0.2 });
   });
 });
 

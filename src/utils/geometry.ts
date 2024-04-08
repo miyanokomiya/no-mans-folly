@@ -545,9 +545,11 @@ export function getLocationRateOnRectPath(rectPath: IVec2[], rotation: number, p
   const center = getCenter(rectPath[0], rectPath[2]);
   const rotatedP = rotate(p, -rotation, center);
   const rotatedPath = rectPath.map((v) => rotate(v, -rotation, center));
+  const dw = rotatedPath[1].x - rotatedPath[0].x;
+  const dh = rotatedPath[3].y - rotatedPath[0].y;
   return {
-    x: (rotatedP.x - rotatedPath[0].x) / (rotatedPath[1].x - rotatedPath[0].x),
-    y: (rotatedP.y - rotatedPath[0].y) / (rotatedPath[3].y - rotatedPath[0].y),
+    x: dw === 0 ? 0 : (rotatedP.x - rotatedPath[0].x) / dw,
+    y: dh === 0 ? 0 : (rotatedP.y - rotatedPath[0].y) / dh,
   };
 }
 
