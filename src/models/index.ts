@@ -37,6 +37,7 @@ export interface StyleScheme {
   selectionPrimary: Color;
   selectionSecondaly: Color;
   selectionLineWidth: number;
+  transformAnchor: Color;
   alert: Color;
 }
 

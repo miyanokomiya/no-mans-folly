@@ -91,8 +91,8 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
             applyFillStyle(ctx, { color: style.selectionSecondaly });
             applyStrokeStyle(ctx, { color: style.selectionSecondaly });
           } else {
-            applyFillStyle(ctx, { color: style.selectionPrimary });
-            applyStrokeStyle(ctx, { color: style.selectionPrimary });
+            applyFillStyle(ctx, { color: style.transformAnchor });
+            applyStrokeStyle(ctx, { color: style.transformAnchor });
           }
           ctx.beginPath();
           ctx.arc(p.x, p.y, threshold, 0, TAU);

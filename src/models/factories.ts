@@ -9,6 +9,7 @@ export function createStyleScheme(): StyleScheme {
     selectionPrimary: createColor(65, 105, 225),
     selectionSecondaly: createColor(64, 224, 208),
     selectionLineWidth: 3,
+    transformAnchor: createColor(250, 250, 55),
     alert: createColor(224, 0, 0),
   };
 }

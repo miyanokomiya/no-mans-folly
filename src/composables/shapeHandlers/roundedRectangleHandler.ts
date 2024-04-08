@@ -59,7 +59,7 @@ export const newRoundedRectangleHandler = defineShapeHandler<RoundedRectangleHit
         if (highlight) {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
         } else {
-          applyFillStyle(ctx, { color: style.selectionPrimary });
+          applyFillStyle(ctx, { color: style.transformAnchor });
         }
 
         ctx.beginPath();
