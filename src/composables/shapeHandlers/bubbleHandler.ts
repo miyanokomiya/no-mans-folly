@@ -5,7 +5,7 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { BubbleShape, getBeakControls, getBeakSize } from "../../shapes/polygons/bubble";
-import { applyLocalSpace, scaleGlobalAlpha } from "../../utils/renderer";
+import { applyLocalSpace, renderOutlinedCircle, scaleGlobalAlpha } from "../../utils/renderer";
 import { getLocalAbsolutePoint, getShapeDetransform } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 
@@ -75,14 +75,10 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
         ] as const
       ).forEach(([p, highlight, size = threshold]) => {
         if (highlight) {
-          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          renderOutlinedCircle(ctx, p, size, style.selectionSecondaly);
         } else {
-          applyFillStyle(ctx, { color: style.selectionPrimary });
+          renderOutlinedCircle(ctx, p, size, style.transformAnchor);
         }
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size, 0, TAU);
-        ctx.fill();
       });
 
       if (hitResult?.type === "beakOriginC" || hitResult?.type === "beakTipC" || hitResult?.type === "beakSizeC") {

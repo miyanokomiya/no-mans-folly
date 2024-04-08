@@ -1,9 +1,9 @@
 import { IRectangle, IVec2, PathSegmentRaw, add, getRadian, getUnit, isSame, multi, rotate, sub } from "okageo";
-import { ISegment, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
+import { ISegment, TAU, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
-import { CurveControl } from "../models";
+import { Color, CurveControl } from "../models";
 import { DEFAULT_FONT_SIZE } from "./textEditor";
 
 export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false, reverse = false) {
@@ -116,6 +116,18 @@ export function createSVGCurvePath(
   }
 
   return ret;
+}
+
+export function renderOutlinedCircle(ctx: CanvasRenderingContext2D, p: IVec2, r: number, fillColor: Color) {
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r, 0, TAU);
+  ctx.fill();
+
+  applyFillStyle(ctx, { color: fillColor });
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r * 0.9, 0, TAU);
+  ctx.fill();
 }
 
 export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, size: number) {

@@ -1,11 +1,9 @@
 import { IVec2, applyAffine, getDistance } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
-import { applyFillStyle } from "../../utils/fillStyle";
-import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { CylinderShape } from "../../shapes/polygons/cylinder";
-import { applyLocalSpace } from "../../utils/renderer";
+import { applyLocalSpace, renderOutlinedCircle } from "../../utils/renderer";
 import { getShapeDetransform } from "../../shapes/simplePolygon";
 
 const ANCHOR_SIZE = 6;
@@ -57,14 +55,10 @@ export const newCylinderHandler = defineShapeHandler<CylinderHitResult, Option>(
         ] as const
       ).forEach(([p, highlight]) => {
         if (highlight) {
-          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          renderOutlinedCircle(ctx, p, threshold, style.selectionSecondaly);
         } else {
-          applyFillStyle(ctx, { color: style.transformAnchor });
+          renderOutlinedCircle(ctx, p, threshold, style.transformAnchor);
         }
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, threshold, 0, TAU);
-        ctx.fill();
       });
     });
   }
@@ -88,12 +82,9 @@ export function renderMovingCylinderAnchor(
     x: shape.width * shape.c0.x,
     y: shape.height * shape.c0.y,
   };
+  const threshold = ANCHOR_SIZE * scale;
 
   applyLocalSpace(ctx, { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height }, shape.rotation, () => {
-    applyFillStyle(ctx, { color: style.selectionSecondaly });
-    applyFillStyle(ctx, { color: style.selectionSecondaly });
-    ctx.beginPath();
-    ctx.arc(nextControlP.x, nextControlP.y, 6 * scale, 0, TAU);
-    ctx.fill();
+    renderOutlinedCircle(ctx, nextControlP, threshold, style.selectionSecondaly);
   });
 }

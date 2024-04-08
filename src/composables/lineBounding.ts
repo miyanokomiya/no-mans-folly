@@ -5,7 +5,7 @@ import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyCurvePath, applyPath, renderMoveIcon, renderPlusIcon } from "../utils/renderer";
+import { applyCurvePath, applyPath, renderMoveIcon, renderOutlinedCircle, renderPlusIcon } from "../utils/renderer";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
@@ -215,18 +215,12 @@ export function newLineBounding(option: Option) {
 
     const optimizeAnchorP = getOptimizeAnchorP(scale);
     if (optimizeAnchorP) {
-      applyFillStyle(ctx, { color: style.selectionPrimary });
-      ctx.beginPath();
-      ctx.ellipse(optimizeAnchorP.x, optimizeAnchorP.y, vertexSize, vertexSize, 0, 0, TAU);
-      ctx.fill();
+      renderOutlinedCircle(ctx, optimizeAnchorP, vertexSize, style.transformAnchor);
     }
 
     const optimizeAnchorQ = getOptimizeAnchorQ(scale);
     if (optimizeAnchorQ) {
-      applyFillStyle(ctx, { color: style.selectionPrimary });
-      ctx.beginPath();
-      ctx.ellipse(optimizeAnchorQ.x, optimizeAnchorQ.y, vertexSize, vertexSize, 0, 0, TAU);
-      ctx.fill();
+      renderOutlinedCircle(ctx, optimizeAnchorQ, vertexSize, style.transformAnchor);
     }
 
     if (hitResult) {

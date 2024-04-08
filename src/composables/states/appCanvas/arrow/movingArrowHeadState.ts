@@ -1,11 +1,11 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { TAU, getRotateFn } from "../../../../utils/geometry";
+import { getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { ArrowCommonShape, getHeadControlPoint, getHeadMaxLength } from "../../../../utils/arrows";
 import { getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
+import { renderOutlinedCircle } from "../../../../utils/renderer";
 
 interface Option {
   targetId: string;
@@ -75,10 +75,7 @@ export function newMovingArrowHeadState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape: ArrowCommonShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const headControlP = getHeadControlPoint(tmpShape);
-      applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
-      renderCtx.beginPath();
-      renderCtx.arc(headControlP.x, headControlP.y, 6 * ctx.getScale(), 0, TAU);
-      renderCtx.fill();
+      renderOutlinedCircle(renderCtx, headControlP, 6 * ctx.getScale(), ctx.getStyleScheme().selectionSecondaly);
     },
   };
 }

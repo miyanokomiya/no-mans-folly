@@ -1,13 +1,12 @@
 import type { AppCanvasState, AppCanvasStateContext } from "./core";
 import { newSelectionHubState } from "./selectionHubState";
-import { applyFillStyle } from "../../../utils/fillStyle";
-import { TAU } from "../../../utils/geometry";
 import { IVec2, add } from "okageo";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { Shape } from "../../../models";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { CommandExam, EditMovement } from "../types";
+import { renderOutlinedCircle } from "../../../utils/renderer";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -95,10 +94,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
     render: (ctx, renderCtx) => {
       const tmpShape: T = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const control = option.getControlFn(tmpShape, ctx.getScale());
-      applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
-      renderCtx.beginPath();
-      renderCtx.arc(control.x, control.y, 6 * ctx.getScale(), 0, TAU);
-      renderCtx.fill();
+      renderOutlinedCircle(renderCtx, control, 6 * ctx.getScale(), ctx.getStyleScheme().selectionSecondaly);
 
       if (snappingResult) {
         renderSnappingResult(renderCtx, {

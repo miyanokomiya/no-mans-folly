@@ -1,11 +1,11 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
 import { OneSidedArrowShape, getTailControlPoint } from "../../../../shapes/oneSidedArrow";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { TAU, getRotateFn } from "../../../../utils/geometry";
+import { getRotateFn } from "../../../../utils/geometry";
 import { add, clamp, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
+import { renderOutlinedCircle } from "../../../../utils/renderer";
 
 interface Option {
   targetId: string;
@@ -71,10 +71,7 @@ export function newMovingArrowTailState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape: OneSidedArrowShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const tailControlP = getTailControlPoint(tmpShape);
-      applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
-      renderCtx.beginPath();
-      renderCtx.arc(tailControlP.x, tailControlP.y, 6 * ctx.getScale(), 0, TAU);
-      renderCtx.fill();
+      renderOutlinedCircle(renderCtx, tailControlP, 6 * ctx.getScale(), ctx.getStyleScheme().selectionSecondaly);
     },
   };
 }

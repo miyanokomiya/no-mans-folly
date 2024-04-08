@@ -4,7 +4,13 @@ import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, applyPath, renderSwitchDirection, renderValueLabel } from "../../utils/renderer";
+import {
+  applyLocalSpace,
+  applyPath,
+  renderOutlinedCircle,
+  renderSwitchDirection,
+  renderValueLabel,
+} from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import {
   SimplePolygonShape,
@@ -88,15 +94,10 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
         .map<[IVec2, boolean]>((a) => [a[1], a[0] === hitResult?.type])
         .forEach(([p, highlight]) => {
           if (highlight) {
-            applyFillStyle(ctx, { color: style.selectionSecondaly });
-            applyStrokeStyle(ctx, { color: style.selectionSecondaly });
+            renderOutlinedCircle(ctx, p, threshold, style.selectionSecondaly);
           } else {
-            applyFillStyle(ctx, { color: style.transformAnchor });
-            applyStrokeStyle(ctx, { color: style.transformAnchor });
+            renderOutlinedCircle(ctx, p, threshold, style.transformAnchor);
           }
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, threshold, 0, TAU);
-          ctx.fill();
         });
 
       if (direction4Anchor) {

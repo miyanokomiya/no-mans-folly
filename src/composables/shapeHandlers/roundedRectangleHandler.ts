@@ -1,10 +1,8 @@
 import { IVec2, applyAffine, getDistance } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
-import { applyFillStyle } from "../../utils/fillStyle";
-import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderValueLabel } from "../../utils/renderer";
+import { applyLocalSpace, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { getShapeDetransform } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { RoundedRectangleShape } from "../../shapes/polygons/roundedRectangle";
@@ -57,14 +55,10 @@ export const newRoundedRectangleHandler = defineShapeHandler<RoundedRectangleHit
         ] as const
       ).forEach(([p, highlight, size = threshold]) => {
         if (highlight) {
-          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          renderOutlinedCircle(ctx, p, size, style.selectionSecondaly);
         } else {
-          applyFillStyle(ctx, { color: style.transformAnchor });
+          renderOutlinedCircle(ctx, p, size, style.transformAnchor);
         }
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size, 0, TAU);
-        ctx.fill();
       });
     });
 

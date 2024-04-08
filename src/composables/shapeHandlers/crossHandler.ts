@@ -1,10 +1,9 @@
 import { IVec2, getDistance, getRectCenter, sub } from "okageo";
 import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
-import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderValueLabel } from "../../utils/renderer";
+import { applyLocalSpace, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { CrossShape } from "../../shapes/polygons/cross";
 
@@ -52,14 +51,10 @@ export const newCrossHandler = defineShapeHandler<CrossHitResult, Option>((optio
       ctx.stroke();
 
       if (hitResult) {
-        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        renderOutlinedCircle(ctx, controlSizeP, threshold, style.selectionSecondaly);
       } else {
-        applyFillStyle(ctx, { color: style.transformAnchor });
+        renderOutlinedCircle(ctx, controlSizeP, threshold, style.transformAnchor);
       }
-
-      ctx.beginPath();
-      ctx.arc(controlSizeP.x, controlSizeP.y, threshold, 0, TAU);
-      ctx.fill();
     });
   }
 
@@ -93,9 +88,6 @@ export function renderMovingCrossAnchor(
     ctx.arc(shape.width / 2, shape.height / 2, shape.crossSize / 2, 0, TAU);
     ctx.stroke();
 
-    applyFillStyle(ctx, { color: style.selectionSecondaly });
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, threshold, 0, TAU);
-    ctx.fill();
+    renderOutlinedCircle(ctx, p, threshold, style.selectionSecondaly);
   });
 }

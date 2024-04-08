@@ -4,7 +4,7 @@ import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4 } from "../../utils/geometry";
-import { renderSwitchDirection } from "../../utils/renderer";
+import { renderOutlinedCircle, renderSwitchDirection } from "../../utils/renderer";
 import { COLORS } from "../../utils/color";
 import { getArrowHeadPoint, getArrowTailPoint } from "../../utils/arrows";
 import { defineShapeHandler } from "./core";
@@ -77,13 +77,10 @@ export const newArrowHandler = defineShapeHandler<ArrowHitResult, Option>((optio
       ] as const
     ).forEach(([p, highlight]) => {
       if (highlight) {
-        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        renderOutlinedCircle(ctx, p, threshold, style.selectionSecondaly);
       } else {
-        applyFillStyle(ctx, { color: style.selectionPrimary });
+        renderOutlinedCircle(ctx, p, threshold, style.transformAnchor);
       }
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, threshold, 0, TAU);
-      ctx.fill();
     });
 
     if (hitResult?.type === "direction") {

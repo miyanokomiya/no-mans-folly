@@ -1,11 +1,10 @@
 import type { AppCanvasState } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { TAU } from "../../../../utils/geometry";
 import { add } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { ArrowCommonShape, getArrowHeadPoint, patchToMoveHead } from "../../../../utils/arrows";
+import { renderOutlinedCircle } from "../../../../utils/renderer";
 
 interface Option {
   targetId: string;
@@ -62,10 +61,7 @@ export function newMovingArrowToState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape: ArrowCommonShape = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
       const headP = getArrowHeadPoint(tmpShape);
-      applyFillStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly });
-      renderCtx.beginPath();
-      renderCtx.arc(headP.x, headP.y, 6 * ctx.getScale(), 0, TAU);
-      renderCtx.fill();
+      renderOutlinedCircle(renderCtx, headP, 6 * ctx.getScale(), ctx.getStyleScheme().selectionSecondaly);
 
       if (snappingResult) {
         renderSnappingResult(renderCtx, {
