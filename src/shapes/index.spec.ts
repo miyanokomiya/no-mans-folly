@@ -5,6 +5,7 @@ import {
   createShape,
   getCommonStruct,
   getShapeTextBounds,
+  getTextRangeRect,
   getWrapperRect,
   isPointOn,
   refreshShapeRelations,
@@ -19,6 +20,7 @@ import { createStrokeStyle } from "../utils/strokeStyle";
 import { createBoxPadding } from "../utils/boxPadding";
 import { TreeRootShape } from "./tree/treeRoot";
 import { struct as unknownStruct } from "./unknown";
+import { EllipseShape } from "./ellipse";
 
 describe("getCommonStruct", () => {
   test("should return the struct of the type", () => {
@@ -76,6 +78,31 @@ describe("getWrapperRect", () => {
       y: -50,
       width: 110,
       height: 120,
+    });
+  });
+});
+
+describe("getTextRangeRect", () => {
+  test("should regard boundsType option of the text bounds", () => {
+    const shape = createShape<EllipseShape>(getCommonStruct, "ellipse", { rx: 10, ry: 20 });
+    expect(
+      getTextRangeRect(getCommonStruct, { ...shape, textPadding: createBoxPadding() } as EllipseShape),
+    ).not.toEqual({
+      x: 0,
+      y: 0,
+      width: 20,
+      height: 40,
+    });
+    expect(
+      getTextRangeRect(getCommonStruct, {
+        ...shape,
+        textPadding: createBoxPadding(undefined, undefined, "outer"),
+      } as EllipseShape),
+    ).toEqual({
+      x: 0,
+      y: 0,
+      width: 20,
+      height: 40,
     });
   });
 });

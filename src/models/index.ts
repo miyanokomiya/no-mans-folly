@@ -101,6 +101,13 @@ export type BoxValues4 = [top: number, right: number, bottom: number, left: numb
 
 export interface BoxPadding {
   type?: "relative"; // undefined should mean "absolute"
+  /**
+   * inner: based on the inner bounds of the target
+   * outer: based on the outer bounds of the target
+   *
+   * undefined should mean "inner"
+   */
+  boundsType?: "outer";
   value: BoxValues4; // represents px with absolute, rate with relative
 }
 

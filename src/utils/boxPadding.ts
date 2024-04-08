@@ -1,14 +1,18 @@
 import { IRectangle } from "okageo";
 import { BoxPadding } from "../models";
 
-export function createBoxPadding(value?: BoxPadding["value"], type?: BoxPadding["type"]): BoxPadding {
-  return { type, value: value ?? [0, 0, 0, 0] };
+export function createBoxPadding(
+  value?: BoxPadding["value"],
+  type?: BoxPadding["type"],
+  boundsType?: BoxPadding["boundsType"],
+): BoxPadding {
+  return { type, value: value ?? [0, 0, 0, 0], boundsType };
 }
 
 export function isSameBoxPadding(a?: BoxPadding, b?: BoxPadding): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
-  return a.type === b.type && a.value.every((v, i) => v === b.value[i]);
+  return a.type === b.type && a.boundsType === b.boundsType && a.value.every((v, i) => v === b.value[i]);
 }
 
 export function getPaddingRect(padding: BoxPadding | undefined, rect: IRectangle): IRectangle {
@@ -64,6 +68,7 @@ export function convertPaddingType(padding: BoxPadding, rect: IRectangle, type?:
     };
   } else {
     return {
+      type,
       value: absValue,
     };
   }

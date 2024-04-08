@@ -59,9 +59,16 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
     (val: boolean) => {
       // Just reset each padding instead of conserve current padding.
       // => Keeping it requires parent bounds and it would be too complex for this feature.
-      onChange?.(createBoxPadding(undefined, val ? "relative" : undefined));
+      onChange?.(createBoxPadding(undefined, val ? "relative" : undefined, currentValue.boundsType));
     },
-    [onChange],
+    [currentValue, onChange],
+  );
+
+  const onBoundsTypeChange = useCallback(
+    (val: boolean) => {
+      onChange?.(createBoxPadding(currentValue.value, currentValue.type, val ? "outer" : undefined));
+    },
+    [currentValue, onChange],
   );
 
   const onChangeTop = useCallback(
@@ -126,9 +133,12 @@ const BoxPaddingPanel: React.FC<BoxPaddingProps> = ({ onChange, value }) => {
 
   return (
     <div className="p-2">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
         <ToggleInput value={currentValue.type === "relative"} onChange={onRelativeChange}>
           Relative
+        </ToggleInput>
+        <ToggleInput value={currentValue.boundsType === "outer"} onChange={onBoundsTypeChange}>
+          Outer bounds
         </ToggleInput>
       </div>
       <div className="flex flex-col items-center gap-1 mt-2">

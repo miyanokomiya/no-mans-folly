@@ -61,6 +61,16 @@ export function getLocalRectPolygon(getStruct: GetShapeStruct, shape: Shape, sha
 
 export function getTextRangeRect(getStruct: GetShapeStruct, shape: Shape): IRectangle | undefined {
   const struct = getStruct(shape.type);
+
+  // Take care of "outer" option of the text padding here for convenience.
+  // TODO: Do it in each shape struce.
+  const textPadding: BoxPadding | undefined = (shape as any).textPadding;
+  if (textPadding?.boundsType === "outer") {
+    // This wrapper rect isn't always correct because some shape types require whole shape trees to derive their bounds,
+    const rect = struct.getWrapperRect(shape);
+    return getPaddingRect(textPadding, rect);
+  }
+
   return struct.getTextRangeRect?.(shape);
 }
 
