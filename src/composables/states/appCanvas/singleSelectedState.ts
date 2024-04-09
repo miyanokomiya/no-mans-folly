@@ -101,24 +101,25 @@ export const newSingleSelectedState = defineIntransientState(() => {
               return;
           }
         case "pointerdoubleclick": {
+          // TODO: It'd be better to make "GroupSelectedState"
+          if (isGroupShapeSelected) {
+            const shapeComposite = ctx.getShapeComposite();
+            const child = shapeComposite.findShapeAt(
+              event.data.point,
+              { parentId: selectedId },
+              undefined,
+              undefined,
+              ctx.getScale(),
+            );
+            if (child) {
+              ctx.selectShape(child.id);
+              return;
+            }
+          }
+
           const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
-            // TODO: It'd be better to make "GroupSelectedState"
-            if (isGroupShapeSelected) {
-              const shapeComposite = ctx.getShapeComposite();
-              const child = shapeComposite.findShapeAt(
-                event.data.point,
-                { parentId: selectedId },
-                undefined,
-                undefined,
-                ctx.getScale(),
-              );
-              if (child) {
-                ctx.selectShape(child.id);
-              }
-            } else {
-              return startTextEditingIfPossible(ctx, selectedId, event.data.point);
-            }
+            return startTextEditingIfPossible(ctx, selectedId, event.data.point);
           }
           return;
         }

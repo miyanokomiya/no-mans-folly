@@ -49,8 +49,8 @@ export const struct: ShapeStruct<GroupShape> = {
     const rotatedInnserPoints = innerPoints.map((p) => rotateFn(p, true));
     return getRectPoints(getOuterRectangle([rotatedInnserPoints])).map((p) => rotateFn(p));
   },
-  isPointOn(shape, p, shapeContext) {
-    return shapeContext ? isPointOnGroup(shape, p, shapeContext) : false;
+  isPointOn(shape, p, shapeContext, scale) {
+    return shapeContext ? isPointOnGroup(shape, p, shapeContext, scale) : false;
   },
   resize(shape, resizingAffine, shapeContext) {
     if (!shapeContext) return {};
@@ -88,12 +88,12 @@ export function isGroupShape(shape: Shape): shape is GroupShape {
   return shape.type === "group";
 }
 
-export function isPointOnGroup(shape: Shape, p: IVec2, shapeContext: ShapeContext) {
+export function isPointOnGroup(shape: Shape, p: IVec2, shapeContext: ShapeContext, scale?: number) {
   const children = shapeContext?.treeNodeMap[shape.id].children;
   if (!children || children.length === 0) return false;
 
   return children.some((c) => {
     const s = shapeContext.shapeMap[c.id];
-    return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext);
+    return shapeContext.getStruct(s.type).isPointOn(s, p, shapeContext, scale);
   });
 }

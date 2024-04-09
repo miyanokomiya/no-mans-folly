@@ -251,7 +251,9 @@ export const struct: ShapeStruct<LineShape> = {
   },
   getWrapperRect(shape, _, includeBounds) {
     const path = getLinePath(shape);
-    let rect = getCurveSplineBounds(path, shape.curves);
+    // Regard curves only when bounds included.
+    // => Otherwise, the bounds doesn't represent vertices.
+    let rect = getCurveSplineBounds(path, includeBounds ? shape.curves : undefined);
 
     if (includeBounds) {
       const affines = getHeadAffines(shape);
