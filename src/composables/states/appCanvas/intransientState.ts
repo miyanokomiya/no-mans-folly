@@ -1,6 +1,6 @@
 import { IVec2, applyAffine, getOuterRectangle } from "okageo";
 import { Shape } from "../../../models";
-import { applyPath } from "../../../utils/renderer";
+import { applyCurvePath, applyPath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
@@ -8,6 +8,7 @@ import { LinkInfo } from "../types";
 import { getShapeTextBounds } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
+import { getLinePath, isLineShape } from "../../../shapes/line";
 
 /**
  * Event flow specifications.
@@ -56,15 +57,22 @@ export function defineIntransientState<A extends any[]>(
       },
       render: (ctx, renderCtx) => {
         if (hoveredShape) {
-          const shapeComposite = ctx.getShapeComposite();
-          const path = shapeComposite.getLocalRectPolygon(hoveredShape);
+          renderCtx.beginPath();
+
+          if (isLineShape(hoveredShape)) {
+            const linePath = getLinePath(hoveredShape);
+            applyCurvePath(renderCtx, linePath, hoveredShape.curves);
+          } else {
+            const shapeComposite = ctx.getShapeComposite();
+            const path = shapeComposite.getLocalRectPolygon(hoveredShape);
+            applyPath(renderCtx, path, true);
+          }
+
           applyStrokeStyle(renderCtx, {
             color: ctx.getStyleScheme().selectionSecondaly,
             width: 2 * ctx.getScale(),
             dash: "short",
           });
-          renderCtx.beginPath();
-          applyPath(renderCtx, path, true);
           renderCtx.stroke();
         }
 
