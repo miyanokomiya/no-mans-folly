@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, add, multi, rotate, sub } from "okageo";
+import { IRectangle, IVec2, add, rotate, sub } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
 import {
   SimplePath,
@@ -18,13 +18,13 @@ import { getRotateFn } from "../utils/geometry";
  */
 export type OneSidedArrowShape = SimplePolygonShape & {
   /**
-   * Represents the rate from the arrow top to top left of the shape.
-   * - The bigger x, the bigger length of the head.
+   * Relative rate in the shape.
+   * - The bigger x, the smaller length of the head.
    * - The bigger y, the smaller depth of the head.
    */
   headControl: IVec2;
   /**
-   * Represents the rate from the opposite of the arrow top to top left of the body.
+   * Relative rate in the shape.
    * - x has no role.
    * - The smaller y, the skewer the tail of the arrow.
    */
@@ -43,8 +43,8 @@ export const struct: ShapeStruct<OneSidedArrowShape> = {
       width: arg.width ?? 100,
       height: arg.height ?? 50,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
-      headControl: arg.headControl ?? { x: 0.25, y: 0.5 },
-      tailControl: arg.tailControl ?? { x: 0, y: 1 },
+      headControl: arg.headControl ?? { x: 0.75, y: 0.25 },
+      tailControl: arg.tailControl ?? { x: 0, y: 0 },
       direction: arg.direction ?? 1,
     };
   },
@@ -54,8 +54,8 @@ export const struct: ShapeStruct<OneSidedArrowShape> = {
     let rect: IRectangle;
 
     if (shape.direction === 0 || shape.direction === 2) {
-      const headDepth = halfWidth * (1 - shape.headControl.y);
-      const headLength = shape.height * shape.headControl.x;
+      const headDepth = shape.width * shape.headControl.y;
+      const headLength = shape.height * (1 - shape.headControl.x);
       const bodyHeight = shape.width - headDepth * 2;
       const headPadding = (bodyHeight / 2) * (headLength / halfWidth);
       rect = {
@@ -65,8 +65,8 @@ export const struct: ShapeStruct<OneSidedArrowShape> = {
         height: shape.height - headPadding,
       };
     } else {
-      const headDepth = halfHeight * (1 - shape.headControl.y);
-      const headLength = shape.width * shape.headControl.x;
+      const headDepth = shape.height * shape.headControl.y;
+      const headLength = shape.width * (1 - shape.headControl.x);
       const bodyHeight = shape.height - headDepth * 2;
       const headPadding = (bodyHeight / 2) * (headLength / halfHeight);
       rect = {
@@ -87,10 +87,10 @@ function getPath(src: OneSidedArrowShape): SimplePath {
   const halfHeight = shape.height / 2;
   const c = { x: shape.p.x + halfWidth, y: shape.p.y + halfHeight };
 
-  const headDepth = halfHeight * (1 - shape.headControl.y);
-  const headLength = shape.width * shape.headControl.x;
+  const headDepth = shape.height * shape.headControl.y;
+  const headLength = shape.width * (1 - shape.headControl.x);
   const bodyHeight = shape.height - headDepth * 2;
-  const tailHeight = bodyHeight * shape.tailControl.y;
+  const tailHeight = Math.min(bodyHeight, shape.height * (1 - 2 * shape.tailControl.y));
   const halfTailHeight = tailHeight / 2;
 
   const path = [
@@ -110,19 +110,14 @@ function getPath(src: OneSidedArrowShape): SimplePath {
 export function getHeadControlPoint(src: OneSidedArrowShape): IVec2 {
   const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: shape.width / 2, y: shape.height / 2 };
-  const from = { x: shape.width, y: c.y };
-  const v = multi(from, -1);
-  const relativeP = add({ x: v.x * shape.headControl.x, y: v.y * shape.headControl.y }, from);
+  const relativeP = { x: shape.width * shape.headControl.x, y: shape.height * shape.headControl.y };
   return add(rotate(relativeP, shape.rotation, c), shape.p);
 }
 
 export function getTailControlPoint(src: OneSidedArrowShape): IVec2 {
   const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: shape.width / 2, y: shape.height / 2 };
-  const headDepth = c.y * (1 - shape.headControl.y);
-  const from = { x: 0, y: c.y };
-  const v = { x: 0, y: headDepth - from.y };
-  const relativeP = add({ x: 0, y: v.y * shape.tailControl.y }, from);
+  const relativeP = { x: 0, y: shape.height * shape.tailControl.y };
   return add(rotate(relativeP, shape.rotation, c), shape.p);
 }
 

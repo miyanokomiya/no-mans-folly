@@ -17,7 +17,7 @@ import { getRotateFn } from "../utils/geometry";
  */
 export type TwoSidedArrowShape = SimplePolygonShape & {
   /**
-   * Represents the rate from the arrow top to top center of the shape.
+   * Relative rate in the shape.
    * - The bigger x, the bigger length of the head.
    * - The bigger y, the smaller depth of the head.
    */
@@ -36,7 +36,7 @@ export const struct: ShapeStruct<TwoSidedArrowShape> = {
       width: arg.width ?? 100,
       height: arg.height ?? 50,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
-      headControl: arg.headControl ?? { x: 0.5, y: 0.5 },
+      headControl: arg.headControl ?? { x: 0.75, y: 0.25 },
       direction: arg.direction ?? 1,
     };
   },
@@ -46,8 +46,8 @@ export const struct: ShapeStruct<TwoSidedArrowShape> = {
     let rect: IRectangle;
 
     if (shape.direction === 0) {
-      const headDepth = halfWidth * (1 - shape.headControl.y);
-      const headLength = halfHeight * shape.headControl.x;
+      const headDepth = shape.width * shape.headControl.y;
+      const headLength = shape.height * (1 - shape.headControl.x);
       const bodyHeight = shape.width - headDepth * 2;
       const headPadding = (bodyHeight / 2) * (headLength / halfWidth);
       rect = {
@@ -57,8 +57,8 @@ export const struct: ShapeStruct<TwoSidedArrowShape> = {
         height: shape.height - headPadding * 2,
       };
     } else {
-      const headDepth = halfHeight * (1 - shape.headControl.y);
-      const headLength = halfWidth * shape.headControl.x;
+      const headDepth = shape.height * shape.headControl.y;
+      const headLength = shape.width * (1 - shape.headControl.x);
       const bodyHeight = shape.height - headDepth * 2;
       const headPadding = (bodyHeight / 2) * (headLength / halfHeight);
       rect = {
@@ -79,8 +79,8 @@ function getPath(src: TwoSidedArrowShape): SimplePath {
   const halfHeight = shape.height / 2;
   const c = { x: shape.p.x + halfWidth, y: shape.p.y + halfHeight };
 
-  const headDepth = halfHeight * (1 - shape.headControl.y);
-  const headLength = halfWidth * shape.headControl.x;
+  const headDepth = shape.height * shape.headControl.y;
+  const headLength = shape.width * (1 - shape.headControl.x);
   const bodyHeight = shape.height - headDepth * 2;
   const halfBodyHeight = bodyHeight / 2;
 
@@ -104,9 +104,7 @@ function getPath(src: TwoSidedArrowShape): SimplePath {
 export function getHeadControlPoint(src: TwoSidedArrowShape): IVec2 {
   const shape = getNormalizedSimplePolygonShape(src);
   const c = { x: shape.width / 2, y: shape.height / 2 };
-  const from = { x: shape.width, y: c.y };
-  const v = { x: -shape.width / 2, y: -c.y };
-  const relativeP = add({ x: v.x * shape.headControl.x, y: v.y * shape.headControl.y }, from);
+  const relativeP = { x: shape.width * shape.headControl.x, y: shape.height * shape.headControl.y };
   return add(rotate(relativeP, shape.rotation, c), shape.p);
 }
 

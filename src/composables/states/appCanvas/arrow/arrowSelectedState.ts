@@ -1,147 +1,123 @@
-import {
-  handleCommonPointerDownLeftOnSingleSelection,
-  handleCommonPointerDownRightOnSingleSelection,
-  handleIntransientEvent,
-} from "../commons";
-import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
-import { BoundingBox, newBoundingBox } from "../../../boundingBox";
-import { newResizingState } from "../resizingState";
-import { newRotatingState } from "../rotatingState";
 import { OneSidedArrowShape } from "../../../../shapes/oneSidedArrow";
-import { newArrowHandler } from "../../../shapeHandlers/arrowHandler";
-import { newMovingArrowHeadState } from "./movingArrowHeadState";
-import { newMovingArrowTailState } from "./movingArrowTailState";
-import { getPatchByLayouts } from "../../../shapeLayoutHandler";
-import { newMovingArrowToState } from "./movingArrowToState";
-import { newMovingArrowFromState } from "./movingArrowFromState";
-import { ShapeHandler } from "../../../shapeHandlers/core";
-import { defineIntransientState } from "../intransientState";
-import { newPointerDownEmptyState } from "../pointerDownEmptyState";
-import { getShapeDirection } from "../../../../shapes/simplePolygon";
+import {
+  getDirectionalLocalAbsolutePoints,
+  getNormalizedSimplePolygonShape,
+  getShapeDetransform,
+  getShapeTransform,
+} from "../../../../shapes/simplePolygon";
+import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
+import {
+  EDGE_ANCHOR_MARGIN,
+  SimplePolygonHandler,
+  getResizeByState,
+  handleSwitchDirection4,
+  newSimplePolygonHandler,
+} from "../../../shapeHandlers/simplePolygonHandler";
+import { movingShapeControlState } from "../movingShapeControlState";
+import { applyAffine, clamp } from "okageo";
 
-export const newArrowSelectedState = defineIntransientState(() => {
-  let targetShape: OneSidedArrowShape;
-  let shapeHandler: ShapeHandler;
-  let boundingBox: BoundingBox;
+export const newArrowSelectedState = defineSingleSelectedHandlerState<OneSidedArrowShape, SimplePolygonHandler, never>(
+  (getters) => {
+    return {
+      getLabel: () => "ArrowSelected",
+      handleEvent: (ctx, event) => {
+        switch (event.type) {
+          case "pointerdown":
+            switch (event.data.options.button) {
+              case 0: {
+                const targetShape = getters.getTargetShape();
+                const shapeHandler = getters.getShapeHandler();
+                const shapeComposite = ctx.getShapeComposite();
 
-  return {
-    getLabel: () => "ArrowSelected",
-    onStart: (ctx) => {
-      ctx.showFloatMenu();
-      ctx.setCommandExams([]);
-      targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as OneSidedArrowShape;
-      shapeHandler = newArrowHandler({ getShapeComposite: ctx.getShapeComposite, targetId: targetShape.id });
-
-      const shapeComposite = ctx.getShapeComposite();
-      boundingBox = newBoundingBox({
-        path: shapeComposite.getLocalRectPolygon(targetShape),
-      });
-    },
-    onEnd: (ctx) => {
-      ctx.hideFloatMenu();
-      ctx.setCommandExams();
-      ctx.setContextMenuList();
-      ctx.setCursor();
-    },
-    handleEvent: (ctx, event) => {
-      if (!targetShape) return newSelectionHubState;
-
-      switch (event.type) {
-        case "pointerdown":
-          ctx.setContextMenuList();
-
-          switch (event.data.options.button) {
-            case 0: {
-              const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
-              shapeHandler.saveHitResult(hitResult);
-              if (hitResult) {
-                switch (hitResult.type) {
-                  case "head":
-                    return () => newMovingArrowHeadState({ targetId: targetShape.id });
-                  case "tail":
-                    return () => newMovingArrowTailState({ targetId: targetShape.id });
-                  case "to":
-                    return () => newMovingArrowToState({ targetId: targetShape.id });
-                  case "from":
-                    return () => newMovingArrowFromState({ targetId: targetShape.id });
-                  case "direction": {
-                    const shapeComposite = ctx.getShapeComposite();
-                    const patch = {
-                      direction: (getShapeDirection(targetShape) + 1) % 4,
-                    } as Partial<OneSidedArrowShape>;
-                    const layoutPatch = getPatchByLayouts(shapeComposite, {
-                      update: { [targetShape.id]: patch },
-                    });
-                    ctx.patchShapes(layoutPatch);
-                    return newSelectionHubState;
+                const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+                shapeHandler.saveHitResult(hitResult);
+                if (hitResult) {
+                  switch (hitResult.type) {
+                    case "headControl":
+                      return () => {
+                        return movingShapeControlState<OneSidedArrowShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            const nextC = {
+                              x: clamp(0, 1, localP.x / s.width),
+                              y: clamp(0, 0.5, localP.y / s.height),
+                            };
+                            return { headControl: nextC };
+                          },
+                          getControlFn: (shape) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), {
+                              x: s.width * s.headControl.x,
+                              y: s.height * s.headControl.y,
+                            });
+                          },
+                        });
+                      };
+                    case "tailControl":
+                      return () => {
+                        return movingShapeControlState<OneSidedArrowShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            const nextCY = clamp(0, 0.5, localP.y / s.height);
+                            return { tailControl: { x: s.tailControl.x, y: nextCY } };
+                          },
+                          getControlFn: (shape, scale) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), {
+                              x: s.width * s.tailControl.x - EDGE_ANCHOR_MARGIN * scale,
+                              y: s.height * s.tailControl.y,
+                            });
+                          },
+                        });
+                      };
+                    case "left":
+                      return () =>
+                        getResizeByState(3, shapeComposite, targetShape, [
+                          ["headControl", { x: 1, y: 0.5 }],
+                          ["tailControl", { x: 0, y: 0.5 }],
+                        ]);
+                    case "right":
+                      return () =>
+                        getResizeByState(1, shapeComposite, targetShape, [
+                          ["headControl", { x: 1, y: 0.5 }],
+                          ["tailControl", { x: 0, y: 0.5 }],
+                        ]);
+                    case "direction4": {
+                      return handleSwitchDirection4(ctx, targetShape);
+                    }
                   }
-                  default:
-                    return;
                 }
               }
-
-              const boundingHitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
-              if (boundingHitResult) {
-                switch (boundingHitResult.type) {
-                  case "corner":
-                  case "segment":
-                    return () => newResizingState({ boundingBox, hitResult: boundingHitResult });
-                  case "rotation":
-                    return () => newRotatingState({ boundingBox });
-                }
-              }
-
-              return handleCommonPointerDownLeftOnSingleSelection(
-                ctx,
-                event,
-                targetShape.id,
-                ctx.getShapeComposite().getSelectionScope(targetShape),
-              );
             }
-            case 1:
-              return () => newPointerDownEmptyState(event.data.options);
-            case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(
-                ctx,
-                event,
-                targetShape.id,
-                ctx.getShapeComposite().getSelectionScope(targetShape),
-              );
-            }
-            default:
-              return;
-          }
-        case "pointerhover": {
-          const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
-          if (shapeHandler.saveHitResult(nextHitResult)) {
-            ctx.redraw();
-          }
-
-          if (nextHitResult) {
-            boundingBox.saveHitResult();
-            return;
-          }
-
-          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (boundingBox.saveHitResult(hitBounding)) {
-            ctx.redraw();
-          }
-          break;
         }
-        case "contextmenu":
-          ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
-            point: event.data.point,
-          });
-          return;
-        default:
-          return handleIntransientEvent(ctx, event);
-      }
-    },
-    render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-    },
-  };
-});
+      },
+    };
+  },
+  (ctx, target) =>
+    newSimplePolygonHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      targetId: target.id,
+      getAnchors: (scale) => {
+        const s = getNormalizedSimplePolygonShape(target);
+        const list = getDirectionalLocalAbsolutePoints(target, s, [
+          s.headControl,
+          { x: s.tailControl.x - (EDGE_ANCHOR_MARGIN / s.width) * scale, y: s.tailControl.y },
+          { x: 0, y: 0.5 },
+          { x: 1, y: 0.5 },
+        ]);
+        return [
+          ["headControl", list[0]],
+          ["tailControl", list[1]],
+          ["left", list[2]],
+          ["right", list[3]],
+        ];
+      },
+      direction4: true,
+    }),
+);
