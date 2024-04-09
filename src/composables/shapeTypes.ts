@@ -2,6 +2,7 @@ import iconRectangle from "../assets/icons/shape_rectangle.svg";
 import iconRoundedRectangle from "../assets/icons/shape_rounded_rectangle.svg";
 import iconRhombus from "../assets/icons/shape_rhombus.svg";
 import iconHexagon from "../assets/icons/shape_hexagon.svg";
+import iconTriangle from "../assets/icons/shape_triangle.svg";
 import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
 import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
 import iconCapsule from "../assets/icons/shape_capsule.svg";
@@ -42,6 +43,7 @@ import { newAlignBoxSelectedState } from "./states/appCanvas/align/alignBoxSelec
 import { newSingleSelectedState } from "./states/appCanvas/singleSelectedState";
 import { newHexagonSelectedState } from "./states/appCanvas/hexagon/hexagonSelectedState";
 import { newCapsuleSelectedState } from "./states/appCanvas/capsule/capsuleSelectedState";
+import { newTriangleSelectedState } from "./states/appCanvas/triangle/triangleSelectedState";
 
 type ShapeTypeItem = { type: string; icon: string };
 
@@ -51,6 +53,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "ellipse", icon: iconEllipse },
   { type: "rhombus", icon: iconRhombus },
   { type: "hexagon", icon: iconHexagon },
+  { type: "triangle", icon: iconTriangle },
   { type: "trapezoid", icon: iconTrapezoid },
   { type: "parallelogram", icon: iconParallelogram },
   { type: "capsule", icon: iconCapsule },
@@ -95,6 +98,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newDocumentSymbolSelectedState;
     case "wave":
       return newWaveSelectedState;
+    case "triangle":
+      return newTriangleSelectedState;
     case "parallelogram":
       return newParallelogramSelectedState;
     case "capsule":
