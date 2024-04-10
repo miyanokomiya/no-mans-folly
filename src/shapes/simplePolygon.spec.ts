@@ -14,12 +14,14 @@ import {
   getNextDirection2,
   getDirectionalSimplePath,
   SimplePath,
+  getSimpleShapeTextRangeRect,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
 import { applyAffine } from "okageo";
 import { createShape, getCommonStruct } from ".";
 import { TrapezoidShape } from "./polygons/trapezoid";
+import { createBoxPadding } from "../utils/boxPadding";
 
 describe("getStructForSimplePolygon", () => {
   const shape = rectangleStruct.create({ width: 100, height: 100 });
@@ -413,5 +415,48 @@ describe("getDirectionalSimplePath", () => {
     ]);
     expect(res3.curves?.[0]?.c1).toEqualPoint({ x: 0, y: 100 });
     expect(res3.curves?.[0]?.c2).toEqualPoint({ x: 100, y: 50 });
+  });
+});
+
+describe("getSimpleShapeTextRangeRect", () => {
+  test("should return text range rectangle", () => {
+    const shape = rectangleStruct.create({
+      p: { x: 10, y: 20 },
+      width: 100,
+      height: 200,
+      textPadding: createBoxPadding([1, 2, 3, 4]),
+    });
+    const ret0 = getSimpleShapeTextRangeRect(shape, { x: 10, y: 20, width: 100, height: 200 });
+    expect(ret0).toEqualPoint({ x: 14, y: 21 });
+    expect(ret0.width).toBe(94);
+    expect(ret0.height).toBe(196);
+  });
+
+  test("should regard the direction of the shape", () => {
+    const shape = oneSidedArrowStruct.create({
+      width: 100,
+      height: 200,
+      textPadding: createBoxPadding([0, 0, 0, 0]),
+    });
+
+    const ret0 = getSimpleShapeTextRangeRect({ ...shape, direction: 0 }, { x: 0, y: 0, width: 100, height: 120 });
+    expect(ret0).toEqualPoint({ x: -50, y: 50 });
+    expect(ret0.width).toBe(120);
+    expect(ret0.height).toBe(100);
+
+    const ret1 = getSimpleShapeTextRangeRect({ ...shape, direction: 1 }, { x: 0, y: 0, width: 100, height: 120 });
+    expect(ret1).toEqualPoint({ x: 0, y: 0 });
+    expect(ret1.width).toBe(100);
+    expect(ret1.height).toBe(120);
+
+    const ret2 = getSimpleShapeTextRangeRect({ ...shape, direction: 2 }, { x: 0, y: 0, width: 100, height: 120 });
+    expect(ret2).toEqualPoint({ x: 30, y: 50 });
+    expect(ret2.width).toBe(120);
+    expect(ret2.height).toBe(100);
+
+    const ret3 = getSimpleShapeTextRangeRect({ ...shape, direction: 3 }, { x: 0, y: 0, width: 100, height: 120 });
+    expect(ret3).toEqualPoint({ x: 0, y: 80 });
+    expect(ret3.width).toBe(100);
+    expect(ret3.height).toBe(120);
   });
 });

@@ -1052,3 +1052,12 @@ export function getRoundedRectInnerBounds(rect: IRectangle, radiusX: number, rad
     };
   }
 }
+
+export function rotateRectByAngle(target: IRectangle, origin: IVec2, by: 90 | -90 | 180): IRectangle {
+  const r = (by * Math.PI) / 180;
+  const c = rotate(getRectCenter(target), r, origin);
+  const swapped = by !== 180;
+  const w = swapped ? target.height : target.width;
+  const h = swapped ? target.width : target.height;
+  return { x: c.x - w / 2, y: c.y - h / 2, width: w, height: h };
+}

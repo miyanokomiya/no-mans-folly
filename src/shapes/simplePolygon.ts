@@ -1,5 +1,6 @@
 import {
   AffineMatrix,
+  IRectangle,
   IVec2,
   add,
   applyAffine,
@@ -32,6 +33,7 @@ import {
   getRotatedWrapperRect,
   getRotationAffine,
   isPointOnRectangle,
+  rotateRectByAngle,
   sortPointFrom,
 } from "../utils/geometry";
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
@@ -40,6 +42,7 @@ import { BezierCurveControl, CommonStyle, Direction4, Shape, Size } from "../mod
 import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/renderer";
 import { pickMinItem } from "../utils/commons";
 import { renderTransform } from "../utils/svgElements";
+import { getPaddingRect } from "../utils/boxPadding";
 
 export type SimplePath = {
   path: IVec2[];
@@ -467,4 +470,30 @@ export function getDirectionalSimplePath<S extends SimplePolygonShape>(
     path: simplePath.path.map((p) => convertFn(p)),
     curves: simplePath.curves?.map((c) => (c ? { c1: convertFn(c.c1), c2: convertFn(c.c2) } : undefined)),
   };
+}
+
+export function getSimpleShapeTextRangeRect(shape: SimplePolygonShape, srcRect: IRectangle): IRectangle {
+  const c = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
+
+  let rect: IRectangle;
+  switch (shape.direction) {
+    case 0: {
+      rect = rotateRectByAngle(srcRect, c, -90);
+      break;
+    }
+    case 2: {
+      rect = rotateRectByAngle(srcRect, c, 90);
+      break;
+    }
+    case 3: {
+      rect = rotateRectByAngle(srcRect, c, 180);
+      break;
+    }
+    default: {
+      rect = srcRect;
+      break;
+    }
+  }
+
+  return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
 }

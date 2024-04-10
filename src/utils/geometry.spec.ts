@@ -57,6 +57,7 @@ import {
   snapRadianByAngle,
   getRoundedRectInnerBounds,
   getLocationRateOnRectPath,
+  rotateRectByAngle,
 } from "./geometry";
 import { IRectangle, applyAffine } from "okageo";
 
@@ -1383,5 +1384,29 @@ describe("getRoundedRectInnerBounds", () => {
     expect(res0.width).toBeLessThan(20);
     expect(res0.height).toBeGreaterThan(7);
     expect(res0.height).toBeLessThan(8);
+  });
+});
+
+describe("rotateRectByAngle", () => {
+  test("should return rotated rectangle", () => {
+    const res0 = rotateRectByAngle({ x: 0, y: 0, width: 20, height: 10 }, { x: 5, y: 5 }, -90);
+    expect(res0).toEqualPoint({ x: 0, y: -10 });
+    expect(res0.width).toBe(10);
+    expect(res0.height).toBe(20);
+
+    const res1 = rotateRectByAngle({ x: 0, y: 0, width: 20, height: 10 }, { x: 5, y: 5 }, 90);
+    expect(res1).toEqualPoint({ x: 0, y: 0 });
+    expect(res1.width).toBe(10);
+    expect(res1.height).toBe(20);
+
+    const res2 = rotateRectByAngle({ x: 0, y: 0, width: 20, height: 10 }, { x: 5, y: 5 }, 180);
+    expect(res2).toEqualPoint({ x: -10, y: 0 });
+    expect(res2.width).toBe(20);
+    expect(res2.height).toBe(10);
+
+    const res3 = rotateRectByAngle({ x: 0, y: 0, width: 20, height: 10 }, { x: 0, y: 0 }, 180);
+    expect(res3).toEqualPoint({ x: -20, y: -10 });
+    expect(res3.width).toBe(20);
+    expect(res3.height).toBe(10);
   });
 });
