@@ -426,10 +426,16 @@ describe("getSimpleShapeTextRangeRect", () => {
       height: 200,
       textPadding: createBoxPadding([1, 2, 3, 4]),
     });
-    const ret0 = getSimpleShapeTextRangeRect(shape, () => ({ x: 10, y: 20, width: 100, height: 200 }));
+    const getRect = (s: SimplePolygonShape) => ({
+      x: s.p.x,
+      y: s.p.y,
+      width: s.width,
+      height: s.height * 0.6,
+    });
+    const ret0 = getSimpleShapeTextRangeRect(shape, getRect);
     expect(ret0).toEqualPoint({ x: 14, y: 21 });
     expect(ret0.width).toBe(94);
-    expect(ret0.height).toBe(196);
+    expect(ret0.height).toBe(116);
   });
 
   test("should regard the direction of the shape", () => {
@@ -439,17 +445,17 @@ describe("getSimpleShapeTextRangeRect", () => {
       textPadding: createBoxPadding([0, 0, 0, 0]),
     });
 
-    const getRect = () => ({
-      x: shape.p.x,
-      y: shape.p.y,
-      width: shape.width,
-      height: shape.height * 0.6,
+    const getRect = (s: SimplePolygonShape) => ({
+      x: s.p.x,
+      y: s.p.y,
+      width: s.width,
+      height: s.height * 0.6,
     });
 
     const ret0 = getSimpleShapeTextRangeRect({ ...shape, direction: 0 }, getRect);
-    expect(ret0).toEqualPoint({ x: -50, y: 50 });
-    expect(ret0.width).toBe(120);
-    expect(ret0.height).toBe(100);
+    expect(ret0).toEqualPoint({ x: 0, y: 0 });
+    expect(ret0.width).toBe(60);
+    expect(ret0.height).toBe(200);
 
     const ret1 = getSimpleShapeTextRangeRect({ ...shape, direction: 1 }, getRect);
     expect(ret1).toEqualPoint({ x: 0, y: 0 });
@@ -457,9 +463,9 @@ describe("getSimpleShapeTextRangeRect", () => {
     expect(ret1.height).toBe(120);
 
     const ret2 = getSimpleShapeTextRangeRect({ ...shape, direction: 2 }, getRect);
-    expect(ret2).toEqualPoint({ x: 30, y: 50 });
-    expect(ret2.width).toBe(120);
-    expect(ret2.height).toBe(100);
+    expect(ret2).toEqualPoint({ x: 40, y: 0 });
+    expect(ret2.width).toBe(60);
+    expect(ret2.height).toBe(200);
 
     const ret3 = getSimpleShapeTextRangeRect({ ...shape, direction: 3 }, getRect);
     expect(ret3).toEqualPoint({ x: 0, y: 80 });
