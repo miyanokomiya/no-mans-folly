@@ -1,7 +1,13 @@
-import { IRectangle, IVec2 } from "okageo";
+import { IVec2 } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePath, SimplePolygonShape, getDirectionalSimplePath, getStructForSimplePolygon } from "../simplePolygon";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import {
+  SimplePath,
+  SimplePolygonShape,
+  getDirectionalSimplePath,
+  getSimpleShapeTextRangeRect,
+  getStructForSimplePolygon,
+} from "../simplePolygon";
+import { createBoxPadding } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getWavePathControl } from "../../utils/path";
@@ -52,51 +58,15 @@ export const struct: ShapeStruct<DocumentSymbolShape> = {
     };
   },
   getTextRangeRect(shape) {
-    let rect: IRectangle;
-    switch (shape.direction) {
-      case 0: {
-        const size = shape.width * (1 - shape.c0.y);
-        rect = {
-          x: shape.p.x,
-          y: shape.p.y,
-          width: shape.width - size,
-          height: shape.height,
-        };
-        break;
-      }
-      case 2: {
-        const size = shape.width * (1 - shape.c0.y);
-        rect = {
-          x: shape.p.x + size,
-          y: shape.p.y,
-          width: shape.width - size,
-          height: shape.height,
-        };
-        break;
-      }
-      case 3: {
-        const size = shape.height * (1 - shape.c0.y);
-        rect = {
-          x: shape.p.x,
-          y: shape.p.y + size,
-          width: shape.width,
-          height: shape.height - size,
-        };
-        break;
-      }
-      default: {
-        const size = shape.height * (1 - shape.c0.y);
-        rect = {
-          x: shape.p.x,
-          y: shape.p.y,
-          width: shape.width,
-          height: shape.height - size,
-        };
-        break;
-      }
-    }
-
-    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+    return getSimpleShapeTextRangeRect(shape, (s) => {
+      const size = s.height * (1 - s.c0.y);
+      return {
+        x: s.p.x,
+        y: s.p.y,
+        width: s.width,
+        height: s.height - size,
+      };
+    });
   },
   canAttachSmartBranch: true,
 };

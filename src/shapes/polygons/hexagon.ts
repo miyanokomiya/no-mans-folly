@@ -1,7 +1,13 @@
 import { IVec2, clamp } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePath, SimplePolygonShape, getDirectionalSimplePath, getStructForSimplePolygon } from "../simplePolygon";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import {
+  SimplePath,
+  SimplePolygonShape,
+  getDirectionalSimplePath,
+  getSimpleShapeTextRangeRect,
+  getStructForSimplePolygon,
+} from "../simplePolygon";
+import { createBoxPadding } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 
@@ -26,32 +32,17 @@ export const struct: ShapeStruct<HexagonShape> = {
     };
   },
   getTextRangeRect(shape) {
-    switch (shape.direction) {
-      case 0: {
-        const dy = shape.height * clamp(0, 0.5, shape.c0.x);
-        const innerTop = dy;
-        const innerBottom = shape.height - dy;
-        const rect = {
-          x: shape.p.x,
-          y: shape.p.y + innerTop,
-          width: shape.width,
-          height: innerBottom - innerTop,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-      default: {
-        const dx = shape.width * clamp(0, 0.5, shape.c0.x);
-        const innerLeft = dx;
-        const innerRight = shape.width - dx;
-        const rect = {
-          x: shape.p.x + innerLeft,
-          y: shape.p.y,
-          width: innerRight - innerLeft,
-          height: shape.height,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-    }
+    return getSimpleShapeTextRangeRect(shape, (s) => {
+      const dx = s.width * clamp(0, 0.5, s.c0.x);
+      const innerLeft = dx;
+      const innerRight = s.width - dx;
+      return {
+        x: s.p.x + innerLeft,
+        y: s.p.y,
+        width: innerRight - innerLeft,
+        height: s.height,
+      };
+    });
   },
   canAttachSmartBranch: true,
 };

@@ -4,9 +4,10 @@ import {
   SimplePath,
   SimplePolygonShape,
   getNormalizedSimplePolygonShape,
+  getSimpleShapeTextRangeRect,
   getStructForSimplePolygon,
 } from "../simplePolygon";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import { createBoxPadding } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { getRotateFn } from "../../utils/geometry";
@@ -35,32 +36,17 @@ export const struct: ShapeStruct<ParallelogramShape> = {
     };
   },
   getTextRangeRect(shape) {
-    switch (shape.direction) {
-      case 0: {
-        const d = shape.height * Math.abs(shape.c0.x - 0.5);
-        const innerTop = d;
-        const innerBottom = shape.height - d;
-        const rect = {
-          x: shape.p.x,
-          y: shape.p.y + innerTop,
-          width: shape.width,
-          height: innerBottom - innerTop,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-      default: {
-        const d = shape.width * Math.abs(shape.c0.x - 0.5);
-        const innerLeft = d;
-        const innerRight = shape.width - d;
-        const rect = {
-          x: shape.p.x + innerLeft,
-          y: shape.p.y,
-          width: innerRight - innerLeft,
-          height: shape.height,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-    }
+    return getSimpleShapeTextRangeRect(shape, (s) => {
+      const d = s.width * Math.abs(s.c0.x - 0.5);
+      const innerLeft = d;
+      const innerRight = s.width - d;
+      return {
+        x: s.p.x + innerLeft,
+        y: s.p.y,
+        width: innerRight - innerLeft,
+        height: s.height,
+      };
+    });
   },
   canAttachSmartBranch: true,
 };

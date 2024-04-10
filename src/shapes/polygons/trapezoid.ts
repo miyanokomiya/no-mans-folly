@@ -1,7 +1,13 @@
 import { IVec2 } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePath, SimplePolygonShape, getDirectionalSimplePath, getStructForSimplePolygon } from "../simplePolygon";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import {
+  SimplePath,
+  SimplePolygonShape,
+  getDirectionalSimplePath,
+  getSimpleShapeTextRangeRect,
+  getStructForSimplePolygon,
+} from "../simplePolygon";
+import { createBoxPadding } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 
@@ -28,52 +34,16 @@ export const struct: ShapeStruct<TrapezoidShape> = {
     };
   },
   getTextRangeRect(shape) {
-    switch (shape.direction) {
-      case 0: {
-        const innerTop = shape.height * (1 - shape.c1.x);
-        const innerBottom = shape.height * (1 - shape.c0.x);
-        const rect = {
-          x: shape.p.x,
-          y: shape.p.y + innerTop,
-          width: shape.width,
-          height: innerBottom - innerTop,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-      case 2: {
-        const innerTop = shape.height * shape.c0.x;
-        const innerBottom = shape.height * shape.c1.x;
-        const rect = {
-          x: shape.p.x,
-          y: shape.p.y + innerTop,
-          width: shape.width,
-          height: innerBottom - innerTop,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-      case 3: {
-        const innerLeft = shape.width * (1 - shape.c1.x);
-        const innerRight = shape.width * (1 - shape.c0.x);
-        const rect = {
-          x: shape.p.x + innerLeft,
-          y: shape.p.y,
-          width: innerRight - innerLeft,
-          height: shape.height,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-      default: {
-        const innerLeft = shape.width * shape.c0.x;
-        const innerRight = shape.width * shape.c1.x;
-        const rect = {
-          x: shape.p.x + innerLeft,
-          y: shape.p.y,
-          width: innerRight - innerLeft,
-          height: shape.height,
-        };
-        return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-      }
-    }
+    return getSimpleShapeTextRangeRect(shape, (s) => {
+      const innerLeft = s.width * s.c0.x;
+      const innerRight = s.width * s.c1.x;
+      return {
+        x: s.p.x + innerLeft,
+        y: s.p.y,
+        width: innerRight - innerLeft,
+        height: s.height,
+      };
+    });
   },
   canAttachSmartBranch: true,
 };

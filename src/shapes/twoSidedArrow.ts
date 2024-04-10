@@ -1,12 +1,13 @@
-import { IRectangle, IVec2, add, sub, rotate } from "okageo";
+import { IVec2, add, sub, rotate } from "okageo";
 import { ShapeStruct, createBaseShape } from "./core";
 import {
   SimplePath,
   SimplePolygonShape,
   getNormalizedSimplePolygonShape,
+  getSimpleShapeTextRangeRect,
   getStructForSimplePolygon,
 } from "./simplePolygon";
-import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
+import { createBoxPadding } from "../utils/boxPadding";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { Shape } from "../models";
@@ -41,35 +42,19 @@ export const struct: ShapeStruct<TwoSidedArrowShape> = {
     };
   },
   getTextRangeRect(shape) {
-    const halfWidth = shape.width / 2;
-    const halfHeight = shape.height / 2;
-    let rect: IRectangle;
-
-    if (shape.direction === 0) {
-      const headDepth = shape.width * shape.headControl.y;
-      const headLength = shape.height * (1 - shape.headControl.x);
-      const bodyHeight = shape.width - headDepth * 2;
-      const headPadding = (bodyHeight / 2) * (headLength / halfWidth);
-      rect = {
-        x: shape.p.x + headDepth,
-        y: shape.p.y + headPadding,
-        width: bodyHeight,
-        height: shape.height - headPadding * 2,
-      };
-    } else {
-      const headDepth = shape.height * shape.headControl.y;
-      const headLength = shape.width * (1 - shape.headControl.x);
-      const bodyHeight = shape.height - headDepth * 2;
+    return getSimpleShapeTextRangeRect(shape, (s) => {
+      const halfHeight = s.height / 2;
+      const headDepth = s.height * s.headControl.y;
+      const headLength = s.width * (1 - s.headControl.x);
+      const bodyHeight = s.height - headDepth * 2;
       const headPadding = (bodyHeight / 2) * (headLength / halfHeight);
-      rect = {
-        x: shape.p.x + headPadding,
-        y: shape.p.y + headDepth,
-        width: shape.width - headPadding * 2,
+      return {
+        x: s.p.x + headPadding,
+        y: s.p.y + headDepth,
+        width: s.width - headPadding * 2,
         height: bodyHeight,
       };
-    }
-
-    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+    });
   },
 };
 
