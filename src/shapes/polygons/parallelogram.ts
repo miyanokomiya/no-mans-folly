@@ -1,16 +1,15 @@
-import { IVec2, add, clamp, sub } from "okageo";
+import { IVec2, add, clamp } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import {
   SimplePath,
   SimplePolygonShape,
-  getNormalizedSimplePolygonShape,
+  getDirectionalSimplePath,
   getSimpleShapeTextRangeRect,
   getStructForSimplePolygon,
 } from "../simplePolygon";
 import { createBoxPadding } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
-import { getRotateFn } from "../../utils/geometry";
 import { getBezierControlForArc, getCornerRadiusArc, shiftBezierCurveControl } from "../../utils/path";
 
 export type ParallelogramShape = SimplePolygonShape & {
@@ -52,17 +51,7 @@ export const struct: ShapeStruct<ParallelogramShape> = {
 };
 
 function getPath(src: ParallelogramShape): SimplePath {
-  if (src.direction === undefined || src.direction === 1) return getRawPath(src);
-
-  const shape = getNormalizedSimplePolygonShape(src);
-  const c = { x: src.width / 2, y: src.height / 2 };
-  const rotateFn = getRotateFn(shape.rotation - src.rotation, add(c, src.p));
-  const adjustFn = (p: IVec2) => sub(rotateFn(add(p, shape.p)), src.p);
-  const { path, curves } = getRawPath(shape);
-  return {
-    path: path.map((p) => adjustFn(p)),
-    curves: curves?.map((c) => (c ? { c1: adjustFn(c.c1), c2: adjustFn(c.c2) } : undefined)),
-  };
+  return getDirectionalSimplePath(src, getRawPath);
 }
 
 function getRawPath(shape: ParallelogramShape): SimplePath {
