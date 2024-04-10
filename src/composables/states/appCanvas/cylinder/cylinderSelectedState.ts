@@ -1,4 +1,4 @@
-import { CylinderShape } from "../../../../shapes/polygons/cylinder";
+import { CylinderShape, getCylinderMaxRadiusY } from "../../../../shapes/polygons/cylinder";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   getDirectionalLocalAbsolutePoints,
@@ -42,11 +42,12 @@ export const newCylinderSelectedState = defineSingleSelectedHandlerState<Cylinde
                           patchFn: (shape, p, movement) => {
                             const s = getNormalizedSimplePolygonShape(shape);
                             const localP = applyAffine(getShapeDetransform(s), p);
-                            let nextCY = clamp(0, 1, localP.y / s.height);
+                            const maxCY = (2 * getCylinderMaxRadiusY(s)) / s.height;
+                            let nextCY = clamp(0, maxCY, localP.y / s.height);
                             if (movement.ctrl) {
                               showLabel = false;
                             } else {
-                              nextCY = clamp(0, 1, Math.round(localP.y) / s.height);
+                              nextCY = clamp(0, maxCY, Math.round(localP.y) / s.height);
                               showLabel = true;
                             }
                             return { c0: { x: 0.5, y: nextCY } };

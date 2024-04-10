@@ -1,4 +1,4 @@
-import { IVec2, pathSegmentRawsToString } from "okageo";
+import { IVec2, clamp, pathSegmentRawsToString } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import {
   SimplePath,
@@ -12,7 +12,6 @@ import {
 import { createBoxPadding } from "../../utils/boxPadding";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
-import { BezierCurveControl } from "../../models";
 import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../../utils/renderer";
 import { renderTransform } from "../../utils/svgElements";
 
@@ -57,52 +56,27 @@ export const struct: ShapeStruct<CylinderShape> = {
         applyStrokeStyle(ctx, shape.stroke);
 
         const ry = getCylinderRadiusY(shape);
-        if (ry >= 0) {
-          const upperC = curves[0]!;
+        const upperC = curves[0]!;
 
-          ctx.beginPath();
-          applyCurvePath(
-            ctx,
-            [path[0], path[1], path[0]],
-            [
-              upperC,
-              {
-                c1: { x: upperC.c2.x, y: 2 * ry - upperC.c2.y },
-                c2: { x: upperC.c1.x, y: 2 * ry - upperC.c1.y },
-              },
-            ],
-            true,
-          );
-          ctx.stroke();
+        ctx.beginPath();
+        applyCurvePath(
+          ctx,
+          [path[0], path[1], path[0]],
+          [
+            upperC,
+            {
+              c1: { x: upperC.c2.x, y: 2 * ry - upperC.c2.y },
+              c2: { x: upperC.c1.x, y: 2 * ry - upperC.c1.y },
+            },
+          ],
+          true,
+        );
+        ctx.stroke();
 
-          const lowerC = curves[2]!;
-          ctx.beginPath();
-          applyCurvePath(ctx, [path[1], path[2], path[3], path[0]], [undefined, lowerC]);
-          ctx.stroke();
-        } else {
-          const upperC = curves[0]!;
-
-          ctx.beginPath();
-          applyCurvePath(ctx, [path[3], path[0], path[1], path[2]], [undefined, upperC]);
-          ctx.stroke();
-
-          const lowerC = curves[2]!;
-          const lowerY = shape.height + ry;
-          ctx.beginPath();
-          applyCurvePath(
-            ctx,
-            [path[2], path[3], path[2]],
-            [
-              lowerC,
-              {
-                c1: { x: lowerC.c2.x, y: 2 * lowerY - lowerC.c2.y },
-                c2: { x: lowerC.c1.x, y: 2 * lowerY - lowerC.c1.y },
-              },
-            ],
-            true,
-          );
-          ctx.stroke();
-        }
+        const lowerC = curves[2]!;
+        ctx.beginPath();
+        applyCurvePath(ctx, [path[1], path[2], path[3], path[0]], [undefined, lowerC]);
+        ctx.stroke();
       }
     });
   },
@@ -111,31 +85,16 @@ export const struct: ShapeStruct<CylinderShape> = {
     const transform = getShapeTransform(shape);
     const { path, curves } = getPath(shape);
 
-    let innerPath: IVec2[];
-    let innerCurve: BezierCurveControl[];
+    const innerPath = [path[0], path[1], path[0]];
     const ry = getCylinderRadiusY(shape);
-    if (ry >= 0) {
-      innerPath = [path[0], path[1], path[0]];
-      const upperC = curves[0]!;
-      innerCurve = [
-        upperC,
-        {
-          c1: { x: upperC.c2.x, y: 2 * ry - upperC.c2.y },
-          c2: { x: upperC.c1.x, y: 2 * ry - upperC.c1.y },
-        },
-      ];
-    } else {
-      innerPath = [path[2], path[3], path[2]];
-      const lowerC = curves[2]!;
-      const lowerY = shape.height + ry;
-      innerCurve = [
-        lowerC,
-        {
-          c1: { x: lowerC.c2.x, y: 2 * lowerY - lowerC.c2.y },
-          c2: { x: lowerC.c1.x, y: 2 * lowerY - lowerC.c1.y },
-        },
-      ];
-    }
+    const upperC = curves[0]!;
+    const innerCurve = [
+      upperC,
+      {
+        c1: { x: upperC.c2.x, y: 2 * ry - upperC.c2.y },
+        c2: { x: upperC.c1.x, y: 2 * ry - upperC.c1.y },
+      },
+    ];
 
     const innerD = pathSegmentRawsToString(createSVGCurvePath(innerPath, innerCurve));
 
@@ -152,13 +111,12 @@ export const struct: ShapeStruct<CylinderShape> = {
   getTextRangeRect(src) {
     return getSimpleShapeTextRangeRect(src, (shape) => {
       const ry = getCylinderRadiusY(shape);
-      const ary = Math.abs(ry);
 
       return {
         x: shape.p.x,
-        y: shape.p.y + ary * 2 + Math.min(0, ry),
+        y: shape.p.y + ry * 2 + Math.min(0, ry),
         width: shape.width,
-        height: shape.height - ary * 3,
+        height: shape.height - ry * 3,
       };
     });
   },
@@ -170,7 +128,7 @@ function getPath(shape: CylinderShape): SimplePath & Required<Pick<SimplePath, "
 }
 
 function getRawPath(shape: CylinderShape): SimplePath {
-  const ry = Math.abs(getCylinderRadiusY(shape));
+  const ry = getCylinderRadiusY(shape);
   const v = ry / 0.75; // Magical number to approximate ellipse by cubic bezier.
   const upperY = ry - v;
   const lowerY = shape.height - ry + v;
@@ -194,6 +152,10 @@ function getRawPath(shape: CylinderShape): SimplePath {
   };
 }
 
-export function getCylinderRadiusY(shape: CylinderShape): number {
-  return (Math.sign(shape.c0.y) * Math.min(shape.height * Math.abs(shape.c0.y), shape.width)) / 2;
+function getCylinderRadiusY(shape: CylinderShape): number {
+  return clamp(0, getCylinderMaxRadiusY(shape), (shape.height * shape.c0.y) / 2);
+}
+
+export function getCylinderMaxRadiusY(shape: CylinderShape): number {
+  return Math.min(shape.height, shape.width) / 2;
 }
