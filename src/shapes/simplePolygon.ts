@@ -472,25 +472,28 @@ export function getDirectionalSimplePath<S extends SimplePolygonShape>(
   };
 }
 
-export function getSimpleShapeTextRangeRect(shape: SimplePolygonShape, srcRect: IRectangle): IRectangle {
+export function getSimpleShapeTextRangeRect<T extends SimplePolygonShape>(
+  shape: T,
+  getSrcRect: (s: T) => IRectangle,
+): IRectangle {
   const c = { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
 
-  let rect: IRectangle;
+  const normalized = getNormalizedSimplePolygonShape(shape);
+  let rect = getSrcRect(normalized);
   switch (shape.direction) {
     case 0: {
-      rect = rotateRectByAngle(srcRect, c, -90);
+      rect = rotateRectByAngle(rect, c, -90);
       break;
     }
     case 2: {
-      rect = rotateRectByAngle(srcRect, c, 90);
+      rect = rotateRectByAngle(rect, c, 90);
       break;
     }
     case 3: {
-      rect = rotateRectByAngle(srcRect, c, 180);
+      rect = rotateRectByAngle(rect, c, 180);
       break;
     }
     default: {
-      rect = srcRect;
       break;
     }
   }

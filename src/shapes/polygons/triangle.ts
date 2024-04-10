@@ -33,14 +33,15 @@ export const struct: ShapeStruct<TriangleShape> = {
     };
   },
   getTextRangeRect(shape) {
-    const rawGap = getRawGap(shape);
-    const rect = {
-      x: shape.p.x + shape.width * 0.25 - rawGap.x / 2,
-      y: shape.p.y + (shape.height - rawGap.y) / 2,
-      width: shape.width / 2 + rawGap.x,
-      height: (shape.height + rawGap.y) / 2,
-    };
-    return getSimpleShapeTextRangeRect(shape, rect);
+    return getSimpleShapeTextRangeRect(shape, (s) => {
+      const rawGap = getRawGap(s);
+      return {
+        x: s.p.x + s.width * 0.25 - rawGap.x / 2,
+        y: s.p.y + (s.height - rawGap.y) / 2,
+        width: s.width / 2 + rawGap.x,
+        height: (s.height + rawGap.y) / 2,
+      };
+    });
   },
   canAttachSmartBranch: true,
 };

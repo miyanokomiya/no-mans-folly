@@ -426,7 +426,7 @@ describe("getSimpleShapeTextRangeRect", () => {
       height: 200,
       textPadding: createBoxPadding([1, 2, 3, 4]),
     });
-    const ret0 = getSimpleShapeTextRangeRect(shape, { x: 10, y: 20, width: 100, height: 200 });
+    const ret0 = getSimpleShapeTextRangeRect(shape, () => ({ x: 10, y: 20, width: 100, height: 200 }));
     expect(ret0).toEqualPoint({ x: 14, y: 21 });
     expect(ret0.width).toBe(94);
     expect(ret0.height).toBe(196);
@@ -439,22 +439,29 @@ describe("getSimpleShapeTextRangeRect", () => {
       textPadding: createBoxPadding([0, 0, 0, 0]),
     });
 
-    const ret0 = getSimpleShapeTextRangeRect({ ...shape, direction: 0 }, { x: 0, y: 0, width: 100, height: 120 });
+    const getRect = () => ({
+      x: shape.p.x,
+      y: shape.p.y,
+      width: shape.width,
+      height: shape.height * 0.6,
+    });
+
+    const ret0 = getSimpleShapeTextRangeRect({ ...shape, direction: 0 }, getRect);
     expect(ret0).toEqualPoint({ x: -50, y: 50 });
     expect(ret0.width).toBe(120);
     expect(ret0.height).toBe(100);
 
-    const ret1 = getSimpleShapeTextRangeRect({ ...shape, direction: 1 }, { x: 0, y: 0, width: 100, height: 120 });
+    const ret1 = getSimpleShapeTextRangeRect({ ...shape, direction: 1 }, getRect);
     expect(ret1).toEqualPoint({ x: 0, y: 0 });
     expect(ret1.width).toBe(100);
     expect(ret1.height).toBe(120);
 
-    const ret2 = getSimpleShapeTextRangeRect({ ...shape, direction: 2 }, { x: 0, y: 0, width: 100, height: 120 });
+    const ret2 = getSimpleShapeTextRangeRect({ ...shape, direction: 2 }, getRect);
     expect(ret2).toEqualPoint({ x: 30, y: 50 });
     expect(ret2.width).toBe(120);
     expect(ret2.height).toBe(100);
 
-    const ret3 = getSimpleShapeTextRangeRect({ ...shape, direction: 3 }, { x: 0, y: 0, width: 100, height: 120 });
+    const ret3 = getSimpleShapeTextRangeRect({ ...shape, direction: 3 }, getRect);
     expect(ret3).toEqualPoint({ x: 0, y: 80 });
     expect(ret3.width).toBe(100);
     expect(ret3.height).toBe(120);
