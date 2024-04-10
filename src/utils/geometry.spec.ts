@@ -58,8 +58,9 @@ import {
   getRoundedRectInnerBounds,
   getLocationRateOnRectPath,
   rotateRectByAngle,
+  getTriangleIncenter,
 } from "./geometry";
-import { IRectangle, applyAffine } from "okageo";
+import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
 describe("getRotateFn", () => {
   test("should return function to rotate", () => {
@@ -1408,5 +1409,21 @@ describe("rotateRectByAngle", () => {
     expect(res3).toEqualPoint({ x: -20, y: -10 });
     expect(res3.width).toBe(20);
     expect(res3.height).toBe(10);
+  });
+});
+
+describe("getTriangleIncenter", () => {
+  test("should return the incenter of the triangle", () => {
+    expect(getTriangleIncenter({ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 })).toEqualPoint({ x: 0, y: 0 });
+
+    const tri0 = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 0, y: 10 },
+    ];
+    const res0 = getTriangleIncenter(tri0[0], tri0[1], tri0[2]);
+    expect(getDistance(res0, getPedal(res0, [tri0[0], tri0[1]]))).toBeCloseTo(
+      getDistance(res0, getPedal(res0, [tri0[0], tri0[2]])),
+    );
   });
 });

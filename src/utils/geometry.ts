@@ -1061,3 +1061,12 @@ export function rotateRectByAngle(target: IRectangle, origin: IVec2, by: 90 | -9
   const h = swapped ? target.width : target.height;
   return { x: c.x - w / 2, y: c.y - h / 2, width: w, height: h };
 }
+
+export function getTriangleIncenter(a: IVec2, b: IVec2, c: IVec2): IVec2 {
+  const da = getDistance(b, c);
+  const db = getDistance(c, a);
+  const dc = getDistance(a, b);
+  const d = da + db + dc;
+  if (Math.abs(d) < MINVALUE) return a;
+  return { x: (a.x * da + b.x * db + c.x * dc) / d, y: (a.y * da + b.y * db + c.y * dc) / d };
+}

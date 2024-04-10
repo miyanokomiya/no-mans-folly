@@ -1,4 +1,4 @@
-import { TriangleShape } from "../../../../shapes/polygons/triangle";
+import { TriangleShape, getDefaultTriangleTopC, getTriangleCornerMaxSize } from "../../../../shapes/polygons/triangle";
 import { movingShapeControlState } from "../movingShapeControlState";
 import {
   getDirectionalLocalAbsolutePoints,
@@ -41,7 +41,7 @@ export const newTriangleSelectedState = defineSingleSelectedHandlerState<Triangl
                           patchFn: (shape, p, movement) => {
                             const s = getNormalizedSimplePolygonShape(shape);
                             const localP = applyAffine(getShapeDetransform(s), p);
-                            let nextCX = clamp(0, s.width / 2, localP.x);
+                            let nextCX = clamp(0, getTriangleCornerMaxSize(s), localP.x);
                             if (movement.ctrl) {
                               showLabel = false;
                             } else {
@@ -74,6 +74,48 @@ export const newTriangleSelectedState = defineSingleSelectedHandlerState<Triangl
                           },
                         });
                       };
+                    case "c0":
+                      return () => {
+                        let showLabel = !event.data.options.ctrl;
+                        return movingShapeControlState<TriangleShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            let nextCX = clamp(0, s.width, localP.x);
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextCX = Math.round(nextCX);
+                              showLabel = true;
+                            }
+                            return { c0: { x: nextCX / s.width, y: 0 } };
+                          },
+                          getControlFn: (shape, scale) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const rateX = getDefaultTriangleTopC(s).x;
+                            const rateY = getC0ControlYRate(s, scale);
+                            return applyAffine(getShapeTransform(s), { x: s.width * rateX, y: s.height * rateY });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
+
+                            const scale = ctx.getScale();
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const rateX = getDefaultTriangleTopC(s).x;
+                            const rateY = getC0ControlYRate(s, scale);
+                            const origin = { x: s.width * rateX, y: s.height * rateY };
+                            renderValueLabel(
+                              renderCtx,
+                              Math.round(s.width * rateX),
+                              applyAffine(getShapeTransform(s), origin),
+                              0,
+                              scale,
+                            );
+                          },
+                        });
+                      };
                     case "direction4": {
                       return handleSwitchDirection4(ctx, targetShape);
                     }
@@ -92,18 +134,26 @@ export const newTriangleSelectedState = defineSingleSelectedHandlerState<Triangl
       getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
         const list = getDirectionalLocalAbsolutePoints(target, s, [
-          { x: getCrControlXRate(s), y: (-EDGE_ANCHOR_MARGIN / s.height) * scale },
+          { x: getCrControlXRate(s), y: getCrControlYRate(s, scale) },
+          { x: getDefaultTriangleTopC(s).x, y: getC0ControlYRate(s, scale) },
         ]);
-        return [["cr", list[0]]];
+        return [
+          ["cr", list[0]],
+          ["c0", list[1]],
+        ];
       },
       direction4: true,
     }),
 );
 
 function getCrControlYRate(shape: TriangleShape, scale: number) {
-  return (-EDGE_ANCHOR_MARGIN / shape.height) * scale;
+  return 1 + (EDGE_ANCHOR_MARGIN / shape.height) * scale;
 }
 
 function getCrControlXRate(shape: TriangleShape) {
   return (shape.cr ?? 0) / shape.width;
+}
+
+function getC0ControlYRate(shape: TriangleShape, scale: number) {
+  return (-EDGE_ANCHOR_MARGIN / shape.height) * scale;
 }
