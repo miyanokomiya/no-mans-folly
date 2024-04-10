@@ -1,188 +1,102 @@
-import {
-  handleCommonPointerDownLeftOnSingleSelection,
-  handleCommonPointerDownRightOnSingleSelection,
-  handleIntransientEvent,
-} from "../commons";
-import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
-import { BoundingBox, newBoundingBox } from "../../../boundingBox";
-import { newResizingState } from "../resizingState";
-import { newRotatingState } from "../rotatingState";
-import { CylinderShape, getCylinderRadiusY } from "../../../../shapes/polygons/cylinder";
-import { newCylinderHandler } from "../../../shapeHandlers/cylinderHandler";
-import { newTransformingCylinderState } from "./transformingCylinderState";
+import { CylinderShape } from "../../../../shapes/polygons/cylinder";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { getShapeTransform } from "../../../../shapes/simplePolygon";
-import { applyAffine, getDistance, getRadian, multiAffines } from "okageo";
-import { getGlobalAffine, getRotationAffine } from "../../../../utils/geometry";
-import { defineIntransientState } from "../intransientState";
-import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import {
+  getDirectionalLocalAbsolutePoints,
+  getNormalizedSimplePolygonShape,
+  getShapeDetransform,
+  getShapeTransform,
+} from "../../../../shapes/simplePolygon";
+import { applyAffine, clamp } from "okageo";
+import {
+  SimplePolygonHandler,
+  getResizeByState,
+  handleSwitchDirection4,
+  newSimplePolygonHandler,
+} from "../../../shapeHandlers/simplePolygonHandler";
+import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
+import { renderValueLabel } from "../../../../utils/renderer";
 
-export const newCylinderSelectedState = defineIntransientState(() => {
-  let targetShape: CylinderShape;
-  let shapeHandler: ReturnType<typeof newCylinderHandler>;
-  let boundingBox: BoundingBox;
+export const newCylinderSelectedState = defineSingleSelectedHandlerState<CylinderShape, SimplePolygonHandler, never>(
+  (getters) => {
+    return {
+      getLabel: () => "CylinderSelected",
+      handleEvent: (ctx, event) => {
+        switch (event.type) {
+          case "pointerdown":
+            switch (event.data.options.button) {
+              case 0: {
+                const targetShape = getters.getTargetShape();
+                const shapeHandler = getters.getShapeHandler();
+                const shapeComposite = ctx.getShapeComposite();
 
-  return {
-    getLabel: () => "CylinderSelected",
-    onStart: (ctx) => {
-      ctx.showFloatMenu();
-      ctx.setCommandExams([]);
-      targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as CylinderShape;
-      shapeHandler = newCylinderHandler({ getShapeComposite: ctx.getShapeComposite, targetId: targetShape.id });
+                const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+                shapeHandler.saveHitResult(hitResult);
+                if (hitResult) {
+                  switch (hitResult.type) {
+                    case "c0":
+                      return () => {
+                        let showLabel = !event.data.options.ctrl;
+                        return movingShapeControlState<CylinderShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            const localP = applyAffine(getShapeDetransform(s), p);
+                            let nextCY = clamp(0, 1, localP.y / s.height);
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextCY = clamp(0, 1, Math.round(localP.y) / s.height);
+                              showLabel = true;
+                            }
+                            return { c0: { x: 0.5, y: nextCY } };
+                          },
+                          getControlFn: (shape) => {
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            return applyAffine(getShapeTransform(s), { x: s.width / 2, y: s.height * s.c0.y });
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
 
-      const shapeComposite = ctx.getShapeComposite();
-      boundingBox = newBoundingBox({
-        path: shapeComposite.getLocalRectPolygon(targetShape),
-      });
-    },
-    onEnd: (ctx) => {
-      ctx.hideFloatMenu();
-      ctx.setCommandExams();
-      ctx.setContextMenuList();
-      ctx.setCursor();
-    },
-    handleEvent: (ctx, event) => {
-      if (!targetShape) return newSelectionHubState;
-
-      switch (event.type) {
-        case "pointerdown":
-          ctx.setContextMenuList();
-
-          switch (event.data.options.button) {
-            case 0: {
-              const shapeComposite = ctx.getShapeComposite();
-              const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
-              shapeHandler.saveHitResult(hitResult);
-              if (hitResult) {
-                switch (hitResult.type) {
-                  case "c0":
-                    return () => newTransformingCylinderState({ targetId: targetShape.id });
-                  case "top":
-                    return () =>
-                      movingShapeControlState<CylinderShape>({
-                        targetId: targetShape.id,
-                        patchFn: (s, p) => {
-                          const ry = getCylinderRadiusY(s);
-                          const origin = applyAffine(getShapeTransform(s), {
-                            x: s.width / 2,
-                            y: s.height,
-                          });
-                          const distance = getDistance(p, origin);
-                          const top = Math.min(s.height - distance, s.height - 2 * ry);
-                          const radDiff = getRadian(p, origin) + Math.PI / 2 - s.rotation;
-                          const resized = shapeComposite.transformShape(
-                            s,
-                            getGlobalAffine(
-                              origin,
-                              s.rotation,
-                              multiAffines([getRotationAffine(radDiff), [1, 0, 0, (s.height - top) / s.height, 0, 0]]),
-                            ),
-                          );
-                          return {
-                            ...resized,
-                            c0: { x: s.c0.x, y: (2 * ry) / (resized.height ?? s.height) },
-                          };
-                        },
-                        getControlFn: (s) => applyAffine(getShapeTransform(s), { x: s.width / 2, y: 0 }),
-                      });
-                  case "bottom":
-                    return () =>
-                      movingShapeControlState<CylinderShape>({
-                        targetId: targetShape.id,
-                        patchFn: (s, p) => {
-                          const ry = getCylinderRadiusY(s);
-                          const origin = applyAffine(getShapeTransform(s), {
-                            x: s.width / 2,
-                            y: 0,
-                          });
-                          const distance = getDistance(p, origin);
-                          const bottom = Math.max(distance, 2 * ry);
-                          const radDiff = getRadian(p, origin) - Math.PI / 2 - s.rotation;
-                          const resized = shapeComposite.transformShape(
-                            s,
-                            getGlobalAffine(
-                              applyAffine(getShapeTransform(s), {
-                                x: s.width / 2,
-                                y: 0,
-                              }),
-                              s.rotation,
-                              multiAffines([getRotationAffine(radDiff), [1, 0, 0, bottom / s.height, 0, 0]]),
-                            ),
-                          );
-                          return {
-                            ...resized,
-                            c0: { x: s.c0.x, y: (2 * ry) / (resized.height ?? s.height) },
-                          };
-                        },
-                        getControlFn: (s) => applyAffine(getShapeTransform(s), { x: s.width / 2, y: s.height }),
-                      });
-                  default:
-                    return;
+                            const s = getNormalizedSimplePolygonShape(shape);
+                            renderValueLabel(
+                              renderCtx,
+                              Math.round(s.height * s.c0.y),
+                              applyAffine(getShapeTransform(s), { x: s.width / 2, y: s.height * s.c0.y }),
+                              0,
+                              ctx.getScale(),
+                            );
+                          },
+                        });
+                      };
+                    case "top":
+                      return () => getResizeByState(0, shapeComposite, targetShape, [["c0", { x: 0.5, y: 0 }]]);
+                    case "bottom":
+                      return () => getResizeByState(2, shapeComposite, targetShape, [["c0", { x: 0.5, y: 0 }]]);
+                    case "direction4": {
+                      return handleSwitchDirection4(ctx, targetShape);
+                    }
+                  }
                 }
               }
-
-              const boundingHitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
-              if (boundingHitResult) {
-                switch (boundingHitResult.type) {
-                  case "corner":
-                  case "segment":
-                    return () => newResizingState({ boundingBox, hitResult: boundingHitResult });
-                  case "rotation":
-                    return () => newRotatingState({ boundingBox });
-                }
-              }
-
-              return handleCommonPointerDownLeftOnSingleSelection(
-                ctx,
-                event,
-                targetShape.id,
-                ctx.getShapeComposite().getSelectionScope(targetShape),
-              );
             }
-            case 1:
-              return () => newPointerDownEmptyState(event.data.options);
-            case 2: {
-              return handleCommonPointerDownRightOnSingleSelection(
-                ctx,
-                event,
-                targetShape.id,
-                ctx.getShapeComposite().getSelectionScope(targetShape),
-              );
-            }
-            default:
-              return;
-          }
-        case "pointerhover": {
-          const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
-          if (shapeHandler.saveHitResult(nextHitResult)) {
-            ctx.redraw();
-          }
-
-          if (nextHitResult) {
-            boundingBox.saveHitResult();
-            return;
-          }
-
-          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (boundingBox.saveHitResult(hitBounding)) {
-            ctx.redraw();
-          }
-          break;
         }
-        case "contextmenu":
-          ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
-            point: event.data.point,
-          });
-          return;
-        default:
-          return handleIntransientEvent(ctx, event);
-      }
-    },
-    render: (ctx, renderCtx) => {
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-    },
-  };
-});
+      },
+    };
+  },
+  (ctx, target) =>
+    newSimplePolygonHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      targetId: target.id,
+      getAnchors: () => {
+        const s = getNormalizedSimplePolygonShape(target);
+        const list = getDirectionalLocalAbsolutePoints(target, s, [s.c0, { x: 0.5, y: 0 }, { x: 0.5, y: 1 }]);
+        return [
+          ["c0", list[0]],
+          ["top", list[1]],
+          ["bottom", list[2]],
+        ];
+      },
+      direction4: true,
+    }),
+);

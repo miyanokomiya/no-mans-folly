@@ -1,7 +1,15 @@
 import { IVec2, pathSegmentRawsToString } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
-import { SimplePath, SimplePolygonShape, getShapeTransform, getStructForSimplePolygon } from "../simplePolygon";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import {
+  SimplePath,
+  SimplePolygonShape,
+  getDirectionalSimplePath,
+  getNormalizedSimplePolygonShape,
+  getShapeTransform,
+  getSimpleShapeTextRangeRect,
+  getStructForSimplePolygon,
+} from "../simplePolygon";
+import { createBoxPadding } from "../../utils/boxPadding";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { BezierCurveControl } from "../../models";
@@ -10,8 +18,7 @@ import { renderTransform } from "../../utils/svgElements";
 
 export type CylinderShape = SimplePolygonShape & {
   /**
-   * Relative rate from "p".
-   * When "y" is negative, the bottom surface of the cylinder is visible.
+   * Relative rate within the shape.
    */
   c0: IVec2;
 };
@@ -28,12 +35,14 @@ export const struct: ShapeStruct<CylinderShape> = {
       width: arg.width ?? 100,
       height: arg.height ?? 100,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
+      direction: arg.direction,
       c0: arg.c0 ?? { x: 0.5, y: 0.3 },
     };
   },
-  render(ctx, shape) {
-    if (shape.fill.disabled && shape.stroke.disabled) return;
+  render(ctx, src) {
+    if (src.fill.disabled && src.stroke.disabled) return;
 
+    const shape = getNormalizedSimplePolygonShape(src);
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const { path, curves } = getPath(shape);
 
@@ -97,7 +106,8 @@ export const struct: ShapeStruct<CylinderShape> = {
       }
     });
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(src) {
+    const shape = getNormalizedSimplePolygonShape(src);
     const transform = getShapeTransform(shape);
     const { path, curves } = getPath(shape);
 
@@ -139,22 +149,27 @@ export const struct: ShapeStruct<CylinderShape> = {
       },
     };
   },
-  getTextRangeRect(shape) {
-    const ry = getCylinderRadiusY(shape);
-    const ary = Math.abs(ry);
+  getTextRangeRect(src) {
+    return getSimpleShapeTextRangeRect(src, (shape) => {
+      const ry = getCylinderRadiusY(shape);
+      const ary = Math.abs(ry);
 
-    const rect = {
-      x: shape.p.x,
-      y: shape.p.y + ary * 2 + Math.min(0, ry),
-      width: shape.width,
-      height: shape.height - ary * 3,
-    };
-    return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+      return {
+        x: shape.p.x,
+        y: shape.p.y + ary * 2 + Math.min(0, ry),
+        width: shape.width,
+        height: shape.height - ary * 3,
+      };
+    });
   },
   canAttachSmartBranch: true,
 };
 
 function getPath(shape: CylinderShape): SimplePath & Required<Pick<SimplePath, "curves">> {
+  return getDirectionalSimplePath(shape, getRawPath) as SimplePath & Required<Pick<SimplePath, "curves">>;
+}
+
+function getRawPath(shape: CylinderShape): SimplePath {
   const ry = Math.abs(getCylinderRadiusY(shape));
   const v = ry / 0.75; // Magical number to approximate ellipse by cubic bezier.
   const upperY = ry - v;
