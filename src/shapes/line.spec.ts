@@ -531,10 +531,8 @@ describe("addNewVertex", () => {
     const v = { x: -1, y: -1 };
     const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
     expect(addNewVertex(shape0, 1, v)).toEqual({ body: [{ p: v }] });
-    expect(addNewVertex(shape0, 2, v)).toEqual({ body: [{ p: v }] });
 
     expect(addNewVertex(shape0, 1, v, c)).toEqual({ body: [{ p: v, c }] });
-    expect(addNewVertex(shape0, 2, v, c)).toEqual({ body: [{ p: v, c }] });
 
     const shape1 = struct.create({
       p: { x: 0, y: 0 },
@@ -632,7 +630,6 @@ describe("deleteVertex", () => {
       q: { x: 10, y: 0 },
       body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
     });
-    expect(deleteVertex(shape0, 0)).toEqual({});
     expect(deleteVertex(shape0, 1)).toEqual({
       body: [{ p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
     });
@@ -642,7 +639,6 @@ describe("deleteVertex", () => {
     expect(deleteVertex(shape0, 3)).toEqual({
       body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
     });
-    expect(deleteVertex(shape0, 4)).toEqual({});
   });
 
   test("should return patched object to delete a curve along with the vertex", () => {
@@ -663,7 +659,44 @@ describe("deleteVertex", () => {
     expect(deleteVertex(shape0, 3)).toEqual({
       body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
     });
-    expect(deleteVertex(shape0, 4)).toEqual({});
+  });
+
+  test("should delete the start point", () => {
+    const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 1, y: 1 }, c }, { p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+    });
+    expect(deleteVertex(shape0, 0)).toEqual({
+      p: { x: 1, y: 1 },
+      body: [{ p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+      pConnection: c,
+    });
+    expect(deleteVertex({ ...shape0, body: [{ p: { x: 1, y: 1 } }] }, 0)).toEqual({
+      p: { x: 1, y: 1 },
+      body: undefined,
+    });
+    expect(deleteVertex({ ...shape0, body: undefined }, 0)).toEqual({});
+  });
+
+  test("should delete the last point", () => {
+    const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 }, c }],
+    });
+    expect(deleteVertex(shape0, 4)).toEqual({
+      q: { x: 3, y: 3 },
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
+      qConnection: c,
+    });
+    expect(deleteVertex({ ...shape0, body: [{ p: { x: 1, y: 1 } }] }, 2)).toEqual({
+      q: { x: 1, y: 1 },
+      body: undefined,
+    });
+    expect(deleteVertex({ ...shape0, body: undefined }, 1)).toEqual({});
   });
 });
 

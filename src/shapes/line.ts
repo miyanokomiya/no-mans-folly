@@ -546,10 +546,24 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
  * Only inner vertices can be deleted.
  */
 export function deleteVertex(shape: LineShape, index: number): Partial<LineShape> {
-  if (!shape.body) return {};
+  if (!shape.body || shape.body?.length === 0) return {};
 
   const vertices = getLinePath(shape);
-  if (0 === index || index === vertices.length - 1) return {};
+  if (index === 0) {
+    return {
+      p: shape.body[0].p,
+      pConnection: shape.body[0].c,
+      body: shape.body.length === 1 ? undefined : shape.body.slice(1),
+    };
+  }
+  if (index === vertices.length - 1) {
+    const bodyLastIndex = shape.body.length - 1;
+    return {
+      q: shape.body[bodyLastIndex].p,
+      qConnection: shape.body[bodyLastIndex].c,
+      body: shape.body.length === 1 ? undefined : shape.body.slice(0, bodyLastIndex),
+    };
+  }
 
   const body = shape.body.filter((_, i) => i !== index - 1);
   if (shape.curves && shape.curves.length > index) {
