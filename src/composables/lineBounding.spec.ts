@@ -16,7 +16,7 @@ describe("newLineBounding", () => {
 
       expect(target.hitTest({ x: -10, y: 0 })).toEqual(undefined);
 
-      expect(target.hitTest({ x: -30, y: 0 })).toEqual({
+      expect(target.hitTest({ x: 0, y: 30 })).toEqual({
         type: "move-anchor",
         index: 0,
       });

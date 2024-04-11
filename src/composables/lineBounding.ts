@@ -45,8 +45,18 @@ export function newLineBounding(option: Option) {
   let hitResult: LineHitResult | undefined;
 
   function getMoveAnchor(scale: number): IVec2 {
-    const v = rotate({ x: 30, y: 0 }, getRadianP(lineShape));
+    const v = rotate({ x: 0, y: -30 }, getRadianP(lineShape));
     return add(vertices[0], multi(v, scale));
+  }
+
+  function getAddAnchorP(scale: number): IVec2 {
+    const v = rotate({ x: 20, y: 0 }, getRadianP(lineShape));
+    return add(lineShape.p, multi(v, scale));
+  }
+
+  function getAddAnchorQ(scale: number): IVec2 {
+    const v = rotate({ x: 20, y: 0 }, getRadianQ(lineShape));
+    return add(lineShape.q, multi(v, scale));
   }
 
   function getOptimizeAnchorP(scale: number): IVec2 | undefined {
@@ -127,6 +137,20 @@ export function newLineBounding(option: Option) {
         if (edgeCenterIndex !== -1) {
           return { type: "new-vertex-anchor", index: edgeCenterIndex };
         }
+
+        {
+          const testFn = newCircleHitTest(getAddAnchorP(scale), addAnchorSize);
+          if (testFn.test(p)) {
+            return { type: "new-vertex-anchor", index: -1 };
+          }
+        }
+
+        {
+          const testFn = newCircleHitTest(getAddAnchorQ(scale), addAnchorSize);
+          if (testFn.test(p)) {
+            return { type: "new-vertex-anchor", index: vertices.length - 1 };
+          }
+        }
       }
 
       {
@@ -198,6 +222,13 @@ export function newLineBounding(option: Option) {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
         const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
         addAnchors.forEach((c) => {
+          ctx.beginPath();
+          ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
+          ctx.fill();
+          renderPlusIcon(ctx, c, size * 2);
+        });
+
+        [getAddAnchorP(scale), getAddAnchorQ(scale)].forEach((c) => {
           ctx.beginPath();
           ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
           ctx.fill();
@@ -292,7 +323,16 @@ export function newLineBounding(option: Option) {
         }
         case "new-vertex-anchor": {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
-          const p = addAnchors[hitResult.index];
+
+          let p: IVec2;
+          if (hitResult.index === -1) {
+            p = getAddAnchorP(scale);
+          } else if (hitResult.index === vertices.length - 1) {
+            p = getAddAnchorQ(scale);
+          } else {
+            p = addAnchors[hitResult.index];
+          }
+
           const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, size, size, 0, 0, TAU);

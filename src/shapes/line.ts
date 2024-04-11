@@ -510,7 +510,22 @@ export function getConnection(shape: LineShape, index: number): ConnectionPoint 
 export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: ConnectionPoint): Partial<LineShape> {
   switch (index) {
     case 0:
-      return {};
+      return {
+        p,
+        pConnection: c,
+        body: shape.body
+          ? [{ p: shape.p, c: shape.pConnection }, ...shape.body]
+          : [{ p: shape.p, c: shape.pConnection }],
+        curves: shape.curves ? [undefined, ...shape.curves] : undefined,
+      };
+    case 2 + (shape.body?.length ?? 0):
+      return {
+        body: shape.body
+          ? [...shape.body, { p: shape.q, c: shape.qConnection }]
+          : [{ p: shape.q, c: shape.qConnection }],
+        q: p,
+        qConnection: c,
+      };
     default:
       if (shape.body) {
         const body = [...shape.body.slice(0, index - 1), { p, c }, ...shape.body.slice(index - 1)];

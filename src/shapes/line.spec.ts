@@ -530,11 +530,9 @@ describe("addNewVertex", () => {
     const shape0 = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
     const v = { x: -1, y: -1 };
     const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
-    expect(addNewVertex(shape0, 0, v)).toEqual({});
     expect(addNewVertex(shape0, 1, v)).toEqual({ body: [{ p: v }] });
     expect(addNewVertex(shape0, 2, v)).toEqual({ body: [{ p: v }] });
 
-    expect(addNewVertex(shape0, 0, v, c)).toEqual({});
     expect(addNewVertex(shape0, 1, v, c)).toEqual({ body: [{ p: v, c }] });
     expect(addNewVertex(shape0, 2, v, c)).toEqual({ body: [{ p: v, c }] });
 
@@ -543,7 +541,6 @@ describe("addNewVertex", () => {
       q: { x: 10, y: 0 },
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
     });
-    expect(addNewVertex(shape1, 0, v)).toEqual({});
     expect(addNewVertex(shape1, 1, v)).toEqual({
       body: [{ p: v }, { p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
     });
@@ -563,7 +560,6 @@ describe("addNewVertex", () => {
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
       curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
     });
-    expect(addNewVertex(shape1, 0, v)).toEqual({});
     expect(addNewVertex(shape1, 1, v)).toEqual({
       body: [{ p: v }, { p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
       curves: [{ d: { x: 0, y: 0 } }, { d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
@@ -573,6 +569,58 @@ describe("addNewVertex", () => {
     });
     expect(addNewVertex(shape1, 3, v)).toEqual({
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
+    });
+  });
+
+  test("should insert new vertex to the top when index is 0", () => {
+    const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
+    const shape0 = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 }, pConnection: c });
+    const v = { x: -1, y: -1 };
+    expect(addNewVertex(shape0, 0, v)).toEqual({
+      p: v,
+      body: [{ p: { x: 0, y: 0 }, c }],
+    });
+    expect(addNewVertex({ ...shape0, body: [{ p: { x: 1, y: 2 } }] }, 0, v)).toEqual({
+      p: v,
+      body: [{ p: { x: 0, y: 0 }, c }, { p: { x: 1, y: 2 } }],
+    });
+
+    const curve = { c1: { x: 1, y: 2 }, c2: { x: 3, y: 4 } };
+    const shape1 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      curves: [curve],
+    });
+    expect(addNewVertex(shape1, 0, v)).toEqual({
+      p: v,
+      body: [{ p: { x: 0, y: 0 } }],
+      curves: [undefined, curve],
+    });
+  });
+
+  test("should insert new vertex to the last when index is the size of the vertices", () => {
+    const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
+    const shape0 = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 }, qConnection: c });
+    const v = { x: -1, y: -1 };
+    expect(addNewVertex(shape0, 2, v)).toEqual({
+      body: [{ p: shape0.q, c }],
+      q: v,
+      qConnection: undefined,
+    });
+    expect(addNewVertex({ ...shape0, body: [{ p: { x: 1, y: 2 } }] }, 3, v)).toEqual({
+      body: [{ p: { x: 1, y: 2 } }, { p: { x: 10, y: 0 }, c }],
+      q: v,
+    });
+
+    const curve = { c1: { x: 1, y: 2 }, c2: { x: 3, y: 4 } };
+    const shape1 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      curves: [curve],
+    });
+    expect(addNewVertex(shape1, 2, v)).toEqual({
+      body: [{ p: { x: 10, y: 0 } }],
+      q: v,
     });
   });
 });
