@@ -161,9 +161,8 @@ export const newLineSelectedState = defineIntransientState(() => {
               return handleIntransientEvent(ctx, event);
           }
         case "contextmenu": {
-          const vertices = getLinePath(lineShape);
           const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
-          if (hitResult?.type === "vertex" && hitResult.index !== 0 && hitResult.index !== vertices.length - 1) {
+          if (hitResult?.type === "vertex") {
             ctx.setContextMenuList({
               items: [
                 { ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX, meta: { index: hitResult.index } as DeleteVertexMeta },
