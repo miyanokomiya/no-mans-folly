@@ -4,6 +4,7 @@ import {
   add,
   getBezierInterpolation,
   getCenter,
+  getDistance,
   getNorm,
   getPeriodicBezierInterpolation,
   isSame,
@@ -12,6 +13,7 @@ import {
 } from "okageo";
 import { BezierCurveControl } from "../models";
 import { CurveType, LineShape, getLinePath } from "../shapes/line";
+import { getBezierControlForArc, getCornerRadiusArc } from "./path";
 
 export function getAutomaticCurve(path: IVec2[]): BezierCurveControl[] | undefined {
   if (path.length <= 2) return;
@@ -53,4 +55,34 @@ export function getDefaultCurveBody(p: IVec2, q: IVec2): LineShape["body"] {
   const rate = 1 / 5;
   const v = multi({ x: -pq.y, y: pq.x }, rate);
   return [{ p: add(c, v) }];
+}
+
+export function applyCornerRadius(line: LineShape): Partial<LineShape> {
+  if (!line.body || line.body.length === 0) return {};
+
+  const radius = 20;
+  const bodyPath = line.body.map((b) => b.p);
+
+  const newBodyPath: IVec2[] = [];
+  const newCurves: LineShape["curves"] = [];
+
+  const path = [line.p, ...bodyPath, line.q];
+  for (let index = 0; index < path.length - 2; index++) {
+    const a = path[index];
+    const b = path[index + 1];
+    const c = path[index + 2];
+    const abD = getDistance(a, b);
+    const bcD = getDistance(b, c);
+    const r = Math.min(radius, abD / 2, bcD / 2);
+    const info = getCornerRadiusArc(a, b, c, r);
+    const control = getBezierControlForArc(info[0], info[1], info[2]);
+
+    newBodyPath.push(info[1], info[2]);
+    newCurves.push(undefined, control);
+  }
+
+  return {
+    body: newBodyPath.map((p) => ({ p })),
+    curves: newCurves,
+  };
 }
