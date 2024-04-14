@@ -1084,6 +1084,67 @@ describe("applyRangeWidthToLineWord", () => {
       [[[[["\n", 0, { align: "right" }]]]], { align: "right" }],
     ]);
   });
+
+  test("should be one line when a letter is within exact width", () => {
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 1],
+              ["b", 1],
+              ["c", 1],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        3,
+      ),
+    ).toEqual([
+      [
+        [
+          [
+            [
+              ["a", 1],
+              ["b", 1],
+              ["c", 1],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        undefined,
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 1],
+              ["b", 1],
+              ["c", 1],
+            ],
+            [["\n", 0]],
+          ],
+        ],
+        2.99999,
+      ),
+    ).toEqual([
+      [
+        [
+          [
+            [
+              ["a", 1],
+              ["b", 1],
+            ],
+          ],
+          [[["c", 1]], [["\n", 0]]],
+        ],
+        undefined,
+      ],
+    ]);
+  });
 });
 
 describe("getWordRangeAtCursor", () => {

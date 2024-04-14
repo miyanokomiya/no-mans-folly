@@ -945,7 +945,7 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
           return;
         }
 
-        if (left + unit[1] < rangeWidth) {
+        if (left + unit[1] <= rangeWidth) {
           word.push(unit);
           left += unit[1];
         } else {
