@@ -56,7 +56,7 @@ export const AppHeader: React.FC<Props> = ({
     setPopupedKey("");
   }, []);
   const storageMessage = useMemo(() => {
-    const baseClass = "border rounded py-1 px-2 text-white select-none ";
+    const baseClass = "rounded h-7 px-2 flex items-center text-white select-none ";
 
     if (!canSyncWorkspace) {
       return (
@@ -79,12 +79,12 @@ export const AppHeader: React.FC<Props> = ({
     }
 
     if (saving || ctrlS) {
-      return <span className={baseClass + "bg-lime-500"}>Saving...</span>;
+      return <span className={baseClass + "bg-yellow-500"}>Saving...</span>;
     }
 
     if (savePending) {
       return (
-        <button type="button" className={baseClass + "bg-lime-500"} onClick={onClickFlush}>
+        <button type="button" className={baseClass + "bg-yellow-500"} onClick={onClickFlush}>
           Pending...
         </button>
       );
@@ -219,9 +219,7 @@ export const AppHeader: React.FC<Props> = ({
       >
         <div className="px-2">File</div>
       </PopupButton>
-      <div className="ml-2 text-sm">
-        <span>{storageMessage}</span>
-      </div>
+      <div className="ml-2 text-sm">{storageMessage}</div>
       <Dialog
         open={openClearConfirm}
         onClose={closeClearConfirm}
