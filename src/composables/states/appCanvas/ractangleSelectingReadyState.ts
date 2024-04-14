@@ -35,7 +35,7 @@ export function newRactangleSelectingReadyState(): AppCanvasState {
               return;
           }
         case "state":
-          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["RectSelectReady"]));
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents());
         default:
           return;
       }

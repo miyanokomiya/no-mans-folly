@@ -82,7 +82,7 @@ export function newTextReadyState(): AppCanvasState {
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["TextReady"]));
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents());
         default:
           return;
       }

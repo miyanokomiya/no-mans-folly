@@ -126,7 +126,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
         case "history":
           return newDefaultState;
         case "state":
-          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["LineReady"]));
+          return handleStateEvent(ctx, event, getCommonAcceptableEvents());
         default:
           return;
       }
