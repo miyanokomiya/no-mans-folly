@@ -1,6 +1,6 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { handleHistoryEvent } from "../commons";
-import { LineShape, getEdges, getLinePath, patchVertices } from "../../../../shapes/line";
+import { LineShape, getEdges, patchVertices } from "../../../../shapes/line";
 import { add, getOuterRectangle, moveRect, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { optimizeLinePath } from "../../../lineSnapping";
@@ -8,7 +8,6 @@ import { newSelectionHubState } from "../selectionHubState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
-import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 
@@ -69,10 +68,6 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
 
           const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
-
-          if (option.lineShape.curveType === "auto") {
-            patch.curves = getAutomaticCurve(getLinePath({ ...option.lineShape, ...patch }));
-          }
 
           ctx.setTmpShapeMap(
             getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),

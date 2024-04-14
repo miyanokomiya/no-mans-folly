@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
-import { LineShape, getLinePath, isLineShape, patchVertex } from "../../../../shapes/line";
+import { LineShape, isLineShape, patchVertex } from "../../../../shapes/line";
 import { newLineSelectedState } from "./lineSelectedState";
 import {
   ConnectionResult,
@@ -19,7 +19,8 @@ import { add } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
 import { handleCommonWheel } from "../commons";
-import { getAutomaticCurve, getDefaultCurveBody } from "../../../../utils/curveLine";
+import { getDefaultCurveBody } from "../../../../utils/curveLine";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   shape: LineShape;
@@ -101,9 +102,11 @@ export function newLineDrawingState(option: Option): AppCanvasState {
             patch = { ...patch, body: getDefaultCurveBody(shape.p, shape.q) };
           }
 
-          if (option.shape.curveType === "auto") {
-            patch.curves = getAutomaticCurve(getLinePath({ ...option.shape, ...patch }));
-          }
+          const tmpShapeComposite = newShapeComposite({
+            getStruct: ctx.getShapeComposite().getShapeStruct,
+            shapes: [option.shape],
+          });
+          patch = getPatchAfterLayouts(tmpShapeComposite, { update: { [option.shape.id]: patch } })[option.shape.id];
 
           shape = { ...option.shape, ...patch };
           ctx.redraw();

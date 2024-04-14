@@ -3,6 +3,7 @@ import { mergeMap, patchPipe } from "../utils/commons";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
+import { getCurveLinePatch } from "./curveLineHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
@@ -37,6 +38,7 @@ export function getPatchByLayouts(
         ).patch;
       },
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getCurveLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,
@@ -89,6 +91,7 @@ export function getPatchInfoByLayouts(
         ).patch;
       },
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getCurveLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,
@@ -113,6 +116,7 @@ export function getPatchAfterLayouts(
     [
       () => patchInfo.update ?? {},
       (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
+      (_, patch) => getCurveLinePatch(shapeComposite, { update: patch }),
       (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,

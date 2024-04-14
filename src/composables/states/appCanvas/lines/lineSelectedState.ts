@@ -4,14 +4,7 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
 } from "../commons";
-import {
-  LineShape,
-  deleteVertex,
-  getConnection,
-  getLinePath,
-  getRelativePointOn,
-  patchConnection,
-} from "../../../../shapes/line";
+import { LineShape, deleteVertex, getConnection, getRelativePointOn, patchConnection } from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
@@ -23,7 +16,6 @@ import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
-import { getAutomaticCurve } from "../../../../utils/curveLine";
 import { getPatchAfterLayouts, getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
@@ -88,9 +80,6 @@ export const newLineSelectedState = defineIntransientState(() => {
                     if (event.data.options.shift) {
                       const patch = deleteVertex(lineShape, hitResult.index);
                       if (Object.keys(patch).length > 0) {
-                        if (lineShape.curveType === "auto") {
-                          patch.curves = getAutomaticCurve(getLinePath({ ...lineShape, ...patch }));
-                        }
                         ctx.patchShapes(
                           getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }),
                         );
@@ -185,9 +174,6 @@ export const newLineSelectedState = defineIntransientState(() => {
             case CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX.key: {
               const patch = deleteVertex(lineShape, (event.data.meta as DeleteVertexMeta).index);
               if (Object.keys(patch).length > 0) {
-                if (lineShape.curveType === "auto") {
-                  patch.curves = getAutomaticCurve(getLinePath({ ...lineShape, ...patch }));
-                }
                 ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
               }
               return newSelectionHubState;

@@ -57,6 +57,10 @@ export function getDefaultCurveBody(p: IVec2, q: IVec2): LineShape["body"] {
   return [{ p: add(c, v) }];
 }
 
+/**
+ * Applies corner radius to each corner.
+ * => Supposes that target line doesn't have curves.
+ */
 export function applyCornerRadius(line: LineShape): Partial<LineShape> {
   if (!line.body || line.body.length === 0) return {};
 

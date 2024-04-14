@@ -4,19 +4,13 @@ import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
-import {
-  ConnectedLineHandler,
-  getConnectedLineInfoMap,
-  newConnectedLineHandler,
-  renderPatchedVertices,
-} from "../../connectedLineHandler";
-import { mergeMap } from "../../../utils/commons";
-import { LineShape, isLineShape } from "../../../shapes/line";
-import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
+import { renderPatchedVertices } from "../../connectedLineHandler";
+import { isLineShape } from "../../../shapes/line";
 import { isLineLabelShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
+import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -28,9 +22,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
-  let lineHandler: ConnectedLineHandler;
-  let lineLabelHandler: LineLabelHandler;
-  let linePatchedMap: { [id: string]: Partial<LineShape> };
   let targetIds: string[];
 
   return {
@@ -74,13 +65,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
         });
       }
-
-      lineHandler = newConnectedLineHandler({
-        connectedLinesMap: getConnectedLineInfoMap(ctx, targetIds),
-        ctx,
-      });
-
-      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -101,16 +85,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;
-          const patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
+          let patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
             const s = shapeMap[id];
             if (s) m[id] = shapeComposite.transformShape(s, affine);
             return m;
           }, {});
 
-          linePatchedMap = lineHandler.onModified(patchMap);
-          const merged = mergeMap(patchMap, linePatchedMap);
-          const labelPatch = lineLabelHandler.onModified(merged);
-          ctx.setTmpShapeMap(mergeMap(merged, labelPatch));
+          patchMap = getPatchAfterLayouts(shapeComposite, { update: patchMap });
+          ctx.setTmpShapeMap(patchMap);
           return;
         }
         case "pointerup": {
@@ -129,9 +111,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      const shapeComposite = ctx.getShapeComposite();
       boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), affine);
       if (snappingResult) {
-        const shapeComposite = ctx.getShapeComposite();
         const shapeMap = shapeComposite.shapeMap;
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
@@ -141,9 +123,12 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         });
       }
 
-      if (linePatchedMap) {
+      const tmpLines = Object.entries(shapeComposite.tmpShapeMap)
+        .filter(([id]) => isLineShape(shapeComposite.shapeMap[id]))
+        .map(([, patch]) => patch);
+      if (tmpLines.length > 0) {
         renderPatchedVertices(renderCtx, {
-          lines: Object.values(linePatchedMap),
+          lines: tmpLines,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
         });
