@@ -13,12 +13,19 @@ export function getCurveLinePatch(
   Object.entries(patchInfo.update).forEach(([id, patch]) => {
     const src = srcComposite.shapeMap[id];
     if (!isLineShape(src)) return;
-    if (src.curveType !== "auto") return;
 
-    if (src.lineType === "elbow") {
-      ret[id] = applyCornerRadius({ ...src, ...patch });
+    const updated = { ...src, ...patch };
+    if (updated.curveType !== "auto") {
+      if (src.curveType === "auto") {
+        ret[id] = { curves: undefined };
+      }
+      return;
+    }
+
+    if (updated.lineType === "elbow") {
+      ret[id] = applyCornerRadius(updated);
     } else {
-      ret[id] = { curves: getAutomaticCurve(getLinePath({ ...src, ...patch })) };
+      ret[id] = { curves: getAutomaticCurve(getLinePath(updated)) };
     }
   });
 
