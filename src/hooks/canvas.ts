@@ -176,11 +176,11 @@ export function useCanvas(
         return;
       }
 
-      const ret = centerizeView(expandRect(rect, margin / scale), viewSize, (v) => clamp(1, scaleMax, v));
+      const ret = centerizeView(expandRect(rect, margin / scale), viewSize, (v) => clamp(scaleMin, scaleMax, v));
       setScale(ret.scale);
       setViewOrigin(ret.viewOrigin);
     },
-    [scale, scaleMax, adjustToCenter, viewSize, setViewOrigin, setScale],
+    [scale, scaleMin, scaleMax, adjustToCenter, viewSize, setViewOrigin, setScale],
   );
 
   const zoomView = useCallback(
