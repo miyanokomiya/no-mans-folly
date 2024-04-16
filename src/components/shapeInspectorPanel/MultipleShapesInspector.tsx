@@ -106,7 +106,7 @@ function getScaleToAffine(rect: IRectangle, to: IVec2): AffineMatrix {
 
   return multiAffines([
     [1, 0, 0, 1, origin.x, origin.y],
-    [to.x / rect.width, 0, 0, to.y / rect.height, 0, 0],
+    [rect.width === 0 ? 1 : to.x / rect.width, 0, 0, rect.height === 0 ? 1 : to.y / rect.height, 0, 0],
     [1, 0, 0, 1, -origin.x, -origin.y],
   ]);
 }
