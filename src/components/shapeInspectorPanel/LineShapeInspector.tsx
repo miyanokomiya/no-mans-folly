@@ -4,6 +4,7 @@ import { BlockField } from "../atoms/BlockField";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
 import { ConnectionPoint } from "../../models";
+import { MultipleShapesInspector } from "./MultipleShapesInspector";
 
 interface Props {
   targetShape: LineShape;
@@ -41,8 +42,38 @@ export const LineShapeInspector: React.FC<Props> = ({
     [commit, readyState, updateTmpTargetShape, targetShape],
   );
 
+  const targetShapes = useMemo(() => [targetShape], [targetShape]);
+  const targetTmpShapes = useMemo(() => [targetTmpShape], [targetTmpShape]);
+
+  const updateTmpShapes = useCallback(
+    (patch: { [id: string]: Partial<LineShape> }) => {
+      const adjusted = { ...patch[targetShape.id] };
+
+      // Disconnect all vertices.
+      if (targetShape.pConnection) {
+        adjusted.pConnection = undefined;
+      }
+      if (targetShape.qConnection) {
+        adjusted.qConnection = undefined;
+      }
+      if (adjusted.body) {
+        adjusted.body = adjusted.body.map((b) => ({ p: b.p }));
+      }
+
+      updateTmpTargetShape(adjusted);
+    },
+    [targetShape, updateTmpTargetShape],
+  );
+
   return (
     <>
+      <MultipleShapesInspector
+        targetShapes={targetShapes}
+        targetTmpShapes={targetTmpShapes}
+        commit={commit}
+        updateTmpShapes={updateTmpShapes}
+        readyState={readyState}
+      />
       {targetTmpVertices.map((v, i) => (
         <BlockField key={i} label={getVertexLabel(i, targetTmpVertices.length, !!targetTmpConnections[i])}>
           <VertexField index={i} value={v} onChange={handleVertexChange} connection={targetTmpConnections[i]} />
