@@ -7,6 +7,7 @@ import { LineHeadClosedBlankStruct } from "./closed_blank";
 import { LineHeadDotFilled } from "./dot_filled";
 import { LineHeadDotBlank } from "./dot_blank";
 import { LineHeadErOne } from "./er_one";
+import { LineHeadErMany } from "./er_many";
 
 const STRUCTS: { [type: string]: LineHeadStruct<any> } = {
   open: LineHeadOpen,
@@ -15,6 +16,7 @@ const STRUCTS: { [type: string]: LineHeadStruct<any> } = {
   dot_filled: LineHeadDotFilled,
   dot_blank: LineHeadDotBlank,
   er_one: LineHeadErOne,
+  er_many: LineHeadErMany,
 };
 
 export function getLineHeadStruct(type: string): LineHeadStruct<any> {
