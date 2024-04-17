@@ -8,8 +8,9 @@ import iconHeadClosedFilled from "../../assets/icons/head_closed_filled.svg";
 import iconHeadClosedBlank from "../../assets/icons/head_closed_blank.svg";
 import iconHeadDotFilled from "../../assets/icons/head_dot_filled.svg";
 import iconHeadDotBlank from "../../assets/icons/head_dot_blank.svg";
+import iconHeadOne from "../../assets/icons/head_one.svg";
 
-const HEAD_TYPES = ["none", "open", "closed_filled", "closed_blank", "dot_filled", "dot_blank"];
+const HEAD_TYPES = ["none", "open", "closed_filled", "closed_blank", "dot_filled", "dot_blank", "er_one"];
 
 const HEAD_ICONS = {
   none: iconHeadNone,
@@ -18,6 +19,7 @@ const HEAD_ICONS = {
   closed_blank: iconHeadClosedBlank,
   dot_blank: iconHeadDotBlank,
   dot_filled: iconHeadDotFilled,
+  er_one: iconHeadOne,
 };
 
 function getHeadIcon(type = "none"): string {
