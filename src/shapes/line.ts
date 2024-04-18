@@ -242,7 +242,7 @@ export const struct: ShapeStruct<LineShape> = {
           tag: "g",
           attributes: {
             ...renderFillSVGAttributes({ ...shape.stroke, disabled: false }),
-            ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false }),
+            ...renderStrokeSVGAttributes({ ...shape.stroke, dash: undefined, disabled: false }),
           },
           children: [...(pHeadInfo ? [pHeadInfo] : []), ...(qHeadInfo ? [qHeadInfo] : [])],
         },
