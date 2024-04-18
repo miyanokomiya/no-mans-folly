@@ -33,12 +33,12 @@ export const LineHeadErOne: LineHeadStruct<LineHead> = {
     return getSrcPath(lineWidth);
   },
   getRotationOriginDistance(_head, lineWidth) {
-    return 12 + lineWidth;
+    return 6 + lineWidth * 4;
   },
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = 12 + lineWidth;
+  const height = 6 + lineWidth * 4;
   const width = height;
 
   return [

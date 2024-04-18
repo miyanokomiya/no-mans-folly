@@ -10,8 +10,21 @@ import iconHeadDotFilled from "../../assets/icons/head_dot_filled.svg";
 import iconHeadDotBlank from "../../assets/icons/head_dot_blank.svg";
 import iconHeadOne from "../../assets/icons/head_one.svg";
 import iconHeadMany from "../../assets/icons/head_many.svg";
+import iconHeadOneOnly from "../../assets/icons/head_one_only.svg";
+import iconHeadOneMany from "../../assets/icons/head_one_many.svg";
 
-const HEAD_TYPES = ["none", "open", "closed_filled", "closed_blank", "dot_filled", "dot_blank", "er_one", "er_many"];
+const HEAD_TYPES = [
+  "none",
+  "open",
+  "closed_filled",
+  "closed_blank",
+  "dot_filled",
+  "dot_blank",
+  "er_one",
+  "er_many",
+  "er_one_only",
+  "er_one_many",
+];
 
 const HEAD_ICONS = {
   none: iconHeadNone,
@@ -22,10 +35,12 @@ const HEAD_ICONS = {
   dot_filled: iconHeadDotFilled,
   er_one: iconHeadOne,
   er_many: iconHeadMany,
+  er_one_only: iconHeadOneOnly,
+  er_one_many: iconHeadOneMany,
 };
 
 function getHeadIcon(type = "none"): string {
-  return (HEAD_ICONS as any)[type] ?? "none";
+  return (HEAD_ICONS as any)[type] ?? iconHeadNone;
 }
 
 interface Props {
