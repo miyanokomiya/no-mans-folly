@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { LineHead } from "../../models";
-import { PopupButton } from "../atoms/PopupButton";
+import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import iconHeadSwap from "../../assets/icons/head_swap.svg";
 import iconHeadNone from "../../assets/icons/head_none.svg";
 import iconHeadOpen from "../../assets/icons/head_open.svg";
@@ -52,12 +52,20 @@ function getHeadIcon(type = "none"): string {
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  popupDefaultDirection?: PopupDirection;
   pHead?: LineHead;
   qHead?: LineHead;
   onChange?: (val: { pHead?: LineHead; qHead?: LineHead }) => void;
 }
 
-export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHead, qHead, onChange }) => {
+export const LineHeadItems: React.FC<Props> = ({
+  popupedKey,
+  setPopupedKey,
+  popupDefaultDirection,
+  pHead,
+  qHead,
+  onChange,
+}) => {
   const onPHeadClick = useCallback(() => {
     setPopupedKey("line-p-head");
   }, [setPopupedKey]);
@@ -90,6 +98,7 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
         name="line-p-head"
         opened={popupedKey === "line-p-head"}
         popup={<LineHeadPanel type={pHead?.type} onClick={onPHeadChanged} flip />}
+        defaultDirection={popupDefaultDirection}
         onClick={onPHeadClick}
       >
         <div className="w-8 h-8 p-1" style={{ transform: "scaleX(-1)" }}>
@@ -103,6 +112,7 @@ export const LineHeadItems: React.FC<Props> = ({ popupedKey, setPopupedKey, pHea
         name="line-q-head"
         opened={popupedKey === "line-q-head"}
         popup={<LineHeadPanel type={qHead?.type} onClick={onQHeadChanged} />}
+        defaultDirection={popupDefaultDirection}
         onClick={onQHeadClick}
       >
         <div className="w-8 h-8 p-1">
@@ -143,7 +153,7 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
         <button
           key={t}
           type="button"
-          className={"w-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
+          className={"w-10 h-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
           data-type={t}
           onClick={onClickButton}
         >
@@ -153,5 +163,5 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
     });
   }, [type, onClickButton, iconStyle]);
 
-  return <div className="flex gap-1">{items}</div>;
+  return <div className="w-max grid grid-cols-6">{items}</div>;
 };

@@ -32,25 +32,28 @@ export const PopupButton: React.FC<Option> = ({
   );
 
   const { size: windowSize } = useWindow();
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+  const [buttonBounds, setButtonBounds] = useState<IRectangle>();
   const [popupBounds, setPopupBounds] = useState<IRectangle>();
 
   useEffect(() => {
-    if (!popupRef.current || !opened) {
+    if (!buttonRef.current || !popupRef.current || !opened) {
       setPopupBounds(undefined);
     } else {
-      const bounds = popupRef.current.getBoundingClientRect();
-      setPopupBounds(bounds);
+      setButtonBounds(buttonRef.current.getBoundingClientRect());
+      setPopupBounds(popupRef.current.getBoundingClientRect());
     }
   }, [opened]);
 
   const popupAttrs = useMemo(() => {
-    return getPopupAttrs(windowSize.height, popupBounds, popupPosition, defaultDirection);
-  }, [popupPosition, defaultDirection, popupBounds, windowSize.height]);
+    return getPopupAttrs(windowSize.height, buttonBounds, popupBounds, popupPosition, defaultDirection);
+  }, [popupPosition, defaultDirection, buttonBounds, popupBounds, windowSize.height]);
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
         className="border rounded bg-white p-1 flex justify-center items-center"
         onClick={onButtonClick}
@@ -126,18 +129,19 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
 
 function getPopupAttrs(
   windowHeight: number,
+  buttonBounds?: IRectangle,
   popupBounds?: IRectangle,
   popupPosition?: Option["popupPosition"],
   defaultDirection?: PopupDirection,
 ) {
   const classBase = "z-10 absolute bg-white border rounded drop-shadow-md ";
-  if (!popupBounds) {
+  if (!buttonBounds || !popupBounds) {
     // Make invisbile until "popupBounds" is determined.
     return { className: classBase + "invisible " + (defaultDirection === "top" ? "bottom-0" : "") };
   }
 
-  const toTop = defaultDirection === "top" && 0 < popupBounds.y;
-  const toBottom = !toTop && popupBounds.y + popupBounds.height < windowHeight;
+  const toTop = defaultDirection === "top" && 0 < buttonBounds.y - popupBounds.height;
+  const toBottom = !toTop && buttonBounds.y + buttonBounds.height + popupBounds.height < windowHeight;
   switch (popupPosition) {
     case "right":
       return toBottom

@@ -424,6 +424,7 @@ export const FloatMenu: React.FC<Option> = ({
             />
             <LineHeadItems
               {...popupButtonCommonProps}
+              popupDefaultDirection={popupDefaultDirection}
               pHead={indexLineShape.pHead}
               qHead={indexLineShape.qHead}
               onChange={onLineHeadChanged}
