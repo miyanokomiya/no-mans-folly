@@ -1,8 +1,8 @@
 import { AffineMatrix, applyAffine, pathSegmentRawsToString } from "okageo";
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
-import { LineHeadErCore, getErHeadHeight } from "./er_core";
+import { LineHeadErCore } from "./er_core";
 
 export const LineHeadErMany: LineHeadStruct<LineHead> = {
   label: "ERMany",
@@ -49,7 +49,7 @@ export const LineHeadErMany: LineHeadStruct<LineHead> = {
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = getErHeadHeight(lineWidth);
+  const height = getHeadBaseHeight(lineWidth);
   const width = height;
 
   return [

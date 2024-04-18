@@ -1,9 +1,9 @@
 import { AffineMatrix, applyAffine, pathSegmentRawsToString } from "okageo";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { LineHeadErOne } from "./er_one";
-import { LineHeadErCore, getErHeadHeight } from "./er_core";
+import { LineHeadErCore } from "./er_core";
 
 export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
   label: "EROneOnly",
@@ -42,7 +42,7 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
     return LineHeadErCore.createSVGClipPathCommand(head, transform, lineWidth);
   },
   getWrapperSrcPath(_head, lineWidth) {
-    const height = getErHeadHeight(lineWidth);
+    const height = getHeadBaseHeight(lineWidth);
     const width = height;
 
     return [
@@ -59,7 +59,7 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = getErHeadHeight(lineWidth);
+  const height = getHeadBaseHeight(lineWidth);
   const width = height;
 
   return [

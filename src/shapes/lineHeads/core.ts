@@ -31,3 +31,7 @@ export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
   createSVGClipPathCommand: () => undefined,
   getWrapperSrcPath: () => [],
 };
+
+export function getHeadBaseHeight(lineWidth: number): number {
+  return 6 + lineWidth * 4;
+}

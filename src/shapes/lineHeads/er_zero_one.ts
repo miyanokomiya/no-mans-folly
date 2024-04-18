@@ -1,10 +1,10 @@
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { getRectPoints } from "../../utils/geometry";
 import { AffineMatrix, applyAffine, getOuterRectangle, pathSegmentRawsToString } from "okageo";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 import { LineHeadErZero } from "./er_zero";
-import { LineHeadErCore, getErHeadHeight } from "./er_core";
+import { LineHeadErCore } from "./er_core";
 
 export const LineHeadErZeroOne: LineHeadStruct<LineHead> = {
   label: "ERZeroOne",
@@ -57,7 +57,7 @@ export const LineHeadErZeroOne: LineHeadStruct<LineHead> = {
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = getErHeadHeight(lineWidth);
+  const height = getHeadBaseHeight(lineWidth);
   const width = height;
 
   return [

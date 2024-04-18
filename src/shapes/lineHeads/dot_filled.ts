@@ -1,5 +1,5 @@
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { TAU } from "../../utils/geometry";
 import { pathSegmentRawsToString } from "okageo";
 
@@ -59,5 +59,5 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
 };
 
 function getRadius(lineWidth: number): number {
-  return 6 + lineWidth / 2;
+  return getHeadBaseHeight(lineWidth) / 2;
 }

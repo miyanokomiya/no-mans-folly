@@ -1,6 +1,6 @@
 import { AffineMatrix, IVec2, applyAffine, pathSegmentRawsToString } from "okageo";
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
 export const LineHeadErCore: LineHeadStruct<LineHead> = {
@@ -37,12 +37,12 @@ export const LineHeadErCore: LineHeadStruct<LineHead> = {
     return getSrcPath(lineWidth);
   },
   getRotationOriginDistance(_head, lineWidth) {
-    return getErHeadHeight(lineWidth);
+    return getHeadBaseHeight(lineWidth);
   },
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = getErHeadHeight(lineWidth);
+  const height = getHeadBaseHeight(lineWidth);
   return [
     { x: -height, y: 0 },
     { x: 0, y: 0 },
@@ -53,16 +53,12 @@ function getPath(transform: AffineMatrix, lineWidth: number) {
   return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
 }
 
-export function getErHeadHeight(lineWidth: number): number {
-  return 6 + lineWidth * 4;
-}
-
 function getClipPath(transform: AffineMatrix, lineWidth: number): IVec2[] {
   return getErHeadBounds(lineWidth).map((p) => applyAffine(transform, p));
 }
 
 export function getErHeadBounds(lineWidth: number): IVec2[] {
-  const height = getErHeadHeight(lineWidth);
+  const height = getHeadBaseHeight(lineWidth);
   const width = height;
 
   return [

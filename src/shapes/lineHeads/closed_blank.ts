@@ -1,6 +1,6 @@
 import { AffineMatrix, applyAffine, pathSegmentRawsToString } from "okageo";
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
 export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
@@ -35,12 +35,12 @@ export const LineHeadClosedBlankStruct: LineHeadStruct<LineHead> = {
     return getSrcPath(lineWidth);
   },
   getRotationOriginDistance(_head, lineWidth) {
-    return 12 + lineWidth;
+    return getHeadBaseHeight(lineWidth);
   },
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = 12 + lineWidth;
+  const height = getHeadBaseHeight(lineWidth);
   const width = height;
 
   return [
