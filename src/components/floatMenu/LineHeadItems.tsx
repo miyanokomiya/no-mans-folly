@@ -12,6 +12,8 @@ import iconHeadOne from "../../assets/icons/head_one.svg";
 import iconHeadMany from "../../assets/icons/head_many.svg";
 import iconHeadOneOnly from "../../assets/icons/head_one_only.svg";
 import iconHeadOneMany from "../../assets/icons/head_one_many.svg";
+import iconHeadZeroOne from "../../assets/icons/head_zero_one.svg";
+import iconHeadZeroMany from "../../assets/icons/head_zero_many.svg";
 
 const HEAD_TYPES = [
   "none",
@@ -24,6 +26,8 @@ const HEAD_TYPES = [
   "er_many",
   "er_one_only",
   "er_one_many",
+  "er_zero_one",
+  "er_zero_many",
 ];
 
 const HEAD_ICONS = {
@@ -37,6 +41,8 @@ const HEAD_ICONS = {
   er_many: iconHeadMany,
   er_one_only: iconHeadOneOnly,
   er_one_many: iconHeadOneMany,
+  er_zero_one: iconHeadZeroOne,
+  er_zero_many: iconHeadZeroMany,
 };
 
 function getHeadIcon(type = "none"): string {

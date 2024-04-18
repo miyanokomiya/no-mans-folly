@@ -10,6 +10,8 @@ import { LineHeadErOne } from "./er_one";
 import { LineHeadErMany } from "./er_many";
 import { LineHeadErOneOnly } from "./er_one_only";
 import { LineHeadErOneMany } from "./er_one_many";
+import { LineHeadErZeroOne } from "./er_zero_one";
+import { LineHeadErZeroMany } from "./er_zero_many";
 
 const STRUCTS: { [type: string]: LineHeadStruct<any> } = {
   open: LineHeadOpen,
@@ -21,6 +23,8 @@ const STRUCTS: { [type: string]: LineHeadStruct<any> } = {
   er_many: LineHeadErMany,
   er_one_only: LineHeadErOneOnly,
   er_one_many: LineHeadErOneMany,
+  er_zero_one: LineHeadErZeroOne,
+  er_zero_many: LineHeadErZeroMany,
 };
 
 export function getLineHeadStruct(type: string): LineHeadStruct<any> {
