@@ -33,5 +33,5 @@ export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
 };
 
 export function getHeadBaseHeight(lineWidth: number): number {
-  return 6 + lineWidth * 4;
+  return lineWidth * 6;
 }

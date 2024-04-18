@@ -1,5 +1,5 @@
 import { LineHead } from "../../models";
-import { LineHeadStruct } from "./core";
+import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { TAU } from "../../utils/geometry";
 import { IVec2, applyAffine, pathSegmentRawsToString } from "okageo";
 
@@ -63,10 +63,11 @@ export const LineHeadErZero: LineHeadStruct<LineHead> = {
 };
 
 function getRadius(lineWidth: number): number {
-  return 3 + lineWidth * 2;
+  return getHeadBaseHeight(lineWidth) / 2;
 }
 
 function getArcCenter(lineWidth: number): IVec2 {
-  const height = 6 + lineWidth * 4;
-  return { x: -height - getRadius(lineWidth), y: 0 };
+  const radius = getRadius(lineWidth);
+  const height = radius * 2;
+  return { x: -height - radius, y: 0 };
 }
