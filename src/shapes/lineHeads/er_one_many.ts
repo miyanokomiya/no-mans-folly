@@ -2,6 +2,7 @@ import { LineHead } from "../../models";
 import { LineHeadStruct } from "./core";
 import { LineHeadErOne } from "./er_one";
 import { LineHeadErMany } from "./er_many";
+import { getErHeadBounds } from "./er_core";
 
 export const LineHeadErOneMany: LineHeadStruct<LineHead> = {
   label: "EROneMany",
@@ -24,19 +25,14 @@ export const LineHeadErOneMany: LineHeadStruct<LineHead> = {
       ],
     };
   },
-  clip() {},
-  createSVGClipPathCommand() {
-    return undefined;
+  clip(region, head, transform, lineWidth) {
+    LineHeadErMany.clip(region, head, transform, lineWidth);
+  },
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    return LineHeadErMany.createSVGClipPathCommand(head, transform, lineWidth);
   },
   getWrapperSrcPath(_head, lineWidth) {
-    const height = 6 + lineWidth * 4;
-    const width = height;
-    return [
-      { x: -height, y: -width / 2 },
-      { x: 0, y: -width / 2 },
-      { x: 0, y: width / 2 },
-      { x: -height, y: width / 2 },
-    ];
+    return getErHeadBounds(lineWidth);
   },
   getRotationOriginDistance(head, lineWidth) {
     return LineHeadErOne.getRotationOriginDistance!(head, lineWidth);

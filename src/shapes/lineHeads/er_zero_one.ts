@@ -4,6 +4,7 @@ import { getRectPoints } from "../../utils/geometry";
 import { AffineMatrix, applyAffine, getOuterRectangle, pathSegmentRawsToString } from "okageo";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 import { LineHeadErZero } from "./er_zero";
+import { LineHeadErCore, getErHeadHeight } from "./er_core";
 
 export const LineHeadErZeroOne: LineHeadStruct<LineHead> = {
   label: "ERZeroOne",
@@ -18,6 +19,7 @@ export const LineHeadErZeroOne: LineHeadStruct<LineHead> = {
     applyPath(ctx, getPath(transform, lineWidth));
     ctx.stroke();
 
+    LineHeadErCore.render(ctx, head, transform, lineWidth);
     LineHeadErZero.render(ctx, head, transform, lineWidth);
   },
   createSVGElementInfo(head, transform, lineWidth) {
@@ -31,15 +33,20 @@ export const LineHeadErZeroOne: LineHeadStruct<LineHead> = {
             fill: "none",
           },
         },
+        LineHeadErCore.createSVGElementInfo(head, transform, lineWidth)!,
         LineHeadErZero.createSVGElementInfo(head, transform, lineWidth)!,
       ],
     };
   },
   clip(region, head, transform, lineWidth) {
+    LineHeadErCore.clip(region, head, transform, lineWidth);
     LineHeadErZero.clip(region, head, transform, lineWidth);
   },
   createSVGClipPathCommand(head, transform, lineWidth) {
-    return LineHeadErZero.createSVGClipPathCommand(head, transform, lineWidth);
+    return [
+      LineHeadErCore.createSVGClipPathCommand(head, transform, lineWidth)!,
+      LineHeadErZero.createSVGClipPathCommand(head, transform, lineWidth)!,
+    ].join(" ");
   },
   getWrapperSrcPath(head, lineWidth) {
     return getRectPoints(getOuterRectangle([getSrcPath(lineWidth), LineHeadErZero.getWrapperSrcPath(head, lineWidth)]));
@@ -50,7 +57,7 @@ export const LineHeadErZeroOne: LineHeadStruct<LineHead> = {
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = 6 + lineWidth * 4;
+  const height = getErHeadHeight(lineWidth);
   const width = height;
 
   return [

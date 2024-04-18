@@ -27,10 +27,14 @@ export const LineHeadErZeroMany: LineHeadStruct<LineHead> = {
     };
   },
   clip(region, head, transform, lineWidth) {
+    LineHeadErMany.clip(region, head, transform, lineWidth);
     LineHeadErZero.clip(region, head, transform, lineWidth);
   },
   createSVGClipPathCommand(head, transform, lineWidth) {
-    return LineHeadErZero.createSVGClipPathCommand(head, transform, lineWidth);
+    return [
+      LineHeadErMany.createSVGClipPathCommand(head, transform, lineWidth)!,
+      LineHeadErZero.createSVGClipPathCommand(head, transform, lineWidth)!,
+    ].join(" ");
   },
   getWrapperSrcPath(head, lineWidth) {
     return getRectPoints(

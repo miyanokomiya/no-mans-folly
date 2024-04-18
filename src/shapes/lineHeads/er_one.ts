@@ -2,6 +2,7 @@ import { AffineMatrix, applyAffine, pathSegmentRawsToString } from "okageo";
 import { LineHead } from "../../models";
 import { LineHeadStruct } from "./core";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
+import { LineHeadErCore, getErHeadHeight } from "./er_core";
 
 export const LineHeadErOne: LineHeadStruct<LineHead> = {
   label: "EROne",
@@ -11,34 +12,44 @@ export const LineHeadErOne: LineHeadStruct<LineHead> = {
       type: "er_one",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
+  render(ctx, head, transform, lineWidth) {
+    LineHeadErCore.render(ctx, head, transform, lineWidth);
+
     ctx.beginPath();
     applyPath(ctx, getPath(transform, lineWidth));
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
+  createSVGElementInfo(head, transform, lineWidth) {
     return {
-      tag: "path",
-      attributes: {
-        d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
-        fill: "none",
-      },
+      tag: "g",
+      children: [
+        LineHeadErCore.createSVGElementInfo(head, transform, lineWidth)!,
+        {
+          tag: "path",
+          attributes: {
+            d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
+            fill: "none",
+          },
+        },
+      ],
     };
   },
-  clip() {},
-  createSVGClipPathCommand() {
-    return undefined;
+  clip(region, head, transform, lineWidth) {
+    LineHeadErCore.clip(region, head, transform, lineWidth);
+  },
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    return LineHeadErCore.createSVGClipPathCommand(head, transform, lineWidth);
   },
   getWrapperSrcPath(_head, lineWidth) {
     return getSrcPath(lineWidth);
   },
-  getRotationOriginDistance(_head, lineWidth) {
-    return 6 + lineWidth * 4;
+  getRotationOriginDistance(head, lineWidth) {
+    return LineHeadErCore.getRotationOriginDistance!(head, lineWidth);
   },
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = 6 + lineWidth * 4;
+  const height = getErHeadHeight(lineWidth);
   const width = height;
 
   return [

@@ -3,6 +3,7 @@ import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 import { LineHead } from "../../models";
 import { LineHeadStruct } from "./core";
 import { LineHeadErOne } from "./er_one";
+import { LineHeadErCore, getErHeadHeight } from "./er_core";
 
 export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
   label: "EROneOnly",
@@ -14,6 +15,7 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
   },
   render(ctx, head, transform, lineWidth) {
     LineHeadErOne.render(ctx, head, transform, lineWidth);
+
     ctx.beginPath();
     applyPath(ctx, getPath(transform, lineWidth));
     ctx.stroke();
@@ -33,17 +35,21 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
       ],
     };
   },
-  clip() {},
-  createSVGClipPathCommand() {
-    return undefined;
+  clip(region, head, transform, lineWidth) {
+    LineHeadErCore.clip(region, head, transform, lineWidth);
+  },
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    return LineHeadErCore.createSVGClipPathCommand(head, transform, lineWidth);
   },
   getWrapperSrcPath(_head, lineWidth) {
-    const height = 6 + lineWidth * 4;
+    const height = getErHeadHeight(lineWidth);
     const width = height;
+
     return [
       { x: -height, y: -width / 2 },
-      { x: 0, y: -width / 2 },
-      { x: 0, y: width / 2 },
+      { x: -height / 2, y: -width / 2 },
+      { x: 0, y: 0 },
+      { x: -height / 2, y: width / 2 },
       { x: -height, y: width / 2 },
     ];
   },
@@ -53,7 +59,7 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
 };
 
 function getSrcPath(lineWidth: number) {
-  const height = 6 + lineWidth * 4;
+  const height = getErHeadHeight(lineWidth);
   const width = height;
 
   return [
