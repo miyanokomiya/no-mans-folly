@@ -53,10 +53,6 @@ function getPath(transform: AffineMatrix, lineWidth: number) {
   return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
 }
 
-function getClipPath(transform: AffineMatrix, lineWidth: number): IVec2[] {
-  return getErHeadBounds(lineWidth).map((p) => applyAffine(transform, p));
-}
-
 export function getErHeadBounds(lineWidth: number): IVec2[] {
   const height = getHeadBaseHeight(lineWidth);
   const width = height;
@@ -65,6 +61,23 @@ export function getErHeadBounds(lineWidth: number): IVec2[] {
     { x: -height, y: -width / 2 },
     { x: 0, y: -width / 2 },
     { x: 0, y: width / 2 },
+    { x: -height, y: width / 2 },
+  ];
+}
+
+function getClipPath(transform: AffineMatrix, lineWidth: number): IVec2[] {
+  return getErHeadBoundsForClip(lineWidth).map((p) => applyAffine(transform, p));
+}
+
+function getErHeadBoundsForClip(lineWidth: number): IVec2[] {
+  const height = getHeadBaseHeight(lineWidth);
+  const width = height;
+
+  // Expand a little towards the head in case curved line sticks out the area.
+  return [
+    { x: -height, y: -width / 2 },
+    { x: lineWidth / 2, y: -width / 2 },
+    { x: lineWidth / 2, y: width / 2 },
     { x: -height, y: width / 2 },
   ];
 }
