@@ -1,6 +1,7 @@
-import { AffineMatrix, IVec2 } from "okageo";
+import { AffineMatrix, IVec2, applyAffine, pathSegmentRawsToString } from "okageo";
 import { LineHead } from "../../models";
 import { SVGElementInfo } from "../../utils/svgElements";
+import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
 export interface LineHeadStruct<T extends LineHead> {
   label: string;
@@ -34,4 +35,58 @@ export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
 
 export function getHeadBaseHeight(lineWidth: number): number {
   return lineWidth * 6;
+}
+
+export function defineLineHeadPolygon<T extends LineHead>(option: {
+  label: string;
+  create: (arg: Partial<T>) => T;
+  getSrcPath: (lineWidth: number) => IVec2[];
+  filled?: boolean;
+}) {
+  const struct: LineHeadStruct<T> = {
+    label: option.label,
+    create(arg = {}) {
+      return option.create(arg);
+    },
+    render(ctx, _head, transform, lineWidth) {
+      ctx.beginPath();
+      applyPath(ctx, getPath(transform, lineWidth), true);
+
+      if (option.filled) {
+        const tmp = ctx.fillStyle;
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.fill();
+        ctx.fillStyle = tmp;
+      }
+
+      ctx.stroke();
+    },
+    createSVGElementInfo(_head, transform, lineWidth) {
+      return {
+        tag: "path",
+        attributes: {
+          d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [], true)),
+          fill: option.filled ? undefined : "none",
+        },
+      };
+    },
+    clip(region, _head, transform, lineWidth) {
+      applyPath(region, getPath(transform, lineWidth), true);
+    },
+    createSVGClipPathCommand(_head, transform, lineWidth) {
+      return pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [], true));
+    },
+    getWrapperSrcPath(_head, lineWidth) {
+      return option.getSrcPath(lineWidth);
+    },
+    getRotationOriginDistance(_head, lineWidth) {
+      return getHeadBaseHeight(lineWidth);
+    },
+  };
+
+  function getPath(transform: AffineMatrix, lineWidth: number) {
+    return option.getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
+  }
+
+  return struct;
 }
