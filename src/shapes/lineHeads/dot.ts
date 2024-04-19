@@ -3,18 +3,23 @@ import { LineHeadStruct, getHeadBaseHeight } from "./core";
 import { TAU } from "../../utils/geometry";
 import { pathSegmentRawsToString } from "okageo";
 
-export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
-  label: "Dot Blank",
+export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
+  label: "DotFilled",
   create(arg = {}) {
     return {
       ...arg,
-      type: "dot_blank",
+      type: "dot_filled",
     };
   },
   render(ctx, _head, transform, lineWidth) {
     const radius = getRadius(lineWidth);
     ctx.beginPath();
     ctx.arc(transform[4], transform[5], radius, 0, TAU, true);
+
+    const tmp = ctx.fillStyle;
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+    ctx.fillStyle = tmp;
     ctx.stroke();
   },
   createSVGElementInfo(_head, transform, lineWidth) {
@@ -26,7 +31,6 @@ export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
         cy: transform[5],
         rx: radius,
         ry: radius,
-        fill: "none",
       },
     };
   },
@@ -51,6 +55,36 @@ export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
       { x: rad, y: rad },
       { x: -rad, y: rad },
     ];
+  },
+};
+
+export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
+  ...LineHeadDotFilled,
+  label: "DotBlank",
+  create(arg = {}) {
+    return {
+      ...arg,
+      type: "dot_blank",
+    };
+  },
+  render(ctx, _head, transform, lineWidth) {
+    const radius = getRadius(lineWidth);
+    ctx.beginPath();
+    ctx.arc(transform[4], transform[5], radius, 0, TAU, true);
+    ctx.stroke();
+  },
+  createSVGElementInfo(_head, transform, lineWidth) {
+    const radius = getRadius(lineWidth);
+    return {
+      tag: "ellipse",
+      attributes: {
+        cx: transform[4],
+        cy: transform[5],
+        rx: radius,
+        ry: radius,
+        fill: "none",
+      },
+    };
   },
 };
 
