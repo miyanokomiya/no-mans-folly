@@ -13,6 +13,8 @@ import iconHeadDotFilled from "../../assets/icons/head_dot_filled.svg";
 import iconHeadDotBlank from "../../assets/icons/head_dot_blank.svg";
 import iconHeadDotTopFilled from "../../assets/icons/head_dot_top_filled.svg";
 import iconHeadDotTopBlank from "../../assets/icons/head_dot_top_blank.svg";
+import iconHeadStartStiffFilled from "../../assets/icons/head_star_stiff_filled.svg";
+import iconHeadStartStiffBlank from "../../assets/icons/head_star_stiff_blank.svg";
 
 import iconHeadDiamondFilled from "../../assets/icons/head_diamond_filled.svg";
 import iconHeadDiamondBlank from "../../assets/icons/head_diamond_blank.svg";
@@ -36,6 +38,8 @@ const HEAD_TYPES = [
     "dot_top_blank",
     "dot_filled",
     "dot_blank",
+    "star_stiff_filled",
+    "star_stiff_blank",
   ],
   ["er_one", "er_many", "er_one_only", "er_one_many", "er_zero_one", "er_zero_many"],
 ];
@@ -51,6 +55,8 @@ const HEAD_ICONS = {
   dot_top_filled: iconHeadDotTopFilled,
   dot_blank: iconHeadDotBlank,
   dot_filled: iconHeadDotFilled,
+  star_stiff_filled: iconHeadStartStiffFilled,
+  star_stiff_blank: iconHeadStartStiffBlank,
 
   er_one: iconHeadOne,
   er_many: iconHeadMany,
