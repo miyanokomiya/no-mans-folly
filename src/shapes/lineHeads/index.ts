@@ -5,6 +5,7 @@ import { LineHeadOpen } from "./open";
 import { LineHeadClosedFilledStruct, LineHeadClosedBlankStruct } from "./closed";
 import { LineHeadDotFilled } from "./dot_filled";
 import { LineHeadDotBlank } from "./dot_blank";
+import { LineHeadDotTopFilled, LineHeadDotTopBlank } from "./dot_top";
 import { LineHeadDiamondFilled, LineHeadDiamondBlank } from "./diamond";
 import { LineHeadErOne } from "./er_one";
 import { LineHeadErMany } from "./er_many";
@@ -19,6 +20,8 @@ const STRUCTS: { [type: string]: LineHeadStruct<any> } = {
   closed_blank: LineHeadClosedBlankStruct,
   dot_filled: LineHeadDotFilled,
   dot_blank: LineHeadDotBlank,
+  dot_top_filled: LineHeadDotTopFilled,
+  dot_top_blank: LineHeadDotTopBlank,
   diamond_filled: LineHeadDiamondFilled,
   diamond_blank: LineHeadDiamondBlank,
   er_one: LineHeadErOne,

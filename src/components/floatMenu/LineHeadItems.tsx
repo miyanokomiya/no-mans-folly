@@ -1,37 +1,43 @@
 import { useCallback, useMemo } from "react";
 import { LineHead } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
+
 import iconHeadSwap from "../../assets/icons/head_swap.svg";
 import iconHeadNone from "../../assets/icons/head_none.svg";
 import iconHeadOpen from "../../assets/icons/head_open.svg";
+
 import iconHeadClosedFilled from "../../assets/icons/head_closed_filled.svg";
 import iconHeadClosedBlank from "../../assets/icons/head_closed_blank.svg";
+
 import iconHeadDotFilled from "../../assets/icons/head_dot_filled.svg";
 import iconHeadDotBlank from "../../assets/icons/head_dot_blank.svg";
+import iconHeadDotTopFilled from "../../assets/icons/head_dot_top_filled.svg";
+import iconHeadDotTopBlank from "../../assets/icons/head_dot_top_blank.svg";
+
+import iconHeadDiamondFilled from "../../assets/icons/head_diamond_filled.svg";
+import iconHeadDiamondBlank from "../../assets/icons/head_diamond_blank.svg";
+
 import iconHeadOne from "../../assets/icons/head_one.svg";
 import iconHeadMany from "../../assets/icons/head_many.svg";
 import iconHeadOneOnly from "../../assets/icons/head_one_only.svg";
 import iconHeadOneMany from "../../assets/icons/head_one_many.svg";
 import iconHeadZeroOne from "../../assets/icons/head_zero_one.svg";
 import iconHeadZeroMany from "../../assets/icons/head_zero_many.svg";
-import iconHeadDiamondFilled from "../../assets/icons/head_diamond_filled.svg";
-import iconHeadDiamondBlank from "../../assets/icons/head_diamond_blank.svg";
 
 const HEAD_TYPES = [
-  "none",
-  "open",
-  "closed_filled",
-  "closed_blank",
-  "dot_filled",
-  "dot_blank",
-  "er_one",
-  "er_many",
-  "er_one_only",
-  "er_one_many",
-  "er_zero_one",
-  "er_zero_many",
-  "diamond_filled",
-  "diamond_blank",
+  [
+    "none",
+    "open",
+    "closed_filled",
+    "closed_blank",
+    "diamond_filled",
+    "diamond_blank",
+    "dot_top_filled",
+    "dot_top_blank",
+    "dot_filled",
+    "dot_blank",
+  ],
+  ["er_one", "er_many", "er_one_only", "er_one_many", "er_zero_one", "er_zero_many"],
 ];
 
 const HEAD_ICONS = {
@@ -39,16 +45,19 @@ const HEAD_ICONS = {
   open: iconHeadOpen,
   closed_filled: iconHeadClosedFilled,
   closed_blank: iconHeadClosedBlank,
+  diamond_filled: iconHeadDiamondFilled,
+  diamond_blank: iconHeadDiamondBlank,
+  dot_top_blank: iconHeadDotTopBlank,
+  dot_top_filled: iconHeadDotTopFilled,
   dot_blank: iconHeadDotBlank,
   dot_filled: iconHeadDotFilled,
+
   er_one: iconHeadOne,
   er_many: iconHeadMany,
   er_one_only: iconHeadOneOnly,
   er_one_many: iconHeadOneMany,
   er_zero_one: iconHeadZeroOne,
   er_zero_many: iconHeadZeroMany,
-  diamond_filled: iconHeadDiamondFilled,
-  diamond_blank: iconHeadDiamondBlank,
 };
 
 function getHeadIcon(type = "none"): string {
@@ -153,21 +162,28 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
   }, [flip]);
 
   const items = useMemo(() => {
-    return HEAD_TYPES.map((t) => {
-      const selected = type ? type === t : t === "none";
+    return HEAD_TYPES.map((group, i) => {
+      const groupItems = group.map((t) => {
+        const selected = type ? type === t : t === "none";
+        return (
+          <button
+            key={t}
+            type="button"
+            className={"w-10 h-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
+            data-type={t}
+            onClick={onClickButton}
+          >
+            <img src={getHeadIcon(t)} alt={t} style={iconStyle} />
+          </button>
+        );
+      });
       return (
-        <button
-          key={t}
-          type="button"
-          className={"w-10 h-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
-          data-type={t}
-          onClick={onClickButton}
-        >
-          <img src={getHeadIcon(t)} alt={t} style={iconStyle} />
-        </button>
+        <div key={i} className="w-max grid grid-cols-6">
+          {groupItems}
+        </div>
       );
     });
   }, [type, onClickButton, iconStyle]);
 
-  return <div className="w-max grid grid-cols-6">{items}</div>;
+  return <div>{items}</div>;
 };
