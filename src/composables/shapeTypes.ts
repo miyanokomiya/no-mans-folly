@@ -45,6 +45,7 @@ import { newSingleSelectedState } from "./states/appCanvas/singleSelectedState";
 import { newHexagonSelectedState } from "./states/appCanvas/hexagon/hexagonSelectedState";
 import { newCapsuleSelectedState } from "./states/appCanvas/capsule/capsuleSelectedState";
 import { newTriangleSelectedState } from "./states/appCanvas/triangle/triangleSelectedState";
+import { newStarSelectedState } from "./states/appCanvas/star/starSelectedState";
 
 type ShapeTypeItem = { type: string; icon: string };
 
@@ -96,6 +97,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newTrapezoidSelectedState;
     case "hexagon":
       return newHexagonSelectedState;
+    case "star":
+      return newStarSelectedState;
     case "document_symbol":
       return newDocumentSymbolSelectedState;
     case "wave":
