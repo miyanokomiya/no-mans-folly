@@ -68,10 +68,10 @@ export function getMaxStarSize(): number {
 }
 
 function getPath(src: StarShape): SimplePath {
-  return getDirectionalSimplePath(src, getRawPath);
+  return getDirectionalSimplePath(src, getRawStarPath);
 }
 
-function getRawPath(shape: StarShape): SimplePath {
+export function getRawStarPath(shape: StarShape): SimplePath {
   const size = getSize(shape);
   const unitR = (Math.PI * 2) / size;
   const arr = [...Array(size)].map((_, i) => i);
