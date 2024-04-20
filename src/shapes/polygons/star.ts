@@ -26,7 +26,7 @@ export const struct: ShapeStruct<StarShape> = {
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
-      height: arg.height ?? 100 * (Math.sqrt(3) / 2),
+      height: arg.height ?? 100,
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       c0: arg.c0 ?? { x: 0.5, y: 0.25 },
       size: arg.size ?? 5,
@@ -59,7 +59,11 @@ function getRadiusRate(src: StarShape): number {
 }
 
 function getSize(src: StarShape): number {
-  return clamp(3, 20, src.size);
+  return clamp(3, getMaxStarSize(), src.size);
+}
+
+export function getMaxStarSize(): number {
+  return 20;
 }
 
 function getPath(src: StarShape): SimplePath {
@@ -76,16 +80,17 @@ function getRawPath(shape: StarShape): SimplePath {
   const c = { x: shape.width / 2, y: height / 2 };
 
   const outerRadius = { x: width / 2, y: height / 2 };
+  const outerRadFrom = -Math.PI / 2;
   const ops = arr.map<IVec2>((i) => {
-    const r = unitR * i - Math.PI / 2;
+    const r = unitR * i + outerRadFrom;
     return { x: Math.cos(r) * outerRadius.x + c.x, y: Math.sin(r) * outerRadius.y + c.y };
   });
 
   const rate = getRadiusRate(shape);
   const innerRadius = { x: width * rate, y: height * rate };
-  const indexDiff = Math.floor(size / 2);
+  const innerRadFrom = unitR / 2 - Math.PI / 2;
   const ips = arr.map<IVec2>((i) => {
-    const r = unitR * (i - indexDiff) + Math.PI / 2;
+    const r = unitR * i + innerRadFrom;
     return { x: Math.cos(r) * innerRadius.x + c.x, y: Math.sin(r) * innerRadius.y + c.y };
   });
 
@@ -101,9 +106,26 @@ function getSizeGapScale(shape: StarShape): IVec2 {
   const size = getSize(shape);
   const unitR = (Math.PI * 2) / size;
   const from = -Math.PI / 2;
+  const innerRadiusRate = getRadiusRate(shape) * 2;
+
   const bottomIndex = Math.ceil(size / 2);
+  const bottomInnerIndex = Math.floor(size / 2);
+  const h = Math.max(
+    Math.sin(from + unitR * bottomIndex),
+    Math.sin(from + unitR * (0.5 + bottomInnerIndex)) * innerRadiusRate,
+  );
+
+  // Check both "floor" and "ceil" because either of them can be the widest vertex.
   // Avoid picking 0 when size is 3.
-  const rightIndex = Math.max(1, Math.floor(size / 4));
+  const rightIndex0 = Math.max(1, Math.floor(size / 4));
+  const rightIndex1 = Math.min(size - 1, Math.ceil(size / 4));
+  const rightInnerIndex = Math.floor(size / 4);
+  const w = Math.max(
+    Math.cos(from + unitR * rightIndex0),
+    Math.cos(from + unitR * rightIndex1),
+    Math.cos(from + unitR * (0.5 + rightInnerIndex)) * innerRadiusRate,
+  );
+
   // Each side expect for top can have gap because this shape is based on the top.
-  return { x: 1 / Math.cos(from + unitR * rightIndex), y: 1 / ((1 + Math.sin(from + unitR * bottomIndex)) / 2) };
+  return { x: 1 / w, y: 1 / ((1 + h) / 2) };
 }
