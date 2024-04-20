@@ -8,6 +8,7 @@ import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
 import iconCapsule from "../assets/icons/shape_capsule.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
 import iconDocumentSymbol from "../assets/icons/shape_document_symbol.svg";
+import iconStar from "../assets/icons/shape_star.svg";
 import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
 import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
@@ -59,6 +60,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "capsule", icon: iconCapsule },
   { type: "cylinder", icon: iconCylinder },
   { type: "document_symbol", icon: iconDocumentSymbol },
+  { type: "star", icon: iconStar },
   { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
   { type: "two_sided_arrow", icon: iconTwoSidedArrow },

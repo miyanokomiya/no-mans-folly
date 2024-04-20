@@ -16,6 +16,7 @@ import { struct as parallelogram } from "./polygons/parallelogram";
 import { struct as capsule } from "./polygons/capsule";
 import { struct as cylinder } from "./polygons/cylinder";
 import { struct as document_symbol } from "./polygons/documentSymbol";
+import { struct as star } from "./polygons/star";
 import { struct as bubble } from "./polygons/bubble";
 import { struct as one_sided_arrow } from "./oneSidedArrow";
 import { struct as two_sided_arrow } from "./twoSidedArrow";
@@ -51,6 +52,7 @@ export const SHAPE_COMMON_STRUCTS: {
   capsule,
   cylinder,
   document_symbol,
+  star,
   bubble,
   one_sided_arrow,
   two_sided_arrow,
