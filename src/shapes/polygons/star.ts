@@ -63,7 +63,8 @@ function getSize(src: StarShape): number {
 }
 
 export function getMaxStarSize(): number {
-  return 20;
+  // There's no technical restriction, but it's better to set reasonal or practical maximum.
+  return 64;
 }
 
 function getPath(src: StarShape): SimplePath {
