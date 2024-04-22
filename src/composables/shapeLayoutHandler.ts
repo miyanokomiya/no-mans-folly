@@ -37,9 +37,10 @@ export function getPatchByLayouts(
           {},
         ).patch;
       },
-      (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
-      (_, patch) => getCurveLinePatch(shapeComposite, { update: patch }),
-      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
+      // Use "updatedComposite" from here that contains newly added shapes.
+      (_, patch) => getConnectedLinePatch(updatedComposite, { update: patch }),
+      (_, patch) => getCurveLinePatch(updatedComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(updatedComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,
   );
@@ -90,9 +91,9 @@ export function getPatchInfoByLayouts(
           {},
         ).patch;
       },
-      (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
-      (_, patch) => getCurveLinePatch(shapeComposite, { update: patch }),
-      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
+      (_, patch) => getConnectedLinePatch(updatedComposite, { update: patch }),
+      (_, patch) => getCurveLinePatch(updatedComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(updatedComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,
   );
@@ -112,12 +113,15 @@ export function getPatchAfterLayouts(
   shapeComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
+  const updatedComposite = getNextShapeComposite(shapeComposite, patchInfo);
+
   const result = patchPipe(
     [
       () => patchInfo.update ?? {},
-      (_, patch) => getConnectedLinePatch(shapeComposite, { update: patch }),
-      (_, patch) => getCurveLinePatch(shapeComposite, { update: patch }),
-      (_, patch) => getLineLabelPatch(shapeComposite, { update: patch }),
+      // Use "updatedComposite" from here that contains newly added shapes.
+      (_, patch) => getConnectedLinePatch(updatedComposite, { update: patch }),
+      (_, patch) => getCurveLinePatch(updatedComposite, { update: patch }),
+      (_, patch) => getLineLabelPatch(updatedComposite, { update: patch }),
     ],
     shapeComposite.shapeMap,
   );

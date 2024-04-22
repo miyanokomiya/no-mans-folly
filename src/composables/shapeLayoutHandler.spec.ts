@@ -1,9 +1,36 @@
 import { describe, test, expect } from "vitest";
-import { getPatchInfoByLayouts } from "./shapeLayoutHandler";
+import { getPatchAfterLayouts, getPatchByLayouts, getPatchInfoByLayouts } from "./shapeLayoutHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { generateKeyBetween } from "fractional-indexing";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
+
+describe("getPatchByLayouts", () => {
+  test("error case: regard new shapes added by the patch", () => {
+    const root = createShape(getCommonStruct, "board_root", {
+      id: "root",
+      findex: generateKeyBetween(null, null),
+    });
+    const column0 = createShape(getCommonStruct, "board_column", {
+      id: "column0",
+      findex: generateKeyBetween(root.findex, null),
+      parentId: root.id,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column0],
+      getStruct: getCommonStruct,
+    });
+
+    const new_card = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+      id: "new_card",
+      findex: generateKeyBetween(column0.findex, null),
+      parentId: root.id,
+      columnId: column0.id,
+    });
+    const result = getPatchByLayouts(shapeComposite, { add: [new_card] });
+    expect(result[new_card.id]).toHaveProperty("p");
+  });
+});
 
 describe("getPatchInfoByLayouts", () => {
   test("should delete when a shape can't exist under the updated condition", () => {
@@ -45,5 +72,32 @@ describe("getPatchInfoByLayouts", () => {
 
     const result2 = getPatchInfoByLayouts(shapeComposite, { delete: [card0.id] });
     expect(result2.delete).toEqual([card0.id]);
+  });
+});
+
+describe("getPatchAfterLayouts", () => {
+  test("error case: regard new shapes added by the patch", () => {
+    const root = createShape(getCommonStruct, "board_root", {
+      id: "root",
+      findex: generateKeyBetween(null, null),
+    });
+    const column0 = createShape(getCommonStruct, "board_column", {
+      id: "column0",
+      findex: generateKeyBetween(root.findex, null),
+      parentId: root.id,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column0],
+      getStruct: getCommonStruct,
+    });
+
+    const new_card = createShape<BoardCardShape>(getCommonStruct, "board_card", {
+      id: "new_card",
+      findex: generateKeyBetween(column0.findex, null),
+      parentId: root.id,
+      columnId: column0.id,
+    });
+    const result = getPatchAfterLayouts(shapeComposite, { add: [new_card] });
+    expect(result[new_card.id]).toBe(undefined);
   });
 });
