@@ -1,13 +1,13 @@
 import type { AppCanvasState } from "./core";
 import { newDefaultState } from "./defaultState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
-import { isLineLabelShape } from "../../../shapes/text";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 import { newMovingShapeState } from "./movingShapeState";
 import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
 import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 import { newBoardLaneMovingState } from "./board/boardLaneMovingState";
+import { isLineLabelShape } from "../../../utils/lineLabel";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -34,7 +34,7 @@ export function newMovingHubState(option?: Option): AppCanvasState {
             path: shapeComposite.getLocalRectPolygon(shape),
           });
 
-        if (isLineLabelShape(shape) && shapeMap[shape.parentId ?? ""]) {
+        if (isLineLabelShape(shapeComposite, shape)) {
           return () => newMovingLineLabelState({ boundingBox });
         }
 

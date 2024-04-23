@@ -1,7 +1,9 @@
 import { describe, test, expect } from "vitest";
 import { struct as textStruct } from "../shapes/text";
 import { struct as lineStruct } from "../shapes/line";
-import { attachLabelToLine } from "./lineLabel";
+import { attachLabelToLine, isLineLabelShape } from "./lineLabel";
+import { newShapeComposite } from "../composables/shapeComposite";
+import { getCommonStruct } from "../shapes";
 
 describe("attachLabelToLine", () => {
   test("should return patch object to attach a label to a line: horizontal line", () => {
@@ -151,5 +153,28 @@ describe("attachLabelToLine", () => {
     expect(ret1.hAlign).toBe("left");
     expect(ret1.vAlign).toBe("center");
     expect(ret1.lineAttached).toBeCloseTo(0.75, 3);
+  });
+});
+
+describe("isLineLabelShape", () => {
+  test("should return true when the shape is valid line label", () => {
+    const line = lineStruct.create({ id: "line" });
+    const label0 = textStruct.create({ parentId: line.id, lineAttached: 0.5 });
+    const label1 = textStruct.create({ parentId: line.id, lineAttached: undefined });
+    const group = lineStruct.create({ id: "group" });
+    const label2 = textStruct.create({ parentId: "group" });
+    const label3 = textStruct.create({ parentId: "unknown" });
+    const label4 = textStruct.create({ parentId: undefined });
+    const shapeComposite = newShapeComposite({
+      getStruct: getCommonStruct,
+      shapes: [line, label0, label1, label2, group, label3, label4],
+    });
+
+    expect(isLineLabelShape(shapeComposite, line), "not a text").toBe(false);
+    expect(isLineLabelShape(shapeComposite, label0), "valid line label").toBe(true);
+    expect(isLineLabelShape(shapeComposite, label1), "invalid lineAttached").toBe(false);
+    expect(isLineLabelShape(shapeComposite, label2), "the parent isn't a line").toBe(false);
+    expect(isLineLabelShape(shapeComposite, label3), "invalid parent").toBe(false);
+    expect(isLineLabelShape(shapeComposite, label4), "no parent").toBe(false);
   });
 });

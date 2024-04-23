@@ -44,7 +44,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const selectedIds = ctx.getSelectedShapeIdMap();
       const branchIdSet = new Set(shapeComposite.getAllBranchMergedShapes(Object.keys(selectedIds)).map((s) => s.id));
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !branchIdSet.has(s.id) && isLineSnappableShape(s)),
+        Object.values(shapeMap).filter((s) => !branchIdSet.has(s.id) && isLineSnappableShape(shapeComposite, s)),
         ctx.getViewRect(),
       );
       lineSnapping = newLineSnapping({

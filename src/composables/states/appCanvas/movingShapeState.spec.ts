@@ -19,8 +19,9 @@ function getMockCtx() {
       newShapeComposite({
         shapes: [
           createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
-          createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
-          createShape<TextShape>(getCommonStruct, "text", { id: "label2", lineAttached: 0.5 }),
+          createShape(getCommonStruct, "line", { id: "line" }),
+          createShape<TextShape>(getCommonStruct, "text", { id: "label", parentId: "line", lineAttached: 0.5 }),
+          createShape<TextShape>(getCommonStruct, "text", { id: "label2", parentId: "line", lineAttached: 0.5 }),
         ],
         getStruct: getCommonStruct,
       }),

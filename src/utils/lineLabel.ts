@@ -8,10 +8,12 @@ import {
   getRectCenter,
   isOnSeg,
 } from "okageo";
-import { LineShape, getLinePath, isCurveLine } from "../shapes/line";
-import { TextShape, patchPosition } from "../shapes/text";
+import { LineShape, getLinePath, isCurveLine, isLineShape } from "../shapes/line";
+import { TextShape, isTextShape, patchPosition } from "../shapes/text";
 import { BEZIER_APPROX_SIZE, ISegment, getCurveLerpFn, getRotateFn, getSegments } from "./geometry";
 import { pickMinItem } from "./commons";
+import { Shape } from "../models";
+import { ShapeComposite } from "../composables/shapeComposite";
 
 export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0): Partial<TextShape> {
   const labelBounds = { x: label.p.x, y: label.p.y, width: label.width, height: label.height };
@@ -118,4 +120,9 @@ function getEdgeInfo(
     totalLength,
     lerpFn: (rate) => getPathPointAtLengthFromStructs(pathStructs, totalLength * rate),
   };
+}
+
+export function isLineLabelShape(shapeComposite: ShapeComposite, shape: Shape): shape is TextShape {
+  const parent = shapeComposite.shapeMap[shape.parentId ?? ""];
+  return !!parent && isLineShape(parent) && isTextShape(shape) && shape.lineAttached !== undefined;
 }

@@ -6,11 +6,11 @@ import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { renderPatchedVertices } from "../../connectedLineHandler";
 import { isLineShape } from "../../../shapes/line";
-import { isLineLabelShape } from "../../../shapes/text";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
+import { isLineLabelShape } from "../../../utils/lineLabel";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -38,7 +38,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       // Line labels should be moved via dedicated state
       targetIds = targetIds.filter((id) => {
         const shape = shapeMap[id];
-        return !isLineLabelShape(shape);
+        return !isLineLabelShape(shapeComposite, shape);
       });
 
       ctx.startDragging();

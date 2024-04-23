@@ -16,10 +16,10 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
-import { isLineLabelShape } from "../shapes/text";
 import { pickMinItem } from "../utils/commons";
 import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
+import { isLineLabelShape } from "../utils/lineLabel";
 
 const SNAP_THRESHOLD = 10;
 
@@ -410,6 +410,6 @@ export function optimizeLinePath(
   return Object.keys(ret).length > 0 ? ret : undefined;
 }
 
-export function isLineSnappableShape(shape: Shape): boolean {
-  return !isLineShape(shape) && !isLineLabelShape(shape) && !isGroupShape(shape);
+export function isLineSnappableShape(shapeComposite: ShapeComposite, shape: Shape): boolean {
+  return !isLineShape(shape) && !isLineLabelShape(shapeComposite, shape) && !isGroupShape(shape);
 }

@@ -1,10 +1,10 @@
 import { IVec2 } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { LineShape, getLinePath, getRelativePointOn, isLineShape } from "../shapes/line";
-import { TextShape, isLineLabelShape, patchPosition } from "../shapes/text";
+import { TextShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
-import { attachLabelToLine } from "../utils/lineLabel";
+import { attachLabelToLine, isLineLabelShape } from "../utils/lineLabel";
 import { applyCurvePath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ShapeComposite } from "./shapeComposite";
@@ -16,7 +16,8 @@ interface Option {
 
 export function newLineLabelHandler(option: Option) {
   function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
-    const shapeMap = option.ctx.getShapeComposite().shapeMap;
+    const shapeComposite = option.ctx.getShapeComposite();
+    const shapeMap = shapeComposite.shapeMap;
     const shapeList = Object.values(shapeMap);
     const updatedEntries = Object.entries(updatedMap);
 
@@ -27,7 +28,9 @@ export function newLineLabelHandler(option: Option) {
       if (!src || !isLineShape(src)) return;
 
       const patchedLine: LineShape = { ...src, ...patch };
-      const labels = shapeList.filter((s): s is TextShape => isLineLabelShape(s) && s.parentId === lineId);
+      const labels = shapeList.filter(
+        (s): s is TextShape => isLineLabelShape(shapeComposite, s) && s.parentId === lineId,
+      );
       labels.forEach((label) => {
         const origin = getRelativePointOn(patchedLine, label.lineAttached ?? 0.5);
         const labelPatch = patchPosition(label, origin, getLabelMargin(patchedLine));
@@ -39,7 +42,7 @@ export function newLineLabelHandler(option: Option) {
 
     updatedEntries.forEach(([labelId, patch]) => {
       const shape = shapeMap[labelId];
-      if (!shape || !isLineLabelShape(shape) || !shape.parentId) return;
+      if (!shape || !isLineLabelShape(shapeComposite, shape) || !shape.parentId) return;
 
       const label = { ...shape, ...patch } as TextShape;
       const line = { ...shapeMap[shape.parentId], ...(updatedMap[shape.parentId] ?? {}) } as LineShape;

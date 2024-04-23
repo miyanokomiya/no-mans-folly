@@ -38,7 +38,7 @@ import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
 import { isGroupShape } from "../shapes/group";
-import { isLineLabelShape } from "../shapes/text";
+import { isLineLabelShape } from "../utils/lineLabel";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -882,7 +882,7 @@ export function getModifiedAlignRootIds(
 
 export function canAttendToAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (isLineShape(shape)) return false;
-  if (isLineLabelShape(shape)) return false;
+  if (isLineLabelShape(shapeComposite, shape)) return false;
   return (
     !shape.parentId ||
     !shapeComposite.shapeMap[shape.parentId] ||

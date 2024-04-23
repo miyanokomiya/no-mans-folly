@@ -31,11 +31,9 @@ describe("refreshRelation", () => {
     });
   });
 
-  test("should patch object to refresh parent when it has valid parent but doesn't have lineAttached", () => {
+  test("should not refresh parent when it has valid parent but doesn't have lineAttached", () => {
     const shape = struct.create({ parentId: "a", hAlign: "center", vAlign: "center", lineAttached: undefined });
-    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual({
-      lineAttached: undefined,
-    });
+    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual(undefined);
   });
 });
 

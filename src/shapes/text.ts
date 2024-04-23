@@ -39,7 +39,7 @@ export const struct: ShapeStruct<TextShape> = {
   },
   refreshRelation(shape, availableIdSet) {
     if (shape.parentId && availableIdSet.has(shape.parentId)) {
-      return shape.lineAttached === undefined ? { parentId: undefined } : undefined;
+      return undefined;
     }
 
     const ret: Partial<TextShape> = { lineAttached: undefined };
@@ -55,10 +55,6 @@ export const struct: ShapeStruct<TextShape> = {
 
 export function isTextShape(shape: Shape): shape is TextShape {
   return shape.type === "text";
-}
-
-export function isLineLabelShape(shape: Shape): shape is TextShape {
-  return isTextShape(shape) && shape.lineAttached !== undefined;
 }
 
 function patchSize(shape: TextShape, textBoxSize: Size): Partial<TextShape> | undefined {

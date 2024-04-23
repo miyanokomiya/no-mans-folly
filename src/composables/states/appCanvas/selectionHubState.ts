@@ -2,9 +2,9 @@ import type { AppCanvasState } from "./core";
 import { newDefaultState } from "./defaultState";
 import { newMultipleSelectedState } from "./multipleSelectedState";
 import { BoundingBox } from "../../boundingBox";
-import { isLineLabelShape } from "../../../shapes/text";
 import { newLineLabelSelectedState } from "./lines/lineLabelSelectedState";
 import { getSingleShapeSelectedStateFn } from "../../shapeTypes";
+import { isLineLabelShape } from "../../../utils/lineLabel";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -22,7 +22,7 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
         const shapeComposite = ctx.getShapeComposite();
         const shape = shapeComposite.shapeMap[selectedIds[0]];
 
-        if (isLineLabelShape(shape) && shapeComposite.shapeMap[shape.parentId ?? ""]) {
+        if (isLineLabelShape(shapeComposite, shape)) {
           return newLineLabelSelectedState;
         }
 

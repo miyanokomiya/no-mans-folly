@@ -598,11 +598,22 @@ describe("optimizeLinePath", () => {
 
 describe("isLineSnappableShape", () => {
   test("should return true if a shape is snappable to lines", () => {
-    expect(isLineSnappableShape(createShape(getCommonStruct, "rectangle", {}))).toBe(true);
-    expect(isLineSnappableShape(createShape(getCommonStruct, "text", {}))).toBe(true);
+    const rect = createShape(getCommonStruct, "rectangle", { id: "rect" });
+    const text = createShape(getCommonStruct, "text", { id: "text" });
+    const line = createShape(getCommonStruct, "line", { id: "line" });
+    const label = createShape<TextShape>(getCommonStruct, "text", {
+      id: "label",
+      lineAttached: 0.5,
+      parentId: line.id,
+    });
+    const group = createShape(getCommonStruct, "group", { id: "group" });
+    const shapeComposite = newShapeComposite({ shapes: [rect, text, line, label, group], getStruct: getCommonStruct });
 
-    expect(isLineSnappableShape(createShape(getCommonStruct, "line", {}))).toBe(false);
-    expect(isLineSnappableShape(createShape<TextShape>(getCommonStruct, "text", { lineAttached: 0.5 }))).toBe(false);
-    expect(isLineSnappableShape(createShape(getCommonStruct, "group", {}))).toBe(false);
+    expect(isLineSnappableShape(shapeComposite, rect)).toBe(true);
+    expect(isLineSnappableShape(shapeComposite, text)).toBe(true);
+
+    expect(isLineSnappableShape(shapeComposite, line)).toBe(false);
+    expect(isLineSnappableShape(shapeComposite, label)).toBe(false);
+    expect(isLineSnappableShape(shapeComposite, group)).toBe(false);
   });
 });
