@@ -36,7 +36,6 @@ export type ConnectionResult = { connection?: ConnectionPoint; p: IVec2; guidLin
 export function newLineSnapping(option: Option) {
   const reversedSnappableShapes = option.snappableShapes.concat().reverse();
   const vertices = option.movingLine ? getLinePath(option.movingLine) : [];
-  const isEndVertex = option.movingIndex === 0 || option.movingIndex === vertices.length - 1;
   const adjacentVertices =
     vertices.length === 0 || option.movingIndex === undefined
       ? []
@@ -126,15 +125,13 @@ export function newLineSnapping(option: Option) {
         // If there's no intersection, seek the closest outline point.
         const p = intersection ?? getClosestOutline(option.getShapeStruct, shape, point, threshold);
         if (!p) {
-          if (isEndVertex) {
-            const rect = shapeComposite.getWrapperRect(shape);
-            const c = getRectCenter(rect);
-            const d = getDistance(c, point);
-            if (d < threshold) {
-              outline = { p: c, d, shape };
-              selfSnapped = undefined;
-              return true;
-            }
+          const rect = shapeComposite.getWrapperRect(shape);
+          const c = getRectCenter(rect);
+          const d = getDistance(c, point);
+          if (d < threshold) {
+            outline = { p: c, d, shape };
+            selfSnapped = undefined;
+            return true;
           }
           return;
         }
