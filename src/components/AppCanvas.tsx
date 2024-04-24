@@ -36,6 +36,9 @@ import { LinkMenu } from "./linkMenu/LinkMenu";
 import { useClickable } from "../hooks/clickable";
 import { ModifierSupportPanel } from "./molecules/ModifierSupportPanel";
 
+// image files, folly sheet files (having empty type).
+const DroppableFileRegs = [/image\/.+/, /^$/];
+
 export const AppCanvas: React.FC = () => {
   const { sheetStore, shapeStore, documentStore, undoManager, userSettingStore } = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
@@ -771,7 +774,7 @@ export const AppCanvas: React.FC = () => {
         onContextMenu={onContextMenu}
         tabIndex={-1}
       >
-        <FileDropArea typeReg={/image\/.+/} onDrop={onDrop}>
+        <FileDropArea typeRegs={DroppableFileRegs} onDrop={onDrop}>
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
             {grid.disabled ? undefined : (
               <GridBackground x={grid.range.x / scale} y={grid.range.y / scale} size={grid.size / scale} />

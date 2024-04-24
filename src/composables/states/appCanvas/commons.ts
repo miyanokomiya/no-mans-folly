@@ -44,6 +44,8 @@ import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState"
 import { FOLLY_SVG_PREFIX, ShapeTemplateInfo, parseTemplateShapes } from "../../../utils/shapeTemplateUtil";
 import { Shape } from "../../../models";
 import { newPanToShapeState } from "./panToShapeState";
+import { isFollySheetFileName } from "../../../utils/fileAccess";
+import { loadShapesFromSheetFile } from "../../workspaceFile";
 
 type AcceptableEvent =
   | "Break"
@@ -366,17 +368,34 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput, plain
 export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDropEvent): Promise<void> {
   const follySvgFiles: File[] = [];
   const assetFiles: File[] = [];
+  const sheetFiles: File[] = [];
+
   for (const file of event.data.files) {
-    if (file.name.toLowerCase().endsWith(FOLLY_SVG_PREFIX)) {
+    const loweredName = file.name.toLowerCase();
+
+    if (isFollySheetFileName(loweredName)) {
+      sheetFiles.push(file);
+    } else if (loweredName.endsWith(FOLLY_SVG_PREFIX)) {
       follySvgFiles.push(file);
-    } else {
+    } else if (/image\/.+/.test(file.type)) {
       assetFiles.push(file);
     }
   }
 
+  if (sheetFiles.length === 0 && follySvgFiles.length === 0 && assetFiles.length === 0) {
+    ctx.showToastMessage({ text: "No available data fround in files.", type: "warn" });
+    return;
+  }
+
+  if (sheetFiles.length > 0) {
+    await loadFollySheetFiles(ctx, sheetFiles, event.data.point);
+  }
+
   if (follySvgFiles.length > 0) {
     await loadFollySvgFiles(ctx, follySvgFiles, event.data.point);
-    // Ignore other files when template files eixst.
+  }
+
+  if (assetFiles.length === 0) {
     return;
   }
 
@@ -424,14 +443,39 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
 }
 
 async function loadFollySvgFiles(ctx: AppCanvasStateContext, follySvgFiles: File[], point: IVec2) {
+  const templates: ShapeTemplateInfo[] = [];
+
+  for (const file of follySvgFiles) {
+    const svgText = await file.text();
+    const data = parseTemplateShapes(svgText);
+    if (data) {
+      templates.push(data);
+    }
+  }
+
+  pasteShapeTemplateInfoList(ctx, templates, point);
+}
+
+async function loadFollySheetFiles(ctx: AppCanvasStateContext, follySheetFiles: File[], point: IVec2) {
+  const templates: ShapeTemplateInfo[] = [];
+
+  for (const file of follySheetFiles) {
+    const data = await loadShapesFromSheetFile(file);
+    if (data) {
+      templates.push(data);
+    }
+  }
+
+  pasteShapeTemplateInfoList(ctx, templates, point);
+}
+
+function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates: ShapeTemplateInfo[], point: IVec2) {
   const newShapes: Shape[] = [];
   const newDocMap: { [key: string]: DocOutput } = {};
   const lastIndex = ctx.createLastIndex();
   const drift = { x: 20, y: 20 };
   let position = point;
-  for (const file of follySvgFiles) {
-    const svgText = await file.text();
-    const data = parseTemplateShapes(svgText);
+  for (const data of templates) {
     if (data && data.shapes.length > 0) {
       const duplicated = duplicateShapes(
         ctx.getShapeStruct,

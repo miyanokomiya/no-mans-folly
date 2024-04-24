@@ -97,3 +97,7 @@ export async function exportWorkspaceToAnother(
     alert(`Failed to export: ${e.message}`);
   }
 }
+
+export function isFollySheetFileName(loweredName: string): boolean {
+  return loweredName.endsWith(DOC_FILE_NAME_SUFFIX) && loweredName !== DIAGRAM_FILE_NAME;
+}
