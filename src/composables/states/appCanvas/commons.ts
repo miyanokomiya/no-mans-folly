@@ -503,7 +503,8 @@ function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates: Shape
       return { ...s, ...patch[s.id] };
     });
     ctx.addShapes(adjustedNewShapes, newDocMap);
-    ctx.multiSelectShapes(adjustedNewShapes.map((s) => s.id));
+    // Select root shapes
+    ctx.multiSelectShapes(adjustedNewShapes.filter((s) => !s.parentId).map((s) => s.id));
   }
 }
 
