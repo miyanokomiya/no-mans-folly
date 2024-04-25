@@ -108,8 +108,13 @@ export function handleCommonShortcut(
   ctx: AppCanvasStateContext,
   event: KeyDownEvent,
 ): TransitionValue<AppCanvasStateContext> {
+  // Note: On Mac, letters are always lowered when command key is held.
+  // => "switch case" should be case insensitive, then check "shift" key inside the block.
   switch (event.data.key) {
-    case "a": {
+    case "a":
+    case "A": {
+      if (event.data.shift) return;
+
       event.data.prevent?.();
       const shapeComposite = ctx.getShapeComposite();
       const rootShapeIds = shapeComposite.mergedShapeTree.map((t) => t.id);
@@ -121,62 +126,67 @@ export function handleCommonShortcut(
       }
       return newSelectionHubState;
     }
-    case "p": {
-      if (!event.data.ctrl) {
-        const shapeComposite = ctx.getShapeComposite();
-        const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
-        if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
-          ctx.selectShape(current.parentId);
-          return newSelectionHubState;
-        }
+    case "p":
+    case "P": {
+      if (event.data.shift) return;
+      if (event.data.ctrl) return;
+
+      const shapeComposite = ctx.getShapeComposite();
+      const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
+      if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
+        ctx.selectShape(current.parentId);
+        return newSelectionHubState;
       }
       return;
     }
-    case "c": {
-      if (!event.data.ctrl) {
-        const shapeComposite = ctx.getShapeComposite();
-        const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
-        if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
-          ctx.selectShape(currentNode.children[0].id);
-          return newSelectionHubState;
-        }
+    case "c":
+    case "C": {
+      if (event.data.shift) return;
+      if (event.data.ctrl) return;
+
+      const shapeComposite = ctx.getShapeComposite();
+      const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
+      if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
+        ctx.selectShape(currentNode.children[0].id);
+        return newSelectionHubState;
       }
       return;
     }
     case "g":
-      if (event.data.ctrl) {
-        event.data.prevent?.();
-
-        const grouped = groupShapes(ctx);
-        return grouped ? newSelectionHubState : undefined;
-      } else {
-        ctx.setGridDisabled(!ctx.getGrid().disabled);
-      }
-      return newSelectionHubState;
     case "G":
       if (event.data.ctrl) {
         event.data.prevent?.();
 
-        const ungrouped = ungroupShapes(ctx);
-        return ungrouped ? newSelectionHubState : undefined;
-      }
-      return;
-    case "l":
-      if (event.data.ctrl) ctx.undo();
-      return () => newLineReadyState({ type: undefined });
-    case "t":
-      if (event.data.ctrl) ctx.undo();
-      return () => newTextReadyState();
-    case "z":
-      if (event.data.ctrl) {
-        event.data.prevent?.();
-        ctx.undo();
+        if (event.data.shift) {
+          const ungrouped = ungroupShapes(ctx);
+          return ungrouped ? newSelectionHubState : undefined;
+        } else {
+          const grouped = groupShapes(ctx);
+          return grouped ? newSelectionHubState : undefined;
+        }
+      } else {
+        if (event.data.shift) return;
+        ctx.setGridDisabled(!ctx.getGrid().disabled);
       }
       return newSelectionHubState;
+    case "l":
+    case "L":
+      if (event.data.shift) return;
+      return () => newLineReadyState({ type: undefined });
+    case "t":
+    case "T":
+      if (event.data.shift) return;
+      return () => newTextReadyState();
+    case "z":
     case "Z":
       if (event.data.ctrl) {
         event.data.prevent?.();
-        ctx.redo();
+
+        if (event.data.shift) {
+          ctx.redo();
+        } else {
+          ctx.undo();
+        }
       }
       return newSelectionHubState;
     case ";":
