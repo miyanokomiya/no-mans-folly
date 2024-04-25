@@ -9,6 +9,7 @@ import iconRedo from "../assets/icons/redo.svg";
 import iconHelp from "../assets/icons/help.svg";
 import iconPlus from "../assets/icons/plus.svg";
 import iconMinus from "../assets/icons/minus.svg";
+import iconBMC from "../assets/externals/bmc-logo.svg";
 import { useGlobalMouseupEffect } from "../hooks/window";
 
 export const AppFootbar: React.FC = () => {
@@ -58,6 +59,8 @@ export const AppFootbar: React.FC = () => {
     });
   }, [sm]);
 
+  const borderElm = <div className="h-6 border" />;
+
   return (
     <div className="p-1 border rounded bg-white flex gap-2 items-center select-none">
       <div className="flex gap-1 items-center">
@@ -83,6 +86,7 @@ export const AppFootbar: React.FC = () => {
           <img src={iconPlus} alt="Zoom In" className="w-4 h-4" />
         </ZoomButton>
       </div>
+      {borderElm}
       <div className="flex gap-1 items-center">
         <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onUndo}>
           <img src={iconUndo} alt="Undo" />
@@ -91,27 +95,29 @@ export const AppFootbar: React.FC = () => {
           <img src={iconRedo} alt="Redo" />
         </button>
       </div>
-      {process.env.CONTACT_FORM_URL ? (
-        <OutsideObserver onClick={handleCloseHelpPopup}>
-          <PopupButton
-            name="help"
-            opened={popupedKey === "help"}
-            popup={
-              <div className="flex flex-col items-center">
-                <ListLink href={process.env.CONTACT_FORM_URL} external>
-                  Contact
-                </ListLink>
-              </div>
-            }
-            onClick={onClickPopupButton}
-            popupPosition="left"
-          >
-            <div className="w-6 h-6 flex justify-center items-center">
-              <img src={iconHelp} alt="Help" />
+      {borderElm}
+      <a href={process.env.BUYMEACOFFEE_URL} target="_blank" rel="noopener" className="p-1">
+        <img src={iconBMC} alt="Buy me a coffee" className="w-6 h-6" />
+      </a>
+      <OutsideObserver onClick={handleCloseHelpPopup}>
+        <PopupButton
+          name="help"
+          opened={popupedKey === "help"}
+          popup={
+            <div className="flex flex-col items-center">
+              <ListLink href={process.env.CONTACT_FORM_URL!} external>
+                Contact
+              </ListLink>
             </div>
-          </PopupButton>
-        </OutsideObserver>
-      ) : undefined}
+          }
+          onClick={onClickPopupButton}
+          popupPosition="left"
+        >
+          <div className="w-6 h-6 flex justify-center items-center">
+            <img src={iconHelp} alt="Help" />
+          </div>
+        </PopupButton>
+      </OutsideObserver>
     </div>
   );
 };
