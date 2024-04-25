@@ -18,6 +18,7 @@ export default defineConfig({
       },
     },
   },
+  publicDir: resolve(__dirname, "public"),
   plugins: [
     react(),
     handlebars({
