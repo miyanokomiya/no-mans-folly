@@ -1,6 +1,7 @@
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import handlebars from "vite-plugin-handlebars";
 
 const root = resolve(__dirname, "src", "pages");
 const outDir = resolve(__dirname, "dist");
@@ -17,7 +18,15 @@ export default defineConfig({
       },
     },
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    handlebars({
+      partialDirectory: resolve(__dirname, "src", "partials"),
+      context: {
+        title: "No-man's folly",
+      },
+    }),
+  ],
   define: {
     "process.env.APP_VERSION": JSON.stringify(process.env.npm_package_version),
     "process.env.CONTACT_FORM_URL": JSON.stringify(process.env.CONTACT_FORM_URL),
