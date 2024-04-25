@@ -125,6 +125,7 @@ export function newLineSnapping(option: Option) {
         // If there's no intersection, seek the closest outline point.
         const p = intersection ?? getClosestOutline(option.getShapeStruct, shape, point, threshold);
         if (!p) {
+          // If there's no close outline, check the center.
           const rect = shapeComposite.getWrapperRect(shape);
           const c = getRectCenter(rect);
           const d = getDistance(c, point);
