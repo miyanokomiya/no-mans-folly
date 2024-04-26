@@ -186,6 +186,27 @@ export function getClosestOutlineOnEllipse(
   return getDistance(ep, p) <= threshold ? ep : undefined;
 }
 
+export function getClosestOutlineOnArc(
+  c: IVec2,
+  rx: number,
+  ry: number,
+  from: number,
+  to: number,
+  p: IVec2,
+  threshold?: number,
+): IVec2 | undefined {
+  const np = sub(p, c);
+  const r = getRadian({ x: np.x / rx, y: np.y / ry });
+  if (!isRadianInside(normalizeRadian(from), normalizeRadian(to), r)) return;
+
+  const x = c.x + Math.cos(r) * rx;
+  const y = c.y + Math.sin(r) * ry;
+  const ep = { x, y };
+  if (threshold === undefined) return ep;
+
+  return getDistance(ep, p) <= threshold ? ep : undefined;
+}
+
 export function getClosestOutlineOnPolygon(path: IVec2[], p: IVec2, threshold: number): IVec2 | undefined {
   let candidate: IVec2 | undefined = undefined;
   let d = Infinity;
@@ -235,6 +256,23 @@ export function isPointOnEllipse(c: IVec2, rx: number, ry: number, p: IVec2): bo
 export function isPointOnEllipseRotated(c: IVec2, rx: number, ry: number, rotation: number, p: IVec2): boolean {
   const rotatedP = rotation === 0 ? p : rotate(p, -rotation, c);
   return isPointOnEllipse(c, rx, ry, rotatedP);
+}
+
+/**
+ * When "from" is equal to "to", the arc becomes ellipse.
+ */
+export function isPointOnArcRotated(
+  c: IVec2,
+  rx: number,
+  ry: number,
+  rotation: number,
+  from: number,
+  to: number,
+  p: IVec2,
+): boolean {
+  const rotatedP = rotation === 0 ? p : rotate(p, -rotation, c);
+  if (!isPointOnEllipse(c, rx, ry, rotatedP)) return false;
+  return isRadianInside(normalizeRadian(from), normalizeRadian(to), getRadian(rotatedP, c));
 }
 
 export function getCrossLineAndEllipse(line: ISegment, c: IVec2, rx: number, ry: number): IVec2[] | undefined {

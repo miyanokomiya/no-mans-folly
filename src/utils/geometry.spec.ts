@@ -59,6 +59,8 @@ import {
   getLocationRateOnRectPath,
   rotateRectByAngle,
   getTriangleIncenter,
+  getClosestOutlineOnArc,
+  isPointOnArcRotated,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
@@ -230,6 +232,26 @@ describe("getClosestOutlineOnEllipse", () => {
   });
 });
 
+describe("getClosestOutlineOnArc", () => {
+  test("should return the closest outline point on the arc", () => {
+    const r0 = getClosestOutlineOnArc({ x: 0, y: 0 }, 3, 4, 0, 0, { x: 4, y: 0 }, 2);
+    expect(r0?.x).toBeCloseTo(3);
+    expect(r0?.y).toBeCloseTo(0);
+
+    const r1 = getClosestOutlineOnArc({ x: 0, y: 0 }, 3, 4, Math.PI / 4, Math.PI / 2, { x: 4, y: 0 }, 2);
+    expect(r1).toBe(undefined);
+
+    const r2 = getClosestOutlineOnArc({ x: 0, y: 0 }, 3, 4, Math.PI / 4, Math.PI / 2, { x: 1, y: 4 }, 2);
+    expect(r2).not.toBe(undefined);
+
+    const r3 = getClosestOutlineOnArc({ x: 0, y: 0 }, 3, 4, Math.PI / 4, -Math.PI / 4, { x: 4, y: 0 }, 2);
+    expect(r3).toBe(undefined);
+
+    const r4 = getClosestOutlineOnArc({ x: 0, y: 0 }, 3, 4, Math.PI / 4, -Math.PI / 4, { x: -4, y: 0 }, 2);
+    expect(r4).not.toBe(undefined);
+  });
+});
+
 describe("getClosestOutlineOnPolygon", () => {
   test("should return the closest point on the polygon outline", () => {
     const path = [
@@ -309,6 +331,20 @@ describe("isPointOnEllipseRotated", () => {
 
     expect(isPointOnEllipseRotated({ x: 0, y: 0 }, 3, 4, 0, { x: 3, y: -2 })).toBe(false);
     expect(isPointOnEllipseRotated({ x: 0, y: 0 }, 3, 4, Math.PI / 4, { x: 3, y: -2 })).toBe(true);
+  });
+});
+
+describe("isPointOnArcRotated", () => {
+  test("should return true if the point is on the rotated ellipse", () => {
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, 0, 0, { x: 4, y: 0 })).toBe(false);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, 0, 0, { x: 2, y: 0 })).toBe(true);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, 0, 0, { x: 2, y: 1 })).toBe(true);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, 0, 0.0001, { x: 2, y: 1 })).toBe(false);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, Math.PI / 4, Math.PI / 2, { x: 2, y: 1 })).toBe(false);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, Math.PI / 4, Math.PI / 2, { x: 1, y: 2 })).toBe(true);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, Math.PI / 4, Math.PI / 2, { x: -1, y: 2 })).toBe(false);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, Math.PI / 4, -Math.PI / 4, { x: 1, y: 0 })).toBe(false);
+    expect(isPointOnArcRotated({ x: 0, y: 0 }, 3, 4, 0, Math.PI / 4, -Math.PI / 4, { x: -1, y: 0 })).toBe(true);
   });
 });
 
