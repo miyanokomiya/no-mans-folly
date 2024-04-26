@@ -4,13 +4,19 @@ import { Shape } from "../../../models";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
-import { renderPatchedVertices } from "../../connectedLineHandler";
+import {
+  ConnectedLineHandler,
+  getConnectedLineInfoMap,
+  newConnectedLineHandler,
+  renderPatchedVertices,
+} from "../../connectedLineHandler";
 import { isLineShape } from "../../../shapes/line";
 import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { isLineLabelShape } from "../../../utils/lineLabel";
+import { mergeMap } from "../../../utils/commons";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -22,6 +28,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
+  let lineHandler: ConnectedLineHandler;
   let targetIds: string[];
 
   return {
@@ -65,6 +72,11 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
         });
       }
+
+      lineHandler = newConnectedLineHandler({
+        connectedLinesMap: getConnectedLineInfoMap(ctx, targetIds),
+        ctx,
+      });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -91,7 +103,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
             return m;
           }, {});
 
-          patchMap = getPatchAfterLayouts(shapeComposite, { update: patchMap });
+          const linePatchedMap = lineHandler.onModified(patchMap);
+          patchMap = getPatchAfterLayouts(shapeComposite, { update: mergeMap(patchMap, linePatchedMap) });
           ctx.setTmpShapeMap(patchMap);
           return;
         }
