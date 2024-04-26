@@ -12,7 +12,7 @@
     "type": "yarn tsc --noEmit",
     "lint": "eslint --ext ts,tsx ./*.ts ./src",
     "lint-json": "prettier -c ./*.json",
-    "lint-style": "prettier -c ./src/**/*.css",
+    "lint-style": "prettier -c ./src/**/*.css ./src/**/*.html",
     "lint:fix": "yarn lint --fix && yarn lint-json -w && yarn lint-style -w"
   },
   "dependencies": {
