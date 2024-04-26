@@ -5,9 +5,9 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import {
-  ConnectedLineHandler,
+  ConnectedLineDetouchHandler,
   getConnectedLineInfoMap,
-  newConnectedLineHandler,
+  newConnectedLineDetouchHandler,
   renderPatchedVertices,
 } from "../../connectedLineHandler";
 import { isLineShape } from "../../../shapes/line";
@@ -28,7 +28,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
-  let lineHandler: ConnectedLineHandler;
+  let lineHandler: ConnectedLineDetouchHandler;
   let targetIds: string[];
 
   return {
@@ -73,7 +73,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         });
       }
 
-      lineHandler = newConnectedLineHandler({
+      lineHandler = newConnectedLineDetouchHandler({
         connectedLinesMap: getConnectedLineInfoMap(ctx, targetIds),
         ctx,
       });

@@ -13,9 +13,12 @@ interface Option {
     [id: string]: LineShape[];
   };
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
-  keepConnection?: boolean;
 }
 
+/**
+ * This handler doesn't detouch line connections.
+ * Use "newConnectedLineDetouchHandler" for that purpose.
+ */
 export function newConnectedLineHandler(option: Option) {
   /**
    * Returns patched properties that are updated in this function.
@@ -37,34 +40,6 @@ export function newConnectedLineHandler(option: Option) {
 
     // Update connections
     Object.entries(updatedShapeMap).forEach(([id, shape]) => {
-      // When a line is modified but connected shapes doesn't, the connections should be deleted.
-      // => This behavior shouldn't always work when the operation isn't supposed to be shape moving.
-      // => Prepare "keepConnection" to disable this behavior.
-      if (!option.keepConnection && isLineShape(shape)) {
-        if (shape.pConnection && !updatedShapeMap[shape.pConnection.id]) {
-          ret[shape.id] ??= {};
-          ret[shape.id].pConnection = undefined;
-        }
-        if (shape.qConnection && !updatedShapeMap[shape.qConnection.id]) {
-          ret[shape.id] ??= {};
-          ret[shape.id].qConnection = undefined;
-        }
-        if (shape.body) {
-          shape.body.forEach((b, i) => {
-            if (b.c && !updatedShapeMap[b.c.id]) {
-              ret[shape.id] ??= {};
-              if (!ret[shape.id].body) {
-                ret[shape.id].body = shape.body!.concat();
-              }
-              const next = { ...ret[shape.id].body![i] };
-              delete next.c;
-              ret[shape.id].body![i] = next;
-            }
-          });
-        }
-        return;
-      }
-
       const rectPath = shapeComposite.getLocalRectPolygon(shape);
       const rotation = shape.rotation;
 
@@ -152,6 +127,61 @@ export function newConnectedLineHandler(option: Option) {
   return { onModified };
 }
 export type ConnectedLineHandler = ReturnType<typeof newConnectedLineHandler>;
+
+export function newConnectedLineDetouchHandler(option: Option) {
+  /**
+   * Returns patched properties that are updated in this function.
+   * => Returned value doesn't inherit the content of "updatedMap".
+   */
+  function onModified(updatedMap: { [id: string]: Partial<Shape> }): {
+    [id: string]: Partial<LineShape>;
+  } {
+    const ret: { [id: string]: Partial<LineShape> } = {};
+
+    const shapeComposite = option.ctx.getShapeComposite();
+    const shapeMap = shapeComposite.shapeMap;
+    const updatedShapeMap: { [id: string]: Shape } = {};
+    Object.entries(updatedMap).forEach(([id, patch]) => {
+      if (shapeMap[id]) {
+        updatedShapeMap[id] = { ...shapeMap[id], ...patch };
+      }
+    });
+
+    // Update connections
+    Object.values(updatedShapeMap).forEach((shape) => {
+      // When a line is modified but connected shapes doesn't, the connections should be deleted.
+      if (isLineShape(shape)) {
+        if (shape.pConnection && !updatedShapeMap[shape.pConnection.id]) {
+          ret[shape.id] ??= {};
+          ret[shape.id].pConnection = undefined;
+        }
+        if (shape.qConnection && !updatedShapeMap[shape.qConnection.id]) {
+          ret[shape.id] ??= {};
+          ret[shape.id].qConnection = undefined;
+        }
+        if (shape.body) {
+          shape.body.forEach((b, i) => {
+            if (b.c && !updatedShapeMap[b.c.id]) {
+              ret[shape.id] ??= {};
+              if (!ret[shape.id].body) {
+                ret[shape.id].body = shape.body!.concat();
+              }
+              const next = { ...ret[shape.id].body![i] };
+              delete next.c;
+              ret[shape.id].body![i] = next;
+            }
+          });
+        }
+        return;
+      }
+    });
+
+    return ret;
+  }
+
+  return { onModified };
+}
+export type ConnectedLineDetouchHandler = ReturnType<typeof newConnectedLineDetouchHandler>;
 
 export function getConnectedLineInfoMap(
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
@@ -265,7 +295,6 @@ export function getConnectedLinePatch(srcComposite: ShapeComposite, patchInfo: E
   const handler = newConnectedLineHandler({
     connectedLinesMap,
     ctx: { getShapeComposite: () => srcComposite },
-    keepConnection: true,
   });
   return handler.onModified(patchInfo.update);
 }

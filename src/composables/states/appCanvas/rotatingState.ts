@@ -3,9 +3,9 @@ import { BoundingBox, newBoundingBoxRotating } from "../../boundingBox";
 import { IDENTITY_AFFINE } from "okageo";
 import { Shape } from "../../../models";
 import {
-  ConnectedLineHandler,
+  ConnectedLineDetouchHandler,
   getConnectedLineInfoMap,
-  newConnectedLineHandler,
+  newConnectedLineDetouchHandler,
   renderPatchedVertices,
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
@@ -21,7 +21,7 @@ interface Option {
 export function newRotatingState(option: Option): AppCanvasState {
   let targets: Shape[];
   let resizingAffine = IDENTITY_AFFINE;
-  let lineHandler: ConnectedLineHandler;
+  let lineHandler: ConnectedLineDetouchHandler;
   let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
 
@@ -35,7 +35,7 @@ export function newRotatingState(option: Option): AppCanvasState {
       targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
       ctx.startDragging();
 
-      lineHandler = newConnectedLineHandler({
+      lineHandler = newConnectedLineDetouchHandler({
         connectedLinesMap: getConnectedLineInfoMap(
           ctx,
           targets.map((s) => s.id),
