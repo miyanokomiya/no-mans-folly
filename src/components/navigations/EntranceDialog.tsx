@@ -78,7 +78,12 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   return (
     <Dialog open={open} onClose={onClose} title="Open workspace" hideClose required>
       <div className="w-96">
-        <p>
+        <div>
+          <a href="/terms/privacy-policy/" target="_blank" className="text-blue-500 underline font-semibold">
+            Privacy Policy of No-man's folly
+          </a>
+        </div>
+        <p className="mt-2">
           Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
           there.
         </p>
