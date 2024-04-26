@@ -15,6 +15,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, "src", "pages", "index.html"),
         "auth-result": resolve(__dirname, "src", "pages", "auth-result", "index.html"),
+        "privacy-policy": resolve(__dirname, "src", "pages", "terms", "privacy-policy", "index.html"),
       },
     },
   },

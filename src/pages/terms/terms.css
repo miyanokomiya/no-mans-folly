@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  body {
+    @apply container mx-auto overflow-auto py-8 px-10;
+  }
+  h1 {
+    @apply mb-4 text-2xl font-bold;
+  }
+  h2 {
+    @apply mb-4 text-xl font-bold;
+  }
+  h3 {
+    @apply mb-4 text-lg font-bold;
+  }
+  p {
+    @apply mb-4;
+  }
+  ul {
+    @apply mb-4 list-disc list-inside;
+  }
+}
