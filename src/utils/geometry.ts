@@ -320,6 +320,26 @@ export function getCrossLineAndEllipseRotated(
   return getCrossLineAndEllipse(rotatedLine, c, rx, ry)?.map((p) => rotateFn(p, true));
 }
 
+export function getCrossLineAndArcRotated(
+  line: ISegment,
+  c: IVec2,
+  rx: number,
+  ry: number,
+  rotation: number,
+  from: number,
+  to: number,
+): IVec2[] | undefined {
+  const candidate = getCrossLineAndEllipseRotated(line, c, rx, ry, rotation);
+  if (!candidate) return;
+
+  const nfrom = normalizeRadian(from);
+  const nto = normalizeRadian(to);
+  const result = candidate.filter((p) => {
+    return isRadianInside(nfrom, nto, getRadian(p, c) - rotation);
+  });
+  return result.length > 0 ? result : undefined;
+}
+
 export function getWrapperRect(rects: IRectangle[]): IRectangle {
   const xList = rects.flatMap((r) => [r.x, r.x + r.width]);
   const yList = rects.flatMap((r) => [r.y, r.y + r.height]);

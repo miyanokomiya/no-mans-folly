@@ -61,6 +61,7 @@ import {
   getTriangleIncenter,
   getClosestOutlineOnArc,
   isPointOnArcRotated,
+  getCrossLineAndArcRotated,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
@@ -420,6 +421,85 @@ describe("getCrossLineAndEllipse", () => {
       4,
     );
     expect(res1).toBe(undefined);
+  });
+});
+
+describe("getCrossLineAndArcRotated", () => {
+  test("should return intersections if exist", () => {
+    const res0 = getCrossLineAndArcRotated(
+      [
+        { x: -1, y: 1 },
+        { x: 11, y: 1 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4,
+      0,
+      0,
+      0,
+    );
+    expect(res0).toEqualPoints([
+      { x: 4, y: 1 },
+      { x: -2, y: 1 },
+    ]);
+
+    const res1 = getCrossLineAndArcRotated(
+      [
+        { x: -1, y: 1 },
+        { x: 11, y: 1 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4,
+      0,
+      Math.PI / 4,
+      Math.PI / 2,
+    );
+    expect(res1).toBe(undefined);
+
+    const res2 = getCrossLineAndArcRotated(
+      [
+        { x: -1, y: 1 },
+        { x: 11, y: 1 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4,
+      0,
+      -Math.PI / 4,
+      Math.PI / 4,
+    );
+    expect(res2).toEqualPoints([{ x: 4, y: 1 }]);
+
+    const res3 = getCrossLineAndArcRotated(
+      [
+        { x: -1, y: 1 },
+        { x: 11, y: 1 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4,
+      0,
+      Math.PI / 4,
+      -Math.PI / 4,
+    );
+    expect(res3).toEqualPoints([{ x: -2, y: 1 }]);
+  });
+
+  test("should return intersections if exist: rotated arc", () => {
+    const res0 = getCrossLineAndArcRotated(
+      [
+        { x: -1, y: 1 },
+        { x: 11, y: 1 },
+      ],
+      { x: 1, y: 1 },
+      3,
+      4,
+      Math.PI / 2,
+      Math.PI / 4,
+      Math.PI / 2,
+    );
+    expect(res0).toEqualPoints([{ x: -3, y: 1 }]);
   });
 });
 
