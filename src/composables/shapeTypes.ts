@@ -47,6 +47,7 @@ import { newHexagonSelectedState } from "./states/appCanvas/hexagon/hexagonSelec
 import { newCapsuleSelectedState } from "./states/appCanvas/capsule/capsuleSelectedState";
 import { newTriangleSelectedState } from "./states/appCanvas/triangle/triangleSelectedState";
 import { newStarSelectedState } from "./states/appCanvas/star/starSelectedState";
+import { newArcSelectedState } from "./states/appCanvas/arc/arcSelectedState";
 
 type ShapeTypeItem = { type: string; icon: string };
 
@@ -91,6 +92,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newLineSelectedState;
     case "rounded_rectangle":
       return newRoundedRectangleSelectedState;
+    case "arc":
+      return newArcSelectedState;
     case "one_sided_arrow":
       return newArrowSelectedState;
     case "two_sided_arrow":
