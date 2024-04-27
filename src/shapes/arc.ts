@@ -25,6 +25,7 @@ import { pickMinItem } from "../utils/commons";
 
 export type ArcShape = EllipseShape & {
   // The arc is always drawn clockwisely "from" -> "to".
+  // When "from" is equal to "to", the arc should become an ellipse rather than a line.
   from: number;
   to: number;
 };
@@ -41,16 +42,17 @@ export const struct: ShapeStruct<ArcShape> = {
       rx: arg.rx ?? 50,
       ry: arg.ry ?? 50,
       from: arg.from ?? 0,
-      to: arg.to ?? TAU / 4,
+      to: arg.to ?? Math.PI * 1.5,
     };
   },
   render(ctx, shape) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+    const to = Math.abs(shape.from - shape.to) < MINVALUE ? shape.to + TAU : shape.to;
     ctx.beginPath();
     ctx.moveTo(c.x, c.y);
-    ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
+    ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
     ctx.closePath();
 
     if (!shape.fill.disabled) {
@@ -73,13 +75,21 @@ export const struct: ShapeStruct<ArcShape> = {
 
     // "large" param depends on whether the arc has larger radian than pi.
     const large = (shape.to > shape.from ? shape.to : shape.to + TAU) - shape.from > Math.PI ? 1 : 0;
+
+    // Drawing an ellipse requires two "A" commands.
+    const isEllipse = Math.abs(shape.from - shape.to) < MINVALUE;
+    const arcD = isEllipse
+      ? `A${shape.rx} ${shape.ry} 0 0 1 ${shape.rx + Math.cos(shape.from + Math.PI) * shape.rx} ${shape.ry + Math.sin(shape.from + Math.PI) * shape.ry}` +
+        `A${shape.rx} ${shape.ry} 0 0 1 ${shape.rx + Math.cos(shape.from) * shape.rx} ${shape.ry + Math.sin(shape.from) * shape.ry}`
+      : `A${shape.rx} ${shape.ry} 0 ${large} 1 ${shape.rx + Math.cos(shape.to) * shape.rx} ${shape.ry + Math.sin(shape.to) * shape.ry}z`;
+
     return {
       tag: "path",
       attributes: {
         d: [
           `M${shape.rx} ${shape.ry}`,
           `L${shape.rx + Math.cos(shape.from) * shape.rx} ${shape.ry + Math.sin(shape.from) * shape.ry}`,
-          `A${shape.rx} ${shape.ry} 0 ${large} 1 ${shape.rx + Math.cos(shape.to) * shape.rx} ${shape.ry + Math.sin(shape.to) * shape.ry}z`,
+          arcD,
         ].join(" "),
         transform: renderTransform(affine),
         ...renderFillSVGAttributes(shape.fill),
