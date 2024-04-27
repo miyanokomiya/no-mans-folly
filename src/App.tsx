@@ -1,6 +1,6 @@
 import { generateUuid } from "./utils/random";
 import { AppCanvas } from "./components/AppCanvas";
-import { AppToolbar } from "./components/AppToolbar";
+import { AppToolbar } from "./components/appToolbar/AppToolbar";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
 import { SheetList } from "./components/sheets/SheetList";

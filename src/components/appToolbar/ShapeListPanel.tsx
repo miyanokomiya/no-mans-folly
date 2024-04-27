@@ -32,7 +32,7 @@ export const ShapeListPanel: React.FC<Props> = ({ onDownShapeType }) => {
     <div>
       <h3 className="mb-1">Text container</h3>
       <div className="grid grid-cols-4">{shapeTypeList.map((item) => getIconElm(item))}</div>
-      <h3 className="mb-1">No Text</h3>
+      <h3 className="mb-1">Plain</h3>
       <div className="grid grid-cols-4">{shapeWithoutTextTypeList.map((item) => getIconElm(item))}</div>
     </div>
   );

@@ -1,20 +1,20 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
-import { createShape } from "../shapes";
-import iconShapeSet from "../assets/icons/shape_set.svg";
-import iconLineStraight from "../assets/icons/shape_line_straight.svg";
-import iconText from "../assets/icons/text.svg";
-import iconLayout from "../assets/icons/layout.svg";
-import iconSelectArea from "../assets/icons/select_area.svg";
-import { OutsideObserver } from "./atoms/OutsideObserver";
-import { Shape } from "../models";
-import { generateBoardTemplate } from "../composables/boardHandler";
-import { DocOutput } from "../models/document";
-import { generateAlignTemplate } from "../composables/alignHandler";
-import { CurveType, LineType } from "../shapes/line";
-import { layoutTypeList, lineTypeList } from "../composables/shapeTypes";
-import { ShapeListPanel } from "./appToolbar/ShapeListPanel";
+import { AppCanvasContext } from "../../contexts/AppCanvasContext";
+import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
+import { createShape } from "../../shapes";
+import iconShapeSet from "../../assets/icons/shape_set.svg";
+import iconLineStraight from "../../assets/icons/shape_line_straight.svg";
+import iconText from "../../assets/icons/text.svg";
+import iconLayout from "../../assets/icons/layout.svg";
+import iconSelectArea from "../../assets/icons/select_area.svg";
+import { OutsideObserver } from "../atoms/OutsideObserver";
+import { Shape } from "../../models";
+import { generateBoardTemplate } from "../../composables/boardHandler";
+import { DocOutput } from "../../models/document";
+import { generateAlignTemplate } from "../../composables/alignHandler";
+import { CurveType, LineType } from "../../shapes/line";
+import { layoutTypeList, lineTypeList } from "../../composables/shapeTypes";
+import { ShapeListPanel } from "./ShapeListPanel";
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
