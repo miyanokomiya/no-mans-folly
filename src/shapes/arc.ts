@@ -9,9 +9,11 @@ import {
   getCrossLineAndArcRotated,
   getCrossSegAndSeg,
   getD2,
+  getGeneralArcBounds,
   getRotateFn,
   getRotatedRectAffine,
   getRotatedWrapperRect,
+  getWrapperRect,
   isPointOnArcRotated,
   sortPointFrom,
 } from "../utils/geometry";
@@ -86,12 +88,10 @@ export const struct: ShapeStruct<ArcShape> = {
   getWrapperRect(shape, shapeContext, includeBounds) {
     if (!includeBounds) return ellipseStruct.getWrapperRect(shape, shapeContext, includeBounds);
 
-    let rect = {
-      x: shape.p.x,
-      y: shape.p.y,
-      width: 2 * shape.rx,
-      height: 2 * shape.ry,
-    };
+    // Crop the bounds to the actual arc appearance.
+    const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+    const arcBounds = getGeneralArcBounds(c, shape.rx, shape.ry, shape.to, shape.from);
+    let rect = getWrapperRect([arcBounds, { x: c.x, y: c.y, width: 0, height: 0 }]);
     rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
     return getRotatedWrapperRect(rect, shape.rotation);
   },

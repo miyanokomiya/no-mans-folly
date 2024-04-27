@@ -995,25 +995,36 @@ export function getApproxCurvePointsFromStruct(
 }
 
 export function getArcBounds({ c, radius, to, from, counterclockwise }: ArcCurveParams): IRectangle {
+  return getGeneralArcBounds(c, radius, radius, to, from, counterclockwise);
+}
+
+export function getGeneralArcBounds(
+  c: IVec2,
+  rx: number,
+  ry: number,
+  to: number,
+  from: number,
+  counterclockwise = false,
+): IRectangle {
   const [f, t] = counterclockwise ? [to, from] : [from, to];
   const nfrom = normalizeRadian(f);
   const nto = normalizeRadian(t);
   if (Math.abs(nto - nfrom) < MINVALUE) {
     return {
-      x: c.x - radius,
-      y: c.y - radius,
-      width: 2 * radius,
-      height: 2 * radius,
+      x: c.x - rx,
+      y: c.y - ry,
+      width: 2 * rx,
+      height: 2 * ry,
     };
   }
 
-  const fromP = multi({ x: Math.cos(nfrom), y: Math.sin(nfrom) }, radius);
-  const toP = multi({ x: Math.cos(nto), y: Math.sin(nto) }, radius);
+  const fromP = { x: Math.cos(nfrom) * rx, y: Math.sin(nfrom) * ry };
+  const toP = { x: Math.cos(nto) * rx, y: Math.sin(nto) * ry };
 
-  const left = isRadianInside(nfrom, nto, Math.PI) ? -radius : Math.min(fromP.x, toP.x);
-  const right = isRadianInside(nfrom, nto, 0) ? radius : Math.max(fromP.x, toP.x);
-  const top = isRadianInside(nfrom, nto, -Math.PI / 2) ? -radius : Math.min(fromP.y, toP.y);
-  const bottom = isRadianInside(nfrom, nto, Math.PI / 2) ? radius : Math.max(fromP.y, toP.y);
+  const left = isRadianInside(nfrom, nto, Math.PI) ? -rx : Math.min(fromP.x, toP.x);
+  const right = isRadianInside(nfrom, nto, 0) ? rx : Math.max(fromP.x, toP.x);
+  const top = isRadianInside(nfrom, nto, -Math.PI / 2) ? -ry : Math.min(fromP.y, toP.y);
+  const bottom = isRadianInside(nfrom, nto, Math.PI / 2) ? ry : Math.max(fromP.y, toP.y);
 
   return {
     x: left + c.x,

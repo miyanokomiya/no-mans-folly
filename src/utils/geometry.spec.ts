@@ -62,6 +62,7 @@ import {
   getClosestOutlineOnArc,
   isPointOnArcRotated,
   getCrossLineAndArcRotated,
+  getGeneralArcBounds,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
@@ -1420,6 +1421,17 @@ describe("getArcBounds", () => {
     expect(ret2.width).toBeCloseTo(20, 3);
     expect(ret2.y).toBeCloseTo(90, 3);
     expect(ret2.height).toBeCloseTo(20, 3);
+  });
+});
+
+describe("getGeneralArcBounds", () => {
+  test("should return the bounds of the arc", () => {
+    const c = { x: 100, y: 100 };
+    const ret0 = getGeneralArcBounds(c, 10, 20, -Math.PI / 4, Math.PI / 2);
+    expect(ret0.x).toBeCloseTo(90, 3);
+    expect(ret0.width).toBeCloseTo(17.071, 3);
+    expect(ret0.y).toBeCloseTo(80, 3);
+    expect(ret0.height).toBeCloseTo(40, 3);
   });
 });
 
