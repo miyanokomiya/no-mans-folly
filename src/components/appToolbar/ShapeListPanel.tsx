@@ -1,31 +1,15 @@
 import { useCallback } from "react";
-import { ShapeTypeItem, shapeTypeList, shapeWithoutTextTypeList } from "../../composables/shapeTypes";
+import { ShapeTypeItem, shapeTypeList, shapeWithoutTextTypeList, layoutTypeList } from "../../composables/shapeTypes";
+import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 
 interface Props {
-  onDownShapeType: (type: string) => void;
+  onShapeTypeDragStart: (type: string) => void;
+  onShapeTypeClick: (type: string) => void;
 }
 
-export const ShapeListPanel: React.FC<Props> = ({ onDownShapeType }) => {
-  const onDownShapeElm = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      const type = e.currentTarget.getAttribute("data-type")!;
-      if (type) {
-        onDownShapeType(type);
-      }
-    },
-    [onDownShapeType],
-  );
-
+export const ShapeListPanel: React.FC<Props> = ({ onShapeTypeDragStart, onShapeTypeClick }) => {
   const getIconElm = (item: ShapeTypeItem) => (
-    <div
-      key={item.type}
-      className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab touch-none"
-      data-type={item.type}
-      onPointerDown={onDownShapeElm}
-    >
-      <img src={item.icon} alt={item.type} />
-    </div>
+    <ShapeItemButton key={item.type} item={item} onClick={onShapeTypeClick} onDragStart={onShapeTypeDragStart} />
   );
 
   return (
@@ -35,5 +19,37 @@ export const ShapeListPanel: React.FC<Props> = ({ onDownShapeType }) => {
       <h3 className="mb-1">Plain</h3>
       <div className="grid grid-cols-4">{shapeWithoutTextTypeList.map((item) => getIconElm(item))}</div>
     </div>
+  );
+};
+
+export const LayoutShapeListPanel: React.FC<Props> = ({ onShapeTypeDragStart, onShapeTypeClick }) => {
+  const getIconElm = (item: ShapeTypeItem) => (
+    <ShapeItemButton key={item.type} item={item} onClick={onShapeTypeClick} onDragStart={onShapeTypeDragStart} />
+  );
+
+  return <div className="grid grid-cols-1">{layoutTypeList.map((item) => getIconElm(item))}</div>;
+};
+
+interface ShapeItemButtonProps {
+  item: ShapeTypeItem;
+  onClick?: (type: string) => void;
+  onDragStart?: (type: string) => void;
+}
+
+const ShapeItemButton: React.FC<ShapeItemButtonProps> = ({ item, onClick, onDragStart }) => {
+  const handleClick = useCallback(() => {
+    onClick?.(item.type);
+  }, [item, onClick]);
+
+  const handleDragStart = useCallback(() => {
+    onDragStart?.(item.type);
+  }, [item, onDragStart]);
+
+  return (
+    <ClickOrDragHandler onClick={handleClick} onDragStart={handleDragStart}>
+      <div key={item.type} className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab" data-type={item.type}>
+        <img src={item.icon} alt={item.type} />
+      </div>
+    </ClickOrDragHandler>
   );
 };

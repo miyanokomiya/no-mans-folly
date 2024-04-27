@@ -13,8 +13,10 @@ import { generateBoardTemplate } from "../../composables/boardHandler";
 import { DocOutput } from "../../models/document";
 import { generateAlignTemplate } from "../../composables/alignHandler";
 import { CurveType, LineType } from "../../shapes/line";
-import { layoutTypeList, lineTypeList } from "../../composables/shapeTypes";
-import { ShapeListPanel } from "./ShapeListPanel";
+import { lineTypeList } from "../../composables/shapeTypes";
+import { LayoutShapeListPanel, ShapeListPanel } from "./ShapeListPanel";
+import { newShapeComposite } from "../../composables/shapeComposite";
+import { AffineMatrix, getRectCenter } from "okageo";
 
 type PopupKey = "" | "shapes" | "lines" | "layouts";
 
@@ -41,7 +43,7 @@ export const AppToolbar: React.FC = () => {
     setPopup("");
   }, []);
 
-  const handleDownShapeType = useCallback(
+  const createShapeTemplate = useCallback(
     (type: string) => {
       const ctx = getCtx();
       let template: { shapes: Shape[]; docMap?: { [id: string]: DocOutput } };
@@ -59,6 +61,39 @@ export const AppToolbar: React.FC = () => {
           ],
         };
       }
+
+      return template;
+    },
+    [getCtx, acctx],
+  );
+
+  const handleShapeTypeClick = useCallback(
+    (type: string) => {
+      const template = createShapeTemplate(type);
+      if (template.shapes.length === 0) return;
+
+      const ctx = getCtx();
+      const minShapeComposite = newShapeComposite({
+        getStruct: ctx.getShapeStruct,
+        shapes: template.shapes,
+      });
+      const wrapper = minShapeComposite.getWrapperRectForShapes(template.shapes);
+      const wrapperCenter = getRectCenter(wrapper);
+      const viewCenter = getRectCenter(ctx.getViewRect());
+      const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+
+      ctx.addShapes(
+        template.shapes.map((s) => ({ ...s, ...minShapeComposite.transformShape(s, affine) })),
+        template.docMap,
+      );
+      ctx.multiSelectShapes(template.shapes.map((s) => s.id));
+    },
+    [getCtx, createShapeTemplate],
+  );
+
+  const handleShapeTypeDragStart = useCallback(
+    (type: string) => {
+      const template = createShapeTemplate(type);
       if (template.shapes.length === 0) return;
 
       sm.handleEvent({
@@ -70,16 +105,7 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("");
     },
-    [sm, getCtx, acctx],
-  );
-
-  const onDownShapeElm = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      const type = e.currentTarget.getAttribute("data-type")!;
-      handleDownShapeType(type);
-    },
-    [handleDownShapeType],
+    [sm, createShapeTemplate],
   );
 
   const onDownLineElm = useCallback(
@@ -169,7 +195,7 @@ export const AppToolbar: React.FC = () => {
             className="bg-white absolute left-0 border p-1 rounded shadow w-max"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
-            <ShapeListPanel onDownShapeType={handleDownShapeType} />
+            <ShapeListPanel onShapeTypeClick={handleShapeTypeClick} onShapeTypeDragStart={handleShapeTypeDragStart} />
           </div>
         );
       case "lines":
@@ -196,19 +222,13 @@ export const AppToolbar: React.FC = () => {
       case "layouts":
         return (
           <div
-            className="bg-white absolute left-0 border p-1 rounded shadow"
+            className="bg-white absolute left-0 border p-1 rounded shadow w-max"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
-            {layoutTypeList.map((shape) => (
-              <div
-                key={shape.type}
-                className="w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-grab touch-none"
-                data-type={shape.type}
-                onPointerDown={onDownShapeElm}
-              >
-                <img src={shape.icon} alt={shape.type} />
-              </div>
-            ))}
+            <LayoutShapeListPanel
+              onShapeTypeClick={handleShapeTypeClick}
+              onShapeTypeDragStart={handleShapeTypeDragStart}
+            />
           </div>
         );
       default:
