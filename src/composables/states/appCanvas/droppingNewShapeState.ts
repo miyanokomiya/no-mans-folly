@@ -1,13 +1,10 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { canHaveText } from "../../../shapes";
 import { AffineMatrix, IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
-import { getInitialOutput } from "../../../utils/textEditor";
 import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { newSelectionHubState } from "./selectionHubState";
-import { mapReduce, toMap } from "../../../utils/commons";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { handleCommonWheel } from "./commons";
@@ -86,12 +83,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           const affine: AffineMatrix = [1, 0, 0, 1, diff.x, diff.y];
           ctx.addShapes(
             shapes.map((s) => ({ ...s, ...minShapeComposite.transformShape(s, affine) })),
-            // Newly created shapes should have doc by default.
-            // => It useful to apply text style even it has no content.
-            mapReduce(
-              toMap(shapes.filter((s) => canHaveText(ctx.getShapeStruct, s))),
-              (_, id) => option.docMap?.[id] ?? getInitialOutput(),
-            ),
+            option.docMap,
           );
           ctx.multiSelectShapes(shapes.map((s) => s.id));
           return newSelectionHubState;

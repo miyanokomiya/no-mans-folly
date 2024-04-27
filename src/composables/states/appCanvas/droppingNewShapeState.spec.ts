@@ -38,6 +38,7 @@ describe("newDroppingNewShapeState", () => {
         height: 100,
       }),
     ],
+    docMap: { a: getInitialOutput() },
   });
 
   describe("lifecycle", () => {

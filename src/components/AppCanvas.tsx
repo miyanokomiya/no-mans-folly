@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext, SetAppStateContext } from "../contexts/AppContext";
-import { duplicateShapes, getCommonStruct } from "../shapes";
+import { canHaveText, duplicateShapes, getCommonStruct } from "../shapes";
 import { useCanvas } from "../hooks/canvas";
 import { getKeyOptions, getMouseOptions, ModifierOptions } from "../utils/devices";
 import {
@@ -11,8 +11,8 @@ import {
   useGlobalPasteEffect,
 } from "../hooks/window";
 import { TextEditor, TextEditorEmojiOnly } from "./textEditor/TextEditor";
-import { DocAttrInfo } from "../models/document";
-import { getDocAttributes } from "../utils/textEditor";
+import { DocAttrInfo, DocOutput } from "../models/document";
+import { getDocAttributes, getInitialOutput } from "../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "./floatMenu/FloatMenu";
 import { generateUuid } from "../utils/random";
@@ -258,6 +258,16 @@ export const AppCanvas: React.FC = () => {
           if (docMap) {
             documentStore.patchDocs(docMap);
           }
+
+          // Newly created shapes should have doc by default.
+          // => It useful to apply text style and to avoid conflict even it has no content.
+          const docSupplement = shapes
+            .filter((s) => canHaveText(getCommonStruct, s) && !docMap?.[s.id])
+            .reduce<{ [id: string]: DocOutput }>((p, s) => {
+              p[s.id] = getInitialOutput();
+              return p;
+            }, {});
+          documentStore.patchDocs(docSupplement);
         });
         loadShapeAssets(shapes);
       },
@@ -312,6 +322,19 @@ export const AppCanvas: React.FC = () => {
           if (docMap) {
             documentStore.patchDocs(docMap);
           }
+
+          if (shapePatchInfo.add) {
+            // Newly created shapes should have doc by default.
+            // => It useful to apply text style and to avoid conflict even it has no content.
+            const docSupplement = shapePatchInfo.add
+              .filter((s) => canHaveText(getCommonStruct, s) && !docMap?.[s.id])
+              .reduce<{ [id: string]: DocOutput }>((p, s) => {
+                p[s.id] = getInitialOutput();
+                return p;
+              }, {});
+            documentStore.patchDocs(docSupplement);
+          }
+
           if (shapePatchInfo.delete) {
             shapeStore.deleteEntities(shapePatchInfo.delete);
             documentStore.deleteDocs(shapePatchInfo.delete);
