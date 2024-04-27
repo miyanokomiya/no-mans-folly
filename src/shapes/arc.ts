@@ -71,13 +71,15 @@ export const struct: ShapeStruct<ArcShape> = {
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
+    // "large" param depends on whether the arc has larger radian than pi.
+    const large = (shape.to > shape.from ? shape.to : shape.to + TAU) - shape.from > Math.PI ? 1 : 0;
     return {
       tag: "path",
       attributes: {
         d: [
           `M${shape.rx} ${shape.ry}`,
           `L${shape.rx + Math.cos(shape.from) * shape.rx} ${shape.ry + Math.sin(shape.from) * shape.ry}`,
-          `A${shape.rx} ${shape.ry} 0 0 1 ${shape.rx + Math.cos(shape.to) * shape.rx} ${shape.ry + Math.sin(shape.to) * shape.ry}z`,
+          `A${shape.rx} ${shape.ry} 0 ${large} 1 ${shape.rx + Math.cos(shape.to) * shape.rx} ${shape.ry + Math.sin(shape.to) * shape.ry}z`,
         ].join(" "),
         transform: renderTransform(affine),
         ...renderFillSVGAttributes(shape.fill),
