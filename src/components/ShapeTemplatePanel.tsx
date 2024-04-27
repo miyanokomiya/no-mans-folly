@@ -3,6 +3,8 @@ import { GroupAccordion } from "./molecules/ShapeLibraryGroup";
 import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { parseTemplateShapes } from "../utils/shapeTemplateUtil";
 import { duplicateShapes } from "../shapes";
+import { AffineMatrix, getRectCenter } from "okageo";
+import { newShapeComposite } from "../composables/shapeComposite";
 
 export const ShapeTemplatePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -20,7 +22,7 @@ export const ShapeTemplatePanel: React.FC = () => {
     });
   }, [sm]);
 
-  const handleIconDown = useCallback(
+  const createTemplate = useCallback(
     async (url: string) => {
       const res = await fetch(url);
       const svgText = await res.text();
@@ -36,6 +38,16 @@ export const ShapeTemplatePanel: React.FC = () => {
         smctx.createLastIndex(), // This is just a temprorary value and adjusted later.
         new Set(),
       );
+      return duplicated;
+    },
+    [getCtx],
+  );
+
+  const handleIconDragStart = useCallback(
+    async (url: string) => {
+      const duplicated = await createTemplate(url);
+      if (!duplicated) return;
+
       sm.handleEvent({
         type: "state",
         data: {
@@ -44,7 +56,31 @@ export const ShapeTemplatePanel: React.FC = () => {
         },
       });
     },
-    [sm, getCtx],
+    [sm, createTemplate],
+  );
+
+  const handleIconClick = useCallback(
+    async (url: string) => {
+      const duplicated = await createTemplate(url);
+      if (!duplicated) return;
+
+      const smctx = getCtx();
+      const minShapeComposite = newShapeComposite({
+        getStruct: smctx.getShapeStruct,
+        shapes: duplicated.shapes,
+      });
+      const wrapper = minShapeComposite.getWrapperRectForShapes(duplicated.shapes);
+      const wrapperCenter = getRectCenter(wrapper);
+      const viewCenter = getRectCenter(smctx.getViewRect());
+      const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+
+      smctx.addShapes(
+        duplicated.shapes.map((s) => ({ ...s, ...minShapeComposite.transformShape(s, affine) })),
+        duplicated.docMap,
+      );
+      smctx.multiSelectShapes(duplicated.shapes.map((s) => s.id));
+    },
+    [getCtx, createTemplate],
   );
 
   return (
@@ -55,7 +91,8 @@ export const ShapeTemplatePanel: React.FC = () => {
         type="templates"
         size="lg"
         onClick={handleClickAccordion}
-        onIconDown={handleIconDown}
+        onIconDragStart={handleIconDragStart}
+        onIconClick={handleIconClick}
       />
       <GroupAccordion
         selectedName={selected}
@@ -63,7 +100,8 @@ export const ShapeTemplatePanel: React.FC = () => {
         type="templates"
         size="lg"
         onClick={handleClickAccordion}
-        onIconDown={handleIconDown}
+        onIconDragStart={handleIconDragStart}
+        onIconClick={handleIconClick}
       />
     </div>
   );

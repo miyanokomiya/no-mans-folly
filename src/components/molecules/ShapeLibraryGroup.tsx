@@ -3,6 +3,7 @@ import { TextInput } from "../atoms/inputs/TextInput";
 import { ImageWithSkeleton } from "../atoms/ImageWithSkeleton";
 import { getAssetSearchTag } from "../../utils/route";
 import { newKeywordFilter } from "../../composables/keywordFilter";
+import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 
 const baseURL = process.env.ASSETS_PATH!;
 
@@ -12,7 +13,8 @@ interface GroupAccordionProps {
   type: "shapes" | "templates";
   size?: "md" | "lg";
   onClick?: (name: string) => void;
-  onIconDown?: (url: string, id: string) => void;
+  onIconDragStart?: (url: string, id: string) => void;
+  onIconClick?: (url: string, id: string) => void;
 }
 
 export const GroupAccordion: React.FC<GroupAccordionProps> = ({
@@ -21,7 +23,8 @@ export const GroupAccordion: React.FC<GroupAccordionProps> = ({
   type,
   size,
   onClick,
-  onIconDown,
+  onIconDragStart,
+  onIconClick,
 }) => {
   const handleClick = useCallback(() => {
     onClick?.(name);
@@ -34,7 +37,13 @@ export const GroupAccordion: React.FC<GroupAccordionProps> = ({
       </button>
       {selectedName === name ? (
         <div className="pl-2">
-          <ShapeLibraryGroup name={name.toLowerCase()} type={type} size={size} onIconDown={onIconDown} />
+          <ShapeLibraryGroup
+            name={name.toLowerCase()}
+            type={type}
+            size={size}
+            onIconDragStart={onIconDragStart}
+            onIconClick={onIconClick}
+          />
         </div>
       ) : undefined}
     </div>
@@ -45,10 +54,11 @@ interface ShapeLibraryGroupProps {
   name: string;
   type: "shapes" | "templates";
   size?: "md" | "lg";
-  onIconDown?: (url: string, id: string) => void;
+  onIconDragStart?: (url: string, id: string) => void;
+  onIconClick?: (url: string, id: string) => void;
 }
 
-export const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size, onIconDown }) => {
+const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size, onIconDragStart, onIconClick }) => {
   const [loading, setLoading] = useState(true);
   const [indexData, setIndexData] = useState<ListItemData>();
   const basePath = `${baseURL}${type}/${name}`;
@@ -124,7 +134,17 @@ export const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type
             ) : (
               <ul className="p-1 flex flex-wrap gap-1">
                 {rootItems.map(({ url, id, name }) => {
-                  return <IconItem key={url} url={url} name={name} id={id} size={size} onDown={onIconDown} />;
+                  return (
+                    <IconItem
+                      key={url}
+                      url={url}
+                      name={name}
+                      id={id}
+                      size={size}
+                      onDragStart={onIconDragStart}
+                      onClick={onIconClick}
+                    />
+                  );
                 })}
               </ul>
             )
@@ -136,7 +156,8 @@ export const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type
                 item={item as ListItemData}
                 level={0}
                 path={basePath}
-                onIconDown={onIconDown}
+                onIconDragStart={onIconDragStart}
+                onIconClick={onIconClick}
               />
             ))
           )}
@@ -156,10 +177,11 @@ interface ListItemProps {
   level: number;
   path: string;
   size?: "md" | "lg";
-  onIconDown?: (url: string, id: string) => void;
+  onIconDragStart?: (url: string, id: string) => void;
+  onIconClick?: (url: string, id: string) => void;
 }
 
-const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIconDown }) => {
+const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIconDragStart, onIconClick }) => {
   const [expanded, setExpanded] = useState(false);
 
   const toggle = useCallback(() => {
@@ -194,7 +216,8 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIc
                     name={key}
                     id={item[key] as string}
                     size={size}
-                    onDown={onIconDown}
+                    onDragStart={onIconDragStart}
+                    onClick={onIconClick}
                   />
                 );
               })}
@@ -206,7 +229,14 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIc
                 const data = item[key] as ListItemData;
                 return (
                   <li key={key}>
-                    <ListItem name={key} item={data} level={level + 1} path={currentPath} onIconDown={onIconDown} />
+                    <ListItem
+                      name={key}
+                      item={data}
+                      level={level + 1}
+                      path={currentPath}
+                      onIconDragStart={onIconDragStart}
+                      onIconClick={onIconClick}
+                    />
                   </li>
                 );
               })}
@@ -223,31 +253,36 @@ interface IconButtonProps {
   name: string;
   id: string;
   size?: "md" | "lg";
-  onDown?: (url: string, id: string) => void;
+  onDragStart?: (url: string, id: string) => void;
+  onClick?: (url: string, id: string) => void;
 }
 
-export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDown }) => {
-  const handleDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onDown?.(url, id);
-    },
-    [onDown, id, url],
-  );
+export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDragStart, onClick }) => {
+  const handleDragStart = useCallback(() => {
+    onDragStart?.(url, id);
+  }, [onDragStart, id, url]);
 
-  const wrapperClass = size === "lg" ? "w-full h-auto max-h-32 p-1" : "w-10 h-10";
-  const skeletonClass = size === "lg" ? "w-full h-32" : "w-full h-full";
+  const handleClick = useCallback(() => {
+    onClick?.(url, id);
+  }, [onClick, id, url]);
+
+  const wrapperClass = size === "lg" ? "p-1" : "w-10 h-10";
+  const skeletonClass = size === "lg" ? "h-32" : "w-full h-full";
 
   return (
-    <li className={"rounded hover:bg-gray-200 " + wrapperClass}>
-      <button type="button" onPointerDown={handleDown} className="w-full h-full cursor-grab touch-none" title={name}>
+    <li title={name}>
+      <ClickOrDragHandler
+        className={"rounded cursor-pointer hover:bg-gray-200 " + wrapperClass}
+        onClick={handleClick}
+        onDragStart={handleDragStart}
+      >
         <ImageWithSkeleton
           src={url}
           alt={name}
-          className="w-full max-h-full object-contain"
+          className="max-w-full max-h-full object-contain"
           skeletonClassName={skeletonClass}
         />
-      </button>
+      </ClickOrDragHandler>
     </li>
   );
 };

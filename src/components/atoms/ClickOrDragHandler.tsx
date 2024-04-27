@@ -5,9 +5,10 @@ interface Props {
   onClick?: () => void;
   onDragStart?: () => void;
   children: React.ReactNode;
+  className?: string;
 }
 
-export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, children }) => {
+export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, children, className }) => {
   const downRef = useRef<IVec2>();
 
   const handleDown = useCallback((e: React.PointerEvent) => {
@@ -43,7 +44,7 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
 
   return (
     <div
-      className="select-none touch-none"
+      className={"select-none touch-none " + className}
       onPointerDown={handleDown}
       onPointerMove={handleMove}
       onPointerUp={handleUp}

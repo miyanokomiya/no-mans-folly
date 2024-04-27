@@ -89,14 +89,14 @@ export const ShapeLibraryPanel: React.FC = () => {
         name="AWS"
         type="shapes"
         onClick={handleClickAccordion}
-        onIconDown={handleIconDown}
+        onIconDragStart={handleIconDown}
       />
       <GroupAccordion
         selectedName={selected}
         name="GCP"
         type="shapes"
         onClick={handleClickAccordion}
-        onIconDown={handleIconDown}
+        onIconDragStart={handleIconDown}
       />
     </div>
   );

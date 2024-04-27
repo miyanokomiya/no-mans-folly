@@ -47,7 +47,11 @@ const ShapeItemButton: React.FC<ShapeItemButtonProps> = ({ item, onClick, onDrag
 
   return (
     <ClickOrDragHandler onClick={handleClick} onDragStart={handleDragStart}>
-      <div key={item.type} className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab" data-type={item.type}>
+      <div
+        key={item.type}
+        className="w-10 h-10 border p-1 rounded last:mb-0 cursor-pointer hover:bg-gray-200"
+        data-type={item.type}
+      >
         <img src={item.icon} alt={item.type} />
       </div>
     </ClickOrDragHandler>
