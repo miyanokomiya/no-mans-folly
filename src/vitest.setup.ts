@@ -25,7 +25,7 @@ expect.extend({
   toEqualPoints(received: IVec2[], expected: IVec2[]) {
     const { isNot } = this;
     return {
-      pass: received.every((p, i) => isSame(p, expected[i])),
+      pass: received.length === expected.length && received.every((p, i) => isSame(p, expected[i])),
       message: () => `${printPoints(received)} is${isNot ? " not" : ""} ${printPoints(expected)}`,
     };
   },
