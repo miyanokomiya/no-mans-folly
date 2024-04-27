@@ -1,4 +1,4 @@
-import { expect, test, describe, vi } from "vitest";
+import { expect, describe, test, vi, afterEach, beforeEach } from "vitest";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
@@ -36,6 +36,13 @@ function getMockCtx() {
 }
 
 describe("newSingleSelectedByPointerOnState", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("lifecycle", () => {
     test("should setup and clean the state", () => {
       const ctx = getMockCtx();
@@ -48,21 +55,29 @@ describe("newSingleSelectedByPointerOnState", () => {
   });
 
   describe("handle pointermove", () => {
-    test("should move to MovingHub state", () => {
+    test("should move to MovingHub state when the pointer moves or time passes beyond respective threshold", () => {
       const ctx = getMockCtx();
       const target = newSingleSelectedByPointerOnState();
-      const result = target.handleEvent(ctx as any, {
+      target.onStart?.(ctx as any);
+
+      const result0 = target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       }) as any;
-      expect(result?.().getLabel()).toBe("MovingHub");
+      expect(result0?.().getLabel(), "moved beyond threshold").toBe("MovingHub");
 
-      target.onStart?.(ctx as any);
       const result1 = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
       }) as any;
-      expect(result1, "in early time").toBe(undefined);
+      expect(result1, "moved within threshold").toBe(undefined);
+
+      vi.advanceTimersByTime(150);
+      const result2 = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
+      }) as any;
+      expect(result2?.().getLabel(), "moved within threshold but time passes beyond threshold").toBe("MovingHub");
     });
   });
 
