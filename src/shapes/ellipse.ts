@@ -30,8 +30,6 @@ export type EllipseShape = Shape &
   TextContainer & {
     rx: number;
     ry: number;
-    from: number;
-    to: number;
   };
 
 export const struct: ShapeStruct<EllipseShape> = {
@@ -44,15 +42,13 @@ export const struct: ShapeStruct<EllipseShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       rx: arg.rx ?? 50,
       ry: arg.ry ?? 50,
-      from: arg.from ?? 0,
-      to: arg.to ?? TAU,
     };
   },
   render(ctx, shape) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.beginPath();
-    ctx.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
+    ctx.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, 0, TAU);
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
       ctx.fill();
