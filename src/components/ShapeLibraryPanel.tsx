@@ -3,6 +3,8 @@ import { GroupAccordion } from "./molecules/ShapeLibraryGroup";
 import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
 import { ImageShape } from "../shapes/image";
+import { newShapeComposite } from "../composables/shapeComposite";
+import { AffineMatrix, getRectCenter } from "okageo";
 
 export const ShapeLibraryPanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -20,7 +22,7 @@ export const ShapeLibraryPanel: React.FC = () => {
     });
   }, [sm]);
 
-  const handleIconDown = useCallback(
+  const createTemplate = useCallback(
     async (url: string, id: string) => {
       const smctx = getCtx();
       const imageStore = smctx.getImageStore();
@@ -67,19 +69,49 @@ export const ShapeLibraryPanel: React.FC = () => {
             }),
           ],
         };
-
-        sm.handleEvent({
-          type: "state",
-          data: {
-            name: "DroppingNewShape",
-            options: template,
-          },
-        });
+        return template;
       } else {
         smctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
       }
     },
-    [sm, getCtx],
+    [getCtx],
+  );
+
+  const handleIconDragStart = useCallback(
+    async (url: string, id: string) => {
+      const template = await createTemplate(url, id);
+      if (!template) return;
+
+      sm.handleEvent({
+        type: "state",
+        data: {
+          name: "DroppingNewShape",
+          options: template,
+        },
+      });
+    },
+    [sm, createTemplate],
+  );
+
+  const handleIconClick = useCallback(
+    async (url: string, id: string) => {
+      const template = await createTemplate(url, id);
+      if (!template) return;
+
+      const smctx = getCtx();
+      const minShapeComposite = newShapeComposite({
+        getStruct: smctx.getShapeStruct,
+        shapes: template.shapes,
+      });
+      const wrapper = minShapeComposite.getWrapperRectForShapes(template.shapes);
+      const wrapperCenter = getRectCenter(wrapper);
+      const viewCenter = getRectCenter(smctx.getViewRect());
+      const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+
+      smctx.addShapes(template.shapes.map((s) => ({ ...s, ...minShapeComposite.transformShape(s, affine) })));
+      smctx.multiSelectShapes(template.shapes.map((s) => s.id));
+    },
+    [getCtx, createTemplate],
   );
 
   return (
@@ -89,14 +121,16 @@ export const ShapeLibraryPanel: React.FC = () => {
         name="AWS"
         type="shapes"
         onClick={handleClickAccordion}
-        onIconDragStart={handleIconDown}
+        onIconDragStart={handleIconDragStart}
+        onIconClick={handleIconClick}
       />
       <GroupAccordion
         selectedName={selected}
         name="GCP"
         type="shapes"
         onClick={handleClickAccordion}
-        onIconDragStart={handleIconDown}
+        onIconDragStart={handleIconDragStart}
+        onIconClick={handleIconClick}
       />
     </div>
   );
