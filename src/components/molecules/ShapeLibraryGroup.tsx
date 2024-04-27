@@ -267,6 +267,7 @@ export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDra
   }, [onClick, id, url]);
 
   const wrapperClass = size === "lg" ? "p-1" : "w-10 h-10";
+  const imageClass = size === "lg" ? "max-w-full max-h-full object-contain" : "w-full h-full object-contain";
   const skeletonClass = size === "lg" ? "h-32" : "w-full h-full";
 
   return (
@@ -276,12 +277,7 @@ export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDra
         onClick={handleClick}
         onDragStart={handleDragStart}
       >
-        <ImageWithSkeleton
-          src={url}
-          alt={name}
-          className="max-w-full max-h-full object-contain"
-          skeletonClassName={skeletonClass}
-        />
+        <ImageWithSkeleton src={url} alt={name} className={imageClass} skeletonClassName={skeletonClass} />
       </ClickOrDragHandler>
     </li>
   );
