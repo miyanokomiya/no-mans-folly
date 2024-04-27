@@ -16,6 +16,8 @@ import { CurveType, LineType } from "../../shapes/line";
 import { layoutTypeList, lineTypeList } from "../../composables/shapeTypes";
 import { ShapeListPanel } from "./ShapeListPanel";
 
+type PopupKey = "" | "shapes" | "lines" | "layouts";
+
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
 }
@@ -31,6 +33,13 @@ export const AppToolbar: React.FC = () => {
       setStateLabel(sm.getStateSummary().label);
     });
   }, [sm]);
+
+  const [popup, setPopup] = useState<PopupKey>("");
+  const [lineType, setLineType] = useState<string>("straight");
+
+  const handleClosePopup = useCallback(() => {
+    setPopup("");
+  }, []);
 
   const handleDownShapeType = useCallback(
     (type: string) => {
@@ -85,13 +94,6 @@ export const AppToolbar: React.FC = () => {
     },
     [sm],
   );
-
-  const [popup, setPopup] = useState<"" | "shapes" | "lines" | "layouts">("");
-  const [lineType, setLineType] = useState<string>("straight");
-
-  const handleClosePopup = useCallback(() => {
-    setPopup("");
-  }, []);
 
   const handleDownAreaSelect = useCallback(() => {
     if (stateLabel === "RectangleSelectingReady") {
