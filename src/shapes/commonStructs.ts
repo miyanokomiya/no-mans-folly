@@ -1,6 +1,7 @@
 import { ShapeStruct } from "./core";
 import { struct as rectangle } from "./rectangle";
 import { struct as ellipse } from "./ellipse";
+import { struct as arc } from "./arc";
 import { struct as text } from "./text";
 import { struct as line } from "./line";
 import { struct as image } from "./image";
@@ -37,6 +38,7 @@ export const SHAPE_COMMON_STRUCTS: {
 } = {
   rectangle,
   ellipse,
+  arc,
   text,
   line,
   image,

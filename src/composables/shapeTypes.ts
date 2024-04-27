@@ -13,6 +13,7 @@ import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
 import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
+import iconArc from "../assets/icons/shape_arc.svg";
 import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
@@ -53,6 +54,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "rectangle", icon: iconRectangle },
   { type: "rounded_rectangle", icon: iconRoundedRectangle },
   { type: "ellipse", icon: iconEllipse },
+  { type: "arc", icon: iconArc },
   { type: "rhombus", icon: iconRhombus },
   { type: "hexagon", icon: iconHexagon },
   { type: "triangle", icon: iconTriangle },
