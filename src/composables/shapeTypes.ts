@@ -49,13 +49,12 @@ import { newTriangleSelectedState } from "./states/appCanvas/triangle/triangleSe
 import { newStarSelectedState } from "./states/appCanvas/star/starSelectedState";
 import { newArcSelectedState } from "./states/appCanvas/arc/arcSelectedState";
 
-type ShapeTypeItem = { type: string; icon: string };
+export type ShapeTypeItem = { type: string; icon: string };
 
 export const shapeTypeList: ShapeTypeItem[] = [
   { type: "rectangle", icon: iconRectangle },
   { type: "rounded_rectangle", icon: iconRoundedRectangle },
   { type: "ellipse", icon: iconEllipse },
-  { type: "arc", icon: iconArc },
   { type: "rhombus", icon: iconRhombus },
   { type: "hexagon", icon: iconHexagon },
   { type: "triangle", icon: iconTriangle },
@@ -68,8 +67,12 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
   { type: "two_sided_arrow", icon: iconTwoSidedArrow },
+];
+
+export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "cross", icon: iconCross },
   { type: "diagonal_cross", icon: iconDiagonalCross },
+  { type: "arc", icon: iconArc },
   { type: "wave", icon: iconWave },
 ];
 

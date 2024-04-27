@@ -13,7 +13,8 @@ import { generateBoardTemplate } from "../composables/boardHandler";
 import { DocOutput } from "../models/document";
 import { generateAlignTemplate } from "../composables/alignHandler";
 import { CurveType, LineType } from "../shapes/line";
-import { layoutTypeList, lineTypeList, shapeTypeList } from "../composables/shapeTypes";
+import { layoutTypeList, lineTypeList } from "../composables/shapeTypes";
+import { ShapeListPanel } from "./appToolbar/ShapeListPanel";
 
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
@@ -31,12 +32,9 @@ export const AppToolbar: React.FC = () => {
     });
   }, [sm]);
 
-  const onDownShapeElm = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
+  const handleDownShapeType = useCallback(
+    (type: string) => {
       const ctx = getCtx();
-      const type = e.currentTarget.getAttribute("data-type")!;
-
       let template: { shapes: Shape[]; docMap?: { [id: string]: DocOutput } };
       if (type === "board_root") {
         template = generateBoardTemplate(ctx);
@@ -64,6 +62,15 @@ export const AppToolbar: React.FC = () => {
       setPopup("");
     },
     [sm, getCtx, acctx],
+  );
+
+  const onDownShapeElm = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const type = e.currentTarget.getAttribute("data-type")!;
+      handleDownShapeType(type);
+    },
+    [handleDownShapeType],
   );
 
   const onDownLineElm = useCallback(
@@ -157,19 +164,10 @@ export const AppToolbar: React.FC = () => {
       case "shapes":
         return (
           <div
-            className="bg-white absolute left-0 border p-1 rounded shadow w-max grid grid-cols-2"
+            className="bg-white absolute left-0 border p-1 rounded shadow w-max"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
-            {shapeTypeList.map((shape) => (
-              <div
-                key={shape.type}
-                className="w-10 h-10 border p-1 rounded last:mb-0 cursor-grab touch-none"
-                data-type={shape.type}
-                onPointerDown={onDownShapeElm}
-              >
-                <img src={shape.icon} alt={shape.type} />
-              </div>
-            ))}
+            <ShapeListPanel onDownShapeType={handleDownShapeType} />
           </div>
         );
       case "lines":
