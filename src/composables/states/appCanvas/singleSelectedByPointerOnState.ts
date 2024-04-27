@@ -24,7 +24,7 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          if (Date.now() - timestamp < 100 || getDistance(event.data.current, event.data.start) < 8 * ctx.getScale())
+          if (Date.now() - timestamp < 100 && getDistance(event.data.current, event.data.start) < 8 * ctx.getScale())
             return;
 
           const shapeComposite = ctx.getShapeComposite();
