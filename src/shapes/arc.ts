@@ -165,7 +165,7 @@ export const struct: ShapeStruct<ArcShape> = {
     if (!isOnArc) return false;
 
     const holeRate = getHoleRate(shape);
-    if (!holeRate) return false;
+    if (!holeRate) return isOnArc;
 
     return !isPointOnEllipseRotated(c, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, p);
   },
