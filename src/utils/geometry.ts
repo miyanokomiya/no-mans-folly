@@ -336,7 +336,7 @@ export function getCrossLineAndArcRotated(
   const nfrom = normalizeRadian(from);
   const nto = normalizeRadian(to);
   const result = candidate.filter((p) => {
-    return isRadianInside(nfrom, nto, getRadian(p, c) - rotation);
+    return isRadianInside(nfrom, nto, normalizeRadian(getRadian(p, c) - rotation));
   });
   return result.length > 0 ? result : undefined;
 }

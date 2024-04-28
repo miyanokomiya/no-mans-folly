@@ -505,6 +505,20 @@ describe("getCrossLineAndArcRotated", () => {
       Math.PI / 2,
     );
     expect(res0).toEqualPoints([{ x: -3, y: 1 }]);
+
+    const res1 = getCrossLineAndArcRotated(
+      [
+        { x: 10, y: -50 },
+        { x: 10, y: 150 },
+      ],
+      { x: 50, y: 50 },
+      50,
+      50,
+      Math.PI,
+      Math.PI,
+      0,
+    );
+    expect(res1).toEqualPoints([{ x: 10, y: 80 }]);
   });
 });
 
