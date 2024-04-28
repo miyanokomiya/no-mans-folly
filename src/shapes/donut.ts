@@ -90,7 +90,11 @@ export const struct: ShapeStruct<DonutShape> = {
   },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
-    return isPointOnEllipseRotated(c, shape.rx, shape.ry, shape.rotation, p);
+    const isOnEllipse = isPointOnEllipseRotated(c, shape.rx, shape.ry, shape.rotation, p);
+    if (!isOnEllipse) return false;
+
+    const donutSize = getDonutSize(shape);
+    return !isPointOnEllipseRotated(c, shape.rx - donutSize, shape.ry - donutSize, shape.rotation, p);
   },
   getClosestOutline,
   getIntersectedOutlines(shape, from, to) {
