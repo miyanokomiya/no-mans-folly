@@ -272,7 +272,8 @@ export function isPointOnArcRotated(
 ): boolean {
   const rotatedP = rotation === 0 ? p : rotate(p, -rotation, c);
   if (!isPointOnEllipse(c, rx, ry, rotatedP)) return false;
-  return isRadianInside(normalizeRadian(from), normalizeRadian(to), getRadian(rotatedP, c));
+  const adjusted = { x: (rotatedP.x - c.x) / rx, y: (rotatedP.y - c.y) / ry };
+  return isRadianInside(normalizeRadian(from), normalizeRadian(to), getRadian(adjusted));
 }
 
 export function getCrossLineAndEllipse(line: ISegment, c: IVec2, rx: number, ry: number): IVec2[] | undefined {
