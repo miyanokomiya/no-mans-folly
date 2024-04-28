@@ -2,8 +2,8 @@ import { movingShapeControlState } from "../movingShapeControlState";
 import { add, clamp, rotate } from "okageo";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { renderValueLabel } from "../../../../utils/renderer";
-import { DonutShape, getDonutSize } from "../../../../shapes/donut";
-import { newDonutHandler, DonutHandler, getDonutSizeLocalControl } from "../../../shapeHandlers/donutHandler";
+import { DonutShape } from "../../../../shapes/donut";
+import { newDonutHandler, DonutHandler, getDonutHoleRateLocalControl } from "../../../shapeHandlers/donutHandler";
 
 export const newDonutSelectedState = defineSingleSelectedHandlerState<DonutShape, DonutHandler, never>(
   (getters) => {
@@ -21,39 +21,41 @@ export const newDonutSelectedState = defineSingleSelectedHandlerState<DonutShape
                 shapeHandler.saveHitResult(hitResult);
                 if (hitResult) {
                   switch (hitResult.type) {
-                    case "donutSize":
+                    case "holeRate":
                       return () => {
                         let showLabel = !event.data.options.ctrl;
                         return movingShapeControlState<DonutShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
                           patchFn: (shape, p, movement) => {
-                            const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
-                            const rotatedP = rotate(p, -shape.rotation, c);
-                            let next = clamp(0, Math.min(shape.rx, shape.ry), rotatedP.y - shape.p.y);
+                            const rotatedP = rotate(p, -shape.rotation, {
+                              x: shape.p.x + shape.rx,
+                              y: shape.p.y + shape.ry,
+                            });
+                            let nextSize = clamp(0, shape.ry, rotatedP.y - shape.p.y);
 
                             if (movement.ctrl) {
                               showLabel = false;
                             } else {
-                              next = Math.round(next);
+                              nextSize = Math.round(nextSize);
                               showLabel = true;
                             }
-                            return { donutSize: next };
+                            return { holeRate: 1 - nextSize / shape.ry };
                           },
                           getControlFn: (shape) => {
                             const c = { x: shape.rx, y: shape.ry };
-                            return add(shape.p, rotate(getDonutSizeLocalControl(shape), shape.rotation, c));
+                            return add(shape.p, rotate(getDonutHoleRateLocalControl(shape), shape.rotation, c));
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
 
                             const c = { x: shape.rx, y: shape.ry };
-                            const donutSize = getDonutSize(shape);
+                            const donutSize = shape.ry * (1 - shape.holeRate);
                             const scale = ctx.getScale();
                             renderValueLabel(
                               renderCtx,
                               Math.round(donutSize),
-                              add(shape.p, rotate(getDonutSizeLocalControl(shape), shape.rotation, c)),
+                              add(shape.p, rotate(getDonutHoleRateLocalControl(shape), shape.rotation, c)),
                               0,
                               scale,
                             );

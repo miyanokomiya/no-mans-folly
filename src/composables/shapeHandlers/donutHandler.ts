@@ -4,14 +4,14 @@ import { ShapeComposite } from "../shapeComposite";
 import { getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, renderOutlinedCircle } from "../../utils/renderer";
-import { DonutShape, getDonutSize } from "../../shapes/donut";
+import { DonutShape } from "../../shapes/donut";
 
 export const ANCHOR_SIZE = 6;
 
-type HitAnchor = [type: "donutSize", IVec2];
+type HitAnchor = [type: "holeRate", IVec2];
 
 interface HitResult {
-  type: string;
+  type: HitAnchor[0];
 }
 
 interface Option {
@@ -26,7 +26,7 @@ export const newDonutHandler = defineShapeHandler<HitResult, Option>((option) =>
   const rotateFn = getRotateFn(shape.rotation, getRectCenter(shapeRect));
 
   function getAnchors(): HitAnchor[] {
-    return [["donutSize", getDonutSizeLocalControl(shape)]];
+    return [["holeRate", getDonutHoleRateLocalControl(shape)]];
   }
 
   function hitTest(p: IVec2, scale = 1): HitResult | undefined {
@@ -67,7 +67,6 @@ export const newDonutHandler = defineShapeHandler<HitResult, Option>((option) =>
 });
 export type DonutHandler = ReturnType<typeof newDonutHandler>;
 
-export function getDonutSizeLocalControl(shape: DonutShape): IVec2 {
-  const donutSize = getDonutSize(shape);
-  return { x: shape.rx, y: donutSize };
+export function getDonutHoleRateLocalControl(shape: DonutShape): IVec2 {
+  return { x: shape.rx, y: shape.ry * (1 - shape.holeRate) };
 }
