@@ -15,6 +15,7 @@ import {
   getRotatedWrapperRect,
   getWrapperRect,
   isPointOnArcRotated,
+  isPointOnEllipseRotated,
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -160,32 +161,68 @@ export const struct: ShapeStruct<ArcShape> = {
   },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
-    return isPointOnArcRotated(c, shape.rx, shape.ry, shape.rotation, shape.from, shape.to, p);
+    const isOnArc = isPointOnArcRotated(c, shape.rx, shape.ry, shape.rotation, shape.from, shape.to, p);
+    if (!isOnArc) return false;
+
+    const holeRate = getHoleRate(shape);
+    if (!holeRate) return false;
+
+    return !isPointOnEllipseRotated(c, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, p);
   },
   getClosestOutline,
   getIntersectedOutlines(shape, from, to) {
     const r = { x: shape.rx, y: shape.ry };
     const center = add(shape.p, r);
+    const holeRate = getHoleRate(shape);
     const intersections: IVec2[] = [];
 
     {
       const rotateFn = getRotateFn(shape.rotation, center);
       const localFrom = rotateFn(from, true);
       const localTo = rotateFn(to, true);
-      const fromP = add(center, { x: r.x * Math.cos(shape.from), y: r.y * Math.sin(shape.from) });
-      const toP = add(center, { x: r.x * Math.cos(shape.to), y: r.y * Math.sin(shape.to) });
-      [
-        [center, fromP],
-        [center, toP],
-      ].forEach((seg) => {
-        const inter = getCrossSegAndSeg([localFrom, localTo], seg as ISegment);
-        if (inter) intersections.push(rotateFn(inter));
-      });
+      const fromV = { x: r.x * Math.cos(shape.from), y: r.y * Math.sin(shape.from) };
+      const toV = { x: r.x * Math.cos(shape.to), y: r.y * Math.sin(shape.to) };
+      const fromP = add(center, fromV);
+      const toP = add(center, toV);
+
+      if (holeRate) {
+        const ifromP = add(center, multi(toV, holeRate));
+        const itoP = add(center, multi(fromV, holeRate));
+        [
+          [itoP, fromP],
+          [toP, ifromP],
+        ].forEach((seg) => {
+          const inter = getCrossSegAndSeg([localFrom, localTo], seg as ISegment);
+          if (inter) intersections.push(rotateFn(inter));
+        });
+      } else {
+        [
+          [center, fromP],
+          [center, toP],
+        ].forEach((seg) => {
+          const inter = getCrossSegAndSeg([localFrom, localTo], seg as ISegment);
+          if (inter) intersections.push(rotateFn(inter));
+        });
+      }
     }
 
-    getCrossLineAndArcRotated([from, to], center, shape.rx, shape.ry, shape.rotation, shape.from, shape.to)?.forEach(
-      (p) => intersections.push(p),
-    );
+    {
+      if (holeRate) {
+        getCrossLineAndArcRotated(
+          [from, to],
+          center,
+          shape.rx * holeRate,
+          shape.ry * holeRate,
+          shape.rotation,
+          shape.from,
+          shape.to,
+        )?.forEach((p) => intersections.push(p));
+      }
+
+      getCrossLineAndArcRotated([from, to], center, shape.rx, shape.ry, shape.rotation, shape.from, shape.to)?.forEach(
+        (p) => intersections.push(p),
+      );
+    }
 
     return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
   },
@@ -199,24 +236,37 @@ export const struct: ShapeStruct<ArcShape> = {
 function getClosestOutline(shape: ArcShape, p: IVec2, threshold: number): IVec2 | undefined {
   const r = { x: shape.rx, y: shape.ry };
   const center = add(shape.p, r);
-  const fromP = add(center, { x: r.x * Math.cos(shape.from), y: r.y * Math.sin(shape.from) });
-  const toP = add(center, { x: r.x * Math.cos(shape.to), y: r.y * Math.sin(shape.to) });
+  const holeRate = getHoleRate(shape);
+  const fromV = { x: r.x * Math.cos(shape.from), y: r.y * Math.sin(shape.from) };
+  const toV = { x: r.x * Math.cos(shape.to), y: r.y * Math.sin(shape.to) };
+  const fromP = add(center, fromV);
+  const toP = add(center, toV);
+  const ifromP = add(center, multi(toV, holeRate));
+  const itoP = add(center, multi(fromV, holeRate));
 
   const rotateFn = getRotateFn(shape.rotation, center);
   const rotatedP = rotateFn(p, true);
 
   {
-    const markers = [center, fromP, toP, getCenter(center, fromP), getCenter(center, toP)];
+    const markers = holeRate
+      ? [fromP, toP, ifromP, itoP, getCenter(itoP, fromP), getCenter(ifromP, toP)]
+      : [center, fromP, toP, getCenter(center, fromP), getCenter(center, toP)];
     const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
 
   {
     const points: IVec2[] = [];
-    [
-      [center, fromP],
-      [center, toP],
-    ].forEach((seg) => {
+    (holeRate
+      ? [
+          [itoP, fromP],
+          [toP, ifromP],
+        ]
+      : [
+          [center, fromP],
+          [center, toP],
+        ]
+    ).forEach((seg) => {
       points.push(getClosestPointOnSegment(seg, rotatedP));
     });
     const rotatedClosest = pickMinItem(points, (a) => getD2(sub(a, rotatedP)));
@@ -236,6 +286,19 @@ function getClosestOutline(shape: ArcShape, p: IVec2, threshold: number): IVec2 
       threshold,
     );
     if (rotatedClosest) return rotateFn(rotatedClosest);
+
+    if (holeRate) {
+      const rotatedClosest = getClosestOutlineOnArc(
+        center,
+        shape.rx * holeRate,
+        shape.ry * holeRate,
+        shape.from,
+        shape.to,
+        rotatedP,
+        threshold,
+      );
+      if (rotatedClosest) return rotateFn(rotatedClosest);
+    }
   }
 }
 
