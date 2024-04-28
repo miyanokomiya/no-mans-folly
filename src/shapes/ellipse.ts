@@ -1,4 +1,4 @@
-import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, rotate, sub } from "okageo";
+import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, sub } from "okageo";
 import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
@@ -137,12 +137,13 @@ export const struct: ShapeStruct<EllipseShape> = {
 
 function getLocalRectPolygon(shape: EllipseShape): IVec2[] {
   const c = add(shape.p, { x: shape.rx, y: shape.ry });
+  const rotateFn = getRotateFn(shape.rotation, c);
   return getRectPoints({
     x: shape.p.x,
     y: shape.p.y,
     width: 2 * shape.rx,
     height: 2 * shape.ry,
-  }).map((p) => rotate(p, shape.rotation, c));
+  }).map((p) => rotateFn(p));
 }
 
 function getMarkers(center: IVec2, rx: number, ry: number): IVec2[] {
