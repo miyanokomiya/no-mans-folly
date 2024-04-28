@@ -159,6 +159,6 @@ function getClosestOutline(shape: DonutShape, p: IVec2, threshold: number): IVec
   }
 }
 
-function getDonutSize(shape: DonutShape): number {
+export function getDonutSize(shape: DonutShape): number {
   return clamp(0, Math.min(shape.rx, shape.ry), shape.donutSize);
 }
