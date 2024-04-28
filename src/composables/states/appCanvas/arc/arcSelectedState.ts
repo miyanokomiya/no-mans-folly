@@ -1,11 +1,12 @@
 import { ArcShape } from "../../../../shapes/arc";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { add, getRadian, rotate } from "okageo";
+import { add, clamp, getRadian, rotate } from "okageo";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
   ArcHandler,
   getArcFromLocalControl,
+  getArcHoleRateLocalControl,
   getArcToLocalControl,
   newArcHandler,
 } from "../../../shapeHandlers/arcHandler";
@@ -49,9 +50,9 @@ export const newArcSelectedState = defineSingleSelectedHandlerState<ArcShape, Ar
                             }
                             return { from: nextFrom };
                           },
-                          getControlFn: (shape) => {
+                          getControlFn: (shape, scale) => {
                             const c = { x: shape.rx, y: shape.ry };
-                            return add(shape.p, rotate(getArcFromLocalControl(shape), shape.rotation, c));
+                            return add(shape.p, rotate(getArcFromLocalControl(shape, scale), shape.rotation, c));
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
@@ -90,9 +91,9 @@ export const newArcSelectedState = defineSingleSelectedHandlerState<ArcShape, Ar
                             }
                             return { to: nextTo };
                           },
-                          getControlFn: (shape) => {
+                          getControlFn: (shape, scale) => {
                             const c = { x: shape.rx, y: shape.ry };
-                            return add(shape.p, rotate(getArcToLocalControl(shape), shape.rotation, c));
+                            return add(shape.p, rotate(getArcToLocalControl(shape, scale), shape.rotation, c));
                           },
                           renderFn: (ctx, renderCtx, shape) => {
                             if (!showLabel) return;
@@ -106,6 +107,42 @@ export const newArcSelectedState = defineSingleSelectedHandlerState<ArcShape, Ar
                               0,
                               scale,
                             );
+                          },
+                        });
+                      };
+                    case "holeRate":
+                      return () => {
+                        let showLabel = !event.data.options.ctrl;
+                        return movingShapeControlState<ArcShape>({
+                          targetId: targetShape.id,
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            const rotatedP = rotate(p, -shape.rotation, {
+                              x: shape.p.x + shape.rx,
+                              y: shape.p.y + shape.ry,
+                            });
+                            let nextSize = clamp(0, shape.ry, rotatedP.y - shape.p.y);
+
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextSize = Math.round(nextSize);
+                              showLabel = true;
+                            }
+                            return { holeRate: 1 - nextSize / shape.ry };
+                          },
+                          getControlFn: (shape) => {
+                            const c = { x: shape.rx, y: shape.ry };
+                            return add(shape.p, rotate(getArcHoleRateLocalControl(shape), shape.rotation, c));
+                          },
+                          renderFn: (ctx, renderCtx, shape) => {
+                            if (!showLabel) return;
+
+                            const c = { x: shape.rx, y: shape.ry };
+                            const localP = getArcHoleRateLocalControl(shape);
+                            const p = add(shape.p, rotate(localP, shape.rotation, c));
+                            const scale = ctx.getScale();
+                            renderValueLabel(renderCtx, Math.round(localP.y), p, 0, scale);
                           },
                         });
                       };

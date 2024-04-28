@@ -302,7 +302,7 @@ function getClosestOutline(shape: ArcShape, p: IVec2, threshold: number): IVec2 
   }
 }
 
-function getHoleRate(shape: ArcShape): number {
+export function getHoleRate(shape: ArcShape): number {
   return clamp(0, 1, shape.holeRate ?? 0);
 }
 
