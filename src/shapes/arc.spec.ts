@@ -9,13 +9,13 @@ describe("isPointOn", () => {
   });
 
   test("should return false when a point is on the gap", () => {
-    const shape = struct.create({ rx: 50, ry: 50, from: Math.PI / 2, to: 0 });
+    const shape = struct.create({ rx: 50, ry: 50, holeRate: 0, from: Math.PI / 2, to: 0 });
     expect(struct.isPointOn(shape, { x: 60, y: 60 })).toBe(false);
     expect(struct.isPointOn(shape, { x: 40, y: 60 })).toBe(true);
   });
 
   test("should return false when a point is on the gap: rotated", () => {
-    const shape = struct.create({ rx: 50, ry: 50, from: 0, to: -Math.PI / 2, rotation: Math.PI / 2 });
+    const shape = struct.create({ rx: 50, ry: 50, holeRate: 0, from: 0, to: -Math.PI / 2, rotation: Math.PI / 2 });
     expect(struct.isPointOn(shape, { x: 60, y: 60 })).toBe(false);
     expect(struct.isPointOn(shape, { x: 40, y: 60 })).toBe(true);
   });
