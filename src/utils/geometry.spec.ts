@@ -63,6 +63,7 @@ import {
   isPointOnArcRotated,
   getCrossLineAndArcRotated,
   getGeneralArcBounds,
+  getIntersectionBetweenCircles,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
@@ -1571,5 +1572,29 @@ describe("getTriangleIncenter", () => {
     expect(getDistance(res0, getPedal(res0, [tri0[0], tri0[1]]))).toBeCloseTo(
       getDistance(res0, getPedal(res0, [tri0[0], tri0[2]])),
     );
+  });
+});
+
+describe("getIntersectionBetweenCircles", () => {
+  test("should return undefined when there's no intersection", () => {
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 5, { x: 30, y: 10 }, 5)).toBe(undefined);
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 5, { x: 10, y: 10 }, 10)).toBe(undefined);
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 10, { x: 10, y: 10 }, 5)).toBe(undefined);
+  });
+
+  test("should return one intersection when two circles touch at single point", () => {
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 5, { x: 20, y: 10 }, 5)).toEqualPoints([{ x: 15, y: 10 }]);
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 5, { x: 10, y: 20 }, 5)).toEqualPoints([{ x: 10, y: 15 }]);
+  });
+
+  test("should return one intersection when two circles are the same", () => {
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 5, { x: 10, y: 10 }, 5)).toEqualPoints([{ x: 15, y: 10 }]);
+  });
+
+  test("should return two intersections when two circles intersect", () => {
+    expect(getIntersectionBetweenCircles({ x: 10, y: 10 }, 5, { x: 15, y: 10 }, 5)).toEqualPoints([
+      { x: 12.5, y: 10 - Math.sin(Math.acos(2.5 / 5)) * 5 },
+      { x: 12.5, y: 10 + Math.sin(Math.acos(2.5 / 5)) * 5 },
+    ]);
   });
 });

@@ -1140,3 +1140,25 @@ export function getTriangleIncenter(a: IVec2, b: IVec2, c: IVec2): IVec2 {
   if (Math.abs(d) < MINVALUE) return a;
   return { x: (a.x * da + b.x * db + c.x * dc) / d, y: (a.y * da + b.y * db + c.y * dc) / d };
 }
+
+export function getIntersectionBetweenCircles(ac: IVec2, ar: number, bc: IVec2, br: number): IVec2[] | undefined {
+  const rotation = getRadian(bc, ac);
+  const rotateFn = getRotateFn(rotation, ac);
+  const nbc = sub(rotateFn(bc, true), ac);
+  const d = Math.abs(nbc.x);
+
+  if (d < MINVALUE) {
+    return Math.abs(ar - br) < MINVALUE ? [{ x: ac.x + ar, y: ac.y }] : undefined;
+  }
+  if (d > ar + br) return;
+  if (Math.abs(d - ar - br) < MINVALUE) {
+    return [lerpPoint(ac, bc, ar / d)];
+  }
+
+  const x = (d * d + ar * ar - br * br) / (2 * d);
+  const rad = Math.acos(x / ar);
+  return [
+    { x, y: Math.sin(-rad) * ar },
+    { x, y: Math.sin(rad) * ar },
+  ].map((p) => rotateFn(add(p, ac)));
+}
