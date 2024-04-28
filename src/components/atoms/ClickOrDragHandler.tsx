@@ -31,6 +31,19 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
     [onDragStart],
   );
 
+  // Treat "leave" event as a trigger of dragging.
+  // => This helps when there's not enough room to activate dragging on the element.
+  const handleLeave = useCallback(
+    (e: React.PointerEvent) => {
+      if (!downRef.current) return;
+
+      e.preventDefault();
+      onDragStart?.();
+      downRef.current = undefined;
+    },
+    [onDragStart],
+  );
+
   const handleUp = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
@@ -47,6 +60,7 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
       className={"select-none touch-none " + className}
       onPointerDown={handleDown}
       onPointerMove={handleMove}
+      onPointerLeave={handleLeave}
       onPointerUp={handleUp}
     >
       {children}
