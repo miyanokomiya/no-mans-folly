@@ -1,4 +1,4 @@
-import { IVec2, MINVALUE, add, getCenter, getDistance, sub } from "okageo";
+import { IVec2, MINVALUE, add, clamp, getCenter, getDistance, multi, rotate, sub } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   ISegment,
@@ -26,8 +26,11 @@ import { pickMinItem } from "../utils/commons";
 export type ArcShape = EllipseShape & {
   // The arc is always drawn clockwisely "from" -> "to".
   // When "from" is equal to "to", the arc should become an ellipse rather than a line.
+  // Both values should be within [-pi, pi].
   from: number;
   to: number;
+  // should be 0 when undefined
+  holeRate?: number;
 };
 
 export const struct: ShapeStruct<ArcShape> = {
@@ -42,7 +45,8 @@ export const struct: ShapeStruct<ArcShape> = {
       rx: arg.rx ?? 50,
       ry: arg.ry ?? 50,
       from: arg.from ?? 0,
-      to: arg.to ?? Math.PI * 1.5,
+      to: arg.to ?? -Math.PI / 2,
+      holeRate: arg.holeRate,
     };
   },
   render(ctx, shape) {
@@ -50,9 +54,22 @@ export const struct: ShapeStruct<ArcShape> = {
 
     const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
     const to = Math.abs(shape.from - shape.to) < MINVALUE ? shape.to + TAU : shape.to;
+
     ctx.beginPath();
-    ctx.moveTo(c.x, c.y);
-    ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
+
+    const holeRate = getHoleRate(shape);
+    if (holeRate) {
+      const [startP] = getArcPoints(shape);
+      const outerStartP = add(c, startP);
+
+      ctx.moveTo(outerStartP.x, outerStartP.y);
+      ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
+      ctx.ellipse(c.x, c.y, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, to, shape.from, true);
+    } else {
+      ctx.moveTo(c.x, c.y);
+      ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
+    }
+
     ctx.closePath();
 
     if (!shape.fill.disabled) {
@@ -78,19 +95,53 @@ export const struct: ShapeStruct<ArcShape> = {
 
     // Drawing an ellipse requires two "A" commands.
     const isEllipse = Math.abs(shape.from - shape.to) < MINVALUE;
-    const arcD = isEllipse
-      ? `A${shape.rx} ${shape.ry} 0 0 1 ${shape.rx + Math.cos(shape.from + Math.PI) * shape.rx} ${shape.ry + Math.sin(shape.from + Math.PI) * shape.ry}` +
-        `A${shape.rx} ${shape.ry} 0 0 1 ${shape.rx + Math.cos(shape.from) * shape.rx} ${shape.ry + Math.sin(shape.from) * shape.ry}`
-      : `A${shape.rx} ${shape.ry} 0 ${large} 1 ${shape.rx + Math.cos(shape.to) * shape.rx} ${shape.ry + Math.sin(shape.to) * shape.ry}z`;
+
+    const holeRate = getHoleRate(shape);
+    const [startP, toP] = getArcPoints(shape);
+    const c = { x: shape.rx, y: shape.ry };
+    const outerStartP = add(c, startP);
+    const outerToP = add(c, toP);
+    const outerHalfP = add(c, rotate(startP, Math.PI));
+
+    let arcD: string;
+
+    if (holeRate) {
+      const innerStartP = add(c, multi(toP, holeRate));
+      const innerToP = add(c, multi(startP, holeRate));
+      const innerHalfP = add(c, rotate(multi(startP, holeRate), Math.PI));
+      arcD = [
+        `M${outerStartP.x} ${outerStartP.y}`,
+        ...(isEllipse
+          ? [
+              `A${shape.rx} ${shape.ry} 0 0 1 ${outerHalfP.x} ${outerHalfP.y}`,
+              `A${shape.rx} ${shape.ry} 0 0 1 ${outerStartP.x} ${outerStartP.y}`,
+              `L${innerStartP.x} ${innerStartP.y}`,
+              `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 0 0 ${innerHalfP.x} ${innerHalfP.y}`,
+              `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 0 0 ${innerStartP.x} ${innerStartP.y}z`,
+            ]
+          : [
+              `A${shape.rx} ${shape.ry} 0 ${large} 1 ${outerToP.x} ${outerToP.y}`,
+              `L${innerStartP.x} ${innerStartP.y}`,
+              `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 ${large} 0 ${innerToP.x} ${innerToP.y}z`,
+            ]),
+      ].join(" ");
+    } else {
+      arcD = [
+        `M${shape.rx} ${shape.ry}`,
+        `L${outerStartP.x} ${outerStartP.y}`,
+        ...(isEllipse
+          ? [
+              `A${shape.rx} ${shape.ry} 0 0 1 ${outerHalfP.x} ${outerHalfP.y}`,
+              `A${shape.rx} ${shape.ry} 0 0 1 ${outerStartP.x} ${outerStartP.y}z`,
+            ]
+          : [`A${shape.rx} ${shape.ry} 0 ${large} 1 ${outerToP.x} ${outerToP.y}z`]),
+      ].join(" ");
+    }
 
     return {
       tag: "path",
       attributes: {
-        d: [
-          `M${shape.rx} ${shape.ry}`,
-          `L${shape.rx + Math.cos(shape.from) * shape.rx} ${shape.ry + Math.sin(shape.from) * shape.ry}`,
-          arcD,
-        ].join(" "),
+        d: arcD,
         transform: renderTransform(affine),
         ...renderFillSVGAttributes(shape.fill),
         ...renderStrokeSVGAttributes(shape.stroke),
@@ -186,4 +237,15 @@ function getClosestOutline(shape: ArcShape, p: IVec2, threshold: number): IVec2 
     );
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
+}
+
+function getHoleRate(shape: ArcShape): number {
+  return clamp(0, 1, shape.holeRate ?? 0);
+}
+
+function getArcPoints(shape: ArcShape): [from: IVec2, to: IVec2] {
+  return [
+    { x: Math.cos(shape.from) * shape.rx, y: Math.sin(shape.from) * shape.ry },
+    { x: Math.cos(shape.to) * shape.rx, y: Math.sin(shape.to) * shape.ry },
+  ];
 }
