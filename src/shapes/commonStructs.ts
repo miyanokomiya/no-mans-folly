@@ -1,6 +1,7 @@
 import { ShapeStruct } from "./core";
 import { struct as rectangle } from "./rectangle";
 import { struct as ellipse } from "./ellipse";
+import { struct as donut } from "./donut";
 import { struct as arc } from "./arc";
 import { struct as text } from "./text";
 import { struct as line } from "./line";
@@ -36,14 +37,14 @@ import { struct as align_box } from "./align/alignBox";
 export const SHAPE_COMMON_STRUCTS: {
   [type: string]: ShapeStruct<any>;
 } = {
-  rectangle,
-  ellipse,
-  arc,
+  group,
   text,
   line,
   image,
   emoji,
-  group,
+
+  rectangle,
+  ellipse,
 
   rhombus,
   hexagon,
@@ -58,6 +59,9 @@ export const SHAPE_COMMON_STRUCTS: {
   bubble,
   one_sided_arrow,
   two_sided_arrow,
+
+  donut,
+  arc,
   cross,
   diagonal_cross,
   wave,
