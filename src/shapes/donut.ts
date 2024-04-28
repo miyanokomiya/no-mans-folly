@@ -37,9 +37,12 @@ export const struct: ShapeStruct<DonutShape> = {
 
     const donutSize = getDonutSize(shape);
     const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+    const rotateFn = getRotateFn(shape.rotation, c);
+    const innerStartP = rotateFn({ x: c.x + shape.rx - donutSize, y: c.y });
+
     ctx.beginPath();
     ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
-    ctx.moveTo(c.x + shape.rx - donutSize, c.y);
+    ctx.moveTo(innerStartP.x, innerStartP.y);
     ctx.ellipse(c.x, c.y, shape.rx - donutSize, shape.ry - donutSize, shape.rotation, 0, TAU, true);
 
     if (!shape.fill.disabled) {
@@ -61,11 +64,11 @@ export const struct: ShapeStruct<DonutShape> = {
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
     const rx = shape.rx;
-    const ry = shape.rx;
+    const ry = shape.ry;
     const c = { x: rx, y: ry };
     const donutSize = getDonutSize(shape);
     const irx = rx - donutSize;
-    const iry = rx - donutSize;
+    const iry = ry - donutSize;
     const d = [
       `M${c.x + rx} ${c.y}`,
       `A${rx} ${ry} 0 0 0 ${c.x - rx} ${c.y}`,
