@@ -47,7 +47,7 @@ export const struct: ShapeStruct<ArcShape> = {
       ry: arg.ry ?? 50,
       from: arg.from ?? 0,
       to: arg.to ?? -Math.PI / 2,
-      holeRate: arg.holeRate,
+      holeRate: arg.holeRate ?? 0.5,
     };
   },
   render(ctx, shape) {
