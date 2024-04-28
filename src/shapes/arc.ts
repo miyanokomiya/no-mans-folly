@@ -61,7 +61,7 @@ export const struct: ShapeStruct<ArcShape> = {
     const holeRate = getHoleRate(shape);
     if (holeRate) {
       const [startP] = getArcPoints(shape);
-      const outerStartP = add(c, startP);
+      const outerStartP = add(c, rotate(startP, shape.rotation));
 
       ctx.moveTo(outerStartP.x, outerStartP.y);
       ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
