@@ -397,6 +397,11 @@ export function getRotatedWrapperRect(rect: IRectangle, rotation: number): IRect
   return getOuterRectangle([getRectPoints(rect).map((p) => rotate(p, rotation, c))]);
 }
 
+export function getRotatedWrapperRectAt(rect: IRectangle, rotation: number, origin: IVec2): IRectangle {
+  if (rotation === 0) return rect;
+  return getOuterRectangle([getRectPoints(rect).map((p) => rotate(p, rotation, origin))]);
+}
+
 /**
  * Suppose "rectPolygon" composes a rectangle.
  * => [tl, tr, br, bl]

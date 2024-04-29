@@ -64,6 +64,7 @@ import {
   getCrossLineAndArcRotated,
   getGeneralArcBounds,
   getIntersectionBetweenCircles,
+  getRotatedWrapperRectAt,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
@@ -595,6 +596,20 @@ describe("getRotatedWrapperRect", () => {
     expect(res1.y).toBeCloseTo(5);
     expect(res1.width).toBeCloseTo(20);
     expect(res1.height).toBeCloseTo(10);
+  });
+});
+
+describe("getRotatedWrapperRectAt", () => {
+  test("should return a rectangle to wrap rotated rectangle", () => {
+    expect(getRotatedWrapperRectAt({ x: 1, y: 2, width: 10, height: 20 }, 0, { x: 50, y: 0 })).toEqualRect({
+      x: 1,
+      y: 2,
+      width: 10,
+      height: 20,
+    });
+
+    const res1 = getRotatedWrapperRectAt({ x: 0, y: 0, width: 10, height: 20 }, Math.PI / 2, { x: 50, y: 0 });
+    expect(res1).toEqualRect({ x: 30, y: -50, width: 20, height: 10 });
   });
 });
 

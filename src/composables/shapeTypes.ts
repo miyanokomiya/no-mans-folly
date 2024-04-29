@@ -15,6 +15,7 @@ import iconTwoSidedArrow from "../assets/icons/shape_two_sided_arrow.svg";
 import iconEllipse from "../assets/icons/shape_ellipse.svg";
 import iconDonut from "../assets/icons/shape_donut.svg";
 import iconDonutArc from "../assets/icons/shape_donut_arc.svg";
+import iconMoon from "../assets/icons/shape_moon.svg";
 import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
@@ -76,6 +77,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "diagonal_cross", icon: iconDiagonalCross },
   { type: "donut", icon: iconDonut },
   { type: "arc", icon: iconDonutArc },
+  { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
 ];
 

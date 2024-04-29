@@ -1,5 +1,5 @@
 import { IVec2, add, getDistance, getRadian, isSame } from "okageo";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
   expandRect,
@@ -7,13 +7,15 @@ import {
   getCrossLineAndArcRotated,
   getIntersectionBetweenCircles,
   getRotateFn,
-  getRotatedWrapperRect,
+  getRotatedRectAffine,
+  getRotatedWrapperRectAt,
   isPointOnEllipseRotated,
   sortPointFrom,
 } from "../utils/geometry";
-import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
+import { renderTransform } from "../utils/svgElements";
 
 export type MoonShape = EllipseShape & {
   innsetC: IVec2;
@@ -72,27 +74,68 @@ export const struct: ShapeStruct<MoonShape> = {
     }
   },
   createSVGElementInfo(shape) {
-    return undefined;
+    const ac = { x: shape.rx, y: shape.ry };
+    const ar = shape.rx;
+    const br = shape.radiusRate * ar;
+    const bc = { x: getMoonInsetLocalX(shape) + br, y: ac.y };
+    const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+    if (!moonIntersections || moonIntersections.length < 2) {
+      const empty = moonIntersections?.length === 1 && isSame(ac, bc);
+      return ellipseStruct.createSVGElementInfo?.(
+        empty ? { ...shape, fill: { ...shape.fill, disabled: true } } : shape,
+      );
+    }
+
+    const rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    const [aifrom, aito] = moonIntersections.map((p) => ({
+      x: p.x,
+      y: ac.y + ((p.y - ac.y) / shape.rx) * shape.ry,
+    }));
+    const brx = br;
+    const bry = (br / shape.rx) * shape.ry;
+    const arcD = [
+      `M${aifrom.x} ${aifrom.y}`,
+      `A${shape.rx} ${shape.ry} 0 0 0 ${0} ${ac.y}`,
+      `A${shape.rx} ${shape.ry} 0 0 0 ${aito.x} ${aito.y}`,
+      `A${brx} ${bry} 0 0 1 ${bc.x - br} ${bc.y}`,
+      `A${brx} ${bry} 0 0 1 ${aifrom.x} ${aifrom.y}z`,
+    ].join(" ");
+
+    return {
+      tag: "path",
+      attributes: {
+        d: arcD,
+        transform: renderTransform(affine),
+        ...renderFillSVGAttributes(shape.fill),
+        ...renderStrokeSVGAttributes(shape.stroke),
+      },
+    };
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
     if (!includeBounds) return ellipseStruct.getWrapperRect(shape, shapeContext, includeBounds);
 
     // Crop the bounds to the actual arc appearance.
     const ac = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
-    const rotateFn = getRotateFn(shape.rotation, ac);
     const ar = shape.rx;
     const br = shape.radiusRate * ar;
-    const bc = rotateFn({ x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y });
+    const bc = { x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y };
     const intersections = getIntersectionBetweenCircles(ac, ar, bc, br);
     const intersection = intersections?.[0];
 
-    const width = intersection ? Math.abs(intersection.x - shape.p.x) * 2 : shape.rx * 2;
+    const width = intersection ? Math.abs(intersection.x - shape.p.x) : shape.rx * 2;
     const height =
       intersection && width < shape.rx ? (Math.abs(intersection.y - ac.y) / shape.rx) * shape.ry * 2 : shape.ry * 2;
     const y = shape.p.y + (shape.ry - height / 2);
     let rect = { x: shape.p.x, y, width, height };
     rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
-    return getRotatedWrapperRect(rect, shape.rotation);
+    return getRotatedWrapperRectAt(rect, shape.rotation, ac);
   },
   isPointOn(shape, p) {
     const ac = add(shape.p, { x: shape.rx, y: shape.ry });
