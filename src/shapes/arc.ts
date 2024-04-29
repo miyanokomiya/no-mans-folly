@@ -12,7 +12,7 @@ import {
   getGeneralArcBounds,
   getRotateFn,
   getRotatedRectAffine,
-  getRotatedWrapperRect,
+  getRotatedWrapperRectAt,
   getWrapperRect,
   isPointOnArcRotated,
   isPointOnEllipseRotated,
@@ -157,7 +157,7 @@ export const struct: ShapeStruct<ArcShape> = {
     const arcBounds = getGeneralArcBounds(c, shape.rx, shape.ry, shape.to, shape.from);
     let rect = getWrapperRect([arcBounds, { x: c.x, y: c.y, width: 0, height: 0 }]);
     rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
-    return getRotatedWrapperRect(rect, shape.rotation);
+    return getRotatedWrapperRectAt(rect, shape.rotation, c);
   },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
