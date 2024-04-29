@@ -20,9 +20,9 @@ describe("isPointOn", () => {
     expect(struct.isPointOn(shape0, { x: 74, y: 50 })).toBe(true);
     expect(struct.isPointOn(shape0, { x: 76, y: 50 })).toBe(false);
 
-    const shape1 = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.25, y: 0.5 }, radiusRate: 2 });
-    expect(struct.isPointOn(shape1, { x: 24, y: 50 })).toBe(true);
-    expect(struct.isPointOn(shape1, { x: 26, y: 50 })).toBe(false);
+    const shape1 = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 2 });
+    expect(struct.isPointOn(shape1, { x: 49, y: 50 })).toBe(true);
+    expect(struct.isPointOn(shape1, { x: 51, y: 50 })).toBe(false);
   });
 });
 

@@ -1,4 +1,4 @@
-import { IVec2, add, getDistance, getRadian, isSame } from "okageo";
+import { IVec2, add, clamp, getDistance, getRadian, isSame } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -224,6 +224,6 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   }
 }
 
-function getMoonInsetLocalX(shape: MoonShape): number {
-  return 2 * shape.rx * shape.innsetC.x;
+export function getMoonInsetLocalX(shape: MoonShape): number {
+  return 2 * shape.rx * clamp(0, 1, shape.innsetC.x);
 }

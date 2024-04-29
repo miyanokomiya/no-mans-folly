@@ -51,6 +51,7 @@ import { newTriangleSelectedState } from "./states/appCanvas/triangle/triangleSe
 import { newStarSelectedState } from "./states/appCanvas/star/starSelectedState";
 import { newArcSelectedState } from "./states/appCanvas/arc/arcSelectedState";
 import { newDonutSelectedState } from "./states/appCanvas/donut/donutSelectedState";
+import { newMoonSelectedState } from "./states/appCanvas/moon/moonSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -102,6 +103,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newRoundedRectangleSelectedState;
     case "arc":
       return newArcSelectedState;
+    case "moon":
+      return newMoonSelectedState;
     case "donut":
       return newDonutSelectedState;
     case "one_sided_arrow":
