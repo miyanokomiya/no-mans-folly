@@ -1612,4 +1612,11 @@ describe("getIntersectionBetweenCircles", () => {
       { x: 12.5, y: 10 + Math.sin(Math.acos(2.5 / 5)) * 5 },
     ]);
   });
+
+  test("should return one intersection when a circle is within another and touches it", () => {
+    expect(getIntersectionBetweenCircles({ x: 10, y: 0 }, 10, { x: 15, y: 0 }, 5)).toEqualPoints([{ x: 20, y: 0 }]);
+    expect(getIntersectionBetweenCircles({ x: 10, y: 0 }, 10, { x: 14, y: 0 }, 6)).toEqualPoints([{ x: 20, y: 0 }]);
+    expect(getIntersectionBetweenCircles({ x: 10, y: 0 }, 10, { x: 30, y: 0 }, 30)).toEqualPoints([{ x: 0, y: 0 }]);
+    expect(getIntersectionBetweenCircles({ x: 15, y: 0 }, 5, { x: 10, y: 0 }, 10)).toEqualPoints([{ x: 10, y: 0 }]);
+  });
 });

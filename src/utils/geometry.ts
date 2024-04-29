@@ -1160,6 +1160,12 @@ export function getIntersectionBetweenCircles(ac: IVec2, ar: number, bc: IVec2, 
   if (Math.abs(d - ar - br) < MINVALUE) {
     return [lerpPoint(ac, bc, ar / d)];
   }
+  if (Math.abs(ar - (nbc.x + br)) < MINVALUE) {
+    return [{ x: ac.x + ar, y: ac.y }];
+  }
+  if (Math.abs(-ar - (nbc.x - br)) < MINVALUE) {
+    return [{ x: ac.x - ar, y: ac.y }];
+  }
 
   const x = (d * d + ar * ar - br * br) / (2 * d);
   const rad = Math.acos(x / ar);
