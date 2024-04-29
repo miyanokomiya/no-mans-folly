@@ -10,9 +10,9 @@ import {
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 import { LineShape } from "../../../shapes/line";
-import { LineLabelHandler, newLineLabelHandler } from "../../lineLabelHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { handleCommonWheel } from "./commons";
+import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -22,7 +22,6 @@ export function newRotatingState(option: Option): AppCanvasState {
   let targets: Shape[];
   let resizingAffine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineDetouchHandler;
-  let lineLabelHandler: LineLabelHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
 
   const boundingBoxRotatingRotating = newBoundingBoxRotating({
@@ -42,8 +41,6 @@ export function newRotatingState(option: Option): AppCanvasState {
         ),
         ctx,
       });
-
-      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -56,7 +53,7 @@ export function newRotatingState(option: Option): AppCanvasState {
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;
-          const patchMap = targets.reduce<{ [id: string]: Partial<Shape> }>((m, s) => {
+          let patchMap = targets.reduce<{ [id: string]: Partial<Shape> }>((m, s) => {
             const shape = shapeMap[s.id];
             if (shape) {
               m[s.id] = shapeComposite.transformShape(shape, resizingAffine);
@@ -65,9 +62,8 @@ export function newRotatingState(option: Option): AppCanvasState {
           }, {});
 
           linePatchedMap = lineHandler.onModified(patchMap);
-          const merged = mergeMap(patchMap, linePatchedMap);
-          const labelPatch = lineLabelHandler.onModified(merged);
-          ctx.setTmpShapeMap(mergeMap(merged, labelPatch));
+          patchMap = getPatchAfterLayouts(shapeComposite, { update: mergeMap(patchMap, linePatchedMap) });
+          ctx.setTmpShapeMap(patchMap);
           return;
         }
         case "pointerup": {
