@@ -69,6 +69,21 @@ describe("getIntersectedOutlines", () => {
     const res3 = struct.getIntersectedOutlines?.(shape, { x: 151, y: 0 }, { x: 151, y: 100 });
     expect(res3, "beyond the tips").toBe(undefined);
   });
+
+  test("should return intersections: full moon", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 1, y: 0.5 }, radiusRate: 1 });
+    expect(struct.getIntersectedOutlines?.(shape, { x: 50, y: -50 }, { x: 50, y: 150 })).toEqualPoints([
+      { x: 50, y: 0 },
+      { x: 50, y: 100 },
+    ]);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 150, y: -50 }, { x: 150, y: 150 })).toBe(undefined);
+  });
+
+  test("should return intersections: new moon", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0, y: 0.5 }, radiusRate: 1 });
+    expect(struct.getIntersectedOutlines?.(shape, { x: 50, y: -50 }, { x: 50, y: 150 })).toBe(undefined);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 150, y: -50 }, { x: 150, y: 150 })).toBe(undefined);
+  });
 });
 
 describe("getClosestOutline", () => {
@@ -104,5 +119,17 @@ describe("getClosestOutline", () => {
     const shape = struct.create({ rx: 100, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1, rotation: Math.PI / 2 });
     const res0 = struct.getClosestOutline?.(shape, { x: 125, y: 60 }, 5);
     expect(res0).toEqualPoint({ x: 124.2821465589316, y: 62.58427238784621 });
+  });
+
+  test("should return closest outline: full moon", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 1, y: 0.5 }, radiusRate: 1 });
+    expect(struct.getClosestOutline?.(shape, { x: 50, y: 1 }, 2)).toEqualPoint({ x: 50, y: 0 });
+    expect(struct.getClosestOutline?.(shape, { x: 150, y: 1 }, 2)).toBe(undefined);
+  });
+
+  test("should return intersections: new moon", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0, y: 0.5 }, radiusRate: 1 });
+    expect(struct.getClosestOutline?.(shape, { x: 50, y: 1 }, 2)).toBe(undefined);
+    expect(struct.getClosestOutline?.(shape, { x: 150, y: 1 }, 2)).toBe(undefined);
   });
 });

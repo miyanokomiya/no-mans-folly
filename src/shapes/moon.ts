@@ -210,17 +210,23 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   const insetLocalX = getMoonInsetLocalX(shape);
   const bc = { x: shape.p.x + insetLocalX + br, y: ac.y };
   const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+  let moonIntersections2 = moonIntersections;
+
   if (!moonIntersections) {
     return ellipseStruct.getClosestOutline?.(shape, p, threshold);
   }
   if (moonIntersections.length === 1) {
     if (Math.abs(insetLocalX) < MINVALUE) return;
-    return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+    if (Math.abs(insetLocalX - 2 * ar) < MINVALUE) return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+
+    // Duplicate the single intersection to make a hole.
+    moonIntersections2 = [moonIntersections[0], moonIntersections[0]];
   }
+  moonIntersections2 ??= moonIntersections;
 
   const rotateFn = getRotateFn(shape.rotation, ac);
   const rotatedP = rotateFn(p, true);
-  const adjustedMoonIntersections = moonIntersections.map((p) => ({
+  const adjustedMoonIntersections = moonIntersections2.map((p) => ({
     x: p.x,
     y: ac.y + ((p.y - ac.y) / shape.rx) * shape.ry,
   }));
@@ -232,7 +238,7 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   }
 
   {
-    const [afrom, ato] = moonIntersections.map((p) => getRadian(p, ac));
+    const [afrom, ato] = moonIntersections2.map((p) => getRadian(p, ac));
     const rotatedClosest = getClosestOutlineOnArc(ac, shape.rx, shape.ry, ato, afrom, rotatedP, threshold);
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
@@ -240,7 +246,7 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   {
     const brx = br;
     const bry = (br / shape.rx) * shape.ry;
-    const [bfrom, bto] = moonIntersections.map((p) => getRadian(p, bc));
+    const [bfrom, bto] = moonIntersections2.map((p) => getRadian(p, bc));
     const rotatedClosest = getClosestOutlineOnArc(bc, brx, bry, bto, bfrom, rotatedP, threshold);
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
