@@ -17,7 +17,7 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
 
   return (
     <div className="w-full h-full">
-      <div className="absolute top-0 left-0 select-none touch-none">
+      <div className="absolute top-0 left-0 w-0 h-0 select-none touch-none">
         <div className="origin-top-left rotate-90 flex gap-1">{tabs}</div>
       </div>
       <div className={"w-full h-full overflow-auto border border-l-gray-500" + wrapperClassName}>{panel}</div>
