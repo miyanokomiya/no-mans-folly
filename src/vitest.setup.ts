@@ -17,8 +17,8 @@ expect.extend({
   toEqualPoint(received: IVec2, expected: IVec2) {
     const { isNot } = this;
     return {
-      pass: isSame(received, expected),
-      message: () => `${printPoint(received)} is${isNot ? " not" : ""} ${printPoint(expected)}`,
+      pass: !!received && isSame(received, expected),
+      message: () => `${received ? printPoint(received) : received} is${isNot ? " not" : ""} ${printPoint(expected)}`,
     };
   },
 

@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { struct } from "./moon";
+import { getDistance } from "okageo";
 
 describe("isPointOn", () => {
   test("should return true when a point is on the moon", () => {
@@ -67,5 +68,41 @@ describe("getIntersectedOutlines", () => {
 
     const res3 = struct.getIntersectedOutlines?.(shape, { x: 151, y: 0 }, { x: 151, y: 100 });
     expect(res3, "beyond the tips").toBe(undefined);
+  });
+});
+
+describe("getClosestOutline", () => {
+  test("should return closest outline: tips", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1 });
+    const res0 = struct.getClosestOutline?.(shape, { x: 74, y: 6 }, 2);
+    expect(res0).toEqualPoint({ x: 75, y: 50 + Math.sin(-Math.acos(1 / 2)) * 50 });
+
+    const res1 = struct.getClosestOutline?.(shape, { x: 74, y: 94 }, 2);
+    expect(res1).toEqualPoint({ x: 75, y: 50 + Math.sin(Math.acos(1 / 2)) * 50 });
+  });
+
+  test("should return closest outline: outline", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1 });
+    const res0 = struct.getClosestOutline?.(shape, { x: 5, y: 25 }, 2);
+    expect(getDistance(res0!, { x: 50, y: 50 })).toBeCloseTo(50);
+    expect(res0!.x).toBeGreaterThan(5);
+  });
+
+  test("should return closest outline: outline: rotated ellipse", () => {
+    const shape = struct.create({ rx: 100, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1, rotation: Math.PI / 2 });
+    const res0 = struct.getClosestOutline?.(shape, { x: 125, y: -37.5 }, 5);
+    expect(res0).toEqualPoint({ x: 124.8069469178417, y: -36.82431421244591 });
+  });
+
+  test("should return closest outline: inner outline", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1 });
+    const res0 = struct.getClosestOutline?.(shape, { x: 49, y: 50 }, 2);
+    expect(res0).toEqualPoint({ x: 50, y: 50 });
+  });
+
+  test("should return closest outline: inner outline: rotated ellipse", () => {
+    const shape = struct.create({ rx: 100, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1, rotation: Math.PI / 2 });
+    const res0 = struct.getClosestOutline?.(shape, { x: 125, y: 60 }, 5);
+    expect(res0).toEqualPoint({ x: 124.2821465589316, y: 62.58427238784621 });
   });
 });

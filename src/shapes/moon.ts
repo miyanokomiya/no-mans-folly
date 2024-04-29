@@ -1,8 +1,9 @@
-import { IVec2, add, getRadian, isSame } from "okageo";
+import { IVec2, add, getDistance, getRadian, isSame } from "okageo";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import {
   TAU,
   expandRect,
+  getClosestOutlineOnArc,
   getCrossLineAndArcRotated,
   getIntersectionBetweenCircles,
   getRotateFn,
@@ -144,7 +145,40 @@ export const struct: ShapeStruct<MoonShape> = {
 };
 
 function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2 | undefined {
-  return;
+  const r = { x: shape.rx, y: shape.ry };
+  const ac = add(shape.p, r);
+  const ar = shape.rx;
+  const br = shape.radiusRate * ar;
+  const bc = { x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y };
+  const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+  if (!moonIntersections || moonIntersections.length < 2) return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+
+  const rotateFn = getRotateFn(shape.rotation, ac);
+  const rotatedP = rotateFn(p, true);
+  const adjustedMoonIntersections = moonIntersections.map((p) => ({
+    x: p.x,
+    y: ac.y + ((p.y - ac.y) / shape.rx) * shape.ry,
+  }));
+
+  {
+    const markers = [{ x: bc.x - br, y: ac.y }, { x: shape.p.x, y: ac.y }, ...adjustedMoonIntersections];
+    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+    if (rotatedClosest) return rotateFn(rotatedClosest);
+  }
+
+  {
+    const [afrom, ato] = moonIntersections.map((p) => getRadian(p, ac));
+    const rotatedClosest = getClosestOutlineOnArc(ac, shape.rx, shape.ry, ato, afrom, rotatedP, threshold);
+    if (rotatedClosest) return rotateFn(rotatedClosest);
+  }
+
+  {
+    const brx = br;
+    const bry = (br / shape.rx) * shape.ry;
+    const [bfrom, bto] = moonIntersections.map((p) => getRadian(p, bc));
+    const rotatedClosest = getClosestOutlineOnArc(bc, brx, bry, bto, bfrom, rotatedP, threshold);
+    if (rotatedClosest) return rotateFn(rotatedClosest);
+  }
 }
 
 function getMoonInsetLocalX(shape: MoonShape): number {
