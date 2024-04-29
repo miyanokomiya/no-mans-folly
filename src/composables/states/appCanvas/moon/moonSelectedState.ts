@@ -75,7 +75,7 @@ export const newMoonSelectedState = defineSingleSelectedHandlerState<MoonShape, 
                               x: shape.p.x + shape.rx,
                               y: shape.p.y + shape.ry,
                             });
-                            let nextSize = clamp(0, shape.ry, shape.p.y + shape.ry - rotatedP.y);
+                            let nextSize = shape.p.y + shape.ry - rotatedP.y;
 
                             if (movement.ctrl) {
                               showLabel = false;

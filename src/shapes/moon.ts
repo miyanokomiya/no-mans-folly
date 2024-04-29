@@ -1,4 +1,4 @@
-import { IVec2, add, clamp, getDistance, getRadian, isSame } from "okageo";
+import { IVec2, MINVALUE, add, clamp, getDistance, getRadian, isSame } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -47,14 +47,16 @@ export const struct: ShapeStruct<MoonShape> = {
     const insetLocalX = getMoonInsetLocalX(shape);
     const bc = rotateFn({ x: shape.p.x + insetLocalX + br, y: ac.y });
     const intersections = getIntersectionBetweenCircles(ac, ar, bc, br);
-    let empty = false;
 
     ctx.beginPath();
     if (!intersections) {
       ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
     } else if (intersections.length === 1) {
-      empty = isSame(ac, bc);
-      if (!empty && insetLocalX < shape.rx * 2) {
+      // Ignore when there's no visible part.
+      if (isSame(ac, bc)) return;
+      if (Math.abs(insetLocalX) < MINVALUE) return;
+
+      if (insetLocalX < shape.rx * 2) {
         ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, 0, TAU, true);
       }
       ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
@@ -67,7 +69,7 @@ export const struct: ShapeStruct<MoonShape> = {
 
     ctx.closePath();
 
-    if (!empty && !shape.fill.disabled) {
+    if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
       ctx.fill();
     }
@@ -80,14 +82,16 @@ export const struct: ShapeStruct<MoonShape> = {
     const ac = { x: shape.rx, y: shape.ry };
     const ar = shape.rx;
     const br = getMoonRadius(shape);
-    const bc = { x: getMoonInsetLocalX(shape) + br, y: ac.y };
+    const insetLocalX = getMoonInsetLocalX(shape);
+    const bc = { x: insetLocalX + br, y: ac.y };
     const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
     let adjustedMoonIntersections = moonIntersections;
 
     if (!moonIntersections) return ellipseStruct.createSVGElementInfo?.(shape);
     if (moonIntersections.length === 1) {
-      const empty = isSame(ac, bc);
-      if (empty) ellipseStruct.createSVGElementInfo?.({ ...shape, fill: { ...shape.fill, disabled: true } });
+      // Ignore when there's no visible part.
+      if (isSame(ac, bc)) return;
+      if (Math.abs(insetLocalX) < MINVALUE) return;
 
       // Duplicate the single intersection to make a hole.
       adjustedMoonIntersections = [moonIntersections[0], moonIntersections[0]];
@@ -243,5 +247,5 @@ export function getMoonRadius(shape: MoonShape): number {
 
 export function getMoonRadiusRange(shape: MoonShape): [min: number, max: number] {
   const insetX = getMoonInsetLocalX(shape);
-  return [shape.rx - insetX / 2, 3 * shape.rx];
+  return [shape.rx - insetX / 2, 10 * shape.rx];
 }
