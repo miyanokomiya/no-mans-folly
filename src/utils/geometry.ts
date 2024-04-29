@@ -1050,6 +1050,7 @@ export function isPointCloseToArc(
 /**
  * Suppose each argument is normalized. See: "normalizeRadian"
  * When nfrom === nto, returns true for any value.
+ * Edge condition may be unstable.
  */
 function isRadianInside(nfrom: number, nto: number, nr: number): boolean {
   if (nfrom === nto) return true;
