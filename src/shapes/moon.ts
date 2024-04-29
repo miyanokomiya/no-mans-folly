@@ -1,4 +1,4 @@
-import { IVec2, MINVALUE, add, clamp, getDistance, getRadian, isSame } from "okageo";
+import { IVec2, MINVALUE, add, clamp, getDistance, getRadian } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -53,7 +53,6 @@ export const struct: ShapeStruct<MoonShape> = {
       ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
     } else if (intersections.length === 1) {
       // Ignore when there's no visible part.
-      if (isSame(ac, bc)) return;
       if (Math.abs(insetLocalX) < MINVALUE) return;
 
       if (insetLocalX < shape.rx * 2) {
@@ -90,7 +89,6 @@ export const struct: ShapeStruct<MoonShape> = {
     if (!moonIntersections) return ellipseStruct.createSVGElementInfo?.(shape);
     if (moonIntersections.length === 1) {
       // Ignore when there's no visible part.
-      if (isSame(ac, bc)) return;
       if (Math.abs(insetLocalX) < MINVALUE) return;
 
       // Duplicate the single intersection to make a hole.
@@ -167,10 +165,16 @@ export const struct: ShapeStruct<MoonShape> = {
     const rotateFn = getRotateFn(shape.rotation, ac);
     const ar = shape.rx;
     const br = getMoonRadius(shape);
-    const bc = rotateFn({ x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y });
+    const insetLocalX = getMoonInsetLocalX(shape);
+    const bc = rotateFn({ x: shape.p.x + insetLocalX + br, y: ac.y });
     const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
-    if (!moonIntersections || moonIntersections.length < 2)
+    if (!moonIntersections) {
       return ellipseStruct.getIntersectedOutlines?.(shape, from, to);
+    }
+    if (moonIntersections.length === 1) {
+      if (Math.abs(insetLocalX) < MINVALUE) return;
+      return ellipseStruct.getIntersectedOutlines?.(shape, from, to);
+    }
 
     const intersections: IVec2[] = [];
 
@@ -193,7 +197,6 @@ export const struct: ShapeStruct<MoonShape> = {
     return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
   },
   canAttachSmartBranch: false,
-  // Prevent having text because text bounds is quite unstable depending on the form of the arc.
   getTextRangeRect: undefined,
   getTextPadding: undefined,
   patchTextPadding: undefined,
@@ -204,9 +207,16 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   const ac = add(shape.p, r);
   const ar = shape.rx;
   const br = getMoonRadius(shape);
-  const bc = { x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y };
+  const insetLocalX = getMoonInsetLocalX(shape);
+  const bc = { x: shape.p.x + insetLocalX + br, y: ac.y };
   const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
-  if (!moonIntersections || moonIntersections.length < 2) return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+  if (!moonIntersections) {
+    return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+  }
+  if (moonIntersections.length === 1) {
+    if (Math.abs(insetLocalX) < MINVALUE) return;
+    return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+  }
 
   const rotateFn = getRotateFn(shape.rotation, ac);
   const rotatedP = rotateFn(p, true);
