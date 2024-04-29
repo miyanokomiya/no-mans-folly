@@ -43,8 +43,9 @@ export const struct: ShapeStruct<MoonShape> = {
     const ac = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
     const rotateFn = getRotateFn(shape.rotation, ac);
     const ar = shape.rx;
-    const br = shape.radiusRate * ar;
-    const bc = rotateFn({ x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y });
+    const br = getMoonRadius(shape);
+    const insetLocalX = getMoonInsetLocalX(shape);
+    const bc = rotateFn({ x: shape.p.x + insetLocalX + br, y: ac.y });
     const intersections = getIntersectionBetweenCircles(ac, ar, bc, br);
     let empty = false;
 
@@ -53,9 +54,11 @@ export const struct: ShapeStruct<MoonShape> = {
       ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
     } else if (intersections.length === 1) {
       empty = isSame(ac, bc);
+      if (!empty && insetLocalX < shape.rx * 2) {
+        ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, 0, TAU, true);
+      }
       ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
     } else {
-      // intersections.map((p) => ({ x: p.x, y: (p.y / shape.rx) * shape.ry }));
       const [bfrom, bto] = intersections.map((p) => getRadian(p, bc) - shape.rotation);
       ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, bfrom, bto, true);
       const [afrom, ato] = intersections.map((p) => getRadian(p, ac) - shape.rotation);
@@ -76,15 +79,20 @@ export const struct: ShapeStruct<MoonShape> = {
   createSVGElementInfo(shape) {
     const ac = { x: shape.rx, y: shape.ry };
     const ar = shape.rx;
-    const br = shape.radiusRate * ar;
+    const br = getMoonRadius(shape);
     const bc = { x: getMoonInsetLocalX(shape) + br, y: ac.y };
     const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
-    if (!moonIntersections || moonIntersections.length < 2) {
-      const empty = moonIntersections?.length === 1 && isSame(ac, bc);
-      return ellipseStruct.createSVGElementInfo?.(
-        empty ? { ...shape, fill: { ...shape.fill, disabled: true } } : shape,
-      );
+    let adjustedMoonIntersections = moonIntersections;
+
+    if (!moonIntersections) return ellipseStruct.createSVGElementInfo?.(shape);
+    if (moonIntersections.length === 1) {
+      const empty = isSame(ac, bc);
+      if (empty) ellipseStruct.createSVGElementInfo?.({ ...shape, fill: { ...shape.fill, disabled: true } });
+
+      // Duplicate the single intersection to make a hole.
+      adjustedMoonIntersections = [moonIntersections[0], moonIntersections[0]];
     }
+    if (!adjustedMoonIntersections) adjustedMoonIntersections = moonIntersections;
 
     const rect = {
       x: shape.p.x,
@@ -94,7 +102,7 @@ export const struct: ShapeStruct<MoonShape> = {
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
-    const [aifrom, aito] = moonIntersections.map((p) => ({
+    const [aifrom, aito] = adjustedMoonIntersections.map((p) => ({
       x: p.x,
       y: ac.y + ((p.y - ac.y) / shape.rx) * shape.ry,
     }));
@@ -124,7 +132,7 @@ export const struct: ShapeStruct<MoonShape> = {
     // Crop the bounds to the actual arc appearance.
     const ac = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
     const ar = shape.rx;
-    const br = shape.radiusRate * ar;
+    const br = getMoonRadius(shape);
     const bc = { x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y };
     const intersections = getIntersectionBetweenCircles(ac, ar, bc, br);
     const intersection = intersections?.[0];
@@ -143,8 +151,8 @@ export const struct: ShapeStruct<MoonShape> = {
     if (!isOnEllipse) return false;
 
     const rotateFn = getRotateFn(shape.rotation, ac);
-    const brx = shape.radiusRate * shape.rx;
-    const bry = shape.radiusRate * shape.ry;
+    const brx = getMoonRadius(shape);
+    const bry = (brx / shape.rx) * shape.ry;
     const bc = rotateFn({ x: shape.p.x + getMoonInsetLocalX(shape) + brx, y: ac.y });
     return !isPointOnEllipseRotated(bc, brx, bry, shape.rotation, p);
   },
@@ -154,7 +162,7 @@ export const struct: ShapeStruct<MoonShape> = {
     const ac = add(shape.p, r);
     const rotateFn = getRotateFn(shape.rotation, ac);
     const ar = shape.rx;
-    const br = shape.radiusRate * ar;
+    const br = getMoonRadius(shape);
     const bc = rotateFn({ x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y });
     const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
     if (!moonIntersections || moonIntersections.length < 2)
@@ -191,7 +199,7 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   const r = { x: shape.rx, y: shape.ry };
   const ac = add(shape.p, r);
   const ar = shape.rx;
-  const br = shape.radiusRate * ar;
+  const br = getMoonRadius(shape);
   const bc = { x: shape.p.x + getMoonInsetLocalX(shape) + br, y: ac.y };
   const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
   if (!moonIntersections || moonIntersections.length < 2) return ellipseStruct.getClosestOutline?.(shape, p, threshold);
@@ -226,4 +234,14 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
 
 export function getMoonInsetLocalX(shape: MoonShape): number {
   return 2 * shape.rx * clamp(0, 1, shape.innsetC.x);
+}
+
+export function getMoonRadius(shape: MoonShape): number {
+  const range = getMoonRadiusRange(shape);
+  return clamp(range[0], range[1], shape.rx * shape.radiusRate);
+}
+
+export function getMoonRadiusRange(shape: MoonShape): [min: number, max: number] {
+  const insetX = getMoonInsetLocalX(shape);
+  return [shape.rx - insetX / 2, 3 * shape.rx];
 }

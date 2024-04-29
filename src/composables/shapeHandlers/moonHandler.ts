@@ -5,12 +5,12 @@ import { TAU, getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, applyPath, renderOutlinedCircle } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { MoonShape, getMoonInsetLocalX } from "../../shapes/moon";
+import { MoonShape, getMoonInsetLocalX, getMoonRadius } from "../../shapes/moon";
 
 export const ANCHOR_SIZE = 6;
 export const ANCHOR_MARGIN = 16;
 
-type HitAnchor = [type: "innsetC", IVec2];
+type HitAnchor = [type: "innsetC" | "radiusRate", IVec2];
 
 interface HitResult {
   type: HitAnchor[0];
@@ -28,7 +28,10 @@ export const newMoonHandler = defineShapeHandler<HitResult, Option>((option) => 
   const rotateFn = getRotateFn(shape.rotation, getRectCenter(shapeRect));
 
   function getAnchors(): HitAnchor[] {
-    return [["innsetC", getMoonInnsetLocalControl(shape)]];
+    return [
+      ["innsetC", getMoonInnsetLocalControl(shape)],
+      ["radiusRate", getMoonRadiusLocalControl(shape)],
+    ];
   }
 
   function hitTest(p: IVec2, scale = 1): HitResult | undefined {
@@ -46,15 +49,9 @@ export const newMoonHandler = defineShapeHandler<HitResult, Option>((option) => 
     const threshold = ANCHOR_SIZE * scale;
     const anchors = getAnchors();
 
-    applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
-      applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot", width: 4 * scale });
-      const brx = shape.radiusRate * shape.rx;
-      const bry = shape.radiusRate * shape.ry;
-      const bc = { x: getMoonInsetLocalX(shape) + brx, y: shape.ry };
-      ctx.beginPath();
-      ctx.ellipse(bc.x, bc.y, brx, bry, 0, 0, TAU);
-      ctx.stroke();
+    renderMoonOutline(ctx, style, scale, shape);
 
+    applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       anchors
         .map<[IVec2, boolean]>((a) => [a[1], a[0] === hitResult?.type])
         .forEach(([p, highlight]) => {
@@ -77,6 +74,19 @@ export const newMoonHandler = defineShapeHandler<HitResult, Option>((option) => 
 });
 export type MoonHandler = ReturnType<typeof newMoonHandler>;
 
+export function renderMoonOutline(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, shape: MoonShape) {
+  const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.rx * 2, height: shape.ry * 2 };
+  applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
+    applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot", width: 4 * scale });
+    const brx = getMoonRadius(shape);
+    const bry = (brx / shape.rx) * shape.ry;
+    const bc = { x: getMoonInsetLocalX(shape) + brx, y: shape.ry };
+    ctx.beginPath();
+    ctx.ellipse(bc.x, bc.y, brx, bry, 0, 0, TAU);
+    ctx.stroke();
+  });
+}
+
 export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleScheme, path: IVec2[]) {
   applyStrokeStyle(ctx, { color: style.selectionPrimary });
   ctx.beginPath();
@@ -86,4 +96,9 @@ export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleSch
 
 export function getMoonInnsetLocalControl(shape: MoonShape): IVec2 {
   return { x: getMoonInsetLocalX(shape), y: shape.ry };
+}
+
+export function getMoonRadiusLocalControl(shape: MoonShape): IVec2 {
+  const radius = getMoonRadius(shape);
+  return { x: getMoonInsetLocalX(shape) + radius, y: shape.ry - (radius / shape.rx) * shape.ry };
 }
