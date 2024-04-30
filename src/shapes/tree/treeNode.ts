@@ -4,7 +4,7 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { TreeRootShape, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
-import { TreeShapeBase, isTreeShapeBase } from "./core";
+import { TreeShapeBase, isTreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
@@ -79,6 +79,12 @@ export const struct: ShapeStruct<TreeNodeShape> = {
         body,
       ],
     };
+  },
+  resize(shape, resizingAffine) {
+    return resizeTreeShape(shape, resizingAffine, MIN_WIDTH, MIN_HEIGHT);
+  },
+  resizeOnTextEdit(shape, textBoxSize) {
+    return resizeTreeShapeOnTextEdit(shape, textBoxSize, MIN_WIDTH, MIN_HEIGHT);
   },
   immigrateShapeIds(shape, oldToNewIdMap) {
     if (!oldToNewIdMap[shape.treeParentId] || !oldToNewIdMap[shape.parentId ?? ""]) {

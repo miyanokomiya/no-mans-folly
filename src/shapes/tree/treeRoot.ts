@@ -1,11 +1,11 @@
 import { Shape } from "../../models";
-import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
+import { createBoxPadding } from "../../utils/boxPadding";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
 import { isPointOnGroup } from "../group";
-import { TreeShapeBase } from "./core";
+import { TreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
 import { applyLocalSpace } from "../../utils/renderer";
 import { getRotatedRectAffine } from "../../utils/geometry";
 import { renderTransform } from "../../utils/svgElements";
@@ -77,45 +77,16 @@ export const struct: ShapeStruct<TreeRootShape> = {
     };
   },
   resize(shape, resizingAffine) {
-    const ret: Partial<TreeRootShape> = { ...recntagleStruct.resize(shape, resizingAffine) };
-    if (ret.width !== undefined) {
-      ret.width = Math.max(ret.width, MIN_WIDTH);
-      ret.maxWidth = ret.width;
-    }
-    if (ret.height !== undefined) {
-      ret.height = Math.max(ret.height, MIN_HEIGHT);
-    }
-    return ret;
+    return resizeTreeShape(shape, resizingAffine, MIN_WIDTH, MIN_HEIGHT);
   },
-  canAttachSmartBranch: false,
   resizeOnTextEdit(shape, textBoxSize) {
-    const prect = shape.textPadding
-      ? getPaddingRect(shape.textPadding, { x: 0, y: 0, width: shape.width, height: shape.height })
-      : undefined;
-    const wDiff = prect ? shape.width - prect.width : 0;
-    const hDiff = prect ? shape.height - prect.height : 0;
-
-    let changed = false;
-    const ret: Partial<TreeRootShape> = {};
-
-    const nextWidth = textBoxSize.width + wDiff;
-    if (shape.width !== nextWidth) {
-      ret.width = Math.max(nextWidth, MIN_WIDTH);
-      changed = true;
-    }
-
-    const nextHeight = textBoxSize.height + hDiff;
-    if (shape.height !== nextHeight) {
-      ret.height = Math.max(nextHeight, MIN_HEIGHT);
-      changed = true;
-    }
-
-    return changed ? ret : undefined;
+    return resizeTreeShapeOnTextEdit(shape, textBoxSize, MIN_WIDTH, MIN_HEIGHT);
   },
   isPointOn(shape, p, shapeContext) {
     const selfResult = recntagleStruct.isPointOn(shape, p, shapeContext);
     return selfResult || (!!shapeContext && isPointOnGroup(shape, p, shapeContext));
   },
+  canAttachSmartBranch: false,
   transparentSelection: true,
 };
 
