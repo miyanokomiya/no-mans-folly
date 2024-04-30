@@ -124,7 +124,10 @@ export const FloatMenu: React.FC<Option> = ({
   }, [dragOrigin, draggable.v]);
 
   const rootAttrs = useMemo(() => {
-    if (!targetRect || !rootRef.current) return { className: rootBaseClassName };
+    if (!targetRect || !rootRef.current) {
+      // Need to render the menu to get its size, but make it invisible until everything's ready.
+      return { className: rootBaseClassName + " invisible" };
+    }
 
     return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height, rootFixed);
   }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height, rootFixed]);
