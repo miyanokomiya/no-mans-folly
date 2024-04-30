@@ -1,18 +1,11 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
 import { TreeNodeShape, getBoxAlignByDirection } from "../../../../shapes/tree/treeNode";
-import {
-  newTreeNodeMovingHandler,
-  getNextTreeLayout,
-  isValidTreeNode,
-  getTreeBranchIds,
-} from "../../../shapeHandlers/treeHandler";
-import { getNextShapeComposite } from "../../../shapeComposite";
-import { mergeMap } from "../../../../utils/commons";
+import { newTreeNodeMovingHandler, isValidTreeNode, getTreeBranchIds } from "../../../shapeHandlers/treeHandler";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
-import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { TransitionValue } from "../../core";
 import { newTreeRootMovingState } from "./treeRootMovingState";
 
@@ -86,10 +79,7 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
             };
 
             const shapeComposite = ctx.getShapeComposite();
-            const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
-            const layoutPatch = getNextTreeLayout(nextComposite, treeNodeShape.parentId!);
-            const adjustedPatch = getPatchAfterLayouts(shapeComposite, { update: mergeMap(layoutPatch, patch) });
-            ctx.patchShapes(adjustedPatch);
+            ctx.patchShapes(getPatchByLayouts(shapeComposite, { update: patch }));
           }
           return newSelectionHubState;
         }

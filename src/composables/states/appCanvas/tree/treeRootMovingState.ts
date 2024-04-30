@@ -46,6 +46,7 @@ export function newTreeRootMovingState(option: Option): AppCanvasState {
             const shapeComposite = ctx.getShapeComposite();
             const patch = getPatchToGraftBranch(shapeComposite, option.targetId, graftTargetShape.id);
             const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
+            // Get new layout of the grafting-target tree.
             const layoutPatch = getNextTreeLayout(nextComposite, patch[option.targetId].parentId!);
             const adjustedPatch = getPatchAfterLayouts(shapeComposite, { update: mergeMap(layoutPatch, patch) });
             ctx.patchShapes(adjustedPatch);

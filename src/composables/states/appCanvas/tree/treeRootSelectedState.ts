@@ -5,9 +5,8 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
-import { getNextShapeComposite } from "../../../shapeComposite";
 import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
-import { getNextTreeLayout, newTreeHandler } from "../../../shapeHandlers/treeHandler";
+import { newTreeHandler } from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import { getInitialOutput } from "../../../../utils/textEditor";
@@ -17,6 +16,7 @@ import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 export const newTreeRootSelectedState = defineIntransientState(() => {
   let treeRootShape: TreeRootShape;
@@ -68,10 +68,7 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
                   dropdown: treeHitResult.dropdown,
                 });
 
-                const nextComposite = getNextShapeComposite(shapeComposite, {
-                  add: [treeNode],
-                });
-                const patch = getNextTreeLayout(nextComposite, treeRootShape.id);
+                const patch = getPatchByLayouts(shapeComposite, { add: [treeNode] });
                 treeNode = { ...treeNode, ...patch[treeNode.id] };
                 delete patch[treeNode.id];
 
