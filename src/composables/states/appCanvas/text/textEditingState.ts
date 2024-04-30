@@ -108,6 +108,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
       ]);
     },
     onResume: (ctx) => {
+      ctx.startTextEditing();
+      ctx.showFloatMenu();
       onCursorUpdated(ctx);
     },
     onEnd: (ctx) => {
@@ -185,6 +187,8 @@ export function newTextEditingState(option: Option): AppCanvasState {
               };
             }
             case 1:
+              ctx.hideFloatMenu();
+              ctx.stopTextEditing();
               return {
                 type: "stack-resume",
                 getState: () => newPointerDownEmptyState(event.data.options),
