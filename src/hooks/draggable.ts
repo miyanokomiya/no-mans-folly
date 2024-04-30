@@ -46,6 +46,13 @@ export function useDraggable() {
     [startDragging],
   );
 
+  const clear = useCallback(() => {
+    setDragFrom(undefined);
+    setDragTo(undefined);
+    setTotal(undefined);
+    vRef.current = undefined;
+  }, []);
+
   const currentTotal = useMemo(() => {
     if (dragTo && dragFrom) {
       const v = sub(dragTo, dragFrom);
@@ -58,5 +65,6 @@ export function useDraggable() {
   return {
     v: currentTotal,
     startDrag,
+    clear,
   };
 }

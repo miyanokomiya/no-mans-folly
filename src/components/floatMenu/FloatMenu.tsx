@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, getRectCenter } from "okageo";
+import { IRectangle, IVec2, add, getRectCenter } from "okageo";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
@@ -41,6 +41,9 @@ import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 // => It's useful to prevent the menu from slightly translating at the first appearance.
 const ROOT_HEIGHT = 44;
 
+// Keep and restore the fixed location.
+let rootFixedCache: IVec2 | undefined;
+
 interface Option {
   canvasState: any;
   scale: number;
@@ -64,10 +67,14 @@ export const FloatMenu: React.FC<Option> = ({
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getShapeStruct, setTmpShapeMap, patchShapes, createLastIndex, createFirstIndex } =
     useContext(AppStateContext);
+  const { size: windowSize } = useWindow();
+  const draggable = useDraggable();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [rootSize, setRootSize] = useState<Size>({ width: 0, height: ROOT_HEIGHT });
-  const draggable = useDraggable();
+  // Once the menu was dragged, stick it to the location.
+  const [rootFixed, setRootFixed] = useState<IVec2 | undefined>(rootFixedCache);
+  const [dragOrigin, setDragOrigin] = useState<IVec2 | undefined>();
 
   const indexShape = useMemo<Shape | undefined>(() => {
     canvasState; // For exhaustive-deps
@@ -109,33 +116,40 @@ export const FloatMenu: React.FC<Option> = ({
     setRootSize({ width: bounds.width, height: bounds.height });
   }, [targetRect]);
 
-  const { size: windowSize } = useWindow();
-
-  // Once the menu was dragged, stick it to the current location.
-  const [rootAttrsFixed, setRootAttrsFixed] = useState<ReturnType<typeof getRootAttrs>>();
-  const rootAttrs = useMemo(() => {
-    if (!targetRect) return;
-    if (rootAttrsFixed && draggable.v) {
-      return {
-        ...rootAttrsFixed,
-        style: {
-          transform: rootAttrsFixed.style.transform + ` translate(${draggable.v.x}px, ${draggable.v.y}px)`,
-        },
-      };
-    }
-    return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height, draggable.v);
-  }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height, draggable.v, rootAttrsFixed]);
   useEffect(() => {
-    if (rootAttrsFixed || !draggable.v) return;
-    setRootAttrsFixed(rootAttrs);
-  }, [draggable.v, rootAttrsFixed, rootAttrs]);
+    if (!dragOrigin || !draggable.v) return;
 
-  const handleDragMenu = useCallback(
+    const p = add(dragOrigin, draggable.v);
+    setRootFixed(p);
+  }, [dragOrigin, draggable.v]);
+
+  const rootAttrs = useMemo(() => {
+    if (!targetRect || !rootRef.current) return { className: rootBaseClassName };
+
+    return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height, rootFixed);
+  }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height, rootFixed]);
+
+  const handleMenuAnchorDrag = useCallback(
     (e: React.PointerEvent) => {
+      if (!rootRef.current) return;
+
+      const bounds = rootRef.current.getBoundingClientRect();
+      setDragOrigin({ x: bounds.x + bounds.width / 2, y: bounds.y });
+      draggable.clear();
       draggable.startDrag(e);
     },
     [draggable],
   );
+
+  const handleMenuAnchorClick = useCallback(() => {
+    draggable.clear();
+    setDragOrigin(undefined);
+    setRootFixed(undefined);
+  }, [draggable]);
+
+  useEffect(() => {
+    rootFixedCache = rootFixed;
+  }, [rootFixed]);
 
   const popupDefaultDirection: PopupDirection = rootAttrs?.className.includes(TOP_LOCATED_KEY) ? "top" : "bottom";
   const [popupedKey, setPopupedKey] = useState("");
@@ -374,8 +388,8 @@ export const FloatMenu: React.FC<Option> = ({
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
-        <ClickOrDragHandler onClick={undefined} onDragStart={handleDragMenu}>
-          <div className="w-2 h-8 border rounded bg-gray-300 touch-none" />
+        <ClickOrDragHandler onClick={handleMenuAnchorClick} onDragStart={handleMenuAnchorDrag}>
+          <div className={"w-3 h-8 border rounded touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
         </ClickOrDragHandler>
         {indexCommonStyle?.fill ? (
           <PopupButton
@@ -463,6 +477,7 @@ export const FloatMenu: React.FC<Option> = ({
 };
 
 const TOP_LOCATED_KEY = "top-located";
+const rootBaseClassName = "fixed border rounded shadow w-max h-max bg-white px-1 top-0 left-0";
 
 function getRootAttrs(
   targetRect: IRectangle,
@@ -470,15 +485,15 @@ function getRootAttrs(
   rootHeight: number,
   windowWidth: number,
   windowHeight: number,
-  translate: IVec2 = { x: 0, y: 0 },
+  fixed?: IVec2,
 ) {
   const yMargin = 60;
   const center = getRectCenter(targetRect);
-  const topY = targetRect.y - yMargin - rootHeight + translate.y;
+  const topY = targetRect.y - yMargin - rootHeight;
   const toBottom = topY < 0;
-  const p = {
-    x: center.x + translate.x,
-    y: toBottom ? targetRect.y + targetRect.height + yMargin + translate.y : topY,
+  const p = fixed ?? {
+    x: center.x,
+    y: toBottom ? targetRect.y + targetRect.height + yMargin : topY,
   };
 
   const dx = Math.min(windowWidth - (p.x + rootWidth / 2), 0);
@@ -486,7 +501,7 @@ function getRootAttrs(
   const dy = Math.min(windowHeight - (p.y + rootHeight), 0);
   const ty = p.y < 0 ? "0" : `calc(${p.y + dy}px)`;
   return {
-    className: "fixed border rounded shadow bg-white px-1 top-0 left-0" + (toBottom ? "" : ` ${TOP_LOCATED_KEY}`),
+    className: rootBaseClassName + (toBottom ? "" : ` ${TOP_LOCATED_KEY}`),
     style: {
       transform: `translate(${tx}, ${ty})`,
     },
