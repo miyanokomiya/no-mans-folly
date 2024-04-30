@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 
 interface Props {
   onClick?: () => void;
-  onDragStart?: () => void;
+  onDragStart?: (e: React.PointerEvent) => void;
   children: React.ReactNode;
   className?: string;
 }
@@ -24,7 +24,7 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
       const p = { x: e.clientX, y: e.clientY };
       const d = getDistance(p, downRef.current);
       if (d > 6) {
-        onDragStart?.();
+        onDragStart?.(e);
         downRef.current = undefined;
       }
     },
@@ -38,7 +38,7 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
       if (!downRef.current) return;
 
       e.preventDefault();
-      onDragStart?.();
+      onDragStart?.(e);
       downRef.current = undefined;
     },
     [onDragStart],

@@ -35,6 +35,7 @@ import { BoxPaddingButton } from "./BoxPaddingButton";
 import { getPatchByChangingCurveType } from "../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
+import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -128,6 +129,13 @@ export const FloatMenu: React.FC<Option> = ({
     if (rootAttrsFixed || !draggable.v) return;
     setRootAttrsFixed(rootAttrs);
   }, [draggable.v, rootAttrsFixed, rootAttrs]);
+
+  const handleDragMenu = useCallback(
+    (e: React.PointerEvent) => {
+      draggable.startDrag(e);
+    },
+    [draggable],
+  );
 
   const popupDefaultDirection: PopupDirection = rootAttrs?.className.includes(TOP_LOCATED_KEY) ? "top" : "bottom";
   const [popupedKey, setPopupedKey] = useState("");
@@ -366,7 +374,9 @@ export const FloatMenu: React.FC<Option> = ({
   return targetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
-        <div className="w-2 h-8 border rounded bg-gray-300 touch-none" onPointerDown={draggable.startDrag}></div>
+        <ClickOrDragHandler onClick={undefined} onDragStart={handleDragMenu}>
+          <div className="w-2 h-8 border rounded bg-gray-300 touch-none" />
+        </ClickOrDragHandler>
         {indexCommonStyle?.fill ? (
           <PopupButton
             name="fill"
