@@ -14,11 +14,12 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
   return {
     getLabel: () => "SingleSelectedByPointerOn",
     onStart: (ctx) => {
-      ctx.hideFloatMenu();
+      ctx.showFloatMenu();
       ctx.startDragging();
       timestamp = Date.now();
     },
     onEnd: (ctx) => {
+      ctx.hideFloatMenu();
       ctx.stopDragging();
     },
     handleEvent: (ctx, event) => {
