@@ -1,4 +1,4 @@
-import { newPanningState } from "../commons";
+import { newPanningState } from "../panningState";
 import type { AppCanvasState } from "./core";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 

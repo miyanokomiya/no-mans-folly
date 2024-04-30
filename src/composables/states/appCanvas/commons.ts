@@ -1,4 +1,5 @@
-import { HistoryEvent, newPanningReadyState } from "../commons";
+import { HistoryEvent } from "../commons";
+import { newPanningReadyState } from "../panningReadyState";
 import { ChangeStateEvent, KeyDownEvent, PointerDownEvent, TransitionValue, WheelEvent } from "../core";
 import { newDroppingNewShapeState } from "./droppingNewShapeState";
 import { AppCanvasState, AppCanvasStateContext, FileDropEvent, TextStyleEvent } from "./core";
