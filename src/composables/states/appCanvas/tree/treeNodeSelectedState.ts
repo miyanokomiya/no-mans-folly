@@ -7,12 +7,10 @@ import {
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
 import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
-import { getNextShapeComposite } from "../../../shapeComposite";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
   generateFindexNextAt,
   generateFindexPreviousAt,
-  getNextTreeLayout,
   getPatchToDisconnectBranch,
   getTreeBranchIds,
   isValidTreeNode,
@@ -23,11 +21,11 @@ import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
-import { mergeMap } from "../../../../utils/commons";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 export const newTreeNodeSelectedState = defineIntransientState(() => {
   let treeNodeShape: TreeNodeShape;
@@ -38,10 +36,7 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
     if (!treeNodeShape.parentId) return;
 
     const shapeComposite = ctx.getShapeComposite();
-    const nextComposite = getNextShapeComposite(shapeComposite, {
-      add: [treeNode],
-    });
-    const patch = getNextTreeLayout(nextComposite, treeNodeShape.parentId);
+    const patch = getPatchByLayouts(shapeComposite, { add: [treeNode] });
     treeNode = { ...treeNode, ...patch[treeNode.id] };
     delete patch[treeNode.id];
 
@@ -93,15 +88,11 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
               treeHandler.saveHitResult(treeHitResult);
               if (treeHitResult) {
                 const shapeComposite = ctx.getShapeComposite();
-                const treeRootId = treeNodeShape.parentId!;
 
                 if (treeHitResult.type === -1) {
                   // Disconnect this branch and make it new tree.
                   const shapePatch = getPatchToDisconnectBranch(shapeComposite, treeNodeShape.id);
-                  // Need to recalculate original tree's layout.
-                  const nextComposite = getNextShapeComposite(shapeComposite, { update: shapePatch });
-                  const treePatch = getNextTreeLayout(nextComposite, treeRootId);
-                  ctx.patchShapes(mergeMap(shapePatch, treePatch));
+                  ctx.patchShapes(getPatchByLayouts(shapeComposite, { update: shapePatch }));
                   return;
                 }
 
