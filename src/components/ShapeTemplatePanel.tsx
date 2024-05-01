@@ -22,6 +22,42 @@ export const ShapeTemplatePanel: React.FC = () => {
     });
   }, [sm]);
 
+  const saveTemplateAssets = useCallback(
+    async (assets: [string, Blob][]) => {
+      const smctx = getCtx();
+      const assetAPI = smctx.assetAPI;
+
+      if (!assetAPI.enabled) {
+        smctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
+        return;
+      }
+
+      const imageStore = smctx.getImageStore();
+      const unstored = assets.filter(([id]) => imageStore.getImage(id));
+      const saved: [string, Blob][] = [];
+
+      for (const [id, blob] of unstored) {
+        try {
+          await assetAPI.saveAsset(id, blob);
+          saved.push([id, blob]);
+        } catch (e) {
+          console.error(e);
+          smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
+        }
+      }
+
+      for (const [id, blob] of saved) {
+        try {
+          await imageStore.loadFromFile(id, blob);
+        } catch (e) {
+          console.error(e);
+          smctx.showToastMessage({ text: "Failed to load asset files.", type: "warn" });
+        }
+      }
+    },
+    [getCtx],
+  );
+
   const createTemplate = useCallback(
     async (url: string) => {
       const res = await fetch(url);
@@ -30,6 +66,12 @@ export const ShapeTemplatePanel: React.FC = () => {
       if (!template) return;
 
       const smctx = getCtx();
+
+      if (template.assets) {
+        // Save assets asynchronously.
+        saveTemplateAssets(template.assets);
+      }
+
       const duplicated = duplicateShapes(
         smctx.getShapeStruct,
         template.shapes,
@@ -40,7 +82,7 @@ export const ShapeTemplatePanel: React.FC = () => {
       );
       return duplicated;
     },
-    [getCtx],
+    [getCtx, saveTemplateAssets],
   );
 
   const handleIconDragStart = useCallback(
