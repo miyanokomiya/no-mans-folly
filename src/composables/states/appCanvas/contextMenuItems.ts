@@ -198,13 +198,15 @@ async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): 
     shapeComposite: newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct }),
     getDocumentMap: ctx.getDocumentMap,
     imageStore: ctx.getImageStore(),
+    assetAPI: ctx.assetAPI,
   });
 
   const range = ctx.getShapeComposite().getWrapperRectForShapes(targetShapes, true);
 
   try {
     const builder = newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
-    saveFileInWeb(builder.toDataURL(), withMeta ? `shapes${FOLLY_SVG_PREFIX}` : "shapes.svg");
+    const dataURL = await builder.toDataURL();
+    saveFileInWeb(dataURL, withMeta ? `shapes${FOLLY_SVG_PREFIX}` : "shapes.svg");
   } catch (e: any) {
     ctx.showToastMessage({
       text: `Failed to create image. ${e.message}`,

@@ -1,7 +1,8 @@
+import { AssetAPI } from "../hooks/persistence";
 import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
-import { isImageShape } from "../shapes/image";
+import { blobToBase64 } from "../utils/fileAccess";
 import { createTemplateShapeEmbedElement } from "../utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
 import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
@@ -13,13 +14,14 @@ interface Option {
   shapeComposite: ShapeComposite;
   getDocumentMap: () => { [id: string]: DocOutput };
   imageStore?: ImageStore;
+  assetAPI: AssetAPI;
 }
 
 export function newShapeSVGRenderer(option: Option) {
   const { mergedShapeMap, mergedShapeTree } = option.shapeComposite;
   const docMap = option.getDocumentMap();
 
-  function render(ctx: CanvasRenderingContext2D): SVGSVGElement {
+  async function render(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {
     const root = createSVGSVGElement();
 
     walkTree(mergedShapeTree, (node) => {
@@ -32,52 +34,42 @@ export function newShapeSVGRenderer(option: Option) {
     });
 
     // Gather asset files used in the SVG.
-    const assetDataMap = new Map<string, { width: number; height: number; img: HTMLImageElement }>();
-    root.querySelectorAll("use[href]").forEach((elm) => {
+    const assetDataMap = new Map<string, { width: number; height: number; base64: string }>();
+    for (const elm of root.querySelectorAll("use[href]")) {
+      if (!option.assetAPI?.enabled) {
+        // TODO: Show warning message: "assetAPI" isn't available.
+        throw new Error(`Asset API is unavailable.`);
+      }
+
       const useElm = elm as SVGUseElement;
       const assetId = useElm.href.baseVal.slice(1);
-      const imageData = option.imageStore?.getImageData(assetId);
-      if (!imageData) return;
-
-      const { img, type } = imageData;
-      // Resize the element via "transform" attribute here since its "width" and "height" don't affect its size.
-      const width = useElm.width.baseVal.value;
-      const height = useElm.height.baseVal.value;
-      const tranform = renderTransform([width / img.width, 0, 0, height / img.height, 0, 0]);
-      if (tranform) {
-        useElm.setAttribute("transform", tranform);
+      const assetData = option.imageStore?.getImageData(assetId);
+      if (!assetData) {
+        throw new Error(`Not found image data: ${assetId}.`);
       }
 
-      if (type !== "image/svg+xml") {
-        assetDataMap.set(assetId, { width: img.width, height: img.height, img });
-        return;
-      }
+      try {
+        const assetFile = await option.assetAPI.loadAsset(assetId);
+        if (!assetFile) {
+          throw new Error(`Not found image data: ${assetId}.`);
+        }
 
-      // When the image is SVG, save the widest shape size.
-      // => Use this size to expand SVG when it's drawn to "canvas".
-      const data = assetDataMap.get(assetId);
-      const { width: currentWidth, height: currentHeight } = data ?? img;
-      if (currentWidth * currentHeight < width * height) {
-        assetDataMap.set(assetId, { width, height, img });
-      } else {
-        assetDataMap.set(assetId, { width: currentWidth, height: currentHeight, img });
+        const base64 = await blobToBase64(assetFile, true);
+        assetDataMap.set(assetId, { width: assetData.img.width, height: assetData.img.height, base64 });
+      } catch (e: any) {
+        console.error(e);
+        throw new Error(`Failed to load image file: ${assetId}. ${e.message}`);
       }
-    });
+    }
 
     // Embed asset files in a def tag.
     const assetDef = createSVGElement("def");
     for (const [assetId, data] of assetDataMap.entries()) {
-      const assetCanvas = document.createElement("canvas");
-      assetCanvas.width = data.width;
-      assetCanvas.height = data.height;
-      const assetCtx = assetCanvas.getContext("2d")!;
-      assetCtx.drawImage(data.img, 0, 0, assetCanvas.width, assetCanvas.height);
-      const base64 = assetCanvas.toDataURL();
       const imageElm = createSVGElement("image", {
         id: assetId,
-        href: base64,
-        width: data.img.width,
-        height: data.img.height,
+        href: data.base64,
+        width: data.width,
+        height: data.height,
       });
       assetDef.appendChild(imageElm);
     }
@@ -89,20 +81,10 @@ export function newShapeSVGRenderer(option: Option) {
     return root;
   }
 
-  function renderWithMeta(ctx: CanvasRenderingContext2D): SVGSVGElement {
-    const root = createSVGSVGElement();
+  async function renderWithMeta(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {
+    const root = await render(ctx);
 
-    walkTree(mergedShapeTree, (node) => {
-      const shape = mergedShapeMap[node.id];
-      if (isImageShape(shape)) throw new Error("Image shapes can't be included.");
-
-      const doc = docMap[shape.id];
-      const elm = createShapeElement(option, ctx, shape, doc);
-      if (elm) {
-        root.appendChild(elm);
-      }
-    });
-
+    // Embed shape data to the SVG.
     const targets = option.shapeComposite.getAllBranchMergedShapes(mergedShapeTree.map((t) => t.id));
     const docs: [string, DocOutput][] = targets.filter((s) => !!docMap[s.id]).map((s) => [s.id, docMap[s.id]]);
     root.appendChild(createTemplateShapeEmbedElement({ shapes: targets, docs }));

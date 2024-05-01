@@ -45,7 +45,7 @@ function createCanvas(): HTMLCanvasElement {
 }
 
 interface SVGOption {
-  render: (renderCtx: CanvasRenderingContext2D) => SVGSVGElement;
+  render: (renderCtx: CanvasRenderingContext2D) => Promise<SVGSVGElement>;
   range: IRectangle;
 }
 
@@ -55,18 +55,26 @@ export function newSVGImageBuilder({ render, range }: SVGOption) {
   canvas.width = Math.ceil(range.width * rate);
   canvas.height = Math.ceil(range.height * rate);
   const renderCtx = canvas.getContext("2d")!;
-  const elm = render(renderCtx);
-  elm.setAttribute("viewBox", `${range.x} ${range.y} ${range.width} ${range.height}`);
-  elm.setAttribute("width", `${range.width}`);
-  elm.setAttribute("height", `${range.height}`);
 
-  function toBlob() {
+  let elm: SVGSVGElement;
+  async function procRender() {
+    elm = await render(renderCtx);
+    elm.setAttribute("viewBox", `${range.x} ${range.y} ${range.width} ${range.height}`);
+    elm.setAttribute("width", `${range.width}`);
+    elm.setAttribute("height", `${range.height}`);
+  }
+
+  async function toBlob() {
+    if (!elm) {
+      await procRender();
+    }
     const svg = new XMLSerializer().serializeToString(elm);
     return new Blob([`${XML_PROLONG}\n${svg}`], { type: "image/svg+xml" });
   }
 
-  function toDataURL(): string {
-    return URL.createObjectURL(toBlob());
+  async function toDataURL(): Promise<string> {
+    const blob = await toBlob();
+    return URL.createObjectURL(blob);
   }
 
   return { toBlob, toDataURL };
