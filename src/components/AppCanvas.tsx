@@ -1,6 +1,11 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { AppStateContext, AppStateMachineContext, SetAppStateContext } from "../contexts/AppContext";
+import {
+  AppStateContext,
+  AppStateMachineContext,
+  GetAppStateContext,
+  SetAppStateContext,
+} from "../contexts/AppContext";
 import { canHaveText, duplicateShapes, getCommonStruct } from "../shapes";
 import { useCanvas } from "../hooks/canvas";
 import { getKeyOptions, getMouseOptions, ModifierOptions } from "../utils/devices";
@@ -44,6 +49,7 @@ export const AppCanvas: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
   const setSmctx = useContext(SetAppStateContext);
+  const getSmctx = useContext(GetAppStateContext);
 
   const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
@@ -63,14 +69,19 @@ export const AppCanvas: React.FC = () => {
     return newImageStore();
   }, [shapeStore]);
 
+  // Need to directly use this value as a dependency.
+  const assetAPI = smctx.assetAPI;
   const loadShapeAssets = useCallback(
-    (shapes: Shape[]) => {
-      imageStore.batchLoad(
+    async (shapes: Shape[]) => {
+      const errors = await imageStore.batchLoad(
         shapes.filter(isImageShape).map((s) => s.assetId),
-        smctx.assetAPI,
+        assetAPI,
       );
+      if (errors && errors.length > 0) {
+        getSmctx().showToastMessage({ text: `Failed to load ${errors.length} asset file(s).`, type: "warn" });
+      }
     },
-    [smctx.assetAPI, imageStore],
+    [getSmctx, assetAPI, imageStore],
   );
 
   useEffect(() => {

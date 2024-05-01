@@ -49,22 +49,29 @@ export function newImageStore() {
     return file;
   }
 
-  async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<void> {
+  /**
+   * Returns error id list when there is any.
+   */
+  async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<string[] | undefined> {
     if (!assetAPI.enabled) return;
+
+    const errors: string[] = [];
 
     for (const assetId of assetIds) {
       if (assetId && !processing.has(assetId)) {
         try {
+          processing.add(assetId);
           const file = await assetAPI.loadAsset(assetId);
           if (file) {
             await loadFromFile(assetId, file);
           }
         } catch (e) {
-          // Ignore individual error
-          console.warn(`Not found asset: ${assetId}`);
+          errors.push(assetId);
         }
       }
     }
+
+    return errors;
   }
 
   function getImage(assetId: string): HTMLImageElement | undefined {
