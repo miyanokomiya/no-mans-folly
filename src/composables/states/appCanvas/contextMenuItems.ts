@@ -59,8 +59,8 @@ export const CONTEXT_MENU_ITEM_SRC = {
 } satisfies { [key: string]: ContextMenuItem };
 
 export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
-  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG,
   CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
+  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG,
   CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG,
   // CONTEXT_MENU_ITEM_SRC.COPY_AS_SVG, // Clipboard API doesn't go with "image/svg+xml"
   CONTEXT_MENU_ITEM_SRC.EXPORT_AS_FOLLY_SVG,
