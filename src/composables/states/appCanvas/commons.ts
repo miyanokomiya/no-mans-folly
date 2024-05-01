@@ -464,7 +464,7 @@ async function loadFollySvgFiles(ctx: AppCanvasStateContext, follySvgFiles: File
     }
   }
 
-  pasteShapeTemplateInfoList(ctx, templates, point);
+  await pasteShapeTemplateInfoList(ctx, templates, point);
 }
 
 async function loadFollySheetFiles(ctx: AppCanvasStateContext, follySheetFiles: File[], point: IVec2) {
@@ -477,10 +477,10 @@ async function loadFollySheetFiles(ctx: AppCanvasStateContext, follySheetFiles: 
     }
   }
 
-  pasteShapeTemplateInfoList(ctx, templates, point);
+  await pasteShapeTemplateInfoList(ctx, templates, point);
 }
 
-function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates: ShapeTemplateInfo[], point: IVec2) {
+async function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates: ShapeTemplateInfo[], point: IVec2) {
   const newShapes: Shape[] = [];
   const newDocMap: { [key: string]: DocOutput } = {};
   const lastIndex = ctx.createLastIndex();
@@ -516,6 +516,36 @@ function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates: Shape
     ctx.addShapes(adjustedNewShapes, newDocMap);
     // Select root shapes
     ctx.multiSelectShapes(adjustedNewShapes.filter((s) => !s.parentId).map((s) => s.id));
+  }
+
+  const imageStore = ctx.getImageStore();
+  const assetMap = new Map<string, Blob>();
+  templates.forEach((t) => {
+    t.assets?.forEach(([id, blob]) => {
+      if (imageStore.getImage(id)) return;
+      assetMap.set(id, blob);
+    });
+  });
+  if (assetMap.size === 0) return;
+
+  if (!ctx.assetAPI.enabled) {
+    ctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
+    return;
+  }
+
+  for (const [id, blob] of assetMap) {
+    await ctx.assetAPI.saveAsset(id, blob);
+  }
+
+  // Try to load asset files.
+  // Show warning when something goes wrong, but keep going.
+  for (const [id, blob] of assetMap) {
+    try {
+      await imageStore.loadFromFile(id, blob);
+    } catch (e) {
+      console.error(e);
+      ctx.showToastMessage({ text: "Failed to load asset files.", type: "warn" });
+    }
   }
 }
 

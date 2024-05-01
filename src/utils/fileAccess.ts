@@ -102,7 +102,7 @@ export function isFollySheetFileName(loweredName: string): boolean {
   return loweredName.endsWith(DOC_FILE_NAME_SUFFIX) && loweredName !== DIAGRAM_FILE_NAME;
 }
 
-export function blobToBase64(blob: Blob | File, withURI = false): Promise<string> {
+export async function blobToBase64(blob: Blob | File, withURI = false): Promise<string> {
   const fileReader: FileReader = new FileReader();
   return new Promise((resolve, reject) => {
     fileReader.readAsBinaryString(blob);
@@ -113,4 +113,19 @@ export function blobToBase64(blob: Blob | File, withURI = false): Promise<string
     };
     fileReader.onerror = reject;
   });
+}
+
+export function base64ToBlob(base64: string, type: string): Blob {
+  const bin = atob(base64.replace(/^.*,/, ""));
+  const buffer = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    buffer[i] = bin.charCodeAt(i);
+  }
+  const blob = new Blob([buffer.buffer], { type });
+  return blob;
+}
+
+export function getBase64Type(base64: string): string {
+  const data = base64.match(/^data:(.+);/);
+  return data && data[1] ? data[1] : "application/octet-stream";
 }
