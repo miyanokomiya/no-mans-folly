@@ -101,3 +101,16 @@ export async function exportWorkspaceToAnother(
 export function isFollySheetFileName(loweredName: string): boolean {
   return loweredName.endsWith(DOC_FILE_NAME_SUFFIX) && loweredName !== DIAGRAM_FILE_NAME;
 }
+
+export function blobToBase64(blob: Blob | File, withURI = false): Promise<string> {
+  const fileReader: FileReader = new FileReader();
+  return new Promise((resolve, reject) => {
+    fileReader.readAsBinaryString(blob);
+    fileReader.onload = () => {
+      const data = btoa(fileReader.result as string);
+      const base64 = withURI ? `data:${blob.type};base64,${data}` : data;
+      resolve(base64);
+    };
+    fileReader.onerror = reject;
+  });
+}

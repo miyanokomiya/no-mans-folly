@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { FileAccess, getSheetFileName } from "../../utils/fileAccess";
+import { FileAccess, blobToBase64, getSheetFileName } from "../../utils/fileAccess";
 import { GoogleDriveFile } from "../types";
 import { ASSET_DIRECTORY_NAME, DIAGRAM_FILE_NAME } from "../../utils/fileAccess";
 import { fetchGoogleAuthToken } from "../utils/auth";
@@ -377,13 +377,4 @@ function getMultipartItems() {
   const delimiter = "\r\n--" + boundary + "\r\n";
   const close_delim = "\r\n--" + boundary + "--";
   return { boundary, delimiter, close_delim };
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  const fileReader: FileReader = new FileReader();
-  return new Promise((resolve, reject) => {
-    fileReader.readAsBinaryString(blob);
-    fileReader.onload = () => resolve(btoa(fileReader.result as string));
-    fileReader.onerror = reject;
-  });
 }
