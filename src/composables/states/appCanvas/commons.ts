@@ -533,13 +533,20 @@ async function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates:
     return;
   }
 
+  const saved: [string, Blob][] = [];
   for (const [id, blob] of assetMap) {
-    await ctx.assetAPI.saveAsset(id, blob);
+    try {
+      await ctx.assetAPI.saveAsset(id, blob);
+      saved.push([id, blob]);
+    } catch (e) {
+      console.error(e);
+      ctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
+    }
   }
 
   // Try to load asset files.
   // Show warning when something goes wrong, but keep going.
-  for (const [id, blob] of assetMap) {
+  for (const [id, blob] of saved) {
     try {
       await imageStore.loadFromFile(id, blob);
     } catch (e) {
