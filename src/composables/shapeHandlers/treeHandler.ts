@@ -1,9 +1,9 @@
-import { IRectangle, IVec2, getDistance, getRectCenter, isSame } from "okageo";
+import { IRectangle, IVec2, applyAffine, getDistance, getRectCenter, isSame, multiAffines } from "okageo";
 import { getWrapperRect } from "../../shapes";
 import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../../shapes/tree/treeNode";
 import { TreeRootShape, isTreeRootShape } from "../../shapes/tree/treeRoot";
 import { ShapeComposite } from "../shapeComposite";
-import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../../models";
+import { Direction4, EntityPatchInfo, Shape, Size, StyleScheme } from "../../models";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getDistanceBetweenPointAndRect } from "../../utils/geometry";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
@@ -14,6 +14,7 @@ import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { pickMinItem } from "../../utils/commons";
 import { defineShapeHandler } from "./core";
 import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
+import { getShapeDetransform, getShapeTransform } from "../../shapes/simplePolygon";
 
 const ANCHOR_SIZE = 9;
 const ANCHOR_MARGIN = 30;
@@ -48,7 +49,19 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
   const isRoot = isTreeRootShape(shape);
   const directionSrc = isTreeNodeShape(shape) ? shape.direction : 0;
   const dropdownSrc = isTreeNodeShape(shape) ? shape.dropdown : undefined;
-  const bounds = getWrapperRect(shapeComposite.getShapeStruct, shape);
+
+  const shapeTransform = getShapeTransform(shape);
+
+  const rootShape = (isRoot ? shape : shapeComposite.shapeMap[(shape as any as TreeNodeShape).parentId ?? ""]) ?? shape;
+  const rootTransform = getShapeTransform(rootShape as TreeRootShape);
+  const rootDetransform = getShapeDetransform(rootShape as TreeRootShape);
+
+  const localShapeSize: Size = getWrapperRect(shapeComposite.getShapeStruct, {
+    ...shape,
+    rotation: shape.rotation - rootShape.rotation,
+  });
+  const localShapeP = applyAffine(multiAffines([rootDetransform, shapeTransform]), { x: 0, y: 0 });
+  const bounds = { x: localShapeP.x, y: localShapeP.y, width: localShapeSize.width, height: localShapeSize.height };
 
   function getAnchors(scale: number): AnchorInfo[] {
     const margin = ANCHOR_MARGIN * scale;
@@ -161,8 +174,9 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 
   function hitTest(p: IVec2, scale = 1): TreeHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
+    const localP = applyAffine(rootDetransform, p);
 
-    const anchor = getAnchors(scale).find((a) => getDistance(a[1], p) <= threshold);
+    const anchor = getAnchors(scale).find((a) => getDistance(a[1], localP) <= threshold);
     if (!anchor) return;
     return { direction: anchor[0], p: anchor[1], type: anchor[2], dropdown: anchor[3] };
   }
@@ -170,6 +184,9 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
     const anchors = getAnchors(scale);
     const threshold = ANCHOR_SIZE * scale;
+
+    ctx.save();
+    ctx.transform(...rootTransform);
 
     applyFillStyle(ctx, { color: style.selectionPrimary });
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
@@ -290,6 +307,8 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
       ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
       ctx.fill();
     }
+
+    ctx.restore();
   }
 
   return {
