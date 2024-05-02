@@ -605,6 +605,22 @@ describe("newTreeNodeMovingHandler", () => {
       expect(target2.hitTest({ x: -50, y: -10 }, 1)).toEqual(undefined);
     });
   });
+
+  describe("hitTest: rotation", () => {
+    test("should take place in the rotated tree space", () => {
+      const shapeComposite = newShapeComposite({
+        shapes: [root, a, aa, b, bb, ia].map((s) => ({ ...s, rotation: Math.PI / 2 })),
+        getStruct: getCommonStruct,
+      });
+      const target = newTreeNodeMovingHandler({ getShapeComposite: () => shapeComposite, targetId: "a" });
+      expect(target.hitTest({ x: 80, y: -10 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 50, y: 40 }, 1)).toEqual({
+        treeParentId: "root",
+        direction: 1,
+        findex: generateKeyBetween(b.findex, null),
+      });
+    });
+  });
 });
 
 describe("getTreeBranchIds", () => {

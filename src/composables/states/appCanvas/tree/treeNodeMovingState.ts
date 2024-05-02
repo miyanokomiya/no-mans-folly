@@ -2,9 +2,6 @@ import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newSelectionHubState } from "../selectionHubState";
 import { TreeNodeShape, getBoxAlignByDirection } from "../../../../shapes/tree/treeNode";
 import { newTreeNodeMovingHandler, isValidTreeNode, getTreeBranchIds } from "../../../shapeHandlers/treeHandler";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { TransitionValue } from "../../core";
 import { newTreeRootMovingState } from "./treeRootMovingState";
@@ -104,19 +101,6 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const style = ctx.getStyleScheme();
-      applyFillStyle(renderCtx, { color: style.selectionSecondaly });
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: ctx.getScale() * 2 });
-
-      const shapeComposite = ctx.getShapeComposite();
-      const rect = shapeComposite.getWrapperRectForShapes(branchIds.map((id) => shapeComposite.mergedShapeMap[id]));
-      renderCtx.beginPath();
-      renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
-      scaleGlobalAlpha(renderCtx, 0.3, () => {
-        renderCtx.fill();
-      });
-      renderCtx.stroke();
-
       treeMovingHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };

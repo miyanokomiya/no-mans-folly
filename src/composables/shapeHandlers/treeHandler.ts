@@ -1,11 +1,10 @@
 import { IRectangle, IVec2, applyAffine, getDistance, getRectCenter, isSame, sub } from "okageo";
-import { getWrapperRect } from "../../shapes";
 import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../../shapes/tree/treeNode";
 import { TreeRootShape, isTreeRootShape } from "../../shapes/tree/treeRoot";
 import { ShapeComposite } from "../shapeComposite";
 import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../../models";
 import { applyFillStyle } from "../../utils/fillStyle";
-import { TAU, getDistanceBetweenPointAndRect, getRectRotateFn } from "../../utils/geometry";
+import { TAU, getDistanceBetweenPointAndRect, getRectRotateFn, getWrapperRect } from "../../utils/geometry";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, treeLayout } from "../../utils/layouts/tree";
 import { flatTree, getAllBranchIds, getTree } from "../../utils/tree";
@@ -20,6 +19,7 @@ import {
   getSimpleShapeCenter,
   getSimpleShapeRect,
 } from "../../shapes/simplePolygon";
+import { scaleGlobalAlpha } from "../../utils/renderer";
 
 const ANCHOR_SIZE = 9;
 const ANCHOR_MARGIN = 30;
@@ -350,14 +350,20 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
   const ownBranchIdSet = new Set(getTreeBranchIds(shapeComposite, [shape.id]));
   const candidateIds = allIds.filter((id) => !ownBranchIdSet.has(id));
 
-  const rects = candidateIds.map<[string, IRectangle]>((id) => [
-    id,
-    getWrapperRect(shapeComposite.getShapeStruct, shapeComposite.shapeMap[id]),
-  ]);
+  const rootTransform = getShapeTransform(root as TreeRootShape);
+  const rootDetransform = getShapeDetransform(root as TreeRootShape);
+  const rootC = getSimpleShapeCenter(root);
+  const rectRotateFn = getRectRotateFn(root.rotation, rootC);
 
-  function hitTest(p: IVec2): TreeNodeMovingResult | undefined {
+  const rects = candidateIds.map<[string, IRectangle]>((id) => {
+    const rect = rectRotateFn(getSimpleShapeRect(shapeComposite.shapeMap[id] as TreeShapeBase), true);
+    return [id, { x: rect.x - root.p.x, y: rect.y - root.p.y, width: rect.width, height: rect.height }];
+  });
+
+  function hitTest(globalP: IVec2): TreeNodeMovingResult | undefined {
     if (rects.length === 0) return;
 
+    const p = applyAffine(rootDetransform, globalP);
     const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
       id,
       rect,
@@ -507,30 +513,53 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
     scale: number,
     movingResult?: TreeNodeMovingResult,
   ) {
-    if (!movingResult) return;
+    ctx.save();
+    ctx.transform(...rootTransform);
+    ctx.translate(-root.p.x, -root.p.y);
 
-    applyFillStyle(ctx, { color: style.selectionPrimary });
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: scale * 2 });
+    // Render the bounds of moving branch.
+    {
+      const branchRects = Array.from(ownBranchIdSet).map((id) =>
+        rectRotateFn(getSimpleShapeRect(shapeComposite.mergedShapeMap[id] as TreeShapeBase), true),
+      );
+      const rect = getWrapperRect(branchRects);
+      applyFillStyle(ctx, { color: style.selectionSecondaly });
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: scale * 2 });
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.width, rect.height);
+      scaleGlobalAlpha(ctx, 0.3, () => {
+        ctx.fill();
+      });
+      ctx.stroke();
+    }
 
-    const treeParent = shapeComposite.shapeMap[movingResult.treeParentId];
-    const treeParentRect = getWrapperRect(shapeComposite.getShapeStruct, treeParent);
-    const siblings = allShapeNodes.filter(
-      (s) =>
-        s.treeParentId === treeParent.id &&
-        s.direction === movingResult.direction &&
-        s.dropdown === movingResult.dropdown,
-    );
-    const _nextIndex = siblings.findIndex((s) => movingResult.findex < s.findex);
-    const nextIndex = _nextIndex === -1 ? siblings.length : _nextIndex;
+    // Render the preview of insertion.
+    if (movingResult) {
+      applyFillStyle(ctx, { color: style.selectionPrimary });
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: scale * 2 });
 
-    renderMovingPreview(
-      ctx,
-      movingResult.direction,
-      movingResult.dropdown,
-      treeParentRect,
-      nextIndex > 0 ? getWrapperRect(shapeComposite.getShapeStruct, siblings[nextIndex - 1]) : undefined,
-      nextIndex < siblings.length ? getWrapperRect(shapeComposite.getShapeStruct, siblings[nextIndex]) : undefined,
-    );
+      const treeParent = shapeComposite.shapeMap[movingResult.treeParentId] as TreeShapeBase;
+      const treeParentRect = rectRotateFn(getSimpleShapeRect(treeParent), true);
+      const siblings = allShapeNodes.filter(
+        (s) =>
+          s.treeParentId === treeParent.id &&
+          s.direction === movingResult.direction &&
+          s.dropdown === movingResult.dropdown,
+      );
+      const _nextIndex = siblings.findIndex((s) => movingResult.findex < s.findex);
+      const nextIndex = _nextIndex === -1 ? siblings.length : _nextIndex;
+
+      renderMovingPreview(
+        ctx,
+        movingResult.direction,
+        movingResult.dropdown,
+        treeParentRect,
+        nextIndex > 0 ? rectRotateFn(getSimpleShapeRect(siblings[nextIndex - 1]), true) : undefined,
+        nextIndex < siblings.length ? rectRotateFn(getSimpleShapeRect(siblings[nextIndex]), true) : undefined,
+      );
+    }
+
+    ctx.restore();
   }
 
   return {
