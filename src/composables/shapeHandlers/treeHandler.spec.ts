@@ -651,6 +651,20 @@ describe("getNextTreeLayout", () => {
     expect(result["a"].p!.x).toBeCloseTo(result["cc"].p!.x);
     expect(result["aa"].p!.x).not.toBeCloseTo(result["cc"].p!.x);
   });
+
+  test("should align shapes according to rotation of the root", () => {
+    const rotatedRoot = { ...root, rotation: Math.PI / 2 };
+    const shapeComposite = newShapeComposite({
+      shapes: [rotatedRoot, a, aa],
+      getStruct: getCommonStruct,
+    });
+    const result = getNextTreeLayout(shapeComposite, "root");
+
+    expect(result["a"].p!).toEqualPoint({ x: 0, y: 60 });
+    expect(result["a"].rotation!).toBeCloseTo(Math.PI / 2);
+    expect(result["aa"].p!).toEqualPoint({ x: 0, y: 120 });
+    expect(result["aa"].rotation!).toBeCloseTo(Math.PI / 2);
+  });
 });
 
 describe("getModifiedTreeRootIds", () => {

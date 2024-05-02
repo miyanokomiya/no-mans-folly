@@ -1624,7 +1624,10 @@ describe("getIntersectionBetweenCircles", () => {
 
 describe("getRectRotateFn", () => {
   test("should return rotated rect", () => {
-    const fn = getRectRotateFn(Math.PI / 2, { x: 10, y: 0 });
-    expect(fn({ x: 0, y: 0, width: 10, height: 20 })).toEqualRect({ x: -5, y: -15, width: 10, height: 20 });
+    const fn0 = getRectRotateFn(Math.PI, { x: 10, y: 0 });
+    expect(fn0({ x: 50, y: -10, width: 10, height: 20 })).toEqualRect({ x: -40, y: -10, width: 10, height: 20 });
+
+    const fn1 = getRectRotateFn(Math.PI / 2, { x: 10, y: 0 });
+    expect(fn1({ x: 0, y: 0, width: 10, height: 20 })).toEqualRect({ x: -5, y: -15, width: 10, height: 20 });
   });
 });

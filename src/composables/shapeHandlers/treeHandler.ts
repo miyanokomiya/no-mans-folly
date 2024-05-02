@@ -5,7 +5,7 @@ import { TreeRootShape, isTreeRootShape } from "../../shapes/tree/treeRoot";
 import { ShapeComposite } from "../shapeComposite";
 import { Direction4, EntityPatchInfo, Shape, Size, StyleScheme } from "../../models";
 import { applyFillStyle } from "../../utils/fillStyle";
-import { TAU, getDistanceBetweenPointAndRect } from "../../utils/geometry";
+import { TAU, getDistanceBetweenPointAndRect, getRectRotateFn } from "../../utils/geometry";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, treeLayout } from "../../utils/layouts/tree";
 import { flatTree, getAllBranchIds, getTree } from "../../utils/tree";
@@ -14,7 +14,12 @@ import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { pickMinItem } from "../../utils/commons";
 import { defineShapeHandler } from "./core";
 import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
-import { getShapeDetransform, getShapeTransform } from "../../shapes/simplePolygon";
+import {
+  getShapeDetransform,
+  getShapeTransform,
+  getSimpleShapeCenter,
+  getSimpleShapeRect,
+} from "../../shapes/simplePolygon";
 
 const ANCHOR_SIZE = 9;
 const ANCHOR_MARGIN = 30;
@@ -600,8 +605,8 @@ export function isSameTreeNodeMovingResult(a?: TreeNodeMovingResult, b?: TreeNod
   return !a && !b;
 }
 
-function toLayoutNode(shapeComposite: ShapeComposite, shape: TreeShapeBase): TreeLayoutNode {
-  const rect = getWrapperRect(shapeComposite.getShapeStruct, shape);
+function toLayoutNode(shape: TreeShapeBase): TreeLayoutNode {
+  const rect = getSimpleShapeRect(shape);
   if (isTreeNodeShape(shape)) {
     return {
       id: shape.id,
@@ -623,7 +628,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): TreeLayo
   flatTree([tree]).forEach((t) => {
     const s = shapeComposite.mergedShapeMap[t.id];
     if (!isTreeShapeBase(s)) return;
-    const node = toLayoutNode(shapeComposite, s);
+    const node = toLayoutNode(s);
     if (!node.parentId || shapeComposite.mergedShapeMap[node.parentId]) {
       layoutNodes.push(node);
     } else {
@@ -675,6 +680,10 @@ export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string
   const root = shapeComposite.mergedShapeTreeMap[rootId];
   if (root.children.length === 0) return {};
 
+  const rootShape = shapeComposite.mergedShapeMap[root.id] as TreeRootShape;
+  const rootC = getSimpleShapeCenter(rootShape);
+  const rectRotateFn = getRectRotateFn(rootShape.rotation, rootC);
+
   const node = shapeComposite.mergedShapeMap[root.children[0].id] as TreeNodeShape;
   const isDropdown = node.dropdown === 0 || node.dropdown === 2;
 
@@ -683,8 +692,19 @@ export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string
 
   const ret: { [id: string]: Partial<Shape> } = {};
   result.forEach((r) => {
-    if (!isSame(r.rect, shapeComposite.shapeMap[r.id].p)) {
-      ret[r.id] = { p: { x: r.rect.x, y: r.rect.y } };
+    const s = shapeComposite.shapeMap[r.id] as TreeNodeShape;
+    const rotatedRect = rectRotateFn(r.rect);
+    const p = { x: rotatedRect.x, y: rotatedRect.y };
+
+    if (!isSame(p, s.p)) {
+      ret[r.id] = { p: { x: p.x, y: p.y } };
+    }
+    if (s.rotation !== rootShape.rotation) {
+      if (ret[r.id]) {
+        ret[r.id].rotation = rootShape.rotation;
+      } else {
+        ret[r.id] = { rotation: rootShape.rotation };
+      }
     }
   });
 
