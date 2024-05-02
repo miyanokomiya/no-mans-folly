@@ -1,9 +1,9 @@
-import { IRectangle, IVec2, applyAffine, getDistance, getRectCenter, isSame, multiAffines } from "okageo";
+import { IRectangle, IVec2, applyAffine, getDistance, getRectCenter, isSame, sub } from "okageo";
 import { getWrapperRect } from "../../shapes";
 import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../../shapes/tree/treeNode";
 import { TreeRootShape, isTreeRootShape } from "../../shapes/tree/treeRoot";
 import { ShapeComposite } from "../shapeComposite";
-import { Direction4, EntityPatchInfo, Shape, Size, StyleScheme } from "../../models";
+import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../../models";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getDistanceBetweenPointAndRect, getRectRotateFn } from "../../utils/geometry";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
@@ -55,18 +55,16 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
   const directionSrc = isTreeNodeShape(shape) ? shape.direction : 0;
   const dropdownSrc = isTreeNodeShape(shape) ? shape.dropdown : undefined;
 
-  const shapeTransform = getShapeTransform(shape);
-
   const rootShape = (isRoot ? shape : shapeComposite.shapeMap[(shape as any as TreeNodeShape).parentId ?? ""]) ?? shape;
   const rootTransform = getShapeTransform(rootShape as TreeRootShape);
   const rootDetransform = getShapeDetransform(rootShape as TreeRootShape);
 
-  const localShapeSize: Size = getWrapperRect(shapeComposite.getShapeStruct, {
-    ...shape,
-    rotation: shape.rotation - rootShape.rotation,
+  // Represents local position of the tree.
+  const localShapeP = sub(applyAffine(rootDetransform, getSimpleShapeCenter(shape)), {
+    x: shape.width / 2,
+    y: shape.height / 2,
   });
-  const localShapeP = applyAffine(multiAffines([rootDetransform, shapeTransform]), { x: 0, y: 0 });
-  const bounds = { x: localShapeP.x, y: localShapeP.y, width: localShapeSize.width, height: localShapeSize.height };
+  const bounds = { x: localShapeP.x, y: localShapeP.y, width: shape.width, height: shape.height };
 
   function getAnchors(scale: number): AnchorInfo[] {
     const margin = ANCHOR_MARGIN * scale;

@@ -49,13 +49,14 @@ export const struct: ShapeStruct<TreeNodeShape> = {
   render(ctx, shape, shapeContext) {
     const treeRoot = shapeContext?.shapeMap[shape.parentId ?? ""];
     if (isTreeRootShape(treeRoot)) {
+      const treeRotation = treeRoot.rotation;
       const treeParent = shapeContext?.shapeMap[shape.treeParentId];
       if (treeParent && isTreeShapeBase(treeParent)) {
         const parentRect = { x: treeParent.p.x, y: treeParent.p.y, width: treeParent.width, height: treeParent.height };
-        applyLocalSpace(ctx, parentRect, treeParent.rotation, () => {
+        applyLocalSpace(ctx, parentRect, treeRotation, () => {
           applyStrokeStyle(ctx, shape.stroke);
           ctx.beginPath();
-          applyPath(ctx, getConnectorLocalPath(shape, treeParent));
+          applyPath(ctx, getConnectorLocalPath(shape, treeParent, treeRotation));
           ctx.stroke();
         });
       }
@@ -68,6 +69,7 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     const treeRoot = shapeContext?.shapeMap[shape.parentId ?? ""];
     if (!isTreeRootShape(treeRoot)) return body;
 
+    const treeRotation = treeRoot.rotation;
     const treeParent = shapeContext?.shapeMap[shape.treeParentId];
     if (!treeParent || !isTreeShapeBase(treeParent)) return body;
 
@@ -77,8 +79,8 @@ export const struct: ShapeStruct<TreeNodeShape> = {
         {
           tag: "path",
           attributes: {
-            transform: renderTransform(getShapeTransform(treeParent)),
-            d: pathSegmentRawsToString(createSVGCurvePath(getConnectorLocalPath(shape, treeParent))),
+            transform: renderTransform(getShapeTransform({ ...treeParent, rotation: treeRotation })),
+            d: pathSegmentRawsToString(createSVGCurvePath(getConnectorLocalPath(shape, treeParent, treeRotation))),
             fill: "none",
             ...renderStrokeSVGAttributes(shape.stroke),
           },
@@ -155,14 +157,13 @@ export function getBoxAlignByDirection(direction: Direction4): BoxAlign {
   };
 }
 
-function getConnectorLocalPath(shape: TreeNodeShape, treeParent: TreeShapeBase): IVec2[] {
+function getConnectorLocalPath(shape: TreeNodeShape, treeParent: TreeShapeBase, treeRotation: number): IVec2[] {
   const parentC = getSimpleShapeCenter(treeParent);
-  const parentRotateFn = getRectRotateFn(treeParent.rotation, parentC);
+  const parentRotateFn = getRectRotateFn(treeRotation, parentC);
   const shapeRect = getSimpleShapeRect(shape);
   const rotatedShapeRect = parentRotateFn(shapeRect, true);
 
-  const adjustedShape =
-    treeParent.rotation === 0 ? shape : { ...shape, p: { x: rotatedShapeRect.x, y: rotatedShapeRect.y } };
+  const adjustedShape = treeRotation === 0 ? shape : { ...shape, p: { x: rotatedShapeRect.x, y: rotatedShapeRect.y } };
 
   const fromP = getChildConnectionPoint(adjustedShape);
   const path = [fromP];
