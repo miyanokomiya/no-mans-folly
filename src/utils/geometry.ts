@@ -1174,3 +1174,23 @@ export function getIntersectionBetweenCircles(ac: IVec2, ar: number, bc: IVec2, 
     { x, y: Math.sin(rad) * ar },
   ].map((p) => rotateFn(add(p, ac)));
 }
+
+/**
+ * Target rect keeps its global rotation.
+ * => Only x and y can change via this transform.
+ */
+export function getRectRotateFn(radian: number, origin?: IVec2): (rect: IRectangle, reverse?: boolean) => IRectangle {
+  if (radian === 0) return identityFn;
+
+  const sin = Math.sin(radian);
+  const cos = Math.cos(radian);
+  return (rect: IRectangle, reverse = false) => {
+    const c = getRectCenter(rect);
+    const v = origin ? sub(c, origin) : c;
+    const rotatedV = reverse
+      ? { x: v.x * cos + v.y * sin, y: -v.x * sin + v.y * cos }
+      : { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
+    const rotatedC = origin ? add(rotatedV, origin) : rotatedV;
+    return { x: rotatedC.x - rect.width / 2, y: rotatedC.y - rect.height / 2, width: rect.width, height: rect.height };
+  };
+}

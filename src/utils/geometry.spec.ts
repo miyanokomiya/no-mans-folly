@@ -65,6 +65,7 @@ import {
   getGeneralArcBounds,
   getIntersectionBetweenCircles,
   getRotatedWrapperRectAt,
+  getRectRotateFn,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
 
@@ -1618,5 +1619,12 @@ describe("getIntersectionBetweenCircles", () => {
     expect(getIntersectionBetweenCircles({ x: 10, y: 0 }, 10, { x: 14, y: 0 }, 6)).toEqualPoints([{ x: 20, y: 0 }]);
     expect(getIntersectionBetweenCircles({ x: 10, y: 0 }, 10, { x: 30, y: 0 }, 30)).toEqualPoints([{ x: 0, y: 0 }]);
     expect(getIntersectionBetweenCircles({ x: 15, y: 0 }, 5, { x: 10, y: 0 }, 10)).toEqualPoints([{ x: 10, y: 0 }]);
+  });
+});
+
+describe("getRectRotateFn", () => {
+  test("should return rotated rect", () => {
+    const fn = getRectRotateFn(Math.PI / 2, { x: 10, y: 0 });
+    expect(fn({ x: 0, y: 0, width: 10, height: 20 })).toEqualRect({ x: -5, y: -15, width: 10, height: 20 });
   });
 });
