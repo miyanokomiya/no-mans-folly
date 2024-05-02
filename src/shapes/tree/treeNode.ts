@@ -1,12 +1,15 @@
-import { IVec2, add, pathSegmentRawsToString } from "okageo";
+import { IVec2, add, pathSegmentRawsToString, sub } from "okageo";
 import { BoxAlign, Direction4, Shape } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
-import { TreeRootShape, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
+import { isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
-import { applyPath, createSVGCurvePath } from "../../utils/renderer";
+import { applyLocalSpace, applyPath, createSVGCurvePath } from "../../utils/renderer";
+import { getRectRotateFn } from "../../utils/geometry";
+import { getShapeTransform, getSimpleShapeCenter, getSimpleShapeRect } from "../simplePolygon";
+import { renderTransform } from "../../utils/svgElements";
 
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 50;
@@ -15,7 +18,7 @@ const MIN_HEIGHT = 50;
  * "parentId" should always refer to the root node.
  * "treeParentId" should refer to the parent as the tree structure.
  */
-export type TreeNodeShape = TreeRootShape & {
+export type TreeNodeShape = TreeShapeBase & {
   treeParentId: string;
   direction: Direction4;
   // As for dropdown, only 0 or 2 are valid and other values should be treated as 2.
@@ -48,10 +51,13 @@ export const struct: ShapeStruct<TreeNodeShape> = {
     if (isTreeRootShape(treeRoot)) {
       const treeParent = shapeContext?.shapeMap[shape.treeParentId];
       if (treeParent && isTreeShapeBase(treeParent)) {
-        applyStrokeStyle(ctx, shape.stroke);
-        ctx.beginPath();
-        applyPath(ctx, getConnectorPath(shape, treeParent));
-        ctx.stroke();
+        const parentRect = { x: treeParent.p.x, y: treeParent.p.y, width: treeParent.width, height: treeParent.height };
+        applyLocalSpace(ctx, parentRect, treeParent.rotation, () => {
+          applyStrokeStyle(ctx, shape.stroke);
+          ctx.beginPath();
+          applyPath(ctx, getConnectorLocalPath(shape, treeParent));
+          ctx.stroke();
+        });
       }
     }
 
@@ -71,7 +77,8 @@ export const struct: ShapeStruct<TreeNodeShape> = {
         {
           tag: "path",
           attributes: {
-            d: pathSegmentRawsToString(createSVGCurvePath(getConnectorPath(shape, treeParent))),
+            transform: renderTransform(getShapeTransform(treeParent)),
+            d: pathSegmentRawsToString(createSVGCurvePath(getConnectorLocalPath(shape, treeParent))),
             fill: "none",
             ...renderStrokeSVGAttributes(shape.stroke),
           },
@@ -148,19 +155,28 @@ export function getBoxAlignByDirection(direction: Direction4): BoxAlign {
   };
 }
 
-function getConnectorPath(shape: TreeNodeShape, treeParent: TreeShapeBase): IVec2[] {
-  const fromP = getChildConnectionPoint(shape);
+function getConnectorLocalPath(shape: TreeNodeShape, treeParent: TreeShapeBase): IVec2[] {
+  const parentC = getSimpleShapeCenter(treeParent);
+  const parentRotateFn = getRectRotateFn(treeParent.rotation, parentC);
+  const shapeRect = getSimpleShapeRect(shape);
+  const rotatedShapeRect = parentRotateFn(shapeRect, true);
+
+  const adjustedShape =
+    treeParent.rotation === 0 ? shape : { ...shape, p: { x: rotatedShapeRect.x, y: rotatedShapeRect.y } };
+
+  const fromP = getChildConnectionPoint(adjustedShape);
   const path = [fromP];
 
-  if (shape.dropdown !== undefined) {
-    const toP = getParentConnectionPoint(treeParent, shape.dropdown);
+  if (adjustedShape.dropdown !== undefined) {
+    const toP = getParentConnectionPoint(treeParent, adjustedShape.dropdown);
     const x =
-      treeParent.p.x + treeParent.width * (isTreeRootShape(treeParent) ? (shape.direction === 3 ? 0.4 : 0.6) : 0.5);
+      treeParent.p.x +
+      treeParent.width * (isTreeRootShape(treeParent) ? (adjustedShape.direction === 3 ? 0.4 : 0.6) : 0.5);
     path.push({ x, y: fromP.y });
     path.push({ x, y: toP.y });
   } else {
-    path.push(getParentConnectionPoint(treeParent, shape.direction));
+    path.push(getParentConnectionPoint(treeParent, adjustedShape.direction));
   }
 
-  return path;
+  return path.map((p) => sub(p, treeParent.p));
 }

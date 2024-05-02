@@ -500,3 +500,11 @@ export function getSimpleShapeTextRangeRect<T extends SimplePolygonShape>(
 
   return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
 }
+
+export function getSimpleShapeRect(shape: SimplePolygonShape): IRectangle {
+  return { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+}
+
+export function getSimpleShapeCenter(shape: SimplePolygonShape): IVec2 {
+  return { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
+}
