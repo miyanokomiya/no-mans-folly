@@ -3,7 +3,7 @@ import { newMovingShapeState } from "../movingShapeState";
 import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { TreeShapeBase } from "../../../../shapes/tree/core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import {
   canBeGraftTarget,
   getNextTreeLayout,
@@ -63,10 +63,11 @@ export function newTreeRootMovingState(option: Option): AppCanvasState {
         const shapeComposite = ctx.getShapeComposite();
         const style = ctx.getStyleScheme();
         applyFillStyle(renderCtx, { color: style.selectionPrimary });
-        const rect = shapeComposite.getWrapperRect(graftTargetShape);
+        const polygon = shapeComposite.getLocalRectPolygon(graftTargetShape);
         scaleGlobalAlpha(renderCtx, 0.5, () => {
           renderCtx.beginPath();
-          renderCtx.fillRect(rect.x, rect.y, rect.width, rect.height);
+          applyPath(renderCtx, polygon, true);
+          renderCtx.fill();
         });
       } else {
         movingState.render?.(ctx, renderCtx);
