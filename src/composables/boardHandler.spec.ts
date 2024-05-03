@@ -168,6 +168,59 @@ describe("newBoardHandler", () => {
       expect(handler.isBoardChanged(["unknown", column0.id])).toBe(true);
     });
   });
+
+  describe("hitTest", () => {
+    const root = createShape<BoardRootShape>(getCommonStruct, "board_root", {
+      id: "root",
+      findex: generateKeyBetween(null, null),
+      width: 120,
+      height: 70,
+    });
+    const column0 = createShape<BoardColumnShape>(getCommonStruct, "board_column", {
+      id: "column0",
+      findex: generateKeyBetween("a0", "a1"),
+      parentId: root.id,
+      p: { x: 10, y: 10 },
+      width: 100,
+      height: 50,
+    });
+
+    test("should return hit result for anchors: rotated", () => {
+      const shapeComposite = newShapeComposite({
+        shapes: [root, column0],
+        getStruct: getCommonStruct,
+      });
+      const handler = newBoardHandler({ getShapeComposite: () => shapeComposite, boardId: root.id });
+      expect(handler.hitTest({ x: 120, y: 60 })).toEqual({
+        type: "add_column",
+        p: { x: 120, y: 60 },
+      });
+      expect(handler.hitTest({ x: 60, y: 60 })).toEqual({
+        type: "add_card",
+        p: { x: 60, y: 60 },
+        columnId: "column0",
+        laneId: "",
+      });
+    });
+
+    test("should return hit result for anchors: rotated", () => {
+      const shapeComposite = newShapeComposite({
+        shapes: [root, column0].map((s) => ({ ...s, rotation: Math.PI / 2 })),
+        getStruct: getCommonStruct,
+      });
+      const handler = newBoardHandler({ getShapeComposite: () => shapeComposite, boardId: root.id });
+      expect(handler.hitTest({ x: 35, y: 95 })).toEqual({
+        type: "add_column",
+        p: { x: 120, y: 60 },
+      });
+      expect(handler.hitTest({ x: 35, y: 35 })).toEqual({
+        type: "add_card",
+        p: { x: 60, y: 60 },
+        columnId: "column0",
+        laneId: "",
+      });
+    });
+  });
 });
 
 describe("getNextBoardLayout", () => {

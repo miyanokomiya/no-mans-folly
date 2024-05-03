@@ -21,6 +21,7 @@ import { newResizingState } from "../resizingState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { newRotatingState } from "../rotatingState";
 
 /**
  * General selected state for any board entity
@@ -63,7 +64,7 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
 
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
-        noRotation: true,
+        noRotation: !isBoardRootShape(targetShape),
       });
 
       ctx.showFloatMenu();
@@ -146,6 +147,8 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
                   case "corner":
                   case "segment":
                     return () => newResizingState({ boundingBox, hitResult });
+                  case "rotation":
+                    return () => newRotatingState({ boundingBox });
                 }
               }
 

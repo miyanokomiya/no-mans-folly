@@ -9,9 +9,9 @@ import { flatTree } from "../utils/tree";
 import { BoardRootShape, isBoardRootShape } from "../shapes/board/boardRoot";
 import { BoardColumnShape, isBoardColumnShape } from "../shapes/board/boardColumn";
 import { BoardLaneShape, isBoardLaneShape } from "../shapes/board/boardLane";
-import { IRectangle, IVec2, isSame, sub } from "okageo";
+import { IRectangle, IVec2, applyAffine, getRectCenter, isSame, sub } from "okageo";
 import { RectangleShape } from "../shapes/rectangle";
-import { TAU, getD2, getDistanceBetweenPointAndRect } from "../utils/geometry";
+import { TAU, getD2, getDistanceBetweenPointAndRect, getRectRotateFn } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { renderPlusIcon } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -19,6 +19,7 @@ import { COLORS } from "../utils/color";
 import { getFirstItemOfMap, getlastItemOfMap, pickMinItem } from "../utils/commons";
 import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
+import { getShapeDetransform, getShapeTransform, getSimpleShapeRect } from "../shapes/simplePolygon";
 
 // Never change these values to avoid messing up findex between different type entities.
 const COLUMN_FINDEX_FROM = "a0";
@@ -84,22 +85,36 @@ export function newBoardHandler(option: Option) {
     }
   }
 
+  const rootTransform = getShapeTransform(root);
+  const rootDetransform = getShapeDetransform(root);
+  const rootRect = getSimpleShapeRect(root);
+  const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
+  const toBoardLocalRect = (rect: IRectangle) => {
+    const rotated = boardRectRotateFn(rect, true);
+    return { x: rotated.x - rootRect.x, y: rotated.y - rootRect.y, width: rotated.width, height: rotated.height };
+  };
+
   const anchors: BoardHitResult[] = [];
+
+  // Anchors for new card
   for (const [columnId, byColumn] of cardByLaneByColumnMap) {
     const column = columnMap.get(columnId)!;
+    const columRect = toBoardLocalRect(getSimpleShapeRect(column));
+
     for (const [laneId] of byColumn) {
       if (laneId) {
         const lane = laneMap.get(laneId)!;
+        const laneRect = toBoardLocalRect(getSimpleShapeRect(lane));
         anchors.push({
           type: "add_card",
-          p: { x: column.p.x + column.width / 2, y: lane.p.y + lane.height },
+          p: { x: columRect.x + columRect.width / 2, y: laneRect.y + laneRect.height },
           columnId,
           laneId,
         });
       } else {
         anchors.push({
           type: "add_card",
-          p: { x: column.p.x + column.width / 2, y: column.p.y + column.height },
+          p: { x: columRect.x + columRect.width / 2, y: columRect.y + columRect.height },
           columnId,
           laneId: "",
         });
@@ -107,23 +122,27 @@ export function newBoardHandler(option: Option) {
     }
   }
 
+  // Anchors for new column
   anchors.push({
     type: "add_column",
-    p: { x: root.p.x + root.width, y: root.p.y + root.titleHeight + ANCHOR_MARGIN },
+    p: { x: root.width, y: root.titleHeight + ANCHOR_MARGIN },
   });
 
+  // Anchors for new line
   if (columnMap.size > 0) {
     if (laneMap.size === 0) {
       const firstColumn = getFirstItemOfMap(columnMap)!;
+      const columnRect = toBoardLocalRect(getSimpleShapeRect(firstColumn));
       anchors.push({
         type: "add_lane",
-        p: { x: root.p.x, y: firstColumn.p.y + firstColumn.titleHeight + ANCHOR_MARGIN },
+        p: { x: 0, y: columnRect.y + firstColumn.titleHeight + ANCHOR_MARGIN },
       });
     } else {
       const lastLane = getlastItemOfMap(laneMap)!;
+      const laneRect = toBoardLocalRect(getSimpleShapeRect(lastLane));
       anchors.push({
         type: "add_lane",
-        p: { x: root.p.x, y: lastLane.p.y + lastLane.height + ANCHOR_MARGIN },
+        p: { x: 0, y: laneRect.y + laneRect.height + ANCHOR_MARGIN },
       });
     }
   }
@@ -131,11 +150,16 @@ export function newBoardHandler(option: Option) {
   function hitTest(p: IVec2, scale = 1): BoardHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
     const t2 = threshold * threshold;
-    return anchors.find((a) => getD2(sub(a.p, p)) <= t2);
+    const localP = applyAffine(rootDetransform, p);
+    return anchors.find((a) => getD2(sub(a.p, localP)) <= t2);
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BoardHitResult) {
     const threshold = ANCHOR_SIZE * scale;
+
+    ctx.save();
+    ctx.transform(...rootTransform);
+
     applyFillStyle(ctx, { color: style.selectionPrimary });
     applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 2 * scale });
     anchors.forEach((a) => {
@@ -152,6 +176,8 @@ export function newBoardHandler(option: Option) {
       ctx.fill();
       renderPlusIcon(ctx, hitResult.p, threshold);
     }
+
+    ctx.restore();
   }
 
   function getCardsInColumnLane(columnId: string, laneId = ""): BoardCardShape[] {
