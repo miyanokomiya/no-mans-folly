@@ -1,5 +1,4 @@
 import { getCommonCommandExams, handleIntransientEvent } from "./commons";
-import * as geometry from "../../../utils/geometry";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
@@ -16,6 +15,8 @@ import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { ContextMenuItem } from "../types";
 import { isGroupShape } from "../../../shapes/group";
+import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
+import { AppCanvasStateContext } from "./core";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -27,6 +28,20 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
   let selectedIdMap: { [id: string]: true };
   let boundingBox: BoundingBox;
   let scode: ShapeSelectionScope | undefined;
+  let handler: MultipleSelectedHandler;
+
+  function initHandlers(ctx: AppCanvasStateContext, rotation = 0) {
+    const shapeComposite = ctx.getShapeComposite();
+    const selectedIds = Object.keys(selectedIdMap);
+    boundingBox = newBoundingBox({
+      path: getRotatedTargetBounds(shapeComposite, selectedIds, rotation),
+    });
+    handler = newMultipleSelectedHandler({
+      getShapeComposite: ctx.getShapeComposite,
+      targetIds: selectedIds,
+      rotation: rotation,
+    });
+  }
 
   return {
     getLabel: () => "MultipleSelected",
@@ -65,19 +80,9 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
       ctx.showFloatMenu();
       ctx.setCommandExams(getCommonCommandExams(ctx));
 
-      if (option?.boundingBox) {
-        // Recalculate the bounding because shapes aren't always transformed along with the bounding box.
-        // => Also, need to conserve the rotation.
-        boundingBox = newBoundingBox({
-          path: getRotatedTargetBounds(shapeComposite, selectedIds, option.boundingBox.getRotation()),
-        });
-      } else {
-        const shapeRects = selectedIds.map((id) => shapeMap[id]).map((s) => shapeComposite.getWrapperRect(s));
-
-        boundingBox = newBoundingBox({
-          path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
-        });
-      }
+      // Recalculate the bounding because shapes aren't always transformed along with the bounding box.
+      // => Also, need to conserve the rotation.
+      initHandlers(ctx, option?.boundingBox?.getRotation() ?? 0);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -102,6 +107,17 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                }
+              }
+
+              const handlerHitResult = handler.hitTest(event.data.point, ctx.getScale());
+              if (handlerHitResult) {
+                switch (handlerHitResult.type) {
+                  case "rotation": {
+                    initHandlers(ctx, handlerHitResult.info[1]);
+                    ctx.redraw();
+                    return;
+                  }
                 }
               }
 
@@ -155,6 +171,12 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
           if (boundingBox.saveHitResult(hitResult)) {
             ctx.redraw();
           }
+
+          const handerHitResult = handler.hitTest(event.data.current, ctx.getScale());
+          if (handler.saveHitResult(handerHitResult)) {
+            ctx.redraw();
+          }
+
           break;
         }
         case "contextmenu": {
@@ -187,18 +209,20 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
       }
     },
     render: (ctx, renderCtx) => {
+      const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const shapeComposite = ctx.getShapeComposite();
       const shapes = Object.entries(shapeComposite.shapeMap)
         .filter(([id]) => selectedIdMap[id])
         .map(([, s]) => s);
 
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+      boundingBox.render(renderCtx, ctx.getStyleScheme(), scale);
+      handler.render(renderCtx, style, scale);
     },
   };
 });
