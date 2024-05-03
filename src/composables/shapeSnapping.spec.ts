@@ -104,6 +104,29 @@ describe("newShapeSnapping", () => {
     });
   });
 
+  test("x snapping: should return all snapping targets having the save level", () => {
+    expect(target.test({ x: 1, y: 40, width: 100, height: 10 })).toEqual({
+      diff: { x: -1, y: 0 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 0, y: 100 },
+          ],
+        },
+        {
+          id: "a",
+          line: [
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
+
   test("y snapping: should return snapping result", () => {
     expect(target.test({ x: 40, y: -15, width: 10, height: 10 })).toEqual({
       diff: { x: 0, y: 5 },
@@ -169,6 +192,29 @@ describe("newShapeSnapping", () => {
           line: [
             { x: 0, y: 0 },
             { x: 100, y: 0 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
+
+  test("y snapping: should return all snapping targets having the save level", () => {
+    expect(target.test({ x: 40, y: 1, width: 10, height: 100 })).toEqual({
+      diff: { x: 0, y: -1 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        },
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 100 },
+            { x: 100, y: 100 },
           ],
         },
       ],

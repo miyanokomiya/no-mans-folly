@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, add, moveRect } from "okageo";
+import { IRectangle, IVec2, MINVALUE, add, moveRect } from "okageo";
 import { getRectLines, isRangeOverlapped } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme } from "../models";
@@ -56,6 +56,8 @@ export function newShapeSnapping(option: Option) {
 
     let xClosest: [string, SnappingTmpResult] | undefined;
     let yClosest: [string, SnappingTmpResult] | undefined;
+    let xClosestOthers: [string, SnappingTmpResult][] = [];
+    let yClosestOthers: [string, SnappingTmpResult][] = [];
     shapeAndGridSnappingList.map(([id, lines]) => {
       // x snapping
       {
@@ -66,12 +68,27 @@ export function newShapeSnapping(option: Option) {
             rectRight[0].x,
           ]);
         });
-        const closest = pickMinItem(
-          vList.filter((v) => v.ad < snapThreshold),
-          (v) => v.ad,
-        );
+        const candidates = vList.filter((v) => v.ad < snapThreshold);
+        const closest = pickMinItem(candidates, (v) => v.ad);
         if (closest) {
-          xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
+          if (!xClosest) {
+            // Save as the initial cnadidates.
+            xClosest = [id, closest];
+            xClosestOthers = candidates
+              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
+              .map((c) => [id, c]);
+          } else if (Math.abs(xClosest[1].ad - closest.ad) < MINVALUE) {
+            // Save as cnadidates.
+            xClosestOthers = xClosestOthers.concat(
+              candidates.filter((c) => Math.abs(c.ad - closest.ad) < MINVALUE).map((c) => [id, c]),
+            );
+          } else if (closest.ad < xClosest[1].ad) {
+            // Save as new closer cnadidates.
+            xClosest = [id, closest];
+            xClosestOthers = candidates
+              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
+              .map((c) => [id, c]);
+          }
         }
       }
 
@@ -86,12 +103,27 @@ export function newShapeSnapping(option: Option) {
 
           return getSnappingTmpResult(line, line[0].y, values);
         });
-        const closest = pickMinItem(
-          hList.filter((v) => v.ad < snapThreshold),
-          (v) => v.ad,
-        );
+        const candidates = hList.filter((v) => v.ad < snapThreshold);
+        const closest = pickMinItem(candidates, (v) => v.ad);
         if (closest) {
-          yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
+          if (!yClosest) {
+            // Save as the initial cnadidates.
+            yClosest = [id, closest];
+            yClosestOthers = candidates
+              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
+              .map((c) => [id, c]);
+          } else if (Math.abs(yClosest[1].ad - closest.ad) < MINVALUE) {
+            // Save as cnadidates.
+            yClosestOthers = yClosestOthers.concat(
+              candidates.filter((c) => Math.abs(c.ad - closest.ad) < MINVALUE).map((c) => [id, c]),
+            );
+          } else if (closest.ad < yClosest[1].ad) {
+            // Save as new closer cnadidates.
+            yClosest = [id, closest];
+            yClosestOthers = candidates
+              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
+              .map((c) => [id, c]);
+          }
         }
       }
     });
@@ -122,16 +154,18 @@ export function newShapeSnapping(option: Option) {
         ]),
       });
     } else if (xClosest) {
-      const [id, result] = xClosest;
-      const [y0, , , y1] = [adjustedLeft[0].y, adjustedLeft[1].y, result.line[0].y, result.line[1].y].sort(
-        (a, b) => a - b,
-      );
-      targets.push({
-        id,
-        line: [
-          { x: result.line[0].x, y: y0 },
-          { x: result.line[0].x, y: y1 },
-        ],
+      [xClosest, ...xClosestOthers].forEach((c) => {
+        const [id, result] = c;
+        const [y0, , , y1] = [adjustedLeft[0].y, adjustedLeft[1].y, result.line[0].y, result.line[1].y].sort(
+          (a, b) => a - b,
+        );
+        targets.push({
+          id,
+          line: [
+            { x: result.line[0].x, y: y0 },
+            { x: result.line[0].x, y: y1 },
+          ],
+        });
       });
     }
 
@@ -145,16 +179,18 @@ export function newShapeSnapping(option: Option) {
         ]),
       });
     } else if (yClosest) {
-      const [id, result] = yClosest;
-      const [x0, , , x1] = [adjustedTop[0].x, adjustedTop[1].x, result.line[0].x, result.line[1].x].sort(
-        (a, b) => a - b,
-      );
-      targets.push({
-        id,
-        line: [
-          { x: x0, y: result.line[0].y },
-          { x: x1, y: result.line[0].y },
-        ],
+      [yClosest, ...yClosestOthers].forEach((c) => {
+        const [id, result] = c;
+        const [x0, , , x1] = [adjustedTop[0].x, adjustedTop[1].x, result.line[0].x, result.line[1].x].sort(
+          (a, b) => a - b,
+        );
+        targets.push({
+          id,
+          line: [
+            { x: x0, y: result.line[0].y },
+            { x: x1, y: result.line[0].y },
+          ],
+        });
       });
     }
 
