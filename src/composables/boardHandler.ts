@@ -311,10 +311,9 @@ export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: strin
   const ret: { [id: string]: Partial<Shape> } = {};
   result.forEach((r) => {
     const src = shapeComposite.shapeMap[r.id] as RectangleShape;
+    const globalRect = boardRectRotateFn(r.rect);
     let changed = false;
     const patch: Partial<RectangleShape> = {};
-
-    const globalRect = boardRectRotateFn(r.rect);
 
     if (!isSame(globalRect, src.p)) {
       patch.p = { x: globalRect.x, y: globalRect.y };
@@ -494,10 +493,20 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   const movingCardIdSet = new Set(option.cardIds);
   const singleMovingId = option.cardIds.length === 1 ? option.cardIds[0] : undefined;
 
+  const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
+  const rootTransform = getShapeTransform(root);
+  const rootDetransform = getShapeDetransform(root);
+  const rootRect = getSimpleShapeRect(root);
+  const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
+  const toBoardLocalRect = (rect: IRectangle) => {
+    const rotated = boardRectRotateFn(rect, true);
+    return { x: rotated.x - rootRect.x, y: rotated.y - rootRect.y, width: rotated.width, height: rotated.height };
+  };
+
   const shapeMap = shapeComposite.shapeMap;
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
     id,
-    shapeComposite.getWrapperRect(shapeMap[id]),
+    toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)),
   ]);
 
   const emptyCells: { columnId: string; laneId: string }[] = [];
@@ -510,33 +519,44 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   }
   const emptyCellRects = emptyCells.map<[{ columnId: string; laneId: string }, IRectangle]>((cell) => {
     const column = boardHandler.columnMap.get(cell.columnId)!;
+    const columnRect = toBoardLocalRect(getSimpleShapeRect(column));
+
     if (cell.laneId) {
       const lane = boardHandler.laneMap.get(cell.laneId)!;
+      const laneRect = toBoardLocalRect(getSimpleShapeRect(lane));
+
       return [
         cell,
-        { x: column.p.x, y: lane.p.y + lane.titleHeight, width: column.width, height: lane.height - lane.titleHeight },
+        {
+          x: columnRect.x,
+          y: laneRect.y + lane.titleHeight,
+          width: columnRect.width,
+          height: laneRect.height - lane.titleHeight,
+        },
       ];
     } else {
       const lanes = Array.from(boardHandler.laneMap.values());
       if (lanes.length > 0) {
         const lastLane = lanes[lanes.length - 1];
-        const y = lastLane.p.y + lastLane.height;
-        return [cell, { x: column.p.x, y, width: column.width, height: column.p.y + column.height - y }];
+        const laneRect = toBoardLocalRect(getSimpleShapeRect(lastLane));
+        const y = laneRect.y + laneRect.height;
+        return [cell, { x: columnRect.x, y, width: columnRect.width, height: columnRect.y + columnRect.height - y }];
       } else {
         return [
           cell,
           {
-            x: column.p.x,
-            y: column.p.y + column.titleHeight,
-            width: column.width,
-            height: column.height - column.titleHeight,
+            x: columnRect.x,
+            y: columnRect.y + column.titleHeight,
+            width: columnRect.width,
+            height: columnRect.height - column.titleHeight,
           },
         ];
       }
     }
   });
 
-  function hitTest(p: IVec2): BoardCardMovingHitResult | undefined {
+  function hitTest(globalP: IVec2): BoardCardMovingHitResult | undefined {
+    const p = applyAffine(rootDetransform, globalP);
     const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
       id,
       rect,
@@ -578,14 +598,14 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       const next = siblings[nextIndex];
       if (next.id === singleMovingId) return;
 
-      const nextRect = shapeComposite.getWrapperRect(next);
+      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
       findexBetween = [CARD_FINDEX_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
-      const prevRect = shapeComposite.getWrapperRect(prev);
+      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
       findexBetween = [prev.findex, CARD_FINDEX_TO];
     } else {
@@ -593,8 +613,8 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       const next = siblings[nextIndex];
       if (prev.id === singleMovingId || next.id === singleMovingId) return;
 
-      const prevRect = shapeComposite.getWrapperRect(prev);
-      const nextRect = shapeComposite.getWrapperRect(next);
+      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
+      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
       rect = {
         x: prevRect.x,
         y: (prevRect.y + prevRect.height + nextRect.y) / 2 - 7.5,
@@ -619,10 +639,15 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
     hitResult?: BoardCardMovingHitResult,
   ) {
     if (hitResult) {
+      ctx.save();
+      ctx.transform(...rootTransform);
+
       applyFillStyle(ctx, { color: style.selectionSecondaly });
       ctx.beginPath();
       ctx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
       ctx.fill();
+
+      ctx.restore();
     }
   }
 

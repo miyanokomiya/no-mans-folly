@@ -447,6 +447,33 @@ describe("newBoardCardMovingHandler", () => {
         rect: expect.anything(),
       });
     });
+
+    test("should return insertion information: rotated board", () => {
+      const shapes = [{ ...root, rotation: Math.PI / 2 }, column0, column1, card0, lane0, card1, card2, card3];
+      const patch = getNextBoardLayout(
+        newShapeComposite({
+          shapes,
+          getStruct: getCommonStruct,
+        }),
+        root.id,
+      );
+      const layoutShapes = shapes.map((s) => ({ ...s, ...patch[s.id] }));
+      const shapeComposite = newShapeComposite({
+        shapes: layoutShapes,
+        getStruct: getCommonStruct,
+      });
+      const target = newBoardCardMovingHandler({
+        getShapeComposite: () => shapeComposite,
+        boardId: root.id,
+        cardIds: [card0.id],
+      });
+      expect(target.hitTest({ x: layoutCard3.p.x, y: layoutCard3.p.y + layoutCard3.height })).toEqual({
+        columnId: column1.id,
+        laneId: card3.laneId,
+        findexBetween: ["a2", "a3"],
+        rect: expect.anything(),
+      });
+    });
   });
 });
 
