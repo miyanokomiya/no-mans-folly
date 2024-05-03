@@ -11,9 +11,9 @@ import { BoardColumnShape, isBoardColumnShape } from "../shapes/board/boardColum
 import { BoardLaneShape, isBoardLaneShape } from "../shapes/board/boardLane";
 import { IRectangle, IVec2, applyAffine, getRectCenter, isSame, sub } from "okageo";
 import { RectangleShape } from "../shapes/rectangle";
-import { TAU, getD2, getDistanceBetweenPointAndRect, getRectRotateFn } from "../utils/geometry";
+import { TAU, getD2, getDistanceBetweenPointAndRect, getRectRotateFn, getWrapperRect } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { renderPlusIcon } from "../utils/renderer";
+import { renderPlusIcon, scaleGlobalAlpha } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
 import { getFirstItemOfMap, getlastItemOfMap, pickMinItem } from "../utils/commons";
@@ -674,12 +674,23 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
   const singleMovingId = option.columnIds.length === 1 ? option.columnIds[0] : undefined;
 
   const shapeMap = shapeComposite.shapeMap;
+  const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
+  const rootTransform = getShapeTransform(root);
+  const rootDetransform = getShapeDetransform(root);
+  const rootRect = getSimpleShapeRect(root);
+  const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
+  const toBoardLocalRect = (rect: IRectangle) => {
+    const rotated = boardRectRotateFn(rect, true);
+    return { x: rotated.x - rootRect.x, y: rotated.y - rootRect.y, width: rotated.width, height: rotated.height };
+  };
+
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
     id,
-    shapeComposite.getWrapperRect(shapeMap[id]),
+    toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)),
   ]);
 
-  function hitTest(p: IVec2): BoardColumnMovingHitResult | undefined {
+  function hitTest(globalP: IVec2): BoardColumnMovingHitResult | undefined {
+    const p = applyAffine(rootDetransform, globalP);
     if (rects.length === 0) return;
 
     const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
@@ -703,14 +714,14 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
       const next = siblings[nextIndex];
       if (next.id === singleMovingId) return;
 
-      const nextRect = shapeComposite.getWrapperRect(next);
+      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
       rect = { x: nextRect.x - 15, y: nextRect.y, width: 15, height: nextRect.height };
       findexBetween = [COLUMN_FINDEX_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
-      const prevRect = shapeComposite.getWrapperRect(prev);
+      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
       rect = { x: prevRect.x + prevRect.width, y: prevRect.y, width: 15, height: prevRect.height };
       findexBetween = [prev.findex, LANE_FINDEXF_FROM];
     } else {
@@ -718,8 +729,8 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
       const next = siblings[nextIndex];
       if (prev.id === singleMovingId || next.id === singleMovingId) return;
 
-      const prevRect = shapeComposite.getWrapperRect(prev);
-      const nextRect = shapeComposite.getWrapperRect(next);
+      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
+      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
       rect = {
         x: (prevRect.x + prevRect.width + nextRect.x) / 2 - 7.5,
         y: prevRect.y,
@@ -741,12 +752,26 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
     _scale: number,
     hitResult?: BoardColumnMovingHitResult,
   ) {
+    ctx.save();
+    ctx.transform(...rootTransform);
+
+    const rects = option.columnIds.map((id) => toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)));
+    const rect = getWrapperRect(rects);
+    applyFillStyle(ctx, { color: style.selectionPrimary });
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.width, rect.height);
+    scaleGlobalAlpha(ctx, 0.3, () => {
+      ctx.fill();
+    });
+
     if (hitResult) {
       applyFillStyle(ctx, { color: style.selectionSecondaly });
       ctx.beginPath();
       ctx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
       ctx.fill();
     }
+
+    ctx.restore();
   }
 
   return { hitTest, render, isBoardChanged: boardHandler.isBoardChanged };
@@ -772,12 +797,23 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
   const singleMovingId = option.laneIds.length === 1 ? option.laneIds[0] : undefined;
 
   const shapeMap = shapeComposite.shapeMap;
+  const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
+  const rootTransform = getShapeTransform(root);
+  const rootDetransform = getShapeDetransform(root);
+  const rootRect = getSimpleShapeRect(root);
+  const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
+  const toBoardLocalRect = (rect: IRectangle) => {
+    const rotated = boardRectRotateFn(rect, true);
+    return { x: rotated.x - rootRect.x, y: rotated.y - rootRect.y, width: rotated.width, height: rotated.height };
+  };
+
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
     id,
-    shapeComposite.getWrapperRect(shapeMap[id]),
+    toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)),
   ]);
 
-  function hitTest(p: IVec2): BoardLaneMovingHitResult | undefined {
+  function hitTest(globalP: IVec2): BoardLaneMovingHitResult | undefined {
+    const p = applyAffine(rootDetransform, globalP);
     if (rects.length === 0) return;
 
     const evaluated = rects.map<[string, IRectangle, number]>(([id, rect]) => [
@@ -801,14 +837,14 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
       const next = siblings[nextIndex];
       if (next.id === singleMovingId) return;
 
-      const nextRect = shapeComposite.getWrapperRect(next);
+      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
       findexBetween = [LANE_FINDEXF_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
-      const prevRect = shapeComposite.getWrapperRect(prev);
+      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
       findexBetween = [prev.findex, CARD_FINDEX_FROM];
     } else {
@@ -816,8 +852,8 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
       const next = siblings[nextIndex];
       if (prev.id === singleMovingId || next.id === singleMovingId) return;
 
-      const prevRect = shapeComposite.getWrapperRect(prev);
-      const nextRect = shapeComposite.getWrapperRect(next);
+      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
+      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
       rect = {
         x: prevRect.x,
         y: (prevRect.y + prevRect.height + nextRect.y) / 2 - 7.5,
@@ -839,12 +875,26 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
     _scale: number,
     hitResult?: BoardLaneMovingHitResult,
   ) {
+    ctx.save();
+    ctx.transform(...rootTransform);
+
+    const rects = option.laneIds.map((id) => toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)));
+    const rect = getWrapperRect(rects);
+    applyFillStyle(ctx, { color: style.selectionPrimary });
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.width, rect.height);
+    scaleGlobalAlpha(ctx, 0.3, () => {
+      ctx.fill();
+    });
+
     if (hitResult) {
       applyFillStyle(ctx, { color: style.selectionSecondaly });
       ctx.beginPath();
       ctx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
       ctx.fill();
     }
+
+    ctx.restore();
   }
 
   return { hitTest, render, isBoardChanged: boardHandler.isBoardChanged };

@@ -3,7 +3,6 @@ import { newSelectionHubState } from "../selectionHubState";
 import { newMovingShapeState } from "../movingShapeState";
 import { BoardLaneMovingHandler, BoardLaneMovingHitResult, newBoardLaneMovingHandler } from "../../../boardHandler";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
-import { applyFillStyle } from "../../../../utils/fillStyle";
 import { newShapeComposite } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { findexSortFn } from "../../../../utils/commons";
@@ -83,18 +82,10 @@ export function newBoardLaneMovingState(): AppCanvasState {
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      const shapeComposite = ctx.getShapeComposite();
-      const rect = shapeComposite.getWrapperRectForShapes(laneShapes);
-      applyFillStyle(renderCtx, { color: style.selectionPrimary });
-      renderCtx.beginPath();
-      renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
-      scaleGlobalAlpha(renderCtx, 0.3, () => {
-        renderCtx.fill();
-      });
-
       boardLaneMovingHandler.render(renderCtx, style, scale, boardMovingHitResult);
 
       if (diff) {
+        const shapeComposite = ctx.getShapeComposite();
         const shapeRenderer = newShapeRenderer({
           shapeComposite: newShapeComposite({
             shapes: laneShapes.map((s) => ({ ...s, p: add(s.p, diff) })),
