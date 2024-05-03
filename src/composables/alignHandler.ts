@@ -37,7 +37,6 @@ import { renderArrowUnit, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
-import { isLineLabelShape } from "../utils/lineLabel";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -881,7 +880,6 @@ export function getModifiedAlignRootIds(
 
 export function canAttendToAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (isLineShape(shape)) return false;
-  if (isLineLabelShape(shapeComposite, shape)) return false;
   if (!shape.parentId) return true;
 
   const parent = shapeComposite.shapeMap[shape.parentId];

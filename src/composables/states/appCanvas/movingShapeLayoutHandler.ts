@@ -1,5 +1,5 @@
 import { Shape } from "../../../models";
-import { AlignBoxShape } from "../../../shapes/align/alignBox";
+import { AlignBoxShape, isAlignBoxShape } from "../../../shapes/align/alignBox";
 import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
 import { findBackward, mapReduce } from "../../../utils/commons";
@@ -64,19 +64,36 @@ function canAttendToBoard(ctx: AppCanvasStateContext, event: PointerMoveEvent): 
  * Returned value contains src "shapePatch".
  */
 export function getPatchByPointerUpOutsideLayout(
-  ctx: AppCanvasStateContext,
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
   shapePatch: { [id: string]: Partial<Shape> },
 ): { [id: string]: Partial<Shape> } {
   const shapeComposite = ctx.getShapeComposite();
-  const selectedIdMap = ctx.getSelectedShapeIdMap();
-  const adjusted = canAlign(ctx)
-    ? mapReduce(shapePatch, (v, id) => (selectedIdMap[id] ? { ...v, parentId: undefined } : v))
-    : shapePatch;
+  const adjusted = mapReduce(shapePatch, (patch, id) => {
+    if (shouldDetachParentWhenOutside(shapeComposite.shapeMap, id)) {
+      return { ...patch, parentId: undefined };
+    } else {
+      return patch;
+    }
+  });
   return getPatchByLayouts(shapeComposite, { update: adjusted });
 }
 
 function canAlign(ctx: AppCanvasStateContext) {
   const shapeComposite = ctx.getShapeComposite();
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
-  return ids.some((id) => canAttendToAlignBox(shapeComposite, shapeComposite.shapeMap[id]));
+  return ids.every((id) => canAttendToAlignBox(shapeComposite, shapeComposite.shapeMap[id]));
+}
+
+/**
+ * Certain shape type can leave its layout parent, but other can't.
+ * e.g. "board_card" can leave but "tree_node" can't.
+ */
+function shouldDetachParentWhenOutside(shapeMap: { [id: string]: Shape }, id: string): boolean {
+  const shape = shapeMap[id];
+  if (!shape.parentId) return false;
+
+  const parent = shapeMap[shape.parentId];
+  if (!parent) return false;
+
+  return isAlignBoxShape(parent) || isBoardRootShape(parent);
 }
