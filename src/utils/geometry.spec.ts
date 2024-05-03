@@ -66,8 +66,9 @@ import {
   getIntersectionBetweenCircles,
   getRotatedWrapperRectAt,
   getRectRotateFn,
+  getWrapperRectWithRotationFromPoints,
 } from "./geometry";
-import { IRectangle, applyAffine, getDistance, getPedal } from "okageo";
+import { IRectangle, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
 describe("getRotateFn", () => {
   test("should return function to rotate", () => {
@@ -636,6 +637,31 @@ describe("getRectWithRotationFromRectPolygon", () => {
     expect(res1[0].width).toBeCloseTo(10);
     expect(res1[0].height).toBeCloseTo(20);
     expect(res1[1]).toBeCloseTo(Math.PI / 2);
+  });
+});
+
+describe("getWrapperRectWithRotationFromPoints", () => {
+  test("should return a rectangle and rotation derived from a rect polygon", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+      { x: 20, y: 10 },
+      { x: 0, y: 10 },
+    ];
+    const res0 = getWrapperRectWithRotationFromPoints(points, 0);
+    expect(res0[0]).toEqual({ x: 0, y: 0, width: 20, height: 10 });
+    expect(res0[1]).toEqual(0);
+
+    const res1 = getWrapperRectWithRotationFromPoints(points, Math.PI / 2);
+    expect(res1[0]).toEqualRect({ x: 5, y: -5, width: 10, height: 20 });
+    expect(res1[1]).toEqual(Math.PI / 2);
+
+    const res2 = getWrapperRectWithRotationFromPoints(
+      points.map((p) => rotate(p, Math.PI / 4, { x: 10, y: 5 })),
+      Math.PI / 4,
+    );
+    expect(res2[0]).toEqualRect({ x: 0, y: 0, width: 20, height: 10 });
+    expect(res2[1]).toEqual(Math.PI / 4);
   });
 });
 

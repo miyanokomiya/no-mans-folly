@@ -433,6 +433,23 @@ export function getRectWithRotationFromRectPolygon(rectPolygon: IVec2[]): [rect:
   ];
 }
 
+export function getWrapperRectWithRotationFromPoints(
+  points: IVec2[],
+  rotation: number,
+): [rect: IRectangle, rotation: number] {
+  const outerRect = getOuterRectangle([points]);
+  if (rotation === 0) {
+    return [outerRect, 0];
+  }
+
+  const c = getRectCenter(outerRect);
+  const rotateFn = getRotateFn(rotation, c);
+  const rotatedPoints = points.map((p) => rotateFn(p, true));
+  const rotatedOuterRect = getOuterRectangle([rotatedPoints]);
+
+  return [rotatedOuterRect, rotation];
+}
+
 // When the pedal point isn't on the segment, this always returns false.
 export function isPointCloseToSegment(seg: IVec2[], p: IVec2, threshold: number): boolean {
   const pedal = getPedal(p, seg);
