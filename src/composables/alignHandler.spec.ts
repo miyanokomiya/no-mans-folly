@@ -306,15 +306,23 @@ describe("canAttendToAlignBox", () => {
       id: "child1",
       parentId: "unknown",
     });
+    const align = createShape(getCommonStruct, "align_box", {
+      id: "align",
+    });
+    const align_child = createShape(getCommonStruct, "rectangle", {
+      id: "align_child",
+      parentId: align.id,
+    });
     const shapeComposite = newShapeComposite({
-      shapes: [rect0, line0, label0, group0, child0, child1],
+      shapes: [rect0, line0, label0, group0, child0, child1, align, align_child],
       getStruct: getCommonStruct,
     });
     expect(canAttendToAlignBox(shapeComposite, rect0)).toBe(true);
     expect(canAttendToAlignBox(shapeComposite, line0)).toBe(false);
     expect(canAttendToAlignBox(shapeComposite, label0)).toBe(false);
     expect(canAttendToAlignBox(shapeComposite, group0)).toBe(true);
-    expect(canAttendToAlignBox(shapeComposite, child0)).toBe(false);
-    expect(canAttendToAlignBox(shapeComposite, child1)).toBe(true);
+    expect(canAttendToAlignBox(shapeComposite, child0), "child of group shape").toBe(false);
+    expect(canAttendToAlignBox(shapeComposite, child1), "child of missing shape").toBe(true);
+    expect(canAttendToAlignBox(shapeComposite, align_child), "child of align box shape").toBe(true);
   });
 });
