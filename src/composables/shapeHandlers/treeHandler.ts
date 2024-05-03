@@ -13,12 +13,7 @@ import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { pickMinItem } from "../../utils/commons";
 import { defineShapeHandler } from "./core";
 import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
-import {
-  getShapeDetransform,
-  getShapeTransform,
-  getSimpleShapeCenter,
-  getSimpleShapeRect,
-} from "../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform, getRectShapeCenter, getRectShapeRect } from "../../shapes/rectPolygon";
 import { scaleGlobalAlpha } from "../../utils/renderer";
 
 const ANCHOR_SIZE = 9;
@@ -60,7 +55,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
   const rootDetransform = getShapeDetransform(rootShape as TreeRootShape);
 
   // Represents local position of the tree.
-  const localShapeP = sub(applyAffine(rootDetransform, getSimpleShapeCenter(shape)), {
+  const localShapeP = sub(applyAffine(rootDetransform, getRectShapeCenter(shape)), {
     x: shape.width / 2,
     y: shape.height / 2,
   });
@@ -352,11 +347,11 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
 
   const rootTransform = getShapeTransform(root as TreeRootShape);
   const rootDetransform = getShapeDetransform(root as TreeRootShape);
-  const rootC = getSimpleShapeCenter(root);
+  const rootC = getRectShapeCenter(root);
   const rectRotateFn = getRectRotateFn(root.rotation, rootC);
 
   const rects = candidateIds.map<[string, IRectangle]>((id) => {
-    const rect = rectRotateFn(getSimpleShapeRect(shapeComposite.shapeMap[id] as TreeShapeBase), true);
+    const rect = rectRotateFn(getRectShapeRect(shapeComposite.shapeMap[id] as TreeShapeBase), true);
     return [id, { x: rect.x - root.p.x, y: rect.y - root.p.y, width: rect.width, height: rect.height }];
   });
 
@@ -520,7 +515,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
     // Render the bounds of moving branch.
     {
       const branchRects = Array.from(ownBranchIdSet).map((id) =>
-        rectRotateFn(getSimpleShapeRect(shapeComposite.mergedShapeMap[id] as TreeShapeBase), true),
+        rectRotateFn(getRectShapeRect(shapeComposite.mergedShapeMap[id] as TreeShapeBase), true),
       );
       const rect = getWrapperRect(branchRects);
       applyFillStyle(ctx, { color: style.selectionSecondaly });
@@ -539,7 +534,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: scale * 2 });
 
       const treeParent = shapeComposite.shapeMap[movingResult.treeParentId] as TreeShapeBase;
-      const treeParentRect = rectRotateFn(getSimpleShapeRect(treeParent), true);
+      const treeParentRect = rectRotateFn(getRectShapeRect(treeParent), true);
       const siblings = allShapeNodes.filter(
         (s) =>
           s.treeParentId === treeParent.id &&
@@ -554,8 +549,8 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
         movingResult.direction,
         movingResult.dropdown,
         treeParentRect,
-        nextIndex > 0 ? rectRotateFn(getSimpleShapeRect(siblings[nextIndex - 1]), true) : undefined,
-        nextIndex < siblings.length ? rectRotateFn(getSimpleShapeRect(siblings[nextIndex]), true) : undefined,
+        nextIndex > 0 ? rectRotateFn(getRectShapeRect(siblings[nextIndex - 1]), true) : undefined,
+        nextIndex < siblings.length ? rectRotateFn(getRectShapeRect(siblings[nextIndex]), true) : undefined,
       );
     }
 
@@ -633,7 +628,7 @@ export function isSameTreeNodeMovingResult(a?: TreeNodeMovingResult, b?: TreeNod
 }
 
 function toLayoutNode(shape: TreeShapeBase): TreeLayoutNode {
-  const rect = getSimpleShapeRect(shape);
+  const rect = getRectShapeRect(shape);
   if (isTreeNodeShape(shape)) {
     return {
       id: shape.id,
@@ -708,7 +703,7 @@ export function getNextTreeLayout(shapeComposite: ShapeComposite, rootId: string
   if (root.children.length === 0) return {};
 
   const rootShape = shapeComposite.mergedShapeMap[root.id] as TreeRootShape;
-  const rootC = getSimpleShapeCenter(rootShape);
+  const rootC = getRectShapeCenter(rootShape);
   const rectRotateFn = getRectRotateFn(rootShape.rotation, rootC);
 
   const node = shapeComposite.mergedShapeMap[root.children[0].id] as TreeNodeShape;

@@ -1,11 +1,7 @@
 import { CylinderShape, getCylinderMaxRadiusY } from "../../../../shapes/polygons/cylinder";
 import { movingShapeControlState } from "../movingShapeControlState";
-import {
-  getDirectionalLocalAbsolutePoints,
-  getNormalizedSimplePolygonShape,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { applyAffine, clamp } from "okageo";
 import {
   SimplePolygonHandler,

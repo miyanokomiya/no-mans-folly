@@ -1,11 +1,7 @@
 import { ParallelogramShape, getMaxParallelogramCornerRadius } from "../../../../shapes/polygons/parallelogram";
 import { movingShapeControlState } from "../movingShapeControlState";
-import {
-  getDirectionalLocalAbsolutePoints,
-  getNormalizedSimplePolygonShape,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
 import { getCrossLineAndLine, snapAngle } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";

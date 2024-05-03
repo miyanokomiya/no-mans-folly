@@ -4,7 +4,7 @@ import {
   renderCornerGuidlines,
 } from "../../../shapeHandlers/roundedRectangleHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { applyAffine, clamp } from "okageo";
 import { snapNumber } from "../../../../utils/geometry";
 import { RoundedRectangleShape } from "../../../../shapes/polygons/roundedRectangle";

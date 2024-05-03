@@ -6,7 +6,8 @@ import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { BubbleShape, getBeakControls, getBeakSize } from "../../shapes/polygons/bubble";
 import { applyLocalSpace, renderOutlinedCircle, scaleGlobalAlpha } from "../../utils/renderer";
-import { getLocalAbsolutePoint, getShapeDetransform } from "../../shapes/simplePolygon";
+import { getShapeDetransform } from "../../shapes/rectPolygon";
+import { getLocalAbsolutePoint } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 const ANCHOR_SIZE = 6;

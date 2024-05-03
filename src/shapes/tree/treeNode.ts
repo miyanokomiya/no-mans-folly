@@ -8,7 +8,7 @@ import { TreeShapeBase, isTreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextE
 import { createBoxPadding } from "../../utils/boxPadding";
 import { applyLocalSpace, applyPath, createSVGCurvePath } from "../../utils/renderer";
 import { getRectRotateFn } from "../../utils/geometry";
-import { getShapeTransform, getSimpleShapeCenter, getSimpleShapeRect } from "../simplePolygon";
+import { getShapeTransform, getRectShapeCenter, getRectShapeRect } from "../rectPolygon";
 import { renderTransform } from "../../utils/svgElements";
 
 const MIN_WIDTH = 120;
@@ -158,9 +158,9 @@ export function getBoxAlignByDirection(direction: Direction4): BoxAlign {
 }
 
 function getConnectorLocalPath(shape: TreeNodeShape, treeParent: TreeShapeBase, treeRotation: number): IVec2[] {
-  const parentC = getSimpleShapeCenter(treeParent);
+  const parentC = getRectShapeCenter(treeParent);
   const parentRotateFn = getRectRotateFn(treeRotation, parentC);
-  const shapeRect = getSimpleShapeRect(shape);
+  const shapeRect = getRectShapeRect(shape);
   const rotatedShapeRect = parentRotateFn(shapeRect, true);
 
   const adjustedShape = treeRotation === 0 ? shape : { ...shape, p: { x: rotatedShapeRect.x, y: rotatedShapeRect.y } };

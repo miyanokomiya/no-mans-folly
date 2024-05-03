@@ -38,22 +38,21 @@ import {
 } from "../utils/geometry";
 import { applyFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
-import { BezierCurveControl, CommonStyle, Direction4, Shape, Size } from "../models";
+import { BezierCurveControl, CommonStyle, Direction4, Size } from "../models";
 import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/renderer";
 import { pickMinItem } from "../utils/commons";
 import { renderTransform } from "../utils/svgElements";
 import { getPaddingRect } from "../utils/boxPadding";
+import { RectPolygonShape, getShapeDetransform, getShapeTransform } from "./rectPolygon";
 
 export type SimplePath = {
   path: IVec2[];
   curves?: (BezierCurveControl | undefined)[];
 };
 
-export type SimplePolygonShape = Shape &
+export type SimplePolygonShape = RectPolygonShape &
   CommonStyle &
   TextContainer & {
-    width: number;
-    height: number;
     // Default direction should be 1: undefined should mean 1.
     direction?: Direction4;
   };
@@ -278,32 +277,6 @@ export function getDirectionalLocalAbsolutePoints<T extends SimplePolygonShape>(
   );
 }
 
-export function getShapeTransform(shape: SimplePolygonShape): AffineMatrix {
-  const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-  const center = getRectCenter(rect);
-  const sin = Math.sin(shape.rotation);
-  const cos = Math.cos(shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, center.x, center.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [1, 0, 0, 1, rect.x - center.x, rect.y - center.y],
-  ]);
-}
-
-export function getShapeDetransform(shape: SimplePolygonShape): AffineMatrix {
-  const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-  const center = getRectCenter(rect);
-  const sin = Math.sin(shape.rotation);
-  const cos = Math.cos(shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, -(rect.x - center.x), -(rect.y - center.y)],
-    [cos, -sin, sin, cos, 0, 0],
-    [1, 0, 0, 1, -center.x, -center.y],
-  ]);
-}
-
 export function getLocalAbsolutePoint(shape: SimplePolygonShape, relativeRate: IVec2): IVec2 {
   return {
     x: shape.width * relativeRate.x,
@@ -499,12 +472,4 @@ export function getSimpleShapeTextRangeRect<T extends SimplePolygonShape>(
   }
 
   return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
-}
-
-export function getSimpleShapeRect(shape: SimplePolygonShape): IRectangle {
-  return { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-}
-
-export function getSimpleShapeCenter(shape: SimplePolygonShape): IVec2 {
-  return { x: shape.p.x + shape.width / 2, y: shape.p.y + shape.height / 2 };
 }

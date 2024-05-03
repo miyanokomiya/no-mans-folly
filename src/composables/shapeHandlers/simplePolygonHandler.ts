@@ -12,6 +12,7 @@ import {
   renderValueLabel,
 } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
+import { getShapeDetransform, getShapeTransform } from "../../shapes/rectPolygon";
 import {
   SimplePolygonShape,
   getExpansionFn,
@@ -19,9 +20,7 @@ import {
   getNextDirection2,
   getNextDirection4,
   getNormalizedSimplePolygonShape,
-  getShapeDetransform,
   getShapeDirection,
-  getShapeTransform,
 } from "../../shapes/simplePolygon";
 import { COLORS } from "../../utils/color";
 import { MouseOptions } from "../states/types";

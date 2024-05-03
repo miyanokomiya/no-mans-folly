@@ -19,7 +19,7 @@ import { COLORS } from "../utils/color";
 import { getFirstItemOfMap, getlastItemOfMap, pickMinItem } from "../utils/commons";
 import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
-import { getShapeDetransform, getShapeTransform, getSimpleShapeRect } from "../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform, getRectShapeRect } from "../shapes/rectPolygon";
 
 // Never change these values to avoid messing up findex between different type entities.
 const COLUMN_FINDEX_FROM = "a0";
@@ -87,7 +87,7 @@ export function newBoardHandler(option: Option) {
 
   const rootTransform = getShapeTransform(root);
   const rootDetransform = getShapeDetransform(root);
-  const rootRect = getSimpleShapeRect(root);
+  const rootRect = getRectShapeRect(root);
   const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
   const toBoardLocalRect = (rect: IRectangle) => {
     const rotated = boardRectRotateFn(rect, true);
@@ -99,12 +99,12 @@ export function newBoardHandler(option: Option) {
   // Anchors for new card
   for (const [columnId, byColumn] of cardByLaneByColumnMap) {
     const column = columnMap.get(columnId)!;
-    const columRect = toBoardLocalRect(getSimpleShapeRect(column));
+    const columRect = toBoardLocalRect(getRectShapeRect(column));
 
     for (const [laneId] of byColumn) {
       if (laneId) {
         const lane = laneMap.get(laneId)!;
-        const laneRect = toBoardLocalRect(getSimpleShapeRect(lane));
+        const laneRect = toBoardLocalRect(getRectShapeRect(lane));
         anchors.push({
           type: "add_card",
           p: { x: columRect.x + columRect.width / 2, y: laneRect.y + laneRect.height },
@@ -132,14 +132,14 @@ export function newBoardHandler(option: Option) {
   if (columnMap.size > 0) {
     if (laneMap.size === 0) {
       const firstColumn = getFirstItemOfMap(columnMap)!;
-      const columnRect = toBoardLocalRect(getSimpleShapeRect(firstColumn));
+      const columnRect = toBoardLocalRect(getRectShapeRect(firstColumn));
       anchors.push({
         type: "add_lane",
         p: { x: 0, y: columnRect.y + firstColumn.titleHeight + ANCHOR_MARGIN },
       });
     } else {
       const lastLane = getlastItemOfMap(laneMap)!;
-      const laneRect = toBoardLocalRect(getSimpleShapeRect(lastLane));
+      const laneRect = toBoardLocalRect(getRectShapeRect(lastLane));
       anchors.push({
         type: "add_lane",
         p: { x: 0, y: laneRect.y + laneRect.height + ANCHOR_MARGIN },
@@ -305,7 +305,7 @@ export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: strin
   }
 
   const root = shapeComposite.shapeMap[rootId] as BoardRootShape;
-  const rootRect = getSimpleShapeRect(root);
+  const rootRect = getRectShapeRect(root);
   const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
 
   const ret: { [id: string]: Partial<Shape> } = {};
@@ -422,7 +422,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
     const s = shapeComposite.mergedShapeMap[t.id] as RectangleShape;
     if (isBoardCardShape(s)) return;
 
-    const rect = getSimpleShapeRect(s);
+    const rect = getRectShapeRect(s);
     if (isBoardColumnShape(s)) {
       layoutNodes.push({
         id: s.id,
@@ -454,7 +454,7 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
 
   flatTree([tree]).forEach((t) => {
     const s = shapeComposite.mergedShapeMap[t.id] as RectangleShape;
-    const rect = getSimpleShapeRect(s);
+    const rect = getRectShapeRect(s);
     // Ignore cards in invalid columns
     if (isBoardCardShape(s) && columnIdSet.has(s.columnId)) {
       layoutNodes.push({
@@ -496,7 +496,7 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
   const rootTransform = getShapeTransform(root);
   const rootDetransform = getShapeDetransform(root);
-  const rootRect = getSimpleShapeRect(root);
+  const rootRect = getRectShapeRect(root);
   const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
   const toBoardLocalRect = (rect: IRectangle) => {
     const rotated = boardRectRotateFn(rect, true);
@@ -506,7 +506,7 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   const shapeMap = shapeComposite.shapeMap;
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
     id,
-    toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)),
+    toBoardLocalRect(getRectShapeRect(shapeMap[id] as RectangleShape)),
   ]);
 
   const emptyCells: { columnId: string; laneId: string }[] = [];
@@ -519,11 +519,11 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
   }
   const emptyCellRects = emptyCells.map<[{ columnId: string; laneId: string }, IRectangle]>((cell) => {
     const column = boardHandler.columnMap.get(cell.columnId)!;
-    const columnRect = toBoardLocalRect(getSimpleShapeRect(column));
+    const columnRect = toBoardLocalRect(getRectShapeRect(column));
 
     if (cell.laneId) {
       const lane = boardHandler.laneMap.get(cell.laneId)!;
-      const laneRect = toBoardLocalRect(getSimpleShapeRect(lane));
+      const laneRect = toBoardLocalRect(getRectShapeRect(lane));
 
       return [
         cell,
@@ -538,7 +538,7 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       const lanes = Array.from(boardHandler.laneMap.values());
       if (lanes.length > 0) {
         const lastLane = lanes[lanes.length - 1];
-        const laneRect = toBoardLocalRect(getSimpleShapeRect(lastLane));
+        const laneRect = toBoardLocalRect(getRectShapeRect(lastLane));
         const y = laneRect.y + laneRect.height;
         return [cell, { x: columnRect.x, y, width: columnRect.width, height: columnRect.y + columnRect.height - y }];
       } else {
@@ -598,14 +598,14 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       const next = siblings[nextIndex];
       if (next.id === singleMovingId) return;
 
-      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
+      const nextRect = toBoardLocalRect(getRectShapeRect(next));
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
       findexBetween = [CARD_FINDEX_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
-      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
+      const prevRect = toBoardLocalRect(getRectShapeRect(prev));
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
       findexBetween = [prev.findex, CARD_FINDEX_TO];
     } else {
@@ -613,8 +613,8 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
       const next = siblings[nextIndex];
       if (prev.id === singleMovingId || next.id === singleMovingId) return;
 
-      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
-      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
+      const prevRect = toBoardLocalRect(getRectShapeRect(prev));
+      const nextRect = toBoardLocalRect(getRectShapeRect(next));
       rect = {
         x: prevRect.x,
         y: (prevRect.y + prevRect.height + nextRect.y) / 2 - 7.5,
@@ -677,7 +677,7 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
   const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
   const rootTransform = getShapeTransform(root);
   const rootDetransform = getShapeDetransform(root);
-  const rootRect = getSimpleShapeRect(root);
+  const rootRect = getRectShapeRect(root);
   const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
   const toBoardLocalRect = (rect: IRectangle) => {
     const rotated = boardRectRotateFn(rect, true);
@@ -686,7 +686,7 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
 
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
     id,
-    toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)),
+    toBoardLocalRect(getRectShapeRect(shapeMap[id] as RectangleShape)),
   ]);
 
   function hitTest(globalP: IVec2): BoardColumnMovingHitResult | undefined {
@@ -714,14 +714,14 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
       const next = siblings[nextIndex];
       if (next.id === singleMovingId) return;
 
-      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
+      const nextRect = toBoardLocalRect(getRectShapeRect(next));
       rect = { x: nextRect.x - 15, y: nextRect.y, width: 15, height: nextRect.height };
       findexBetween = [COLUMN_FINDEX_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
-      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
+      const prevRect = toBoardLocalRect(getRectShapeRect(prev));
       rect = { x: prevRect.x + prevRect.width, y: prevRect.y, width: 15, height: prevRect.height };
       findexBetween = [prev.findex, LANE_FINDEXF_FROM];
     } else {
@@ -729,8 +729,8 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
       const next = siblings[nextIndex];
       if (prev.id === singleMovingId || next.id === singleMovingId) return;
 
-      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
-      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
+      const prevRect = toBoardLocalRect(getRectShapeRect(prev));
+      const nextRect = toBoardLocalRect(getRectShapeRect(next));
       rect = {
         x: (prevRect.x + prevRect.width + nextRect.x) / 2 - 7.5,
         y: prevRect.y,
@@ -755,7 +755,7 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
     ctx.save();
     ctx.transform(...rootTransform);
 
-    const rects = option.columnIds.map((id) => toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)));
+    const rects = option.columnIds.map((id) => toBoardLocalRect(getRectShapeRect(shapeMap[id] as RectangleShape)));
     const rect = getWrapperRect(rects);
     applyFillStyle(ctx, { color: style.selectionPrimary });
     ctx.beginPath();
@@ -800,7 +800,7 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
   const root = shapeComposite.shapeMap[option.boardId] as BoardRootShape;
   const rootTransform = getShapeTransform(root);
   const rootDetransform = getShapeDetransform(root);
-  const rootRect = getSimpleShapeRect(root);
+  const rootRect = getRectShapeRect(root);
   const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
   const toBoardLocalRect = (rect: IRectangle) => {
     const rotated = boardRectRotateFn(rect, true);
@@ -809,7 +809,7 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
 
   const rects = Array.from(candidateIdSet).map<[string, IRectangle]>((id) => [
     id,
-    toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)),
+    toBoardLocalRect(getRectShapeRect(shapeMap[id] as RectangleShape)),
   ]);
 
   function hitTest(globalP: IVec2): BoardLaneMovingHitResult | undefined {
@@ -837,14 +837,14 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
       const next = siblings[nextIndex];
       if (next.id === singleMovingId) return;
 
-      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
+      const nextRect = toBoardLocalRect(getRectShapeRect(next));
       rect = { x: nextRect.x, y: nextRect.y - 15, width: nextRect.width, height: 15 };
       findexBetween = [LANE_FINDEXF_FROM, next.findex];
     } else if (nextIndex === siblings.length) {
       const prev = siblings[previousIndex];
       if (prev.id === singleMovingId) return;
 
-      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
+      const prevRect = toBoardLocalRect(getRectShapeRect(prev));
       rect = { x: prevRect.x, y: prevRect.y + prevRect.height, width: prevRect.width, height: 15 };
       findexBetween = [prev.findex, CARD_FINDEX_FROM];
     } else {
@@ -852,8 +852,8 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
       const next = siblings[nextIndex];
       if (prev.id === singleMovingId || next.id === singleMovingId) return;
 
-      const prevRect = toBoardLocalRect(getSimpleShapeRect(prev));
-      const nextRect = toBoardLocalRect(getSimpleShapeRect(next));
+      const prevRect = toBoardLocalRect(getRectShapeRect(prev));
+      const nextRect = toBoardLocalRect(getRectShapeRect(next));
       rect = {
         x: prevRect.x,
         y: (prevRect.y + prevRect.height + nextRect.y) / 2 - 7.5,
@@ -878,7 +878,7 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
     ctx.save();
     ctx.transform(...rootTransform);
 
-    const rects = option.laneIds.map((id) => toBoardLocalRect(getSimpleShapeRect(shapeMap[id] as RectangleShape)));
+    const rects = option.laneIds.map((id) => toBoardLocalRect(getRectShapeRect(shapeMap[id] as RectangleShape)));
     const rect = getWrapperRect(rects);
     applyFillStyle(ctx, { color: style.selectionPrimary });
     ctx.beginPath();

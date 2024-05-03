@@ -3,7 +3,7 @@ import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
-import { getShapeDetransform } from "../../shapes/simplePolygon";
+import { getShapeDetransform } from "../../shapes/rectPolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { RoundedRectangleShape } from "../../shapes/polygons/roundedRectangle";
 

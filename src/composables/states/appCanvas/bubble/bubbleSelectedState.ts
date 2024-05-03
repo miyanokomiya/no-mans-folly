@@ -5,12 +5,8 @@ import {
   renderCornerGuidlines,
 } from "../../../shapeHandlers/bubbleHandler";
 import { RenderShapeControlFn, movingShapeControlState } from "../movingShapeControlState";
-import {
-  getLocalAbsolutePoint,
-  getLocalRelativeRate,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getLocalAbsolutePoint, getLocalRelativeRate } from "../../../../shapes/simplePolygon";
 import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
 import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";

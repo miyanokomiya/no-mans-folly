@@ -2,12 +2,8 @@ import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState"
 import { movingShapeControlState } from "../movingShapeControlState";
 import { StarShape, getMaxStarSize } from "../../../../shapes/polygons/star";
 import { IVec2, applyAffine, clamp } from "okageo";
-import {
-  getDirectionalLocalAbsolutePoints,
-  getNormalizedSimplePolygonShape,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import {
   EDGE_ANCHOR_MARGIN,
   SimplePolygonHandler,

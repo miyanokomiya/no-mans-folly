@@ -2,12 +2,8 @@ import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState"
 import { movingShapeControlState } from "../movingShapeControlState";
 import { TrapezoidShape } from "../../../../shapes/polygons/trapezoid";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
-import {
-  getDirectionalLocalAbsolutePoints,
-  getNormalizedSimplePolygonShape,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { renderValueLabel } from "../../../../utils/renderer";

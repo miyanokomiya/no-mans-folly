@@ -2,12 +2,8 @@ import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState"
 import { movingShapeControlState } from "../movingShapeControlState";
 import { DocumentSymbolShape } from "../../../../shapes/polygons/documentSymbol";
 import { applyAffine, clamp } from "okageo";
-import {
-  getDirectionalLocalAbsolutePoints,
-  getNormalizedSimplePolygonShape,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
   SimplePolygonHandler,

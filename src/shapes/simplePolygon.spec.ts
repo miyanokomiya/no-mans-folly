@@ -15,8 +15,6 @@ import {
   getDirectionalSimplePath,
   SimplePath,
   getSimpleShapeTextRangeRect,
-  getSimpleShapeRect,
-  getSimpleShapeCenter,
 } from "./simplePolygon";
 import { struct as rectangleStruct } from "./rectangle";
 import { struct as oneSidedArrowStruct } from "./oneSidedArrow";
@@ -473,27 +471,5 @@ describe("getSimpleShapeTextRangeRect", () => {
     expect(ret3).toEqualPoint({ x: 0, y: 80 });
     expect(ret3.width).toBe(100);
     expect(ret3.height).toBe(120);
-  });
-});
-
-describe("getSimpleShapeRect", () => {
-  test("should return the rect of the shape", () => {
-    const shape = rectangleStruct.create({
-      p: { x: 10, y: 20 },
-      width: 100,
-      height: 200,
-    });
-    expect(getSimpleShapeRect(shape)).toEqualRect({ x: 10, y: 20, width: 100, height: 200 });
-  });
-});
-
-describe("getSimpleShapeCenter", () => {
-  test("should return the center of the shape", () => {
-    const shape = rectangleStruct.create({
-      p: { x: 10, y: 20 },
-      width: 100,
-      height: 200,
-    });
-    expect(getSimpleShapeCenter(shape)).toEqualPoint({ x: 60, y: 120 });
   });
 });

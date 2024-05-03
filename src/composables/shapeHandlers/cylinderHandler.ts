@@ -4,7 +4,7 @@ import { ShapeComposite } from "../shapeComposite";
 import { defineShapeHandler } from "./core";
 import { CylinderShape } from "../../shapes/polygons/cylinder";
 import { applyLocalSpace, renderOutlinedCircle } from "../../utils/renderer";
-import { getShapeDetransform } from "../../shapes/simplePolygon";
+import { getShapeDetransform } from "../../shapes/rectPolygon";
 
 const ANCHOR_SIZE = 6;
 

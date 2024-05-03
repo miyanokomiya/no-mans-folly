@@ -1,11 +1,11 @@
 import { IVec2, clamp, pathSegmentRawsToString } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
+import { getShapeTransform } from "../../shapes/rectPolygon";
 import {
   SimplePath,
   SimplePolygonShape,
   getDirectionalSimplePath,
   getNormalizedSimplePolygonShape,
-  getShapeTransform,
   getSimpleShapeTextRangeRect,
   getStructForSimplePolygon,
 } from "../simplePolygon";

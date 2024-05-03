@@ -2,7 +2,7 @@ import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState"
 import { movingShapeControlState } from "../movingShapeControlState";
 import { WaveShape } from "../../../../shapes/polygons/wave";
 import { IVec2, applyAffine, clamp } from "okageo";
-import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { renderValueLabel } from "../../../../utils/renderer";
 import { SimplePolygonHandler, newSimplePolygonHandler } from "../../../shapeHandlers/simplePolygonHandler";
 

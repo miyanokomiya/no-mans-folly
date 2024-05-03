@@ -9,7 +9,7 @@ import {
   isSame,
   rotate,
 } from "okageo";
-import { CommonStyle, Shape } from "../models";
+import { CommonStyle } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   getClosestOutlineOnRectangle,
@@ -32,13 +32,9 @@ import {
 } from "./core";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
+import { RectPolygonShape } from "./rectPolygon";
 
-export type RectangleShape = Shape &
-  CommonStyle &
-  TextContainer & {
-    width: number;
-    height: number;
-  };
+export type RectangleShape = RectPolygonShape & CommonStyle & TextContainer;
 
 export const struct: ShapeStruct<RectangleShape> = {
   label: "Rectangle",

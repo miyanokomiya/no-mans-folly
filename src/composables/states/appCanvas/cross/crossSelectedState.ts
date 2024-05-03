@@ -1,7 +1,7 @@
 import { CrossShape } from "../../../../shapes/polygons/cross";
 import { newCrossHandler, renderMovingCrossAnchor } from "../../../shapeHandlers/crossHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { getShapeDetransform, getShapeTransform } from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { applyAffine, clamp } from "okageo";
 import { snapNumber } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";

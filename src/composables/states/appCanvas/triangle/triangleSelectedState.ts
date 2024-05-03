@@ -1,11 +1,7 @@
 import { TriangleShape, getDefaultTriangleTopC, getTriangleCornerMaxSize } from "../../../../shapes/polygons/triangle";
 import { movingShapeControlState } from "../movingShapeControlState";
-import {
-  getDirectionalLocalAbsolutePoints,
-  getNormalizedSimplePolygonShape,
-  getShapeDetransform,
-  getShapeTransform,
-} from "../../../../shapes/simplePolygon";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { applyAffine, clamp } from "okageo";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { renderValueLabel } from "../../../../utils/renderer";
