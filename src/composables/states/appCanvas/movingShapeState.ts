@@ -17,6 +17,7 @@ import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./m
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { isLineLabelShape } from "../../../utils/lineLabel";
 import { mergeMap } from "../../../utils/commons";
+import { applyStrokeStyle } from "../../../utils/strokeStyle";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -125,12 +126,18 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const shapeComposite = ctx.getShapeComposite();
-      boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), affine);
+
+      const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
+      renderCtx.beginPath();
+      renderCtx.strokeRect(movingRect.x + affine[4], movingRect.y + affine[5], movingRect.width, movingRect.height);
+
       if (snappingResult) {
         const shapeMap = shapeComposite.shapeMap;
         renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
+          style,
+          scale,
           result: snappingResult,
           getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
         });
@@ -142,8 +149,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       if (tmpLines.length > 0) {
         renderPatchedVertices(renderCtx, {
           lines: tmpLines,
-          scale: ctx.getScale(),
-          style: ctx.getStyleScheme(),
+          scale,
+          style,
         });
       }
     },
