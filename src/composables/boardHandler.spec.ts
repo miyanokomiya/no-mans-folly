@@ -231,18 +231,20 @@ describe("getNextBoardLayout", () => {
     expect(Object.keys(result0)).toHaveLength(5);
   });
 
-  test("should clear rotation and use local rectangle size", () => {
+  test("should be based on rotation of the board", () => {
     const shapeComposite = newShapeComposite({
-      shapes: [root, column0, card0, lane0, card1].map((s) => ({ ...s, rotation: Math.PI / 4 })),
+      shapes: [{ ...root, rotation: Math.PI / 2 }, column0, card0, lane0, card1, card2],
       getStruct: getCommonStruct,
     });
     const result0 = getNextBoardLayout(shapeComposite, "root");
-    expect(result0["root"].rotation).toBe(0);
-    expect(result0["column0"].rotation).toBe(0);
+    expect(result0["root"].rotation).toBe(undefined);
+    expect(result0["column0"].rotation).toBe(Math.PI / 2);
     expect(result0["column0"]).not.toHaveProperty("width");
-    expect(result0["lane0"].rotation).toBe(0);
-    expect(result0["card0"].rotation).toBe(0);
-    expect(result0["card1"].rotation).toBe(0);
+    expect(result0["lane0"].rotation).toBe(Math.PI / 2);
+    expect(result0["card0"].rotation).toBe(Math.PI / 2);
+    expect(result0["card1"].rotation).toBe(Math.PI / 2);
+    expect(result0["card1"].p!.x).toBeGreaterThan(result0["card2"].p!.x);
+    expect(result0["card1"].p!.y).toBeCloseTo(result0["card2"].p!.y);
   });
 
   test("should do nothing when no root is found", () => {

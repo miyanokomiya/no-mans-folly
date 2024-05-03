@@ -1,6 +1,6 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { EntityPatchInfo, Shape, StyleScheme } from "../models";
-import { createShape, getWrapperRect } from "../shapes";
+import { createShape } from "../shapes";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { BoardCardShape, isBoardCardShape } from "../shapes/board/boardCard";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
@@ -304,28 +304,32 @@ export function getNextBoardLayout(shapeComposite: ShapeComposite, rootId: strin
     return {};
   }
 
+  const root = shapeComposite.shapeMap[rootId] as BoardRootShape;
+  const rootRect = getSimpleShapeRect(root);
+  const boardRectRotateFn = getRectRotateFn(root.rotation, getRectCenter(rootRect));
+
   const ret: { [id: string]: Partial<Shape> } = {};
   result.forEach((r) => {
     const src = shapeComposite.shapeMap[r.id] as RectangleShape;
     let changed = false;
     const patch: Partial<RectangleShape> = {};
-    if (!isSame(r.rect, src.p)) {
-      patch.p = { x: r.rect.x, y: r.rect.y };
-      changed = true;
-    }
-    if (r.rect.width !== src.width) {
-      patch.width = r.rect.width;
-      changed = true;
-    }
-    if (r.rect.height !== src.height) {
-      patch.height = r.rect.height;
-      changed = true;
-    }
 
-    // Clear rotation
-    // TODO: Allowing rotation isn't impossible, but it requires further adjustments throughtout the process.
-    if (src.rotation !== 0) {
-      patch.rotation = 0;
+    const globalRect = boardRectRotateFn(r.rect);
+
+    if (!isSame(globalRect, src.p)) {
+      patch.p = { x: globalRect.x, y: globalRect.y };
+      changed = true;
+    }
+    if (globalRect.width !== src.width) {
+      patch.width = globalRect.width;
+      changed = true;
+    }
+    if (globalRect.height !== src.height) {
+      patch.height = globalRect.height;
+      changed = true;
+    }
+    if (src.rotation !== root.rotation) {
+      patch.rotation = root.rotation;
       changed = true;
     }
 
@@ -416,10 +420,10 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
   const laneIdSet = new Set<string>();
   const layoutNodes: BoardLayoutNode[] = [];
   flatTree([tree]).forEach((t) => {
-    const s = shapeComposite.mergedShapeMap[t.id];
+    const s = shapeComposite.mergedShapeMap[t.id] as RectangleShape;
     if (isBoardCardShape(s)) return;
 
-    const rect = getWrapperRect(shapeComposite.getShapeStruct, { ...s, rotation: 0 });
+    const rect = getSimpleShapeRect(s);
     if (isBoardColumnShape(s)) {
       layoutNodes.push({
         id: s.id,
@@ -450,8 +454,8 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): BoardLay
   });
 
   flatTree([tree]).forEach((t) => {
-    const s = shapeComposite.mergedShapeMap[t.id];
-    const rect = getWrapperRect(shapeComposite.getShapeStruct, { ...s, rotation: 0 });
+    const s = shapeComposite.mergedShapeMap[t.id] as RectangleShape;
+    const rect = getSimpleShapeRect(s);
     // Ignore cards in invalid columns
     if (isBoardCardShape(s) && columnIdSet.has(s.columnId)) {
       layoutNodes.push({
