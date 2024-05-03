@@ -124,7 +124,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               const shapeComposite = ctx.getShapeComposite();
               const shape = findBetterShapeAt(shapeComposite, event.data.point, scode, undefined, ctx.getScale());
               if (!shape) {
-                return () => newPointerDownEmptyState(event.data.options);
+                return () => newPointerDownEmptyState({ ...event.data.options, boundingBox });
               }
 
               if (!event.data.options.ctrl) {
@@ -148,7 +148,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               return;
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return () => newPointerDownEmptyState({ ...event.data.options, boundingBox });
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
               const shapeAtPointer = findBetterShapeAt(
