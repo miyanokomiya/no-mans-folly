@@ -7,7 +7,7 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
+import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
@@ -188,7 +188,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
         }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+            items: getMenuItemsForSelectedShapes(ctx),
             point: event.data.point,
           });
           return;

@@ -14,7 +14,7 @@ import { TextShape, patchPosition } from "../../../../shapes/text";
 import { newTextEditingState } from "../text/textEditingState";
 import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
 import { getPatchAfterLayouts, getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
@@ -156,7 +156,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               items: [
                 { ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX, meta: { index: hitResult.index } as DeleteVertexMeta },
                 { separator: true },
-                ...CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+                ...getMenuItemsForSelectedShapes(ctx),
               ],
               point: event.data.point,
             });
@@ -164,7 +164,7 @@ export const newLineSelectedState = defineIntransientState(() => {
           }
 
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+            items: getMenuItemsForSelectedShapes(ctx),
             point: event.data.point,
           });
           return;

@@ -12,7 +12,7 @@ import { newResizingState } from "./resizingState";
 import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
 import { getOuterRectangle } from "okageo";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
@@ -160,13 +160,13 @@ export const newSingleSelectedState = defineIntransientState(() => {
               items: [
                 CONTEXT_MENU_ITEM_SRC.UNGROUP,
                 CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                ...CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+                ...getMenuItemsForSelectedShapes(ctx),
               ],
               point: event.data.point,
             });
           } else {
             ctx.setContextMenuList({
-              items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+              items: getMenuItemsForSelectedShapes(ctx),
               point: event.data.point,
             });
           }

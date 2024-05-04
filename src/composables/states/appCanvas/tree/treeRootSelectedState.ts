@@ -4,7 +4,7 @@ import {
   handleIntransientEvent,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
+import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
 import { newTreeHandler } from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
@@ -128,7 +128,7 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
         }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+            items: getMenuItemsForSelectedShapes(ctx),
             point: event.data.point,
           });
           return;

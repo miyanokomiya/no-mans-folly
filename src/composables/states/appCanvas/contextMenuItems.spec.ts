@@ -4,7 +4,13 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
 import { newShapeComposite } from "../../shapeComposite";
-import { CONTEXT_MENU_ITEM_SRC, groupShapes, handleContextItemEvent, ungroupShapes } from "./contextMenuItems";
+import {
+  CONTEXT_MENU_ITEM_SRC,
+  getMenuItemsForSelectedShapes,
+  groupShapes,
+  handleContextItemEvent,
+  ungroupShapes,
+} from "./contextMenuItems";
 
 function getMockCtx() {
   return {
@@ -15,7 +21,11 @@ function getMockCtx() {
     }),
     getShapeComposite: () =>
       newShapeComposite({
-        shapes: [createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 })],
+        shapes: [
+          createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
+          createShape(getCommonStruct, "rectangle", { id: "unlocked", locked: false }),
+          createShape(getCommonStruct, "rectangle", { id: "locked", locked: true }),
+        ],
         getStruct: getCommonStruct,
       }),
     getDocumentMap: () => ({ a: [{ insert: "text" }] }),
@@ -29,6 +39,27 @@ function getMockCtx() {
     getScale: () => 2,
   };
 }
+
+describe("getMenuItemsForSelectedShapes", () => {
+  test("should differentiate lock items based on locked status of shapes", () => {
+    const ctx = getMockCtx();
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({});
+    expect(getMenuItemsForSelectedShapes(ctx)).toEqual([]);
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ locked: true });
+    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.UNLOCK);
+    expect(getMenuItemsForSelectedShapes(ctx)).not.toContain(CONTEXT_MENU_ITEM_SRC.LOCK);
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ unlocked: true });
+    expect(getMenuItemsForSelectedShapes(ctx)).not.toContain(CONTEXT_MENU_ITEM_SRC.UNLOCK);
+    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.LOCK);
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ locked: true, unlocked: true });
+    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.UNLOCK);
+    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.LOCK);
+  });
+});
 
 describe("handleContextItemEvent", () => {
   describe("DELETE_SHAPE", () => {

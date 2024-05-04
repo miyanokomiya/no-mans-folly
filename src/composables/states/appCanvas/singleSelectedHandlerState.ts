@@ -4,7 +4,7 @@ import {
   handleIntransientEvent,
 } from "./commons";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
+import { getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
@@ -124,7 +124,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
           }
           case "contextmenu":
             ctx.setContextMenuList({
-              items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+              items: getMenuItemsForSelectedShapes(ctx),
               point: event.data.point,
             });
             return;

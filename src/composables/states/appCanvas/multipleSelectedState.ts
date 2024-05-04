@@ -7,7 +7,7 @@ import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
@@ -200,7 +200,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
           }
 
           ctx.setContextMenuList({
-            items: [...items, ...CONTEXT_MENU_SHAPE_SELECTED_ITEMS],
+            items: [...items, ...getMenuItemsForSelectedShapes(ctx)],
             point: event.data.point,
           });
           return;

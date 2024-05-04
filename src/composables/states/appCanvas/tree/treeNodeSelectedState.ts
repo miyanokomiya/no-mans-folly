@@ -6,7 +6,7 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { newSelectionHubState } from "../selectionHubState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
+import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
   generateFindexNextAt,
@@ -206,7 +206,7 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
           }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+            items: getMenuItemsForSelectedShapes(ctx),
             point: event.data.point,
           });
           return;

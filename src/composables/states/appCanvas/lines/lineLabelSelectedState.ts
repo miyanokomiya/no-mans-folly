@@ -12,7 +12,7 @@ import { newResizingState } from "../resizingState";
 import { LineShape } from "../../../../shapes/line";
 import { renderParentLineRelation } from "../../../lineLabelHandler";
 import { newRotatingLineLabelState } from "./rotatingLineLabelState";
-import { CONTEXT_MENU_SHAPE_SELECTED_ITEMS } from "../contextMenuItems";
+import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
@@ -112,7 +112,7 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
           }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: CONTEXT_MENU_SHAPE_SELECTED_ITEMS,
+            items: getMenuItemsForSelectedShapes(ctx),
             point: event.data.point,
           });
           return;

@@ -1,7 +1,7 @@
 import { Shape } from "../../../models";
 import { createShape, duplicateShapes } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
-import { mapFilter, mapReduce } from "../../../utils/commons";
+import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { FOLLY_SVG_PREFIX } from "../../../utils/shapeTemplateUtil";
 import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
 import { canGroupShapes, newShapeComposite } from "../../shapeComposite";
@@ -68,7 +68,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };
 
-export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
+const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
   CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG,
   CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG,
@@ -76,15 +76,37 @@ export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.EXPORT_AS_FOLLY_SVG,
 ];
 
-export const CONTEXT_MENU_SHAPE_SELECTED_ITEMS: ContextMenuItem[] = [
-  CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
-  CONTEXT_MENU_ITEM_SRC.LOCK,
-  CONTEXT_MENU_ITEM_SRC.UNLOCK,
-  CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-  ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
-  CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-  CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
-];
+export function getMenuItemsForSelectedShapes(
+  ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeComposite">,
+): ContextMenuItem[] {
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  if (ids.length === 0) return [];
+
+  const shapeComposite = ctx.getShapeComposite();
+  const shapes = ids.map((id) => shapeComposite.shapeMap[id]);
+  const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
+
+  const lockItems: ContextMenuItem[] = [];
+
+  if (unlocked.length > 0) {
+    lockItems.push(CONTEXT_MENU_ITEM_SRC.LOCK);
+  }
+  if (locked.length > 0) {
+    lockItems.push(CONTEXT_MENU_ITEM_SRC.UNLOCK);
+  }
+  if (lockItems.length > 0) {
+    lockItems.push(CONTEXT_MENU_ITEM_SRC.SEPARATOR);
+  }
+
+  return [
+    ...lockItems,
+    CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
+    CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+    ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
+    CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+    CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
+  ];
+}
 
 export function handleContextItemEvent(
   ctx: AppCanvasStateContext,
