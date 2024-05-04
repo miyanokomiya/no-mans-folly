@@ -49,6 +49,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         const shapeComposite = ctx.getShapeComposite();
         boundingBox = newBoundingBox({
           path: shapeComposite.getLocalRectPolygon(targetShape),
+          locked: targetShape.locked,
         });
 
         src.onStart?.(ctx);

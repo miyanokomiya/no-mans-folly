@@ -39,6 +39,7 @@ interface ResizingBase {
 interface Option {
   path: IVec2[];
   noRotation?: boolean;
+  locked?: boolean;
 }
 
 export type BoundingBox = ShapeHandler<HitResult> & {
@@ -128,12 +129,15 @@ export function newBoundingBox(option: Option): BoundingBox {
     function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
       const anchors = getAnchors(scale);
       const rotationAnchor = getRotationAnchor(scale);
-      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
 
       ctx.beginPath();
       applyPath(ctx, option.path, true);
-      if (hitResult?.type === "area") {
+      if (option.locked) {
+        applyStrokeStyle(ctx, { color: style.locked, width: style.selectionLineWidth * scale });
+      } else if (hitResult?.type === "area") {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+      } else {
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
       }
       ctx.stroke();
 

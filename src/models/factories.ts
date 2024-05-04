@@ -11,5 +11,6 @@ export function createStyleScheme(): StyleScheme {
     selectionLineWidth: 3,
     transformAnchor: createColor(250, 250, 55),
     alert: createColor(224, 0, 0),
+    locked: createColor(168, 85, 247),
   };
 }

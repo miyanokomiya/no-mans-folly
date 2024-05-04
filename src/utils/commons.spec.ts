@@ -259,3 +259,12 @@ describe("pickMinItem", () => {
     expect(target.pickMinItem([], () => 0)).toEqual(undefined);
   });
 });
+
+describe("splitList", () => {
+  test("should split list by checkFn", () => {
+    expect(target.splitList([1, 2, 3, 4, 5], (n) => n < 3)).toEqual([
+      [1, 2],
+      [3, 4, 5],
+    ]);
+  });
+});

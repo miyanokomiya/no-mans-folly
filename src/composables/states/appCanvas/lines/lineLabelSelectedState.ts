@@ -46,6 +46,7 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
         option?.boundingBox ??
         newBoundingBox({
           path: shapeComposite.getLocalRectPolygon(shape),
+          locked: shape.locked,
         });
     },
     onEnd: (ctx) => {

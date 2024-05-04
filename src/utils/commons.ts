@@ -139,3 +139,19 @@ export function pickMinItem<T>(src: T[], getValue: (item: T) => number): T | und
   }
   return ret;
 }
+
+export function splitList<T>(
+  list: T[],
+  checkfn: (item: T) => boolean = (item) => !!item,
+): [trueList: T[], falseList: T[]] {
+  const t: T[] = [];
+  const f: T[] = [];
+  list.forEach((item) => {
+    if (checkfn(item)) {
+      t.push(item);
+    } else {
+      f.push(item);
+    }
+  });
+  return [t, f];
+}

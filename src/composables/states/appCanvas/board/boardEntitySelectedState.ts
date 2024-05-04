@@ -65,6 +65,7 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
         noRotation: !isBoardRootShape(targetShape),
+        locked: targetShape.locked,
       });
 
       ctx.showFloatMenu();

@@ -42,6 +42,7 @@ export const newSingleSelectedState = defineIntransientState(() => {
 
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(shape),
+        locked: shape.locked,
       });
 
       if (!shapeComposite.hasParent(shape) && canAttachSmartBranch(ctx.getShapeStruct, shape)) {

@@ -1,3 +1,4 @@
+import { Shape } from "../../../models";
 import { createShape, duplicateShapes } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce } from "../../../utils/commons";
@@ -27,6 +28,15 @@ export const CONTEXT_MENU_ITEM_SRC = {
   UNGROUP: {
     label: "Ungroup",
     key: "UNGROUP",
+  },
+
+  LOCK: {
+    label: "Lock",
+    key: "LOCK",
+  },
+  UNLOCK: {
+    label: "Unlock",
+    key: "UNLOCK",
   },
 
   EXPORT_AS_PNG: {
@@ -68,6 +78,8 @@ export const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
 
 export const CONTEXT_MENU_SHAPE_SELECTED_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
+  CONTEXT_MENU_ITEM_SRC.LOCK,
+  CONTEXT_MENU_ITEM_SRC.UNLOCK,
   CONTEXT_MENU_ITEM_SRC.SEPARATOR,
   ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
   CONTEXT_MENU_ITEM_SRC.SEPARATOR,
@@ -117,6 +129,14 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.UNGROUP.key: {
       ungroupShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.LOCK.key: {
+      lockShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.UNLOCK.key: {
+      unlockShapes(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
@@ -253,5 +273,29 @@ export function ungroupShapes(ctx: AppCanvasStateContext): boolean {
 
   ctx.deleteShapes(Array.from(groupIdSet), patch);
   ctx.multiSelectShapes(Object.keys(patch));
+  return true;
+}
+
+export function lockShapes(ctx: AppCanvasStateContext): boolean {
+  const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (targetIds.length === 0) return false;
+
+  const patch = targetIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+    p[id] = { locked: true };
+    return p;
+  }, {});
+  ctx.patchShapes(patch);
+  return true;
+}
+
+export function unlockShapes(ctx: AppCanvasStateContext): boolean {
+  const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (targetIds.length === 0) return false;
+
+  const patch = targetIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+    p[id] = { locked: false };
+    return p;
+  }, {});
+  ctx.patchShapes(patch);
   return true;
 }

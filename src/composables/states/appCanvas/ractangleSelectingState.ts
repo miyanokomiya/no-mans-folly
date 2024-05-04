@@ -10,6 +10,7 @@ import { handleCommonWheel } from "./commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { applyFillStyle } from "../../../utils/fillStyle";
+import { splitList } from "../../../utils/commons";
 
 interface Option {
   keepSelection?: boolean;
@@ -147,9 +148,16 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         .filter(([id]) => selectedIds[id] || targetIdSet.has(id))
         .map(([, s]) => s);
 
+      const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
+
+      applyStrokeStyle(renderCtx, { color: style.locked, width: 2 * scale });
+      renderCtx.beginPath();
+      locked.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
+      renderCtx.stroke();
+
       applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 * scale });
       renderCtx.beginPath();
-      shapes.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
+      unlocked.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
 
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
