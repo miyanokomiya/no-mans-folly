@@ -5,7 +5,6 @@ import { createStyleScheme } from "../../../models/factories";
 import { TextShape } from "../../../shapes/text";
 import { newShapeComposite } from "../../shapeComposite";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
-import { newDefaultState } from "./defaultState";
 import { newMovingHubState } from "./movingHubState";
 
 function getMockCtx() {
@@ -22,6 +21,8 @@ function getMockCtx() {
           createShape(getCommonStruct, "line", { id: "line" }),
           createShape<TextShape>(getCommonStruct, "text", { id: "label", parentId: "line", lineAttached: 0.5 }),
           createShape<TextShape>(getCommonStruct, "text", { id: "label2", parentId: "unknow", lineAttached: 0.5 }),
+          createShape(getCommonStruct, "rectangle", { id: "locked0", locked: true }),
+          createShape(getCommonStruct, "rectangle", { id: "locked1", locked: true }),
         ],
         getStruct: getCommonStruct,
       }),
@@ -34,15 +35,16 @@ function getMockCtx() {
     setCursor: vi.fn(),
     getScale: () => 1,
     hideFloatMenu: vi.fn(),
+    multiSelectShapes: vi.fn(),
   };
 }
 
 describe("newMovingHubState", () => {
-  test("should move to Default state if no shape is selected", () => {
+  test("should move to SelectionHub state if no shape is selected", () => {
     const ctx = getMockCtx();
     ctx.getSelectedShapeIdMap.mockReturnValue({});
     const result = newMovingHubState().onStart?.(ctx as any);
-    expect(result).toEqual(newDefaultState);
+    expect((result as any)().getLabel()).toEqual("SelectionHub");
   });
 
   test("should move to MultipleSelected state if multiple shape is selected", () => {
@@ -64,5 +66,21 @@ describe("newMovingHubState", () => {
     ctx.getSelectedShapeIdMap.mockReturnValue({ label2: true });
     const result = newMovingHubState().onStart?.(ctx as any);
     expect((result as any)().getLabel()).toEqual("MovingShape");
+  });
+
+  test("should unselect and ignore locked shapes: unlocked shape exists", () => {
+    const ctx = getMockCtx();
+    ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, locked0: true, locked1: true });
+    const result = newMovingHubState().onStart?.(ctx as any);
+    expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a"]);
+    expect((result as any)().getLabel()).toEqual("MovingShape");
+  });
+
+  test("should unselect and ignore locked shapes: unlocked shape doesn't exist", () => {
+    const ctx = getMockCtx();
+    ctx.getSelectedShapeIdMap.mockReturnValue({ locked0: true, locked1: true });
+    const result = newMovingHubState().onStart?.(ctx as any);
+    expect(ctx.multiSelectShapes).not.toHaveBeenCalled();
+    expect((result as any)().getLabel()).toEqual("SelectionHub");
   });
 });

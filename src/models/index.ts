@@ -26,6 +26,7 @@ export interface Shape extends Entity {
   rotation: number;
   gcV?: GroupConstraint;
   gcH?: GroupConstraint;
+  locked?: boolean;
 }
 
 export interface Size {
@@ -39,6 +40,7 @@ export interface StyleScheme {
   selectionLineWidth: number;
   transformAnchor: Color;
   alert: Color;
+  locked: Color;
 }
 
 export interface Color {

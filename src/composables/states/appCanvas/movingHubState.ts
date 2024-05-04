@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "./core";
-import { newDefaultState } from "./defaultState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
 import { newMovingShapeState } from "./movingShapeState";
@@ -8,6 +7,7 @@ import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 import { newBoardLaneMovingState } from "./board/boardLaneMovingState";
 import { isLineLabelShape } from "../../../utils/lineLabel";
+import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -21,11 +21,17 @@ export function newMovingHubState(option?: Option): AppCanvasState {
 
       const shapeMap = ctx.getShapeComposite().shapeMap;
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-      const count = selectedIds.length;
-      if (count === 0) {
-        return newDefaultState;
-      } else if (count === 1) {
-        const shape = shapeMap[selectedIds[0]];
+      const unlockedSelectedIds = selectedIds.filter((id) => !shapeMap[id].locked);
+
+      const unlockedCount = unlockedSelectedIds.length;
+      if (unlockedCount === 0) return () => newSelectionHubState({ boundingBox: option?.boundingBox });
+
+      if (selectedIds.length !== unlockedCount) {
+        ctx.multiSelectShapes(unlockedSelectedIds);
+      }
+
+      if (unlockedCount === 1) {
+        const shape = shapeMap[unlockedSelectedIds[0]];
 
         const shapeComposite = ctx.getShapeComposite();
         const boundingBox =
@@ -51,7 +57,7 @@ export function newMovingHubState(option?: Option): AppCanvasState {
             return () => newMovingShapeState({ boundingBox: option?.boundingBox });
         }
       } else {
-        const types = new Set(selectedIds.map((id) => shapeMap[id].type));
+        const types = new Set(unlockedSelectedIds.map((id) => shapeMap[id].type));
         if (types.size === 1) {
           const type = Array.from(types)[0];
           switch (type) {

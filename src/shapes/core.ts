@@ -119,6 +119,7 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     parentId: arg.parentId,
     gcV: arg.gcV,
     gcH: arg.gcH,
+    locked: arg.locked,
   };
 }
 
