@@ -7,9 +7,11 @@ import { createPortal } from "react-dom";
 
 interface Props {
   children: string;
+  className?: string;
+  portal?: boolean;
 }
 
-export const AppText: React.FC<Props> = ({ children }) => {
+export const AppText: React.FC<Props> = ({ children, className, portal }) => {
   const [popup, setPopup] = useState<{ item: TerminologyItem; p: IVec2 } | undefined>(undefined);
 
   const handleHintActivate = useCallback((item: TerminologyItem, p: IVec2) => {
@@ -36,8 +38,8 @@ export const AppText: React.FC<Props> = ({ children }) => {
 
   return (
     <div>
-      <div>{elm}</div>
-      {popup ? <TerminologyPopup {...popup} onClose={handleHintDeactivate} /> : undefined}
+      <div className={className}>{elm}</div>
+      {popup ? <TerminologyPopup {...popup} portal={portal} onClose={handleHintDeactivate} /> : undefined}
     </div>
   );
 };
@@ -66,7 +68,7 @@ const TerminologySpan: React.FC<TerminologySpanProps> = ({ terminology, activate
   );
 
   return (
-    <span ref={ref} className="font-bold text-emerald-500 inline-flex items-center">
+    <span ref={ref} className="font-bold inline-flex items-center">
       {terminology.text}
       <a
         className={
@@ -84,17 +86,18 @@ const TerminologySpan: React.FC<TerminologySpanProps> = ({ terminology, activate
 interface TerminologyPopupProps {
   item: TerminologyItem;
   p: IVec2;
+  portal?: boolean;
   onClose?: () => void;
 }
 
-const TerminologyPopup = ({ item, p, onClose }: TerminologyPopupProps): any => {
+const TerminologyPopup = ({ item, p, portal, onClose }: TerminologyPopupProps): any => {
   const handleClick = useCallback((e: React.MouseEvent) => {
     // Inert the event in case this component is placed inside an interaction item.
     e.preventDefault();
     e.stopPropagation();
   }, []);
 
-  return createPortal(
+  const elm = (
     <div
       className="p-2 border rounded bg-white shadow fixed max-w-60"
       style={{ left: p.x, top: p.y }}
@@ -105,7 +108,9 @@ const TerminologyPopup = ({ item, p, onClose }: TerminologyPopupProps): any => {
       <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={onClose}>
         <img src={iconDelete} alt="Close" />
       </button>
-    </div>,
-    document.body,
+    </div>
   );
+  portal;
+
+  return portal ? createPortal(elm, document.body) : elm;
 };

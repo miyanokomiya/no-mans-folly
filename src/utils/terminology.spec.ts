@@ -15,4 +15,10 @@ describe("parseTerminologies", () => {
       { text: "." },
     ]);
   });
+
+  test("should lownercase when a key contains (l)", () => {
+    const result = parseTerminologies("[[WORKSPACE(l)]]");
+    expect(result).toHaveLength(1);
+    expect(result[0].text).toBe("workspace");
+  });
 });

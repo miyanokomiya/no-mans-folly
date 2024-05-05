@@ -76,7 +76,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   const loading = !!googleMode;
 
   return (
-    <Dialog open={open} onClose={onClose} title="Open workspace" hideClose required>
+    <Dialog open={open} onClose={onClose} title="Open [[(l)WORKSPACE]]" hideClose required>
       <div className="w-96">
         <div>
           <a href="/terms/privacy-policy/" target="_blank" className="text-blue-500 underline font-semibold">

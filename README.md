@@ -30,5 +30,9 @@ Debug information list
 Terminologies are defined in `src/utils/terminology.ts`.  
 `<AppText>` creates hints for terminologies when the text contains `[[KEYWORD]]` format.
 
+Some modifiers are available to adjust key text.
+
+- `(l)`: make key text lowercase.
+
 ### Feature flags
 Add feature flags in `src/composables/featureFlags.ts` if necessary.

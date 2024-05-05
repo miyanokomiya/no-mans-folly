@@ -35,11 +35,11 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const title = useMemo(() => {
     switch (actionType) {
       case "save":
-        return "Save and open workspace";
+        return "Save and open [[(l)WORKSPACE]]";
       case "export":
-        return "Export workspace";
+        return "Export [[(l)WORKSPACE]]";
       default:
-        return "Open workspace";
+        return "Open [[(l)WORKSPACE]]";
     }
   }, [actionType]);
 

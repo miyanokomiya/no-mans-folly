@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import iconDelete from "../../assets/icons/delete_filled.svg";
+import { AppText } from "../molecules/AppText";
 
 interface Props {
   open: boolean;
@@ -55,7 +56,7 @@ export const Dialog: React.FC<Props> = ({
         </button>
       )}
       <div onClick={onClickContent} className="p-4">
-        {title ? <div className="mb-1 text-lg font-medium">{title}</div> : undefined}
+        {title ? <AppText className="mb-1 text-lg font-medium">{title}</AppText> : undefined}
         <div>{children}</div>
         {actions ? <div className="flex justify-end gap-2 mt-4">{actions}</div> : undefined}
       </div>

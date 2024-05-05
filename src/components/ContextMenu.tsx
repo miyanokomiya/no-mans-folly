@@ -17,7 +17,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
         <ListSpacer key={i} />
       ) : (
         <ListButton key={item.key} onClick={() => onClickItem?.(item.key, item.meta)}>
-          <AppText>{item.label}</AppText>
+          <AppText portal={true}>{item.label}</AppText>
         </ListButton>
       ),
     );
