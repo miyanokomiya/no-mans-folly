@@ -51,7 +51,7 @@ interface Option {
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
   textEditing: boolean;
-  onContextMenu: (e: React.MouseEvent) => void;
+  onContextMenu: (p: IVec2, toggle?: boolean) => void;
 }
 
 export const FloatMenu: React.FC<Option> = ({
@@ -382,6 +382,14 @@ export const FloatMenu: React.FC<Option> = ({
     [shapeStore, setTmpShapeMap, patchShapes],
   );
 
+  const handleContextMenuClick = useCallback(
+    (e: React.MouseEvent) => {
+      const bounds = (e.target as HTMLElement).getBoundingClientRect();
+      onContextMenu({ x: bounds.right, y: bounds.top }, true);
+    },
+    [onContextMenu],
+  );
+
   const popupButtonCommonProps = {
     popupedKey: popupedKey,
     setPopupedKey: onClickPopupButton,
@@ -470,7 +478,7 @@ export const FloatMenu: React.FC<Option> = ({
         <button
           type="button"
           className="w-10 h-10 border rounded bg-white p-1 flex justify-center items-center"
-          onClick={onContextMenu}
+          onClick={handleContextMenuClick}
         >
           <img src={menuIcon} alt="Context menu" className="w-6 h-6" />
         </button>

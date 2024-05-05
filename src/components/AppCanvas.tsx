@@ -684,12 +684,23 @@ export const AppCanvas: React.FC = () => {
     };
   }, [onWheel]);
 
-  const onContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      sm.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(getMousePoint()) } });
+  const handleContextMenu = useCallback(
+    (p: IVec2, toggle = false) => {
+      if (toggle && contextMenu) {
+        setContextMenu(undefined);
+      } else {
+        sm.handleEvent({ type: "contextmenu", data: { point: viewToCanvas(p) } });
+      }
     },
-    [sm, getMousePoint, viewToCanvas],
+    [sm, viewToCanvas, contextMenu],
+  );
+
+  const handleNativeContextMenu = useCallback(
+    (e: React.MouseEvent, toggle = false) => {
+      e.preventDefault();
+      handleContextMenu(getMousePoint(), toggle);
+    },
+    [handleContextMenu, getMousePoint],
   );
 
   const onClickContextMenuItem = useCallback(
@@ -773,7 +784,7 @@ export const AppCanvas: React.FC = () => {
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
       textEditing={textEditing}
-      onContextMenu={onContextMenu}
+      onContextMenu={handleContextMenu}
     />
   ) : undefined;
 
@@ -805,7 +816,7 @@ export const AppCanvas: React.FC = () => {
         onKeyUp={onKeyUp}
         onFocus={onFocus}
         onBlur={onBlur}
-        onContextMenu={onContextMenu}
+        onContextMenu={handleNativeContextMenu}
         tabIndex={-1}
       >
         <FileDropArea typeRegs={DroppableFileRegs} onDrop={onDrop}>
