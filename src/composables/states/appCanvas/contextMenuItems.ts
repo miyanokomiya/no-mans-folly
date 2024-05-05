@@ -56,7 +56,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
     key: "COPY_AS_SVG",
   },
   EXPORT_AS_FOLLY_SVG: {
-    label: "Export as Folly SVG",
+    label: "Export as [[FOLLY_SVG]]",
     key: "EXPORT_AS_FOLLY_SVG",
   },
 

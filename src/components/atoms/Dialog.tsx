@@ -51,7 +51,7 @@ export const Dialog: React.FC<Props> = ({
     <dialog ref={ref} onClick={onClickBackdrop} className={className}>
       {hideClose ? undefined : (
         <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={closeDialog}>
-          <img src={iconDelete} alt="Delete Sheet" />
+          <img src={iconDelete} alt="Close" />
         </button>
       )}
       <div onClick={onClickContent} className="p-4">

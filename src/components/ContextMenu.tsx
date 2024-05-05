@@ -2,6 +2,7 @@ import { IVec2 } from "okageo";
 import { ContextMenuItem } from "../composables/states/types";
 import { useMemo } from "react";
 import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
+import { AppText } from "./molecules/AppText";
 
 interface Props {
   items: ContextMenuItem[];
@@ -16,7 +17,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
         <ListSpacer key={i} />
       ) : (
         <ListButton key={item.key} onClick={() => onClickItem?.(item.key, item.meta)}>
-          {item.label}
+          <AppText>{item.label}</AppText>
         </ListButton>
       ),
     );
