@@ -14,7 +14,7 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { applyPath } from "../utils/renderer";
+import { applyPath, renderRotationArrow } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ISegment, TAU, getCrossLineAndLine, getRotateFn, isPointCloseToSegment, snapAngle } from "../utils/geometry";
@@ -163,6 +163,8 @@ export function newBoundingBox(option: Option): BoundingBox {
         ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);
         ctx.fill();
         ctx.stroke();
+        applyFillStyle(ctx, { color: style.selectionPrimary });
+        renderRotationArrow(ctx, rotationAnchor.c, rotation, rotationAnchor.r);
       }
 
       if (hitResult?.type === "corner") {
@@ -179,6 +181,8 @@ export function newBoundingBox(option: Option): BoundingBox {
         ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);
         ctx.fill();
         ctx.stroke();
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        renderRotationArrow(ctx, rotationAnchor.c, rotation, rotationAnchor.r);
       }
     }
 

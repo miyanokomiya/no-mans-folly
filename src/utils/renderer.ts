@@ -193,6 +193,26 @@ export function renderSwitchDirection(ctx: CanvasRenderingContext2D, p: IVec2, r
   ctx.restore();
 }
 
+export function renderRotationArrow(ctx: CanvasRenderingContext2D, p: IVec2, rotation: number, size: number) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(rotation - Math.PI / 4);
+
+  ctx.strokeStyle = ctx.fillStyle;
+  ctx.lineWidth = size * 0.3;
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.5, -Math.PI, Math.PI / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.lineTo(size * 0.1, size * 0.9);
+  ctx.lineTo(-size * 0.5, size * 0.4);
+  ctx.lineTo(size * 0.1, size * 0.0);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
   const half = size / 2;
   ctx.beginPath();
