@@ -2,10 +2,10 @@ import { Shape } from "../../../models";
 import { AlignBoxShape, isAlignBoxShape } from "../../../shapes/align/alignBox";
 import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
-import { findBackward, mapReduce } from "../../../utils/commons";
+import { findBackward, mergeMap } from "../../../utils/commons";
 import { canAttendToAlignBox } from "../../alignHandler";
 import { BoundingBox } from "../../boundingBox";
-import { findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
+import { ShapeComposite, findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
@@ -62,19 +62,20 @@ function canAttendToBoard(ctx: AppCanvasStateContext, event: PointerMoveEvent): 
 
 /**
  * Returned value contains src "shapePatch".
+ * "targetIds" has be passed because "shapePatch" contains updated child shapes.
  */
 export function getPatchByPointerUpOutsideLayout(
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite">,
+  shapeComposite: ShapeComposite,
   shapePatch: { [id: string]: Partial<Shape> },
+  targetIds: string[],
 ): { [id: string]: Partial<Shape> } {
-  const shapeComposite = ctx.getShapeComposite();
-  const adjusted = mapReduce(shapePatch, (patch, id) => {
+  const detatched = targetIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
     if (shouldDetachParentWhenOutside(shapeComposite.shapeMap, id)) {
-      return { ...patch, parentId: undefined };
-    } else {
-      return patch;
+      p[id] = { parentId: undefined };
     }
-  });
+    return p;
+  }, {});
+  const adjusted = mergeMap(shapePatch, detatched);
   return getPatchByLayouts(shapeComposite, { update: adjusted });
 }
 

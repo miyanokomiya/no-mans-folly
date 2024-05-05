@@ -113,7 +113,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const val = ctx.getTmpShapeMap();
 
           if (Object.keys(val).length > 0) {
-            ctx.patchShapes(getPatchByPointerUpOutsideLayout(ctx, val));
+            ctx.patchShapes(
+              getPatchByPointerUpOutsideLayout(ctx.getShapeComposite(), val, Object.keys(ctx.getSelectedShapeIdMap())),
+            );
           }
           return () => newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
         }
