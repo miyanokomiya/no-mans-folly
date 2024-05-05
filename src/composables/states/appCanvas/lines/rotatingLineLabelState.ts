@@ -6,6 +6,7 @@ import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, newBoundingBoxRotating } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -20,11 +21,13 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
   let parentLineShape: LineShape;
   let lineLabelHandler: LineLabelHandler;
   let affine = IDENTITY_AFFINE;
+  let freeAngle = true;
 
   return {
     getLabel: () => "RotatingLineLabel",
     onStart: (ctx) => {
       ctx.startDragging();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       const id = ctx.getLastSelectedShapeId();
       const shapeMap = ctx.getShapeComposite().shapeMap;
@@ -38,13 +41,15 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
+      ctx.setCommandExams();
       ctx.setTmpShapeMap({});
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
-          const affineSrc = boundingBoxRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);
+          freeAngle = !!event.data.ctrl;
+          const affineSrc = boundingBoxRotating.getAffine(event.data.start, event.data.current, freeAngle);
           const patch = { [labelShape.id]: shapeComposite.transformShape(labelShape, affineSrc) };
           const labelPatch = lineLabelHandler.onModified(patch);
           const mergedPatch = mergeMap(patch, labelPatch);
@@ -75,7 +80,7 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
     render: (ctx, renderCtx) => {
       const tmpShape = ctx.getTmpShapeMap()[labelShape.id] ?? {};
       renderParentLineRelation(ctx, renderCtx, { ...labelShape, ...tmpShape }, parentLineShape);
-      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), affine);
+      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), affine, !freeAngle);
     },
   };
 }

@@ -13,6 +13,7 @@ import { LineShape } from "../../../shapes/line";
 import { newSelectionHubState } from "./selectionHubState";
 import { handleCommonWheel } from "./commons";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -23,6 +24,7 @@ export function newRotatingState(option: Option): AppCanvasState {
   let resizingAffine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineDetouchHandler;
   let linePatchedMap: { [id: string]: Partial<LineShape> };
+  let freeAngle = true;
 
   const boundingBoxRotatingRotating = newBoundingBoxRotating({
     rotation: option.boundingBox.getRotation(),
@@ -33,6 +35,7 @@ export function newRotatingState(option: Option): AppCanvasState {
     onStart: (ctx) => {
       targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
       ctx.startDragging();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       lineHandler = newConnectedLineDetouchHandler({
         connectedLinesMap: getConnectedLineInfoMap(
@@ -44,12 +47,14 @@ export function newRotatingState(option: Option): AppCanvasState {
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
+      ctx.setCommandExams();
       ctx.setTmpShapeMap({});
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, event.data.ctrl);
+          freeAngle = !!event.data.ctrl;
+          resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, freeAngle);
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;
@@ -82,7 +87,13 @@ export function newRotatingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), resizingAffine);
+      option.boundingBox.renderResizedBounding(
+        renderCtx,
+        ctx.getStyleScheme(),
+        ctx.getScale(),
+        resizingAffine,
+        !freeAngle,
+      );
 
       if (linePatchedMap) {
         renderPatchedVertices(renderCtx, {

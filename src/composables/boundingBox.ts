@@ -14,10 +14,17 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { applyPath, renderRotationArrow } from "../utils/renderer";
+import { applyPath, renderRotationArrow, renderValueLabel } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { ISegment, TAU, getCrossLineAndLine, getRotateFn, isPointCloseToSegment, snapAngle } from "../utils/geometry";
+import {
+  ISegment,
+  TAU,
+  getCrossLineAndLine,
+  getRotateFn,
+  isPointCloseToSegment,
+  snapRadianByAngle,
+} from "../utils/geometry";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
@@ -51,6 +58,7 @@ export type BoundingBox = ShapeHandler<HitResult> & {
     style: StyleScheme,
     scale: number,
     resizingAffine?: AffineMatrix,
+    showLabel?: boolean,
   ) => void;
   getResizingBase: (hitResult: HitResult) => ResizingBase;
   getTransformedBoundingBox: (affine: AffineMatrix) => BoundingBox;
@@ -200,6 +208,7 @@ export function newBoundingBox(option: Option): BoundingBox {
     style: StyleScheme,
     scale: number,
     resizingAffine?: AffineMatrix,
+    showLabel = false,
   ) {
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
 
@@ -207,9 +216,20 @@ export function newBoundingBox(option: Option): BoundingBox {
       return resizingAffine ? applyAffine(resizingAffine, p) : p;
     }
 
+    const rotatedPath = option.path.map(resize);
+
     ctx.beginPath();
-    applyPath(ctx, option.path.map(resize), true);
+    applyPath(ctx, rotatedPath, true);
     ctx.stroke();
+
+    if (showLabel) {
+      const c = getCenter(rotatedPath[0], rotatedPath[2]);
+      const r = getRadian(rotatedPath[1], rotatedPath[0]);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 10 * scale, 0, TAU);
+      ctx.fill();
+      renderValueLabel(ctx, `${Math.round((r * 180) / Math.PI)}°`, c, 0, scale, true);
+    }
   }
 
   function getResizingBase(hitResult: HitResult): ResizingBase {
@@ -402,25 +422,25 @@ export function newBoundingBoxRotating(option: BoundingBoxRotatingOption) {
     [1, 0, 0, 1, -option.origin.x, -option.origin.y],
   ]);
 
-  function getAffine(start: IVec2, current: IVec2, snap = false): AffineMatrix {
+  /**
+   * Rounds rotation via angle by default.
+   * Doesn't round rotation when "freeAngle" is set true.
+   */
+  function getAffine(start: IVec2, current: IVec2, freeAngle = false): AffineMatrix {
     const startR = getRadian(start, option.origin);
     const targetR = getRadian(current, option.origin);
     const dr = targetR - startR;
 
-    if (snap) {
-      const r = (snapAngle(((dr + option.rotation) * 180) / Math.PI, 15) * Math.PI) / 180 - option.rotation;
+    if (freeAngle) {
+      const dsin = Math.sin(dr);
+      const dcos = Math.cos(dr);
+      return multiAffines([m0, [dcos, dsin, -dsin, dcos, 0, 0], m1]);
+    } else {
+      const r = snapRadianByAngle(dr + option.rotation, 1) - option.rotation;
       const dsin = Math.sin(r);
       const dcos = Math.cos(r);
       return multiAffines([m0, [dcos, dsin, -dsin, dcos, 0, 0], m1]);
     }
-
-    const adjusted0 = (snapAngle(((dr + option.rotation) * 180) / Math.PI, 5) * Math.PI) / 180 - option.rotation;
-    const adjusted1 = (snapAngle(((dr + option.rotation) * 180) / Math.PI, 45) * Math.PI) / 180 - option.rotation;
-    const r = Math.abs(adjusted0 - adjusted1) < 0.0001 ? adjusted0 : dr;
-    const dsin = Math.sin(r);
-    const dcos = Math.cos(r);
-
-    return multiAffines([m0, [dcos, dsin, -dsin, dcos, 0, 0], m1]);
   }
 
   return { getAffine };
