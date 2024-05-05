@@ -225,9 +225,6 @@ export function newBoundingBox(option: Option): BoundingBox {
     if (showLabel) {
       const c = getCenter(rotatedPath[0], rotatedPath[2]);
       const r = getRadian(rotatedPath[1], rotatedPath[0]);
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, 10 * scale, 0, TAU);
-      ctx.fill();
       renderValueLabel(ctx, `${Math.round((r * 180) / Math.PI)}°`, c, 0, scale, true);
     }
   }
