@@ -3,8 +3,9 @@ export type TerminologyItem = {
   description?: string;
 };
 
-export const TERMINOLOGY_KEYS = {
+const TERMINOLOGY_KEYS = {
   FOLLY_SVG: "FOLLY_SVG",
+  LOCK: "LOCK",
 };
 
 const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
@@ -12,6 +13,10 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
     text: "Folly SVG",
     description:
       "Folly SVG contains meta data of shapes. You can restore the shapes by dropping Folly SVG to the canvas.",
+  },
+  [TERMINOLOGY_KEYS.LOCK]: {
+    text: "Lock",
+    description: "Prevents shapes from moving. You can still modify, resize or rotate locked shapes.",
   },
 };
 

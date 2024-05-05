@@ -31,7 +31,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
   },
 
   LOCK: {
-    label: "Lock",
+    label: "[[LOCK]]",
     key: "LOCK",
   },
   UNLOCK: {
