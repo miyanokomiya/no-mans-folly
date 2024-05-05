@@ -15,7 +15,9 @@ export const AppText: React.FC<Props> = ({ children, className, portal }) => {
   const [popup, setPopup] = useState<{ item: TerminologyItem; p: IVec2 } | undefined>(undefined);
 
   const handleHintActivate = useCallback((item: TerminologyItem, p: IVec2) => {
-    setPopup((val) => (val?.item === item ? undefined : { item, p }));
+    setPopup((val) => {
+      return val?.item.text === item.text ? undefined : { item, p };
+    });
   }, []);
 
   const handleHintDeactivate = useCallback(() => {
@@ -26,12 +28,7 @@ export const AppText: React.FC<Props> = ({ children, className, portal }) => {
     return parseTerminologies(children).map((item, i) => {
       if (!item.description) return item.text;
       return (
-        <TerminologySpan
-          key={i}
-          terminology={item}
-          activated={item === popup?.item}
-          onHintActivate={handleHintActivate}
-        />
+        <TerminologySpan key={i} item={item} activated={item === popup?.item} onHintActivate={handleHintActivate} />
       );
     });
   }, [children, popup, handleHintActivate]);
@@ -45,12 +42,12 @@ export const AppText: React.FC<Props> = ({ children, className, portal }) => {
 };
 
 interface TerminologySpanProps {
-  terminology: TerminologyItem;
+  item: TerminologyItem;
   activated: boolean;
   onHintActivate?: (item: TerminologyItem, p: IVec2) => void;
 }
 
-const TerminologySpan: React.FC<TerminologySpanProps> = ({ terminology, activated, onHintActivate }) => {
+const TerminologySpan: React.FC<TerminologySpanProps> = ({ item, activated, onHintActivate }) => {
   const ref = useRef<HTMLElement>(null);
 
   const handleHintClick = useCallback(
@@ -61,15 +58,15 @@ const TerminologySpan: React.FC<TerminologySpanProps> = ({ terminology, activate
 
       if (ref.current) {
         const bounds = ref.current.getBoundingClientRect();
-        onHintActivate?.(terminology, { x: bounds.right + 2, y: bounds.top - 12 });
+        onHintActivate?.(item, { x: bounds.right + 2, y: bounds.top - 12 });
       }
     },
-    [terminology, onHintActivate],
+    [item, onHintActivate],
   );
 
   return (
     <span ref={ref} className="font-bold inline-flex items-center">
-      {terminology.text}
+      {item.text}
       <a
         className={
           "rounded-full border ml-1 p-1 cursor-auto hover:bg-emerald-200" +
