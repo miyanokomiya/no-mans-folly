@@ -6,6 +6,8 @@ import { ImageShape } from "../shapes/image";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { AffineMatrix, getRectCenter } from "okageo";
 
+const ICON_GROUPS = ["AWS", "Cisco", "GCP"];
+
 export const ShapeLibraryPanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const sm = useContext(AppStateMachineContext);
@@ -116,22 +118,17 @@ export const ShapeLibraryPanel: React.FC = () => {
 
   return (
     <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
-      <GroupAccordion
-        selectedName={selected}
-        name="AWS"
-        type="shapes"
-        onClick={handleClickAccordion}
-        onIconDragStart={handleIconDragStart}
-        onIconClick={handleIconClick}
-      />
-      <GroupAccordion
-        selectedName={selected}
-        name="GCP"
-        type="shapes"
-        onClick={handleClickAccordion}
-        onIconDragStart={handleIconDragStart}
-        onIconClick={handleIconClick}
-      />
+      {ICON_GROUPS.map((name) => (
+        <GroupAccordion
+          key={name}
+          selectedName={selected}
+          name={name}
+          type="shapes"
+          onClick={handleClickAccordion}
+          onIconDragStart={handleIconDragStart}
+          onIconClick={handleIconClick}
+        />
+      ))}
     </div>
   );
 };
