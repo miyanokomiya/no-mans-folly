@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { FadeIn } from "./effects/FadeIn";
+import { Size } from "../../models";
 
 interface Props {
   src: string;
   alt: string;
   className?: string;
   skeletonClassName?: string;
+  onLoad?: (size: Size) => void;
 }
 
-export const ImageWithSkeleton: React.FC<Props> = ({ src, alt, className, skeletonClassName }) => {
+export const ImageWithSkeleton: React.FC<Props> = ({ src, alt, className, skeletonClassName, onLoad }) => {
   const imgRef = useRef<HTMLImageElement>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -18,8 +20,9 @@ export const ImageWithSkeleton: React.FC<Props> = ({ src, alt, className, skelet
     imgRef.current.src = src;
     imgRef.current.onload = () => {
       setLoaded(true);
+      onLoad?.({ width: imgRef.current!.width, height: imgRef.current!.height });
     };
-  }, [src, className]);
+  }, [src, className, onLoad]);
 
   return (
     <>

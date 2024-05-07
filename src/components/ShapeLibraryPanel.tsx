@@ -5,6 +5,7 @@ import { createShape } from "../shapes";
 import { ImageShape } from "../shapes/image";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { AffineMatrix, getRectCenter } from "okageo";
+import { Size } from "../models";
 
 const ICON_GROUPS = ["AWS", "Cisco", "GCP"];
 
@@ -25,7 +26,7 @@ export const ShapeLibraryPanel: React.FC = () => {
   }, [sm]);
 
   const createTemplate = useCallback(
-    async (url: string, id: string) => {
+    async (url: string, id: string, size: Size) => {
       const smctx = getCtx();
       const imageStore = smctx.getImageStore();
       const assetAPI = smctx.assetAPI;
@@ -60,13 +61,17 @@ export const ShapeLibraryPanel: React.FC = () => {
         // Fetch, load and save the asset without waiting.
         loadAsset();
 
+        // FIXME: Use original size of the icon rather than adjusting here.
+        // Proportional size is intended for AWS and GCP, unproportional size is intended for Cisco that has quite inconsistent sized icons.
+        const shapeSize = size.width === size.height ? { width: 50, height: 50 } : size;
+
         const template = {
           shapes: [
             createShape<ImageShape>(smctx.getShapeStruct, "image", {
               id: smctx.generateUuid(),
               findex: smctx.createLastIndex(),
-              width: 50,
-              height: 50,
+              width: shapeSize.width,
+              height: shapeSize.height,
               assetId: id,
             }),
           ],
@@ -80,8 +85,8 @@ export const ShapeLibraryPanel: React.FC = () => {
   );
 
   const handleIconDragStart = useCallback(
-    async (url: string, id: string) => {
-      const template = await createTemplate(url, id);
+    async (url: string, id: string, size: Size) => {
+      const template = await createTemplate(url, id, size);
       if (!template) return;
 
       sm.handleEvent({
@@ -96,8 +101,8 @@ export const ShapeLibraryPanel: React.FC = () => {
   );
 
   const handleIconClick = useCallback(
-    async (url: string, id: string) => {
-      const template = await createTemplate(url, id);
+    async (url: string, id: string, size: Size) => {
+      const template = await createTemplate(url, id, size);
       if (!template) return;
 
       const smctx = getCtx();

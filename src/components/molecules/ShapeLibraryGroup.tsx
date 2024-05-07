@@ -4,6 +4,9 @@ import { ImageWithSkeleton } from "../atoms/ImageWithSkeleton";
 import { getAssetSearchTag } from "../../utils/route";
 import { newKeywordFilter } from "../../composables/keywordFilter";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
+import { Size } from "../../models";
+
+type IconEventHandler = (url: string, id: string, size: Size) => void;
 
 const baseURL = process.env.ASSETS_PATH!;
 
@@ -13,8 +16,8 @@ interface GroupAccordionProps {
   type: "shapes" | "templates";
   size?: "md" | "lg";
   onClick?: (name: string) => void;
-  onIconDragStart?: (url: string, id: string) => void;
-  onIconClick?: (url: string, id: string) => void;
+  onIconDragStart?: IconEventHandler;
+  onIconClick?: IconEventHandler;
 }
 
 export const GroupAccordion: React.FC<GroupAccordionProps> = ({
@@ -54,8 +57,8 @@ interface ShapeLibraryGroupProps {
   name: string;
   type: "shapes" | "templates";
   size?: "md" | "lg";
-  onIconDragStart?: (url: string, id: string) => void;
-  onIconClick?: (url: string, id: string) => void;
+  onIconDragStart?: IconEventHandler;
+  onIconClick?: IconEventHandler;
 }
 
 const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size, onIconDragStart, onIconClick }) => {
@@ -177,8 +180,8 @@ interface ListItemProps {
   level: number;
   path: string;
   size?: "md" | "lg";
-  onIconDragStart?: (url: string, id: string) => void;
-  onIconClick?: (url: string, id: string) => void;
+  onIconDragStart?: IconEventHandler;
+  onIconClick?: IconEventHandler;
 }
 
 const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIconDragStart, onIconClick }) => {
@@ -253,18 +256,22 @@ interface IconButtonProps {
   name: string;
   id: string;
   size?: "md" | "lg";
-  onDragStart?: (url: string, id: string) => void;
-  onClick?: (url: string, id: string) => void;
+  onDragStart?: IconEventHandler;
+  onClick?: IconEventHandler;
 }
 
 export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDragStart, onClick }) => {
+  const [iconSize, setIconSize] = useState<Size>();
+
   const handleDragStart = useCallback(() => {
-    onDragStart?.(url, id);
-  }, [onDragStart, id, url]);
+    if (!iconSize) return;
+    onDragStart?.(url, id, iconSize);
+  }, [onDragStart, id, url, iconSize]);
 
   const handleClick = useCallback(() => {
-    onClick?.(url, id);
-  }, [onClick, id, url]);
+    if (!iconSize) return;
+    onClick?.(url, id, iconSize);
+  }, [onClick, id, url, iconSize]);
 
   const wrapperClass = size === "lg" ? "p-1" : "w-10 h-10";
   const imageClass = size === "lg" ? "max-w-full max-h-full object-contain" : "w-full h-full object-contain";
@@ -277,7 +284,13 @@ export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDra
         onClick={handleClick}
         onDragStart={handleDragStart}
       >
-        <ImageWithSkeleton src={url} alt={name} className={imageClass} skeletonClassName={skeletonClass} />
+        <ImageWithSkeleton
+          src={url}
+          alt={name}
+          className={imageClass}
+          skeletonClassName={skeletonClass}
+          onLoad={setIconSize}
+        />
       </ClickOrDragHandler>
     </li>
   );
