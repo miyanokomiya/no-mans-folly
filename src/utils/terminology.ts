@@ -13,7 +13,7 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
   [TERMINOLOGY_KEYS.WORKSPACE]: {
     text: "Workspace",
     description:
-      'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "asset" folder.',
+      'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "assets" folder.',
   },
   [TERMINOLOGY_KEYS.FOLLY_SVG]: {
     text: "Folly SVG",
