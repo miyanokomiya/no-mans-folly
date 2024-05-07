@@ -4,6 +4,7 @@ import { defineShapeHandler } from "./core";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU } from "../../utils/geometry";
 import { StyleScheme } from "../../models";
+import { isLineShape } from "../../shapes/line";
 
 const ANCHOR_SIZE = 6;
 
@@ -22,14 +23,14 @@ interface Option {
 
 export const newMultipleSelectedHandler = defineShapeHandler<HitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
-  const infoList: RotationAnchorInfo[] = option.targetIds
+  const rotationAnchorInfoList: RotationAnchorInfo[] = option.targetIds
     .map((id) => shapeComposite.shapeMap[id])
-    .filter((s) => Math.abs(s.rotation - option.rotation) > MINVALUE)
+    .filter((s) => !isLineShape(s) && Math.abs(s.rotation - option.rotation) > MINVALUE)
     .map((s) => [s.id, s.rotation, getRectCenter(shapeComposite.getWrapperRect(s))]);
 
   function hitTest(p: IVec2, scale: number): HitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
-    const info = infoList.find((info) => getDistance(info[2], p) <= threshold);
+    const info = rotationAnchorInfoList.find((info) => getDistance(info[2], p) <= threshold);
     if (info) return { type: "rotation", info };
   }
 
@@ -37,7 +38,7 @@ export const newMultipleSelectedHandler = defineShapeHandler<HitResult, Option>(
     const threshold = ANCHOR_SIZE * scale;
 
     applyFillStyle(ctx, { color: style.selectionPrimary });
-    infoList.forEach((info) => {
+    rotationAnchorInfoList.forEach((info) => {
       ctx.beginPath();
       ctx.arc(info[2].x, info[2].y, threshold, 0, TAU);
       ctx.fill();

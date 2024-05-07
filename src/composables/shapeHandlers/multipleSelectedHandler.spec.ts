@@ -3,6 +3,7 @@ import { newMultipleSelectedHandler } from "./multipleSelectedHandler";
 import { newShapeComposite } from "../shapeComposite";
 import { createShape, getCommonStruct } from "../../shapes";
 import { RectangleShape } from "../../shapes/rectangle";
+import { LineShape } from "../../shapes/line";
 
 describe("hitTest", () => {
   test("should check shapes that have different rotation from the option", () => {
@@ -74,5 +75,33 @@ describe("hitTest", () => {
       type: "rotation",
       info: [d.id, d.rotation, { x: 5, y: 35 }],
     });
+  });
+
+  test("should not check line shapes", () => {
+    const a = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "a",
+      p: { x: 0, y: 0 },
+      width: 10,
+      height: 10,
+      rotation: Math.PI / 2,
+    });
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "b",
+      p: { x: 0, y: 20 },
+      q: { x: 10, y: 20 },
+    });
+    const shapes = [a, line];
+    const shapeComposite = newShapeComposite({
+      getStruct: getCommonStruct,
+      shapes,
+    });
+
+    const target0 = newMultipleSelectedHandler({
+      getShapeComposite: () => shapeComposite,
+      targetIds: shapes.map((s) => s.id),
+      rotation: Math.PI / 4,
+    });
+    expect(target0.hitTest({ x: 5, y: 20 }, 1)).toBe(undefined);
+    expect(target0.hitTest({ x: 5, y: 5 }, 1)?.info[0]).toBe("a");
   });
 });
