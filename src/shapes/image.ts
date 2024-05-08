@@ -55,9 +55,28 @@ export const struct: ShapeStruct<ImageShape> = {
 
     ctx.restore();
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, _shapeContext, imageStore) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    const imageData = shape.assetId ? imageStore?.getImageData(shape.assetId) : undefined;
+    const imgElm = imageData
+      ? {
+          tag: "use",
+          attributes: {
+            href: `#${shape.assetId}`,
+            // Apply transfrom instead of "width" and "height" that don't work with "<use>" element.
+            transform: renderTransform([
+              shape.width / imageData.img.width,
+              0,
+              0,
+              shape.height / imageData.img.height,
+              0,
+              0,
+            ]),
+          },
+        }
+      : undefined;
 
     return {
       tag: "g",
@@ -78,16 +97,7 @@ export const struct: ShapeStruct<ImageShape> = {
                 },
               },
             ]),
-        {
-          tag: "use",
-          attributes: {
-            href: `#${shape.assetId}`,
-            // "width" and "height" do nothing for this element but they are used afterwards to derive "transform".
-            // => "transform" attribute should be empty here. See: "shapeSVGRenderer.ts".
-            width: shape.width,
-            height: shape.height,
-          },
-        },
+        ...(imgElm ? [imgElm] : []),
         ...(shape.stroke.disabled
           ? []
           : [
