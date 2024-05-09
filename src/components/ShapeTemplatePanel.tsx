@@ -6,6 +6,8 @@ import { duplicateShapes } from "../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../composables/shapeComposite";
 
+const TEMPLATE_LIST = ["Flowchart", "Sequence", "Misc"];
+
 export const ShapeTemplatePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const sm = useContext(AppStateMachineContext);
@@ -127,24 +129,18 @@ export const ShapeTemplatePanel: React.FC = () => {
 
   return (
     <div className={"transition-opacity" + (stateLabel === "DroppingNewShape" ? " opacity-30" : "")}>
-      <GroupAccordion
-        selectedName={selected}
-        name="Flowchart"
-        type="templates"
-        size="lg"
-        onClick={handleClickAccordion}
-        onIconDragStart={handleIconDragStart}
-        onIconClick={handleIconClick}
-      />
-      <GroupAccordion
-        selectedName={selected}
-        name="Sequence"
-        type="templates"
-        size="lg"
-        onClick={handleClickAccordion}
-        onIconDragStart={handleIconDragStart}
-        onIconClick={handleIconClick}
-      />
+      {TEMPLATE_LIST.map((name) => (
+        <GroupAccordion
+          key={name}
+          selectedName={selected}
+          name={name}
+          type="templates"
+          size="lg"
+          onClick={handleClickAccordion}
+          onIconDragStart={handleIconDragStart}
+          onIconClick={handleIconClick}
+        />
+      ))}
     </div>
   );
 };

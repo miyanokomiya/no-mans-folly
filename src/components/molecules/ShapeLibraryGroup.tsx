@@ -159,6 +159,7 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
                 item={item as ListItemData}
                 level={0}
                 path={basePath}
+                size={size}
                 onIconDragStart={onIconDragStart}
                 onIconClick={onIconClick}
               />
@@ -237,6 +238,7 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIc
                       item={data}
                       level={level + 1}
                       path={currentPath}
+                      size={size}
                       onIconDragStart={onIconDragStart}
                       onIconClick={onIconClick}
                     />
