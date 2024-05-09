@@ -14,7 +14,7 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { applyPath, renderRotationArrow, renderValueLabel } from "../utils/renderer";
+import { applyPath, renderMoveIcon, renderRotationArrow, renderValueLabel } from "../utils/renderer";
 import { StyleScheme } from "../models";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import {
@@ -32,7 +32,7 @@ import { ShapeHandler, defineShapeHandler } from "./shapeHandlers/core";
 
 const ANCHOR_SIZE = 5;
 
-type HitType = "rotation" | "corner" | "segment" | "area";
+type HitType = "rotation" | "corner" | "segment" | "area" | "move";
 export interface HitResult {
   type: HitType;
   index: number;
@@ -46,6 +46,7 @@ interface ResizingBase {
 interface Option {
   path: IVec2[];
   noRotation?: boolean;
+  moveAnchor?: boolean;
   locked?: boolean;
 }
 
@@ -107,6 +108,16 @@ export function newBoundingBox(option: Option): BoundingBox {
           };
     }
 
+    function getMoveAnchor(scale = 1): { c: IVec2; r: number } | undefined {
+      const scaledAnchorSize = ANCHOR_SIZE * scale;
+      return option.moveAnchor
+        ? {
+            c: add(tl, multi(rotate({ x: -20, y: -20 }, rotation), scale)),
+            r: scaledAnchorSize * 2,
+          }
+        : undefined;
+    }
+
     function hitTest(p: IVec2, scale = 1): HitResult | undefined {
       const scaledAnchorSize = ANCHOR_SIZE * scale;
 
@@ -115,6 +126,14 @@ export function newBoundingBox(option: Option): BoundingBox {
         const rotationHitTest = newCircleHitTest(rotationAnchor.c, rotationAnchor.r);
         if (rotationHitTest.test(p)) {
           return { type: "rotation", index: 0 };
+        }
+      }
+
+      const moveAnchor = getMoveAnchor(scale);
+      if (moveAnchor) {
+        const moveHitTest = newCircleHitTest(moveAnchor.c, moveAnchor.r);
+        if (moveHitTest.test(p)) {
+          return { type: "move", index: 0 };
         }
       }
 
@@ -137,6 +156,7 @@ export function newBoundingBox(option: Option): BoundingBox {
     function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
       const anchors = getAnchors(scale);
       const rotationAnchor = getRotationAnchor(scale);
+      const moveAnchor = getMoveAnchor(scale);
 
       ctx.beginPath();
       applyPath(ctx, option.path, true);
@@ -175,6 +195,15 @@ export function newBoundingBox(option: Option): BoundingBox {
         renderRotationArrow(ctx, rotationAnchor.c, rotation, rotationAnchor.r);
       }
 
+      if (moveAnchor) {
+        ctx.beginPath();
+        ctx.arc(moveAnchor.c.x, moveAnchor.c.y, moveAnchor.r, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        renderMoveIcon(ctx, moveAnchor.c, moveAnchor.r);
+      }
+
       if (hitResult?.type === "corner") {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
         applyFillStyle(ctx, { color: COLORS.WHITE });
@@ -191,6 +220,15 @@ export function newBoundingBox(option: Option): BoundingBox {
         ctx.stroke();
         applyFillStyle(ctx, { color: style.selectionSecondaly });
         renderRotationArrow(ctx, rotationAnchor.c, rotation, rotationAnchor.r);
+      } else if (moveAnchor && hitResult?.type === "move") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.arc(moveAnchor.c.x, moveAnchor.c.y, moveAnchor.r, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        renderMoveIcon(ctx, moveAnchor.c, moveAnchor.r);
       }
     }
 

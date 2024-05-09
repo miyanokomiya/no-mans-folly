@@ -19,6 +19,7 @@ import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
 import { newAlignBoxGapState } from "./alignBoxGapState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { newMovingHubState } from "../movingHubState";
 
 export const newAlignBoxSelectedState = defineIntransientState(() => {
   let targetId: string;
@@ -33,6 +34,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(target),
       locked: target.locked,
+      moveAnchor: true,
     });
     alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,
@@ -127,6 +129,8 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                  case "move":
+                    return () => newMovingHubState({ boundingBox });
                 }
               }
 
