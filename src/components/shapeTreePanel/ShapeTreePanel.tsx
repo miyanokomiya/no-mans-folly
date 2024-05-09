@@ -9,6 +9,7 @@ import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/cor
 import { useGlobalDrag } from "../../hooks/window";
 import { IVec2 } from "okageo";
 import { isGroupShape } from "../../shapes/group";
+import { isAlignBoxShape } from "../../shapes/align/alignBox";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -270,11 +271,11 @@ function getUITreeNodeProps(
 }
 
 /**
- * Only shapes that are children of a group shape or have no parent are draggable.
+ * Only shapes that are children of a container shape that acceps any shape types or have no parent are draggable.
  * This ristriction can be loosen, but things will become more complicated for sure.
  */
 function isDraggableShape(shapeComposite: ShapeComposite, id: string): boolean {
   const shape = shapeComposite.shapeMap[id];
   const parent = shape.parentId ? shapeComposite.shapeMap[shape.parentId] : undefined;
-  return !parent || isGroupShape(parent);
+  return !parent || isGroupShape(parent) || isAlignBoxShape(parent);
 }
