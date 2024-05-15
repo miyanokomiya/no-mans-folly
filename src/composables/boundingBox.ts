@@ -208,7 +208,7 @@ export function newBoundingBox(option: Option): BoundingBox {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
         applyFillStyle(ctx, { color: COLORS.WHITE });
         ctx.beginPath();
-        applyPath(ctx, anchors[hitResult.index]);
+        applyPath(ctx, anchors[hitResult.index], true);
         ctx.fill();
         ctx.stroke();
       } else if (rotationAnchor && hitResult?.type === "rotation") {
