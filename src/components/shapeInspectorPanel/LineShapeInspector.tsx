@@ -74,11 +74,13 @@ export const LineShapeInspector: React.FC<Props> = ({
         updateTmpShapes={updateTmpShapes}
         readyState={readyState}
       />
-      {targetTmpVertices.map((v, i) => (
-        <BlockField key={i} label={getVertexLabel(i, targetTmpVertices.length, !!targetTmpConnections[i])}>
-          <VertexField index={i} value={v} onChange={handleVertexChange} connection={targetTmpConnections[i]} />
-        </BlockField>
-      ))}
+      {targetShape.lineType === "elbow"
+        ? undefined // Vertices of elbow line should be derived automatically.
+        : targetTmpVertices.map((v, i) => (
+            <BlockField key={i} label={getVertexLabel(i, targetTmpVertices.length, !!targetTmpConnections[i])}>
+              <VertexField index={i} value={v} onChange={handleVertexChange} connection={targetTmpConnections[i]} />
+            </BlockField>
+          ))}
     </>
   );
 };
