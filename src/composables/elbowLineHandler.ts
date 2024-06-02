@@ -1,5 +1,5 @@
-import { IRectangle } from "okageo";
-import { LineShape } from "../shapes/line";
+import { IRectangle, IVec2, add, getRadian, multi } from "okageo";
+import { LineBodyItem, LineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
 import { ShapeComposite } from "./shapeComposite";
 
@@ -8,7 +8,7 @@ interface Option {
 }
 
 export function newElbowLineHandler(option: Option) {
-  function optimizeElbow(lineShape: LineShape) {
+  function optimizeElbow(lineShape: LineShape): LineBodyItem[] {
     const [pBounds, qBounds] = getTargetRects(option, lineShape);
     const vertices = getOptimalElbowBody(lineShape.p, lineShape.q, pBounds, qBounds, 30);
     return vertices.map((p) => ({ p }));
@@ -17,6 +17,32 @@ export function newElbowLineHandler(option: Option) {
   return { optimizeElbow };
 }
 export type ElbowLineHandler = ReturnType<typeof newElbowLineHandler>;
+
+export function inheritElbowExtraDistance(lineShape: LineShape, nextBodyvertices: IVec2[]): LineBodyItem[] {
+  const srcBody = lineShape.body;
+  if (!srcBody || srcBody.length === 0) {
+    return nextBodyvertices.map((p) => ({ p }));
+  }
+
+  const ret: LineBodyItem[] = [];
+  let v: IVec2 | undefined;
+
+  for (let i = 0; i < nextBodyvertices.length; i++) {
+    const p0 = v ? add(nextBodyvertices[i], v) : nextBodyvertices[i];
+    const d = srcBody[i]?.d;
+    if (d && i < nextBodyvertices.length - 1) {
+      const p1 = nextBodyvertices[i + 1];
+      const r = getRadian(p1, p0) + Math.PI / 2;
+      v = multi({ x: Math.cos(r), y: Math.sin(r) }, d);
+      ret.push({ p: add(p0, v), d });
+    } else {
+      v = undefined;
+      ret.push({ p: p0 });
+    }
+  }
+
+  return ret;
+}
 
 function getTargetRects(option: Option, line: LineShape): [IRectangle, IRectangle] {
   const shapeComposite = option.getShapeComposite();

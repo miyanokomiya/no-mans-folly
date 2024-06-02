@@ -42,6 +42,16 @@ import { struct as textStruct } from "./text";
 
 export type LineType = undefined | "elbow";
 export type CurveType = undefined | "auto";
+export type LineBodyItem = {
+  p: IVec2;
+  c?: ConnectionPoint;
+  /**
+   * Extra distance for elbow edge.
+   * "p" should be derived with taking care of this value.
+   * => This value is intended to preserve the extra disntance info.
+   */
+  d?: number;
+};
 
 export interface LineShape extends Shape {
   fill: FillStyle;
@@ -51,7 +61,7 @@ export interface LineShape extends Shape {
   qConnection?: ConnectionPoint;
   pHead?: LineHead;
   qHead?: LineHead;
-  body?: { p: IVec2; c?: ConnectionPoint }[];
+  body?: LineBodyItem[];
   lineType?: LineType;
   /**
    * The first item represents body[0], the last one does "q" and others do "body".
