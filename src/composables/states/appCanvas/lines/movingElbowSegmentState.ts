@@ -2,7 +2,6 @@ import type { AppCanvasState } from "../core";
 import { handleHistoryEvent } from "../commons";
 import { LineShape, getEdges, patchBodyVertex } from "../../../../shapes/line";
 import { getDistance, getPedal, getRadian } from "okageo";
-import { optimizeLinePath } from "../../../lineSnapping";
 import { newSelectionHubState } from "../selectionHubState";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -47,8 +46,6 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           const d = sign * getDistance(pedal, p) + (srcBodyItem.d ?? 0);
 
           let patch = patchBodyVertex(option.lineShape, option.index - 1, { ...srcBodyItem, d });
-          const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
-          patch = optimized ? { ...patch, ...optimized } : patch;
           patch = { ...patch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...patch }) };
 
           ctx.setTmpShapeMap(

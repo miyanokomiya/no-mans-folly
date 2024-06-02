@@ -4,7 +4,14 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
 } from "../commons";
-import { LineShape, deleteVertex, getConnection, getRelativePointOn, patchConnection } from "../../../../shapes/line";
+import {
+  LineShape,
+  deleteVertex,
+  getConnection,
+  getRelativePointOn,
+  patchBodyVertex,
+  patchConnection,
+} from "../../../../shapes/line";
 import { LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
@@ -23,6 +30,7 @@ import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { optimizeLinePath } from "../../../lineSnapping";
 import { newMovingElbowSegmentState } from "./movingElbowSegmentState";
+import { newElbowLineHandler } from "../../../elbowLineHandler";
 
 type DeleteVertexMeta = {
   index: number;
@@ -98,6 +106,20 @@ export const newLineSelectedState = defineIntransientState(() => {
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });
                   case "arc-anchor":
                     return () => newMovingLineArcState({ lineShape, index: hitResult.index, p: event.data.point });
+                  case "reset-elbow-edge": {
+                    const bodyIndex = hitResult.index - 1;
+                    const srcBodyItem = lineShape.body?.[bodyIndex];
+                    if (srcBodyItem) {
+                      let patch = patchBodyVertex(lineShape, hitResult.index - 1, { ...srcBodyItem, d: undefined });
+                      const elbowHandler = newElbowLineHandler(ctx);
+                      patch = { ...patch, body: elbowHandler.optimizeElbow({ ...lineShape, ...patch }) };
+                      const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
+                        update: { [lineShape.id]: patch },
+                      });
+                      ctx.patchShapes(layoutPatch);
+                    }
+                    return;
+                  }
                 }
               }
 

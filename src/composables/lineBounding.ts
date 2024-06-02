@@ -1,4 +1,4 @@
-import { IVec2, add, isSame, multi, rotate } from "okageo";
+import { IVec2, add, getCenter, getRadian, isSame, multi, rotate } from "okageo";
 import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
@@ -11,7 +11,15 @@ const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
 const MOVE_ANCHOR_RATE = 1.4;
 
-type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor" | "arc-anchor" | "optimize" | "elbow-edge";
+type LineHitType =
+  | "move-anchor"
+  | "vertex"
+  | "edge"
+  | "new-vertex-anchor"
+  | "arc-anchor"
+  | "optimize"
+  | "elbow-edge"
+  | "reset-elbow-edge";
 export interface LineHitResult {
   type: LineHitType;
   index: number;
@@ -43,6 +51,22 @@ export function newLineBounding(option: Option) {
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
 
   let hitResult: LineHitResult | undefined;
+
+  function getResetElbowEdgeAnchors(scale: number): { p: IVec2; index: number }[] {
+    const ret: { p: IVec2; index: number }[] = [];
+    lineShape.body?.forEach((item, i) => {
+      if (!item.d) return;
+
+      const edge = edges[i + 1];
+      const r = getRadian(edge[1], edge[0]) + Math.PI / 2;
+      const c = getCenter(edge[0], edge[1]);
+      ret.push({
+        p: add(c, multi({ x: Math.cos(r), y: Math.sin(r) }, VERTEX_R * 2 * scale)),
+        index: i + 1,
+      });
+    });
+    return ret;
+  }
 
   function getMoveAnchor(scale: number): IVec2 {
     const v = rotate({ x: 0, y: -30 }, getRadianP(lineShape));
@@ -163,6 +187,14 @@ export function newLineBounding(option: Option) {
           return { type: "arc-anchor", index: arcAnchorIndex };
         }
       }
+    } else {
+      const result = getResetElbowEdgeAnchors(scale).find((a) => {
+        const testFn = newCircleHitTest(a.p, vertexSize * ADD_VERTEX_ANCHOR_RATE);
+        return testFn.test(p);
+      });
+      if (result) {
+        return { type: "reset-elbow-edge", index: result.index };
+      }
     }
 
     {
@@ -227,14 +259,25 @@ export function newLineBounding(option: Option) {
           renderPlusIcon(ctx, c, size * 2);
         });
       }
+    } else {
+      applyFillStyle(ctx, { color: style.selectionPrimary });
+      const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+      getResetElbowEdgeAnchors(scale).forEach((a) => {
+        ctx.beginPath();
+        ctx.ellipse(a.p.x, a.p.y, size, size, 0, 0, TAU);
+        ctx.fill();
+      });
     }
 
     const moveAnchor = getMoveAnchor(scale);
-    ctx.beginPath();
-    ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
-    ctx.fill();
-    applyFillStyle(ctx, { color: style.selectionPrimary });
-    renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
+    {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
+      ctx.fill();
+      applyFillStyle(ctx, { color: style.selectionPrimary });
+      renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
+    }
 
     const optimizeAnchorP = getOptimizeAnchorP(scale);
     if (optimizeAnchorP) {
@@ -339,6 +382,17 @@ export function newLineBounding(option: Option) {
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
           ctx.fill();
+          break;
+        }
+        case "reset-elbow-edge": {
+          const p = getResetElbowEdgeAnchors(scale).find((a) => a.index === hitResult?.index)?.p;
+          if (p) {
+            applyFillStyle(ctx, { color: style.selectionSecondaly });
+            const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, size, size, 0, 0, TAU);
+            ctx.fill();
+          }
           break;
         }
       }
