@@ -7,6 +7,7 @@ import {
   getRadianQ,
   isCurveLine,
   isLineShape,
+  patchBodyVertex,
   patchConnection,
   patchVertex,
   patchVertices,
@@ -428,6 +429,26 @@ describe("patchVertices", () => {
         [2, v, c],
       ]),
     ).toEqual({ p: v, body: [{ p: { x: 2, y: 3 } }, { p: v, c }] });
+  });
+});
+
+describe("patchBodyVertex", () => {
+  test("should return empty object when index is invalid", () => {
+    const shape0 = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
+    const p = { x: -1, y: -1 };
+    expect(patchBodyVertex(shape0, 0, { p })).toEqual({});
+    expect(patchBodyVertex(shape0, 1, { p })).toEqual({});
+  });
+
+  test("should return patched object of the line", () => {
+    const p = { x: -1, y: -1 };
+    const shape1 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+    });
+    expect(patchBodyVertex(shape1, 0, { p })).toEqual({ body: [{ p }, { p: { x: 3, y: 4 } }] });
+    expect(patchBodyVertex(shape1, 1, { p, d: 1 })).toEqual({ body: [{ p: { x: 2, y: 3 } }, { p, d: 1 }] });
   });
 });
 

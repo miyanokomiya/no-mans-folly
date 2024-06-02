@@ -478,6 +478,10 @@ export function patchVertices(
   }, {});
 }
 
+export function patchBodyVertex(shape: LineShape, bodyIndex: number, item: LineBodyItem): Partial<LineShape> {
+  return shape.body ? { body: shape.body.map((b, i) => (i === bodyIndex ? item : b)) } : {};
+}
+
 export function patchConnection(shape: LineShape, index: number, connection?: ConnectionPoint): Partial<LineShape> {
   const vertices = getLinePath(shape);
   switch (index) {
