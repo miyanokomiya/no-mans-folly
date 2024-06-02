@@ -2,6 +2,7 @@ import { IRectangle, IVec2, add, getRadian, multi } from "okageo";
 import { LineBodyItem, LineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
 import { ShapeComposite } from "./shapeComposite";
+import { restoreBodyFromRoundedElbow } from "../utils/curveLine";
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -24,12 +25,14 @@ export function inheritElbowExtraDistance(lineShape: LineShape, nextBodyvertices
     return nextBodyvertices.map((p) => ({ p }));
   }
 
+  // Regard curvec elbow that has extra body vertices for rounded appearance.
+  const restoredSrcBody = lineShape.curveType === "auto" ? restoreBodyFromRoundedElbow(lineShape) : srcBody;
   const ret: LineBodyItem[] = [];
   let v: IVec2 | undefined;
 
   for (let i = 0; i < nextBodyvertices.length; i++) {
     const p0 = v ? add(nextBodyvertices[i], v) : nextBodyvertices[i];
-    const d = srcBody[i]?.d;
+    const d = restoredSrcBody[i]?.d;
     if (d && i < nextBodyvertices.length - 1) {
       const p1 = nextBodyvertices[i + 1];
       const r = getRadian(p1, p0) + Math.PI / 2;

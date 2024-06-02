@@ -12,7 +12,7 @@ import {
   sub,
 } from "okageo";
 import { BezierCurveControl } from "../models";
-import { CurveType, LineShape, getLinePath } from "../shapes/line";
+import { CurveType, LineBodyItem, LineShape, getLinePath } from "../shapes/line";
 import { getBezierControlForArc, getCornerRadiusArc } from "./path";
 
 export function getAutomaticCurve(path: IVec2[]): BezierCurveControl[] | undefined {
@@ -62,12 +62,13 @@ export function getDefaultCurveBody(p: IVec2, q: IVec2): LineShape["body"] {
  * => Supposes that target line doesn't have curves.
  */
 export function applyCornerRadius(line: LineShape): Partial<LineShape> {
-  if (!line.body || line.body.length === 0) return {};
+  const body = line.body;
+  if (!body || body.length === 0) return {};
 
   const radius = 20;
-  const bodyPath = line.body.map((b) => b.p);
+  const bodyPath = body.map((b) => b.p);
 
-  const newBodyPath: IVec2[] = [];
+  const newBody: LineBodyItem[] = [];
   const newCurves: LineShape["curves"] = [];
 
   const path = [line.p, ...bodyPath, line.q];
@@ -81,12 +82,30 @@ export function applyCornerRadius(line: LineShape): Partial<LineShape> {
     const info = getCornerRadiusArc(a, b, c, r);
     const control = getBezierControlForArc(info[0], info[1], info[2]);
 
-    newBodyPath.push(info[1], info[2]);
+    if (index < body.length && body[index].d) {
+      newBody.push({ p: info[1] }, { p: info[2], d: body[index].d });
+    } else {
+      newBody.push({ p: info[1] }, { p: info[2] });
+    }
     newCurves.push(undefined, control);
   }
 
   return {
-    body: newBodyPath.map((p) => ({ p })),
+    body: newBody,
     curves: newCurves,
   };
+}
+
+export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): Pick<LineBodyItem, "d">[] {
+  const body = roundedElbow.body;
+  if (!body || body.length === 0) return [];
+
+  const ret: Pick<LineBodyItem, "d">[] = [];
+  const srcLength = body.length / 2;
+  for (let i = 0; i < srcLength; i++) {
+    const d = body[i * 2 + 1].d;
+    ret.push(d ? { d } : {});
+  }
+
+  return ret;
 }

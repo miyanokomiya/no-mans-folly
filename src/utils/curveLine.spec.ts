@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { applyCornerRadius, getDefaultCurveBody } from "./curveLine";
+import { applyCornerRadius, getDefaultCurveBody, restoreBodyFromRoundedElbow } from "./curveLine";
 import { createShape, getCommonStruct } from "../shapes";
 import { LineShape } from "../shapes/line";
 
@@ -23,5 +23,44 @@ describe("applyCornerRadius", () => {
     expect(res1.curves).toHaveLength(2);
     expect(res1.curves?.[0]).toBe(undefined);
     expect(res1.curves?.[1]).not.toBe(undefined);
+  });
+
+  test("should preserve d attribute", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 0 },
+    });
+
+    const res0 = applyCornerRadius({
+      ...line,
+      body: [
+        { p: { x: 50, y: 50 }, d: 1 },
+        { p: { x: 50, y: 100 }, d: 2 },
+      ],
+    });
+    expect(res0.body).toHaveLength(4);
+    expect(res0.body?.[0].d).toBe(undefined);
+    expect(res0.body?.[1].d).toBe(1);
+    expect(res0.body?.[2].d).toBe(undefined);
+    expect(res0.body?.[3].d).toBe(2);
+  });
+});
+
+describe("restoreBodyFromRoundedElbow", () => {
+  test("should return source body attribute list", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [
+        { p: { x: 50, y: 50 }, d: 1 },
+        { p: { x: 50, y: 100 }, d: 2 },
+      ],
+      q: { x: 100, y: 0 },
+    });
+
+    const roundedElbow = { ...line, ...applyCornerRadius(line) };
+    const res = restoreBodyFromRoundedElbow(roundedElbow);
+    expect(res).toHaveLength(2);
+    expect(res[0].d).toBe(1);
+    expect(res[1].d).toBe(2);
   });
 });
