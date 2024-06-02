@@ -448,7 +448,10 @@ describe("patchBodyVertex", () => {
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
     });
     expect(patchBodyVertex(shape1, 0, { p })).toEqual({ body: [{ p }, { p: { x: 3, y: 4 } }] });
-    expect(patchBodyVertex(shape1, 1, { p, d: 1 })).toEqual({ body: [{ p: { x: 2, y: 3 } }, { p, d: 1 }] });
+    const elbow = { d: 1, p: { x: 1, y: 2 } };
+    expect(patchBodyVertex(shape1, 1, { p, elbow })).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p, elbow }],
+    });
   });
 });
 

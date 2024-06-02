@@ -32,12 +32,12 @@ export function inheritElbowExtraDistance(lineShape: LineShape, nextBodyvertices
 
   for (let i = 0; i < nextBodyvertices.length; i++) {
     const p0 = v ? add(nextBodyvertices[i], v) : nextBodyvertices[i];
-    const d = restoredSrcBody[i]?.d;
-    if (d && i < nextBodyvertices.length - 1) {
-      const p1 = nextBodyvertices[i + 1];
-      const r = getRadian(p1, p0) + Math.PI / 2;
-      v = multi({ x: Math.cos(r), y: Math.sin(r) }, d);
-      ret.push({ p: add(p0, v), d });
+    const elbow = restoredSrcBody[i]?.elbow;
+    if (elbow && i < nextBodyvertices.length - 1) {
+      const prev = i === 0 ? lineShape.p : ret[ret.length - 1].p;
+      const r = getRadian(p0, prev);
+      v = multi({ x: Math.cos(r), y: Math.sin(r) }, elbow.d);
+      ret.push({ p: add(p0, v), elbow: { ...elbow, p: nextBodyvertices[i] } });
     } else {
       v = undefined;
       ret.push({ p: p0 });

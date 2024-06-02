@@ -110,7 +110,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                     const bodyIndex = hitResult.index - 1;
                     const srcBodyItem = lineShape.body?.[bodyIndex];
                     if (srcBodyItem) {
-                      let patch = patchBodyVertex(lineShape, hitResult.index - 1, { ...srcBodyItem, d: undefined });
+                      let patch = patchBodyVertex(lineShape, hitResult.index - 1, { ...srcBodyItem, elbow: undefined });
                       const elbowHandler = newElbowLineHandler(ctx);
                       patch = { ...patch, body: elbowHandler.optimizeElbow({ ...lineShape, ...patch }) };
                       const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {

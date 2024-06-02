@@ -55,7 +55,7 @@ export function newLineBounding(option: Option) {
   function getResetElbowEdgeAnchors(scale: number): { p: IVec2; index: number }[] {
     const ret: { p: IVec2; index: number }[] = [];
     lineShape.body?.forEach((item, i) => {
-      if (!item.d) return;
+      if (!item.elbow) return;
 
       const edge = edges[i + 1];
       const r = getRadian(edge[1], edge[0]) + Math.PI / 2;

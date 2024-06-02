@@ -34,15 +34,15 @@ describe("applyCornerRadius", () => {
     const res0 = applyCornerRadius({
       ...line,
       body: [
-        { p: { x: 50, y: 50 }, d: 1 },
-        { p: { x: 50, y: 100 }, d: 2 },
+        { p: { x: 50, y: 50 }, elbow: { d: 1, p: { x: 1, y: 2 } } },
+        { p: { x: 50, y: 100 }, elbow: { d: 2, p: { x: 1, y: 2 } } },
       ],
     });
     expect(res0.body).toHaveLength(4);
-    expect(res0.body?.[0].d).toBe(undefined);
-    expect(res0.body?.[1].d).toBe(1);
-    expect(res0.body?.[2].d).toBe(undefined);
-    expect(res0.body?.[3].d).toBe(2);
+    expect(res0.body?.[0].elbow).toBe(undefined);
+    expect(res0.body?.[1].elbow).toEqual({ d: 1, p: { x: 1, y: 2 } });
+    expect(res0.body?.[2].elbow).toBe(undefined);
+    expect(res0.body?.[3].elbow).toEqual({ d: 2, p: { x: 1, y: 2 } });
   });
 });
 
@@ -51,8 +51,8 @@ describe("restoreBodyFromRoundedElbow", () => {
     const line = createShape<LineShape>(getCommonStruct, "line", {
       p: { x: 0, y: 0 },
       body: [
-        { p: { x: 50, y: 50 }, d: 1 },
-        { p: { x: 50, y: 100 }, d: 2 },
+        { p: { x: 50, y: 50 }, elbow: { d: 1, p: { x: 1, y: 2 } } },
+        { p: { x: 50, y: 100 }, elbow: { d: 2, p: { x: 1, y: 2 } } },
       ],
       q: { x: 100, y: 0 },
     });
@@ -60,7 +60,7 @@ describe("restoreBodyFromRoundedElbow", () => {
     const roundedElbow = { ...line, ...applyCornerRadius(line) };
     const res = restoreBodyFromRoundedElbow(roundedElbow);
     expect(res).toHaveLength(2);
-    expect(res[0].d).toBe(1);
-    expect(res[1].d).toBe(2);
+    expect(res[0].elbow?.d).toBe(1);
+    expect(res[1].elbow?.d).toBe(2);
   });
 });

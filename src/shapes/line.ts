@@ -46,11 +46,13 @@ export type LineBodyItem = {
   p: IVec2;
   c?: ConnectionPoint;
   /**
-   * Extra distance for elbow edge.
+   * Extra distance info for elbow edge.
    * "p" should be derived with taking care of this value.
    * => This value is intended to preserve the extra disntance info.
+   * d: Distance away from "c"
+   * p: Original first vertex of the edge
    */
-  d?: number;
+  elbow?: { d: number; p: IVec2 };
 };
 
 export interface LineShape extends Shape {

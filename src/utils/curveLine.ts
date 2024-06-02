@@ -82,8 +82,8 @@ export function applyCornerRadius(line: LineShape): Partial<LineShape> {
     const info = getCornerRadiusArc(a, b, c, r);
     const control = getBezierControlForArc(info[0], info[1], info[2]);
 
-    if (index < body.length && body[index].d) {
-      newBody.push({ p: info[1] }, { p: info[2], d: body[index].d });
+    if (index < body.length && body[index].elbow) {
+      newBody.push({ p: info[1] }, { p: info[2], elbow: body[index].elbow });
     } else {
       newBody.push({ p: info[1] }, { p: info[2] });
     }
@@ -96,15 +96,15 @@ export function applyCornerRadius(line: LineShape): Partial<LineShape> {
   };
 }
 
-export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): Pick<LineBodyItem, "d">[] {
+export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): Pick<LineBodyItem, "elbow">[] {
   const body = roundedElbow.body;
   if (!body || body.length === 0) return [];
 
-  const ret: Pick<LineBodyItem, "d">[] = [];
+  const ret: Pick<LineBodyItem, "elbow">[] = [];
   const srcLength = body.length / 2;
   for (let i = 0; i < srcLength; i++) {
-    const d = body[i * 2 + 1].d;
-    ret.push(d ? { d } : {});
+    const elbow = body[i * 2 + 1].elbow;
+    ret.push(elbow ? { elbow } : {});
   }
 
   return ret;

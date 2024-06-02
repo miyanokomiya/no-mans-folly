@@ -20,8 +20,8 @@ describe("inheritElbowExtraDistance", () => {
     const lineShape = struct.create({
       p: { x: 0, y: 0 },
       body: [
-        { p: { x: 0, y: 0 }, d: 5 },
-        { p: { x: 0, y: 0 }, d: 10 },
+        { p: { x: 0, y: 0 }, elbow: { d: 5, p: { x: 50, y: 50 } } },
+        { p: { x: 0, y: 0 }, elbow: { d: 5, p: { x: 50, y: 50 } } },
       ],
       q: { x: 100, y: 100 },
     });
@@ -29,19 +29,19 @@ describe("inheritElbowExtraDistance", () => {
       { x: 50, y: 0 },
       { x: 50, y: 100 },
     ]);
-    expect(res[0].p).toEqualPoint({ x: 45, y: 0 });
-    expect(res[1].p).toEqualPoint({ x: 45, y: 100 });
-    expect(res[0].d).toBe(5);
-    expect(res[1].d).toBe(undefined);
+    expect(res[0].p).toEqualPoint({ x: 55, y: 0 });
+    expect(res[1].p).toEqualPoint({ x: 55, y: 100 });
+    expect(res[0].elbow?.d).toBe(5);
+    expect(res[1].elbow).toBe(undefined);
   });
 
   test("should apply elbow extra distance: 3 body vertices", () => {
     const lineShape = struct.create({
       p: { x: 0, y: 0 },
       body: [
-        { p: { x: 0, y: 0 }, d: 5 },
-        { p: { x: 0, y: 0 }, d: 10 },
-        { p: { x: 0, y: 0 }, d: 15 },
+        { p: { x: 0, y: 0 }, elbow: { d: 5, p: { x: 50, y: 75 } } },
+        { p: { x: 0, y: 0 }, elbow: { d: 10, p: { x: 75, y: 150 } } },
+        { p: { x: 0, y: 0 }, elbow: { d: 15, p: { x: 50, y: 50 } } },
       ],
       q: { x: 100, y: 100 },
     });
@@ -50,11 +50,11 @@ describe("inheritElbowExtraDistance", () => {
       { x: 50, y: 150 },
       { x: 100, y: 150 },
     ]);
-    expect(res[0].p).toEqualPoint({ x: 45, y: 0 });
-    expect(res[1].p).toEqualPoint({ x: 45, y: 160 });
+    expect(res[0].p).toEqualPoint({ x: 55, y: 0 });
+    expect(res[1].p).toEqualPoint({ x: 55, y: 160 });
     expect(res[2].p).toEqualPoint({ x: 100, y: 160 });
-    expect(res[0].d).toBe(5);
-    expect(res[1].d).toBe(10);
-    expect(res[2].d).toBe(undefined);
+    expect(res[0].elbow).toEqual({ d: 5, p: { x: 50, y: 0 } });
+    expect(res[1].elbow).toEqual({ d: 10, p: { x: 50, y: 150 } });
+    expect(res[2].elbow).toBe(undefined);
   });
 });

@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent } from "../commons";
-import { LineShape, getEdges, patchBodyVertex } from "../../../../shapes/line";
-import { getDistance, getPedal, getRadian } from "okageo";
+import { LineShape, getEdges, getLinePath, patchBodyVertex } from "../../../../shapes/line";
+import { getDistance, getInner, getPedal, sub } from "okageo";
 import { newSelectionHubState } from "../selectionHubState";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -39,13 +39,17 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const p = event.data.current;
+          const elbow = srcBodyItem.elbow;
           const pedal = getPedal(p, targetSegment);
-          const sign = Math.sign(
-            Math.sin(getRadian(p, targetSegment[0]) - getRadian(targetSegment[1], targetSegment[0])),
-          );
-          const d = sign * getDistance(pedal, p) + (srcBodyItem.d ?? 0);
 
-          let patch = patchBodyVertex(option.lineShape, option.index - 1, { ...srcBodyItem, d });
+          const vertices = getLinePath(option.lineShape);
+          const prev = vertices[option.index - 1];
+          const origin = elbow?.p ?? targetSegment[0];
+          const sign = Math.sign(getInner(sub(origin, prev), sub(p, pedal)));
+          const d = sign * getDistance(pedal, p) + (elbow?.d ?? 0);
+
+          const nextElbow = { ...elbow, d, p: origin };
+          let patch = patchBodyVertex(option.lineShape, option.index - 1, { ...srcBodyItem, elbow: nextElbow });
           patch = { ...patch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...patch }) };
 
           ctx.setTmpShapeMap(
