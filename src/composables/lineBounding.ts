@@ -11,7 +11,7 @@ const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
 const MOVE_ANCHOR_RATE = 1.4;
 
-type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor" | "arc-anchor" | "optimize";
+type LineHitType = "move-anchor" | "vertex" | "edge" | "new-vertex-anchor" | "arc-anchor" | "optimize" | "elbow-edge";
 export interface LineHitResult {
   type: LineHitType;
   index: number;
@@ -171,23 +171,15 @@ export function newLineBounding(option: Option) {
       });
 
       if (edgeIndex !== -1) {
-        // Each edge of elbow line shouldn't be targeted.
-        // => They are calculated automatically.
-        return { type: elbow ? "move-anchor" : "edge", index: edgeIndex };
+        if (elbow) {
+          // Only internal edges can be moved.
+          if (0 < edgeIndex && edgeIndex < edges.length - 1) {
+            return { type: "elbow-edge", index: edgeIndex };
+          }
+        } else {
+          return { type: "edge", index: edgeIndex };
+        }
       }
-    }
-  }
-
-  function getCursorStyle(hitBounding: LineHitResult): string | undefined {
-    if (!hitBounding) return;
-
-    switch (hitBounding.type) {
-      case "vertex":
-        return "grab";
-      case "edge":
-        return "move";
-      default:
-        return;
     }
   }
 
@@ -311,7 +303,8 @@ export function newLineBounding(option: Option) {
           ctx.fill();
           break;
         }
-        case "edge": {
+        case "edge":
+        case "elbow-edge": {
           ctx.beginPath();
           if (curves) {
             applyCurvePath(ctx, edges[hitResult.index], [curves[hitResult.index]]);
@@ -352,7 +345,7 @@ export function newLineBounding(option: Option) {
     }
   }
 
-  return { saveHitResult, hitTest, getCursorStyle, render };
+  return { saveHitResult, hitTest, render };
 }
 export type LineBounding = ReturnType<typeof newLineBounding>;
 

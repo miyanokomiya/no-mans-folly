@@ -22,6 +22,7 @@ import { newMovingLineArcState } from "./movingLineArcState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { optimizeLinePath } from "../../../lineSnapping";
+import { newMovingElbowSegmentState } from "./movingElbowSegmentState";
 
 type DeleteVertexMeta = {
   index: number;
@@ -90,6 +91,8 @@ export const newLineSelectedState = defineIntransientState(() => {
                     }
                   case "edge":
                     return () => newMovingLineSegmentState({ lineShape, index: hitResult.index });
+                  case "elbow-edge":
+                    return () => newMovingElbowSegmentState({ lineShape, index: hitResult.index });
                   case "new-vertex-anchor":
                     return () =>
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });

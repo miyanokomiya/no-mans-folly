@@ -12,7 +12,7 @@ export function newElbowLineHandler(option: Option) {
   function optimizeElbow(lineShape: LineShape): LineBodyItem[] {
     const [pBounds, qBounds] = getTargetRects(option, lineShape);
     const vertices = getOptimalElbowBody(lineShape.p, lineShape.q, pBounds, qBounds, 30);
-    return vertices.map((p) => ({ p }));
+    return inheritElbowExtraDistance(lineShape, vertices);
   }
 
   return { optimizeElbow };
