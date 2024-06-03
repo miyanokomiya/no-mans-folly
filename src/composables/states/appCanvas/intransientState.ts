@@ -56,7 +56,9 @@ export function defineIntransientState<A extends any[]>(
         return src.handleEvent(ctx, event);
       },
       render: (ctx, renderCtx) => {
-        if (hoveredShape) {
+        // Avoid highlighting selected shape.
+        // => It should have certain selected appearance provided by other state.
+        if (hoveredShape && !ctx.getSelectedShapeIdMap()[hoveredShape.id]) {
           renderCtx.beginPath();
 
           if (isLineShape(hoveredShape)) {
