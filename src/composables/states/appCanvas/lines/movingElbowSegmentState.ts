@@ -43,7 +43,9 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           const pedal = getPedal(p, targetSegment);
 
           const vertices = getLinePath(option.lineShape);
-          const prev = vertices[option.index - 1];
+          // Regard rounded elbow that has an extra vertex for each corner.
+          const prevIndex = option.lineShape.curveType === "auto" ? option.index - 2 : option.index - 1;
+          const prev = vertices[prevIndex];
           const origin = elbow?.p ?? targetSegment[0];
           const sign = Math.sign(getInner(sub(origin, prev), sub(p, pedal)));
           const d = sign * getDistance(pedal, p) + (elbow?.d ?? 0);
