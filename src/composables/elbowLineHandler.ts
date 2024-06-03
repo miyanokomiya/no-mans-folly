@@ -19,6 +19,9 @@ export function newElbowLineHandler(option: Option) {
 }
 export type ElbowLineHandler = ReturnType<typeof newElbowLineHandler>;
 
+/**
+ * "nextBodyvertices" shouldn be the one before courner radius applied.
+ */
 export function inheritElbowExtraDistance(lineShape: LineShape, nextBodyvertices: IVec2[]): LineBodyItem[] {
   const srcBody = lineShape.body;
   if (!srcBody || srcBody.length === 0) {

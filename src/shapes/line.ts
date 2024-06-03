@@ -47,10 +47,10 @@ export type LineBodyItem = {
   c?: ConnectionPoint;
   /**
    * Extra distance info for elbow edge.
-   * "p" should be derived with taking care of this value.
+   * "p" of "LineBodyItem" should be derived with taking care of this value.
    * => This value is intended to preserve the extra disntance info.
-   * d: Distance away from "c"
-   * p: Original first vertex of the edge
+   * d: Distance away from "p"
+   * p: Original first vertex of the edge without courner radius
    */
   elbow?: { d: number; p: IVec2 };
 };

@@ -96,15 +96,16 @@ export function applyCornerRadius(line: LineShape): Partial<LineShape> {
   };
 }
 
-export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): Pick<LineBodyItem, "elbow">[] {
+export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): LineBodyItem[] {
   const body = roundedElbow.body;
   if (!body || body.length === 0) return [];
 
-  const ret: Pick<LineBodyItem, "elbow">[] = [];
+  const ret: LineBodyItem[] = [];
   const srcLength = body.length / 2;
   for (let i = 0; i < srcLength; i++) {
-    const elbow = body[i * 2 + 1].elbow;
-    ret.push(elbow ? { elbow } : {});
+    const item = body[i * 2 + 1];
+    const elbow = item.elbow;
+    ret.push(elbow ? { ...item, p: elbow.p } : item);
   }
 
   return ret;

@@ -52,7 +52,7 @@ describe("restoreBodyFromRoundedElbow", () => {
       p: { x: 0, y: 0 },
       body: [
         { p: { x: 50, y: 50 }, elbow: { d: 1, p: { x: 1, y: 2 } } },
-        { p: { x: 50, y: 100 }, elbow: { d: 2, p: { x: 1, y: 2 } } },
+        { p: { x: 50, y: 100 }, elbow: { d: 2, p: { x: 2, y: 3 } } },
       ],
       q: { x: 100, y: 0 },
     });
@@ -60,7 +60,9 @@ describe("restoreBodyFromRoundedElbow", () => {
     const roundedElbow = { ...line, ...applyCornerRadius(line) };
     const res = restoreBodyFromRoundedElbow(roundedElbow);
     expect(res).toHaveLength(2);
+    expect(res[0].p).toEqualPoint({ x: 1, y: 2 });
     expect(res[0].elbow?.d).toBe(1);
+    expect(res[1].p).toEqualPoint({ x: 2, y: 3 });
     expect(res[1].elbow?.d).toBe(2);
   });
 });
