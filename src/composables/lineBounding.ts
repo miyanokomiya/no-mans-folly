@@ -34,14 +34,14 @@ export function newLineBounding(option: Option) {
   const lineShape = option.lineShape;
   const vertices = getLinePath(lineShape);
   const edges = getEdges(lineShape);
+  const autoCurve = lineShape.curveType === "auto";
   const curves = isCurveLine(lineShape) ? lineShape.curves : undefined;
-  const arcAnchors =
-    lineShape.curveType === "auto"
-      ? []
-      : edges.map((edge, i) => {
-          const lerpFn = getCurveLerpFn(edge, curves?.[i]);
-          return lerpFn(0.5);
-        });
+  const arcAnchors = autoCurve
+    ? []
+    : edges.map((edge, i) => {
+        const lerpFn = getCurveLerpFn(edge, curves?.[i]);
+        return lerpFn(0.5);
+      });
   const addAnchors = edges.map((edge, i) => {
     const lerpFn = getCurveLerpFn(edge, curves?.[i]);
     return lerpFn(0.25);
@@ -205,8 +205,8 @@ export function newLineBounding(option: Option) {
 
       if (edgeIndex !== -1) {
         if (elbow) {
-          // Only internal edges can be moved.
-          if (0 < edgeIndex && edgeIndex < edges.length - 1) {
+          // Only internal straight edges can be moved.
+          if (0 < edgeIndex && edgeIndex < edges.length - 1 && !curves?.[edgeIndex]) {
             return { type: "elbow-edge", index: edgeIndex };
           }
         } else {
