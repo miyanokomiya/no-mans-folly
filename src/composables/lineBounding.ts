@@ -52,8 +52,8 @@ export function newLineBounding(option: Option) {
 
   let hitResult: LineHitResult | undefined;
 
-  function getResetElbowEdgeAnchors(scale: number): { p: IVec2; index: number }[] {
-    const ret: { p: IVec2; index: number }[] = [];
+  function getResetElbowEdgeAnchors(scale: number): { p: IVec2; index: number; c: IVec2 }[] {
+    const ret: { p: IVec2; index: number; c: IVec2 }[] = [];
     lineShape.body?.forEach((item, i) => {
       if (!item.elbow) return;
 
@@ -63,6 +63,7 @@ export function newLineBounding(option: Option) {
       ret.push({
         p: add(c, multi({ x: Math.cos(r), y: Math.sin(r) }, VERTEX_R * 2 * scale)),
         index: i + 1,
+        c,
       });
     });
     return ret;
@@ -260,9 +261,14 @@ export function newLineBounding(option: Option) {
         });
       }
     } else {
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
       applyFillStyle(ctx, { color: style.selectionPrimary });
       const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
       getResetElbowEdgeAnchors(scale).forEach((a) => {
+        ctx.beginPath();
+        ctx.moveTo(a.p.x, a.p.y);
+        ctx.lineTo(a.c.x, a.c.y);
+        ctx.stroke();
         ctx.beginPath();
         ctx.ellipse(a.p.x, a.p.y, size, size, 0, 0, TAU);
         ctx.fill();
