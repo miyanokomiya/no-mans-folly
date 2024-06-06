@@ -37,13 +37,14 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
 
       // Target elbow segment is always cardinal, so either horizontal or vertical snapping is available at once.
       const isHorizontalSegment = Math.abs(Math.sin(getRadian(targetSegment[1], targetSegment[0]))) < MINVALUE;
+      const gridLines = ctx.getGrid().getSnappingLines();
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => {
           const lines = shapeComposite.getSnappingLines(s);
           return [s.id, isHorizontalSegment ? { v: [], h: lines.h } : { v: lines.v, h: [] }];
         }),
         scale: ctx.getScale(),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
+        gridSnapping: isHorizontalSegment ? { v: [], h: gridLines.h } : { v: gridLines.v, h: [] },
       });
     },
     onEnd: (ctx) => {
