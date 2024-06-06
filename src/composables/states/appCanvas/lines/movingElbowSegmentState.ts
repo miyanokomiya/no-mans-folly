@@ -57,12 +57,11 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
 
       switch (event.type) {
         case "pointermove": {
+          const v = sub(event.data.current, event.data.start);
           snappingResult = event.data.ctrl
             ? undefined
-            : shapeSnapping.test(
-                moveRect(getOuterRectangle([targetSegment]), sub(event.data.current, event.data.start)),
-              );
-          const p = snappingResult ? add(event.data.current, snappingResult.diff) : event.data.current;
+            : shapeSnapping.test(moveRect(getOuterRectangle([targetSegment]), v));
+          const p = snappingResult ? add(v, add(targetSegment[0], snappingResult.diff)) : event.data.current;
 
           const elbow = srcBodyItem.elbow;
           const pedal = getPedal(p, targetSegment);
