@@ -1,7 +1,37 @@
 import { describe, expect, test } from "vitest";
-import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, getTreeBranchPositionMap, getTreeBranchSizeMap } from "./tree";
+import {
+  CHILD_MARGIN,
+  SIBLING_MARGIN,
+  TreeLayoutNode,
+  getTreeBranchPositionMap,
+  getTreeBranchSizeMap,
+  treeLayout,
+} from "./tree";
 import { getTree } from "../tree";
 import { toMap } from "../commons";
+
+describe("treeLayout", () => {
+  test("should use siblingMargin and childMargin of the root", () => {
+    const rect10 = { x: 0, y: 0, width: 10, height: 10 };
+    const src: TreeLayoutNode[] = [
+      {
+        id: "a",
+        findex: "a",
+        type: "root",
+        direction: 0,
+        parentId: "",
+        siblingMargin: 100,
+        childMargin: 200,
+        rect: rect10,
+      },
+      { id: "b", findex: "b", type: "node", direction: 1, parentId: "a", rect: rect10 },
+      { id: "c", findex: "c", type: "node", direction: 1, parentId: "a", rect: rect10 },
+    ];
+    const result = treeLayout(src);
+    expect(result[1].rect).toEqualRect({ x: 210, y: -55, width: 10, height: 10 });
+    expect(result[2].rect).toEqualRect({ x: 210, y: 55, width: 10, height: 10 });
+  });
+});
 
 describe("getTreeBranchPositionMap", () => {
   test("should return tree branch positions: direction 1", () => {

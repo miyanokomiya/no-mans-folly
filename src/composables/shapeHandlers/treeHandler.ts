@@ -640,7 +640,17 @@ function toLayoutNode(shape: TreeShapeBase): TreeLayoutNode {
       parentId: shape.treeParentId,
     };
   } else {
-    return { id: shape.id, findex: shape.findex, type: "root", rect, direction: 0, parentId: "" };
+    const root = shape as TreeRootShape;
+    return {
+      id: root.id,
+      findex: root.findex,
+      type: "root",
+      rect,
+      direction: 0,
+      parentId: "",
+      siblingMargin: root.siblingMargin,
+      childMargin: root.childMargin,
+    };
   }
 }
 

@@ -12,6 +12,8 @@ export interface TreeLayoutNode extends LayoutNode {
   parentId: string;
   direction: Direction4;
   dropdown?: Direction4;
+  siblingMargin?: number;
+  childMargin?: number;
 }
 
 export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {
@@ -23,7 +25,16 @@ export const treeLayout: LayoutFn<TreeLayoutNode> = (src) => {
   }
 
   const treeRoot = trees[0];
-  const positionMap = getTreeBranchPositionMap(srcMap, treeRoot, getTreeBranchSizeMap(srcMap, treeRoot));
+  const rootSrc = srcMap[treeRoot.id];
+  const siblingMargin = rootSrc.siblingMargin ?? SIBLING_MARGIN;
+  const childMargin = rootSrc.childMargin ?? CHILD_MARGIN;
+  const positionMap = getTreeBranchPositionMap(
+    srcMap,
+    treeRoot,
+    getTreeBranchSizeMap(srcMap, treeRoot, siblingMargin, childMargin),
+    siblingMargin,
+    childMargin,
+  );
 
   return src.map((s) => {
     const p = positionMap.get(s.id);
@@ -138,8 +149,8 @@ function getChildrenBranchPositionMapRight(
   srcMap: { [id: string]: TreeLayoutNode },
   treeNode: TreeNode,
   sizeMap: Map<string, Size>,
-  siblingMargin = SIBLING_MARGIN,
-  childMargin = CHILD_MARGIN,
+  siblingMargin: number,
+  childMargin: number,
 ) {
   const nodeSize = srcMap[treeNode.id].rect;
   const siblingBranchHeight =
@@ -165,8 +176,8 @@ function getChildrenBranchPositionMapBottom(
   srcMap: { [id: string]: TreeLayoutNode },
   treeNode: TreeNode,
   sizeMap: Map<string, Size>,
-  siblingMargin = SIBLING_MARGIN,
-  childMargin = CHILD_MARGIN,
+  siblingMargin: number,
+  childMargin: number,
 ) {
   const nodeSize = srcMap[treeNode.id].rect;
   const siblingBranchWidth =
@@ -256,8 +267,8 @@ function _getTreeBranchSize(
   ret: Map<string, Size>,
   srcMap: { [id: string]: TreeLayoutNode },
   treeNode: TreeNode,
-  siblingMargin = SIBLING_MARGIN,
-  childMargin = CHILD_MARGIN,
+  siblingMargin: number,
+  childMargin: number,
 ) {
   const node = srcMap[treeNode.id];
   const horizontal = node.direction === 1 || node.direction === 3;

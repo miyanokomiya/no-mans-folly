@@ -13,7 +13,10 @@ import { renderTransform } from "../../utils/svgElements";
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 60;
 
-export type TreeRootShape = TreeShapeBase;
+export type TreeRootShape = TreeShapeBase & {
+  siblingMargin?: number;
+  childMargin?: number;
+};
 
 export const struct: ShapeStruct<TreeRootShape> = {
   ...recntagleStruct,
@@ -28,6 +31,8 @@ export const struct: ShapeStruct<TreeRootShape> = {
       height: arg.height ?? MIN_HEIGHT,
       textPadding: arg.textPadding ?? createBoxPadding([6, 6, 6, 6]),
       maxWidth: arg.maxWidth ?? 300,
+      siblingMargin: arg.siblingMargin,
+      childMargin: arg.childMargin,
     };
   },
   render(ctx, shape) {
