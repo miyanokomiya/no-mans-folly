@@ -6,7 +6,7 @@ import {
 import { newSelectionHubState } from "../selectionHubState";
 import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
-import { newTreeHandler } from "../../../shapeHandlers/treeHandler";
+import { getLocalMarginAnchorPoints, newTreeHandler } from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import { getInitialOutput } from "../../../../utils/textEditor";
@@ -17,6 +17,10 @@ import { newRotatingState } from "../rotatingState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { movingShapeControlState } from "../movingShapeControlState";
+import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
+import { applyAffine, clamp } from "okageo";
+import { renderValueLabel } from "../../../../utils/renderer";
 
 export const newTreeRootSelectedState = defineIntransientState(() => {
   let treeRootShape: TreeRootShape;
@@ -56,6 +60,77 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
               treeHandler.saveHitResult(treeHitResult);
               if (treeHitResult) {
                 if (treeHitResult.type === -1) {
+                  return;
+                }
+                if (treeHitResult.direction === "margin") {
+                  if (treeHitResult.type === "sibling-margin") {
+                    return () => {
+                      let showLabel = false;
+                      return movingShapeControlState<TreeRootShape>({
+                        targetId: treeRootShape.id,
+                        snapType: "custom",
+                        patchFn: (shape, p, movement) => {
+                          const detransform = getShapeDetransform(shape);
+                          const localP = applyAffine(detransform, p);
+                          let nextSize = clamp(0, 200, localP.y);
+
+                          if (movement.ctrl) {
+                            showLabel = false;
+                          } else {
+                            nextSize = Math.round(nextSize);
+                            showLabel = true;
+                          }
+                          return { siblingMargin: nextSize };
+                        },
+                        getControlFn: (shape, scale) => {
+                          const [localP] = getLocalMarginAnchorPoints(shape, scale);
+                          return applyAffine(getShapeTransform(shape), localP);
+                        },
+                        renderFn: (ctx, renderCtx, shape) => {
+                          if (!showLabel) return;
+
+                          const scale = ctx.getScale();
+                          const [localP] = getLocalMarginAnchorPoints(shape, scale);
+                          const p = applyAffine(getShapeTransform(shape), localP);
+                          renderValueLabel(renderCtx, Math.round(shape.siblingMargin ?? 0), p, 0, scale);
+                        },
+                      });
+                    };
+                  }
+                  if (treeHitResult.type === "child-margin") {
+                    return () => {
+                      let showLabel = false;
+                      return movingShapeControlState<TreeRootShape>({
+                        targetId: treeRootShape.id,
+                        snapType: "custom",
+                        patchFn: (shape, p, movement) => {
+                          const detransform = getShapeDetransform(shape);
+                          const localP = applyAffine(detransform, p);
+                          let nextSize = clamp(0, 200, localP.x);
+
+                          if (movement.ctrl) {
+                            showLabel = false;
+                          } else {
+                            nextSize = Math.round(nextSize);
+                            showLabel = true;
+                          }
+                          return { childMargin: nextSize };
+                        },
+                        getControlFn: (shape, scale) => {
+                          const [, localP] = getLocalMarginAnchorPoints(shape, scale);
+                          return applyAffine(getShapeTransform(shape), localP);
+                        },
+                        renderFn: (ctx, renderCtx, shape) => {
+                          if (!showLabel) return;
+
+                          const scale = ctx.getScale();
+                          const [, localP] = getLocalMarginAnchorPoints(shape, scale);
+                          const p = applyAffine(getShapeTransform(shape), localP);
+                          renderValueLabel(renderCtx, Math.round(shape.childMargin ?? 0), p, 0, scale);
+                        },
+                      });
+                    };
+                  }
                   return;
                 }
 

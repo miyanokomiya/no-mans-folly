@@ -14,12 +14,13 @@ import { pickMinItem } from "../../utils/commons";
 import { defineShapeHandler } from "./core";
 import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
 import { getShapeDetransform, getShapeTransform, getRectShapeCenter, getRectShapeRect } from "../../shapes/rectPolygon";
-import { scaleGlobalAlpha } from "../../utils/renderer";
+import { renderOutlinedCircle, scaleGlobalAlpha } from "../../utils/renderer";
 
 const ANCHOR_SIZE = 9;
 const ANCHOR_MARGIN = 30;
 const ANCHOR_SIBLING_MARGIN = 18;
 const DROPDOWN_ANCHOR_POSITION_RATE = 0.9;
+const MARGIN_ANCHOR_SIZE = 6;
 
 /**
  * - undefined: insert as a child
@@ -27,16 +28,16 @@ const DROPDOWN_ANCHOR_POSITION_RATE = 0.9;
  * - 1: insert as the next sibling
  * - -1: disconnect from a parent
  */
-type AnchorType = undefined | 0 | 1 | -1;
+type AnchorType = undefined | 0 | 1 | -1 | "sibling-margin" | "child-margin";
 
 export interface TreeHitResult {
-  direction: Direction4;
+  direction: Direction4 | "margin";
   p: IVec2;
   type: AnchorType;
   dropdown?: Direction4;
 }
 
-type AnchorInfo = [Direction4, IVec2, type?: AnchorType, dropdown?: Direction4];
+type AnchorInfo = [Direction4 | "margin", IVec2, type?: AnchorType, dropdown?: Direction4];
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -170,18 +171,36 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
     }
   }
 
+  function getMarginAnchors(scale: number): AnchorInfo[] | undefined {
+    if (!isRoot) return;
+
+    const anchors = getLocalMarginAnchorPoints(shape, scale);
+    return [
+      ["margin", anchors[0], "sibling-margin"],
+      ["margin", anchors[1], "child-margin"],
+    ];
+  }
+
   function hitTest(p: IVec2, scale = 1): TreeHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
     const localP = applyAffine(rootDetransform, p);
 
     const anchor = getAnchors(scale).find((a) => getDistance(a[1], localP) <= threshold);
-    if (!anchor) return;
-    return { direction: anchor[0], p: anchor[1], type: anchor[2], dropdown: anchor[3] };
+    if (anchor) {
+      return { direction: anchor[0], p: anchor[1], type: anchor[2], dropdown: anchor[3] };
+    }
+
+    const thresholdForMargin = MARGIN_ANCHOR_SIZE * scale;
+    const marginAnchor = getMarginAnchors(scale)?.find((a) => getDistance(a[1], localP) <= thresholdForMargin);
+    if (marginAnchor) {
+      return { direction: marginAnchor[0], p: marginAnchor[1], type: marginAnchor[2], dropdown: marginAnchor[3] };
+    }
   }
 
   function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
     const anchors = getAnchors(scale);
     const threshold = ANCHOR_SIZE * scale;
+    const thresholdForMargin = MARGIN_ANCHOR_SIZE * scale;
 
     ctx.save();
     ctx.transform(...rootTransform);
@@ -299,11 +318,21 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
         ctx.fill();
       });
 
+    const marginAnchors = getMarginAnchors(scale);
+    marginAnchors?.forEach(([, p]) => {
+      renderOutlinedCircle(ctx, p, thresholdForMargin, style.transformAnchor);
+    });
+
     if (hitResult) {
-      applyFillStyle(ctx, { color: style.selectionSecondaly });
-      ctx.beginPath();
-      ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
-      ctx.fill();
+      switch (hitResult.type) {
+        case "sibling-margin":
+        case "child-margin":
+          renderOutlinedCircle(ctx, hitResult.p, thresholdForMargin, style.selectionSecondaly);
+          break;
+        default:
+          renderOutlinedCircle(ctx, hitResult.p, threshold, style.selectionSecondaly);
+          break;
+      }
     }
 
     ctx.restore();
@@ -320,6 +349,14 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
     },
   };
 });
+
+export function getLocalMarginAnchorPoints(shape: TreeRootShape, scale: number): [sibling: IVec2, child: IVec2] {
+  const margin = ANCHOR_MARGIN * scale * 0.5;
+  return [
+    { x: -margin, y: shape.siblingMargin ?? SIBLING_MARGIN },
+    { x: shape.childMargin ?? CHILD_MARGIN, y: -margin },
+  ];
+}
 
 export interface TreeNodeMovingResult {
   treeParentId: string;
