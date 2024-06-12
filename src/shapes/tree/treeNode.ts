@@ -170,9 +170,11 @@ function getConnectorLocalPath(shape: TreeNodeShape, treeParent: TreeShapeBase, 
 
   if (adjustedShape.dropdown !== undefined) {
     const toP = getParentConnectionPoint(treeParent, adjustedShape.dropdown);
-    const x =
-      treeParent.p.x +
-      treeParent.width * (isTreeRootShape(treeParent) ? (adjustedShape.direction === 3 ? 0.4 : 0.6) : 0.5);
+    const marginRate =
+      isTreeRootShape(treeParent) && treeParent.childMargin
+        ? Math.min(0.1, treeParent.childMargin / treeParent.width)
+        : 0;
+    const x = treeParent.p.x + treeParent.width * (adjustedShape.direction === 3 ? 0.5 - marginRate : 0.5 + marginRate);
     path.push({ x, y: fromP.y });
     path.push({ x, y: toP.y });
   } else {

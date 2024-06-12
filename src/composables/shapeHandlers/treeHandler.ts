@@ -183,17 +183,17 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 
   function hitTest(p: IVec2, scale = 1): TreeHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
+    const thresholdForMargin = MARGIN_ANCHOR_SIZE * scale;
     const localP = applyAffine(rootDetransform, p);
+
+    const marginAnchor = getMarginAnchors(scale)?.find((a) => getDistance(a[1], localP) <= thresholdForMargin);
+    if (marginAnchor) {
+      return { direction: marginAnchor[0], p: marginAnchor[1], type: marginAnchor[2], dropdown: marginAnchor[3] };
+    }
 
     const anchor = getAnchors(scale).find((a) => getDistance(a[1], localP) <= threshold);
     if (anchor) {
       return { direction: anchor[0], p: anchor[1], type: anchor[2], dropdown: anchor[3] };
-    }
-
-    const thresholdForMargin = MARGIN_ANCHOR_SIZE * scale;
-    const marginAnchor = getMarginAnchors(scale)?.find((a) => getDistance(a[1], localP) <= thresholdForMargin);
-    if (marginAnchor) {
-      return { direction: marginAnchor[0], p: marginAnchor[1], type: marginAnchor[2], dropdown: marginAnchor[3] };
     }
   }
 
@@ -351,7 +351,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
 });
 
 export function getLocalMarginAnchorPoints(shape: TreeRootShape, scale: number): [sibling: IVec2, child: IVec2] {
-  const margin = ANCHOR_MARGIN * scale * 0.5;
+  const margin = ANCHOR_MARGIN * scale * 0.4;
   return [
     { x: -margin, y: shape.siblingMargin ?? SIBLING_MARGIN },
     { x: shape.childMargin ?? CHILD_MARGIN, y: -margin },

@@ -3,10 +3,7 @@ import { Size } from "../../models";
 import { groupBy, toMap } from "../commons";
 import { TreeNode, getTree, walkTree } from "../tree";
 import { LayoutFn } from "./core";
-import { TreeLayoutNode, getSiblingHeightMap, getSiblingWidthMap } from "./tree";
-
-export const SIBLING_MARGIN = 30;
-export const CHILD_MARGIN = 50;
+import { CHILD_MARGIN, SIBLING_MARGIN, TreeLayoutNode, getSiblingHeightMap, getSiblingWidthMap } from "./tree";
 
 export const dropDownTreeLayout: LayoutFn<TreeLayoutNode> = (src) => {
   const srcMap = toMap(src);
@@ -17,7 +14,16 @@ export const dropDownTreeLayout: LayoutFn<TreeLayoutNode> = (src) => {
   }
 
   const treeRoot = trees[0];
-  const positionMap = getTreeBranchPositionMap(srcMap, treeRoot, getTreeBranchSizeMap(srcMap, treeRoot));
+  const rootSrc = srcMap[treeRoot.id];
+  const siblingMargin = rootSrc.siblingMargin ?? SIBLING_MARGIN;
+  const childMargin = rootSrc.childMargin ?? CHILD_MARGIN;
+  const positionMap = getTreeBranchPositionMap(
+    srcMap,
+    treeRoot,
+    getTreeBranchSizeMap(srcMap, treeRoot, siblingMargin, childMargin),
+    siblingMargin,
+    childMargin,
+  );
 
   return src.map((s) => {
     const p = positionMap.get(s.id);
@@ -124,8 +130,8 @@ function getChildrenBranchPositionMapRight(
   srcMap: { [id: string]: TreeLayoutNode },
   treeNode: TreeNode,
   sizeMap: Map<string, Size>,
-  siblingMargin = SIBLING_MARGIN,
-  childMargin = CHILD_MARGIN,
+  siblingMargin: number,
+  childMargin: number,
 ) {
   const nodeSize = srcMap[treeNode.id].rect;
   const nodeP = ret.get(treeNode.id)!;
@@ -172,8 +178,8 @@ function _getTreeBranchSize(
   ret: Map<string, Size>,
   srcMap: { [id: string]: TreeLayoutNode },
   treeNode: TreeNode,
-  siblingMargin = SIBLING_MARGIN,
-  childMargin = CHILD_MARGIN,
+  siblingMargin: number,
+  childMargin: number,
 ) {
   const node = srcMap[treeNode.id];
   const horizontal = node.direction === 1 || node.direction === 3;

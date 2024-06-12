@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { CHILD_MARGIN, SIBLING_MARGIN, getTreeBranchPositionMap, getTreeBranchSizeMap } from "./dropDownTree";
+import { getTreeBranchPositionMap, getTreeBranchSizeMap } from "./dropDownTree";
+import { CHILD_MARGIN, SIBLING_MARGIN } from "./tree";
 import { getTree } from "../tree";
 import { toMap } from "../commons";
 import { TreeLayoutNode } from "./tree";
