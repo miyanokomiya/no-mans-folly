@@ -501,7 +501,7 @@ function renderCursor(
         ctx.lineTo(tail.bounds.x + tail.bounds.width, tail.bounds.y + tail.bounds.height);
       });
 
-      const cs = composition[cursor + selection - 1];
+      const cs = composition[Math.max(0, cursor + selection - 1)];
       ctx.moveTo(cs.bounds.x + cs.bounds.width, cs.bounds.y);
       ctx.lineTo(cs.bounds.x + cs.bounds.width, cs.bounds.y + cs.bounds.height);
       ctx.stroke();
