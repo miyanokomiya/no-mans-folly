@@ -163,6 +163,6 @@ export function hexToColor(hex: string): Color {
  * Suppose "str" is either RGBA or HEX format.
  */
 export function toHexAndAlpha(str?: string | null): [string, number] | undefined {
-  const rgba = str ? parseRGBA(str) ?? hexToColor(str) : undefined;
+  const rgba = str ? (parseRGBA(str) ?? hexToColor(str)) : undefined;
   return rgba ? [colorToHex(rgba), rgba.a] : undefined;
 }

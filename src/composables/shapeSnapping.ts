@@ -136,8 +136,8 @@ export function newShapeSnapping(option: Option) {
       (xClosest && intervalResult?.v && intervalResult.v.ad < xClosest[1].ad) || (!xClosest && intervalResult?.v);
     const isHInterval =
       (yClosest && intervalResult?.h && intervalResult.h.ad < yClosest[1].ad) || (!yClosest && intervalResult?.h);
-    const dx = isVInterval ? intervalResult.v!.d : xClosest?.[1].d ?? 0;
-    const dy = isHInterval ? intervalResult.h!.d : yClosest?.[1].d ?? 0;
+    const dx = isVInterval ? intervalResult.v!.d : (xClosest?.[1].d ?? 0);
+    const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
 
     const targets: SnappingResultTarget[] = [];
     const diff = { x: dx, y: dy };
