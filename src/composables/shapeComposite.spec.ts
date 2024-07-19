@@ -139,7 +139,12 @@ describe("newShapeComposite", () => {
 
   describe("getShapeTreeLocalRect", () => {
     const getShapes = () => {
-      const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", { id: "root", width: 10, height: 20 });
+      const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
+        id: "root",
+        p: { x: 100, y: 200 },
+        width: 10,
+        height: 20,
+      });
       const child0 = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
         id: "child0",
         parentId: root.id,

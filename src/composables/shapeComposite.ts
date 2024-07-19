@@ -136,10 +136,13 @@ export function newShapeComposite(option: Option) {
     return geometry.getLocationRateOnRectPath(getLocalRectPolygon(shape), shape.rotation, p);
   }
 
+  /**
+   * Returns wrapper rect of the tree shapes.
+   * This rect has local location based on the shape.
+   */
   function getShapeTreeLocalRect(shape: Shape): IRectangle {
-    const rootRect = getWrapperRect(shape);
-    const center = getRectCenter(rootRect);
-    const t = geometry.getRotatedAtAffine(center, -shape.rotation);
+    const rootLocalRect = geometry.getRectWithRotationFromRectPolygon(getLocalRectPolygon(shape));
+    const t = geometry.getRotatedRectAffineInverse(rootLocalRect[0], rootLocalRect[1]);
     const points = getAllBranchMergedShapes([shape.id]).map((s) =>
       getLocalRectPolygon(s).map((p) => applyAffine(t, p)),
     );

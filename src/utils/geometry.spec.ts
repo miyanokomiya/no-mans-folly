@@ -67,6 +67,7 @@ import {
   getRotatedWrapperRectAt,
   getRectRotateFn,
   getWrapperRectWithRotationFromPoints,
+  getRotatedRectAffineInverse,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1093,6 +1094,20 @@ describe("getRotatedRectAffine", () => {
     expect(result1[3]).toBeCloseTo(0);
     expect(result1[4]).toBeCloseTo(15);
     expect(result1[5]).toBeCloseTo(5);
+  });
+});
+
+describe("getRotatedRectAffineInverse", () => {
+  test("should return relative point on the path", () => {
+    expect(getRotatedRectAffineInverse({ x: 100, y: 200, width: 10, height: 20 }, 0)).toEqual([1, 0, 0, 1, -100, -200]);
+
+    const result1 = getRotatedRectAffineInverse({ x: 0, y: 0, width: 10, height: 20 }, Math.PI / 2);
+    expect(result1[0]).toBeCloseTo(0);
+    expect(result1[1]).toBeCloseTo(-1);
+    expect(result1[2]).toBeCloseTo(1);
+    expect(result1[3]).toBeCloseTo(0);
+    expect(result1[4]).toBeCloseTo(-5);
+    expect(result1[5]).toBeCloseTo(15);
   });
 });
 
