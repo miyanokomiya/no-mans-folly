@@ -1,20 +1,8 @@
-import {
-  AffineMatrix,
-  IRectangle,
-  IVec2,
-  add,
-  applyAffine,
-  getCenter,
-  getRectCenter,
-  isSame,
-  multiAffines,
-  rotate,
-  sub,
-} from "okageo";
+import { IRectangle, IVec2, add, applyAffine, getCenter, getRectCenter, isSame, rotate, sub } from "okageo";
 import { BoxValues4, Direction2, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
-import { flatTree, getBranchPath } from "../utils/tree";
+import { getBranchPath } from "../utils/tree";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
@@ -27,6 +15,7 @@ import {
   getD2,
   getDistanceBetweenPointAndRect,
   getRotateFn,
+  getRotatedAtAffine,
   getRotationAffines,
   isPointCloseToSegment,
   isPointOnRectangle,
@@ -37,6 +26,7 @@ import { renderArrowUnit, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
+import { toMap } from "../utils/commons";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -650,18 +640,22 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
 }
 export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
 
-function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayoutNode | undefined {
-  const parent = shape.parentId ? shapeComposite.mergedShapeMap[shape.parentId] : undefined;
-  const parentId = parent && isAlignBoxShape(parent) ? parent.id : "";
+/**
+ * "positionDiff" represents the vector from the location of the wrapper rectangle of the shape to the location of the shape.
+ * When a shape has children but doesn't accommodate them (e.g. tree_root), the wrapper rectangle doesn't always represent the shape.
+ * => The layout result for the wrapper rectangle needs to be adjusted to apply it to the shape.
+ */
+type AlignLayoutNodeWithMeta = AlignLayoutNode & { positionDiff?: IVec2 };
 
+function treeToLayoutNode(result: AlignLayoutNodeWithMeta[], shapeComposite: ShapeComposite, shape: Shape) {
+  const treeNode = shapeComposite.mergedShapeTreeMap[shape.id];
   if (isAlignBoxShape(shape)) {
-    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    return {
+    result.push({
       id: shape.id,
       findex: shape.findex,
-      parentId,
+      parentId: shape.parentId ?? "",
       type: "box",
-      rect,
+      rect: { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
       direction: shape.direction,
       gapC: shape.gapC,
       gapR: shape.gapR,
@@ -669,73 +663,72 @@ function toLayoutNode(shapeComposite: ShapeComposite, shape: Shape): AlignLayout
       baseHeight: shape.baseHeight,
       padding: shape.padding,
       alignItems: shape.alignItems,
-    };
-  } else {
-    const rect = shapeComposite.getWrapperRect(shape);
-    return parentId ? { id: shape.id, findex: shape.findex, type: "entity", rect, parentId } : undefined;
+    });
+
+    treeNode.children.forEach((c) => {
+      treeToLayoutNode(result, shapeComposite, shapeComposite.mergedShapeMap[c.id]);
+    });
+  } else if (shape.parentId) {
+    const rect = shapeComposite.getShapeTreeLocalRect(shape);
+    result.push({
+      id: shape.id,
+      findex: shape.findex,
+      type: "entity",
+      rect,
+      parentId: shape.parentId,
+      positionDiff: { x: -rect.x, y: -rect.y },
+    });
   }
 }
 
 function toLayoutNodes(
   shapeComposite: ShapeComposite,
   rootId: string,
-): { layoutNodes: AlignLayoutNode[]; rootShape: AlignBoxShape } {
+): { layoutNodes: AlignLayoutNodeWithMeta[]; rootShape: AlignBoxShape } {
   const root = shapeComposite.mergedShapeTreeMap[rootId];
   const rootShape = shapeComposite.mergedShapeMap[root.id] as AlignBoxShape;
 
   const c = getRectCenter({ x: rootShape.p.x, y: rootShape.p.y, width: rootShape.width, height: rootShape.height });
   const rotateFn = getRotateFn(rootShape.rotation, c);
 
-  const layoutNodes: AlignLayoutNode[] = [];
-  flatTree([root]).forEach((t) => {
-    const s = shapeComposite.mergedShapeMap[t.id];
-    const node = toLayoutNode(shapeComposite, {
-      ...s,
-      rotation: 0,
-    });
-    if (node) {
-      if (rootShape.id !== t.id) {
-        const sc = getRectCenter(node.rect);
-        layoutNodes.push({
-          ...node,
-          rect: { ...node.rect, ...rotateFn(rotate(node.rect, s.rotation, sc), true) },
-        });
-      } else {
-        layoutNodes.push(node);
-      }
-    }
+  const layoutNodes: AlignLayoutNodeWithMeta[] = [];
+  treeToLayoutNode(layoutNodes, shapeComposite, rootShape);
+  const adjustedLayoutNodes = layoutNodes.map((node) => {
+    if (rootShape.id === node.id) return node;
+
+    const shape = shapeComposite.mergedShapeMap[node.id];
+    const sc = getRectCenter(node.rect);
+    return {
+      ...node,
+      rect: { ...node.rect, ...rotateFn(rotate(node.rect, shape.rotation, sc), true) },
+    };
   });
-  return { layoutNodes, rootShape };
+
+  return { layoutNodes: adjustedLayoutNodes, rootShape };
 }
 
 export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
   const { layoutNodes, rootShape } = toLayoutNodes(shapeComposite, rootId);
+  const layoutNodeMap = toMap(layoutNodes);
   const result = alignLayout(layoutNodes);
 
   // Apply root rotation to layout result if the root has rotation
   const rotatedPatchMap: { [id: string]: Partial<Shape> & Partial<AlignBoxShape> } = {};
   if (rootShape.rotation !== 0) {
-    const layoutRootNode = layoutNodes.find((n) => n.id === rootId)!;
-    const layoutRootCenter = getRectCenter(layoutRootNode.rect);
-    const cos = Math.cos(rootShape.rotation);
-    const sin = Math.sin(rootShape.rotation);
-    const affine: AffineMatrix = multiAffines([
-      [1, 0, 0, 1, layoutRootCenter.x, layoutRootCenter.y],
-      [cos, sin, -sin, cos, 0, 0],
-      [1, 0, 0, 1, -layoutRootCenter.x, -layoutRootCenter.y],
-    ]);
-
     // Get updated shapes without rotation
     const updated = result.map<Shape>((r) => {
       const s = shapeComposite.shapeMap[r.id];
       if (isAlignBoxShape(s)) {
         return { ...s, rotation: 0, p: { x: r.rect.x, y: r.rect.y }, width: r.rect.width, height: r.rect.height };
       } else {
-        return { ...s, rotation: 0, p: { x: r.rect.x, y: r.rect.y } };
+        return { ...s, rotation: 0, p: add(r.rect, layoutNodeMap[r.id].positionDiff ?? { x: 0, y: 0 }) };
       }
     });
 
     // Get rotated patch info
+    const layoutRootNode = layoutNodeMap[rootId];
+    const affine = getRotatedAtAffine(getRectCenter(layoutRootNode.rect), rootShape.rotation);
+
     updated.forEach((s) => {
       rotatedPatchMap[s.id] = shapeComposite.transformShape(s, affine);
     });
@@ -750,7 +743,7 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
     const patch: Partial<Shape> & Partial<AlignBoxShape> = {};
     let updated = false;
 
-    const p = rotatedPatch.p ?? { x: r.rect.x, y: r.rect.y };
+    const p = rotatedPatch.p ?? add(r.rect, layoutNodeMap[r.id].positionDiff ?? { x: 0, y: 0 });
     if (!isSame(srcPosition, p)) {
       patch.p = p;
       updated = true;
