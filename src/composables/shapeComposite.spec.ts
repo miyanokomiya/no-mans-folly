@@ -17,6 +17,10 @@ import { generateKeyBetween } from "fractional-indexing";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { BoardRootShape } from "../shapes/board/boardRoot";
 import { BoardColumnShape } from "../shapes/board/boardColumn";
+import { TreeRootShape } from "../shapes/tree/treeRoot";
+import { TreeNodeShape } from "../shapes/tree/treeNode";
+import { getNextTreeLayout } from "./shapeHandlers/treeHandler";
+import { patchPipe, toList, toMap } from "../utils/commons";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -130,6 +134,69 @@ describe("newShapeComposite", () => {
       const result2 = target.getLocationRateOnShape({ ...shape, rotation: Math.PI / 2 }, { x: 5, y: 14 });
       expect(result2.x).toBeCloseTo(0.9);
       expect(result2.y).toBeCloseTo(0.5);
+    });
+  });
+
+  describe("getShapeTreeLocalRect", () => {
+    const getShapes = () => {
+      const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", { id: "root", width: 10, height: 20 });
+      const child0 = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+        id: "child0",
+        parentId: root.id,
+        treeParentId: root.id,
+        width: 20,
+        height: 30,
+      });
+      const child1 = { ...child0, id: "child1" };
+      return [root, child0, child1];
+    };
+
+    test("should return local rect of the shape tree", () => {
+      const shapes = getShapes();
+      const patched = patchPipe(
+        [
+          () => {
+            return getNextTreeLayout(
+              newShapeComposite({
+                shapes,
+                getStruct: getCommonStruct,
+              }),
+              shapes[0].id,
+            );
+          },
+        ],
+        toMap(shapes),
+      );
+      const target = newShapeComposite({
+        shapes: toList(patched.result),
+        getStruct: getCommonStruct,
+      });
+      const result0 = target.getShapeTreeLocalRect(shapes[0]);
+      expect(result0).toEqualRect({ x: 0, y: -35, width: 80, height: 90 });
+    });
+
+    test("should return local rect of the shape tree: rotated", () => {
+      const shapes = getShapes().map((s) => ({ ...s, rotation: Math.PI / 2 }));
+      const patched = patchPipe(
+        [
+          () => {
+            return getNextTreeLayout(
+              newShapeComposite({
+                shapes,
+                getStruct: getCommonStruct,
+              }),
+              shapes[0].id,
+            );
+          },
+        ],
+        toMap(shapes),
+      );
+      const target = newShapeComposite({
+        shapes: toList(patched.result),
+        getStruct: getCommonStruct,
+      });
+      const result0 = target.getShapeTreeLocalRect(patched.result[shapes[0].id]);
+      expect(result0).toEqualRect({ x: 0, y: -35, width: 80, height: 90 });
     });
   });
 

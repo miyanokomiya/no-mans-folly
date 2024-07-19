@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2, getRectCenter, multiAffines } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, applyAffine, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
@@ -136,6 +136,16 @@ export function newShapeComposite(option: Option) {
     return geometry.getLocationRateOnRectPath(getLocalRectPolygon(shape), shape.rotation, p);
   }
 
+  function getShapeTreeLocalRect(shape: Shape): IRectangle {
+    const rootRect = getWrapperRect(shape);
+    const center = getRectCenter(rootRect);
+    const t = geometry.getRotatedAtAffine(center, -shape.rotation);
+    const points = getAllBranchMergedShapes([shape.id]).map((s) =>
+      getLocalRectPolygon(s).map((p) => applyAffine(t, p)),
+    );
+    return getOuterRectangle(points);
+  }
+
   function getShapesOverlappingRect(shapes: Shape[], rect: IRectangle): Shape[] {
     const checkFn = geometry.getIsRectHitRectFn(rect);
     return shapes.filter((s) => checkFn(getWrapperRect(s)));
@@ -233,6 +243,7 @@ export function newShapeComposite(option: Option) {
     getWrapperRectForShapes,
     getLocalRectPolygon,
     getLocationRateOnShape,
+    getShapeTreeLocalRect,
     getShapesOverlappingRect,
     getSnappingLines,
     shouldDelete,
