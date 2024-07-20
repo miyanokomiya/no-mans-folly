@@ -11,7 +11,7 @@ export function toMap<T extends { id: string }>(list: T[]): { [id: string]: T } 
 }
 
 export function toList<T>(map: { [key: string]: T }): T[] {
-  return Object.keys(map).map((key) => map[key]);
+  return Object.values(map);
 }
 
 export function findBackward<T>(list: T[], predicate: (value: T, index: number, obj: T[]) => boolean): T | undefined {
@@ -65,19 +65,27 @@ export function mapFilter<T>(
   origin: { [key: string]: T },
   checkFn: (t: T, key: string) => boolean,
 ): { [key: string]: T } {
-  return Object.keys(origin).reduce<{ [key: string]: T }>((p, c) => {
-    if (checkFn(origin[c], c)) {
-      p[c] = origin[c];
+  const ret = {} as { [key: string]: T };
+  for (const key in origin) {
+    if (checkFn(origin[key], key)) {
+      ret[key] = origin[key];
     }
-    return p;
-  }, {});
+  }
+  return ret;
 }
 
-export function mapReduce<T, R, K extends string>(map: { [key in K]?: T }, fn: (t: T, key: K) => R): { [key in K]: R } {
-  return Object.keys(map).reduce<any>((p, c) => {
-    p[c] = fn((map as any)[c], c as K);
-    return p;
-  }, {});
+export function mapReduce<T, R, K extends string>(map: { [key in K]: T }, fn: (t: T, key: K) => R): { [key in K]: R } {
+  const ret = {} as { [key in K]: R };
+  for (const key in map) {
+    ret[key] = fn(map[key], key);
+  }
+  return ret;
+}
+
+export function mapEach<T, K extends string>(map: { [key in K]: T }, fn: (t: T, key: K) => void) {
+  for (const key in map) {
+    fn(map[key], key);
+  }
 }
 
 export function patchPipe<T extends { id: string }>(

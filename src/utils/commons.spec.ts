@@ -156,6 +156,23 @@ describe("mapReduce", () => {
   });
 });
 
+describe("mapEach", () => {
+  test("should apply the operation for each item", () => {
+    const result: any = [];
+    target.mapEach(
+      {
+        id_a: { val: 1 },
+        id_b: { val: 2 },
+      },
+      (obj, key) => result.push([key, obj.val]),
+    );
+    expect(result).toEqual([
+      ["id_a", 1],
+      ["id_b", 2],
+    ]);
+  });
+});
+
 describe("patchPipe", () => {
   test("should call patch functions", () => {
     expect(
