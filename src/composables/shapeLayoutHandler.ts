@@ -1,5 +1,6 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { mergeMap, patchPipe } from "../utils/commons";
+import { normalizeEntityPatchInfo } from "../utils/entities";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
@@ -24,10 +25,10 @@ export function getPatchByLayouts(
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       (_, patch) => {
-        const nextPatchInfo = {
+        const nextPatchInfo = normalizeEntityPatchInfo({
           ...patchInfo,
           update: mergeMap(patchInfo.update ?? {}, patch),
-        };
+        });
         return patchPipe(
           getAlignLayoutPatchFunctions(
             shapeComposite,
@@ -78,10 +79,10 @@ export function getPatchInfoByLayouts(
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       (_, patch) => {
-        const nextPatchInfo = {
+        const nextPatchInfo = normalizeEntityPatchInfo({
           ...adjustedPatchInfo,
           update: mergeMap(adjustedPatchInfo.update ?? {}, patch),
-        };
+        });
         return patchPipe(
           getAlignLayoutPatchFunctions(
             shapeComposite,
