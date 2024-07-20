@@ -1,5 +1,5 @@
 import { Entity, EntityPatchInfo } from "../models";
-import { mapFilter } from "./commons";
+import { isObjectEmpty, mapFilter, mergeMap } from "./commons";
 
 /**
  * Prioritizes "delete" the most.
@@ -18,6 +18,42 @@ export function normalizeEntityPatchInfo<T extends Entity>(src: EntityPatchInfo<
 
   const addedIds = new Set(ret.add?.map((s) => s.id) ?? []);
   ret.update = src.update ? mapFilter(src.update, (_, id) => !addedIds.has(id) && !deletedIds.has(id)) : undefined;
+
+  return ret;
+}
+
+/**
+ * Prioritizes "add" of "override".
+ * Merges "update" of "override" to "src" in property level.
+ *
+ * This method doen't call "normalizeEntityPatchInfo".
+ */
+export function mergeEntityPatchInfo<T extends Entity>(
+  src: EntityPatchInfo<T>,
+  overwrite: EntityPatchInfo<T>,
+): EntityPatchInfo<T> {
+  const ret: EntityPatchInfo<T> = { delete: src.delete };
+
+  const addMap = new Map(src.add?.map((s) => [s.id, s]) ?? []);
+  overwrite.add?.forEach((s) => {
+    addMap.set(s.id, s);
+  });
+  if (addMap.size > 0) {
+    ret.add = Array.from(addMap.values());
+  }
+
+  const update = mergeMap(src.update ?? {}, overwrite.update ?? {});
+  if (!isObjectEmpty(update, true)) {
+    ret.update = update;
+  }
+
+  const deleteSet = new Set(src.delete ?? []);
+  overwrite.delete?.forEach((id) => {
+    deleteSet.add(id);
+  });
+  if (deleteSet.size > 0) {
+    ret.delete = Array.from(deleteSet.keys());
+  }
 
   return ret;
 }
