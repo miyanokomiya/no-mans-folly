@@ -19,6 +19,7 @@ import {
   getRotationAffines,
   isPointCloseToSegment,
   isPointOnRectangle,
+  translateRect,
 } from "../utils/geometry";
 import { applyDefaultStrokeStyle, applyStrokeStyle } from "../utils/strokeStyle";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -56,7 +57,8 @@ export function newAlignHandler(option: AlignHandlerOption) {
   const siblingRects = siblingIds.map<[string, IRectangle]>((id) => {
     const shape = shapeMap[id];
     const derotatedShape = { ...shape, ...shapeComposite.transformShape(shape, derotateAffine) };
-    return [id, shapeComposite.getWrapperRect(derotatedShape)];
+    const localRect = shapeComposite.getShapeTreeLocalRect(shape);
+    return [id, translateRect(localRect, derotatedShape.p)];
   });
 
   function hitTest(p: IVec2): AlignHitResult | undefined {

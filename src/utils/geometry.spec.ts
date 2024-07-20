@@ -68,6 +68,7 @@ import {
   getRectRotateFn,
   getWrapperRectWithRotationFromPoints,
   getRotatedRectAffineInverse,
+  translateRect,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -139,6 +140,17 @@ describe("expandRect", () => {
       y: -3,
       width: 20,
       height: 30,
+    });
+  });
+});
+
+describe("translateRect", () => {
+  test("should return translated rectangle", () => {
+    expect(translateRect({ x: 1, y: 2, width: 10, height: 20 }, { x: 10, y: 30 })).toEqualRect({
+      x: 11,
+      y: 32,
+      width: 10,
+      height: 20,
     });
   });
 });

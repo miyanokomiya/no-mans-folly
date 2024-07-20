@@ -108,6 +108,15 @@ export function expandRect(rect: IRectangle, padding: number): IRectangle {
   };
 }
 
+export function translateRect(rect: IRectangle, v: IVec2): IRectangle {
+  return {
+    x: rect.x + v.x,
+    y: rect.y + v.y,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
 export function getPathTotalLength(points: IVec2[], closed = false): number {
   if (points.length < 2) return 0;
 
