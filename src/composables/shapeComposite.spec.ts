@@ -205,6 +205,55 @@ describe("newShapeComposite", () => {
     });
   });
 
+  describe("rotateShapeTree", () => {
+    const getShapes = () => {
+      const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
+        id: "root",
+        p: { x: 100, y: 200 },
+        width: 10,
+        height: 20,
+      });
+      const child0 = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+        id: "child0",
+        parentId: root.id,
+        treeParentId: root.id,
+        width: 20,
+        height: 30,
+      });
+      const child1 = { ...child0, id: "child1" };
+      return [root, child0, child1];
+    };
+
+    test("should return patch info to rotate the tree", () => {
+      const shapes = getShapes();
+      const patched = patchPipe(
+        [
+          () => {
+            return getNextTreeLayout(
+              newShapeComposite({
+                shapes,
+                getStruct: getCommonStruct,
+              }),
+              shapes[0].id,
+            );
+          },
+        ],
+        toMap(shapes),
+      );
+      const target = newShapeComposite({
+        shapes: toList(patched.result),
+        getStruct: getCommonStruct,
+      });
+      const result0 = target.rotateShapeTree(shapes[0].id, Math.PI / 2);
+      expect(result0[shapes[0].id].rotation).toBeCloseTo(Math.PI / 2);
+      expect(result0[shapes[0].id].p).toBe(undefined);
+      expect(result0[shapes[1].id].p).toEqualPoint({ x: 125, y: 260 });
+      expect(result0[shapes[1].id].rotation).toBeCloseTo(Math.PI / 2);
+      expect(result0[shapes[2].id].p).toEqualPoint({ x: 65, y: 260 });
+      expect(result0[shapes[2].id].rotation).toBeCloseTo(Math.PI / 2);
+    });
+  });
+
   describe("findShapeAt", () => {
     test("should be able to find a child shape when a parent is transparent selection", () => {
       const line = createShape<LineShape>(getCommonStruct, "line", {

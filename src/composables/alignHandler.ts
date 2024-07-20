@@ -26,7 +26,7 @@ import { renderArrowUnit, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
-import { toMap } from "../utils/commons";
+import { mapEach, toMap } from "../utils/commons";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -755,6 +755,7 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
     }
 
     if (isAlignBoxShape(s)) {
+      // Align box may change its size.
       const width = rotatedPatch.width ?? r.rect.width;
       if (width !== s.width) {
         patch.width = width;
@@ -767,12 +768,30 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
         updated = true;
       }
     } else {
-      if (!isSame(srcPosition, p)) {
-        // Need to deal with all children if the shape isn't align box.
+      // Need to deal with all children as well when the shape isn't align box.
+      if (patch.p) {
+        // Translate all children along with the parent.
         const v = sub(p, srcPosition);
         shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
-          if (target.id !== s.id) {
-            ret[target.id] = { p: add(target.p, v) };
+          if (target.id === s.id) return;
+          ret[target.id] = { p: add(target.p, v) };
+        });
+      }
+
+      if (patch.rotation !== undefined) {
+        // Rotate all children along with the parent.
+        mapEach(shapeComposite.rotateShapeTree(s.id, rootShape.rotation), (rotationPatch, id) => {
+          if (id === s.id) return;
+
+          if (rotationPatch.p) {
+            const shape = shapeComposite.shapeMap[id];
+            const v = sub(rotationPatch.p, shape.p);
+            ret[id] ??= {};
+            ret[id].p = add(ret[id]?.p ?? shape.p, v);
+          }
+          if (rotationPatch.rotation !== undefined) {
+            ret[id] ??= {};
+            ret[id].rotation = rotationPatch.rotation;
           }
         });
       }

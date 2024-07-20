@@ -149,6 +149,18 @@ export function newShapeComposite(option: Option) {
     return getOuterRectangle(points);
   }
 
+  function rotateShapeTree(targetId: string, nextRotation: number): { [id: string]: Partial<Shape> } {
+    const root = mergedShapeMap[targetId];
+    const wrapperRect = getWrapperRect(root);
+    const c = getRectCenter(wrapperRect);
+    const t = geometry.getRotatedAtAffine(c, nextRotation - root.rotation);
+    const ret: { [id: string]: Partial<Shape> } = {};
+    getAllBranchMergedShapes([targetId]).forEach((s) => {
+      ret[s.id] = transformShape(shapeMap[s.id], t);
+    });
+    return ret;
+  }
+
   function getShapesOverlappingRect(shapes: Shape[], rect: IRectangle): Shape[] {
     const checkFn = geometry.getIsRectHitRectFn(rect);
     return shapes.filter((s) => checkFn(getWrapperRect(s)));
@@ -247,6 +259,7 @@ export function newShapeComposite(option: Option) {
     getLocalRectPolygon,
     getLocationRateOnShape,
     getShapeTreeLocalRect,
+    rotateShapeTree,
     getShapesOverlappingRect,
     getSnappingLines,
     shouldDelete,
