@@ -20,7 +20,8 @@ import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { applyAffine, clamp } from "okageo";
-import { renderValueLabel } from "../../../../utils/renderer";
+import { applyPath, renderValueLabel } from "../../../../utils/renderer";
+import { getRotatedTargetBounds } from "../../../shapeComposite";
 
 export const newTreeRootSelectedState = defineIntransientState(() => {
   let treeRootShape: TreeRootShape;
@@ -213,10 +214,15 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
     },
     render: (ctx, renderCtx) => {
       const shapeComposite = ctx.getShapeComposite();
-      const rect = shapeComposite.getWrapperRectForShapes(shapeComposite.getAllBranchMergedShapes([treeRootShape.id]));
       applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: ctx.getScale() * 2 });
+
+      const path = getRotatedTargetBounds(
+        shapeComposite,
+        shapeComposite.getAllBranchMergedShapes([treeRootShape.id]).map((s) => s.id),
+        treeRootShape.rotation,
+      );
       renderCtx.beginPath();
-      renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
+      applyPath(renderCtx, path, true);
       renderCtx.stroke();
 
       treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
