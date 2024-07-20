@@ -155,3 +155,25 @@ export function splitList<T>(
   });
   return [t, f];
 }
+
+export function convertObjectToMap<T>(obj: { [key: string]: T }): Map<string, T> {
+  return new Map(Object.entries(obj));
+}
+
+export function convertMapToObject<T>(map: Map<string, T>): { [key: string]: T } {
+  const ret: { [key: string]: T } = {};
+  map.forEach((val, key) => {
+    ret[key] = val;
+  });
+  return ret;
+}
+
+export function isObjectEmpty<T extends object>(obj: T, ignoreUndefined = false): boolean {
+  for (const key in obj) {
+    if (ignoreUndefined && obj[key] === undefined) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}

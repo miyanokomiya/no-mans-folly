@@ -268,3 +268,41 @@ describe("splitList", () => {
     ]);
   });
 });
+
+describe("convertObjectToMap", () => {
+  test("should convert Object to Map", () => {
+    expect(target.convertObjectToMap({ a: { val: 1 }, b: { val: 2 } })).toEqual(
+      new Map([
+        ["a", { val: 1 }],
+        ["b", { val: 2 }],
+      ]),
+    );
+  });
+});
+
+describe("convertMapToObject", () => {
+  test("should convert Map to Object", () => {
+    expect(
+      target.convertMapToObject(
+        new Map([
+          ["a", { val: 1 }],
+          ["b", { val: 2 }],
+        ]),
+      ),
+    ).toEqual({ a: { val: 1 }, b: { val: 2 } });
+  });
+});
+
+describe("isObjectEmpty", () => {
+  test("should return true when the object has no entry", () => {
+    expect(target.isObjectEmpty({})).toBe(true);
+    expect(target.isObjectEmpty({ a: 1 })).toBe(false);
+    expect(target.isObjectEmpty({ a: undefined })).toBe(false);
+  });
+  test("When ignoreUndefined is true, should return true when the object has no defined entry", () => {
+    expect(target.isObjectEmpty({}, true)).toBe(true);
+    expect(target.isObjectEmpty({ a: 1 }, true)).toBe(false);
+    expect(target.isObjectEmpty({ a: undefined }, true)).toBe(true);
+    expect(target.isObjectEmpty({ a: undefined, b: 1 }, true)).toBe(false);
+  });
+});
