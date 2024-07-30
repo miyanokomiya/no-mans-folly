@@ -6,10 +6,16 @@ import {
   getMovingBoundingBoxPoints,
   newBoundingBoxResizing,
 } from "../../boundingBox";
-import { IDENTITY_AFFINE, IVec2, add, applyAffine, getNorm, sub } from "okageo";
+import { IDENTITY_AFFINE, sub } from "okageo";
 import { getTextRangeRect, resizeOnTextEdit, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
 import { Shape } from "../../../models";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
+import {
+  ShapeSnapping,
+  SnappingResult,
+  getSnappingResultForBoundingBoxResizing,
+  newShapeSnapping,
+  renderSnappingResult,
+} from "../../shapeSnapping";
 import { renderPatchedVertices } from "../../connectedLineHandler";
 import { patchPipe, toMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
@@ -87,72 +93,23 @@ export function newResizingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          const diff = sub(event.data.current, event.data.start);
           const keepAspect = event.data.shift;
-
-          // Apply plain resizing
-          resizingAffine = boundingBoxResizing.getAffine(diff, {
-            keepAspect,
-            centralize: event.data.alt,
-          });
-
-          // Let resized bounding box snap to shapes.
+          const centralize = event.data.alt;
+          const diff = sub(event.data.current, event.data.start);
           const boundingBoxPath = getMovingBoundingBoxPoints(option.boundingBox.path, option.hitResult);
-          const snappingResults = event.data.ctrl
-            ? []
-            : boundingBoxPath
-                .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-                .filter((r): r is SnappingResult => !!r)
-                .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
-
-          if (snappingResults.length > 0) {
-            snappingResult = snappingResults[0];
-          } else {
+          if (event.data.ctrl) {
+            resizingAffine = boundingBoxResizing.getAffine(diff, { keepAspect, centralize });
             snappingResult = undefined;
-          }
-
-          if (snappingResult) {
-            const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
-            const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [
-              p,
-              applyAffine(resizingAffine, p),
-            ]);
-
-            // Apply resizing restriction to each snapping candidate
-            const results = snappingResult.targets
-              .map((target) =>
-                boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, target.line, {
-                  keepAspect: event.data.shift,
-                  centralize: event.data.alt,
-                }),
-              )
-              .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2)
-              .sort((a, b) => a[1] - b[1]);
-
-            if (results.length > 0) {
-              const result = results[0];
-              resizingAffine = result[0];
-
-              if (result[2]) {
-                // Pick exact target when it's determined.
-                snappingResult = {
-                  ...snappingResult,
-                  targets: snappingResult.targets.filter((t) => t.line == result[2]),
-                };
-              } else if (resizingAffine) {
-                // Need recalculation to get final control lines.
-                const results = boundingBoxPath
-                  .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-                  .filter((r): r is SnappingResult => !!r)
-                  .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
-                if (results.length > 0) {
-                  snappingResult = results[0];
-                }
-              }
-            } else {
-              // No snapping result satisfies the resizing restriction or close enough to the cursor.
-              snappingResult = undefined;
-            }
+          } else {
+            const snappingInfo = getSnappingResultForBoundingBoxResizing(
+              boundingBoxResizing,
+              shapeSnapping,
+              boundingBoxPath,
+              diff,
+              { keepAspect, centralize },
+            );
+            resizingAffine = snappingInfo.resizingAffine;
+            snappingResult = snappingInfo.snappingResult;
           }
 
           const selectedIdMap = ctx.getSelectedShapeIdMap();

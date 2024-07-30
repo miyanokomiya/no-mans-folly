@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, MINVALUE, add, moveRect } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, MINVALUE, add, applyAffine, getNorm, moveRect } from "okageo";
 import { getRectLines, isRangeOverlapped } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme } from "../models";
@@ -6,6 +6,7 @@ import { ShapeSnappingLines } from "../shapes/core";
 import { renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 import { pickMinItem } from "../utils/commons";
+import { BoundingBoxResizing } from "./boundingBox";
 
 const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
@@ -659,4 +660,74 @@ function getIntervalSnappingTmpResult(target: number, client: number): IntervalS
   const d = target - client;
   const ad = Math.abs(d);
   return { d, ad };
+}
+
+export function getSnappingResultForBoundingBoxResizing(
+  boundingBoxResizing: BoundingBoxResizing,
+  shapeSnapping: ShapeSnapping,
+  boundingBoxPath: IVec2[],
+  diff: IVec2,
+  options?: { keepAspect?: boolean; centralize?: boolean },
+): { resizingAffine: AffineMatrix; snappingResult: SnappingResult | undefined } {
+  const keepAspect = options?.keepAspect;
+  const centralize = options?.centralize;
+
+  // Apply plain resizing
+  let resizingAffine = boundingBoxResizing.getAffine(diff, { keepAspect, centralize });
+
+  // Let resized bounding box snap to shapes.
+  const snappingResults = boundingBoxPath
+    .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+    .filter((r): r is SnappingResult => !!r)
+    .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
+
+  let snappingResult: SnappingResult | undefined;
+  if (snappingResults.length > 0) {
+    snappingResult = snappingResults[0];
+  } else {
+    snappingResult = undefined;
+  }
+
+  if (snappingResult) {
+    const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
+    const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, applyAffine(resizingAffine, p)]);
+
+    // Apply resizing restriction to each snapping candidate
+    const results = snappingResult.targets
+      .map((target) =>
+        boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, target.line, {
+          keepAspect,
+          centralize,
+        }),
+      )
+      .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2)
+      .sort((a, b) => a[1] - b[1]);
+
+    if (results.length > 0) {
+      const result = results[0];
+      resizingAffine = result[0];
+
+      if (result[2]) {
+        // Pick exact target when it's determined.
+        snappingResult = {
+          ...snappingResult,
+          targets: snappingResult.targets.filter((t) => t.line == result[2]),
+        };
+      } else if (resizingAffine) {
+        // Need recalculation to get final control lines.
+        const results = boundingBoxPath
+          .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+          .filter((r): r is SnappingResult => !!r)
+          .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
+        if (results.length > 0) {
+          snappingResult = results[0];
+        }
+      }
+    } else {
+      // No snapping result satisfies the resizing restriction or close enough to the cursor.
+      snappingResult = undefined;
+    }
+  }
+
+  return { resizingAffine, snappingResult };
 }
