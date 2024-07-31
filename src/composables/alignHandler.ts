@@ -546,7 +546,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         ctx,
         a.p,
         resizeThreshold,
-        hitResult?.type === a.type ? style.selectionSecondaly : style.transformAnchor,
+        hitResult === a ? style.selectionSecondaly : style.transformAnchor,
       );
     });
 
