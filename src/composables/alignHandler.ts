@@ -23,7 +23,7 @@ import {
 } from "../utils/geometry";
 import { applyDefaultStrokeStyle, applyStrokeStyle } from "../utils/strokeStyle";
 import { applyFillStyle } from "../utils/fillStyle";
-import { renderArrowUnit, renderOutlinedCircle, renderValueLabel } from "../utils/renderer";
+import { renderArrowUnit, renderOutlinedCircle, renderRoundedSegment, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
@@ -528,45 +528,17 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     }
 
     {
-      paddingAnchors.forEach(({ seg }) => {
-        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold, lineCap: "round" });
-        ctx.beginPath();
-        ctx.moveTo(seg[0].x, seg[0].y);
-        ctx.lineTo(seg[1].x, seg[1].y);
-        ctx.stroke();
-      });
-
-      gapAnchors.forEach(({ seg }) => {
-        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: segThreshold, lineCap: "round" });
-        ctx.beginPath();
-        ctx.moveTo(seg[0].x, seg[0].y);
-        ctx.lineTo(seg[1].x, seg[1].y);
-        ctx.stroke();
-      });
+      renderRoundedSegment(
+        ctx,
+        gapAnchors.map(({ seg }) => seg).concat(paddingAnchors.map(({ seg }) => seg)),
+        segThreshold,
+        style.selectionPrimary,
+        COLORS.WHITE,
+      );
 
       if (hitResult && "seg" in hitResult) {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: segThreshold, lineCap: "round" });
-        ctx.beginPath();
-        ctx.moveTo(hitResult.seg[0].x, hitResult.seg[0].y);
-        ctx.lineTo(hitResult.seg[1].x, hitResult.seg[1].y);
-        ctx.stroke();
+        renderRoundedSegment(ctx, [hitResult.seg], segThreshold, style.selectionSecondaly, COLORS.WHITE);
       }
-
-      paddingAnchors.forEach(({ seg }) => {
-        applyStrokeStyle(ctx, { color: COLORS.WHITE, width: segThreshold / 3 });
-        ctx.beginPath();
-        ctx.moveTo(seg[0].x, seg[0].y);
-        ctx.lineTo(seg[1].x, seg[1].y);
-        ctx.stroke();
-      });
-
-      gapAnchors.forEach(({ seg }) => {
-        applyStrokeStyle(ctx, { color: COLORS.WHITE, width: segThreshold / 3 });
-        ctx.beginPath();
-        ctx.moveTo(seg[0].x, seg[0].y);
-        ctx.lineTo(seg[1].x, seg[1].y);
-        ctx.stroke();
-      });
     }
 
     resizeAnchors.forEach((a) => {

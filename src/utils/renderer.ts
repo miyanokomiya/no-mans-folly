@@ -118,6 +118,28 @@ export function createSVGCurvePath(
   return ret;
 }
 
+export function renderRoundedSegment(
+  ctx: CanvasRenderingContext2D,
+  segs: ISegment[],
+  width: number,
+  bgColor: Color,
+  fgColor?: Color,
+) {
+  ctx.beginPath();
+  segs.forEach((seg) => {
+    ctx.moveTo(seg[0].x, seg[0].y);
+    ctx.lineTo(seg[1].x, seg[1].y);
+  });
+
+  applyStrokeStyle(ctx, { color: bgColor, width: width, lineCap: "round" });
+  ctx.stroke();
+
+  if (fgColor) {
+    applyStrokeStyle(ctx, { color: fgColor, width: width / 3, lineCap: "round" });
+    ctx.stroke();
+  }
+}
+
 export function renderOutlinedCircle(ctx: CanvasRenderingContext2D, p: IVec2, r: number, fillColor: Color) {
   ctx.fillStyle = "#000";
   ctx.beginPath();
