@@ -6,7 +6,7 @@ import {
   getMovingBoundingBoxPoints,
   newBoundingBoxResizing,
 } from "../../boundingBox";
-import { IDENTITY_AFFINE, sub } from "okageo";
+import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
 import { getTextRangeRect, resizeOnTextEdit, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
 import { Shape } from "../../../models";
 import {
@@ -33,6 +33,8 @@ import { getTree } from "../../../utils/tree";
 interface Option {
   boundingBox: BoundingBox;
   hitResult: HitResult;
+  // Set this option to implement exclusive resizing result with conventional resizing behavior.
+  resizeFn?: (targetMap: { [id: string]: Shape }, affine: AffineMatrix) => { [id: string]: Partial<Shape> };
 }
 
 export function newResizingState(option: Option): AppCanvasState {
@@ -119,7 +121,11 @@ export function newResizingState(option: Option): AppCanvasState {
           const docPatch: { [id: string]: DocDelta } = {};
           const patchResult = patchPipe(
             [
-              (_current) => {
+              () => {
+                if (option?.resizeFn) {
+                  return option.resizeFn(targetShapeMap, resizingAffine);
+                }
+
                 const trees = getTree(Object.values(targetShapeMap));
                 return resizeShapeTrees(
                   shapeComposite,

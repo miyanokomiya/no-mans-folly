@@ -1,5 +1,5 @@
 import { IRectangle, IVec2, add, applyAffine, getCenter, getRectCenter, isSame, rotate, sub } from "okageo";
-import { BoxValues4, Direction2, EntityPatchInfo, Shape, StyleScheme } from "../models";
+import { BoxValues4, Direction2, Direction4, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
 import { getBranchPath } from "../utils/tree";
@@ -23,11 +23,12 @@ import {
 } from "../utils/geometry";
 import { applyDefaultStrokeStyle, applyStrokeStyle } from "../utils/strokeStyle";
 import { applyFillStyle } from "../utils/fillStyle";
-import { renderArrowUnit, renderValueLabel } from "../utils/renderer";
+import { renderArrowUnit, renderOutlinedCircle, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
 import { mapEach, toMap } from "../utils/commons";
+import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -165,7 +166,6 @@ export function newAlignHandler(option: AlignHandlerOption) {
 }
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
-const DIRECTION_ANCHOR_SIZE = 10;
 const ALIGN_ITEMS_ANCHOR_SIZE = 7;
 const PADDING_ANCHOR_SIZE = 8;
 
@@ -174,7 +174,8 @@ export type AlignBoxHitResult =
   | AlignBoxAlignItemsHitResult
   | AlignBoxBaseSizeHitResult
   | AlignBoxPaddingHitResult
-  | AlignBoxGapHitResult;
+  | AlignBoxGapHitResult
+  | AlignBoxResizeHitResult;
 
 type AlignBoxDirectionHitResult = {
   type: "direction";
@@ -203,6 +204,12 @@ export type AlignBoxGapHitResult = {
   seg: ISegment;
 };
 
+export type AlignBoxResizeHitResult = {
+  type: "resize-by-segment";
+  index: Direction4;
+  p: IVec2;
+};
+
 export function newAlignBoxHandler(option: AlignHandlerOption) {
   const shapeComposite = option.getShapeComposite();
   const shapeMap = shapeComposite.shapeMap;
@@ -224,12 +231,12 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       ? {
           type: "direction",
           direction: 1,
-          p: { x: alignBoxRect.x + DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y - DIRECTION_ANCHOR_SIZE * 2 },
+          p: { x: alignBoxRect.x + DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y - DIRECTION_ANCHOR_SIZE * 3 },
         }
       : {
           type: "direction",
           direction: 0,
-          p: { x: alignBoxRect.x - DIRECTION_ANCHOR_SIZE * 2, y: alignBoxRect.y + DIRECTION_ANCHOR_SIZE * 2 },
+          p: { x: alignBoxRect.x - DIRECTION_ANCHOR_SIZE * 3, y: alignBoxRect.y + DIRECTION_ANCHOR_SIZE * 2 },
         };
 
   const alignItemsAnchors: AlignBoxAlignItemsHitResult[] = [
@@ -240,10 +247,10 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         alignBox.direction === 0
           ? {
               x: alignBoxRectWithPadding.x + DIRECTION_ANCHOR_SIZE,
-              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height + DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
             }
           : {
-              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width + DIRECTION_ANCHOR_SIZE * 2,
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
               y: alignBoxRectWithPadding.y + DIRECTION_ANCHOR_SIZE,
             },
     },
@@ -254,10 +261,10 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         alignBox.direction === 0
           ? {
               x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width / 2,
-              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height + DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
             }
           : {
-              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width + DIRECTION_ANCHOR_SIZE * 2,
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
               y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height / 2,
             },
     },
@@ -268,11 +275,42 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         alignBox.direction === 0
           ? {
               x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width - DIRECTION_ANCHOR_SIZE,
-              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height + DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
             }
           : {
-              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width + DIRECTION_ANCHOR_SIZE * 2,
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
               y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height - DIRECTION_ANCHOR_SIZE,
+            },
+    },
+  ];
+
+  const resizeAnchors: AlignBoxResizeHitResult[] = [
+    {
+      type: "resize-by-segment",
+      index: 1,
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRect.x + alignBoxRect.width / 2,
+              y: alignBoxRect.y + alignBoxRect.height,
+            }
+          : {
+              x: alignBoxRect.x + alignBoxRect.width,
+              y: alignBoxRect.y + alignBoxRect.height / 2,
+            },
+    },
+    {
+      type: "resize-by-segment",
+      index: 2,
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRect.x + alignBoxRect.width,
+              y: alignBoxRect.y + alignBoxRect.height / 2,
+            }
+          : {
+              x: alignBoxRect.x + alignBoxRect.width / 2,
+              y: alignBoxRect.y + alignBoxRect.height,
             },
     },
   ];
@@ -382,6 +420,14 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       return directionAnchor;
     }
 
+    {
+      const resizeThresholdD2 = Math.pow(ANCHOR_SIZE * scale, 2);
+      const hit = resizeAnchors.find((a) => getD2(sub(a.p, derotatedP)) <= resizeThresholdD2);
+      if (hit) {
+        return hit;
+      }
+    }
+
     const alignItemsThreshold = ALIGN_ITEMS_ANCHOR_SIZE * scale;
     const alignItemsThresholdD2 = alignItemsThreshold * alignItemsThreshold;
     const alignItemsAnchor = alignItemsAnchors.find(({ p }) => getD2(sub(p, derotatedP)) <= alignItemsThresholdD2);
@@ -415,6 +461,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
     const alignItemsThreshold = ALIGN_ITEMS_ANCHOR_SIZE * scale;
     const segThreshold = PADDING_ANCHOR_SIZE * scale;
+    const resizeThreshold = ANCHOR_SIZE * scale;
 
     ctx.save();
     ctx.transform(...rotateAffine);
@@ -452,16 +499,24 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       );
       ctx.fill();
 
-      if (hitResult?.type === "align-items") {
-        applyFillStyle(ctx, { color: style.selectionSecondaly });
-        ctx.beginPath();
-        ctx.arc(hitResult.p.x, hitResult.p.y, alignItemsThreshold, 0, TAU);
-        ctx.fill();
-      } else if (hitResult && "p" in hitResult) {
-        applyFillStyle(ctx, { color: style.selectionSecondaly });
-        ctx.beginPath();
-        ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
-        ctx.fill();
+      if (hitResult) {
+        switch (hitResult.type) {
+          case "align-items": {
+            applyFillStyle(ctx, { color: style.selectionSecondaly });
+            ctx.beginPath();
+            ctx.arc(hitResult.p.x, hitResult.p.y, alignItemsThreshold, 0, TAU);
+            ctx.fill();
+            break;
+          }
+          case "direction":
+          case "optimize-width":
+          case "optimize-height": {
+            applyFillStyle(ctx, { color: style.selectionSecondaly });
+            ctx.beginPath();
+            ctx.arc(hitResult.p.x, hitResult.p.y, threshold, 0, TAU);
+            ctx.fill();
+          }
+        }
       }
 
       applyFillStyle(ctx, { color: COLORS.WHITE });
@@ -513,6 +568,15 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         ctx.stroke();
       });
     }
+
+    resizeAnchors.forEach((a) => {
+      renderOutlinedCircle(
+        ctx,
+        a.p,
+        resizeThreshold,
+        hitResult?.type === a.type ? style.selectionSecondaly : style.transformAnchor,
+      );
+    });
 
     ctx.restore();
   }

@@ -31,7 +31,7 @@ import { newSelectionHubState } from "../states/appCanvas/selectionHubState";
 import { getPatchByLayouts } from "../shapeLayoutHandler";
 
 export const ANCHOR_SIZE = 6;
-const DIRECTION_ANCHOR_SIZE = 10;
+export const DIRECTION_ANCHOR_SIZE = 10;
 export const EDGE_ANCHOR_MARGIN = 20;
 
 type HitAnchor = [type: string, IVec2];

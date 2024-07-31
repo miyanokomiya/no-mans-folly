@@ -109,6 +109,17 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
                     const type = alignBoxHitResult.type;
                     return () => newAlignBoxGapState({ type, alignBoxId: targetId });
                   }
+                  case "resize-by-segment": {
+                    const index = alignBoxHitResult.index;
+                    return () =>
+                      newResizingState({
+                        boundingBox,
+                        hitResult: { type: "segment", index },
+                        resizeFn: (_, affine) => {
+                          return { [targetShape.id]: shapeComposite.transformShape(targetShape, affine) };
+                        },
+                      });
+                  }
                 }
 
                 if (patch) {
@@ -168,20 +179,14 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
         }
         case "pointerhover": {
           alignBoxHitResult = alignBoxHandler.hitTest(event.data.current, ctx.getScale());
-          ctx.redraw();
           if (alignBoxHitResult) {
-            ctx.setCursor();
-            return;
+            boundingBox.saveHitResult();
+          } else {
+            const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
+            boundingBox.saveHitResult(hitBounding);
           }
 
-          const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (boundingBox.saveHitResult(hitBounding)) {
-            ctx.redraw();
-          }
-          if (hitBounding) {
-            ctx.setCursor();
-            return;
-          }
+          ctx.redraw();
           break;
         }
         case "shape-updated": {
