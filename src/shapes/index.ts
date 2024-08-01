@@ -258,7 +258,7 @@ export function remapShapeIds(
     if (s.parentId) {
       if (oldToNewMap[s.parentId]) {
         patch = { parentId: oldToNewMap[s.parentId] };
-      } else {
+      } else if (removeNotFound) {
         patch = { parentId: undefined };
       }
     }

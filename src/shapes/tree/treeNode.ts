@@ -95,7 +95,11 @@ export const struct: ShapeStruct<TreeNodeShape> = {
   resizeOnTextEdit(shape, textBoxSize) {
     return resizeTreeShapeOnTextEdit(shape, textBoxSize, MIN_WIDTH, MIN_HEIGHT);
   },
-  immigrateShapeIds(shape, oldToNewIdMap) {
+  immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
+    if (!removeNotFound) {
+      return oldToNewIdMap[shape.treeParentId] ? { treeParentId: oldToNewIdMap[shape.treeParentId] } : {};
+    }
+
     if (!oldToNewIdMap[shape.treeParentId] || !oldToNewIdMap[shape.parentId ?? ""]) {
       return getPatchTreeRootShape();
     } else {

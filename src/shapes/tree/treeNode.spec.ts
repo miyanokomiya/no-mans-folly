@@ -4,16 +4,21 @@ import { getBoxAlignByDirection, struct } from "./treeNode";
 describe("immigrateShapeIds", () => {
   test("should convert a shape to rectangle shape if a parent doesn't exist", () => {
     const shape = struct.create({ treeParentId: "a" });
-    const result = struct.immigrateShapeIds!(shape, {});
-    expect(result).toEqual({ type: "tree_root" });
-    expect(result).toHaveProperty("direction");
-    expect(result).toHaveProperty("treeParentId");
+    const result0 = struct.immigrateShapeIds!(shape, {}, true);
+    expect(result0).toEqual({ type: "tree_root" });
+    expect(result0).toHaveProperty("direction");
+    expect(result0).toHaveProperty("treeParentId");
+  });
+
+  test("should keep current relations if a parent doesn't exist but removeNotFound is true", () => {
+    const shape = struct.create({ treeParentId: "a" });
+    expect(struct.immigrateShapeIds!(shape, {})).toEqual({});
   });
 
   test("should immigrate tree parent if both tree parent and tree root exist", () => {
     const shape = struct.create({ treeParentId: "a", parentId: "p" });
-    expect(struct.immigrateShapeIds!(shape, { a: "b" })).toEqual({ type: "tree_root" });
-    expect(struct.immigrateShapeIds!(shape, { a: "b", p: "pp" })).toEqual({ treeParentId: "b" });
+    expect(struct.immigrateShapeIds!(shape, { a: "b" }, true)).toEqual({ type: "tree_root" });
+    expect(struct.immigrateShapeIds!(shape, { a: "b", p: "pp" }, true)).toEqual({ treeParentId: "b" });
   });
 });
 
