@@ -319,17 +319,16 @@ function duplicateSelectedShapes(ctx: AppCanvasStateContext, withinGroup = false
 
   const scale = ctx.getScale();
   const shapeComposite = ctx.getShapeComposite();
-  const shapeMap = shapeComposite.shapeMap;
+  const srcShapes = shapeComposite.getAllBranchMergedShapes(ids);
   const docMap = ctx.getDocumentMap();
-  const srcShapes = ids.map((id) => shapeMap[id]);
   const srcBounds = shapeComposite.getWrapperRectForShapes(srcShapes);
   const duplicated = duplicateShapes(
     ctx.getShapeStruct,
     srcShapes,
-    ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
+    srcShapes.filter(({ id }) => !!docMap[id]).map(({ id }) => [id, docMap[id]]),
     ctx.generateUuid,
     ctx.createLastIndex(),
-    new Set(Object.keys(shapeMap)),
+    new Set(Object.keys(shapeComposite.shapeMap)),
     { x: srcBounds.x + 20 * scale, y: srcBounds.y + 20 * scale },
     withinGroup,
   );
