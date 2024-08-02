@@ -89,7 +89,7 @@ describe("handleContextItemEvent", () => {
         height: 50,
         p: { x: 40, y: 40 },
       });
-      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [rect], { [rect.id]: [{ insert: "text" }] });
+      expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [rect], { [rect.id]: [{ insert: "text" }] }, undefined);
       expect(ctx.multiSelectShapes).toHaveBeenNthCalledWith(1, [rect.id]);
     });
   });

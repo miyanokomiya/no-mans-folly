@@ -349,8 +349,9 @@ export function duplicateShapes(
   lastFIndex: string,
   availableIdSet: Set<string>,
   p?: IVec2,
+  keepExternalRelations = false,
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
-  const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, true);
+  const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, !keepExternalRelations);
   const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
 
   const remapComposite = newShapeComposite({

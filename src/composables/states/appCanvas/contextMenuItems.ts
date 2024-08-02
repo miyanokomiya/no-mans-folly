@@ -2,9 +2,11 @@ import { Shape } from "../../../models";
 import { createShape, duplicateShapes } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
+import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
 import { FOLLY_SVG_PREFIX } from "../../../utils/shapeTemplateUtil";
 import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
 import { canGroupShapes, newShapeComposite } from "../../shapeComposite";
+import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import { TransitionValue } from "../core";
@@ -19,6 +21,10 @@ export const CONTEXT_MENU_ITEM_SRC = {
   DUPLICATE_SHAPE: {
     label: "Duplicate",
     key: "DUPLICATE_SHAPE",
+  },
+  DUPLICATE_SHAPE_WITHIN_GROUP: {
+    label: "Duplicate within group",
+    key: "DUPLICATE_SHAPE_WITHIN_GROUP",
   },
 
   GROUP: {
@@ -101,6 +107,7 @@ export function getMenuItemsForSelectedShapes(
   return [
     ...lockItems,
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
+    ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
     ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
@@ -122,27 +129,11 @@ export function handleContextItemEvent(
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE.key: {
-      const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      if (ids.length === 0) return;
-
-      const scale = ctx.getScale();
-      const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const docMap = ctx.getDocumentMap();
-      const srcShapes = ids.map((id) => shapeMap[id]);
-      const srcBounds = shapeComposite.getWrapperRectForShapes(srcShapes);
-      const duplicated = duplicateShapes(
-        ctx.getShapeStruct,
-        srcShapes,
-        ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
-        ctx.generateUuid,
-        ctx.createLastIndex(),
-        new Set(Object.keys(shapeMap)),
-        { x: srcBounds.x + 20 * scale, y: srcBounds.y + 20 * scale },
-      );
-
-      ctx.addShapes(duplicated.shapes, duplicated.docMap);
-      ctx.multiSelectShapes(duplicated.shapes.map((s) => s.id));
+      duplicateSelectedShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP.key: {
+      duplicateSelectedShapes(ctx, true);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.GROUP.key: {
@@ -320,4 +311,36 @@ export function unlockShapes(ctx: AppCanvasStateContext): boolean {
   }, {});
   ctx.patchShapes(patch);
   return true;
+}
+
+function duplicateSelectedShapes(ctx: AppCanvasStateContext, withinGroup = false) {
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  if (ids.length === 0) return;
+
+  const scale = ctx.getScale();
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
+  const docMap = ctx.getDocumentMap();
+  const srcShapes = ids.map((id) => shapeMap[id]);
+  const srcBounds = shapeComposite.getWrapperRectForShapes(srcShapes);
+  const duplicated = duplicateShapes(
+    ctx.getShapeStruct,
+    srcShapes,
+    ids.filter((id) => !!docMap[id]).map((id) => [id, docMap[id]]),
+    ctx.generateUuid,
+    ctx.createLastIndex(),
+    new Set(Object.keys(shapeMap)),
+    { x: srcBounds.x + 20 * scale, y: srcBounds.y + 20 * scale },
+    withinGroup,
+  );
+
+  const entityPatch = normalizeEntityPatchInfo(
+    mergeEntityPatchInfo(
+      { add: duplicated.shapes },
+      { update: getPatchByLayouts(shapeComposite, { add: duplicated.shapes }) },
+    ),
+  );
+
+  ctx.addShapes(entityPatch.add ?? [], duplicated.docMap, entityPatch.update);
+  ctx.multiSelectShapes(duplicated.shapes.map((s) => s.id));
 }
