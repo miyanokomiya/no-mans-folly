@@ -1,6 +1,6 @@
 import { IRectangle, IVec2, applyAffine, getDistance, getRectCenter, isSame, sub } from "okageo";
 import { TreeNodeShape, getBoxAlignByDirection, isTreeNodeShape } from "../../shapes/tree/treeNode";
-import { TreeRootShape, isTreeRootShape } from "../../shapes/tree/treeRoot";
+import { TreeRootShape, getTreeChildMargin, getTreeSiblingMargin, isTreeRootShape } from "../../shapes/tree/treeRoot";
 import { ShapeComposite } from "../shapeComposite";
 import { Direction4, EntityPatchInfo, Shape, StyleScheme } from "../../models";
 import { applyFillStyle } from "../../utils/fillStyle";
@@ -354,7 +354,7 @@ export function getLocalMarginAnchorPoints(shape: TreeRootShape, scale: number):
   const margin = ANCHOR_MARGIN * scale * 0.4;
   return [
     { x: -margin, y: shape.siblingMargin ?? SIBLING_MARGIN },
-    { x: shape.childMargin ?? CHILD_MARGIN, y: -margin },
+    { x: getTreeChildMargin(shape), y: -margin },
   ];
 }
 
@@ -685,8 +685,8 @@ function toLayoutNode(shape: TreeShapeBase): TreeLayoutNode {
       rect,
       direction: 0,
       parentId: "",
-      siblingMargin: root.siblingMargin,
-      childMargin: root.childMargin,
+      siblingMargin: getTreeSiblingMargin(root),
+      childMargin: getTreeChildMargin(root),
     };
   }
 }

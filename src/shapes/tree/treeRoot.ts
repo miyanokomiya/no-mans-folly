@@ -9,6 +9,7 @@ import { TreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./cor
 import { applyLocalSpace } from "../../utils/renderer";
 import { getRotatedRectAffine } from "../../utils/geometry";
 import { renderTransform } from "../../utils/svgElements";
+import { CHILD_MARGIN, SIBLING_MARGIN } from "../../utils/layouts/tree";
 
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 60;
@@ -97,4 +98,12 @@ export const struct: ShapeStruct<TreeRootShape> = {
 
 export function isTreeRootShape(shape?: Shape): shape is TreeRootShape {
   return shape?.type === "tree_root";
+}
+
+export function getTreeChildMargin(shape: TreeRootShape): number {
+  return shape.childMargin ?? CHILD_MARGIN;
+}
+
+export function getTreeSiblingMargin(shape: TreeRootShape): number {
+  return shape.siblingMargin ?? SIBLING_MARGIN;
 }

@@ -3,7 +3,7 @@ import { BoxAlign, Direction4, Shape } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
-import { isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
+import { getTreeChildMargin, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
 import { TreeShapeBase, isTreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
 import { applyLocalSpace, applyPath, createSVGCurvePath } from "../../utils/renderer";
@@ -174,10 +174,7 @@ function getConnectorLocalPath(shape: TreeNodeShape, treeParent: TreeShapeBase, 
 
   if (adjustedShape.dropdown !== undefined) {
     const toP = getParentConnectionPoint(treeParent, adjustedShape.dropdown);
-    const marginRate =
-      isTreeRootShape(treeParent) && treeParent.childMargin
-        ? Math.min(0.1, treeParent.childMargin / treeParent.width)
-        : 0;
+    const marginRate = Math.min(0.1, getTreeChildMargin(treeParent) / treeParent.width);
     const x = treeParent.p.x + treeParent.width * (adjustedShape.direction === 3 ? 0.5 - marginRate : 0.5 + marginRate);
     path.push({ x, y: fromP.y });
     path.push({ x, y: toP.y });
