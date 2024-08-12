@@ -91,7 +91,7 @@ describe("newSingleSelectedState", () => {
       const sm = newStateMachine(() => ctx as any, newSingleSelectedState);
       sm.handleEvent({
         type: "pointerdown",
-        data: { point: { x: -10, y: -20 }, options: { button: 0, ctrl: false } },
+        data: { point: { x: -90, y: -20 }, options: { button: 0, ctrl: false } },
       });
       expect(ctx.selectShape).not.toHaveBeenCalled();
       expect(sm.getStateSummary().label).toBe("RectangleSelecting");

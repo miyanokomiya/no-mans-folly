@@ -62,9 +62,11 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
         return newSingleSelectedState;
       }
 
+      const isBoardRoot = isBoardRootShape(targetShape);
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(targetShape),
-        noRotation: !isBoardRootShape(targetShape),
+        noRotation: !isBoardRoot,
+        noMoveAnchor: !isBoardRoot,
         locked: targetShape.locked,
       });
 

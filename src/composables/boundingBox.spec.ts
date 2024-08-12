@@ -25,15 +25,15 @@ describe("newBoundingBox", () => {
       expect(target.hitTest({ x: 120, y: -20 }, 1)).toEqual({ type: "rotation", index: 0 });
     });
 
-    test("should check the anchor for moving only when the option is set true", () => {
+    test("should check the anchor for moving when noMoveAnchor isn't set true", () => {
       const target0 = newBoundingBox({
         path: getRectPoints({ x: 0, y: 0, width: 100, height: 200 }),
+        noMoveAnchor: true,
       });
       expect(target0.hitTest({ x: -18, y: -18 }, 1)).toEqual(undefined);
 
       const target1 = newBoundingBox({
         path: getRectPoints({ x: 0, y: 0, width: 100, height: 200 }),
-        moveAnchor: true,
       });
       expect(target1.hitTest({ x: -18, y: -18 }, 1)).toEqual({ type: "move", index: 0 });
     });

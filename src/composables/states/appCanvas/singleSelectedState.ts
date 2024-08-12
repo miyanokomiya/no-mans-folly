@@ -17,6 +17,7 @@ import { isGroupShape } from "../../../shapes/group";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
+import { newMovingHubState } from "./movingHubState";
 
 export const newSingleSelectedState = defineIntransientState(() => {
   let selectedId: string | undefined;
@@ -75,6 +76,8 @@ export const newSingleSelectedState = defineIntransientState(() => {
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                  case "move":
+                    return () => newMovingHubState({ boundingBox });
                 }
               }
 

@@ -108,6 +108,8 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                  case "move":
+                    return () => newMovingHubState({ boundingBox });
                 }
               }
 

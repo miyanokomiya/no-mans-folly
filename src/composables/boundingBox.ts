@@ -46,7 +46,7 @@ interface ResizingBase {
 interface Option {
   path: IVec2[];
   noRotation?: boolean;
-  moveAnchor?: boolean;
+  noMoveAnchor?: boolean;
   locked?: boolean;
 }
 
@@ -100,7 +100,7 @@ export function newBoundingBox(option: Option): BoundingBox {
 
     function getRotationAnchor(scale = 1): { c: IVec2; r: number } | undefined {
       const scaledAnchorSize = ANCHOR_SIZE * scale;
-      return option.noRotation
+      return option.noRotation || option.locked
         ? undefined
         : {
             c: add(tr, multi(rotate({ x: 20, y: -20 }, rotation), scale)),
@@ -110,12 +110,12 @@ export function newBoundingBox(option: Option): BoundingBox {
 
     function getMoveAnchor(scale = 1): { c: IVec2; r: number } | undefined {
       const scaledAnchorSize = ANCHOR_SIZE * scale;
-      return option.moveAnchor
-        ? {
+      return option.noMoveAnchor || option.locked
+        ? undefined
+        : {
             c: add(tl, multi(rotate({ x: -20, y: -20 }, rotation), scale)),
             r: scaledAnchorSize * 2,
-          }
-        : undefined;
+          };
     }
 
     function hitTest(p: IVec2, scale = 1): HitResult | undefined {

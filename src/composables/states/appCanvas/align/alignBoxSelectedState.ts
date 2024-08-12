@@ -34,7 +34,6 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(target),
       locked: target.locked,
-      moveAnchor: true,
     });
     alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,

@@ -14,6 +14,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";
+import { newMovingHubState } from "../movingHubState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
@@ -166,6 +167,8 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                  case "move":
+                    return () => newMovingHubState({ boundingBox });
                 }
               }
 
