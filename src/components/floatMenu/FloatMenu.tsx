@@ -304,6 +304,18 @@ export const FloatMenu: React.FC<Option> = ({
     [shapeStore, patchShapes, getShapeStruct],
   );
 
+  const onLineJumpChanged = useCallback(
+    (val: boolean) => {
+      const shapeComposite = shapeStore.shapeComposite;
+      const shapeMap = shapeComposite.shapeMap;
+      const lineIds = Object.keys(shapeStore.getSelected());
+      const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
+      lines.map(() => ({ jump: val ? true : undefined }));
+      patchShapes(mapReduce(toMap(lines), () => ({ jump: val ? true : undefined }) as Partial<LineShape>));
+    },
+    [shapeStore, patchShapes],
+  );
+
   const onClickLineLabel = useCallback(() => {
     handleEvent({
       type: "state",
@@ -456,6 +468,8 @@ export const FloatMenu: React.FC<Option> = ({
               currentType={indexLineShape.lineType}
               currentCurve={indexLineShape.curveType}
               onChange={onLineTypeChanged}
+              jump={indexLineShape.jump}
+              onJumpChange={onLineJumpChanged}
             />
             <LineHeadItems
               {...popupButtonCommonProps}
