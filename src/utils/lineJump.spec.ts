@@ -54,6 +54,22 @@ describe("getLineIntersectionMap", () => {
       ]),
     );
   });
+
+  test("should ignore curves", () => {
+    const l0 = struct.create({ id: "l0", p: { x: 0, y: 0 }, q: { x: 10, y: 0 }, curves: [{ d: { x: 0, y: 5 } }] });
+    const l1 = struct.create({ id: "l1", p: { x: 5, y: -5 }, q: { x: 5, y: 5 }, jump: true });
+    expect(getLineIntersectionMap([l0, l1])).toEqual(new Map([]));
+
+    const l2 = struct.create({ id: "l2", p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
+    const l3 = struct.create({
+      id: "l3",
+      p: { x: 5, y: -5 },
+      q: { x: 5, y: 5 },
+      curves: [{ d: { x: 0, y: 5 } }],
+      jump: true,
+    });
+    expect(getLineIntersectionMap([l2, l3])).toEqual(new Map([]));
+  });
 });
 
 describe("makeJumps", () => {

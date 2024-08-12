@@ -48,7 +48,7 @@ export function getLineIntersectionMap(lines: LineShape[]): LineIntersectionMap 
       }
     }
 
-    behindPolylines.push(linePath);
+    behindPolylines.push(linePath.filter((_, i) => !line.curves?.[i]));
   });
 
   return ret;
@@ -65,6 +65,7 @@ function getPolylineIntersections(
   target.forEach((targetSeg, i) => {
     if (disabledSegments.has(i)) {
       ret.segments.push(undefined);
+      return;
     }
 
     const intersections: IVec2[] = [];
@@ -87,7 +88,7 @@ function getPolylineIntersections(
   return hasItem ? ret : undefined;
 }
 
-export function getLineJumpPoints(
+function getLineJumpPoints(
   src: ISegment[],
   polylineIntersections: PolylineIntersections,
   interval: number,
