@@ -166,8 +166,8 @@ export const struct: ShapeStruct<LineShape> = {
   },
   createSVGElementInfo(shape, shapeContext) {
     const treeNode = shapeContext?.treeNodeMap[shape.id];
-    const linePath = getLinePath(shape);
-    const pathStr = pathSegmentRawsToString(createSVGCurvePath(linePath, shape.curves));
+    const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
+    const pathStr = pathSegmentRawsToString(createSVGCurvePath(curvePath.path, curvePath.curves));
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
     const defaultWidth = getStrokeWidth({ ...shape.stroke, disabled: false });
