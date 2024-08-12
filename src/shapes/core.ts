@@ -6,13 +6,17 @@ import { TreeNode } from "../utils/tree";
 import { ImageStore } from "../composables/imageStore";
 import { isSameBoxPadding } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
+import { ISegment } from "../utils/geometry";
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
+
+export type LineJumpMap = Map<string, ISegment[][]>;
 
 export interface ShapeContext {
   shapeMap: { [id: string]: Shape };
   treeNodeMap: { [id: string]: TreeNode };
   getStruct: GetShapeStruct;
+  lineJumpMap: LineJumpMap;
 }
 
 /**

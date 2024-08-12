@@ -42,6 +42,7 @@ describe("struct", () => {
         shapeMap: { [shape.id]: shape },
         treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
         getStruct: getCommonStruct,
+        lineJumpMap: new Map(),
       });
       expect(ctx.stroke).toHaveBeenCalled();
     });
@@ -60,6 +61,7 @@ describe("struct", () => {
           shapeMap: { [shape0.id]: shape0 },
           treeNodeMap: { [shape0.id]: { id: shape0.id, children: [] } },
           getStruct: getCommonStruct,
+          lineJumpMap: new Map(),
         }),
       ).toMatchSnapshot("straight spline");
 
@@ -75,6 +77,7 @@ describe("struct", () => {
           shapeMap: { [shape1.id]: shape1 },
           treeNodeMap: { [shape1.id]: { id: shape1.id, children: [] } },
           getStruct: getCommonStruct,
+          lineJumpMap: new Map(),
         }),
       ).toMatchSnapshot("bezier spline");
 
@@ -87,6 +90,7 @@ describe("struct", () => {
           shapeMap: { [shape2.id]: shape2 },
           treeNodeMap: { [shape2.id]: { id: shape2.id, children: [] } },
           getStruct: getCommonStruct,
+          lineJumpMap: new Map(),
         }),
       ).toMatchSnapshot("arc spline");
     });
@@ -104,6 +108,7 @@ describe("struct", () => {
           shapeMap: { [shape0.id]: shape0 },
           treeNodeMap: { [shape0.id]: { id: shape0.id, children: [] } },
           getStruct: getCommonStruct,
+          lineJumpMap: new Map(),
         }),
       ).toMatchSnapshot("dot_blank, dot_filled");
 
@@ -117,6 +122,7 @@ describe("struct", () => {
           shapeMap: { [shape1.id]: shape1 },
           treeNodeMap: { [shape1.id]: { id: shape1.id, children: [] } },
           getStruct: getCommonStruct,
+          lineJumpMap: new Map(),
         }),
       ).toMatchSnapshot("closed_blank, closed_filled");
 
@@ -129,6 +135,7 @@ describe("struct", () => {
           shapeMap: { [shape2.id]: shape2 },
           treeNodeMap: { [shape2.id]: { id: shape2.id, children: [] } },
           getStruct: getCommonStruct,
+          lineJumpMap: new Map(),
         }),
       ).toMatchSnapshot("open");
     });

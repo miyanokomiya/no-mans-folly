@@ -6,6 +6,7 @@ import { findBackward, mergeMap, toMap } from "../utils/commons";
 import { flatTree, getAllBranchIds, getBranchPath, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
+  ShapeContext,
   ShapeSelectionScope,
   ShapeSnappingLines,
   isSameShapeParentScope,
@@ -18,6 +19,8 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { generateKeyBetweenAllowSame } from "../utils/findex";
 import { newObjectWeakCache } from "./cache";
 import { DocOutput } from "../models/document";
+import { getLineJumpMap } from "../utils/lineJump";
+import { isLineShape } from "../shapes/line";
 
 interface Option {
   shapes: Shape[];
@@ -43,10 +46,11 @@ export function newShapeComposite(option: Option) {
   const mergedShapeTree = getTree(mergedShapes);
   const mergedShapeTreeMap = toMap(flatTree(mergedShapeTree));
 
-  const mergedShapeContext = {
+  const mergedShapeContext: ShapeContext = {
     shapeMap: mergedShapeMap,
     treeNodeMap: mergedShapeTreeMap,
     getStruct: option.getStruct,
+    lineJumpMap: getLineJumpMap(mergedShapes.filter((s) => isLineShape(s))),
   };
 
   const docCompositeCacheMap: { [id: string]: [info: DocCompositionInfo, src: DocOutput] } = {};

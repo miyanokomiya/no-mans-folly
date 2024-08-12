@@ -138,7 +138,7 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     ctx.beginPath();
-    applyCurvePath(ctx, linePath, shape.curves);
+    applyCurvePath(ctx, linePath, shape.curves, false, shapeContext?.lineJumpMap.get(shape.id));
 
     if (!shape.fill.disabled) {
       applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined });

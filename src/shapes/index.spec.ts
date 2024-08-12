@@ -54,6 +54,7 @@ describe("renderShape", () => {
       shapeMap: { [shape.id]: shape },
       treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
       getStruct: getCommonStruct,
+      lineJumpMap: new Map(),
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();
