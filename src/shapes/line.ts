@@ -266,11 +266,13 @@ export const struct: ShapeStruct<LineShape> = {
       ],
     };
   },
-  getWrapperRect(shape, _, includeBounds) {
-    const path = getLinePath(shape);
+  getWrapperRect(shape, shapeContext, includeBounds) {
+    const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
     // Regard curves only when bounds included.
     // => Otherwise, the bounds doesn't represent vertices.
-    let rect = getCurveSplineBounds(path, includeBounds ? shape.curves : undefined);
+    let rect = includeBounds
+      ? getCurveSplineBounds(curvePath.path, curvePath.curves)
+      : getCurveSplineBounds(getLinePath(shape), undefined);
 
     if (includeBounds) {
       const affines = getHeadAffines(shape);
@@ -323,7 +325,8 @@ export const struct: ShapeStruct<LineShape> = {
       if (isOnPolygon(p, polygon)) return true;
     }
 
-    if (isPointCloseToCurveSpline(getLinePath(shape), shape.curves, p, Math.max(shape.stroke.width ?? 1, 4 * scale)))
+    const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
+    if (isPointCloseToCurveSpline(curvePath.path, curvePath.curves, p, Math.max(shape.stroke.width ?? 1, 4 * scale)))
       return true;
     if (!shapeContext) return false;
 
