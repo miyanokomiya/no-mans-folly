@@ -72,7 +72,7 @@ import {
   mergeClosePoints,
   splitPointsToCloseSections,
 } from "./geometry";
-import { IRectangle, applyAffine, getDistance, getPedal, rotate } from "okageo";
+import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
 describe("getRotateFn", () => {
   test("should return function to rotate", () => {
@@ -1706,24 +1706,39 @@ describe("mergeClosePoints", () => {
 
 describe("splitPointsToCloseSections", () => {
   test("should mrege close points but keep edges", () => {
-    const src = [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-      { x: 2, y: 0 },
-      { x: 10, y: 0 },
-      { x: 15, y: 0 },
-      { x: 16, y: 0 },
+    const src: [IVec2, number][] = [
+      [{ x: 0, y: 0 }, 0],
+      [{ x: 1, y: 0 }, 0],
+      [{ x: 2, y: 0 }, 0],
+      [{ x: 10, y: 0 }, 0],
+      [{ x: 15, y: 0 }, 0],
+      [{ x: 16, y: 0 }, 0],
     ];
     expect(splitPointsToCloseSections(src, 1)).toEqual([
       [
-        { x: 0, y: 0 },
-        { x: 1, y: 0 },
-        { x: 2, y: 0 },
+        [{ x: 0, y: 0 }, 0],
+        [{ x: 1, y: 0 }, 0],
+        [{ x: 2, y: 0 }, 0],
       ],
-      [{ x: 10, y: 0 }],
+      [[{ x: 10, y: 0 }, 0]],
       [
-        { x: 15, y: 0 },
-        { x: 16, y: 0 },
+        [{ x: 15, y: 0 }, 0],
+        [{ x: 16, y: 0 }, 0],
+      ],
+    ]);
+  });
+
+  test("should regard individual vertex size", () => {
+    const src: [IVec2, number][] = [
+      [{ x: 0, y: 0 }, 1],
+      [{ x: 2, y: 0 }, 2],
+      [{ x: 3.4, y: 0 }, 1],
+    ];
+    expect(splitPointsToCloseSections(src, 0)).toEqual([
+      [[{ x: 0, y: 0 }, 1]],
+      [
+        [{ x: 2, y: 0 }, 2],
+        [{ x: 3.4, y: 0 }, 1],
       ],
     ]);
   });

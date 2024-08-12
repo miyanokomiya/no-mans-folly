@@ -77,6 +77,8 @@ export interface LineShape extends Shape {
   jump?: boolean;
 }
 
+export const LINE_JUMP_BASE_INTERVAL = 20;
+
 export const struct: ShapeStruct<LineShape> = {
   label: "Line",
   create(arg = {}) {
@@ -662,7 +664,7 @@ function isSameCurve(a: LineShape["curves"], b: LineShape["curves"]): boolean {
   });
 }
 
-function getLineWidth(shape: LineShape): number {
+export function getLineWidth(shape: LineShape): number {
   if (shape.stroke.disabled) {
     const base = getStrokeWidth({ ...shape.stroke, disabled: false });
     return shape.fill.disabled ? 0 : base * 0.8;
@@ -737,7 +739,7 @@ export function combineJumps(shape: LineShape, jumps?: ISegment[][]): { path: IV
 
     jump.forEach((seg) => {
       path.push(seg[0]);
-      curves.push({ d: { x: 0, y: 10 } });
+      curves.push({ d: { x: 0, y: (LINE_JUMP_BASE_INTERVAL + getLineWidth(shape)) / 2 } });
       path.push(seg[1]);
       curves.push(undefined);
     });

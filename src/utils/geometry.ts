@@ -1242,12 +1242,15 @@ export function getRectRotateFn(radian: number, origin?: IVec2): (rect: IRectang
  * Suppose points in "src" are aligned in order on a line.
  */
 export function mergeClosePoints(src: IVec2[], threshold: number): IVec2[] {
-  const sections = splitPointsToCloseSections(src, threshold);
+  const sections = splitPointsToCloseSections(
+    src.map((p) => [p, 0] as const),
+    threshold,
+  );
   const ret: IVec2[] = [];
   sections.forEach((sec) => {
-    ret.push(sec[0]);
+    ret.push(sec[0][0]);
     if (sec.length > 1) {
-      ret.push(sec[sec.length - 1]);
+      ret.push(sec[sec.length - 1][0]);
     }
   });
   return ret;
@@ -1256,16 +1259,18 @@ export function mergeClosePoints(src: IVec2[], threshold: number): IVec2[] {
 /**
  * Suppose points in "src" are aligned in order on a line.
  */
-export function splitPointsToCloseSections(src: IVec2[], threshold: number): IVec2[][] {
-  const thresholdD2 = threshold * threshold;
-  const ret: IVec2[][] = [[src[0]]];
+export function splitPointsToCloseSections(src: [IVec2, size: number][], threshold: number): [IVec2, size: number][][] {
+  const ret: [IVec2, number][][] = [[src[0]]];
 
   for (let i = 1; i < src.length; i++) {
-    const p = src[i];
-    if (getD2(sub(src[i - 1], p)) > thresholdD2) {
-      ret.push([p]);
+    const [p, size] = src[i];
+    const [prevP, prevSize] = src[i - 1];
+    const d = threshold + (size + prevSize) / 2;
+
+    if (getD2(sub(prevP, p)) > d * d) {
+      ret.push([[p, size]]);
     } else {
-      ret[ret.length - 1].push(p);
+      ret[ret.length - 1].push([p, size]);
     }
   }
 

@@ -14,7 +14,7 @@ describe("getLineIntersectionMap", () => {
         [
           "l1",
           {
-            segments: [{ points: [{ x: 5, y: 0 }] }],
+            segments: [{ points: [[{ x: 5, y: 0 }, 2]] }],
           },
         ],
         [
@@ -23,8 +23,8 @@ describe("getLineIntersectionMap", () => {
             segments: [
               {
                 points: [
-                  { x: 10, y: 3 },
-                  { x: 5, y: 3 },
+                  [{ x: 10, y: 3 }, 2],
+                  [{ x: 5, y: 3 }, 2],
                 ],
               },
             ],
@@ -48,7 +48,7 @@ describe("getLineIntersectionMap", () => {
         [
           "l1",
           {
-            segments: [{ points: [{ x: 5, y: 0 }] }, undefined],
+            segments: [{ points: [[{ x: 5, y: 0 }, 2]] }, undefined],
           },
         ],
       ]),
@@ -79,11 +79,16 @@ describe("makeJumps", () => {
   ];
 
   test("should make jump points", () => {
-    const intersections = [
-      { x: 2, y: 0 },
-      { x: 6, y: 0 },
-    ];
-    expect(makeJumps(seg, intersections, 1)).toEqual([
+    expect(
+      makeJumps(
+        seg,
+        [
+          [{ x: 2, y: 0 }, 0],
+          [{ x: 6, y: 0 }, 0],
+        ],
+        1,
+      ),
+    ).toEqual([
       [
         { x: 1.5, y: 0 },
         { x: 2.5, y: 0 },
@@ -96,11 +101,16 @@ describe("makeJumps", () => {
   });
 
   test("should merge close jump points", () => {
-    const intersections = [
-      { x: 2, y: 0 },
-      { x: 3, y: 0 },
-    ];
-    expect(makeJumps(seg, intersections, 1)).toEqual([
+    expect(
+      makeJumps(
+        seg,
+        [
+          [{ x: 2, y: 0 }, 0],
+          [{ x: 3, y: 0 }, 0],
+        ],
+        1,
+      ),
+    ).toEqual([
       [
         { x: 1.5, y: 0 },
         { x: 3.5, y: 0 },
@@ -109,11 +119,16 @@ describe("makeJumps", () => {
   });
 
   test("should avoid sticking out the src segment", () => {
-    const intersections = [
-      { x: 1, y: 0 },
-      { x: 9, y: 0 },
-    ];
-    expect(makeJumps(seg, intersections, 4)).toEqual([
+    expect(
+      makeJumps(
+        seg,
+        [
+          [{ x: 1, y: 0 }, 0],
+          [{ x: 9, y: 0 }, 0],
+        ],
+        4,
+      ),
+    ).toEqual([
       [
         { x: 0, y: 0 },
         { x: 3, y: 0 },
@@ -126,11 +141,16 @@ describe("makeJumps", () => {
   });
 
   test("should align segments in order", () => {
-    const intersections = [
-      { x: 6, y: 0 },
-      { x: 2, y: 0 },
-    ];
-    expect(makeJumps(seg, intersections, 1)).toEqual([
+    expect(
+      makeJumps(
+        seg,
+        [
+          [{ x: 6, y: 0 }, 0],
+          [{ x: 2, y: 0 }, 0],
+        ],
+        1,
+      ),
+    ).toEqual([
       [
         { x: 1.5, y: 0 },
         { x: 2.5, y: 0 },
