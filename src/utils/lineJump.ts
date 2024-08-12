@@ -117,7 +117,7 @@ export function makeJumps(seg: ISegment, intersections: SegmentIntersections["po
 
   return sections.map((points, i) => {
     const [p0, size0] = points[0];
-    const [p1, size1] = points.length === 1 ? points[0] : points[1];
+    const [p1, size1] = points.at(-1)!;
 
     return [
       i === 0 && getD2(sub(p0, seg[0])) <= intervalHalfD2 ? seg[0] : sub(p0, multi(unit, (interval + size0) / 2)),

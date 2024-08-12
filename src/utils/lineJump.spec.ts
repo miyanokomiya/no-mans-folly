@@ -116,6 +116,23 @@ describe("makeJumps", () => {
         { x: 3.5, y: 0 },
       ],
     ]);
+
+    expect(
+      makeJumps(
+        seg,
+        [
+          [{ x: 2, y: 0 }, 0],
+          [{ x: 3, y: 0 }, 0],
+          [{ x: 4, y: 0 }, 0],
+        ],
+        1,
+      ),
+    ).toEqual([
+      [
+        { x: 1.5, y: 0 },
+        { x: 4.5, y: 0 },
+      ],
+    ]);
   });
 
   test("should avoid sticking out the src segment", () => {
