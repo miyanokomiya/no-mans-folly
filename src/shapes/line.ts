@@ -77,7 +77,7 @@ export interface LineShape extends Shape {
   jump?: boolean;
 }
 
-export const LINE_JUMP_BASE_INTERVAL = 20;
+export const LINE_JUMP_BASE_INTERVAL = 12;
 
 export const struct: ShapeStruct<LineShape> = {
   label: "Line",
