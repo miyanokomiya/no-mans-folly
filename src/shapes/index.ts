@@ -341,6 +341,10 @@ export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: 
   return !!struct.rectangularOptimizedSegment;
 }
 
+/**
+ * When `keepExternalRelations` is true, all relations except for ids of duplicating targets will be kept.
+ * Make sure those relations are satisfied by `availableIdSet` as well.
+ */
 export function duplicateShapes(
   getStruct: GetShapeStruct,
   shapes: Shape[],
