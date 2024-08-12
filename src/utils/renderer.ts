@@ -27,7 +27,6 @@ export function applyCurvePath(
   path: IVec2[],
   curves: (CurveControl | undefined)[] = [],
   closed = false,
-  jumps?: ISegment[][],
 ) {
   path.forEach((p, i) => {
     if (i === 0) {
@@ -54,21 +53,6 @@ export function applyCurvePath(
         ctx.bezierCurveTo(control.c1.x, control.c1.y, control.c2.x, control.c2.y, p.x, p.y);
       }
     }
-
-    jumps?.[i]?.forEach(([p0, p1]) => {
-      const arcParams = getArcCurveParamsByNormalizedControl([p0, p1], { x: 0, y: 15 });
-      if (arcParams) {
-        ctx.lineTo(p0.x, p0.y);
-        ctx.arc(
-          arcParams.c.x,
-          arcParams.c.y,
-          arcParams.radius,
-          arcParams.from,
-          arcParams.to,
-          arcParams.counterclockwise,
-        );
-      }
-    });
   });
   if (closed) {
     ctx.closePath();

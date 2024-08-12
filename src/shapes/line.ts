@@ -103,7 +103,6 @@ export const struct: ShapeStruct<LineShape> = {
     applyStrokeStyle(ctx, { ...shape.stroke, dash: undefined });
     applyFillStyle(ctx, shape.fill);
     const treeNode = shapeContext?.treeNodeMap[shape.id];
-    const linePath = getLinePath(shape);
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
 
@@ -138,7 +137,8 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     ctx.beginPath();
-    applyCurvePath(ctx, linePath, shape.curves, false, shapeContext?.lineJumpMap.get(shape.id));
+    const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
+    applyCurvePath(ctx, curvePath.path, curvePath.curves);
 
     if (!shape.fill.disabled) {
       applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined });
@@ -700,4 +700,47 @@ function getHeadAffines(shape: LineShape): { pAffine?: AffineMatrix; qAffine?: A
     pAffine,
     qAffine,
   };
+}
+
+export function combineJumps(shape: LineShape, jumps?: ISegment[][]): { path: IVec2[]; curves: LineShape["curves"] } {
+  const srcPath = getLinePath(shape);
+  if (!jumps) {
+    return { path: srcPath, curves: shape.curves };
+  }
+
+  const srcCurves = shape.curves ?? [];
+  const path: IVec2[] = [];
+  const curves: LineShape["curves"] = [];
+  srcPath.forEach((p, i) => {
+    if (i === 0) {
+      path.push(p);
+      return;
+    }
+
+    const curve = srcCurves[i - 1];
+    if (curve) {
+      path.push(p);
+      curves.push(curve);
+      return;
+    }
+
+    curves.push(undefined);
+
+    const jump = jumps[i - 1];
+    if (jump.length === 0) {
+      path.push(p);
+      return;
+    }
+
+    jump.forEach((seg) => {
+      path.push(seg[0]);
+      curves.push({ d: { x: 0, y: 10 } });
+      path.push(seg[1]);
+      curves.push(undefined);
+    });
+
+    path.push(p);
+  });
+
+  return { path, curves };
 }

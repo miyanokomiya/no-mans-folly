@@ -13,7 +13,7 @@ interface SegmentIntersections {
   points: IVec2[];
 }
 
-const LINE_JUMP_INTERVAL = 30;
+const LINE_JUMP_INTERVAL = 20;
 
 export function getLineJumpMap(lines: LineShape[], interval = LINE_JUMP_INTERVAL): LineJumpMap {
   const ret: LineJumpMap = new Map();

@@ -1,6 +1,7 @@
 import { expect, describe, test, vi } from "vitest";
 import {
   addNewVertex,
+  combineJumps,
   deleteVertex,
   getLinePath,
   getRadianP,
@@ -822,5 +823,38 @@ describe("getRadianQ", () => {
         5,
       ),
     ).toBeCloseTo(2.073, 3);
+  });
+});
+
+describe("combineJumps", () => {
+  test("should return the path combined with jumps", () => {
+    const shape = struct.create({
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 10, y: 0 } }],
+      q: { x: 10, y: 10 },
+      curves: [{ d: { x: 0, y: 5 } }],
+    });
+    const ret = combineJumps(shape, [
+      [
+        [
+          { x: 1, y: 0 },
+          { x: 3, y: 0 },
+        ],
+      ],
+      [
+        [
+          { x: 10, y: 1 },
+          { x: 10, y: 3 },
+        ],
+      ],
+    ]);
+    expect(ret.path).toEqualPoints([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 1 },
+      { x: 10, y: 3 },
+      { x: 10, y: 10 },
+    ]);
+    expect(ret.curves).toEqual([shape.curves?.[0], undefined, { d: { x: 0, y: 10 } }, undefined]);
   });
 });
