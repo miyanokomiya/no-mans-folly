@@ -7,6 +7,7 @@ const TERMINOLOGY_KEYS = {
   WORKSPACE: "WORKSPACE",
   FOLLY_SVG: "FOLLY_SVG",
   LOCK: "LOCK",
+  LINE_JUMP: "LINE_JUMP",
 };
 
 const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
@@ -23,6 +24,10 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
   [TERMINOLOGY_KEYS.LOCK]: {
     text: "Lock",
     description: "Prevents shapes from moving. You can still modify, resize or rotate locked shapes.",
+  },
+  [TERMINOLOGY_KEYS.LINE_JUMP]: {
+    text: "Jump",
+    description: "Jump over background lines. This works only between straight segments.",
   },
 };
 

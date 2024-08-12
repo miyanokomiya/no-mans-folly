@@ -6,6 +6,7 @@ import iconLineElbow from "../../assets/icons/shape_line_elbow.svg";
 import iconLineCurve from "../../assets/icons/shape_line_curve.svg";
 import iconLineElbowCurve from "../../assets/icons/shape_line_elbow_curve.svg";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
+import { AppText } from "../molecules/AppText";
 
 const LINE_LIST = [
   { type: "straight", icon: iconLineStraight },
@@ -118,7 +119,7 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType, onTypeClick, ju
       <div className="flex gap-1">{lines}</div>
       <div className="flex justify-end">
         <ToggleInput value={jump} onChange={onJumpChange}>
-          Jump
+          <AppText portal={true}>[[LINE_JUMP]]</AppText>
         </ToggleInput>
       </div>
     </div>
