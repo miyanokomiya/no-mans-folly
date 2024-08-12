@@ -8,7 +8,7 @@ describe("getLineIntersectionMap", () => {
     const l0 = struct.create({ id: "l0", p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 0 } }], q: { x: 10, y: 10 } });
     const l1 = struct.create({ id: "l1", p: { x: 5, y: -5 }, q: { x: 5, y: 5 }, jump: true });
     const l2 = struct.create({ id: "l2", p: { x: 5, y: 3 }, q: { x: 15, y: 3 }, jump: true });
-    const l3 = struct.create({ id: "l3", p: { x: 5, y: 3 }, q: { x: 15, y: 3 } });
+    const l3 = struct.create({ id: "l3", p: { x: 5, y: 3 }, q: { x: 15, y: 3 }, jump: false });
     expect(getLineIntersectionMap([l0, l1, l2, l3])).toEqual(
       new Map([
         [
@@ -105,6 +105,23 @@ describe("makeJumps", () => {
       [
         { x: 7, y: 0 },
         { x: 10, y: 0 },
+      ],
+    ]);
+  });
+
+  test("should align segments in order", () => {
+    const intersections = [
+      { x: 6, y: 0 },
+      { x: 2, y: 0 },
+    ];
+    expect(makeJumps(seg, intersections, 1)).toEqual([
+      [
+        { x: 1.5, y: 0 },
+        { x: 2.5, y: 0 },
+      ],
+      [
+        { x: 5.5, y: 0 },
+        { x: 6.5, y: 0 },
       ],
     ]);
   });

@@ -1,6 +1,7 @@
 import { add, getUnit, IVec2, multi, sub } from "okageo";
 import { getLinePath, LineShape } from "../shapes/line";
-import { splitPointsToCloseSections, getCrossSegAndSeg, getSegments, ISegment, getD2 } from "./geometry";
+import { splitPointsToCloseSections, getCrossSegAndSeg, getSegments, ISegment, getD2, sortPointFrom } from "./geometry";
+import { LineJumpMap } from "../shapes/core";
 
 type LineIntersectionMap = Map<string, PolylineIntersections>;
 
@@ -10,6 +11,22 @@ interface PolylineIntersections {
 
 interface SegmentIntersections {
   points: IVec2[];
+}
+
+const LINE_JUMP_INTERVAL = 30;
+
+export function getLineJumpMap(lines: LineShape[], interval = LINE_JUMP_INTERVAL): LineJumpMap {
+  const ret: LineJumpMap = new Map();
+  const lineMap = new Map(lines.map((l) => [l.id, l]));
+  const intersectionMap = getLineIntersectionMap(lines);
+  for (const [id, info] of intersectionMap) {
+    const line = lineMap.get(id)!;
+    const linePath = getSegments(getLinePath(line));
+    const jumps = getLineJumpPoints(linePath, info, interval);
+    ret.set(id, jumps);
+  }
+
+  return ret;
 }
 
 export function getLineIntersectionMap(lines: LineShape[]): LineIntersectionMap {
@@ -77,24 +94,27 @@ export function getLineJumpPoints(
 ): ISegment[][] {
   const ret: ISegment[][] = [];
   polylineIntersections.segments.forEach((si, i) => {
-    if (!si) return;
-    ret.push(makeJumps(src[i], si.points, interval));
+    if (!si) {
+      ret.push([]);
+    } else {
+      ret.push(makeJumps(src[i], si.points, interval));
+    }
   });
   return ret;
 }
 
 export function makeJumps(seg: ISegment, intersections: IVec2[], interval: number): ISegment[] {
-  const sections = splitPointsToCloseSections(intersections, interval);
+  const sections = splitPointsToCloseSections(sortPointFrom(seg[0], intersections), interval);
   const v = multi(getUnit(sub(seg[1], seg[0])), interval / 2);
-  const intervalD2 = interval * interval;
+  const intervalHalfD2 = (interval * interval) / 4;
 
   return sections.map((points, i) => {
     const p0 = points[0];
     const p1 = points.length === 1 ? points[0] : points[1];
 
     return [
-      i === 0 && getD2(sub(p0, seg[0])) <= intervalD2 ? seg[0] : sub(p0, v),
-      i === sections.length - 1 && getD2(sub(p1, seg[1])) <= intervalD2 ? seg[1] : add(p1, v),
+      i === 0 && getD2(sub(p0, seg[0])) <= intervalHalfD2 ? seg[0] : sub(p0, v),
+      i === sections.length - 1 && getD2(sub(p1, seg[1])) <= intervalHalfD2 ? seg[1] : add(p1, v),
     ];
   });
 }
