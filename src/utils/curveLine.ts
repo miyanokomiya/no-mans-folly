@@ -35,13 +35,13 @@ export function getPatchByChangingCurveType(
 ): Partial<LineShape> | undefined {
   if (!force && line.curveType === curveType) return;
 
-  if (curveType === "auto") {
+  if (curveType === "auto" && line.lineType !== "elbow") {
     return {
       curves: getAutomaticCurve(getLinePath(line)),
       curveType,
     };
   } else {
-    return { curves: undefined, curveType: undefined };
+    return { curves: undefined, curveType };
   }
 }
 
@@ -98,7 +98,7 @@ export function applyCornerRadius(line: LineShape): Partial<LineShape> {
 
 export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): LineBodyItem[] {
   const body = roundedElbow.body;
-  if (!body || body.length === 0) return [];
+  if (!body || body.length === 0 || body.length % 2 !== 0) return [];
 
   const ret: LineBodyItem[] = [];
   const srcLength = body.length / 2;

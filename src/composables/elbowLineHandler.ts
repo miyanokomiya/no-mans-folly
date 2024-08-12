@@ -20,7 +20,7 @@ export function newElbowLineHandler(option: Option) {
 export type ElbowLineHandler = ReturnType<typeof newElbowLineHandler>;
 
 /**
- * "nextBodyvertices" shouldn be the one before courner radius applied.
+ * "nextBodyvertices" should be the one before courner radius applied.
  */
 export function inheritElbowExtraDistance(lineShape: LineShape, nextBodyvertices: IVec2[]): LineBodyItem[] {
   const srcBody = lineShape.body;
@@ -28,7 +28,7 @@ export function inheritElbowExtraDistance(lineShape: LineShape, nextBodyvertices
     return nextBodyvertices.map((p) => ({ p }));
   }
 
-  // Regard curvec elbow that has extra body vertices for rounded appearance.
+  // Regard curved elbow that has extra body vertices for rounded appearance.
   const restoredSrcBody = lineShape.curveType === "auto" ? restoreBodyFromRoundedElbow(lineShape) : srcBody;
   const ret: LineBodyItem[] = [];
   let v: IVec2 | undefined;

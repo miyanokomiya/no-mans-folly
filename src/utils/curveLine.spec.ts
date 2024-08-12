@@ -47,16 +47,16 @@ describe("applyCornerRadius", () => {
 });
 
 describe("restoreBodyFromRoundedElbow", () => {
-  test("should return source body attribute list", () => {
-    const line = createShape<LineShape>(getCommonStruct, "line", {
-      p: { x: 0, y: 0 },
-      body: [
-        { p: { x: 50, y: 50 }, elbow: { d: 1, p: { x: 1, y: 2 } } },
-        { p: { x: 50, y: 100 }, elbow: { d: 2, p: { x: 2, y: 3 } } },
-      ],
-      q: { x: 100, y: 0 },
-    });
+  const line = createShape<LineShape>(getCommonStruct, "line", {
+    p: { x: 0, y: 0 },
+    body: [
+      { p: { x: 50, y: 50 }, elbow: { d: 1, p: { x: 1, y: 2 } } },
+      { p: { x: 50, y: 100 }, elbow: { d: 2, p: { x: 2, y: 3 } } },
+    ],
+    q: { x: 100, y: 0 },
+  });
 
+  test("should return source body attribute list", () => {
     const roundedElbow = { ...line, ...applyCornerRadius(line) };
     const res = restoreBodyFromRoundedElbow(roundedElbow);
     expect(res).toHaveLength(2);
@@ -64,5 +64,14 @@ describe("restoreBodyFromRoundedElbow", () => {
     expect(res[0].elbow?.d).toBe(1);
     expect(res[1].p).toEqualPoint({ x: 2, y: 3 });
     expect(res[1].elbow?.d).toBe(2);
+  });
+
+  test("should do nothing when the body has invalid items", () => {
+    const roundedElbow = { ...line, ...applyCornerRadius(line) };
+    const res = restoreBodyFromRoundedElbow({
+      ...roundedElbow,
+      body: roundedElbow.body!.slice(0, roundedElbow.body!.length - 1),
+    });
+    expect(res).toHaveLength(0);
   });
 });
