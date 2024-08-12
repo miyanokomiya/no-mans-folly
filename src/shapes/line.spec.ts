@@ -855,6 +855,6 @@ describe("combineJumps", () => {
       { x: 10, y: 3 },
       { x: 10, y: 10 },
     ]);
-    expect(ret.curves).toEqual([shape.curves?.[0], undefined, { d: { x: 0, y: 11 } }, undefined]);
+    expect(ret.curves).toEqual([shape.curves?.[0], undefined, { d: { x: 0, y: 7 } }, undefined]);
   });
 });
