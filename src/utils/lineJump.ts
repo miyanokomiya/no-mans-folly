@@ -1,8 +1,8 @@
-import { IVec2 } from "okageo";
+import { add, getUnit, IVec2, multi, sub } from "okageo";
 import { getLinePath, LineShape } from "../shapes/line";
-import { getCrossSegAndSeg, getSegments, ISegment } from "./geometry";
+import { splitPointsToCloseSections, getCrossSegAndSeg, getSegments, ISegment, getD2 } from "./geometry";
 
-type LineJumpMap = Map<string, PolylineIntersections>;
+type LineIntersectionMap = Map<string, PolylineIntersections>;
 
 interface PolylineIntersections {
   segments: (SegmentIntersections | undefined)[];
@@ -12,8 +12,8 @@ interface SegmentIntersections {
   points: IVec2[];
 }
 
-export function getLineJumpMap(lines: LineShape[]): LineJumpMap {
-  const ret: LineJumpMap = new Map();
+export function getLineIntersectionMap(lines: LineShape[]): LineIntersectionMap {
+  const ret: LineIntersectionMap = new Map();
   const behindPolylines: ISegment[][] = [];
 
   lines.forEach((line) => {
@@ -68,4 +68,33 @@ function getPolylineIntersections(
     }
   });
   return hasItem ? ret : undefined;
+}
+
+export function getLineJumpPoints(
+  src: ISegment[],
+  polylineIntersections: PolylineIntersections,
+  interval: number,
+): ISegment[][] {
+  const ret: ISegment[][] = [];
+  polylineIntersections.segments.forEach((si, i) => {
+    if (!si) return;
+    ret.push(makeJumps(src[i], si.points, interval));
+  });
+  return ret;
+}
+
+export function makeJumps(seg: ISegment, intersections: IVec2[], interval: number): ISegment[] {
+  const sections = splitPointsToCloseSections(intersections, interval);
+  const v = multi(getUnit(sub(seg[1], seg[0])), interval / 2);
+  const intervalD2 = interval * interval;
+
+  return sections.map((points, i) => {
+    const p0 = points[0];
+    const p1 = points.length === 1 ? points[0] : points[1];
+
+    return [
+      i === 0 && getD2(sub(p0, seg[0])) <= intervalD2 ? seg[0] : sub(p0, v),
+      i === sections.length - 1 && getD2(sub(p1, seg[1])) <= intervalD2 ? seg[1] : add(p1, v),
+    ];
+  });
 }
