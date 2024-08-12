@@ -277,11 +277,11 @@ export function newLineBounding(option: Option) {
 
     const moveAnchor = getMoveAnchor(scale);
     {
-      ctx.fillStyle = "#fff";
+      applyFillStyle(ctx, { color: style.selectionPrimary });
       ctx.beginPath();
       ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
       ctx.fill();
-      applyFillStyle(ctx, { color: style.selectionPrimary });
+      ctx.fillStyle = "#fff";
       renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
     }
 
@@ -296,7 +296,6 @@ export function newLineBounding(option: Option) {
     }
 
     if (hitResult) {
-      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
       switch (hitResult.type) {
         case "optimize": {
           const p = hitResult.index === 0 ? optimizeAnchorP : optimizeAnchorQ;
@@ -309,21 +308,16 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "move-anchor": {
-          applyFillStyle(ctx, { color: style.selectionPrimary });
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+          applyFillStyle(ctx, { color: style.selectionSecondaly });
           ctx.beginPath();
-          ctx.ellipse(
-            moveAnchor.x,
-            moveAnchor.y,
-            vertexSize * MOVE_ANCHOR_RATE,
-            vertexSize * MOVE_ANCHOR_RATE,
-            0,
-            0,
-            TAU,
-          );
+          ctx.arc(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, 0, TAU);
           ctx.fill();
+          ctx.stroke();
           ctx.fillStyle = "#fff";
           renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
 
+          applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
           edges.forEach((edge, i) => {
             ctx.beginPath();
             if (curves) {
@@ -354,6 +348,7 @@ export function newLineBounding(option: Option) {
         }
         case "edge":
         case "elbow-edge": {
+          applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
           ctx.beginPath();
           if (curves) {
             applyCurvePath(ctx, edges[hitResult.index], [curves[hitResult.index]]);
