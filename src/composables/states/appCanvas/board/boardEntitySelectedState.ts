@@ -22,6 +22,7 @@ import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { newRotatingState } from "../rotatingState";
+import { newMovingHubState } from "../movingHubState";
 
 /**
  * General selected state for any board entity
@@ -152,6 +153,8 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
                     return () => newResizingState({ boundingBox, hitResult });
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
+                  case "move":
+                    return () => newMovingHubState({ boundingBox });
                 }
               }
 
