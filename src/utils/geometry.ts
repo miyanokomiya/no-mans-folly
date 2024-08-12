@@ -1237,3 +1237,37 @@ export function getRectRotateFn(radian: number, origin?: IVec2): (rect: IRectang
     return { x: rotatedC.x - rect.width / 2, y: rotatedC.y - rect.height / 2, width: rect.width, height: rect.height };
   };
 }
+
+/**
+ * Suppose points in "src" are aligned in order on a line.
+ */
+export function mergeClosePoints(src: IVec2[], threshold: number): IVec2[] {
+  const sections = splitPointsToCloseSections(src, threshold);
+  const ret: IVec2[] = [];
+  sections.forEach((sec) => {
+    ret.push(sec[0]);
+    if (sec.length > 1) {
+      ret.push(sec[sec.length - 1]);
+    }
+  });
+  return ret;
+}
+
+/**
+ * Suppose points in "src" are aligned in order on a line.
+ */
+export function splitPointsToCloseSections(src: IVec2[], threshold: number): IVec2[][] {
+  const thresholdD2 = threshold * threshold;
+  const ret: IVec2[][] = [[src[0]]];
+
+  for (let i = 1; i < src.length; i++) {
+    const p = src[i];
+    if (getD2(sub(src[i - 1], p)) > thresholdD2) {
+      ret.push([p]);
+    } else {
+      ret[ret.length - 1].push(p);
+    }
+  }
+
+  return ret;
+}

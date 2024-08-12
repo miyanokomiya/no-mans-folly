@@ -69,6 +69,8 @@ import {
   getWrapperRectWithRotationFromPoints,
   getRotatedRectAffineInverse,
   translateRect,
+  mergeClosePoints,
+  splitPointsToCloseSections,
 } from "./geometry";
 import { IRectangle, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1682,5 +1684,47 @@ describe("getRectRotateFn", () => {
 
     const fn1 = getRectRotateFn(Math.PI / 2, { x: 10, y: 0 });
     expect(fn1({ x: 0, y: 0, width: 10, height: 20 })).toEqualRect({ x: -5, y: -15, width: 10, height: 20 });
+  });
+});
+
+describe("mergeClosePoints", () => {
+  test("should mrege close points but keep edges", () => {
+    const src = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 2, y: 0 },
+      { x: 10, y: 0 },
+      { x: 15, y: 0 },
+    ];
+    expect(mergeClosePoints(src, 1)).toEqualPoints([src[0], src[2], src[3], src[4]]);
+    expect(mergeClosePoints(src, 2)).toEqualPoints([src[0], src[2], src[3], src[4]]);
+    expect(mergeClosePoints(src, 7)).toEqualPoints([src[0], src[2], src[3], src[4]]);
+    expect(mergeClosePoints(src, 8)).toEqualPoints([src[0], src[4]]);
+    expect(mergeClosePoints(src, 20)).toEqualPoints([src[0], src[4]]);
+  });
+});
+
+describe("splitPointsToCloseSections", () => {
+  test("should mrege close points but keep edges", () => {
+    const src = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 2, y: 0 },
+      { x: 10, y: 0 },
+      { x: 15, y: 0 },
+      { x: 16, y: 0 },
+    ];
+    expect(splitPointsToCloseSections(src, 1)).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: 2, y: 0 },
+      ],
+      [{ x: 10, y: 0 }],
+      [
+        { x: 15, y: 0 },
+        { x: 16, y: 0 },
+      ],
+    ]);
   });
 });
