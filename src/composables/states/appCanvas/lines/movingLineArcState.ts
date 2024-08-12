@@ -69,7 +69,7 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           }
 
           const curves = option.lineShape.curves?.concat() ?? [];
-          curves[option.index] = { d };
+          curves[option.index] = d.y !== 0 ? { d } : undefined;
           ctx.setTmpShapeMap(
             getPatchAfterLayouts(ctx.getShapeComposite(), {
               update: { [option.lineShape.id]: { curves } as Partial<LineShape> },
