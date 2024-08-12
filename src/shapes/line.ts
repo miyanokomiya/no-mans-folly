@@ -71,6 +71,10 @@ export interface LineShape extends Shape {
    */
   curves?: (CurveControl | undefined)[];
   curveType?: CurveType;
+  /**
+   * When true, this line jumps over former lines.
+   */
+  jump?: boolean;
 }
 
 export const struct: ShapeStruct<LineShape> = {
@@ -89,6 +93,7 @@ export const struct: ShapeStruct<LineShape> = {
       lineType: arg.lineType,
       curves: arg.curves,
       curveType: arg.curveType,
+      jump: arg.jump,
     };
     if (arg.pConnection) obj.pConnection = arg.pConnection;
     if (arg.qConnection) obj.qConnection = arg.qConnection;
