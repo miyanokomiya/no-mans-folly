@@ -1,6 +1,13 @@
-import { add, getUnit, IVec2, multi, sub } from "okageo";
+import { add, getUnit, IVec2, MINVALUE, multi, sub } from "okageo";
 import { getLinePath, getLineWidth, LINE_JUMP_BASE_INTERVAL, LineShape } from "../shapes/line";
-import { splitPointsToCloseSections, getCrossSegAndSeg, getSegments, ISegment, getD2, sortPointFrom } from "./geometry";
+import {
+  splitPointsToCloseSections,
+  getSegments,
+  ISegment,
+  getD2,
+  sortPointFrom,
+  getCrossSegAndSegWithT,
+} from "./geometry";
 import { LineJumpMap } from "../shapes/core";
 
 type LineIntersectionMap = Map<string, PolylineIntersections>;
@@ -69,9 +76,12 @@ function getPolylineIntersections(
     const intersections: [IVec2, number][] = [];
     others.forEach(([otherSegs, size]) => {
       otherSegs.forEach((otherSeg) => {
-        const intersection = getCrossSegAndSeg(targetSeg, otherSeg);
+        const intersection = getCrossSegAndSegWithT(targetSeg, otherSeg);
         if (intersection) {
-          intersections.push([intersection, size]);
+          const [p, t0, t1] = intersection;
+          if (!isIntersectionOnVertex(t0) && !isIntersectionOnVertex(t1)) {
+            intersections.push([p, size]);
+          }
         }
       });
     });
@@ -84,6 +94,10 @@ function getPolylineIntersections(
     }
   });
   return hasItem ? ret : undefined;
+}
+
+function isIntersectionOnVertex(t: number): boolean {
+  return Math.abs(t) < MINVALUE || Math.abs(t - 1) < MINVALUE;
 }
 
 function getLineJumpPoints(

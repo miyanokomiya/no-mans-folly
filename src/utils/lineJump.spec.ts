@@ -7,7 +7,7 @@ describe("getLineIntersectionMap", () => {
   test("should return line jump map", () => {
     const l0 = struct.create({ id: "l0", p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 0 } }], q: { x: 10, y: 10 } });
     const l1 = struct.create({ id: "l1", p: { x: 5, y: -5 }, q: { x: 5, y: 5 }, jump: true });
-    const l2 = struct.create({ id: "l2", p: { x: 5, y: 3 }, q: { x: 15, y: 3 }, jump: true });
+    const l2 = struct.create({ id: "l2", p: { x: 4, y: 3 }, q: { x: 14, y: 3 }, jump: true });
     const l3 = struct.create({ id: "l3", p: { x: 5, y: 3 }, q: { x: 15, y: 3 }, jump: false });
     expect(getLineIntersectionMap([l0, l1, l2, l3])).toEqual(
       new Map([
@@ -69,6 +69,13 @@ describe("getLineIntersectionMap", () => {
       jump: true,
     });
     expect(getLineIntersectionMap([l2, l3])).toEqual(new Map([]));
+  });
+
+  test("should exclude intersections on the vertices", () => {
+    const l0 = struct.create({ id: "l0", p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
+    const l1 = struct.create({ id: "l1", p: { x: 5, y: 5 }, q: { x: 15, y: 5 } });
+    const l2 = struct.create({ id: "l2", p: { x: 5, y: 0 }, q: { x: 5, y: 10 }, jump: true });
+    expect(getLineIntersectionMap([l0, l1, l2])).toEqual(new Map([]));
   });
 });
 
