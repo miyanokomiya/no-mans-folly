@@ -400,3 +400,23 @@ function shiftShapesAtTopLeft(getStruct: GetShapeStruct, shapeInfos: [Shape, IRe
 
   return moved;
 }
+
+/**
+ * Make sure both src and dist shapes have compatibility before calling this function.
+ */
+export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: string): Shape {
+  const dist = createShape(getStruct, type, { id: src.id, findex: src.findex, parentId: src.parentId });
+  const distRect = getWrapperRect(getStruct, dist);
+  const srcRect = getWrapperRect(getStruct, { ...src, rotation: 0 });
+
+  const resizePatch = resizeShape(getStruct, dist, [
+    srcRect.width / distRect.width,
+    0,
+    0,
+    srcRect.height / distRect.height,
+    srcRect.x,
+    srcRect.y,
+  ]);
+
+  return { ...dist, ...resizePatch, rotation: src.rotation };
+}

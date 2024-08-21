@@ -12,6 +12,7 @@ import {
   remapShapeIds,
   renderShape,
   shouldResizeOnTextEdit,
+  switchShapeType,
 } from ".";
 import { RectangleShape, struct as rectangleStruct } from "./rectangle";
 import { LineShape } from "./line";
@@ -357,5 +358,40 @@ describe("refreshShapeRelations", () => {
 
     const result1 = refreshShapeRelations(getCommonStruct, [text], new Set(["line"]));
     expect(result1).toEqual({});
+  });
+});
+
+describe("switchShapeType", () => {
+  test("should return switched shape: keep size", () => {
+    const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "a",
+      p: { x: 100, y: 200 },
+      width: 100,
+      height: 200,
+    });
+    const result0 = switchShapeType(getCommonStruct, rect, "rectangle") as RectangleShape;
+    expect(result0.p).toEqual({ x: 100, y: 200 });
+    expect(result0.width).toBeCloseTo(100);
+    expect(result0.height).toBeCloseTo(200);
+
+    const result1 = switchShapeType(getCommonStruct, rect, "ellipse") as EllipseShape;
+    expect(result1.p).toEqual({ x: 100, y: 200 });
+    expect(result1.rx).toBeCloseTo(50);
+    expect(result1.ry).toBeCloseTo(100);
+  });
+
+  test("should return switched shape: keep rotation", () => {
+    const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "a",
+      p: { x: 100, y: 200 },
+      width: 100,
+      height: 200,
+      rotation: Math.PI / 2,
+    });
+    const result0 = switchShapeType(getCommonStruct, rect, "ellipse") as EllipseShape;
+    expect(result0.p).toEqual({ x: 100, y: 200 });
+    expect(result0.rotation).toBeCloseTo(Math.PI / 2);
+    expect(result0.rx).toBeCloseTo(50);
+    expect(result0.ry).toBeCloseTo(100);
   });
 });
