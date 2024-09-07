@@ -9,8 +9,7 @@ import {
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
-import { SmartBranchHandler, SmartBranchHitResult, newSmartBranchHandler } from "../../smartBranchHandler";
-import { getOuterRectangle } from "okageo";
+import { SmartBranchHandler, newSmartBranchHandler } from "../../smartBranchHandler";
 import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { isGroupShape } from "../../../shapes/group";
@@ -23,7 +22,6 @@ export const newSingleSelectedState = defineIntransientState(() => {
   let selectedId: string | undefined;
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
-  let smartBranchHitResult: SmartBranchHitResult | undefined;
   let selectionScope: ShapeSelectionScope | undefined;
   let isGroupShapeSelected: boolean;
 
@@ -49,7 +47,7 @@ export const newSingleSelectedState = defineIntransientState(() => {
       if (!shapeComposite.hasParent(shape) && canAttachSmartBranch(ctx.getShapeStruct, shape)) {
         smartBranchHandler = newSmartBranchHandler({
           ...ctx,
-          bounds: getOuterRectangle([boundingBox.path]),
+          targetId: shape.id,
         });
       }
     },
@@ -81,13 +79,11 @@ export const newSingleSelectedState = defineIntransientState(() => {
                 }
               }
 
-              const shapeComposite = ctx.getShapeComposite();
-              const shape = shapeComposite.shapeMap[selectedId];
-
               if (smartBranchHandler) {
-                smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, shape, ctx.getScale());
+                const smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, ctx.getScale());
+                smartBranchHandler.saveHitResult(smartBranchHitResult);
                 if (smartBranchHitResult) {
-                  const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, shape, ctx.generateUuid);
+                  const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, ctx.generateUuid);
                   ctx.addShapes(branchShapes);
                   ctx.selectShape(branchShapes[0].id);
                   return;
@@ -133,16 +129,11 @@ export const newSingleSelectedState = defineIntransientState(() => {
             ctx.redraw();
           }
 
-          if (!_hitResult) {
-            const shape = ctx.getShapeComposite().shapeMap[selectedId];
-            const current = smartBranchHitResult?.index;
-
-            if (smartBranchHandler) {
-              smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, shape, ctx.getScale());
-              if (current !== smartBranchHitResult?.index) {
-                ctx.redraw();
-                return;
-              }
+          if (!_hitResult && smartBranchHandler) {
+            const smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, ctx.getScale());
+            if (smartBranchHandler.saveHitResult(smartBranchHitResult)) {
+              ctx.redraw();
+              return;
             }
           }
           break;
@@ -184,7 +175,7 @@ export const newSingleSelectedState = defineIntransientState(() => {
       if (!shape) return;
 
       boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale(), smartBranchHitResult);
+      smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
     },
   };
 });

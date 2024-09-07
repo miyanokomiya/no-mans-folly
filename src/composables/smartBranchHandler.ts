@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2, getDistance, getRectCenter, moveRect } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getDistance, getOuterRectangle, getRectCenter, moveRect } from "okageo";
 import { Shape, StyleScheme } from "../models";
 import { cloneShapes, createShape, getIntersectedOutlines } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -7,86 +7,53 @@ import { getOptimalElbowBody } from "../utils/elbowLine";
 import { newRectHitRectHitTest } from "./shapeHitTest";
 import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
+import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
 const ANCHOR_SIZE = 7;
 const ANCHOR_MARGIN = 24;
 
-export interface SmartBranchHitResult {
+interface HitResult {
   index: number; // index of anchor array: [top, right, bottom, left]
   previewShapes: [Shape, LineShape];
 }
 
+export type SmartBranchHandler = ShapeHandler<HitResult> & {
+  createBranch(hitResult: Pick<HitResult, "index">, generateId: () => string): [Shape, LineShape];
+};
+
 interface Option {
   getShapeComposite: () => ShapeComposite;
-  bounds: IRectangle;
+  targetId: string;
 }
 
-export function newSmartBranchHandler(option: Option) {
+const getBaseHandler = defineShapeHandler<HitResult, Option>((option) => {
+  const shapeComposite = option.getShapeComposite();
+  const shape = shapeComposite.shapeMap[option.targetId];
+  const bounds = getOuterRectangle([shapeComposite.getLocalRectPolygon(shape)]);
+
   function getAnchors(scale: number) {
     const margin = ANCHOR_MARGIN * scale;
     return [
-      { x: option.bounds.x + option.bounds.width / 2, y: option.bounds.y - margin },
-      { x: option.bounds.x + option.bounds.width + margin, y: option.bounds.y + option.bounds.height / 2 },
-      { x: option.bounds.x + option.bounds.width / 2, y: option.bounds.y + option.bounds.height + margin },
-      { x: option.bounds.x - margin, y: option.bounds.y + option.bounds.height / 2 },
+      { x: bounds.x + bounds.width / 2, y: bounds.y - margin },
+      { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height / 2 },
+      { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height + margin },
+      { x: bounds.x - margin, y: bounds.y + bounds.height / 2 },
     ];
   }
 
-  function hitTest(p: IVec2, src: Shape, scale = 1): SmartBranchHitResult | undefined {
+  function hitTest(p: IVec2, scale = 1): HitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
 
     const index = getAnchors(scale).findIndex((a) => getDistance(a, p) <= threshold);
     if (index === -1) return;
 
-    const previewShapes = createBranch({ index }, src, () => "mock");
+    const previewShapes = createBranch(shapeComposite, shape, bounds, { index }, () => "mock");
     return { index, previewShapes };
   }
 
-  function createBranch(
-    hitResult: Pick<SmartBranchHitResult, "index">,
-    src: Shape,
-    generateId: () => string,
-  ): [Shape, LineShape] {
-    const shapeComposite = option.getShapeComposite();
-    const getShapeStruct = shapeComposite.getShapeStruct;
-    const shape = cloneShapes(getShapeStruct, [src], generateId)[0];
-
-    const obstacles = Object.values(shapeComposite.shapeMap)
-      .filter((s) => !isLineShape(s))
-      .map((s) => {
-        return shapeComposite.getWrapperRect(s);
-      });
-    const baseQ = getTargetPosition(hitResult.index, option.bounds, obstacles);
-    const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - option.bounds.x, baseQ.y - option.bounds.y];
-    const moved = { ...shape, ...shapeComposite.transformShape(shape, affine) };
-
-    const pRect = shapeComposite.getWrapperRect(src);
-    const qRect = moveRect(pRect, { x: baseQ.x - option.bounds.x, y: baseQ.y - option.bounds.y });
-    const pCenter = getRectCenter(pRect);
-    const qCenter = getRectCenter(qRect);
-    const p =
-      getIntersectedOutlines(getShapeStruct, src, getPBasePoint(hitResult.index, pCenter, qCenter), pCenter)?.[0] ??
-      pCenter;
-    const q =
-      getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter)?.[0] ??
-      qCenter;
-
-    const elbow = createShape<LineShape>(getShapeStruct, "line", {
-      id: generateId(),
-      lineType: "elbow",
-      p,
-      q,
-      pConnection: { id: src.id, rate: shapeComposite.getLocationRateOnShape(src, p) },
-      qConnection: { id: moved.id, rate: shapeComposite.getLocationRateOnShape(moved, q) },
-      body: getOptimalElbowBody(p, q, pRect, qRect, 30).map((a) => ({ p: a })),
-    });
-
-    return [moved, elbow];
-  }
-
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: SmartBranchHitResult) {
+  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
     const threshold = ANCHOR_SIZE * scale;
     applyFillStyle(ctx, { color: style.selectionPrimary });
 
@@ -119,10 +86,72 @@ export function newSmartBranchHandler(option: Option) {
   return {
     render,
     hitTest,
-    createBranch,
+    isSameHitResult,
+  };
+});
+
+export function newSmartBranchHandler(option: Option): SmartBranchHandler {
+  const shapeComposite = option.getShapeComposite();
+  const shape = shapeComposite.shapeMap[option.targetId];
+  const bounds = getOuterRectangle([shapeComposite.getLocalRectPolygon(shape)]);
+
+  return {
+    ...getBaseHandler(option),
+    createBranch: (hitResult: Pick<HitResult, "index">, generateId: () => string) =>
+      createBranch(shapeComposite, shape, bounds, hitResult, generateId),
   };
 }
-export type SmartBranchHandler = ReturnType<typeof newSmartBranchHandler>;
+
+function isSameHitResult(a?: HitResult, b?: HitResult): boolean {
+  if (a && b) {
+    return a.index === b.index;
+  } else {
+    return a === b;
+  }
+}
+
+function createBranch(
+  shapeComposite: ShapeComposite,
+  src: Shape,
+  bounds: IRectangle,
+  hitResult: Pick<HitResult, "index">,
+  generateId: () => string,
+): [Shape, LineShape] {
+  const getShapeStruct = shapeComposite.getShapeStruct;
+  const shape = cloneShapes(getShapeStruct, [src], generateId)[0];
+
+  const obstacles = Object.values(shapeComposite.shapeMap)
+    .filter((s) => !isLineShape(s))
+    .map((s) => {
+      return shapeComposite.getWrapperRect(s);
+    });
+  const baseQ = getTargetPosition(hitResult.index, bounds, obstacles);
+  const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - bounds.x, baseQ.y - bounds.y];
+  const moved = { ...shape, ...shapeComposite.transformShape(shape, affine) };
+
+  const pRect = shapeComposite.getWrapperRect(src);
+  const qRect = moveRect(pRect, { x: baseQ.x - bounds.x, y: baseQ.y - bounds.y });
+  const pCenter = getRectCenter(pRect);
+  const qCenter = getRectCenter(qRect);
+  const p =
+    getIntersectedOutlines(getShapeStruct, src, getPBasePoint(hitResult.index, pCenter, qCenter), pCenter)?.[0] ??
+    pCenter;
+  const q =
+    getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter)?.[0] ??
+    qCenter;
+
+  const elbow = createShape<LineShape>(getShapeStruct, "line", {
+    id: generateId(),
+    lineType: "elbow",
+    p,
+    q,
+    pConnection: { id: src.id, rate: shapeComposite.getLocationRateOnShape(src, p) },
+    qConnection: { id: moved.id, rate: shapeComposite.getLocationRateOnShape(moved, q) },
+    body: getOptimalElbowBody(p, q, pRect, qRect, 30).map((a) => ({ p: a })),
+  });
+
+  return [moved, elbow];
+}
 
 function getTargetPosition(index: number, src: IRectangle, obstacles: IRectangle[]): IVec2 {
   switch (index) {
