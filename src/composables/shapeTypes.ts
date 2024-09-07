@@ -149,3 +149,7 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newSingleSelectedState;
   }
 }
+
+export function isInShapeTypeList(type: string): boolean {
+  return shapeTypeList.some((s) => s.type === type);
+}

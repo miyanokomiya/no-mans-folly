@@ -10,6 +10,7 @@ import {
   patchShapesOrderToLast,
   patchTextPadding,
   stackOrderDisabled,
+  switchShapeType,
   updateCommonStyle,
 } from "../../shapes";
 import { BoxAlign, BoxPadding, CommonStyle, FillStyle, LineHead, Shape, Size, StrokeStyle } from "../../models";
@@ -36,6 +37,8 @@ import { getPatchByChangingCurveType } from "../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
+import { isInShapeTypeList } from "../../composables/shapeTypes";
+import { ShapeTypeButton } from "./ShapeTypeButton";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -245,6 +248,31 @@ export const FloatMenu: React.FC<Option> = ({
       focusBack?.();
     },
     [handleEvent, focusBack],
+  );
+
+  const indexTextContainerShape = useMemo(() => {
+    return indexShape && isInShapeTypeList(indexShape.type) ? indexShape : undefined;
+  }, [indexShape]);
+
+  const onShapeTypeChanged = useCallback(
+    (val: string) => {
+      const shapeComposite = shapeStore.shapeComposite;
+      const shapeMap = shapeComposite.shapeMap;
+      const targets = Object.keys(shapeStore.getSelected())
+        .map((id) => shapeMap[id])
+        .filter((s) => isInShapeTypeList(s.type));
+      patchShapes(
+        patchPipe(
+          [
+            (src) => mapReduce(src, (s) => switchShapeType(shapeComposite.getShapeStruct, s, val)),
+            (_, patch) => getPatchAfterLayouts(shapeComposite, { update: patch }),
+          ],
+          toMap(targets),
+        ).patch,
+      );
+      focusBack?.();
+    },
+    [focusBack, shapeStore, patchShapes],
   );
 
   const indexLineShape = useMemo(() => {
@@ -459,6 +487,13 @@ export const FloatMenu: React.FC<Option> = ({
         ) : undefined}
         {canIndexShapeHaveTextPadding ? (
           <BoxPaddingButton {...popupButtonCommonProps} value={indexTextPadding} onChange={onChangeTextPadding} />
+        ) : undefined}
+        {indexTextContainerShape ? (
+          <ShapeTypeButton
+            {...popupButtonCommonProps}
+            selectedType={indexTextContainerShape.type}
+            onChange={onShapeTypeChanged}
+          />
         ) : undefined}
         {indexLineShape ? (
           <>
