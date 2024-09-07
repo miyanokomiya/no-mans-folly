@@ -100,6 +100,7 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType, onTypeClick, ju
       key={item.type}
       value={item.type}
       icon={item.icon}
+      size={10}
       highlight={itemType === item.type}
       onClick={handleTypeClick}
     />

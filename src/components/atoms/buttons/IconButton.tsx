@@ -3,11 +3,14 @@ import { useCallback } from "react";
 interface Props {
   value: string;
   icon: string;
+  size: 10;
   highlight?: boolean;
   onClick?: (value: string) => void;
 }
 
-export const IconButton: React.FC<Props> = ({ value, icon, highlight, onClick }) => {
+export const IconButton: React.FC<Props> = ({ value, icon, size, highlight, onClick }) => {
+  const sizeClass = { 10: "w-10 h-10" }[size];
+
   const handleClick = useCallback(() => {
     onClick?.(value);
   }, [value, onClick]);
@@ -16,7 +19,7 @@ export const IconButton: React.FC<Props> = ({ value, icon, highlight, onClick })
     <button
       type="button"
       className={
-        "w-10 h-10 border p-1 rounded touch-none hover:bg-gray-200" + (highlight ? " border-2 border-cyan-400" : "")
+        sizeClass + " border p-1 rounded touch-none hover:bg-gray-200" + (highlight ? " border-2 border-cyan-400" : "")
       }
       onClick={handleClick}
     >
