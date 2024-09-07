@@ -7,6 +7,7 @@ import iconLineCurve from "../../assets/icons/shape_line_curve.svg";
 import iconLineElbowCurve from "../../assets/icons/shape_line_elbow_curve.svg";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { AppText } from "../molecules/AppText";
+import { IconButton } from "../atoms/buttons/IconButton";
 
 const LINE_LIST = [
   { type: "straight", icon: iconLineStraight },
@@ -19,7 +20,7 @@ type LineItemType = (typeof LINE_LIST)[number]["type"];
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
-  defaultDirection?: PopupDirection; // bottom by default
+  defaultDirection?: PopupDirection;
   currentType: LineType;
   currentCurve?: CurveType;
   onChange?: (lineType: LineType, curveType?: CurveType) => void;
@@ -37,10 +38,6 @@ export const LineTypeButton: React.FC<Props> = ({
   jump,
   onJumpChange,
 }) => {
-  const onLineTypeClick = useCallback(() => {
-    setPopupedKey("line-type");
-  }, [setPopupedKey]);
-
   const selected = useMemo(() => {
     let type: LineItemType;
     if (currentType === "elbow") {
@@ -59,7 +56,7 @@ export const LineTypeButton: React.FC<Props> = ({
         popup={
           <LineTypePanel itemType={selected.type} onTypeClick={onChange} jump={jump} onJumpChange={onJumpChange} />
         }
-        onClick={onLineTypeClick}
+        onClick={setPopupedKey}
         defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 p-1">
@@ -78,10 +75,8 @@ interface LineTypePanelProps {
 }
 
 const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType, onTypeClick, jump, onJumpChange }) => {
-  const onDownLineElm = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      const value = e.currentTarget.getAttribute("data-type")! as LineItemType;
+  const handleTypeClick = useCallback(
+    (value: string) => {
       switch (value) {
         case "straight":
           onTypeClick?.(undefined);
@@ -101,17 +96,13 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType, onTypeClick, ju
   );
 
   const lines = LINE_LIST.map((item) => (
-    <button
+    <IconButton
       key={item.type}
-      type="button"
-      className={
-        "w-10 h-10 border p-1 rounded touch-none" + (itemType === item.type ? " border-2 border-cyan-400" : "")
-      }
-      data-type={item.type}
-      onPointerDown={onDownLineElm}
-    >
-      <img src={item.icon} alt={item.type} />
-    </button>
+      value={item.type}
+      icon={item.icon}
+      highlight={itemType === item.type}
+      onClick={handleTypeClick}
+    />
   ));
 
   return (
