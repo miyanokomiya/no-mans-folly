@@ -434,36 +434,32 @@ function patchLineConnectedToShapeOutline(
   shape: Shape,
   line: LineShape,
 ): Partial<LineShape> {
+  const pConnection = line.pConnection;
+  const qConnection = line.qConnection;
+  const shouldCheckP = pConnection && pConnection.id === shape.id && !pConnection.optimized;
+  const shouldCheckQ = qConnection && qConnection.id === shape.id && !qConnection.optimized;
+  if (!shouldCheckP && !shouldCheckQ) return {};
+
+  const points = getLinePath(line);
   const ret: Partial<LineShape> = {};
 
-  if (line.pConnection && line.pConnection.id === shape.id && !line.pConnection.optimized) {
-    const points = getLinePath(line);
-    const endP = points[0];
-    const intersection = getClosestEndPoint(
-      shapeComposite.getShapeStruct,
-      shape,
-      endP,
-      extendSegment([points[1], endP], 10),
-    );
+  if (shouldCheckP) {
+    const intersection = getClosestEndPoint(shapeComposite.getShapeStruct, shape, [points[1], points[0]]);
     if (intersection) {
       const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
-      ret.pConnection = { ...line.pConnection, rate };
+      ret.pConnection = { ...pConnection, rate };
       ret.p = intersection;
     }
   }
 
-  if (line.qConnection && line.qConnection.id === shape.id && !line.qConnection.optimized) {
-    const points = getLinePath(line);
-    const endP = points[points.length - 1];
-    const intersection = getClosestEndPoint(
-      shapeComposite.getShapeStruct,
-      shape,
-      endP,
-      extendSegment([points[points.length - 2], endP], 10),
-    );
+  if (shouldCheckQ) {
+    const intersection = getClosestEndPoint(shapeComposite.getShapeStruct, shape, [
+      points[points.length - 2],
+      points[points.length - 1],
+    ]);
     if (intersection) {
       const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
-      ret.qConnection = { ...line.qConnection, rate };
+      ret.qConnection = { ...qConnection, rate };
       ret.q = intersection;
     }
   }
@@ -477,11 +473,11 @@ function patchLineConnectedToShapeOutline(
  * - It might be well to ignore the segment and return the closest point to the outline,
  *   but it would greatly ruin reversability of this operation.
  */
-function getClosestEndPoint(
-  getShapeStruct: GetShapeStruct,
-  shape: Shape,
-  originalEndPoint: IVec2,
-  seg: ISegment,
-): IVec2 | undefined {
-  return getClosestPointTo(originalEndPoint, getIntersectedOutlines(getShapeStruct, shape, seg[0], seg[1]) ?? []);
+function getClosestEndPoint(getShapeStruct: GetShapeStruct, shape: Shape, seg: ISegment): IVec2 | undefined {
+  const originalEndPoint = seg[1];
+  const extendedSeg = extendSegment(seg, 10);
+  return getClosestPointTo(
+    originalEndPoint,
+    getIntersectedOutlines(getShapeStruct, shape, extendedSeg[0], extendedSeg[1]) ?? [],
+  );
 }
