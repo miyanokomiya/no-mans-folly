@@ -16,7 +16,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
-import { pickMinItem } from "../utils/commons";
+import { isObjectEmpty, pickMinItem } from "../utils/commons";
 import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../utils/lineLabel";
@@ -410,4 +410,52 @@ export function optimizeLinePath(
 
 export function isLineSnappableShape(shapeComposite: ShapeComposite, shape: Shape): boolean {
   return !isLineShape(shape) && !isLineLabelShape(shapeComposite, shape) && !isGroupShape(shape);
+}
+
+export function patchLinesConnectedToShapeOutline(
+  shapeComposite: ShapeComposite,
+  shape: Shape,
+): { [id: string]: Partial<LineShape> } {
+  const shapeMap = shapeComposite.shapeMap;
+  const lines = Object.values(shapeMap).filter(isLineShape);
+
+  const ret: { [id: string]: Partial<LineShape> } = {};
+  lines.forEach((line) => {
+    const patch = patchLineConnectedToShapeOutline(shapeComposite, shape, line);
+    if (isObjectEmpty(patch)) return;
+    ret[line.id] = patch;
+  });
+  return ret;
+}
+
+function patchLineConnectedToShapeOutline(
+  shapeComposite: ShapeComposite,
+  shape: Shape,
+  line: LineShape,
+): Partial<LineShape> {
+  const ret: Partial<LineShape> = {};
+
+  if (line.pConnection && line.pConnection.id === shape.id && !line.pConnection.optimized) {
+    const points = getLinePath(line);
+    const [from, to] = extendSegment([points[1], points[0]], 10);
+    const intersection = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to)?.[0];
+    if (intersection) {
+      const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
+      ret.pConnection = { ...line.pConnection, rate };
+      ret.p = intersection;
+    }
+  }
+
+  if (line.qConnection && line.qConnection.id === shape.id && !line.qConnection.optimized) {
+    const points = getLinePath(line);
+    const [from, to] = extendSegment([points[points.length - 2], points[points.length - 1]], 10);
+    const intersection = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to)?.[0];
+    if (intersection) {
+      const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
+      ret.qConnection = { ...line.qConnection, rate };
+      ret.q = intersection;
+    }
+  }
+
+  return ret;
 }

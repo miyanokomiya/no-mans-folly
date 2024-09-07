@@ -39,6 +39,7 @@ import menuIcon from "../../assets/icons/three_dots_v.svg";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { isInShapeTypeList } from "../../composables/shapeTypes";
 import { ShapeTypeButton } from "./ShapeTypeButton";
+import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -265,6 +266,9 @@ export const FloatMenu: React.FC<Option> = ({
         patchPipe(
           [
             (src) => mapReduce(src, (s) => switchShapeType(shapeComposite.getShapeStruct, s, val)),
+            ...targets.map(
+              (s) => (src: { [id: string]: Shape }) => patchLinesConnectedToShapeOutline(shapeComposite, src[s.id]),
+            ),
             (_, patch) => getPatchAfterLayouts(shapeComposite, { update: patch }),
           ],
           toMap(targets),

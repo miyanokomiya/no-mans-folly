@@ -1,11 +1,18 @@
 import { expect, describe, test } from "vitest";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
-import { getOptimizedSegment, isLineSnappableShape, newLineSnapping, optimizeLinePath } from "./lineSnapping";
+import {
+  getOptimizedSegment,
+  isLineSnappableShape,
+  newLineSnapping,
+  optimizeLinePath,
+  patchLinesConnectedToShapeOutline,
+} from "./lineSnapping";
 import { LineShape } from "../shapes/line";
 import { EllipseShape } from "../shapes/ellipse";
 import { newShapeComposite } from "./shapeComposite";
 import { TextShape } from "../shapes/text";
+import { TwoSidedArrowShape } from "../shapes/twoSidedArrow";
 
 describe("newLineSnapping", () => {
   describe("testConnection", () => {
@@ -637,5 +644,70 @@ describe("isLineSnappableShape", () => {
     expect(isLineSnappableShape(shapeComposite, line)).toBe(false);
     expect(isLineSnappableShape(shapeComposite, label)).toBe(false);
     expect(isLineSnappableShape(shapeComposite, group)).toBe(false);
+  });
+});
+
+describe("patchLinesConnectedToShapeOutline", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", {
+    id: "line",
+    p: { x: 0, y: 50 },
+    body: [{ p: { x: -200, y: 50 } }, { p: { x: -200, y: 200 } }, { p: { x: 50, y: 200 } }],
+    q: { x: 50, y: 100 },
+    pConnection: { id: "a", rate: { x: 0, y: 0.5 } },
+    qConnection: { id: "a", rate: { x: 0.5, y: 1 } },
+  });
+  const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "a",
+    p: { x: -50, y: -50 },
+    width: 200,
+    height: 200,
+  });
+
+  test("should reconnect lines to the outline of the shape: rectangle -> rectangle", () => {
+    const shapeComposite = newShapeComposite({ shapes: [line, shapeA], getStruct: getCommonStruct });
+    const res = patchLinesConnectedToShapeOutline(shapeComposite, shapeA);
+    expect(res).toEqual({
+      line: {
+        p: { x: -50, y: 50 },
+        q: { x: 50, y: 150 },
+        pConnection: { id: "a", rate: { x: 0, y: 0.5 } },
+        qConnection: { id: "a", rate: { x: 0.5, y: 1 } },
+      },
+    });
+  });
+
+  test("should reconnect lines to the outline of the shape: rectangle -> star", () => {
+    const arrow = createShape<TwoSidedArrowShape>(getCommonStruct, "two_sided_arrow", {
+      id: "a",
+      width: 100,
+      height: 50,
+    });
+    const shapeComposite = newShapeComposite({ shapes: [line, arrow], getStruct: getCommonStruct });
+    const res = patchLinesConnectedToShapeOutline(shapeComposite, arrow);
+    expect(res).toEqual({
+      line: {
+        p: { x: 25, y: 50 },
+        q: { x: 50, y: 37.5 },
+        pConnection: { id: "a", rate: { x: 0.25, y: 1 } },
+        qConnection: { id: "a", rate: { x: 0.5, y: 0.75 } },
+      },
+    });
+  });
+
+  test("should ignore optimized connections", () => {
+    const optimized = createShape<LineShape>(getCommonStruct, "line", {
+      ...line,
+      pConnection: { id: "a", rate: { x: 0, y: 0.5 }, optimized: true },
+      qConnection: { id: "a", rate: { x: 0.5, y: 1 }, optimized: true },
+    });
+    const shapeComposite = newShapeComposite({ shapes: [optimized, shapeA], getStruct: getCommonStruct });
+    const res = patchLinesConnectedToShapeOutline(shapeComposite, shapeA);
+    expect(res).toEqual({});
+  });
+
+  test("should ignore connections unrelated to the shape", () => {
+    const shapeComposite = newShapeComposite({ shapes: [line, shapeA], getStruct: getCommonStruct });
+    const res = patchLinesConnectedToShapeOutline(shapeComposite, { ...shapeA, id: "b" });
+    expect(res).toEqual({});
   });
 });
