@@ -439,10 +439,11 @@ function patchLineConnectedToShapeOutline(
   if (line.pConnection && line.pConnection.id === shape.id && !line.pConnection.optimized) {
     const points = getLinePath(line);
     const endP = points[0];
-    const [from, to] = extendSegment([points[1], endP], 10);
-    const intersection = getClosestPointTo(
+    const intersection = getClosestEndPoint(
+      shapeComposite.getShapeStruct,
+      shape,
       endP,
-      getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to) ?? [],
+      extendSegment([points[1], endP], 10),
     );
     if (intersection) {
       const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
@@ -454,10 +455,11 @@ function patchLineConnectedToShapeOutline(
   if (line.qConnection && line.qConnection.id === shape.id && !line.qConnection.optimized) {
     const points = getLinePath(line);
     const endP = points[points.length - 1];
-    const [from, to] = extendSegment([points[points.length - 2], endP], 10);
-    const intersection = getClosestPointTo(
+    const intersection = getClosestEndPoint(
+      shapeComposite.getShapeStruct,
+      shape,
       endP,
-      getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to) ?? [],
+      extendSegment([points[points.length - 2], endP], 10),
     );
     if (intersection) {
       const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
@@ -467,4 +469,19 @@ function patchLineConnectedToShapeOutline(
   }
 
   return ret;
+}
+
+/**
+ * Returns the closest intersection on the segment.
+ * Returns nothing when there's no intersection.
+ * - It might be well to ignore the segment and return the closest point to the outline,
+ *   but it would greatly ruin reversability of this operation.
+ */
+function getClosestEndPoint(
+  getShapeStruct: GetShapeStruct,
+  shape: Shape,
+  originalEndPoint: IVec2,
+  seg: ISegment,
+): IVec2 | undefined {
+  return getClosestPointTo(originalEndPoint, getIntersectedOutlines(getShapeStruct, shape, seg[0], seg[1]) ?? []);
 }
