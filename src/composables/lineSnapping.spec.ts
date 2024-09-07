@@ -694,6 +694,22 @@ describe("patchLinesConnectedToShapeOutline", () => {
     });
   });
 
+  test("should reconnect to the closest candidate", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [{ ...line, p: { x: 80, y: 50 }, q: { x: 50, y: 20 } } as LineShape, shapeA],
+      getStruct: getCommonStruct,
+    });
+    const res = patchLinesConnectedToShapeOutline(shapeComposite, shapeA);
+    expect(res).toEqual({
+      line: {
+        p: { x: 150, y: 50 },
+        q: { x: 50, y: -50 },
+        pConnection: { id: "a", rate: { x: 1, y: 0.5 } },
+        qConnection: { id: "a", rate: { x: 0.5, y: 0 } },
+      },
+    });
+  });
+
   test("should ignore optimized connections", () => {
     const optimized = createShape<LineShape>(getCommonStruct, "line", {
       ...line,

@@ -71,6 +71,7 @@ import {
   translateRect,
   mergeClosePoints,
   splitPointsToCloseSections,
+  getClosestPointTo,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -939,6 +940,18 @@ describe("sortPointFrom", () => {
       { x: 0, y: 10 },
       { x: 11, y: 0 },
     ]);
+  });
+});
+
+describe("getClosestPointTo", () => {
+  test("should return the closest point to the point", () => {
+    expect(
+      getClosestPointTo({ x: 10, y: 10 }, [
+        { x: 11, y: 0 },
+        { x: 12, y: 12 },
+        { x: 0, y: 10 },
+      ]),
+    ).toEqual({ x: 12, y: 12 });
   });
 });
 

@@ -33,6 +33,7 @@ import {
   vec,
 } from "okageo";
 import { CurveControl, Direction4 } from "../models";
+import { pickMinItem } from "./commons";
 
 export const BEZIER_APPROX_SIZE = 10;
 
@@ -629,6 +630,10 @@ export function sortPointFrom(p: IVec2, points: IVec2[]): IVec2[] {
     })
     .sort((a, b) => a[0] - b[0])
     .map((v) => v[1]);
+}
+
+export function getClosestPointTo(to: IVec2, points: IVec2[]): IVec2 | undefined {
+  return pickMinItem(points, (p) => getD2(sub(p, to)));
 }
 
 export function getLocationRateOnRectPath(rectPath: IVec2[], rotation: number, p: IVec2): IVec2 {

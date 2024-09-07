@@ -7,6 +7,7 @@ import {
   ISegment,
   TAU,
   extendSegment,
+  getClosestPointTo,
   getCrossLineAndLine,
   isRectOverlappedH,
   isRectOverlappedV,
@@ -437,8 +438,12 @@ function patchLineConnectedToShapeOutline(
 
   if (line.pConnection && line.pConnection.id === shape.id && !line.pConnection.optimized) {
     const points = getLinePath(line);
-    const [from, to] = extendSegment([points[1], points[0]], 10);
-    const intersection = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to)?.[0];
+    const endP = points[0];
+    const [from, to] = extendSegment([points[1], endP], 10);
+    const intersection = getClosestPointTo(
+      endP,
+      getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to) ?? [],
+    );
     if (intersection) {
       const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
       ret.pConnection = { ...line.pConnection, rate };
@@ -448,8 +453,12 @@ function patchLineConnectedToShapeOutline(
 
   if (line.qConnection && line.qConnection.id === shape.id && !line.qConnection.optimized) {
     const points = getLinePath(line);
-    const [from, to] = extendSegment([points[points.length - 2], points[points.length - 1]], 10);
-    const intersection = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to)?.[0];
+    const endP = points[points.length - 1];
+    const [from, to] = extendSegment([points[points.length - 2], endP], 10);
+    const intersection = getClosestPointTo(
+      endP,
+      getIntersectedOutlines(shapeComposite.getShapeStruct, shape, from, to) ?? [],
+    );
     if (intersection) {
       const rate = shapeComposite.getLocationRateOnShape(shape, intersection);
       ret.qConnection = { ...line.qConnection, rate };
