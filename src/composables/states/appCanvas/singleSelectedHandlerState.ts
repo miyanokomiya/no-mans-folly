@@ -14,6 +14,8 @@ import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { Shape } from "../../../models";
 import { ShapeHandler } from "../../shapeHandlers/core";
 import { newMovingHubState } from "./movingHubState";
+import { newSmartBranchHandler, SmartBranchHandler } from "../../smartBranchHandler";
+import { canAttachSmartBranch } from "../../../shapes";
 
 interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHandler> {
   getTargetShape: () => S;
@@ -29,6 +31,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
     let targetShape: S;
     let shapeHandler: H;
     let boundingBox: BoundingBox;
+    let smartBranchHandler: SmartBranchHandler | undefined;
 
     const src = createFn(
       {
@@ -52,6 +55,13 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
           path: shapeComposite.getLocalRectPolygon(targetShape),
           locked: targetShape.locked,
         });
+
+        if (!shapeComposite.hasParent(targetShape) && canAttachSmartBranch(ctx.getShapeStruct, targetShape)) {
+          smartBranchHandler = newSmartBranchHandler({
+            getShapeComposite: ctx.getShapeComposite,
+            targetId: targetShape.id,
+          });
+        }
 
         src.onStart?.(ctx);
       },
@@ -88,6 +98,16 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                   }
                 }
 
+                if (smartBranchHandler) {
+                  const smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, ctx.getScale());
+                  if (smartBranchHitResult) {
+                    const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, ctx.generateUuid);
+                    ctx.addShapes(branchShapes);
+                    ctx.selectShape(branchShapes[0].id);
+                    return;
+                  }
+                }
+
                 return handleCommonPointerDownLeftOnSingleSelection(
                   ctx,
                   event,
@@ -116,6 +136,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
             if (nextHitResult) {
               boundingBox.saveHitResult();
+              smartBranchHandler?.saveHitResult();
               return;
             }
 
@@ -123,6 +144,20 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             if (boundingBox.saveHitResult(hitBounding)) {
               ctx.redraw();
             }
+
+            if (hitBounding) {
+              smartBranchHandler?.saveHitResult();
+              return;
+            }
+
+            if (smartBranchHandler) {
+              const smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, ctx.getScale());
+              if (smartBranchHandler.saveHitResult(smartBranchHitResult)) {
+                ctx.redraw();
+                return;
+              }
+            }
+
             break;
           }
           case "contextmenu":
@@ -139,6 +174,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       },
       render: (ctx, renderCtx) => {
         boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+        smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
         shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
 
         src.render?.(ctx, renderCtx);

@@ -81,7 +81,6 @@ export const newSingleSelectedState = defineIntransientState(() => {
 
               if (smartBranchHandler) {
                 const smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, ctx.getScale());
-                smartBranchHandler.saveHitResult(smartBranchHitResult);
                 if (smartBranchHitResult) {
                   const branchShapes = smartBranchHandler.createBranch(smartBranchHitResult, ctx.generateUuid);
                   ctx.addShapes(branchShapes);

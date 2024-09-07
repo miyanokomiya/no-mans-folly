@@ -12,7 +12,7 @@ import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
 const ANCHOR_SIZE = 7;
-const ANCHOR_MARGIN = 24;
+const ANCHOR_MARGIN = 34;
 
 interface HitResult {
   index: number; // index of anchor array: [top, right, bottom, left]
