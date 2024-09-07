@@ -7,6 +7,8 @@ import { Shape } from "../../../models";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { CommandExam, EditMovement } from "../types";
 import { renderOutlinedCircle } from "../../../utils/renderer";
+import { patchPipe } from "../../../utils/commons";
+import { patchLinesConnectedToShapeOutline } from "../../lineSnapping";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -71,12 +73,16 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
               ? undefined
               : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
-          const patch = option.patchFn(targetShape, p, event.data);
           const shapeComposite = ctx.getShapeComposite();
-          const layoutPatch = getPatchByLayouts(shapeComposite, {
-            update: { [targetShape.id]: patch },
-          });
-          ctx.setTmpShapeMap(layoutPatch);
+          const patch = patchPipe(
+            [
+              (src) => ({ [option.targetId]: option.patchFn(src[option.targetId] as T, p, event.data) }),
+              (src) => patchLinesConnectedToShapeOutline(shapeComposite, src[option.targetId]),
+              (_, patch) => getPatchByLayouts(shapeComposite, { update: patch }),
+            ],
+            { [targetShape.id]: targetShape as Shape },
+          ).patch;
+          ctx.setTmpShapeMap(patch);
           return;
         }
         case "pointerup": {
