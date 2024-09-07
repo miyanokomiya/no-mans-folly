@@ -26,8 +26,8 @@ export const ShapeTypeButton: React.FC<Props> = ({
   return (
     <div className="flex gap-1 items-center">
       <PopupButton
-        name="line-type"
-        opened={popupedKey === "line-type"}
+        name="shape-type"
+        opened={popupedKey === "shape-type"}
         popup={<ShapeTypePanel selectedType={selectedType} onChange={onSelect} />}
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
