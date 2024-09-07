@@ -73,7 +73,6 @@ export function newSmartBranchHandler(option: Option) {
       getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter)?.[0] ??
       qCenter;
 
-    shapeComposite.getLocationRateOnShape(src, p);
     const elbow = createShape<LineShape>(getShapeStruct, "line", {
       id: generateId(),
       lineType: "elbow",
