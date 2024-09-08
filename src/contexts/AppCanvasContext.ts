@@ -13,6 +13,7 @@ import { newImageStore } from "../composables/imageStore";
 import { UserSettingStore } from "../stores/userSettingStore";
 import { AssetAPI } from "../hooks/persistence";
 import { ToastMessage } from "../composables/states/types";
+import { stateGenerators } from "../composables/states/appCanvas";
 
 export interface IAppCanvasContext {
   diagramStore: DiagramStore;
@@ -106,6 +107,8 @@ export function createInitialAppCanvasStateContext(arg: {
     retrieveCursorPosition: () => 0,
 
     getImageStore: () => newImageStore(),
+
+    states: stateGenerators,
   };
 }
 

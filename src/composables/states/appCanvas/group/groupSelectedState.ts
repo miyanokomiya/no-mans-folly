@@ -18,8 +18,9 @@ export const newGroupSelectedState = defineSingleSelectedHandlerState((getters) 
           );
           if (child) {
             ctx.selectShape(child.id);
+            return null;
           }
-          return null;
+          return;
         }
         case "contextmenu": {
           ctx.setContextMenuList({

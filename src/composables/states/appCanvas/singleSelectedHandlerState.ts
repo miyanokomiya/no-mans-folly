@@ -3,7 +3,6 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
 } from "./commons";
-import { newSelectionHubState } from "./selectionHubState";
 import { getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
@@ -77,7 +76,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         src.onEnd?.(ctx);
       },
       handleEvent: (ctx, event) => {
-        if (!targetShape) return newSelectionHubState;
+        if (!targetShape) return ctx.states.newSelectionHubState;
 
         const res = src.handleEvent(ctx, event);
         if (res !== undefined) return res;

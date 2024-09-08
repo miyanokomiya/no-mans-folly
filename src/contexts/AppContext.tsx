@@ -49,16 +49,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
   const handleSetStateContext = useCallback<React.Dispatch<AppCanvasStateContextPart>>(
     (val) => {
       setStateContext((prev) => {
-        const next = {
-          getTimestamp: prev.getTimestamp,
-          generateUuid: prev.generateUuid,
-          getShapeStruct: prev.getShapeStruct,
-          getStyleScheme: prev.getStyleScheme,
-          getUserSetting: prev.getUserSetting,
-          assetAPI: prev.assetAPI,
-          showToastMessage: prev.showToastMessage,
-          ...val,
-        };
+        const next = { ...prev, ...val };
         stateContextRef.current = next;
         return next;
       });
@@ -113,4 +104,5 @@ type AppCanvasStateContextPart = Omit<
   | "getUserSetting"
   | "showToastMessage"
   | "assetAPI"
+  | "states"
 >;

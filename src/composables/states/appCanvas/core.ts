@@ -1,6 +1,7 @@
 import type { ModeStateBase, ModeStateEventBase } from "../core";
 import type { CanvasStateContext, CanvasStateEvent } from "../commons";
 import type { AssetAPI } from "../../../hooks/persistence";
+import type { StateGenerators } from ".";
 import { EntityPatchInfo, Shape } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
@@ -53,6 +54,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
 
   assetAPI: AssetAPI;
   getImageStore: () => ImageStore;
+
+  states: StateGenerators;
 }
 
 export type AppCanvasState = ModeStateBase<AppCanvasStateContext, AppCanvasEvent>;

@@ -36,3 +36,4 @@ export function newSelectionHubState(option?: Option): AppCanvasState {
     handleEvent() {},
   };
 }
+export type NewSelectionHubState = typeof newSelectionHubState;
