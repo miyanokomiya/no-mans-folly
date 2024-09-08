@@ -1,11 +1,12 @@
 import { useCallback, useMemo } from "react";
-import { shapeTypeList } from "../../composables/shapeTypes";
+import { ShapeTypeItem } from "../../composables/shapeTypes";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { IconButton } from "../atoms/buttons/IconButton";
 
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  shapeTypeList: ShapeTypeItem[];
   defaultDirection?: PopupDirection;
   selectedType?: string;
   onChange?: (type: string) => void;
@@ -14,13 +15,14 @@ interface Props {
 export const ShapeTypeButton: React.FC<Props> = ({
   popupedKey,
   setPopupedKey,
+  shapeTypeList,
   defaultDirection,
   selectedType,
   onChange: onSelect,
 }) => {
   const selectedItem = useMemo(
     () => shapeTypeList.find((item) => item.type === selectedType) ?? shapeTypeList[0],
-    [selectedType],
+    [selectedType, shapeTypeList],
   );
 
   return (
@@ -28,7 +30,7 @@ export const ShapeTypeButton: React.FC<Props> = ({
       <PopupButton
         name="shape-type"
         opened={popupedKey === "shape-type"}
-        popup={<ShapeTypePanel selectedType={selectedType} onChange={onSelect} />}
+        popup={<ShapeTypePanel shapeTypeList={shapeTypeList} selectedType={selectedType} onChange={onSelect} />}
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
       >
@@ -41,11 +43,12 @@ export const ShapeTypeButton: React.FC<Props> = ({
 };
 
 interface ShapeTypePanelProps {
+  shapeTypeList: ShapeTypeItem[];
   selectedType?: string;
   onChange?: (type: string) => void;
 }
 
-const ShapeTypePanel: React.FC<ShapeTypePanelProps> = ({ selectedType, onChange }) => {
+const ShapeTypePanel: React.FC<ShapeTypePanelProps> = ({ shapeTypeList, selectedType, onChange }) => {
   const handleClick = useCallback(
     (type: string) => {
       if (type === selectedType) return;

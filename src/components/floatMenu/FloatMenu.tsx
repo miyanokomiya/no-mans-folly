@@ -37,7 +37,7 @@ import { getPatchByChangingCurveType } from "../../utils/curveLine";
 import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
-import { isInShapeTypeList } from "../../composables/shapeTypes";
+import { getShapeTypeList } from "../../composables/shapeTypes";
 import { ShapeTypeButton } from "./ShapeTypeButton";
 import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
 
@@ -251,8 +251,8 @@ export const FloatMenu: React.FC<Option> = ({
     [handleEvent, focusBack],
   );
 
-  const indexTextContainerShape = useMemo(() => {
-    return indexShape && isInShapeTypeList(indexShape.type) ? indexShape : undefined;
+  const availableShapeTypeList = useMemo(() => {
+    return indexShape ? getShapeTypeList(indexShape.type) : undefined;
   }, [indexShape]);
 
   const onShapeTypeChanged = useCallback(
@@ -261,7 +261,7 @@ export const FloatMenu: React.FC<Option> = ({
       const shapeMap = shapeComposite.shapeMap;
       const targets = Object.keys(shapeStore.getSelected())
         .map((id) => shapeMap[id])
-        .filter((s) => isInShapeTypeList(s.type));
+        .filter((s) => getShapeTypeList(s.type));
       patchShapes(
         patchPipe(
           [
@@ -492,10 +492,11 @@ export const FloatMenu: React.FC<Option> = ({
         {canIndexShapeHaveTextPadding ? (
           <BoxPaddingButton {...popupButtonCommonProps} value={indexTextPadding} onChange={onChangeTextPadding} />
         ) : undefined}
-        {indexTextContainerShape ? (
+        {indexShape && availableShapeTypeList ? (
           <ShapeTypeButton
             {...popupButtonCommonProps}
-            selectedType={indexTextContainerShape.type}
+            shapeTypeList={availableShapeTypeList}
+            selectedType={indexShape.type}
             onChange={onShapeTypeChanged}
           />
         ) : undefined}

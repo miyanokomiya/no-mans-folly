@@ -153,6 +153,7 @@ export function getSingleShapeSelectedStateFn(type: string) {
   }
 }
 
-export function isInShapeTypeList(type: string): boolean {
-  return shapeTypeList.some((s) => s.type === type);
+export function getShapeTypeList(type: string): ShapeTypeItem[] | undefined {
+  if (shapeWithoutTextTypeList.find((t) => t.type === type)) return shapeWithoutTextTypeList;
+  if (shapeTypeList.find((t) => t.type === type)) return shapeTypeList;
 }
