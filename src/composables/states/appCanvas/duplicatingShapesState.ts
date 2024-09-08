@@ -4,7 +4,6 @@ import { duplicateShapes } from "../../../shapes";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
-import { newSelectionHubState } from "./selectionHubState";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
@@ -93,7 +92,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
           const moved = duplicatedShapeComposite.mergedShapes;
           ctx.addShapes(moved, duplicated.docMap);
           ctx.multiSelectShapes(moved.map((s) => s.id));
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "wheel":
           handleCommonWheel(ctx, event);

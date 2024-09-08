@@ -5,7 +5,6 @@ import {
   handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
-import { newSelectionHubState } from "../selectionHubState";
 import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
 import {
@@ -79,7 +78,7 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
       ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
-      if (!treeNodeShape) return newSelectionHubState;
+      if (!treeNodeShape) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":

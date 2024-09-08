@@ -4,7 +4,6 @@ import { LineShape, getEdges, patchVertices } from "../../../../shapes/line";
 import { add, getOuterRectangle, moveRect, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { optimizeLinePath } from "../../../lineSnapping";
-import { newSelectionHubState } from "../selectionHubState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
@@ -79,14 +78,14 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           if (Object.keys(tmpMap).length > 0) {
             ctx.patchShapes(tmpMap);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         default:
           return;
       }

@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { AlignBoxHandler, AlignBoxPaddingHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
@@ -59,10 +58,10 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
           if (val) {
             ctx.patchShapes(val);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
           if (event.data.keys.has(alignBoxId)) {

@@ -12,7 +12,6 @@ import {
 } from "../../../shapeHandlers/treeHandler";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { mergeMap } from "../../../../utils/commons";
-import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   targetId: string;
@@ -50,7 +49,7 @@ export function newTreeRootMovingState(option: Option): AppCanvasState {
             const layoutPatch = getNextTreeLayout(nextComposite, patch[option.targetId].parentId!);
             const adjustedPatch = getPatchAfterLayouts(shapeComposite, { update: mergeMap(layoutPatch, patch) });
             ctx.patchShapes(adjustedPatch);
-            return newSelectionHubState;
+            return ctx.states.newSelectionHubState;
           }
           break;
         }

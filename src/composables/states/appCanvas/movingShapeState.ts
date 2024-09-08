@@ -11,7 +11,6 @@ import {
   renderPatchedVertices,
 } from "../../connectedLineHandler";
 import { isLineShape } from "../../../shapes/line";
-import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
@@ -38,7 +37,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
-      if (targets.length === 0) return newSelectionHubState;
+      if (targets.length === 0) return ctx.states.newSelectionHubState;
 
       targetIds = targets.map((s) => s.id);
       const targetIdSet = new Set(targetIds);
@@ -117,10 +116,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
               getPatchByPointerUpOutsideLayout(ctx.getShapeComposite(), val, Object.keys(ctx.getSelectedShapeIdMap())),
             );
           }
-          return () => newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
+          return () => ctx.states.newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         default:
           return;

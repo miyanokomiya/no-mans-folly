@@ -13,7 +13,6 @@ import {
 } from "../../../lineSnapping";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
@@ -116,7 +115,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return newSelectionHubState;
+              return ctx.states.newSelectionHubState;
             default:
               return;
           }

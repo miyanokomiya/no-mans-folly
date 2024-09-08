@@ -2,7 +2,6 @@ import type { AppCanvasState } from "../core";
 import { IDENTITY_AFFINE, multiAffine } from "okageo";
 import { mergeMap } from "../../../../utils/commons";
 import { LineLabelHandler, newLineLabelHandler, renderParentLineRelation } from "../../../lineLabelHandler";
-import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, newBoundingBoxRotating } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
@@ -32,10 +31,10 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
       const id = ctx.getLastSelectedShapeId();
       const shapeMap = ctx.getShapeComposite().shapeMap;
       labelShape = shapeMap[id ?? ""] as TextShape;
-      if (!labelShape) return newSelectionHubState;
+      if (!labelShape) return ctx.states.newSelectionHubState;
 
       parentLineShape = shapeMap[labelShape.parentId ?? ""] as LineShape;
-      if (!parentLineShape) return newSelectionHubState;
+      if (!parentLineShape) return ctx.states.newSelectionHubState;
 
       lineLabelHandler = newLineLabelHandler({ ctx });
     },
@@ -68,10 +67,10 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
           if (Object.keys(val).length > 0) {
             ctx.patchShapes(val);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         default:
           return;

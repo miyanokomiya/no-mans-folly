@@ -10,7 +10,6 @@ import {
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 import { LineShape } from "../../../shapes/line";
-import { newSelectionHubState } from "./selectionHubState";
 import { handleCommonWheel } from "./commons";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "./commandExams";
@@ -74,13 +73,15 @@ export function newRotatingState(option: Option): AppCanvasState {
         case "pointerup": {
           ctx.patchShapes(ctx.getTmpShapeMap());
           return () =>
-            newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
+            ctx.states.newSelectionHubState({
+              boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine),
+            });
         }
         case "wheel":
           handleCommonWheel(ctx, event);
           return;
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         default:
           return;

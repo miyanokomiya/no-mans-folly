@@ -7,7 +7,6 @@ import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 import { newBoardLaneMovingState } from "./board/boardLaneMovingState";
 import { isLineLabelShape } from "../../../utils/lineLabel";
-import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -24,7 +23,7 @@ export function newMovingHubState(option?: Option): AppCanvasState {
       const unlockedSelectedIds = selectedIds.filter((id) => !shapeMap[id].locked);
 
       const unlockedCount = unlockedSelectedIds.length;
-      if (unlockedCount === 0) return () => newSelectionHubState({ boundingBox: option?.boundingBox });
+      if (unlockedCount === 0) return () => ctx.states.newSelectionHubState({ boundingBox: option?.boundingBox });
 
       if (selectedIds.length !== unlockedCount) {
         ctx.multiSelectShapes(unlockedSelectedIds);

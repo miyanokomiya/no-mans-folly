@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "./core";
-import { newSelectionHubState } from "./selectionHubState";
 import { IVec2, add } from "okageo";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
@@ -40,7 +39,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
     getLabel: () => "MovingShapeControl",
     onStart: (ctx) => {
       targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as T;
-      if (!targetShape) return newSelectionHubState;
+      if (!targetShape) return ctx.states.newSelectionHubState;
 
       ctx.startDragging();
       const commands = option.extraCommands ?? [];
@@ -87,10 +86,10 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
         }
         case "pointerup": {
           ctx.patchShapes(ctx.getTmpShapeMap());
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (event.data.keys.has(targetShape.id)) return newSelectionHubState;
+          if (event.data.keys.has(targetShape.id)) return ctx.states.newSelectionHubState;
           return;
         }
         default:

@@ -19,7 +19,6 @@ import {
 import { renderPatchedVertices } from "../../connectedLineHandler";
 import { patchPipe, toMap } from "../../../utils/commons";
 import { LineShape, isLineShape } from "../../../shapes/line";
-import { newSelectionHubState } from "./selectionHubState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
@@ -184,10 +183,12 @@ export function newResizingState(option: Option): AppCanvasState {
           const patch = getPatchByLayouts(ctx.getShapeComposite(), { update: ctx.getTmpShapeMap() });
           ctx.patchDocuments(ctx.getTmpDocMap(), patch);
           return () =>
-            newSelectionHubState({ boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine) });
+            ctx.states.newSelectionHubState({
+              boundingBox: option.boundingBox.getTransformedBoundingBox(resizingAffine),
+            });
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         default:
           return;

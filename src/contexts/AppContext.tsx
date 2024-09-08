@@ -4,7 +4,6 @@ import { AppCanvasEvent, AppCanvasStateContext } from "../composables/states/app
 import { generateUuid } from "../utils/random";
 import { StateMachine, newStateMachine } from "../composables/states/core";
 import { AssetAPI } from "../hooks/persistence";
-import { newSelectionHubState } from "../composables/states/appCanvas/selectionHubState";
 import { ToastMessage } from "../composables/states/types";
 import { ToastMessageContext } from "./ToastMessageContext";
 
@@ -38,8 +37,8 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
   const stateContextRef = useRef(stateContext);
 
   const stateMachine = useMemo(() => {
-    return newStateMachine(() => stateContextRef.current, newSelectionHubState);
-  }, []);
+    return newStateMachine(() => stateContextRef.current, stateContext.states.newSelectionHubState);
+  }, [stateContext.states.newSelectionHubState]);
 
   useEffect(() => {
     acctx;

@@ -3,7 +3,6 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
-import { newSelectionHubState } from "./selectionHubState";
 import { TextShape } from "../../../shapes/text";
 import { newShapeComposite } from "../../shapeComposite";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
@@ -90,7 +89,7 @@ describe("newSingleSelectedByPointerOnState", () => {
         type: "pointerup",
         data: { point: { x: 0, y: 0 }, options: { button: 0 } },
       });
-      expect(result).toBe(newSelectionHubState);
+      expect(result).toBe(ctx.states.newSelectionHubState);
     });
 
     test("should move to TextEditing state when concurrent option is set true", () => {
@@ -100,7 +99,7 @@ describe("newSingleSelectedByPointerOnState", () => {
         type: "pointerup",
         data: { point: { x: 0, y: 0 }, options: { button: 0 } },
       }) as any;
-      expect(result0, "timeout").toEqual(newSelectionHubState);
+      expect(result0, "timeout").toEqual(ctx.states.newSelectionHubState);
 
       target.onStart?.(ctx as any);
       const result1 = target.handleEvent(ctx as any, {
@@ -119,7 +118,7 @@ describe("newSingleSelectedByPointerOnState", () => {
       const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
-      expect(result).toEqual(newSelectionHubState);
+      expect(result).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

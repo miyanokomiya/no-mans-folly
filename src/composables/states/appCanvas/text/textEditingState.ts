@@ -18,7 +18,6 @@ import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
 import { calcOriginalDocSize, splitToSegments } from "../../../../utils/textEditor";
-import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
@@ -173,7 +172,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
                 // If not, select the shape.
                 if (shapeAtPointer?.id !== option.id) {
                   shapeAtPointer ? ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl) : ctx.clearAllSelected();
-                  return newSelectionHubState;
+                  return ctx.states.newSelectionHubState;
                 }
               }
 
@@ -212,7 +211,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         case "shape-updated": {
           const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
-          if (!shape) return newSelectionHubState;
+          if (!shape) return ctx.states.newSelectionHubState;
 
           if (event.data.keys.has(option.id)) {
             textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
@@ -223,7 +222,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "tmp-shape-updated": {
           const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
-          if (!shape) return newSelectionHubState;
+          if (!shape) return ctx.states.newSelectionHubState;
 
           const shapeUpdated = ctx.getTmpShapeMap()[option.id];
           const docUpdated = ctx.getTmpDocMap()[option.id];
@@ -262,11 +261,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
           handleCommonWheel(ctx, event);
           return;
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, getCommonAcceptableEvents(["Break", "ShapeInspection"]));
         case "copy": {
@@ -457,7 +456,7 @@ function handleKeydown(
       return;
     }
     case "Escape": {
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     }
   }
 }

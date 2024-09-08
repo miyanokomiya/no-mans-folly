@@ -4,7 +4,6 @@ import { newMultipleSelectedState } from "./multipleSelectedState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
-import { newSelectionHubState } from "./selectionHubState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { newShapeComposite } from "../../shapeComposite";
 import { newStateMachine } from "../core";
@@ -118,7 +117,7 @@ describe("newMultipleSelectedState", () => {
       const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
-      expect(result).toEqual(newSelectionHubState);
+      expect(result).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

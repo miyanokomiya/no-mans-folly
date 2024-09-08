@@ -5,7 +5,6 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { TextShape } from "../../../shapes/text";
-import { newSelectionHubState } from "./selectionHubState";
 import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
@@ -95,7 +94,7 @@ describe("newMovingShapeState", () => {
       const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
-      expect(result).toEqual(newSelectionHubState);
+      expect(result).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

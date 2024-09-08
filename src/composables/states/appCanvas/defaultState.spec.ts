@@ -3,7 +3,6 @@ import { newDefaultState } from "./defaultState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
-import { newSelectionHubState } from "./selectionHubState";
 import { newShapeComposite } from "../../shapeComposite";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newStateMachine } from "../core";
@@ -50,7 +49,7 @@ describe("newDefaultState", () => {
         type: "pointerdown",
         data: { point: { x: 1, y: 2 }, options: { button: 0, ctrl: true } },
       });
-      expect(result2).toBe(newSelectionHubState);
+      expect(result2).toBe(ctx.states.newSelectionHubState);
     });
 
     test("should move to RectangleSelecting state if there's no shape at the point", () => {

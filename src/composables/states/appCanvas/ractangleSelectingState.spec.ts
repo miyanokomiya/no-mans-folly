@@ -2,13 +2,19 @@ import { expect, test, describe, vi } from "vitest";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
-import { newSelectionHubState } from "./selectionHubState";
 import { newShapeComposite } from "../../shapeComposite";
 import { TreeRootShape } from "../../../shapes/tree/treeRoot";
 import { TreeNodeShape } from "../../../shapes/tree/treeNode";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     setCommandExams: vi.fn(),
     startDragging: vi.fn(),
     stopDragging: vi.fn(),
@@ -182,7 +188,7 @@ describe("newRectangleSelectingState", () => {
       });
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a"], false);
-      expect(result).toEqual(newSelectionHubState);
+      expect(result).toEqual(ctx.states.newSelectionHubState);
     });
 
     test("should keep current selection and select shapes in the rectangle when keepSelection is true", () => {
@@ -197,7 +203,7 @@ describe("newRectangleSelectingState", () => {
       });
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a"], true);
-      expect(result).toEqual(newSelectionHubState);
+      expect(result).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

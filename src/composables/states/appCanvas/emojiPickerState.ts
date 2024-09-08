@@ -3,7 +3,6 @@ import { createShape } from "../../../shapes";
 import { EmojiShape } from "../../../shapes/emoji";
 import type { AppCanvasState } from "./core";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { newSelectionHubState } from "./selectionHubState";
 import { handleCommonWheel } from "./commons";
 
 export function newEmojiPickerState(): AppCanvasState {
@@ -31,12 +30,12 @@ export function newEmojiPickerState(): AppCanvasState {
 
           ctx.addShapes([shape]);
           ctx.selectShape(shape.id);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "pointerdown":
           return newSingleSelectedState;
         case "close-emoji-picker":
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         case "wheel":
           handleCommonWheel(ctx, event);
           return;

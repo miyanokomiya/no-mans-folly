@@ -3,7 +3,6 @@ import { handleHistoryEvent } from "../commons";
 import { LineShape, getEdges, isLineShape } from "../../../../shapes/line";
 import { IVec2, add, getRadian, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
@@ -82,14 +81,14 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           if (Object.keys(tmpMap).length > 0) {
             ctx.patchShapes(tmpMap);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         default:
           return;
       }

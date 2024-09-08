@@ -4,7 +4,6 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
-import { newSelectionHubState } from "./selectionHubState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { newShapeComposite } from "../../shapeComposite";
 import { newStateMachine } from "../core";
@@ -118,7 +117,7 @@ describe("newSingleSelectedState", () => {
       const result = target.handleEvent(ctx as any, {
         type: "selection",
       });
-      expect(result).toEqual(newSelectionHubState);
+      expect(result).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

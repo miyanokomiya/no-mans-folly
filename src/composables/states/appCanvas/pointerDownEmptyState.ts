@@ -2,7 +2,6 @@ import { BoundingBox } from "../../boundingBox";
 import { newPanningState } from "../panningState";
 import type { AppCanvasState } from "./core";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
-import { newSelectionHubState } from "./selectionHubState";
 
 interface Option {
   ctrl?: boolean; // when true, pass "keepSelection: true" to "RectangleSelectingState"
@@ -44,7 +43,9 @@ export function newPointerDownEmptyState(option?: Option): AppCanvasState {
         ctx.clearAllSelected();
       }
 
-      return option?.boundingBox ? () => newSelectionHubState({ boundingBox: option.boundingBox }) : { type: "break" };
+      return option?.boundingBox
+        ? () => ctx.states.newSelectionHubState({ boundingBox: option.boundingBox })
+        : { type: "break" };
     },
     handleEvent() {},
   };

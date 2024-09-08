@@ -6,7 +6,6 @@ import {
   startTextEditingIfPossible,
 } from "../commons";
 import { TextShape } from "../../../../shapes/text";
-import { newSelectionHubState } from "../selectionHubState";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { LineShape } from "../../../../shapes/line";
@@ -35,10 +34,10 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
       const shapeMap = shapeComposite.shapeMap;
       const selectedId = ctx.getLastSelectedShapeId();
       shape = shapeMap[selectedId ?? ""] as TextShape;
-      if (!shape) return newSelectionHubState;
+      if (!shape) return ctx.states.newSelectionHubState;
 
       parentLineShape = shapeMap[shape.parentId ?? ""] as LineShape;
-      if (!parentLineShape) return newSelectionHubState;
+      if (!parentLineShape) return ctx.states.newSelectionHubState;
 
       ctx.showFloatMenu();
 

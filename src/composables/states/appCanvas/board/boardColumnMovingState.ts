@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { newMovingShapeState } from "../movingShapeState";
 import {
   BoardColumnMovingHandler,
@@ -68,10 +67,10 @@ export function newBoardColumnMovingState(): AppCanvasState {
             const shapeComposite = ctx.getShapeComposite();
             ctx.patchShapes(getPatchByLayouts(shapeComposite, { update: patch }));
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
           if (boardColumnMovingHandler.isBoardChanged(Array.from(event.data.keys))) {

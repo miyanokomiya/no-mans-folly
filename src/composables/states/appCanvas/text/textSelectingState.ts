@@ -3,7 +3,6 @@ import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController } from "../../../textEditor";
 import { AppCanvasState } from "../core";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { newSelectionHubState } from "../selectionHubState";
 
 interface Option {
   id: string;
@@ -41,14 +40,14 @@ export function newTextSelectingState(option: Option): AppCanvasState {
         }
         case "shape-updated": {
           const shape = ctx.getShapeComposite().shapeMap[option.id];
-          if (!shape) return newSelectionHubState;
+          if (!shape) return ctx.states.newSelectionHubState;
 
           textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
           textEditorController.setDoc(ctx.getDocumentMap()[option.id], textBounds.range);
           return;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         default:
           return;

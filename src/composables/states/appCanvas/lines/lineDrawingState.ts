@@ -12,7 +12,6 @@ import {
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { add } from "okageo";
@@ -120,7 +119,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return newSelectionHubState;
+              return ctx.states.newSelectionHubState;
             default:
               return;
           }

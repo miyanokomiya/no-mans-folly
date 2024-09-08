@@ -6,7 +6,6 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
-import { newSelectionHubState } from "./selectionHubState";
 import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
 import { newMovingHubState } from "./movingHubState";
@@ -72,7 +71,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
             return isSameShapeSelectionScope(firstScope, shapeComposite.getSelectionScope(shape));
           });
           ctx.multiSelectShapes(nextSelected);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
 
         scode = firstScope;

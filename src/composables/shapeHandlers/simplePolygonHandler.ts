@@ -27,7 +27,6 @@ import { MouseOptions } from "../states/types";
 import { movingShapeControlState } from "../states/appCanvas/movingShapeControlState";
 import { COMMAND_EXAM_SRC } from "../states/appCanvas/commandExams";
 import { AppCanvasStateContext } from "../states/appCanvas/core";
-import { newSelectionHubState } from "../states/appCanvas/selectionHubState";
 import { getPatchByLayouts } from "../shapeLayoutHandler";
 
 export const ANCHOR_SIZE = 6;
@@ -369,7 +368,7 @@ export function getResizeByState<S extends SimplePolygonShape, K = keyof S>(
 }
 
 export function handleSwitchDirection2(
-  ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite">,
+  ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite" | "states">,
   shape: SimplePolygonShape,
 ) {
   const patch = {
@@ -379,11 +378,11 @@ export function handleSwitchDirection2(
     update: { [shape.id]: patch },
   });
   ctx.patchShapes(layoutPatch);
-  return newSelectionHubState;
+  return ctx.states.newSelectionHubState;
 }
 
 export function handleSwitchDirection4(
-  ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite">,
+  ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite" | "states">,
   shape: SimplePolygonShape,
 ) {
   const patch = {
@@ -393,5 +392,5 @@ export function handleSwitchDirection4(
     update: { [shape.id]: patch },
   });
   ctx.patchShapes(layoutPatch);
-  return newSelectionHubState;
+  return ctx.states.newSelectionHubState;
 }

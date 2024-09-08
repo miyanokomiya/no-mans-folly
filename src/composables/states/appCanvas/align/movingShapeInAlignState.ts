@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
@@ -87,7 +86,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
-          if (event.data.options.ctrl) return newSelectionHubState;
+          if (event.data.options.ctrl) return ctx.states.newSelectionHubState;
 
           const shapeComposite = ctx.getShapeComposite();
           if (!hitResult) {
@@ -109,10 +108,10 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
             const layoutPatch = getPatchByLayouts(shapeComposite, { update: patch });
             ctx.patchShapes(layoutPatch);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
           if (alignHandler.isAlignChanged(event.data.keys)) {

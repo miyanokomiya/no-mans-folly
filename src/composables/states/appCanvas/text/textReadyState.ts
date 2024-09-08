@@ -6,7 +6,6 @@ import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TextShape } from "../../../../shapes/text";
 import { newTextEditingState } from "./textEditingState";
-import { newSelectionHubState } from "../selectionHubState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { isLineShape } from "../../../../shapes/line";
 import { TAU } from "../../../../utils/geometry";
@@ -72,7 +71,7 @@ export function newTextReadyState(): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return newSelectionHubState;
+              return ctx.states.newSelectionHubState;
             default:
               return;
           }

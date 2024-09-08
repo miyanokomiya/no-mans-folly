@@ -12,7 +12,6 @@ import {
   renderConnectionResult,
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
-import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
@@ -107,14 +106,14 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           if (Object.keys(tmpMap).length > 0) {
             ctx.patchShapes(tmpMap);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         default:
           return;
       }

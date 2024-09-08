@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { TreeNodeShape, getBoxAlignByDirection } from "../../../../shapes/tree/treeNode";
 import { newTreeNodeMovingHandler, isValidTreeNode, getTreeBranchIds } from "../../../shapeHandlers/treeHandler";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
@@ -39,7 +38,7 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
       ctx.stopDragging();
     },
     handleEvent: (ctx, event) => {
-      if (!treeNodeShape) return newSelectionHubState;
+      if (!treeNodeShape) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointermove": {
@@ -78,15 +77,15 @@ export function newTreeNodeMovingState(option: Option): AppCanvasState {
             const shapeComposite = ctx.getShapeComposite();
             ctx.patchShapes(getPatchByLayouts(shapeComposite, { update: patch }));
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
           const shapeComposite = ctx.getShapeComposite();
           const shape = shapeComposite.mergedShapeMap[treeNodeShape.id];
-          if (!shape) return newSelectionHubState;
+          if (!shape) return ctx.states.newSelectionHubState;
 
           const isTreeChanged = Array.from(event.data.keys).some(
             (id) => shapeComposite.mergedShapeMap[id]?.parentId === treeNodeShape.parentId,

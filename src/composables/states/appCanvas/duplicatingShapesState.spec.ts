@@ -4,7 +4,6 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
-import { newSelectionHubState } from "./selectionHubState";
 import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {
@@ -102,7 +101,7 @@ describe("newDuplicatingShapesState", () => {
         [(group.id, child.id, rect.id)]: [{ insert: "text" }],
       });
       expect(ctx.multiSelectShapes).toHaveBeenNthCalledWith(1, [group.id, child.id, rect.id]);
-      expect(result2).toEqual(newSelectionHubState);
+      expect(result2).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

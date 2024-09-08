@@ -4,7 +4,6 @@ import { AffineMatrix, IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
 import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
-import { newSelectionHubState } from "./selectionHubState";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { handleCommonWheel } from "./commons";
@@ -86,7 +85,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
             option.docMap,
           );
           ctx.multiSelectShapes(shapes.map((s) => s.id));
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "wheel":
           handleCommonWheel(ctx, event);

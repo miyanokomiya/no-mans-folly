@@ -3,7 +3,6 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
 } from "../commons";
-import { newSelectionHubState } from "../selectionHubState";
 import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
 import { getLocalMarginAnchorPoints, newTreeHandler } from "../../../shapeHandlers/treeHandler";
@@ -50,7 +49,7 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
       ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
-      if (!treeRootShape) return newSelectionHubState;
+      if (!treeRootShape) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":

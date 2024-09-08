@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
 import { BoardCardMovingHandler, BoardCardMovingHitResult, newBoardCardMovingHandler } from "../../../boardHandler";
 import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
@@ -95,7 +94,7 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
               update: patch,
             });
             ctx.patchShapes(layoutPatch);
-            return newSelectionHubState;
+            return ctx.states.newSelectionHubState;
           }
 
           if (boardMovingHitResult) {
@@ -117,10 +116,10 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
             });
             ctx.patchShapes(layoutPatch);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
           if (boardCardMovingHandler?.isBoardChanged(Array.from(event.data.keys))) {

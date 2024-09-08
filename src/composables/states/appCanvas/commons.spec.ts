@@ -3,9 +3,16 @@ import { getCommonAcceptableEvents, handleCommonWheel, handleHistoryEvent, handl
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { UserSetting } from "../../../models";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { createStyleScheme } from "../../../models/factories";
 
 function getMockCtx() {
   return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
     getSelectedShapeIdMap: vi.fn().mockReturnValue({}),
     getShapeMap: vi.fn().mockReturnValue({
       a: createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),

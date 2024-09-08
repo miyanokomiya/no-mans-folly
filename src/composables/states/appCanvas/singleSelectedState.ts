@@ -10,7 +10,6 @@ import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { SmartBranchHandler, newSmartBranchHandler } from "../../smartBranchHandler";
-import { newSelectionHubState } from "./selectionHubState";
 import { getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
@@ -55,7 +54,7 @@ export const newSingleSelectedState = defineIntransientState(() => {
       ctx.setCursor();
     },
     handleEvent: (ctx, event) => {
-      if (!selectedId) return newSelectionHubState;
+      if (!selectedId) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":

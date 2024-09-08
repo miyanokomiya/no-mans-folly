@@ -2,7 +2,6 @@ import { applyPath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { handleStateEvent } from "./commons";
 import { AppCanvasState } from "./core";
-import { newSelectionHubState } from "./selectionHubState";
 
 export function newShapeInspectionState(): AppCanvasState {
   let selectedIds: string[];
@@ -11,7 +10,7 @@ export function newShapeInspectionState(): AppCanvasState {
     getLabel: () => "ShapeInspection",
     onStart: (ctx) => {
       selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-      if (selectedIds.length === 0) return newSelectionHubState;
+      if (selectedIds.length === 0) return ctx.states.newSelectionHubState;
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {

@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "./core";
 import { getDistance } from "okageo";
-import { newSelectionHubState } from "./selectionHubState";
 import { newMovingHubState } from "./movingHubState";
 import { startTextEditingIfPossible } from "./commons";
 
@@ -31,7 +30,7 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
           const shapeComposite = ctx.getShapeComposite();
           const shape = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
           if (!shape) {
-            return newSelectionHubState;
+            return ctx.states.newSelectionHubState;
           }
 
           return newMovingHubState;
@@ -42,10 +41,10 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
             if (result) return result;
           }
 
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         default:
           return;

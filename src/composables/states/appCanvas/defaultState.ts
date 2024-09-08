@@ -2,7 +2,6 @@ import type { AppCanvasState } from "./core";
 import { getCommonCommandExams, handleIntransientEvent } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
-import { newSelectionHubState } from "./selectionHubState";
 import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 
@@ -35,7 +34,7 @@ const state: AppCanvasState = {
                   return newSingleSelectedByPointerOnState;
                 }
               }
-              return newSelectionHubState;
+              return ctx.states.newSelectionHubState;
             }
 
             return newPointerDownEmptyState;
@@ -48,7 +47,7 @@ const state: AppCanvasState = {
             if (!shape) return;
 
             ctx.selectShape(shape.id);
-            return newSelectionHubState;
+            return ctx.states.newSelectionHubState;
           }
           default:
             return;

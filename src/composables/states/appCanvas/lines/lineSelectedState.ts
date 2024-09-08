@@ -19,7 +19,6 @@ import { newDuplicatingShapesState } from "../duplicatingShapesState";
 import { createShape } from "../../../../shapes";
 import { TextShape, patchPosition } from "../../../../shapes/text";
 import { newTextEditingState } from "../text/textEditingState";
-import { newSelectionHubState } from "../selectionHubState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { newMovingHubState } from "../movingHubState";
@@ -55,7 +54,7 @@ export const newLineSelectedState = defineIntransientState(() => {
       ctx.setCursor();
     },
     handleEvent: (ctx, event) => {
-      if (!lineShape) return newSelectionHubState;
+      if (!lineShape) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":
@@ -81,7 +80,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                       update: { [lineShape.id]: patch },
                     });
                     ctx.patchShapes(layoutPatch);
-                    return newSelectionHubState;
+                    return ctx.states.newSelectionHubState;
                   }
                   case "move-anchor":
                     return newMovingHubState;
@@ -93,7 +92,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                           getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }),
                         );
                       }
-                      return newSelectionHubState;
+                      return ctx.states.newSelectionHubState;
                     } else {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
@@ -201,7 +200,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               if (Object.keys(patch).length > 0) {
                 ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
               }
-              return newSelectionHubState;
+              return ctx.states.newSelectionHubState;
             }
             default:
               return handleIntransientEvent(ctx, event);

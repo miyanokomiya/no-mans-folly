@@ -6,7 +6,6 @@ import {
   handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
-import { newSelectionHubState } from "../selectionHubState";
 import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
@@ -82,7 +81,7 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
       ctx.setContextMenuList();
     },
     handleEvent: (ctx, event) => {
-      if (!targetShape) return newSelectionHubState;
+      if (!targetShape) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":

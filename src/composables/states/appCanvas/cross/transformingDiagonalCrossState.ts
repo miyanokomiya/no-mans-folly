@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { getRotateFn } from "../../../../utils/geometry";
 import { IVec2, add, clamp, sub } from "okageo";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
@@ -22,7 +21,7 @@ export function newTransformingDiagonalCrossState(option: Option): AppCanvasStat
     getLabel: () => "TransformingDiagonalCross",
     onStart: (ctx) => {
       targetShape = ctx.getShapeComposite().shapeMap[option.targetId] as DiagonalCrossShape;
-      if (!targetShape) return newSelectionHubState;
+      if (!targetShape) return ctx.states.newSelectionHubState;
 
       rotateFn = getRotateFn(targetShape.rotation, {
         x: targetShape.p.x + targetShape.width / 2,
@@ -63,10 +62,10 @@ export function newTransformingDiagonalCrossState(option: Option): AppCanvasStat
         }
         case "pointerup": {
           ctx.patchShapes(ctx.getTmpShapeMap());
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (event.data.keys.has(targetShape.id)) return newSelectionHubState;
+          if (event.data.keys.has(targetShape.id)) return ctx.states.newSelectionHubState;
           return;
         }
         default:

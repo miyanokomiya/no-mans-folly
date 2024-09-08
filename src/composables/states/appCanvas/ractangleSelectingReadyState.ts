@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "./core";
 import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "./commons";
-import { newSelectionHubState } from "./selectionHubState";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
@@ -30,7 +29,7 @@ export function newRactangleSelectingReadyState(): AppCanvasState {
         case "keydown":
           switch (event.data.key) {
             case "Escape":
-              return newSelectionHubState;
+              return ctx.states.newSelectionHubState;
             default:
               return;
           }

@@ -25,7 +25,6 @@ import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboar
 import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
 import { TextShape } from "../../../shapes/text";
-import { newSelectionHubState } from "./selectionHubState";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ImageShape } from "../../../shapes/image";
 import { COMMAND_EXAM_SRC } from "./commandExams";
@@ -72,7 +71,7 @@ export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): Acc
 }
 
 export function handleStateEvent(
-  _ctx: unknown,
+  ctx: Pick<AppCanvasStateContext, "states">,
   event: ChangeStateEvent,
   acceptable: AcceptableEvent[],
 ): TransitionValue<AppCanvasStateContext> {
@@ -81,7 +80,7 @@ export function handleStateEvent(
 
   switch (event.data.name) {
     case "Break":
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     case "DroppingNewShape":
       return () => newDroppingNewShapeState(event.data.options);
     case "LineReady":
@@ -125,7 +124,7 @@ export function handleCommonShortcut(
       } else {
         ctx.multiSelectShapes(rootShapeIds);
       }
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     }
     case "p":
     case "P": {
@@ -136,7 +135,7 @@ export function handleCommonShortcut(
       const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
       if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
         ctx.selectShape(current.parentId);
-        return newSelectionHubState;
+        return ctx.states.newSelectionHubState;
       }
       return;
     }
@@ -149,7 +148,7 @@ export function handleCommonShortcut(
       const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
       if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
         ctx.selectShape(currentNode.children[0].id);
-        return newSelectionHubState;
+        return ctx.states.newSelectionHubState;
       }
       return;
     }
@@ -160,16 +159,16 @@ export function handleCommonShortcut(
 
         if (event.data.shift) {
           const ungrouped = ungroupShapes(ctx);
-          return ungrouped ? newSelectionHubState : undefined;
+          return ungrouped ? ctx.states.newSelectionHubState : undefined;
         } else {
           const grouped = groupShapes(ctx);
-          return grouped ? newSelectionHubState : undefined;
+          return grouped ? ctx.states.newSelectionHubState : undefined;
         }
       } else {
         if (event.data.shift) return;
         ctx.setGridDisabled(!ctx.getGrid().disabled);
       }
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     case "l":
     case "L":
       if (event.data.shift) return;
@@ -189,7 +188,7 @@ export function handleCommonShortcut(
           ctx.undo();
         }
       }
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     case ";":
     case ":":
       if (event.data.ctrl) {
@@ -644,20 +643,20 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
     case "keydown":
       return handleCommonShortcut(ctx, event);
     case "selection": {
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     }
     case "text-style": {
       return handleCommonTextStyle(ctx, event);
     }
     case "shape-updated": {
       if (Object.keys(ctx.getSelectedShapeIdMap()).some((id) => event.data.keys.has(id))) {
-        return newSelectionHubState;
+        return ctx.states.newSelectionHubState;
       }
       return;
     }
     case "history":
       handleHistoryEvent(ctx, event);
-      return newSelectionHubState;
+      return ctx.states.newSelectionHubState;
     case "state":
       return handleStateEvent(ctx, event, [
         "DroppingNewShape",

@@ -2,7 +2,6 @@ import type { AppCanvasState } from "../core";
 import { handleHistoryEvent } from "../commons";
 import { LineShape, getEdges, getLinePath, isLineShape, patchBodyVertex } from "../../../../shapes/line";
 import { MINVALUE, add, getDistance, getInner, getOuterRectangle, getPedal, getRadian, moveRect, sub } from "okageo";
-import { newSelectionHubState } from "../selectionHubState";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
@@ -23,7 +22,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
   return {
     getLabel: () => "MovingElbowSegment",
     onStart: (ctx) => {
-      if (option.lineShape.lineType !== "elbow") return newSelectionHubState;
+      if (option.lineShape.lineType !== "elbow") return ctx.states.newSelectionHubState;
 
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
@@ -53,7 +52,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
       ctx.setTmpShapeMap({});
     },
     handleEvent: (ctx, event) => {
-      if (!srcBodyItem) return newSelectionHubState;
+      if (!srcBodyItem) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointermove": {
@@ -88,14 +87,14 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           if (Object.keys(tmpMap).length > 0) {
             ctx.patchShapes(tmpMap);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "history":
           handleHistoryEvent(ctx, event);
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         default:
           return;
       }

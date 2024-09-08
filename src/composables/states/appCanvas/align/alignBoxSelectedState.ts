@@ -6,7 +6,6 @@ import {
   handleIntransientEvent,
   startTextEditingIfPossible,
 } from "../commons";
-import { newSelectionHubState } from "../selectionHubState";
 import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
@@ -59,7 +58,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
     handleEvent: (ctx, event) => {
       const shapeComposite = ctx.getShapeComposite();
       const targetShape: AlignBoxShape | undefined = shapeComposite.shapeMap[targetId] as AlignBoxShape;
-      if (!targetShape) return newSelectionHubState;
+      if (!targetShape) return ctx.states.newSelectionHubState;
 
       switch (event.type) {
         case "pointerdown":

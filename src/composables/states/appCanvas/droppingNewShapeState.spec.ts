@@ -6,7 +6,6 @@ import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasC
 import { createStyleScheme } from "../../../models/factories";
 import { getInitialOutput } from "../../../utils/textEditor";
 import { newShapeComposite } from "../../shapeComposite";
-import { newSelectionHubState } from "./selectionHubState";
 
 function getMockCtx() {
   return {
@@ -80,7 +79,7 @@ describe("newDroppingNewShapeState", () => {
       expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shapes[0], p: { x: -40, y: -50 } }], {
         [getOption().shapes[0].id]: getInitialOutput(),
       });
-      expect(result2).toEqual(newSelectionHubState);
+      expect(result2).toEqual(ctx.states.newSelectionHubState);
     });
   });
 });

@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newSelectionHubState } from "../selectionHubState";
 import { newMovingShapeState } from "../movingShapeState";
 import { BoardLaneMovingHandler, BoardLaneMovingHitResult, newBoardLaneMovingHandler } from "../../../boardHandler";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
@@ -64,10 +63,10 @@ export function newBoardLaneMovingState(): AppCanvasState {
             const shapeComposite = ctx.getShapeComposite();
             ctx.patchShapes(getPatchByLayouts(shapeComposite, { update: patch }));
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "selection": {
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
           if (boardLaneMovingHandler.isBoardChanged(Array.from(event.data.keys))) {

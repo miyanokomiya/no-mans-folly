@@ -3,7 +3,6 @@ import type { AppCanvasState } from "./core";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath, scaleGlobalAlpha } from "../../../utils/renderer";
-import { newSelectionHubState } from "./selectionHubState";
 import { isTransparentSelection } from "../../../shapes";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "./commons";
@@ -119,7 +118,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           if (rectangle && targetIdSet.size > 0) {
             ctx.multiSelectShapes(Array.from(targetIdSet), keepSelection);
           }
-          return newSelectionHubState;
+          return ctx.states.newSelectionHubState;
         case "wheel":
           handleCommonWheel(ctx, event);
           return;
