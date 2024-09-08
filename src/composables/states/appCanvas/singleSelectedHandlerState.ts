@@ -1,7 +1,9 @@
 import {
+  getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
+  startTextEditingIfPossible,
 } from "./commons";
 import { getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
@@ -47,9 +49,11 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
     return {
       ...src,
       onStart: (ctx) => {
-        ctx.showFloatMenu();
-        ctx.setCommandExams([]);
         targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as S;
+        if (!targetShape) return ctx.states.newSelectionHubState;
+
+        ctx.showFloatMenu();
+        ctx.setCommandExams(getCommonCommandExams(ctx));
         shapeHandler = newHandlerFn?.(ctx, targetShape) ?? (newDummyHandler({}) as H);
 
         const shapeComposite = ctx.getShapeComposite();
@@ -162,6 +166,15 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             }
 
             break;
+          }
+          case "keydown": {
+            switch (event.data.key) {
+              case "Enter":
+                event.data.prevent?.();
+                return startTextEditingIfPossible(ctx, targetShape.id);
+              default:
+                return handleIntransientEvent(ctx, event);
+            }
           }
           case "contextmenu":
             ctx.setContextMenuList({
