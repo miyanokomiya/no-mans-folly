@@ -9,6 +9,7 @@ export type TransitionValue<C, E = ModeStateEvent> =
   | (() => ModeStateBase<C, E>)
   | { getState: () => ModeStateBase<C, E>; type: TransitionType }
   | { type: "break" }
+  | null // Can be used to let the returned value have some meaning but remain void.
   | void;
 
 export interface ModeStateBase<C, E = ModeStateEvent> {

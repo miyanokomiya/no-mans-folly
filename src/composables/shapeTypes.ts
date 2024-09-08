@@ -52,6 +52,7 @@ import { newStarSelectedState } from "./states/appCanvas/star/starSelectedState"
 import { newArcSelectedState } from "./states/appCanvas/arc/arcSelectedState";
 import { newDonutSelectedState } from "./states/appCanvas/donut/donutSelectedState";
 import { newMoonSelectedState } from "./states/appCanvas/moon/moonSelectedState";
+import { newGroupSelectedState } from "./states/appCanvas/group/groupSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -97,6 +98,8 @@ export const layoutTypeList: ShapeTypeItem[] = [
 
 export function getSingleShapeSelectedStateFn(type: string) {
   switch (type) {
+    case "group":
+      return newGroupSelectedState;
     case "line":
       return newLineSelectedState;
     case "rounded_rectangle":

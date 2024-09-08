@@ -37,3 +37,11 @@ export function defineShapeHandler<H extends ShapeHandlerHitResult, O>(
     };
   };
 }
+
+export const newDummyHandler = defineShapeHandler<any, any>(() => {
+  return {
+    hitTest: () => {},
+    render: () => {},
+    isSameHitResult: () => true,
+  };
+});

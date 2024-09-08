@@ -11,8 +11,7 @@ import { newRotatingState } from "./rotatingState";
 import { newResizingState } from "./resizingState";
 import { SmartBranchHandler, newSmartBranchHandler } from "../../smartBranchHandler";
 import { newSelectionHubState } from "./selectionHubState";
-import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "./contextMenuItems";
-import { isGroupShape } from "../../../shapes/group";
+import { getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
@@ -23,7 +22,6 @@ export const newSingleSelectedState = defineIntransientState(() => {
   let boundingBox: BoundingBox;
   let smartBranchHandler: SmartBranchHandler | undefined;
   let selectionScope: ShapeSelectionScope | undefined;
-  let isGroupShapeSelected: boolean;
 
   return {
     getLabel: () => "SingleSelected",
@@ -35,7 +33,6 @@ export const newSingleSelectedState = defineIntransientState(() => {
 
       ctx.showFloatMenu();
       selectionScope = shapeComposite.getSelectionScope(shape);
-      isGroupShapeSelected = isGroupShape(shape);
 
       ctx.setCommandExams(getCommonCommandExams(ctx));
 
@@ -100,22 +97,6 @@ export const newSingleSelectedState = defineIntransientState(() => {
               return;
           }
         case "pointerdoubleclick": {
-          // TODO: It'd be better to make "GroupSelectedState"
-          if (isGroupShapeSelected) {
-            const shapeComposite = ctx.getShapeComposite();
-            const child = shapeComposite.findShapeAt(
-              event.data.point,
-              { parentId: selectedId },
-              undefined,
-              undefined,
-              ctx.getScale(),
-            );
-            if (child) {
-              ctx.selectShape(child.id);
-              return;
-            }
-          }
-
           const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
           if (hitResult) {
             return startTextEditingIfPossible(ctx, selectedId, event.data.point);
@@ -146,23 +127,10 @@ export const newSingleSelectedState = defineIntransientState(() => {
               return handleIntransientEvent(ctx, event);
           }
         case "contextmenu": {
-          const shapeComposite = ctx.getShapeComposite();
-          const shape = shapeComposite.shapeMap[selectedId];
-          if (isGroupShape(shape)) {
-            ctx.setContextMenuList({
-              items: [
-                CONTEXT_MENU_ITEM_SRC.UNGROUP,
-                CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                ...getMenuItemsForSelectedShapes(ctx),
-              ],
-              point: event.data.point,
-            });
-          } else {
-            ctx.setContextMenuList({
-              items: getMenuItemsForSelectedShapes(ctx),
-              point: event.data.point,
-            });
-          }
+          ctx.setContextMenuList({
+            items: getMenuItemsForSelectedShapes(ctx),
+            point: event.data.point,
+          });
           return;
         }
         default:

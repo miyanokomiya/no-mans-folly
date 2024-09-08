@@ -12,7 +12,7 @@ import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { Shape } from "../../../models";
-import { ShapeHandler } from "../../shapeHandlers/core";
+import { newDummyHandler, ShapeHandler } from "../../shapeHandlers/core";
 import { newMovingHubState } from "./movingHubState";
 import { newSmartBranchHandler, SmartBranchHandler } from "../../smartBranchHandler";
 import { canAttachSmartBranch } from "../../../shapes";
@@ -23,9 +23,12 @@ interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHand
   getBoundingBox: () => BoundingBox;
 }
 
+/**
+ * "handleEvent" can be overridden by returning "null" from the custom handler.
+ */
 export function defineSingleSelectedHandlerState<S extends Shape, H extends ShapeHandler, A extends any[]>(
   createFn: (getters: SingleSelectedHandlerStateGetters<S, H>, ...o: A) => AppCanvasState,
-  newHandlerFn: (ctx: AppCanvasStateContext, targetShape: S) => H,
+  newHandlerFn?: (ctx: AppCanvasStateContext, targetShape: S) => H,
 ): (...o: A) => AppCanvasState {
   return defineIntransientState((...o: A) => {
     let targetShape: S;
@@ -48,7 +51,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         ctx.showFloatMenu();
         ctx.setCommandExams([]);
         targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as S;
-        shapeHandler = newHandlerFn(ctx, targetShape);
+        shapeHandler = newHandlerFn?.(ctx, targetShape) ?? (newDummyHandler({}) as H);
 
         const shapeComposite = ctx.getShapeComposite();
         boundingBox = newBoundingBox({
@@ -76,15 +79,15 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       handleEvent: (ctx, event) => {
         if (!targetShape) return newSelectionHubState;
 
+        const res = src.handleEvent(ctx, event);
+        if (res !== undefined) return res;
+
         switch (event.type) {
-          case "pointerdown":
+          case "pointerdown": {
             ctx.setContextMenuList();
 
             switch (event.data.options.button) {
               case 0: {
-                const res = src.handleEvent(ctx, event);
-                if (res) return res;
-
                 const boundingHitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
                 if (boundingHitResult) {
                   switch (boundingHitResult.type) {
@@ -128,6 +131,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
               default:
                 return;
             }
+          }
           case "pointerhover": {
             const nextHitResult = shapeHandler.hitTest(event.data.current, ctx.getScale());
             if (shapeHandler.saveHitResult(nextHitResult)) {
