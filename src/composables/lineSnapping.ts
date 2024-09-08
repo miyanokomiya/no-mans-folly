@@ -469,6 +469,8 @@ function patchLineConnectedToShapeOutline(
 
 /**
  * Returns the closest intersection on the segment.
+ * - Picks the closest one to the original point when there're multiple candidates.
+ *   This one isn't always the best but it keeps better consistency and reversability.
  * Returns nothing when there's no intersection.
  * - It might be well to ignore the segment and return the closest point to the outline,
  *   but it would greatly ruin reversability of this operation.
