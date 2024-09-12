@@ -28,6 +28,8 @@ import { movingShapeControlState } from "../states/appCanvas/movingShapeControlS
 import { COMMAND_EXAM_SRC } from "../states/appCanvas/commandExams";
 import { AppCanvasStateContext } from "../states/appCanvas/core";
 import { getPatchByLayouts } from "../shapeLayoutHandler";
+import { patchPipe } from "../../utils/commons";
+import { patchLinesConnectedToShapeOutline } from "../lineSnapping";
 
 export const ANCHOR_SIZE = 6;
 export const DIRECTION_ANCHOR_SIZE = 10;
@@ -371,13 +373,16 @@ export function handleSwitchDirection2(
   ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite" | "states">,
   shape: SimplePolygonShape,
 ) {
-  const patch = {
-    direction: getNextDirection2(getShapeDirection(shape)),
-  } as Partial<SimplePolygonShape>;
-  const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
-    update: { [shape.id]: patch },
-  });
-  ctx.patchShapes(layoutPatch);
+  const shapeComposite = ctx.getShapeComposite();
+  const patch = patchPipe(
+    [
+      () => ({ [shape.id]: { direction: getNextDirection2(getShapeDirection(shape)) } }),
+      (src) => patchLinesConnectedToShapeOutline(shapeComposite, src[shape.id]),
+      (_, patch) => getPatchByLayouts(shapeComposite, { update: patch }),
+    ],
+    { [shape.id]: shape },
+  ).patch;
+  ctx.patchShapes(patch);
   return ctx.states.newSelectionHubState;
 }
 
@@ -385,12 +390,15 @@ export function handleSwitchDirection4(
   ctx: Pick<AppCanvasStateContext, "patchShapes" | "getShapeComposite" | "states">,
   shape: SimplePolygonShape,
 ) {
-  const patch = {
-    direction: getNextDirection4(getShapeDirection(shape)),
-  } as Partial<SimplePolygonShape>;
-  const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
-    update: { [shape.id]: patch },
-  });
-  ctx.patchShapes(layoutPatch);
+  const shapeComposite = ctx.getShapeComposite();
+  const patch = patchPipe(
+    [
+      () => ({ [shape.id]: { direction: getNextDirection4(getShapeDirection(shape)) } }),
+      (src) => patchLinesConnectedToShapeOutline(shapeComposite, src[shape.id]),
+      (_, patch) => getPatchByLayouts(shapeComposite, { update: patch }),
+    ],
+    { [shape.id]: shape },
+  ).patch;
+  ctx.patchShapes(patch);
   return ctx.states.newSelectionHubState;
 }
