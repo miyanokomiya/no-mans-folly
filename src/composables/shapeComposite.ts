@@ -28,16 +28,19 @@ interface Option {
   tmpShapeMap?: { [id: string]: Partial<Shape> };
 }
 
-const cacheMap = newObjectWeakCache<
-  Shape,
-  {
-    wrapperRect: IRectangle;
-    "wrapperRect:bounds": IRectangle;
-    localRectPolygon: IVec2[];
-  }
->();
-
 export function newShapeComposite(option: Option) {
+  // This cache has to be within this scope.
+  // Some shapes such as groups depend on other shapes to derive their bounds,
+  // so using those intances as keys aren't sufficient to take this cache over composites.
+  const cacheMap = newObjectWeakCache<
+    Shape,
+    {
+      wrapperRect: IRectangle;
+      "wrapperRect:bounds": IRectangle;
+      localRectPolygon: IVec2[];
+    }
+  >();
+
   const shapeMap = toMap(option.shapes);
   const mergedShapeMap = option.tmpShapeMap
     ? (mergeMap(shapeMap, option.tmpShapeMap) as { [id: string]: Shape })
