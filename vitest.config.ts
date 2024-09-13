@@ -5,5 +5,8 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     setupFiles: ["src/vitest.setup.ts"],
+    benchmark: {
+      include: ["src/**/*.bench.(js|ts)"],
+    },
   },
 });

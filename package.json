@@ -9,6 +9,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "bench": "vitest bench",
     "type": "yarn tsc --noEmit",
     "lint": "eslint --ext ts,tsx ./*.ts ./src",
     "lint-json": "prettier -c ./*.json",
