@@ -7,16 +7,17 @@ describe("newEntityStore", () => {
     const ydoc = new Y.Doc();
     const store = newEntityStore({ name: "test", ydoc });
 
-    const ids = [...Array(500)].map((_, i) => `id_${i}`);
+    const ids = [...Array(1000)].map((_, i) => `id_${i}`);
     ids.map((id) => {
       store.addEntity({ id, findex: `findex_${id}` });
     });
+    store.getEntities();
 
     bench("patch all entities in order", () => {
       ids.map((id) => {
         store.patchEntities({ [id]: { findex: id } });
+        store.getEntities();
       });
-      store.getEntities();
     });
   });
 });
