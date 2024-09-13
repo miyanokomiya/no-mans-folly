@@ -3,7 +3,6 @@ import { generateKeyBetween } from "fractional-indexing";
 import type { Entity } from "../../models";
 import { newCallback } from "../../composables/reactives";
 import { findexSortFn, toMap } from "../../utils/commons";
-import { newCache } from "../../composables/cache";
 
 type Option = {
   name: string;
@@ -14,15 +13,10 @@ export function newEntityStore<T extends Entity>(option: Option) {
   let ydoc: Y.Doc;
   let entityMap: Y.Map<Y.Map<any>>;
   let unobserve: (() => void) | undefined;
+  let entityListCache: ReturnType<typeof newEntityListCache<T>>;
 
   const callback = newCallback<Set<string>>();
   const watch = callback.bind;
-
-  const _entitiesCache = newCache(() => {
-    const list = Array.from(entityMap.values()).map((ye) => toEntity(ye));
-    list.sort(findexSortFn);
-    return list;
-  });
 
   function refresh(_ydoc: Y.Doc) {
     unobserve?.();
@@ -30,11 +24,12 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
     ydoc = _ydoc;
     entityMap = ydoc.getMap(option.name);
-    unobserve = observeEntityMap(entityMap, (ids: Set<string>) => {
-      _entitiesCache.update();
+    unobserve = observeEntityMap(entityMap, (ids, keyMap) => {
+      entityListCache.setDirtyKeyMap(keyMap);
       callback.dispatch(ids);
     });
-    _entitiesCache.update();
+    entityListCache = newEntityListCache(entityMap);
+    entityListCache.refresh();
     callback.dispatch(new Set(getEntities().map((e) => e.id)));
   }
   refresh(option.ydoc);
@@ -49,7 +44,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
   }
 
   function getEntities(): T[] {
-    return _entitiesCache.getValue();
+    return entityListCache.getEntityList();
   }
 
   function getEntityMap(): { [id: string]: T } {
@@ -58,20 +53,7 @@ export function newEntityStore<T extends Entity>(option: Option) {
 
   function getEntity(id: string): T | undefined {
     const ye = entityMap.get(id);
-    return ye ? toEntity(ye) : undefined;
-  }
-
-  function toYEntity(entity: T): Y.Map<any> {
-    const yEntity = new Y.Map<any>(Object.entries(entity));
-    return yEntity;
-  }
-
-  function toEntity(yEntity: Y.Map<any>): T {
-    const ret: any = {};
-    for (const [key, value] of yEntity.entries()) {
-      ret[key] = value;
-    }
-    return ret;
+    return ye ? toEntity<T>(ye) : undefined;
   }
 
   function addEntity(entity: T) {
@@ -176,15 +158,7 @@ export function newSingleEntityStore<T extends Entity>(option: Option) {
   const entity: Y.Map<any> = option.ydoc.getMap(option.name);
 
   function getEntity(): T {
-    return toEntity(entity);
-  }
-
-  function toEntity(yEntity: Y.Map<any>): T {
-    const ret: any = {};
-    for (const [key, value] of yEntity.entries()) {
-      ret[key] = value;
-    }
-    return ret;
+    return toEntity<T>(entity);
   }
 
   function patchEntity(attrs: Partial<T>) {
@@ -223,22 +197,110 @@ export function newSingleEntityStore<T extends Entity>(option: Option) {
   };
 }
 
-export function observeEntityMap(entityMap: Y.Map<any>, fn: (ids: Set<string>) => void): () => void {
+type ObserveValue = { action: "add" | "update" | "delete" };
+type ObserveKeyMap = Map<string, ObserveValue>;
+
+export function observeEntityMap(
+  entityMap: Y.Map<any>,
+  fn: (ids: Set<string>, keyMap: ObserveKeyMap) => void,
+): () => void {
   const callback = (arg: Array<Y.YEvent<any>>) => {
     const ids = new Set<string>();
+    const keyMap: ObserveKeyMap = new Map();
     arg.forEach((a) => {
       if (a.target === entityMap) {
+        for (const [key, v] of a.keys) {
+          keyMap.set(key, { action: v.action });
+        }
         for (const k of a.keys.keys()) {
           ids.add(k);
         }
       } else {
-        ids.add(a.path[a.path.length - 1] as string);
+        const id = a.path[a.path.length - 1] as string;
+        ids.add(id);
+        keyMap.set(id, { action: "update" });
       }
     });
-    fn(ids);
+    fn(ids, keyMap);
   };
   entityMap.observeDeep(callback);
   return () => {
     entityMap.unobserveDeep(callback);
   };
+}
+
+function newEntityListCache<T extends Entity>(entityMap: Y.Map<Y.Map<any>>) {
+  let entityListCache: T[] = [];
+  let dirtyKeyMap: ObserveKeyMap = new Map();
+
+  function refresh() {
+    const list = Array.from(entityMap.values()).map((ye) => toEntity<T>(ye));
+    list.sort(findexSortFn);
+    entityListCache = list;
+    dirtyKeyMap = new Map();
+  }
+
+  function patchEntityListCache() {
+    if (dirtyKeyMap.size === 0) return;
+
+    const indexMap = new Map<string, number>();
+    let shift = 0;
+    entityListCache.forEach((entity, i) => {
+      const v = dirtyKeyMap!.get(entity.id);
+      if (!v) return;
+
+      indexMap.set(entity.id, i + shift);
+      if (v.action === "delete") {
+        shift--;
+      }
+    });
+
+    entityListCache = entityListCache.concat();
+    for (const [id, v] of dirtyKeyMap) {
+      switch (v.action) {
+        case "add":
+        case "update":
+          if (indexMap.has(id)) {
+            entityListCache[indexMap.get(id)!] = toEntity(entityMap.get(id)!);
+          } else {
+            entityListCache.push(toEntity(entityMap.get(id)!));
+          }
+          break;
+        case "delete":
+          if (indexMap.has(id)) {
+            entityListCache.splice(indexMap.get(id)!, 1);
+          }
+          break;
+      }
+    }
+
+    entityListCache.sort(findexSortFn);
+    dirtyKeyMap = new Map();
+  }
+
+  function getEntityList(): T[] {
+    patchEntityListCache();
+    return entityListCache;
+  }
+
+  function setDirtyKeyMap(keyMap: ObserveKeyMap) {
+    for (const [key, v] of keyMap) {
+      dirtyKeyMap.set(key, v);
+    }
+  }
+
+  return { refresh, getEntityList, setDirtyKeyMap };
+}
+
+function toEntity<T extends Entity>(yEntity: Y.Map<any>): T {
+  const ret: any = {};
+  for (const [key, value] of yEntity.entries()) {
+    ret[key] = value;
+  }
+  return ret;
+}
+
+function toYEntity<T extends Entity>(entity: T): Y.Map<any> {
+  const yEntity = new Y.Map<any>(Object.entries(entity));
+  return yEntity;
 }
