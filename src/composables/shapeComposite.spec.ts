@@ -453,6 +453,42 @@ describe("newShapeComposite", () => {
       expect(target1.tmpShapeMap).toEqual({});
     });
   });
+
+  describe("Circular parent reference", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0", parentId: "group10" });
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = { ...child0, id: "child1", parentId: group0.id };
+    const group10 = { ...group0, id: "group10", parentId: group0.id };
+    const child10 = { ...child0, id: "child10", parentId: group10.id };
+    const child11 = { ...child0, id: "child11", parentId: group10.id };
+
+    test("should sever circular parent reference", () => {
+      const shapes = [group0, child0, child1, group10, child10, child11];
+      const composite = newShapeComposite({ shapes, getStruct: getCommonStruct });
+      expect(composite.mergedShapeTree).toEqual([
+        {
+          id: group10.id,
+          children: [
+            {
+              id: group0.id,
+              parentId: group10.id,
+              children: [
+                { id: child0.id, parentId: group0.id, children: [] },
+                { id: child1.id, parentId: group0.id, children: [] },
+              ],
+            },
+            { id: child10.id, parentId: group10.id, children: [] },
+            { id: child11.id, parentId: group10.id, children: [] },
+          ],
+        },
+      ]);
+      expect(composite.shapes.find((s) => s.id === group10.id)!.parentId).toBe(undefined);
+      expect(composite.shapeMap[group10.id].parentId).toBe(undefined);
+    });
+  });
 });
 
 describe("findBetterShapeAt", () => {

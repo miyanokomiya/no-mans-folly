@@ -10,23 +10,53 @@ export interface TreeNode {
 }
 
 export function getTree<T extends TreeFlatNode>(items: T[]): TreeNode[] {
-  const noParents: T[] = [];
   const itemMap = new Map(items.map((item) => [item.id, item]));
+  const parentRefMap = getParentRefMap(items);
+  const noParents = items.filter((item) => !parentRefMap.has(item.id));
+  const parentMap: { [id: string]: T[] } = {};
 
-  const parentMap: { [id: string]: T[] } = items.reduce<{ [id: string]: T[] }>((p, b) => {
-    if (!b.parentId || !itemMap.has(b.parentId)) {
-      noParents.push(b);
-    } else if (p[b.parentId]) {
-      p[b.parentId].push(b);
+  for (const [id, parentId] of parentRefMap) {
+    const item = itemMap.get(id)!;
+    if (parentMap[parentId]) {
+      parentMap[parentId].push(item);
     } else {
-      p[b.parentId] = [b];
+      parentMap[parentId] = [item];
     }
-    return p;
-  }, {});
+  }
 
   return noParents.map((b) => {
     return { id: b.id, children: getChildNodes(parentMap, b.id) };
   });
+}
+
+/**
+ * Circular parent references are severed but the result will be unstable.
+ */
+export function getParentRefMap(items: TreeFlatNode[]): Map<string, string> {
+  const parentMap: Map<string, string> = new Map();
+  const checkedSet: Set<string> = new Set();
+  const itemMap = new Map(items.map((item) => [item.id, item]));
+
+  items.forEach((item) => {
+    if (checkedSet.has(item.id)) return;
+
+    const route = new Set<string>();
+    let current: TreeFlatNode | undefined = item;
+    while (current) {
+      if (checkedSet.has(current.id)) break;
+      checkedSet.add(current.id);
+
+      if (current.parentId && itemMap.has(current.parentId) && !route.has(current.parentId)) {
+        parentMap.set(current.id, current.parentId);
+        route.add(current.id);
+        current = itemMap.get(current.parentId);
+      } else {
+        current = undefined;
+      }
+    }
+  });
+
+  return parentMap;
 }
 
 function getChildNodes<T extends TreeFlatNode>(parentMap: { [id: string]: T[] }, parentId: string): TreeNode[] {

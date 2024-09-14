@@ -3,7 +3,7 @@ import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
-import { flatTree, getAllBranchIds, getBranchPath, getTree } from "../utils/tree";
+import { flatTree, getAllBranchIds, getBranchPath, getParentRefMap, getTree } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
   ShapeContext,
@@ -40,12 +40,15 @@ export function newShapeComposite(option: Option) {
       localRectPolygon: IVec2[];
     }
   >();
+  // Regard and sever circular parent references here.
+  // Be careful that original shapes still keep those references.
+  const srcShapes = severCircularParentRefs(option.shapes);
 
-  const shapeMap = toMap(option.shapes);
+  const shapeMap = toMap(srcShapes);
   const mergedShapeMap = option.tmpShapeMap
     ? (mergeMap(shapeMap, option.tmpShapeMap) as { [id: string]: Shape })
     : shapeMap;
-  const mergedShapes = option.shapes.map((s) => mergedShapeMap[s.id]);
+  const mergedShapes = srcShapes.map((s) => mergedShapeMap[s.id]);
   const mergedShapeTree = getTree(mergedShapes);
   const mergedShapeTreeMap = toMap(flatTree(mergedShapeTree));
 
@@ -246,7 +249,7 @@ export function newShapeComposite(option: Option) {
 
   return {
     getShapeStruct: option.getStruct,
-    shapes: option.shapes,
+    shapes: srcShapes,
     shapeMap,
     tmpShapeMap: option.tmpShapeMap ?? {},
     mergedShapes,
@@ -499,4 +502,9 @@ export function swapShapeParent(
   }
 
   return ret;
+}
+
+function severCircularParentRefs(src: Shape[]): Shape[] {
+  const parentRefMap = getParentRefMap(src);
+  return src.map((s) => (s.parentId && !parentRefMap.has(s.id) ? { ...s, parentId: undefined } : s));
 }

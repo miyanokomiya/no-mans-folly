@@ -40,7 +40,7 @@ describe("getTree", () => {
       },
     ]);
   });
-  test("ignore the parent does not exist", () => {
+  test("ignore the parent when it does not exist", () => {
     const items = [
       { id: "a", parentId: "" },
       { id: "aa", parentId: "a" },
@@ -53,6 +53,47 @@ describe("getTree", () => {
       },
       { id: "ab", children: [] },
     ]);
+  });
+});
+
+describe("getParentMap", () => {
+  test("should sever circular reference", () => {
+    expect(
+      target.getParentRefMap([
+        { id: "a", parentId: "aa" },
+        { id: "aa", parentId: "a" },
+        { id: "c", parentId: "a" },
+      ]),
+    ).toEqual(
+      new Map([
+        ["a", "aa"],
+        ["c", "a"],
+      ]),
+    );
+
+    expect(
+      target.getParentRefMap([
+        { id: "a", parentId: "aaa" },
+        { id: "aa", parentId: "a" },
+        { id: "aaa", parentId: "aa" },
+        { id: "c", parentId: "a" },
+      ]),
+    ).toEqual(
+      new Map([
+        ["a", "aaa"],
+        ["aaa", "aa"],
+        ["c", "a"],
+      ]),
+    );
+  });
+
+  test("ignore the parent when it does not exist", () => {
+    const items = [
+      { id: "a", parentId: "" },
+      { id: "aa", parentId: "a" },
+      { id: "ab", parentId: "b" },
+    ];
+    expect(target.getParentRefMap(items)).toEqual(new Map([["aa", "a"]]));
   });
 });
 
