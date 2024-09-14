@@ -1,12 +1,12 @@
-import { add, getDistance, getNorm, getPedal, isParallel, isSame, IVec2, MINVALUE, sub } from "okageo";
+import { add, getDistance, getNorm, getPedal, isSame, IVec2, MINVALUE, sub } from "okageo";
 import { Shape, StyleScheme } from "../models";
 import { getIntersectedOutlines, GetShapeStruct } from "../shapes";
 import { ShapeSnappingLines } from "../shapes/core";
-import { extendSegment, getCrossLineAndLine, ISegment, TAU } from "../utils/geometry";
-import { pickMinItem } from "../utils/commons";
+import { extendSegment, ISegment, TAU } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
+import { snapVectorToGrid } from "./grid";
 
 const SNAP_THRESHOLD = 10;
 
@@ -25,8 +25,6 @@ export type VectorSnappingResult = { p: IVec2; guidLines?: ISegment[]; snapped?:
 export function newVectorSnapping(option: Option) {
   const isZeroVector = isSame(option.vector, { x: 0, y: 0 });
   const segment: ISegment = [option.origin, add(option.origin, option.vector)];
-  const isHorizontal = isParallel(option.vector, { x: 1, y: 0 });
-  const isVertical = isParallel(option.vector, { x: 0, y: 1 });
   const reversedSnappableShapes = option.snappableShapes.concat().reverse();
 
   function hitTest(point: IVec2, scale: number): VectorSnappingResult {
@@ -64,35 +62,9 @@ export function newVectorSnapping(option: Option) {
     }
 
     if (option.gridSnapping) {
-      const closestHGrid = !isHorizontal
-        ? pickMinItem(option.gridSnapping.h, (hLine) => Math.abs(hLine[0].y - pedal.y))
-        : undefined;
-      const closestVGrid = !isVertical
-        ? pickMinItem(option.gridSnapping.v, (vLine) => Math.abs(vLine[0].x - pedal.x))
-        : undefined;
-
-      const intersectionH = closestHGrid ? getCrossLineAndLine(rawSegment, closestHGrid) : undefined;
-      const intersectionV = closestVGrid ? getCrossLineAndLine(rawSegment, closestVGrid) : undefined;
-      const dH = intersectionH ? getDistance(pedal, intersectionH) : Infinity;
-      const dV = intersectionV ? getDistance(pedal, intersectionV) : Infinity;
-
-      const candidateH = dH < threshold ? intersectionH : undefined;
-      const candidateV = dV < threshold ? intersectionV : undefined;
-
-      if (candidateH && candidateV) {
-        if (isSame(candidateH, candidateV)) {
-          return { p: intersectionH!, guidLines: [closestHGrid!, closestVGrid!], snapped: "grid" };
-        }
-
-        if (dH <= dV) {
-          return { p: intersectionH!, guidLines: [closestHGrid!], snapped: "grid" };
-        } else {
-          return { p: intersectionV!, guidLines: [closestVGrid!], snapped: "grid" };
-        }
-      } else if (candidateH) {
-        return { p: intersectionH!, guidLines: [closestHGrid!], snapped: "grid" };
-      } else if (candidateV) {
-        return { p: intersectionV!, guidLines: [closestVGrid!], snapped: "grid" };
+      const gridResult = snapVectorToGrid(option.gridSnapping, rawSegment[0], rawSegment[1], threshold);
+      if (gridResult) {
+        return { p: gridResult.p, guidLines: gridResult.lines, snapped: "grid" };
       }
     }
 

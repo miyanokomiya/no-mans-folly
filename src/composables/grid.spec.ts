@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { newGrid } from "./grid";
+import { newGrid, snapVectorToGrid } from "./grid";
+import { ShapeSnappingLines } from "../shapes/core";
 
 describe("newGrid", () => {
   test("should create grid segments", () => {
@@ -57,5 +58,42 @@ describe("newGrid", () => {
         { x: 55, y: 80 },
       ],
     ]);
+  });
+});
+
+describe("snapVectorToGrid", () => {
+  const gridSnapping: ShapeSnappingLines = {
+    h: [
+      [
+        { x: -200, y: 0 },
+        { x: 200, y: 0 },
+      ],
+      [
+        { x: -200, y: 50 },
+        { x: 200, y: 50 },
+      ],
+    ],
+    v: [
+      [
+        { x: 0, y: -200 },
+        { x: 0, y: 200 },
+      ],
+      [
+        { x: 50, y: -200 },
+        { x: 50, y: 200 },
+      ],
+    ],
+  };
+
+  test("should snap to unparallel grid line near by", () => {
+    expect(snapVectorToGrid(gridSnapping, { x: -20, y: 0 }, { x: 1, y: 0 }, 5)).toEqual({
+      p: { x: 0, y: 0 },
+      lines: [gridSnapping.v[0]],
+    });
+
+    expect(snapVectorToGrid(gridSnapping, { x: 0, y: -20 }, { x: 0, y: 51 }, 5)).toEqual({
+      p: { x: 0, y: 50 },
+      lines: [gridSnapping.h[1]],
+    });
   });
 });
