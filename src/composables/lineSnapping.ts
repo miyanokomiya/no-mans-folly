@@ -8,7 +8,6 @@ import {
   TAU,
   extendSegment,
   getClosestPointTo,
-  getCrossLineAndLine,
   isRectOverlappedH,
   isRectOverlappedV,
   pickLongSegment,
@@ -21,6 +20,7 @@ import { isObjectEmpty, pickMinItem } from "../utils/commons";
 import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../utils/lineLabel";
+import { snapVectorToGrid } from "./grid";
 
 const SNAP_THRESHOLD = 10;
 
@@ -166,36 +166,14 @@ export function newLineSnapping(option: Option) {
       };
     }
 
-    // Try to snap to the grid lines when "single guid line" has been found.
+    // Try to snap to the grid lines when "single guid line" has been found out of self lines.
     if (selfSnapped?.guidLines?.length === 1 && option.gridSnapping) {
       const p = selfSnapped.p;
       const guideline = selfSnapped?.guidLines[0];
 
-      const closestHGrid = pickMinItem(option.gridSnapping.h, (hLine) => Math.abs(hLine[0].y - p.y));
-      const closestVGrid = pickMinItem(option.gridSnapping.v, (vLine) => Math.abs(vLine[0].x - p.x));
-
-      const intersectionH = closestHGrid ? getCrossLineAndLine(guideline, closestHGrid) : undefined;
-      const intersectionV = closestVGrid ? getCrossLineAndLine(guideline, closestVGrid) : undefined;
-      const dH = intersectionH ? getDistance(point, intersectionH) : Infinity;
-      const dV = intersectionV ? getDistance(point, intersectionV) : Infinity;
-
-      const candidateH = dH < threshold ? intersectionH : undefined;
-      const candidateV = dV < threshold ? intersectionV : undefined;
-
-      if (candidateH && candidateV) {
-        if (isSame(candidateH, candidateV)) {
-          return { p: intersectionH!, guidLines: [guideline, closestHGrid!, closestVGrid!] };
-        }
-
-        if (dH <= dV) {
-          return { p: intersectionH!, guidLines: [guideline, closestHGrid!] };
-        } else {
-          return { p: intersectionV!, guidLines: [guideline, closestVGrid!] };
-        }
-      } else if (candidateH) {
-        return { p: intersectionH!, guidLines: [guideline, closestHGrid!] };
-      } else if (candidateV) {
-        return { p: intersectionV!, guidLines: [guideline, closestVGrid!] };
+      const gridResult = snapVectorToGrid(option.gridSnapping, guideline[0], p, threshold);
+      if (gridResult) {
+        return { p: gridResult.p, guidLines: [guideline, ...gridResult.lines] };
       }
     }
 
