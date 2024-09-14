@@ -1,13 +1,20 @@
 import type { AppCanvasState } from "../core";
 import { handleHistoryEvent } from "../commons";
-import { LineShape, getEdges, isLineShape } from "../../../../shapes/line";
-import { IVec2, add, getRadian, sub } from "okageo";
+import { LineShape, getEdges } from "../../../../shapes/line";
+import { IVec2, add, getCenter, getRadian, rotate, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU, getRotateFn } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { ArcCurveControl } from "../../../../models";
+import {
+  newVectorSnapping,
+  renderVectorSnappingResult,
+  VectorSnapping,
+  VectorSnappingResult,
+} from "../../../vectorSnapping";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { applyPath } from "../../../../utils/renderer";
 
 interface Option {
   lineShape: LineShape;
@@ -18,8 +25,8 @@ interface Option {
 export function newMovingLineArcState(option: Option): AppCanvasState {
   const edge = getEdges(option.lineShape)[option.index];
   const rotateFn = getRotateFn(getRadian(edge[1], edge[0]));
-  let shapeSnapping: ShapeSnapping;
-  let snappingResult: SnappingResult | undefined;
+  let shapeSnapping: VectorSnapping;
+  let snappingResult: VectorSnappingResult | undefined;
 
   return {
     getLabel: () => "MovingLineArc",
@@ -30,14 +37,17 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
 
-      const snappableLines = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => isLineShape(s)),
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
+        Object.values(shapeMap).filter((s) => s.id !== option.lineShape.id),
         ctx.getViewRect(),
       );
-      shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
+      shapeSnapping = newVectorSnapping({
+        origin: getCenter(edge[1], edge[0]),
+        vector: rotate(sub(edge[1], edge[0]), -Math.PI / 2),
+        snappableShapes,
         gridSnapping: ctx.getGrid().getSnappingLines(),
+        getShapeStruct: shapeComposite.getShapeStruct,
+        snappableOrigin: true,
       });
 
       const d = rotateFn(sub(option.p, edge[0]), true);
@@ -59,13 +69,9 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
         case "pointermove": {
           const point = event.data.current;
 
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
-          const p = snappingResult ? add(point, snappingResult.diff) : point;
-          let d = rotateFn(sub(p, edge[0]), true);
-          // Snap to none arc point.
-          if (!event.data.ctrl && Math.abs(d.y) < 10 * ctx.getScale()) {
-            d = { x: d.x, y: 0 };
-          }
+          snappingResult = event.data.ctrl ? undefined : shapeSnapping.hitTest(point, ctx.getScale());
+          const p = snappingResult?.p ?? point;
+          const d = rotateFn(sub(p, edge[0]), true);
 
           const curves = option.lineShape.curves?.concat() ?? [];
           curves[option.index] = d.y !== 0 ? { d } : undefined;
@@ -101,16 +107,26 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
 
       const line: LineShape = { ...option.lineShape, ...ctx.getTmpShapeMap()[option.lineShape.id] };
       const d = (line.curves?.[option.index] as ArcCurveControl | undefined)?.d ?? { x: 0, y: 0 };
-      const p = add(rotateFn(d), edge[0]);
+      const p = add(rotateFn({ x: 0, y: d.y }), getCenter(edge[0], edge[1]));
 
       renderCtx.beginPath();
       renderCtx.arc(p.x, p.y, vertexSize, 0, TAU);
       renderCtx.fill();
 
       if (snappingResult) {
-        renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
+        const style = ctx.getStyleScheme();
+        const scale = ctx.getScale();
+
+        if (snappingResult.snapped === "origin") {
+          applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
+          renderCtx.beginPath();
+          applyPath(renderCtx, edge);
+          renderCtx.stroke();
+        }
+
+        renderVectorSnappingResult(renderCtx, {
+          style,
+          scale,
           result: snappingResult,
         });
       }
