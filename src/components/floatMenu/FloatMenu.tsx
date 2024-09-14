@@ -86,7 +86,7 @@ export const FloatMenu: React.FC<Option> = ({
     const id = shapeStore.getLastSelected();
     if (!id) return;
 
-    const shape = shapeStore.getEntityMap()[id];
+    const shape = shapeStore.shapeComposite.shapeMap[id];
     if (!shape) return;
 
     const tmp = shapeStore.getTmpShapeMap()[id] ?? {};

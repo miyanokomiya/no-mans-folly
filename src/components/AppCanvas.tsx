@@ -86,7 +86,7 @@ export const AppCanvas: React.FC = () => {
 
   useEffect(() => {
     imageStore.clear();
-    loadShapeAssets(shapeStore.getEntities());
+    loadShapeAssets(shapeStore.shapeComposite.shapes);
 
     return imageStore.watch(() => {
       setCanvasState({});
@@ -285,7 +285,7 @@ export const AppCanvas: React.FC = () => {
       deleteShapes: (ids: string[], patch) => {
         // Apply patch before getting branch ids in case tree structure changes by the patch.
         // => e.g. ungrouping
-        const updated = patchPipe([() => patch ?? {}], shapeStore.getEntityMap());
+        const updated = patchPipe([() => patch ?? {}], shapeStore.shapeComposite.shapeMap);
         const targetIds = getDeleteTargetIds(
           shapeStore.shapeComposite,
           getAllBranchIds(getTree(Object.values(updated.result)), ids),
@@ -309,7 +309,7 @@ export const AppCanvas: React.FC = () => {
       updateShapes: (update, docMap) => {
         // Apply patch before getting branch ids in case tree structure changes by the patch.
         // => e.g. ungrouping
-        const updated = patchPipe([() => update.update ?? {}], shapeStore.getEntityMap());
+        const updated = patchPipe([() => update.update ?? {}], shapeStore.shapeComposite.shapeMap);
         const targetIds = update.delete
           ? getDeleteTargetIds(
               shapeStore.shapeComposite,
@@ -358,7 +358,7 @@ export const AppCanvas: React.FC = () => {
       },
       pasteShapes: (shapes, docs, p) => {
         const targetP = p ?? viewToCanvas(getMousePoint());
-        const availableIdSet = new Set(shapeStore.getEntities().map((s) => s.id));
+        const availableIdSet = new Set(shapeStore.shapeComposite.shapes.map((s) => s.id));
         const result = duplicateShapes(
           getCommonStruct,
           shapes,

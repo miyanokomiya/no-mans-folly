@@ -77,7 +77,7 @@ export function useShapes(): Shape[] {
   const [shapes, setShapes] = useState<Shape[]>([]);
 
   const update = useCallback(() => {
-    setShapes(shapeStore.getEntities());
+    setShapes(shapeStore.shapeComposite.shapes);
   }, [shapeStore]);
 
   useEffect(() => {
@@ -215,7 +215,7 @@ export function useSelectedShapes(): Shape[] {
   const [selectedShapes, setSelectedShapes] = useState<Shape[]>([]);
 
   const update = useCallback(() => {
-    const shapeMap = shapeStore.getEntityMap();
+    const shapeMap = shapeStore.shapeComposite.shapeMap;
     setSelectedShapes(Object.keys(shapeStore.getSelected()).map((id) => shapeMap[id]));
   }, [shapeStore]);
 
@@ -295,9 +295,9 @@ export function useSelectedShapeInfo(): { idMap: { [id: string]: true }; lastId?
 export function useHasShape(shapeStore: ShapeStore): boolean {
   const [hasShape, setHasShape] = useState(false);
   useEffect(() => {
-    setHasShape(shapeStore.getEntities().length > 0);
+    setHasShape(shapeStore.shapeComposite.shapes.length > 0);
     return shapeStore.watch(() => {
-      setHasShape(shapeStore.getEntities().length > 0);
+      setHasShape(shapeStore.shapeComposite.shapes.length > 0);
     });
   }, [shapeStore]);
 

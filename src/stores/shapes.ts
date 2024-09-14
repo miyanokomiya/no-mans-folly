@@ -63,6 +63,10 @@ export function newShapeStore(option: Option) {
     getTmpShapeMap,
     watchTmpShapeMap: tmpShapeMapCallback.bind,
 
+    /**
+     * This property should be used most of the time shapes are needed, because shape composite may format them for variety of reasons.
+     * "getEntities", "getEntityMap" and "getEntity" should be used only when raw persistent data is needed.
+     */
     get shapeComposite() {
       return shapeCompositeCache.getValue();
     },
