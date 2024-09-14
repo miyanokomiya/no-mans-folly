@@ -10,22 +10,23 @@ export interface TreeNode {
 }
 
 export function getTree<T extends TreeFlatNode>(items: T[]): TreeNode[] {
-  const itemMap = new Map(items.map((item) => [item.id, item]));
   const parentRefMap = getParentRefMap(items);
-  const noParents = items.filter((item) => !parentRefMap.has(item.id));
+  const noParentIds: string[] = [];
   const parentMap: { [id: string]: T[] } = {};
 
-  for (const [id, parentId] of parentRefMap) {
-    const item = itemMap.get(id)!;
-    if (parentMap[parentId]) {
+  for (const item of items) {
+    const parentId = parentRefMap.get(item.id);
+    if (!parentId) {
+      noParentIds.push(item.id);
+    } else if (parentMap[parentId]) {
       parentMap[parentId].push(item);
     } else {
       parentMap[parentId] = [item];
     }
   }
 
-  return noParents.map((b) => {
-    return { id: b.id, children: getChildNodes(parentMap, b.id) };
+  return noParentIds.map((id) => {
+    return { id, children: getChildNodes(parentMap, id) };
   });
 }
 

@@ -54,6 +54,25 @@ describe("getTree", () => {
       { id: "ab", children: [] },
     ]);
   });
+  test("should respect original order of the items", () => {
+    const items = [
+      { id: "aca", parentId: "ac" },
+      { id: "a", parentId: "" },
+      { id: "aa", parentId: "a" },
+      { id: "ab", parentId: "a" },
+      { id: "ac", parentId: "a" },
+    ];
+    expect(target.getTree(items)).toEqual([
+      {
+        id: "a",
+        children: [
+          { id: "aa", parentId: "a", children: [] },
+          { id: "ab", parentId: "a", children: [] },
+          { id: "ac", parentId: "a", children: [{ id: "aca", parentId: "ac", children: [] }] },
+        ],
+      },
+    ]);
+  });
 });
 
 describe("getParentMap", () => {
