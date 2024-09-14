@@ -40,14 +40,16 @@ export function newShapeComposite(option: Option) {
       localRectPolygon: IVec2[];
     }
   >();
+
+  const getStruct = option.getStruct;
+  const tmpShapeMap = option.tmpShapeMap;
+
   // Regard and sever circular parent references here.
   // Be careful that original shapes still keep those references.
   const srcShapes = severCircularParentRefs(option.shapes);
 
   const shapeMap = toMap(srcShapes);
-  const mergedShapeMap = option.tmpShapeMap
-    ? (mergeMap(shapeMap, option.tmpShapeMap) as { [id: string]: Shape })
-    : shapeMap;
+  const mergedShapeMap = tmpShapeMap ? (mergeMap(shapeMap, tmpShapeMap) as { [id: string]: Shape }) : shapeMap;
   const mergedShapes = srcShapes.map((s) => mergedShapeMap[s.id]);
   const mergedShapeTree = getTree(mergedShapes);
   const mergedShapeTreeMap = toMap(flatTree(mergedShapeTree));
@@ -55,7 +57,7 @@ export function newShapeComposite(option: Option) {
   const mergedShapeContext: ShapeContext = {
     shapeMap: mergedShapeMap,
     treeNodeMap: mergedShapeTreeMap,
-    getStruct: option.getStruct,
+    getStruct,
     lineJumpMap: getLineJumpMap(mergedShapes.filter((s) => isLineShape(s))),
   };
 
@@ -74,7 +76,7 @@ export function newShapeComposite(option: Option) {
     const filteredIds = ignoreUnbound
       ? ids.filter((id) => {
           const s = mergedShapeMap[id];
-          if (option.getStruct(s.type).unboundChildren) {
+          if (getStruct(s.type).unboundChildren) {
             unboundParents.push(s);
             return false;
           }
@@ -88,11 +90,11 @@ export function newShapeComposite(option: Option) {
   }
 
   function render(ctx: CanvasRenderingContext2D, shape: Shape, imageStore?: ImageStore) {
-    shapeModule.renderShape(option.getStruct, ctx, shape, mergedShapeContext, imageStore);
+    shapeModule.renderShape(getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
   function createSVGElementInfo(shape: Shape, imageStore?: ImageStore): SVGElementInfo | undefined {
-    return shapeModule.createSVGElementInfo(option.getStruct, shape, mergedShapeContext, imageStore);
+    return shapeModule.createSVGElementInfo(getStruct, shape, mergedShapeContext, imageStore);
   }
 
   function findShapeAt(
@@ -106,11 +108,10 @@ export function newShapeComposite(option: Option) {
     const candidates = getMergedShapesInSelectionScope(scope, parentScopeCheckOnly);
     const candidate = findBackward(
       candidates,
-      (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(option.getStruct, s, p, mergedShapeContext, scale),
+      (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(getStruct, s, p, mergedShapeContext, scale),
     );
     if (!candidate) return;
-    if (!excludeSet.has(candidate.id) && !shapeModule.isTransparentSelection(option.getStruct, candidate))
-      return candidate;
+    if (!excludeSet.has(candidate.id) && !shapeModule.isTransparentSelection(getStruct, candidate)) return candidate;
 
     // When the candidate is transparent for selection, try seeking its children.
     const childCandidate = findShapeAt(p, { parentId: candidate.id }, excludeIds, true, scale);
@@ -118,16 +119,16 @@ export function newShapeComposite(option: Option) {
   }
 
   function isPointOn(shape: Shape, p: IVec2): boolean {
-    return shapeModule.isPointOn(option.getStruct, shape, p, mergedShapeContext);
+    return shapeModule.isPointOn(getStruct, shape, p, mergedShapeContext);
   }
 
   function transformShape<T extends Shape>(shape: T, resizingAffine: AffineMatrix): Partial<T> {
-    return shapeModule.resizeShape(option.getStruct, shape, resizingAffine, mergedShapeContext);
+    return shapeModule.resizeShape(getStruct, shape, resizingAffine, mergedShapeContext);
   }
 
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
     return cacheMap.getValue(shape, includeBounds ? "wrapperRect:bounds" : "wrapperRect", () => {
-      return shapeModule.getWrapperRect(option.getStruct, shape, mergedShapeContext, includeBounds);
+      return shapeModule.getWrapperRect(getStruct, shape, mergedShapeContext, includeBounds);
     });
   }
 
@@ -138,7 +139,7 @@ export function newShapeComposite(option: Option) {
 
   function getLocalRectPolygon(shape: Shape): IVec2[] {
     return cacheMap.getValue(shape, "localRectPolygon", () => {
-      return shapeModule.getLocalRectPolygon(option.getStruct, shape, mergedShapeContext);
+      return shapeModule.getLocalRectPolygon(getStruct, shape, mergedShapeContext);
     });
   }
 
@@ -177,15 +178,15 @@ export function newShapeComposite(option: Option) {
   }
 
   function getSnappingLines(shape: Shape): ShapeSnappingLines {
-    return shapeModule.getSnappingLines(option.getStruct, shape, mergedShapeContext);
+    return shapeModule.getSnappingLines(getStruct, shape, mergedShapeContext);
   }
 
   function shouldDelete(shape: Shape): boolean {
-    return !!option.getStruct(shape.type).shouldDelete?.(shape, mergedShapeContext);
+    return !!getStruct(shape.type).shouldDelete?.(shape, mergedShapeContext);
   }
 
   function getSelectionScope(shape: Shape): ShapeSelectionScope {
-    const struct = option.getStruct(shape.type);
+    const struct = getStruct(shape.type);
     if (struct.getSelectionScope) {
       return struct.getSelectionScope(shape, mergedShapeContext);
     } else if (mergedShapeContext.shapeMap[shape.parentId ?? ""]) {
@@ -210,7 +211,7 @@ export function newShapeComposite(option: Option) {
   }
 
   function getShapeActualPosition(shape: Shape): IVec2 {
-    return option.getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
+    return getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
   }
 
   function hasParent(shape: Shape): boolean {
@@ -234,7 +235,7 @@ export function newShapeComposite(option: Option) {
 
   function getShapeCompositeWithoutTmpInfo(): ShapeComposite {
     return newShapeComposite({
-      getStruct: option.getStruct,
+      getStruct,
       shapes: option.shapes,
     });
   }
@@ -242,16 +243,16 @@ export function newShapeComposite(option: Option) {
   function getSubShapeComposite(ids: string[]): ShapeComposite {
     const allIds = getAllBranchIds(mergedShapeTree, ids);
     return newShapeComposite({
-      getStruct: option.getStruct,
+      getStruct,
       shapes: allIds.map((id) => shapeMap[id]),
     });
   }
 
   return {
-    getShapeStruct: option.getStruct,
+    getShapeStruct: getStruct,
     shapes: srcShapes,
     shapeMap,
-    tmpShapeMap: option.tmpShapeMap ?? {},
+    tmpShapeMap: tmpShapeMap ?? {},
     mergedShapes,
     mergedShapeMap,
     mergedShapeTree,
