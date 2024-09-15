@@ -6,11 +6,13 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { applyCurvePath, applyPath, renderMoveIcon, renderOutlinedCircle, renderPlusIcon } from "../utils/renderer";
-import { getSegmentVicinityFrom } from "../utils/path";
+import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
+import { canAddBezierControls, getModifiableBezierControls } from "../shapes/utils/curveLine";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
 const MOVE_ANCHOR_RATE = 1.4;
+export const BEZIER_ANCHOR_SIZE = 6;
 
 type LineHitType =
   | "move-anchor"
@@ -21,10 +23,16 @@ type LineHitType =
   | "optimize"
   | "elbow-edge"
   | "reset-elbow-edge";
-export interface LineHitResult {
-  type: LineHitType;
-  index: number;
-}
+export type LineHitResult =
+  | {
+      type: LineHitType;
+      index: number;
+    }
+  | {
+      type: "new-bezier-anchor" | "bezier-anchor";
+      index: number;
+      subIndex: 0 | 1;
+    };
 
 interface Option {
   lineShape: LineShape;
@@ -43,6 +51,7 @@ export function newLineBounding(option: Option) {
         const lerpFn = getCurveLerpFn(edge, curves?.[i]);
         return lerpFn(0.5);
       });
+  const bezierAnchors = getModifiableBezierControls(lineShape);
 
   const elbow = isElbow(lineShape);
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
@@ -86,6 +95,16 @@ export function newLineBounding(option: Option) {
     return edges.map((edge, i) => getSegmentVicinityFrom(edge, curves?.[i], margin));
   }
 
+  function getAddAnchorBeziers(scale: number): ([IVec2, IVec2] | undefined)[] {
+    if (autoCurve || elbow) return [];
+
+    const margin = 40 * scale;
+    return edges.map((edge, i) => {
+      if (!canAddBezierControls(curves?.[i])) return;
+      return [getSegmentVicinityFrom(edge, undefined, margin), getSegmentVicinityTo(edge, undefined, margin)];
+    });
+  }
+
   function getOptimizeAnchorP(scale: number): IVec2 | undefined {
     if (!lineShape.pConnection) return;
     const rate = lineShape.pConnection.rate;
@@ -115,6 +134,7 @@ export function newLineBounding(option: Option) {
 
   function hitTest(p: IVec2, scale = 1): LineHitResult | undefined {
     const vertexSize = VERTEX_R * scale;
+    const bezierSize = BEZIER_ANCHOR_SIZE * scale;
 
     {
       const moveAnchor = getMoveAnchor(scale);
@@ -142,6 +162,39 @@ export function newLineBounding(option: Option) {
           return { type: "optimize", index: vertices.length - 1 };
         }
       }
+    }
+
+    {
+      let hitResult: LineHitResult | undefined;
+      bezierAnchors?.some((v, i) => {
+        if (!v) return;
+
+        if (newCircleHitTest(v.c1, bezierSize).test(p)) {
+          hitResult = { type: "bezier-anchor", index: i, subIndex: 0 };
+          return true;
+        } else if (newCircleHitTest(v.c2, bezierSize).test(p)) {
+          hitResult = { type: "bezier-anchor", index: i, subIndex: 1 };
+          return true;
+        }
+      });
+      if (hitResult) return hitResult;
+    }
+
+    {
+      const addAnchorBeziers = getAddAnchorBeziers(scale);
+      let hitResult: LineHitResult | undefined;
+      addAnchorBeziers.some((v, i) => {
+        if (!v) return;
+
+        if (newCircleHitTest(v[0], bezierSize).test(p)) {
+          hitResult = { type: "new-bezier-anchor", index: i, subIndex: 0 };
+          return true;
+        } else if (newCircleHitTest(v[1], bezierSize).test(p)) {
+          hitResult = { type: "new-bezier-anchor", index: i, subIndex: 1 };
+          return true;
+        }
+      });
+      if (hitResult) return hitResult;
     }
 
     {
@@ -220,11 +273,14 @@ export function newLineBounding(option: Option) {
 
   function render(ctx: CanvasRenderingContext2D, scale = 1) {
     const vertexSize = VERTEX_R * scale;
+    const bezierSize = BEZIER_ANCHOR_SIZE * scale;
     const style = option.styleScheme;
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
     ctx.fillStyle = "#fff";
 
     const points = vertices;
+    const addAnchorBeziers = getAddAnchorBeziers(scale);
+
     points.forEach((p, i) => {
       if (!availableVertexIndex.has(i)) return;
 
@@ -245,7 +301,26 @@ export function newLineBounding(option: Option) {
         });
       }
 
+      renderBezierControls(ctx, style, scale, lineShape);
+
+      if (bezierAnchors) {
+        bezierAnchors.forEach((c) => {
+          if (!c) return;
+          renderOutlinedCircle(ctx, c.c1, bezierSize, style.transformAnchor);
+          renderOutlinedCircle(ctx, c.c2, bezierSize, style.transformAnchor);
+        });
+      }
+
       {
+        addAnchorBeziers.forEach((c) => {
+          if (!c) return;
+          renderOutlinedCircle(ctx, c[0], bezierSize, style.transformAnchor);
+          renderOutlinedCircle(ctx, c[1], bezierSize, style.transformAnchor);
+        });
+      }
+
+      {
+        ctx.fillStyle = "#fff";
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
         const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
         getAddAnchorBody(scale).forEach((c) => {
@@ -387,6 +462,20 @@ export function newLineBounding(option: Option) {
           ctx.fill();
           break;
         }
+        case "new-bezier-anchor": {
+          const p = addAnchorBeziers[hitResult.index]?.[hitResult.subIndex];
+          if (p) {
+            renderOutlinedCircle(ctx, p, bezierSize, style.selectionSecondaly);
+          }
+          break;
+        }
+        case "bezier-anchor": {
+          const p = bezierAnchors?.[hitResult.index]?.[hitResult.subIndex === 0 ? "c1" : "c2"];
+          if (p) {
+            renderOutlinedCircle(ctx, p, bezierSize, style.selectionSecondaly);
+          }
+          break;
+        }
         case "reset-elbow-edge": {
           const p = getResetElbowEdgeAnchors(scale).find((a) => a.index === hitResult?.index)?.p;
           if (p) {
@@ -408,4 +497,27 @@ export type LineBounding = ReturnType<typeof newLineBounding>;
 
 function isElbow(lineShape: LineShape): boolean {
   return lineShape.lineType === "elbow";
+}
+
+export function renderBezierControls(
+  ctx: CanvasRenderingContext2D,
+  style: StyleScheme,
+  scale: number,
+  lineShape: LineShape,
+) {
+  const edges = getEdges(lineShape);
+  const bezierAnchors = getModifiableBezierControls(lineShape);
+  const bezierSize = BEZIER_ANCHOR_SIZE * scale;
+  applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 2 * scale, dash: "dot" });
+  bezierAnchors?.forEach((b, i) => {
+    if (!b) return;
+
+    const edge = edges[i];
+    ctx.beginPath();
+    applyPath(ctx, [edge[0], b.c1]);
+    applyPath(ctx, [edge[1], b.c2]);
+    ctx.stroke();
+    renderOutlinedCircle(ctx, b.c1, bezierSize, style.transformAnchor);
+    renderOutlinedCircle(ctx, b.c2, bezierSize, style.transformAnchor);
+  });
 }

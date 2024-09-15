@@ -30,6 +30,7 @@ import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { optimizeLinePath } from "../../../lineSnapping";
 import { newMovingElbowSegmentState } from "./movingElbowSegmentState";
 import { newElbowLineHandler } from "../../../elbowLineHandler";
+import { newMovingLineBezierState } from "./movingLineBezierState";
 
 type DeleteVertexMeta = {
   index: number;
@@ -105,6 +106,15 @@ export const newLineSelectedState = defineIntransientState(() => {
                       newMovingNewVertexState({ lineShape, index: hitResult.index + 1, p: event.data.point });
                   case "arc-anchor":
                     return () => newMovingLineArcState({ lineShape, index: hitResult.index, p: event.data.point });
+                  case "bezier-anchor":
+                  case "new-bezier-anchor":
+                    return () =>
+                      newMovingLineBezierState({
+                        lineShape,
+                        index: hitResult.index,
+                        subIndex: hitResult.subIndex,
+                        p: event.data.point,
+                      });
                   case "reset-elbow-edge": {
                     const bodyIndex = hitResult.index - 1;
                     const srcBodyItem = lineShape.body?.[bodyIndex];

@@ -7,6 +7,7 @@ import {
   getSegmentVicinityFrom,
   getSegmentVicinityTo,
   getWavePathControl,
+  isArcControl,
   isBezieirControl,
   shiftBezierCurveControl,
 } from "./path";
@@ -18,6 +19,14 @@ describe("isBezieirControl", () => {
     expect(isBezieirControl(undefined)).toBe(false);
     expect(isBezieirControl({ d: { x: 0, y: 0 } })).toBe(false);
     expect(isBezieirControl({ c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } })).toBe(true);
+  });
+});
+
+describe("isArcControl", () => {
+  test("should return true iff the control is of arc", () => {
+    expect(isArcControl(undefined)).toBe(false);
+    expect(isArcControl({ d: { x: 0, y: 0 } })).toBe(true);
+    expect(isArcControl({ c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } })).toBe(false);
   });
 });
 

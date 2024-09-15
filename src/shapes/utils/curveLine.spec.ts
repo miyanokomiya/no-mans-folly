@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import {
   applyCornerRadius,
+  canAddBezierControls,
   getDefaultCurveBody,
   getModifiableBezierControls,
   restoreBodyFromRoundedElbow,
@@ -85,7 +86,7 @@ describe("getModifiableBezierControls", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", {
     p: { x: 0, y: 0 },
     q: { x: 100, y: 0 },
-    curves: [undefined, { d: { x: 0, y: 0 } }, { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }],
+    curves: [undefined, { d: { x: 10, y: 0 } }, { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }],
   });
 
   test("should return modifiable bezier controls", () => {
@@ -99,5 +100,15 @@ describe("getModifiableBezierControls", () => {
   test("should not return bezier controls when the line is auto-curve or elbow", () => {
     expect(getModifiableBezierControls({ ...line, curveType: "auto" })).toEqual(undefined);
     expect(getModifiableBezierControls({ ...line, lineType: "elbow" })).toEqual(undefined);
+  });
+});
+
+describe("canAddBezierControls", () => {
+  test("should return true when the curve control doesn't form a curve", () => {
+    expect(canAddBezierControls(undefined)).toBe(true);
+    expect(canAddBezierControls({ c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } })).toBe(false);
+    expect(canAddBezierControls({ d: { x: 0, y: 10 } })).toBe(false);
+    expect(canAddBezierControls({ d: { x: 0, y: 0 } })).toBe(true);
+    expect(canAddBezierControls({ d: { x: 10, y: 0 } })).toBe(true);
   });
 });

@@ -13,7 +13,7 @@ import {
   multi,
   sub,
 } from "okageo";
-import { BezierCurveControl, CurveControl } from "../models";
+import { ArcCurveControl, BezierCurveControl, CurveControl } from "../models";
 import { ISegment, getCrossSegAndSegWithT, getCurveLerpFn, getCurvePathStructs, getRotateFn } from "./geometry";
 
 export type BezierPath = { path: IVec2[]; curves: (BezierCurveControl | undefined)[] };
@@ -22,6 +22,10 @@ export type PathLocation = [point: IVec2, segmentIndex: number, segmentRate: num
 
 export function isBezieirControl(c: CurveControl | undefined): c is BezierCurveControl {
   return !!c && "c1" in c;
+}
+
+export function isArcControl(c: CurveControl | undefined): c is ArcCurveControl {
+  return !!c && "d" in c;
 }
 
 export function getCrossBezierPathAndSegment(bezierPath: BezierPath, segment: ISegment): PathLocation[] {
