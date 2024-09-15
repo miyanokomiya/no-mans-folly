@@ -37,6 +37,11 @@
             "target": "src/utils/",
             "from": "src/composables/",
             "message": "\"src/utils/\" should be independent from \"src/composables/\"."
+          },
+          {
+            "target": "src/utils/",
+            "from": "src/stores/",
+            "message": "\"src/utils/\" should be independent from \"src/stores/\"."
           }
         ]
       }
