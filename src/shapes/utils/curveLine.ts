@@ -13,7 +13,7 @@ import {
 } from "okageo";
 import { BezierCurveControl } from "../../models";
 import { CurveType, LineBodyItem, LineShape, getLinePath } from "../line";
-import { getBezierControlForArc, getCornerRadiusArc } from "../../utils/path";
+import { getBezierControlForArc, getCornerRadiusArc, isBezieirControl } from "../../utils/path";
 
 export function getAutomaticCurve(path: IVec2[]): BezierCurveControl[] | undefined {
   if (path.length <= 2) return;
@@ -109,4 +109,14 @@ export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): LineBodyIt
   }
 
   return ret;
+}
+
+export function getModifiableBezierControls(line: LineShape): (BezierCurveControl | undefined)[] | undefined {
+  if (line.curveType === "auto" || line.lineType) return;
+
+  return line.curves?.map((c) => {
+    if (isBezieirControl(c)) {
+      return c;
+    }
+  });
 }

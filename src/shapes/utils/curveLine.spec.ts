@@ -1,5 +1,10 @@
 import { describe, test, expect } from "vitest";
-import { applyCornerRadius, getDefaultCurveBody, restoreBodyFromRoundedElbow } from "./curveLine";
+import {
+  applyCornerRadius,
+  getDefaultCurveBody,
+  getModifiableBezierControls,
+  restoreBodyFromRoundedElbow,
+} from "./curveLine";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
 
@@ -73,5 +78,26 @@ describe("restoreBodyFromRoundedElbow", () => {
       body: roundedElbow.body!.slice(0, roundedElbow.body!.length - 1),
     });
     expect(res).toHaveLength(0);
+  });
+});
+
+describe("getModifiableBezierControls", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", {
+    p: { x: 0, y: 0 },
+    q: { x: 100, y: 0 },
+    curves: [undefined, { d: { x: 0, y: 0 } }, { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }],
+  });
+
+  test("should return modifiable bezier controls", () => {
+    expect(getModifiableBezierControls(line)).toEqual([
+      undefined,
+      undefined,
+      { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } },
+    ]);
+  });
+
+  test("should not return bezier controls when the line is auto-curve or elbow", () => {
+    expect(getModifiableBezierControls({ ...line, curveType: "auto" })).toEqual(undefined);
+    expect(getModifiableBezierControls({ ...line, lineType: "elbow" })).toEqual(undefined);
   });
 });

@@ -7,10 +7,19 @@ import {
   getSegmentVicinityFrom,
   getSegmentVicinityTo,
   getWavePathControl,
+  isBezieirControl,
   shiftBezierCurveControl,
 } from "./path";
 import { getBezierBounds, ISegment } from "./geometry";
 import { getDistance, getPedal } from "okageo";
+
+describe("isBezieirControl", () => {
+  test("should return true iff the control is of bezier", () => {
+    expect(isBezieirControl(undefined)).toBe(false);
+    expect(isBezieirControl({ d: { x: 0, y: 0 } })).toBe(false);
+    expect(isBezieirControl({ c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } })).toBe(true);
+  });
+});
 
 describe("getCrossBezierPathAndSegment", () => {
   const path = [

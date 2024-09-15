@@ -20,6 +20,10 @@ export type BezierPath = { path: IVec2[]; curves: (BezierCurveControl | undefine
 
 export type PathLocation = [point: IVec2, segmentIndex: number, segmentRate: number];
 
+export function isBezieirControl(c: CurveControl | undefined): c is BezierCurveControl {
+  return !!c && "c1" in c;
+}
+
 export function getCrossBezierPathAndSegment(bezierPath: BezierPath, segment: ISegment): PathLocation[] {
   const { path, curves } = completeBezierPath(bezierPath);
   const candidates: PathLocation[] = [];
