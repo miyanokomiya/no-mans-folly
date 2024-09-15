@@ -2,7 +2,7 @@ import { IRectangle, IVec2 } from "okageo";
 import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
-import { newChronoCache } from "../composables/cache";
+import { newChronoCache } from "./stateful/cache";
 import { SVGElementInfo, getColorAttributes } from "./svgElements";
 import { toHexAndAlpha } from "./color";
 

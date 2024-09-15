@@ -2,9 +2,9 @@ import * as Y from "yjs";
 import { Shape } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newEntitySelectable } from "./core/entitySelectable";
-import { newCallback } from "../composables/reactives";
+import { newCallback } from "../utils/stateful/reactives";
 import { newShapeComposite } from "../composables/shapeComposite";
-import { newCache } from "../composables/cache";
+import { newCache } from "../utils/stateful/cache";
 import { getCommonStruct } from "../shapes";
 
 type Option = {

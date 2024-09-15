@@ -2,7 +2,7 @@ import * as Y from "yjs";
 import { Sheet } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newValueStore } from "./core/values";
-import { newCallback } from "../composables/reactives";
+import { newCallback } from "../utils/stateful/reactives";
 
 type Option = {
   ydoc: Y.Doc;

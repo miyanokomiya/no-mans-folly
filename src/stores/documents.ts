@@ -1,8 +1,8 @@
 import * as Y from "yjs";
 import { DocDelta, DocOutput } from "../models/document";
-import { newCallback } from "../composables/reactives";
+import { newCallback } from "../utils/stateful/reactives";
 import { observeEntityMap } from "./core/entities";
-import { newCache } from "../composables/cache";
+import { newCache } from "../utils/stateful/cache";
 
 export type CursorPositionInfo = Y.RelativePosition;
 

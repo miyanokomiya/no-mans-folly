@@ -1,5 +1,5 @@
 import { AssetAPI } from "../hooks/persistence";
-import { newCallback } from "./reactives";
+import { newCallback } from "../utils/stateful/reactives";
 
 interface ImageData {
   img: HTMLImageElement;

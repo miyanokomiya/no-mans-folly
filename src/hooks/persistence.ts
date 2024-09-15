@@ -8,7 +8,7 @@ import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
 import { generateKeyBetween } from "fractional-indexing";
 import { FileAccess } from "../utils/fileAccess";
-import { newLeveledThrottle } from "../composables/throttle";
+import { newLeveledThrottle } from "../utils/stateful/throttle";
 import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";

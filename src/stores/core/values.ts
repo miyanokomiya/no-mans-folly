@@ -1,4 +1,4 @@
-import { newCallback } from "../../composables/reactives";
+import { newCallback } from "../../utils/stateful/reactives";
 
 export function newValueStore<T>(initialValue: T) {
   const callback = newCallback();

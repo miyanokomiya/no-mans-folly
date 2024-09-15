@@ -1,4 +1,4 @@
-import { newCallback } from "../composables/reactives";
+import { newCallback } from "../utils/stateful/reactives";
 import { UserSetting } from "../models";
 
 type Option = {

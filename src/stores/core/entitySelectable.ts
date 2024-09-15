@@ -1,5 +1,5 @@
 import * as okaselect from "okaselect";
-import { newCallback } from "../../composables/reactives";
+import { newCallback } from "../../utils/stateful/reactives";
 
 type Option<T> = {
   getEntityMap: () => { [id: string]: T };
