@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { applyCornerRadius, getDefaultCurveBody, restoreBodyFromRoundedElbow } from "./curveLine";
-import { createShape, getCommonStruct } from "../shapes";
-import { LineShape } from "../shapes/line";
+import { createShape, getCommonStruct } from "..";
+import { LineShape } from "../line";
 
 describe("getDefaultCurveBody", () => {
   test("should return default body for curve line", () => {

@@ -33,7 +33,7 @@ import { mapReduce, patchPipe, toList, toMap } from "../../utils/commons";
 import { newElbowLineHandler } from "../../composables/elbowLineHandler";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { BoxPaddingButton } from "./BoxPaddingButton";
-import { getPatchByChangingCurveType } from "../../utils/curveLine";
+import { getPatchByChangingCurveType } from "../../shapes/utils/curveLine";
 import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";

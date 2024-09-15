@@ -1,6 +1,6 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
-import { applyCornerRadius, getAutomaticCurve } from "../utils/curveLine";
+import { applyCornerRadius, getAutomaticCurve } from "../shapes/utils/curveLine";
 import { ShapeComposite } from "./shapeComposite";
 
 export function getCurveLinePatch(

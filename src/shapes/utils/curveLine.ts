@@ -11,9 +11,9 @@ import {
   multi,
   sub,
 } from "okageo";
-import { BezierCurveControl } from "../models";
-import { CurveType, LineBodyItem, LineShape, getLinePath } from "../shapes/line";
-import { getBezierControlForArc, getCornerRadiusArc } from "./path";
+import { BezierCurveControl } from "../../models";
+import { CurveType, LineBodyItem, LineShape, getLinePath } from "../line";
+import { getBezierControlForArc, getCornerRadiusArc } from "../../utils/path";
 
 export function getAutomaticCurve(path: IVec2[]): BezierCurveControl[] | undefined {
   if (path.length <= 2) return;

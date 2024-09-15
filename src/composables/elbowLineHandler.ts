@@ -2,7 +2,7 @@ import { IRectangle, IVec2, add, getRadian, multi } from "okageo";
 import { LineBodyItem, LineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
 import { ShapeComposite } from "./shapeComposite";
-import { restoreBodyFromRoundedElbow } from "../utils/curveLine";
+import { restoreBodyFromRoundedElbow } from "../shapes/utils/curveLine";
 
 interface Option {
   getShapeComposite: () => ShapeComposite;

@@ -18,7 +18,7 @@ import { add } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
 import { handleCommonWheel } from "../commons";
-import { getDefaultCurveBody } from "../../../../utils/curveLine";
+import { getDefaultCurveBody } from "../../../../shapes/utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
