@@ -4,10 +4,12 @@ import {
   getBezierControlForArc,
   getCornerRadiusArc,
   getCrossBezierPathAndSegment,
+  getSegmentVicinityFrom,
+  getSegmentVicinityTo,
   getWavePathControl,
   shiftBezierCurveControl,
 } from "./path";
-import { getBezierBounds } from "./geometry";
+import { getBezierBounds, ISegment } from "./geometry";
 import { getDistance, getPedal } from "okageo";
 
 describe("getCrossBezierPathAndSegment", () => {
@@ -350,5 +352,47 @@ describe("shiftBezierCurveControl", () => {
     const res0 = shiftBezierCurveControl({ c1: { x: 0, y: 0 }, c2: { x: 10, y: 20 } }, { x: 100, y: 200 });
     expect(res0.c1).toEqualPoint({ x: 100, y: 200 });
     expect(res0.c2).toEqualPoint({ x: 110, y: 220 });
+  });
+});
+
+describe("getSegmentVicinityFrom", () => {
+  test("should return a vicinity of the head point", () => {
+    const seg: ISegment = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    expect(getSegmentVicinityFrom(seg, { d: { x: 5, y: 5 } })).toEqualPoint({
+      x: 0.002467198171341778,
+      y: 0.15705379539064118,
+    });
+  });
+
+  test("should specify the distance of between the vicinity and the head point", () => {
+    const seg: ISegment = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    expect(getSegmentVicinityFrom(seg, undefined, 3)).toEqualPoint({ x: 3, y: 0 });
+  });
+});
+
+describe("getSegmentVicinityTo", () => {
+  test("should return a vicinity of the tail point", () => {
+    const seg: ISegment = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    expect(getSegmentVicinityTo(seg, { d: { x: 5, y: 5 } })).toEqualPoint({
+      x: 9.997532801828658,
+      y: 0.1570537953906416,
+    });
+  });
+
+  test("should specify the distance of between the vicinity and the tail point", () => {
+    const seg: ISegment = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+    ];
+    expect(getSegmentVicinityTo(seg, undefined, 3)).toEqualPoint({ x: 7, y: 0 });
   });
 });

@@ -7,13 +7,14 @@ import {
   getDistance,
   getInner,
   getNorm,
+  getPathPointAtLengthFromStructs,
   getRadian,
   getUnit,
   multi,
   sub,
 } from "okageo";
-import { BezierCurveControl } from "../models";
-import { ISegment, getCrossSegAndSegWithT, getRotateFn } from "./geometry";
+import { BezierCurveControl, CurveControl } from "../models";
+import { ISegment, getCrossSegAndSegWithT, getCurveLerpFn, getCurvePathStructs, getRotateFn } from "./geometry";
 
 export type BezierPath = { path: IVec2[]; curves: (BezierCurveControl | undefined)[] };
 
@@ -234,4 +235,38 @@ export function getBezierControlForArc(c: IVec2, p0: IVec2, p1: IVec2): BezierCu
 
 export function shiftBezierCurveControl(c: BezierCurveControl, v: IVec2): BezierCurveControl {
   return { c1: add(c.c1, v), c2: add(c.c2, v) };
+}
+
+export function getSegmentVicinityFrom(seg: ISegment, curve?: CurveControl, originDistance?: number): IVec2 {
+  let vicinity = seg[1];
+  if (curve) {
+    if (originDistance === undefined) {
+      const lerpFn = getCurveLerpFn(seg, curve);
+      vicinity = lerpFn(0.01);
+    } else {
+      const pathStructs = getCurvePathStructs(seg, [curve]);
+      vicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
+    }
+  } else if (originDistance) {
+    const pathStructs = getCurvePathStructs(seg);
+    vicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
+  }
+  return vicinity;
+}
+
+export function getSegmentVicinityTo(seg: ISegment, curve?: CurveControl, originDistance?: number): IVec2 {
+  let vicinity = seg[0];
+  if (curve) {
+    if (originDistance === undefined) {
+      const lerpFn = getCurveLerpFn(seg, curve);
+      vicinity = lerpFn(0.99);
+    } else {
+      const pathStructs = getCurvePathStructs(seg, [curve]);
+      vicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
+    }
+  } else if (originDistance) {
+    const pathStructs = getCurvePathStructs(seg);
+    vicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
+  }
+  return vicinity;
 }

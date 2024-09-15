@@ -4,7 +4,6 @@ import {
   IVec2,
   applyAffine,
   getOuterRectangle,
-  getPathPointAtLengthFromStructs,
   getRadian,
   getRectCenter,
   isOnPolygon,
@@ -18,12 +17,10 @@ import {
   ISegment,
   expandRect,
   getCurveSplineBounds,
-  getCurveLerpFn,
   getRectPoints,
   getRelativePointOnCurvePath,
   getWrapperRect,
   isPointCloseToCurveSpline,
-  getCurvePathStructs,
   getRotatedAtAffine,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -39,6 +36,7 @@ import {
 import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
+import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
 
 export type LineType = undefined | "elbow";
 export type CurveType = undefined | "auto";
@@ -628,20 +626,7 @@ export function getForwardVicinity(shape: LineShape, index: number, originDistan
   const p0 = linePath[index];
   const p1 = linePath[index + 1];
   const c = shape.curves?.[index];
-  let vicinity = linePath[index + 1];
-  if (c) {
-    if (originDistance === undefined) {
-      const lerpFn = getCurveLerpFn([p0, p1], c);
-      vicinity = lerpFn(0.01);
-    } else {
-      const pathStructs = getCurvePathStructs([p0, p1], [c]);
-      vicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
-    }
-  } else if (originDistance) {
-    const pathStructs = getCurvePathStructs([p0, p1]);
-    vicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
-  }
-  return vicinity;
+  return getSegmentVicinityFrom([p0, p1], c, originDistance);
 }
 
 export function getBackwardVicinity(shape: LineShape, index: number, originDistance?: number): IVec2 {
@@ -649,23 +634,10 @@ export function getBackwardVicinity(shape: LineShape, index: number, originDista
   if (index === 0) return shape.p;
   if (linePath.length <= index) return shape.q;
 
-  const q0 = linePath[index];
-  const q1 = linePath[index - 1];
+  const q0 = linePath[index - 1];
+  const q1 = linePath[index];
   const c = shape.curves?.[index - 1];
-  let vicinity = q1;
-  if (c) {
-    if (originDistance === undefined) {
-      const lerpFn = getCurveLerpFn([q1, q0], c);
-      vicinity = lerpFn(0.99);
-    } else {
-      const pathStructs = getCurvePathStructs([q1, q0], [c]);
-      vicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
-    }
-  } else if (originDistance) {
-    const pathStructs = getCurvePathStructs([q1, q0]);
-    vicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
-  }
-  return vicinity;
+  return getSegmentVicinityTo([q0, q1], c, originDistance);
 }
 
 function isSameCurve(a: LineShape["curves"], b: LineShape["curves"]): boolean {
