@@ -4,7 +4,7 @@ import { LineShape, getLinePath, getRelativePointOn, isLineShape } from "../shap
 import { TextShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
-import { attachLabelToLine, isLineLabelShape } from "../utils/lineLabel";
+import { attachLabelToLine, isLineLabelShape } from "../shapes/utils/lineLabel";
 import { applyCurvePath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ShapeComposite } from "./shapeComposite";

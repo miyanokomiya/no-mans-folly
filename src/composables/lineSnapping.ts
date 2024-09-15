@@ -19,7 +19,7 @@ import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { isObjectEmpty, pickMinItem } from "../utils/commons";
 import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
-import { isLineLabelShape } from "../utils/lineLabel";
+import { isLineLabelShape } from "../shapes/utils/lineLabel";
 import { snapVectorToGrid } from "./grid";
 
 const SNAP_THRESHOLD = 10;

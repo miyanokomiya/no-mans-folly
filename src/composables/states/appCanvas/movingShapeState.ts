@@ -14,7 +14,7 @@ import { isLineShape } from "../../../shapes/line";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
-import { isLineLabelShape } from "../../../utils/lineLabel";
+import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 import { mergeMap } from "../../../utils/commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 

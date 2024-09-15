@@ -8,12 +8,12 @@ import {
   getRectCenter,
   isOnSeg,
 } from "okageo";
-import { LineShape, getLinePath, isCurveLine, isLineShape } from "../shapes/line";
-import { TextShape, isTextShape, patchPosition } from "../shapes/text";
-import { BEZIER_APPROX_SIZE, ISegment, getCurveLerpFn, getRotateFn, getSegments } from "./geometry";
-import { pickMinItem } from "./commons";
-import { Shape } from "../models";
-import { ShapeComposite } from "../composables/shapeComposite";
+import { LineShape, getLinePath, isCurveLine, isLineShape } from "../line";
+import { TextShape, isTextShape, patchPosition } from "../text";
+import { BEZIER_APPROX_SIZE, ISegment, getCurveLerpFn, getRotateFn, getSegments } from "../../utils/geometry";
+import { pickMinItem } from "../../utils/commons";
+import { Shape } from "../../models";
+import { ShapeComposite } from "../../composables/shapeComposite";
 
 export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0): Partial<TextShape> {
   const labelBounds = { x: label.p.x, y: label.p.y, width: label.width, height: label.height };

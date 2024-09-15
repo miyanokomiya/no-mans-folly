@@ -6,7 +6,7 @@ import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
 import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 import { newBoardLaneMovingState } from "./board/boardLaneMovingState";
-import { isLineLabelShape } from "../../../utils/lineLabel";
+import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 
 interface Option {
   boundingBox?: BoundingBox;

@@ -1,9 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { struct as textStruct } from "../shapes/text";
-import { struct as lineStruct } from "../shapes/line";
+import { struct as textStruct } from "../text";
+import { struct as lineStruct } from "../line";
 import { attachLabelToLine, isLineLabelShape } from "./lineLabel";
-import { newShapeComposite } from "../composables/shapeComposite";
-import { getCommonStruct } from "../shapes";
+import { newShapeComposite } from "../../composables/shapeComposite";
+import { getCommonStruct } from "..";
 
 describe("attachLabelToLine", () => {
   test("should return patch object to attach a label to a line: horizontal line", () => {

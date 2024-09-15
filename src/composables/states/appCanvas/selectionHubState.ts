@@ -4,7 +4,7 @@ import { newMultipleSelectedState } from "./multipleSelectedState";
 import { BoundingBox } from "../../boundingBox";
 import { newLineLabelSelectedState } from "./lines/lineLabelSelectedState";
 import { getSingleShapeSelectedStateFn } from "../../shapeTypes";
-import { isLineLabelShape } from "../../../utils/lineLabel";
+import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 
 interface Option {
   boundingBox?: BoundingBox;
