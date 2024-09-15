@@ -41,7 +41,7 @@ import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState";
-import { FOLLY_SVG_PREFIX, ShapeTemplateInfo, parseTemplateShapes } from "../../../utils/shapeTemplateUtil";
+import { FOLLY_SVG_PREFIX, ShapeTemplateInfo, parseTemplateShapes } from "../../../shapes/utils/shapeTemplateUtil";
 import { Shape } from "../../../models";
 import { newPanToShapeState } from "./panToShapeState";
 import { isFollySheetFileName } from "../../../utils/fileAccess";

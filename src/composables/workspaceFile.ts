@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 import { newShapeStore } from "../stores/shapes";
-import { ShapeTemplateInfo } from "../utils/shapeTemplateUtil";
+import { ShapeTemplateInfo } from "../shapes/utils/shapeTemplateUtil";
 import { newDocumentStore } from "../stores/documents";
 
 export async function loadShapesFromSheetFile(sheetFile: File): Promise<ShapeTemplateInfo | undefined> {

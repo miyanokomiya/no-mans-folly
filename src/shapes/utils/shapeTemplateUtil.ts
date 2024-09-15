@@ -1,8 +1,8 @@
-import { Shape } from "../models";
-import { DocOutput } from "../models/document";
-import { isImageShape } from "../shapes/image";
-import { base64ToBlob, getBase64Type } from "./fileAccess";
-import { createSVGElement } from "./svgElements";
+import { Shape } from "../../models";
+import { DocOutput } from "../../models/document";
+import { isImageShape } from "../image";
+import { base64ToBlob, getBase64Type } from "../../utils/fileAccess";
+import { createSVGElement } from "../../utils/svgElements";
 
 export const FOLLY_SVG_PREFIX = ".folly.svg";
 const FOLLY_SVG_META_ATTRIBUTE = "data-folly-template";

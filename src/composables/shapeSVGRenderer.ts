@@ -3,7 +3,7 @@ import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
 import { blobToBase64 } from "../utils/fileAccess";
-import { createTemplateShapeEmbedElement } from "../utils/shapeTemplateUtil";
+import { createTemplateShapeEmbedElement } from "../shapes/utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
 import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
 import { walkTree } from "../utils/tree";

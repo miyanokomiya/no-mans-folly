@@ -1,8 +1,8 @@
 import { describe, test, expect } from "vitest";
-import { createSVGElement, createSVGSVGElement } from "./svgElements";
+import { createSVGElement, createSVGSVGElement } from "../../utils/svgElements";
 import { ShapeTemplateInfo, createTemplateShapeEmbedElement, parseTemplateShapesFromSVG } from "./shapeTemplateUtil";
-import { createShape, getCommonStruct } from "../shapes";
-import { ImageShape } from "../shapes/image";
+import { createShape, getCommonStruct } from "..";
+import { ImageShape } from "../image";
 
 // Note: "DOMParser" in "happy-dom" doesn't support SVG.
 describe("parseTemplateShapesFromSVG", () => {

@@ -3,7 +3,7 @@ import { createShape, duplicateShapes } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
-import { FOLLY_SVG_PREFIX } from "../../../utils/shapeTemplateUtil";
+import { FOLLY_SVG_PREFIX } from "../../../shapes/utils/shapeTemplateUtil";
 import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
 import { canGroupShapes, newShapeComposite } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
