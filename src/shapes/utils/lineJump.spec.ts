@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { getLineIntersectionMap, makeJumps } from "./lineJump";
-import { struct } from "../shapes/line";
-import { ISegment } from "./geometry";
+import { struct } from "../line";
+import { ISegment } from "../../utils/geometry";
 
 describe("getLineIntersectionMap", () => {
   test("should return line jump map", () => {

@@ -19,7 +19,7 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { generateKeyBetweenAllowSame } from "../utils/findex";
 import { newObjectWeakCache } from "./cache";
 import { DocOutput } from "../models/document";
-import { getLineJumpMap } from "../utils/lineJump";
+import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
 
 interface Option {

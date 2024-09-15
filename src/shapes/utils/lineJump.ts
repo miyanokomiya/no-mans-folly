@@ -1,5 +1,5 @@
 import { add, getUnit, IVec2, MINVALUE, multi, sub } from "okageo";
-import { getLinePath, getLineWidth, LINE_JUMP_BASE_INTERVAL, LineShape } from "../shapes/line";
+import { getLinePath, getLineWidth, LINE_JUMP_BASE_INTERVAL, LineShape } from "../line";
 import {
   splitPointsToCloseSections,
   getSegments,
@@ -7,8 +7,8 @@ import {
   getD2,
   sortPointFrom,
   getCrossSegAndSegWithT,
-} from "./geometry";
-import { LineJumpMap } from "../shapes/core";
+} from "../../utils/geometry";
+import { LineJumpMap } from "../core";
 
 type LineIntersectionMap = Map<string, PolylineIntersections>;
 
