@@ -614,37 +614,58 @@ export function getRelativePointOn(shape: LineShape, rate: number): IVec2 {
 }
 
 export function getRadianP(shape: LineShape, originDistance?: number): number {
-  const linePath = getLinePath(shape);
-  const p = linePath[0];
-
-  let pVicinity = linePath[1];
-  if (shape.curves && shape.curves[0]) {
-    if (originDistance === undefined) {
-      const lerpFn = getCurveLerpFn([p, linePath[1]], shape.curves[0]);
-      pVicinity = lerpFn(0.01);
-    } else {
-      const pathStructs = getCurvePathStructs([p, linePath[1]], [shape.curves[0]]);
-      pVicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
-    }
-  }
-  return getRadian(p, pVicinity);
+  return getRadian(shape.p, getForwardVicinity(shape, 0, originDistance));
 }
 
 export function getRadianQ(shape: LineShape, originDistance?: number): number {
-  const linePath = getLinePath(shape);
-  const q = linePath[linePath.length - 1];
+  return getRadian(shape.q, getBackwardVicinity(shape, 1 + (shape.body?.length ?? 0), originDistance));
+}
 
-  let qVicinity = linePath[linePath.length - 2];
-  if (shape.curves && shape.curves[linePath.length - 2]) {
+export function getForwardVicinity(shape: LineShape, index: number, originDistance?: number): IVec2 {
+  const linePath = getLinePath(shape);
+  if (linePath.length - 1 <= index) return shape.q;
+
+  const p0 = linePath[index];
+  const p1 = linePath[index + 1];
+  const c = shape.curves?.[index];
+  let vicinity = linePath[index + 1];
+  if (c) {
     if (originDistance === undefined) {
-      const lerpFn = getCurveLerpFn([linePath[linePath.length - 2], q], shape.curves[linePath.length - 2]);
-      qVicinity = lerpFn(0.99);
+      const lerpFn = getCurveLerpFn([p0, p1], c);
+      vicinity = lerpFn(0.01);
     } else {
-      const pathStructs = getCurvePathStructs([linePath[linePath.length - 2], q], [shape.curves[linePath.length - 2]]);
-      qVicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
+      const pathStructs = getCurvePathStructs([p0, p1], [c]);
+      vicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
     }
+  } else if (originDistance) {
+    const pathStructs = getCurvePathStructs([p0, p1]);
+    vicinity = getPathPointAtLengthFromStructs(pathStructs, originDistance);
   }
-  return getRadian(q, qVicinity);
+  return vicinity;
+}
+
+export function getBackwardVicinity(shape: LineShape, index: number, originDistance?: number): IVec2 {
+  const linePath = getLinePath(shape);
+  if (index === 0) return shape.p;
+  if (linePath.length <= index) return shape.q;
+
+  const q0 = linePath[index];
+  const q1 = linePath[index - 1];
+  const c = shape.curves?.[index - 1];
+  let vicinity = q1;
+  if (c) {
+    if (originDistance === undefined) {
+      const lerpFn = getCurveLerpFn([q1, q0], c);
+      vicinity = lerpFn(0.99);
+    } else {
+      const pathStructs = getCurvePathStructs([q1, q0], [c]);
+      vicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
+    }
+  } else if (originDistance) {
+    const pathStructs = getCurvePathStructs([q1, q0]);
+    vicinity = getPathPointAtLengthFromStructs(pathStructs, pathStructs[0].length - originDistance);
+  }
+  return vicinity;
 }
 
 function isSameCurve(a: LineShape["curves"], b: LineShape["curves"]): boolean {

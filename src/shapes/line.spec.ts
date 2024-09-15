@@ -3,6 +3,8 @@ import {
   addNewVertex,
   combineJumps,
   deleteVertex,
+  getBackwardVicinity,
+  getForwardVicinity,
   getLinePath,
   getRadianP,
   getRadianQ,
@@ -823,6 +825,53 @@ describe("getRadianQ", () => {
         5,
       ),
     ).toBeCloseTo(2.073, 3);
+  });
+});
+
+describe("getForwardVicinity", () => {
+  test("should return foward vicinity of the vertex", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 0 } }], q: { x: 10, y: 10 } });
+    expect(getForwardVicinity(shape, 1)).toEqualPoint({ x: 10, y: 10 });
+    expect(getForwardVicinity(shape, 2)).toEqualPoint({ x: 10, y: 10 });
+    expect(getForwardVicinity(shape, 3)).toEqualPoint({ x: 10, y: 10 });
+
+    expect(
+      getForwardVicinity(
+        {
+          ...shape,
+          curves: [undefined, { d: { x: 15, y: 5 } }],
+        },
+        1,
+      ),
+    ).toEqualPoint({ x: 9.842946204609358, y: 0.002467198171341778 });
+  });
+
+  test("should be able to specify vicinity distance", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 0 } }], q: { x: 10, y: 10 } });
+    expect(getForwardVicinity(shape, 1, 3)).toEqualPoint({ x: 10, y: 3 });
+  });
+});
+
+describe("getBackwardVicinity", () => {
+  test("should return backward vicinity of the vertex", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 0 } }], q: { x: 10, y: 10 } });
+    expect(getBackwardVicinity(shape, 0)).toEqualPoint({ x: 0, y: 0 });
+    expect(getBackwardVicinity(shape, 1)).toEqualPoint({ x: 0, y: 0 });
+
+    expect(
+      getBackwardVicinity(
+        {
+          ...shape,
+          curves: [{ d: { x: 5, y: -5 } }],
+        },
+        1,
+      ),
+    ).toEqualPoint({ x: 9.997532801828658, y: -0.1570537953906406 });
+  });
+
+  test("should be able to specify vicinity distance", () => {
+    const shape = struct.create({ p: { x: 0, y: 0 }, body: [{ p: { x: 10, y: 0 } }], q: { x: 10, y: 10 } });
+    expect(getBackwardVicinity(shape, 1, 3)).toEqualPoint({ x: 7, y: 0 });
   });
 });
 

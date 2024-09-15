@@ -2,11 +2,11 @@ import { IRectangle, IVec2, isSame } from "okageo";
 import { expect } from "vitest";
 
 function printPoint(p: IVec2): string {
-  return `(${p.x}, ${p.y})`;
+  return `{ x: ${p.x}, y: ${p.y} }`;
 }
 
 function printRect(rect: IRectangle): string {
-  return `(${rect.x}, ${rect.y}, ${rect.width}, ${rect.height})`;
+  return `{ x: ${rect.x}, y: ${rect.y}, width: ${rect.width}, height: ${rect.height} }`;
 }
 
 function printPoints(list: IVec2[]): string {
