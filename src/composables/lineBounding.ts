@@ -6,6 +6,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { applyCurvePath, applyPath, renderMoveIcon, renderOutlinedCircle, renderPlusIcon } from "../utils/renderer";
+import { getSegmentVicinityFrom } from "../utils/path";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
@@ -42,10 +43,6 @@ export function newLineBounding(option: Option) {
         const lerpFn = getCurveLerpFn(edge, curves?.[i]);
         return lerpFn(0.5);
       });
-  const addAnchors = edges.map((edge, i) => {
-    const lerpFn = getCurveLerpFn(edge, curves?.[i]);
-    return lerpFn(0.25);
-  });
 
   const elbow = isElbow(lineShape);
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
@@ -82,6 +79,11 @@ export function newLineBounding(option: Option) {
   function getAddAnchorQ(scale: number): IVec2 {
     const v = rotate({ x: 20, y: 0 }, getRadianQ(lineShape));
     return add(lineShape.q, multi(v, scale));
+  }
+
+  function getAddAnchorBody(scale: number): IVec2[] {
+    const margin = 20 * scale;
+    return edges.map((edge, i) => getSegmentVicinityFrom(edge, curves?.[i], margin));
   }
 
   function getOptimizeAnchorP(scale: number): IVec2 | undefined {
@@ -155,7 +157,7 @@ export function newLineBounding(option: Option) {
     if (!elbow) {
       {
         const addAnchorSize = vertexSize * ADD_VERTEX_ANCHOR_RATE;
-        const edgeCenterIndex = addAnchors.findIndex((v) => {
+        const edgeCenterIndex = getAddAnchorBody(scale).findIndex((v) => {
           const testFn = newCircleHitTest(v, addAnchorSize);
           return testFn.test(p);
         });
@@ -246,7 +248,7 @@ export function newLineBounding(option: Option) {
       {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
         const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
-        addAnchors.forEach((c) => {
+        getAddAnchorBody(scale).forEach((c) => {
           ctx.beginPath();
           ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
           ctx.fill();
@@ -367,7 +369,7 @@ export function newLineBounding(option: Option) {
           } else if (hitResult.index === vertices.length - 1) {
             p = getAddAnchorQ(scale);
           } else {
-            p = addAnchors[hitResult.index];
+            p = getAddAnchorBody(scale)[hitResult.index];
           }
 
           const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
