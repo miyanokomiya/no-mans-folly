@@ -647,13 +647,35 @@ describe("addNewVertex", () => {
     });
     expect(addNewVertex(shape1, 1, v)).toEqual({
       body: [{ p: v }, { p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
-      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
+      curves: [undefined, { d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }],
     });
     expect(addNewVertex(shape1, 2, v)).toEqual({
       body: [{ p: { x: 2, y: 3 } }, { p: v }, { p: { x: 3, y: 4 } }],
+      curves: [{ d: { x: 0, y: 0 } }, undefined, { d: { x: 1, y: 1 } }],
     });
     expect(addNewVertex(shape1, 3, v)).toEqual({
       body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
+    });
+
+    const shape2 = struct.create({
+      ...shape1,
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }],
+    });
+    expect(addNewVertex(shape2, 1, v)).toEqual({
+      body: [{ p: v }, { p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+      curves: [undefined, { d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }],
+    });
+    expect(addNewVertex(shape2, 2, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: v }, { p: { x: 3, y: 4 } }],
+      curves: [{ d: { x: 0, y: 0 } }, undefined, { d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }],
+    });
+    expect(addNewVertex(shape2, 3, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }, undefined, { d: { x: 2, y: 2 } }],
+    });
+    expect(addNewVertex(shape2, 4, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: shape2.q }],
+      q: v,
     });
   });
 

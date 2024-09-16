@@ -588,6 +588,11 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
           : [{ p: shape.p, c: shape.pConnection }],
         curves: shape.curves ? [undefined, ...shape.curves] : undefined,
       };
+    case 1:
+      return {
+        body: shape.body ? [{ p, c }, ...shape.body] : [{ p, c }],
+        curves: shape.curves ? [undefined, ...shape.curves] : undefined,
+      };
     case 2 + (shape.body?.length ?? 0):
       return {
         body: shape.body
@@ -599,9 +604,8 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
     default:
       if (shape.body) {
         const body = [...shape.body.slice(0, index - 1), { p, c }, ...shape.body.slice(index - 1)];
-        if (shape.curves && shape.curves.length > index) {
-          // Insert new curve and let it inherit the previous one.
-          const curves = [...shape.curves.slice(0, index), shape.curves[index - 1], ...shape.curves.slice(index)];
+        if (shape.curves && shape.curves.length >= index) {
+          const curves = [...shape.curves.slice(0, index - 1), undefined, ...shape.curves.slice(index - 1)];
           return { body, curves };
         } else {
           return { body };
