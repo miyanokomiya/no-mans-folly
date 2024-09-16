@@ -679,6 +679,33 @@ describe("addNewVertex", () => {
     });
   });
 
+  test("should shift the fist bezier control along with new vertex", () => {
+    const v = { x: -10, y: -10 };
+    const c = { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } };
+    const shape = struct.create({
+      p: { x: 1, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+      curves: [c, c, c],
+    });
+    expect(addNewVertex(shape, 1, v)).toEqual({
+      body: [{ p: v }, { p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }],
+      curves: [undefined, { c1: { x: -11, y: -10 }, c2: { x: 0, y: 0 } }, c, c],
+    });
+    expect(addNewVertex(shape, 2, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: v }, { p: { x: 3, y: 4 } }],
+      curves: [c, undefined, { c1: { x: -12, y: -13 }, c2: { x: 0, y: 0 } }, c],
+    });
+    expect(addNewVertex(shape, 3, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: v }],
+      curves: [c, c, undefined, { c1: { x: -13, y: -14 }, c2: { x: 0, y: 0 } }],
+    });
+    expect(addNewVertex(shape, 4, v)).toEqual({
+      body: [{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }, { p: shape.q }],
+      q: v,
+    });
+  });
+
   test("should insert new vertex to the top when index is 0", () => {
     const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
     const shape0 = struct.create({ p: { x: 0, y: 0 }, q: { x: 10, y: 0 }, pConnection: c });

@@ -502,6 +502,22 @@ function shiftCurves(
   return ret.length > 0 ? ret : undefined;
 }
 
+function shiftCurveAtVertex(curves: LineShape["curves"], index: number, v: IVec2): LineShape["curves"] {
+  const ret: LineShape["curves"] = curves?.concat() ?? [];
+
+  const curveForward = ret?.[index];
+  if (isBezieirControl(curveForward)) {
+    ret[index] = { c1: add(curveForward.c1, v), c2: curveForward.c2 };
+  }
+
+  const curveBackward = index > 0 ? ret?.[index - 1] : undefined;
+  if (isBezieirControl(curveBackward)) {
+    ret[index - 1] = { c1: curveBackward.c1, c2: add(curveBackward.c2, v) };
+  }
+
+  return ret;
+}
+
 export function patchVertices(
   shape: LineShape,
   data: [index: number, p: IVec2, c: ConnectionPoint | undefined][],
@@ -588,11 +604,6 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
           : [{ p: shape.p, c: shape.pConnection }],
         curves: shape.curves ? [undefined, ...shape.curves] : undefined,
       };
-    case 1:
-      return {
-        body: shape.body ? [{ p, c }, ...shape.body] : [{ p, c }],
-        curves: shape.curves ? [undefined, ...shape.curves] : undefined,
-      };
     case 2 + (shape.body?.length ?? 0):
       return {
         body: shape.body
@@ -602,16 +613,23 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
         qConnection: c,
       };
     default:
-      if (shape.body) {
+      if (shape.body && shape.body.length > 0) {
         const body = [...shape.body.slice(0, index - 1), { p, c }, ...shape.body.slice(index - 1)];
         if (shape.curves && shape.curves.length >= index) {
-          const curves = [...shape.curves.slice(0, index - 1), undefined, ...shape.curves.slice(index - 1)];
+          const curves = shiftCurveAtVertex(
+            [...shape.curves.slice(0, index - 1), undefined, ...shape.curves.slice(index - 1)],
+            index,
+            sub(p, index === 1 ? shape.p : shape.body[index - 2].p),
+          );
           return { body, curves };
         } else {
           return { body };
         }
       } else {
-        return { body: [{ p, c }] };
+        return {
+          body: [{ p, c }],
+          curves: shape.curves ? shiftCurveAtVertex([undefined, ...shape.curves], index, sub(p, shape.p)) : undefined,
+        };
       }
   }
 }
