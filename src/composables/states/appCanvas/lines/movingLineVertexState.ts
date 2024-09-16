@@ -17,6 +17,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { renderBezierControls } from "../../../lineBounding";
 
 interface Option {
   lineShape: LineShape;
@@ -129,6 +130,9 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         renderCtx.arc(origin.x, origin.y, vertexSize, 0, TAU);
         renderCtx.fill();
       });
+
+      const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
+      renderBezierControls(renderCtx, style, scale, line);
 
       renderCtx.beginPath();
       renderCtx.arc(vertex.x, vertex.y, vertexSize, 0, TAU);

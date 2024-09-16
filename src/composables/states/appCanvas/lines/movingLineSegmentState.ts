@@ -9,6 +9,7 @@ import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { renderBezierControls } from "../../../lineBounding";
 
 interface Option {
   lineShape: LineShape;
@@ -95,8 +96,8 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
       const segment = getLatestSegment(ctx);
-      applyFillStyle(renderCtx, { color: style.selectionPrimary });
 
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
       scaleGlobalAlpha(renderCtx, 0.5, () => {
         renderCtx.beginPath();
         renderCtx.arc(targetSegment[0].x, targetSegment[0].y, vertexSize, 0, TAU);
@@ -106,6 +107,10 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
         renderCtx.fill();
       });
 
+      const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
+      renderBezierControls(renderCtx, style, scale, line);
+
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
       renderCtx.arc(segment[0].x, segment[0].y, vertexSize, 0, TAU);
       renderCtx.fill();

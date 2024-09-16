@@ -104,7 +104,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const bezierSize = BEZIER_ANCHOR_SIZE * scale;
 
-      const line: LineShape = { ...option.lineShape, ...ctx.getTmpShapeMap()[option.lineShape.id] };
+      const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
       const curve = line.curves?.[option.index];
       if (!isBezieirControl(curve)) return;
 
