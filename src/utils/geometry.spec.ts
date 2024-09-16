@@ -1053,14 +1053,14 @@ describe("getRelativePointOnCurvePath", () => {
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(0, 3);
     const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
-    expect(ret10.x).toBeCloseTo(1.616, 3);
-    expect(ret10.y).toBeCloseTo(-2.4, 3);
+    expect(ret10.x).toBeCloseTo(1.434, 3);
+    expect(ret10.y).toBeCloseTo(-2.226, 3);
     const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
     expect(ret50.x).toBeCloseTo(10, 3);
     expect(ret50.y).toBeCloseTo(0, 3);
     const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
-    expect(ret90.x).toBeCloseTo(12.4, 3);
-    expect(ret90.y).toBeCloseTo(8.384, 3);
+    expect(ret90.x).toBeCloseTo(12.226, 3);
+    expect(ret90.y).toBeCloseTo(8.566, 3);
     const ret100 = getRelativePointOnCurvePath(path, controls, 1);
     expect(ret100.x).toBeCloseTo(10, 3);
     expect(ret100.y).toBeCloseTo(10, 3);

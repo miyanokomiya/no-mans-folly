@@ -4180,7 +4180,7 @@ __metadata:
     happy-dom: "npm:^15.7.3"
     minimatrix-polyroots: "npm:^3.0.5"
     nanoid: "npm:^5.0.7"
-    okageo: "npm:^3.1.6"
+    okageo: "npm:^3.1.9"
     okaselect: "npm:^0.1.0"
     postcss: "npm:^8.4.45"
     prettier: "npm:^3.3.3"
@@ -4339,10 +4339,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"okageo@npm:^3.1.6":
-  version: 3.1.6
-  resolution: "okageo@npm:3.1.6"
-  checksum: 119ea27b8e5a58e7d4566fa0151f5751171f07718d169c6bf97a416068712018f50af845f2ac8ecf5d8b59113c5f19482ce8bd7534b8ac7fbea100f6688d9204
+"okageo@npm:^3.1.9":
+  version: 3.1.9
+  resolution: "okageo@npm:3.1.9"
+  checksum: 4e5af4057cad1d214a20e6150779a4391eeea23dfb0343b97a2ba602e3593347bf2dcaf0af26283dede513f95b12fb230dc6264004798db3f06c81e496dc78f2
   languageName: node
   linkType: hard
 
