@@ -13,6 +13,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { renderBezierControls } from "../../../lineBounding";
 
 interface Option {
   lineShape: LineShape;
@@ -103,8 +104,12 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     render(ctx, renderCtx) {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
-      const vertexSize = 8 * scale;
+
+      const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
+      renderBezierControls(renderCtx, style, scale, line);
+
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
+      const vertexSize = 8 * scale;
       renderCtx.beginPath();
       renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
       renderCtx.fill();

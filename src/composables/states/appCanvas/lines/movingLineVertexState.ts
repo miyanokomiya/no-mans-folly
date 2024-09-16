@@ -119,8 +119,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
-      applyFillStyle(renderCtx, { color: style.selectionPrimary });
 
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
       scaleGlobalAlpha(renderCtx, 0.5, () => {
         renderCtx.beginPath();
         renderCtx.arc(origin.x, origin.y, vertexSize, 0, TAU);
@@ -130,6 +130,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
       renderBezierControls(renderCtx, style, scale, line);
 
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
       renderCtx.arc(vertex.x, vertex.y, vertexSize, 0, TAU);
       renderCtx.fill();
