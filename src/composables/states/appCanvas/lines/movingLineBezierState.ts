@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { handleHistoryEvent } from "../commons";
 import { LineShape, getEdges } from "../../../../shapes/line";
 import { IVec2, add } from "okageo";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -92,9 +91,6 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return ctx.states.newSelectionHubState;
         default:
           return;
       }

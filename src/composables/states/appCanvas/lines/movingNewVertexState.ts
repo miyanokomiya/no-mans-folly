@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { handleHistoryEvent } from "../commons";
 import { LineShape, addNewVertex, isLineShape } from "../../../../shapes/line";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
@@ -97,9 +96,6 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return ctx.states.newSelectionHubState;
         default:
           return;
       }

@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { handleHistoryEvent } from "../commons";
 import { LineShape, getEdges, getLinePath, isLineShape, patchBodyVertex } from "../../../../shapes/line";
 import { MINVALUE, add, getDistance, getInner, getOuterRectangle, getPedal, getRadian, moveRect, sub } from "okageo";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -92,9 +91,6 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return ctx.states.newSelectionHubState;
         default:
           return;
       }

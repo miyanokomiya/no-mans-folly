@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { handleHistoryEvent } from "../commons";
 import { LineShape, getEdges, patchVertices } from "../../../../shapes/line";
 import { add, getOuterRectangle, moveRect, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
@@ -84,9 +83,6 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return ctx.states.newSelectionHubState;
         default:
           return;
       }
