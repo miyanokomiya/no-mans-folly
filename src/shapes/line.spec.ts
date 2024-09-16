@@ -413,6 +413,25 @@ describe("patchVertex", () => {
     });
     expect(patchVertex(shape1, 3, v, c)).toEqual({ q: v, qConnection: c });
   });
+
+  test("should shift bezier controls around the vertex", () => {
+    const v = { x: -1, y: -1 };
+    const curve = { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } };
+    const shape1 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 } }],
+      curves: [curve, curve, curve],
+    });
+    expect(patchVertex(shape1, 0, v, undefined)).toEqual({
+      p: v,
+      curves: [{ c1: { x: -1, y: -1 }, c2: { x: 0, y: 0 } }, curve, curve],
+    });
+    expect(patchVertex(shape1, 1, v, undefined)).toEqual({
+      body: [{ p: { x: -1, y: -1 } }],
+      curves: [{ c1: { x: 0, y: 0 }, c2: { x: -3, y: -4 } }, { c1: { x: -3, y: -4 }, c2: { x: 0, y: 0 } }, curve],
+    });
+  });
 });
 
 describe("patchVertices", () => {
@@ -439,6 +458,40 @@ describe("patchVertices", () => {
         [2, v, c],
       ]),
     ).toEqual({ p: v, body: [{ p: { x: 2, y: 3 } }, { p: v, c }] });
+  });
+
+  test("should shift bezier controls around the vertices", () => {
+    const curve = { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } };
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 } }],
+      curves: [curve, curve, curve],
+    });
+    const v = { x: -1, y: -1 };
+
+    expect(patchVertices(shape0, [[0, v, undefined]])).toEqual({
+      p: v,
+      curves: [{ c1: { x: -1, y: -1 }, c2: { x: 0, y: 0 } }, curve, curve],
+    });
+    expect(patchVertices(shape0, [[1, v, undefined]])).toEqual({
+      body: [{ p: { x: -1, y: -1 } }],
+      curves: [{ c1: { x: 0, y: 0 }, c2: { x: -3, y: -4 } }, { c1: { x: -3, y: -4 }, c2: { x: 0, y: 0 } }, curve],
+    });
+    expect(patchVertices(shape0, [[2, v, undefined]])).toEqual({
+      q: v,
+      curves: [curve, { c1: { x: 0, y: 0 }, c2: { x: -11, y: -1 } }, { c1: { x: -11, y: -1 }, c2: { x: 0, y: 0 } }],
+    });
+    expect(
+      patchVertices(shape0, [
+        [0, v, undefined],
+        [1, v, undefined],
+      ]),
+    ).toEqual({
+      p: v,
+      body: [{ p: { x: -1, y: -1 } }],
+      curves: [{ c1: { x: -1, y: -1 }, c2: { x: -3, y: -4 } }, { c1: { x: -3, y: -4 }, c2: { x: 0, y: 0 } }, curve],
+    });
   });
 });
 

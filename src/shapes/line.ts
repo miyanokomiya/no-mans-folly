@@ -2,6 +2,7 @@ import {
   AffineMatrix,
   IRectangle,
   IVec2,
+  add,
   applyAffine,
   getOuterRectangle,
   getRadian,
@@ -10,6 +11,7 @@ import {
   isSame,
   multiAffines,
   pathSegmentRawsToString,
+  sub,
 } from "okageo";
 import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
@@ -36,7 +38,7 @@ import {
 import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
-import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
+import { getSegmentVicinityFrom, getSegmentVicinityTo, isBezieirControl } from "../utils/path";
 
 export type LineType = undefined | "elbow";
 export type CurveType = undefined | "auto";
@@ -452,14 +454,52 @@ export function patchVertex(
   c: ConnectionPoint | undefined,
 ): Partial<LineShape> {
   const vertices = getLinePath(shape);
+  const ret: Partial<LineShape> = {};
+
+  const curves = shiftCurves(vertices, shape.curves, [[index, p]]);
+  if (curves) {
+    ret.curves = curves;
+  }
+
   switch (index) {
     case 0:
-      return { p, pConnection: c };
+      ret.p = p;
+      ret.pConnection = c;
+      break;
     case vertices.length - 1:
-      return { q: p, qConnection: c };
+      ret.q = p;
+      ret.qConnection = c;
+      break;
     default:
-      return shape.body ? { body: shape.body.map((b, i) => (i + 1 === index ? { ...b, p, c } : b)) } : {};
+      ret.body = shape.body?.map((b, i) => (i + 1 === index ? { ...b, p, c } : b));
+      break;
   }
+
+  return ret;
+}
+
+function shiftCurves(
+  vertices: IVec2[],
+  curves: LineShape["curves"],
+  data: [index: number, p: IVec2, ..._: any][],
+): LineShape["curves"] {
+  const ret: LineShape["curves"] = curves?.concat() ?? [];
+
+  data.forEach(([index, p]) => {
+    const curveForward = ret?.[index];
+    if (isBezieirControl(curveForward)) {
+      const v = sub(p, vertices[index]);
+      ret[index] = { c1: add(curveForward.c1, v), c2: curveForward.c2 };
+    }
+
+    const curveBackward = index > 0 ? ret?.[index - 1] : undefined;
+    if (isBezieirControl(curveBackward)) {
+      const v = sub(p, vertices[index]);
+      ret[index - 1] = { c1: curveBackward.c1, c2: add(curveBackward.c2, v) };
+    }
+  });
+
+  return ret.length > 0 ? ret : undefined;
 }
 
 export function patchVertices(
@@ -467,6 +507,12 @@ export function patchVertices(
   data: [index: number, p: IVec2, c: ConnectionPoint | undefined][],
 ): Partial<LineShape> {
   const vertices = getLinePath(shape);
+  const ret: Partial<LineShape> = {};
+  const curves = shiftCurves(vertices, shape.curves, data);
+  if (curves) {
+    ret.curves = curves;
+  }
+
   return data.reduce<Partial<LineShape>>((patch, [index, p, c]) => {
     switch (index) {
       case 0:
@@ -485,7 +531,7 @@ export function patchVertices(
         break;
     }
     return patch;
-  }, {});
+  }, ret);
 }
 
 export function patchBodyVertex(shape: LineShape, bodyIndex: number, item: LineBodyItem): Partial<LineShape> {
