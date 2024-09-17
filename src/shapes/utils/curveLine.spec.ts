@@ -85,6 +85,7 @@ describe("restoreBodyFromRoundedElbow", () => {
 describe("getModifiableBezierControls", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", {
     p: { x: 0, y: 0 },
+    body: [{ p: { x: 50, y: 0 } }],
     q: { x: 100, y: 0 },
     curves: [undefined, { d: { x: 10, y: 0 } }, { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }],
   });
@@ -101,6 +102,15 @@ describe("getModifiableBezierControls", () => {
     expect(getModifiableBezierControls({ ...line, curveType: "auto" })).toEqual(undefined);
     expect(getModifiableBezierControls({ ...line, lineType: "elbow" })).toEqual(undefined);
     expect(getModifiableBezierControls({ ...line, lineType: "stright" })).not.toEqual(undefined);
+  });
+
+  test("should not return excessive items", () => {
+    expect(
+      getModifiableBezierControls({
+        ...line,
+        curves: [{ c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }, undefined, undefined, undefined, undefined],
+      }),
+    ).toEqual([{ c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }, undefined, undefined]);
   });
 });
 
