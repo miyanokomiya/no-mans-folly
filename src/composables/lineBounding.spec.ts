@@ -38,8 +38,8 @@ describe("newLineBounding", () => {
         index: 1,
       });
 
-      expect(target.hitTest({ x: 10, y: -10 })).toEqual(undefined);
-      expect(target.hitTest({ x: 10, y: 10 })).toEqual(undefined);
+      expect(target.hitTest({ x: 10, y: -20 })).toEqual(undefined);
+      expect(target.hitTest({ x: 10, y: 20 })).toEqual(undefined);
       expect(target.hitTest({ x: 10, y: -1 })).toEqual({
         type: "edge",
         index: 0,
@@ -48,7 +48,7 @@ describe("newLineBounding", () => {
         type: "edge",
         index: 0,
       });
-      expect(target.hitTest({ x: 25, y: 1 })).toEqual({
+      expect(target.hitTest({ x: 35, y: 1 })).toEqual({
         type: "new-vertex-anchor",
         index: 0,
       });
@@ -56,12 +56,12 @@ describe("newLineBounding", () => {
         type: "arc-anchor",
         index: 0,
       });
-      expect(target.hitTest({ x: 35, y: 1 })).toEqual({
+      expect(target.hitTest({ x: 20, y: 1 })).toEqual({
         type: "new-bezier-anchor",
         index: 0,
         subIndex: 0,
       });
-      expect(target.hitTest({ x: 65, y: 1 })).toEqual({
+      expect(target.hitTest({ x: 80, y: 1 })).toEqual({
         type: "new-bezier-anchor",
         index: 0,
         subIndex: 1,
@@ -91,7 +91,7 @@ describe("newLineBounding", () => {
         index: 0,
       });
       expect(target.hitTest({ x: 50, y: 0 })).toEqual(undefined);
-      expect(target.hitTest({ x: 15, y: -20 })).toEqual({
+      expect(target.hitTest({ x: 20, y: -30 })).toEqual({
         type: "new-vertex-anchor",
         index: 0,
       });
