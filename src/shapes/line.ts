@@ -644,7 +644,22 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
 
   if (shape.curves && shape.curves.length > index) {
     // Delete corresponding curve.
-    part.curves = shape.curves.filter((_, i) => i !== index);
+    const targetC = shape.curves[index];
+    if (isBezieirControl(targetC)) {
+      part.curves = [];
+      shape.curves.forEach((c, i) => {
+        if (!isBezieirControl(c)) {
+          part.curves!.push(c);
+        } else if (i === index - 1) {
+          // Second bezier constrol of the target vertex should be preserved.
+          part.curves!.push({ c1: c.c1, c2: targetC.c2 });
+        } else if (i !== index) {
+          part.curves!.push(c);
+        }
+      });
+    } else {
+      part.curves = shape.curves.filter((_, i) => i !== index);
+    }
   }
 
   const vertices = getLinePath(shape);
@@ -667,7 +682,7 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
   }
 
   const body = shape.body.filter((_, i) => i !== index - 1);
-  return { ...part, body };
+  return { ...part, body: body.length > 0 ? body : undefined };
 }
 
 export function isLineShape(shape: Shape): shape is LineShape {

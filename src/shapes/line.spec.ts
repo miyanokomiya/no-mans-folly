@@ -813,6 +813,31 @@ describe("deleteVertex", () => {
     });
   });
 
+  test("should preserve bezier controls of vertices of the removal target", () => {
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 1, y: 1 } }],
+      curves: [
+        { c1: { x: 0, y: 0 }, c2: { x: 1, y: 1 } },
+        { c1: { x: 2, y: 2 }, c2: { x: 3, y: 3 } },
+      ],
+    });
+    expect(deleteVertex(shape0, 0)).toEqual({
+      p: { x: 1, y: 1 },
+      body: undefined,
+      curves: [{ c1: { x: 2, y: 2 }, c2: { x: 3, y: 3 } }],
+    });
+    expect(deleteVertex(shape0, 1)).toEqual({
+      body: undefined,
+      curves: [{ c1: { x: 0, y: 0 }, c2: { x: 3, y: 3 } }],
+    });
+    expect(deleteVertex(shape0, 2)).toEqual({
+      body: undefined,
+      q: { x: 1, y: 1 },
+    });
+  });
+
   test("should delete the start point", () => {
     const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
     const shape0 = struct.create({
