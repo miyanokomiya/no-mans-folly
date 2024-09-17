@@ -47,14 +47,14 @@ type BezierAnchorInfo =
   | {
       type: 0;
       p: IVec2;
-      add?: boolean;
+      addAnchor?: boolean;
     }
   | {
       type: 1;
       p: IVec2;
       vicinity: IVec2;
       r: number;
-      add?: boolean;
+      addAnchor?: boolean;
     };
 
 interface Option {
@@ -532,17 +532,23 @@ function getBezierAnchorInfo(
   edge: ISegment,
   bezier: BezierCurveControl | undefined,
   distance: number,
-  add = false,
+  addAnchor = false,
 ): [BezierAnchorInfo, BezierAnchorInfo] | undefined {
   if (!bezier) return;
 
   return [bezier.c1, bezier.c2].map<BezierAnchorInfo>((c, j) => {
     if (!isSame(c, edge[j])) return { type: 0, p: c };
 
-    // This edge must be stright.
-    const vicinity =
-      j === 0 ? getSegmentVicinityFrom(edge, undefined, distance) : getSegmentVicinityTo(edge, undefined, distance);
-    return { type: 1, p: c, vicinity, r: getRadian(vicinity, c), add };
+    const vicinity = (j === 0 ? getSegmentVicinityFrom : getSegmentVicinityTo)(edge, bezier, distance);
+    // Use this vicinity only for deriving the angle because vicinity calculation isn't so accurate when the curve is steep.
+    const vicinityRad = getRadian(vicinity, c);
+    return {
+      type: 1,
+      p: c,
+      vicinity: add(c, rotate({ x: distance, y: 0 }, vicinityRad)),
+      r: vicinityRad,
+      addAnchor,
+    };
   }) as [BezierAnchorInfo, BezierAnchorInfo];
 }
 
@@ -569,12 +575,12 @@ function hitTestBeziers(
           p,
         );
         if (hit) {
-          hitResult = { type: v.add ? "new-bezier-anchor" : "bezier-anchor", index: i, subIndex: j as 0 | 1 };
+          hitResult = { type: v.addAnchor ? "new-bezier-anchor" : "bezier-anchor", index: i, subIndex: j as 0 | 1 };
           return true;
         }
       } else {
         if (newCircleHitTest(v.p, bezierSize).test(p)) {
-          hitResult = { type: v.add ? "new-bezier-anchor" : "bezier-anchor", index: i, subIndex: j as 0 | 1 };
+          hitResult = { type: v.addAnchor ? "new-bezier-anchor" : "bezier-anchor", index: i, subIndex: j as 0 | 1 };
           return true;
         }
       }
