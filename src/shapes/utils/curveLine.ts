@@ -112,7 +112,7 @@ export function restoreBodyFromRoundedElbow(roundedElbow: LineShape): LineBodyIt
 }
 
 export function getModifiableBezierControls(line: LineShape): (BezierCurveControl | undefined)[] | undefined {
-  if (line.curveType === "auto" || line.lineType) return;
+  if (line.curveType === "auto" || line.lineType === "elbow") return;
 
   return line.curves?.map((c) => {
     if (isBezieirControl(c)) {

@@ -40,7 +40,7 @@ import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 import { getSegmentVicinityFrom, getSegmentVicinityTo, isBezieirControl } from "../utils/path";
 
-export type LineType = undefined | "elbow";
+export type LineType = undefined | "stright" | "elbow"; // undefined means "stright"
 export type CurveType = undefined | "auto";
 export type LineBodyItem = {
   p: IVec2;

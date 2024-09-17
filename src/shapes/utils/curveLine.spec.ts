@@ -100,6 +100,7 @@ describe("getModifiableBezierControls", () => {
   test("should not return bezier controls when the line is auto-curve or elbow", () => {
     expect(getModifiableBezierControls({ ...line, curveType: "auto" })).toEqual(undefined);
     expect(getModifiableBezierControls({ ...line, lineType: "elbow" })).toEqual(undefined);
+    expect(getModifiableBezierControls({ ...line, lineType: "stright" })).not.toEqual(undefined);
   });
 });
 
