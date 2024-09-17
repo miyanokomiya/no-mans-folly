@@ -14,8 +14,7 @@ import {
   getRotatedRectAffine,
   getRotatedWrapperRectAt,
   getWrapperRect,
-  isPointOnArcRotated,
-  isPointOnEllipseRotated,
+  isOnDonutArc,
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -161,13 +160,7 @@ export const struct: ShapeStruct<ArcShape> = {
   },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
-    const isOnArc = isPointOnArcRotated(c, shape.rx, shape.ry, shape.rotation, shape.from, shape.to, p);
-    if (!isOnArc) return false;
-
-    const holeRate = getHoleRate(shape);
-    if (!holeRate) return isOnArc;
-
-    return !isPointOnEllipseRotated(c, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, p);
+    return isOnDonutArc(c, shape.rx, shape.ry, shape.rotation, shape.from, shape.to, getHoleRate(shape), p);
   },
   getClosestOutline,
   getIntersectedOutlines(shape, from, to) {

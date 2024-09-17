@@ -286,6 +286,22 @@ export function isPointOnArcRotated(
   return isRadianInside(normalizeRadian(from), normalizeRadian(to), getRadian(adjusted));
 }
 
+export function isOnDonutArc(
+  c: IVec2,
+  rx: number,
+  ry: number,
+  rotation: number,
+  from: number,
+  to: number,
+  holeRate: number,
+  p: IVec2,
+) {
+  return (
+    isPointOnArcRotated(c, rx, ry, rotation, from, to, p) &&
+    (holeRate === 0 || !isPointOnEllipseRotated(c, rx * holeRate, ry * holeRate, rotation, p))
+  );
+}
+
 export function getCrossLineAndEllipse(line: ISegment, c: IVec2, rx: number, ry: number): IVec2[] | undefined {
   const centeredLine = [sub(line[0], c), sub(line[1], c)];
 

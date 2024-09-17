@@ -72,6 +72,7 @@ import {
   mergeClosePoints,
   splitPointsToCloseSections,
   getClosestPointTo,
+  isOnDonutArc,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -371,6 +372,16 @@ describe("isPointOnArcRotated", () => {
   test("should take care of unproportional ellipse", () => {
     expect(isPointOnArcRotated({ x: 0, y: 0 }, 4, 2, 0, 0, Math.PI / 4, { x: 2, y: 1 })).toBe(true);
     expect(isPointOnArcRotated({ x: 0, y: 0 }, 4, 2, 0, 0, Math.PI / 4, { x: 1, y: 1 })).toBe(false);
+  });
+});
+
+describe("isOnDonutArc", () => {
+  test("should return true when a point is on the donut", () => {
+    const c = { x: 0, y: 0 };
+    expect(isOnDonutArc(c, 10, 10, 0, 0, Math.PI, 0.5, { x: 0, y: 4 })).toBe(false);
+    expect(isOnDonutArc(c, 10, 10, 0, 0, Math.PI, 0.5, { x: 0, y: 6 })).toBe(true);
+    expect(isOnDonutArc(c, 10, 10, 0, 0, Math.PI, 0.5, { x: 0, y: -6 })).toBe(false);
+    expect(isOnDonutArc(c, 10, 10, 0, 0, Math.PI * 2, 0, { x: 0, y: 0 })).toBe(true);
   });
 });
 
