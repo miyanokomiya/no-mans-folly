@@ -152,6 +152,33 @@ export function renderOutlinedCircle(ctx: CanvasRenderingContext2D, p: IVec2, r:
   ctx.fill();
 }
 
+export function renderOutlinedDonutArc(
+  ctx: CanvasRenderingContext2D,
+  p: IVec2,
+  r: number,
+  from: number,
+  to: number,
+  holeRate: number,
+  fillColor: Color,
+) {
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r, from, to);
+  ctx.arc(p.x, p.y, r * holeRate, to, from, true);
+  ctx.closePath();
+  ctx.fill();
+
+  applyFillStyle(ctx, { color: fillColor });
+  const cr = (from + to) / 2;
+  const cv = rotate({ x: r * 0.1, y: 0 }, cr);
+  const cp = add(p, cv);
+  ctx.beginPath();
+  ctx.arc(cp.x, cp.y, r * 0.8, from, to);
+  ctx.arc(cp.x, cp.y, r * 0.8 * holeRate, to, from, true);
+  ctx.closePath();
+  ctx.fill();
+}
+
 export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, size: number) {
   const v = sub(b, a);
   const n = isSame(a, b) ? { x: size, y: 0 } : multi(getUnit(v), size);

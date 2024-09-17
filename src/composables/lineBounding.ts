@@ -3,9 +3,16 @@ import { StyleScheme } from "../models";
 import { LineShape, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { TAU, getCurveLerpFn, isPointCloseToCurveSpline } from "../utils/geometry";
+import { TAU, getCurveLerpFn, isOnDonutArc, isPointCloseToCurveSpline } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
-import { applyCurvePath, applyPath, renderMoveIcon, renderOutlinedCircle, renderPlusIcon } from "../utils/renderer";
+import {
+  applyCurvePath,
+  applyPath,
+  renderMoveIcon,
+  renderOutlinedCircle,
+  renderOutlinedDonutArc,
+  renderPlusIcon,
+} from "../utils/renderer";
 import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
 import { canAddBezierControls, getModifiableBezierControls } from "../shapes/utils/curveLine";
 
@@ -13,6 +20,8 @@ const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
 const MOVE_ANCHOR_RATE = 1.4;
 export const BEZIER_ANCHOR_SIZE = 6;
+const BEZIER_ANCHOR_VICINITY_SIZE = 14;
+const BEZIER_ANCHOR_VICINITY_INNER_RATE = 0.4;
 
 type LineHitType =
   | "move-anchor"
@@ -32,6 +41,18 @@ export type LineHitResult =
       type: "new-bezier-anchor" | "bezier-anchor";
       index: number;
       subIndex: 0 | 1;
+    };
+
+type BezierAnchor =
+  | {
+      type: 0;
+      p: IVec2;
+    }
+  | {
+      type: 1;
+      p: IVec2;
+      vicinity: IVec2;
+      r: number;
     };
 
 interface Option {
@@ -91,7 +112,7 @@ export function newLineBounding(option: Option) {
   }
 
   function getAddAnchorBody(scale: number): IVec2[] {
-    const margin = 20 * scale;
+    const margin = 36 * scale;
     return edges.map((edge, i) => getSegmentVicinityFrom(edge, curves?.[i], margin));
   }
 
@@ -103,6 +124,27 @@ export function newLineBounding(option: Option) {
       if (!canAddBezierControls(curves?.[i])) return;
       return [getSegmentVicinityFrom(edge, undefined, margin), getSegmentVicinityTo(edge, undefined, margin)];
     });
+  }
+
+  function getBezierAnchors(scale: number): ([BezierAnchor, BezierAnchor] | undefined)[] {
+    const distance = BEZIER_ANCHOR_SIZE * scale * 1.6;
+    return (
+      bezierAnchors?.map((b, i) => {
+        if (!b) return;
+
+        const edge = edges[i];
+        return [b.c1, b.c2].map<BezierAnchor>((c, j) => {
+          if (!isSame(c, edge[j])) return { type: 0, p: c };
+
+          // This edge must be stright.
+          const vicinity =
+            j === 0
+              ? getSegmentVicinityFrom(edge, undefined, distance)
+              : getSegmentVicinityTo(edge, undefined, distance);
+          return { type: 1, p: c, vicinity, r: getRadian(vicinity, c) };
+        }) as [BezierAnchor, BezierAnchor];
+      }) ?? []
+    );
   }
 
   function getOptimizeAnchorP(scale: number): IVec2 | undefined {
@@ -135,6 +177,7 @@ export function newLineBounding(option: Option) {
   function hitTest(p: IVec2, scale = 1): LineHitResult | undefined {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
+    const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
 
     {
       const moveAnchor = getMoveAnchor(scale);
@@ -166,16 +209,32 @@ export function newLineBounding(option: Option) {
 
     {
       let hitResult: LineHitResult | undefined;
-      bezierAnchors?.some((v, i) => {
-        if (!v) return;
+      getBezierAnchors(scale).some((a, i) => {
+        if (!a) return;
 
-        if (newCircleHitTest(v.c1, bezierSize).test(p)) {
-          hitResult = { type: "bezier-anchor", index: i, subIndex: 0 };
-          return true;
-        } else if (newCircleHitTest(v.c2, bezierSize).test(p)) {
-          hitResult = { type: "bezier-anchor", index: i, subIndex: 1 };
-          return true;
-        }
+        return a.some((v, j) => {
+          if (v.type === 1) {
+            const hit = isOnDonutArc(
+              v.vicinity,
+              bezierVicinitySize,
+              bezierVicinitySize,
+              0,
+              v.r - Math.PI / 2,
+              v.r + Math.PI / 2,
+              BEZIER_ANCHOR_VICINITY_INNER_RATE,
+              p,
+            );
+            if (hit) {
+              hitResult = { type: "bezier-anchor", index: i, subIndex: j as 0 | 1 };
+              return true;
+            }
+          } else {
+            if (newCircleHitTest(v.p, bezierSize).test(p)) {
+              hitResult = { type: "bezier-anchor", index: i, subIndex: j as 0 | 1 };
+              return true;
+            }
+          }
+        });
       });
       if (hitResult) return hitResult;
     }
@@ -274,13 +333,37 @@ export function newLineBounding(option: Option) {
   function render(ctx: CanvasRenderingContext2D, scale = 1) {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
+    const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
     const style = option.styleScheme;
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
-    ctx.fillStyle = "#fff";
 
     const points = vertices;
     const addAnchorBeziers = getAddAnchorBeziers(scale);
+    const bezierViewAnchors = getBezierAnchors(scale);
 
+    bezierViewAnchors.forEach((anchor, i) => {
+      anchor?.forEach((a, j) => {
+        if (a.type === 1) {
+          renderOutlinedDonutArc(
+            ctx,
+            a.vicinity,
+            bezierVicinitySize,
+            a.r - Math.PI / 2,
+            a.r + Math.PI / 2,
+            BEZIER_ANCHOR_VICINITY_INNER_RATE,
+            style.transformAnchor,
+          );
+        } else {
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 2 * scale, dash: "dot" });
+          ctx.beginPath();
+          applyPath(ctx, [vertices[i + j], a.p]);
+          ctx.stroke();
+          renderOutlinedCircle(ctx, a.p, bezierSize, style.transformAnchor);
+        }
+      });
+    });
+
+    ctx.fillStyle = "#fff";
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
     points.forEach((p, i) => {
       if (!availableVertexIndex.has(i)) return;
 
@@ -298,16 +381,6 @@ export function newLineBounding(option: Option) {
           ctx.beginPath();
           ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
           ctx.stroke();
-        });
-      }
-
-      renderBezierControls(ctx, style, scale, lineShape);
-
-      if (bezierAnchors) {
-        bezierAnchors.forEach((c) => {
-          if (!c) return;
-          renderOutlinedCircle(ctx, c.c1, bezierSize, style.transformAnchor);
-          renderOutlinedCircle(ctx, c.c2, bezierSize, style.transformAnchor);
         });
       }
 
@@ -470,9 +543,21 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "bezier-anchor": {
-          const p = bezierAnchors?.[hitResult.index]?.[hitResult.subIndex === 0 ? "c1" : "c2"];
-          if (p) {
-            renderOutlinedCircle(ctx, p, bezierSize, style.selectionSecondaly);
+          const a = bezierViewAnchors[hitResult.index]?.[hitResult.subIndex === 1 ? 1 : 0];
+          if (a) {
+            if (a.type === 1) {
+              renderOutlinedDonutArc(
+                ctx,
+                a.vicinity,
+                bezierVicinitySize,
+                a.r - Math.PI / 2,
+                a.r + Math.PI / 2,
+                BEZIER_ANCHOR_VICINITY_INNER_RATE,
+                style.selectionSecondaly,
+              );
+            } else {
+              renderOutlinedCircle(ctx, a.p, bezierSize, style.selectionSecondaly);
+            }
           }
           break;
         }
@@ -517,7 +602,12 @@ export function renderBezierControls(
     applyPath(ctx, [edge[0], b.c1]);
     applyPath(ctx, [edge[1], b.c2]);
     ctx.stroke();
-    renderOutlinedCircle(ctx, b.c1, bezierSize, style.transformAnchor);
-    renderOutlinedCircle(ctx, b.c2, bezierSize, style.transformAnchor);
+
+    if (!isSame(edge[0], b.c1)) {
+      renderOutlinedCircle(ctx, b.c1, bezierSize, style.transformAnchor);
+    }
+    if (!isSame(edge[1], b.c2)) {
+      renderOutlinedCircle(ctx, b.c2, bezierSize, style.transformAnchor);
+    }
   });
 }

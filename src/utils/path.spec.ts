@@ -391,6 +391,12 @@ describe("getSegmentVicinityFrom", () => {
       { x: 10, y: 0 },
     ];
     expect(getSegmentVicinityFrom(seg, undefined, 3)).toEqualPoint({ x: 3, y: 0 });
+
+    const seg1: ISegment = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+    ];
+    expect(getSegmentVicinityFrom(seg1, undefined, 3)).toEqualPoint({ x: 3, y: 0 });
   });
 });
 
