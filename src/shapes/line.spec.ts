@@ -784,6 +784,11 @@ describe("deleteVertex", () => {
       body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
       curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }],
     });
+    expect(deleteVertex(shape0, 0)).toEqual({
+      p: { x: 1, y: 1 },
+      body: [{ p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
+      curves: [{ d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }],
+    });
     expect(deleteVertex(shape0, 1)).toEqual({
       body: [{ p: { x: 2, y: 2 } }, { p: { x: 3, y: 3 } }],
       curves: [{ d: { x: 0, y: 0 } }, { d: { x: 2, y: 2 } }],
@@ -794,6 +799,17 @@ describe("deleteVertex", () => {
     });
     expect(deleteVertex(shape0, 3)).toEqual({
       body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 4)).toEqual({
+      q: { x: 3, y: 3 },
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
+    });
+    expect(
+      deleteVertex({ ...shape0, curves: shape0.curves?.concat([{ d: { x: 3, y: 3 } }, { d: { x: 4, y: 4 } }]) }, 4),
+    ).toEqual({
+      q: { x: 3, y: 3 },
+      body: [{ p: { x: 1, y: 1 } }, { p: { x: 2, y: 2 } }],
+      curves: [{ d: { x: 0, y: 0 } }, { d: { x: 1, y: 1 } }, { d: { x: 2, y: 2 } }, { d: { x: 3, y: 3 } }],
     });
   });
 

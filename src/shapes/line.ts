@@ -640,9 +640,17 @@ export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: Conn
 export function deleteVertex(shape: LineShape, index: number): Partial<LineShape> {
   if (!shape.body || shape.body?.length === 0) return {};
 
+  const part: Partial<LineShape> = {};
+
+  if (shape.curves && shape.curves.length > index) {
+    // Delete corresponding curve.
+    part.curves = shape.curves.filter((_, i) => i !== index);
+  }
+
   const vertices = getLinePath(shape);
   if (index === 0) {
     return {
+      ...part,
       p: shape.body[0].p,
       pConnection: shape.body[0].c,
       body: shape.body.length === 1 ? undefined : shape.body.slice(1),
@@ -651,6 +659,7 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
   if (index === vertices.length - 1) {
     const bodyLastIndex = shape.body.length - 1;
     return {
+      ...part,
       q: shape.body[bodyLastIndex].p,
       qConnection: shape.body[bodyLastIndex].c,
       body: shape.body.length === 1 ? undefined : shape.body.slice(0, bodyLastIndex),
@@ -658,13 +667,7 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
   }
 
   const body = shape.body.filter((_, i) => i !== index - 1);
-  if (shape.curves && shape.curves.length > index) {
-    // Delete corresponding curve.
-    const curves = shape.curves.filter((_, i) => i !== index);
-    return { body, curves };
-  } else {
-    return { body };
-  }
+  return { ...part, body };
 }
 
 export function isLineShape(shape: Shape): shape is LineShape {
