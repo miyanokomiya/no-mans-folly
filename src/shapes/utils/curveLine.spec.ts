@@ -85,7 +85,7 @@ describe("restoreBodyFromRoundedElbow", () => {
 describe("getModifiableBezierControls", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", {
     p: { x: 0, y: 0 },
-    body: [{ p: { x: 50, y: 0 } }],
+    body: [{ p: { x: 50, y: 0 } }, { p: { x: 80, y: 0 } }],
     q: { x: 100, y: 0 },
     curves: [undefined, { d: { x: 10, y: 0 } }, { c1: { x: 0, y: 0 }, c2: { x: 0, y: 0 } }],
   });
