@@ -33,6 +33,7 @@ import {
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
 import { RectPolygonShape } from "./rectPolygon";
+import { applyPath } from "../utils/renderer";
 
 export type RectangleShape = RectPolygonShape & CommonStyle & TextContainer;
 
@@ -54,10 +55,7 @@ export const struct: ShapeStruct<RectangleShape> = {
 
     const rectPolygon = getLocalRectPolygon(shape);
     ctx.beginPath();
-    rectPolygon.forEach((p) => {
-      ctx.lineTo(p.x, p.y);
-    });
-    ctx.closePath();
+    applyPath(ctx, rectPolygon, true);
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
       ctx.fill();
@@ -66,6 +64,17 @@ export const struct: ShapeStruct<RectangleShape> = {
       applyStrokeStyle(ctx, shape.stroke);
       ctx.stroke();
     }
+  },
+  getClipPath(shape) {
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+    const rectPolygon = getLocalRectPolygon(shape);
+
+    const region = new Path2D();
+    const localRegion = new Path2D();
+    applyPath(localRegion, rectPolygon, true);
+    const m = getRotatedRectAffine(rect, shape.rotation);
+    region.addPath(localRegion, { a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
+    return region;
   },
   createSVGElementInfo(shape) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };

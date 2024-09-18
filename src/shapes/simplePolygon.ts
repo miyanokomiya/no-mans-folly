@@ -71,9 +71,8 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 ): Pick<
   ShapeStruct<T>,
   | "render"
-  | "clip"
+  | "getClipPath"
   | "createSVGElementInfo"
-  | "createClipSVGElementInfo"
   | "getWrapperRect"
   | "getLocalRectPolygon"
   | "isPointOn"
@@ -103,7 +102,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         }
       });
     },
-    clip(shape) {
+    getClipPath(shape) {
       const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
       const { path, curves } = getPath(shape);
 

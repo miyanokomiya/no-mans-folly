@@ -34,13 +34,14 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeContext, imageStore);
 }
 
-export function clipShape<T extends Shape>(
-  getStruct: GetShapeStruct,
-  shape: T,
-  shapeContext: ShapeContext,
-): Path2D | undefined {
+export function clipShape(getStruct: GetShapeStruct, shape: Shape, shapeContext: ShapeContext): Path2D | undefined {
   const struct = getStruct(shape.type);
-  return struct.clip?.(shape, shapeContext);
+  return struct.getClipPath?.(shape, shapeContext);
+}
+
+export function canClip(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.getClipPath;
 }
 
 export function createSVGElementInfo<T extends Shape>(

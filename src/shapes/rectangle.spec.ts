@@ -15,6 +15,7 @@ describe("struct", () => {
       const ctx = {
         beginPath: vi.fn(),
         closePath: vi.fn(),
+        moveTo: vi.fn(),
         lineTo: vi.fn(),
         fill: vi.fn(),
         stroke: vi.fn(),
