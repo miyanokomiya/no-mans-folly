@@ -6,9 +6,11 @@ import { blobToBase64 } from "../utils/fileAccess";
 import { createTemplateShapeEmbedElement } from "../shapes/utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
 import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
-import { walkTree } from "../utils/tree";
+import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
+import { isGroupShape } from "../shapes/group";
+import { splitList } from "../utils/commons";
 
 interface Option {
   shapeComposite: ShapeComposite;
@@ -23,15 +25,7 @@ export function newShapeSVGRenderer(option: Option) {
 
   async function render(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {
     const root = createSVGSVGElement();
-
-    walkTree(mergedShapeTree, (node) => {
-      const shape = mergedShapeMap[node.id];
-      const doc = docMap[shape.id];
-      const elm = createShapeElement(option, ctx, shape, doc);
-      if (elm) {
-        root.appendChild(elm);
-      }
-    });
+    renderShapeTree(root, ctx, mergedShapeTree);
 
     // Gather asset files used in the SVG.
     const assetDataMap = new Map<string, { width: number; height: number; base64: string }>();
@@ -79,6 +73,54 @@ export function newShapeSVGRenderer(option: Option) {
     }
 
     return root;
+  }
+
+  function renderShapeTree(root: SVGElement, ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {
+    treeNodes.forEach((n) => renderShapeTreeStep(root, ctx, n));
+  }
+
+  function renderShapeTreeStep(root: SVGElement, ctx: CanvasRenderingContext2D, node: TreeNode) {
+    const shape = mergedShapeMap[node.id];
+    const elm = renderShapeAndDoc(ctx, shape);
+    if (elm) {
+      root.appendChild(elm);
+    }
+    if (node.children.length === 0) return;
+
+    const parentElm = elm ?? root;
+    const isParentGroup = isGroupShape(shape);
+    const [others, clips] = splitList(node.children, (c) => {
+      return !isParentGroup || !mergedShapeMap[c.id].clipping;
+    });
+
+    if (!elm || !isParentGroup || clips.length === 0) {
+      others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
+      return;
+    }
+
+    const clipPathId = `clip-${shape.id}`;
+    const clipPath = createSVGElement("clipPath", { id: clipPathId, "clip-rule": shape.clipRule ?? "nonzero" });
+    let clipped = false;
+    clips.forEach((c) => {
+      const childShape = mergedShapeMap[c.id];
+      const childElm = createShapeElement(option, ctx, childShape);
+      if (childElm) {
+        clipPath.appendChild(childElm);
+        clipped = true;
+      }
+    });
+    if (clipped) {
+      root.appendChild(clipPath);
+      elm.setAttribute("clip-path", `url(#${clipPathId})`);
+    }
+
+    others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
+    ctx.restore();
+  }
+
+  function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape): SVGElement | undefined {
+    const doc = docMap[shape.id];
+    return createShapeElement(option, ctx, shape, doc);
   }
 
   async function renderWithMeta(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {

@@ -24,6 +24,9 @@ export const struct: ShapeStruct<GroupShape> = {
   },
   // TODO: Bounds can be rendered with fill and stroke style.
   render() {},
+  createSVGElementInfo() {
+    return { tag: "g" };
+  },
   getWrapperRect(shape, shapeContext) {
     const children = shapeContext?.treeNodeMap[shape.id].children;
     if (!children || children.length === 0) return { x: 0, y: 0, width: 0, height: 0 };

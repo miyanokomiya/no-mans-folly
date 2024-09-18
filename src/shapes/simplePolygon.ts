@@ -73,6 +73,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "render"
   | "clip"
   | "createSVGElementInfo"
+  | "createClipSVGElementInfo"
   | "getWrapperRect"
   | "getLocalRectPolygon"
   | "isPointOn"
