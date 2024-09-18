@@ -30,6 +30,7 @@ import {
   getMarkersOnPolygon,
   getRectPoints,
   getRotateFn,
+  getRotatedRectAffine,
   getRotatedWrapperRect,
   getRotationAffine,
   isPointOnRectangle,
@@ -70,6 +71,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 ): Pick<
   ShapeStruct<T>,
   | "render"
+  | "clip"
   | "createSVGElementInfo"
   | "getWrapperRect"
   | "getLocalRectPolygon"
@@ -99,6 +101,17 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
           ctx.stroke();
         }
       });
+    },
+    clip(shape) {
+      const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+      const { path, curves } = getPath(shape);
+
+      const region = new Path2D();
+      const localRegion = new Path2D();
+      applyCurvePath(localRegion, path, curves, true);
+      const m = getRotatedRectAffine(rect, shape.rotation);
+      region.addPath(localRegion, { a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
+      return region;
     },
     createSVGElementInfo(shape) {
       const transform = getShapeTransform(shape);

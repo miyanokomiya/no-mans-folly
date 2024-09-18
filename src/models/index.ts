@@ -27,7 +27,10 @@ export interface Shape extends Entity {
   gcV?: GroupConstraint;
   gcH?: GroupConstraint;
   locked?: boolean;
+  clipping?: boolean;
 }
+
+export type ClipRule = "nonzero" | "evenodd";
 
 export interface Size {
   width: number;

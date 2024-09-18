@@ -34,6 +34,15 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeContext, imageStore);
 }
 
+export function clipShape<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  shapeContext: ShapeContext,
+): Path2D | undefined {
+  const struct = getStruct(shape.type);
+  return struct.clip?.(shape, shapeContext);
+}
+
 export function createSVGElementInfo<T extends Shape>(
   getStruct: GetShapeStruct,
   shape: T,

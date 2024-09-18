@@ -93,6 +93,10 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
+  function clip(shape: Shape): Path2D | undefined {
+    return shapeModule.clipShape(getStruct, shape, mergedShapeContext);
+  }
+
   function createSVGElementInfo(shape: Shape, imageStore?: ImageStore): SVGElementInfo | undefined {
     return shapeModule.createSVGElementInfo(getStruct, shape, mergedShapeContext, imageStore);
   }
@@ -261,6 +265,7 @@ export function newShapeComposite(option: Option) {
     getAllTransformTargets,
 
     render,
+    clip,
     createSVGElementInfo,
     findShapeAt,
     isPointOn,

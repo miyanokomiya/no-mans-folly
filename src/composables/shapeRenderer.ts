@@ -1,7 +1,10 @@
+import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
+import { isGroupShape } from "../shapes/group";
+import { splitList } from "../utils/commons";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
-import { walkTree } from "../utils/tree";
+import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
 
@@ -19,26 +22,67 @@ export function newShapeRenderer(option: Option) {
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
 
   function render(ctx: CanvasRenderingContext2D) {
-    walkTree(mergedShapeTree, (node) => {
-      const shape = mergedShapeMap[node.id];
-      option.shapeComposite.render(ctx, shape, option.imageStore);
+    renderShapeTree(ctx, mergedShapeTree);
+  }
 
-      const doc = docMap[shape.id];
-      if (doc && !ignoreDocIdSet.has(shape.id) && !hasDocNoContent(doc)) {
-        ctx.save();
-        const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
-        ctx.transform(...bounds.affine);
+  function renderShapeTree(ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {
+    treeNodes.forEach((n) => renderShapeTreeStep(ctx, n));
+  }
 
-        const infoCache = option.shapeComposite.getDocCompositeCache(shape.id, doc);
-        const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
-        if (!infoCache) {
-          option.shapeComposite.setDocCompositeCache(shape.id, info, doc);
-        }
+  function renderShapeTreeStep(ctx: CanvasRenderingContext2D, node: TreeNode) {
+    const shape = mergedShapeMap[node.id];
+    renderShapeAndDoc(ctx, shape);
+    if (node.children.length === 0) return;
 
-        renderDocByComposition(ctx, info.composition, info.lines, option.scale);
-        ctx.restore();
+    const isParentGroup = isGroupShape(shape);
+    const [others, clips] = splitList(node.children, (c) => {
+      return !isParentGroup || !mergedShapeMap[c.id].clipping;
+    });
+
+    if (!isParentGroup || clips.length === 0) {
+      others.forEach((c) => renderShapeTreeStep(ctx, c));
+      return;
+    }
+
+    ctx.save();
+    const region = new Path2D();
+    let clipped = false;
+    clips.forEach((c) => {
+      const childShape = mergedShapeMap[c.id];
+      const subRegion = option.shapeComposite.clip(childShape);
+      if (subRegion) {
+        region.addPath(subRegion);
+        clipped = true;
       }
     });
+    if (clipped) {
+      ctx.clip(region, shape.clipRule);
+    }
+    others.forEach((c) => renderShapeTreeStep(ctx, c));
+    ctx.restore();
+  }
+
+  function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape) {
+    option.shapeComposite.render(ctx, shape, option.imageStore);
+    renderDoc(ctx, shape);
+  }
+
+  function renderDoc(ctx: CanvasRenderingContext2D, shape: Shape) {
+    const doc = docMap[shape.id];
+    if (doc && !ignoreDocIdSet.has(shape.id) && !hasDocNoContent(doc)) {
+      ctx.save();
+      const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
+      ctx.transform(...bounds.affine);
+
+      const infoCache = option.shapeComposite.getDocCompositeCache(shape.id, doc);
+      const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
+      if (!infoCache) {
+        option.shapeComposite.setDocCompositeCache(shape.id, info, doc);
+      }
+
+      renderDocByComposition(ctx, info.composition, info.lines, option.scale);
+      ctx.restore();
+    }
   }
 
   return { render };
