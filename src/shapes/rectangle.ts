@@ -66,14 +66,10 @@ export const struct: ShapeStruct<RectangleShape> = {
     }
   },
   getClipPath(shape) {
-    const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const rectPolygon = getLocalRectPolygon(shape);
 
     const region = new Path2D();
-    const localRegion = new Path2D();
-    applyPath(localRegion, rectPolygon, true);
-    const m = getRotatedRectAffine(rect, shape.rotation);
-    region.addPath(localRegion, { a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
+    applyPath(region, rectPolygon, true);
     return region;
   },
   createSVGElementInfo(shape) {
