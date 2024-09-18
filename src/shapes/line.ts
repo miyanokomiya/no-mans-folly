@@ -651,7 +651,7 @@ export function deleteVertex(shape: LineShape, index: number): Partial<LineShape
         if (!isBezieirControl(c)) {
           part.curves!.push(c);
         } else if (i === index - 1) {
-          // Second bezier constrol of the target vertex should be preserved.
+          // Preserve second bezier constrol of the target vertex when the former edge is also bezier.
           part.curves!.push({ c1: c.c1, c2: targetC.c2 });
         } else if (i !== index) {
           part.curves!.push(c);

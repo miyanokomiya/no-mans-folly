@@ -161,22 +161,23 @@ export function renderOutlinedDonutArc(
   holeRate: number,
   fillColor: Color,
 ) {
-  ctx.fillStyle = "#000";
+  ctx.save();
+  const region = new Path2D();
+  region.arc(p.x, p.y, r, from, to);
+  region.arc(p.x, p.y, r * holeRate, to, from, true);
+  region.closePath();
+  ctx.clip(region);
+
+  applyFillStyle(ctx, { color: fillColor });
+  applyStrokeStyle(ctx, { color: COLORS.BLACK, width: r * 0.1 });
   ctx.beginPath();
   ctx.arc(p.x, p.y, r, from, to);
   ctx.arc(p.x, p.y, r * holeRate, to, from, true);
   ctx.closePath();
   ctx.fill();
+  ctx.stroke();
 
-  applyFillStyle(ctx, { color: fillColor });
-  const cr = (from + to) / 2;
-  const cv = rotate({ x: r * 0.1, y: 0 }, cr);
-  const cp = add(p, cv);
-  ctx.beginPath();
-  ctx.arc(cp.x, cp.y, r * 0.8, from, to);
-  ctx.arc(cp.x, cp.y, r * 0.8 * holeRate, to, from, true);
-  ctx.closePath();
-  ctx.fill();
+  ctx.restore();
 }
 
 export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, size: number) {
