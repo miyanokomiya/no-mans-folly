@@ -74,7 +74,7 @@ interface ItemButtonProps {
   onClick?: (val: GroupConstraint) => void;
 }
 
-export const ItemButton: React.FC<ItemButtonProps> = ({ value, icon, vertical, selectedValue, onClick }) => {
+const ItemButton: React.FC<ItemButtonProps> = ({ value, icon, vertical, selectedValue, onClick }) => {
   const handleClick = useCallback(() => {
     onClick?.(value);
   }, [value, onClick]);
