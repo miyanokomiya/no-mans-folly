@@ -9,8 +9,11 @@ import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } fro
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
-import { isGroupShape } from "../shapes/group";
+import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
+import { getRectPoints } from "../utils/geometry";
+import { createSVGCurvePath } from "../utils/renderer";
+import { pathSegmentRawsToString } from "okageo";
 
 interface Option {
   shapeComposite: ShapeComposite;
@@ -93,29 +96,11 @@ export function newShapeSVGRenderer(option: Option) {
       return !isParentGroup || !mergedShapeMap[c.id].clipping;
     });
 
-    if (!elm || !isParentGroup || clips.length === 0) {
-      others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
-      return;
-    }
-
-    const clipPathId = `clip-${shape.id}`;
-    const clipPath = createSVGElement("clipPath", { id: clipPathId, "clip-rule": shape.clipRule ?? "nonzero" });
-    let clipped = false;
-    clips.forEach((c) => {
-      const childShape = mergedShapeMap[c.id];
-      const childElm = createShapeElement(option, ctx, childShape);
-      if (childElm) {
-        clipPath.appendChild(childElm);
-        clipped = true;
-      }
-    });
-    if (clipped) {
-      root.appendChild(clipPath);
-      elm.setAttribute("clip-path", `url(#${clipPathId})`);
+    if (elm && isParentGroup && clips.length > 0) {
+      clipWithinGroup(option.shapeComposite, shape, clips, root, elm);
     }
 
     others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
-    ctx.restore();
   }
 
   function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape): SVGElement | undefined {
@@ -165,4 +150,56 @@ function createShapeElement(
   }
   const wrapperElm = createSVGElement("g", undefined, [shapeElmInfo, docElmInfo]);
   return wrapperElm;
+}
+
+function clipWithinGroup(
+  shapeComposite: ShapeComposite,
+  groupShape: GroupShape,
+  clips: TreeNode[],
+  root: SVGElement,
+  groupElm: SVGElement,
+) {
+  if (groupShape.clipRule === "out") {
+    const wrapperPath = getRectPoints(shapeComposite.getWrapperRect(groupShape, true)).reverse();
+    const wrapperPathStr = pathSegmentRawsToString(createSVGCurvePath(wrapperPath, undefined, true));
+
+    let lastClipPath: SVGElement | undefined;
+    clips.forEach((c) => {
+      const clipPathId = `clip-${groupShape.id}-${c.id}`;
+      const clipPath = createSVGElement("clipPath", { id: clipPathId });
+      const childShape = shapeComposite.mergedShapeMap[c.id];
+      const pathStr = shapeComposite.createClipSVGPath(childShape);
+      if (pathStr) {
+        const pathElm = createSVGElement("path", { d: `${pathStr} ${wrapperPathStr}` });
+        clipPath.appendChild(pathElm);
+        if (lastClipPath) {
+          clipPath.setAttribute("clip-path", `url(#${lastClipPath.id})`);
+        }
+        root.appendChild(clipPath);
+        lastClipPath = clipPath;
+      }
+    });
+
+    if (lastClipPath) {
+      root.appendChild(lastClipPath);
+      groupElm.setAttribute("clip-path", `url(#${lastClipPath.id})`);
+    }
+  } else {
+    const clipPathId = `clip-${groupShape.id}`;
+    const clipPath = createSVGElement("clipPath", { id: clipPathId });
+    let clipped = false;
+    clips.forEach((c) => {
+      const childShape = shapeComposite.mergedShapeMap[c.id];
+      const pathStr = shapeComposite.createClipSVGPath(childShape);
+      if (pathStr) {
+        const pathElm = createSVGElement("path", { d: pathStr });
+        clipPath.appendChild(pathElm);
+        clipped = true;
+      }
+    });
+    if (clipped) {
+      root.appendChild(clipPath);
+      groupElm.setAttribute("clip-path", `url(#${clipPathId})`);
+    }
+  }
 }

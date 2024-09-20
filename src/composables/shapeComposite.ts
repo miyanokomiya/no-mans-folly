@@ -101,6 +101,10 @@ export function newShapeComposite(option: Option) {
     return shapeModule.createSVGElementInfo(getStruct, shape, mergedShapeContext, imageStore);
   }
 
+  function createClipSVGPath(shape: Shape): string | undefined {
+    return shapeModule.createClipSVGPath(getStruct, shape, mergedShapeContext);
+  }
+
   function findShapeAt(
     p: IVec2,
     scope?: ShapeSelectionScope,
@@ -267,6 +271,8 @@ export function newShapeComposite(option: Option) {
     render,
     clip,
     createSVGElementInfo,
+    createClipSVGPath,
+
     findShapeAt,
     isPointOn,
     transformShape,

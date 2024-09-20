@@ -30,7 +30,7 @@ export interface Shape extends Entity {
   clipping?: boolean;
 }
 
-export type ClipRule = "nonzero" | "evenodd";
+export type ClipRule = "in" | "out";
 
 export interface Size {
   width: number;

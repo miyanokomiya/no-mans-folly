@@ -1,13 +1,13 @@
 import { useCallback } from "react";
 import { ClipRule } from "../../models";
 import { BlockField } from "../atoms/BlockField";
-import iconNonzero from "../../assets/icons/clip_rule_nonzero.svg";
-import iconEvenodd from "../../assets/icons/clip_rule_evenodd.svg";
+import iconClipIn from "../../assets/icons/clip_rule_in.svg";
+import iconClipOut from "../../assets/icons/clip_rule_out.svg";
 import { GroupShape } from "../../shapes/group";
 
 const rules: { value: ClipRule; icon: string }[] = [
-  { value: "nonzero", icon: iconNonzero },
-  { value: "evenodd", icon: iconEvenodd },
+  { value: "in", icon: iconClipIn },
+  { value: "out", icon: iconClipOut },
 ];
 
 interface Props {

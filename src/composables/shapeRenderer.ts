@@ -1,8 +1,10 @@
 import { Shape } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
-import { isGroupShape } from "../shapes/group";
+import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
+import { getRectPoints } from "../utils/geometry";
+import { applyPath } from "../utils/renderer";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
@@ -45,19 +47,7 @@ export function newShapeRenderer(option: Option) {
     }
 
     ctx.save();
-    const region = new Path2D();
-    let clipped = false;
-    clips.forEach((c) => {
-      const childShape = mergedShapeMap[c.id];
-      const subRegion = option.shapeComposite.clip(childShape);
-      if (subRegion) {
-        region.addPath(subRegion);
-        clipped = true;
-      }
-    });
-    if (clipped) {
-      ctx.clip(region, shape.clipRule);
-    }
+    clipWithinGroup(option.shapeComposite, shape, clips, ctx);
     others.forEach((c) => renderShapeTreeStep(ctx, c));
     ctx.restore();
   }
@@ -88,3 +78,38 @@ export function newShapeRenderer(option: Option) {
   return { render };
 }
 export type ShapeRenderer = ReturnType<typeof newShapeRenderer>;
+
+function clipWithinGroup(
+  shapeComposite: ShapeComposite,
+  groupShape: GroupShape,
+  clips: TreeNode[],
+  ctx: CanvasRenderingContext2D,
+) {
+  const wrapperRegion = new Path2D();
+  applyPath(wrapperRegion, getRectPoints(shapeComposite.getWrapperRect(groupShape, true)).reverse(), true);
+
+  if (groupShape.clipRule === "out") {
+    clips.forEach((c) => {
+      const childShape = shapeComposite.mergedShapeMap[c.id];
+      const subRegion = shapeComposite.clip(childShape);
+      if (subRegion) {
+        subRegion.addPath(wrapperRegion);
+        ctx.clip(subRegion, "nonzero");
+      }
+    });
+  } else {
+    const region = new Path2D();
+    let clipped = false;
+    clips.forEach((c) => {
+      const childShape = shapeComposite.mergedShapeMap[c.id];
+      const subRegion = shapeComposite.clip(childShape);
+      if (subRegion) {
+        region.addPath(subRegion);
+        clipped = true;
+      }
+    });
+    if (clipped) {
+      ctx.clip(region, "nonzero");
+    }
+  }
+}

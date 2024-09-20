@@ -54,6 +54,15 @@ export function createSVGElementInfo<T extends Shape>(
   return struct.createSVGElementInfo?.(shape, shapeContext, imageStore);
 }
 
+export function createClipSVGPath<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  shapeContext: ShapeContext,
+): string | undefined {
+  const struct = getStruct(shape.type);
+  return struct.createClipSVGPath?.(shape, shapeContext);
+}
+
 export function getWrapperRect(
   getStruct: GetShapeStruct,
   shape: Shape,

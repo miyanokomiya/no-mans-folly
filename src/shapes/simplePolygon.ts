@@ -15,6 +15,8 @@ import {
   multiAffines,
   pathSegmentRawsToString,
   rotate,
+  rotatePath,
+  slidePath,
   sub,
 } from "okageo";
 import { ShapeStruct, TextContainer, getCommonStyle, updateCommonStyle, textContainerModule } from "./core";
@@ -44,7 +46,7 @@ import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/re
 import { pickMinItem } from "../utils/commons";
 import { renderTransform } from "../utils/svgElements";
 import { getPaddingRect } from "../utils/boxPadding";
-import { RectPolygonShape, getShapeDetransform, getShapeTransform } from "./rectPolygon";
+import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
 
 export type SimplePath = {
   path: IVec2[];
@@ -73,6 +75,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "render"
   | "getClipPath"
   | "createSVGElementInfo"
+  | "createClipSVGPath"
   | "getWrapperRect"
   | "getLocalRectPolygon"
   | "isPointOn"
@@ -126,6 +129,18 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
           ...renderStrokeSVGAttributes(shape.stroke),
         },
       };
+    },
+    createClipSVGPath(shape) {
+      const { path, curves } = getPath(shape);
+      const rawPath = createSVGCurvePath(path, curves, true);
+      const rect = getRectShapeRect(shape);
+      const c = getRectCenter(rect);
+      return pathSegmentRawsToString(
+        slidePath(rotatePath(slidePath(rawPath, { x: rect.x - c.x, y: rect.y - c.y }), shape.rotation), {
+          x: c.x,
+          y: c.y,
+        }),
+      );
     },
     getWrapperRect(shape, _, includeBounds) {
       let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };

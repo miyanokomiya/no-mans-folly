@@ -43,6 +43,7 @@ export interface ShapeStruct<T extends Shape> {
   render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
   getClipPath?: (shape: T, shapeContext?: ShapeContext) => Path2D;
   createSVGElementInfo?: (shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => SVGElementInfo | undefined;
+  createClipSVGPath?: (shape: T, shapeContext?: ShapeContext) => string | undefined;
   getWrapperRect: (shape: T, shapeContext?: ShapeContext, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T, shapeContext?: ShapeContext) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle;

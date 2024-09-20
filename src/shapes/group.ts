@@ -1,11 +1,11 @@
 import { ShapeContext, ShapeStruct, createBaseShape } from "./core";
-import { Shape } from "../models";
+import { ClipRule, Shape } from "../models";
 import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
 import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
 
 export type GroupShape = Shape & {
   type: "group";
-  clipRule?: "nonzero" | "evenodd"; // undefined means "nonzero"
+  clipRule?: ClipRule; // undefined means "in"
 };
 
 /**
