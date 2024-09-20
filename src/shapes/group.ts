@@ -5,7 +5,7 @@ import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from 
 
 export type GroupShape = Shape & {
   type: "group";
-  clipRule?: ClipRule; // undefined means "in"
+  clipRule?: ClipRule; // undefined means "out"
 };
 
 /**

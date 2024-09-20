@@ -6,8 +6,8 @@ import iconClipOut from "../../assets/icons/clip_rule_out.svg";
 import { GroupShape } from "../../shapes/group";
 
 const rules: { value: ClipRule; icon: string }[] = [
-  { value: "in", icon: iconClipIn },
   { value: "out", icon: iconClipOut },
+  { value: "in", icon: iconClipIn },
 ];
 
 interface Props {

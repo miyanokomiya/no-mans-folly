@@ -88,16 +88,7 @@ function clipWithinGroup(
   const wrapperRegion = new Path2D();
   applyPath(wrapperRegion, getRectPoints(shapeComposite.getWrapperRect(groupShape, true)).reverse(), true);
 
-  if (groupShape.clipRule === "out") {
-    clips.forEach((c) => {
-      const childShape = shapeComposite.mergedShapeMap[c.id];
-      const subRegion = shapeComposite.clip(childShape);
-      if (subRegion) {
-        subRegion.addPath(wrapperRegion);
-        ctx.clip(subRegion, "nonzero");
-      }
-    });
-  } else {
+  if (groupShape.clipRule === "in") {
     const region = new Path2D();
     let clipped = false;
     clips.forEach((c) => {
@@ -111,5 +102,14 @@ function clipWithinGroup(
     if (clipped) {
       ctx.clip(region, "nonzero");
     }
+  } else {
+    clips.forEach((c) => {
+      const childShape = shapeComposite.mergedShapeMap[c.id];
+      const subRegion = shapeComposite.clip(childShape);
+      if (subRegion) {
+        subRegion.addPath(wrapperRegion);
+        ctx.clip(subRegion, "nonzero");
+      }
+    });
   }
 }
