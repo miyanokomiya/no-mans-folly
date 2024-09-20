@@ -1,4 +1,15 @@
-import { IVec2, add, applyAffine, getCenter, getDistance, getRadian, isSame, sub } from "okageo";
+import {
+  IVec2,
+  add,
+  applyAffine,
+  getCenter,
+  getDistance,
+  getRadian,
+  isSame,
+  parsePathSegmentRaws,
+  pathSegmentRawsToString,
+  sub,
+} from "okageo";
 import { CommonStyle, Shape } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
@@ -23,7 +34,7 @@ import {
   updateCommonStyle,
 } from "./core";
 import { getPaddingRect } from "../utils/boxPadding";
-import { renderTransform } from "../utils/svgElements";
+import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 
 export type EllipseShape = Shape &
   CommonStyle &
@@ -58,6 +69,11 @@ export const struct: ShapeStruct<EllipseShape> = {
       ctx.stroke();
     }
   },
+  getClipPath(shape) {
+    const region = new Path2D();
+    region.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, 0, TAU);
+    return region;
+  },
   createSVGElementInfo(shape) {
     const rect = {
       x: shape.p.x,
@@ -79,6 +95,22 @@ export const struct: ShapeStruct<EllipseShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
     };
+  },
+  createClipSVGPath(shape) {
+    const pathStr = [
+      `M${0} ${shape.ry}`,
+      `A${shape.rx} ${shape.ry} 0 0 1 ${shape.rx * 2} ${shape.ry}`,
+      `A${shape.rx} ${shape.ry} 0 0 1 ${0} ${shape.ry}`,
+      `Z`,
+    ];
+    const rawPath = parsePathSegmentRaws(pathStr.join(" "));
+    const rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    return pathSegmentRawsToString(applyRotatedRectTransformToRawPath(rect, shape.rotation, rawPath));
   },
   getWrapperRect(shape, _, includeBounds) {
     let rect = {

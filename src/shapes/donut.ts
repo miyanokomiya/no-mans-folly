@@ -1,4 +1,4 @@
-import { IVec2, add, getDistance } from "okageo";
+import { IVec2, add, getDistance, parsePathSegmentRaws, pathSegmentRawsToString } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -11,7 +11,7 @@ import {
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
-import { renderTransform } from "../utils/svgElements";
+import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 
 export type DonutShape = EllipseShape & {
@@ -35,15 +35,8 @@ export const struct: ShapeStruct<DonutShape> = {
   render(ctx, shape) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
-    const holeRate = shape.holeRate;
-    const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
-    const rotateFn = getRotateFn(shape.rotation, c);
-    const innerStartP = rotateFn({ x: c.x + shape.rx * holeRate, y: c.y });
-
     ctx.beginPath();
-    ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
-    ctx.moveTo(innerStartP.x, innerStartP.y);
-    ctx.ellipse(c.x, c.y, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, 0, TAU, true);
+    applyDonutPath(ctx, shape);
 
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
@@ -54,6 +47,11 @@ export const struct: ShapeStruct<DonutShape> = {
       ctx.stroke();
     }
   },
+  getClipPath(shape) {
+    const region = new Path2D();
+    applyDonutPath(region, shape);
+    return region;
+  },
   createSVGElementInfo(shape) {
     const rect = {
       x: shape.p.x,
@@ -62,21 +60,7 @@ export const struct: ShapeStruct<DonutShape> = {
       height: 2 * shape.ry,
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
-
-    const rx = shape.rx;
-    const ry = shape.ry;
-    const c = { x: rx, y: ry };
-    const holeRate = shape.holeRate;
-    const irx = rx * holeRate;
-    const iry = ry * holeRate;
-    const d = [
-      `M${c.x + rx} ${c.y}`,
-      `A${rx} ${ry} 0 0 0 ${c.x - rx} ${c.y}`,
-      `A${rx} ${ry} 0 0 0 ${c.x + rx} ${c.y}`,
-      `M${c.x + irx} ${c.y}`,
-      `A${irx} ${iry} 0 0 1 ${c.x - irx} ${c.y}`,
-      `A${irx} ${iry} 0 0 1 ${c.x + irx} ${c.y}`,
-    ].join(" ");
+    const d = createDonutLocalSVGPathStr(shape);
 
     return {
       tag: "path",
@@ -87,6 +71,17 @@ export const struct: ShapeStruct<DonutShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
     };
+  },
+  createClipSVGPath(shape) {
+    const arcD = createDonutLocalSVGPathStr(shape);
+    const rawPath = parsePathSegmentRaws(arcD);
+    const rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    return pathSegmentRawsToString(applyRotatedRectTransformToRawPath(rect, shape.rotation, rawPath));
   },
   isPointOn(shape, p) {
     const c = add(shape.p, { x: shape.rx, y: shape.ry });
@@ -164,4 +159,32 @@ function getClosestOutline(shape: DonutShape, p: IVec2, threshold: number): IVec
       return rotateFn(rotatedInnerClosest);
     }
   }
+}
+
+function applyDonutPath(ctx: CanvasRenderingContext2D | Path2D, shape: DonutShape) {
+  const holeRate = shape.holeRate;
+  const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+  const rotateFn = getRotateFn(shape.rotation, c);
+  const innerStartP = rotateFn({ x: c.x + shape.rx * holeRate, y: c.y });
+
+  ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
+  ctx.moveTo(innerStartP.x, innerStartP.y);
+  ctx.ellipse(c.x, c.y, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, 0, TAU, true);
+}
+
+function createDonutLocalSVGPathStr(shape: DonutShape): string {
+  const rx = shape.rx;
+  const ry = shape.ry;
+  const c = { x: rx, y: ry };
+  const holeRate = shape.holeRate;
+  const irx = rx * holeRate;
+  const iry = ry * holeRate;
+  return [
+    `M${c.x + rx} ${c.y}`,
+    `A${rx} ${ry} 0 0 1 ${c.x - rx} ${c.y}`,
+    `A${rx} ${ry} 0 0 1 ${c.x + rx} ${c.y}`,
+    `M${c.x + irx} ${c.y}`,
+    `A${irx} ${iry} 0 0 0 ${c.x - irx} ${c.y}`,
+    `A${irx} ${iry} 0 0 0 ${c.x + irx} ${c.y}`,
+  ].join(" ");
 }

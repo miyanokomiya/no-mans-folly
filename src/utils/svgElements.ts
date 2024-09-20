@@ -1,4 +1,4 @@
-import { AffineMatrix } from "okageo";
+import { AffineMatrix, getRectCenter, IRectangle, PathSegmentRaw, rotatePath, slidePath } from "okageo";
 import { isIdentityAffine } from "./geometry";
 
 const SVG_URL = "http://www.w3.org/2000/svg";
@@ -66,4 +66,16 @@ export function getColorAttributes(
   val?: [hex: string, alpha: number],
 ): SVGAttributes | undefined {
   return val ? { [type]: val[0], [`${type}-opacity`]: val[1] === 1 ? undefined : val[1] } : undefined;
+}
+
+export function applyRotatedRectTransformToRawPath(
+  rect: IRectangle,
+  rotation: number,
+  rawPath: PathSegmentRaw[],
+): PathSegmentRaw[] {
+  const c = getRectCenter(rect);
+  return slidePath(rotatePath(slidePath(rawPath, { x: -rect.width / 2, y: -rect.height / 2 }), rotation), {
+    x: c.x,
+    y: c.y,
+  });
 }

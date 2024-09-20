@@ -1,4 +1,13 @@
-import { IVec2, MINVALUE, add, clamp, getDistance, getRadian } from "okageo";
+import {
+  IVec2,
+  MINVALUE,
+  add,
+  clamp,
+  getDistance,
+  getRadian,
+  parsePathSegmentRaws,
+  pathSegmentRawsToString,
+} from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -15,7 +24,7 @@ import {
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
-import { renderTransform } from "../utils/svgElements";
+import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 
 export type MoonShape = EllipseShape & {
   innsetC: IVec2;
@@ -40,33 +49,8 @@ export const struct: ShapeStruct<MoonShape> = {
   render(ctx, shape) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
-    const ac = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
-    const rotateFn = getRotateFn(shape.rotation, ac);
-    const ar = shape.rx;
-    const br = getMoonRadius(shape);
-    const insetLocalX = getMoonInsetLocalX(shape);
-    const bc = rotateFn({ x: shape.p.x + insetLocalX + br, y: ac.y });
-    const intersections = getIntersectionBetweenCircles(ac, ar, bc, br);
-
     ctx.beginPath();
-    if (!intersections) {
-      ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
-    } else if (intersections.length === 1) {
-      // Ignore when there's no visible part.
-      if (Math.abs(insetLocalX) < MINVALUE) return;
-
-      if (insetLocalX < shape.rx * 2) {
-        ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, 0, TAU, true);
-      }
-      ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
-    } else {
-      const [bfrom, bto] = intersections.map((p) => getRadian(p, bc) - shape.rotation);
-      ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, bfrom, bto, true);
-      const [afrom, ato] = intersections.map((p) => getRadian(p, ac) - shape.rotation);
-      ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, ato, afrom);
-    }
-
-    ctx.closePath();
+    applyMoonPath(ctx, shape);
 
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
@@ -77,24 +61,15 @@ export const struct: ShapeStruct<MoonShape> = {
       ctx.stroke();
     }
   },
+  getClipPath(shape) {
+    const region = new Path2D();
+    applyMoonPath(region, shape);
+    return region;
+  },
   createSVGElementInfo(shape) {
-    const ac = { x: shape.rx, y: shape.ry };
-    const ar = shape.rx;
-    const br = getMoonRadius(shape);
-    const insetLocalX = getMoonInsetLocalX(shape);
-    const bc = { x: insetLocalX + br, y: ac.y };
-    const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
-    let adjustedMoonIntersections = moonIntersections;
-
-    if (!moonIntersections) return ellipseStruct.createSVGElementInfo?.(shape);
-    if (moonIntersections.length === 1) {
-      // Ignore when there's no visible part.
-      if (Math.abs(insetLocalX) < MINVALUE) return;
-
-      // Duplicate the single intersection to make a hole.
-      adjustedMoonIntersections = [moonIntersections[0], moonIntersections[0]];
-    }
-    if (!adjustedMoonIntersections) adjustedMoonIntersections = moonIntersections;
+    const arcD = createMoonLocalSVGPathStr(shape);
+    if (arcD === "ellipse") return ellipseStruct.createSVGElementInfo?.(shape);
+    if (arcD === "none") return;
 
     const rect = {
       x: shape.p.x,
@@ -103,20 +78,6 @@ export const struct: ShapeStruct<MoonShape> = {
       height: 2 * shape.ry,
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
-
-    const [aifrom, aito] = adjustedMoonIntersections.map((p) => ({
-      x: p.x,
-      y: ac.y + ((p.y - ac.y) / shape.rx) * shape.ry,
-    }));
-    const brx = br;
-    const bry = (br / shape.rx) * shape.ry;
-    const arcD = [
-      `M${aifrom.x} ${aifrom.y}`,
-      `A${shape.rx} ${shape.ry} 0 0 0 ${0} ${ac.y}`,
-      `A${shape.rx} ${shape.ry} 0 0 0 ${aito.x} ${aito.y}`,
-      `A${brx} ${bry} 0 0 1 ${bc.x - br} ${bc.y}`,
-      `A${brx} ${bry} 0 0 1 ${aifrom.x} ${aifrom.y}z`,
-    ].join(" ");
 
     return {
       tag: "path",
@@ -127,6 +88,20 @@ export const struct: ShapeStruct<MoonShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
     };
+  },
+  createClipSVGPath(shape) {
+    const arcD = createMoonLocalSVGPathStr(shape);
+    if (arcD === "ellipse") return ellipseStruct.createClipSVGPath?.(shape);
+    if (arcD === "none") return;
+
+    const rawPath = parsePathSegmentRaws(arcD);
+    const rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    return pathSegmentRawsToString(applyRotatedRectTransformToRawPath(rect, shape.rotation, rawPath));
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
     if (!includeBounds) return ellipseStruct.getWrapperRect(shape, shapeContext, includeBounds);
@@ -264,4 +239,67 @@ export function getMoonRadius(shape: MoonShape): number {
 export function getMoonRadiusRange(shape: MoonShape): [min: number, max: number] {
   const insetX = getMoonInsetLocalX(shape);
   return [shape.rx - insetX / 2, 10 * shape.rx];
+}
+
+function applyMoonPath(ctx: CanvasRenderingContext2D | Path2D, shape: MoonShape) {
+  const ac = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+  const rotateFn = getRotateFn(shape.rotation, ac);
+  const ar = shape.rx;
+  const br = getMoonRadius(shape);
+  const insetLocalX = getMoonInsetLocalX(shape);
+  const bc = rotateFn({ x: shape.p.x + insetLocalX + br, y: ac.y });
+  const intersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+
+  if (!intersections) {
+    ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
+  } else if (intersections.length === 1) {
+    // Ignore when there's no visible part.
+    if (Math.abs(insetLocalX) < MINVALUE) return;
+
+    if (insetLocalX < shape.rx * 2) {
+      ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, 0, TAU, true);
+    }
+    ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, 0, TAU);
+  } else {
+    const [bfrom, bto] = intersections.map((p) => getRadian(p, bc) - shape.rotation);
+    ctx.ellipse(bc.x, bc.y, br, (br / shape.rx) * shape.ry, shape.rotation, bfrom, bto, true);
+    const [afrom, ato] = intersections.map((p) => getRadian(p, ac) - shape.rotation);
+    ctx.ellipse(ac.x, ac.y, shape.rx, shape.ry, shape.rotation, ato, afrom);
+  }
+
+  ctx.closePath();
+}
+
+function createMoonLocalSVGPathStr(shape: MoonShape): "ellipse" | "none" | string {
+  const ac = { x: shape.rx, y: shape.ry };
+  const ar = shape.rx;
+  const br = getMoonRadius(shape);
+  const insetLocalX = getMoonInsetLocalX(shape);
+  const bc = { x: insetLocalX + br, y: ac.y };
+  const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+  let adjustedMoonIntersections = moonIntersections;
+
+  if (!moonIntersections) return "ellipse";
+  if (moonIntersections.length === 1) {
+    // Ignore when there's no visible part.
+    if (Math.abs(insetLocalX) < MINVALUE) return "none";
+
+    // Duplicate the single intersection to make a hole.
+    adjustedMoonIntersections = [moonIntersections[0], moonIntersections[0]];
+  }
+  if (!adjustedMoonIntersections) adjustedMoonIntersections = moonIntersections;
+
+  const [aifrom, aito] = adjustedMoonIntersections.map((p) => ({
+    x: p.x,
+    y: ac.y + ((p.y - ac.y) / shape.rx) * shape.ry,
+  }));
+  const brx = br;
+  const bry = (br / shape.rx) * shape.ry;
+  return [
+    `M${aifrom.x} ${aifrom.y}`,
+    `A${brx} ${bry} 0 0 0 ${bc.x - br} ${bc.y}`,
+    `A${brx} ${bry} 0 0 0 ${aito.x} ${aito.y}`,
+    `A${shape.rx} ${shape.ry} 0 0 1 ${0} ${ac.y}`,
+    `A${shape.rx} ${shape.ry} 0 0 1 ${aifrom.x} ${aifrom.y}z`,
+  ].join(" ");
 }

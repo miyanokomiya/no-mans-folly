@@ -7,6 +7,7 @@ import {
   getRadian,
   getRectCenter,
   isSame,
+  pathSegmentRawsToString,
   rotate,
 } from "okageo";
 import { CommonStyle } from "../models";
@@ -33,7 +34,7 @@ import {
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
 import { RectPolygonShape } from "./rectPolygon";
-import { applyPath } from "../utils/renderer";
+import { applyPath, createSVGCurvePath } from "../utils/renderer";
 
 export type RectangleShape = RectPolygonShape & CommonStyle & TextContainer;
 
@@ -86,6 +87,11 @@ export const struct: ShapeStruct<RectangleShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
     };
+  },
+  createClipSVGPath(shape) {
+    const rectPolygon = getLocalRectPolygon(shape);
+    const rawPath = createSVGCurvePath(rectPolygon, undefined, true);
+    return pathSegmentRawsToString(rawPath);
   },
   getWrapperRect(shape, _, includeBounds) {
     let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
