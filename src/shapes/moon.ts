@@ -1,13 +1,4 @@
-import {
-  IVec2,
-  MINVALUE,
-  add,
-  clamp,
-  getDistance,
-  getRadian,
-  parsePathSegmentRaws,
-  pathSegmentRawsToString,
-} from "okageo";
+import { IVec2, MINVALUE, PathSegmentRaw, add, clamp, getDistance, getRadian, pathSegmentRawsToString } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -67,9 +58,9 @@ export const struct: ShapeStruct<MoonShape> = {
     return region;
   },
   createSVGElementInfo(shape) {
-    const arcD = createMoonLocalSVGPathStr(shape);
-    if (arcD === "ellipse") return ellipseStruct.createSVGElementInfo?.(shape);
-    if (arcD === "none") return;
+    const rawPath = createLocalSVGRawPath(shape);
+    if (rawPath === "ellipse") return ellipseStruct.createSVGElementInfo?.(shape);
+    if (!rawPath) return;
 
     const rect = {
       x: shape.p.x,
@@ -82,7 +73,7 @@ export const struct: ShapeStruct<MoonShape> = {
     return {
       tag: "path",
       attributes: {
-        d: arcD,
+        d: pathSegmentRawsToString(rawPath),
         transform: renderTransform(affine),
         ...renderFillSVGAttributes(shape.fill),
         ...renderStrokeSVGAttributes(shape.stroke),
@@ -90,11 +81,10 @@ export const struct: ShapeStruct<MoonShape> = {
     };
   },
   createClipSVGPath(shape) {
-    const arcD = createMoonLocalSVGPathStr(shape);
-    if (arcD === "ellipse") return ellipseStruct.createClipSVGPath?.(shape);
-    if (arcD === "none") return;
+    const rawPath = createLocalSVGRawPath(shape);
+    if (rawPath === "ellipse") return ellipseStruct.createClipSVGPath?.(shape);
+    if (!rawPath) return;
 
-    const rawPath = parsePathSegmentRaws(arcD);
     const rect = {
       x: shape.p.x,
       y: shape.p.y,
@@ -270,7 +260,7 @@ function applyMoonPath(ctx: CanvasRenderingContext2D | Path2D, shape: MoonShape)
   ctx.closePath();
 }
 
-function createMoonLocalSVGPathStr(shape: MoonShape): "ellipse" | "none" | string {
+function createLocalSVGRawPath(shape: MoonShape): "ellipse" | undefined | PathSegmentRaw[] {
   const ac = { x: shape.rx, y: shape.ry };
   const ar = shape.rx;
   const br = getMoonRadius(shape);
@@ -282,7 +272,7 @@ function createMoonLocalSVGPathStr(shape: MoonShape): "ellipse" | "none" | strin
   if (!moonIntersections) return "ellipse";
   if (moonIntersections.length === 1) {
     // Ignore when there's no visible part.
-    if (Math.abs(insetLocalX) < MINVALUE) return "none";
+    if (Math.abs(insetLocalX) < MINVALUE) return;
 
     // Duplicate the single intersection to make a hole.
     adjustedMoonIntersections = [moonIntersections[0], moonIntersections[0]];
@@ -296,10 +286,11 @@ function createMoonLocalSVGPathStr(shape: MoonShape): "ellipse" | "none" | strin
   const brx = br;
   const bry = (br / shape.rx) * shape.ry;
   return [
-    `M${aifrom.x} ${aifrom.y}`,
-    `A${brx} ${bry} 0 0 0 ${bc.x - br} ${bc.y}`,
-    `A${brx} ${bry} 0 0 0 ${aito.x} ${aito.y}`,
-    `A${shape.rx} ${shape.ry} 0 0 1 ${0} ${ac.y}`,
-    `A${shape.rx} ${shape.ry} 0 0 1 ${aifrom.x} ${aifrom.y}z`,
-  ].join(" ");
+    ["M", aifrom.x, aifrom.y],
+    ["A", brx, bry, 0, false, false, bc.x - br, bc.y],
+    ["A", brx, bry, 0, false, false, aito.x, aito.y],
+    ["A", shape.rx, shape.ry, 0, false, true, 0, ac.y],
+    ["A", shape.rx, shape.ry, 0, false, true, aifrom.x, aifrom.y],
+    ["z"],
+  ];
 }

@@ -1,12 +1,12 @@
 import {
   IVec2,
   MINVALUE,
+  PathSegmentRaw,
   add,
   clamp,
   getCenter,
   getDistance,
   multi,
-  parsePathSegmentRaws,
   pathSegmentRawsToString,
   rotate,
   sub,
@@ -89,7 +89,7 @@ export const struct: ShapeStruct<ArcShape> = {
       height: 2 * shape.ry,
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
-    const arcD = getPathStr(shape);
+    const arcD = pathSegmentRawsToString(createLocalSVGRawPath(shape));
 
     return {
       tag: "path",
@@ -108,7 +108,7 @@ export const struct: ShapeStruct<ArcShape> = {
       width: 2 * shape.rx,
       height: 2 * shape.ry,
     };
-    const rawPath = parsePathSegmentRaws(getPathStr(shape));
+    const rawPath = createLocalSVGRawPath(shape);
     return pathSegmentRawsToString(applyRotatedRectTransformToRawPath(rect, shape.rotation, rawPath));
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
@@ -289,9 +289,9 @@ function applyShapePath(region: CanvasRenderingContext2D | Path2D, shape: ArcSha
   region.closePath();
 }
 
-function getPathStr(shape: ArcShape): string {
+function createLocalSVGRawPath(shape: ArcShape): PathSegmentRaw[] {
   // "large" param depends on whether the arc has larger radian than pi.
-  const large = (shape.to > shape.from ? shape.to : shape.to + TAU) - shape.from > Math.PI ? 1 : 0;
+  const large = (shape.to > shape.from ? shape.to : shape.to + TAU) - shape.from > Math.PI;
   // Drawing an ellipse requires two "A" commands.
   const isEllipse = Math.abs(shape.from - shape.to) < MINVALUE;
   const holeRate = getHoleRate(shape);
@@ -301,40 +301,39 @@ function getPathStr(shape: ArcShape): string {
   const outerToP = add(c, toP);
   const outerHalfP = add(c, rotate(startP, Math.PI));
 
-  let arcD: string;
-
   if (holeRate) {
     const innerStartP = add(c, multi(toP, holeRate));
     const innerToP = add(c, multi(startP, holeRate));
     const innerHalfP = add(c, rotate(multi(startP, holeRate), Math.PI));
-    arcD = [
-      `M${outerStartP.x} ${outerStartP.y}`,
-      ...(isEllipse
+    return [
+      ["M", outerStartP.x, outerStartP.y],
+      ...((isEllipse
         ? [
-            `A${shape.rx} ${shape.ry} 0 0 1 ${outerHalfP.x} ${outerHalfP.y}`,
-            `A${shape.rx} ${shape.ry} 0 0 1 ${outerStartP.x} ${outerStartP.y}`,
-            `L${innerStartP.x} ${innerStartP.y}`,
-            `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 0 0 ${innerHalfP.x} ${innerHalfP.y}`,
-            `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 0 0 ${innerStartP.x} ${innerStartP.y}z`,
+            ["A", shape.rx, shape.ry, 0, false, true, outerHalfP.x, outerHalfP.y],
+            ["A", shape.rx, shape.ry, 0, false, true, outerStartP.x, outerStartP.y],
+            ["L", innerStartP.x, innerStartP.y],
+            ["A", shape.rx * holeRate, shape.ry * holeRate, 0, false, true, innerHalfP.x, innerHalfP.y],
+            ["A", shape.rx * holeRate, shape.ry * holeRate, 0, false, true, innerStartP.x, innerStartP.y],
+            ["z"],
           ]
         : [
-            `A${shape.rx} ${shape.ry} 0 ${large} 1 ${outerToP.x} ${outerToP.y}`,
-            `L${innerStartP.x} ${innerStartP.y}`,
-            `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 ${large} 0 ${innerToP.x} ${innerToP.y}z`,
-          ]),
-    ].join(" ");
+            ["A", shape.rx, shape.ry, 0, large, true, outerToP.x, outerToP.y],
+            ["L", innerStartP.x, innerStartP.y],
+            ["A", shape.rx * holeRate, shape.ry * holeRate, 0, large, false, innerToP.x, innerToP.y],
+            ["z"],
+          ]) as PathSegmentRaw[]),
+    ];
   } else {
-    arcD = [
-      `M${shape.rx} ${shape.ry}`,
-      `L${outerStartP.x} ${outerStartP.y}`,
-      ...(isEllipse
+    return [
+      ["M", shape.rx, shape.ry],
+      ["L", outerStartP.x, outerStartP.y],
+      ...((isEllipse
         ? [
-            `A${shape.rx} ${shape.ry} 0 0 1 ${outerHalfP.x} ${outerHalfP.y}`,
-            `A${shape.rx} ${shape.ry} 0 0 1 ${outerStartP.x} ${outerStartP.y}z`,
+            ["A", shape.rx, shape.ry, 0, false, true, outerHalfP.x, outerHalfP.y],
+            ["A", shape.rx, shape.ry, 0, false, true, outerStartP.x, outerStartP.y],
+            ["z"],
           ]
-        : [`A${shape.rx} ${shape.ry} 0 ${large} 1 ${outerToP.x} ${outerToP.y}z`]),
-    ].join(" ");
+        : [["A", shape.rx, shape.ry, 0, large, true, outerToP.x, outerToP.y], ["z"]]) as PathSegmentRaw[]),
+    ];
   }
-
-  return arcD;
 }

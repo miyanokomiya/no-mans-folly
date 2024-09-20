@@ -1,4 +1,4 @@
-import { IVec2, add, getDistance, parsePathSegmentRaws, pathSegmentRawsToString } from "okageo";
+import { IVec2, PathSegmentRaw, add, getDistance, pathSegmentRawsToString } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -60,7 +60,7 @@ export const struct: ShapeStruct<DonutShape> = {
       height: 2 * shape.ry,
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
-    const d = createDonutLocalSVGPathStr(shape);
+    const d = pathSegmentRawsToString(createLocalSVGRawPath(shape));
 
     return {
       tag: "path",
@@ -73,8 +73,7 @@ export const struct: ShapeStruct<DonutShape> = {
     };
   },
   createClipSVGPath(shape) {
-    const arcD = createDonutLocalSVGPathStr(shape);
-    const rawPath = parsePathSegmentRaws(arcD);
+    const rawPath = createLocalSVGRawPath(shape);
     const rect = {
       x: shape.p.x,
       y: shape.p.y,
@@ -172,7 +171,7 @@ function applyDonutPath(ctx: CanvasRenderingContext2D | Path2D, shape: DonutShap
   ctx.ellipse(c.x, c.y, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, 0, TAU, true);
 }
 
-function createDonutLocalSVGPathStr(shape: DonutShape): string {
+function createLocalSVGRawPath(shape: DonutShape): PathSegmentRaw[] {
   const rx = shape.rx;
   const ry = shape.ry;
   const c = { x: rx, y: ry };
@@ -180,11 +179,12 @@ function createDonutLocalSVGPathStr(shape: DonutShape): string {
   const irx = rx * holeRate;
   const iry = ry * holeRate;
   return [
-    `M${c.x + rx} ${c.y}`,
-    `A${rx} ${ry} 0 0 1 ${c.x - rx} ${c.y}`,
-    `A${rx} ${ry} 0 0 1 ${c.x + rx} ${c.y}`,
-    `M${c.x + irx} ${c.y}`,
-    `A${irx} ${iry} 0 0 0 ${c.x - irx} ${c.y}`,
-    `A${irx} ${iry} 0 0 0 ${c.x + irx} ${c.y}`,
-  ].join(" ");
+    ["M", c.x + rx, c.y],
+    ["A", rx, ry, 0, false, true, c.x - rx, c.y],
+    ["A", rx, ry, 0, false, true, c.x + rx, c.y],
+    ["M", c.x + irx, c.y],
+    ["A", irx, iry, 0, false, true, c.x - irx, c.y],
+    ["A", irx, iry, 0, false, true, c.x + irx, c.y],
+    ["z"],
+  ];
 }
