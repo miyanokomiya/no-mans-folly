@@ -1,10 +1,11 @@
 import { Shape } from "../models";
 import { DocOutput } from "../models/document";
-import { getShapeTextBounds } from "../shapes";
+import { getShapeTextBounds, hasStrokeStyle } from "../shapes";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
 import { getRectPoints } from "../utils/geometry";
 import { applyPath } from "../utils/renderer";
+import { applyStrokeStyle } from "../utils/strokeStyle";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
@@ -38,7 +39,7 @@ export function newShapeRenderer(option: Option) {
 
     const isParentGroup = isGroupShape(shape);
     const [others, clips] = splitList(node.children, (c) => {
-      return !isParentGroup || !mergedShapeMap[c.id].clipping;
+      return !mergedShapeMap[c.id].clipping;
     });
 
     if (!isParentGroup || clips.length === 0) {
@@ -46,10 +47,9 @@ export function newShapeRenderer(option: Option) {
       return;
     }
 
-    ctx.save();
-    clipWithinGroup(option.shapeComposite, shape, clips, ctx);
-    others.forEach((c) => renderShapeTreeStep(ctx, c));
-    ctx.restore();
+    clipWithinGroup(option.shapeComposite, shape, clips, ctx, () => {
+      others.forEach((c) => renderShapeTreeStep(ctx, c));
+    });
   }
 
   function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape) {
@@ -84,32 +84,62 @@ function clipWithinGroup(
   groupShape: GroupShape,
   clips: TreeNode[],
   ctx: CanvasRenderingContext2D,
+  renderMain: () => void,
 ) {
+  const regions: [Path2D, Shape][] = [];
+  clips.map((c) => {
+    const childShape = shapeComposite.mergedShapeMap[c.id];
+    const subRegion = shapeComposite.clip(childShape);
+    if (subRegion) {
+      regions.push([subRegion, childShape]);
+    }
+  });
+  if (regions.length === 0) {
+    renderMain();
+    return;
+  }
+
+  const renderOutline = () => {
+    regions.forEach(([subRegion, childShape]) => {
+      if (hasStrokeStyle(childShape)) {
+        applyStrokeStyle(ctx, childShape.stroke);
+        ctx.stroke(subRegion);
+      }
+    });
+  };
+
+  const clipOut = () => {
+    regions.forEach(([subRegion]) => {
+      const combinedPath = new Path2D();
+      combinedPath.addPath(subRegion);
+      combinedPath.addPath(wrapperRegion);
+      ctx.clip(combinedPath);
+    });
+  };
+
   const wrapperRegion = new Path2D();
   applyPath(wrapperRegion, getRectPoints(shapeComposite.getWrapperRect(groupShape, true)).reverse(), true);
 
   if (groupShape.clipRule === "in") {
     const region = new Path2D();
-    let clipped = false;
-    clips.forEach((c) => {
-      const childShape = shapeComposite.mergedShapeMap[c.id];
-      const subRegion = shapeComposite.clip(childShape);
-      if (subRegion) {
-        region.addPath(subRegion);
-        clipped = true;
-      }
+    regions.forEach(([subRegion]) => {
+      region.addPath(subRegion);
     });
-    if (clipped) {
-      ctx.clip(region, "nonzero");
-    }
+    ctx.save();
+    ctx.clip(region);
+    renderMain();
+    ctx.restore();
+
+    // This "save" is essential for some reason.
+    ctx.save();
+    clipOut();
+    renderOutline();
+    ctx.restore();
   } else {
-    clips.forEach((c) => {
-      const childShape = shapeComposite.mergedShapeMap[c.id];
-      const subRegion = shapeComposite.clip(childShape);
-      if (subRegion) {
-        subRegion.addPath(wrapperRegion);
-        ctx.clip(subRegion, "nonzero");
-      }
-    });
+    ctx.save();
+    clipOut();
+    renderMain();
+    renderOutline();
+    ctx.restore();
   }
 }
