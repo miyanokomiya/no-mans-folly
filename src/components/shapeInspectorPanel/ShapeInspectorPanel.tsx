@@ -9,10 +9,9 @@ import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { GroupConstraintInspector } from "./GroupConstraintInspector";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
-import { ClipInspector } from "./ClipInspector";
 import { canClip } from "../../shapes";
 import { GroupShape, isGroupShape } from "../../shapes/group";
-import { ClipRuleInspector } from "./ClipRuleInspector";
+import { ClipInspector } from "./ClipInspector";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -164,10 +163,11 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       )}
       <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
       {canClip(getShapeComposite().getShapeStruct, targetShape) ? (
-        <ClipInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
-      ) : undefined}
-      {isGroupShape(targetShape) ? (
-        <ClipRuleInspector targetShape={targetShape} updateTargetShape={updateGroupShapesBySamePatch} />
+        <ClipInspector
+          targetShape={targetShape}
+          updateTargetShape={updateTargetShapesBySamePatch}
+          updateTargetGroupShape={updateGroupShapesBySamePatch}
+        />
       ) : undefined}
       <button type="submit" className="hidden" />
     </form>
