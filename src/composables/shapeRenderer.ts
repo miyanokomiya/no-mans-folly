@@ -3,7 +3,7 @@ import { DocOutput } from "../models/document";
 import { getShapeTextBounds, hasStrokeStyle } from "../shapes";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
-import { getRectPoints } from "../utils/geometry";
+import { expandRect, getRectPoints } from "../utils/geometry";
 import { applyPath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
@@ -101,7 +101,7 @@ function clipWithinGroup(
 
   const renderOutline = () => {
     regions.forEach(([subRegion, childShape]) => {
-      if (hasStrokeStyle(childShape)) {
+      if (hasStrokeStyle(childShape) && !childShape.stroke.disabled) {
         applyStrokeStyle(ctx, childShape.stroke);
         ctx.stroke(subRegion);
       }
@@ -109,6 +109,9 @@ function clipWithinGroup(
   };
 
   const clipOut = () => {
+    const wrapperRegion = new Path2D();
+    const wrapperRect = expandRect(shapeComposite.getWrapperRect(groupShape, true), 100);
+    applyPath(wrapperRegion, getRectPoints(wrapperRect).reverse(), true);
     regions.forEach(([subRegion]) => {
       const combinedPath = new Path2D();
       combinedPath.addPath(subRegion);
@@ -116,9 +119,6 @@ function clipWithinGroup(
       ctx.clip(combinedPath);
     });
   };
-
-  const wrapperRegion = new Path2D();
-  applyPath(wrapperRegion, getRectPoints(shapeComposite.getWrapperRect(groupShape, true)).reverse(), true);
 
   if (groupShape.clipRule === "in") {
     const region = new Path2D();

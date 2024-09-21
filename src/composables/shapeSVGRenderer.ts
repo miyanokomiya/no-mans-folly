@@ -11,7 +11,7 @@ import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
-import { getRectPoints } from "../utils/geometry";
+import { expandRect, getRectPoints } from "../utils/geometry";
 import { createSVGCurvePath } from "../utils/renderer";
 import { pathSegmentRawsToString } from "okageo";
 import { renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -180,7 +180,7 @@ function clipWithinGroup(
   const renderOutline = (): SVGElement | undefined => {
     const g = createSVGElement("g");
     pathList.forEach(([pathStr, childShape]) => {
-      if (hasStrokeStyle(childShape)) {
+      if (hasStrokeStyle(childShape) && !childShape.stroke.disabled) {
         const pathElm = createSVGElement("path", {
           d: pathStr,
           fill: "none",
@@ -193,7 +193,8 @@ function clipWithinGroup(
   };
 
   const embedClipOut = (): string | undefined => {
-    const wrapperPath = getRectPoints(shapeComposite.getWrapperRect(groupShape, true)).reverse();
+    const wrapperRect = expandRect(shapeComposite.getWrapperRect(groupShape, true), 100);
+    const wrapperPath = getRectPoints(wrapperRect).reverse();
     const wrapperPathStr = pathSegmentRawsToString(createSVGCurvePath(wrapperPath, undefined, true));
     let lastClipPath: SVGElement | undefined;
     pathList.forEach(([pathStr, childShape]) => {
