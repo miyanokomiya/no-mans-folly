@@ -56,7 +56,7 @@ export const ClipInspector: React.FC<Props> = ({ targetShape, updateTargetShape,
                 key={rule.value}
                 value={rule.value}
                 icon={rule.icon}
-                selectedValue={targetShape.clipRule}
+                selectedValue={targetShape.clipRule ?? "out"}
                 onClick={handleClipRuleChange}
               />
             ))}
