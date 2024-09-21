@@ -24,6 +24,9 @@ export const struct: ShapeStruct<GroupShape> = {
   },
   // TODO: Bounds can be rendered with fill and stroke style.
   render() {},
+  getClipPath() {
+    return new Path2D();
+  },
   createSVGElementInfo() {
     return { tag: "g" };
   },

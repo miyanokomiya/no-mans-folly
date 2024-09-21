@@ -1,4 +1,4 @@
-import { Shape } from "../models";
+import { Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds, hasStrokeStyle } from "../shapes";
 import { GroupShape, isGroupShape } from "../shapes/group";
@@ -47,7 +47,7 @@ export function newShapeRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(option.shapeComposite, shape, clips, ctx, () => {
+    clipWithinGroup(option.shapeComposite, shape, clips, others, ctx, () => {
       others.forEach((c) => renderShapeTreeStep(ctx, c));
     });
   }
@@ -83,26 +83,47 @@ function clipWithinGroup(
   shapeComposite: ShapeComposite,
   groupShape: GroupShape,
   clips: TreeNode[],
+  others: TreeNode[],
   ctx: CanvasRenderingContext2D,
   renderMain: () => void,
 ) {
-  const regions: [Path2D, Shape][] = [];
-  clips.map((c) => {
-    const childShape = shapeComposite.mergedShapeMap[c.id];
-    const subRegion = shapeComposite.clip(childShape);
-    if (subRegion) {
-      regions.push([subRegion, childShape]);
-    }
+  const regions: [Path2D, StrokeStyle?][] = [];
+  let shouldStroke = false;
+  clips.forEach((c) => {
+    shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
+      const subRegion = shapeComposite.clip(s);
+      if (subRegion) {
+        if (hasStrokeStyle(s) && !s.stroke.disabled) {
+          regions.push([subRegion, s.stroke]);
+          shouldStroke = true;
+        } else {
+          regions.push([subRegion]);
+        }
+      }
+    });
   });
   if (regions.length === 0) {
     renderMain();
     return;
   }
 
+  const clipOutside = () => {
+    const otherRegion: Path2D = new Path2D();
+    others.forEach((c) => {
+      shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
+        const subRegion = shapeComposite.clip(s);
+        if (subRegion) {
+          otherRegion.addPath(subRegion);
+        }
+      });
+    });
+    ctx.clip(otherRegion);
+  };
+
   const renderOutline = () => {
-    regions.forEach(([subRegion, childShape]) => {
-      if (hasStrokeStyle(childShape) && !childShape.stroke.disabled) {
-        applyStrokeStyle(ctx, childShape.stroke);
+    regions.forEach(([subRegion, stroke]) => {
+      if (stroke) {
+        applyStrokeStyle(ctx, stroke);
         ctx.stroke(subRegion);
       }
     });
@@ -130,16 +151,21 @@ function clipWithinGroup(
     renderMain();
     ctx.restore();
 
-    // This "save" is essential for some reason.
     ctx.save();
     clipOut();
-    renderOutline();
+    if (shouldStroke) {
+      clipOutside();
+      renderOutline();
+    }
     ctx.restore();
   } else {
     ctx.save();
     clipOut();
     renderMain();
-    renderOutline();
+    if (shouldStroke) {
+      clipOutside();
+      renderOutline();
+    }
     ctx.restore();
   }
 }

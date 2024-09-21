@@ -1,5 +1,5 @@
 import { AssetAPI } from "../hooks/persistence";
-import { Shape } from "../models";
+import { Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds, hasStrokeStyle } from "../shapes";
 import { blobToBase64 } from "../utils/fileAccess";
@@ -102,7 +102,7 @@ export function newShapeSVGRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(option.shapeComposite, shape, clips, root, elm, () => {
+    clipWithinGroup(option.shapeComposite, shape, clips, others, root, elm, () => {
       others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
     });
   }
@@ -160,36 +160,61 @@ function clipWithinGroup(
   shapeComposite: ShapeComposite,
   groupShape: GroupShape,
   clips: TreeNode[],
+  others: TreeNode[],
   root: SVGElement,
   groupElm: SVGElement,
   renderMain: () => void,
 ) {
-  const pathList: [string, Shape][] = [];
+  const pathList: [string, id: string, StrokeStyle?][] = [];
+  let shouldStroke = false;
   clips.forEach((c) => {
-    const childShape = shapeComposite.mergedShapeMap[c.id];
-    const pathStr = shapeComposite.createClipSVGPath(childShape);
-    if (pathStr) {
-      pathList.push([pathStr, childShape]);
-    }
+    shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
+      const pathStr = shapeComposite.createClipSVGPath(s);
+      if (pathStr) {
+        if (hasStrokeStyle(s) && !s.stroke.disabled) {
+          pathList.push([pathStr, s.id, s.stroke]);
+          shouldStroke = true;
+        } else {
+          pathList.push([pathStr, s.id]);
+        }
+      }
+    });
   });
   if (clips.length === 0) {
     renderMain();
     return;
   }
 
-  const renderOutline = (): SVGElement | undefined => {
+  const renderClipOutside = (): SVGElement => {
+    const pathStrList: string[] = [];
+    others.forEach((c) => {
+      shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
+        const pathStr = shapeComposite.createClipSVGPath(s);
+        if (pathStr) {
+          pathStrList.push(pathStr);
+        }
+      });
+    });
+
+    const clipPathId = `clip-${groupShape.id}-outside`;
+    const clipPath = createClipPathElementIn(pathStrList);
+    clipPath.id = clipPathId;
+    return clipPath;
+  };
+
+  const renderOutline = (): SVGElement => {
     const g = createSVGElement("g");
-    pathList.forEach(([pathStr, childShape]) => {
-      if (hasStrokeStyle(childShape) && !childShape.stroke.disabled) {
+    pathList.forEach(([pathStr, , stroke]) => {
+      if (stroke) {
         const pathElm = createSVGElement("path", {
           d: pathStr,
           fill: "none",
-          ...renderStrokeSVGAttributes(childShape.stroke),
+          ...renderStrokeSVGAttributes(stroke),
         });
         g.appendChild(pathElm);
       }
     });
-    return g.childNodes.length > 0 ? g : undefined;
+    return g;
   };
 
   const embedClipOut = (): string | undefined => {
@@ -197,55 +222,70 @@ function clipWithinGroup(
     const wrapperPath = getRectPoints(wrapperRect).reverse();
     const wrapperPathStr = pathSegmentRawsToString(createSVGCurvePath(wrapperPath, undefined, true));
     let lastClipPath: SVGElement | undefined;
-    pathList.forEach(([pathStr, childShape]) => {
-      const clipPathId = `clip-${groupShape.id}-${childShape.id}`;
+    pathList.forEach(([pathStr, id]) => {
+      if (!pathStr) return;
+
+      const clipPathId = `clip-${groupShape.id}-${id}`;
       const clipPath = createSVGElement("clipPath", { id: clipPathId });
-      if (pathStr) {
-        const pathElm = createSVGElement("path", { d: `${pathStr} ${wrapperPathStr}` });
-        clipPath.appendChild(pathElm);
-        if (lastClipPath) {
-          clipPath.setAttribute("clip-path", `url(#${lastClipPath.id})`);
-        }
-        root.appendChild(clipPath);
-        lastClipPath = clipPath;
+      const pathElm = createSVGElement("path", { d: `${pathStr} ${wrapperPathStr}` });
+      clipPath.appendChild(pathElm);
+      if (lastClipPath) {
+        clipPath.setAttribute("clip-path", `url(#${lastClipPath.id})`);
       }
+      root.appendChild(clipPath);
+      lastClipPath = clipPath;
     });
 
-    if (lastClipPath) {
-      root.appendChild(lastClipPath);
-      return lastClipPath.id;
-    }
+    return lastClipPath?.id;
   };
 
   if (groupShape.clipRule === "in") {
     const clipPathId = `clip-${groupShape.id}`;
-    const clipPath = createSVGElement("clipPath", { id: clipPathId });
-    pathList.forEach(([pathStr]) => {
-      if (pathStr) {
-        const pathElm = createSVGElement("path", { d: pathStr });
-        clipPath.appendChild(pathElm);
-      }
-    });
+    const clipPath = createClipPathElementIn(pathList.map(([pathStr]) => pathStr));
+    clipPath.id = clipPathId;
     root.appendChild(clipPath);
     groupElm.setAttribute("clip-path", `url(#${clipPathId})`);
+
     renderMain();
-    const outlineG = renderOutline();
-    if (outlineG) {
-      const clipPathId = embedClipOut();
-      if (clipPathId) {
-        outlineG.setAttribute("clip-path", `url(#${clipPathId})`);
+
+    if (shouldStroke) {
+      const outlineG = renderOutline();
+      if (outlineG) {
+        const clipOutsideElm = renderClipOutside();
+        const clipPathId = embedClipOut();
+        if (clipPathId) {
+          clipOutsideElm.setAttribute("clip-path", `url(#${clipPathId})`);
+        }
+        outlineG.setAttribute("clip-path", `url(#${clipOutsideElm.id})`);
+        root.appendChild(clipOutsideElm);
+        root.appendChild(outlineG);
       }
-      root.appendChild(outlineG);
     }
   } else {
     const clipPathId = embedClipOut();
     if (clipPathId) {
       groupElm.setAttribute("clip-path", `url(#${clipPathId})`);
     }
+
     renderMain();
-    const outlineG = renderOutline();
-    if (outlineG) {
+
+    if (shouldStroke) {
+      const outlineG = renderOutline();
+      const clipOutsideElm = renderClipOutside();
+      root.appendChild(clipOutsideElm);
+      outlineG.setAttribute("clip-path", `url(#${clipOutsideElm.id})`);
       groupElm.appendChild(outlineG);
     }
   }
+}
+
+function createClipPathElementIn(pathStrList: string[]): SVGElement {
+  const clipPath = createSVGElement("clipPath");
+  pathStrList.forEach((pathStr) => {
+    if (pathStr) {
+      const pathElm = createSVGElement("path", { d: pathStr });
+      clipPath.appendChild(pathElm);
+    }
+  });
+  return clipPath;
 }
