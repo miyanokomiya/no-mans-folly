@@ -182,9 +182,10 @@ function createLocalSVGRawPath(shape: DonutShape): PathSegmentRaw[] {
     ["M", c.x + rx, c.y],
     ["A", rx, ry, 0, false, true, c.x - rx, c.y],
     ["A", rx, ry, 0, false, true, c.x + rx, c.y],
+    ["z"],
     ["M", c.x + irx, c.y],
-    ["A", irx, iry, 0, false, true, c.x - irx, c.y],
-    ["A", irx, iry, 0, false, true, c.x + irx, c.y],
+    ["A", irx, iry, 0, false, false, c.x - irx, c.y],
+    ["A", irx, iry, 0, false, false, c.x + irx, c.y],
     ["z"],
   ];
 }
