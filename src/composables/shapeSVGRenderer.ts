@@ -165,14 +165,16 @@ function clipWithinGroup(
   groupElm: SVGElement,
   renderMain: () => void,
 ) {
-  const pathList: [string, id: string, StrokeStyle?][] = [];
+  const pathList: [string, id: string, StrokeStyle?, cropClipBorder?: boolean][] = [];
   let shouldStroke = false;
   clips.forEach((c) => {
+    const rootChildShape = shapeComposite.shapeMap[c.id];
+
     shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
       const pathStr = shapeComposite.createClipSVGPath(s);
       if (pathStr) {
         if (hasStrokeStyle(s) && !s.stroke.disabled) {
-          pathList.push([pathStr, s.id, s.stroke]);
+          pathList.push([pathStr, s.id, s.stroke, rootChildShape.cropClipBorder]);
           shouldStroke = true;
         } else {
           pathList.push([pathStr, s.id]);
@@ -185,6 +187,8 @@ function clipWithinGroup(
     return;
   }
 
+  const clipOutsideElmId = `clip-${groupShape.id}-outside`;
+
   const renderClipOutside = (): SVGElement => {
     const pathStrList: string[] = [];
     others.forEach((c) => {
@@ -196,21 +200,25 @@ function clipWithinGroup(
       });
     });
 
-    const clipPathId = `clip-${groupShape.id}-outside`;
     const clipPath = createClipPathElementIn(pathStrList);
-    clipPath.id = clipPathId;
+    clipPath.id = clipOutsideElmId;
     return clipPath;
   };
 
   const renderOutline = (): SVGElement => {
     const g = createSVGElement("g");
-    pathList.forEach(([pathStr, , stroke]) => {
+    pathList.forEach(([pathStr, , stroke, cropClipBorder]) => {
       if (stroke) {
         const pathElm = createSVGElement("path", {
           d: pathStr,
           fill: "none",
           ...renderStrokeSVGAttributes(stroke),
         });
+
+        if (cropClipBorder) {
+          pathElm.setAttribute("clip-path", `url(#${clipOutsideElmId})`);
+        }
+
         g.appendChild(pathElm);
       }
     });
@@ -250,13 +258,12 @@ function clipWithinGroup(
 
     if (shouldStroke) {
       const outlineG = renderOutline();
-      if (outlineG) {
+      if (outlineG.childNodes.length > 0) {
         const clipOutsideElm = renderClipOutside();
         const clipPathId = embedClipOut();
         if (clipPathId) {
           clipOutsideElm.setAttribute("clip-path", `url(#${clipPathId})`);
         }
-        outlineG.setAttribute("clip-path", `url(#${clipOutsideElm.id})`);
         root.appendChild(clipOutsideElm);
         root.appendChild(outlineG);
       }
@@ -273,7 +280,6 @@ function clipWithinGroup(
       const outlineG = renderOutline();
       const clipOutsideElm = renderClipOutside();
       root.appendChild(clipOutsideElm);
-      outlineG.setAttribute("clip-path", `url(#${clipOutsideElm.id})`);
       groupElm.appendChild(outlineG);
     }
   }

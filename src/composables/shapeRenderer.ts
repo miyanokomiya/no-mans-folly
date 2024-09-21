@@ -87,14 +87,16 @@ function clipWithinGroup(
   ctx: CanvasRenderingContext2D,
   renderMain: () => void,
 ) {
-  const regions: [Path2D, StrokeStyle?][] = [];
+  const regions: [Path2D, StrokeStyle?, cropClipBorder?: boolean][] = [];
   let shouldStroke = false;
   clips.forEach((c) => {
+    const rootChildShape = shapeComposite.shapeMap[c.id];
+
     shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
       const subRegion = shapeComposite.clip(s);
       if (subRegion) {
         if (hasStrokeStyle(s) && !s.stroke.disabled) {
-          regions.push([subRegion, s.stroke]);
+          regions.push([subRegion, s.stroke, rootChildShape.cropClipBorder]);
           shouldStroke = true;
         } else {
           regions.push([subRegion]);
@@ -121,12 +123,28 @@ function clipWithinGroup(
   };
 
   const renderOutline = () => {
-    regions.forEach(([subRegion, stroke]) => {
+    let currentCrop = false;
+
+    regions.forEach(([subRegion, stroke, cropClipBorder]) => {
       if (stroke) {
+        if (currentCrop === !cropClipBorder) {
+          if (cropClipBorder) {
+            ctx.save();
+            clipOutside();
+          } else {
+            ctx.restore();
+          }
+          currentCrop = !!cropClipBorder;
+        }
+
         applyStrokeStyle(ctx, stroke);
         ctx.stroke(subRegion);
       }
     });
+
+    if (currentCrop) {
+      ctx.restore();
+    }
   };
 
   const clipOut = () => {
@@ -154,7 +172,6 @@ function clipWithinGroup(
     ctx.save();
     clipOut();
     if (shouldStroke) {
-      clipOutside();
       renderOutline();
     }
     ctx.restore();
@@ -163,7 +180,6 @@ function clipWithinGroup(
     clipOut();
     renderMain();
     if (shouldStroke) {
-      clipOutside();
       renderOutline();
     }
     ctx.restore();

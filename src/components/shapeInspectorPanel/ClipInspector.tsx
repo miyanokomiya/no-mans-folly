@@ -33,10 +33,20 @@ export const ClipInspector: React.FC<Props> = ({ targetShape, updateTargetShape,
     [updateTargetShape],
   );
 
+  const handleCropChange = useCallback(
+    (val: boolean) => {
+      updateTargetShape({ cropClipBorder: val });
+    },
+    [updateTargetShape],
+  );
+
   return (
     <BlockGroupField label="Clip">
       <InlineField label="Clip within parent group">
         <ToggleInput value={targetShape.clipping} onChange={handleClippingChange} />
+      </InlineField>
+      <InlineField label="Crop outside border" inert={!targetShape.clipping}>
+        <ToggleInput value={targetShape.cropClipBorder} onChange={handleCropChange} />
       </InlineField>
       {isGroupShape(targetShape) ? (
         <InlineField label="Clip mode" inert={targetShape.clipping}>

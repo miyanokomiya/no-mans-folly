@@ -27,7 +27,8 @@ export interface Shape extends Entity {
   gcV?: GroupConstraint;
   gcH?: GroupConstraint;
   locked?: boolean;
-  clipping?: boolean;
+  clipping?: boolean; // When this is set true, it's prioritized over all child shapes.
+  cropClipBorder?: boolean; // This is prioritized over all child shapes.
 }
 
 export type ClipRule = "out" | "in";
