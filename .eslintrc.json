@@ -24,6 +24,21 @@
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "nanoid",
+            "message": "This module should be used via \"src/utils/random.ts\"."
+          },
+          {
+            "name": "fractional-indexing",
+            "message": "This module should be used via \"src/utils/findex.ts\"."
+          }
+        ]
+      }
+    ],
     "import/no-restricted-paths": [
       "error",
       {

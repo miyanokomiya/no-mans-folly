@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import * as findexing from "fractional-indexing";
 
 /**
