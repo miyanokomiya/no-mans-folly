@@ -10,6 +10,7 @@ import { isGroupShape } from "../../shapes/group";
 import { isAlignBoxShape } from "../../shapes/align/alignBox";
 import { isCtrlOrMeta } from "../../utils/devices";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
+import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -38,25 +39,7 @@ export const ShapeTreePanel: React.FC = () => {
       if (multi) {
         ctx.multiSelectShapes([id], true);
       } else if (range) {
-        const lastId = ctx.getLastSelectedShapeId();
-        if (!lastId) return;
-
-        const composite = ctx.getShapeComposite();
-        const lastSelected = composite.shapeMap[lastId];
-        const siblings =
-          composite.mergedShapeTreeMap[lastSelected.parentId ?? ""]?.children ?? composite.mergedShapeTree;
-        const siblingIds = siblings.map((s) => s.id);
-        const lastIndex = siblingIds.findIndex((sid) => sid === lastSelected.id);
-        const targetIndex = siblingIds.findIndex((sid) => sid === id);
-        if (lastIndex < targetIndex) {
-          const ids = siblingIds.slice(lastIndex, targetIndex);
-          ids.push(id);
-          ctx.multiSelectShapes(ids, true);
-        } else if (targetIndex < lastIndex) {
-          const ids = siblingIds.slice(targetIndex + 1, lastIndex + 1);
-          ids.push(id);
-          ctx.multiSelectShapes(ids, true);
-        }
+        selectShapesInRange(ctx, id);
       } else {
         ctx.selectShape(id);
         handleEvent({

@@ -703,3 +703,33 @@ export function panViewToShape(
     scale: ctx.getScale(),
   });
 }
+
+export function selectShapesInRange(
+  ctx: Pick<AppCanvasStateContext, "getLastSelectedShapeId" | "multiSelectShapes" | "getShapeComposite">,
+  targetId: string,
+) {
+  const lastId = ctx.getLastSelectedShapeId();
+  if (!lastId) {
+    ctx.multiSelectShapes([targetId], true);
+    return;
+  }
+
+  const shapeComposite = ctx.getShapeComposite();
+  const lastSelected = shapeComposite.shapeMap[lastId];
+  const siblings =
+    shapeComposite.mergedShapeTreeMap[lastSelected.parentId ?? ""]?.children ?? shapeComposite.mergedShapeTree;
+  const siblingIds = siblings.map((s) => s.id);
+  const lastIndex = siblingIds.findIndex((id) => id === lastSelected.id);
+  const targetIndex = siblingIds.findIndex((id) => id === targetId);
+  if (targetIndex === -1) return;
+
+  if (lastIndex < targetIndex) {
+    const ids = siblingIds.slice(lastIndex, targetIndex);
+    ids.push(targetId);
+    ctx.multiSelectShapes(ids, true);
+  } else if (targetIndex < lastIndex) {
+    const ids = siblingIds.slice(targetIndex + 1, lastIndex + 1);
+    ids.push(targetId);
+    ctx.multiSelectShapes(ids, true);
+  }
+}
