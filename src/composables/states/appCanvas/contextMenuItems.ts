@@ -209,7 +209,7 @@ function getImageBuilderForSelectedShapes(ctx: AppCanvasStateContext) {
     imageStore: ctx.getImageStore(),
   });
 
-  const range = getAllShapeRangeWithinComposite(targetShapeComposite);
+  const range = getAllShapeRangeWithinComposite(targetShapeComposite, true);
   return newImageBuilder({ render: renderer.render, range });
 }
 
@@ -230,7 +230,7 @@ async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): 
     imageStore: ctx.getImageStore(),
     assetAPI: ctx.assetAPI,
   });
-  const range = getAllShapeRangeWithinComposite(targetShapeComposite);
+  const range = getAllShapeRangeWithinComposite(targetShapeComposite, true);
 
   try {
     const builder = newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
