@@ -29,7 +29,7 @@ export const struct: ShapeStruct<DonutShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       rx: arg.rx ?? 50,
       ry: arg.ry ?? 50,
-      holeRate: arg.holeRate ?? 0.8,
+      holeRate: arg.holeRate ?? 0.6,
     };
   },
   render(ctx, shape) {
