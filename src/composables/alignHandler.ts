@@ -7,7 +7,6 @@ import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
 import { createShape } from "../shapes";
-import { generateKeyBetween } from "fractional-indexing";
 import { RectangleShape } from "../shapes/rectangle";
 import {
   ISegment,
@@ -29,6 +28,7 @@ import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
 import { mapEach, toMap } from "../utils/commons";
 import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
+import { generateKeyBetween } from "../utils/findex";
 
 export type AlignHitResult = {
   seg: ISegment;

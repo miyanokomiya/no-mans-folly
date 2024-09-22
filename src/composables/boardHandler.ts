@@ -1,4 +1,3 @@
-import { generateKeyBetween } from "fractional-indexing";
 import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { createShape } from "../shapes";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
@@ -20,6 +19,7 @@ import { getFirstItemOfMap, getlastItemOfMap, pickMinItem } from "../utils/commo
 import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
 import { getShapeDetransform, getShapeTransform, getRectShapeRect } from "../shapes/rectPolygon";
+import { generateKeyBetween } from "../utils/findex";
 
 // Never change these values to avoid messing up findex between different type entities.
 const COLUMN_FINDEX_FROM = "a0";

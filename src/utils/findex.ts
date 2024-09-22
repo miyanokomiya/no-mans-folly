@@ -1,4 +1,4 @@
-import { generateKeyBetween } from "fractional-indexing";
+import * as findexing from "fractional-indexing";
 
 /**
  * Works same as "generateKeyBetween".
@@ -6,5 +6,8 @@ import { generateKeyBetween } from "fractional-indexing";
  * It's possible enough that different entities have the same findex value under CRDT conversion situation.
  */
 export function generateKeyBetweenAllowSame(a: string | null, b: string | null): string {
-  return a && b && a === b ? a : generateKeyBetween(a, b);
+  return a && b && a === b ? a : findexing.generateKeyBetween(a, b);
 }
+
+export const generateKeyBetween = findexing.generateKeyBetween;
+export const generateNKeysBetween = findexing.generateNKeysBetween;

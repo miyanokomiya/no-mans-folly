@@ -1,8 +1,8 @@
 import * as Y from "yjs";
-import { generateKeyBetween } from "fractional-indexing";
 import type { Entity } from "../../models";
 import { newCallback } from "../../utils/stateful/reactives";
 import { findexSortFn, toMap } from "../../utils/commons";
+import { generateKeyBetween } from "../../utils/findex";
 
 type Option = {
   name: string;

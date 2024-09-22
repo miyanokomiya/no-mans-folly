@@ -9,12 +9,12 @@ import {
 } from "./boardHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { BoardRootShape } from "../shapes/board/boardRoot";
-import { generateKeyBetween } from "fractional-indexing";
 import { BoardColumnShape } from "../shapes/board/boardColumn";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { BoardLaneShape } from "../shapes/board/boardLane";
 import { add } from "okageo";
+import { generateKeyBetween } from "../utils/findex";
 
 const root = createShape<BoardRootShape>(getCommonStruct, "board_root", {
   id: "root",

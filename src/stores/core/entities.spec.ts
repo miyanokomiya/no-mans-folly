@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { newEntityStore, newSingleEntityStore } from "./entities";
 import * as Y from "yjs";
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetween } from "../../utils/findex";
 
 describe("newEntityStore", () => {
   describe("getEntities", () => {

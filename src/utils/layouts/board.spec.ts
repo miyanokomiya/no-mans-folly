@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { BoardLayoutCard, BoardLayoutCommon, getBoardRectMap } from "./board";
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetween } from "../findex";
 
 const offsetInfo = {
   boardPaddingX: 20,

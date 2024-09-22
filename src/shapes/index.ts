@@ -3,7 +3,6 @@ import { BoxPadding, CommonStyle, Shape, Size } from "../models";
 import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
-import { generateKeyBetween } from "fractional-indexing";
 import { DocOutput } from "../models/document";
 import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
@@ -11,6 +10,7 @@ import { newShapeComposite } from "../composables/shapeComposite";
 import { getPaddingRect } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
 import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
+import { generateKeyBetween } from "../utils/findex";
 
 export type GetShapeStruct = _GetShapeStruct;
 

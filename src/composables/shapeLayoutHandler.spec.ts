@@ -1,9 +1,9 @@
 import { describe, test, expect } from "vitest";
 import { getPatchAfterLayouts, getPatchByLayouts, getPatchInfoByLayouts } from "./shapeLayoutHandler";
 import { createShape, getCommonStruct } from "../shapes";
-import { generateKeyBetween } from "fractional-indexing";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
+import { generateKeyBetween } from "../utils/findex";
 
 describe("getPatchByLayouts", () => {
   test("error case: regard new shapes added by the patch", () => {

@@ -15,8 +15,7 @@ import {
 import { isGroupShape } from "../shapes/group";
 import { DocCompositionInfo } from "../utils/textEditor";
 import { SVGElementInfo } from "../utils/svgElements";
-import { generateNKeysBetween } from "fractional-indexing";
-import { generateKeyBetweenAllowSame } from "../utils/findex";
+import { generateKeyBetweenAllowSame, generateNKeysBetween } from "../utils/findex";
 import { newObjectWeakCache } from "../utils/stateful/cache";
 import { DocOutput } from "../models/document";
 import { getLineJumpMap } from "../shapes/utils/lineJump";

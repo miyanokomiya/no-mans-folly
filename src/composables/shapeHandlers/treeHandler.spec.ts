@@ -15,7 +15,7 @@ import { newShapeComposite } from "../shapeComposite";
 import { createShape, getCommonStruct } from "../../shapes";
 import { TreeNodeShape } from "../../shapes/tree/treeNode";
 import { TreeRootShape } from "../../shapes/tree/treeRoot";
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetween } from "../../utils/findex";
 
 const root = createShape<TreeRootShape>(getCommonStruct, "tree_root", {
   id: "root",

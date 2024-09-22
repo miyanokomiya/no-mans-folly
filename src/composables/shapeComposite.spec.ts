@@ -14,7 +14,6 @@ import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { LineShape } from "../shapes/line";
 import { TextShape } from "../shapes/text";
-import { generateKeyBetween } from "fractional-indexing";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { BoardRootShape } from "../shapes/board/boardRoot";
 import { BoardColumnShape } from "../shapes/board/boardColumn";
@@ -22,6 +21,7 @@ import { TreeRootShape } from "../shapes/tree/treeRoot";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
 import { getNextTreeLayout } from "./shapeHandlers/treeHandler";
 import { patchPipe, toList, toMap } from "../utils/commons";
+import { generateKeyBetween } from "../utils/findex";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {

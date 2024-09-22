@@ -6,12 +6,12 @@ import { SheetStore, newSheetStore } from "../stores/sheets";
 import { LayerStore, newLayerStore } from "../stores/layers";
 import { ShapeStore, newShapeStore } from "../stores/shapes";
 import { DocumentStore, newDocumentStore } from "../stores/documents";
-import { generateKeyBetween } from "fractional-indexing";
 import { FileAccess } from "../utils/fileAccess";
 import { newLeveledThrottle } from "../utils/stateful/throttle";
 import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
+import { generateKeyBetween } from "../utils/findex";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
