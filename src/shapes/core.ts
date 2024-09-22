@@ -41,7 +41,9 @@ export interface ShapeStruct<T extends Shape> {
    * "shapeMap" and "treeNode" are used for such purpose.
    */
   render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
+  getClipPath?: (shape: T, shapeContext?: ShapeContext) => Path2D;
   createSVGElementInfo?: (shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => SVGElementInfo | undefined;
+  createClipSVGPath?: (shape: T, shapeContext?: ShapeContext) => string | undefined;
   getWrapperRect: (shape: T, shapeContext?: ShapeContext, includeBounds?: boolean) => IRectangle;
   getLocalRectPolygon: (shape: T, shapeContext?: ShapeContext) => IVec2[];
   getTextRangeRect?: (shape: T) => IRectangle;
@@ -124,6 +126,8 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     gcV: arg.gcV,
     gcH: arg.gcH,
     locked: arg.locked,
+    clipping: arg.clipping,
+    cropClipBorder: arg.cropClipBorder,
   };
 }
 
@@ -171,4 +175,12 @@ export function isSameShapeParentScope(a?: ShapeSelectionScope, b?: ShapeSelecti
     return a.parentId === b.parentId;
   }
   return a === b;
+}
+
+export function hasStrokeStyle(shape: Shape): shape is Shape & { stroke: StrokeStyle } {
+  return "stroke" in shape;
+}
+
+export function isInvisibleClippingShape(shape: Shape): boolean {
+  return !!shape.clipping && (!hasStrokeStyle(shape) || !!shape.stroke.disabled);
 }

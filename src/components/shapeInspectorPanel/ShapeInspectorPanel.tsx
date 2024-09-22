@@ -9,6 +9,9 @@ import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { GroupConstraintInspector } from "./GroupConstraintInspector";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
+import { canClip } from "../../shapes";
+import { GroupShape, isGroupShape } from "../../shapes/group";
+import { ClipInspector } from "./ClipInspector";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -110,6 +113,22 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShapes, getShapeComposite, patchShapes],
   );
 
+  const updateGroupShapesBySamePatch = useCallback(
+    (patch: Partial<GroupShape>) => {
+      const shapeComposite = getShapeComposite();
+
+      const layoutPatch = getPatchByLayouts(shapeComposite, {
+        update: targetShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
+          if (!isGroupShape(s)) return p;
+          p[s.id] = patch;
+          return p;
+        }, {}),
+      });
+      patchShapes(layoutPatch);
+    },
+    [targetShapes, getShapeComposite, patchShapes],
+  );
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
       {targetShapes.length >= 2 ? (
@@ -143,6 +162,13 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
         </>
       )}
       <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
+      {canClip(getShapeComposite().getShapeStruct, targetShape) ? (
+        <ClipInspector
+          targetShape={targetShape}
+          updateTargetShape={updateTargetShapesBySamePatch}
+          updateTargetGroupShape={updateGroupShapesBySamePatch}
+        />
+      ) : undefined}
       <button type="submit" className="hidden" />
     </form>
   );

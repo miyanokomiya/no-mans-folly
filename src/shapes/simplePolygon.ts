@@ -30,6 +30,7 @@ import {
   getMarkersOnPolygon,
   getRectPoints,
   getRotateFn,
+  getRotatedRectAffine,
   getRotatedWrapperRect,
   getRotationAffine,
   isPointOnRectangle,
@@ -41,9 +42,9 @@ import { applyStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../
 import { BezierCurveControl, CommonStyle, Direction4, Size } from "../models";
 import { applyCurvePath, applyLocalSpace, createSVGCurvePath } from "../utils/renderer";
 import { pickMinItem } from "../utils/commons";
-import { renderTransform } from "../utils/svgElements";
+import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { getPaddingRect } from "../utils/boxPadding";
-import { RectPolygonShape, getShapeDetransform, getShapeTransform } from "./rectPolygon";
+import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
 
 export type SimplePath = {
   path: IVec2[];
@@ -70,7 +71,9 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 ): Pick<
   ShapeStruct<T>,
   | "render"
+  | "getClipPath"
   | "createSVGElementInfo"
+  | "createClipSVGPath"
   | "getWrapperRect"
   | "getLocalRectPolygon"
   | "isPointOn"
@@ -100,6 +103,17 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         }
       });
     },
+    getClipPath(shape) {
+      const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+      const { path, curves } = getPath(shape);
+
+      const region = new Path2D();
+      const localRegion = new Path2D();
+      applyCurvePath(localRegion, path, curves, true);
+      const m = getRotatedRectAffine(rect, shape.rotation);
+      region.addPath(localRegion, { a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
+      return region;
+    },
     createSVGElementInfo(shape) {
       const transform = getShapeTransform(shape);
       const { path, curves } = getPath(shape);
@@ -113,6 +127,12 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
           ...renderStrokeSVGAttributes(shape.stroke),
         },
       };
+    },
+    createClipSVGPath(shape) {
+      const { path, curves } = getPath(shape);
+      const rawPath = createSVGCurvePath(path, curves, true);
+      const rect = getRectShapeRect(shape);
+      return pathSegmentRawsToString(applyRotatedRectTransformToRawPath(rect, shape.rotation, rawPath));
     },
     getWrapperRect(shape, _, includeBounds) {
       let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };

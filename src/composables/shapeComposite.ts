@@ -93,8 +93,16 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 
+  function clip(shape: Shape): Path2D | undefined {
+    return shapeModule.clipShape(getStruct, shape, mergedShapeContext);
+  }
+
   function createSVGElementInfo(shape: Shape, imageStore?: ImageStore): SVGElementInfo | undefined {
     return shapeModule.createSVGElementInfo(getStruct, shape, mergedShapeContext, imageStore);
+  }
+
+  function createClipSVGPath(shape: Shape): string | undefined {
+    return shapeModule.createClipSVGPath(getStruct, shape, mergedShapeContext);
   }
 
   function findShapeAt(
@@ -261,7 +269,10 @@ export function newShapeComposite(option: Option) {
     getAllTransformTargets,
 
     render,
+    clip,
     createSVGElementInfo,
+    createClipSVGPath,
+
     findShapeAt,
     isPointOn,
     transformShape,
@@ -508,4 +519,12 @@ export function swapShapeParent(
 function severCircularParentRefs(src: Shape[]): Shape[] {
   const parentRefMap = getParentRefMap(src);
   return src.map((s) => (s.parentId && !parentRefMap.has(s.id) ? { ...s, parentId: undefined } : s));
+}
+
+export function getAllShapeRangeWithinComposite(shapeComposite: ShapeComposite, includeBounds?: boolean) {
+  const shapeMap = shapeComposite.mergedShapeMap;
+  return shapeComposite.getWrapperRectForShapes(
+    shapeComposite.mergedShapeTree.map((t) => shapeMap[t.id]),
+    includeBounds,
+  );
 }

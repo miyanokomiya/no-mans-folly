@@ -34,6 +34,16 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeContext, imageStore);
 }
 
+export function clipShape(getStruct: GetShapeStruct, shape: Shape, shapeContext: ShapeContext): Path2D | undefined {
+  const struct = getStruct(shape.type);
+  return struct.getClipPath?.(shape, shapeContext);
+}
+
+export function canClip(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.getClipPath;
+}
+
 export function createSVGElementInfo<T extends Shape>(
   getStruct: GetShapeStruct,
   shape: T,
@@ -42,6 +52,15 @@ export function createSVGElementInfo<T extends Shape>(
 ): SVGElementInfo | undefined {
   const struct = getStruct(shape.type);
   return struct.createSVGElementInfo?.(shape, shapeContext, imageStore);
+}
+
+export function createClipSVGPath<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  shapeContext: ShapeContext,
+): string | undefined {
+  const struct = getStruct(shape.type);
+  return struct.createClipSVGPath?.(shape, shapeContext);
 }
 
 export function getWrapperRect(

@@ -68,16 +68,25 @@ function getChildNodes<T extends TreeFlatNode>(parentMap: { [id: string]: T[] },
   );
 }
 
+type TreeWalkOptions = {
+  onDown?: (parent: TreeNode) => void;
+  onUp?: (parent: TreeNode) => void;
+};
+
 /**
  * Depth first ordered
  */
-export function walkTree(treeNodes: TreeNode[], fn: (node: TreeNode, i: number) => void) {
-  treeNodes.forEach((n, i) => walkTreeStep(n, fn, i));
+export function walkTree(treeNodes: TreeNode[], fn: (node: TreeNode, i: number) => void, options?: TreeWalkOptions) {
+  treeNodes.forEach((n, i) => walkTreeStep(n, fn, i, options));
 }
 
-function walkTreeStep(node: TreeNode, fn: (node: TreeNode, i: number) => void, i: number) {
+function walkTreeStep(node: TreeNode, fn: (node: TreeNode, i: number) => void, i: number, options?: TreeWalkOptions) {
   fn(node, i);
-  node.children.forEach((c, j) => walkTreeStep(c, fn, j));
+  if (node.children.length > 0) {
+    options?.onDown?.(node);
+    node.children.forEach((c, j) => walkTreeStep(c, fn, j, options));
+    options?.onUp?.(node);
+  }
 }
 
 export function walkTreeWithValue<T>(treeNodes: TreeNode[], fn: (node: TreeNode, i: number, t: T) => T, t: T) {

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   canGroupShapes,
   findBetterShapeAt,
+  getAllShapeRangeWithinComposite,
   getClosestShapeByType,
   getDeleteTargetIds,
   getNextShapeComposite,
@@ -969,5 +970,32 @@ describe("swapShapeParent", () => {
       update: { [target.id]: { parentId: group0.id, findex: "aA" } },
       delete: [group1.id],
     });
+  });
+});
+
+describe("getAllShapeRangeWithinComposite", () => {
+  test("should return the range accommodate all shapes", () => {
+    const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "rect0",
+      p: { x: 10, y: 10 },
+      width: 100,
+      height: 100,
+    });
+    const rect1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "rect1",
+      p: { x: 210, y: 210 },
+      width: 100,
+      height: 100,
+    });
+
+    expect(
+      getAllShapeRangeWithinComposite(newShapeComposite({ shapes: [rect0], getStruct: getCommonStruct })),
+    ).toEqualRect({ x: 10, y: 10, width: 100, height: 100 });
+    expect(
+      getAllShapeRangeWithinComposite(newShapeComposite({ shapes: [rect1], getStruct: getCommonStruct })),
+    ).toEqualRect({ x: 210, y: 210, width: 100, height: 100 });
+    expect(
+      getAllShapeRangeWithinComposite(newShapeComposite({ shapes: [rect0, rect1], getStruct: getCommonStruct })),
+    ).toEqualRect({ x: 10, y: 10, width: 300, height: 300 });
   });
 });

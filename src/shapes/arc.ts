@@ -1,4 +1,16 @@
-import { IVec2, MINVALUE, add, clamp, getCenter, getDistance, multi, rotate, sub } from "okageo";
+import {
+  IVec2,
+  MINVALUE,
+  PathSegmentRaw,
+  add,
+  clamp,
+  getCenter,
+  getDistance,
+  multi,
+  pathSegmentRawsToString,
+  rotate,
+  sub,
+} from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   ISegment,
@@ -19,7 +31,7 @@ import {
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
-import { renderTransform } from "../utils/svgElements";
+import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { pickMinItem } from "../utils/commons";
 
@@ -52,25 +64,8 @@ export const struct: ShapeStruct<ArcShape> = {
   render(ctx, shape) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
-    const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
-    const to = Math.abs(shape.from - shape.to) < MINVALUE ? shape.to + TAU : shape.to;
-
     ctx.beginPath();
-
-    const holeRate = getHoleRate(shape);
-    if (holeRate) {
-      const [startP] = getArcPoints(shape);
-      const outerStartP = add(c, rotate(startP, shape.rotation));
-
-      ctx.moveTo(outerStartP.x, outerStartP.y);
-      ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
-      ctx.ellipse(c.x, c.y, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, to, shape.from, true);
-    } else {
-      ctx.moveTo(c.x, c.y);
-      ctx.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
-    }
-
-    ctx.closePath();
+    applyShapePath(ctx, shape);
 
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
@@ -81,6 +76,11 @@ export const struct: ShapeStruct<ArcShape> = {
       ctx.stroke();
     }
   },
+  getClipPath(shape) {
+    const region = new Path2D();
+    applyShapePath(region, shape);
+    return region;
+  },
   createSVGElementInfo(shape) {
     const rect = {
       x: shape.p.x,
@@ -89,54 +89,7 @@ export const struct: ShapeStruct<ArcShape> = {
       height: 2 * shape.ry,
     };
     const affine = getRotatedRectAffine(rect, shape.rotation);
-
-    // "large" param depends on whether the arc has larger radian than pi.
-    const large = (shape.to > shape.from ? shape.to : shape.to + TAU) - shape.from > Math.PI ? 1 : 0;
-
-    // Drawing an ellipse requires two "A" commands.
-    const isEllipse = Math.abs(shape.from - shape.to) < MINVALUE;
-
-    const holeRate = getHoleRate(shape);
-    const [startP, toP] = getArcPoints(shape);
-    const c = { x: shape.rx, y: shape.ry };
-    const outerStartP = add(c, startP);
-    const outerToP = add(c, toP);
-    const outerHalfP = add(c, rotate(startP, Math.PI));
-
-    let arcD: string;
-
-    if (holeRate) {
-      const innerStartP = add(c, multi(toP, holeRate));
-      const innerToP = add(c, multi(startP, holeRate));
-      const innerHalfP = add(c, rotate(multi(startP, holeRate), Math.PI));
-      arcD = [
-        `M${outerStartP.x} ${outerStartP.y}`,
-        ...(isEllipse
-          ? [
-              `A${shape.rx} ${shape.ry} 0 0 1 ${outerHalfP.x} ${outerHalfP.y}`,
-              `A${shape.rx} ${shape.ry} 0 0 1 ${outerStartP.x} ${outerStartP.y}`,
-              `L${innerStartP.x} ${innerStartP.y}`,
-              `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 0 0 ${innerHalfP.x} ${innerHalfP.y}`,
-              `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 0 0 ${innerStartP.x} ${innerStartP.y}z`,
-            ]
-          : [
-              `A${shape.rx} ${shape.ry} 0 ${large} 1 ${outerToP.x} ${outerToP.y}`,
-              `L${innerStartP.x} ${innerStartP.y}`,
-              `A${shape.rx * holeRate} ${shape.ry * holeRate} 0 ${large} 0 ${innerToP.x} ${innerToP.y}z`,
-            ]),
-      ].join(" ");
-    } else {
-      arcD = [
-        `M${shape.rx} ${shape.ry}`,
-        `L${outerStartP.x} ${outerStartP.y}`,
-        ...(isEllipse
-          ? [
-              `A${shape.rx} ${shape.ry} 0 0 1 ${outerHalfP.x} ${outerHalfP.y}`,
-              `A${shape.rx} ${shape.ry} 0 0 1 ${outerStartP.x} ${outerStartP.y}z`,
-            ]
-          : [`A${shape.rx} ${shape.ry} 0 ${large} 1 ${outerToP.x} ${outerToP.y}z`]),
-      ].join(" ");
-    }
+    const arcD = pathSegmentRawsToString(createLocalSVGRawPath(shape));
 
     return {
       tag: "path",
@@ -147,6 +100,16 @@ export const struct: ShapeStruct<ArcShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
     };
+  },
+  createClipSVGPath(shape) {
+    const rect = {
+      x: shape.p.x,
+      y: shape.p.y,
+      width: 2 * shape.rx,
+      height: 2 * shape.ry,
+    };
+    const rawPath = createLocalSVGRawPath(shape);
+    return pathSegmentRawsToString(applyRotatedRectTransformToRawPath(rect, shape.rotation, rawPath));
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
     if (!includeBounds) return ellipseStruct.getWrapperRect(shape, shapeContext, includeBounds);
@@ -304,4 +267,73 @@ function getArcPoints(shape: ArcShape): [from: IVec2, to: IVec2] {
     { x: Math.cos(shape.from) * shape.rx, y: Math.sin(shape.from) * shape.ry },
     { x: Math.cos(shape.to) * shape.rx, y: Math.sin(shape.to) * shape.ry },
   ];
+}
+
+function applyShapePath(region: CanvasRenderingContext2D | Path2D, shape: ArcShape) {
+  const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+  const to = Math.abs(shape.from - shape.to) < MINVALUE ? shape.to + TAU : shape.to;
+
+  const holeRate = getHoleRate(shape);
+  if (holeRate) {
+    const [startP] = getArcPoints(shape);
+    const outerStartP = add(c, rotate(startP, shape.rotation));
+
+    region.moveTo(outerStartP.x, outerStartP.y);
+    region.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
+    region.ellipse(c.x, c.y, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, to, shape.from, true);
+  } else {
+    region.moveTo(c.x, c.y);
+    region.ellipse(c.x, c.y, shape.rx, shape.ry, shape.rotation, shape.from, to);
+  }
+
+  region.closePath();
+}
+
+function createLocalSVGRawPath(shape: ArcShape): PathSegmentRaw[] {
+  // "large" param depends on whether the arc has larger radian than pi.
+  const large = (shape.to > shape.from ? shape.to : shape.to + TAU) - shape.from > Math.PI;
+  // Drawing an ellipse requires two "A" commands.
+  const isEllipse = Math.abs(shape.from - shape.to) < MINVALUE;
+  const holeRate = getHoleRate(shape);
+  const [startP, toP] = getArcPoints(shape);
+  const c = { x: shape.rx, y: shape.ry };
+  const outerStartP = add(c, startP);
+  const outerToP = add(c, toP);
+  const outerHalfP = add(c, rotate(startP, Math.PI));
+
+  if (holeRate) {
+    const innerStartP = add(c, multi(toP, holeRate));
+    const innerToP = add(c, multi(startP, holeRate));
+    const innerHalfP = add(c, rotate(multi(startP, holeRate), Math.PI));
+    return [
+      ["M", outerStartP.x, outerStartP.y],
+      ...((isEllipse
+        ? [
+            ["A", shape.rx, shape.ry, 0, false, true, outerHalfP.x, outerHalfP.y],
+            ["A", shape.rx, shape.ry, 0, false, true, outerStartP.x, outerStartP.y],
+            ["L", innerStartP.x, innerStartP.y],
+            ["A", shape.rx * holeRate, shape.ry * holeRate, 0, false, true, innerHalfP.x, innerHalfP.y],
+            ["A", shape.rx * holeRate, shape.ry * holeRate, 0, false, true, innerStartP.x, innerStartP.y],
+            ["z"],
+          ]
+        : [
+            ["A", shape.rx, shape.ry, 0, large, true, outerToP.x, outerToP.y],
+            ["L", innerStartP.x, innerStartP.y],
+            ["A", shape.rx * holeRate, shape.ry * holeRate, 0, large, false, innerToP.x, innerToP.y],
+            ["z"],
+          ]) as PathSegmentRaw[]),
+    ];
+  } else {
+    return [
+      ["M", shape.rx, shape.ry],
+      ["L", outerStartP.x, outerStartP.y],
+      ...((isEllipse
+        ? [
+            ["A", shape.rx, shape.ry, 0, false, true, outerHalfP.x, outerHalfP.y],
+            ["A", shape.rx, shape.ry, 0, false, true, outerStartP.x, outerStartP.y],
+            ["z"],
+          ]
+        : [["A", shape.rx, shape.ry, 0, large, true, outerToP.x, outerToP.y], ["z"]]) as PathSegmentRaw[]),
+    ];
+  }
 }

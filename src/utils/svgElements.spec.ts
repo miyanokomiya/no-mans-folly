@@ -1,5 +1,10 @@
 import { describe, test, expect } from "vitest";
-import { createSVGElement, createSVGSVGElement, renderTransform } from "./svgElements";
+import {
+  applyRotatedRectTransformToRawPath,
+  createSVGElement,
+  createSVGSVGElement,
+  renderTransform,
+} from "./svgElements";
 
 describe("createSVGSVGElement", () => {
   test("should return <svg> element", () => {
@@ -26,5 +31,13 @@ describe("renderTransform", () => {
 
   test("should return undefined when the affine is identity", () => {
     expect(renderTransform([1, 0, 0, 1, 0, 0])).toBe(undefined);
+  });
+});
+
+describe("applyRotatedRectTransformToRawPath", () => {
+  test("should apply rect transform", () => {
+    const rect = { x: 100, y: 200, width: 40, height: 80 };
+    expect(applyRotatedRectTransformToRawPath(rect, 0, [["L", 10, 30]])).toEqual([["L", 110, 230]]);
+    expect(applyRotatedRectTransformToRawPath(rect, Math.PI / 2, [["L", 10, 40]])).toEqual([["L", 120, 230]]);
   });
 });

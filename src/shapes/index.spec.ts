@@ -1,5 +1,6 @@
 import { expect, describe, test, vi } from "vitest";
 import {
+  canClip,
   canHaveText,
   canHaveTextPadding,
   createShape,
@@ -46,6 +47,7 @@ describe("renderShape", () => {
     const ctx = {
       beginPath: vi.fn(),
       closePath: vi.fn(),
+      moveTo: vi.fn(),
       lineTo: vi.fn(),
       fill: vi.fn(),
       stroke: vi.fn(),
@@ -59,6 +61,15 @@ describe("renderShape", () => {
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();
+  });
+});
+
+describe("canClip", () => {
+  test("should true when a shape can clip other shapes", () => {
+    const rect = createShape(getCommonStruct, "rectangle", {});
+    const line = createShape(getCommonStruct, "line", {});
+    expect(canClip(getCommonStruct, rect)).toBe(true);
+    expect(canClip(getCommonStruct, line)).toBe(false);
   });
 });
 

@@ -7,6 +7,7 @@ import {
   getRadian,
   getRectCenter,
   isSame,
+  pathSegmentRawsToString,
   rotate,
 } from "okageo";
 import { CommonStyle } from "../models";
@@ -33,6 +34,7 @@ import {
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
 import { RectPolygonShape } from "./rectPolygon";
+import { applyPath, createSVGCurvePath } from "../utils/renderer";
 
 export type RectangleShape = RectPolygonShape & CommonStyle & TextContainer;
 
@@ -54,10 +56,7 @@ export const struct: ShapeStruct<RectangleShape> = {
 
     const rectPolygon = getLocalRectPolygon(shape);
     ctx.beginPath();
-    rectPolygon.forEach((p) => {
-      ctx.lineTo(p.x, p.y);
-    });
-    ctx.closePath();
+    applyPath(ctx, rectPolygon, true);
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
       ctx.fill();
@@ -66,6 +65,13 @@ export const struct: ShapeStruct<RectangleShape> = {
       applyStrokeStyle(ctx, shape.stroke);
       ctx.stroke();
     }
+  },
+  getClipPath(shape) {
+    const rectPolygon = getLocalRectPolygon(shape);
+
+    const region = new Path2D();
+    applyPath(region, rectPolygon, true);
+    return region;
   },
   createSVGElementInfo(shape) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
@@ -81,6 +87,11 @@ export const struct: ShapeStruct<RectangleShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
     };
+  },
+  createClipSVGPath(shape) {
+    const rectPolygon = getLocalRectPolygon(shape);
+    const rawPath = createSVGCurvePath(rectPolygon, undefined, true);
+    return pathSegmentRawsToString(rawPath);
   },
   getWrapperRect(shape, _, includeBounds) {
     let rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
