@@ -520,3 +520,11 @@ function severCircularParentRefs(src: Shape[]): Shape[] {
   const parentRefMap = getParentRefMap(src);
   return src.map((s) => (s.parentId && !parentRefMap.has(s.id) ? { ...s, parentId: undefined } : s));
 }
+
+export function getAllShapeRangeWithinComposite(shapeComposite: ShapeComposite, includeBounds?: boolean) {
+  const shapeMap = shapeComposite.mergedShapeMap;
+  return shapeComposite.getWrapperRectForShapes(
+    shapeComposite.mergedShapeTree.map((t) => shapeMap[t.id]),
+    includeBounds,
+  );
+}
