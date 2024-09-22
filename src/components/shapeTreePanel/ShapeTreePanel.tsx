@@ -10,6 +10,8 @@ import { useGlobalDrag } from "../../hooks/window";
 import { IVec2 } from "okageo";
 import { isGroupShape } from "../../shapes/group";
 import { isAlignBoxShape } from "../../shapes/align/alignBox";
+import { isCtrlOrMeta } from "../../utils/devices";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -167,22 +169,24 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   const handleNodeDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
+
+      if (isCtrlOrMeta(e)) {
+        onSelect?.(id, primeSibling);
+        return;
+      }
+
       onSelect?.(id);
 
       if (draggable) {
         onDragStart?.(e, id);
       }
     },
-    [id, onSelect, draggable, onDragStart],
+    [id, onSelect, draggable, onDragStart, primeSibling],
   );
 
-  const handleNodeSelectDown = useCallback(
-    (e: React.PointerEvent) => {
-      e.preventDefault();
-      onSelect?.(id, true);
-    },
-    [id, onSelect],
-  );
+  const handleNodeSelectDown = useCallback(() => {
+    onSelect?.(id, true);
+  }, [id, onSelect]);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -194,6 +198,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
 
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
+  ToggleInput;
   return (
     <div ref={rootRef} data-id={id} data-draggable={draggable || undefined}>
       <div data-anchor className="flex items-center relative">
@@ -206,17 +211,9 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
           {name}
         </button>
         {primeSibling ? (
-          <button
-            type="button"
-            className="ml-1 border border-gray-400 rounded-full flex items-center justify-center"
-            onPointerDown={handleNodeSelectDown}
-          >
-            {selected ? (
-              <img className="w-4 h-4" src={minusIcon} alt="Deselect" />
-            ) : (
-              <img className="w-4 h-4" src={plusIcon} alt="Select" />
-            )}
-          </button>
+          <div className="ml-1">
+            <ToggleInput value={selected} onChange={handleNodeSelectDown} />
+          </div>
         ) : undefined}
         {dropTo?.[0] === id ? (
           dropTo[1] === "group" ? (
