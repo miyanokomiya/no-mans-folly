@@ -3,8 +3,6 @@ import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposit
 import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
-import plusIcon from "../../assets/icons/plus.svg";
-import minusIcon from "../../assets/icons/minus.svg";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
 import { useGlobalDrag } from "../../hooks/window";
 import { IVec2 } from "okageo";
@@ -34,11 +32,31 @@ export const ShapeTreePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
 
   const handleNodeSelect = useCallback(
-    (id: string, multi = false) => {
+    (id: string, multi = false, range = false) => {
       const ctx = getCtx();
 
       if (multi) {
         ctx.multiSelectShapes([id], true);
+      } else if (range) {
+        const lastId = ctx.getLastSelectedShapeId();
+        if (!lastId) return;
+
+        const composite = ctx.getShapeComposite();
+        const lastSelected = composite.shapeMap[lastId];
+        const siblings =
+          composite.mergedShapeTreeMap[lastSelected.parentId ?? ""]?.children ?? composite.mergedShapeTree;
+        const siblingIds = siblings.map((s) => s.id);
+        const lastIndex = siblingIds.findIndex((sid) => sid === lastSelected.id);
+        const targetIndex = siblingIds.findIndex((sid) => sid === id);
+        if (lastIndex < targetIndex) {
+          const ids = siblingIds.slice(lastIndex, targetIndex);
+          ids.push(id);
+          ctx.multiSelectShapes(ids, true);
+        } else if (targetIndex < lastIndex) {
+          const ids = siblingIds.slice(targetIndex + 1, lastIndex + 1);
+          ids.push(id);
+          ctx.multiSelectShapes(ids, true);
+        }
       } else {
         ctx.selectShape(id);
         handleEvent({
@@ -150,7 +168,7 @@ interface UITreeNodeProps {
   primeSibling: boolean;
   draggable: boolean;
   dropTo?: [string, DropOperation];
-  onSelect?: (id: string, multi?: boolean) => void;
+  onSelect?: (id: string, multi?: boolean, range?: boolean) => void;
   onDragStart?: (e: React.PointerEvent, id: string) => void;
 }
 
@@ -170,8 +188,12 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     (e: React.PointerEvent) => {
       e.preventDefault();
 
-      if (isCtrlOrMeta(e)) {
-        onSelect?.(id, primeSibling);
+      if (isCtrlOrMeta(e) && primeSibling) {
+        onSelect?.(id, true);
+        return;
+      }
+      if (e.shiftKey && primeSibling) {
+        onSelect?.(id, false, true);
         return;
       }
 
@@ -198,7 +220,6 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
 
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
-  ToggleInput;
   return (
     <div ref={rootRef} data-id={id} data-draggable={draggable || undefined}>
       <div data-anchor className="flex items-center relative">
