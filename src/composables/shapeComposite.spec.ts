@@ -876,7 +876,7 @@ describe("swapShapeParent", () => {
       update: { [target.id]: { parentId: undefined, findex: "a9V" } },
     });
     expect(swapShapeParent(composite, target.id, group0.id, "below", () => "")).toEqual({
-      update: { [target.id]: { parentId: undefined, findex: "aB" } },
+      update: { [target.id]: { parentId: undefined, findex: "aC" } },
     });
   });
 
@@ -895,7 +895,7 @@ describe("swapShapeParent", () => {
       update: { [target.id]: { findex: "a9V" } },
     });
     expect(swapShapeParent(composite, target.id, group0.id, "below", () => "")).toEqual({
-      update: { [target.id]: { findex: "aB" } },
+      update: { [target.id]: { findex: "aC" } },
     });
   });
 

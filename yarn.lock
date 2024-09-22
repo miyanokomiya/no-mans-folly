@@ -2964,10 +2964,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fractional-indexing@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "fractional-indexing@npm:3.2.0"
-  checksum: d4d477c2ba369346ef0f03a4776bd78a3426e2778c23f8fd9dd3f51f9a851280bfc412c9bd970de55f1d21b831899f4c7f75f7fb72ae7f92b189eee962564005
+"fractional-indexing-jittered@npm:^0.9.1":
+  version: 0.9.1
+  resolution: "fractional-indexing-jittered@npm:0.9.1"
+  checksum: 6baa15eb1200b01df7d65e4038fc8480befd0ea3231d8d86b6a7a24e948593efcd451be442a46e61c220bc93408dd8b9bbc4405cbc7d11a2b253d519399f1e80
   languageName: node
   linkType: hard
 
@@ -4140,7 +4140,7 @@ __metadata:
     eslint-plugin-prettier: "npm:^5.2.1"
     eslint-plugin-react-hooks: "npm:^4.6.2"
     eslint-plugin-react-refresh: "npm:^0.4.12"
-    fractional-indexing: "npm:^3.2.0"
+    fractional-indexing-jittered: "npm:^0.9.1"
     happy-dom: "npm:^15.7.4"
     minimatrix-polyroots: "npm:^3.0.5"
     nanoid: "npm:^5.0.7"

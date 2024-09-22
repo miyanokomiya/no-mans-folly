@@ -33,7 +33,7 @@
             "message": "This module should be used via \"src/utils/random.ts\"."
           },
           {
-            "name": "fractional-indexing",
+            "name": "fractional-indexing-jittered",
             "message": "This module should be used via \"src/utils/findex.ts\"."
           }
         ]
