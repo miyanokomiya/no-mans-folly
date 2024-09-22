@@ -1,7 +1,8 @@
-import { ShapeContext, ShapeStruct, createBaseShape } from "./core";
+import { ShapeContext, ShapeStruct, createBaseShape, isInvisibleClippingShape } from "./core";
 import { ClipRule, Shape } from "../models";
 import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
 import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
+import { splitList } from "../utils/commons";
 
 export type GroupShape = Shape & {
   type: "group";
@@ -30,11 +31,18 @@ export const struct: ShapeStruct<GroupShape> = {
   createSVGElementInfo() {
     return { tag: "g" };
   },
-  getWrapperRect(shape, shapeContext) {
+  getWrapperRect(shape, shapeContext, includeBounds) {
     const children = shapeContext?.treeNodeMap[shape.id].children;
     if (!children || children.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
 
-    const rects = children.map((c) => {
+    let targetList = children;
+    if (includeBounds) {
+      // Omit invisible clipping shapes when they work.
+      const [icList, others] = splitList(children, (s) => isInvisibleClippingShape(shapeContext.shapeMap[s.id]));
+      targetList = icList.length > 0 && others.length > 0 ? others : children;
+    }
+
+    const rects = targetList.map((c) => {
       const s = shapeContext.shapeMap[c.id];
       return shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext);
     });

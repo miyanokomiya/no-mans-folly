@@ -1,7 +1,8 @@
 import { AssetAPI } from "../hooks/persistence";
 import { Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
-import { getShapeTextBounds, hasStrokeStyle } from "../shapes";
+import { getShapeTextBounds } from "../shapes";
+import { hasStrokeStyle } from "../shapes/core";
 import { blobToBase64 } from "../utils/fileAccess";
 import { createTemplateShapeEmbedElement } from "../shapes/utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";

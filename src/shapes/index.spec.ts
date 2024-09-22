@@ -407,11 +407,3 @@ describe("switchShapeType", () => {
     expect(result0.ry).toBeCloseTo(100);
   });
 });
-
-describe("hasStrokeStyle", () => {
-  test("should return true when a shape has stroke property", () => {
-    expect(hasStrokeStyle(createShape(getCommonStruct, "group", {}))).toBe(false);
-    expect(hasStrokeStyle(createShape(getCommonStruct, "line", {}))).toBe(true);
-    expect(hasStrokeStyle(createShape(getCommonStruct, "rectangle", {}))).toBe(true);
-  });
-});

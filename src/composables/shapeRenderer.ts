@@ -1,6 +1,7 @@
 import { Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
-import { getShapeTextBounds, hasStrokeStyle } from "../shapes";
+import { getShapeTextBounds } from "../shapes";
+import { hasStrokeStyle } from "../shapes/core";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
 import { expandRect, getRectPoints } from "../utils/geometry";

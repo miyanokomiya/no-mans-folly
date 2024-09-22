@@ -1,6 +1,8 @@
 import { expect, describe, test } from "vitest";
 import {
   getCommonStyle,
+  hasStrokeStyle,
+  isInvisibleClippingShape,
   isSameShapeParentScope,
   isSameShapeSelectionScope,
   textContainerModule,
@@ -80,5 +82,30 @@ describe("isSameShapeParentScope", () => {
     expect(isSameShapeParentScope({ parentId: "a" }, { parentId: "b" })).toBe(false);
     expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "c" })).toBe(true);
     expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "c", scopeKey: "b" })).toBe(false);
+  });
+});
+
+describe("hasStrokeStyle", () => {
+  test("should return true when a shape has stroke property", () => {
+    expect(hasStrokeStyle(createShape(getCommonStruct, "group", {}))).toBe(false);
+    expect(hasStrokeStyle(createShape(getCommonStruct, "line", {}))).toBe(true);
+    expect(hasStrokeStyle(createShape(getCommonStruct, "rectangle", {}))).toBe(true);
+  });
+});
+
+describe("isInvisibleClippingShape", () => {
+  test("should return true when a shape an invisible clipping shape", () => {
+    expect(isInvisibleClippingShape(createShape(getCommonStruct, "line", {}))).toBe(false);
+    expect(
+      isInvisibleClippingShape(createShape<RectangleShape>(getCommonStruct, "rectangle", { clipping: true })),
+    ).toBe(false);
+    expect(
+      isInvisibleClippingShape(
+        createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          clipping: true,
+          stroke: createStrokeStyle({ disabled: true }),
+        }),
+      ),
+    ).toBe(true);
   });
 });

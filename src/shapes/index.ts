@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines, sub } from "okageo";
-import { BoxPadding, CommonStyle, Shape, Size, StrokeStyle } from "../models";
+import { BoxPadding, CommonStyle, Shape, Size } from "../models";
 import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
@@ -438,8 +438,4 @@ export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: str
   ]);
 
   return { ...dist, ...resizePatch, rotation: src.rotation };
-}
-
-export function hasStrokeStyle(shape: Shape): shape is Shape & { stroke: StrokeStyle } {
-  return "stroke" in shape;
 }

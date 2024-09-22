@@ -176,3 +176,11 @@ export function isSameShapeParentScope(a?: ShapeSelectionScope, b?: ShapeSelecti
   }
   return a === b;
 }
+
+export function hasStrokeStyle(shape: Shape): shape is Shape & { stroke: StrokeStyle } {
+  return "stroke" in shape;
+}
+
+export function isInvisibleClippingShape(shape: Shape): boolean {
+  return !!shape.clipping && (!hasStrokeStyle(shape) || !!shape.stroke.disabled);
+}
