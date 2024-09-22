@@ -8,7 +8,6 @@ import {
   getShapeTextBounds,
   getTextRangeRect,
   getWrapperRect,
-  hasStrokeStyle,
   isPointOn,
   refreshShapeRelations,
   remapShapeIds,
