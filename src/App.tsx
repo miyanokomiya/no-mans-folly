@@ -27,6 +27,7 @@ import { useUnloadWarning } from "./hooks/window";
 import { useToastMessages } from "./hooks/toastMessage";
 import { ToastMessages } from "./components/ToastMessages";
 import { useLocalStorageAdopter } from "./hooks/localStorage";
+import "./i18n";
 
 const USER_SETTING_KEY = "userSetting";
 

@@ -21,6 +21,7 @@
     "@emoji-mart/react": "^1.1.1",
     "emoji-mart": "^5.6.0",
     "fractional-indexing-jittered": "^0.9.1",
+    "i18next": "^23.15.1",
     "minimatrix-polyroots": "^3.0.5",
     "nanoid": "^5.0.7",
     "okageo": "^3.1.9",
@@ -28,6 +29,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-google-drive-picker": "^1.2.2",
+    "react-i18next": "^15.0.2",
     "tailwindcss": "^3.4.12",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.19"

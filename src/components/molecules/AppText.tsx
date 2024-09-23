@@ -65,7 +65,7 @@ const TerminologySpan: React.FC<TerminologySpanProps> = ({ item, activated, onHi
   );
 
   return (
-    <span ref={ref} className="font-bold inline-flex items-center">
+    <span ref={ref} className="font-bold inline-flex items-center pr-1">
       {item.text}
       <a
         className={

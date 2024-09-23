@@ -7,6 +7,7 @@ import { GoogleDriveFolder } from "../../google/types";
 import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import { usePageShowBackEffect } from "../../hooks/window";
+import { useTranslation, Trans } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace, onGoogleFolderSelect, onRevoke }) => {
+  const { t } = useTranslation();
   const fileAccessAvailable = isFileAccessAvailable();
 
   const [googleToken, setGoogleToken] = useState<string>();
@@ -75,68 +77,66 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
 
   const loading = !!googleMode;
 
+  const buttonStyle = "w-60 py-2 px-4 rounded flex items-center justify-center";
+
   return (
-    <Dialog open={open} onClose={onClose} title="Open [[(l)WORKSPACE]]" hideClose required>
+    <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
       <div className="w-96">
         <div>
           <a href="/terms/privacy-policy/" target="_blank" className="text-blue-500 underline font-semibold">
-            Privacy Policy of No-man's folly
+            {t("app.privacy_policy")}
           </a>
         </div>
         <p className="mt-2">
-          Select <span className="font-bold">a folder</span> as a workspace, then all updates are automatically saved
-          there.
+          <Trans i18nKey="select_workspace" components={{ tag_folder: <span className="font-bold" /> }} />
         </p>
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (
             <button
               type="button"
-              className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+              className={buttonStyle + " bg-blue-400 text-white gap-2"}
               onClick={onOpenWorkspace}
               disabled={loading}
             >
               <img src={folderColoredIcon} alt="" className="w-8 h-8 bg-white rounded" />
-              <span className="w-full text-center text-lg">Local folder</span>
+              <span className="w-full text-center text-lg">{t("local_folder")}</span>
             </button>
           ) : (
-            <p className="text-red-500 font-bold text-center">This browser doesn't support local folder.</p>
+            <p className="text-red-500 font-bold text-center">{t("local_folder.unsupported")}</p>
           )}
         </div>
         <div className="mt-4 flex flex-col items-center">
           <button
             type="button"
-            className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+            className={buttonStyle + " bg-blue-400 text-white gap-2"}
             onClick={handleGoogleClick}
             disabled={loading}
           >
             <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
-            <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
+            <span className="w-full text-center text-lg">{t(googleMode ? "loading" : "google_drive")}</span>
           </button>
         </div>
-        <p className="mt-4">
-          You can start with no workspace, but your data will be gone unless it's saved to a workspace before you leave
-          this page.
-        </p>
+        <p className="mt-4">{t("noworkspace.warning")}</p>
         <div className="mt-4 flex flex-col items-center">
           <button
             type="button"
-            className="w-52 p-2 rounded border border-gray-500 font-semibold flex items-center justify-center gap-2"
+            className={buttonStyle + " border border-gray-500 font-semibold gap-2"}
             onClick={onClose}
             disabled={loading}
           >
-            <span>Start with no workspace</span>
+            {t("noworkspace.start")}
           </button>
         </div>
-        <p className="mt-4">You can revoke external connections via below button.</p>
-        <p>(This button is visible even if there's no connection.)</p>
+        <p className="mt-4"> {t("exconnection.revoke.description")}</p>
+        <p>({t("exconnection.revoke.visibility")})</p>
         <div className="mt-4 flex flex-col items-center">
           <button
             type="button"
-            className="w-52 p-2 rounded border border-red-400 text-red-500 font-semibold flex items-center gap-2"
+            className={buttonStyle + " border border-red-400 text-red-500 font-semibold gap-2"}
             onClick={onRevoke}
             disabled={loading}
           >
-            <span className="w-full text-center">Revoke connections</span>
+            {t("exconnection.revoke")}
           </button>
         </div>
       </div>

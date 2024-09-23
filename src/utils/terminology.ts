@@ -1,3 +1,7 @@
+import { i18n } from "../i18n";
+
+i18n;
+
 export type TerminologyItem = {
   text: string;
   description?: string;
@@ -12,9 +16,8 @@ const TERMINOLOGY_KEYS = {
 
 const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
   [TERMINOLOGY_KEYS.WORKSPACE]: {
-    text: "Workspace",
-    description:
-      'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "assets" folder.',
+    text: i18n.t("workspace"),
+    description: i18n.t("term.workspace"),
   },
   [TERMINOLOGY_KEYS.FOLLY_SVG]: {
     text: "Folly SVG",
