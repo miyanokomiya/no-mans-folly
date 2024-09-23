@@ -7,6 +7,7 @@ import {
   LineSnapping,
   isLineSnappableShape,
   newLineSnapping,
+  optimizeLinePath,
   renderConnectionResult,
 } from "../../../lineSnapping";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -48,6 +49,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         getShapeStruct: ctx.getShapeStruct,
         movingLine: mockMovingLine,
         movingIndex: option.index,
+        gridSnapping: ctx.getGrid().getSnappingLines(),
       });
 
       const snappableLines = shapeComposite.getShapesOverlappingRect(
@@ -71,7 +73,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
-          if (connectionResult?.connection) {
+          if (connectionResult) {
             vertex = connectionResult.p;
             snappingResult = undefined;
           } else {
@@ -80,7 +82,9 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
             connectionResult = undefined;
           }
 
-          const patch = addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
+          let patch = addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
+          const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
+          patch = optimized ? { ...patch, ...optimized } : patch;
 
           ctx.setTmpShapeMap(
             getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),

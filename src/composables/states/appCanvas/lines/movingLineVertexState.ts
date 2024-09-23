@@ -78,7 +78,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
           if (connectionResult) {
-            vertex = connectionResult.p ?? add(origin, sub(point, event.data.start));
+            vertex = connectionResult.p;
             snappingResult = undefined;
           } else {
             snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
