@@ -8,6 +8,7 @@ import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import { usePageShowBackEffect } from "../../hooks/window";
 import { useTranslation, Trans } from "react-i18next";
+import { LangSelection } from "../molecules/LangSelection";
 
 interface Props {
   open: boolean;
@@ -138,6 +139,9 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
           >
             {t("exconnection.revoke")}
           </button>
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-2">
+          <LangSelection />
         </div>
       </div>
     </Dialog>

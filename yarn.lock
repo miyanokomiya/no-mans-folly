@@ -3374,6 +3374,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"i18next-browser-languagedetector@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "i18next-browser-languagedetector@npm:8.0.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.23.2"
+  checksum: 08a7c747ec18a0743b54390a0b42836d814b15fb49c92b90c259298e6a6e7e001ff9df99d0fd308283a34fceea53b4d9053aa1695a37f696bc04160017bbb524
+  languageName: node
+  linkType: hard
+
 "i18next@npm:^23.15.1":
   version: 23.15.1
   resolution: "i18next@npm:23.15.1"
@@ -4170,6 +4179,7 @@ __metadata:
     fractional-indexing-jittered: "npm:^0.9.1"
     happy-dom: "npm:^15.7.4"
     i18next: "npm:^23.15.1"
+    i18next-browser-languagedetector: "npm:^8.0.0"
     minimatrix-polyroots: "npm:^3.0.5"
     nanoid: "npm:^5.0.7"
     okageo: "npm:^3.1.9"

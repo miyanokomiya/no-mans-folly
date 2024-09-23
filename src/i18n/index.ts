@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 
 const en = {
   translation: {
@@ -45,14 +46,17 @@ const ja: TranslationResource = {
   },
 };
 
-i18next.use(initReactI18next).init({
-  fallbackLng: "en",
-  debug: true,
-  interpolation: {
-    escapeValue: false, // not needed for react as it escapes by default
-  },
+i18next
+  .use(initReactI18next)
+  .use(LanguageDetector)
+  .init({
+    supportedLngs: ["en", "ja"],
+    fallbackLng: "en",
+    interpolation: {
+      escapeValue: false, // not needed for react as it escapes by default
+    },
 
-  resources: { en, ja },
-});
+    resources: { en, ja },
+  });
 
 export const i18n = i18next;

@@ -1,36 +1,35 @@
 import { i18n } from "../i18n";
 
-i18n;
-
 export type TerminologyItem = {
   text: string;
   description?: string;
 };
 
-const TERMINOLOGY_KEYS = {
-  WORKSPACE: "WORKSPACE",
-  FOLLY_SVG: "FOLLY_SVG",
-  LOCK: "LOCK",
-  LINE_JUMP: "LINE_JUMP",
-};
-
 const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
-  [TERMINOLOGY_KEYS.WORKSPACE]: {
-    text: i18n.t("workspace"),
-    description: i18n.t("term.workspace"),
+  get WORKSPACE() {
+    return {
+      text: i18n.t("workspace"),
+      description: i18n.t("term.workspace"),
+    };
   },
-  [TERMINOLOGY_KEYS.FOLLY_SVG]: {
-    text: "Folly SVG",
-    description:
-      "Folly SVG contains meta data of shapes. You can restore the shapes by dropping Folly SVG to the canvas.",
+  get FOLLY_SVG() {
+    return {
+      text: "Folly SVG",
+      description:
+        "Folly SVG contains meta data of shapes. You can restore the shapes by dropping Folly SVG to the canvas.",
+    };
   },
-  [TERMINOLOGY_KEYS.LOCK]: {
-    text: "Lock",
-    description: "Prevents shapes from moving. You can still modify, resize or rotate locked shapes.",
+  get LOCK() {
+    return {
+      text: "Lock",
+      description: "Prevents shapes from moving. You can still modify, resize or rotate locked shapes.",
+    };
   },
-  [TERMINOLOGY_KEYS.LINE_JUMP]: {
-    text: "Jump",
-    description: "Jump over background lines. This works only between straight segments.",
+  get LINE_JUMP() {
+    return {
+      text: "Jump",
+      description: "Jump over background lines. This works only between straight segments.",
+    };
   },
 };
 
