@@ -51,7 +51,7 @@ export function newLineSnapping(option: Option) {
 
     // Points in a guide line are order sensitive: The first item shouldn't be snapped point.
     // => This assumption is used for snapping to a shape's outline.
-    let selfSnapped: ConnectionResult | undefined;
+    let selfSnapped: { p: IVec2; guidLines: ISegment[] } | undefined;
 
     // Try snapping to adjacent vertices: On a line.
     if (option.movingLine && option.movingIndex !== undefined) {
@@ -87,14 +87,54 @@ export function newLineSnapping(option: Option) {
       }
     }
 
-    // Extend guide lines to have enough room around the snapped point to check if the lines has an intersection with other shapes' outline.
-    const extendedGuideLines =
-      selfSnapped?.guidLines?.map((guide) => {
-        if (isSame(selfSnapped!.p, guide[0])) return guide;
+    // When there're more than one guidlines, snapping point must have been determined.
+    if ((selfSnapped?.guidLines.length ?? 0) > 1) return selfSnapped;
 
-        const seg: ISegment = [guide[0], selfSnapped!.p];
-        return extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
-      }) ?? [];
+    let lineConstrain: { p: IVec2; guidLines: ISegment[] } | undefined;
+    let extendedGuideLine: ISegment | undefined;
+
+    if (selfSnapped?.guidLines[0] && !isSame(selfSnapped!.p, selfSnapped.guidLines[0][0])) {
+      const seg: ISegment = [selfSnapped.guidLines[0][0], selfSnapped.p];
+      lineConstrain = selfSnapped;
+      extendedGuideLine = extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
+    } else if (!selfSnapped && option.gridSnapping) {
+      const gridH = pickMinItem(
+        option.gridSnapping.h.map<[ISegment, number]>((seg) => [seg, Math.abs(point.y - seg[0].y)]),
+        ([, v]) => v,
+      );
+      const gridV = pickMinItem(
+        option.gridSnapping.v.map<[ISegment, number]>((seg) => [seg, Math.abs(point.x - seg[0].x)]),
+        ([, v]) => v,
+      );
+
+      if (gridH && gridV) {
+        if (gridH[1] < threshold && gridH[1] < gridV[1]) {
+          lineConstrain = {
+            p: { x: point.x, y: gridH[0][0].y },
+            guidLines: [gridH[0]],
+          };
+          extendedGuideLine = gridH[0];
+        } else if (gridV[1] < threshold && gridV[1] < gridH[1]) {
+          lineConstrain = {
+            p: { x: gridV[0][0].x, y: point.y },
+            guidLines: [gridV[0]],
+          };
+          extendedGuideLine = gridV[0];
+        }
+      } else if (gridH && gridH[1] < threshold) {
+        lineConstrain = {
+          p: { x: point.x, y: gridH[0][0].y },
+          guidLines: [gridH[0]],
+        };
+        extendedGuideLine = gridH[0];
+      } else if (gridV && gridV[1] < threshold) {
+        lineConstrain = {
+          p: { x: gridV[0][0].x, y: point.y },
+          guidLines: [gridV[0]],
+        };
+        extendedGuideLine = gridV[0];
+      }
+    }
 
     const shapeComposite = newShapeComposite({
       shapes: reversedSnappableShapes,
@@ -108,19 +148,19 @@ export function newLineSnapping(option: Option) {
         // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
         let intersection: IVec2 | undefined;
         let priorityGuidline: ISegment | undefined;
-        if (selfSnapped) {
-          extendedGuideLines.some((guide, i) => {
-            const candidates = getIntersectedOutlines(option.getShapeStruct, shape, guide[0], guide[1]);
-            if (candidates) {
-              intersection = candidates.find((c) => getDistance(c, selfSnapped!.p) <= threshold);
-              if (intersection) {
-                priorityGuidline = selfSnapped?.guidLines?.[i];
-                return true;
-              } else {
-                priorityGuidline = undefined;
-              }
+        if (lineConstrain && extendedGuideLine) {
+          const candidates = getIntersectedOutlines(
+            option.getShapeStruct,
+            shape,
+            extendedGuideLine[0],
+            extendedGuideLine[1],
+          );
+          if (candidates) {
+            intersection = candidates.find((c) => getDistance(c, lineConstrain!.p) <= threshold);
+            if (intersection) {
+              priorityGuidline = lineConstrain.guidLines[0];
             }
-          });
+          }
         }
 
         // If there's no intersection, seek the closest outline point.
@@ -132,15 +172,15 @@ export function newLineSnapping(option: Option) {
           const d = getDistance(c, point);
           if (d < threshold) {
             outline = { p: c, d, shape };
-            selfSnapped = undefined;
+            lineConstrain = undefined;
             return true;
           }
           return;
         }
 
-        // Abandon self snapped when the closest outline is found indenpendently from guide lines.
+        // Abandon the line constrain when the closest outline is found indenpendently from it.
         if (!intersection) {
-          selfSnapped = undefined;
+          lineConstrain = undefined;
         }
 
         const d = getDistance(p, point);
@@ -162,12 +202,12 @@ export function newLineSnapping(option: Option) {
         p: outline.p,
         guidLines: outline.guideLine
           ? [outline.guideLine]
-          : selfSnapped?.guidLines?.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
+          : lineConstrain?.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
       };
     }
 
     // Try to snap to the grid lines when "single guid line" has been found out of self lines.
-    if (selfSnapped?.guidLines?.length === 1 && option.gridSnapping) {
+    if (selfSnapped?.guidLines.length === 1 && option.gridSnapping) {
       const p = selfSnapped.p;
       const guideline = selfSnapped?.guidLines[0];
 
