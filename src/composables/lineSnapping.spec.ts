@@ -244,6 +244,51 @@ describe("newLineSnapping", () => {
         ],
       });
     });
+
+    test("should snap to shape outline along a grid", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 50 } });
+      const target = newLineSnapping({
+        snappableShapes,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+        gridSnapping: {
+          h: [
+            [
+              { x: -500, y: 30 },
+              { x: 500, y: 30 },
+            ],
+          ],
+          v: [
+            [
+              { x: 230, y: -500 },
+              { x: 230, y: 500 },
+            ],
+          ],
+        },
+      });
+
+      expect(target.testConnection({ x: 231, y: 101 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0.8, y: 1 } },
+        p: { x: 230, y: 100 },
+        guidLines: [
+          [
+            { x: 230, y: -500 },
+            { x: 230, y: 500 },
+          ],
+        ],
+      });
+      expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0, y: 0.3 } },
+        p: { x: 150, y: 30 },
+        guidLines: [
+          [
+            { x: -500, y: 30 },
+            { x: 500, y: 30 },
+          ],
+        ],
+      });
+    });
   });
 });
 
