@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { ClipRule, Shape } from "../../models";
-import { BlockGroupField } from "../atoms/BlockField";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 import iconClipIn from "../../assets/icons/clip_rule_in.svg";
 import iconClipOut from "../../assets/icons/clip_rule_out.svg";
 import { GroupShape, isGroupShape } from "../../shapes/group";

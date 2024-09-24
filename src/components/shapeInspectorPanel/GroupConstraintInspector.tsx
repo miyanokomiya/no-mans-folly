@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { GroupConstraint, Shape } from "../../models";
-import { BlockField, BlockGroupField } from "../atoms/BlockField";
+import { BlockField } from "../atoms/BlockField";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 import gcIcon0 from "../../assets/icons/group_constraints_0.svg";
 import gcIcon1 from "../../assets/icons/group_constraints_1.svg";
 import gcIcon2 from "../../assets/icons/group_constraints_2.svg";
