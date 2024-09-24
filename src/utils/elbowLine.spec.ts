@@ -17,6 +17,17 @@ describe("getOptimalElbowBody", () => {
       ]);
     });
 
+    test("should return empty when they have y margin and the same x value", () => {
+      expect(
+        getOptimalElbowBody(
+          { x: 5, y: 10 },
+          { x: 5, y: 20 },
+          { x: 0, y: 0, width: 10, height: 10 },
+          { x: 0, y: 20, width: 10, height: 10 },
+        ),
+      ).toEqual([]);
+    });
+
     test("when they don't have y margin but have x margin", () => {
       expect(
         getOptimalElbowBody(

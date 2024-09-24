@@ -107,6 +107,8 @@ function getOptimalElbowBody_2_8(
   const [qt, qr, , ql] = [qBounds.y, qBounds.x + qBounds.width, qBounds.y + qBounds.height, qBounds.x];
 
   if (pb < qt) {
+    if (p.x === q.x) return [];
+
     const y = (qt + pb) / 2;
     return [
       { x: p.x, y },
