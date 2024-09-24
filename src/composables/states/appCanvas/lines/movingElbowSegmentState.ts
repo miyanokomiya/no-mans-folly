@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { LineShape, getEdges, getLinePath, isLineShape, patchBodyVertex } from "../../../../shapes/line";
+import { LineShape, getEdges, getLinePath, patchBodyVertex } from "../../../../shapes/line";
 import { MINVALUE, add, getDistance, getInner, getOuterRectangle, getPedal, getRadian, moveRect, sub } from "okageo";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -29,7 +29,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
 
       const shapeComposite = ctx.getShapeComposite();
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeComposite.shapeMap).filter((s) => !isLineShape(s)),
+        Object.values(shapeComposite.shapeMap),
         ctx.getViewRect(),
       );
 
