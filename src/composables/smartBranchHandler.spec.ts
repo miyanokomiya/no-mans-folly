@@ -1,5 +1,46 @@
 import { describe, test, expect } from "vitest";
-import { getAbovePosition, getBelowPosition, getLeftPosition, getRightPosition } from "./smartBranchHandler";
+import {
+  getAbovePosition,
+  getBelowPosition,
+  getLeftPosition,
+  getRightPosition,
+  newSmartBranchHandler,
+} from "./smartBranchHandler";
+import { newShapeComposite } from "./shapeComposite";
+import { createShape, getCommonStruct } from "../shapes";
+
+describe("newSmartBranchHandler", () => {
+  const rect = createShape(getCommonStruct, "rectangle", { id: "a", findex: "aA" });
+  const shapeComposite = newShapeComposite({
+    shapes: [rect],
+    getStruct: getCommonStruct,
+  });
+  const target = newSmartBranchHandler({
+    getShapeComposite: () => shapeComposite,
+    targetId: "a",
+  });
+
+  describe("hitTest", () => {
+    test("should return branch data when a point is on one of the anchors", () => {
+      expect(target.hitTest({ x: 50, y: -40 }, 1)?.index).toBe(0);
+      expect(target.hitTest({ x: 140, y: 50 }, 1)?.index).toBe(1);
+      expect(target.hitTest({ x: 50, y: 140 }, 1)?.index).toBe(2);
+      expect(target.hitTest({ x: -40, y: 50 }, 1)?.index).toBe(3);
+    });
+  });
+
+  describe("createBranch", () => {
+    test("should return branch shapes based on the hit result", () => {
+      const hit = target.hitTest({ x: 140, y: 50 }, 1);
+      const result = target.createBranch(hit!, () => "b", rect.findex);
+      expect(result).toHaveLength(2);
+      expect(result[0].type).toBe("rectangle");
+      expect(result[0].findex > rect.findex).toBe(true);
+      expect(result[1].type).toBe("line");
+      expect(result[1].findex > result[0].findex).toBe(true);
+    });
+  });
+});
 
 describe("getBelowPosition", () => {
   test("should return better position to avoid obstacles", () => {

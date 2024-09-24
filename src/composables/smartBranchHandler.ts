@@ -8,6 +8,7 @@ import { newRectHitRectHitTest } from "./shapeHitTest";
 import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
+import { generateKeyBetween } from "../utils/findex";
 
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
@@ -20,7 +21,7 @@ interface HitResult {
 }
 
 export type SmartBranchHandler = ShapeHandler<HitResult> & {
-  createBranch(hitResult: Pick<HitResult, "index">, generateId: () => string): [Shape, LineShape];
+  createBranch(hitResult: Pick<HitResult, "index">, generateId: () => string, lastFindex: string): [Shape, LineShape];
 };
 
 interface Option {
@@ -49,7 +50,7 @@ const getBaseHandler = defineShapeHandler<HitResult, Option>((option) => {
     const index = getAnchors(scale).findIndex((a) => getDistance(a, p) <= threshold);
     if (index === -1) return;
 
-    const previewShapes = createBranch(shapeComposite, shape, bounds, { index }, () => "mock");
+    const previewShapes = createBranch(shapeComposite, shape, bounds, { index }, () => "mock", shape.findex);
     return { index, previewShapes };
   }
 
@@ -97,8 +98,8 @@ export function newSmartBranchHandler(option: Option): SmartBranchHandler {
 
   return {
     ...getBaseHandler(option),
-    createBranch: (hitResult: Pick<HitResult, "index">, generateId: () => string) =>
-      createBranch(shapeComposite, shape, bounds, hitResult, generateId),
+    createBranch: (hitResult: Pick<HitResult, "index">, generateId: () => string, lastFindex: string) =>
+      createBranch(shapeComposite, shape, bounds, hitResult, generateId, lastFindex),
   };
 }
 
@@ -116,9 +117,12 @@ function createBranch(
   bounds: IRectangle,
   hitResult: Pick<HitResult, "index">,
   generateId: () => string,
+  lastFindex: string,
 ): [Shape, LineShape] {
   const getShapeStruct = shapeComposite.getShapeStruct;
   const shape = cloneShapes(getShapeStruct, [src], generateId)[0];
+  const findexForShape = generateKeyBetween(lastFindex, null);
+  const findexForElbow = generateKeyBetween(findexForShape, null);
 
   const obstacles = Object.values(shapeComposite.shapeMap)
     .filter((s) => !isLineShape(s))
@@ -127,7 +131,7 @@ function createBranch(
     });
   const baseQ = getTargetPosition(hitResult.index, bounds, obstacles);
   const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - bounds.x, baseQ.y - bounds.y];
-  const moved = { ...shape, ...shapeComposite.transformShape(shape, affine) };
+  const moved: Shape = { ...shape, findex: findexForShape, ...shapeComposite.transformShape(shape, affine) };
 
   const pRect = shapeComposite.getWrapperRect(src);
   const qRect = moveRect(pRect, { x: baseQ.x - bounds.x, y: baseQ.y - bounds.y });
@@ -142,6 +146,7 @@ function createBranch(
 
   const elbow = createShape<LineShape>(getShapeStruct, "line", {
     id: generateId(),
+    findex: findexForElbow,
     lineType: "elbow",
     p,
     q,
