@@ -132,3 +132,52 @@ export function snapVectorToGrid(
     return { p: candidateV, lines: [closestVGrid!] };
   }
 }
+
+export function pickClosestGridLineAtPoint(
+  gridSnapping: ShapeSnappingLines,
+  point: IVec2,
+  threshold: number,
+):
+  | {
+      p: IVec2; // the pedal on the closest grid line
+      line: ISegment; // the closest grid line
+      type: "h" | "v";
+    }
+  | undefined {
+  const gridH = pickMinItem(
+    gridSnapping.h.map<[ISegment, number]>((seg) => [seg, Math.abs(point.y - seg[0].y)]),
+    ([, v]) => v,
+  );
+  const gridV = pickMinItem(
+    gridSnapping.v.map<[ISegment, number]>((seg) => [seg, Math.abs(point.x - seg[0].x)]),
+    ([, v]) => v,
+  );
+
+  if (gridH && gridV) {
+    if (gridH[1] < threshold && gridH[1] < gridV[1]) {
+      return {
+        p: { x: point.x, y: gridH[0][0].y },
+        line: gridH[0],
+        type: "h",
+      };
+    } else if (gridV[1] < threshold && gridV[1] < gridH[1]) {
+      return {
+        p: { x: gridV[0][0].x, y: point.y },
+        line: gridV[0],
+        type: "v",
+      };
+    }
+  } else if (gridH && gridH[1] < threshold) {
+    return {
+      p: { x: point.x, y: gridH[0][0].y },
+      line: gridH[0],
+      type: "h",
+    };
+  } else if (gridV && gridV[1] < threshold) {
+    return {
+      p: { x: gridV[0][0].x, y: point.y },
+      line: gridV[0],
+      type: "v",
+    };
+  }
+}

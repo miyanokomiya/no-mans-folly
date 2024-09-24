@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newGrid, snapVectorToGrid } from "./grid";
+import { newGrid, pickClosestGridLineAtPoint, snapVectorToGrid } from "./grid";
 import { ShapeSnappingLines } from "../shapes/core";
 
 describe("newGrid", () => {
@@ -94,6 +94,57 @@ describe("snapVectorToGrid", () => {
     expect(snapVectorToGrid(gridSnapping, { x: 0, y: -20 }, { x: 0, y: 51 }, 5)).toEqual({
       p: { x: 0, y: 50 },
       lines: [gridSnapping.h[1]],
+    });
+  });
+});
+
+describe("pickClosestGridLineAtPoint", () => {
+  const gridSnapping: ShapeSnappingLines = {
+    h: [
+      [
+        { x: -200, y: 0 },
+        { x: 200, y: 0 },
+      ],
+      [
+        { x: -200, y: 50 },
+        { x: 200, y: 50 },
+      ],
+    ],
+    v: [
+      [
+        { x: 0, y: -200 },
+        { x: 0, y: 200 },
+      ],
+      [
+        { x: 50, y: -200 },
+        { x: 50, y: 200 },
+      ],
+    ],
+  };
+
+  test("should return the closest grid line", () => {
+    expect(pickClosestGridLineAtPoint(gridSnapping, { x: 500, y: 500 }, 5)).toEqual(undefined);
+
+    expect(pickClosestGridLineAtPoint(gridSnapping, { x: 2, y: 1 }, 5)).toEqual({
+      p: { x: 2, y: 0 },
+      line: gridSnapping.h[0],
+      type: "h",
+    });
+    expect(pickClosestGridLineAtPoint(gridSnapping, { x: 100, y: 1 }, 5)).toEqual({
+      p: { x: 100, y: 0 },
+      line: gridSnapping.h[0],
+      type: "h",
+    });
+
+    expect(pickClosestGridLineAtPoint(gridSnapping, { x: 1, y: 2 }, 5)).toEqual({
+      p: { x: 0, y: 2 },
+      line: gridSnapping.v[0],
+      type: "v",
+    });
+    expect(pickClosestGridLineAtPoint(gridSnapping, { x: 1, y: 100 }, 5)).toEqual({
+      p: { x: 0, y: 100 },
+      line: gridSnapping.v[0],
+      type: "v",
     });
   });
 });

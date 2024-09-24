@@ -20,7 +20,7 @@ import { isObjectEmpty, pickMinItem } from "../utils/commons";
 import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
-import { snapVectorToGrid } from "./grid";
+import { pickClosestGridLineAtPoint, snapVectorToGrid } from "./grid";
 
 const SNAP_THRESHOLD = 10;
 
@@ -98,41 +98,13 @@ export function newLineSnapping(option: Option) {
       lineConstrain = selfSnapped;
       extendedGuideLine = extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
     } else if (!selfSnapped && option.gridSnapping) {
-      const gridH = pickMinItem(
-        option.gridSnapping.h.map<[ISegment, number]>((seg) => [seg, Math.abs(point.y - seg[0].y)]),
-        ([, v]) => v,
-      );
-      const gridV = pickMinItem(
-        option.gridSnapping.v.map<[ISegment, number]>((seg) => [seg, Math.abs(point.x - seg[0].x)]),
-        ([, v]) => v,
-      );
-
-      if (gridH && gridV) {
-        if (gridH[1] < threshold && gridH[1] < gridV[1]) {
-          lineConstrain = {
-            p: { x: point.x, y: gridH[0][0].y },
-            guidLines: [gridH[0]],
-          };
-          extendedGuideLine = gridH[0];
-        } else if (gridV[1] < threshold && gridV[1] < gridH[1]) {
-          lineConstrain = {
-            p: { x: gridV[0][0].x, y: point.y },
-            guidLines: [gridV[0]],
-          };
-          extendedGuideLine = gridV[0];
-        }
-      } else if (gridH && gridH[1] < threshold) {
+      const closestGridInfo = pickClosestGridLineAtPoint(option.gridSnapping, point, threshold);
+      if (closestGridInfo) {
         lineConstrain = {
-          p: { x: point.x, y: gridH[0][0].y },
-          guidLines: [gridH[0]],
+          p: closestGridInfo.p,
+          guidLines: [closestGridInfo.line],
         };
-        extendedGuideLine = gridH[0];
-      } else if (gridV && gridV[1] < threshold) {
-        lineConstrain = {
-          p: { x: gridV[0][0].x, y: point.y },
-          guidLines: [gridV[0]],
-        };
-        extendedGuideLine = gridV[0];
+        extendedGuideLine = closestGridInfo.line;
       }
     }
 
