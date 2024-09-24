@@ -41,7 +41,7 @@ export const ClipInspector: React.FC<Props> = ({ targetShape, updateTargetShape,
   );
 
   return (
-    <BlockGroupField label="Clip">
+    <BlockGroupField label="Clip" accordionKey="clip-inspector">
       <InlineField label="Clip within parent group">
         <ToggleInput value={targetShape.clipping} onChange={handleClippingChange} />
       </InlineField>

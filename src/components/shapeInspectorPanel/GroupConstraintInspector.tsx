@@ -35,7 +35,7 @@ export const GroupConstraintInspector: React.FC<Props> = ({ targetShape, updateT
   );
 
   return (
-    <BlockGroupField label="Group constraints">
+    <BlockGroupField label="Group constraints" accordionKey="group-constraint-inspector">
       <BlockField label="Vertical fixed">
         <div className="w-56 flex flex-wrap justify-end gap-1">
           {gcIcons.map((icon, i) => (
