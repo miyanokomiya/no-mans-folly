@@ -260,13 +260,14 @@ function clipWithinGroup(
     if (shouldStroke) {
       const outlineG = renderOutline();
       if (outlineG.childNodes.length > 0) {
-        const clipOutsideElm = renderClipOutside();
         const clipPathId = embedClipOut();
         if (clipPathId) {
-          clipOutsideElm.setAttribute("clip-path", `url(#${clipPathId})`);
+          // Clip out the outline within the clipping shapes.
+          outlineG.setAttribute("clip-path", `url(#${clipPathId})`);
         }
-        root.appendChild(clipOutsideElm);
         root.appendChild(outlineG);
+        const clipOutsideElm = renderClipOutside();
+        root.appendChild(clipOutsideElm);
       }
     }
   } else {
@@ -279,9 +280,12 @@ function clipWithinGroup(
 
     if (shouldStroke) {
       const outlineG = renderOutline();
-      const clipOutsideElm = renderClipOutside();
-      root.appendChild(clipOutsideElm);
-      groupElm.appendChild(outlineG);
+      if (outlineG.childNodes.length > 0) {
+        // Put outline element in the same parent group of sahpes to clip out in the same way.
+        groupElm.appendChild(outlineG);
+        const clipOutsideElm = renderClipOutside();
+        root.appendChild(clipOutsideElm);
+      }
     }
   }
 }
