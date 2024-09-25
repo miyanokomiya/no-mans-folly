@@ -5,6 +5,8 @@ import { COLORS } from "../utils/color";
 import { ShapeSnappingLines } from "../shapes/core";
 import { pickMinItem } from "../utils/commons";
 
+const GRID_LABEL_STEP_SIZE = 100;
+
 interface Option {
   size: number;
   range: IRectangle;
@@ -52,17 +54,31 @@ export function newGrid({ size, range, disabled }: Option) {
     ctx.globalAlpha = 0.5;
     ctx.font = `${14 * scale}px Arial`;
 
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    segmentsV.forEach(([a, b]) => {
-      ctx.fillText(`${a.x}`, a.x, b.y - 4);
-    });
+    {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      const labelVY = range.y + range.height - 4;
+      const labelVMaxCount = Math.round(range.width / GRID_LABEL_STEP_SIZE / scale);
+      const labelVStep = Math.round(countV / labelVMaxCount);
+      const shiftV = -(baseX / size) % labelVStep;
+      for (let i = 0; i < countV; i += labelVStep) {
+        const x = baseX + (i + shiftV) * size;
+        ctx.fillText(`${x}`, x, labelVY);
+      }
+    }
 
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    segmentsH.forEach(([a]) => {
-      ctx.fillText(`${a.y}`, a.x + 4, a.y);
-    });
+    {
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      const labelHX = range.x + 4;
+      const labelHMaxCount = Math.round(range.height / GRID_LABEL_STEP_SIZE / scale);
+      const labelHStep = Math.round(countH / labelHMaxCount);
+      const shiftH = -(baseY / size) % labelHStep;
+      for (let i = 0; i < countH; i += labelHStep) {
+        const y = baseY + (i + shiftH) * size;
+        ctx.fillText(`${y}`, labelHX, y);
+      }
+    }
 
     ctx.restore();
   }
