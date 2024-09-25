@@ -4,10 +4,17 @@ import { ToggleInput } from "./atoms/inputs/ToggleInput";
 import { SelectInput } from "./atoms/inputs/SelectInput";
 import { InlineField } from "./atoms/InlineField";
 import { UserSetting } from "../models";
+import { BlockGroupField } from "./atoms/BlockGroupField";
+import { NumberInput } from "./atoms/inputs/NumberInput";
 
 const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], undefined>; label: string }[] = [
   { value: "off", label: "Off" },
   { value: "modifiers", label: "Modifiers" },
+];
+
+const gridSizeOptions: { value: Exclude<UserSetting["gridSizeType"], undefined>; label: string }[] = [
+  { value: "auto", label: "Auto" },
+  { value: "custom", label: "Custom" },
 ];
 
 export const UserSettingPanel: React.FC = () => {
@@ -55,6 +62,20 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handleGridSizeTypeChange = useCallback(
+    (val: UserSetting["gridSizeType"]) => {
+      userSettingStore.patchState({ gridSizeType: val });
+    },
+    [userSettingStore],
+  );
+
+  const handleGridSizeChange = useCallback(
+    (val: number) => {
+      userSettingStore.patchState({ gridSize: val });
+    },
+    [userSettingStore],
+  );
+
   const virtualKeyboardValue = userSetting.virtualKeyboard ?? "off";
 
   return (
@@ -83,9 +104,23 @@ export const UserSettingPanel: React.FC = () => {
             <p className="text-red-500 font-sm text-right">(Not work well with stylus pens)</p>
           ) : undefined}
         </div>
-        <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
-          Grid
-        </ToggleInput>
+        <BlockGroupField label="Grid">
+          <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
+            Grid
+          </ToggleInput>
+          <InlineField label="Grid size type">
+            <SelectInput
+              value={userSetting.gridSizeType ?? "auto"}
+              options={gridSizeOptions}
+              onChange={handleGridSizeTypeChange}
+            />
+          </InlineField>
+          <InlineField label="Grid size" inert={userSetting.gridSizeType !== "custom"}>
+            <div className="w-24">
+              <NumberInput min={1} slider={true} value={userSetting.gridSize ?? 50} onChange={handleGridSizeChange} />
+            </div>
+          </InlineField>
+        </BlockGroupField>
       </div>
     </div>
   );

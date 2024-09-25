@@ -30,7 +30,7 @@ export const BlockGroupField: React.FC<Props> = ({ label, children, accordionKey
   }, [setAccordingState]);
 
   const content = (
-    <div ref={contentRef} className="ml-2 pl-2 border-l border-b border-gray-400 flex flex-col gap-1">
+    <div ref={contentRef} className="ml-2 pl-2 pb-1 border-l border-b border-gray-400 flex flex-col gap-1">
       {children}
     </div>
   );
@@ -45,7 +45,7 @@ export const BlockGroupField: React.FC<Props> = ({ label, children, accordionKey
   }
 
   return (
-    <div className={"flex flex-col gap-1 " + (accordionState ? "" : "border-b border-gray-400")}>
+    <div className={"pb-1 flex flex-col gap-1 " + (accordionState ? "" : "border-b border-gray-400")}>
       <button
         type="button"
         className="flex items-center justify-between hover:bg-gray-200"
