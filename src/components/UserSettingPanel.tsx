@@ -12,11 +12,6 @@ const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], u
   { value: "modifiers", label: "Modifiers" },
 ];
 
-const gridSizeOptions: { value: Exclude<UserSetting["gridSizeType"], undefined>; label: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "custom", label: "Custom" },
-];
-
 export const UserSettingPanel: React.FC = () => {
   const { userSettingStore } = useContext(AppCanvasContext);
   const [userSetting, setUserSetting] = useState(userSettingStore.getState());
@@ -62,13 +57,6 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
-  const handleGridSizeTypeChange = useCallback(
-    (val: UserSetting["gridSizeType"]) => {
-      userSettingStore.patchState({ gridSizeType: val });
-    },
-    [userSettingStore],
-  );
-
   const handleGridSizeChange = useCallback(
     (val: number) => {
       userSettingStore.patchState({ gridSize: val });
@@ -108,13 +96,6 @@ export const UserSettingPanel: React.FC = () => {
           <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
             Grid
           </ToggleInput>
-          <InlineField label="Grid size type">
-            <SelectInput
-              value={userSetting.gridSizeType ?? "auto"}
-              options={gridSizeOptions}
-              onChange={handleGridSizeTypeChange}
-            />
-          </InlineField>
           <InlineField label="Grid size" inert={userSetting.gridSizeType !== "custom"}>
             <div className="w-24">
               <NumberInput min={1} slider={true} value={userSetting.gridSize ?? 50} onChange={handleGridSizeChange} />

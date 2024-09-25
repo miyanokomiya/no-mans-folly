@@ -1,5 +1,5 @@
 import { getDistance, IRectangle, isParallel, isSame, IVec2, sub } from "okageo";
-import { getCrossLineAndLine, ISegment, snapNumberCeil } from "../utils/geometry";
+import { getCrossLineAndLine, ISegment, snapNumber, snapNumberCeil } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -71,19 +71,14 @@ export function newGrid({ size, range, disabled }: Option) {
 }
 export type Grid = ReturnType<typeof newGrid>;
 
-export function getGridSize(scale: number): number {
-  // Should be scaled by same rate
-  if (scale < 0.6) {
-    return 25;
-  } else if (scale < 1.5) {
-    return 50;
-  } else if (scale < 2.4) {
-    return 100;
-  } else if (scale < 4.8) {
-    return 200;
-  } else {
-    return 400;
-  }
+const GRID_MIN_VIEW_SIZE = 20;
+
+export function getGridSize(baseSize: number, scale: number): number {
+  const viewSize = baseSize / scale;
+  if (viewSize >= GRID_MIN_VIEW_SIZE) return baseSize;
+
+  const adjustedSize = snapNumber(GRID_MIN_VIEW_SIZE * scale, baseSize);
+  return adjustedSize;
 }
 
 export function snapVectorToGrid(

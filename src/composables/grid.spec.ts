@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newGrid, pickClosestGridLineAtPoint, snapVectorToGrid } from "./grid";
+import { getGridSize, newGrid, pickClosestGridLineAtPoint, snapVectorToGrid } from "./grid";
 import { ShapeSnappingLines } from "../shapes/core";
 
 describe("newGrid", () => {
@@ -58,6 +58,17 @@ describe("newGrid", () => {
         { x: 55, y: 80 },
       ],
     ]);
+  });
+});
+
+describe("getGridSize", () => {
+  test("should return grid size for the given scale", () => {
+    expect(getGridSize(20, 1)).toBeCloseTo(20);
+    expect(getGridSize(15, 1)).toBeCloseTo(15);
+    expect(getGridSize(10, 1)).toBeCloseTo(20);
+    expect(getGridSize(20, 2)).toBeCloseTo(40);
+    expect(getGridSize(15, 2)).toBeCloseTo(45);
+    expect(getGridSize(10, 2)).toBeCloseTo(40);
   });
 });
 

@@ -181,7 +181,11 @@ export const AppCanvas: React.FC = () => {
   } = useCanvas(getWrapper);
 
   const grid = useMemo(() => {
-    return newGrid({ size: getGridSize(scale), range: viewCanvasRect, disabled: userSetting.grid === "off" });
+    return newGrid({
+      size: getGridSize(userSetting.gridSize ?? 50, scale),
+      range: viewCanvasRect,
+      disabled: userSetting.grid === "off",
+    });
   }, [scale, viewCanvasRect, userSetting]);
 
   const mergedDocMap = useMemo(() => {
