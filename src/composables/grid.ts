@@ -54,31 +54,19 @@ export function newGrid({ size, range, disabled }: Option) {
     ctx.globalAlpha = 0.5;
     ctx.font = `${14 * scale}px Arial`;
 
-    {
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      const labelVY = range.y + range.height - 4;
-      const labelVMaxCount = Math.round(range.width / GRID_LABEL_STEP_SIZE / scale);
-      const labelVStep = Math.max(1, Math.round(countV / labelVMaxCount));
-      const shiftV = -(baseX / size) % labelVStep;
-      for (let i = 0; i < countV; i += labelVStep) {
-        const x = baseX + (i + shiftV) * size;
-        ctx.fillText(`${x}`, x, labelVY);
-      }
-    }
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    const labelVY = range.y + range.height - 4;
+    forEachGridLabel(baseX, size, range.width, scale, (v) => {
+      ctx.fillText(`${v}`, v, labelVY);
+    });
 
-    {
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      const labelHX = range.x + 4;
-      const labelHMaxCount = Math.round(range.height / GRID_LABEL_STEP_SIZE / scale);
-      const labelHStep = Math.max(1, Math.round(countH / labelHMaxCount));
-      const shiftH = -(baseY / size) % labelHStep;
-      for (let i = 0; i < countH; i += labelHStep) {
-        const y = baseY + (i + shiftH) * size;
-        ctx.fillText(`${y}`, labelHX, y);
-      }
-    }
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    const labelHX = range.x + 4;
+    forEachGridLabel(baseY, size, range.height, scale, (v) => {
+      ctx.fillText(`${v}`, labelHX, v);
+    });
 
     ctx.restore();
   }
@@ -86,6 +74,16 @@ export function newGrid({ size, range, disabled }: Option) {
   return { getSegmentsV, getSegmentsH, getSnappingLines, renderAxisLabels, disabled, size, range };
 }
 export type Grid = ReturnType<typeof newGrid>;
+
+function forEachGridLabel(base: number, size: number, viewSize: number, scale: number, fn: (v: number) => void) {
+  const count = Math.ceil(viewSize / size);
+  const maxCount = Math.round(viewSize / GRID_LABEL_STEP_SIZE / scale);
+  const step = Math.max(1, Math.round(count / maxCount));
+  const shift = -(base / size) % step;
+  for (let i = 0; i < count; i += step) {
+    fn(base + (i + shift) * size);
+  }
+}
 
 const GRID_MIN_VIEW_SIZE = 20;
 
