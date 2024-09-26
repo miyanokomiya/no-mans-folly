@@ -96,7 +96,7 @@ export const UserSettingPanel: React.FC = () => {
           <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
             Grid
           </ToggleInput>
-          <InlineField label="Grid size" inert={userSetting.gridSizeType !== "custom"}>
+          <InlineField label="Grid size">
             <div className="w-24">
               <NumberInput min={1} slider={true} value={userSetting.gridSize ?? 50} onChange={handleGridSizeChange} />
             </div>
