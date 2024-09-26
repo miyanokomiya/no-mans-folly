@@ -24,7 +24,6 @@ export type AssetAPI =
     }
   | { enabled: false };
 
-const initialSheetIdByQuery = getSheetIdFromQuery();
 const { indexedDBMode } = newFeatureFlags();
 
 const defaultDiagramDoc = new Y.Doc();
@@ -151,8 +150,8 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       createInitialSheet(sheetStore, generateUuid);
     }
 
-    const sheet = sheetStore.getEntityMap()[initialSheetIdByQuery] ?? sheetStore.getSelectedSheet()!;
-    sheetStore.selectSheet(sheet.id);
+    sheetStore.selectSheet(getSheetIdFromQuery());
+    const sheet = sheetStore.getSelectedSheet()!;
     await initSheet(sheet.id);
 
     setDbProviderDiagram(provider);
@@ -198,6 +197,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       }
     }
 
+    sheetStore.selectSheet(getSheetIdFromQuery());
     const sheet = sheetStore.getSelectedSheet()!;
     await initSheet(sheet.id);
 
