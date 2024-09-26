@@ -35,12 +35,20 @@ export function newGrid({ size, range, disabled }: Option) {
     ];
   });
 
-  function getSegmentsV() {
-    return segmentsV;
+  function pickClosestGridLineVAtPoint(point: IVec2): ISegment {
+    const x = snapNumber(point.x, size);
+    return [
+      { x, y: range.y },
+      { x, y: range.y + range.height },
+    ];
   }
 
-  function getSegmentsH() {
-    return segmentsH;
+  function pickClosestGridLineHAtPoint(point: IVec2): ISegment {
+    const y = snapNumber(point.y, size);
+    return [
+      { x: range.x, y },
+      { x: range.x + range.width, y },
+    ];
   }
 
   function getSnappingLines(): ShapeSnappingLines {
@@ -71,7 +79,15 @@ export function newGrid({ size, range, disabled }: Option) {
     ctx.restore();
   }
 
-  return { getSegmentsV, getSegmentsH, getSnappingLines, renderAxisLabels, disabled, size, range };
+  return {
+    pickClosestGridLineHAtPoint,
+    pickClosestGridLineVAtPoint,
+    getSnappingLines,
+    renderAxisLabels,
+    disabled,
+    size,
+    range,
+  };
 }
 export type Grid = ReturnType<typeof newGrid>;
 

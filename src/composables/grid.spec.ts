@@ -5,7 +5,7 @@ import { ShapeSnappingLines } from "../shapes/core";
 describe("newGrid", () => {
   test("should create grid segments", () => {
     const grid = newGrid({ size: 10, range: { x: 5, y: 15, width: 50, height: 65 } });
-    expect(grid.getSegmentsV()).toEqual([
+    expect(grid.getSnappingLines().v).toEqual([
       [
         { x: 10, y: 15 },
         { x: 10, y: 80 },
@@ -28,7 +28,7 @@ describe("newGrid", () => {
       ],
     ]);
 
-    expect(grid.getSegmentsH()).toEqual([
+    expect(grid.getSnappingLines().h).toEqual([
       [
         { x: 5, y: 20 },
         { x: 55, y: 20 },
@@ -58,6 +58,34 @@ describe("newGrid", () => {
         { x: 55, y: 80 },
       ],
     ]);
+  });
+
+  describe("pickClosestGridLineVAtPoint", () => {
+    test("should return the clsoest horizontal grid line", () => {
+      const grid = newGrid({ size: 10, range: { x: 5, y: 15, width: 50, height: 65 } });
+      expect(grid.pickClosestGridLineVAtPoint({ x: 1, y: 0 })).toEqualPoints([
+        { x: 0, y: 15 },
+        { x: 0, y: 80 },
+      ]);
+      expect(grid.pickClosestGridLineVAtPoint({ x: 58, y: 1 })).toEqualPoints([
+        { x: 60, y: 15 },
+        { x: 60, y: 80 },
+      ]);
+    });
+  });
+
+  describe("pickClosestGridLineHAtPoint", () => {
+    test("should return the clsoest horizontal grid line", () => {
+      const grid = newGrid({ size: 10, range: { x: 5, y: 15, width: 50, height: 65 } });
+      expect(grid.pickClosestGridLineHAtPoint({ x: 0, y: 1 })).toEqualPoints([
+        { x: 5, y: 0 },
+        { x: 55, y: 0 },
+      ]);
+      expect(grid.pickClosestGridLineHAtPoint({ x: 0, y: 58 })).toEqualPoints([
+        { x: 5, y: 60 },
+        { x: 55, y: 60 },
+      ]);
+    });
   });
 });
 
