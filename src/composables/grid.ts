@@ -56,14 +56,14 @@ export function newGrid({ size, range, disabled }: Option) {
 
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    const labelVY = range.y + range.height - 4;
+    const labelVY = range.y + range.height - 4 * scale;
     forEachGridLabel(baseX, size, range.width, scale, (v) => {
       ctx.fillText(`${v}`, v, labelVY);
     });
 
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    const labelHX = range.x + 4;
+    const labelHX = range.x + 4 * scale;
     forEachGridLabel(baseY, size, range.height, scale, (v) => {
       ctx.fillText(`${v}`, labelHX, v);
     });
