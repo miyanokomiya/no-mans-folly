@@ -98,7 +98,13 @@ export const UserSettingPanel: React.FC = () => {
           </ToggleInput>
           <InlineField label="Grid size">
             <div className="w-24">
-              <NumberInput min={1} slider={true} value={userSetting.gridSize ?? 50} onChange={handleGridSizeChange} />
+              <NumberInput
+                min={1}
+                max={200}
+                slider={true}
+                value={userSetting.gridSize ?? 50}
+                onChange={handleGridSizeChange}
+              />
             </div>
           </InlineField>
         </BlockGroupField>

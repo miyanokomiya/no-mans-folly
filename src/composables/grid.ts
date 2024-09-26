@@ -59,7 +59,7 @@ export function newGrid({ size, range, disabled }: Option) {
       ctx.textBaseline = "bottom";
       const labelVY = range.y + range.height - 4;
       const labelVMaxCount = Math.round(range.width / GRID_LABEL_STEP_SIZE / scale);
-      const labelVStep = Math.round(countV / labelVMaxCount);
+      const labelVStep = Math.max(1, Math.round(countV / labelVMaxCount));
       const shiftV = -(baseX / size) % labelVStep;
       for (let i = 0; i < countV; i += labelVStep) {
         const x = baseX + (i + shiftV) * size;
@@ -72,7 +72,7 @@ export function newGrid({ size, range, disabled }: Option) {
       ctx.textBaseline = "middle";
       const labelHX = range.x + 4;
       const labelHMaxCount = Math.round(range.height / GRID_LABEL_STEP_SIZE / scale);
-      const labelHStep = Math.round(countH / labelHMaxCount);
+      const labelHStep = Math.max(1, Math.round(countH / labelHMaxCount));
       const shiftH = -(baseY / size) % labelHStep;
       for (let i = 0; i < countH; i += labelHStep) {
         const y = baseY + (i + shiftH) * size;
