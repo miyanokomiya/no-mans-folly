@@ -4,14 +4,20 @@ import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
 import { FOLLY_SVG_PREFIX } from "../../../shapes/utils/shapeTemplateUtil";
-import { newImageBuilder, newSVGImageBuilder } from "../../imageBuilder";
-import { canGroupShapes, getAllShapeRangeWithinComposite, newShapeComposite } from "../../shapeComposite";
+import { ImageBuilder, newImageBuilder, newSVGImageBuilder, SVGImageBuilder } from "../../imageBuilder";
+import {
+  canGroupShapes,
+  getAllShapeRangeWithinComposite,
+  newShapeComposite,
+  ShapeComposite,
+} from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import { TransitionValue } from "../core";
 import { ContextMenuItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
+import { IRectangle } from "okageo";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   DELETE_SHAPE: {
@@ -68,6 +74,20 @@ export const CONTEXT_MENU_ITEM_SRC = {
       },
     ],
   },
+  EXPORT_SELECTED_RANGE: {
+    label: "Export selected range as",
+    key: "EXPORT_SELECTED_RANGE",
+    children: [
+      {
+        label: "PNG",
+        key: "EXPORT_RANGE_AS_PNG",
+      },
+      {
+        label: "SVG",
+        key: "EXPORT_RANGE_AS_SVG",
+      },
+    ],
+  },
 
   DELETE_LINE_VERTEX: {
     label: "Delete vertex",
@@ -80,6 +100,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
 const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
   CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_SHAPES,
+  CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_RANGE,
 ];
 
 export function getMenuItemsForSelectedShapes(
@@ -164,6 +185,12 @@ export function handleContextItemEvent(
     case "EXPORT_AS_FOLLY_SVG":
       exportShapesAsSVG(ctx, true);
       return;
+    case "EXPORT_RANGE_AS_PNG":
+      exportRangeAsPNG(ctx);
+      return;
+    case "EXPORT_RANGE_AS_SVG":
+      exportRangeAsSVG(ctx);
+      return;
   }
 }
 
@@ -187,7 +214,28 @@ async function copyShapesAsPNG(ctx: AppCanvasStateContext): Promise<void> {
 }
 
 function exportShapesAsPNG(ctx: AppCanvasStateContext) {
-  const builder = getImageBuilderForSelectedShapes(ctx);
+  if (!ctx.getLastSelectedShapeId()) {
+    ctx.showToastMessage({
+      text: "No shape is selected",
+      type: "error",
+    });
+    return;
+  }
+  exportAsPNG(ctx, getImageBuilderForSelectedShapes(ctx));
+}
+
+function exportRangeAsPNG(ctx: AppCanvasStateContext) {
+  if (!ctx.getLastSelectedShapeId()) {
+    ctx.showToastMessage({
+      text: "No shape is selected",
+      type: "error",
+    });
+    return;
+  }
+  exportAsPNG(ctx, getImageBuilderForSelectedRange(ctx));
+}
+
+function exportAsPNG(ctx: AppCanvasStateContext, builder: ImageBuilder) {
   try {
     saveFileInWeb(builder.toDataURL(), "shapes.png");
   } catch (e) {
@@ -200,22 +248,52 @@ function exportShapesAsPNG(ctx: AppCanvasStateContext) {
 }
 
 function getImageBuilderForSelectedShapes(ctx: AppCanvasStateContext) {
-  const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
+  const info = getExportParamsForSelectedShapes(ctx);
+  return getImageBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
+}
 
+function getImageBuilderForSelectedRange(ctx: AppCanvasStateContext) {
+  const info = getExportParamsForSelectedRange(ctx);
+  return getImageBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
+}
+
+function getExportParamsForSelectedShapes(ctx: AppCanvasStateContext) {
+  const shapeComposite = ctx.getShapeComposite();
+  const targetShapes = shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
   const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
+  // Get optimal exporting range for shapes.
+  // This range may differ from visually selected range due to the optimization.
+  const range = getAllShapeRangeWithinComposite(targetShapeComposite, true);
+  return { targetShapeComposite, range };
+}
+
+function getExportParamsForSelectedRange(ctx: AppCanvasStateContext) {
+  const shapeComposite = ctx.getShapeComposite();
+  const srcShapes = shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
+  // Get currently selected range.
+  // Unlike "getExportParamsForSelectedShapes", this function prioritizes visually selected range.
+  const range = shapeComposite.getWrapperRectForShapes(srcShapes, true);
+  const targetShapes = shapeComposite.getShapesOverlappingRect(shapeComposite.shapes, range);
+  const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
+  return { targetShapeComposite, range };
+}
+
+function getImageBuilderForShapesWithRange(
+  ctx: AppCanvasStateContext,
+  targetShapeComposite: ShapeComposite,
+  range: IRectangle,
+) {
   const renderer = newShapeRenderer({
     shapeComposite: targetShapeComposite,
     getDocumentMap: ctx.getDocumentMap,
     imageStore: ctx.getImageStore(),
   });
 
-  const range = getAllShapeRangeWithinComposite(targetShapeComposite, true);
   return newImageBuilder({ render: renderer.render, range });
 }
 
 async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): Promise<void> {
-  const targetShapes = ctx.getShapeComposite().getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
-  if (targetShapes.length === 0) {
+  if (!ctx.getLastSelectedShapeId()) {
     ctx.showToastMessage({
       text: "No shape is selected",
       type: "error",
@@ -223,19 +301,25 @@ async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): 
     return;
   }
 
-  const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
-  const renderer = newShapeSVGRenderer({
-    shapeComposite: targetShapeComposite,
-    getDocumentMap: ctx.getDocumentMap,
-    imageStore: ctx.getImageStore(),
-    assetAPI: ctx.assetAPI,
-  });
-  const range = getAllShapeRangeWithinComposite(targetShapeComposite, true);
+  await exportAsSVG(ctx, getSVGBuilderForShapes(ctx, withMeta), withMeta ? `shapes${FOLLY_SVG_PREFIX}` : "shapes.svg");
+}
 
+async function exportRangeAsSVG(ctx: AppCanvasStateContext): Promise<void> {
+  if (!ctx.getLastSelectedShapeId()) {
+    ctx.showToastMessage({
+      text: "No shape is selected",
+      type: "error",
+    });
+    return;
+  }
+
+  await exportAsSVG(ctx, getSVGBuilderForRange(ctx), "shapes.svg");
+}
+
+async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageBuilder, name: string): Promise<void> {
   try {
-    const builder = newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
     const dataURL = await builder.toDataURL();
-    saveFileInWeb(dataURL, withMeta ? `shapes${FOLLY_SVG_PREFIX}` : "shapes.svg");
+    saveFileInWeb(dataURL, name);
   } catch (e: any) {
     ctx.showToastMessage({
       text: `Failed to create image. ${e.message}`,
@@ -243,6 +327,31 @@ async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): 
     });
     console.error(e);
   }
+}
+
+function getSVGBuilderForShapes(ctx: AppCanvasStateContext, withMeta = false) {
+  const info = getExportParamsForSelectedShapes(ctx);
+  return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
+}
+
+function getSVGBuilderForRange(ctx: AppCanvasStateContext, withMeta = false) {
+  const info = getExportParamsForSelectedRange(ctx);
+  return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
+}
+
+function getSVGBuilderForShapesWithRange(
+  ctx: AppCanvasStateContext,
+  targetShapeComposite: ShapeComposite,
+  range: IRectangle,
+  withMeta = false,
+) {
+  const renderer = newShapeSVGRenderer({
+    shapeComposite: targetShapeComposite,
+    getDocumentMap: ctx.getDocumentMap,
+    imageStore: ctx.getImageStore(),
+    assetAPI: ctx.assetAPI,
+  });
+  return newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
 }
 
 function saveFileInWeb(file: string, filename: string) {

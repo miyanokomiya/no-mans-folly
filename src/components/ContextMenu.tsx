@@ -83,12 +83,14 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickIte
     <div className="relative">
       <div>
         <ListButton onClick={handleClick}>
-          <AppText portal={true}>{item.label}</AppText>
-          <img
-            className={"ml-2 w-3 h-3 transition-transform " + (dropdownKey === item.key ? "rotate-90" : "-rotate-90")}
-            src={iconDropdown}
-            alt=""
-          />
+          <div className="flex items-center justify-between gap-2 w-full">
+            <AppText portal={true}>{item.label}</AppText>
+            <img
+              className={"w-3 h-3 transition-transform " + (dropdownKey === item.key ? "rotate-90" : "-rotate-90")}
+              src={iconDropdown}
+              alt=""
+            />
+          </div>
         </ListButton>
       </div>
       {dropdownKey === item.key ? (
