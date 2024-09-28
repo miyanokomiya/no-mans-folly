@@ -94,7 +94,7 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickIte
         </ListButton>
       </div>
       {dropdownKey === item.key ? (
-        <div className="absolute left-full top-0 border bg-white w-max">
+        <div className="absolute left-full top-1/2 -translate-y-1/2 border bg-white w-max">
           <ContextList items={item.children} onClickItem={onClickItem} />
         </div>
       ) : undefined}
