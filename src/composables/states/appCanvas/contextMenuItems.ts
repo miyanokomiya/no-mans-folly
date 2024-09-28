@@ -45,25 +45,28 @@ export const CONTEXT_MENU_ITEM_SRC = {
     key: "UNLOCK",
   },
 
-  EXPORT_AS_PNG: {
-    label: "Export as PNG",
-    key: "EXPORT_AS_PNG",
-  },
+  // Note: "COPY_AS_SVZG" doesn't work because Clipboard API doesn't go with "image/svg+xml"
   COPY_AS_PNG: {
     label: "Copy as PNG",
     key: "COPY_AS_PNG",
   },
-  EXPORT_AS_SVG: {
-    label: "Export as SVG",
-    key: "EXPORT_AS_SVG",
-  },
-  COPY_AS_SVG: {
-    label: "Copy as SVG",
-    key: "COPY_AS_SVG",
-  },
-  EXPORT_AS_FOLLY_SVG: {
-    label: "Export as [[FOLLY_SVG]]",
-    key: "EXPORT_AS_FOLLY_SVG",
+  EXPORT_SELECTED_SHAPES: {
+    label: "Export selected shapes as",
+    key: "EXPORT_SELECTED_SHAPES",
+    children: [
+      {
+        label: "PNG",
+        key: "EXPORT_AS_PNG",
+      },
+      {
+        label: "SVG",
+        key: "EXPORT_AS_SVG",
+      },
+      {
+        label: "[[FOLLY_SVG]]",
+        key: "EXPORT_AS_FOLLY_SVG",
+      },
+    ],
   },
 
   DELETE_LINE_VERTEX: {
@@ -76,10 +79,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
 
 const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
   CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
-  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG,
-  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG,
-  // CONTEXT_MENU_ITEM_SRC.COPY_AS_SVG, // Clipboard API doesn't go with "image/svg+xml"
-  CONTEXT_MENU_ITEM_SRC.EXPORT_AS_FOLLY_SVG,
+  CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_SHAPES,
 ];
 
 export function getMenuItemsForSelectedShapes(
@@ -155,13 +155,13 @@ export function handleContextItemEvent(
     case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
       copyShapesAsPNG(ctx);
       return;
-    case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_PNG.key:
+    case "EXPORT_AS_PNG":
       exportShapesAsPNG(ctx);
       return;
-    case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_SVG.key:
+    case "EXPORT_AS_SVG":
       exportShapesAsSVG(ctx);
       return;
-    case CONTEXT_MENU_ITEM_SRC.EXPORT_AS_FOLLY_SVG.key:
+    case "EXPORT_AS_FOLLY_SVG":
       exportShapesAsSVG(ctx, true);
       return;
   }
