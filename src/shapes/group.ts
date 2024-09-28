@@ -1,4 +1,4 @@
-import { ShapeContext, ShapeStruct, createBaseShape, isInvisibleClippingShape } from "./core";
+import { ShapeContext, ShapeStruct, canHaveOutlineWithinGroup, createBaseShape } from "./core";
 import { ClipRule, Shape } from "../models";
 import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
 import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
@@ -38,7 +38,7 @@ export const struct: ShapeStruct<GroupShape> = {
     let targetList = children;
     if (includeBounds) {
       // Omit invisible clipping shapes when they work.
-      const [icList, others] = splitList(children, (s) => isInvisibleClippingShape(shapeContext.shapeMap[s.id]));
+      const [others, icList] = splitList(children, (s) => canHaveOutlineWithinGroup(shapeContext.shapeMap[s.id]));
       targetList = icList.length > 0 && others.length > 0 ? others : children;
     }
 

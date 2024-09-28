@@ -1,5 +1,6 @@
 import { expect, describe, test } from "vitest";
 import {
+  canHaveOutlineWithinGroup,
   getCommonStyle,
   hasStrokeStyle,
   isInvisibleClippingShape,
@@ -107,5 +108,34 @@ describe("isInvisibleClippingShape", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("canHaveOutlineWithinGroup", () => {
+  test("should return true when a shape can outline of its parent group", () => {
+    const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {});
+    expect(canHaveOutlineWithinGroup({ ...rect, clipping: false })).toBe(true);
+    expect(
+      canHaveOutlineWithinGroup({
+        ...rect,
+        clipping: true,
+        stroke: createStrokeStyle({ disabled: true }),
+      } as RectangleShape),
+    ).toBe(false);
+    expect(
+      canHaveOutlineWithinGroup({
+        ...rect,
+        clipping: true,
+        stroke: createStrokeStyle({ disabled: false }),
+      } as RectangleShape),
+    ).toBe(true);
+    expect(
+      canHaveOutlineWithinGroup({
+        ...rect,
+        clipping: true,
+        cropClipBorder: true,
+        stroke: createStrokeStyle({ disabled: false }),
+      } as RectangleShape),
+    ).toBe(false);
   });
 });

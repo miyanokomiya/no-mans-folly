@@ -184,3 +184,9 @@ export function hasStrokeStyle(shape: Shape): shape is Shape & { stroke: StrokeS
 export function isInvisibleClippingShape(shape: Shape): boolean {
   return !!shape.clipping && (!hasStrokeStyle(shape) || !!shape.stroke.disabled);
 }
+
+export function canHaveOutlineWithinGroup(shape: Shape): boolean {
+  if (!shape.clipping) return true;
+  if (shape.cropClipBorder) return false;
+  return hasStrokeStyle(shape) && !shape.stroke.disabled;
+}
