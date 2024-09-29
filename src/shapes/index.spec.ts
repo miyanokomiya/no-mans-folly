@@ -23,6 +23,8 @@ import { createBoxPadding } from "../utils/boxPadding";
 import { TreeRootShape } from "./tree/treeRoot";
 import { struct as unknownStruct } from "./unknown";
 import { EllipseShape } from "./ellipse";
+import { createFillStyle } from "../utils/fillStyle";
+import { COLORS } from "../utils/color";
 
 describe("getCommonStruct", () => {
   test("should return the struct of the type", () => {
@@ -404,5 +406,16 @@ describe("switchShapeType", () => {
     expect(result0.rotation).toBeCloseTo(Math.PI / 2);
     expect(result0.rx).toBeCloseTo(50);
     expect(result0.ry).toBeCloseTo(100);
+  });
+
+  test("should return switched shape: keep fill and stroke", () => {
+    const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "a",
+      fill: createFillStyle({ color: COLORS.GRAY_1 }),
+      stroke: createStrokeStyle({ color: COLORS.YELLOW }),
+    });
+    const result0 = switchShapeType(getCommonStruct, rect, "ellipse") as EllipseShape;
+    expect(result0.fill).toEqual(rect.fill);
+    expect(result0.stroke).toEqual(rect.stroke);
   });
 });

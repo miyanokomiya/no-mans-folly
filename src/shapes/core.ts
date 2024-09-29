@@ -177,6 +177,10 @@ export function isSameShapeParentScope(a?: ShapeSelectionScope, b?: ShapeSelecti
   return a === b;
 }
 
+export function hasFillStyle(shape: Shape): shape is Shape & { fill: FillStyle } {
+  return "fill" in shape;
+}
+
 export function hasStrokeStyle(shape: Shape): shape is Shape & { stroke: StrokeStyle } {
   return "stroke" in shape;
 }

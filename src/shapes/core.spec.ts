@@ -2,6 +2,7 @@ import { expect, describe, test } from "vitest";
 import {
   canHaveOutlineWithinGroup,
   getCommonStyle,
+  hasFillStyle,
   hasStrokeStyle,
   isInvisibleClippingShape,
   isSameShapeParentScope,
@@ -83,6 +84,14 @@ describe("isSameShapeParentScope", () => {
     expect(isSameShapeParentScope({ parentId: "a" }, { parentId: "b" })).toBe(false);
     expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "c" })).toBe(true);
     expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "c", scopeKey: "b" })).toBe(false);
+  });
+});
+
+describe("hasFillStyle", () => {
+  test("should return true when a shape has fill property", () => {
+    expect(hasFillStyle(createShape(getCommonStruct, "group", {}))).toBe(false);
+    expect(hasFillStyle(createShape(getCommonStruct, "line", {}))).toBe(true);
+    expect(hasFillStyle(createShape(getCommonStruct, "rectangle", {}))).toBe(true);
   });
 });
 
