@@ -102,8 +102,18 @@ export const ShapeTreePanel: React.FC = () => {
       return;
     }
 
-    const anchorElm = document.elementFromPoint(draggingTarget[2].x, draggingTarget[2].y);
-    const wrapperElm = anchorElm?.closest("[data-id]");
+    const hoveredElm = document.elementFromPoint(draggingTarget[2].x, draggingTarget[2].y);
+    if (!hoveredElm) {
+      setDropTo(undefined);
+      return;
+    }
+
+    if (hoveredElm.getAttribute("data-drop-to-bottom-dummy")) {
+      setDropTo([shapeComposite.mergedShapeTree[shapeComposite.mergedShapeTree.length - 1].id, "below"]);
+      return;
+    }
+
+    const wrapperElm = hoveredElm.closest("[data-id]");
     if (!wrapperElm || !wrapperElm.getAttribute("data-draggable")) {
       setDropTo(undefined);
       return;
@@ -115,11 +125,21 @@ export const ShapeTreePanel: React.FC = () => {
       return;
     }
 
+    const target = shapeComposite.mergedShapeTreeMap[id];
     const rect = wrapperElm.querySelector("[data-anchor]")!.getBoundingClientRect();
     const offsetRate = (draggingTarget[2].y - rect.top) / rect.height;
-    const operation = offsetRate < 0.4 ? "above" : offsetRate < 0.6 ? "group" : "below";
-    setDropTo([id, operation]);
-  }, [draggingTarget]);
+
+    if (offsetRate < 0.4) {
+      setDropTo([id, "above"]);
+    } else if (offsetRate < 0.6) {
+      setDropTo([id, "group"]);
+    } else if (offsetRate < 1 && target.children.length > 0) {
+      setDropTo([target.children[0].id, "above"]);
+    } else {
+      // Note: "offsetRate" can be greater than 1. The destination should be below the target in that case.
+      setDropTo([id, "below"]);
+    }
+  }, [draggingTarget, shapeComposite]);
 
   return (
     <div>
@@ -138,6 +158,7 @@ export const ShapeTreePanel: React.FC = () => {
           />
         ) : undefined}
       </ul>
+      <div data-drop-to-bottom-dummy className="h-4" />
     </div>
   );
 };
@@ -201,10 +222,25 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     rootRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   }, [prime]);
 
+  const dropTarget = dropTo?.[0] === id;
+  const dropGroupElm =
+    dropTarget && dropTo[1] === "group" ? (
+      <div className="absolute inset-0 border-2 border-green-500 rounded pointer-events-none" />
+    ) : undefined;
+  const dropAboveElm =
+    dropTarget && dropTo[1] === "above" ? (
+      <div className={"absolute w-full h-1 bg-green-500 rounded -translate-y-1/2 left-0 top-0 pointer-events-none"} />
+    ) : undefined;
+  const dropBelowElm =
+    dropTarget && dropTo[1] === "below" ? (
+      <div className={"absolute w-full h-1 bg-green-500 rounded translate-y-1/2 left-0 bottom-0 pointer-events-none"} />
+    ) : undefined;
+
+  const hasChildren = childNode.length > 0;
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
   return (
-    <div ref={rootRef} data-id={id} data-draggable={draggable || undefined}>
+    <div ref={rootRef} data-id={id} data-draggable={draggable || undefined} className="relative">
       <div data-anchor className="flex items-center relative">
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
         <button
@@ -219,20 +255,10 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             <ToggleInput value={selected} onChange={handleNodeSelectDown} />
           </div>
         ) : undefined}
-        {dropTo?.[0] === id ? (
-          dropTo[1] === "group" ? (
-            <div className="absolute inset-0 border-2 border-green-500 rounded pointer-events-none" />
-          ) : (
-            <div
-              className={
-                "absolute w-full h-1 bg-green-500 rounded -translate-y-1/2 left-0 pointer-events-none " +
-                (dropTo[1] === "above" ? "top-0" : "top-full")
-              }
-            />
-          )
-        ) : undefined}
+        {dropGroupElm}
+        {dropAboveElm}
       </div>
-      {childNode.length > 0 ? (
+      {hasChildren ? (
         <ul className="ml-2 relative border-l-2 border-gray-400">
           {childNode.map((c) => (
             <li key={c.id}>
@@ -242,6 +268,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
           <div className="absolute left-0 right-0 border-t border-gray-400" />
         </ul>
       ) : undefined}
+      {dropBelowElm}
     </div>
   );
 };
