@@ -11,50 +11,50 @@ export const LineHeadErCore: LineHeadStruct<LineHead> = {
       type: "er_core",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
+  render(ctx, head, transform, lineWidth) {
     ctx.beginPath();
-    applyPath(ctx, getPath(transform, lineWidth));
+    applyPath(ctx, getPath(transform, lineWidth, head.size));
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
+  createSVGElementInfo(head, transform, lineWidth) {
     return {
       tag: "path",
       attributes: {
-        d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
+        d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [])),
         fill: "none",
       },
     };
   },
-  clip(region, _head, transform, lineWidth) {
-    const path = getClipPath(transform, lineWidth);
+  clip(region, head, transform, lineWidth) {
+    const path = getClipPath(transform, lineWidth, head.size);
     applyPath(region, path, true);
   },
-  createSVGClipPathCommand(_head, transform, lineWidth) {
-    const path = getClipPath(transform, lineWidth);
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    const path = getClipPath(transform, lineWidth, head.size);
     return pathSegmentRawsToString(createSVGCurvePath(path, [], true));
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    return getSrcPath(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    return getSrcPath(lineWidth, head.size);
   },
-  getRotationOriginDistance(_head, lineWidth) {
-    return getHeadBaseHeight(lineWidth);
+  getRotationOriginDistance(head, lineWidth) {
+    return getHeadBaseHeight(lineWidth, head.size);
   },
 };
 
-function getSrcPath(lineWidth: number) {
-  const height = getHeadBaseHeight(lineWidth);
+function getSrcPath(lineWidth: number, size?: number) {
+  const height = getHeadBaseHeight(lineWidth, size);
   return [
     { x: -height, y: 0 },
     { x: 0, y: 0 },
   ];
 }
 
-function getPath(transform: AffineMatrix, lineWidth: number) {
-  return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
+function getPath(transform: AffineMatrix, lineWidth: number, size?: number) {
+  return getSrcPath(lineWidth, size).map((p) => applyAffine(transform, p));
 }
 
-export function getErHeadBounds(lineWidth: number): IVec2[] {
-  const height = getHeadBaseHeight(lineWidth);
+export function getErHeadBounds(lineWidth: number, size?: number): IVec2[] {
+  const height = getHeadBaseHeight(lineWidth, size);
   const width = height;
 
   return [
@@ -65,12 +65,12 @@ export function getErHeadBounds(lineWidth: number): IVec2[] {
   ];
 }
 
-function getClipPath(transform: AffineMatrix, lineWidth: number): IVec2[] {
-  return getErHeadBoundsForClip(lineWidth).map((p) => applyAffine(transform, p));
+function getClipPath(transform: AffineMatrix, lineWidth: number, size?: number): IVec2[] {
+  return getErHeadBoundsForClip(lineWidth, size).map((p) => applyAffine(transform, p));
 }
 
-function getErHeadBoundsForClip(lineWidth: number): IVec2[] {
-  const height = getHeadBaseHeight(lineWidth);
+function getErHeadBoundsForClip(lineWidth: number, size?: number): IVec2[] {
+  const height = getHeadBaseHeight(lineWidth, size);
   const width = height;
 
   // Expand a little towards the head in case curved line sticks out the area.

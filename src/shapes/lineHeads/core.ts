@@ -3,6 +3,9 @@ import { LineHead } from "../../models";
 import { SVGElementInfo } from "../../utils/svgElements";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
 
+// This should be 6 for backward compatibility.
+export const DEFAULT_HEAD_SIZE = 6;
+
 export interface LineHeadStruct<T extends LineHead> {
   label: string;
   create: (arg?: Partial<T>) => T;
@@ -33,14 +36,14 @@ export const LineHeadFallbackStruct: LineHeadStruct<LineHead> = {
   getWrapperSrcPath: () => [],
 };
 
-export function getHeadBaseHeight(lineWidth: number): number {
-  return lineWidth * 6;
+export function getHeadBaseHeight(lineWidth: number, size = DEFAULT_HEAD_SIZE): number {
+  return lineWidth * size;
 }
 
 export function defineLineHeadPolygon<T extends LineHead>(option: {
   label: string;
   create: (arg: Partial<T>) => T;
-  getSrcPath: (lineWidth: number) => IVec2[];
+  getSrcPath: (lineWidth: number, size?: number) => IVec2[];
   filled?: boolean;
 }) {
   const struct: LineHeadStruct<T> = {
@@ -48,9 +51,9 @@ export function defineLineHeadPolygon<T extends LineHead>(option: {
     create(arg = {}) {
       return option.create(arg);
     },
-    render(ctx, _head, transform, lineWidth) {
+    render(ctx, head, transform, lineWidth) {
       ctx.beginPath();
-      applyPath(ctx, getPath(transform, lineWidth), true);
+      applyPath(ctx, getPath(transform, lineWidth, head.size), true);
 
       if (option.filled) {
         const tmp = ctx.fillStyle;
@@ -61,31 +64,31 @@ export function defineLineHeadPolygon<T extends LineHead>(option: {
 
       ctx.stroke();
     },
-    createSVGElementInfo(_head, transform, lineWidth) {
+    createSVGElementInfo(head, transform, lineWidth) {
       return {
         tag: "path",
         attributes: {
-          d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [], true)),
+          d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [], true)),
           fill: option.filled ? undefined : "none",
         },
       };
     },
-    clip(region, _head, transform, lineWidth) {
-      applyPath(region, getPath(transform, lineWidth), true);
+    clip(region, head, transform, lineWidth) {
+      applyPath(region, getPath(transform, lineWidth, head.size), true);
     },
-    createSVGClipPathCommand(_head, transform, lineWidth) {
-      return pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [], true));
+    createSVGClipPathCommand(head, transform, lineWidth) {
+      return pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [], true));
     },
-    getWrapperSrcPath(_head, lineWidth) {
-      return option.getSrcPath(lineWidth);
+    getWrapperSrcPath(head, lineWidth) {
+      return option.getSrcPath(lineWidth, head.size);
     },
     getRotationOriginDistance(_head, lineWidth) {
       return getHeadBaseHeight(lineWidth);
     },
   };
 
-  function getPath(transform: AffineMatrix, lineWidth: number) {
-    return option.getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
+  function getPath(transform: AffineMatrix, lineWidth: number, size?: number) {
+    return option.getSrcPath(lineWidth, size).map((p) => applyAffine(transform, p));
   }
 
   return struct;
@@ -94,7 +97,7 @@ export function defineLineHeadPolygon<T extends LineHead>(option: {
 export function defineLineHeadStiffPolygon<T extends LineHead>(option: {
   label: string;
   create: (arg: Partial<T>) => T;
-  getSrcPath: (lineWidth: number) => IVec2[];
+  getSrcPath: (lineWidth: number, size?: number) => IVec2[];
   filled?: boolean;
 }) {
   const struct: LineHeadStruct<T> = {
@@ -102,9 +105,9 @@ export function defineLineHeadStiffPolygon<T extends LineHead>(option: {
     create(arg = {}) {
       return option.create(arg);
     },
-    render(ctx, _head, transform, lineWidth) {
+    render(ctx, head, transform, lineWidth) {
       ctx.beginPath();
-      applyPath(ctx, getPath(transform, lineWidth), true);
+      applyPath(ctx, getPath(transform, lineWidth, head.size), true);
 
       if (option.filled) {
         const tmp = ctx.fillStyle;
@@ -115,28 +118,28 @@ export function defineLineHeadStiffPolygon<T extends LineHead>(option: {
 
       ctx.stroke();
     },
-    createSVGElementInfo(_head, transform, lineWidth) {
+    createSVGElementInfo(head, transform, lineWidth) {
       return {
         tag: "path",
         attributes: {
-          d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [], true)),
+          d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [], true)),
           fill: option.filled ? undefined : "none",
         },
       };
     },
-    clip(region, _head, transform, lineWidth) {
-      applyPath(region, getPath(transform, lineWidth), true);
+    clip(region, head, transform, lineWidth) {
+      applyPath(region, getPath(transform, lineWidth, head.size), true);
     },
-    createSVGClipPathCommand(_head, transform, lineWidth) {
-      return pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [], true));
+    createSVGClipPathCommand(head, transform, lineWidth) {
+      return pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [], true));
     },
-    getWrapperSrcPath(_head, lineWidth) {
-      return option.getSrcPath(lineWidth);
+    getWrapperSrcPath(head, lineWidth) {
+      return option.getSrcPath(lineWidth, head.size);
     },
   };
 
-  function getPath(transform: AffineMatrix, lineWidth: number) {
-    return option.getSrcPath(lineWidth).map((p) => add({ x: transform[4], y: transform[5] }, p));
+  function getPath(transform: AffineMatrix, lineWidth: number, size?: number) {
+    return option.getSrcPath(lineWidth, size).map((p) => add({ x: transform[4], y: transform[5] }, p));
   }
 
   return struct;

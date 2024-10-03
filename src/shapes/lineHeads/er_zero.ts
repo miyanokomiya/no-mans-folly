@@ -11,16 +11,16 @@ export const LineHeadErZero: LineHeadStruct<LineHead> = {
       type: "er_zero",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  render(ctx, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     ctx.beginPath();
     ctx.arc(c.x, c.y, radius, 0, TAU, true);
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  createSVGElementInfo(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     return {
       tag: "ellipse",
       attributes: {
@@ -32,24 +32,24 @@ export const LineHeadErZero: LineHeadStruct<LineHead> = {
       },
     };
   },
-  clip(region, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  clip(region, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     region.moveTo(c.x + radius, c.y);
     region.arc(c.x, c.y, radius, 0, TAU, true);
   },
-  createSVGClipPathCommand(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     return pathSegmentRawsToString([
       ["M", c.x - radius, c.y],
       ["a", radius, radius, 0, false, false, radius * 2, 0],
       ["a", radius, radius, 0, false, false, -radius * 2, 0],
     ]);
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = getArcCenter(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = getArcCenter(lineWidth, head.size);
     return [
       { x: c.x - radius, y: c.y - radius },
       { x: c.x + radius, y: c.y - radius },
@@ -57,17 +57,17 @@ export const LineHeadErZero: LineHeadStruct<LineHead> = {
       { x: c.x - radius, y: c.y + radius },
     ];
   },
-  getRotationOriginDistance(_head, lineWidth) {
-    return Math.abs(getArcCenter(lineWidth).x);
+  getRotationOriginDistance(head, lineWidth) {
+    return Math.abs(getArcCenter(lineWidth, head.size).x);
   },
 };
 
-function getRadius(lineWidth: number): number {
-  return getHeadBaseHeight(lineWidth) / 2;
+function getRadius(lineWidth: number, size?: number): number {
+  return getHeadBaseHeight(lineWidth, size) / 2;
 }
 
-function getArcCenter(lineWidth: number): IVec2 {
-  const radius = getRadius(lineWidth);
+function getArcCenter(lineWidth: number, size?: number): IVec2 {
+  const radius = getRadius(lineWidth, size);
   const height = radius * 2;
   return { x: -height - radius, y: 0 };
 }

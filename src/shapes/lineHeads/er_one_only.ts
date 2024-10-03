@@ -17,7 +17,7 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
     LineHeadErOne.render(ctx, head, transform, lineWidth);
 
     ctx.beginPath();
-    applyPath(ctx, getPath(transform, lineWidth));
+    applyPath(ctx, getPath(transform, lineWidth, head.size));
     ctx.stroke();
   },
   createSVGElementInfo(head, transform, lineWidth) {
@@ -28,7 +28,7 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
         {
           tag: "path",
           attributes: {
-            d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
+            d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [])),
             fill: "none",
           },
         },
@@ -41,8 +41,8 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
   createSVGClipPathCommand(head, transform, lineWidth) {
     return LineHeadErCore.createSVGClipPathCommand(head, transform, lineWidth);
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    const height = getHeadBaseHeight(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    const height = getHeadBaseHeight(lineWidth, head.size);
     const width = height;
 
     return [
@@ -58,8 +58,8 @@ export const LineHeadErOneOnly: LineHeadStruct<LineHead> = {
   },
 };
 
-function getSrcPath(lineWidth: number) {
-  const height = getHeadBaseHeight(lineWidth);
+function getSrcPath(lineWidth: number, size?: number) {
+  const height = getHeadBaseHeight(lineWidth, size);
   const width = height;
 
   return [
@@ -68,6 +68,6 @@ function getSrcPath(lineWidth: number) {
   ];
 }
 
-function getPath(transform: AffineMatrix, lineWidth: number) {
-  return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
+function getPath(transform: AffineMatrix, lineWidth: number, size?: number) {
+  return getSrcPath(lineWidth, size).map((p) => applyAffine(transform, p));
 }

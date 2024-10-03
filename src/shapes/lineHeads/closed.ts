@@ -17,8 +17,8 @@ export const LineHeadClosedBlankStruct = defineLineHeadPolygon({
   getSrcPath,
 });
 
-function getSrcPath(lineWidth: number) {
-  const height = getHeadBaseHeight(lineWidth);
+function getSrcPath(lineWidth: number, size?: number) {
+  const height = getHeadBaseHeight(lineWidth, size);
   const width = height;
 
   return [

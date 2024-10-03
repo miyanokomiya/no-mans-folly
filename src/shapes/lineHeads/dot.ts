@@ -11,8 +11,8 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
       type: "dot_filled",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
+  render(ctx, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
     ctx.beginPath();
     ctx.arc(transform[4], transform[5], radius, 0, TAU, true);
 
@@ -22,8 +22,8 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
     ctx.fillStyle = tmp;
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
+  createSVGElementInfo(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
     return {
       tag: "ellipse",
       attributes: {
@@ -34,21 +34,21 @@ export const LineHeadDotFilled: LineHeadStruct<LineHead> = {
       },
     };
   },
-  clip(region, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
+  clip(region, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
     region.moveTo(transform[4] + radius, transform[5]);
     region.arc(transform[4], transform[5], radius, 0, TAU, true);
   },
-  createSVGClipPathCommand(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
     return pathSegmentRawsToString([
       ["M", transform[4] - radius, transform[5]],
       ["a", radius, radius, 0, false, false, radius * 2, 0],
       ["a", radius, radius, 0, false, false, -radius * 2, 0],
     ]);
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    const rad = getRadius(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    const rad = getRadius(lineWidth, head.size);
     return [
       { x: -rad, y: -rad },
       { x: rad, y: -rad },
@@ -67,14 +67,14 @@ export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
       type: "dot_blank",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
+  render(ctx, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
     ctx.beginPath();
     ctx.arc(transform[4], transform[5], radius, 0, TAU, true);
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
+  createSVGElementInfo(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
     return {
       tag: "ellipse",
       attributes: {
@@ -88,6 +88,6 @@ export const LineHeadDotBlank: LineHeadStruct<LineHead> = {
   },
 };
 
-function getRadius(lineWidth: number): number {
-  return getHeadBaseHeight(lineWidth) / 2;
+function getRadius(lineWidth: number, size?: number): number {
+  return getHeadBaseHeight(lineWidth, size) / 2;
 }

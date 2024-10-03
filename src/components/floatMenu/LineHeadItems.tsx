@@ -25,6 +25,8 @@ import iconHeadOneOnly from "../../assets/icons/head_one_only.svg";
 import iconHeadOneMany from "../../assets/icons/head_one_many.svg";
 import iconHeadZeroOne from "../../assets/icons/head_zero_one.svg";
 import iconHeadZeroMany from "../../assets/icons/head_zero_many.svg";
+import { SliderInput } from "../atoms/inputs/SliderInput";
+import { DEFAULT_HEAD_SIZE } from "../../shapes/lineHeads/core";
 
 const HEAD_TYPES = [
   [
@@ -76,7 +78,7 @@ interface Props {
   popupDefaultDirection?: PopupDirection;
   pHead?: LineHead;
   qHead?: LineHead;
-  onChange?: (val: { pHead?: LineHead; qHead?: LineHead }) => void;
+  onChange?: (val: { pHead?: LineHead; qHead?: LineHead }, draft?: boolean) => void;
 }
 
 export const LineHeadItems: React.FC<Props> = ({
@@ -92,8 +94,8 @@ export const LineHeadItems: React.FC<Props> = ({
   }, [setPopupedKey]);
 
   const onPHeadChanged = useCallback(
-    (value?: LineHead) => {
-      onChange?.({ pHead: value });
+    (value?: LineHead, draft = false) => {
+      onChange?.({ pHead: value }, draft);
     },
     [onChange],
   );
@@ -103,8 +105,8 @@ export const LineHeadItems: React.FC<Props> = ({
   }, [setPopupedKey]);
 
   const onQHeadChanged = useCallback(
-    (value?: LineHead) => {
-      onChange?.({ qHead: value });
+    (value?: LineHead, draft = false) => {
+      onChange?.({ qHead: value }, draft);
     },
     [onChange],
   );
@@ -118,7 +120,7 @@ export const LineHeadItems: React.FC<Props> = ({
       <PopupButton
         name="line-p-head"
         opened={popupedKey === "line-p-head"}
-        popup={<LineHeadPanel type={pHead?.type} onClick={onPHeadChanged} flip />}
+        popup={<LineHeadPanel head={pHead} onChange={onPHeadChanged} flip />}
         defaultDirection={popupDefaultDirection}
         onClick={onPHeadClick}
       >
@@ -132,7 +134,7 @@ export const LineHeadItems: React.FC<Props> = ({
       <PopupButton
         name="line-q-head"
         opened={popupedKey === "line-q-head"}
-        popup={<LineHeadPanel type={qHead?.type} onClick={onQHeadChanged} />}
+        popup={<LineHeadPanel head={qHead} onChange={onQHeadChanged} />}
         defaultDirection={popupDefaultDirection}
         onClick={onQHeadClick}
       >
@@ -145,22 +147,30 @@ export const LineHeadItems: React.FC<Props> = ({
 };
 
 interface LineHeadPanelProps {
-  type?: string;
-  onClick?: (value?: LineHead) => void;
+  head?: LineHead;
+  onChange?: (value?: LineHead, draft?: boolean) => void;
   flip?: boolean;
 }
 
-const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) => {
-  const onClickButton = useCallback(
+const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ head, onChange, flip }) => {
+  const handleTypeChange = useCallback(
     (e: React.MouseEvent) => {
       const type = e.currentTarget.getAttribute("data-type");
       if (!type || type === "none") {
-        onClick?.(undefined);
+        onChange?.(undefined);
       } else {
-        onClick?.({ type });
+        onChange?.({ ...head, type });
       }
     },
-    [onClick],
+    [head, onChange],
+  );
+
+  const handleSizeChange = useCallback(
+    (val: number, draft = false) => {
+      if (!head || head?.type === "none") return;
+      onChange?.({ ...head, size: val }, draft);
+    },
+    [head, onChange],
   );
 
   const iconStyle = useMemo(() => {
@@ -170,14 +180,14 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
   const items = useMemo(() => {
     return HEAD_TYPES.map((group, i) => {
       const groupItems = group.map((t) => {
-        const selected = type ? type === t : t === "none";
+        const selected = head?.type ? head.type === t : t === "none";
         return (
           <button
             key={t}
             type="button"
             className={"w-10 h-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
             data-type={t}
-            onClick={onClickButton}
+            onClick={handleTypeChange}
           >
             <img src={getHeadIcon(t)} alt={t} style={iconStyle} />
           </button>
@@ -189,7 +199,24 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ type, onClick, flip }) =>
         </div>
       );
     });
-  }, [type, onClickButton, iconStyle]);
+  }, [head, handleTypeChange, iconStyle]);
 
-  return <div>{items}</div>;
+  return (
+    <div className="p-2">
+      <div className="flex items-center mb-1">
+        <span>Size:</span>
+        <div className="ml-4 flex-1">
+          <SliderInput
+            value={head?.size ?? DEFAULT_HEAD_SIZE}
+            min={1}
+            max={10}
+            step={0.1}
+            onChanged={handleSizeChange}
+            showValue
+          />
+        </div>
+      </div>
+      <div>{items}</div>
+    </div>
+  );
 };

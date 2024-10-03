@@ -31,8 +31,8 @@ export const LineHeadErOneMany: LineHeadStruct<LineHead> = {
   createSVGClipPathCommand(head, transform, lineWidth) {
     return LineHeadErMany.createSVGClipPathCommand(head, transform, lineWidth);
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    return getErHeadBounds(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    return getErHeadBounds(lineWidth, head.size);
   },
   getRotationOriginDistance(head, lineWidth) {
     return LineHeadErOne.getRotationOriginDistance!(head, lineWidth);

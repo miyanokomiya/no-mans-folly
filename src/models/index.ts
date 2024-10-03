@@ -83,6 +83,7 @@ export interface ConnectionPoint {
 
 export interface LineHead {
   type: string;
+  size?: number; // "undefined" should be 6 for backward compatibility
 }
 
 export type CurveControl = BezierCurveControl | ArcCurveControl;

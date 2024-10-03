@@ -11,16 +11,16 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
       type: "open",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
+  render(ctx, head, transform, lineWidth) {
     ctx.beginPath();
-    applyPath(ctx, getPath(transform, lineWidth));
+    applyPath(ctx, getPath(transform, lineWidth, head.size));
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
+  createSVGElementInfo(head, transform, lineWidth) {
     return {
       tag: "path",
       attributes: {
-        d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth), [])),
+        d: pathSegmentRawsToString(createSVGCurvePath(getPath(transform, lineWidth, head.size), [])),
         fill: "none",
       },
     };
@@ -29,16 +29,16 @@ export const LineHeadOpen: LineHeadStruct<LineHead> = {
   createSVGClipPathCommand() {
     return undefined;
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    return getSrcPath(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    return getSrcPath(lineWidth, head.size);
   },
-  getRotationOriginDistance(_head, lineWidth) {
-    return getHeadBaseHeight(lineWidth);
+  getRotationOriginDistance(head, lineWidth) {
+    return getHeadBaseHeight(lineWidth, head.size);
   },
 };
 
-function getSrcPath(lineWidth: number) {
-  const height = getHeadBaseHeight(lineWidth);
+function getSrcPath(lineWidth: number, size?: number) {
+  const height = getHeadBaseHeight(lineWidth, size);
   const width = height;
 
   return [
@@ -48,6 +48,6 @@ function getSrcPath(lineWidth: number) {
   ];
 }
 
-function getPath(transform: AffineMatrix, lineWidth: number) {
-  return getSrcPath(lineWidth).map((p) => applyAffine(transform, p));
+function getPath(transform: AffineMatrix, lineWidth: number, size?: number) {
+  return getSrcPath(lineWidth, size).map((p) => applyAffine(transform, p));
 }

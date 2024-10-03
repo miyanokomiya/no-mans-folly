@@ -18,8 +18,8 @@ export const LineHeadStarStiffBlank = defineLineHeadStiffPolygon({
   getSrcPath,
 });
 
-function getSrcPath(lineWidth: number) {
-  const height = getHeadBaseHeight(lineWidth);
+function getSrcPath(lineWidth: number, size?: number) {
+  const height = getHeadBaseHeight(lineWidth, size);
   const unitR = (Math.PI * 2) / 5;
 
   const outerRadius = height / 2;

@@ -284,7 +284,7 @@ export const FloatMenu: React.FC<Option> = ({
   }, [indexShape]);
 
   const onLineHeadChanged = useCallback(
-    (val: { pHead?: LineHead; qHead?: LineHead }) => {
+    (val: { pHead?: LineHead; qHead?: LineHead }, draft = false) => {
       const ids = Object.keys(shapeStore.getSelected());
       const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<LineShape> }>((p, id) => {
@@ -295,10 +295,15 @@ export const FloatMenu: React.FC<Option> = ({
         return p;
       }, {});
 
-      patchShapes(patch);
-      focusBack?.();
+      if (draft) {
+        setTmpShapeMap(patch);
+      } else {
+        setTmpShapeMap({});
+        patchShapes(patch);
+        focusBack?.();
+      }
     },
-    [focusBack, shapeStore, patchShapes],
+    [focusBack, shapeStore, patchShapes, setTmpShapeMap],
   );
 
   const onLineTypeChanged = useCallback(

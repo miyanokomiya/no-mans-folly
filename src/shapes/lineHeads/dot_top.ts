@@ -11,9 +11,9 @@ export const LineHeadDotTopFilled: LineHeadStruct<LineHead> = {
       type: "dot_top_filled",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  render(ctx, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     ctx.beginPath();
     ctx.arc(c.x, c.y, radius, 0, TAU, true);
 
@@ -23,9 +23,9 @@ export const LineHeadDotTopFilled: LineHeadStruct<LineHead> = {
     ctx.fillStyle = tmp;
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  createSVGElementInfo(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     return {
       tag: "ellipse",
       attributes: {
@@ -36,24 +36,24 @@ export const LineHeadDotTopFilled: LineHeadStruct<LineHead> = {
       },
     };
   },
-  clip(region, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  clip(region, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     region.moveTo(c.x + radius, c.y);
     region.arc(c.x, c.y, radius, 0, TAU, true);
   },
-  createSVGClipPathCommand(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  createSVGClipPathCommand(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     return pathSegmentRawsToString([
       ["M", c.x - radius, c.y],
       ["a", radius, radius, 0, false, false, radius * 2, 0],
       ["a", radius, radius, 0, false, false, -radius * 2, 0],
     ]);
   },
-  getWrapperSrcPath(_head, lineWidth) {
-    const rad = getRadius(lineWidth);
-    const c = getArcCenter(lineWidth);
+  getWrapperSrcPath(head, lineWidth) {
+    const rad = getRadius(lineWidth, head.size);
+    const c = getArcCenter(lineWidth, head.size);
     return [
       { x: c.x - rad, y: c.y - rad },
       { x: c.x + rad, y: c.y - rad },
@@ -72,16 +72,16 @@ export const LineHeadDotTopBlank: LineHeadStruct<LineHead> = {
       type: "dot_top_blank",
     };
   },
-  render(ctx, _head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  render(ctx, head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     ctx.beginPath();
     ctx.arc(c.x, c.y, radius, 0, TAU, true);
     ctx.stroke();
   },
-  createSVGElementInfo(_head, transform, lineWidth) {
-    const radius = getRadius(lineWidth);
-    const c = applyAffine(transform, getArcCenter(lineWidth));
+  createSVGElementInfo(head, transform, lineWidth) {
+    const radius = getRadius(lineWidth, head.size);
+    const c = applyAffine(transform, getArcCenter(lineWidth, head.size));
     return {
       tag: "ellipse",
       attributes: {
@@ -95,11 +95,11 @@ export const LineHeadDotTopBlank: LineHeadStruct<LineHead> = {
   },
 };
 
-function getRadius(lineWidth: number): number {
-  return getHeadBaseHeight(lineWidth) / 2;
+function getRadius(lineWidth: number, size?: number): number {
+  return getHeadBaseHeight(lineWidth, size) / 2;
 }
 
-function getArcCenter(lineWidth: number): IVec2 {
-  const radius = getRadius(lineWidth);
+function getArcCenter(lineWidth: number, size?: number): IVec2 {
+  const radius = getRadius(lineWidth, size);
   return { x: -radius, y: 0 };
 }
