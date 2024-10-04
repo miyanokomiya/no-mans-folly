@@ -61,18 +61,18 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           Disabled
         </ToggleInput>
       </div>
-      <div className="mt-2 flex items-center justify-between">
-        <span>Width</span>
-        <div className="w-44">
-          <SliderInput min={1} max={10} step={1} value={stroke.width ?? 1} onChanged={onWidthChanged} showValue />
+      <div className="mt-2 flex items-center">
+        <span>Width:</span>
+        <div className="ml-2 flex-1">
+          <SliderInput min={1} max={20} step={1} value={stroke.width ?? 1} onChanged={onWidthChanged} showValue />
         </div>
       </div>
       <div className="mt-2 flex items-center justify-end gap-2">{dashButtons}</div>
       <div className={stroke.disabled ? "opacity-50 pointer-events-none" : ""}>
-        <div className="mt-2 flex items-center justify-between">
-          <span>Alpha</span>
-          <div className="w-44">
-            <SliderInput min={0} max={1} value={stroke.color.a} onChanged={onAlphaChanged} showValue />
+        <div className="mt-2 flex items-center">
+          <span>Alpha:</span>
+          <div className="ml-2 flex-1">
+            <SliderInput min={0} max={1} step={0.1} value={stroke.color.a} onChanged={onAlphaChanged} showValue />
           </div>
         </div>
         <div className="mt-2">

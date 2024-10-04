@@ -39,8 +39,11 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
         </ToggleInput>
       </div>
       <div className={fill.disabled ? "opacity-50 pointer-events-none" : ""}>
-        <div className="mt-2">
-          <SliderInput min={0} max={1} value={fill.color.a} onChanged={onAlphaChanged} />
+        <div className="mt-2 flex items-center">
+          <span>Alpha:</span>
+          <div className="ml-2 flex-1">
+            <SliderInput min={0} max={1} step={0.1} value={fill.color.a} onChanged={onAlphaChanged} showValue />
+          </div>
         </div>
         <div className="mt-2">
           <ColorPickerPanel color={fill.color} onChange={onColorChange} />
