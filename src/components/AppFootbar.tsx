@@ -105,6 +105,9 @@ export const AppFootbar: React.FC = () => {
           opened={popupedKey === "help"}
           popup={
             <div className="flex flex-col items-center w-max">
+              <ListLink href={process.env.DOC_PATH!} external>
+                Document
+              </ListLink>
               <ListLink href={process.env.CONTACT_FORM_URL!} external>
                 Contact
               </ListLink>
