@@ -40,6 +40,7 @@ import { GridBackground } from "./atoms/GridBackground";
 import { LinkMenu } from "./linkMenu/LinkMenu";
 import { useClickable } from "../hooks/clickable";
 import { ModifierSupportPanel } from "./molecules/ModifierSupportPanel";
+import { newCanvasBank } from "../composables/canvasBank";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -67,6 +68,11 @@ export const AppCanvas: React.FC = () => {
   const imageStore = useMemo(() => {
     shapeStore; // For exhaustive-deps
     return newImageStore();
+  }, [shapeStore]);
+
+  const canvasBank = useMemo(() => {
+    shapeStore; // For exhaustive-deps
+    return newCanvasBank();
   }, [shapeStore]);
 
   // Need to directly use this value as a dependency.
@@ -490,6 +496,7 @@ export const AppCanvas: React.FC = () => {
       ignoreDocIds: textEditing ? Object.keys(selectedMap) : undefined,
       imageStore,
       scale,
+      canvasBank,
     });
     renderer.render(ctx);
 
@@ -511,6 +518,7 @@ export const AppCanvas: React.FC = () => {
     grid,
     mergedDocMap,
     imageStore,
+    canvasBank,
   ]);
 
   const getMouseOptionsCustom = useCallback(

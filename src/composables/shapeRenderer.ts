@@ -5,10 +5,11 @@ import { hasStrokeStyle } from "../shapes/core";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
 import { expandRect, getRectPoints } from "../utils/geometry";
-import { applyPath } from "../utils/renderer";
+import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
 import { TreeNode } from "../utils/tree";
+import { CanvasBank, newCanvasBank } from "./canvasBank";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
 
@@ -18,23 +19,49 @@ interface Option {
   ignoreDocIds?: string[];
   imageStore?: ImageStore;
   scale?: number;
+  canvasBank?: CanvasBank;
 }
 
 export function newShapeRenderer(option: Option) {
   const { mergedShapeMap, mergedShapeTree } = option.shapeComposite;
   const docMap = option.getDocumentMap();
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
+  const canvasBank = option.canvasBank ?? newCanvasBank();
 
   function render(ctx: CanvasRenderingContext2D) {
     renderShapeTree(ctx, mergedShapeTree);
   }
 
   function renderShapeTree(ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {
-    treeNodes.forEach((n) => renderShapeTreeStep(ctx, n));
+    treeNodes.forEach((n) => renderShapeTreeStepWithAlpha(ctx, n));
   }
 
-  function renderShapeTreeStep(ctx: CanvasRenderingContext2D, node: TreeNode) {
+  function renderShapeTreeStepWithAlpha(ctx: CanvasRenderingContext2D, node: TreeNode) {
     const shape = mergedShapeMap[node.id];
+    const alpha = shape.alpha;
+    if (alpha === 0) return;
+    if (!alpha || alpha === 1) {
+      renderShapeTreeStep(ctx, node, shape);
+      return;
+    }
+
+    canvasBank.beginCanvas((subCanvas) => {
+      // Expand the wrapper rect to make sure it accommodates edge part of the shape.
+      const rect = expandRect(option.shapeComposite.getWrapperRect(shape, true), 50);
+      subCanvas.width = rect.width;
+      subCanvas.height = rect.height;
+      const subCtx = subCanvas.getContext("2d")!;
+      subCtx.reset();
+      subCtx.clearRect(0, 0, rect.width, rect.height);
+      subCtx.translate(-rect.x, -rect.y);
+      renderShapeTreeStep(subCtx, node, shape);
+      scaleGlobalAlpha(ctx, alpha, () => {
+        ctx.drawImage(subCanvas, 0, 0, rect.width, rect.height, rect.x, rect.y, rect.width, rect.height);
+      });
+    });
+  }
+
+  function renderShapeTreeStep(ctx: CanvasRenderingContext2D, node: TreeNode, shape: Shape) {
     renderShapeAndDoc(ctx, shape);
     if (node.children.length === 0) return;
 
@@ -44,12 +71,12 @@ export function newShapeRenderer(option: Option) {
     });
 
     if (!isParentGroup || clips.length === 0) {
-      others.forEach((c) => renderShapeTreeStep(ctx, c));
+      others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
       return;
     }
 
     clipWithinGroup(option.shapeComposite, shape, clips, others, ctx, () => {
-      others.forEach((c) => renderShapeTreeStep(ctx, c));
+      others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
     });
   }
 

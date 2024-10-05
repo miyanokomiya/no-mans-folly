@@ -88,6 +88,9 @@ export function newShapeSVGRenderer(option: Option) {
     const shape = mergedShapeMap[node.id];
     const elm = renderShapeAndDoc(ctx, shape);
     if (elm) {
+      if (shape.alpha && shape.alpha !== 1) {
+        elm.setAttribute("opacity", `${shape.alpha}`);
+      }
       root.appendChild(elm);
     }
     if (node.children.length === 0) return;
