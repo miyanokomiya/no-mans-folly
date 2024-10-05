@@ -312,6 +312,11 @@ export function renderMoveIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: nu
 }
 
 export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, render: () => void) {
+  if (scale === 1) {
+    render();
+    return;
+  }
+
   const original = ctx.globalAlpha;
   ctx.globalAlpha = original * scale;
   render();

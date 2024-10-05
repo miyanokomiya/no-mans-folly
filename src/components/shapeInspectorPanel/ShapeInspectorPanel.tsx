@@ -12,6 +12,7 @@ import { MultipleShapesInspector } from "./MultipleShapesInspector";
 import { canClip } from "../../shapes";
 import { GroupShape, isGroupShape } from "../../shapes/group";
 import { ClipInspector } from "./ClipInspector";
+import { AlphaField } from "./AlphaField";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -99,7 +100,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
 
   // Intended for patching common attributes rather than transforming.
   const updateTargetShapesBySamePatch = useCallback(
-    (patch: Partial<Shape>) => {
+    (patch: Partial<Shape>, draft = false) => {
       const shapeComposite = getShapeComposite();
 
       const layoutPatch = getPatchByLayouts(shapeComposite, {
@@ -108,9 +109,15 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
           return p;
         }, {}),
       });
-      patchShapes(layoutPatch);
+
+      if (draft) {
+        setTmpShapeMap(layoutPatch);
+      } else {
+        setTmpShapeMap({});
+        patchShapes(layoutPatch);
+      }
     },
-    [targetShapes, getShapeComposite, patchShapes],
+    [targetShapes, getShapeComposite, patchShapes, setTmpShapeMap],
   );
 
   const updateGroupShapesBySamePatch = useCallback(
@@ -129,19 +136,25 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShapes, getShapeComposite, patchShapes],
   );
 
+  const alphaField = <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />;
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
       {targetShapes.length >= 2 ? (
-        <MultipleShapesInspector
-          targetShapes={targetShapes}
-          targetTmpShapes={targetTmpShapes}
-          commit={commit}
-          updateTmpShapes={updateTmpShapes}
-          readyState={readyState}
-        />
+        <>
+          {alphaField}
+          <MultipleShapesInspector
+            targetShapes={targetShapes}
+            targetTmpShapes={targetTmpShapes}
+            commit={commit}
+            updateTmpShapes={updateTmpShapes}
+            readyState={readyState}
+          />
+        </>
       ) : (
         <>
           <ShapeTypeBlock type={targetShape.type} />
+          {alphaField}
           {isLineShape(targetShape) ? (
             <LineShapeInspector
               targetShape={targetShape}

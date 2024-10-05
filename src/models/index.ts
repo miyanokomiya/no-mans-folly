@@ -29,6 +29,7 @@ export interface Shape extends Entity {
   locked?: boolean;
   clipping?: boolean; // When this is set true, it's prioritized over all child shapes.
   cropClipBorder?: boolean; // This is prioritized over all child shapes.
+  alpha?: number; // "undefined" should mean 1.
 }
 
 export type ClipRule = "out" | "in";
