@@ -73,6 +73,7 @@ import {
   splitPointsToCloseSections,
   getClosestPointTo,
   isOnDonutArc,
+  expandRectByScale,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -144,6 +145,17 @@ describe("expandRect", () => {
       y: -3,
       width: 20,
       height: 30,
+    });
+  });
+});
+
+describe("expandRectByScale", () => {
+  test("should return expanded rectangle", () => {
+    expect(expandRectByScale({ x: 1, y: 2, width: 10, height: 20 }, 2)).toEqual({
+      x: -4,
+      y: -8,
+      width: 20,
+      height: 40,
     });
   });
 });

@@ -109,6 +109,17 @@ export function expandRect(rect: IRectangle, padding: number): IRectangle {
   };
 }
 
+export function expandRectByScale(rect: IRectangle, scale: number): IRectangle {
+  const nextW = rect.width * scale;
+  const nextH = rect.height * scale;
+  return {
+    x: rect.x - (nextW - rect.width) / 2,
+    y: rect.y - (nextH - rect.height) / 2,
+    width: nextW,
+    height: nextH,
+  };
+}
+
 export function translateRect(rect: IRectangle, v: IVec2): IRectangle {
   return {
     x: rect.x + v.x,
