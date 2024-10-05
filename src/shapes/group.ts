@@ -44,7 +44,7 @@ export const struct: ShapeStruct<GroupShape> = {
 
     const rects = targetList.map((c) => {
       const s = shapeContext.shapeMap[c.id];
-      return shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext);
+      return shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext, includeBounds);
     });
     return getWrapperRect(rects);
   },
