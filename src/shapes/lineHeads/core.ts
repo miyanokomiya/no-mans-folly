@@ -82,8 +82,8 @@ export function defineLineHeadPolygon<T extends LineHead>(option: {
     getWrapperSrcPath(head, lineWidth) {
       return option.getSrcPath(lineWidth, head.size);
     },
-    getRotationOriginDistance(_head, lineWidth) {
-      return getHeadBaseHeight(lineWidth);
+    getRotationOriginDistance(head, lineWidth) {
+      return getHeadBaseHeight(lineWidth, head.size);
     },
   };
 
