@@ -70,33 +70,35 @@ export const UserSettingPanel: React.FC = () => {
     <div>
       <div className="flex flex-col gap-1">
         {import.meta.env.DEV ? (
-          <ToggleInput value={userSetting.debug === "on"} onChange={handleDebugChange}>
-            Debug mode
-          </ToggleInput>
-        ) : undefined}
-        <ToggleInput value={userSetting.wheelAction === "pan"} onChange={handleWheelActionChange}>
-          Pan by wheeling
-        </ToggleInput>
-        <ToggleInput value={userSetting.leftDragAction === "pan"} onChange={handleLeftDragActionChange}>
-          Pan by left dragging
-        </ToggleInput>
-        <div>
-          <InlineField label="Virtual keyboard">
-            <SelectInput
-              value={virtualKeyboardValue}
-              options={modifierSupportOptions}
-              onChange={handleModifierSupportChange}
-            />
+          <InlineField label="Debug mode">
+            <ToggleInput value={userSetting.debug === "on"} onChange={handleDebugChange} />
           </InlineField>
-          {virtualKeyboardValue !== "off" ? (
-            <p className="text-red-500 font-sm text-right">(Not work well with stylus pens)</p>
-          ) : undefined}
-        </div>
+        ) : undefined}
+        <BlockGroupField label="Operation">
+          <InlineField label="Pan by wheeling">
+            <ToggleInput value={userSetting.wheelAction === "pan"} onChange={handleWheelActionChange} />
+          </InlineField>
+          <InlineField label="Pan by left dragging">
+            <ToggleInput value={userSetting.leftDragAction === "pan"} onChange={handleLeftDragActionChange} />
+          </InlineField>
+          <div>
+            <InlineField label="Virtual keyboard">
+              <SelectInput
+                value={virtualKeyboardValue}
+                options={modifierSupportOptions}
+                onChange={handleModifierSupportChange}
+              />
+            </InlineField>
+            {virtualKeyboardValue !== "off" ? (
+              <p className="text-red-500 font-sm text-right">(Not work well with stylus pens)</p>
+            ) : undefined}
+          </div>
+        </BlockGroupField>
         <BlockGroupField label="Grid">
-          <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange}>
-            Grid
-          </ToggleInput>
-          <InlineField label="Grid size">
+          <InlineField label="Grid">
+            <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange} />
+          </InlineField>
+          <InlineField label="Size">
             <div className="w-24">
               <NumberInput
                 min={1}
