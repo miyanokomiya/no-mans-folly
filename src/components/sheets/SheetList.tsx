@@ -4,10 +4,12 @@ import { SheetPanel } from "./SheetPanel";
 import { generateUuid } from "../../utils/random";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDelete from "../../assets/icons/delete_filled.svg";
+import iconDropdown from "../../assets/icons/dropdown.svg";
 import { SortableListV } from "../atoms/SortableListV";
 import { useSelectedSheet, useSheets } from "../../hooks/storeHooks";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -89,24 +91,59 @@ export const SheetList: React.FC = () => {
     [sheets, acctx.sheetStore],
   );
 
+  const { state: hidePanel, setState: setHidePanel } = useLocalStorageAdopter({
+    key: "sheet-list",
+    version: "1",
+    initialValue: false,
+  });
+  const toggleHidePanel = useCallback(() => {
+    setHidePanel((val) => !val);
+  }, [setHidePanel]);
+
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const closeDeleteConfirm = useCallback(() => {
     setOpenDeleteConfirm(false);
   }, []);
 
+  const toggleButton = (
+    <button type="button" className="w-6 h-6 p-1 border rounded" onClick={toggleHidePanel}>
+      <img src={iconDropdown} alt="Toggle Panel" />
+    </button>
+  );
+
   return (
     <div className="bg-white border rounded flex flex-col p-1 gap-1">
-      <div className="flex justify-between gap-1">
-        <button type="button" className="w-6 h-6 p-1 border rounded" onClick={onClickDelete}>
-          <img src={iconDelete} alt="Delete Sheet" />
-        </button>
-        <button type="button" className="w-6 h-6 p-1 border rounded" onClick={onClickAdd}>
-          <img src={iconAdd} alt="Add Sheet" />
-        </button>
-      </div>
-      <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
-        <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
-      </div>
+      {hidePanel ? (
+        <>
+          <div className="-rotate-90">{toggleButton}</div>
+          <div className="overflow-auto flex flex-col" style={{ maxHeight: "calc(100vh - 100px)" }}>
+            {sheets.map((sheet, i) => (
+              <MinSheetButton
+                key={sheet.id}
+                id={sheet.id}
+                index={i}
+                highlight={sheet.id === selectedSheet?.id}
+                onClick={onClickSheet}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-1">
+            <button type="button" className="w-6 h-6 p-1 border rounded" onClick={onClickDelete}>
+              <img src={iconDelete} alt="Delete Sheet" />
+            </button>
+            <button type="button" className="ml-auto w-6 h-6 p-1 border rounded" onClick={onClickAdd}>
+              <img src={iconAdd} alt="Add Sheet" />
+            </button>
+            <div className="rotate-90">{toggleButton}</div>
+          </div>
+          <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
+            <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
+          </div>
+        </>
+      )}
       <Dialog
         open={openDeleteConfirm}
         onClose={closeDeleteConfirm}
@@ -123,5 +160,29 @@ export const SheetList: React.FC = () => {
         </div>
       </Dialog>
     </div>
+  );
+};
+
+interface MinSheetButtonProps {
+  id: string;
+  index: number;
+  highlight?: boolean;
+  onClick: (id: string) => void;
+}
+
+const MinSheetButton: React.FC<MinSheetButtonProps> = ({ id, index, highlight, onClick }) => {
+  const handleClick = useCallback(() => {
+    onClick(id);
+  }, [id, onClick]);
+
+  return (
+    <button
+      type="button"
+      className={"min-w-6 px-1 border rounded" + (highlight ? " border-sky-400" : "")}
+      key={id}
+      onClick={handleClick}
+    >
+      {index + 1}
+    </button>
   );
 };
