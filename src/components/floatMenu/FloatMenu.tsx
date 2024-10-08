@@ -108,7 +108,7 @@ export const FloatMenu: React.FC<Option> = ({
     if (selectedShapes.length === 0) return;
 
     const shapeComposite = shapeStore.shapeComposite;
-    const rect = shapeComposite.getWrapperRectForShapes(selectedShapes);
+    const rect = shapeComposite.getWrapperRectForShapes(selectedShapes, true);
     const p = canvasToView(scale, viewOrigin, rect);
     const width = rect.width / scale;
     const height = rect.height / scale;
