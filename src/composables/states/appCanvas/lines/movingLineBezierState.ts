@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { LineShape, getEdges } from "../../../../shapes/line";
-import { IVec2, add } from "okageo";
+import { IVec2, add, getSymmetry } from "okageo";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { BezierCurveControl } from "../../../../models";
@@ -17,16 +17,23 @@ interface Option {
 }
 
 export function newMovingLineBezierState(option: Option): AppCanvasState {
-  const edge = getEdges(option.lineShape)[option.index];
+  const edges = getEdges(option.lineShape);
+  const edge = edges[option.index];
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let currentBezier: BezierCurveControl | undefined;
+
+  const symmetricAvailable = checkSymmetricAvailable(option);
 
   return {
     getLabel: () => "MovingLineBezier",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      if (symmetricAvailable) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.BEZIER_SYMMETRICALLY, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      }
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -71,6 +78,27 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
             option.subIndex === 0
               ? { c1: p, c2: currentBezier?.c2 ?? edge[1] }
               : { c1: currentBezier?.c1 ?? edge[0], c2: p };
+
+          if (symmetricAvailable && event.data.shift) {
+            if (symmetricAvailable === "prev") {
+              const prevEdge = edges[option.index - 1];
+              const prevC = curves[option.index - 1];
+              if (!prevC) {
+                curves[option.index - 1] = { c1: prevEdge[0], c2: getSymmetry(p, prevEdge[1]) };
+              } else if (isBezieirControl(prevC)) {
+                curves[option.index - 1] = { c1: prevC.c1, c2: getSymmetry(p, prevEdge[1]) };
+              }
+            } else if (symmetricAvailable === "next") {
+              const nextEdge = edges[option.index + 1];
+              const nextC = curves[option.index + 1];
+              if (!nextC) {
+                curves[option.index + 1] = { c1: getSymmetry(p, nextEdge[0]), c2: nextEdge[1] };
+              } else if (isBezieirControl(nextC)) {
+                curves[option.index + 1] = { c1: getSymmetry(p, nextEdge[0]), c2: nextC.c2 };
+              }
+            }
+          }
+
           ctx.setTmpShapeMap(
             getPatchAfterLayouts(ctx.getShapeComposite(), {
               update: { [option.lineShape.id]: { curves } as Partial<LineShape> },
@@ -114,4 +142,17 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       }
     },
   };
+}
+
+function checkSymmetricAvailable(option: Option): "prev" | "next" | undefined {
+  const edges = getEdges(option.lineShape);
+  const curves = option.lineShape.curves?.concat() ?? [];
+
+  if (option.subIndex === 0 && option.index > 0) {
+    const prevC = curves[option.index - 1];
+    if (!prevC || isBezieirControl(prevC)) return "prev";
+  } else if (option.subIndex === 1 && option.index < edges.length - 1) {
+    const nextC = curves[option.index + 1];
+    if (!nextC || isBezieirControl(nextC)) return "next";
+  }
 }
