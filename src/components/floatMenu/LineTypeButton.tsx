@@ -5,6 +5,7 @@ import iconLineStraight from "../../assets/icons/shape_line_straight.svg";
 import iconLineElbow from "../../assets/icons/shape_line_elbow.svg";
 import iconLineCurve from "../../assets/icons/shape_line_curve.svg";
 import iconLineElbowCurve from "../../assets/icons/shape_line_elbow_curve.svg";
+import iconLinePolygon from "../../assets/icons/shape_line_polygon.svg";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { AppText } from "../molecules/AppText";
 import { IconButton } from "../atoms/buttons/IconButton";
@@ -55,6 +56,8 @@ export const LineTypeButton: React.FC<Props> = ({
     return LINE_LIST.find((v) => v.type === type)!;
   }, [currentType, currentCurve]);
 
+  const buttonIcon = polygon ? iconLinePolygon : selected.icon;
+
   return (
     <div className="flex gap-1 items-center">
       <PopupButton
@@ -75,7 +78,7 @@ export const LineTypeButton: React.FC<Props> = ({
         defaultDirection={defaultDirection}
       >
         <div className="w-8 h-8 p-1">
-          <img src={selected.icon} alt={selected.type} />
+          <img src={buttonIcon} alt="Line type" />
         </div>
       </PopupButton>
     </div>
