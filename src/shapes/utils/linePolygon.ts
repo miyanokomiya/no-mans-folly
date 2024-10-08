@@ -56,7 +56,7 @@ export function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon
     ...linePolygon.srcLine,
     p,
     q,
-    body,
+    body: body.length > 0 ? body : undefined,
   });
   const shifted = {
     ...normalizedLine,
@@ -84,7 +84,7 @@ function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curve
   return ret;
 }
 
-function covertArcToBezier(seg: ISegment, c: ArcCurveControl): SimplePath {
+export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): SimplePath {
   const ret: Required<SimplePath> = { path: [], curves: [] };
 
   const arcParams = getArcCurveParamsByNormalizedControl(seg, c.d);
@@ -107,6 +107,7 @@ function covertArcToBezier(seg: ISegment, c: ArcCurveControl): SimplePath {
     ret.path.push(partialSeg[0]);
     ret.curves.push(partialBezier);
   });
+  ret.path.push(partialSegs[partialSegs.length - 1][1]);
 
   return ret;
 }
