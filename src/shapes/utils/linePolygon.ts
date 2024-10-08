@@ -71,15 +71,16 @@ function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curve
   getSegments(vertices).map((seg, i) => {
     const c = curves?.[i];
     if (!c || !isArcControl(c)) {
-      ret.path.push(...seg);
+      ret.path.push(seg[0]);
       ret.curves.push(c);
       return;
     }
 
     const path = covertArcToBezier(seg, c);
-    ret.path.push(...path.path);
+    ret.path.push(...path.path.slice(0, path.path.length - 1));
     if (path.curves) ret.curves.push(...path.curves);
   });
+  ret.path.push(vertices[vertices.length - 1]);
 
   return ret;
 }
