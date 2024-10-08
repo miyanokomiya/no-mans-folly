@@ -14,7 +14,7 @@ export function patchLinePolygonFromLine(getStruct: GetShapeStruct, line: LineSh
   return { ...patch, ...result };
 }
 
-export function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): LinePolygonShape {
+function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): LinePolygonShape {
   const rect = getWrapperRect(getStruct, getNakedLineShape(line), undefined, true);
   const p = { x: rect.x, y: rect.y };
   const normalizedLine = { ...line, ...resizeShape(getStruct, line, [1, 0, 0, 1, -p.x, -p.y]) };
@@ -46,7 +46,7 @@ export function patchLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon:
   return { ...patch, ...result };
 }
 
-export function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LinePolygonShape): LineShape {
+function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LinePolygonShape): LineShape {
   const srcVertices = linePolygon.srcLine.vertices;
   const p = srcVertices[0].p;
   const q = srcVertices[srcVertices.length - 1].p;
