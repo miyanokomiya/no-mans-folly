@@ -8,6 +8,7 @@ import iconLineElbowCurve from "../../assets/icons/shape_line_elbow_curve.svg";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { AppText } from "../molecules/AppText";
 import { IconButton } from "../atoms/buttons/IconButton";
+import { InlineField } from "../atoms/InlineField";
 
 const LINE_LIST = [
   { type: "straight", icon: iconLineStraight },
@@ -28,6 +29,7 @@ interface Props {
   onJumpChange?: (val: boolean) => void;
   polygon?: boolean;
   onPolygonChange?: (val: boolean) => void;
+  canMakePolygon?: boolean;
 }
 
 export const LineTypeButton: React.FC<Props> = ({
@@ -41,6 +43,7 @@ export const LineTypeButton: React.FC<Props> = ({
   onJumpChange,
   polygon,
   onPolygonChange,
+  canMakePolygon,
 }) => {
   const selected = useMemo(() => {
     let type: LineItemType;
@@ -65,6 +68,7 @@ export const LineTypeButton: React.FC<Props> = ({
             onJumpChange={onJumpChange}
             polygon={polygon}
             onPolygonChange={onPolygonChange}
+            canMakePolygon={canMakePolygon}
           />
         }
         onClick={setPopupedKey}
@@ -85,6 +89,7 @@ interface LineTypePanelProps {
   onJumpChange?: (val: boolean) => void;
   polygon?: boolean;
   onPolygonChange?: (val: boolean) => void;
+  canMakePolygon?: boolean;
 }
 
 const LineTypePanel: React.FC<LineTypePanelProps> = ({
@@ -94,6 +99,7 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({
   onJumpChange,
   polygon,
   onPolygonChange,
+  canMakePolygon,
 }) => {
   const handleTypeClick = useCallback(
     (value: string) => {
@@ -129,18 +135,12 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({
   return (
     <div className="p-2 flex flex-col gap-1">
       <div className="flex gap-1">{lines}</div>
-      <div className="flex justify-end">
-        <ToggleInput value={polygon} onChange={onPolygonChange}>
-          Make polygon
-        </ToggleInput>
-      </div>
-      {polygon ? undefined : (
-        <div className="flex justify-end">
-          <ToggleInput value={jump} onChange={onJumpChange}>
-            <AppText portal={true}>[[LINE_JUMP]]</AppText>
-          </ToggleInput>
-        </div>
-      )}
+      <InlineField label={<AppText portal>[[LINE_JUMP]]</AppText>} inert={polygon}>
+        <ToggleInput value={jump} onChange={onJumpChange} />
+      </InlineField>
+      <InlineField label=<AppText portal>[[MAKE_POLYGON]]</AppText> inert={!polygon && !canMakePolygon}>
+        <ToggleInput value={polygon} onChange={onPolygonChange} />
+      </InlineField>
     </div>
   );
 };

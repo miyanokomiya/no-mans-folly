@@ -40,7 +40,7 @@ import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { getShapeTypeList } from "../../composables/shapeTypes";
 import { ShapeTypeButton } from "./ShapeTypeButton";
 import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
-import { isLinePolygonShape } from "../../shapes/polygons/linePolygon";
+import { canMakePolygon, isLinePolygonShape } from "../../shapes/polygons/linePolygon";
 import { patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
 
 // Use default root height until it's derived from actual element.
@@ -543,6 +543,7 @@ export const FloatMenu: React.FC<Option> = ({
               onJumpChange={onLineJumpChanged}
               polygon={false}
               onPolygonChange={onLinePolygonChanged}
+              canMakePolygon={canMakePolygon(indexLineShape)}
             />
             <LineHeadItems
               {...popupButtonCommonProps}
@@ -561,8 +562,8 @@ export const FloatMenu: React.FC<Option> = ({
             <div className="h-8 mx-0.5 border"></div>
             <LineTypeButton
               {...popupButtonCommonProps}
-              currentType={indexLinePolygonShape.lineType}
-              currentCurve={indexLinePolygonShape.curveType}
+              currentType={indexLinePolygonShape.srcLine.lineType}
+              currentCurve={indexLinePolygonShape.srcLine.curveType}
               onChange={onLineTypeChanged}
               polygon={true}
               onPolygonChange={onLinePolygonChanged}

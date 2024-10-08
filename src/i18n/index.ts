@@ -19,8 +19,10 @@ const en = {
     "exconnection.revoke": "Revoke connections",
     "exconnection.revoke.description": "You can revoke external connections via below button.",
     "exconnection.revoke.visibility": "This button is visible even if there's no connection.",
+    make_polygon: "Make polygon",
     "term.workspace":
       'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "assets" folder.',
+    "term.make_polygon": "To make a polygon, source line has to be neither an elbow nor a segment.",
   },
 };
 type TranslationResource = typeof en;
@@ -41,8 +43,10 @@ const ja: TranslationResource = {
     "exconnection.revoke": "連携解除",
     "exconnection.revoke.description": "下のボタンを押下することですべての外部連携を解除します。",
     "exconnection.revoke.visibility": "このボタンは外部連携の有無に関わらず常に表示されます。",
+    make_polygon: "ポリゴン化",
     "term.workspace":
       'ワークスペースは、ダイアグラムの保存先となるフォルダです。各シートは別々のファイルとして保存され、アセットファイルは"assets"フォルダに格納されます。',
+    "term.make_polygon": "エルボー、あるいは単一線分はポリゴン化できません。",
   },
 };
 
