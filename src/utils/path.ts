@@ -222,6 +222,7 @@ export function getCornerRadiusArc(p0: IVec2, p1: IVec2, p2: IVec2, radius: numb
 }
 
 // Ref: https://stackoverflow.com/questions/734076/how-to-best-approximate-a-geometrical-arc-with-a-bezier-curve
+// This approximation works well only with arc within 90 degree.
 export function getBezierControlForArc(c: IVec2, p0: IVec2, p1: IVec2): BezierCurveControl {
   const ax = p0.x - c.x;
   const ay = p0.y - c.y;

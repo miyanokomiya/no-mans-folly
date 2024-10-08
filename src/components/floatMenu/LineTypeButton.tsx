@@ -26,6 +26,8 @@ interface Props {
   onChange?: (lineType: LineType, curveType?: CurveType) => void;
   jump?: boolean;
   onJumpChange?: (val: boolean) => void;
+  polygon?: boolean;
+  onPolygonChange?: (val: boolean) => void;
 }
 
 export const LineTypeButton: React.FC<Props> = ({
@@ -37,6 +39,8 @@ export const LineTypeButton: React.FC<Props> = ({
   onChange,
   jump,
   onJumpChange,
+  polygon,
+  onPolygonChange,
 }) => {
   const selected = useMemo(() => {
     let type: LineItemType;
@@ -54,7 +58,14 @@ export const LineTypeButton: React.FC<Props> = ({
         name="line-type"
         opened={popupedKey === "line-type"}
         popup={
-          <LineTypePanel itemType={selected.type} onTypeClick={onChange} jump={jump} onJumpChange={onJumpChange} />
+          <LineTypePanel
+            itemType={selected.type}
+            onTypeClick={onChange}
+            jump={jump}
+            onJumpChange={onJumpChange}
+            polygon={polygon}
+            onPolygonChange={onPolygonChange}
+          />
         }
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
@@ -72,9 +83,18 @@ interface LineTypePanelProps {
   onTypeClick?: (lineType: LineType, curveType?: CurveType) => void;
   jump?: boolean;
   onJumpChange?: (val: boolean) => void;
+  polygon?: boolean;
+  onPolygonChange?: (val: boolean) => void;
 }
 
-const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType, onTypeClick, jump, onJumpChange }) => {
+const LineTypePanel: React.FC<LineTypePanelProps> = ({
+  itemType,
+  onTypeClick,
+  jump,
+  onJumpChange,
+  polygon,
+  onPolygonChange,
+}) => {
   const handleTypeClick = useCallback(
     (value: string) => {
       switch (value) {
@@ -110,10 +130,17 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({ itemType, onTypeClick, ju
     <div className="p-2 flex flex-col gap-1">
       <div className="flex gap-1">{lines}</div>
       <div className="flex justify-end">
-        <ToggleInput value={jump} onChange={onJumpChange}>
-          <AppText portal={true}>[[LINE_JUMP]]</AppText>
+        <ToggleInput value={polygon} onChange={onPolygonChange}>
+          Make polygon
         </ToggleInput>
       </div>
+      {polygon ? undefined : (
+        <div className="flex justify-end">
+          <ToggleInput value={jump} onChange={onJumpChange}>
+            <AppText portal={true}>[[LINE_JUMP]]</AppText>
+          </ToggleInput>
+        </div>
+      )}
     </div>
   );
 };
