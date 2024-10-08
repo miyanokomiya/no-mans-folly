@@ -244,19 +244,33 @@ function newEntityListCache<T extends Entity>(entityMap: Y.Map<Y.Map<any>>) {
     if (dirtyKeyMap.size === 0) return;
 
     const indexMap = new Map<string, number>();
+    const targetInOrder = new Set<string>();
     let shift = 0;
+
+    // Check concurrent entities in order.
     entityListCache.forEach((entity, i) => {
       const v = dirtyKeyMap!.get(entity.id);
       if (!v) return;
 
+      targetInOrder.add(entity.id);
       indexMap.set(entity.id, i + shift);
       if (v.action === "delete") {
         shift--;
       }
     });
 
+    // Check new entities.
+    for (const [id] of dirtyKeyMap) {
+      if (!targetInOrder.has(id)) {
+        targetInOrder.add(id);
+      }
+    }
+
     entityListCache = entityListCache.concat();
-    for (const [id, v] of dirtyKeyMap) {
+    for (const id of targetInOrder) {
+      const v = dirtyKeyMap.get(id);
+      if (!v) continue;
+
       switch (v.action) {
         case "add":
         case "update":

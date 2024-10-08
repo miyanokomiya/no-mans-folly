@@ -110,8 +110,25 @@ describe("newEntityStore", () => {
       const store = newEntityStore({ name: "test", ydoc });
       store.addEntity({ id: "a", findex: "0" });
       store.addEntity({ id: "b", findex: "1" });
+      store.getEntities();
       store.deleteEntities(["a"]);
       expect(store.getEntities()).toEqual([{ id: "b", findex: "1" }]);
+    });
+
+    test("should remove multiple entities: complex deletion order", () => {
+      const ydoc = new Y.Doc();
+      const store = newEntityStore({ name: "test", ydoc });
+      store.addEntity({ id: "a", findex: "0" });
+      store.addEntity({ id: "b", findex: "1" });
+      store.addEntity({ id: "c", findex: "2" });
+      store.addEntity({ id: "d", findex: "3" });
+      store.addEntity({ id: "e", findex: "4" });
+      store.getEntities();
+      store.deleteEntities(["e", "b", "d"]);
+      expect(store.getEntities()).toEqual([
+        { id: "a", findex: "0" },
+        { id: "c", findex: "2" },
+      ]);
     });
   });
 
