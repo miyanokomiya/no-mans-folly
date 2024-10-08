@@ -40,8 +40,8 @@ import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { getShapeTypeList } from "../../composables/shapeTypes";
 import { ShapeTypeButton } from "./ShapeTypeButton";
 import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
-import { canMakePolygon, isLinePolygonShape } from "../../shapes/polygons/linePolygon";
-import { patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
+import { isLinePolygonShape } from "../../shapes/polygons/linePolygon";
+import { canMakePolygon, patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
