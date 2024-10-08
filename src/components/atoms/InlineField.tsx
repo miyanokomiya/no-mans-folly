@@ -8,12 +8,21 @@ interface Props {
 export const InlineField: React.FC<Props> = ({ label, inert, fullBody, children }) => {
   const bodyClass = fullBody ? "ml-2 w-full" : "ml-auto";
 
-  return (
-    <label className={"flex items-center" + (inert ? " opacity-50" : "")}>
-      <span>{label}</span>
-      <div className={bodyClass} {...{ inert: inert ? "" : undefined }}>
-        {children}
+  if (inert) {
+    return (
+      <div className="flex items-center opacity-50">
+        <span>{label}</span>
+        <div className={bodyClass} {...{ inert: "" }}>
+          {children}
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <label className="flex items-center">
+      <span>{label}</span>
+      <div className={bodyClass}>{children}</div>
     </label>
   );
 };
