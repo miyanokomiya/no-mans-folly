@@ -7,6 +7,7 @@ import { getArcCurveParamsByNormalizedControl, getArcLerpFn, getSegments, ISegme
 import { mapReduce } from "../../utils/commons";
 import { IVec2 } from "okageo";
 import { ArcCurveControl } from "../../models";
+import { getNakedLineShape } from "./line";
 
 export function patchLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): LinePolygonShape {
   const result = createLinePolygonFromLine(getStruct, line);
@@ -111,15 +112,6 @@ export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): SimplePath
   ret.path.push(partialSegs[partialSegs.length - 1][1]);
 
   return ret;
-}
-
-function getNakedLineShape(line: LineShape): LineShape {
-  return {
-    ...line,
-    stroke: { ...line.stroke, width: 0 },
-    pHead: undefined,
-    qHead: undefined,
-  };
 }
 
 export function canMakePolygon(line: LineShape): boolean {
