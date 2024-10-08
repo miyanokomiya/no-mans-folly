@@ -133,11 +133,15 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({
   ));
 
   return (
-    <div className="p-2 flex flex-col gap-1">
-      <div className="flex gap-1">{lines}</div>
-      <InlineField label={<AppText portal>[[LINE_JUMP]]</AppText>} inert={polygon}>
-        <ToggleInput value={jump} onChange={onJumpChange} />
-      </InlineField>
+    <div className="p-2 flex flex-col gap-1 w-max">
+      {polygon ? undefined : (
+        <>
+          <div className="flex gap-1">{lines}</div>
+          <InlineField label={<AppText portal>[[LINE_JUMP]]</AppText>}>
+            <ToggleInput value={jump} onChange={onJumpChange} />
+          </InlineField>
+        </>
+      )}
       <InlineField label=<AppText portal>[[MAKE_POLYGON]]</AppText> inert={!polygon && !canMakePolygon}>
         <ToggleInput value={polygon} onChange={onPolygonChange} />
       </InlineField>
