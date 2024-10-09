@@ -166,6 +166,10 @@ export const AppCanvas: React.FC = () => {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
+  const getWrapperSize = useCallback(
+    () => getWrapper()?.getBoundingClientRect() ?? { width: 0, height: 0 },
+    [getWrapper],
+  );
   const {
     setViewport,
     zoomView,
@@ -855,7 +859,12 @@ export const AppCanvas: React.FC = () => {
       {textEditor}
       {linkMenu}
       {contextMenu ? (
-        <ContextMenu items={contextMenu.items} point={contextMenu.point} onClickItem={onClickContextMenuItem} />
+        <ContextMenu
+          items={contextMenu.items}
+          point={contextMenu.point}
+          onClickItem={onClickContextMenuItem}
+          getContainerSize={getWrapperSize}
+        />
       ) : undefined}
     </>
   );

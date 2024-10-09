@@ -1,17 +1,19 @@
-import { IVec2 } from "okageo";
+import { add, IVec2 } from "okageo";
 import { ContextMenuItem } from "../composables/states/types";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
 import { AppText } from "./molecules/AppText";
 import iconDropdown from "../assets/icons/dropdown.svg";
+import { Size } from "../models";
 
 interface Props {
   items: ContextMenuItem[];
   point: IVec2;
   onClickItem?: (key: string, meta?: any) => void;
+  getContainerSize?: () => Size;
 }
 
-export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
+export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, getContainerSize }) => {
   const handleClick = useCallback(
     (item: ContextMenuItem) => {
       if ("separator" in item) return;
@@ -20,11 +22,16 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem }) => {
     [onClickItem],
   );
 
+  const ref = useRef<HTMLDivElement>(null);
+  const { diff } = usePanelWithinViewport(ref, getContainerSize);
+  const p = diff ? add(diff, point) : point;
+
   return (
     <div
-      className="fixed border left-0 top-0 bg-white"
+      ref={ref}
+      className={"fixed border left-0 top-0 bg-white" + (diff ? "" : " opacity-0")}
       style={{
-        transform: `translate(${point.x}px, ${point.y}px)`,
+        transform: `translate(${p.x}px, ${p.y}px)`,
       }}
     >
       <div className="flex flex-col">
@@ -100,4 +107,28 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickIte
       ) : undefined}
     </div>
   );
+};
+
+const PANEL_OFFSET = 4;
+
+const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement>, getContainerSize?: () => Size) => {
+  const [diff, setDiff] = useState<IVec2>();
+
+  useEffect(() => {
+    if (!panelRef.current || !getContainerSize) return;
+
+    const viewportSize = getContainerSize();
+    const rect = panelRef.current.getBoundingClientRect();
+    let dx = 0;
+    if (rect.right > viewportSize.width + PANEL_OFFSET) {
+      dx = -rect.width;
+    }
+    let dy = 0;
+    if (rect.bottom > viewportSize.height + PANEL_OFFSET) {
+      dy = viewportSize.height - rect.bottom - PANEL_OFFSET;
+    }
+    setDiff({ x: dx, y: dy });
+  }, [panelRef, getContainerSize]);
+
+  return { diff };
 };
