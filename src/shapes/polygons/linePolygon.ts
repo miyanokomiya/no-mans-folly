@@ -6,6 +6,7 @@ import { LineBodyItem, LineShape } from "../line";
 import { Shape } from "../../models";
 import { AffineMatrix, applyAffine } from "okageo";
 import { transformBezierCurveControl } from "../../utils/path";
+import { isSizeChanged } from "../rectPolygon";
 
 export type LinePolygonShape = SimplePolygonShape & {
   path: SimplePath;
@@ -33,7 +34,7 @@ export const struct: ShapeStruct<LinePolygonShape> = {
   },
   resize(shape, resizingAffine) {
     const patch = baseStruct.resize(shape, resizingAffine);
-    if (!("width" in patch) && !("height" in patch)) return patch;
+    if (!isSizeChanged(shape, patch)) return patch;
 
     const ret: Partial<LinePolygonShape> = { ...patch };
     const affine: AffineMatrix = [

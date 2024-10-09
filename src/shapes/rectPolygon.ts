@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2, getRectCenter, multiAffines } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, MINVALUE, getRectCenter, multiAffines } from "okageo";
 import { Shape } from "../models";
 
 export type RectPolygonShape = Shape & {
@@ -38,4 +38,10 @@ export function getShapeDetransform(shape: RectPolygonShape): AffineMatrix {
     [cos, -sin, sin, cos, 0, 0],
     [1, 0, 0, 1, -center.x, -center.y],
   ]);
+}
+
+export function isSizeChanged(shape: RectPolygonShape, { width, height }: Partial<RectPolygonShape>): boolean {
+  if (width !== undefined && Math.abs(width - shape.width) > MINVALUE) return true;
+  if (height !== undefined && Math.abs(height - shape.height) > MINVALUE) return true;
+  return false;
 }
