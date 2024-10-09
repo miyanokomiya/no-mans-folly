@@ -48,7 +48,9 @@ export function patchLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon:
 }
 
 function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LinePolygonShape): LineShape {
-  const srcVertices = linePolygon.srcLine.vertices;
+  const srcVertices = linePolygon.srcLine?.vertices ?? linePolygon.path.path.map((p) => ({ p }));
+  const srcCurves = linePolygon.srcLine?.curves ?? linePolygon.path.curves;
+
   const p = srcVertices[0].p;
   const q = srcVertices[srcVertices.length - 1].p;
   const body = srcVertices.slice(1, srcVertices.length - 1);
@@ -58,6 +60,7 @@ function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LineP
     p,
     q,
     body: body.length > 0 ? body : undefined,
+    curves: srcCurves,
   });
   const shifted = {
     ...normalizedLine,
@@ -67,21 +70,24 @@ function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LineP
 }
 
 function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curves"]): SimplePath {
-  const ret: Required<SimplePath> = { path: [], curves: [] };
+  const ret: SimplePath = { path: [], curves: [] };
 
   getSegments(vertices).map((seg, i) => {
     const c = curves?.[i];
     if (!c || !isArcControl(c)) {
       ret.path.push(seg[0]);
-      ret.curves.push(c);
+      ret.curves!.push(c);
       return;
     }
 
     const path = covertArcToBezier(seg, c);
     ret.path.push(...path.path.slice(0, path.path.length - 1));
-    if (path.curves) ret.curves.push(...path.curves);
+    if (path.curves) ret.curves!.push(...path.curves);
   });
   ret.path.push(vertices[vertices.length - 1]);
+  if (ret.curves!.every((c) => !c)) {
+    ret.curves = undefined;
+  }
 
   return ret;
 }

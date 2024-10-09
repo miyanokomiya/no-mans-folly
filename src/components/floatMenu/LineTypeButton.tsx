@@ -23,7 +23,7 @@ interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
   defaultDirection?: PopupDirection;
-  currentType: LineType;
+  currentType?: LineType;
   currentCurve?: CurveType;
   onChange?: (lineType: LineType, curveType?: CurveType) => void;
   jump?: boolean;

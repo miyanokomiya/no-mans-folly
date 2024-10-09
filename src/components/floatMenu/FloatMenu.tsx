@@ -562,8 +562,6 @@ export const FloatMenu: React.FC<Option> = ({
             <div className="h-8 mx-0.5 border"></div>
             <LineTypeButton
               {...popupButtonCommonProps}
-              currentType={indexLinePolygonShape.srcLine.lineType}
-              currentCurve={indexLinePolygonShape.srcLine.curveType}
               onChange={onLineTypeChanged}
               polygon={true}
               onPolygonChange={onLinePolygonChanged}

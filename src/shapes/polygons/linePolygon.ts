@@ -9,7 +9,7 @@ import { transformBezierCurveControl } from "../../utils/path";
 
 export type LinePolygonShape = SimplePolygonShape & {
   path: SimplePath;
-  srcLine: Pick<LineShape, "curves" | "lineType" | "curveType"> & {
+  srcLine?: Pick<LineShape, "curves" | "lineType" | "curveType"> & {
     vertices: LineBodyItem[];
   };
 };
@@ -44,10 +44,16 @@ export const struct: ShapeStruct<LinePolygonShape> = {
       0,
       0,
     ];
+
     ret.path = { path: shape.path.path.map((p) => applyAffine(affine, p)) };
     if (shape.path.curves) {
       ret.path.curves = shape.path.curves.map((c) => (c ? transformBezierCurveControl(c, affine) : c));
     }
+
+    // Once the shape is resized, it can no longer retrieve the source line.
+    // Because arc curves can't be resized unproportionally.
+    ret.srcLine = undefined;
+
     return ret;
   },
   getTextRangeRect: undefined,
