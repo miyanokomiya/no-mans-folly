@@ -1,13 +1,14 @@
 import type { AppCanvasState } from "../core";
 import { LineShape, getEdges } from "../../../../shapes/line";
-import { IVec2, add, getSymmetry } from "okageo";
+import { IVec2, add, getSymmetry, isSame } from "okageo";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
-import { BezierCurveControl } from "../../../../models";
+import { BezierCurveControl, CurveControl } from "../../../../models";
 import { renderOutlinedCircle } from "../../../../utils/renderer";
 import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult } from "../../../shapeSnapping";
 import { isBezieirControl } from "../../../../utils/path";
 import { BEZIER_ANCHOR_SIZE, renderBezierControls } from "../../../lineBounding";
+import { ISegment } from "../../../../utils/geometry";
 
 interface Option {
   lineShape: LineShape;
@@ -80,21 +81,26 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
               : { c1: currentBezier?.c1 ?? edge[0], c2: p };
 
           if (symmetricAvailable && event.data.shift) {
-            if (symmetricAvailable === "prev") {
-              const prevEdge = edges[option.index - 1];
-              const prevC = curves[option.index - 1];
-              if (!prevC) {
-                curves[option.index - 1] = { c1: prevEdge[0], c2: getSymmetry(p, prevEdge[1]) };
-              } else if (isBezieirControl(prevC)) {
-                curves[option.index - 1] = { c1: prevC.c1, c2: getSymmetry(p, prevEdge[1]) };
+            switch (symmetricAvailable) {
+              case "prev": {
+                const prevIndex = option.index - 1;
+                curves[prevIndex] = getSymmetricPrevCurveControl(edges, curves, prevIndex, p);
+                break;
               }
-            } else if (symmetricAvailable === "next") {
-              const nextEdge = edges[option.index + 1];
-              const nextC = curves[option.index + 1];
-              if (!nextC) {
-                curves[option.index + 1] = { c1: getSymmetry(p, nextEdge[0]), c2: nextEdge[1] };
-              } else if (isBezieirControl(nextC)) {
-                curves[option.index + 1] = { c1: getSymmetry(p, nextEdge[0]), c2: nextC.c2 };
+              case "next": {
+                const nextIndex = option.index + 1;
+                curves[nextIndex] = getSymmetricNextCurveControl(edges, curves, nextIndex, p);
+                break;
+              }
+              case "loop-first": {
+                const prevIndex = edges.length - 1;
+                curves[prevIndex] = getSymmetricPrevCurveControl(edges, curves, prevIndex, p);
+                break;
+              }
+              case "loop-last": {
+                const nextIndex = 0;
+                curves[nextIndex] = getSymmetricNextCurveControl(edges, curves, nextIndex, p);
+                break;
               }
             }
           }
@@ -144,7 +150,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
   };
 }
 
-function checkSymmetricAvailable(option: Option): "prev" | "next" | undefined {
+function checkSymmetricAvailable(option: Option): "prev" | "next" | "loop-first" | "loop-last" | undefined {
   const edges = getEdges(option.lineShape);
   const curves = option.lineShape.curves?.concat() ?? [];
 
@@ -154,5 +160,46 @@ function checkSymmetricAvailable(option: Option): "prev" | "next" | undefined {
   } else if (option.subIndex === 1 && option.index < edges.length - 1) {
     const nextC = curves[option.index + 1];
     if (!nextC || isBezieirControl(nextC)) return "next";
+  }
+
+  if (isSame(option.lineShape.p, option.lineShape.q)) {
+    if (option.index === 0 && option.subIndex === 0) {
+      const prevC = curves[edges.length - 1];
+      if (!prevC || isBezieirControl(prevC)) return "loop-first";
+    }
+    if (option.index === edges.length - 1 && option.subIndex === 1) {
+      const nextC = curves[0];
+      if (!nextC || isBezieirControl(nextC)) return "loop-last";
+    }
+  }
+}
+
+function getSymmetricPrevCurveControl(
+  edges: ISegment[],
+  curves: LineShape["curves"],
+  prevIndex: number,
+  p: IVec2,
+): CurveControl | undefined {
+  const prevEdge = edges[prevIndex];
+  const prevC = curves?.[prevIndex];
+  if (!prevC) {
+    return { c1: prevEdge[0], c2: getSymmetry(p, prevEdge[1]) };
+  } else if (isBezieirControl(prevC)) {
+    return { c1: prevC.c1, c2: getSymmetry(p, prevEdge[1]) };
+  }
+}
+
+function getSymmetricNextCurveControl(
+  edges: ISegment[],
+  curves: LineShape["curves"],
+  nextIndex: number,
+  p: IVec2,
+): CurveControl | undefined {
+  const nextEdge = edges[nextIndex];
+  const nextC = curves?.[nextIndex];
+  if (!nextC) {
+    return { c1: getSymmetry(p, nextEdge[0]), c2: nextEdge[1] };
+  } else if (isBezieirControl(nextC)) {
+    return { c1: getSymmetry(p, nextEdge[0]), c2: nextC.c2 };
   }
 }
