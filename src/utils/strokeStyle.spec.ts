@@ -2,7 +2,7 @@ import { expect, describe, test, vi } from "vitest";
 import {
   applyStrokeStyle,
   createStrokeStyle,
-  getLineDashArray,
+  getLineDashArrayWithCap,
   isSameStrokeStyle,
   renderStrokeSVGAttributes,
 } from "./strokeStyle";
@@ -80,7 +80,17 @@ describe("renderStrokeSVGAttributes", () => {
       "stroke-width": 10,
       "stroke-linecap": "round",
       "stroke-linejoin": "bevel",
-      "stroke-dasharray": getLineDashArray("dot", 10).join(" "),
+      "stroke-dasharray": getLineDashArrayWithCap("dot", "round", 10).join(" "),
     });
+  });
+});
+
+describe("getLineDashArrayWithCap", () => {
+  test("should adjust dash array when line cap isn't butt", () => {
+    expect(getLineDashArrayWithCap("dot", "butt", 10)).toEqual([10, 10]);
+    expect(getLineDashArrayWithCap("dot", "round", 10)).toEqual([0.01, 20]);
+    expect(getLineDashArrayWithCap("dot", "square", 10)).toEqual([0.01, 20]);
+    expect(getLineDashArrayWithCap("short", "round", 10)).toEqual([20, 20]);
+    expect(getLineDashArrayWithCap("long", "round", 10)).toEqual([50, 20]);
   });
 });

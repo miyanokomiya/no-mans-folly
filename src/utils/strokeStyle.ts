@@ -36,7 +36,7 @@ export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeSt
   ctx.strokeStyle = rednerRGBA(stroke.color);
   const width = getStrokeWidth(stroke);
   ctx.lineWidth = width;
-  ctx.setLineDash(getLineDashArray(stroke.dash, width));
+  ctx.setLineDash(getLineDashArrayWithCap(stroke.dash, stroke.lineCap, width));
   ctx.lineCap = getLineCap(stroke.lineCap);
   ctx.lineJoin = getLineJoin(stroke.lineJoin);
 }
@@ -54,7 +54,7 @@ export function applyDefaultStrokeStyle(ctx: CanvasRenderingContext2D) {
   ctx.lineJoin = "miter";
 }
 
-export function getLineDashArray(lineDash: LineDash, width = 1): number[] {
+function getLineDashArray(lineDash: LineDash, width = 1): number[] {
   switch (lineDash) {
     case "dot":
       return [width, width];
@@ -67,6 +67,26 @@ export function getLineDashArray(lineDash: LineDash, width = 1): number[] {
   }
 }
 
+export function getLineDashArrayWithCap(lineDash: LineDash, lineCap: CanvasLineCap = "butt", width = 1): number[] {
+  switch (lineCap) {
+    case "butt":
+      return getLineDashArray(lineDash, width);
+    default: {
+      switch (lineDash) {
+        case "dot":
+          // Stroke part must have nonzero value to keep the direction
+          return [0.01, width * 2];
+        case "short":
+          return [width * 2, width * 2];
+        case "long":
+          return [width * 5, width * 2];
+        default:
+          return [];
+      }
+    }
+  }
+}
+
 export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
   return stroke.disabled
     ? { stroke: "none" }
@@ -76,6 +96,8 @@ export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
         "stroke-width": stroke.width,
         "stroke-linecap": getLineCap(stroke.lineCap),
         "stroke-linejoin": getLineJoin(stroke.lineJoin),
-        "stroke-dasharray": stroke.dash ? getLineDashArray(stroke.dash, stroke.width).join(" ") : undefined,
+        "stroke-dasharray": stroke.dash
+          ? getLineDashArrayWithCap(stroke.dash, stroke.lineCap, stroke.width).join(" ")
+          : undefined,
       };
 }

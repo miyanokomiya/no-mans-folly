@@ -3,7 +3,7 @@ import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { Color, LineDash, StrokeStyle } from "../../models";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
-import { getLineCap, getLineDap, getLineDashArray, getLineJoin } from "../../utils/strokeStyle";
+import { getLineCap, getLineDap, getLineDashArrayWithCap, getLineJoin } from "../../utils/strokeStyle";
 import { InlineField } from "../atoms/InlineField";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 
@@ -158,7 +158,7 @@ interface LineDashButtonProps {
 
 const LineDashButton: React.FC<LineDashButtonProps> = ({ lineDash, highlight, onClick }) => {
   const dashArray = useMemo(() => {
-    return getLineDashArray(lineDash, 4).join(" ");
+    return getLineDashArrayWithCap(lineDash, "butt", 4).join(" ");
   }, [lineDash]);
 
   const handleClick = useCallback(() => {
