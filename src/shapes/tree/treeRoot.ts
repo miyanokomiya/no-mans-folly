@@ -7,7 +7,7 @@ import { struct as recntagleStruct } from "../rectangle";
 import { isPointOnGroup } from "../group";
 import { TreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
 import { applyLocalSpace } from "../../utils/renderer";
-import { getRotatedRectAffine } from "../../utils/geometry";
+import { getRotatedRectAffine, getWrapperRect } from "../../utils/geometry";
 import { renderTransform } from "../../utils/svgElements";
 import { CHILD_MARGIN, SIBLING_MARGIN } from "../../utils/layouts/tree";
 
@@ -81,6 +81,19 @@ export const struct: ShapeStruct<TreeRootShape> = {
         },
       ],
     };
+  },
+  getWrapperRect(shape, shapeContext, includeBounds) {
+    const selfWrapperRect = recntagleStruct.getWrapperRect(shape, shapeContext, includeBounds);
+    if (!includeBounds) return selfWrapperRect;
+
+    const children = shapeContext?.treeNodeMap[shape.id].children;
+    if (!children || children.length === 0) return selfWrapperRect;
+
+    const rects = children.map((c) => {
+      const s = shapeContext.shapeMap[c.id];
+      return shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext, includeBounds);
+    });
+    return getWrapperRect([selfWrapperRect, ...rects]);
   },
   resize(shape, resizingAffine) {
     return resizeTreeShape(shape, resizingAffine, MIN_WIDTH, MIN_HEIGHT);

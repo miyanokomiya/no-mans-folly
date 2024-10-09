@@ -95,19 +95,24 @@ export function newShapeSVGRenderer(option: Option) {
     }
     if (node.children.length === 0) return;
 
-    const parentElm = elm ?? root;
-    const isParentGroup = isGroupShape(shape);
+    if (!elm || !isGroupShape(shape)) {
+      // Avoid nesting children when the shape isn't a group.
+      // Only group shapes can work as <g> elements.
+      node.children.forEach((c) => renderShapeTreeStep(root, ctx, c));
+      return;
+    }
+
     const [others, clips] = splitList(node.children, (c) => {
       return !mergedShapeMap[c.id].clipping;
     });
 
-    if (!elm || !isParentGroup || clips.length === 0) {
-      others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
+    if (clips.length === 0) {
+      others.forEach((c) => renderShapeTreeStep(elm, ctx, c));
       return;
     }
 
     clipWithinGroup(option.shapeComposite, shape, clips, others, root, elm, () => {
-      others.forEach((c) => renderShapeTreeStep(parentElm, ctx, c));
+      others.forEach((c) => renderShapeTreeStep(elm, ctx, c));
     });
   }
 
