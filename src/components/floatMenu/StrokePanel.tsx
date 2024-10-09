@@ -5,6 +5,7 @@ import { SliderInput } from "../atoms/inputs/SliderInput";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { getLineCap, getLineDap, getLineDashArray, getLineJoin } from "../../utils/strokeStyle";
 import { InlineField } from "../atoms/InlineField";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 
 const LINE_DASH_KEYS: LineDash[] = ["dot", "short", "long", "solid"];
 const LINE_CAP_KEYS: CanvasLineCap[] = ["butt", "square", "round"];
@@ -52,7 +53,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
   );
 
   const dashButtons = (
-    <InlineField label="Line dash:">
+    <InlineField label="Dash:">
       <div className="flex items-center justify-end gap-1">
         {LINE_DASH_KEYS.map((lineDash) => {
           return (
@@ -76,7 +77,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
   );
 
   const capButtons = (
-    <InlineField label="Line cap:">
+    <InlineField label="Cap:">
       <div className="flex items-center justify-end gap-1">
         {LINE_CAP_KEYS.map((lineCap) => {
           return (
@@ -100,7 +101,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
   );
 
   const joinButtons = (
-    <InlineField label="Line join:">
+    <InlineField label="Join:">
       <div className="flex items-center justify-end gap-1">
         {LINE_JOIN_KEYS.map((lineJoin) => {
           return (
@@ -129,9 +130,11 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           <SliderInput min={1} max={20} step={1} value={stroke.width ?? 1} onChanged={onWidthChanged} showValue />
         </div>
       </div>
-      <div className="mt-2">{capButtons}</div>
-      <div className="mt-2">{joinButtons}</div>
-      <div className="mt-2">{dashButtons}</div>
+      <BlockGroupField label="Stroke styles" accordionKey="stroke-style">
+        <div>{capButtons}</div>
+        <div>{joinButtons}</div>
+        <div>{dashButtons}</div>
+      </BlockGroupField>
       <div className={stroke.disabled ? "opacity-50 pointer-events-none" : ""}>
         <div className="mt-2 flex items-center">
           <span>Alpha:</span>
