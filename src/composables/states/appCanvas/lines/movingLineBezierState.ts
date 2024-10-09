@@ -20,11 +20,10 @@ interface Option {
 export function newMovingLineBezierState(option: Option): AppCanvasState {
   const edges = getEdges(option.lineShape);
   const edge = edges[option.index];
+  const symmetricAvailable = checkSymmetricAvailable(option.lineShape, option.index, option.subIndex);
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let currentBezier: BezierCurveControl | undefined;
-
-  const symmetricAvailable = checkSymmetricAvailable(option);
 
   return {
     getLabel: () => "MovingLineBezier",
@@ -150,24 +149,28 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
   };
 }
 
-function checkSymmetricAvailable(option: Option): "prev" | "next" | "loop-first" | "loop-last" | undefined {
-  const edges = getEdges(option.lineShape);
-  const curves = option.lineShape.curves?.concat() ?? [];
+export function checkSymmetricAvailable(
+  lineShape: LineShape,
+  index: number,
+  subIndex: 0 | 1,
+): "prev" | "next" | "loop-first" | "loop-last" | undefined {
+  const edges = getEdges(lineShape);
+  const curves = lineShape.curves?.concat() ?? [];
 
-  if (option.subIndex === 0 && option.index > 0) {
-    const prevC = curves[option.index - 1];
+  if (subIndex === 0 && index > 0) {
+    const prevC = curves[index - 1];
     if (!prevC || isBezieirControl(prevC)) return "prev";
-  } else if (option.subIndex === 1 && option.index < edges.length - 1) {
-    const nextC = curves[option.index + 1];
+  } else if (subIndex === 1 && index < edges.length - 1) {
+    const nextC = curves[index + 1];
     if (!nextC || isBezieirControl(nextC)) return "next";
   }
 
-  if (isSame(option.lineShape.p, option.lineShape.q)) {
-    if (option.index === 0 && option.subIndex === 0) {
+  if (isSame(lineShape.p, lineShape.q)) {
+    if (index === 0 && subIndex === 0) {
       const prevC = curves[edges.length - 1];
       if (!prevC || isBezieirControl(prevC)) return "loop-first";
     }
-    if (option.index === edges.length - 1 && option.subIndex === 1) {
+    if (index === edges.length - 1 && subIndex === 1) {
       const nextC = curves[0];
       if (!nextC || isBezieirControl(nextC)) return "loop-last";
     }
