@@ -1,7 +1,9 @@
 import {
+  AffineMatrix,
   IVec2,
   MINVALUE,
   add,
+  applyAffine,
   divideBezier3,
   getCrossSegAndBezier3WithT,
   getDistance,
@@ -244,6 +246,10 @@ export function getBezierControlForArc(c: IVec2, p0: IVec2, p1: IVec2): BezierCu
 
 export function shiftBezierCurveControl(c: BezierCurveControl, v: IVec2): BezierCurveControl {
   return { c1: add(c.c1, v), c2: add(c.c2, v) };
+}
+
+export function transformBezierCurveControl(c: BezierCurveControl, affine: AffineMatrix): BezierCurveControl {
+  return { c1: applyAffine(affine, c.c1), c2: applyAffine(affine, c.c2) };
 }
 
 export function getSegmentVicinityFrom(seg: ISegment, curve?: CurveControl, originDistance?: number): IVec2 {

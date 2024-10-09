@@ -4,6 +4,8 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { LineBodyItem, LineShape } from "../line";
 import { Shape } from "../../models";
+import { AffineMatrix, applyAffine } from "okageo";
+import { transformBezierCurveControl } from "../../utils/path";
 
 export type LinePolygonShape = SimplePolygonShape & {
   path: SimplePath;
@@ -12,8 +14,10 @@ export type LinePolygonShape = SimplePolygonShape & {
   };
 };
 
+const baseStruct = getStructForSimplePolygon<LinePolygonShape>(getPath);
+
 export const struct: ShapeStruct<LinePolygonShape> = {
-  ...getStructForSimplePolygon<LinePolygonShape>(getPath),
+  ...baseStruct,
   label: "LinePolygon",
   create(arg = {}) {
     return {
@@ -26,6 +30,25 @@ export const struct: ShapeStruct<LinePolygonShape> = {
       path: arg.path ?? { path: [] },
       srcLine: arg.srcLine ?? { vertices: [] },
     };
+  },
+  resize(shape, resizingAffine) {
+    const patch = baseStruct.resize(shape, resizingAffine);
+    if (!("width" in patch) && !("height" in patch)) return patch;
+
+    const ret: Partial<LinePolygonShape> = { ...patch };
+    const affine: AffineMatrix = [
+      (ret.width ?? shape.width) / shape.width,
+      0,
+      0,
+      (ret.height ?? shape.height) / shape.height,
+      0,
+      0,
+    ];
+    ret.path = { path: shape.path.path.map((p) => applyAffine(affine, p)) };
+    if (shape.path.curves) {
+      ret.path.curves = shape.path.curves.map((c) => (c ? transformBezierCurveControl(c, affine) : c));
+    }
+    return ret;
   },
   getTextRangeRect: undefined,
   getTextPadding: undefined,

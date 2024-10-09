@@ -10,6 +10,7 @@ import {
   isArcControl,
   isBezieirControl,
   shiftBezierCurveControl,
+  transformBezierCurveControl,
 } from "./path";
 import { getBezierBounds, ISegment } from "./geometry";
 import { getDistance, getPedal } from "okageo";
@@ -370,6 +371,14 @@ describe("shiftBezierCurveControl", () => {
     const res0 = shiftBezierCurveControl({ c1: { x: 0, y: 0 }, c2: { x: 10, y: 20 } }, { x: 100, y: 200 });
     expect(res0.c1).toEqualPoint({ x: 100, y: 200 });
     expect(res0.c2).toEqualPoint({ x: 110, y: 220 });
+  });
+});
+
+describe("transformBezierCurveControl", () => {
+  test("should shift the control", () => {
+    const res0 = transformBezierCurveControl({ c1: { x: 10, y: 20 }, c2: { x: 100, y: 200 } }, [2, 0, 0, 3, 0, 0]);
+    expect(res0.c1).toEqualPoint({ x: 20, y: 60 });
+    expect(res0.c2).toEqualPoint({ x: 200, y: 600 });
   });
 });
 
