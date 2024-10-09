@@ -95,7 +95,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         applyCurvePath(ctx, path, curves, true);
         if (!shape.fill.disabled) {
           applyFillStyle(ctx, shape.fill);
-          ctx.fill();
+          ctx.fill("evenodd");
         }
         if (!shape.stroke.disabled) {
           applyStrokeStyle(ctx, shape.stroke);
@@ -123,6 +123,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         attributes: {
           transform: renderTransform(transform),
           d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)),
+          "fill-rule": "evenodd",
           ...renderFillSVGAttributes(shape.fill),
           ...renderStrokeSVGAttributes(shape.stroke),
         },
