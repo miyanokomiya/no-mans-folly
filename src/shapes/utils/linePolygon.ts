@@ -3,11 +3,18 @@ import { getBezierControlForArc, isArcControl } from "../../utils/path";
 import { getLinePath, LineShape } from "../line";
 import { LinePolygonShape } from "../polygons/linePolygon";
 import { SimplePath } from "../simplePolygon";
-import { getArcCurveParamsByNormalizedControl, getArcLerpFn, getSegments, ISegment } from "../../utils/geometry";
+import {
+  getArcCurveParamsByNormalizedControl,
+  getArcLerpFn,
+  getRotationAffine,
+  getSegments,
+  ISegment,
+} from "../../utils/geometry";
 import { mapReduce } from "../../utils/commons";
-import { IVec2 } from "okageo";
+import { AffineMatrix, IVec2, multiAffines } from "okageo";
 import { ArcCurveControl } from "../../models";
 import { getNakedLineShape } from "./line";
+import { getRectShapeCenter } from "../rectPolygon";
 
 export function patchLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): LinePolygonShape {
   const result = createLinePolygonFromLine(getStruct, line);
@@ -62,11 +69,17 @@ function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LineP
     body: body.length > 0 ? body : undefined,
     curves: srcCurves,
   });
-  const shifted = {
+
+  const translateAffine: AffineMatrix = [1, 0, 0, 1, linePolygon.p.x, linePolygon.p.y];
+  const shiftAffine =
+    linePolygon.rotation === 0
+      ? translateAffine
+      : multiAffines([getRotationAffine(linePolygon.rotation, getRectShapeCenter(linePolygon)), translateAffine]);
+
+  return {
     ...normalizedLine,
-    ...resizeShape(getStruct, normalizedLine, [1, 0, 0, 1, linePolygon.p.x, linePolygon.p.y]),
+    ...resizeShape(getStruct, normalizedLine, shiftAffine),
   };
-  return shifted;
 }
 
 function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curves"]): SimplePath {

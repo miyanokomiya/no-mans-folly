@@ -32,11 +32,25 @@ describe("patchLinePolygonFromLine", () => {
 });
 
 describe("patchLineFromLinePolygon", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", {
+    p: { x: 100, y: 0 },
+    body: [{ p: { x: 100, y: 100 } }],
+    q: { x: 0, y: 100 },
+  });
+
   test("should make a line from the line polygon", () => {
-    const line = createShape<LineShape>(getCommonStruct, "line", { p: { x: 100, y: 0 }, q: { x: 0, y: 50 } });
     const linePolygon = patchLinePolygonFromLine(getCommonStruct, line);
     const result = patchLineFromLinePolygon(getCommonStruct, linePolygon);
     expect(line).toEqual(result);
+  });
+
+  test("should regard rotation", () => {
+    const linePolygon = patchLinePolygonFromLine(getCommonStruct, line);
+    const result = patchLineFromLinePolygon(getCommonStruct, { ...linePolygon, rotation: Math.PI / 2 });
+    expect(result.rotation).toBeCloseTo(0);
+    expect(result.p).toEqualPoint({ x: 100, y: 100 });
+    expect(result.body?.[0].p).toEqualPoint({ x: 0, y: 100 });
+    expect(result.q).toEqualPoint({ x: 0, y: 0 });
   });
 });
 
