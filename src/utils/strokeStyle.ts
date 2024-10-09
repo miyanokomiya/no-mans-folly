@@ -9,16 +9,27 @@ export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
   };
 }
 
-function getLineCap(lineCap?: CanvasLineCap): CanvasLineCap {
+export function getLineDap(lineDap?: LineDash): LineDash {
+  return lineDap ?? "solid";
+}
+
+export function getLineCap(lineCap?: CanvasLineCap): CanvasLineCap {
   return lineCap ?? "butt";
 }
 
-function getLineJoin(lineJoin?: CanvasLineJoin): CanvasLineJoin {
+export function getLineJoin(lineJoin?: CanvasLineJoin): CanvasLineJoin {
   return lineJoin ?? "round";
 }
 
 export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
-  return a?.disabled === b?.disabled && isSameColor(a?.color, b?.color) && a?.width === b?.width && a?.dash === b?.dash;
+  return (
+    a?.disabled === b?.disabled &&
+    isSameColor(a?.color, b?.color) &&
+    a?.width === b?.width &&
+    a?.dash === b?.dash &&
+    getLineCap(a?.lineCap) === getLineCap(b?.lineCap) &&
+    getLineJoin(a?.lineJoin) === getLineJoin(b?.lineJoin)
+  );
 }
 
 export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeStyle) {

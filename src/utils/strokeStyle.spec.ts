@@ -33,6 +33,12 @@ describe("isSameStrokeStyle", () => {
     ).toBe(false);
     expect(isSameStrokeStyle(createStrokeStyle({ width: 1 }), createStrokeStyle({ width: 2 }))).toBe(false);
     expect(isSameStrokeStyle(createStrokeStyle({ dash: "dot" }), createStrokeStyle({ dash: "short" }))).toBe(false);
+    expect(isSameStrokeStyle(createStrokeStyle({ lineCap: "butt" }), createStrokeStyle({ lineCap: "round" }))).toBe(
+      false,
+    );
+    expect(isSameStrokeStyle(createStrokeStyle({ lineJoin: "bevel" }), createStrokeStyle({ lineJoin: "round" }))).toBe(
+      false,
+    );
   });
 });
 
