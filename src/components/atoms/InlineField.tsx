@@ -10,7 +10,7 @@ export const InlineField: React.FC<Props> = ({ label, inert, fullBody, children 
 
   if (inert) {
     return (
-      <div className="flex items-center opacity-50">
+      <div className="flex items-center gap-2 opacity-50">
         <span>{label}</span>
         <div className={bodyClass} {...{ inert: "" }}>
           {children}
@@ -20,7 +20,7 @@ export const InlineField: React.FC<Props> = ({ label, inert, fullBody, children 
   }
 
   return (
-    <label className="flex items-center">
+    <label className="flex items-center gap-2">
       <span>{label}</span>
       <div className={bodyClass}>{children}</div>
     </label>
