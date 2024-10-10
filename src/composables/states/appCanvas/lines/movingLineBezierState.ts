@@ -9,6 +9,7 @@ import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult }
 import { isBezieirControl } from "../../../../utils/path";
 import { BEZIER_ANCHOR_SIZE, renderBezierControls } from "../../../lineBounding";
 import { ISegment } from "../../../../utils/geometry";
+import { fillArray } from "../../../../utils/commons";
 
 interface Option {
   lineShape: LineShape;
@@ -45,7 +46,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
 
-      const curves = option.lineShape.curves?.concat() ?? [];
+      const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
       const currentCurve = option.lineShape.curves?.[option.index];
       if (isBezieirControl(currentCurve)) {
         currentBezier = currentCurve;
@@ -73,7 +74,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
 
-          const curves = option.lineShape.curves?.concat() ?? [];
+          const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
           curves[option.index] =
             option.subIndex === 0
               ? { c1: p, c2: currentBezier?.c2 ?? edge[1] }

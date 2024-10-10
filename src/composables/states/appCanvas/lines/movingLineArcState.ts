@@ -14,6 +14,7 @@ import {
 } from "../../../vectorSnapping";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { applyPath } from "../../../../utils/renderer";
+import { fillArray } from "../../../../utils/commons";
 
 interface Option {
   lineShape: LineShape;
@@ -50,7 +51,7 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
       });
 
       const d = rotateFn(sub(option.p, edge[0]), true);
-      const curves = option.lineShape.curves?.concat() ?? [];
+      const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
       curves[option.index] = { d };
       ctx.setTmpShapeMap(
         getPatchAfterLayouts(ctx.getShapeComposite(), {
@@ -72,7 +73,7 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           const p = snappingResult?.p ?? point;
           const d = rotateFn(sub(p, edge[0]), true);
 
-          const curves = option.lineShape.curves?.concat() ?? [];
+          const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
           curves[option.index] = d.y !== 0 ? { d } : undefined;
           ctx.setTmpShapeMap(
             getPatchAfterLayouts(ctx.getShapeComposite(), {

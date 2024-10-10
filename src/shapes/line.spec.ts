@@ -850,6 +850,24 @@ describe("deleteVertex", () => {
     });
   });
 
+  test("should not change curve controls of unrelated vertices", () => {
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 0, y: 10 },
+      body: [{ p: { x: 10, y: 0 } }, { p: { x: 10, y: 10 } }],
+      curves: [{ d: { x: 0, y: 1 } }, undefined, { d: { x: 0, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 0)).toEqual({
+      p: { x: 10, y: 0 },
+      body: [{ p: { x: 10, y: 10 } }],
+      curves: [undefined, { d: { x: 0, y: 2 } }],
+    });
+    expect(deleteVertex(shape0, 1)).toEqual({
+      body: [{ p: { x: 10, y: 10 } }],
+      curves: [{ d: { x: 0, y: 1 } }, { d: { x: 0, y: 2 } }],
+    });
+  });
+
   test("should delete the start point", () => {
     const c = { id: "a", rate: { x: 0.5, y: 0.2 } };
     const shape0 = struct.create({

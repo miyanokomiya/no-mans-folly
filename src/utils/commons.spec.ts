@@ -323,3 +323,15 @@ describe("isObjectEmpty", () => {
     expect(target.isObjectEmpty({ a: undefined, b: 1 }, true)).toBe(false);
   });
 });
+
+describe("fillArray", () => {
+  test("should return an array filled up to the count", () => {
+    expect(target.fillArray(2, 0, [])).toEqual([0, 0]);
+    expect(target.fillArray(3, undefined)).toEqual([undefined, undefined, undefined]);
+    expect(target.fillArray(3, 0, [1, 2])).toEqual([1, 2, 0]);
+  });
+  test("should always return new array", () => {
+    const arr = [1, 2];
+    expect(target.fillArray(2, 0, arr)).not.toBe(arr);
+  });
+});

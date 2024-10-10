@@ -188,3 +188,14 @@ export function isObjectEmpty<T extends object>(obj: T, ignoreUndefined = false)
   }
   return true;
 }
+
+/**
+ * This method always returns new array.
+ */
+export function fillArray<T>(count: number, initialValue: T, src: T[] = []): T[] {
+  const ret: T[] = src.concat();
+  while (ret.length < count) {
+    ret.push(initialValue);
+  }
+  return ret;
+}
