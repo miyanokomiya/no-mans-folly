@@ -43,7 +43,7 @@ export function useCanvas(
     scaleMax?: number;
   } = {},
 ) {
-  const scaleMin = options.scaleMin ?? 0.1;
+  const scaleMin = options.scaleMin ?? 0.01;
   const scaleMax = options.scaleMax ?? 10;
 
   const [viewSize, setViewSize] = useState<Size>({ width: 600, height: 100 });
