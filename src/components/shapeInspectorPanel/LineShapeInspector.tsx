@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from "react";
-import { LineShape, getConnection, getLinePath, patchVertex } from "../../shapes/line";
+import { LineShape, detachVertex, getConnection, getLinePath, patchVertex } from "../../shapes/line";
 import { BlockField } from "../atoms/BlockField";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
 import { ConnectionPoint } from "../../models";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
+import iconLineDetach from "../../assets/icons/line_detach.svg";
 
 interface Props {
   targetShape: LineShape;
@@ -65,6 +66,14 @@ export const LineShapeInspector: React.FC<Props> = ({
     [targetShape, updateTmpTargetShape],
   );
 
+  const handleDetachClick = useCallback(
+    (index: number) => {
+      updateTmpTargetShape(detachVertex(targetShape, index));
+      commit();
+    },
+    [targetShape, updateTmpTargetShape, commit],
+  );
+
   return (
     <>
       <MultipleShapesInspector
@@ -74,13 +83,22 @@ export const LineShapeInspector: React.FC<Props> = ({
         updateTmpShapes={updateTmpShapes}
         readyState={readyState}
       />
-      {targetShape.lineType === "elbow"
-        ? undefined // Vertices of elbow line should be derived automatically.
-        : targetTmpVertices.map((v, i) => (
-            <BlockField key={i} label={getVertexLabel(i, targetTmpVertices.length, !!targetTmpConnections[i])}>
-              <VertexField index={i} value={v} onChange={handleVertexChange} connection={targetTmpConnections[i]} />
-            </BlockField>
-          ))}
+      {targetShape.lineType === "elbow" ? undefined : ( // Vertices of elbow line should be derived automatically.
+        <BlockField label="Vertices">
+          <div className="w-full flex flex-col gap-1">
+            {targetTmpVertices.map((v, i) => (
+              <VertexField
+                key={i}
+                index={i}
+                value={v}
+                onChange={handleVertexChange}
+                connection={targetTmpConnections[i]}
+                onDetachClick={handleDetachClick}
+              />
+            ))}
+          </div>
+        </BlockField>
+      )}
     </>
   );
 };
@@ -90,9 +108,10 @@ interface VertexFieldProps {
   value: IVec2;
   onChange?: (index: number, val: IVec2, draft?: boolean) => void;
   connection?: ConnectionPoint;
+  onDetachClick?: (index: number) => void;
 }
 
-export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange, connection }) => {
+export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange, connection, onDetachClick }) => {
   const handleChange = useCallback(
     (val: IVec2, draft = false) => {
       onChange?.(index, val, draft);
@@ -100,21 +119,18 @@ export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange
     [index, onChange],
   );
 
-  return <PointField value={value} onChange={handleChange} disabled={!!connection} />;
+  const handleDetachClick = useCallback(() => {
+    onDetachClick?.(index);
+  }, [index, onDetachClick]);
+
+  return (
+    <div className="flex items-center justify-end">
+      {connection ? (
+        <button type="button" className="mr-2 p-1 border rounded" title="Detach" onClick={handleDetachClick}>
+          <img className="w-6 h-6" src={iconLineDetach} alt="Detach vertex" />
+        </button>
+      ) : undefined}
+      <PointField value={value} onChange={handleChange} disabled={!!connection} />
+    </div>
+  );
 };
-
-function getVertexLabel(index: number, size: number, connected?: boolean): string {
-  let ret: string;
-  switch (index) {
-    case 0:
-      ret = "Start";
-      break;
-    case size - 1:
-      ret = "End";
-      break;
-    default:
-      ret = `Body ${index}`;
-  }
-
-  return ret + (connected ? " (connected)" : "");
-}

@@ -478,6 +478,11 @@ export function patchVertex(
   return ret;
 }
 
+export function detachVertex(shape: LineShape, index: number): Partial<LineShape> {
+  const vertices = getLinePath(shape);
+  return patchVertex(shape, index, vertices[index], undefined);
+}
+
 function shiftCurves(
   vertices: IVec2[],
   curves: LineShape["curves"],

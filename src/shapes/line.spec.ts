@@ -3,6 +3,7 @@ import {
   addNewVertex,
   combineJumps,
   deleteVertex,
+  detachVertex,
   getBackwardVicinity,
   getForwardVicinity,
   getLinePath,
@@ -431,6 +432,17 @@ describe("patchVertex", () => {
       body: [{ p: { x: -1, y: -1 } }],
       curves: [{ c1: { x: 0, y: 0 }, c2: { x: -3, y: -4 } }, { c1: { x: -3, y: -4 }, c2: { x: 0, y: 0 } }, curve],
     });
+  });
+});
+
+describe("detachVertex", () => {
+  test("should return patched object to detach the vertex", () => {
+    const shape = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      body: [{ p: { x: 2, y: 3 }, c: { id: "a", rate: { x: 0.2, y: 0.3 } } }, { p: { x: 3, y: 4 } }],
+    });
+    expect(detachVertex(shape, 1).body).toEqual([{ p: { x: 2, y: 3 } }, { p: { x: 3, y: 4 } }]);
   });
 });
 
