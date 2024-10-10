@@ -1,3 +1,5 @@
+import iconExternalLink from "../../../assets/icons/external_link.svg";
+
 interface Props {
   children: React.ReactNode;
   type?: "button" | "submit";
@@ -29,12 +31,13 @@ interface LinkProps {
 export const ListLink: React.FC<LinkProps> = ({ children, href, external }) => {
   return (
     <a
-      className="w-full p-2 border-b last:border-none hover:bg-gray-200"
+      className="w-full p-2 flex items-center justify-between border-b last:border-none hover:bg-gray-200"
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener" : undefined}
     >
       {children}
+      {external ? <img className="ml-2 w-4 h-4" src={iconExternalLink} alt="" /> : undefined}
     </a>
   );
 };
