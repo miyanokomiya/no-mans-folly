@@ -17,6 +17,7 @@ import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
 
 interface Option {
   lineShape: LineShape;
@@ -31,6 +32,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
   let elbowHandler: ElbowLineHandler | undefined;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
 
   return {
     getLabel: () => "MovingLineVertex",
@@ -86,6 +88,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
             connectionResult = undefined;
           }
 
+          coordinateRenderer.saveCoord(vertex);
           let patch = patchVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
 
           const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
@@ -150,6 +153,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
+
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
     },
   };
 }
