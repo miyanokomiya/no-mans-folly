@@ -598,6 +598,20 @@ export function getConnection(shape: LineShape, index: number): ConnectionPoint 
   }
 }
 
+export function getConnections(shape: LineShape): (ConnectionPoint | undefined)[] {
+  const vertices = getLinePath(shape);
+  return vertices.map((_, index) => {
+    switch (index) {
+      case 0:
+        return shape.pConnection;
+      case vertices.length - 1:
+        return shape.qConnection;
+      default:
+        return shape.body?.[index - 1].c;
+    }
+  });
+}
+
 export function addNewVertex(shape: LineShape, index: number, p: IVec2, c?: ConnectionPoint): Partial<LineShape> {
   switch (index) {
     case 0:

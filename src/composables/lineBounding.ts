@@ -1,6 +1,6 @@
 import { IVec2, add, getCenter, getRadian, isSame, multi, rotate } from "okageo";
 import { BezierCurveControl, StyleScheme } from "../models";
-import { LineShape, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
+import { LineShape, getConnections, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ISegment, TAU, getCurveLerpFn, isOnDonutArc, isPointCloseToCurveSpline } from "../utils/geometry";
@@ -65,6 +65,7 @@ interface Option {
 export function newLineBounding(option: Option) {
   const lineShape = option.lineShape;
   const vertices = getLinePath(lineShape);
+  const connections = getConnections(lineShape);
   const edges = getEdges(lineShape);
   const autoCurve = lineShape.curveType === "auto";
   const curves = isCurveLine(lineShape) ? lineShape.curves : undefined;
@@ -283,18 +284,21 @@ export function newLineBounding(option: Option) {
     const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
     const style = option.styleScheme;
 
-    const points = vertices;
     const addAnchorBeziers = getAddAnchorBeziers(scale);
     const bezierViewAnchors = getBezierAnchors(scale);
 
     renderBeziers(ctx, vertices, bezierViewAnchors, bezierSize, bezierVicinitySize, scale, style);
     renderBeziers(ctx, vertices, addAnchorBeziers, bezierSize, bezierVicinitySize, scale, style);
 
-    ctx.fillStyle = "#fff";
     applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
-    points.forEach((p, i) => {
+    vertices.forEach((p, i) => {
       if (!availableVertexIndex.has(i)) return;
 
+      if (connections[i]) {
+        applyFillStyle(ctx, { color: style.selectionPrimary });
+      } else {
+        ctx.fillStyle = "#fff";
+      }
       ctx.beginPath();
       ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
       ctx.fill();
@@ -398,7 +402,7 @@ export function newLineBounding(option: Option) {
             ctx.stroke();
           });
 
-          points.forEach((p, i) => {
+          vertices.forEach((p, i) => {
             if (!availableVertexIndex.has(i)) return;
 
             ctx.beginPath();
@@ -409,8 +413,8 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "vertex": {
-          applyFillStyle(ctx, { color: style.selectionPrimary });
-          const p = points[hitResult.index];
+          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          const p = vertices[hitResult.index];
           ctx.beginPath();
           ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
           ctx.fill();
@@ -418,7 +422,7 @@ export function newLineBounding(option: Option) {
         }
         case "edge":
         case "elbow-edge": {
-          applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
           ctx.beginPath();
           if (curves) {
             applyCurvePath(ctx, edges[hitResult.index], [curves[hitResult.index]]);
