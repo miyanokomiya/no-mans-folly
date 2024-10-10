@@ -93,6 +93,10 @@ export const CONTEXT_MENU_ITEM_SRC = {
     label: "Delete vertex",
     key: "DELETE_LINE_VERTEX",
   },
+  DETACH_LINE_VERTEX: {
+    label: "Detach vertex",
+    key: "DETACH_LINE_VERTEX",
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

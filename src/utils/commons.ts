@@ -176,6 +176,9 @@ export function convertMapToObject<T>(map: Map<string, T>): { [key: string]: T }
   return ret;
 }
 
+/**
+ * "undefined" property is considered as non-empty value unless "ignoreUndefined" is set true.
+ */
 export function isObjectEmpty<T extends object>(obj: T, ignoreUndefined = false): boolean {
   for (const key in obj) {
     if (ignoreUndefined && obj[key] === undefined) {

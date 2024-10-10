@@ -7,6 +7,7 @@ import {
 import {
   LineShape,
   deleteVertex,
+  detachVertex,
   getConnection,
   getRelativePointOn,
   patchBodyVertex,
@@ -31,8 +32,9 @@ import { optimizeLinePath } from "../../../lineSnapping";
 import { newMovingElbowSegmentState } from "./movingElbowSegmentState";
 import { newElbowLineHandler } from "../../../elbowLineHandler";
 import { newMovingLineBezierState } from "./movingLineBezierState";
+import { isObjectEmpty } from "../../../../utils/commons";
 
-type DeleteVertexMeta = {
+type VertexMetaForContextMenu = {
   index: number;
 };
 
@@ -143,6 +145,10 @@ export const newLineSelectedState = defineIntransientState(() => {
             case 1:
               return () => newPointerDownEmptyState(event.data.options);
             case 2: {
+              const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
+              // Prioritize the context menu for a vertex
+              if (hitResult?.type === "vertex") return;
+
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,
                 event,
@@ -186,9 +192,21 @@ export const newLineSelectedState = defineIntransientState(() => {
         case "contextmenu": {
           const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
           if (hitResult?.type === "vertex") {
+            const connection = getConnection(lineShape, hitResult.index);
             ctx.setContextMenuList({
               items: [
-                { ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX, meta: { index: hitResult.index } as DeleteVertexMeta },
+                ...(connection
+                  ? [
+                      {
+                        ...CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX,
+                        meta: { index: hitResult.index } as VertexMetaForContextMenu,
+                      },
+                    ]
+                  : []),
+                {
+                  ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX,
+                  meta: { index: hitResult.index } as VertexMetaForContextMenu,
+                },
                 { separator: true },
                 ...getMenuItemsForSelectedShapes(ctx),
               ],
@@ -206,8 +224,15 @@ export const newLineSelectedState = defineIntransientState(() => {
         case "contextmenu-item": {
           switch (event.data.key) {
             case CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX.key: {
-              const patch = deleteVertex(lineShape, (event.data.meta as DeleteVertexMeta).index);
-              if (Object.keys(patch).length > 0) {
+              const patch = deleteVertex(lineShape, (event.data.meta as VertexMetaForContextMenu).index);
+              if (!isObjectEmpty(patch)) {
+                ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
+              }
+              return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX.key: {
+              const patch = detachVertex(lineShape, (event.data.meta as VertexMetaForContextMenu).index);
+              if (!isObjectEmpty(patch)) {
                 ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
               }
               return ctx.states.newSelectionHubState;
