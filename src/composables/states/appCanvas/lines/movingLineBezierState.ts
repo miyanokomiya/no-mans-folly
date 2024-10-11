@@ -10,6 +10,7 @@ import { isBezieirControl } from "../../../../utils/path";
 import { BEZIER_ANCHOR_SIZE, renderBezierControls } from "../../../lineBounding";
 import { ISegment } from "../../../../utils/geometry";
 import { fillArray } from "../../../../utils/commons";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
 
 interface Option {
   lineShape: LineShape;
@@ -25,6 +26,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let currentBezier: BezierCurveControl | undefined;
+  const coordinateRenderer = newCoordinateRenderer({ coord: option.p });
 
   return {
     getLabel: () => "MovingLineBezier",
@@ -73,6 +75,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
           const point = event.data.current;
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
           const p = snappingResult ? add(point, snappingResult.diff) : point;
+          coordinateRenderer.saveCoord(p);
 
           const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
           curves[option.index] =
@@ -135,6 +138,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       const curve = line.curves?.[option.index];
       if (!isBezieirControl(curve)) return;
 
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
       renderBezierControls(renderCtx, style, scale, line);
       const p = option.subIndex === 0 ? curve.c1 : curve.c2;
       renderOutlinedCircle(renderCtx, p, bezierSize, style.selectionSecondaly);

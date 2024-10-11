@@ -34,7 +34,7 @@ export function newCoordinateRenderer(option?: Option) {
     const width = ctx.measureText(text).width + 2 * paddingX;
     const height = size + 2 * paddingY;
     const x = viewRect.x + viewRect.width / 2;
-    const y = viewRect.y + viewRect.height - size - 16 * scale;
+    const y = viewRect.y + size + 4 * scale;
     applyFillStyle(ctx, { color: COLORS.WHITE });
     applyStrokeStyle(ctx, { color: COLORS.BLACK, width: scale });
     ctx.beginPath();

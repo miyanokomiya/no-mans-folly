@@ -15,6 +15,7 @@ import {
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { applyPath } from "../../../../utils/renderer";
 import { fillArray } from "../../../../utils/commons";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
 
 interface Option {
   lineShape: LineShape;
@@ -27,6 +28,7 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
   const rotateFn = getRotateFn(getRadian(edge[1], edge[0]));
   let shapeSnapping: VectorSnapping;
   let snappingResult: VectorSnappingResult | undefined;
+  const coordinateRenderer = newCoordinateRenderer({ coord: option.p });
 
   return {
     getLabel: () => "MovingLineArc",
@@ -72,6 +74,7 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.hitTest(point, ctx.getScale());
           const p = snappingResult?.p ?? point;
           const d = rotateFn(sub(p, edge[0]), true);
+          coordinateRenderer.saveCoord(p);
 
           const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
           curves[option.index] = d.y !== 0 ? { d } : undefined;
@@ -100,6 +103,8 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
+
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
 
       const line: LineShape = { ...option.lineShape, ...ctx.getTmpShapeMap()[option.lineShape.id] };

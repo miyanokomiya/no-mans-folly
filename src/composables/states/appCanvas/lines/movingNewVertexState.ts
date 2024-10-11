@@ -15,6 +15,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
 
 interface Option {
   lineShape: LineShape;
@@ -28,6 +29,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
   let connectionResult: ConnectionResult | undefined;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
 
   return {
     getLabel: () => "MovingNewVertex",
@@ -82,6 +84,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
             connectionResult = undefined;
           }
 
+          coordinateRenderer.saveCoord(vertex);
           let patch = addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
           const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
@@ -108,6 +111,8 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     render(ctx, renderCtx) {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
+
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 
       const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
       renderBezierControls(renderCtx, style, scale, line);

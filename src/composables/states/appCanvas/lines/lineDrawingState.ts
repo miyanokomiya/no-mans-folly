@@ -20,6 +20,7 @@ import { newShapeComposite } from "../../../shapeComposite";
 import { handleCommonWheel } from "../commons";
 import { getDefaultCurveBody } from "../../../../shapes/utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
 
 interface Option {
   shape: LineShape;
@@ -33,6 +34,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
+  const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
 
   return {
     getLabel: () => "LineDrawing",
@@ -87,6 +89,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
             connectionResult = undefined;
           }
 
+          coordinateRenderer.saveCoord(vertex);
           let patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
 
           const optimized = optimizeLinePath(ctx, { ...option.shape, ...patch });
@@ -144,6 +147,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
+
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
+
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
       renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);

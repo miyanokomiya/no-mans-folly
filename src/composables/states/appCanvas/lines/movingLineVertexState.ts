@@ -123,6 +123,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
 
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
+
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       scaleGlobalAlpha(renderCtx, 0.5, () => {
         renderCtx.beginPath();
@@ -153,8 +155,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
-
-      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
     },
   };
 }

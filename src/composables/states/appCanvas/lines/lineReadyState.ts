@@ -17,6 +17,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
 
 interface Option {
   type: LineType;
@@ -29,6 +30,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
   let connectionResult: ConnectionResult | undefined;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  const coordinateRenderer = newCoordinateRenderer();
 
   return {
     getLabel: () => "LineReady",
@@ -59,6 +61,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
       });
 
       vertex = ctx.getCursorPoint();
+      coordinateRenderer.saveCoord(vertex);
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -109,7 +112,8 @@ export function newLineReadyState(option: Option): AppCanvasState {
             vertex = snappingResult ? add(point, snappingResult.diff) : point;
           }
 
-          ctx.setTmpShapeMap({});
+          coordinateRenderer.saveCoord(vertex);
+          ctx.redraw();
           return;
         }
         case "keydown":
@@ -136,6 +140,9 @@ export function newLineReadyState(option: Option): AppCanvasState {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
+
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
+
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
       renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
