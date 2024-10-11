@@ -296,7 +296,7 @@ function isSameHitResult(a?: HitResult, b?: HitResult): boolean {
   }
 }
 
-const MINIMUM_SIZE = 10;
+const MINIMUM_SIZE = 1;
 
 interface BoundingBoxResizingOption {
   rotation: number;
