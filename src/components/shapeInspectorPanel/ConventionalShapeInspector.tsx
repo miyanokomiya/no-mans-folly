@@ -6,9 +6,9 @@ import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { InlineField } from "../atoms/InlineField";
-import { BlockField } from "../atoms/BlockField";
 import { useShapeComposite, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 
 interface Props {
   targetShape: Shape;
@@ -45,18 +45,13 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
       if (draft) {
         readyState();
 
-        const targets = subShapeComposite.getAllTransformTargets([targetShape.id]);
-        const patch: { [id: string]: Partial<Shape> } = {};
-        targets.forEach((s) => {
-          patch[s.id] = subShapeComposite.transformShape(s, affine);
-        });
-
+        const patch = resizeShapeTrees(shapeComposite, [targetShape.id], affine);
         updateTmpShapes(patch);
       } else {
         commit();
       }
     },
-    [commit, readyState, updateTmpShapes, targetShape, subShapeComposite],
+    [commit, readyState, updateTmpShapes, targetShape, shapeComposite],
   );
 
   const handleChangePosition = useCallback(
@@ -92,23 +87,25 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 
   return (
     <>
-      <BlockField label={"Position (x, y)"}>
-        <PointField value={targetLocation} onChange={handleChangePosition} />
-      </BlockField>
-      <BlockField label={"Size (width, height)"}>
-        <PointField value={targetSize} onChange={handleChangeSize} min={1} />
-      </BlockField>
-      <InlineField label={"Rotation (degree)"}>
-        <div className="w-24">
-          <NumberInput
-            value={(targetLocalBounds[1] * 180) / Math.PI}
-            onChange={handleChangeRotation}
-            onBlur={commit}
-            keepFocus
-            slider
-          />
-        </div>
-      </InlineField>
+      <BlockGroupField label="Local bounds" accordionKey="shape-bounds">
+        <InlineField label={"x, y"}>
+          <PointField value={targetLocation} onChange={handleChangePosition} />
+        </InlineField>
+        <InlineField label={"w, h"}>
+          <PointField value={targetSize} onChange={handleChangeSize} min={1} />
+        </InlineField>
+        <InlineField label={"angle"}>
+          <div className="w-24">
+            <NumberInput
+              value={(targetLocalBounds[1] * 180) / Math.PI}
+              onChange={handleChangeRotation}
+              onBlur={commit}
+              keepFocus
+              slider
+            />
+          </div>
+        </InlineField>
+      </BlockGroupField>
     </>
   );
 };
