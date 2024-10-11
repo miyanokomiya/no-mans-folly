@@ -1,4 +1,4 @@
-import { LineShape, isLineShape } from "../shapes/line";
+import { LineShape, getConnections, isLineShape, patchVertex } from "../shapes/line";
 import { RotatedRectPath, TAU, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { EntityPatchInfo, Shape, StyleScheme } from "../models";
@@ -45,27 +45,17 @@ export function newConnectedLineHandler(option: Option) {
 
       const lines = option.connectedLinesMap[id] ?? [];
       lines.forEach((line) => {
-        if (line.pConnection?.id === id) {
-          const p = getLocationFromRateOnRectPath(rectPath, rotation, line.pConnection.rate);
-          ret[line.id] ??= {};
-          ret[line.id].p = p;
-        }
-        if (line.qConnection?.id === id) {
-          const q = getLocationFromRateOnRectPath(rectPath, rotation, line.qConnection.rate);
-          ret[line.id] ??= {};
-          ret[line.id].q = q;
-        }
+        const latestPatch = ret[line.id];
+        const latestLine = latestPatch ? { ...line, ...latestPatch } : line;
 
-        if (line.body) {
-          line.body.forEach((b, i) => {
-            if (b.c?.id === id) {
-              const next = { ...b, p: getLocationFromRateOnRectPath(rectPath, rotation, b.c.rate) };
-              ret[line.id] ??= {};
-              ret[line.id].body ??= line.body!.concat();
-              ret[line.id].body![i] = next;
-            }
-          });
-        }
+        const connections = getConnections(latestLine);
+        const index = connections.findIndex((c) => c?.id === id);
+        const connection = connections[index];
+        if (!connection) return;
+
+        const p = getLocationFromRateOnRectPath(rectPath, rotation, connection.rate);
+        const vertexPatch = patchVertex(latestLine, index, p, connection);
+        ret[latestLine.id] = latestPatch ? { ...latestPatch, ...vertexPatch } : vertexPatch;
       });
     });
 

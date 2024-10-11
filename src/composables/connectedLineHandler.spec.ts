@@ -196,6 +196,49 @@ describe("newConnectedLineHandler", () => {
         },
       });
     });
+
+    test("should move curves along with vertices", () => {
+      const l0_curved: LineShape = {
+        ...l0,
+        curves: [
+          {
+            c1: { x: 1, y: 2 },
+            c2: { x: 3, y: 4 },
+          },
+        ],
+      };
+      const target = newConnectedLineHandler({
+        connectedLinesMap: {
+          a: [l0_curved],
+          b: [l0_curved],
+        },
+        ctx: {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [l0_curved, a, b],
+              getStruct: getCommonStruct,
+            }),
+        },
+      });
+
+      expect(
+        target.onModified({
+          a: { width: 50, height: 100 } as Partial<RectangleShape>,
+          b: { p: { x: 100, y: 0 }, width: 50, height: 100 } as Partial<RectangleShape>,
+        }),
+      ).toEqual({
+        l0: {
+          p: { x: 25, y: 50 },
+          q: { x: 110, y: 80 },
+          curves: [
+            {
+              c1: { x: 26, y: 52 },
+              c2: { x: 13, y: 84 },
+            },
+          ],
+        },
+      });
+    });
   });
 });
 

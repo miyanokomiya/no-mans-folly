@@ -463,12 +463,12 @@ export function patchVertex(
 
   switch (index) {
     case 0:
-      ret.p = p;
-      ret.pConnection = c;
+      if (shape.p !== p) ret.p = p;
+      if (shape.pConnection !== c) ret.pConnection = c;
       break;
     case vertices.length - 1:
-      ret.q = p;
-      ret.qConnection = c;
+      if (shape.q !== p) ret.q = p;
+      if (shape.qConnection !== c) ret.qConnection = c;
       break;
     default:
       ret.body = shape.body?.map((b, i) => (i + 1 === index ? { ...b, p, c } : b));

@@ -433,6 +433,19 @@ describe("patchVertex", () => {
       curves: [{ c1: { x: 0, y: 0 }, c2: { x: -3, y: -4 } }, { c1: { x: -3, y: -4 }, c2: { x: 0, y: 0 } }, curve],
     });
   });
+
+  test("should not change p or q when their referrence don't change", () => {
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      pConnection: { id: "a", rate: { x: 0.5, y: 0.2 } },
+      qConnection: { id: "b", rate: { x: 0.5, y: 0.2 } },
+    });
+    expect(patchVertex(shape0, 0, shape0.p, shape0.pConnection)).not.toHaveProperty("p");
+    expect(patchVertex(shape0, 0, shape0.p, shape0.pConnection)).not.toHaveProperty("pConnection");
+    expect(patchVertex(shape0, 1, shape0.q, shape0.qConnection)).not.toHaveProperty("q");
+    expect(patchVertex(shape0, 1, shape0.q, shape0.qConnection)).not.toHaveProperty("qConnection");
+  });
 });
 
 describe("detachVertex", () => {
