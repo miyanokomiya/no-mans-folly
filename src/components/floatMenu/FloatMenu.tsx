@@ -42,6 +42,7 @@ import { ShapeTypeButton } from "./ShapeTypeButton";
 import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
 import { isLinePolygonShape } from "../../shapes/polygons/linePolygon";
 import { canMakePolygon, patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
+import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -218,6 +219,18 @@ export const FloatMenu: React.FC<Option> = ({
       }
     },
     [shapeStore, focusBack, getShapeStruct, setTmpShapeMap, patchShapes],
+  );
+
+  const highlighShape = useCallback(
+    (meta: HighlightShapeMeta) => {
+      if (!indexShape) return;
+
+      handleEvent({
+        type: "shape-highlight",
+        data: { id: indexShape.id, meta },
+      });
+    },
+    [indexShape, handleEvent],
   );
 
   const onDocInlineAttributesChanged = useCallback(
@@ -548,9 +561,9 @@ export const FloatMenu: React.FC<Option> = ({
             <LineHeadItems
               {...popupButtonCommonProps}
               popupDefaultDirection={popupDefaultDirection}
-              pHead={indexLineShape.pHead}
-              qHead={indexLineShape.qHead}
+              lineShape={indexLineShape}
               onChange={onLineHeadChanged}
+              highlighShape={highlighShape}
             />
             <button type="button" className="w-8 h-8 flex justify-center items-center" onClick={onClickLineLabel}>
               T

@@ -27,6 +27,8 @@ import iconHeadZeroOne from "../../assets/icons/head_zero_one.svg";
 import iconHeadZeroMany from "../../assets/icons/head_zero_many.svg";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { DEFAULT_HEAD_SIZE } from "../../shapes/lineHeads/core";
+import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
+import { getLinePath, LineShape } from "../../shapes/line";
 
 const HEAD_TYPES = [
   [
@@ -76,19 +78,21 @@ interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
   popupDefaultDirection?: PopupDirection;
-  pHead?: LineHead;
-  qHead?: LineHead;
+  lineShape: LineShape;
   onChange?: (val: { pHead?: LineHead; qHead?: LineHead }, draft?: boolean) => void;
+  highlighShape?: (meta: HighlightShapeMeta) => void;
 }
 
 export const LineHeadItems: React.FC<Props> = ({
   popupedKey,
   setPopupedKey,
   popupDefaultDirection,
-  pHead,
-  qHead,
+  lineShape,
   onChange,
+  highlighShape,
 }) => {
+  const { pHead, qHead } = lineShape;
+
   const onPHeadClick = useCallback(() => {
     setPopupedKey("line-p-head");
   }, [setPopupedKey]);
@@ -115,33 +119,49 @@ export const LineHeadItems: React.FC<Props> = ({
     onChange?.({ pHead: qHead, qHead: pHead });
   }, [onChange, pHead, qHead]);
 
+  const handleFirstVertexEnter = useCallback(() => {
+    highlighShape?.({ type: "vertex", index: 0 });
+  }, [highlighShape]);
+
+  const handleLastVertexEnter = useCallback(() => {
+    highlighShape?.({ type: "vertex", index: getLinePath(lineShape).length - 1 });
+  }, [highlighShape, lineShape]);
+
+  const handleLeave = useCallback(() => {
+    highlighShape?.({ type: "vertex", index: -1 });
+  }, [highlighShape]);
+
   return (
     <div className="flex gap-1 items-center">
-      <PopupButton
-        name="line-p-head"
-        opened={popupedKey === "line-p-head"}
-        popup={<LineHeadPanel head={pHead} onChange={onPHeadChanged} flip />}
-        defaultDirection={popupDefaultDirection}
-        onClick={onPHeadClick}
-      >
-        <div className="w-8 h-8 p-1" style={{ transform: "scaleX(-1)" }}>
-          <img src={getHeadIcon(pHead?.type)} alt="Closed Filled" />
-        </div>
-      </PopupButton>
+      <div onPointerEnter={handleFirstVertexEnter} onPointerLeave={handleLeave}>
+        <PopupButton
+          name="line-p-head"
+          opened={popupedKey === "line-p-head"}
+          popup={<LineHeadPanel head={pHead} onChange={onPHeadChanged} flip />}
+          defaultDirection={popupDefaultDirection}
+          onClick={onPHeadClick}
+        >
+          <div className="w-8 h-8 p-1" style={{ transform: "scaleX(-1)" }}>
+            <img src={getHeadIcon(pHead?.type)} alt="Closed Filled" />
+          </div>
+        </PopupButton>
+      </div>
       <button type="button" className="w-7 h-7 p-1 border rounded" onClick={onHeadSwapClick}>
         <img src={iconHeadSwap} alt="Swap heads" />
       </button>
-      <PopupButton
-        name="line-q-head"
-        opened={popupedKey === "line-q-head"}
-        popup={<LineHeadPanel head={qHead} onChange={onQHeadChanged} />}
-        defaultDirection={popupDefaultDirection}
-        onClick={onQHeadClick}
-      >
-        <div className="w-8 h-8 p-1">
-          <img src={getHeadIcon(qHead?.type)} alt="Closed Filled" />
-        </div>
-      </PopupButton>
+      <div onPointerEnter={handleLastVertexEnter} onPointerLeave={handleLeave}>
+        <PopupButton
+          name="line-q-head"
+          opened={popupedKey === "line-q-head"}
+          popup={<LineHeadPanel head={qHead} onChange={onQHeadChanged} />}
+          defaultDirection={popupDefaultDirection}
+          onClick={onQHeadClick}
+        >
+          <div className="w-8 h-8 p-1">
+            <img src={getHeadIcon(qHead?.type)} alt="Closed Filled" />
+          </div>
+        </PopupButton>
+      </div>
     </div>
   );
 };
