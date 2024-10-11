@@ -69,7 +69,8 @@ export type AppCanvasEvent =
   | TextStyleEvent
   | ContextMenuItemEvent
   | FileDropEvent
-  | CloseEmojiPicker;
+  | CloseEmojiPicker
+  | ShapeHighlightEvent;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";
@@ -128,3 +129,18 @@ export interface FileDropEvent extends ModeStateEventBase {
 export interface CloseEmojiPicker extends ModeStateEventBase {
   type: "close-emoji-picker";
 }
+
+export interface ShapeHighlightEvent extends ModeStateEventBase {
+  type: "shape-highlight";
+  data: {
+    id: string;
+    meta: HighlightShapeMeta;
+  };
+}
+
+export type HighlightShapeMeta = HighlightLineVertexMeta;
+
+export type HighlightLineVertexMeta = {
+  type: "vertex";
+  index: number;
+};

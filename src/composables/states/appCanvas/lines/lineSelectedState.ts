@@ -241,6 +241,21 @@ export const newLineSelectedState = defineIntransientState(() => {
               return handleIntransientEvent(ctx, event);
           }
         }
+        case "shape-highlight": {
+          if (event.data.id !== lineShape.id) return;
+
+          switch (event.data.meta.type) {
+            case "vertex": {
+              const meta = event.data.meta;
+              if (lineBounding.saveHitResult(meta.index === -1 ? undefined : { type: "vertex", index: meta.index })) {
+                ctx.redraw();
+              }
+              return;
+            }
+            default:
+              return;
+          }
+        }
         default:
           return handleIntransientEvent(ctx, event);
       }

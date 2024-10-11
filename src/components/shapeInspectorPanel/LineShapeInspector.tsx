@@ -1,11 +1,12 @@
 import { useCallback, useMemo } from "react";
 import { LineShape, detachVertex, getConnection, getLinePath, patchVertex } from "../../shapes/line";
-import { BlockField } from "../atoms/BlockField";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
 import { ConnectionPoint } from "../../models";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
 import iconLineDetach from "../../assets/icons/line_detach.svg";
+import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 
 interface Props {
   targetShape: LineShape;
@@ -13,6 +14,7 @@ interface Props {
   commit: () => void;
   updateTmpTargetShape: (patch: Partial<LineShape>) => void;
   readyState: () => void;
+  highlighShape: (meta: HighlightShapeMeta) => void;
 }
 
 export const LineShapeInspector: React.FC<Props> = ({
@@ -21,6 +23,7 @@ export const LineShapeInspector: React.FC<Props> = ({
   commit,
   updateTmpTargetShape,
   readyState,
+  highlighShape,
 }) => {
   const targetTmpVertices = useMemo(() => {
     return getLinePath(targetTmpShape);
@@ -74,6 +77,17 @@ export const LineShapeInspector: React.FC<Props> = ({
     [targetShape, updateTmpTargetShape, commit],
   );
 
+  const handleVertexHover = useCallback(
+    (index: number) => {
+      highlighShape({ type: "vertex", index });
+    },
+    [highlighShape],
+  );
+
+  const handleVertexLeave = useCallback(() => {
+    handleVertexHover(-1);
+  }, [handleVertexHover]);
+
   return (
     <>
       <MultipleShapesInspector
@@ -84,8 +98,8 @@ export const LineShapeInspector: React.FC<Props> = ({
         readyState={readyState}
       />
       {targetShape.lineType === "elbow" ? undefined : ( // Vertices of elbow line should be derived automatically.
-        <BlockField label="Vertices">
-          <div className="w-full flex flex-col gap-1">
+        <BlockGroupField label="Vertices" accordionKey="line-vertices">
+          <div className="w-full flex flex-col gap-1" onPointerLeave={handleVertexLeave}>
             {targetTmpVertices.map((v, i) => (
               <VertexField
                 key={i}
@@ -94,10 +108,11 @@ export const LineShapeInspector: React.FC<Props> = ({
                 onChange={handleVertexChange}
                 connection={targetTmpConnections[i]}
                 onDetachClick={handleDetachClick}
+                onEnter={handleVertexHover}
               />
             ))}
           </div>
-        </BlockField>
+        </BlockGroupField>
       )}
     </>
   );
@@ -109,9 +124,17 @@ interface VertexFieldProps {
   onChange?: (index: number, val: IVec2, draft?: boolean) => void;
   connection?: ConnectionPoint;
   onDetachClick?: (index: number) => void;
+  onEnter?: (index: number) => void;
 }
 
-export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange, connection, onDetachClick }) => {
+export const VertexField: React.FC<VertexFieldProps> = ({
+  index,
+  value,
+  onChange,
+  connection,
+  onDetachClick,
+  onEnter,
+}) => {
   const handleChange = useCallback(
     (val: IVec2, draft = false) => {
       onChange?.(index, val, draft);
@@ -123,8 +146,12 @@ export const VertexField: React.FC<VertexFieldProps> = ({ index, value, onChange
     onDetachClick?.(index);
   }, [index, onDetachClick]);
 
+  const handleEnter = useCallback(() => {
+    onEnter?.(index);
+  }, [index, onEnter]);
+
   return (
-    <div className="flex items-center justify-end">
+    <div className="flex items-center justify-end" onPointerEnter={handleEnter}>
       {connection ? (
         <button type="button" className="mr-2 p-1 border rounded" title="Detach" onClick={handleDetachClick}>
           <img className="w-6 h-6" src={iconLineDetach} alt="Detach vertex" />

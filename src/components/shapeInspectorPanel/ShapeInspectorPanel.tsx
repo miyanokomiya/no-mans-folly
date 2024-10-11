@@ -13,6 +13,7 @@ import { canClip } from "../../shapes";
 import { GroupShape, isGroupShape } from "../../shapes/group";
 import { ClipInspector } from "./ClipInspector";
 import { AlphaField } from "./AlphaField";
+import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -50,6 +51,16 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       data: { name: "Break" },
     });
   }, [handleEvent]);
+
+  const highlighShape = useCallback(
+    (meta: HighlightShapeMeta) => {
+      handleEvent({
+        type: "shape-highlight",
+        data: { id: targetShape.id, meta },
+      });
+    },
+    [targetShape, handleEvent],
+  );
 
   /**
    * Expected behavior of input field.
@@ -162,6 +173,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
               commit={commit}
               updateTmpTargetShape={updateTmpTargetShape}
               readyState={readyState}
+              highlighShape={highlighShape}
             />
           ) : (
             <ConventionalShapeInspector
