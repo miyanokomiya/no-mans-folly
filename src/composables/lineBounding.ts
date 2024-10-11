@@ -22,6 +22,7 @@ const MOVE_ANCHOR_RATE = 1.4;
 export const BEZIER_ANCHOR_SIZE = 6;
 const BEZIER_ANCHOR_VICINITY_SIZE = 14;
 const BEZIER_ANCHOR_VICINITY_INNER_RATE = 0.4;
+const BEZIER_DONUT_RAD = Math.PI / 3;
 
 type LineHitType =
   | "move-anchor"
@@ -470,8 +471,8 @@ export function newLineBounding(option: Option) {
                 ctx,
                 a.vicinity,
                 bezierVicinitySize,
-                a.r - Math.PI / 2,
-                a.r + Math.PI / 2,
+                a.r - BEZIER_DONUT_RAD,
+                a.r + BEZIER_DONUT_RAD,
                 BEZIER_ANCHOR_VICINITY_INNER_RATE,
                 style.selectionSecondaly,
               );
@@ -573,8 +574,8 @@ function hitTestBeziers(
           bezierVicinitySize,
           bezierVicinitySize,
           0,
-          v.r - Math.PI / 2,
-          v.r + Math.PI / 2,
+          v.r - BEZIER_DONUT_RAD,
+          v.r + BEZIER_DONUT_RAD,
           BEZIER_ANCHOR_VICINITY_INNER_RATE,
           p,
         );
@@ -609,8 +610,8 @@ function renderBeziers(
           ctx,
           a.vicinity,
           bezierVicinitySize,
-          a.r - Math.PI / 2,
-          a.r + Math.PI / 2,
+          a.r - BEZIER_DONUT_RAD,
+          a.r + BEZIER_DONUT_RAD,
           BEZIER_ANCHOR_VICINITY_INNER_RATE,
           style.transformAnchor,
         );
