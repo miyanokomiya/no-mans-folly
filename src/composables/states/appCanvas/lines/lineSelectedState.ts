@@ -99,7 +99,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                     } else {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
-                  case "edge":
+                  case "segment":
                     return () => newMovingLineSegmentState({ lineShape, index: hitResult.index });
                   case "elbow-edge":
                     return () => newMovingElbowSegmentState({ lineShape, index: hitResult.index });
@@ -245,9 +245,11 @@ export const newLineSelectedState = defineIntransientState(() => {
           if (event.data.id !== lineShape.id) return;
 
           switch (event.data.meta.type) {
-            case "vertex": {
+            case "vertex":
+            case "segment":
+            case "bezier-anchor": {
               const meta = event.data.meta;
-              if (lineBounding.saveHitResult(meta.index === -1 ? undefined : { type: "vertex", index: meta.index })) {
+              if (lineBounding.saveHitResult(meta.index === -1 ? undefined : meta)) {
                 ctx.redraw();
               }
               return;

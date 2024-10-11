@@ -27,7 +27,7 @@ const BEZIER_DONUT_RAD = Math.PI / 3;
 type LineHitType =
   | "move-anchor"
   | "vertex"
-  | "edge"
+  | "segment"
   | "new-vertex-anchor"
   | "arc-anchor"
   | "optimize"
@@ -37,6 +37,7 @@ export type LineHitResult =
   | {
       type: LineHitType;
       index: number;
+      subIndex?: undefined; // For type convenience
     }
   | {
       type: "new-bezier-anchor" | "bezier-anchor";
@@ -157,8 +158,10 @@ export function newLineBounding(option: Option) {
     hitResult = result;
     if (!result) return !!prev;
     if (!prev) return true;
-    if (prev.index !== result.index) return true;
     if (prev.type !== result.type) return true;
+    if (prev.index !== result.index) return true;
+    if (prev.index !== result.index) return true;
+    if (prev.subIndex !== result.subIndex) return true;
     return false;
   }
 
@@ -273,7 +276,7 @@ export function newLineBounding(option: Option) {
             return { type: "elbow-edge", index: edgeIndex };
           }
         } else {
-          return { type: "edge", index: edgeIndex };
+          return { type: "segment", index: edgeIndex };
         }
       }
     }
@@ -421,7 +424,7 @@ export function newLineBounding(option: Option) {
           ctx.fill();
           break;
         }
-        case "edge":
+        case "segment":
         case "elbow-edge": {
           applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
           ctx.beginPath();

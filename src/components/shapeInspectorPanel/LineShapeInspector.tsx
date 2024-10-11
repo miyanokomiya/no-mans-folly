@@ -98,16 +98,16 @@ export const LineShapeInspector: React.FC<Props> = ({
     [targetShape, updateTmpTargetShape, commit],
   );
 
-  const handleVertexHover = useCallback(
-    (index: number) => {
-      highlighShape({ type: "vertex", index });
+  const highlightShape = useCallback(
+    (meta: HighlightShapeMeta) => {
+      highlighShape(meta);
     },
     [highlighShape],
   );
 
   const handleVertexLeave = useCallback(() => {
-    handleVertexHover(-1);
-  }, [handleVertexHover]);
+    highlightShape({ type: "vertex", index: -1 });
+  }, [highlightShape]);
 
   return (
     <>
@@ -131,7 +131,7 @@ export const LineShapeInspector: React.FC<Props> = ({
                 onChange={handleVertexChange}
                 onCurveChange={handleCurveChange}
                 onDetachClick={handleDetachClick}
-                onEnter={handleVertexHover}
+                highlightShape={highlightShape}
               />
             ))}
           </div>
@@ -149,7 +149,7 @@ interface VertexFieldProps {
   onChange?: (index: number, val: IVec2, draft?: boolean) => void;
   onCurveChange?: (index: number, val: CurveControl, draft?: boolean) => void;
   onDetachClick?: (index: number) => void;
-  onEnter?: (index: number) => void;
+  highlightShape?: (meta: HighlightShapeMeta) => void;
 }
 
 export const VertexField: React.FC<VertexFieldProps> = ({
@@ -160,7 +160,7 @@ export const VertexField: React.FC<VertexFieldProps> = ({
   onChange,
   onCurveChange,
   onDetachClick,
-  onEnter,
+  highlightShape,
 }) => {
   const handleChange = useCallback(
     (val: IVec2, draft = false) => {
@@ -201,12 +201,24 @@ export const VertexField: React.FC<VertexFieldProps> = ({
     onDetachClick?.(index);
   }, [index, onDetachClick]);
 
-  const handleEnter = useCallback(() => {
-    onEnter?.(index);
-  }, [index, onEnter]);
+  const handleVertexEnter = useCallback(() => {
+    highlightShape?.({ type: "vertex", index });
+  }, [index, highlightShape]);
+
+  const handleSegmentEnter = useCallback(() => {
+    highlightShape?.({ type: "segment", index });
+  }, [index, highlightShape]);
+
+  const handleBezierC1Enter = useCallback(() => {
+    highlightShape?.({ type: "bezier-anchor", index, subIndex: 0 });
+  }, [index, highlightShape]);
+
+  const handleBezierC2Enter = useCallback(() => {
+    highlightShape?.({ type: "bezier-anchor", index, subIndex: 1 });
+  }, [index, highlightShape]);
 
   const vertexField = (
-    <div className="flex items-center justify-end">
+    <div className="flex items-center justify-end" onPointerEnter={handleVertexEnter}>
       {connection ? (
         <button type="button" className="mr-2 p-1 flex-1 border rounded" title="Detach" onClick={handleDetachClick}>
           <img className="w-6 h-6" src={iconLineDetach} alt="Detach vertex" />
@@ -218,44 +230,44 @@ export const VertexField: React.FC<VertexFieldProps> = ({
 
   if (isBezieirControl(curve)) {
     return (
-      <div onPointerEnter={handleEnter}>
-        <BlockGroupField label="Bezier">
-          {vertexField}
-          <div>
+      <BlockGroupField label="Bezier">
+        {vertexField}
+        <div>
+          <div onPointerEnter={handleBezierC1Enter}>
             <InlineField label="c1">
               <PointField value={curve.c1} onChange={handleBezierC1Change} />
             </InlineField>
+          </div>
+          <div onPointerEnter={handleBezierC2Enter}>
             <InlineField label="c2">
               <PointField value={curve.c2} onChange={handleBezierC2Change} />
             </InlineField>
           </div>
-        </BlockGroupField>
-      </div>
+        </div>
+      </BlockGroupField>
     );
   }
 
   if (isArcControl(curve)) {
     return (
-      <div onPointerEnter={handleEnter}>
-        <BlockGroupField label="Arc">
-          {vertexField}
-          <div>
-            <InlineField label="radius">
-              <div className="w-24">
-                <NumberInput
-                  value={curve.d.y}
-                  onChange={handleArcChange}
-                  onBlur={handleArcChangeCommit}
-                  keepFocus
-                  slider
-                />
-              </div>
-            </InlineField>
-          </div>
-        </BlockGroupField>
-      </div>
+      <BlockGroupField label="Arc">
+        {vertexField}
+        <div onPointerEnter={handleSegmentEnter}>
+          <InlineField label="radius">
+            <div className="w-24">
+              <NumberInput
+                value={curve.d.y}
+                onChange={handleArcChange}
+                onBlur={handleArcChangeCommit}
+                keepFocus
+                slider
+              />
+            </div>
+          </InlineField>
+        </div>
+      </BlockGroupField>
     );
   }
 
-  return <div onPointerEnter={handleEnter}>{vertexField}</div>;
+  return vertexField;
 };

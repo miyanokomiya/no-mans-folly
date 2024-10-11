@@ -41,11 +41,11 @@ describe("newLineBounding", () => {
       expect(target.hitTest({ x: 10, y: -20 })).toEqual(undefined);
       expect(target.hitTest({ x: 10, y: 20 })).toEqual(undefined);
       expect(target.hitTest({ x: 10, y: -1 })).toEqual({
-        type: "edge",
+        type: "segment",
         index: 0,
       });
       expect(target.hitTest({ x: 90, y: 1 })).toEqual({
-        type: "edge",
+        type: "segment",
         index: 0,
       });
       expect(target.hitTest({ x: 35, y: 1 })).toEqual({
@@ -87,7 +87,7 @@ describe("newLineBounding", () => {
         index: 0,
       });
       expect(target.hitTest({ x: 30, y: -30 })).toEqual({
-        type: "edge",
+        type: "segment",
         index: 0,
       });
       expect(target.hitTest({ x: 50, y: 0 })).toEqual(undefined);
@@ -150,6 +150,26 @@ describe("newLineBounding", () => {
         expect(target.hitTest({ x: 0, y: -20 })).toEqual(undefined);
         expect(target.hitTest({ x: 100, y: 20 })).toEqual(undefined);
       });
+    });
+  });
+
+  describe("saveHitResult", () => {
+    const option = {
+      lineShape: struct.create({ p: { x: 0, y: 0 }, q: { x: 100, y: 0 } }),
+      styleScheme: createStyleScheme(),
+      scale: 1,
+    };
+
+    test("should return true when something changes", () => {
+      const target = newLineBounding(option);
+      target.saveHitResult({ type: "bezier-anchor", index: 0, subIndex: 0 });
+      expect(target.saveHitResult({ type: "bezier-anchor", index: 0, subIndex: 0 })).toBe(false);
+      expect(target.saveHitResult({ type: "bezier-anchor", index: 0, subIndex: 1 })).toBe(true);
+
+      target.saveHitResult({ type: "bezier-anchor", index: 0, subIndex: 0 });
+      expect(target.saveHitResult({ type: "bezier-anchor", index: 1, subIndex: 0 })).toBe(true);
+      expect(target.saveHitResult({ type: "bezier-anchor", index: 1, subIndex: 0 })).toBe(false);
+      expect(target.saveHitResult({ type: "bezier-anchor", index: 1, subIndex: 1 })).toBe(true);
     });
   });
 });
