@@ -4,7 +4,6 @@ import { PopupButton } from "./atoms/PopupButton";
 import { getWrapperRect } from "../utils/geometry";
 import { ListButton, ListLink } from "./atoms/buttons/ListButton";
 import { OutsideObserver } from "./atoms/OutsideObserver";
-import iconUndo from "../assets/icons/undo.svg";
 import iconRedo from "../assets/icons/redo.svg";
 import iconHelp from "../assets/icons/help.svg";
 import iconPlus from "../assets/icons/plus.svg";
@@ -65,7 +64,7 @@ export const AppFootbar: React.FC = () => {
     <div className="p-1 border rounded bg-white flex gap-2 items-center select-none">
       <div className="flex gap-1 items-center">
         <ZoomButton onZoom={handleZoomOut}>
-          <img src={iconMinus} alt="Zoom out" className="w-4 h-4" />
+          <img src={iconMinus} alt="Zoom out" className="w-6 h-6" />
         </ZoomButton>
         <OutsideObserver onClick={handleCloseScalePopup}>
           <PopupButton
@@ -83,16 +82,16 @@ export const AppFootbar: React.FC = () => {
           </PopupButton>
         </OutsideObserver>
         <ZoomButton onZoom={handleZoomIn}>
-          <img src={iconPlus} alt="Zoom In" className="w-4 h-4" />
+          <img src={iconPlus} alt="Zoom In" className="w-6 h-6" />
         </ZoomButton>
       </div>
       {borderElm}
       <div className="flex gap-1 items-center">
-        <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onUndo}>
-          <img src={iconUndo} alt="Undo" />
+        <button type="button" className="w-8 h-8 border rounded flex items-center justify-center" onClick={onUndo}>
+          <img src={iconRedo} alt="Undo" className="w-6 h-6 -scale-x-100" />
         </button>
-        <button type="button" className="w-8 h-8 border p-1 rounded" onClick={onRedo}>
-          <img src={iconRedo} alt="Redo" />
+        <button type="button" className="w-8 h-8 border rounded flex items-center justify-center" onClick={onRedo}>
+          <img src={iconRedo} alt="Redo" className="w-6 h-6" />
         </button>
       </div>
       {borderElm}
