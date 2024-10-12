@@ -140,34 +140,49 @@ function getPopupAttrs(
     return { className: classBase + "invisible " + (defaultDirection === "top" ? "bottom-0" : "") };
   }
 
-  const toTop = defaultDirection === "top" && 0 < buttonBounds.y - popupBounds.height;
-  const toBottom = !toTop && buttonBounds.y + buttonBounds.height + popupBounds.height < windowHeight;
+  const buttonTop = buttonBounds.y;
+  const buttonBottom = buttonTop + buttonBounds.height;
+  const toTop = defaultDirection === "top" && 0 < buttonTop - popupBounds.height;
+  const toBottom = !toTop && buttonBottom + popupBounds.height < windowHeight;
+
+  // Pick larger room and set max height when the panel is oversized.
+  const overHeight = !toTop && !toBottom;
+  const adjustedToBottom = overHeight ? buttonTop < windowHeight - buttonBottom : toBottom;
+  const heightStyle = overHeight
+    ? {
+        maxHeight: adjustedToBottom ? windowHeight - buttonBottom : buttonTop,
+        overflow: "auto",
+      }
+    : {};
+
   switch (popupPosition) {
     case "right":
-      return toBottom
+      return adjustedToBottom
         ? {
             className: classBase + "left-0 top-full",
           }
         : {
             className: classBase + "left-0 bottom-full",
+            style: heightStyle,
           };
     case "left":
-      return toBottom
+      return adjustedToBottom
         ? {
             className: classBase + "right-0 top-full",
           }
         : {
             className: classBase + "right-0 bottom-full",
+            style: heightStyle,
           };
     default:
-      return toBottom
+      return adjustedToBottom
         ? {
             className: classBase + "left-1/2 bottom-0",
-            style: { transform: "translate(-50%, 100%)" },
+            style: { ...heightStyle, transform: "translate(-50%, 100%)" },
           }
         : {
             className: classBase + "left-1/2 top-0",
-            style: { transform: "translate(-50%, -100%)" },
+            style: { ...heightStyle, transform: "translate(-50%, -100%)" },
           };
   }
 }
