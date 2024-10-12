@@ -6,6 +6,7 @@ import { clamp } from "okageo";
 import { TextInput } from "../atoms/inputs/TextInput";
 import eyeDropperIcon from "../../assets/icons/eyedropper.svg";
 import { isEyedropperAvailable } from "../../utils/devices";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 
 const v = 51;
 const getV = (i: number) => Math.min(Math.max(v * i, 0), 255);
@@ -107,22 +108,24 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
-      <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
-      <HueBar value={hsvaCache.h} onChange={handleHueChange} />
-      <div className="flex items-center">
-        {isEyedropperAvailable() ? (
-          <button
-            type="button"
-            className="w-8 h-8 border rounded flex items-center justify-center"
-            onClick={handleEyedropperClick}
-          >
-            <img src={eyeDropperIcon} alt="Eyedropper" className="w-6 h-6" />
-          </button>
-        ) : undefined}
-        <div className="ml-auto">
-          <HexField {...actualColor} onChange={onChange} />
+      <BlockGroupField label="Color detail" accordionKey="color-detail">
+        <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
+        <HueBar value={hsvaCache.h} onChange={handleHueChange} />
+        <div className="flex items-center">
+          {isEyedropperAvailable() ? (
+            <button
+              type="button"
+              className="w-8 h-8 border rounded flex items-center justify-center"
+              onClick={handleEyedropperClick}
+            >
+              <img src={eyeDropperIcon} alt="Eyedropper" className="w-6 h-6" />
+            </button>
+          ) : undefined}
+          <div className="ml-auto">
+            <HexField {...actualColor} onChange={onChange} />
+          </div>
         </div>
-      </div>
+      </BlockGroupField>
     </div>
   );
 };
