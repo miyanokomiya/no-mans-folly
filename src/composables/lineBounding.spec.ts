@@ -21,6 +21,11 @@ describe("newLineBounding", () => {
         index: 0,
       });
 
+      expect(target.hitTest({ x: 0, y: -30 })).toEqual({
+        type: "rotate-anchor",
+        index: 0,
+      });
+
       expect(target.hitTest({ x: -1, y: 0 })).toEqual({
         type: "vertex",
         index: 0,

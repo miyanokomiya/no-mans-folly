@@ -33,6 +33,8 @@ import { newMovingElbowSegmentState } from "./movingElbowSegmentState";
 import { newElbowLineHandler } from "../../../elbowLineHandler";
 import { newMovingLineBezierState } from "./movingLineBezierState";
 import { isObjectEmpty } from "../../../../utils/commons";
+import { newRotatingState } from "../rotatingState";
+import { newBoundingBox } from "../../../boundingBox";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -87,6 +89,16 @@ export const newLineSelectedState = defineIntransientState(() => {
                   }
                   case "move-anchor":
                     return newMovingHubState;
+                  case "rotate-anchor": {
+                    const shapeComposite = ctx.getShapeComposite();
+                    const rectPath = shapeComposite.getLocalRectPolygon(lineShape);
+                    return () =>
+                      newRotatingState({
+                        boundingBox: newBoundingBox({
+                          path: rectPath,
+                        }),
+                      });
+                  }
                   case "vertex":
                     if (event.data.options.shift) {
                       const patch = deleteVertex(lineShape, hitResult.index);

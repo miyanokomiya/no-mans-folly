@@ -1,4 +1,4 @@
-import { IVec2, add, getCenter, getRadian, isSame, multi, rotate } from "okageo";
+import { IVec2, add, getCenter, getOuterRectangle, getRadian, isSame, multi, rotate } from "okageo";
 import { BezierCurveControl, StyleScheme } from "../models";
 import { LineShape, getConnections, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
@@ -12,13 +12,14 @@ import {
   renderOutlinedCircle,
   renderOutlinedDonutArc,
   renderPlusIcon,
+  renderRotationArrow,
 } from "../utils/renderer";
 import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
 import { canAddBezierControls, getModifiableBezierControls } from "../shapes/utils/curveLine";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
-const MOVE_ANCHOR_RATE = 1.4;
+const BOUNDS_ANCHOR_SIZE = VERTEX_R * 1.4;
 export const BEZIER_ANCHOR_SIZE = 6;
 const BEZIER_ANCHOR_VICINITY_SIZE = 14;
 const BEZIER_ANCHOR_VICINITY_INNER_RATE = 0.4;
@@ -26,6 +27,7 @@ const BEZIER_DONUT_RAD = Math.PI / 3;
 
 type LineHitType =
   | "move-anchor"
+  | "rotate-anchor"
   | "vertex"
   | "segment"
   | "new-vertex-anchor"
@@ -78,6 +80,7 @@ export function newLineBounding(option: Option) {
         return lerpFn(0.5);
       });
   const bezierAnchors = getModifiableBezierControls(lineShape);
+  const vertexWrapperRect = getOuterRectangle([vertices]);
 
   const elbow = isElbow(lineShape);
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
@@ -103,6 +106,11 @@ export function newLineBounding(option: Option) {
 
   function getMoveAnchor(scale: number): IVec2 {
     const v = rotate({ x: 0, y: -30 }, getRadianP(lineShape));
+    return add(vertices[0], multi(v, scale));
+  }
+
+  function getRotateAnchor(scale: number): IVec2 {
+    const v = rotate({ x: 0, y: 30 }, getRadianP(lineShape));
     return add(vertices[0], multi(v, scale));
   }
 
@@ -169,12 +177,21 @@ export function newLineBounding(option: Option) {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
     const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
+    const boundsAnchorSize = BOUNDS_ANCHOR_SIZE * scale;
 
     {
       const moveAnchor = getMoveAnchor(scale);
-      const testFn = newCircleHitTest(moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
+      const testFn = newCircleHitTest(moveAnchor, boundsAnchorSize);
       if (testFn.test(p)) {
         return { type: "move-anchor", index: 0 };
+      }
+    }
+
+    {
+      const moveAnchor = getRotateAnchor(scale);
+      const testFn = newCircleHitTest(moveAnchor, boundsAnchorSize);
+      if (testFn.test(p)) {
+        return { type: "rotate-anchor", index: 0 };
       }
     }
 
@@ -286,6 +303,7 @@ export function newLineBounding(option: Option) {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
     const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
+    const boundsAnchorSize = BOUNDS_ANCHOR_SIZE * scale;
     const style = option.styleScheme;
 
     const addAnchorBeziers = getAddAnchorBeziers(scale);
@@ -357,10 +375,20 @@ export function newLineBounding(option: Option) {
     {
       applyFillStyle(ctx, { color: style.selectionPrimary });
       ctx.beginPath();
-      ctx.ellipse(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, vertexSize * MOVE_ANCHOR_RATE, 0, 0, TAU);
+      ctx.arc(moveAnchor.x, moveAnchor.y, boundsAnchorSize, 0, TAU);
       ctx.fill();
       ctx.fillStyle = "#fff";
-      renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
+      renderMoveIcon(ctx, moveAnchor, boundsAnchorSize);
+    }
+
+    const rotateAnchor = getRotateAnchor(scale);
+    {
+      applyFillStyle(ctx, { color: style.selectionPrimary });
+      ctx.beginPath();
+      ctx.arc(rotateAnchor.x, rotateAnchor.y, boundsAnchorSize, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      renderRotationArrow(ctx, rotateAnchor, 0, boundsAnchorSize);
     }
 
     const optimizeAnchorP = getOptimizeAnchorP(scale);
@@ -389,31 +417,32 @@ export function newLineBounding(option: Option) {
           applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
           applyFillStyle(ctx, { color: style.selectionSecondaly });
           ctx.beginPath();
-          ctx.arc(moveAnchor.x, moveAnchor.y, vertexSize * MOVE_ANCHOR_RATE, 0, TAU);
+          ctx.arc(moveAnchor.x, moveAnchor.y, boundsAnchorSize, 0, TAU);
           ctx.fill();
           ctx.stroke();
           ctx.fillStyle = "#fff";
-          renderMoveIcon(ctx, moveAnchor, vertexSize * MOVE_ANCHOR_RATE);
+          renderMoveIcon(ctx, moveAnchor, boundsAnchorSize);
 
-          applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
-          edges.forEach((edge, i) => {
-            ctx.beginPath();
-            if (curves) {
-              applyCurvePath(ctx, edge, [curves[i]]);
-            } else {
-              applyPath(ctx, edge);
-            }
-            ctx.stroke();
-          });
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
+          ctx.beginPath();
+          ctx.rect(vertexWrapperRect.x, vertexWrapperRect.y, vertexWrapperRect.width, vertexWrapperRect.height);
+          ctx.stroke();
+          break;
+        }
+        case "rotate-anchor": {
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+          applyFillStyle(ctx, { color: style.selectionSecondaly });
+          ctx.beginPath();
+          ctx.arc(rotateAnchor.x, rotateAnchor.y, boundsAnchorSize, 0, TAU);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#fff";
+          renderRotationArrow(ctx, rotateAnchor, 0, boundsAnchorSize);
 
-          vertices.forEach((p, i) => {
-            if (!availableVertexIndex.has(i)) return;
-
-            ctx.beginPath();
-            ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
-            ctx.fill();
-            ctx.stroke();
-          });
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
+          ctx.beginPath();
+          ctx.rect(vertexWrapperRect.x, vertexWrapperRect.y, vertexWrapperRect.width, vertexWrapperRect.height);
+          ctx.stroke();
           break;
         }
         case "vertex": {
