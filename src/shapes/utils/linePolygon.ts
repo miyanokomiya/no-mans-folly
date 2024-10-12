@@ -16,7 +16,10 @@ import { ArcCurveControl } from "../../models";
 import { getNakedLineShape } from "./line";
 import { getRectShapeCenter } from "../rectPolygon";
 
-export function patchLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): LinePolygonShape {
+export function patchLinePolygonFromLine(
+  getStruct: GetShapeStruct,
+  line: LineShape,
+): Partial<LineShape & LinePolygonShape> {
   const result = createLinePolygonFromLine(getStruct, line);
   const patch = mapReduce<any, any, any>(line, () => undefined);
   return { ...patch, ...result };
@@ -26,7 +29,8 @@ function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): 
   const rect = getWrapperRect(getStruct, getNakedLineShape(line), undefined, true);
   const p = { x: rect.x, y: rect.y };
   const normalizedLine = { ...line, ...resizeShape(getStruct, line, [1, 0, 0, 1, -p.x, -p.y]) };
-  const polygonPath = convertLinePathToSimplePath(getLinePath(normalizedLine), normalizedLine.curves);
+  const normalizedVertices = getLinePath(normalizedLine);
+  const polygonPath = convertLinePathToSimplePath(normalizedVertices, normalizedLine.curves);
 
   const linePolygon = createShape<LinePolygonShape>(getStruct, "line_polygon", {
     ...normalizedLine,
@@ -36,7 +40,7 @@ function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): 
       curves: polygonPath.curves,
     },
     srcLine: {
-      vertices: [{ p: normalizedLine.p }, ...(normalizedLine.body ?? []), { p: normalizedLine.q }],
+      vertices: normalizedVertices.map((p) => ({ p })),
       curves: normalizedLine.curves,
       lineType: normalizedLine.lineType,
       curveType: normalizedLine.curveType,
@@ -48,7 +52,10 @@ function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): 
   return linePolygon;
 }
 
-export function patchLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LinePolygonShape): LineShape {
+export function patchLineFromLinePolygon(
+  getStruct: GetShapeStruct,
+  linePolygon: LinePolygonShape,
+): Partial<LineShape & LinePolygonShape> {
   const result = createLineFromLinePolygon(getStruct, linePolygon);
   const patch = mapReduce<any, any, any>(linePolygon, () => undefined);
   return { ...patch, ...result };

@@ -4,14 +4,27 @@ import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
 import { ISegment } from "../../utils/geometry";
 import { getArcLerpFn } from "okageo";
+import { LinePolygonShape } from "../polygons/linePolygon";
 
 describe("patchLinePolygonFromLine", () => {
   test("should make a line polygon from the line", () => {
-    const line = createShape<LineShape>(getCommonStruct, "line", { p: { x: 100, y: 0 }, q: { x: 0, y: 50 } });
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 100, y: 0 },
+      body: [{ p: { x: 100, y: 50 }, c: { id: "a", rate: { x: 0.1, y: 0.2 } } }],
+      q: { x: 0, y: 50 },
+      pConnection: { id: "b", rate: { x: 0.1, y: 0.2 } },
+    });
     const result = patchLinePolygonFromLine(getCommonStruct, line);
     expect(result.p).toEqualPoint({ x: 0, y: 0 });
     expect(result.width).toBeCloseTo(100);
     expect(result.height).toBeCloseTo(50);
+    expect(result).toHaveProperty("pConnection");
+    expect(result.pConnection).toBe(undefined);
+    expect(result.srcLine?.vertices, "should delete all connections").toEqual([
+      { p: { x: 100, y: 0 } },
+      { p: { x: 100, y: 50 } },
+      { p: { x: 0, y: 50 } },
+    ]);
   });
 
   test("should convert arc segment to bezier segment", () => {
@@ -22,12 +35,12 @@ describe("patchLinePolygonFromLine", () => {
       curves: [{ d: { x: 0, y: 50 } }, { d: { x: 0, y: -50 } }],
     });
     const result = patchLinePolygonFromLine(getCommonStruct, line);
-    expect(result.path.path).toHaveLength(9);
-    expect(result.path.path[2]).toEqualPoint({ x: 50, y: 50 });
-    expect(result.path.path[4]).toEqualPoint({ x: 100, y: 0 });
-    expect(result.path.path[6]).toEqualPoint({ x: 150, y: 50 });
-    expect(result.path.path[8]).toEqualPoint({ x: 100, y: 100 });
-    expect(result.path.curves).toHaveLength(8);
+    expect(result.path?.path).toHaveLength(9);
+    expect(result.path?.path[2]).toEqualPoint({ x: 50, y: 50 });
+    expect(result.path?.path[4]).toEqualPoint({ x: 100, y: 0 });
+    expect(result.path?.path[6]).toEqualPoint({ x: 150, y: 50 });
+    expect(result.path?.path[8]).toEqualPoint({ x: 100, y: 100 });
+    expect(result.path?.curves).toHaveLength(8);
   });
 });
 
@@ -40,13 +53,17 @@ describe("patchLineFromLinePolygon", () => {
 
   test("should make a line from the line polygon", () => {
     const linePolygon = patchLinePolygonFromLine(getCommonStruct, line);
-    const result = patchLineFromLinePolygon(getCommonStruct, linePolygon);
+    const result = patchLineFromLinePolygon(getCommonStruct, { ...line, ...linePolygon } as LinePolygonShape);
     expect(line).toEqual(result);
   });
 
   test("should regard rotation", () => {
     const linePolygon = patchLinePolygonFromLine(getCommonStruct, line);
-    const result = patchLineFromLinePolygon(getCommonStruct, { ...linePolygon, rotation: Math.PI / 2 });
+    const result = patchLineFromLinePolygon(getCommonStruct, {
+      ...line,
+      ...linePolygon,
+      rotation: Math.PI / 2,
+    } as LinePolygonShape);
     expect(result.rotation).toBeCloseTo(0);
     expect(result.p).toEqualPoint({ x: 100, y: 100 });
     expect(result.body?.[0].p).toEqualPoint({ x: 0, y: 100 });

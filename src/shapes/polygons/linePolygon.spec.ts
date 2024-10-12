@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { struct as lineStruct } from "../line";
-import { struct } from "./linePolygon";
+import { LinePolygonShape, struct } from "./linePolygon";
 import { patchLinePolygonFromLine } from "../utils/linePolygon";
 import { getCommonStruct } from "..";
 
@@ -12,7 +12,7 @@ describe("resize", () => {
       curves: [{ c1: { x: 150, y: 100 }, c2: { x: 150, y: 0 } }],
       q: { x: 0, y: 0 },
     });
-    const shape = { ...line, ...patchLinePolygonFromLine(getCommonStruct, line) };
+    const shape = { ...line, ...patchLinePolygonFromLine(getCommonStruct, line) } as LinePolygonShape;
     const result = struct.resize(shape, [2, 0, 0, 1, 10, 0]);
     expect(result.p).toEqualPoint({ x: 10, y: 0 });
     expect(result.width).toBeCloseTo(275);
@@ -32,7 +32,7 @@ describe("resize", () => {
       body: [{ p: { x: 100, y: 0 } }],
       q: { x: 0, y: 0 },
     });
-    const shape = { ...line, ...patchLinePolygonFromLine(getCommonStruct, line) };
+    const shape = { ...line, ...patchLinePolygonFromLine(getCommonStruct, line) } as LinePolygonShape;
     const result0 = struct.resize(shape, [2, 0, 0, 1, 10, 0]);
     expect(result0).toHaveProperty("srcLine");
     expect(result0.srcLine).toBe(undefined);
