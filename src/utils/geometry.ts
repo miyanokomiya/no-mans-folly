@@ -32,7 +32,7 @@ import {
   sub,
   vec,
 } from "okageo";
-import { CurveControl, Direction4 } from "../models";
+import { CurveControl, Direction4, Size } from "../models";
 import { pickMinItem } from "./commons";
 
 export const BEZIER_APPROX_SIZE = 10;
@@ -51,6 +51,10 @@ function identityFn<T>(v: T): T {
 
 export function getD2(v: IVec2): number {
   return v.x * v.x + v.y * v.y;
+}
+
+export function isSameSize(a: Size, b: Size): boolean {
+  return Math.abs(a.width - b.width) < MINVALUE && Math.abs(a.height - b.height) < MINVALUE;
 }
 
 export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?: boolean) => IVec2 {

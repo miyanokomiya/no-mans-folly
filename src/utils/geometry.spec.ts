@@ -74,8 +74,19 @@ import {
   getClosestPointTo,
   isOnDonutArc,
   expandRectByScale,
+  isSameSize,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
+
+describe("isSameSize", () => {
+  test("should return true when two sizes are same", () => {
+    expect(isSameSize({ width: 1, height: 2 }, { width: 1, height: 2 })).toBe(true);
+    expect(isSameSize({ width: 1, height: 2 }, { width: 2, height: 2 })).toBe(false);
+    expect(isSameSize({ width: 1, height: 2 }, { width: 1, height: 1 })).toBe(false);
+    expect(isSameSize({ width: 1, height: 2 }, { width: 1.0000001, height: 2 })).toBe(true);
+    expect(isSameSize({ width: 1, height: 2 }, { width: 1, height: 2.0000001 })).toBe(true);
+  });
+});
 
 describe("getRotateFn", () => {
   test("should return function to rotate", () => {

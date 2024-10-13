@@ -277,7 +277,7 @@ export const PreviewDialog: React.FC<Props> = () => {
       open={true}
       title="Preview"
       initialPosition={INITIAL_POSITION}
-      initialSize={INITIAL_SIZE}
+      initialBodySize={INITIAL_SIZE}
       boundsKey="preview"
     >
       <div className="w-full h-full relative">

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import iconDelete from "../../assets/icons/delete_filled.svg";
+import iconRedo from "../../assets/icons/redo.svg";
 import { AppText } from "../molecules/AppText";
-import { add, clamp, IVec2, sub } from "okageo";
+import { add, clamp, isSame, IVec2, sub } from "okageo";
 import { useGlobalDrag, useWindow } from "../../hooks/window";
 import { Size } from "../../models";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import { isSameSize } from "../../utils/geometry";
 
 const ZERO_V = { x: 0, y: 0 };
 const INITIAL_SIZE = { width: 400, height: 400 };
@@ -14,7 +16,7 @@ interface Props {
   open: boolean;
   children: React.ReactNode;
   initialPosition?: IVec2;
-  initialSize?: Size;
+  initialBodySize?: Size;
   onClose?: () => void;
   title?: string;
   className?: string;
@@ -25,7 +27,7 @@ export const FloatDialog: React.FC<Props> = ({
   open,
   children,
   initialPosition = ZERO_V,
-  initialSize = INITIAL_SIZE,
+  initialBodySize = INITIAL_SIZE,
   onClose,
   title,
   className,
@@ -41,7 +43,7 @@ export const FloatDialog: React.FC<Props> = ({
   const { state: bodySize, setState: setBodySize } = useLocalStorageAdopter({
     key: boundsKey ? `float-dialog_${boundsKey}_size` : "",
     version: "1",
-    initialValue: initialSize,
+    initialValue: initialBodySize,
   });
   const [dragFrom, setDragFrom] = useState<{ from: IVec2; data: IVec2 }>();
 
@@ -77,6 +79,13 @@ export const FloatDialog: React.FC<Props> = ({
 
     setPosition({ x, y });
   }, [windowSize, setPosition]);
+
+  const resetBounds = useCallback(() => {
+    setPosition(initialPosition);
+    setBodySize(initialBodySize);
+  }, [setPosition, setBodySize, initialPosition, initialBodySize]);
+
+  const isBoundsChanged = !isSame(position, initialPosition) || !isSameSize(bodySize, initialBodySize);
 
   const { startDragging } = useGlobalDrag(
     useCallback(
@@ -146,9 +155,16 @@ export const FloatDialog: React.FC<Props> = ({
         onPointerDown={handleDown}
       >
         {title ? <AppText className="text-lg font-medium">{title}</AppText> : undefined}
-        <button type="button" className="ml-auto w-6 h-6 p-1" onClick={closeDialog}>
-          <img src={iconDelete} alt="Close" />
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          {isBoundsChanged ? (
+            <button type="button" className="w-6 h-6 p-1" onClick={resetBounds}>
+              <img src={iconRedo} alt="Reset" className="-scale-x-100" />
+            </button>
+          ) : undefined}
+          <button type="button" className="w-6 h-6 p-1" onClick={closeDialog}>
+            <img src={iconDelete} alt="Close" />
+          </button>
+        </div>
       </div>
       <div ref={bodyRef} className="relative overflow-hidden" style={bodyStyle}>
         {children}
