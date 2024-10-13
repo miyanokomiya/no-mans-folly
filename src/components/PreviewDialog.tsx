@@ -14,6 +14,7 @@ import { newPreviewState } from "../composables/states/previewState";
 import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import { CanvasStateContext } from "../composables/states/commons";
 import { ZoomField } from "./molecules/ZoomField";
+import iconDoubleCircle from "../assets/icons/double_circle.svg";
 
 const INITIAL_POSITION = { x: 150, y: 50 };
 const INITIAL_SIZE = { width: 400, height: 400 };
@@ -279,6 +280,10 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
     e.preventDefault();
   }, []);
 
+  const handleFollowClick = useCallback(() => {
+    setViewport(smctx.getViewRect());
+  }, [setViewport, smctx]);
+
   const [popupKey, setPopupKey] = useState("");
   const handlePopupClick = useCallback(
     (value: string) => {
@@ -310,13 +315,19 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
         >
           <canvas ref={canvasRef} width={viewSize.width} height={viewSize.height}></canvas>
         </div>
-        <div className="absolute bottom-1 left-1">
+        <div className="absolute bottom-1 left-1 flex items-center gap-2">
           <ZoomField
             scale={scale}
             onScaleChange={setZoom}
             popupedKey={popupKey}
             onClickPopupButton={handlePopupClick}
           />
+          <button
+            className="w-8 h-8 p-1 bg-white rounded-full flex items-center justify-center"
+            onClick={handleFollowClick}
+          >
+            <img src={iconDoubleCircle} alt="Follow canvas" />
+          </button>
         </div>
       </div>
     </FloatDialog>

@@ -17,6 +17,11 @@ interface Props {
 export const ZoomField: React.FC<Props> = ({ scale, onScaleChange, onScaleFit, popupedKey, onClickPopupButton }) => {
   const viewScalePercent = Math.round((1 / scale) * 100);
 
+  const handleCloseScalePopup = useCallback(() => {
+    if (popupedKey !== "scale") return;
+    onClickPopupButton("");
+  }, [popupedKey, onClickPopupButton]);
+
   const handleZoomOut = useCallback(() => {
     onScaleChange(scale * 1.02, true);
   }, [onScaleChange, scale]);
@@ -25,12 +30,8 @@ export const ZoomField: React.FC<Props> = ({ scale, onScaleChange, onScaleFit, p
   }, [onScaleChange, scale]);
   const handleScale100 = useCallback(() => {
     onScaleChange(1, true);
-  }, [onScaleChange]);
-
-  const handleCloseScalePopup = useCallback(() => {
-    if (popupedKey !== "scale") return;
-    onClickPopupButton("");
-  }, [popupedKey, onClickPopupButton]);
+    handleCloseScalePopup();
+  }, [onScaleChange, handleCloseScalePopup]);
 
   return (
     <div className="flex gap-1 items-center select-none">
