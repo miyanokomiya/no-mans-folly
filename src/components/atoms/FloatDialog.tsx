@@ -33,7 +33,7 @@ export const FloatDialog: React.FC<Props> = ({
   className,
   boundsKey,
 }) => {
-  const ref = useRef<HTMLDialogElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const { size: windowSize } = useWindow();
   const { state: position, setState: setPosition } = useLocalStorageAdopter({
     key: boundsKey ? `float-dialog_${boundsKey}_position` : "",
@@ -54,16 +54,6 @@ export const FloatDialog: React.FC<Props> = ({
     margin: 0,
     zIndex: 100,
   };
-
-  useEffect(() => {
-    if (!ref.current) return;
-
-    if (open) {
-      ref.current.show();
-    } else if (!open) {
-      ref.current.close();
-    }
-  }, [open]);
 
   const closeDialog = useCallback(() => {
     onClose?.();
@@ -158,8 +148,8 @@ export const FloatDialog: React.FC<Props> = ({
     height: bodySize.height,
   };
 
-  return (
-    <dialog ref={ref} className={"border-2 shadow rounded " + className} style={positionStyle}>
+  return open ? (
+    <div ref={ref} className={"border-2 shadow rounded " + className} style={positionStyle}>
       <div
         className="px-1 border rounded bg-gray-200 flex items-center cursor-move select-none"
         onPointerDown={handleDown}
@@ -184,6 +174,6 @@ export const FloatDialog: React.FC<Props> = ({
           <div className="border-t border-black -rotate-45 w-6 absolute bottom-0.5" />
         </div>
       </div>
-    </dialog>
-  );
+    </div>
+  ) : undefined;
 };
