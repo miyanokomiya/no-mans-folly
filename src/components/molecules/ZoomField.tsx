@@ -33,7 +33,7 @@ export const ZoomField: React.FC<Props> = ({ scale, onScaleChange, onScaleFit, p
   }, [popupedKey, onClickPopupButton]);
 
   return (
-    <div className="flex gap-1 items-center">
+    <div className="flex gap-1 items-center select-none">
       <ZoomButton onZoom={handleZoomOut}>
         <img src={iconMinus} alt="Zoom out" className="w-6 h-6" />
       </ZoomButton>
