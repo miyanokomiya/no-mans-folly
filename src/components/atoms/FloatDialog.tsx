@@ -70,15 +70,25 @@ export const FloatDialog: React.FC<Props> = ({
   }, [onClose]);
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current || !bodyRef.current || !open) return;
 
+    // Prevent the dialog from sticking out the viewport
     const bounds = ref.current.getBoundingClientRect();
     const x = clamp(0, windowSize.width - bounds.width, bounds.x);
     const y = clamp(0, windowSize.height - bounds.height, bounds.y);
-    if (x === bounds.x && y === bounds.y) return;
+    if (x !== bounds.x || y !== bounds.y) {
+      setPosition({ x, y });
+    }
 
-    setPosition({ x, y });
-  }, [windowSize, setPosition]);
+    const bodyBounds = bodyRef.current.getBoundingClientRect();
+    const nextBodyX = bodyBounds.x + x - bounds.x;
+    const nextBodyY = bodyBounds.y + y - bounds.y;
+    const width = clamp(MIN_SIZE, windowSize.width - nextBodyX, bodyBounds.width);
+    const height = clamp(MIN_SIZE, windowSize.height - nextBodyY, bodyBounds.height);
+    if (width !== bodyBounds.width || height !== bodyBounds.height) {
+      setBodySize({ width, height });
+    }
+  }, [open, windowSize, setPosition, setBodySize]);
 
   const resetBounds = useCallback(() => {
     setPosition(initialPosition);
@@ -155,16 +165,14 @@ export const FloatDialog: React.FC<Props> = ({
         onPointerDown={handleDown}
       >
         {title ? <AppText className="text-lg font-medium">{title}</AppText> : undefined}
-        <div className="ml-auto flex items-center gap-2">
-          {isBoundsChanged ? (
-            <button type="button" className="w-6 h-6 p-1" onClick={resetBounds}>
-              <img src={iconRedo} alt="Reset" className="-scale-x-100" />
-            </button>
-          ) : undefined}
-          <button type="button" className="w-6 h-6 p-1" onClick={closeDialog}>
-            <img src={iconDelete} alt="Close" />
+        {isBoundsChanged ? (
+          <button type="button" className="ml-2 w-6 h-6 p-1" onClick={resetBounds}>
+            <img src={iconRedo} alt="Reset" className="-scale-x-100" />
           </button>
-        </div>
+        ) : undefined}
+        <button type="button" className="ml-auto w-6 h-6 p-1" onClick={closeDialog}>
+          <img src={iconDelete} alt="Close" />
+        </button>
       </div>
       <div ref={bodyRef} className="relative overflow-hidden" style={bodyStyle}>
         {children}
