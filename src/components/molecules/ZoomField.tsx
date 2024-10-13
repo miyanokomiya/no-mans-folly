@@ -28,8 +28,17 @@ export const ZoomField: React.FC<Props> = ({ scale, onScaleChange, onScaleFit, p
   const handleZoomIn = useCallback(() => {
     onScaleChange(scale / 1.02, true);
   }, [onScaleChange, scale]);
+
+  const handleScale50 = useCallback(() => {
+    onScaleChange(2, true);
+    handleCloseScalePopup();
+  }, [onScaleChange, handleCloseScalePopup]);
   const handleScale100 = useCallback(() => {
     onScaleChange(1, true);
+    handleCloseScalePopup();
+  }, [onScaleChange, handleCloseScalePopup]);
+  const handleScale200 = useCallback(() => {
+    onScaleChange(0.5, true);
     handleCloseScalePopup();
   }, [onScaleChange, handleCloseScalePopup]);
 
@@ -45,7 +54,9 @@ export const ZoomField: React.FC<Props> = ({ scale, onScaleChange, onScaleFit, p
           popup={
             <div className="flex flex-col items-center">
               {onScaleFit ? <ListButton onClick={onScaleFit}>Fit</ListButton> : undefined}
+              <ListButton onClick={handleScale50}>50%</ListButton>
               <ListButton onClick={handleScale100}>100%</ListButton>
+              <ListButton onClick={handleScale200}>200%</ListButton>
             </div>
           }
           onClick={onClickPopupButton}
