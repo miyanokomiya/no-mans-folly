@@ -12,7 +12,7 @@ import { ZoomField } from "./molecules/ZoomField";
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
   const { setZoom, getScale, getShapeComposite, setViewport } = useContext(AppStateContext);
-  const [popupedKey, setPopupedKey] = useState("");
+  const [popupKey, setPopupKey] = useState("");
 
   const handleScaleFit = useCallback(() => {
     const shapeComposite = getShapeComposite();
@@ -22,11 +22,14 @@ export const AppFootbar: React.FC = () => {
     setViewport(getWrapperRect(rects), 80);
   }, [getShapeComposite, setViewport]);
 
-  const onClickPopupButton = useCallback((value: string) => {
-    setPopupedKey((key) => (key === value ? "" : value));
-  }, []);
-  const handleCloseHelpPopup = useCallback(() => {
-    setPopupedKey((key) => (key === "help" ? "" : key));
+  const handlePopupClick = useCallback(
+    (value: string) => {
+      setPopupKey((key) => (key === value ? "" : value));
+    },
+    [setPopupKey],
+  );
+  const handleHelpClose = useCallback(() => {
+    setPopupKey((key) => (key === "help" ? "" : key));
   }, []);
 
   const onUndo = useCallback(() => {
@@ -51,8 +54,8 @@ export const AppFootbar: React.FC = () => {
         scale={getScale()}
         onScaleChange={setZoom}
         onScaleFit={handleScaleFit}
-        popupedKey={popupedKey}
-        onClickPopupButton={onClickPopupButton}
+        popupedKey={popupKey}
+        onClickPopupButton={handlePopupClick}
       />
       {borderElm}
       <div className="flex gap-1 items-center">
@@ -67,10 +70,10 @@ export const AppFootbar: React.FC = () => {
       <a href={process.env.BUYMEACOFFEE_URL} target="_blank" rel="noopener" className="p-1">
         <img src={iconBMC} alt="Buy me a coffee" className="w-6 h-6" />
       </a>
-      <OutsideObserver onClick={handleCloseHelpPopup}>
+      <OutsideObserver onClick={handleHelpClose}>
         <PopupButton
           name="help"
-          opened={popupedKey === "help"}
+          opened={popupKey === "help"}
           popup={
             <div className="flex flex-col items-center w-max">
               <ListLink href={process.env.DOC_PATH!} external>
@@ -84,7 +87,7 @@ export const AppFootbar: React.FC = () => {
               </ListLink>
             </div>
           }
-          onClick={onClickPopupButton}
+          onClick={handlePopupClick}
           popupPosition="left"
         >
           <div className="w-6 h-6 flex justify-center items-center">

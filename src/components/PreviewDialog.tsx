@@ -13,6 +13,7 @@ import { ModeStateContextBase, newStateMachine } from "../composables/states/cor
 import { newPreviewState } from "../composables/states/previewState";
 import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import { CanvasStateContext } from "../composables/states/commons";
+import { ZoomField } from "./molecules/ZoomField";
 
 interface Props {
   open: boolean;
@@ -261,20 +262,38 @@ export const PreviewDialog: React.FC<Props> = () => {
     e.preventDefault();
   }, []);
 
+  const [popupKey, setPopupKey] = useState("");
+  const handlePopupClick = useCallback(
+    (value: string) => {
+      setPopupKey((key) => (key === value ? "" : value));
+    },
+    [setPopupKey],
+  );
+
   return (
     <FloatDialog open={true} title="Preview" initialSize={size}>
-      <div
-        ref={wrapperRef}
-        className="w-full h-full"
-        style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}
-        onPointerDown={onMouseDown}
-        onPointerMove={onMouseHover}
-        onKeyDown={onKeyDown}
-        onKeyUp={onKeyUp}
-        onContextMenu={handleNativeContextMenu}
-        tabIndex={-1}
-      >
-        <canvas ref={canvasRef} width={viewSize.width} height={viewSize.height}></canvas>
+      <div className="w-full h-full relative">
+        <div
+          ref={wrapperRef}
+          className="w-full h-full"
+          style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}
+          onPointerDown={onMouseDown}
+          onPointerMove={onMouseHover}
+          onKeyDown={onKeyDown}
+          onKeyUp={onKeyUp}
+          onContextMenu={handleNativeContextMenu}
+          tabIndex={-1}
+        >
+          <canvas ref={canvasRef} width={viewSize.width} height={viewSize.height}></canvas>
+        </div>
+        <div className="absolute bottom-0 right-0">
+          <ZoomField
+            scale={scale}
+            onScaleChange={setZoom}
+            popupedKey={popupKey}
+            onClickPopupButton={handlePopupClick}
+          />
+        </div>
       </div>
     </FloatDialog>
   );

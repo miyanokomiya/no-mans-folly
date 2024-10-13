@@ -48,6 +48,7 @@ export const ZoomField: React.FC<Props> = ({ scale, onScaleChange, onScaleFit, p
             </div>
           }
           onClick={onClickPopupButton}
+          defaultDirection="top"
         >
           <div className="flex items-center justify-center w-12">{viewScalePercent}%</div>
         </PopupButton>
@@ -101,7 +102,7 @@ const ZoomButton: React.FC<ZoomButtonProps> = ({ children, onZoom }) => {
   return (
     <button
       type="button"
-      className="w-8 h-8 rounded border select-none touch-none text-xl flex items-center justify-center"
+      className="bg-white w-8 h-8 rounded border select-none touch-none text-xl flex items-center justify-center"
       onPointerDown={handleDown}
       onContextMenu={handleContextMenu}
     >
