@@ -1,7 +1,6 @@
 import { IVec2, multi, sub, add, getRectCenter, IRectangle, clamp } from "okageo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditMovement } from "../composables/states/types";
-import { expandRect } from "../utils/geometry";
 import { Size } from "../models";
 import { useLocalStorageAdopter } from "./localStorage";
 
@@ -171,17 +170,17 @@ export function useCanvas(
   );
 
   const setViewport = useCallback(
-    (rect?: IRectangle, margin = 0) => {
+    (rect?: IRectangle) => {
       if (!rect) {
         adjustToCenter();
         return;
       }
 
-      const ret = centerizeView(expandRect(rect, margin / scale), viewSize, (v) => clamp(scaleMin, scaleMax, v));
+      const ret = centerizeView(rect, viewSize, (v) => clamp(scaleMin, scaleMax, v));
       setScale(ret.scale);
       setViewOrigin(ret.viewOrigin);
     },
-    [scale, scaleMin, scaleMax, adjustToCenter, viewSize, setViewOrigin, setScale],
+    [scaleMin, scaleMax, adjustToCenter, viewSize, setViewOrigin, setScale],
   );
 
   const zoomView = useCallback(

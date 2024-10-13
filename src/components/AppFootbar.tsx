@@ -1,13 +1,13 @@
 import { useCallback, useContext, useState } from "react";
 import { AppStateContext, AppStateMachineContext } from "../contexts/AppContext";
 import { PopupButton } from "./atoms/PopupButton";
-import { getWrapperRect } from "../utils/geometry";
 import { ListLink } from "./atoms/buttons/ListButton";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import iconRedo from "../assets/icons/redo.svg";
 import iconHelp from "../assets/icons/help.svg";
 import iconBMC from "../assets/externals/bmc-logo.svg";
 import { ZoomField } from "./molecules/ZoomField";
+import { getAllShapeRangeWithinComposite } from "../composables/shapeComposite";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -15,11 +15,12 @@ export const AppFootbar: React.FC = () => {
   const [popupKey, setPopupKey] = useState("");
 
   const handleScaleFit = useCallback(() => {
+    setPopupKey("");
     const shapeComposite = getShapeComposite();
-    const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
-    if (rects.length === 0) return;
+    if (shapeComposite.shapes.length === 0) return;
 
-    setViewport(getWrapperRect(rects), 80);
+    const rect = getAllShapeRangeWithinComposite(shapeComposite, true);
+    setViewport(rect);
   }, [getShapeComposite, setViewport]);
 
   const handlePopupClick = useCallback(

@@ -22,7 +22,6 @@ import {
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2, add, getRectCenter, multi } from "okageo";
 import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
-import * as geometry from "../../../utils/geometry";
 import { newTextReadyState } from "./text/textReadyState";
 import { TextShape } from "../../../shapes/text";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
@@ -30,7 +29,7 @@ import { ImageShape } from "../../../shapes/image";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
-import { canGroupShapes, findBetterShapeAt } from "../../shapeComposite";
+import { canGroupShapes, findBetterShapeAt, getAllShapeRangeWithinComposite } from "../../shapeComposite";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
@@ -185,11 +184,10 @@ export function handleCommonShortcut(
     case "Home": {
       event.data.prevent?.();
       const shapeComposite = ctx.getShapeComposite();
-      const rects = shapeComposite.shapes.map((s) => shapeComposite.getWrapperRect(s));
-      if (rects.length === 0) return;
+      if (shapeComposite.shapes.length === 0) return;
 
-      const viewRect = geometry.getWrapperRect(rects);
-      return { type: "stack-resume", getState: () => newAutoPanningState({ viewRect, duration: 100 }) };
+      const rect = getAllShapeRangeWithinComposite(shapeComposite, true);
+      return { type: "stack-resume", getState: () => newAutoPanningState({ viewRect: rect, duration: 100 }) };
     }
     case "Delete":
     case "Backspace": {
