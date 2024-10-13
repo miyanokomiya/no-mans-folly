@@ -4,11 +4,11 @@ import { AppText } from "../molecules/AppText";
 import { add, clamp, IVec2, sub } from "okageo";
 import { useGlobalDrag, useWindow } from "../../hooks/window";
 import { Size } from "../../models";
-import { useDraggable } from "../../hooks/draggable";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 const ZERO_V = { x: 0, y: 0 };
 const INITIAL_SIZE = { width: 400, height: 400 };
+const MIN_SIZE = 200;
 
 interface Props {
   open: boolean;
@@ -43,8 +43,7 @@ export const FloatDialog: React.FC<Props> = ({
     version: "1",
     initialValue: initialSize,
   });
-  const [dragFrom, setDragFrom] = useState<{ from: IVec2; position: IVec2 }>();
-  const [adjustedInitialSize] = useState(bodySize);
+  const [dragFrom, setDragFrom] = useState<{ from: IVec2; data: IVec2 }>();
 
   const positionStyle: React.CSSProperties = {
     position: "fixed",
@@ -77,7 +76,7 @@ export const FloatDialog: React.FC<Props> = ({
     if (x === bounds.x && y === bounds.y) return;
 
     setPosition({ x, y });
-  }, [windowSize]);
+  }, [windowSize, setPosition]);
 
   const { startDragging } = useGlobalDrag(
     useCallback(
@@ -86,12 +85,12 @@ export const FloatDialog: React.FC<Props> = ({
 
         const bounds = ref.current.getBoundingClientRect();
         const v = sub({ x: e.clientX, y: e.clientY }, dragFrom.from);
-        const draft = add(dragFrom.position, v);
+        const draft = add(dragFrom.data, v);
         const x = clamp(0, windowSize.width - bounds.width, draft.x);
         const y = clamp(0, windowSize.height - bounds.height, draft.y);
         setPosition({ x, y });
       },
-      [dragFrom, windowSize],
+      [dragFrom, windowSize, setPosition],
     ),
     useCallback(() => {
       setDragFrom(undefined);
@@ -100,19 +99,40 @@ export const FloatDialog: React.FC<Props> = ({
 
   const handleDown = useCallback(
     (e: React.PointerEvent) => {
-      setDragFrom({ from: { x: e.clientX, y: e.clientY }, position });
+      setDragFrom({ from: { x: e.clientX, y: e.clientY }, data: position });
       startDragging();
     },
     [startDragging, position],
   );
 
-  const resizing = useDraggable();
-  useEffect(() => {
-    if (!resizing.v) return;
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const { startDragging: startResizeDragging } = useGlobalDrag(
+    useCallback(
+      (e: PointerEvent) => {
+        if (!dragFrom || !bodyRef.current) return;
 
-    const size = { width: resizing.v.x + adjustedInitialSize.width, height: resizing.v.y + adjustedInitialSize.height };
-    setBodySize(size);
-  }, [setBodySize, resizing.v, adjustedInitialSize]);
+        const bounds = bodyRef.current.getBoundingClientRect();
+        const v = sub({ x: e.clientX, y: e.clientY }, dragFrom.from);
+        const draft = add(dragFrom.data, v);
+        const w = clamp(MIN_SIZE, windowSize.width - bounds.x, draft.x);
+        const h = clamp(MIN_SIZE, windowSize.height - bounds.y, draft.y);
+        setBodySize({ width: w, height: h });
+      },
+      [dragFrom, windowSize, setBodySize],
+    ),
+    useCallback(() => {
+      setDragFrom(undefined);
+    }, []),
+  );
+
+  const handleBodyDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault();
+      setDragFrom({ from: { x: e.clientX, y: e.clientY }, data: { x: bodySize.width, y: bodySize.height } });
+      startResizeDragging();
+    },
+    [startResizeDragging, bodySize],
+  );
 
   const bodyStyle: React.CSSProperties = {
     width: bodySize.width,
@@ -130,11 +150,11 @@ export const FloatDialog: React.FC<Props> = ({
           <img src={iconDelete} alt="Close" />
         </button>
       </div>
-      <div className="relative overflow-hidden" style={bodyStyle}>
+      <div ref={bodyRef} className="relative overflow-hidden" style={bodyStyle}>
         {children}
         <div
           className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize overflow-hidden"
-          onPointerDown={resizing.startDrag}
+          onPointerDown={handleBodyDown}
         >
           <div className="border-t border-black -rotate-45 w-6 absolute bottom-2" />
           <div className="border-t border-black -rotate-45 w-6 absolute bottom-0.5" />
