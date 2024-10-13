@@ -57,6 +57,13 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handlePreviewChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ preview: val ? "on" : "off" });
+    },
+    [userSettingStore],
+  );
+
   const handleGridSizeChange = useCallback(
     (val: number) => {
       userSettingStore.patchState({ gridSize: val });
@@ -110,6 +117,9 @@ export const UserSettingPanel: React.FC = () => {
             </div>
           </InlineField>
         </BlockGroupField>
+        <InlineField label="Preview">
+          <ToggleInput value={userSetting.preview === "on"} onChange={handlePreviewChange} />
+        </InlineField>
       </div>
     </div>
   );

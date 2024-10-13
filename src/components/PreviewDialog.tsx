@@ -23,7 +23,7 @@ interface Props {
   onClose?: () => void;
 }
 
-export const PreviewDialog: React.FC<Props> = () => {
+export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -274,7 +274,8 @@ export const PreviewDialog: React.FC<Props> = () => {
 
   return (
     <FloatDialog
-      open={true}
+      open={open}
+      onClose={onClose}
       title="Preview"
       initialPosition={INITIAL_POSITION}
       initialBodySize={INITIAL_SIZE}

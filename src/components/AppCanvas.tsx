@@ -867,7 +867,10 @@ export const AppCanvas: React.FC = () => {
           getContainerSize={getWrapperSize}
         />
       ) : undefined}
-      <PreviewDialog open={true} />
+      <PreviewDialog
+        open={userSetting.preview === "on"}
+        onClose={useCallback(() => userSettingStore.patchState({ preview: "off" }), [userSettingStore])}
+      />
     </>
   );
 };
