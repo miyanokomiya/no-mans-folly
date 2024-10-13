@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import iconDelete from "../../assets/icons/delete_filled.svg";
 import { AppText } from "../molecules/AppText";
 import { add, clamp, IVec2, sub } from "okageo";
 import { useGlobalDrag, useWindow } from "../../hooks/window";
 import { Size } from "../../models";
+import { useDraggable } from "../../hooks/draggable";
 
 const ZERO_V = { x: 0, y: 0 };
+const INITIAL_SIZE = { width: 400, height: 400 };
 
 interface Props {
   open: boolean;
@@ -21,7 +23,7 @@ export const FloatDialog: React.FC<Props> = ({
   open,
   children,
   initialPosition = ZERO_V,
-  initialSize,
+  initialSize = INITIAL_SIZE,
   onClose,
   title,
   className,
@@ -91,15 +93,20 @@ export const FloatDialog: React.FC<Props> = ({
     [startDragging, position],
   );
 
-  const bodyStyle: React.CSSProperties = initialSize
-    ? {
-        width: initialSize.width,
-        height: initialSize.height,
-      }
-    : {};
+  const resizing = useDraggable();
+  const bodySize = useMemo<Size>(() => {
+    return resizing.v
+      ? { width: resizing.v.x + initialSize.width, height: resizing.v.y + initialSize.height }
+      : initialSize;
+  }, [resizing.v, initialSize]);
+
+  const bodyStyle: React.CSSProperties = {
+    width: bodySize.width,
+    height: bodySize.height,
+  };
 
   return (
-    <dialog ref={ref} className={"border shadow rounded " + className} style={positionStyle}>
+    <dialog ref={ref} className={"border-2 shadow rounded " + className} style={positionStyle}>
       <div
         className="px-1 border rounded bg-gray-200 flex items-center cursor-move select-none"
         onPointerDown={handleDown}
@@ -109,8 +116,15 @@ export const FloatDialog: React.FC<Props> = ({
           <img src={iconDelete} alt="Close" />
         </button>
       </div>
-      <div className="resize overflow-auto" style={bodyStyle}>
+      <div className="relative overflow-hidden" style={bodyStyle}>
         {children}
+        <div
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize overflow-hidden"
+          onPointerDown={resizing.startDrag}
+        >
+          <div className="border-t border-black -rotate-45 w-6 absolute bottom-2" />
+          <div className="border-t border-black -rotate-45 w-6 absolute bottom-0.5" />
+        </div>
       </div>
     </dialog>
   );

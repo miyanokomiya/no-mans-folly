@@ -15,13 +15,15 @@ import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import { CanvasStateContext } from "../composables/states/commons";
 import { ZoomField } from "./molecules/ZoomField";
 
+const INITIAL_POSITION = { x: 150, y: 50 };
+const INITIAL_SIZE = { width: 400, height: 400 };
+
 interface Props {
   open: boolean;
   onClose?: () => void;
 }
 
 export const PreviewDialog: React.FC<Props> = () => {
-  const [size] = useState({ width: 400, height: 400 });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,7 +74,7 @@ export const PreviewDialog: React.FC<Props> = () => {
       canvasBank,
     });
     renderer.render(ctx);
-  }, [shapeComposite, documentStore, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank, canvasState]);
+  }, [shapeComposite, documentStore, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank, canvasState, viewSize]);
 
   const focus = useCallback(() => {
     wrapperRef.current?.focus();
@@ -271,11 +273,11 @@ export const PreviewDialog: React.FC<Props> = () => {
   );
 
   return (
-    <FloatDialog open={true} title="Preview" initialSize={size}>
+    <FloatDialog open={true} title="Preview" initialPosition={INITIAL_POSITION} initialSize={INITIAL_SIZE}>
       <div className="w-full h-full relative">
         <div
           ref={wrapperRef}
-          className="w-full h-full"
+          className="w-full h-full outline-none"
           style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}
           onPointerDown={onMouseDown}
           onPointerMove={onMouseHover}
@@ -286,7 +288,7 @@ export const PreviewDialog: React.FC<Props> = () => {
         >
           <canvas ref={canvasRef} width={viewSize.width} height={viewSize.height}></canvas>
         </div>
-        <div className="absolute bottom-0 right-0">
+        <div className="absolute bottom-1 left-1">
           <ZoomField
             scale={scale}
             onScaleChange={setZoom}
