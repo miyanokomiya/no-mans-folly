@@ -25,6 +25,7 @@ export const COMMAND_EXAM_SRC = {
   TEXT_EMOJI_PICKER: { command: `${getCtrlOrMetaStr()} + ":"`, title: "Emoji picker" },
 
   TOGGLE_GRID: { command: "g", title: "Grid on/off" },
+  TOGGLE_PREVIEW: { command: "p", title: "Preview on/off" },
   RESET_VIEWPORT: { command: "Home, !", title: "Reset viewport" },
   PAN_TO_AREA: { command: "Home, !", title: "Pan to area" },
 
@@ -35,8 +36,6 @@ export const COMMAND_EXAM_SRC = {
   GROUP: { command: `${getCtrlOrMetaStr()} + g`, title: "Group" },
   UNGROUP: { command: `${getCtrlOrMetaStr()} + G`, title: "Ungroup" },
 
-  SELECT_PARENT: { command: "p", title: "Select parent" },
-  SELECT_CHILD: { command: "c", title: "Select child" },
   KEEP_SELECTION: { command: getCtrlOrMetaStr(), title: "Keep selection" },
 
   TREE_NEW_CHILD: { command: "Tab", title: "New child" },

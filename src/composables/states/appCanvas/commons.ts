@@ -131,25 +131,7 @@ export function handleCommonShortcut(
       if (event.data.shift) return;
       if (event.data.ctrl) return;
 
-      const shapeComposite = ctx.getShapeComposite();
-      const current = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
-      if (current?.parentId && shapeComposite.shapeMap[current.parentId]) {
-        ctx.selectShape(current.parentId);
-        return ctx.states.newSelectionHubState;
-      }
-      return;
-    }
-    case "c":
-    case "C": {
-      if (event.data.shift) return;
-      if (event.data.ctrl) return;
-
-      const shapeComposite = ctx.getShapeComposite();
-      const currentNode = shapeComposite.mergedShapeTreeMap[ctx.getLastSelectedShapeId() ?? ""];
-      if (currentNode && currentNode.children.length > 0 && shapeComposite.shapeMap[currentNode.children[0].id]) {
-        ctx.selectShape(currentNode.children[0].id);
-        return ctx.states.newSelectionHubState;
-      }
+      ctx.patchUserSetting({ preview: ctx.getUserSetting().preview === "on" ? "off" : "on" });
       return;
     }
     case "g":
@@ -226,6 +208,7 @@ const COMMON_COMMAND_EXAMS = [
   COMMAND_EXAM_SRC.NEW_LINE,
   COMMAND_EXAM_SRC.NEW_EMOJI,
   COMMAND_EXAM_SRC.TOGGLE_GRID,
+  COMMAND_EXAM_SRC.TOGGLE_PREVIEW,
   COMMAND_EXAM_SRC.PAN_CANVAS,
   COMMAND_EXAM_SRC.RESET_VIEWPORT,
 ];
@@ -236,14 +219,6 @@ export function getCommonCommandExams(ctx: AppCanvasStateContext): CommandExam[]
   if (!current) return COMMON_COMMAND_EXAMS;
 
   const extra: CommandExam[] = [];
-  if (shapeComposite.shapeMap[current.parentId ?? ""]) {
-    extra.push(COMMAND_EXAM_SRC.SELECT_PARENT);
-  }
-  const currentNode = shapeComposite.mergedShapeTreeMap[current.id];
-  if (currentNode.children.length > 0 && shapeMap[currentNode.children[0].id]) {
-    extra.push(COMMAND_EXAM_SRC.SELECT_CHILD);
-  }
-
   const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
   if (canGroupShapes(shapeComposite, selectedIds)) {
     extra.push(COMMAND_EXAM_SRC.GROUP);

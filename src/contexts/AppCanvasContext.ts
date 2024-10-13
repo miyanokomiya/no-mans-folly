@@ -33,6 +33,7 @@ export function createInitialAppCanvasStateContext(arg: {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
   getUserSetting?: () => UserSetting;
+  patchUserSetting?: (patch: Partial<UserSetting>) => void;
   showToastMessage?: (val: ToastMessage) => void;
   assetAPI?: AssetAPI;
 }): AppCanvasStateContext {
@@ -41,6 +42,7 @@ export function createInitialAppCanvasStateContext(arg: {
     generateUuid: arg.generateUuid,
     getStyleScheme: arg.getStyleScheme,
     getUserSetting: arg.getUserSetting ?? (() => ({})),
+    patchUserSetting: arg.patchUserSetting ?? (() => ({})),
     showToastMessage: arg.showToastMessage ?? (() => ({})),
     assetAPI: arg.assetAPI ?? disabledAssetAPI,
 

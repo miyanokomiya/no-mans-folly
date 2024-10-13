@@ -28,6 +28,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
       generateUuid,
       getStyleScheme: acctx.getStyleScheme,
       getUserSetting: acctx.userSettingStore.getState,
+      patchUserSetting: acctx.userSettingStore.patchState,
       showToastMessage,
       assetAPI,
     });
@@ -101,6 +102,7 @@ type AppCanvasStateContextPart = Omit<
   | "getShapeStruct"
   | "getStyleScheme"
   | "getUserSetting"
+  | "patchUserSetting"
   | "showToastMessage"
   | "assetAPI"
   | "states"

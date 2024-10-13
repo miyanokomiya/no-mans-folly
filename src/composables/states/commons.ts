@@ -7,6 +7,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
   getStyleScheme: () => StyleScheme;
   getUserSetting: () => UserSetting;
+  patchUserSetting: (patch: Partial<UserSetting>) => void;
 
   redraw: () => void;
   getRenderCtx: () => CanvasRenderingContext2D | undefined;

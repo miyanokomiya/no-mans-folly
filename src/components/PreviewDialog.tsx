@@ -99,6 +99,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
       generateUuid: () => "",
       getStyleScheme: smctx.getStyleScheme,
       getUserSetting: smctx.getUserSetting,
+      patchUserSetting: smctx.patchUserSetting,
 
       redraw: () => setCanvasState({}),
       getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
@@ -128,6 +129,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   }, [
     smctx.getStyleScheme,
     smctx.getUserSetting,
+    smctx.patchUserSetting,
     setViewport,
     zoomView,
     setZoom,
