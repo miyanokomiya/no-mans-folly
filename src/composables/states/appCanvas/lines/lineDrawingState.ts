@@ -17,7 +17,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { add } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
-import { handleCommonWheel } from "../commons";
+import { handleCommonWheel } from "../../commons";
 import { getDefaultCurveBody } from "../../../../shapes/utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";

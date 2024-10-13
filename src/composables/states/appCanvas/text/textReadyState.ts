@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "../commons";
+import { getCommonAcceptableEvents, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { createShape } from "../../../../shapes";
 import { IVec2, add } from "okageo";
@@ -11,6 +11,7 @@ import { isLineShape } from "../../../../shapes/line";
 import { TAU } from "../../../../utils/geometry";
 import { getInitialOutput } from "../../../../utils/textEditor";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { handleCommonWheel } from "../../commons";
 
 export function newTextReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;

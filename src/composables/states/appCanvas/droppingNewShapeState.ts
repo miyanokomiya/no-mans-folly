@@ -6,7 +6,7 @@ import { isLineShape } from "../../../shapes/line";
 import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
-import { handleCommonWheel } from "./commons";
+import { handleCommonWheel } from "../commons";
 
 interface Option {
   shapes: Shape[];

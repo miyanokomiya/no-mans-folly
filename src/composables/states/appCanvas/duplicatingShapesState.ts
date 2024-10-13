@@ -8,7 +8,7 @@ import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
-import { handleCommonWheel } from "./commons";
+import { handleCommonWheel } from "../commons";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
 
 // Add extra distance to make duplicated shapes' existence clear.

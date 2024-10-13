@@ -3,7 +3,7 @@ import { createShape } from "../../../shapes";
 import { EmojiShape } from "../../../shapes/emoji";
 import type { AppCanvasState } from "./core";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { handleCommonWheel } from "./commons";
+import { handleCommonWheel } from "../commons";
 
 export function newEmojiPickerState(): AppCanvasState {
   let p: IVec2;

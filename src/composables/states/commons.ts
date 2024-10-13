@@ -1,5 +1,5 @@
 import { IVec2, IRectangle } from "okageo";
-import type { ModeStateBase, ModeStateContextBase, ModeStateEvent, ModeStateEventBase } from "./core";
+import type { ModeStateBase, ModeStateContextBase, ModeStateEvent, ModeStateEventBase, WheelEvent } from "./core";
 import type { CommandExam, ContextMenuItem, EditMovement, ToastMessage } from "./types";
 import { StyleScheme, UserSetting } from "../../models";
 
@@ -42,3 +42,19 @@ export interface HistoryEvent extends ModeStateEventBase {
 export type CanvasStateEvent = ModeStateEvent | HistoryEvent;
 
 export type CanvasState = ModeStateBase<CanvasStateContext, CanvasStateEvent>;
+
+/**
+ * Procs zooming or panning depending on the user setting.
+ * Returns the latest scale.
+ */
+export function handleCommonWheel(
+  ctx: Pick<CanvasStateContext, "getUserSetting" | "scrollView" | "zoomView" | "getScale">,
+  event: WheelEvent,
+): number {
+  if (!!event.data.options.ctrl !== (ctx.getUserSetting().wheelAction === "pan")) {
+    ctx.scrollView(event.data.options.shift ? { x: event.data.delta.y, y: event.data.delta.x } : event.data.delta);
+    return ctx.getScale();
+  }
+
+  return ctx.zoomView(event.data.delta.y);
+}

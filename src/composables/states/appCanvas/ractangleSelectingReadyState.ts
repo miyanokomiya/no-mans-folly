@@ -1,5 +1,6 @@
 import type { AppCanvasState } from "./core";
-import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "./commons";
+import { getCommonAcceptableEvents, handleStateEvent } from "./commons";
+import { handleCommonWheel } from "../commons";
 import { newRectangleSelectingState } from "./ractangleSelectingState";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";

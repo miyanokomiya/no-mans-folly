@@ -3,7 +3,6 @@ import { getShapeTextBounds, resizeOnTextEdit, shouldResizeOnTextEdit } from "..
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import {
   getCommonAcceptableEvents,
-  handleCommonWheel,
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
@@ -22,6 +21,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { handleCommonWheel } from "../../commons";
 
 interface Option {
   id: string;

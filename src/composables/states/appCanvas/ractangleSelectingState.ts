@@ -5,7 +5,7 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath, scaleGlobalAlpha } from "../../../utils/renderer";
 import { isTransparentSelection } from "../../../shapes";
 import { ShapeSelectionScope } from "../../../shapes/core";
-import { handleCommonWheel } from "./commons";
+import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { applyFillStyle } from "../../../utils/fillStyle";

@@ -10,9 +10,9 @@ import {
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
 import { LineShape } from "../../../shapes/line";
-import { handleCommonWheel } from "./commons";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { handleCommonWheel } from "../commons";
 
 interface Option {
   boundingBox: BoundingBox;

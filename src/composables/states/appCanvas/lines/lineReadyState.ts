@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { getCommonAcceptableEvents, handleCommonWheel, handleStateEvent } from "../commons";
+import { getCommonAcceptableEvents, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
@@ -18,6 +18,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { TAU } from "../../../../utils/geometry";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
+import { handleCommonWheel } from "../../commons";
 
 interface Option {
   type: LineType;
