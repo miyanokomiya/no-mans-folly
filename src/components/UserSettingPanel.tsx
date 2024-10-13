@@ -117,7 +117,7 @@ export const UserSettingPanel: React.FC = () => {
             </div>
           </InlineField>
         </BlockGroupField>
-        <InlineField label="Preview">
+        <InlineField label="Preview dialog">
           <ToggleInput value={userSetting.preview === "on"} onChange={handlePreviewChange} />
         </InlineField>
       </div>
