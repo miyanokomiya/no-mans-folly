@@ -34,7 +34,6 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   createLastIndex: () => string;
 
   getGrid: () => Grid;
-  setGridDisabled: (val: boolean) => void;
 
   startTextEditing: () => void;
   stopTextEditing: () => void;

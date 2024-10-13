@@ -396,7 +396,6 @@ export const AppCanvas: React.FC = () => {
       createLastIndex: shapeStore.createLastIndex,
 
       getGrid: () => grid,
-      setGridDisabled: (val) => userSettingStore.patchState({ grid: val ? "off" : "on" }),
 
       startTextEditing() {
         setTextEditing(true);

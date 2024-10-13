@@ -148,7 +148,7 @@ export function handleCommonShortcut(
         }
       } else {
         if (event.data.shift) return;
-        ctx.setGridDisabled(!ctx.getGrid().disabled);
+        ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
       }
       return ctx.states.newSelectionHubState;
     case "l":
