@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import iconDelete from "../../assets/icons/delete_filled.svg";
 import { AppText } from "../molecules/AppText";
 import { add, clamp, IVec2, sub } from "okageo";
 import { useGlobalDrag, useWindow } from "../../hooks/window";
 import { Size } from "../../models";
 import { useDraggable } from "../../hooks/draggable";
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 const ZERO_V = { x: 0, y: 0 };
 const INITIAL_SIZE = { width: 400, height: 400 };
@@ -17,6 +18,7 @@ interface Props {
   onClose?: () => void;
   title?: string;
   className?: string;
+  boundsKey?: string;
 }
 
 export const FloatDialog: React.FC<Props> = ({
@@ -27,11 +29,22 @@ export const FloatDialog: React.FC<Props> = ({
   onClose,
   title,
   className,
+  boundsKey,
 }) => {
   const ref = useRef<HTMLDialogElement>(null);
   const { size: windowSize } = useWindow();
-  const [position, setPosition] = useState<IVec2>(initialPosition);
+  const { state: position, setState: setPosition } = useLocalStorageAdopter({
+    key: boundsKey ? `float-dialog_${boundsKey}_position` : "",
+    version: "1",
+    initialValue: initialPosition,
+  });
+  const { state: bodySize, setState: setBodySize } = useLocalStorageAdopter({
+    key: boundsKey ? `float-dialog_${boundsKey}_size` : "",
+    version: "1",
+    initialValue: initialSize,
+  });
   const [dragFrom, setDragFrom] = useState<{ from: IVec2; position: IVec2 }>();
+  const [adjustedInitialSize] = useState(bodySize);
 
   const positionStyle: React.CSSProperties = {
     position: "fixed",
@@ -94,11 +107,12 @@ export const FloatDialog: React.FC<Props> = ({
   );
 
   const resizing = useDraggable();
-  const bodySize = useMemo<Size>(() => {
-    return resizing.v
-      ? { width: resizing.v.x + initialSize.width, height: resizing.v.y + initialSize.height }
-      : initialSize;
-  }, [resizing.v, initialSize]);
+  useEffect(() => {
+    if (!resizing.v) return;
+
+    const size = { width: resizing.v.x + adjustedInitialSize.width, height: resizing.v.y + adjustedInitialSize.height };
+    setBodySize(size);
+  }, [setBodySize, resizing.v, adjustedInitialSize]);
 
   const bodyStyle: React.CSSProperties = {
     width: bodySize.width,

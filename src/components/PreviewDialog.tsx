@@ -273,7 +273,13 @@ export const PreviewDialog: React.FC<Props> = () => {
   );
 
   return (
-    <FloatDialog open={true} title="Preview" initialPosition={INITIAL_POSITION} initialSize={INITIAL_SIZE}>
+    <FloatDialog
+      open={true}
+      title="Preview"
+      initialPosition={INITIAL_POSITION}
+      initialSize={INITIAL_SIZE}
+      boundsKey="preview"
+    >
       <div className="w-full h-full relative">
         <div
           ref={wrapperRef}
