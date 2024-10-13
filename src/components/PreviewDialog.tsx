@@ -58,6 +58,8 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   const shapeComposite = useShapeComposite();
 
   useEffect(() => {
+    if (!open) return;
+
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
@@ -74,7 +76,18 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
       canvasBank,
     });
     renderer.render(ctx);
-  }, [shapeComposite, documentStore, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank, canvasState, viewSize]);
+  }, [
+    open,
+    shapeComposite,
+    documentStore,
+    smctx,
+    scale,
+    viewOrigin.x,
+    viewOrigin.y,
+    canvasBank,
+    canvasState,
+    viewSize,
+  ]);
 
   const focus = useCallback(() => {
     wrapperRef.current?.focus();
