@@ -3,6 +3,7 @@ import iconDelete from "../../assets/icons/delete_filled.svg";
 import { AppText } from "../molecules/AppText";
 import { add, clamp, IVec2, sub } from "okageo";
 import { useGlobalDrag, useWindow } from "../../hooks/window";
+import { Size } from "../../models";
 
 const ZERO_V = { x: 0, y: 0 };
 
@@ -10,21 +11,20 @@ interface Props {
   open: boolean;
   children: React.ReactNode;
   initialPosition?: IVec2;
+  initialSize?: Size;
   onClose?: () => void;
   title?: string;
   className?: string;
-  hideClose?: boolean;
-  required?: boolean;
 }
 
 export const FloatDialog: React.FC<Props> = ({
   open,
   children,
   initialPosition = ZERO_V,
+  initialSize,
   onClose,
   title,
   className,
-  hideClose,
 }) => {
   const ref = useRef<HTMLDialogElement>(null);
   const { size: windowSize } = useWindow();
@@ -91,6 +91,13 @@ export const FloatDialog: React.FC<Props> = ({
     [startDragging, position],
   );
 
+  const bodyStyle: React.CSSProperties = initialSize
+    ? {
+        width: initialSize.width,
+        height: initialSize.height,
+      }
+    : {};
+
   return (
     <dialog ref={ref} className={"border shadow rounded " + className} style={positionStyle}>
       <div
@@ -98,13 +105,13 @@ export const FloatDialog: React.FC<Props> = ({
         onPointerDown={handleDown}
       >
         {title ? <AppText className="text-lg font-medium">{title}</AppText> : undefined}
-        {hideClose ? undefined : (
-          <button type="button" className="ml-auto w-6 h-6 p-1" onClick={closeDialog}>
-            <img src={iconDelete} alt="Close" />
-          </button>
-        )}
+        <button type="button" className="ml-auto w-6 h-6 p-1" onClick={closeDialog}>
+          <img src={iconDelete} alt="Close" />
+        </button>
       </div>
-      <div className="p-4 resize overflow-auto">{children}</div>
+      <div className="resize overflow-auto" style={bodyStyle}>
+        {children}
+      </div>
     </dialog>
   );
 };
