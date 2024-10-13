@@ -820,6 +820,8 @@ export const AppCanvas: React.FC = () => {
     return { cursor, backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" };
   }, [cursor, sheet]);
 
+  const handlePreviewClose = useCallback(() => userSettingStore.patchState({ preview: "off" }), [userSettingStore]);
+
   return (
     <>
       <div
@@ -866,10 +868,7 @@ export const AppCanvas: React.FC = () => {
           getContainerSize={getWrapperSize}
         />
       ) : undefined}
-      <PreviewDialog
-        open={userSetting.preview === "on"}
-        onClose={useCallback(() => userSettingStore.patchState({ preview: "off" }), [userSettingStore])}
-      />
+      {userSetting.preview === "on" ? <PreviewDialog open={true} onClose={handlePreviewClose} /> : undefined}
     </>
   );
 };
