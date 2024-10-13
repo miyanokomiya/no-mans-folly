@@ -7,6 +7,12 @@ import { AppStateContext } from "../contexts/AppContext";
 import { newCanvasBank } from "../composables/canvasBank";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { rednerRGBA } from "../utils/color";
+import { useClickable } from "../hooks/clickable";
+import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../hooks/window";
+import { ModeStateContextBase, newStateMachine } from "../composables/states/core";
+import { newPreviewState } from "../composables/states/previewState";
+import { getKeyOptions, getMouseOptions } from "../utils/devices";
+import { CanvasStateContext } from "../composables/states/commons";
 
 interface Props {
   open: boolean;
@@ -25,6 +31,7 @@ export const PreviewDialog: React.FC<Props> = () => {
     shapeStore; // For exhaustive-deps
     return newCanvasBank();
   }, [shapeStore]);
+  const [canvasState, setCanvasState] = useState<any>({});
 
   const {
     setViewport,
@@ -44,7 +51,7 @@ export const PreviewDialog: React.FC<Props> = () => {
     setMousePoint,
     removeRootPosition,
     editStartPoint,
-  } = useCanvas(getWrapper);
+  } = useCanvas(getWrapper, { viewStateKey: "preview_view_state" });
   const shapeComposite = useShapeComposite();
 
   useEffect(() => {
@@ -64,12 +71,210 @@ export const PreviewDialog: React.FC<Props> = () => {
       canvasBank,
     });
     renderer.render(ctx);
-  }, [shapeComposite, documentStore, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank]);
+  }, [shapeComposite, documentStore, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank, canvasState]);
+
+  const focus = useCallback(() => {
+    wrapperRef.current?.focus();
+  }, []);
+
+  const previewCtx = useMemo<ModeStateContextBase & CanvasStateContext>(() => {
+    return {
+      getTimestamp: () => Date.now(),
+      generateUuid: () => "",
+      getStyleScheme: smctx.getStyleScheme,
+      getUserSetting: smctx.getUserSetting,
+
+      redraw: () => setCanvasState({}),
+      getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
+      setViewport,
+      zoomView,
+      setZoom,
+      getScale: () => scale,
+      getViewRect: () => viewCanvasRect,
+      panView,
+      scrollView,
+      startDragging: startDragging,
+      stopDragging: endMoving,
+      getCursorPoint: () => viewToCanvas(getMousePoint()),
+
+      toView: canvasToView,
+      showFloatMenu: () => {},
+      hideFloatMenu: () => {},
+      setContextMenuList: () => {},
+      setCommandExams: () => {},
+      showToastMessage: () => {},
+      setCursor: () => {},
+
+      undo: () => {},
+      redo: () => {},
+      setCaptureTimeout: () => {},
+    };
+  }, [
+    smctx.getStyleScheme,
+    smctx.getUserSetting,
+    setViewport,
+    zoomView,
+    setZoom,
+    panView,
+    scrollView,
+    startDragging,
+    endMoving,
+    canvasToView,
+    viewToCanvas,
+    scale,
+    viewCanvasRect,
+    getMousePoint,
+  ]);
+
+  const previewCtxRef = useRef(previewCtx);
+  previewCtxRef.current = previewCtx;
+  const sm = useMemo(() => {
+    return newStateMachine(() => {
+      return previewCtxRef.current;
+    }, newPreviewState);
+  }, []);
+
+  const { handlePointerDown, handlePointerUp, isValidPointer } = useClickable({
+    onDown: useCallback(
+      (e: PointerEvent) => {
+        e.preventDefault();
+        focus();
+
+        const p = removeRootPosition({ x: e.pageX, y: e.pageY });
+        setMousePoint(p);
+        sm.handleEvent({
+          type: "pointerdown",
+          data: {
+            point: viewToCanvas(p),
+            options: getMouseOptions(e),
+          },
+        });
+      },
+      [viewToCanvas, sm, focus, removeRootPosition, setMousePoint],
+    ),
+    onUp: useCallback(
+      (e: PointerEvent) => {
+        sm.handleEvent({
+          type: "pointerup",
+          data: {
+            point: viewToCanvas(getMousePoint()),
+            options: getMouseOptions(e),
+          },
+        });
+      },
+      [viewToCanvas, getMousePoint, sm],
+    ),
+  });
+
+  const onMouseDown = useCallback((e: React.PointerEvent) => handlePointerDown(e.nativeEvent), [handlePointerDown]);
+  useGlobalMouseupEffect(handlePointerUp);
+
+  const onMouseMove = useCallback(
+    (e: PointerEvent) => {
+      if (!isValidPointer(e)) return;
+
+      const p = removeRootPosition({ x: e.pageX, y: e.pageY });
+      setMousePoint(p);
+      if (!editStartPoint) return;
+
+      sm.handleEvent({
+        type: "pointermove",
+        data: {
+          start: viewToCanvas(editStartPoint),
+          current: viewToCanvas(p),
+          scale: scale,
+          ...getMouseOptions(e),
+        },
+      });
+    },
+    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, isValidPointer],
+  );
+  useGlobalMousemoveEffect(onMouseMove);
+
+  const onMouseHover = useCallback(
+    (e: React.PointerEvent) => {
+      focus();
+      sm.handleEvent({
+        type: "pointerhover",
+        data: {
+          current: viewToCanvas(getMousePoint()),
+          scale: scale,
+          ...getMouseOptions(e),
+        },
+      });
+    },
+    [getMousePoint, scale, viewToCanvas, sm, focus],
+  );
+
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      sm.handleEvent({
+        type: "keydown",
+        data: {
+          ...getKeyOptions(e),
+          prevent: () => e.preventDefault(),
+        },
+      });
+    },
+    [sm],
+  );
+
+  const onKeyUp = useCallback(
+    (e: React.KeyboardEvent) => {
+      sm.handleEvent({
+        type: "keyup",
+        data: {
+          ...getKeyOptions(e),
+          prevent: () => e.preventDefault(),
+        },
+      });
+    },
+    [sm],
+  );
+
+  const onWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+
+      sm.handleEvent({
+        type: "wheel",
+        data: {
+          delta: { x: e.deltaX, y: e.deltaY },
+          options: getMouseOptions(e),
+        },
+      });
+    },
+    [sm],
+  );
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+
+    const refValue = wrapperRef.current;
+    // There's no way to proc "preventDefault" in React way.
+    refValue.addEventListener("wheel", onWheel);
+    return () => {
+      refValue.removeEventListener("wheel", onWheel);
+    };
+  }, [onWheel]);
+
+  const handleNativeContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
 
   return (
     <FloatDialog open={true} title="Preview" initialSize={size}>
-      <div ref={wrapperRef} style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}>
-        <canvas ref={canvasRef} width={size.width} height={size.height}></canvas>
+      <div
+        ref={wrapperRef}
+        className="w-full h-full"
+        style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}
+        onPointerDown={onMouseDown}
+        onPointerMove={onMouseHover}
+        onKeyDown={onKeyDown}
+        onKeyUp={onKeyUp}
+        onContextMenu={handleNativeContextMenu}
+        tabIndex={-1}
+      >
+        <canvas ref={canvasRef} width={viewSize.width} height={viewSize.height}></canvas>
       </div>
     </FloatDialog>
   );
