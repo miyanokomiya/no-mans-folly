@@ -15,6 +15,7 @@ import { getKeyOptions, getMouseOptions } from "../utils/devices";
 import { CanvasStateContext } from "../composables/states/commons";
 import { ZoomField } from "./molecules/ZoomField";
 import iconDoubleCircle from "../assets/icons/double_circle.svg";
+import { getAllShapeRangeWithinComposite } from "../composables/shapeComposite";
 
 const INITIAL_POSITION = { x: 150, y: 50 };
 const INITIAL_SIZE = { width: 400, height: 400 };
@@ -284,6 +285,14 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
     setViewport(smctx.getViewRect());
   }, [setViewport, smctx]);
 
+  const handleScaleFit = useCallback(() => {
+    setPopupKey("");
+    if (shapeComposite.shapes.length === 0) return;
+
+    const rect = getAllShapeRangeWithinComposite(shapeComposite, true);
+    setViewport(rect);
+  }, [shapeComposite, setViewport]);
+
   const [popupKey, setPopupKey] = useState("");
   const handlePopupClick = useCallback(
     (value: string) => {
@@ -321,6 +330,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
             onScaleChange={setZoom}
             popupedKey={popupKey}
             onClickPopupButton={handlePopupClick}
+            onScaleFit={handleScaleFit}
           />
           <button
             className="w-8 h-8 p-1 bg-white rounded-full flex items-center justify-center"
