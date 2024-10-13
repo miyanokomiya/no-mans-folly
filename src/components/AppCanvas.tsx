@@ -41,6 +41,7 @@ import { LinkMenu } from "./linkMenu/LinkMenu";
 import { useClickable } from "../hooks/clickable";
 import { ModifierSupportPanel } from "./molecules/ModifierSupportPanel";
 import { newCanvasBank } from "../composables/canvasBank";
+import { PreviewDialog } from "./PreviewDialog";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -188,7 +189,7 @@ export const AppCanvas: React.FC = () => {
     setMousePoint,
     removeRootPosition,
     editStartPoint,
-  } = useCanvas(getWrapper);
+  } = useCanvas(getWrapper, { viewStateKey: "view_state" });
 
   const grid = useMemo(() => {
     return newGrid({
@@ -712,9 +713,9 @@ export const AppCanvas: React.FC = () => {
   );
 
   const handleNativeContextMenu = useCallback(
-    (e: React.MouseEvent, toggle = false) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
-      handleContextMenu(getMousePoint(), toggle);
+      handleContextMenu(getMousePoint());
     },
     [handleContextMenu, getMousePoint],
   );
@@ -866,6 +867,7 @@ export const AppCanvas: React.FC = () => {
           getContainerSize={getWrapperSize}
         />
       ) : undefined}
+      <PreviewDialog open={true} />
     </>
   );
 };

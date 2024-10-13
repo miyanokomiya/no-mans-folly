@@ -41,6 +41,7 @@ export function useCanvas(
   options: {
     scaleMin?: number;
     scaleMax?: number;
+    viewStateKey?: string;
   } = {},
 ) {
   const scaleMin = options.scaleMin ?? 0.01;
@@ -56,7 +57,7 @@ export function useCanvas(
   const mousePoint = useRef<IVec2>({ x: 0, y: 0 });
 
   const { state: viewState, setState: setViewState } = useLocalStorageAdopter({
-    key: "view_state",
+    key: options?.viewStateKey,
     version: "1",
     initialValue: { scale: 1, viewOrigin: { x: 0, y: 0 } },
   });
