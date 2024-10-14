@@ -6,6 +6,7 @@ const en = {
   translation: {
     loading: "Loading...",
     "app.privacy_policy": "Privacy Policy of No-man's folly",
+    "app.documentation": "Documentation",
     workspace: "Workspace",
     open_workspace: "Open [[(l)WORKSPACE]]",
     select_workspace:
@@ -31,6 +32,7 @@ const ja: TranslationResource = {
   translation: {
     loading: "読込中...",
     "app.privacy_policy": "No-man's folly プライバシーポリシー",
+    "app.documentation": "ドキュメンテーション",
     workspace: "ワークスペース",
     open_workspace: "[[WORKSPACE]]選択",
     select_workspace:

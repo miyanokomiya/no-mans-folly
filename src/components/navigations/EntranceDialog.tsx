@@ -83,11 +83,6 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   return (
     <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
       <div className="w-96">
-        <div>
-          <a href="/terms/privacy-policy/" target="_blank" className="text-blue-500 underline font-semibold">
-            {t("app.privacy_policy")}
-          </a>
-        </div>
         <p className="mt-2">
           <Trans i18nKey="select_workspace" components={{ tag_folder: <span className="font-bold" /> }} />
         </p>
@@ -116,6 +111,9 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
             <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
             <span className="w-full text-center text-lg">{t(googleMode ? "loading" : "google_drive")}</span>
           </button>
+          <a href="/terms/privacy-policy/" target="_blank" className="mt-2 text-blue-500 underline font-semibold">
+            {t("app.privacy_policy")}
+          </a>
         </div>
         <p className="mt-4">{t("noworkspace.warning")}</p>
         <div className="mt-4 flex flex-col items-center">
@@ -140,7 +138,10 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
             {t("exconnection.revoke")}
           </button>
         </div>
-        <div className="mt-4 flex items-center justify-center gap-2">
+        <div className="mt-2 flex flex-col items-center justify-center">
+          <a href={process.env.DOC_PATH!} target="_blank" className="mt-2 text-blue-500 underline font-semibold">
+            {t("app.documentation")}
+          </a>
           <LangSelection />
         </div>
       </div>
