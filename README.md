@@ -1,6 +1,21 @@
 # No-man's folly
 
-## Coding standards
+No-man's folly is a free diagramming tool. This is a tool for people who love diagramming within.
+
+Links
+- Application: https://no-mans-folly.com/
+- Documentation: https://doc.no-mans-folly.com/
+
+## License
+TBD
+
+## External icons
+External icon are managed in below repository. They aren't under the license of this repository.
+https://github.com/miyanokomiya/no-mans-folly-assets
+
+## Development
+
+### Coding standards
 
 - `useXXX` can be used only when the function is related to React Hooks.
     - Place them into `src/hooks`.
@@ -10,11 +25,6 @@
 - All state transition and handling should be shynchronous.
     - Use `defineAsyncState` to make a state handling something asynchronously.
 - `react` related packages are available only in `src/components`, `src/hooks` and `src/contexts`.
-
-## External icons
-https://github.com/miyanokomiya/no-mans-folly-assets
-
-## Development
 
 ### Data persistence via Indexed DB 
 Diagram data can be saved and restored via Indexed DB without opening a workspace. Add `indexeddb=1` to URL query to turn on this functionality.
