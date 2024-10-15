@@ -17,17 +17,22 @@ https://github.com/miyanokomiya/no-mans-folly-assets
 
 ### Coding standards
 
+- There're some no-restricted-paths rules declared in `.eslintrc.json`.
 - `useXXX` can be used only when the function is related to React Hooks.
-    - Place them into `src/hooks`.
+    - Place them into `src/hooks` or near by related components.
 - `newXXX` can be used only when the function isn't related to React Hooks but is composable.
     - Place them into `src/composables`.
-- `state` generally refers to the state pattern.
-- All state transition and handling should be shynchronous.
-    - Use `defineAsyncState` to make a state handling something asynchronously.
-- `react` related packages are available only in `src/components`, `src/hooks` and `src/contexts`.
+- `state` may refer to the state pattern outside React components.
+- React related packages are available only in `src/components`, `src/hooks` and `src/contexts`.
+    - Feature driven directories should have similar structure as well.
+
+#### State pattern
+Operations in the canvas should be managed via state pattern.
+All state transition and handling should be shynchronous. Use `defineAsyncState` to make a state that handles something asynchronously.
 
 ### Data persistence via Indexed DB 
-Diagram data can be saved and restored via Indexed DB without opening a workspace. Add `indexeddb=1` to URL query to turn on this functionality.
+Diagram data can be saved and restored via Indexed DB without opening a workspace. Add `indexeddb=1` to URL query to turn on this functionality.  
+This functionality is never intended for production environment.
 
 ### Show debug information
 `debug` attribute in `UserSetting` is used as a flag to show debug information in the app. Check "Debug mode" in the "Setting" panel to turn on this value.  
