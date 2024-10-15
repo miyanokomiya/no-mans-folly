@@ -1,7 +1,7 @@
 {
   "name": "no-mans-folly",
-  "private": true,
-  "version": "0.0.0",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
   "packageManager": "yarn@4.0.2",
   "scripts": {

@@ -7,7 +7,9 @@ Links
 - Documentation: https://doc.no-mans-folly.com/
 
 ## License
-TBD
+This repository is licensed under the GNU Affero General Public License, Version 3. Individual files may have a different, but compatible license.
+
+The content you create with this tool is yours and we make no copyright claim on it. However, you still need to follow certain license when you use external assets provided by thrid parties.
 
 ## External icons
 External icon are managed in below repository. They aren't under the license of this repository.
