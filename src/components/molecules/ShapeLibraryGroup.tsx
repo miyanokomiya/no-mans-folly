@@ -13,6 +13,8 @@ const baseURL = process.env.ASSETS_PATH!;
 interface GroupAccordionProps {
   selectedName: string;
   name: string;
+  label: string;
+  url?: string;
   type: "shapes" | "templates";
   size?: "md" | "lg";
   onClick?: (name: string) => void;
@@ -23,6 +25,8 @@ interface GroupAccordionProps {
 export const GroupAccordion: React.FC<GroupAccordionProps> = ({
   selectedName,
   name,
+  label,
+  url,
   type,
   size,
   onClick,
@@ -36,10 +40,18 @@ export const GroupAccordion: React.FC<GroupAccordionProps> = ({
   return (
     <div>
       <button type="button" onClick={handleClick} className="border rounded p-2 w-full text-left">
-        {name}
+        {label}
       </button>
       {selectedName === name ? (
         <div className="pl-2">
+          {url ? (
+            <div className="text-right">
+              <span>From </span>
+              <a href={url} target="_blank" rel="noopener" className="mb-2 text-blue-500 underline font-semibold">
+                {label}
+              </a>
+            </div>
+          ) : undefined}
           <ShapeLibraryGroup
             name={name.toLowerCase()}
             type={type}

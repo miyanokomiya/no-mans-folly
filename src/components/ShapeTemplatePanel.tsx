@@ -134,6 +134,7 @@ export const ShapeTemplatePanel: React.FC = () => {
           key={name}
           selectedName={selected}
           name={name}
+          label={name}
           type="templates"
           size="lg"
           onClick={handleClickAccordion}
