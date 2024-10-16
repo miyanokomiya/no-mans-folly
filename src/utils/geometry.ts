@@ -91,6 +91,10 @@ export function normalizeRadian(value: number): number {
   return circleClamp(-Math.PI, Math.PI, value);
 }
 
+export function isSameValue(a: number, b: number): boolean {
+  return Math.abs(a - b) < MINVALUE;
+}
+
 export function getSegments(points: IVec2[]): ISegment[] {
   const ret: ISegment[] = [];
   for (let i = 0; i < points.length - 1; i++) {

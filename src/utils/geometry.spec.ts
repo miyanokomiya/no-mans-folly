@@ -75,6 +75,7 @@ import {
   isOnDonutArc,
   expandRectByScale,
   isSameSize,
+  isSameValue,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -108,6 +109,15 @@ describe("normalizeRadian", () => {
     expect(normalizeRadian(Math.PI * 2.5)).toBeCloseTo(Math.PI * 0.5, 3);
     expect(normalizeRadian(-Math.PI * 1.5)).toBeCloseTo(Math.PI * 0.5, 3);
     expect(normalizeRadian(-Math.PI * 2.5)).toBeCloseTo(-Math.PI * 0.5, 3);
+  });
+});
+
+describe("isSameValue", () => {
+  test("should return true when two values are same without floating-point error", () => {
+    expect(isSameValue(1, 1)).toBe(true);
+    expect(isSameValue(1, 1.1)).toBe(false);
+    expect(isSameValue(1, 1.0001)).toBe(false);
+    expect(isSameValue(1, 1.0000001)).toBe(true);
   });
 });
 

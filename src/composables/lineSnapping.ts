@@ -10,6 +10,7 @@ import {
   getClosestPointTo,
   isRectOverlappedH,
   isRectOverlappedV,
+  isSameValue,
   pickLongSegment,
 } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -63,7 +64,13 @@ export function newLineSnapping(option: Option) {
       });
 
       const closest = pickMinItem(candidates, (c) => c[2]);
-      if (closest && closest[2] < threshold) {
+      if (
+        closest &&
+        closest[2] < threshold &&
+        // Exclude vertical or horizontal case that is checked afterwards.
+        !isSameValue(closest[1][0].x, closest[1][1].x) &&
+        !isSameValue(closest[1][0].y, closest[1][1].y)
+      ) {
         selfSnapped = {
           p: closest[0],
           guidLines: [pickLongSegment(closest[1][0], closest[1][1], closest[0])],
