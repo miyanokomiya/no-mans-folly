@@ -685,8 +685,8 @@ describe("isLineSnappableShape", () => {
 
     expect(isLineSnappableShape(shapeComposite, rect)).toBe(true);
     expect(isLineSnappableShape(shapeComposite, text)).toBe(true);
+    expect(isLineSnappableShape(shapeComposite, line)).toBe(true);
 
-    expect(isLineSnappableShape(shapeComposite, line)).toBe(false);
     expect(isLineSnappableShape(shapeComposite, label)).toBe(false);
     expect(isLineSnappableShape(shapeComposite, group)).toBe(false);
   });

@@ -400,7 +400,7 @@ export function optimizeLinePath(
 }
 
 export function isLineSnappableShape(shapeComposite: ShapeComposite, shape: Shape): boolean {
-  return !isLineShape(shape) && !isLineLabelShape(shapeComposite, shape) && !isGroupShape(shape);
+  return !isLineLabelShape(shapeComposite, shape) && !isGroupShape(shape);
 }
 
 export function patchLinesConnectedToShapeOutline(
