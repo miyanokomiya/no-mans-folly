@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import iconDelete from "../../../assets/icons/delete_filled.svg";
 
 interface Props {
   value: string;
@@ -7,9 +8,18 @@ interface Props {
   autofocus?: boolean;
   keepFocus?: boolean;
   placeholder?: string;
+  clearable?: boolean;
 }
 
-export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus, keepFocus, placeholder }) => {
+export const TextInput: React.FC<Props> = ({
+  value,
+  onChange,
+  onBlur,
+  autofocus,
+  keepFocus,
+  placeholder,
+  clearable,
+}) => {
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -24,16 +34,32 @@ export const TextInput: React.FC<Props> = ({ value, onChange, onBlur, autofocus,
     [onChange],
   );
 
+  const handleClear = useCallback(() => {
+    onChange?.("");
+    ref.current?.focus();
+  }, [onChange]);
+
   return (
-    <input
-      ref={ref}
-      type="text"
-      data-keep-focus={keepFocus}
-      value={value}
-      onChange={_onChange}
-      onBlur={onBlur}
-      className="border rounded py-1 px-2 w-full"
-      placeholder={placeholder}
-    />
+    <span className="relative">
+      <input
+        ref={ref}
+        type="text"
+        data-keep-focus={keepFocus}
+        value={value}
+        onChange={_onChange}
+        onBlur={onBlur}
+        className="border rounded py-1 px-2 w-full"
+        placeholder={placeholder}
+      />
+      {clearable && value ? (
+        <button
+          type="button"
+          className="absolute top-0 bottom-0 right-0 w-6 flex justify-center items-center"
+          onClick={handleClear}
+        >
+          <img className="w-4 h-4" src={iconDelete} alt="Clear" />
+        </button>
+      ) : undefined}
+    </span>
   );
 };

@@ -141,7 +141,14 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
       ) : (
         <div>
           <div className="py-1">
-            <TextInput value={keyword} onChange={handleKeywordChange} placeholder="Search items" autofocus keepFocus />
+            <TextInput
+              value={keyword}
+              onChange={handleKeywordChange}
+              placeholder="Search items"
+              autofocus
+              keepFocus
+              clearable
+            />
           </div>
           {rootItems ? (
             rootItems.length === 0 ? (
