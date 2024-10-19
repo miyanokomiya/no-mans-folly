@@ -307,14 +307,35 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
       };
     },
     async (items) => {
-      const item = items.find((i) => i.kind === "string") as StringItem | undefined;
-      if (!item) return;
+      const textItem = items.find((i) => i.kind === "string") as StringItem | undefined;
+      if (textItem) {
+        const text: any = await textItem.getAsString();
+        const restored = clipboardShapeSerializer.deserialize(text);
 
-      const text: any = await item.getAsString();
-      const restored = clipboardShapeSerializer.deserialize(text);
+        if (restored.shapes.length > 0) {
+          ctx.pasteShapes(restored.shapes, restored.docs);
+        }
+        return;
+      }
 
-      if (restored.shapes.length > 0) {
-        ctx.pasteShapes(restored.shapes, restored.docs);
+      const fileItems = items.filter((i) => i.kind === "file");
+      if (fileItems.length > 0) {
+        const fileList: File[] = [];
+        try {
+          await Promise.all(
+            fileItems.map(async (item) => {
+              const file = await item.getAsFile();
+              fileList.push(file);
+            }),
+          );
+        } catch (e) {
+          ctx.showToastMessage({ text: "Failed to read files.", type: "error" });
+          console.error(e);
+          return;
+        }
+
+        handleFileImport(ctx, fileList, ctx.getCursorPoint());
+        return;
       }
     },
   );
@@ -349,11 +370,15 @@ export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput, plain
 }
 
 export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDropEvent): Promise<void> {
+  return handleFileImport(ctx, event.data.files, event.data.point);
+}
+
+async function handleFileImport(ctx: AppCanvasStateContext, files: FileList | File[], point: IVec2): Promise<void> {
   const follySvgFiles: File[] = [];
   const assetFiles: File[] = [];
   const sheetFiles: File[] = [];
 
-  for (const file of event.data.files) {
+  for (const file of files) {
     const loweredName = file.name.toLowerCase();
 
     if (isFollySheetFileName(loweredName)) {
@@ -371,11 +396,11 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
   }
 
   if (sheetFiles.length > 0) {
-    await loadFollySheetFiles(ctx, sheetFiles, event.data.point);
+    await loadFollySheetFiles(ctx, sheetFiles, point);
   }
 
   if (follySvgFiles.length > 0) {
-    await loadFollySvgFiles(ctx, follySvgFiles, event.data.point);
+    await loadFollySvgFiles(ctx, follySvgFiles, point);
   }
 
   if (assetFiles.length === 0) {
@@ -416,7 +441,7 @@ export async function handleFileDrop(ctx: AppCanvasStateContext, event: FileDrop
     return createShape<ImageShape>(ctx.getShapeStruct, "image", {
       id,
       assetId,
-      p: add(event.data.point, multi(drift, i)),
+      p: add(point, multi(drift, i)),
       width: img?.width,
       height: img?.height,
       ...patch[id],
