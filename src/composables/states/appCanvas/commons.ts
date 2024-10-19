@@ -295,12 +295,8 @@ const clipboardShapeSerializer = newClipboardSerializer<"shapes", ShapeTemplateI
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
   function pasteTextAsShape(text: string) {
     const delta: DocOutput = [{ insert: text }, { insert: "\n" }];
-    const shape = createNewTextShapeForDocument(ctx, delta, {
-      id: ctx.generateUuid(),
-      findex: ctx.createLastIndex(),
-      p: ctx.getCursorPoint(),
-    });
-    ctx.addShapes([shape], { [shape.id]: delta });
+    const shape = createNewTextShapeForDocument(ctx, delta);
+    ctx.pasteShapes([shape], [[shape.id, delta]]);
   }
 
   return newClipboard(
