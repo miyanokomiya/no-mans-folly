@@ -1834,5 +1834,11 @@ describe("getIntRectFromFloatRect", () => {
       width: 32,
       height: 42,
     });
+    expect(getIntRectFromFloatRect({ x: 10.1, y: 20.8, width: 30.4, height: 40.5 })).toEqual({
+      x: 10,
+      y: 20,
+      width: 31,
+      height: 42,
+    });
   });
 });

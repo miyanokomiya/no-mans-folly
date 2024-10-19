@@ -1322,13 +1322,16 @@ export function splitPointsToCloseSections(src: [IVec2, size: number][], thresho
   return ret;
 }
 
+/**
+ * Returns expanded rect having integer values and accommodating the src.
+ */
 export function getIntRectFromFloatRect(src: IRectangle): IRectangle {
-  const x = signedCeil(src.x);
-  const y = signedCeil(src.y);
+  const x = Math.floor(src.x);
+  const y = Math.floor(src.y);
   const srcRight = src.x + src.width;
   const srcBottom = src.y + src.height;
-  const right = signedCeil(srcRight);
-  const bottom = signedCeil(srcBottom);
+  const right = Math.ceil(srcRight);
+  const bottom = Math.ceil(srcBottom);
   const width = right - x;
   const height = bottom - y;
   return { x, y, width, height };
