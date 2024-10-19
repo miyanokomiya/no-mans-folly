@@ -45,6 +45,7 @@ import { Shape } from "../../../models";
 import { newPanToShapeState } from "./panToShapeState";
 import { isFollySheetFileName } from "../../../utils/fileAccess";
 import { loadShapesFromSheetFile } from "../../workspaceFile";
+import { createNewTextShapeForDocument } from "./utils/text";
 
 type AcceptableEvent =
   | "Break"
@@ -292,6 +293,16 @@ export function startTextEditingIfPossible(
 
 const clipboardShapeSerializer = newClipboardSerializer<"shapes", ShapeTemplateInfo>("shapes");
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
+  function pasteTextAsShape(text: string) {
+    const delta: DocOutput = [{ insert: text }, { insert: "\n" }];
+    const shape = createNewTextShapeForDocument(ctx, delta, {
+      id: ctx.generateUuid(),
+      findex: ctx.createLastIndex(),
+      p: ctx.getCursorPoint(),
+    });
+    ctx.addShapes([shape], { [shape.id]: delta });
+  }
+
   return newClipboard(
     () => {
       const shapeMap = ctx.getShapeComposite().shapeMap;
@@ -310,9 +321,16 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
       const textItem = items.find((i) => i.kind === "string") as StringItem | undefined;
       if (textItem) {
         const text: any = await textItem.getAsString();
-        const restored = clipboardShapeSerializer.deserialize(text);
+        let restored: ShapeTemplateInfo | undefined;
+        try {
+          restored = clipboardShapeSerializer.deserialize(text);
+        } catch {
+          // This text is just plain one
+          pasteTextAsShape(text);
+          return;
+        }
 
-        if (restored.shapes.length > 0) {
+        if (restored && restored.shapes.length > 0) {
           ctx.pasteShapes(restored.shapes, restored.docs);
         }
         return;

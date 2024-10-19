@@ -1,5 +1,5 @@
 import { IVec2, applyAffine } from "okageo";
-import { getShapeTextBounds, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../../shapes";
+import { getShapeTextBounds } from "../../../../shapes";
 import { TextEditorController, newTextEditorController } from "../../../textEditor";
 import {
   getCommonAcceptableEvents,
@@ -16,12 +16,13 @@ import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
 import { DocAttrInfo, DocDelta } from "../../../../models/document";
-import { calcOriginalDocSize, splitToSegments } from "../../../../utils/textEditor";
+import { splitToSegments } from "../../../../utils/textEditor";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { findBetterShapeAt } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { handleCommonWheel } from "../../commons";
+import { getPatchShapeByDocumentUpdate } from "../utils/text";
 
 interface Option {
   id: string;
@@ -462,16 +463,9 @@ function handleKeydown(
 }
 
 function _patchDocument(ctx: AppCanvasStateContext, delta: DocDelta, id: string, draft?: boolean) {
+  const shapePatch = getPatchShapeByDocumentUpdate(ctx, delta, id);
   const shapeComposite = ctx.getShapeComposite();
   const shape = shapeComposite.shapeMap[id];
-  const renderCtx = ctx.getRenderCtx();
-  let shapePatch: Partial<TextShape> | undefined = undefined;
-  const resizeOnTextEditInfo = shouldResizeOnTextEdit(shapeComposite.getShapeStruct, shape);
-  if (renderCtx && resizeOnTextEditInfo?.maxWidth) {
-    const patched = ctx.patchDocDryRun(id, delta);
-    const size = calcOriginalDocSize(patched, renderCtx, resizeOnTextEditInfo.maxWidth);
-    shapePatch = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
-  }
 
   let patchMap = shapePatch ? { [shape.id]: shapePatch } : undefined;
   if (patchMap) {
