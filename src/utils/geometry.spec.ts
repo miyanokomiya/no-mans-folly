@@ -76,8 +76,27 @@ import {
   expandRectByScale,
   isSameSize,
   isSameValue,
+  signedCeil,
+  getIntRectFromFloatRect,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
+
+describe("signedCeil", () => {
+  test("should return ceiled value when number is positive", () => {
+    expect(signedCeil(1.0)).toBe(1);
+    expect(signedCeil(1.1)).toBe(2);
+    expect(signedCeil(1.4)).toBe(2);
+    expect(signedCeil(1.5)).toBe(2);
+    expect(signedCeil(1.9)).toBe(2);
+  });
+  test("should return floored value when number is negative", () => {
+    expect(signedCeil(-1.0)).toBe(-1);
+    expect(signedCeil(-1.1)).toBe(-2);
+    expect(signedCeil(-1.4)).toBe(-2);
+    expect(signedCeil(-1.5)).toBe(-2);
+    expect(signedCeil(-1.9)).toBe(-2);
+  });
+});
 
 describe("isSameSize", () => {
   test("should return true when two sizes are same", () => {
@@ -1798,5 +1817,22 @@ describe("splitPointsToCloseSections", () => {
         [{ x: 3.4, y: 0 }, 1],
       ],
     ]);
+  });
+});
+
+describe("getIntRectFromFloatRect", () => {
+  test("should return int rect accommodating src rect", () => {
+    expect(getIntRectFromFloatRect({ x: -10.1, y: -20.8, width: 30.4, height: 40.5 })).toEqual({
+      x: -11,
+      y: -21,
+      width: 32,
+      height: 41,
+    });
+    expect(getIntRectFromFloatRect({ x: -10.1, y: -20.4, width: 30.4, height: 40.5 })).toEqual({
+      x: -11,
+      y: -21,
+      width: 32,
+      height: 42,
+    });
   });
 });

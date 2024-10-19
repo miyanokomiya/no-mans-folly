@@ -18,6 +18,7 @@ import { TransitionValue } from "../core";
 import { ContextMenuItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
 import { IRectangle } from "okageo";
+import { getIntRectFromFloatRect } from "../../../utils/geometry";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   DELETE_SHAPE: {
@@ -267,7 +268,7 @@ function getExportParamsForSelectedShapes(ctx: AppCanvasStateContext) {
   const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
   // Get optimal exporting range for shapes.
   // This range may differ from visually selected range due to the optimization.
-  const range = getAllShapeRangeWithinComposite(targetShapeComposite, true);
+  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(targetShapeComposite, true));
   return { targetShapeComposite, range };
 }
 
@@ -276,7 +277,7 @@ function getExportParamsForSelectedRange(ctx: AppCanvasStateContext) {
   const srcShapes = shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
   // Get currently selected range.
   // Unlike "getExportParamsForSelectedShapes", this function prioritizes visually selected range.
-  const range = shapeComposite.getWrapperRectForShapes(srcShapes, true);
+  const range = getIntRectFromFloatRect(shapeComposite.getWrapperRectForShapes(srcShapes, true));
   const targetShapes = shapeComposite.getShapesOverlappingRect(shapeComposite.shapes, range);
   const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
   return { targetShapeComposite, range };

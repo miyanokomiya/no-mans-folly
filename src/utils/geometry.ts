@@ -49,6 +49,11 @@ function identityFn<T>(v: T): T {
   return v;
 }
 
+export function signedCeil(v: number): number {
+  const sign = Math.sign(v);
+  return sign * Math.ceil(Math.abs(v));
+}
+
 export function getD2(v: IVec2): number {
   return v.x * v.x + v.y * v.y;
 }
@@ -1315,4 +1320,16 @@ export function splitPointsToCloseSections(src: [IVec2, size: number][], thresho
   }
 
   return ret;
+}
+
+export function getIntRectFromFloatRect(src: IRectangle): IRectangle {
+  const x = signedCeil(src.x);
+  const y = signedCeil(src.y);
+  const srcRight = src.x + src.width;
+  const srcBottom = src.y + src.height;
+  const right = signedCeil(srcRight);
+  const bottom = signedCeil(srcBottom);
+  const width = right - x;
+  const height = bottom - y;
+  return { x, y, width, height };
 }
