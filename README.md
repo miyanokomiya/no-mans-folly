@@ -4,7 +4,7 @@ No-man's folly is a free diagramming tool. This is a tool for people who love di
 
 Links
 - Application: https://no-mans-folly.com/
-- Documentation: https://doc.no-mans-folly.com/ ([Repository](https://github.com/miyanokomiya/no-mans-folly-assets))
+- Documentation: https://doc.no-mans-folly.com/ ([Repository](https://github.com/miyanokomiya/no-mans-folly-doc))
 
 ## License
 This repository is licensed under the GNU Affero General Public License, Version 3. Individual files may have a different, but compatible license.

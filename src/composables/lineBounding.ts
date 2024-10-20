@@ -312,21 +312,6 @@ export function newLineBounding(option: Option) {
     renderBeziers(ctx, vertices, bezierViewAnchors, bezierSize, bezierVicinitySize, scale, style);
     renderBeziers(ctx, vertices, addAnchorBeziers, bezierSize, bezierVicinitySize, scale, style);
 
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
-    vertices.forEach((p, i) => {
-      if (!availableVertexIndex.has(i)) return;
-
-      if (connections[i]) {
-        applyFillStyle(ctx, { color: style.selectionPrimary });
-      } else {
-        ctx.fillStyle = "#fff";
-      }
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
-    });
-
     if (!elbow) {
       {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
@@ -370,6 +355,21 @@ export function newLineBounding(option: Option) {
         ctx.fill();
       });
     }
+
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
+    vertices.forEach((p, i) => {
+      if (!availableVertexIndex.has(i)) return;
+
+      if (connections[i]) {
+        applyFillStyle(ctx, { color: style.selectionPrimary });
+      } else {
+        ctx.fillStyle = "#fff";
+      }
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    });
 
     const moveAnchor = getMoveAnchor(scale);
     {
