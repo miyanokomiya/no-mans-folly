@@ -118,7 +118,7 @@ export function isTreeNodeShape(shape: Shape): shape is TreeNodeShape {
   return shape.type === "tree_node";
 }
 
-function getPatchTreeRootShape(): Partial<TreeNodeShape> {
+export function getPatchTreeRootShape(): Partial<TreeNodeShape> {
   return {
     type: "tree_root",
     direction: undefined,

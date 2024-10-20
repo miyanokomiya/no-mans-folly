@@ -4,8 +4,11 @@ import { Shape } from "../../models";
 import { DocOutput } from "../../models/document";
 import { GetShapeStruct } from "../core";
 import { patchShapesOrderToLast, refreshShapeRelations, remapShapeIds, resizeShape } from "..";
-import { mapDataToObj, remap } from "../../utils/commons";
+import { mapDataToObj, patchPipe, remap, toList, toMap } from "../../utils/commons";
 import { newShapeComposite } from "../../composables/shapeComposite";
+import { patchByRegenerateTreeStructure } from "./tree";
+import { isTreeRootShape } from "../tree/treeRoot";
+import { isTreeNodeShape } from "../tree/treeNode";
 
 /**
  * When `keepExternalRelations` is true, all relations except for ids of duplicating targets will be kept.
@@ -21,7 +24,10 @@ export function duplicateShapes(
   p?: IVec2,
   keepExternalRelations = false,
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
-  const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, !keepExternalRelations);
+  const treeShapes = shapes.filter((s) => isTreeRootShape(s) || isTreeNodeShape(s));
+  const adjustedShapes = toList(patchPipe([() => patchByRegenerateTreeStructure(treeShapes)], toMap(shapes)).result);
+
+  const remapInfo = remapShapeIds(getStruct, adjustedShapes, generateUuid, !keepExternalRelations);
   const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
 
   const remapComposite = newShapeComposite({
