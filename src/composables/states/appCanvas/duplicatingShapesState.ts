@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { duplicateShapes } from "../../../shapes";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { isLineShape } from "../../../shapes/line";
@@ -10,6 +9,7 @@ import { getAllBranchIds, getTree } from "../../../utils/tree";
 import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { handleCommonWheel } from "../commons";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
+import { duplicateShapes } from "../../../shapes/utils/duplicator";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;

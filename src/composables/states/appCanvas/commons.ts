@@ -14,7 +14,6 @@ import {
 import {
   canHaveText,
   createShape,
-  duplicateShapes,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
@@ -46,6 +45,7 @@ import { newPanToShapeState } from "./panToShapeState";
 import { isFollySheetFileName } from "../../../utils/fileAccess";
 import { loadShapesFromSheetFile } from "../../workspaceFile";
 import { createNewTextShapeForDocument } from "./utils/text";
+import { duplicateShapes } from "../../../shapes/utils/duplicator";
 
 type AcceptableEvent =
   | "Break"

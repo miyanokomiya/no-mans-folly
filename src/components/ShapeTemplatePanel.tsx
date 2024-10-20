@@ -2,9 +2,9 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { GroupAccordion } from "./molecules/ShapeLibraryGroup";
 import { AppStateMachineContext, GetAppStateContext } from "../contexts/AppContext";
 import { parseTemplateShapes } from "../shapes/utils/shapeTemplateUtil";
-import { duplicateShapes } from "../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../composables/shapeComposite";
+import { duplicateShapes } from "../shapes/utils/duplicator";
 
 const TEMPLATE_LIST = ["Flowchart", "Sequence", "Misc"];
 

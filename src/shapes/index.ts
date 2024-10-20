@@ -1,4 +1,4 @@
-import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines, sub } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
 import { BoxPadding, CommonStyle, Shape, Size } from "../models";
 import {
   GetShapeStruct as _GetShapeStruct,
@@ -10,10 +10,7 @@ import {
 } from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
-import { DocOutput } from "../models/document";
-import { mapDataToObj, remap } from "../utils/commons";
 import { ImageStore } from "../composables/imageStore";
-import { newShapeComposite } from "../composables/shapeComposite";
 import { getPaddingRect } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
 import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
@@ -365,66 +362,6 @@ export function stackOrderDisabled(getStruct: GetShapeStruct, shape: Shape): boo
 export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.rectangularOptimizedSegment;
-}
-
-/**
- * When `keepExternalRelations` is true, all relations except for ids of duplicating targets will be kept.
- * Make sure those relations are satisfied by `availableIdSet` as well.
- */
-export function duplicateShapes(
-  getStruct: GetShapeStruct,
-  shapes: Shape[],
-  docs: [id: string, doc: DocOutput][],
-  generateUuid: () => string,
-  lastFIndex: string,
-  availableIdSet: Set<string>,
-  p?: IVec2,
-  keepExternalRelations = false,
-): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
-  const remapInfo = remapShapeIds(getStruct, shapes, generateUuid, !keepExternalRelations);
-  const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
-
-  const remapComposite = newShapeComposite({
-    shapes: remapInfo.shapes,
-    getStruct,
-  });
-  const moved = p
-    ? shiftShapesAtTopLeft(
-        getStruct,
-        remapInfo.shapes.map((s) => [s, remapComposite.getWrapperRect(s)]),
-        p,
-      )
-    : remapInfo.shapes;
-  const patch = patchShapesOrderToLast(
-    moved.map((s) => s.id),
-    lastFIndex,
-  );
-
-  let result: Shape[] = moved.map((s) => ({ ...s, ...patch[s.id] }));
-
-  const nextAvailableIdSet = new Set(availableIdSet);
-  result.forEach((s) => nextAvailableIdSet.add(s.id));
-
-  const refreshed = refreshShapeRelations(getStruct, result, nextAvailableIdSet);
-  result = result.map((s) => ({ ...s, ...(refreshed[s.id] ?? {}) }));
-
-  return {
-    shapes: result,
-    docMap: remapDocs,
-  };
-}
-
-function shiftShapesAtTopLeft(getStruct: GetShapeStruct, shapeInfos: [Shape, IRectangle][], targetP: IVec2): Shape[] {
-  const rect = geometry.getWrapperRect(shapeInfos.map(([, r]) => r));
-  const d = sub(targetP, rect);
-
-  const affine: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
-  const moved = shapeInfos.map(([s]) => {
-    const patch = resizeShape(getStruct, s, affine);
-    return { ...s, ...patch };
-  });
-
-  return moved;
 }
 
 /**

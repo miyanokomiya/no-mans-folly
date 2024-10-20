@@ -1,5 +1,5 @@
 import { Shape } from "../../../models";
-import { createShape, duplicateShapes } from "../../../shapes";
+import { createShape } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
@@ -19,6 +19,7 @@ import { ContextMenuItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
 import { IRectangle } from "okageo";
 import { getIntRectFromFloatRect } from "../../../utils/geometry";
+import { duplicateShapes } from "../../../shapes/utils/duplicator";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   DELETE_SHAPE: {

@@ -6,7 +6,7 @@ import {
   GetAppStateContext,
   SetAppStateContext,
 } from "../contexts/AppContext";
-import { canHaveText, duplicateShapes, getCommonStruct } from "../shapes";
+import { canHaveText, getCommonStruct } from "../shapes";
 import { useCanvas } from "../hooks/canvas";
 import { getKeyOptions, getMouseOptions, ModifierOptions } from "../utils/devices";
 import {
@@ -42,6 +42,7 @@ import { useClickable } from "../hooks/clickable";
 import { ModifierSupportPanel } from "./molecules/ModifierSupportPanel";
 import { newCanvasBank } from "../composables/canvasBank";
 import { PreviewDialog } from "./PreviewDialog";
+import { duplicateShapes } from "../shapes/utils/duplicator";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
