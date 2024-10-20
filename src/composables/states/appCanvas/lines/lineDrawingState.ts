@@ -1,7 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
 import { LineShape, isLineShape, patchVertex } from "../../../../shapes/line";
-import { newLineSelectedState } from "./lineSelectedState";
 import {
   ConnectionResult,
   LineSnapping,
@@ -14,7 +13,7 @@ import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
-import { add } from "okageo";
+import { add, isSame } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
 import { handleCommonWheel } from "../../commons";
@@ -35,6 +34,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
   let snappingResult: SnappingResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
   const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
+  let hoverMode = false;
 
   return {
     getLabel: () => "LineDrawing",
@@ -50,7 +50,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       );
       lineSnapping = newLineSnapping({
         snappableShapes,
-        getShapeStruct: ctx.getShapeStruct,
+        getShapeStruct: shapeComposite.getShapeStruct,
         movingLine: shape,
         movingIndex: 1,
       });
@@ -114,11 +114,22 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           ctx.redraw();
           return;
         }
-        case "pointerup":
-          if (!vertex) return;
+        case "pointerup": {
+          if (isSame(shape.p, shape.q)) {
+            // When the line has zero length, continue drawing it at first.
+            // When it happens again, cancel drawing the line.
+            if (!hoverMode) {
+              hoverMode = true;
+              return;
+            } else {
+              return ctx.states.newSelectionHubState;
+            }
+          }
+
           ctx.addShapes([shape]);
           ctx.selectShape(shape.id);
-          return newLineSelectedState;
+          return ctx.states.newSelectionHubState;
+        }
         case "keydown":
           switch (event.data.key) {
             case "Escape":
@@ -136,8 +147,6 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      if (!vertex) return;
-
       const shapeComposite = newShapeComposite({
         shapes: [shape],
         getStruct: ctx.getShapeStruct,
