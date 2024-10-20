@@ -12,17 +12,18 @@ import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
 import { generateKeyBetween } from "../utils/findex";
+import { isMemoryAssetAPI, newFileAssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
 
-export type AssetAPI =
-  | {
-      enabled: true;
-      saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
-      loadAsset: (assetId: string) => Promise<File | undefined>;
-    }
-  | { enabled: false };
+export type AssetAPIEnabled = {
+  enabled: true;
+  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
+  loadAsset: (assetId: string) => Promise<Blob | File | undefined>;
+};
+
+export type AssetAPI = AssetAPIEnabled | { enabled: false };
 
 const { indexedDBMode } = newFeatureFlags();
 
@@ -54,6 +55,17 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const [savePending, setSavePending] = useState({ diagram: false, sheet: false });
   const [syncStatus, setSyncStatus] = useState<"ok" | "autherror" | "unknownerror">("ok");
   const [saving, setSaving] = useState({ diagram: false, sheet: false });
+
+  // "memoryAssetAPI" is used when no workspace is connected.
+  // The assets in it will be saved as "saveToWorkspace" called, then be cleared.
+  const memoryAssetAPI = useMemo(() => newMemoryAssetAPI(), []);
+  const fileAssetAPI = useMemo<AssetAPI | undefined>(() => {
+    return canSyncWorkspace ? newFileAssetAPI(fileAccess) : undefined;
+  }, [fileAccess, canSyncWorkspace]);
+  const assetAPI = fileAssetAPI ?? memoryAssetAPI;
+  useEffect(() => {
+    memoryAssetAPI.clear();
+  }, [memoryAssetAPI, canSyncWorkspace]);
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
@@ -258,6 +270,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       try {
         await fileAccess.openSheet(sheet.id, sheetDoc);
         await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
+
+        if (isMemoryAssetAPI(assetAPI)) {
+          for (const [id, blob] of assetAPI.getAssetList()) {
+            await fileAccess.saveAsset(id, blob);
+          }
+        }
+
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
@@ -274,7 +293,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     }
 
     setCanSyncWorkspace(fileAccess.hasHnadle());
-  }, [fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores]);
+  }, [fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores, assetAPI]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -413,14 +432,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     saveDiagramUpdateThrottle.flush();
     saveSheetUpdateThrottle.flush();
   }, [saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
-
-  const assetAPI = useMemo<AssetAPI>(() => {
-    return {
-      enabled: canSyncWorkspace && fileAccess.hasHnadle(),
-      saveAsset: fileAccess.saveAsset,
-      loadAsset: fileAccess.loadAsset,
-    };
-  }, [fileAccess, canSyncWorkspace]);
 
   return {
     initSheet,

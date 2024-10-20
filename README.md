@@ -34,6 +34,7 @@ All state transition and handling should be shynchronous. Use `defineAsyncState`
 
 ### Data persistence via Indexed DB 
 Diagram data can be saved and restored via Indexed DB without opening a workspace. Add `indexeddb=1` to URL query to turn on this functionality.  
+Asset files aren't kept in Indexed DB, so they are available until leaving the page.  
 This functionality is never intended for production environment.
 
 ### Show debug information
