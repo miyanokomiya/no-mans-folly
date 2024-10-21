@@ -5,6 +5,7 @@ import { getAssetSearchTag } from "../../utils/route";
 import { newKeywordFilter } from "../../composables/keywordFilter";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { Size } from "../../models";
+import { useTranslation } from "react-i18next";
 
 type IconEventHandler = (url: string, id: string, size: Size) => void;
 
@@ -75,17 +76,26 @@ interface ShapeLibraryGroupProps {
 
 const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size, onIconDragStart, onIconClick }) => {
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string>();
   const [indexData, setIndexData] = useState<ListItemData>();
   const basePath = `${baseURL}${type}/${name}`;
+  const { t } = useTranslation();
 
   const fetchIndex = useCallback(async () => {
     if (indexData) return;
 
-    const res = await fetch(`${basePath}/index.json`);
-    const data = await res.json();
-    setIndexData(data);
-    setLoading(false);
-  }, [indexData, basePath]);
+    try {
+      setLoading(true);
+      const res = await fetch(`${basePath}/index.json`);
+      const data = await res.json();
+      setIndexData(data);
+      setErrorMessage(undefined);
+    } catch (e) {
+      setErrorMessage(t("error.network.maybe_offline"));
+    } finally {
+      setLoading(false);
+    }
+  }, [indexData, basePath, t]);
 
   useEffect(() => {
     fetchIndex();
@@ -134,57 +144,59 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
     });
   }, [filteredIndexData, indexDataForSearch, sortedIndexData]);
 
+  if (loading) {
+    return <div className="py-2 text-center">Loading...</div>;
+  }
+
+  if (errorMessage) {
+    return <div className="py-2 text-red-500 font-semibold">{errorMessage}</div>;
+  }
+
   return (
     <div>
-      {loading ? (
-        <div>Loading...</div>
+      <div className="py-1">
+        <TextInput
+          value={keyword}
+          onChange={handleKeywordChange}
+          placeholder="Search items"
+          autofocus
+          keepFocus
+          clearable
+        />
+      </div>
+      {rootItems ? (
+        rootItems.length === 0 ? (
+          <div className="p-4 text-center">No result</div>
+        ) : (
+          <ul className="p-1 flex flex-wrap gap-1">
+            {rootItems.map(({ url, id, name }) => {
+              return (
+                <IconItem
+                  key={url}
+                  url={url}
+                  name={name}
+                  id={id}
+                  size={size}
+                  onDragStart={onIconDragStart}
+                  onClick={onIconClick}
+                />
+              );
+            })}
+          </ul>
+        )
       ) : (
-        <div>
-          <div className="py-1">
-            <TextInput
-              value={keyword}
-              onChange={handleKeywordChange}
-              placeholder="Search items"
-              autofocus
-              keepFocus
-              clearable
-            />
-          </div>
-          {rootItems ? (
-            rootItems.length === 0 ? (
-              <div className="p-4 text-center">No result</div>
-            ) : (
-              <ul className="p-1 flex flex-wrap gap-1">
-                {rootItems.map(({ url, id, name }) => {
-                  return (
-                    <IconItem
-                      key={url}
-                      url={url}
-                      name={name}
-                      id={id}
-                      size={size}
-                      onDragStart={onIconDragStart}
-                      onClick={onIconClick}
-                    />
-                  );
-                })}
-              </ul>
-            )
-          ) : (
-            sortedIndexData.map(([key, item]) => (
-              <ListItem
-                key={key}
-                name={key}
-                item={item as ListItemData}
-                level={0}
-                path={basePath}
-                size={size}
-                onIconDragStart={onIconDragStart}
-                onIconClick={onIconClick}
-              />
-            ))
-          )}
-        </div>
+        sortedIndexData.map(([key, item]) => (
+          <ListItem
+            key={key}
+            name={key}
+            item={item as ListItemData}
+            level={0}
+            path={basePath}
+            size={size}
+            onIconDragStart={onIconDragStart}
+            onIconClick={onIconClick}
+          />
+        ))
       )}
     </div>
   );

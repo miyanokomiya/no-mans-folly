@@ -24,6 +24,7 @@ const en = {
     "term.workspace":
       'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "assets" folder.',
     "term.make_polygon": "To make a polygon, source line has to be neither an elbow nor a segment.",
+    "error.network.maybe_offline": "Network error happened. The device may be offline.",
   },
 };
 type TranslationResource = typeof en;
@@ -49,6 +50,7 @@ const ja: TranslationResource = {
     "term.workspace":
       'ワークスペースは、ダイアグラムの保存先となるフォルダです。各シートは別々のファイルとして保存され、アセットファイルは"assets"フォルダに格納されます。',
     "term.make_polygon": "エルボー、あるいは単一線分はポリゴン化できません。",
+    "error.network.maybe_offline": "通信エラーが発生しました。端末がオフラインの可能性があります。",
   },
 };
 
