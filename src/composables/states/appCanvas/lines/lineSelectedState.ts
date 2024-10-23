@@ -35,6 +35,7 @@ import { newMovingLineBezierState } from "./movingLineBezierState";
 import { isObjectEmpty } from "../../../../utils/commons";
 import { newRotatingState } from "../rotatingState";
 import { newBoundingBox } from "../../../boundingBox";
+import { patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/line";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -228,7 +229,12 @@ export const newLineSelectedState = defineIntransientState(() => {
           }
 
           ctx.setContextMenuList({
-            items: getMenuItemsForSelectedShapes(ctx),
+            items: [
+              CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
+              CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
+              { separator: true },
+              ...getMenuItemsForSelectedShapes(ctx),
+            ],
             point: event.data.point,
           });
           return;
@@ -244,6 +250,20 @@ export const newLineSelectedState = defineIntransientState(() => {
             }
             case CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX.key: {
               const patch = detachVertex(lineShape, (event.data.meta as VertexMetaForContextMenu).index);
+              if (!isObjectEmpty(patch)) {
+                ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
+              }
+              return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H.key: {
+              const patch = patchByFliplineH(lineShape);
+              if (!isObjectEmpty(patch)) {
+                ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
+              }
+              return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V.key: {
+              const patch = patchByFliplineV(lineShape);
               if (!isObjectEmpty(patch)) {
                 ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
               }

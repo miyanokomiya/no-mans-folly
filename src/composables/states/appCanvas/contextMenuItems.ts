@@ -91,6 +91,14 @@ export const CONTEXT_MENU_ITEM_SRC = {
     ],
   },
 
+  FLIP_LINE_H: {
+    label: "Flip horizontally",
+    key: "FLIP_LINE_H",
+  },
+  FLIP_LINE_V: {
+    label: "Flip vertically",
+    key: "FLIP_LINE_V",
+  },
   DELETE_LINE_VERTEX: {
     label: "Delete vertex",
     key: "DELETE_LINE_VERTEX",
