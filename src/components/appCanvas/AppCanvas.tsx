@@ -1,48 +1,48 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AppCanvasContext } from "../contexts/AppCanvasContext";
+import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import {
   AppStateContext,
   AppStateMachineContext,
   GetAppStateContext,
   SetAppStateContext,
-} from "../contexts/AppContext";
-import { canHaveText, getCommonStruct } from "../shapes";
-import { useCanvas } from "../hooks/canvas";
-import { getKeyOptions, getMouseOptions, ModifierOptions } from "../utils/devices";
+} from "../../contexts/AppContext";
+import { canHaveText, getCommonStruct } from "../../shapes";
+import { useCanvas } from "../../hooks/canvas";
+import { getKeyOptions, getMouseOptions, ModifierOptions } from "../../utils/devices";
 import {
   useGlobalCopyEffect,
   useGlobalMousemoveEffect,
   useGlobalMouseupEffect,
   useGlobalPasteEffect,
-} from "../hooks/window";
-import { TextEditor, TextEditorEmojiOnly } from "./textEditor/TextEditor";
-import { DocAttrInfo, DocOutput } from "../models/document";
-import { getDocAttributes, getInitialOutput } from "../utils/textEditor";
+} from "../../hooks/window";
+import { TextEditor, TextEditorEmojiOnly } from "../textEditor/TextEditor";
+import { DocAttrInfo, DocOutput } from "../../models/document";
+import { getDocAttributes, getInitialOutput } from "../../utils/textEditor";
 import { IVec2 } from "okageo";
-import { FloatMenu } from "./floatMenu/FloatMenu";
-import { generateUuid } from "../utils/random";
-import { CommandExam, ContextMenuItem, LinkInfo } from "../composables/states/types";
-import { CommandExamPanel } from "./molecules/CommandExamPanel";
-import { rednerRGBA } from "../utils/color";
-import { useSelectedTmpSheet } from "../hooks/storeHooks";
-import { newShapeRenderer } from "../composables/shapeRenderer";
-import { getAllBranchIds, getTree } from "../utils/tree";
-import { ContextMenu } from "./ContextMenu";
-import { getGridSize, newGrid } from "../composables/grid";
-import { FileDropArea } from "./atoms/FileDropArea";
-import { ImageData, ImageStore, newImageStore } from "../composables/imageStore";
-import { isImageShape } from "../shapes/image";
-import { Shape } from "../models";
-import { mapReduce, patchPipe } from "../utils/commons";
-import { getDeleteTargetIds } from "../composables/shapeComposite";
-import { getPatchInfoByLayouts } from "../composables/shapeLayoutHandler";
-import { GridBackground } from "./atoms/GridBackground";
-import { LinkMenu } from "./linkMenu/LinkMenu";
-import { useClickable } from "../hooks/clickable";
-import { ModifierSupportPanel } from "./molecules/ModifierSupportPanel";
-import { newCanvasBank } from "../composables/canvasBank";
-import { PreviewDialog } from "./PreviewDialog";
-import { duplicateShapes } from "../shapes/utils/duplicator";
+import { FloatMenu } from "../floatMenu/FloatMenu";
+import { generateUuid } from "../../utils/random";
+import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";
+import { CommandExamPanel } from "../molecules/CommandExamPanel";
+import { rednerRGBA } from "../../utils/color";
+import { useSelectedTmpSheet } from "../../hooks/storeHooks";
+import { newShapeRenderer } from "../../composables/shapeRenderer";
+import { getAllBranchIds, getTree } from "../../utils/tree";
+import { ContextMenu } from "../ContextMenu";
+import { getGridSize, newGrid } from "../../composables/grid";
+import { FileDropArea } from "../atoms/FileDropArea";
+import { ImageData, ImageStore, newImageStore } from "../../composables/imageStore";
+import { isImageShape } from "../../shapes/image";
+import { Shape } from "../../models";
+import { mapReduce, patchPipe } from "../../utils/commons";
+import { getDeleteTargetIds } from "../../composables/shapeComposite";
+import { getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
+import { GridBackground } from "../atoms/GridBackground";
+import { LinkMenu } from "../linkMenu/LinkMenu";
+import { useClickable } from "../../hooks/clickable";
+import { ModifierSupportPanel } from "../molecules/ModifierSupportPanel";
+import { newCanvasBank } from "../../composables/canvasBank";
+import { PreviewDialog } from "../PreviewDialog";
+import { duplicateShapes } from "../../shapes/utils/duplicator";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];

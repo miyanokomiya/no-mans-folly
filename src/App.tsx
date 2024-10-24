@@ -1,5 +1,5 @@
 import { generateUuid } from "./utils/random";
-import { AppCanvas } from "./components/AppCanvas";
+import { AppCanvas } from "./components/appCanvas/AppCanvas";
 import { AppToolbar } from "./components/appToolbar/AppToolbar";
 import { AppFootbar } from "./components/AppFootbar";
 import { createStyleScheme } from "./models/factories";
