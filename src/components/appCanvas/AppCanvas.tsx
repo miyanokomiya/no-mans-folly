@@ -30,9 +30,6 @@ import { getAllBranchIds, getTree } from "../../utils/tree";
 import { ContextMenu } from "../ContextMenu";
 import { getGridSize, newGrid } from "../../composables/grid";
 import { FileDropArea } from "../atoms/FileDropArea";
-import { ImageData, ImageStore, newImageStore } from "../../composables/imageStore";
-import { isImageShape } from "../../shapes/image";
-import { Shape } from "../../models";
 import { mapReduce, patchPipe } from "../../utils/commons";
 import { getDeleteTargetIds } from "../../composables/shapeComposite";
 import { getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
@@ -43,6 +40,7 @@ import { ModifierSupportPanel } from "../molecules/ModifierSupportPanel";
 import { newCanvasBank } from "../../composables/canvasBank";
 import { PreviewDialog } from "../PreviewDialog";
 import { duplicateShapes } from "../../shapes/utils/duplicator";
+import { useImageStore, useLoadShapeAssets } from "./hooks";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -67,51 +65,23 @@ export const AppCanvas: React.FC = () => {
   const [userSetting, setUserSetting] = useState(userSettingStore.getState());
   const [modifierOptions, setModifierOptions] = useState<ModifierOptions>({});
 
-  const imageStoreRef = useRef<ImageStore>();
-  const imageStore = useMemo(() => {
-    const prev = imageStoreRef.current;
-    if (prev) {
-      const imageDataList: [string, ImageData][] = [];
-      shapeStore.shapeComposite.shapes.filter(isImageShape).forEach((s) => {
-        if (!s.assetId) return;
-        const imageData = prev.getImageData(s.assetId);
-        if (!imageData) return;
-        imageDataList.push([s.assetId, imageData]);
-      });
-      return newImageStore({ imageDataList });
-    }
-
-    return newImageStore();
-  }, [shapeStore]);
-  imageStoreRef.current = imageStore;
-
   const canvasBank = useMemo(() => {
     shapeStore; // For exhaustive-deps
     return newCanvasBank();
   }, [shapeStore]);
 
-  // Need to directly use this value as a dependency.
-  const assetAPI = smctx.assetAPI;
-  const loadShapeAssets = useCallback(
-    async (shapes: Shape[]) => {
-      const errors = await imageStore.batchLoad(
-        shapes.filter(isImageShape).map((s) => s.assetId),
-        assetAPI,
-      );
-      if (errors && errors.length > 0) {
-        getSmctx().showToastMessage({ text: `Failed to load ${errors.length} asset file(s).`, type: "warn" });
-      }
-    },
-    [getSmctx, assetAPI, imageStore],
-  );
+  const imageStore = useImageStore(shapeStore);
+  const loadShapeAssets = useLoadShapeAssets(imageStore, smctx.assetAPI, getSmctx);
 
   useEffect(() => {
     loadShapeAssets(shapeStore.shapeComposite.shapes);
+  }, [loadShapeAssets, shapeStore]);
 
+  useEffect(() => {
     return imageStore.watch(() => {
       setCanvasState({});
     });
-  }, [imageStore, loadShapeAssets, shapeStore]);
+  }, [imageStore]);
 
   useEffect(() => {
     return sheetStore.watchSelected(() => {
