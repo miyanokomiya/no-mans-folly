@@ -30,7 +30,7 @@ import { getAllBranchIds, getTree } from "../utils/tree";
 import { ContextMenu } from "./ContextMenu";
 import { getGridSize, newGrid } from "../composables/grid";
 import { FileDropArea } from "./atoms/FileDropArea";
-import { newImageStore } from "../composables/imageStore";
+import { ImageData, ImageStore, newImageStore } from "../composables/imageStore";
 import { isImageShape } from "../shapes/image";
 import { Shape } from "../models";
 import { mapReduce, patchPipe } from "../utils/commons";
@@ -67,10 +67,23 @@ export const AppCanvas: React.FC = () => {
   const [userSetting, setUserSetting] = useState(userSettingStore.getState());
   const [modifierOptions, setModifierOptions] = useState<ModifierOptions>({});
 
+  const imageStoreRef = useRef<ImageStore>();
   const imageStore = useMemo(() => {
-    shapeStore; // For exhaustive-deps
+    const prev = imageStoreRef.current;
+    if (prev) {
+      const imageDataList: [string, ImageData][] = [];
+      shapeStore.shapeComposite.shapes.filter(isImageShape).forEach((s) => {
+        if (!s.assetId) return;
+        const imageData = prev.getImageData(s.assetId);
+        if (!imageData) return;
+        imageDataList.push([s.assetId, imageData]);
+      });
+      return newImageStore({ imageDataList });
+    }
+
     return newImageStore();
   }, [shapeStore]);
+  imageStoreRef.current = imageStore;
 
   const canvasBank = useMemo(() => {
     shapeStore; // For exhaustive-deps
@@ -93,7 +106,6 @@ export const AppCanvas: React.FC = () => {
   );
 
   useEffect(() => {
-    imageStore.clear();
     loadShapeAssets(shapeStore.shapeComposite.shapes);
 
     return imageStore.watch(() => {

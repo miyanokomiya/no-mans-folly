@@ -1,13 +1,17 @@
 import { AssetAPI } from "../hooks/persistence";
 import { newCallback } from "../utils/stateful/reactives";
 
-interface ImageData {
+export interface ImageData {
   img: HTMLImageElement;
   type: "image/png" | "image/svg+xml" | string;
 }
 
-export function newImageStore() {
-  const imageMap = new Map<string, ImageData>();
+type Option = {
+  imageDataList?: [string, ImageData][];
+};
+
+export function newImageStore(option?: Option) {
+  const imageMap = new Map<string, ImageData>(option?.imageDataList ?? []);
   const callback = newCallback<[string, HTMLImageElement]>();
   const processing = new Set<string>();
 
@@ -58,7 +62,7 @@ export function newImageStore() {
     const errors: string[] = [];
 
     for (const assetId of assetIds) {
-      if (assetId && !processing.has(assetId)) {
+      if (assetId && !processing.has(assetId) && !imageMap.has(assetId)) {
         try {
           processing.add(assetId);
           const file = await assetAPI.loadAsset(assetId);
