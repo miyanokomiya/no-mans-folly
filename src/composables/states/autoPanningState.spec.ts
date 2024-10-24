@@ -1,11 +1,6 @@
 import { expect, test, describe, vi } from "vitest";
 import { newAutoPanningState } from "./autoPanningState";
-
-async function sleep(time: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time);
-  });
-}
+import { sleep } from "../../testUtils";
 
 function getMockCtx() {
   return {

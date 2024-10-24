@@ -1,33 +1,55 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { newThrottle } from "../utils/stateful/throttle";
 
 type StoredData<T> = {
   version: string;
   value: T;
 };
 
-export function useLocalStorageAdopter<T>(option: { key?: string; version: string; initialValue: T }) {
+export function useLocalStorageAdopter<T>({
+  key,
+  version,
+  initialValue,
+  duration = 1000,
+}: {
+  key?: string;
+  version: string;
+  initialValue: T;
+  duration?: number;
+}) {
   const initialRef = useRef<T>();
 
   // Restore the value at the first occation without delay.
   if (!initialRef.current) {
-    if (option.key) {
-      initialRef.current = getFromLocalStorage<T>(option.key, option.version) ?? option.initialValue;
+    if (key) {
+      initialRef.current = getFromLocalStorage<T>(key, version) ?? initialValue;
     } else {
-      initialRef.current = option.initialValue;
+      initialRef.current = initialValue;
     }
   }
 
   const [state, setState] = useState<T>(initialRef.current);
 
-  const save = useCallback(() => {
-    if (!option.key) return;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const saveThrottle = useMemo(
+    () =>
+      newThrottle(
+        () => {
+          if (!key) return;
 
-    localStorage.setItem(option.key, JSON.stringify({ value: state, version: option.version } as StoredData<T>));
-  }, [state, option.key, option.version]);
+          console.log("saved");
+          localStorage.setItem(key, JSON.stringify({ value: stateRef.current, version: version } as StoredData<T>));
+        },
+        duration,
+        true,
+      ),
+    [key, version, duration],
+  );
 
   useEffect(() => {
-    save();
-  }, [save]);
+    saveThrottle();
+  }, [state, saveThrottle]);
 
   return { state, setState };
 }
