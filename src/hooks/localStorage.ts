@@ -45,6 +45,12 @@ export function useLocalStorageAdopter<T>({
     saveThrottle();
   }, [state, saveThrottle]);
 
+  useEffect(() => {
+    return () => {
+      saveThrottle.flush();
+    };
+  }, [saveThrottle]);
+
   return { state, setState };
 }
 

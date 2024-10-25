@@ -25,10 +25,11 @@ describe("useLocalStorageAdopter", () => {
     });
     expect(rendered.result.current.state).toBe(3);
 
+    await sleep(6);
     const rendered1 = renderHook(() => useLocalStorageAdopter(option));
     expect(rendered1.result.current.state).toBe(1);
 
-    await sleep(20);
+    await sleep(6);
     const rendered2 = renderHook(() => useLocalStorageAdopter(option));
     expect(rendered2.result.current.state).toBe(3);
   });
