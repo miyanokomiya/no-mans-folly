@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { newThrottle } from "../utils/stateful/throttle";
+import { newDebounce } from "../utils/stateful/debounce";
 
 type StoredData<T> = {
   version: string;
@@ -34,16 +34,10 @@ export function useLocalStorageAdopter<T>({
   stateRef.current = state;
   const saveThrottle = useMemo(
     () =>
-      newThrottle(
-        () => {
-          if (!key) return;
-
-          console.log("saved");
-          localStorage.setItem(key, JSON.stringify({ value: stateRef.current, version: version } as StoredData<T>));
-        },
-        duration,
-        true,
-      ),
+      newDebounce(() => {
+        if (!key) return;
+        localStorage.setItem(key, JSON.stringify({ value: stateRef.current, version: version } as StoredData<T>));
+      }, duration),
     [key, version, duration],
   );
 
