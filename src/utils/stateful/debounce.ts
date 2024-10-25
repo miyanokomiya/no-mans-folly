@@ -8,10 +8,7 @@ export function newDebounce<T extends (...args: any[]) => void>(fn: T, interval:
   function debounce(...args: Parameters<T>) {
     currentArgs = args;
     callback.dispatch(true);
-    tick();
-  }
 
-  function tick() {
     if (timer) {
       clearTimeout(timer);
     }
@@ -20,7 +17,6 @@ export function newDebounce<T extends (...args: any[]) => void>(fn: T, interval:
       timer = 0;
       fn(...currentArgs);
       callback.dispatch(false);
-      tick();
     }, interval) as any;
   }
 
