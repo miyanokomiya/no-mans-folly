@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
-  const { state: visible, setState: setVisible } = useLocalStorageAdopter({
+  const [visible, setVisible] = useLocalStorageAdopter({
     key: "command-exam-float-panel",
     version: "1",
     initialValue: true,

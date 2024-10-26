@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const BlockGroupField: React.FC<Props> = ({ label, children, accordionKey }) => {
-  const { state: accordionState, setState: setAccordingState } = useLocalStorageAdopter({
+  const [accordionState, setAccordingState] = useLocalStorageAdopter({
     key: accordionKey,
     initialValue: false,
     version: "1",

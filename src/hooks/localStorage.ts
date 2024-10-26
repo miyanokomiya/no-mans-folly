@@ -51,7 +51,7 @@ export function useLocalStorageAdopter<T>({
     };
   }, [saveThrottle]);
 
-  return { state, setState };
+  return [state, setState] as const;
 }
 
 function getFromLocalStorage<T>(key: string, version: string): T | undefined {

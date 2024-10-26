@@ -35,12 +35,12 @@ export const FloatDialog: React.FC<Props> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { size: windowSize } = useWindow();
-  const { state: position, setState: setPosition } = useLocalStorageAdopter({
+  const [position, setPosition] = useLocalStorageAdopter({
     key: boundsKey ? `float-dialog_${boundsKey}_position` : "",
     version: "1",
     initialValue: initialPosition,
   });
-  const { state: bodySize, setState: setBodySize } = useLocalStorageAdopter({
+  const [bodySize, setBodySize] = useLocalStorageAdopter({
     key: boundsKey ? `float-dialog_${boundsKey}_size` : "",
     version: "1",
     initialValue: initialBodySize,

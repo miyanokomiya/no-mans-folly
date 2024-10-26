@@ -146,7 +146,7 @@ function App() {
     return Object.values(saving).some((v) => v);
   }, [saving]);
 
-  const { state: rightPanel, setState: setRightPanel } = useLocalStorageAdopter({
+  const [rightPanel, setRightPanel] = useLocalStorageAdopter({
     key: "right_panel",
     version: "1",
     initialValue: "",

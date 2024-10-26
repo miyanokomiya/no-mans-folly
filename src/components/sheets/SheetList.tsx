@@ -91,7 +91,7 @@ export const SheetList: React.FC = () => {
     [sheets, acctx.sheetStore],
   );
 
-  const { state: hidePanel, setState: setHidePanel } = useLocalStorageAdopter({
+  const [hidePanel, setHidePanel] = useLocalStorageAdopter({
     key: "sheet-list",
     version: "1",
     initialValue: false,

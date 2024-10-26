@@ -16,7 +16,7 @@ export const ResizablePanelV: React.FC<Props> = ({ top, bottom, initialRate, sto
   const wrapperRef = useRef<HTMLDivElement>(null);
   const draggingY = useRef<number>();
 
-  const { state: rate, setState: setRate } = useLocalStorageAdopter({
+  const [rate, setRate] = useLocalStorageAdopter({
     key: storageKey,
     version: "1",
     initialValue: baseRate,

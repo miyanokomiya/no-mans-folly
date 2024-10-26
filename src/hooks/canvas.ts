@@ -55,7 +55,7 @@ export function useCanvas(
   // Prepare ref for mouse point to reduce recalculation.
   const mousePoint = useRef<IVec2>({ x: 0, y: 0 });
 
-  const { state: viewState, setState: setViewState } = useLocalStorageAdopter({
+  const [viewState, setViewState] = useLocalStorageAdopter({
     key: options?.viewStateKey,
     version: "1",
     initialValue: { scale: 1, viewOrigin: { x: 0, y: 0 } },
