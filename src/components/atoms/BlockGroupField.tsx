@@ -13,6 +13,7 @@ export const BlockGroupField: React.FC<Props> = ({ label, children, accordionKey
     key: accordionKey,
     initialValue: false,
     version: "1",
+    duration: 100,
   });
 
   const contentRef = useRef<HTMLDivElement>(null);

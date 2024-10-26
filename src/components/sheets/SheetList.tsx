@@ -95,6 +95,7 @@ export const SheetList: React.FC = () => {
     key: "sheet-list",
     version: "1",
     initialValue: false,
+    duration: 100,
   });
   const toggleHidePanel = useCallback(() => {
     setHidePanel((val) => !val);

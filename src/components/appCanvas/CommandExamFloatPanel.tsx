@@ -13,6 +13,7 @@ export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
     key: "command-exam-float-panel",
     version: "1",
     initialValue: true,
+    duration: 100,
   });
 
   const handleButtonClick = useCallback(() => setVisible((v) => !v), [setVisible]);

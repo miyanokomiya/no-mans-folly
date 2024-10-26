@@ -150,6 +150,7 @@ function App() {
     key: "right_panel",
     version: "1",
     initialValue: "",
+    duration: 100,
   });
   const rightPanelWidth = 300;
   const canvasStyle = rightPanel ? { width: `calc(100% - ${rightPanelWidth}px)` } : { width: "" };
