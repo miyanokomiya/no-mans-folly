@@ -27,7 +27,10 @@ export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
       ) : undefined}
       <button
         type="button"
-        className={"absolute bottom-0 left-0 w-5 h-5 bg-gray-300 rounded-tr-xl" + (visible ? "" : " rotate-180")}
+        className={
+          "absolute bottom-0 left-0 w-5 h-5 pt-1 pr-1 bg-gray-300 transition " +
+          (visible ? "rounded-tr-xl" : "-scale-100")
+        }
         onClick={handleButtonClick}
       >
         <img src={iconDropdown} alt="Toggle panel" className="rotate-45" />
