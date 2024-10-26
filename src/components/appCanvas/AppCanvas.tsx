@@ -22,7 +22,6 @@ import { IVec2 } from "okageo";
 import { FloatMenu } from "../floatMenu/FloatMenu";
 import { generateUuid } from "../../utils/random";
 import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";
-import { CommandExamPanel } from "../molecules/CommandExamPanel";
 import { rednerRGBA } from "../../utils/color";
 import { useSelectedTmpSheet } from "../../hooks/storeHooks";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
@@ -41,6 +40,7 @@ import { newCanvasBank } from "../../composables/canvasBank";
 import { PreviewDialog } from "../PreviewDialog";
 import { duplicateShapes } from "../../shapes/utils/duplicator";
 import { useImageStore, useLoadShapeAssets } from "./hooks";
+import { CommandExamFloatPanel } from "./CommandExamFloatPanel";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -832,8 +832,8 @@ export const AppCanvas: React.FC = () => {
       {userSetting.debug === "on" ? (
         <div className="fixed right-16 top-0 pointer-events-none">{sm.getStateSummary().label}</div>
       ) : undefined}
-      <div className="fixed bottom-2 left-2 flex flex-col pointer-events-none">
-        <CommandExamPanel commandExams={commandExams} />
+      <div className="fixed bottom-0 left-0 flex">
+        <CommandExamFloatPanel commandExams={commandExams} />
       </div>
       {userSetting.virtualKeyboard === "modifiers" ? (
         <div className="pointer-events-auto fixed bottom-2 left-1/2 -translate-x-1/2">
