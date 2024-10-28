@@ -20,92 +20,118 @@ import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
 import { IRectangle } from "okageo";
 import { getIntRectFromFloatRect } from "../../../utils/geometry";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
+import { i18n } from "../../../i18n";
 
 export const CONTEXT_MENU_ITEM_SRC = {
-  DELETE_SHAPE: {
-    label: "Delete",
-    key: "DELETE_SHAPE",
+  get DELETE_SHAPE() {
+    return {
+      label: i18n.t("contextmenu.delete"),
+      key: "DELETE_SHAPE",
+    };
   },
-  DUPLICATE_SHAPE: {
-    label: "Duplicate",
-    key: "DUPLICATE_SHAPE",
+  get DUPLICATE_SHAPE() {
+    return {
+      label: i18n.t("contextmenu.duplicate"),
+      key: "DUPLICATE_SHAPE",
+    };
   },
-  DUPLICATE_SHAPE_WITHIN_GROUP: {
-    label: "Duplicate within group",
-    key: "DUPLICATE_SHAPE_WITHIN_GROUP",
+  get DUPLICATE_SHAPE_WITHIN_GROUP() {
+    return {
+      label: i18n.t("contextmenu.duplicate.withingroup"),
+      key: "DUPLICATE_SHAPE_WITHIN_GROUP",
+    };
   },
-
-  GROUP: {
-    label: "Group",
-    key: "GROUP",
+  get GROUP() {
+    return {
+      label: i18n.t("contextmenu.group"),
+      key: "GROUP",
+    };
   },
-  UNGROUP: {
-    label: "Ungroup",
-    key: "UNGROUP",
+  get UNGROUP() {
+    return {
+      label: i18n.t("contextmenu.ungroup"),
+      key: "UNGROUP",
+    };
   },
-
-  LOCK: {
-    label: "[[LOCK]]",
-    key: "LOCK",
+  get LOCK() {
+    return {
+      label: i18n.t("contextmenu.lock"),
+      key: "LOCK",
+    };
   },
-  UNLOCK: {
-    label: "Unlock",
-    key: "UNLOCK",
+  get UNLOCK() {
+    return {
+      label: i18n.t("contextmenu.unlock"),
+      key: "UNLOCK",
+    };
   },
-
   // Note: "COPY_AS_SVZG" doesn't work because Clipboard API doesn't go with "image/svg+xml"
-  COPY_AS_PNG: {
-    label: "Copy as PNG",
-    key: "COPY_AS_PNG",
+  get COPY_AS_PNG() {
+    return {
+      label: i18n.t("contextmenu.copy.png"),
+      key: "COPY_AS_PNG",
+    };
   },
-  EXPORT_SELECTED_SHAPES: {
-    label: "Export selected shapes as",
-    key: "EXPORT_SELECTED_SHAPES",
-    children: [
-      {
-        label: "PNG",
-        key: "EXPORT_AS_PNG",
-      },
-      {
-        label: "SVG",
-        key: "EXPORT_AS_SVG",
-      },
-      {
-        label: "[[FOLLY_SVG]]",
-        key: "EXPORT_AS_FOLLY_SVG",
-      },
-    ],
+  get EXPORT_SELECTED_SHAPES() {
+    return {
+      label: i18n.t("contextmenu.export.shapes.as"),
+      key: "EXPORT_SELECTED_SHAPES",
+      children: [
+        {
+          label: i18n.t("contextmenu.export.png"),
+          key: "EXPORT_AS_PNG",
+        },
+        {
+          label: i18n.t("contextmenu.export.svg"),
+          key: "EXPORT_AS_SVG",
+        },
+        {
+          label: i18n.t("contextmenu.export.follysvg"),
+          key: "EXPORT_AS_FOLLY_SVG",
+        },
+      ],
+    };
   },
-  EXPORT_SELECTED_RANGE: {
-    label: "Export selected range as",
-    key: "EXPORT_SELECTED_RANGE",
-    children: [
-      {
-        label: "PNG",
-        key: "EXPORT_RANGE_AS_PNG",
-      },
-      {
-        label: "SVG",
-        key: "EXPORT_RANGE_AS_SVG",
-      },
-    ],
+  get EXPORT_SELECTED_RANGE() {
+    return {
+      label: i18n.t("contextmenu.export.range.as"),
+      key: "EXPORT_SELECTED_RANGE",
+      children: [
+        {
+          label: i18n.t("contextmenu.export.png"),
+          key: "EXPORT_RANGE_AS_PNG",
+        },
+        {
+          label: i18n.t("contextmenu.export.svg"),
+          key: "EXPORT_RANGE_AS_SVG",
+        },
+      ],
+    };
   },
 
-  FLIP_LINE_H: {
-    label: "Flip horizontally",
-    key: "FLIP_LINE_H",
+  get FLIP_LINE_H() {
+    return {
+      label: i18n.t("contextmenu.flip.h"),
+      key: "FLIP_LINE_H",
+    };
   },
-  FLIP_LINE_V: {
-    label: "Flip vertically",
-    key: "FLIP_LINE_V",
+  get FLIP_LINE_V() {
+    return {
+      label: i18n.t("contextmenu.flip.v"),
+      key: "FLIP_LINE_V",
+    };
   },
-  DELETE_LINE_VERTEX: {
-    label: "Delete vertex",
-    key: "DELETE_LINE_VERTEX",
+  get DELETE_LINE_VERTEX() {
+    return {
+      label: i18n.t("contextmenu.vertex.delete"),
+      key: "DELETE_LINE_VERTEX",
+    };
   },
-  DETACH_LINE_VERTEX: {
-    label: "Detach vertex",
-    key: "DETACH_LINE_VERTEX",
+  get DETACH_LINE_VERTEX() {
+    return {
+      label: i18n.t("contextmenu.vertex.detach"),
+      key: "DETACH_LINE_VERTEX",
+    };
   },
 
   SEPARATOR: { separator: true },
