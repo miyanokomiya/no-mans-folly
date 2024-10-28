@@ -9,32 +9,31 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
   get WORKSPACE() {
     return {
       text: i18n.t("workspace"),
-      description: i18n.t("term.workspace"),
+      description: i18n.t("term.workspace.desc"),
     };
   },
   get FOLLY_SVG() {
     return {
       text: "Folly SVG",
-      description:
-        "Folly SVG contains meta data of shapes. You can restore the shapes by dropping Folly SVG to the canvas.",
+      description: i18n.t("term.follysvg"),
     };
   },
   get LOCK() {
     return {
-      text: "Lock",
-      description: "Prevents shapes from moving. You can still modify, resize or rotate locked shapes.",
+      text: i18n.t("term.lock"),
+      description: i18n.t("term.lock.desc"),
     };
   },
   get LINE_JUMP() {
     return {
-      text: "Jump",
-      description: "Jump over background lines. This works only between straight segments.",
+      text: i18n.t("term.linejump"),
+      description: i18n.t("term.linejump.desc"),
     };
   },
   get MAKE_POLYGON() {
     return {
-      text: i18n.t("make_polygon"),
-      description: i18n.t("term.make_polygon"),
+      text: i18n.t("makepolygon"),
+      description: i18n.t("term.makepolygon.desc"),
     };
   },
 };

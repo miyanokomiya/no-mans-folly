@@ -20,11 +20,18 @@ const en = {
     "exconnection.revoke": "Revoke connections",
     "exconnection.revoke.description": "You can revoke external connections via below button.",
     "exconnection.revoke.visibility": "This button is visible even if there's no connection.",
-    make_polygon: "Make polygon",
-    "term.workspace":
-      'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "assets" folder.',
-    "term.make_polygon": "To make a polygon, source line has to be neither an elbow nor a segment.",
     "error.network.maybe_offline": "Network error happened. The device may be offline.",
+
+    "term.workspace.desc":
+      'A workspace is a folder where a diagram data is saved. Each sheet is saved as a separate file. All asset files are saved in the "assets" folder.',
+    "term.follysvg":
+      "Folly SVG is an SVG file containing meta data of shapes. You can restore the shapes by dropping the file to the canvas.",
+    "term.lock": "Lock",
+    "term.lock.desc": "Prevents shapes from moving. You can still modify, resize or rotate locked shapes.",
+    "term.linejump": "Jump",
+    "term.linejump.desc": "Jump over background lines. This works only between straight segments.",
+    "term.makepolygon": "Make polygon",
+    "term.makepolygon.desc": "To make a polygon, source line has to be neither an elbow nor a segment.",
 
     "contextmenu.delete": "Delete",
     "contextmenu.duplicate": "Duplicate",
@@ -64,11 +71,18 @@ const ja: TranslationResource = {
     "exconnection.revoke": "連携解除",
     "exconnection.revoke.description": "下のボタンを押下することですべての外部連携を解除します。",
     "exconnection.revoke.visibility": "このボタンは外部連携の有無に関わらず常に表示されます。",
-    make_polygon: "ポリゴン化",
-    "term.workspace":
-      'ワークスペースは、ダイアグラムの保存先となるフォルダです。各シートは別々のファイルとして保存され、アセットファイルは"assets"フォルダに格納されます。',
-    "term.make_polygon": "エルボー、あるいは単一線分はポリゴン化できません。",
     "error.network.maybe_offline": "通信エラーが発生しました。端末がオフラインの可能性があります。",
+
+    "term.workspace.desc":
+      'ワークスペースは、ダイアグラムの保存先となるフォルダです。各シートは別々のファイルとして保存され、アセットファイルは"assets"フォルダに格納されます。',
+    "term.follysvg":
+      "Folly SVGはシェイプのメタ情報を含んだSVGファイルです。このファイルをキャンバスにドロップすることでシェイプの復元が可能です。",
+    "term.lock": "ロック",
+    "term.lock.desc": "シェイプの移動を防ぎます。リサイズや回転などその他の編集は制限されません。",
+    "term.linejump": "ジャンプ",
+    "term.linejump.desc": "背後のラインをジャンプします。直線同士でのみジャンプが発生します。",
+    "term.makepolygon": "ポリゴン化",
+    "term.makepolygon.desc": "エルボー、あるいは単一線分はポリゴン化できません。",
 
     "contextmenu.delete": "削除",
     "contextmenu.duplicate": "複製",
