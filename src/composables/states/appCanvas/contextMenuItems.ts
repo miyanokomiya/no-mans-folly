@@ -137,12 +137,6 @@ export const CONTEXT_MENU_ITEM_SRC = {
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };
 
-const CONTEXT_MENU_COPY_SHAPE_ITEMS: ContextMenuItem[] = [
-  CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
-  CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_SHAPES,
-  CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_RANGE,
-];
-
 export function getMenuItemsForSelectedShapes(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeComposite">,
 ): ContextMenuItem[] {
@@ -170,7 +164,9 @@ export function getMenuItemsForSelectedShapes(
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
     ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-    ...CONTEXT_MENU_COPY_SHAPE_ITEMS,
+    CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
+    CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_SHAPES,
+    CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_RANGE,
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
     CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE,
   ];
