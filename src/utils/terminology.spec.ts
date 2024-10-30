@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { parseTerminologies } from "./terminology";
+import { i18n } from "../i18n";
 
 describe("parseTerminologies", () => {
   test("should parse terminology information", () => {
@@ -7,8 +8,7 @@ describe("parseTerminologies", () => {
       { text: "This is " },
       {
         text: "Folly SVG",
-        description:
-          "Folly SVG contains meta data of shapes. You can restore the shapes by dropping Folly SVG to the canvas.",
+        description: i18n.t("term.follysvg"),
       },
       { text: " and " },
       { text: "unknown_key" },

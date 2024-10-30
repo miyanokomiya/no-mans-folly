@@ -15,7 +15,7 @@ import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import { TransitionValue } from "../core";
-import { ContextMenuItem } from "../types";
+import { ContextMenuItem, ContextMenuSeparatorItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
 import { IRectangle } from "okageo";
 import { getIntRectFromFloatRect } from "../../../utils/geometry";
@@ -136,6 +136,18 @@ export const CONTEXT_MENU_ITEM_SRC = {
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };
+
+export function isContextSeparatorItem(item: ContextMenuItem): item is ContextMenuSeparatorItem {
+  return "separator" in item;
+}
+
+export function isSameContextItem(a: ContextMenuItem, b: ContextMenuItem): boolean {
+  const isSeparatorA = isContextSeparatorItem(a);
+  const isSeparatorB = isContextSeparatorItem(b);
+  if (isSeparatorA && isSeparatorB) return true;
+  if (!isSeparatorA && !isSeparatorB) return a.key === b.key;
+  return false;
+}
 
 export function getMenuItemsForSelectedShapes(
   ctx: Pick<AppCanvasStateContext, "getSelectedShapeIdMap" | "getShapeComposite">,

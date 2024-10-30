@@ -9,6 +9,7 @@ import {
   getMenuItemsForSelectedShapes,
   groupShapes,
   handleContextItemEvent,
+  isSameContextItem,
   ungroupShapes,
 } from "./contextMenuItems";
 
@@ -48,16 +49,33 @@ describe("getMenuItemsForSelectedShapes", () => {
     expect(getMenuItemsForSelectedShapes(ctx)).toEqual([]);
 
     ctx.getSelectedShapeIdMap.mockReturnValue({ locked: true });
-    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.UNLOCK);
-    expect(getMenuItemsForSelectedShapes(ctx)).not.toContain(CONTEXT_MENU_ITEM_SRC.LOCK);
+    expect(getMenuItemsForSelectedShapes(ctx).some((a) => isSameContextItem(a, CONTEXT_MENU_ITEM_SRC.UNLOCK))).toBe(
+      true,
+    );
+    expect(getMenuItemsForSelectedShapes(ctx).some((a) => isSameContextItem(a, CONTEXT_MENU_ITEM_SRC.LOCK))).toBe(
+      false,
+    );
 
     ctx.getSelectedShapeIdMap.mockReturnValue({ unlocked: true });
-    expect(getMenuItemsForSelectedShapes(ctx)).not.toContain(CONTEXT_MENU_ITEM_SRC.UNLOCK);
-    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.LOCK);
+    expect(getMenuItemsForSelectedShapes(ctx).some((a) => isSameContextItem(a, CONTEXT_MENU_ITEM_SRC.UNLOCK))).toBe(
+      false,
+    );
+    expect(getMenuItemsForSelectedShapes(ctx).some((a) => isSameContextItem(a, CONTEXT_MENU_ITEM_SRC.LOCK))).toBe(true);
 
     ctx.getSelectedShapeIdMap.mockReturnValue({ locked: true, unlocked: true });
-    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.UNLOCK);
-    expect(getMenuItemsForSelectedShapes(ctx)).toContain(CONTEXT_MENU_ITEM_SRC.LOCK);
+    expect(getMenuItemsForSelectedShapes(ctx).some((a) => isSameContextItem(a, CONTEXT_MENU_ITEM_SRC.UNLOCK))).toBe(
+      true,
+    );
+    expect(getMenuItemsForSelectedShapes(ctx).some((a) => isSameContextItem(a, CONTEXT_MENU_ITEM_SRC.LOCK))).toBe(true);
+  });
+});
+
+describe("isSameContextItem", () => {
+  test("should return true when two items are same ones", () => {
+    expect(isSameContextItem(CONTEXT_MENU_ITEM_SRC.LOCK, CONTEXT_MENU_ITEM_SRC.LOCK)).toBe(true);
+    expect(isSameContextItem(CONTEXT_MENU_ITEM_SRC.LOCK, CONTEXT_MENU_ITEM_SRC.UNLOCK)).toBe(false);
+    expect(isSameContextItem(CONTEXT_MENU_ITEM_SRC.LOCK, { separator: true })).toBe(false);
+    expect(isSameContextItem({ separator: true }, { separator: true })).toBe(true);
   });
 });
 

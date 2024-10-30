@@ -18,14 +18,16 @@ export type MouseOptions = {
   button: number;
 } & ModifierOptions;
 
-export type ContextMenuItem =
-  | {
-      label: string;
-      key: string;
-      meta?: any;
-      children?: ContextMenuItem[];
-    }
-  | { separator: true };
+export type ContextMenuItem = ContextMenuActionItem | ContextMenuSeparatorItem;
+
+export type ContextMenuActionItem = {
+  label: string;
+  key: string;
+  meta?: any;
+  children?: ContextMenuItem[];
+};
+
+export type ContextMenuSeparatorItem = { separator: true };
 
 export type CommandExam = { command?: string; title: string };
 
