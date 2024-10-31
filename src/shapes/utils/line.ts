@@ -1,6 +1,19 @@
-import { getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
-import { LineShape, struct } from "../line";
+import {
+  getApproPoints,
+  getDistance,
+  getPathPointAtLengthFromStructs,
+  getPedal,
+  getPolylineLength,
+  getRectCenter,
+  getSymmetry,
+  isOnSeg,
+  isSame,
+  IVec2,
+} from "okageo";
+import { getLinePath, isCurveLine, LineShape, struct } from "../line";
 import { isBezieirControl } from "../../utils/path";
+import { BEZIER_APPROX_SIZE, getCurveLerpFn, getSegments, ISegment } from "../../utils/geometry";
+import { pickMinItem } from "../../utils/commons";
 
 /**
  * Returns the line with minimum styles.
@@ -66,4 +79,78 @@ function patchByFlipline(line: LineShape, flipFn: (v: IVec2) => IVec2): Partial<
   );
 
   return ret;
+}
+
+export function getClosestOutlineInfoOfLine(
+  line: LineShape,
+  p: IVec2,
+  threshold: number,
+): [p: IVec2, rate: number] | undefined {
+  const edgeInfo = getEdgeInfo(line);
+  const edges = edgeInfo.edges;
+
+  const values = edges
+    .map<[number, number, IVec2]>((edge, i) => {
+      let pedal = getPedal(p, edge);
+      if (!isOnSeg(pedal, edge)) {
+        pedal = getDistance(edge[0], p) <= getDistance(edge[1], p) ? edge[0] : edge[1];
+      }
+      return [i, getDistance(p, pedal), pedal];
+    })
+    .filter((v) => v[1] < threshold);
+  const closestValue = pickMinItem(values, (v) => v[1]);
+  if (!closestValue) return;
+
+  const closestEdgeIndex = closestValue[0];
+  const closestPedal = closestValue[2];
+
+  const dList = edgeInfo.edgeLengths;
+  const totalD = edgeInfo.totalLength;
+  let d = 0;
+  for (let i = 0; i < closestEdgeIndex; i++) {
+    d += dList[i];
+  }
+  d += getDistance(edges[closestEdgeIndex][0], closestPedal);
+  const rate = d / totalD;
+
+  return [closestPedal, rate];
+}
+
+function getEdgeInfo(line: LineShape): {
+  edges: ISegment[];
+  edgeLengths: number[];
+  totalLength: number;
+  lerpFn?: (rate: number) => IVec2;
+} {
+  const edges = getSegments(getLinePath(line));
+  if (!isCurveLine(line)) {
+    const edgeLengths = edges.map((edge) => getDistance(edge[0], edge[1]));
+    return {
+      edges,
+      edgeLengths,
+      totalLength: edgeLengths.reduce((n, l) => n + l, 0),
+    };
+  }
+
+  const pathStructs = edges.map((edge, i) => {
+    const curve = line.curves[i];
+    const lerpFn = getCurveLerpFn(edge, curve);
+    let points: IVec2[] = edge;
+    let edges = [edge];
+    if (curve) {
+      points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
+      edges = getSegments(points);
+    }
+    return { lerpFn, length: getPolylineLength(points), edges };
+  });
+
+  const approxEdges = pathStructs.flatMap((s) => s.edges);
+  const edgeLengths = approxEdges.map((edge) => getDistance(edge[0], edge[1]));
+  const totalLength = pathStructs.reduce((n, s) => n + s.length, 0);
+  return {
+    edges: approxEdges,
+    edgeLengths,
+    totalLength,
+    lerpFn: (rate) => getPathPointAtLengthFromStructs(pathStructs, totalLength * rate),
+  };
 }
