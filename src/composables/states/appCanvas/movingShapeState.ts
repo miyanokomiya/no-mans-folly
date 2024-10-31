@@ -18,6 +18,7 @@ import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 import { mergeMap } from "../../../utils/commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
+import { handlePointerMoveOnLine } from "./movingShapeOnLineHandler";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -32,6 +33,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let lineHandler: ConnectedLineDetouchHandler;
   let targetIds: string[];
   let connectionRenderer: ConnectionRenderer;
+  let resumedBeforeMove = false;
 
   return {
     getLabel: () => "MovingShape",
@@ -85,6 +87,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         excludeIdSet: new Set(targetIds),
       });
     },
+    onResume() {
+      resumedBeforeMove = true;
+    },
     onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});
@@ -94,8 +99,12 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          resumedBeforeMove = false;
           const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, option);
           if (onLayoutResult) return onLayoutResult;
+
+          const onLineResult = handlePointerMoveOnLine(ctx, event, targetIds);
+          if (onLineResult) return onLineResult;
 
           const d = sub(event.data.current, event.data.start);
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
@@ -133,8 +142,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const shapeComposite = ctx.getShapeComposite();
+      // Avoid rendering in this case to prevent flickering
+      if (resumedBeforeMove) return;
 
+      const shapeComposite = ctx.getShapeComposite();
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
       applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
