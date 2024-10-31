@@ -10,7 +10,7 @@ import {
   isSame,
   IVec2,
 } from "okageo";
-import { getLinePath, isCurveLine, LineShape, struct } from "../line";
+import { getLinePath, LineShape, struct } from "../line";
 import { isBezieirControl } from "../../utils/path";
 import { BEZIER_APPROX_SIZE, getCurveLerpFn, getSegments, ISegment } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
@@ -120,20 +120,11 @@ export function getLineEdgeInfo(line: LineShape): {
   edges: ISegment[];
   edgeLengths: number[];
   totalLength: number;
-  lerpFn?: (rate: number) => IVec2;
+  lerpFn: (rate: number) => IVec2;
 } {
   const edges = getSegments(getLinePath(line));
-  if (!isCurveLine(line)) {
-    const edgeLengths = edges.map((edge) => getDistance(edge[0], edge[1]));
-    return {
-      edges,
-      edgeLengths,
-      totalLength: edgeLengths.reduce((n, l) => n + l, 0),
-    };
-  }
-
   const pathStructs = edges.map((edge, i) => {
-    const curve = line.curves[i];
+    const curve = line.curves?.[i];
     const lerpFn = getCurveLerpFn(edge, curve);
     let points: IVec2[] = edge;
     let edges = [edge];
