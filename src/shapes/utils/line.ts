@@ -86,7 +86,7 @@ export function getClosestOutlineInfoOfLine(
   p: IVec2,
   threshold: number,
 ): [p: IVec2, rate: number] | undefined {
-  const edgeInfo = getEdgeInfo(line);
+  const edgeInfo = getLineEdgeInfo(line);
   const edges = edgeInfo.edges;
 
   const values = edges
@@ -116,7 +116,7 @@ export function getClosestOutlineInfoOfLine(
   return [closestPedal, rate];
 }
 
-function getEdgeInfo(line: LineShape): {
+export function getLineEdgeInfo(line: LineShape): {
   edges: ISegment[];
   edgeLengths: number[];
   totalLength: number;

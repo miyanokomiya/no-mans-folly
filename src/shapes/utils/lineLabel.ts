@@ -1,17 +1,10 @@
-import {
-  IVec2,
-  getApproPoints,
-  getDistance,
-  getPathPointAtLengthFromStructs,
-  getPolylineLength,
-  getRectCenter,
-} from "okageo";
-import { LineShape, getLinePath, isCurveLine, isLineShape } from "../line";
+import { getRectCenter } from "okageo";
+import { LineShape, isLineShape } from "../line";
 import { TextShape, isTextShape, patchPosition } from "../text";
-import { BEZIER_APPROX_SIZE, ISegment, getCurveLerpFn, getRotateFn, getSegments } from "../../utils/geometry";
+import { getRotateFn } from "../../utils/geometry";
 import { Shape } from "../../models";
 import { ShapeComposite } from "../../composables/shapeComposite";
-import { getClosestOutlineInfoOfLine } from "./line";
+import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "./line";
 
 export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0): Partial<TextShape> {
   const labelBounds = { x: label.p.x, y: label.p.y, width: label.width, height: label.height };
@@ -42,7 +35,7 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
 
   patch.lineAttached = rate;
 
-  const edgeInfo = getEdgeInfo(line);
+  const edgeInfo = getLineEdgeInfo(line);
   const distP = edgeInfo.lerpFn?.(rate) ?? closestPedal;
   patch = { ...patch, ...patchPosition({ ...label, ...patch }, distP, margin) };
 
@@ -58,45 +51,6 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
   }
 
   return ret;
-}
-
-function getEdgeInfo(line: LineShape): {
-  edges: ISegment[];
-  edgeLengths: number[];
-  totalLength: number;
-  lerpFn?: (rate: number) => IVec2;
-} {
-  const edges = getSegments(getLinePath(line));
-  if (!isCurveLine(line)) {
-    const edgeLengths = edges.map((edge) => getDistance(edge[0], edge[1]));
-    return {
-      edges,
-      edgeLengths,
-      totalLength: edgeLengths.reduce((n, l) => n + l, 0),
-    };
-  }
-
-  const pathStructs = edges.map((edge, i) => {
-    const curve = line.curves[i];
-    const lerpFn = getCurveLerpFn(edge, curve);
-    let points: IVec2[] = edge;
-    let edges = [edge];
-    if (curve) {
-      points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
-      edges = getSegments(points);
-    }
-    return { lerpFn, length: getPolylineLength(points), edges };
-  });
-
-  const approxEdges = pathStructs.flatMap((s) => s.edges);
-  const edgeLengths = approxEdges.map((edge) => getDistance(edge[0], edge[1]));
-  const totalLength = pathStructs.reduce((n, s) => n + s.length, 0);
-  return {
-    edges: approxEdges,
-    edgeLengths,
-    totalLength,
-    lerpFn: (rate) => getPathPointAtLengthFromStructs(pathStructs, totalLength * rate),
-  };
 }
 
 export function isLineLabelShape(shapeComposite: ShapeComposite, shape: Shape): shape is TextShape {
