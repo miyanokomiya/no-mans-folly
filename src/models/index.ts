@@ -30,6 +30,7 @@ export interface Shape extends Entity {
   clipping?: boolean; // When this is set true, it's prioritized over all child shapes.
   cropClipBorder?: boolean; // This is prioritized over all child shapes.
   alpha?: number; // "undefined" should mean 1.
+  attachment?: ShapeAttachment;
 }
 
 export type ClipRule = "out" | "in";
@@ -98,6 +99,14 @@ export interface ArcCurveControl {
   // Represents normalized position for target segment.
   // Ref: geometry.ts#normalizeSegment
   d: IVec2;
+}
+
+export interface ShapeAttachment {
+  id: string; // id of target shape that is attached to
+  to: IVec2; // relative rete within the bounds of the target
+  anchor: IVec2; // relative rate within the bounds of attaching shape
+  rotationType: "relative" | "absolute";
+  rotation: number; // this value becomes either relative or absolute based on "rotationType"
 }
 
 export interface BoxAlign {

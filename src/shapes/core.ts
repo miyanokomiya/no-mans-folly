@@ -129,6 +129,7 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     clipping: arg.clipping,
     cropClipBorder: arg.cropClipBorder,
     alpha: arg.alpha,
+    attachment: arg.attachment,
   };
 }
 
