@@ -1,19 +1,29 @@
 import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { mapReduce, patchPipe } from "../../../../utils/commons";
-import { isLineShape } from "../../../../shapes/line";
-import { getClosestOutlineInfoOfLine } from "../../../../shapes/utils/line";
+import { mapReduce, patchPipe, toList } from "../../../../utils/commons";
+import { isLineShape, LineShape } from "../../../../shapes/line";
+import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
-import { IVec2 } from "okageo";
+import { IVec2, lerpPoint } from "okageo";
 
-export function newMovingOnLineState(option: { lineId: string }): AppCanvasState {
+type Option = {
+  lineId: string;
+  shapeId: string;
+};
+
+export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
+  let lineLerpFn: (t: number) => IVec2;
 
   return {
     getLabel: () => "MovingOnLine",
     onStart: (ctx) => {
       // ctx.setTmpShapeMap({});
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeMap = shapeComposite.shapeMap;
+      const line = shapeMap[option.lineId] as LineShape;
+      lineLerpFn = getLineEdgeInfo(line).lerpFn;
     },
     onEnd: (ctx) => {
       if (keepMoving) {
@@ -46,16 +56,33 @@ export function newMovingOnLineState(option: { lineId: string }): AppCanvasState
             return { type: "break" };
           }
 
-          const toP = closestInfo[0];
-          lineAnchor = toP;
-          const to = { x: closestInfo[1], y: 0 };
+          const baseToP = closestInfo[0];
+          lineAnchor = baseToP;
+          const baseTo = { x: closestInfo[1], y: 0 };
+
           const selectedShapeMap = mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeMap[id]);
+          const selectedShapes = toList(selectedShapeMap);
+          const attachInfoMap = new Map<string, [to: IVec2, toP: IVec2]>([[option.shapeId, [baseTo, baseToP]]]);
+
+          if (selectedShapes.length > 1) {
+            const toLerpFn = (t: number) => lerpPoint(baseTo, { x: 1, y: 0 }, t);
+            const step = 1 / selectedShapes.length;
+            selectedShapes
+              .filter((s) => s.id !== option.shapeId)
+              .forEach((s, i) => {
+                const to = toLerpFn(step * (i + 1));
+                attachInfoMap.set(s.id, [to, lineLerpFn(to.x)]);
+              });
+          }
+
           const patch = patchPipe(
             [
               (src) => {
                 return mapReduce(src, (s) => {
                   const bounds = shapeComposite.getWrapperRect(s);
                   const anchorP = { x: bounds.x + bounds.width * anchor.x, y: bounds.y + bounds.height * anchor.y };
+                  const to = attachInfoMap.get(s.id)![0];
+                  const toP = attachInfoMap.get(s.id)![1];
                   return {
                     ...shapeComposite.transformShape(s, [1, 0, 0, 1, toP.x - anchorP.x, toP.y - anchorP.y]),
                     attachment: {
