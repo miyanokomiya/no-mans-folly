@@ -13,7 +13,7 @@ interface Option {
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
 }
 
-export function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
+function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
   function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
@@ -21,11 +21,15 @@ export function newLineAttachmentHandler(option: Option): LineAttachmentHandler 
     const updatedEntries = Object.entries(updatedMap);
     const ret: { [id: string]: Partial<Shape> } = {};
 
-    const updatedLineIds = new Set(updatedEntries.filter(([id]) => isLineShape(shapeMap[id])).map(([id]) => id));
+    const targetLineIds = new Set(updatedEntries.filter(([id]) => isLineShape(shapeMap[id])).map(([id]) => id));
     const attachedMap = new Map<string, Set<string>>();
     shapeList.forEach((s) => {
       if (!s.attachment) return;
-      if (!updatedLineIds.has(s.attachment.id)) return;
+      if (!targetLineIds.has(s.attachment.id)) {
+        if (!updatedMap[s.id]) return; // neither the shape nor the line changes
+
+        targetLineIds.add(s.attachment.id);
+      }
 
       const lineId = s.attachment.id;
       const idSet = attachedMap.get(lineId);
@@ -36,18 +40,18 @@ export function newLineAttachmentHandler(option: Option): LineAttachmentHandler 
       }
     });
 
-    updatedLineIds.forEach((lineId) => {
+    targetLineIds.forEach((lineId) => {
       const attachedIdSet = attachedMap.get(lineId);
       if (!attachedIdSet || attachedIdSet.size === 0) return;
 
       const nextLine = { ...shapeMap[lineId], ...updatedMap[lineId] } as LineShape;
       const nextLineLerpFn = getLineEdgeInfo(nextLine).lerpFn;
       attachedIdSet.forEach((attachedId) => {
-        const attached = shapeMap[attachedId];
-        if (!attached.attachment) return;
+        const nextAttached = { ...shapeMap[attachedId], ...updatedMap[attachedId] };
+        if (!nextAttached.attachment) return;
 
-        const toP = nextLineLerpFn(attached.attachment.to.x);
-        const patch = patchByMoveToAttachedPoint(shapeComposite, attached, attached.attachment.anchor, toP);
+        const toP = nextLineLerpFn(nextAttached.attachment.to.x);
+        const patch = patchByMoveToAttachedPoint(shapeComposite, nextAttached, nextAttached.attachment.anchor, toP);
         if (!patch) return;
 
         ret[attachedId] = patch;

@@ -3,6 +3,7 @@ import { getLineAttachmentPatch, patchByMoveToAttachedPoint } from "./lineAttach
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { LineShape } from "../shapes/line";
+import { RectangleShape } from "../shapes/rectangle";
 
 describe("getLineAttachmentPatch", () => {
   test("should return shape patch to move shapes to the attached points", () => {
@@ -22,6 +23,7 @@ describe("getLineAttachmentPatch", () => {
       shapes: [line, shapeA, shapeB],
       getStruct: getCommonStruct,
     });
+
     const result0 = getLineAttachmentPatch(shapeComposite, {
       update: {
         [line.id]: { q: { x: 0, y: 100 } } as Partial<LineShape>,
@@ -30,6 +32,17 @@ describe("getLineAttachmentPatch", () => {
     expect(result0).toEqual({
       [shapeB.id]: {
         p: { x: -50, y: -30 },
+      },
+    });
+
+    const result1 = getLineAttachmentPatch(shapeComposite, {
+      update: {
+        [shapeB.id]: { width: 200 } as Partial<RectangleShape>,
+      },
+    });
+    expect(result1).toEqual({
+      [shapeB.id]: {
+        p: { x: -80, y: -50 },
       },
     });
   });
