@@ -4,6 +4,7 @@ import { getAttachmentAnchorPoint } from "../../lineAttachmentHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { AppCanvasStateContext } from "./core";
 import { newMovingOnLineState } from "./lines/movingOnLineState";
+import { newShapeComposite } from "../../shapeComposite";
 
 export function handlePointerMoveOnLine(
   ctx: AppCanvasStateContext,
@@ -14,16 +15,20 @@ export function handlePointerMoveOnLine(
   if (movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
-  const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[movingIds[0]]);
+  const movingIdSet = new Set(movingIds);
+  const subShapeComposite = newShapeComposite({
+    shapes: shapeComposite.shapes.filter((s) => movingIdSet.has(s.id)),
+    getStruct: shapeComposite.getShapeStruct,
+  });
 
-  const movingShape = shapeComposite.findShapeAt(event.data.current, scope, [], false, ctx.getScale());
+  const movingShape = subShapeComposite.findShapeAt(event.data.start, undefined, [], false, ctx.getScale());
   if (!movingShape) return;
 
-  const anchorP = getAttachmentAnchorPoint(shapeComposite, movingShape);
+  const anchorP = getAttachmentAnchorPoint(subShapeComposite, movingShape);
   const diff = sub(event.data.current, event.data.start);
   const movedAnchorP = add(anchorP, diff);
 
-  const targetLine = shapeComposite.findShapeAt(movedAnchorP, scope, movingIds, false, ctx.getScale());
+  const targetLine = shapeComposite.findShapeAt(movedAnchorP, undefined, movingIds, false, ctx.getScale());
   if (!targetLine || !isLineShape(targetLine)) return;
 
   return {
