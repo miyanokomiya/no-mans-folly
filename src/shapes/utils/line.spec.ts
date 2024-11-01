@@ -1,5 +1,11 @@
 import { describe, test, expect } from "vitest";
-import { getClosestOutlineInfoOfLine, getNakedLineShape, patchByFliplineH, patchByFliplineV } from "./line";
+import {
+  getClosestOutlineInfoOfLine,
+  getLineEdgeInfo,
+  getNakedLineShape,
+  patchByFliplineH,
+  patchByFliplineV,
+} from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
 import { createLineHead } from "../lineHeads";
@@ -110,5 +116,16 @@ describe("getClosestOutlineInfoOfLine", () => {
     const result0 = getClosestOutlineInfoOfLine(line0, { x: 40, y: 18 }, 10);
     expect(result0?.[0]).toEqualPoint({ x: 39.90618673949272, y: 19.230361600706782 });
     expect(result0?.[1]).toBeCloseTo(0.4081723);
+  });
+});
+
+describe("getLineEdgeInfo", () => {
+  test("should return lerp function based on distance", () => {
+    const line0 = lineStruct.create({
+      q: { x: 200, y: 0 },
+      curves: [{ c1: { x: 50, y: 150 }, c2: { x: 150, y: 150 } }],
+    });
+    const target = getLineEdgeInfo(line0);
+    expect(target.lerpFn(80 / target.totalLength)).toEqualPoint({ x: 34.99598644197986, y: 71.72119092860004 });
   });
 });

@@ -9,8 +9,9 @@ import {
   isOnSeg,
   isSame,
   IVec2,
+  PathLengthStruct,
 } from "okageo";
-import { getLinePath, LineShape, struct } from "../line";
+import { getEdges, LineShape, struct } from "../line";
 import { isBezieirControl } from "../../utils/path";
 import { BEZIER_APPROX_SIZE, getCurveLerpFn, getSegments, ISegment } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
@@ -104,16 +105,28 @@ export function getClosestOutlineInfoOfLine(
   const closestEdgeIndex = closestValue[0];
   const closestPedal = closestValue[2];
 
-  const dList = edgeInfo.edgeLengths;
-  const totalD = edgeInfo.totalLength;
   let d = 0;
   for (let i = 0; i < closestEdgeIndex; i++) {
-    d += dList[i];
+    d += edgeInfo.edgeLengths[i];
   }
   d += getDistance(edges[closestEdgeIndex][0], closestPedal);
-  const rate = d / totalD;
-
+  const rate = d / edgeInfo.totalLength;
   return [closestPedal, rate];
+}
+
+function getLinePathStruce(line: LineShape): PathLengthStruct[] {
+  const edges = getEdges(line);
+  return edges.map((edge, i) => {
+    const curve = line.curves?.[i];
+    const lerpFn = getCurveLerpFn(edge, curve);
+    let points: IVec2[] = edge;
+    let approxEdges = [edge];
+    if (curve) {
+      points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
+      approxEdges = getSegments(points);
+    }
+    return { lerpFn, length: getPolylineLength(points), curve: !!curve, approxEdges };
+  });
 }
 
 export function getLineEdgeInfo(line: LineShape): {
@@ -122,20 +135,14 @@ export function getLineEdgeInfo(line: LineShape): {
   totalLength: number;
   lerpFn: (rate: number) => IVec2;
 } {
-  const edges = getSegments(getLinePath(line));
-  const pathStructs = edges.map((edge, i) => {
-    const curve = line.curves?.[i];
-    const lerpFn = getCurveLerpFn(edge, curve);
-    let points: IVec2[] = edge;
-    let edges = [edge];
-    if (curve) {
-      points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
-      edges = getSegments(points);
+  const pathStructs = getLinePathStruce(line);
+  const approxEdges = pathStructs.flatMap<ISegment>((s) => {
+    if (s.curve) {
+      return getSegments(getApproPoints(s.lerpFn, BEZIER_APPROX_SIZE));
+    } else {
+      return [[s.lerpFn(0), s.lerpFn(1)]];
     }
-    return { lerpFn, length: getPolylineLength(points), edges };
   });
-
-  const approxEdges = pathStructs.flatMap((s) => s.edges);
   const edgeLengths = approxEdges.map((edge) => getDistance(edge[0], edge[1]));
   const totalLength = pathStructs.reduce((n, s) => n + s.length, 0);
   return {
