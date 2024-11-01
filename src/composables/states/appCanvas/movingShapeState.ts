@@ -33,7 +33,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let lineHandler: ConnectedLineDetouchHandler;
   let targetIds: string[];
   let connectionRenderer: ConnectionRenderer;
-  let resumedBeforeMove = false;
+  let beforeMove = true;
 
   return {
     getLabel: () => "MovingShape",
@@ -88,7 +88,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       });
     },
     onResume() {
-      resumedBeforeMove = true;
+      beforeMove = true;
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -99,7 +99,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          resumedBeforeMove = false;
+          beforeMove = false;
           const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, option);
           if (onLayoutResult) return onLayoutResult;
 
@@ -146,7 +146,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       // Avoid rendering in this case to prevent flickering
-      if (resumedBeforeMove) return;
+      if (beforeMove) return;
 
       const shapeComposite = ctx.getShapeComposite();
       const scale = ctx.getScale();
