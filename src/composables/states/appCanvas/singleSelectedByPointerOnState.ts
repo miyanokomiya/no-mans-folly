@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "./core";
 import { getDistance } from "okageo";
-import { newMovingHubState } from "./movingHubState";
 import { startTextEditingIfPossible } from "./commons";
 
 interface Option {
@@ -33,7 +32,7 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
             return ctx.states.newSelectionHubState;
           }
 
-          return newMovingHubState;
+          return ctx.states.newMovingHubState;
         }
         case "pointerup": {
           if (option?.concurrent && Date.now() - timestamp < 200) {

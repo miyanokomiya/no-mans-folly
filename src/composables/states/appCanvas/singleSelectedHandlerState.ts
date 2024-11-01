@@ -14,7 +14,6 @@ import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { Shape } from "../../../models";
 import { newDummyHandler, ShapeHandler } from "../../shapeHandlers/core";
-import { newMovingHubState } from "./movingHubState";
 import { newSmartBranchHandler, SmartBranchHandler } from "../../smartBranchHandler";
 import { canAttachSmartBranch } from "../../../shapes";
 
@@ -100,7 +99,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                     case "rotation":
                       return () => newRotatingState({ boundingBox });
                     case "move":
-                      return () => newMovingHubState({ boundingBox });
+                      return () => ctx.states.newMovingHubState({ boundingBox });
                   }
                 }
 

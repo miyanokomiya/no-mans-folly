@@ -8,7 +8,6 @@ import { newRotatingState } from "./rotatingState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "./contextMenuItems";
 import { canGroupShapes, findBetterShapeAt, getRotatedTargetBounds } from "../../shapeComposite";
-import { newMovingHubState } from "./movingHubState";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../../shapes/core";
 import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
@@ -108,7 +107,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
                   case "move":
-                    return () => newMovingHubState({ boundingBox });
+                    return () => ctx.states.newMovingHubState({ boundingBox });
                 }
               }
 
@@ -134,7 +133,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                   if (event.data.options.alt) {
                     return newDuplicatingShapesState;
                   } else {
-                    return () => newMovingHubState({ boundingBox });
+                    return () => ctx.states.newMovingHubState({ boundingBox });
                   }
                 } else {
                   ctx.selectShape(shape.id, false);

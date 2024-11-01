@@ -22,7 +22,6 @@ import { TextShape, patchPosition } from "../../../../shapes/text";
 import { newTextEditingState } from "../text/textEditingState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "../contextMenuItems";
-import { newMovingHubState } from "../movingHubState";
 import { getPatchAfterLayouts, getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
@@ -89,7 +88,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                     return ctx.states.newSelectionHubState;
                   }
                   case "move-anchor":
-                    return newMovingHubState;
+                    return ctx.states.newMovingHubState;
                   case "rotate-anchor": {
                     const shapeComposite = ctx.getShapeComposite();
                     const rectPath = shapeComposite.getLocalRectPolygon(lineShape);
