@@ -1,12 +1,14 @@
 import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { mapReduce, patchPipe, toList } from "../../../../utils/commons";
-import { isLineShape, LineShape } from "../../../../shapes/line";
+import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
 import { add, IVec2, lerpPoint, sub } from "okageo";
 import { getAttachmentAnchorPoint, patchByMoveToAttachedPoint } from "../../../lineAttachmentHandler";
 import { ShapeAttachment } from "../../../../models";
+import { applyCurvePath } from "../../../../utils/renderer";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 type Option = {
   lineId: string;
@@ -16,6 +18,7 @@ type Option = {
 export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
+  let line: LineShape;
   let lineLerpFn: (t: number) => IVec2;
 
   return {
@@ -24,7 +27,12 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       // ctx.setTmpShapeMap({});
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
-      const line = shapeMap[option.lineId] as LineShape;
+      line = shapeMap[option.lineId] as LineShape;
+      if (!isLineShape(line)) {
+        keepMoving = true;
+        return { type: "break" };
+      }
+
       lineLerpFn = getLineEdgeInfo(line).lerpFn;
     },
     onEnd: (ctx) => {
@@ -44,11 +52,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
-          const line = shapeMap[option.lineId];
-          if (!isLineShape(line)) {
-            keepMoving = true;
-            return { type: "break" };
-          }
 
           const indexShape = shapeMap[option.shapeId];
           const indexAnchorP = getAttachmentAnchorPoint(shapeComposite, indexShape);
@@ -125,9 +128,14 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       const scale = ctx.getScale();
 
       if (lineAnchor) {
-        applyFillStyle(renderCtx, { color: style.selectionPrimary });
+        applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
         renderCtx.beginPath();
-        renderCtx.arc(lineAnchor.x, lineAnchor.y, 10 * scale, 0, TAU);
+        applyCurvePath(renderCtx, getLinePath(line), line.curves);
+        renderCtx.stroke();
+
+        applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+        renderCtx.beginPath();
+        renderCtx.arc(lineAnchor.x, lineAnchor.y, 6 * scale, 0, TAU);
         renderCtx.fill();
       }
     },
