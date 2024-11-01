@@ -8,7 +8,16 @@ import { RectangleShape } from "../shapes/rectangle";
 describe("getLineAttachmentPatch", () => {
   test("should return shape patch to move shapes to the attached points", () => {
     const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
-    const shapeA = createShape(getCommonStruct, "rectangle", { id: "a" });
+    const shapeA = createShape(getCommonStruct, "rectangle", {
+      id: "a",
+      attachment: {
+        id: line.id,
+        to: { x: 0.2, y: 0 },
+        anchor: { x: 0.5, y: 0.5 },
+        rotationType: "absolute",
+        rotation: Math.PI / 2,
+      },
+    });
     const shapeB = createShape(getCommonStruct, "rectangle", {
       id: "b",
       attachment: {
@@ -16,7 +25,7 @@ describe("getLineAttachmentPatch", () => {
         to: { x: 0.2, y: 0 },
         anchor: { x: 0.5, y: 0.5 },
         rotationType: "relative",
-        rotation: 0,
+        rotation: Math.PI / 2,
       },
     });
     const shapeComposite = newShapeComposite({
@@ -29,22 +38,19 @@ describe("getLineAttachmentPatch", () => {
         [line.id]: { q: { x: 0, y: 100 } } as Partial<LineShape>,
       },
     });
-    expect(result0).toEqual({
-      [shapeB.id]: {
-        p: { x: -50, y: -30 },
-      },
-    });
+    expect(result0[shapeA.id].p).toEqualPoint({ x: -50, y: -30 });
+    expect(result0[shapeA.id]).not.toHaveProperty("rotation");
+    expect(result0[shapeB.id].p).toEqualPoint({ x: -50, y: -30 });
+    expect(result0[shapeB.id].rotation).toBeCloseTo(Math.PI);
 
     const result1 = getLineAttachmentPatch(shapeComposite, {
       update: {
         [shapeB.id]: { width: 200 } as Partial<RectangleShape>,
       },
     });
-    expect(result1).toEqual({
-      [shapeB.id]: {
-        p: { x: -80, y: -50 },
-      },
-    });
+    expect(result1).not.toHaveProperty(shapeA.id);
+    expect(result1[shapeB.id].p).toEqualPoint({ x: -80, y: -50 });
+    expect(result1[shapeB.id].rotation).toBeCloseTo(Math.PI / 2);
   });
 });
 

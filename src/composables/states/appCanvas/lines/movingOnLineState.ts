@@ -9,6 +9,7 @@ import { getAttachmentAnchorPoint, patchByMoveToAttachedPoint } from "../../../l
 import { ShapeAttachment } from "../../../../models";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 type Option = {
   lineId: string;
@@ -102,6 +103,9 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                     attachment,
                   };
                 });
+              },
+              (_, currentPatch) => {
+                return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
               },
             ],
             selectedShapeMap,

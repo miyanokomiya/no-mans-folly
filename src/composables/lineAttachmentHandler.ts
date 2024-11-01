@@ -1,9 +1,10 @@
-import { IVec2 } from "okageo";
+import { getRadian, IVec2 } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
+import { isObjectEmpty } from "../utils/commons";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -50,11 +51,25 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
         const nextAttached = { ...shapeMap[attachedId], ...updatedMap[attachedId] };
         if (!nextAttached.attachment) return;
 
-        const toP = nextLineLerpFn(nextAttached.attachment.to.x);
-        const patch = patchByMoveToAttachedPoint(shapeComposite, nextAttached, nextAttached.attachment.anchor, toP);
-        if (!patch) return;
+        const t = nextAttached.attachment.to.x;
+        const toP = nextLineLerpFn(t);
+        const patch =
+          patchByMoveToAttachedPoint(shapeComposite, nextAttached, nextAttached.attachment.anchor, toP) ?? {};
 
-        ret[attachedId] = patch;
+        if (nextAttached.attachment.rotationType === "relative") {
+          const d = 0.001;
+          const [ta, tb] = d < t ? [nextLineLerpFn(t - d), toP] : [toP, nextLineLerpFn(t + d)];
+          const baseRotation = getRadian(tb, ta);
+          const nextRotation = nextAttached.attachment.rotation + baseRotation;
+
+          if (nextAttached.rotation !== nextRotation) {
+            patch.rotation = nextRotation;
+          }
+        }
+
+        if (!isObjectEmpty(patch)) {
+          ret[attachedId] = patch;
+        }
       });
     });
 
