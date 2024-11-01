@@ -5,6 +5,8 @@ import { isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
 import { IVec2, lerpPoint } from "okageo";
+import { patchByMoveToAttachedPoint } from "../../../lineAttachmentHandler";
+import { ShapeAttachment } from "../../../../models";
 
 type Option = {
   lineId: string;
@@ -49,7 +51,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             return { type: "break" };
           }
 
-          const anchor = { x: 0.5, y: 0.5 };
           const closestInfo = getClosestOutlineInfoOfLine(line, p, 40 * ctx.getScale());
           if (!closestInfo) {
             keepMoving = true;
@@ -79,19 +80,17 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             [
               (src) => {
                 return mapReduce(src, (s) => {
-                  const bounds = shapeComposite.getWrapperRect(s);
-                  const anchorP = { x: bounds.x + bounds.width * anchor.x, y: bounds.y + bounds.height * anchor.y };
-                  const to = attachInfoMap.get(s.id)![0];
-                  const toP = attachInfoMap.get(s.id)![1];
+                  const info = attachInfoMap.get(s.id)!;
+                  const attachment: ShapeAttachment = {
+                    id: line.id,
+                    to: info[0],
+                    anchor: { x: 0.5, y: 0.5 },
+                    rotationType: "relative",
+                    rotation: 0,
+                  };
                   return {
-                    ...shapeComposite.transformShape(s, [1, 0, 0, 1, toP.x - anchorP.x, toP.y - anchorP.y]),
-                    attachment: {
-                      id: line.id,
-                      to,
-                      anchor: { x: 0.5, y: 0 },
-                      rotationType: "relative",
-                      rotation: 0,
-                    } as const,
+                    ...patchByMoveToAttachedPoint(shapeComposite, s, attachment.anchor, info[1]),
+                    attachment,
                   };
                 });
               },
