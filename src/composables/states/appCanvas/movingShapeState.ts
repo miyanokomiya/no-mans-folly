@@ -115,7 +115,10 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const shapeMap = ctx.getShapeComposite().shapeMap;
           let patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
             const s = shapeMap[id];
-            if (s) m[id] = shapeComposite.transformShape(s, affine);
+            if (s) {
+              m[id] = shapeComposite.transformShape(s, affine);
+              if (s.attachment) m[id].attachment = undefined;
+            }
             return m;
           }, {});
 
