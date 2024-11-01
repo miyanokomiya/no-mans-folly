@@ -4,8 +4,8 @@ import { mapReduce, patchPipe, toList } from "../../../../utils/commons";
 import { isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
-import { IVec2, lerpPoint } from "okageo";
-import { patchByMoveToAttachedPoint } from "../../../lineAttachmentHandler";
+import { add, IVec2, lerpPoint, sub } from "okageo";
+import { getAttachmentAnchorPoint, patchByMoveToAttachedPoint } from "../../../lineAttachmentHandler";
 import { ShapeAttachment } from "../../../../models";
 
 type Option = {
@@ -42,7 +42,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             return { type: "break" };
           }
 
-          const p = event.data.current;
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
           const line = shapeMap[option.lineId];
@@ -51,7 +50,13 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             return { type: "break" };
           }
 
-          const closestInfo = getClosestOutlineInfoOfLine(line, p, 40 * ctx.getScale());
+          const indexShape = shapeMap[option.shapeId];
+          const indexAnchorP = getAttachmentAnchorPoint(shapeComposite, indexShape);
+
+          const diff = sub(event.data.current, event.data.start);
+          const movedIndexAnchorP = add(indexAnchorP, diff);
+
+          const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, 40 * ctx.getScale());
           if (!closestInfo) {
             keepMoving = true;
             return { type: "break" };
@@ -82,11 +87,12 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                 return mapReduce(src, (s) => {
                   const info = attachInfoMap.get(s.id)!;
                   const attachment: ShapeAttachment = {
-                    id: line.id,
-                    to: info[0],
                     anchor: { x: 0.5, y: 0.5 },
                     rotationType: "relative",
                     rotation: 0,
+                    ...s.attachment,
+                    id: line.id,
+                    to: info[0],
                   };
                   return {
                     ...patchByMoveToAttachedPoint(shapeComposite, s, attachment.anchor, info[1]),

@@ -89,3 +89,12 @@ export function patchByMoveToAttachedPoint(
   };
   return shapeComposite.transformShape(shape, [1, 0, 0, 1, attachedPoint.x - anchorP.x, attachedPoint.y - anchorP.y]);
 }
+
+export function getAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: Shape): IVec2 {
+  const bounds = shapeComposite.getWrapperRect(shape);
+  const anchor = shape.attachment?.anchor ?? { x: 0.5, y: 0.5 };
+  return {
+    x: bounds.x + bounds.width * anchor.x,
+    y: bounds.y + bounds.height * anchor.y,
+  };
+}

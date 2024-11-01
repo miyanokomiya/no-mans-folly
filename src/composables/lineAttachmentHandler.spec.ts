@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { getLineAttachmentPatch, patchByMoveToAttachedPoint } from "./lineAttachmentHandler";
+import { getAttachmentAnchorPoint, getLineAttachmentPatch, patchByMoveToAttachedPoint } from "./lineAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { LineShape } from "../shapes/line";
@@ -61,5 +61,34 @@ describe("patchByMoveToAttachedPoint", () => {
 
     const result1 = patchByMoveToAttachedPoint(shapeComposite, shape, { x: 0.2, y: 0.8 }, { x: 100, y: 100 });
     expect(result1?.p).toEqualPoint({ x: 80, y: 20 });
+  });
+});
+
+describe("getAttachmentAnchorPoint", () => {
+  test("should return initial anchor point when the shape doesn't have attachment", () => {
+    const shape = createShape(getCommonStruct, "rectangle", { id: "a" });
+    const shapeComposite = newShapeComposite({
+      shapes: [shape],
+      getStruct: getCommonStruct,
+    });
+    expect(getAttachmentAnchorPoint(shapeComposite, shape)).toEqualPoint({ x: 50, y: 50 });
+  });
+
+  test("should return anchor point when the shape have attachment", () => {
+    const shape = createShape(getCommonStruct, "rectangle", {
+      id: "a",
+      attachment: {
+        id: "line",
+        to: { x: 0.2, y: 0 },
+        anchor: { x: 0.3, y: 0.6 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [shape],
+      getStruct: getCommonStruct,
+    });
+    expect(getAttachmentAnchorPoint(shapeComposite, shape)).toEqualPoint({ x: 30, y: 60 });
   });
 });
