@@ -28,7 +28,7 @@ export function handlePointerMoveOnLine(
   const diff = sub(event.data.current, event.data.start);
   const movedAnchorP = add(anchorP, diff);
 
-  const targetLine = shapeComposite.findShapeAt(movedAnchorP, undefined, movingIds, false, ctx.getScale());
+  const targetLine = shapeComposite.findShapeAt(movedAnchorP, { shapeType: "line" }, movingIds, false, ctx.getScale());
   if (!targetLine || !isLineShape(targetLine)) return;
 
   return {

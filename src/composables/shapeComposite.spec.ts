@@ -365,6 +365,22 @@ describe("newShapeComposite", () => {
         card1,
       ]);
     });
+
+    test("should respect shapeType of the scope", () => {
+      const group = createShape(getCommonStruct, "group", { id: "group" });
+      const rect0 = createShape(getCommonStruct, "rectangle", { id: "rect0", parentId: group.id });
+      const line0 = createShape(getCommonStruct, "line", { id: "line0", parentId: group.id });
+      const rect1 = createShape(getCommonStruct, "rectangle", { id: "rect1" });
+
+      const shapes = [group, rect0, line0, rect1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getMergedShapesInSelectionScope({ shapeType: "rectangle" })).toEqual([rect1]);
+      expect(target.getMergedShapesInSelectionScope({ parentId: group.id, shapeType: "rectangle" })).toEqual([rect0]);
+      expect(target.getMergedShapesInSelectionScope({ shapeType: "line" })).toEqual([]);
+    });
   });
 
   describe("hasParent", () => {

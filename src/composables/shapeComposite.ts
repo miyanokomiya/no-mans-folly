@@ -204,17 +204,21 @@ export function newShapeComposite(option: Option) {
   }
 
   /**
-   * When scope is undefined, returns root shapes
+   * When scope.parent is undefined, returns root shapes
    */
   function getMergedShapesInSelectionScope(scope?: ShapeSelectionScope, parentScopeCheckOnly = false): Shape[] {
-    if (!scope?.parentId) return mergedShapeTree.map((t) => mergedShapeMap[t.id]);
+    let candidates: Shape[];
+    if (!scope?.parentId) {
+      candidates = mergedShapeTree.map((t) => mergedShapeMap[t.id]);
+    } else {
+      const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
+      candidates =
+        mergedShapeTreeMap[scope.parentId]?.children
+          .map((t) => mergedShapeMap[t.id])
+          .filter((s) => checkFn(getSelectionScope(s), scope)) ?? [];
+    }
 
-    const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
-    return (
-      mergedShapeTreeMap[scope.parentId]?.children
-        .map((t) => mergedShapeMap[t.id])
-        .filter((s) => checkFn(getSelectionScope(s), scope)) ?? []
-    );
+    return scope?.shapeType ? candidates.filter((s) => s.type === scope.shapeType) : candidates;
   }
 
   function getShapeActualPosition(shape: Shape): IVec2 {
