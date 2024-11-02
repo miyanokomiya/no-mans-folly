@@ -186,7 +186,7 @@ function getEvenlySpacedLineAttachment(
 
   const edgeInfo = getLineEdgeInfo(line);
   const closed = isSame(line.p, line.q);
-  const splitSize = Math.max(3, closed ? allTargetIdSet.size : allTargetIdSet.size - 1);
+  const splitSize = closed ? allTargetIdSet.size : Math.max(1, allTargetIdSet.size - 1);
   const points = fillArray(allTargetIdSet.size, 0).map<[IVec2, rate: number, index: number, distanceSq: number]>(
     (_, i) => {
       const t = i / splitSize;
@@ -195,7 +195,9 @@ function getEvenlySpacedLineAttachment(
       return [p, t, i, dd];
     },
   );
-  const closestSplitInfo = pickMinItem(points, (v) => v[3])!;
+
+  const closestCandidates = points.filter((_, i) => i <= points.length - movingTargetIdSet.size);
+  const closestSplitInfo = pickMinItem(closestCandidates, (v) => v[3])!;
 
   const baseTo = { x: closestSplitInfo[1], y: 0 };
   const attachInfoMap = new Map<string, [to: IVec2]>([[indexShapeId, [baseTo]]]);
