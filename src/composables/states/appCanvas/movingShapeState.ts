@@ -6,9 +6,10 @@ import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import {
   ConnectedLineDetouchHandler,
+  ConnectionRenderer,
   getConnectedLineInfoMap,
   newConnectedLineDetouchHandler,
-  renderPatchedVertices,
+  newConnectionRenderer,
 } from "../../connectedLineHandler";
 import { isLineShape } from "../../../shapes/line";
 import { COMMAND_EXAM_SRC } from "./commandExams";
@@ -30,6 +31,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let affine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineDetouchHandler;
   let targetIds: string[];
+  let connectionRenderer: ConnectionRenderer;
 
   return {
     getLabel: () => "MovingShape",
@@ -73,9 +75,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         });
       }
 
+      const connectedLinesMap = getConnectedLineInfoMap(ctx, targetIds);
       lineHandler = newConnectedLineDetouchHandler({
-        connectedLinesMap: getConnectedLineInfoMap(ctx, targetIds),
+        connectedLinesMap,
         ctx,
+      });
+      connectionRenderer = newConnectionRenderer({
+        connectedLinesMap,
+        excludeIdSet: new Set(targetIds),
       });
     },
     onEnd: (ctx) => {
@@ -144,16 +151,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         });
       }
 
-      const tmpLines = Object.entries(shapeComposite.tmpShapeMap)
-        .filter(([id]) => isLineShape(shapeComposite.shapeMap[id]))
-        .map(([, patch]) => patch);
-      if (tmpLines.length > 0) {
-        renderPatchedVertices(renderCtx, {
-          lines: tmpLines,
-          scale,
-          style,
-        });
-      }
+      connectionRenderer.render(renderCtx, ctx.getTmpShapeMap(), style, scale);
     },
   };
 }

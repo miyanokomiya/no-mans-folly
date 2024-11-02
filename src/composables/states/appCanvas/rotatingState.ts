@@ -4,12 +4,12 @@ import { IDENTITY_AFFINE } from "okageo";
 import { Shape } from "../../../models";
 import {
   ConnectedLineDetouchHandler,
+  ConnectionRenderer,
   getConnectedLineInfoMap,
   newConnectedLineDetouchHandler,
-  renderPatchedVertices,
+  newConnectionRenderer,
 } from "../../connectedLineHandler";
 import { mergeMap } from "../../../utils/commons";
-import { LineShape } from "../../../shapes/line";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { handleCommonWheel } from "../commons";
@@ -22,8 +22,8 @@ export function newRotatingState(option: Option): AppCanvasState {
   let targets: Shape[];
   let resizingAffine = IDENTITY_AFFINE;
   let lineHandler: ConnectedLineDetouchHandler;
-  let linePatchedMap: { [id: string]: Partial<LineShape> };
   let freeAngle = true;
+  let connectionRenderer: ConnectionRenderer;
 
   const boundingBoxRotatingRotating = newBoundingBoxRotating({
     rotation: option.boundingBox.getRotation(),
@@ -32,16 +32,19 @@ export function newRotatingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "Rotating",
     onStart: (ctx) => {
-      targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
+      targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
+      const targetIds = targets.map((s) => s.id);
+      const connectedLinesMap = getConnectedLineInfoMap(ctx, targetIds);
       lineHandler = newConnectedLineDetouchHandler({
-        connectedLinesMap: getConnectedLineInfoMap(
-          ctx,
-          targets.map((s) => s.id),
-        ),
+        connectedLinesMap,
         ctx,
+      });
+      connectionRenderer = newConnectionRenderer({
+        connectedLinesMap,
+        excludeIdSet: new Set(targetIds),
       });
     },
     onEnd: (ctx) => {
@@ -65,7 +68,7 @@ export function newRotatingState(option: Option): AppCanvasState {
             return m;
           }, {});
 
-          linePatchedMap = lineHandler.onModified(patchMap);
+          const linePatchedMap = lineHandler.onModified(patchMap);
           patchMap = getPatchAfterLayouts(shapeComposite, { update: mergeMap(patchMap, linePatchedMap) });
           ctx.setTmpShapeMap(patchMap);
           return;
@@ -88,21 +91,10 @@ export function newRotatingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      option.boundingBox.renderResizedBounding(
-        renderCtx,
-        ctx.getStyleScheme(),
-        ctx.getScale(),
-        resizingAffine,
-        !freeAngle,
-      );
-
-      if (linePatchedMap) {
-        renderPatchedVertices(renderCtx, {
-          lines: Object.values(linePatchedMap),
-          scale: ctx.getScale(),
-          style: ctx.getStyleScheme(),
-        });
-      }
+      const style = ctx.getStyleScheme();
+      const scale = ctx.getScale();
+      option.boundingBox.renderResizedBounding(renderCtx, style, scale, resizingAffine, !freeAngle);
+      connectionRenderer.render(renderCtx, ctx.getTmpShapeMap(), style, scale);
     },
   };
 }

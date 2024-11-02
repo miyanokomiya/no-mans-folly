@@ -16,9 +16,9 @@ import {
   newShapeSnapping,
   renderSnappingResult,
 } from "../../shapeSnapping";
-import { renderPatchedVertices } from "../../connectedLineHandler";
+import { ConnectionRenderer, getConnectedLineInfoMap, newConnectionRenderer } from "../../connectedLineHandler";
 import { patchPipe, toMap } from "../../../utils/commons";
-import { LineShape, isLineShape } from "../../../shapes/line";
+import { isLineShape } from "../../../shapes/line";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
@@ -41,8 +41,8 @@ export function newResizingState(option: Option): AppCanvasState {
   let resizingAffine = IDENTITY_AFFINE;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
-  let linePatchedMap: { [id: string]: Partial<LineShape> };
   let boundingBoxResizing: BoundingBoxResizing;
+  let connectionRenderer: ConnectionRenderer;
 
   return {
     getLabel: () => "Resizing",
@@ -77,6 +77,13 @@ export function newResizingState(option: Option): AppCanvasState {
           : directlySelectedTargets.some((s) => shouldResizeOnTextEdit(shapeComposite.getShapeStruct, s))
             ? "text"
             : undefined,
+      });
+
+      const targetIds = targets.map((s) => s.id);
+      const connectedLinesMap = getConnectedLineInfoMap(ctx, targetIds);
+      connectionRenderer = newConnectionRenderer({
+        connectedLinesMap,
+        excludeIdSet: new Set(targetIds),
       });
 
       ctx.setCommandExams([
@@ -196,35 +203,30 @@ export function newResizingState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
+      const scale = ctx.getScale();
       const shapeComposite = ctx.getShapeComposite();
       const shapes = Object.entries(shapeComposite.mergedShapeMap)
         .filter(([id]) => targetShapeMap[id])
         .map(([, s]) => s);
 
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
+      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
-      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), ctx.getScale(), resizingAffine);
+      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), scale, resizingAffine);
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
         const shapeMap = shapeComposite.shapeMap;
         renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
+          style,
+          scale,
           result: snappingResult,
           getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
         });
       }
 
-      if (linePatchedMap) {
-        renderPatchedVertices(renderCtx, {
-          lines: Object.values(linePatchedMap),
-          scale: ctx.getScale(),
-          style: ctx.getStyleScheme(),
-        });
-      }
+      connectionRenderer.render(renderCtx, ctx.getTmpShapeMap(), style, scale);
     },
   };
 }
