@@ -1,13 +1,6 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
 import { BoxPadding, CommonStyle, Shape, Size } from "../models";
-import {
-  GetShapeStruct as _GetShapeStruct,
-  hasFillStyle,
-  hasStrokeStyle,
-  ShapeContext,
-  ShapeSnappingLines,
-  TextContainer,
-} from "./core";
+import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
 import { ImageStore } from "../composables/imageStore";
@@ -381,21 +374,19 @@ export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: 
  * Make sure both src and dist shapes have compatibility before calling this function.
  */
 export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: string): Shape {
-  const dist = createShape(getStruct, type, { id: src.id, findex: src.findex, parentId: src.parentId });
-  const distRect = getWrapperRect(getStruct, dist);
+  const defaultDist = createShape(getStruct, type, { id: src.id, findex: src.findex, parentId: src.parentId });
+  const defaultDistRect = getWrapperRect(getStruct, defaultDist);
   const srcRect = getWrapperRect(getStruct, { ...src, rotation: 0 });
 
-  const resizePatch = resizeShape(getStruct, dist, [
-    srcRect.width / distRect.width,
+  const resizePatch = resizeShape(getStruct, defaultDist, [
+    srcRect.width / defaultDistRect.width,
     0,
     0,
-    srcRect.height / distRect.height,
+    srcRect.height / defaultDistRect.height,
     srcRect.x,
     srcRect.y,
   ]);
 
-  const fill = hasFillStyle(src) ? { fill: src.fill } : {};
-  const stroke = hasStrokeStyle(src) ? { stroke: src.stroke } : {};
-
-  return { ...dist, ...resizePatch, rotation: src.rotation, ...fill, ...stroke };
+  const dist = createShape(getStruct, type, src);
+  return { ...dist, ...resizePatch, rotation: src.rotation };
 }

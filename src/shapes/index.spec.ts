@@ -487,14 +487,16 @@ describe("switchShapeType", () => {
     expect(result0.ry).toBeCloseTo(100);
   });
 
-  test("should return switched shape: keep fill and stroke", () => {
+  test("should return switched shape: keep shared properties", () => {
     const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "a",
       fill: createFillStyle({ color: COLORS.GRAY_1 }),
       stroke: createStrokeStyle({ color: COLORS.YELLOW }),
+      alpha: 0.3,
     });
     const result0 = switchShapeType(getCommonStruct, rect, "ellipse") as EllipseShape;
     expect(result0.fill).toEqual(rect.fill);
     expect(result0.stroke).toEqual(rect.stroke);
+    expect(result0.alpha).toBe(0.3);
   });
 });
