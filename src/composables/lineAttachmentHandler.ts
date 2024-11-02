@@ -1,10 +1,11 @@
-import { getRadian, IVec2 } from "okageo";
+import { clamp, getRadian, IVec2, moveRect } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { isObjectEmpty } from "../utils/commons";
+import { getRelativeRateWithinRect } from "../utils/geometry";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -121,4 +122,12 @@ export function getAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: 
     x: bounds.x + bounds.width * anchor.x,
     y: bounds.y + bounds.height * anchor.y,
   };
+}
+
+export function getClosestAnchorAtCenter(shapeComposite: ShapeComposite, shape: Shape, targetCenter: IVec2): IVec2 {
+  const bounds = shapeComposite.getWrapperRect(shape);
+  const anchor = shape.attachment?.anchor ?? { x: 0.5, y: 0.5 };
+  const centeredBounds = moveRect(bounds, { x: bounds.width * (anchor.x - 0.5), y: bounds.height * (anchor.y - 0.5) });
+  const rate = getRelativeRateWithinRect(centeredBounds, targetCenter);
+  return { x: 1 - clamp(0, 1, rate.x), y: 1 - clamp(0, 1, rate.y) };
 }

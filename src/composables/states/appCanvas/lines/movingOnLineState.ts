@@ -4,13 +4,14 @@ import { fillArray, mapReduce, patchPipe, pickMinItem, splitList, toList, toMap 
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
-import { add, getDistanceSq, isSame, IVec2, lerpPoint, sub } from "okageo";
-import { getAttachmentAnchorPoint } from "../../../lineAttachmentHandler";
+import { add, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, sub } from "okageo";
+import { getAttachmentAnchorPoint, getClosestAnchorAtCenter } from "../../../lineAttachmentHandler";
 import { Shape, ShapeAttachment } from "../../../../models";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { ShapeComposite } from "../../../shapeComposite";
 
 type Option = {
   lineId: string;
@@ -21,11 +22,16 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
+  let shapeCompositeAtStartEditAnchor: ShapeComposite | undefined;
 
   return {
     getLabel: () => "MovingOnLine",
     onStart: (ctx) => {
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.EVENLY_SPACED]);
+      ctx.setCommandExams([
+        COMMAND_EXAM_SRC.DISABLE_SNAP,
+        COMMAND_EXAM_SRC.EVENLY_SPACED,
+        COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR,
+      ]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -56,10 +62,45 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           const shapeMap = shapeComposite.shapeMap;
 
           const indexShape = shapeMap[option.shapeId];
-          const indexAnchorP = getAttachmentAnchorPoint(shapeComposite, indexShape);
+          const latestIndexAttachment = shapeComposite.mergedShapeMap[indexShape.id].attachment;
+          const indexAnchorP = getAttachmentAnchorPoint(
+            shapeComposite,
+            latestIndexAttachment ? { ...indexShape, attachment: latestIndexAttachment } : indexShape,
+          );
 
           const diff = sub(event.data.current, event.data.start);
           const movedIndexAnchorP = add(indexAnchorP, diff);
+
+          if (event.data.alt) {
+            shapeCompositeAtStartEditAnchor ??= shapeComposite;
+            const indexShapeAtStartEditAnchor = shapeCompositeAtStartEditAnchor.mergedShapeMap[indexShape.id];
+            if (shapeCompositeAtStartEditAnchor.attached(indexShapeAtStartEditAnchor)) {
+              const nextAnchor = getClosestAnchorAtCenter(
+                shapeCompositeAtStartEditAnchor,
+                indexShapeAtStartEditAnchor,
+                add(diff, getRectCenter(shapeComposite.getWrapperRect(indexShape))),
+              );
+              const patch = patchPipe(
+                [
+                  (src) => {
+                    return mapReduce(src, (s) => {
+                      const latestShape = shapeCompositeAtStartEditAnchor!.mergedShapeMap[s.id];
+                      return latestShape.attachment
+                        ? { attachment: { ...latestShape.attachment, anchor: nextAnchor } }
+                        : {};
+                    });
+                  },
+                  (_, currentPatch) => {
+                    return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
+                  },
+                ],
+                mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeMap[id]),
+              );
+              ctx.setTmpShapeMap(patch.patch);
+              return;
+            }
+          }
+          shapeCompositeAtStartEditAnchor = undefined;
 
           const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, 40 * ctx.getScale());
           if (!closestInfo) {
@@ -108,7 +149,10 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                     anchor: { x: 0.5, y: 0.5 },
                     rotationType: "relative",
                     rotation: 0,
-                    ...s.attachment,
+                    // Inherit both source and temporary attachment to preserve attachment state as much as possible.
+                    // => Attachment can be deleted in temporary data so "mergedShapeMap" doesn't work for this purpose.
+                    ...shapeComposite.shapeMap[s.id].attachment,
+                    ...shapeComposite.tmpShapeMap[s.id]?.attachment,
                     id: line.id,
                     to: info[0],
                   };

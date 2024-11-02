@@ -1,9 +1,15 @@
 import { describe, test, expect } from "vitest";
-import { getAttachmentAnchorPoint, getLineAttachmentPatch, patchByMoveToAttachedPoint } from "./lineAttachmentHandler";
+import {
+  getAttachmentAnchorPoint,
+  getClosestAnchorAtCenter,
+  getLineAttachmentPatch,
+  patchByMoveToAttachedPoint,
+} from "./lineAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { LineShape } from "../shapes/line";
 import { RectangleShape } from "../shapes/rectangle";
+import { Shape } from "../models";
 
 describe("getLineAttachmentPatch", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
@@ -112,5 +118,35 @@ describe("getAttachmentAnchorPoint", () => {
       getStruct: getCommonStruct,
     });
     expect(getAttachmentAnchorPoint(shapeComposite, shape)).toEqualPoint({ x: 30, y: 60 });
+  });
+});
+
+describe("getClosestAnchorAtCenter", () => {
+  const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 200 });
+  test("should return closest anchor candidate to the point", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [shape],
+      getStruct: getCommonStruct,
+    });
+    expect(getClosestAnchorAtCenter(shapeComposite, shape, { x: 50, y: 50 })).toEqualPoint({ x: 0.5, y: 0.75 });
+  });
+
+  test("should slide the next anchor based on current one", () => {
+    const shape1 = {
+      ...shape,
+      attachment: {
+        id: "a",
+        to: { x: 0, y: 0 },
+        anchor: { x: 1, y: 1 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    } as Shape;
+    const shapeComposite = newShapeComposite({
+      shapes: [shape1],
+      getStruct: getCommonStruct,
+    });
+    expect(getClosestAnchorAtCenter(shapeComposite, shape1, { x: 50, y: 50 })).toEqualPoint({ x: 1, y: 1 });
+    expect(getClosestAnchorAtCenter(shapeComposite, shape1, { x: 80, y: 150 })).toEqualPoint({ x: 0.7, y: 0.75 });
   });
 });
