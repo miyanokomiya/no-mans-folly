@@ -6,28 +6,29 @@ import { LineShape } from "../shapes/line";
 import { RectangleShape } from "../shapes/rectangle";
 
 describe("getLineAttachmentPatch", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
+  const shapeA = createShape(getCommonStruct, "rectangle", {
+    id: "a",
+    attachment: {
+      id: line.id,
+      to: { x: 0.2, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "absolute",
+      rotation: Math.PI / 2,
+    },
+  });
+  const shapeB = createShape(getCommonStruct, "rectangle", {
+    id: "b",
+    attachment: {
+      id: line.id,
+      to: { x: 0.2, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "relative",
+      rotation: Math.PI / 2,
+    },
+  });
+
   test("should return shape patch to move shapes to the attached points", () => {
-    const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
-    const shapeA = createShape(getCommonStruct, "rectangle", {
-      id: "a",
-      attachment: {
-        id: line.id,
-        to: { x: 0.2, y: 0 },
-        anchor: { x: 0.5, y: 0.5 },
-        rotationType: "absolute",
-        rotation: Math.PI / 2,
-      },
-    });
-    const shapeB = createShape(getCommonStruct, "rectangle", {
-      id: "b",
-      attachment: {
-        id: line.id,
-        to: { x: 0.2, y: 0 },
-        anchor: { x: 0.5, y: 0.5 },
-        rotationType: "relative",
-        rotation: Math.PI / 2,
-      },
-    });
     const shapeComposite = newShapeComposite({
       shapes: [line, shapeA, shapeB],
       getStruct: getCommonStruct,
@@ -51,6 +52,21 @@ describe("getLineAttachmentPatch", () => {
     expect(result1).not.toHaveProperty(shapeA.id);
     expect(result1[shapeB.id].p).toEqualPoint({ x: -80, y: -50 });
     expect(result1[shapeB.id].rotation).toBeCloseTo(Math.PI / 2);
+  });
+
+  test("should clear attachment when attached line is missing", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [shapeA, shapeB],
+      getStruct: getCommonStruct,
+    });
+
+    const result1 = getLineAttachmentPatch(shapeComposite, {
+      update: {
+        [shapeB.id]: { width: 200 } as Partial<RectangleShape>,
+      },
+    });
+    expect(result1[shapeB.id]).toHaveProperty("attachment");
+    expect(result1[shapeB.id].attachment).toBe(undefined);
   });
 });
 

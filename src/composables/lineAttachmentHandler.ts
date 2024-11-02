@@ -26,13 +26,14 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
     const attachedMap = new Map<string, Set<string>>();
     shapeList.forEach((s) => {
       if (!s.attachment) return;
-      if (!targetLineIds.has(s.attachment.id)) {
-        if (!updatedMap[s.id]) return; // neither the shape nor the line changes
-
-        targetLineIds.add(s.attachment.id);
-      }
 
       const lineId = s.attachment.id;
+      if (!targetLineIds.has(lineId)) {
+        if (!updatedMap[s.id]) return; // neither the shape nor the line changes
+
+        targetLineIds.add(lineId);
+      }
+
       const idSet = attachedMap.get(lineId);
       if (idSet) {
         idSet.add(s.id);
@@ -45,7 +46,15 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       const attachedIdSet = attachedMap.get(lineId);
       if (!attachedIdSet || attachedIdSet.size === 0) return;
 
-      const nextLine = { ...shapeMap[lineId], ...updatedMap[lineId] } as LineShape;
+      const line = shapeMap[lineId];
+      if (!line || !isLineShape(line)) {
+        attachedIdSet.forEach((attachedId) => {
+          ret[attachedId] = { attachment: undefined };
+        });
+        return;
+      }
+
+      const nextLine = { ...line, ...updatedMap[lineId] } as LineShape;
       const nextLineLerpFn = getLineEdgeInfo(nextLine).lerpFn;
       attachedIdSet.forEach((attachedId) => {
         const nextAttached = { ...shapeMap[attachedId], ...updatedMap[attachedId] };
