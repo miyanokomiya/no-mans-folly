@@ -150,12 +150,12 @@ export function pickMinItem<T>(src: T[], getValue: (item: T) => number): T | und
 
 export function splitList<T>(
   list: T[],
-  checkfn: (item: T) => boolean = (item) => !!item,
+  checkfn: (item: T, i: number) => boolean = (item) => !!item,
 ): [trueList: T[], falseList: T[]] {
   const t: T[] = [];
   const f: T[] = [];
-  list.forEach((item) => {
-    if (checkfn(item)) {
+  list.forEach((item, i) => {
+    if (checkfn(item, i)) {
       t.push(item);
     } else {
       f.push(item);

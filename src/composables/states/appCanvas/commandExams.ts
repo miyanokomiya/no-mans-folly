@@ -6,6 +6,7 @@ export const COMMAND_EXAM_SRC = {
   DISABLE_SNAP: { command: getCtrlOrMetaStr(), title: "Disable snapping" },
   DISABLE_LINE_VERTEX_SNAP: { command: getCtrlOrMetaStr(), title: "Disable snapping" },
   BEZIER_SYMMETRICALLY: { command: "Shift", title: "Symmetrically" },
+  EVENLY_SPACED: { command: "Shift", title: "Evenly spaced" },
 
   LABEL_ALIGN: { command: "Shift", title: "Adjust label align" },
   LABEL_ALIGN_ACTIVATE: { command: "Shift + Drag", title: "Adjust label align" },

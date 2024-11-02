@@ -87,8 +87,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         excludeIdSet: new Set(targetIds),
       });
     },
-    onResume() {
+    onResume(ctx) {
       beforeMove = true;
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
