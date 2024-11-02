@@ -4,14 +4,14 @@ import { fillArray, mapReduce, patchPipe, pickMinItem, splitList, toList, toMap 
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
-import { add, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, sub } from "okageo";
-import { getAttachmentAnchorPoint, getClosestAnchorAtCenter } from "../../../lineAttachmentHandler";
+import { add, clamp, getDistanceSq, isSame, IVec2, lerpPoint, sub } from "okageo";
+import { getAttachmentAnchorPoint } from "../../../lineAttachmentHandler";
 import { Shape, ShapeAttachment } from "../../../../models";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { ShapeComposite } from "../../../shapeComposite";
+import { newMovingAnchorOnLineState } from "./movingAnchorOnLineState";
 
 type Option = {
   lineId: string;
@@ -22,7 +22,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
-  let shapeCompositeAtStartEditAnchor: ShapeComposite | undefined;
 
   return {
     getLabel: () => "MovingOnLine",
@@ -72,35 +71,11 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           const movedIndexAnchorP = add(indexAnchorP, diff);
 
           if (event.data.alt) {
-            shapeCompositeAtStartEditAnchor ??= shapeComposite;
-            const indexShapeAtStartEditAnchor = shapeCompositeAtStartEditAnchor.mergedShapeMap[indexShape.id];
-            if (shapeCompositeAtStartEditAnchor.attached(indexShapeAtStartEditAnchor)) {
-              const nextAnchor = getClosestAnchorAtCenter(
-                shapeCompositeAtStartEditAnchor,
-                indexShapeAtStartEditAnchor,
-                add(diff, getRectCenter(shapeComposite.getWrapperRect(indexShape))),
-              );
-              const patch = patchPipe(
-                [
-                  (src) => {
-                    return mapReduce(src, (s) => {
-                      const latestShape = shapeCompositeAtStartEditAnchor!.mergedShapeMap[s.id];
-                      return latestShape.attachment
-                        ? { attachment: { ...latestShape.attachment, anchor: nextAnchor } }
-                        : {};
-                    });
-                  },
-                  (_, currentPatch) => {
-                    return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
-                  },
-                ],
-                mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeMap[id]),
-              );
-              ctx.setTmpShapeMap(patch.patch);
-              return;
+            const indexShapeAtStartEditAnchor = shapeComposite.mergedShapeMap[indexShape.id];
+            if (shapeComposite.attached(indexShapeAtStartEditAnchor)) {
+              return { type: "stack-resume", getState: () => newMovingAnchorOnLineState(option) };
             }
           }
-          shapeCompositeAtStartEditAnchor = undefined;
 
           const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, 40 * ctx.getScale());
           if (!closestInfo) {
