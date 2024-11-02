@@ -61,7 +61,11 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
           locked: targetShape.locked,
         });
 
-        if (!shapeComposite.hasParent(targetShape) && canAttachSmartBranch(ctx.getShapeStruct, targetShape)) {
+        if (
+          !shapeComposite.hasParent(targetShape) &&
+          !shapeComposite.attached(targetShape) &&
+          canAttachSmartBranch(ctx.getShapeStruct, targetShape)
+        ) {
           smartBranchHandler = newSmartBranchHandler({
             getShapeComposite: ctx.getShapeComposite,
             targetId: targetShape.id,

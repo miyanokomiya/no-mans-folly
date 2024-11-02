@@ -22,6 +22,7 @@ import { TreeNodeShape } from "../shapes/tree/treeNode";
 import { getNextTreeLayout } from "./shapeHandlers/treeHandler";
 import { patchPipe, toList, toMap } from "../utils/commons";
 import { generateKeyBetween } from "../utils/findex";
+import { Shape } from "../models";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -411,6 +412,35 @@ describe("newShapeComposite", () => {
       expect(target.hasParent(group0)).toBe(false);
       expect(target.hasParent(child0)).toBe(true);
       expect(target.hasParent(child1)).toBe(false);
+    });
+  });
+
+  describe("attached", () => {
+    test("should return true when a shape has valid attachment", () => {
+      const shape0 = createShape(getCommonStruct, "rectangle", {
+        id: "shape",
+        attachment: {
+          id: "line",
+          to: { x: 0, y: 0 },
+          anchor: { x: 0, y: 0 },
+          rotationType: "relative",
+          rotation: 0,
+        },
+      });
+      const shape1 = { ...shape0, attachment: { ...shape0.attachment, id: "unknown" } } as Shape;
+      const shape2 = { ...shape0, attachment: undefined } as Shape;
+      const line = createShape(getCommonStruct, "line", { id: "line" });
+
+      const shapes = [shape0, shape1, shape2, line];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      // no scope => should find one among root ones
+      expect(target.attached(shape0)).toBe(true);
+      expect(target.attached(shape1)).toBe(false);
+      expect(target.attached(shape2)).toBe(false);
     });
   });
 

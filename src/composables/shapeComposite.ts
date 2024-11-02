@@ -229,6 +229,10 @@ export function newShapeComposite(option: Option) {
     return !!shapeMap[shape.parentId ?? ""];
   }
 
+  function attached(shape: Shape): boolean {
+    return !!shapeMap[shape.attachment?.id ?? ""];
+  }
+
   function setDocCompositeCache(id: string, val: DocCompositionInfo, src: DocOutput) {
     docCompositeCacheMap[id] = [val, src];
   }
@@ -292,6 +296,7 @@ export function newShapeComposite(option: Option) {
     getMergedShapesInSelectionScope,
     getShapeActualPosition,
     hasParent,
+    attached,
 
     setDocCompositeCache,
     getDocCompositeCache,
