@@ -356,6 +356,63 @@ describe("remapShapeIds", () => {
     expect(result.shapes[1].id).toBe("new_1");
     expect(result.shapes[1].parentId).toBe("new_0");
   });
+
+  describe("attachment", () => {
+    const a = createShape(getCommonStruct, "rectangle", {
+      id: "a",
+      attachment: {
+        id: "line",
+        to: { x: 0, y: 0 },
+        anchor: { x: 0, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const b = createShape(getCommonStruct, "rectangle", {
+      id: "b",
+      attachment: {
+        id: "line",
+        to: { x: 0, y: 0 },
+        anchor: { x: 0, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const line = createShape(getCommonStruct, "line", {
+      id: "line",
+    });
+
+    test("should remap attachment", () => {
+      let count = -1;
+      const result = remapShapeIds(getCommonStruct, [a, b, line], () => {
+        count++;
+        return `new_${count}`;
+      });
+      expect(result.shapes[0].attachment?.id).toBe("new_2");
+      expect(result.shapes[1].attachment?.id).toBe("new_2");
+    });
+
+    test("should remove attachment that aren't found in the new ids when removeNotFound is true", () => {
+      let count = -1;
+      const result0 = remapShapeIds(
+        getCommonStruct,
+        [a, b],
+        () => {
+          count++;
+          return `new_${count}`;
+        },
+        true,
+      );
+      expect(result0.shapes[0].attachment).toBe(undefined);
+      expect(result0.shapes[1].attachment).toBe(undefined);
+
+      const result1 = remapShapeIds(getCommonStruct, [a, b], () => {
+        count++;
+        return `new_${count}`;
+      });
+      expect(result1.shapes[0].attachment?.id).toBe("line");
+    });
+  });
 });
 
 describe("refreshShapeRelations", () => {
@@ -370,6 +427,28 @@ describe("refreshShapeRelations", () => {
     expect(result0.text).toHaveProperty("lineAttached");
 
     const result1 = refreshShapeRelations(getCommonStruct, [text], new Set(["line"]));
+    expect(result1).toEqual({});
+  });
+
+  test("should clear attachment when target shapes aren't available", () => {
+    const a = createShape(getCommonStruct, "rectangle", {
+      id: "a",
+      attachment: {
+        id: "line",
+        to: { x: 0, y: 0 },
+        anchor: { x: 0, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+
+    const result0 = refreshShapeRelations(getCommonStruct, [a], new Set([]));
+    expect(result0).toEqual({
+      a: { attachment: undefined },
+    });
+    expect(result0.a).toHaveProperty("attachment");
+
+    const result1 = refreshShapeRelations(getCommonStruct, [a], new Set(["line"]));
     expect(result1).toEqual({});
   });
 });

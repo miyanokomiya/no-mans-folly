@@ -15,6 +15,7 @@ import { getPaddingRect } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
 import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
 import { generateKeyBetween } from "../utils/findex";
+import { isObjectEmpty } from "../utils/commons";
 
 export type GetShapeStruct = _GetShapeStruct;
 
@@ -280,9 +281,16 @@ export function remapShapeIds(
     let patch: Partial<Shape> = {};
     if (s.parentId) {
       if (oldToNewMap[s.parentId]) {
-        patch = { parentId: oldToNewMap[s.parentId] };
+        patch.parentId = oldToNewMap[s.parentId];
       } else if (removeNotFound) {
-        patch = { parentId: undefined };
+        patch.parentId = undefined;
+      }
+    }
+    if (s.attachment?.id) {
+      if (oldToNewMap[s.attachment.id]) {
+        patch.attachment = { ...s.attachment, id: oldToNewMap[s.attachment.id] };
+      } else if (removeNotFound) {
+        patch.attachment = undefined;
       }
     }
 
@@ -305,16 +313,21 @@ export function refreshShapeRelations(
   const ret: { [id: string]: Partial<Shape> } = {};
 
   shapes.forEach((s) => {
+    let patch: Partial<Shape> = {};
     if (s.parentId && !availableIdSet.has(s.parentId)) {
-      ret[s.id] = { parentId: undefined };
+      patch.parentId = undefined;
+    }
+    if (s.attachment && !availableIdSet.has(s.attachment.id)) {
+      patch.attachment = undefined;
     }
 
     const struct = getStruct(s.type);
-    if (!struct.refreshRelation) return;
+    if (struct.refreshRelation) {
+      patch = { ...patch, ...struct.refreshRelation(s, availableIdSet) };
+    }
 
-    const patch = struct.refreshRelation(s, availableIdSet);
-    if (patch) {
-      ret[s.id] = ret[s.id] ? { ...ret[s.id], ...patch } : patch;
+    if (!isObjectEmpty(patch)) {
+      ret[s.id] = patch;
     }
   });
 
