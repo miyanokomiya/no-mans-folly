@@ -3,6 +3,8 @@ import { BlockGroupField } from "../atoms/BlockGroupField";
 import { InlineField } from "../atoms/InlineField";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { Shape } from "../../models";
+import { SliderInput } from "../atoms/inputs/SliderInput";
+import { BlockField } from "../atoms/BlockField";
 
 interface Props {
   targetShape: Shape;
@@ -20,6 +22,21 @@ export const AttachmentInspector: React.FC<Props> = ({ targetShape, updateTarget
     [attachment, updateTargetShape],
   );
 
+  const handleAnchorXChange = useCallback(
+    (val: number) => {
+      if (!attachment) return;
+      updateTargetShape({ attachment: { ...attachment, anchor: { x: val, y: attachment.anchor.y } } });
+    },
+    [attachment, updateTargetShape],
+  );
+  const handleAnchorYChange = useCallback(
+    (val: number) => {
+      if (!attachment) return;
+      updateTargetShape({ attachment: { ...attachment, anchor: { x: attachment.anchor.x, y: val } } });
+    },
+    [attachment, updateTargetShape],
+  );
+
   if (!attachment) return;
 
   return (
@@ -27,6 +44,28 @@ export const AttachmentInspector: React.FC<Props> = ({ targetShape, updateTarget
       <InlineField label="Relative rotation">
         <ToggleInput value={attachment.rotationType === "relative"} onChange={handleRelativeRotationChange} />
       </InlineField>
+      <BlockField label="Anchor" fullBody>
+        <InlineField label="Left" fullBody>
+          <SliderInput
+            value={attachment.anchor.x}
+            onChanged={handleAnchorXChange}
+            min={0}
+            max={1}
+            step={0.01}
+            showValue
+          />
+        </InlineField>
+        <InlineField label="Top" fullBody>
+          <SliderInput
+            value={attachment.anchor.y}
+            onChanged={handleAnchorYChange}
+            min={0}
+            max={1}
+            step={0.01}
+            showValue
+          />
+        </InlineField>
+      </BlockField>
     </BlockGroupField>
   );
 };
