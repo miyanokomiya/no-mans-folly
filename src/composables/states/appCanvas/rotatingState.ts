@@ -13,6 +13,7 @@ import { mergeMap } from "../../../utils/commons";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { handleCommonWheel } from "../commons";
+import { normalizeRadian } from "../../../utils/geometry";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -63,7 +64,12 @@ export function newRotatingState(option: Option): AppCanvasState {
           let patchMap = targets.reduce<{ [id: string]: Partial<Shape> }>((m, s) => {
             const shape = shapeMap[s.id];
             if (shape) {
-              m[s.id] = shapeComposite.transformShape(shape, resizingAffine);
+              const patch = shapeComposite.transformShape(shape, resizingAffine);
+              m[s.id] = patch;
+              if (patch.rotation !== undefined && shape.attachment) {
+                const v = patch.rotation - shape.rotation;
+                m[s.id].attachment = { ...shape.attachment, rotation: normalizeRadian(shape.attachment.rotation + v) };
+              }
             }
             return m;
           }, {});
