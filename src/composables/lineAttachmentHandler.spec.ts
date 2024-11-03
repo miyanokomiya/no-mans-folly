@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import {
   getAttachmentAnchorPoint,
   getClosestAnchorAtCenter,
+  getEvenlySpacedLineAttachmentBetweenFixedOnes,
   getLineAttachmentPatch,
   patchByMoveToAttachedPoint,
 } from "./lineAttachmentHandler";
@@ -158,5 +159,111 @@ describe("getClosestAnchorAtCenter", () => {
     });
     expect(getClosestAnchorAtCenter(shapeComposite, shape1, { x: 50, y: 50 })).toEqualPoint({ x: 1, y: 1 });
     expect(getClosestAnchorAtCenter(shapeComposite, shape1, { x: 80, y: 150 })).toEqualPoint({ x: 0.7, y: 0.75 });
+  });
+});
+
+describe("getEvenlySpacedLineAttachmentBetweenFixedOnes", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
+  const a = createShape(getCommonStruct, "rectangle", {
+    id: "a",
+    attachment: {
+      id: line.id,
+      to: { x: 0.2, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "relative",
+      rotation: 0,
+    },
+  });
+  const b = {
+    ...a,
+    id: "b",
+    attachment: { ...a.attachment, to: { x: 0.3, y: 0 } },
+  } as Shape;
+  const c = {
+    ...a,
+    id: "c",
+    attachment: { ...a.attachment, to: { x: 0.4, y: 0 } },
+  } as Shape;
+  const d = {
+    ...a,
+    id: "d",
+    attachment: { ...a.attachment, to: { x: 0.8, y: 0 } },
+  } as Shape;
+  const e = {
+    ...a,
+    id: "e",
+    attachment: { ...a.attachment, to: { x: 0.9, y: 0 } },
+  } as Shape;
+
+  test("should slide with perserving distance", () => {
+    const result0 = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      a.id,
+      0.5,
+    );
+    expect(result0.get(b.id)).toEqual([{ x: 0.6, y: 0 }]);
+    expect(result0.get(c.id)).toEqual([{ x: 0.7, y: 0 }]);
+
+    const result1 = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      a.id,
+      0.75,
+    );
+    expect(result1.get(b.id)).toEqual([{ x: 0.85, y: 0 }]);
+    expect(result1.get(c.id)).toEqual([{ x: 0.95, y: 0 }]);
+
+    const result2 = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      a.id,
+      0.85,
+    );
+    expect(result2.get(b.id)).toEqual([{ x: 0.95, y: 0 }]);
+    expect(result2.get(c.id), "should be within 0-1").toEqual([{ x: 1, y: 0 }]);
+  });
+
+  test("should slide with perserving distance: index shape is at middle", () => {
+    const result3 = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      b.id,
+      0.5,
+    );
+    expect(result3.get(a.id)).toEqual([{ x: 0.4, y: 0 }]);
+    expect(result3.get(c.id)?.[0]).toEqualPoint({ x: 0.6, y: 0 });
+  });
+
+  test("should slide with perserving distance: index shape is at the end", () => {
+    const result4 = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      c.id,
+      0.5,
+    );
+    expect(result4.get(a.id)).toEqual([{ x: 0.3, y: 0 }]);
+    expect(result4.get(b.id)?.[0]).toEqualPoint({ x: 0.4, y: 0 });
+  });
+
+  test("should evenly align unattached ones", () => {
+    const ua = { ...a, id: "ua", attachment: undefined };
+    const ub = { ...a, id: "ub", attachment: undefined };
+    const result0 = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+      { line, a, b, c, d, e, ua, ub },
+      line.id,
+      [a.id, b.id, ua.id, ub.id],
+      a.id,
+      0.5,
+    );
+    expect(result0.size).toBe(3);
+    expect(result0.get(b.id)?.[0]).toEqualPoint({ x: 0.6, y: 0 });
+    expect(result0.get(ua.id)?.[0]).toEqualPoint({ x: 0.66666666, y: 0 });
+    expect(result0.get(ub.id)?.[0]).toEqualPoint({ x: 0.73333333, y: 0 });
   });
 });

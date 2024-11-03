@@ -1,10 +1,10 @@
-import { clamp, getRadian, IVec2, moveRect } from "okageo";
+import { clamp, getRadian, IVec2, lerpPoint, moveRect } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { isObjectEmpty } from "../utils/commons";
+import { isObjectEmpty, splitList, toList } from "../utils/commons";
 import { getRelativeRateWithinRect } from "../utils/geometry";
 
 export interface LineAttachmentHandler {
@@ -130,4 +130,61 @@ export function getClosestAnchorAtCenter(shapeComposite: ShapeComposite, shape: 
   const centeredBounds = moveRect(bounds, { x: bounds.width * (anchor.x - 0.5), y: bounds.height * (anchor.y - 0.5) });
   const rate = getRelativeRateWithinRect(centeredBounds, targetCenter);
   return { x: 1 - clamp(0, 1, rate.x), y: 1 - clamp(0, 1, rate.y) };
+}
+
+export function getEvenlySpacedLineAttachmentBetweenFixedOnes(
+  shapeMap: { [id: string]: Shape },
+  lineId: string,
+  selectedShapeIds: string[],
+  indexShapeId: string,
+  attachedRate: number,
+): Map<string, [to: IVec2]> {
+  const line = shapeMap[lineId] as LineShape;
+  const movingTargetIdSet = new Set(selectedShapeIds);
+  const allTargetIdSet = new Set(movingTargetIdSet);
+  const fixedTargetIdSet = new Set<string>();
+  toList(shapeMap).forEach((s) => {
+    if (s.attachment?.id === line.id && !movingTargetIdSet.has(s.id)) {
+      allTargetIdSet.add(s.id);
+      fixedTargetIdSet.add(s.id);
+    }
+  });
+
+  const indexShape = shapeMap[indexShapeId];
+  const selectedShapes = selectedShapeIds.map((id) => shapeMap[id]);
+  const [attachedList, otherList] = splitList(
+    selectedShapes.filter((s) => s.id !== indexShapeId),
+    (s) => s.attachment?.id === line.id,
+  );
+
+  const attachInfoMap = new Map<string, [to: IVec2]>();
+
+  attachedList.sort((a, b) => a.attachment!.to.x - b.attachment!.to.x);
+  let lastRate = attachedRate;
+  attachedList.forEach((s) => {
+    const v = s.attachment!.to.x - indexShape.attachment!.to.x;
+    const rate = clamp(0, 1, attachedRate + v);
+    attachInfoMap.set(s.id, [{ x: rate, y: 0 }]);
+    lastRate = rate;
+  });
+
+  if (otherList.length > 0) {
+    let nextRate = 1;
+    fixedTargetIdSet.forEach((id) => {
+      const s = shapeMap[id];
+      const rate = s.attachment!.to.x;
+      if (lastRate < rate) {
+        nextRate = Math.min(rate, nextRate);
+      }
+    });
+
+    const toLerpFn = (t: number) => lerpPoint({ x: lastRate, y: 0 }, { x: nextRate, y: 0 }, t);
+    const step = 1 / (otherList.length + (fixedTargetIdSet.size > 0 ? 1 : 0));
+    otherList.forEach((s, i) => {
+      const to = toLerpFn(step * (i + 1));
+      attachInfoMap.set(s.id, [to]);
+    });
+  }
+
+  return attachInfoMap;
 }
