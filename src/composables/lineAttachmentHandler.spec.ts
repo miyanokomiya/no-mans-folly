@@ -342,6 +342,38 @@ describe("getEvenlySpacedLineAttachment", () => {
     expect(result0.attachInfoMap.get(e.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
   });
 
+  test("should evenly align between other ones: to the last", () => {
+    const result0 = getEvenlySpacedLineAttachment(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      c.id,
+      { x: 100, y: 0 },
+      getLineEdgeInfo(line),
+    );
+    expect(result0.attachInfoMap.size).toBe(5);
+    expect(result0.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 0.5, y: 0 });
+    expect(result0.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 0.75, y: 0 });
+    expect(result0.attachInfoMap.get(c.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
+    expect(result0.attachInfoMap.get(d.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(result0.attachInfoMap.get(e.id)?.[0]).toEqualPoint({ x: 0.25, y: 0 });
+
+    const result1 = getEvenlySpacedLineAttachment(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      a.id,
+      { x: 100, y: 0 },
+      getLineEdgeInfo(line),
+    );
+    expect(result1.attachInfoMap.size).toBe(5);
+    expect(result1.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 0.5, y: 0 });
+    expect(result1.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 0.75, y: 0 });
+    expect(result1.attachInfoMap.get(c.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
+    expect(result1.attachInfoMap.get(d.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(result1.attachInfoMap.get(e.id)?.[0]).toEqualPoint({ x: 0.25, y: 0 });
+  });
+
   test("should evenly align between other ones: 2 items", () => {
     const result0 = getEvenlySpacedLineAttachment(
       { line, a, b },

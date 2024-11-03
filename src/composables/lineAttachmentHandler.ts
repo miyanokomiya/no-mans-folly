@@ -4,7 +4,7 @@ import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { fillArray, isObjectEmpty, pickMinItem, splitList, toList } from "../utils/commons";
+import { fillArray, isObjectEmpty, pickMinItem, slideSubArray, splitList, toList } from "../utils/commons";
 import { getRelativeRateWithinRect } from "../utils/geometry";
 
 export interface LineAttachmentHandler {
@@ -203,11 +203,9 @@ export function getEvenlySpacedLineAttachment(
   const line = shapeMap[lineId] as LineShape;
   const movingTargetIdSet = new Set(selectedShapeIds);
   const allTargetIdSet = new Set(movingTargetIdSet);
-  const fixedTargetIdSet = new Set<string>();
   toList(shapeMap).forEach((s) => {
     if (s.attachment?.id === line.id && !movingTargetIdSet.has(s.id)) {
       allTargetIdSet.add(s.id);
-      fixedTargetIdSet.add(s.id);
     }
   });
 
@@ -221,48 +219,32 @@ export function getEvenlySpacedLineAttachment(
       return [p, t, i, dd];
     },
   );
-  const movingIndex = selectedShapeIds.findIndex((id) => id === indexShapeId);
-  const closestCandidates = points.filter((_, i) => movingIndex <= i && i <= points.length - movingTargetIdSet.size);
+
+  // Push newly attached ones to the tail.
+  const sortedAllTargets = Array.from(allTargetIdSet)
+    .map((id) => shapeMap[id])
+    .sort((a, b) => (a.attachment?.to.x ?? 1) - (b.attachment?.to.x ?? 1));
+  const [sortedMovingTargets] = splitList(sortedAllTargets, ({ id }) => movingTargetIdSet.has(id));
+
+  const baseIndexWithinMovingShapes = sortedMovingTargets.findIndex(({ id }) => id === indexShapeId);
+
+  const closestCandidates = points.filter(
+    (_, i) => baseIndexWithinMovingShapes <= i && i <= points.length - baseIndexWithinMovingShapes + 1,
+  );
   const closestSplitInfo = pickMinItem(closestCandidates, (v) => v[3])!;
 
-  const attachInfoMap = new Map<string, [to: IVec2]>([[indexShapeId, [{ x: closestSplitInfo[1], y: 0 }]]]);
-  const indexRate = shapeMap[indexShapeId].attachment?.to.x ?? 0;
-  const remainPoints = new Set(points);
-  remainPoints.delete(closestSplitInfo);
-
-  {
-    const [movingPrev, movingAfter] = splitList(
-      Array.from(movingTargetIdSet)
-        .filter((id) => id !== indexShapeId)
-        .map((id) => shapeMap[id])
-        .sort((a, b) => (a.attachment?.to.x ?? 1) - (b.attachment?.to.x ?? 1)),
-      (s) => (s.attachment?.to.x ?? 1) <= indexRate,
-    );
-    movingPrev.forEach((s, i) => {
-      const index = i + closestSplitInfo[2] - movingPrev.length;
-      const info = points[index];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-      remainPoints.delete(info);
-    });
-    movingAfter.forEach((s, i) => {
-      const info = points[i + closestSplitInfo[2] + 1];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-      remainPoints.delete(info);
-    });
-  }
-
-  {
-    const sorted = Array.from(fixedTargetIdSet)
-      .map((id) => shapeMap[id])
-      .sort((a, b) => a.attachment!.to.x - b.attachment!.to.x);
-    sorted.forEach((s, i) => {
-      const info = points[i];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-    });
-    Array.from(remainPoints).forEach((info, i) => {
-      attachInfoMap.set(sorted[i].id, [{ x: info[1], y: 0 }]);
-    });
-  }
+  const movingIndexList: number[] = [];
+  sortedAllTargets.forEach((s, i) => {
+    if (movingTargetIdSet.has(s.id)) {
+      movingIndexList.push(i);
+    }
+  });
+  const nextAllTargets = slideSubArray(
+    sortedAllTargets,
+    [Math.min(...movingIndexList), movingIndexList.length],
+    closestSplitInfo[2] - baseIndexWithinMovingShapes,
+  );
+  const attachInfoMap = new Map<string, [to: IVec2]>(nextAllTargets.map((s, i) => [s.id, [{ x: points[i][1], y: 0 }]]));
 
   return { attachInfoMap, attachedPoint: closestSplitInfo[0] };
 }
