@@ -25,6 +25,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
+  let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
 
   return {
     getLabel: () => "MovingOnLine",
@@ -42,6 +43,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         keepMoving = true;
         return { type: "break" };
       }
+
+      edgeInfo = getLineEdgeInfo(line);
     },
     onResume: (ctx) => {
       ctx.setCommandExams([
@@ -71,18 +74,17 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           const shapeMap = shapeComposite.shapeMap;
 
           const indexShape = shapeMap[option.shapeId];
-          const latestIndexAttachment = shapeComposite.mergedShapeMap[indexShape.id].attachment;
+          const latestShape = shapeComposite.mergedShapeMap[indexShape.id];
           const indexAnchorP = getAttachmentAnchorPoint(
             shapeComposite,
-            latestIndexAttachment ? { ...indexShape, attachment: latestIndexAttachment } : indexShape,
+            latestShape.attachment ? { ...indexShape, attachment: latestShape.attachment } : indexShape,
           );
 
           const diff = sub(event.data.current, event.data.start);
           const movedIndexAnchorP = add(indexAnchorP, diff);
 
           if (event.data.alt) {
-            const indexShapeAtStartEditAnchor = shapeComposite.mergedShapeMap[indexShape.id];
-            if (shapeComposite.attached(indexShapeAtStartEditAnchor)) {
+            if (shapeComposite.attached(latestShape)) {
               return { type: "stack-resume", getState: () => newMovingAnchorOnLineState(option) };
             }
           }
@@ -104,6 +106,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               Object.keys(selectedShapeMap),
               indexShape.id,
               movedIndexAnchorP,
+              edgeInfo,
             );
             attachInfoMap = attachInfo.attachInfoMap;
             lineAnchor = attachInfo.attachedPoint;
@@ -200,6 +203,7 @@ function getEvenlySpacedLineAttachment(
   selectedShapeIds: string[],
   indexShapeId: string,
   anchorP: IVec2,
+  edgeInfo: ReturnType<typeof getLineEdgeInfo>,
 ): {
   attachInfoMap: Map<string, [to: IVec2]>;
   attachedPoint: IVec2;
@@ -215,7 +219,6 @@ function getEvenlySpacedLineAttachment(
     }
   });
 
-  const edgeInfo = getLineEdgeInfo(line);
   const closed = isSame(line.p, line.q);
   const splitSize = closed ? allTargetIdSet.size : Math.max(1, allTargetIdSet.size - 1);
   const points = fillArray(allTargetIdSet.size, 0).map<[IVec2, rate: number, index: number, distanceSq: number]>(
