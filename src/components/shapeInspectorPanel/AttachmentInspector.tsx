@@ -14,6 +14,14 @@ interface Props {
 export const AttachmentInspector: React.FC<Props> = ({ targetShape, updateTargetShape }) => {
   const attachment = targetShape.attachment;
 
+  const handleAnchorRateChange = useCallback(
+    (val: number) => {
+      if (!attachment) return;
+      updateTargetShape({ attachment: { ...attachment, to: { x: val, y: attachment.to.y } } });
+    },
+    [attachment, updateTargetShape],
+  );
+
   const handleRelativeRotationChange = useCallback(
     (val: boolean) => {
       if (!attachment) return;
@@ -41,6 +49,9 @@ export const AttachmentInspector: React.FC<Props> = ({ targetShape, updateTarget
 
   return (
     <BlockGroupField label="Attachment" accordionKey="attachment-inspector">
+      <InlineField label="Rate" fullBody>
+        <SliderInput value={attachment.to.x} onChanged={handleAnchorRateChange} min={0} max={1} step={0.01} showValue />
+      </InlineField>
       <InlineField label="Relative rotation">
         <ToggleInput value={attachment.rotationType === "relative"} onChange={handleRelativeRotationChange} />
       </InlineField>
