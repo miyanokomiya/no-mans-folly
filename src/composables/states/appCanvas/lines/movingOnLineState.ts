@@ -12,6 +12,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newMovingAnchorOnLineState } from "./movingAnchorOnLineState";
+import { ShapeComposite } from "../../../shapeComposite";
 
 type Option = {
   lineId: string;
@@ -26,6 +27,13 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
   let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
+  let anchorP: IVec2;
+  let pointAtStart: IVec2;
+
+  function storeAnchor(shapeComposite: ShapeComposite) {
+    const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
+    anchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
+  }
 
   return {
     getLabel: () => "MovingOnLine",
@@ -45,6 +53,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
 
       edgeInfo = getLineEdgeInfo(line);
+      storeAnchor(shapeComposite);
+      pointAtStart = ctx.getCursorPoint();
     },
     onResume: (ctx) => {
       ctx.setCommandExams([
@@ -52,6 +62,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         COMMAND_EXAM_SRC.EVENLY_SPACED,
         COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR,
       ]);
+      storeAnchor(ctx.getShapeComposite());
+      pointAtStart = ctx.getCursorPoint();
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -75,13 +87,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
           const indexShape = shapeMap[option.shapeId];
           const latestShape = shapeComposite.mergedShapeMap[indexShape.id];
-          const indexAnchorP = getAttachmentAnchorPoint(
-            shapeComposite,
-            latestShape.attachment ? { ...indexShape, attachment: latestShape.attachment } : indexShape,
-          );
-
-          const diff = sub(event.data.current, event.data.start);
-          const movedIndexAnchorP = add(indexAnchorP, diff);
+          const diff = sub(event.data.current, pointAtStart);
+          const movedIndexAnchorP = add(anchorP, diff);
 
           if (event.data.alt) {
             if (shapeComposite.attached(latestShape)) {
