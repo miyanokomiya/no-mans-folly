@@ -339,6 +339,7 @@ describe("fillArray", () => {
 describe("slideSubArray", () => {
   test("should slide the sub array to the position", () => {
     const src = [0, 1, 2, 3, 4];
+    expect(target.slideSubArray(src, [0, 2], -1)).toEqual([0, 1, 2, 3, 4]);
     expect(target.slideSubArray(src, [0, 2], 0)).toEqual([0, 1, 2, 3, 4]);
     expect(target.slideSubArray(src, [0, 2], 1)).toEqual([2, 0, 1, 3, 4]);
     expect(target.slideSubArray(src, [0, 2], 2)).toEqual([2, 3, 0, 1, 4]);
@@ -346,11 +347,13 @@ describe("slideSubArray", () => {
     expect(target.slideSubArray(src, [0, 2], 4)).toEqual([2, 3, 4, 0, 1]);
     expect(target.slideSubArray(src, [0, 2], 5)).toEqual([2, 3, 4, 0, 1]);
 
+    expect(target.slideSubArray(src, [3, 2], -1)).toEqual([3, 4, 0, 1, 2]);
     expect(target.slideSubArray(src, [3, 2], 0)).toEqual([3, 4, 0, 1, 2]);
     expect(target.slideSubArray(src, [3, 2], 1)).toEqual([0, 3, 4, 1, 2]);
     expect(target.slideSubArray(src, [3, 2], 2)).toEqual([0, 1, 3, 4, 2]);
     expect(target.slideSubArray(src, [3, 2], 3)).toEqual([0, 1, 2, 3, 4]);
     expect(target.slideSubArray(src, [3, 2], 4)).toEqual([0, 1, 2, 3, 4]);
+    expect(target.slideSubArray(src, [3, 2], 5)).toEqual([0, 1, 2, 3, 4]);
 
     expect(target.slideSubArray(src, [0, 3], 1)).toEqual([3, 0, 1, 2, 4]);
     expect(target.slideSubArray(src, [0, 3], 2)).toEqual([3, 4, 0, 1, 2]);

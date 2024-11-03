@@ -219,19 +219,14 @@ export function getEvenlySpacedLineAttachment(
       return [p, t, i, dd];
     },
   );
+  const closestSplitInfo = pickMinItem(points, (v) => v[3])!;
 
   // Push newly attached ones to the tail.
   const sortedAllTargets = Array.from(allTargetIdSet)
     .map((id) => shapeMap[id])
     .sort((a, b) => (a.attachment?.to.x ?? 1) - (b.attachment?.to.x ?? 1));
-  const [sortedMovingTargets] = splitList(sortedAllTargets, ({ id }) => movingTargetIdSet.has(id));
-
+  const sortedMovingTargets = sortedAllTargets.filter(({ id }) => movingTargetIdSet.has(id));
   const baseIndexWithinMovingShapes = sortedMovingTargets.findIndex(({ id }) => id === indexShapeId);
-
-  const closestCandidates = points.filter(
-    (_, i) => baseIndexWithinMovingShapes <= i && i <= points.length - baseIndexWithinMovingShapes + 1,
-  );
-  const closestSplitInfo = pickMinItem(closestCandidates, (v) => v[3])!;
 
   const movingIndexList: number[] = [];
   sortedAllTargets.forEach((s, i) => {

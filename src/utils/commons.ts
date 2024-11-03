@@ -1,3 +1,5 @@
+import { clamp } from "okageo";
+
 export function toKeyMap<T extends object>(list: T[], key: string | number): { [key: string]: T } {
   return list.reduce<{ [key: string]: T }>((p, c: any) => {
     const k = c[key];
@@ -214,6 +216,6 @@ export function slideSubArray<T>(src: T[], range: [from: number, count: number],
     }
   });
 
-  others.splice(to, 0, ...sub);
+  others.splice(clamp(0, src.length, to), 0, ...sub);
   return others;
 }
