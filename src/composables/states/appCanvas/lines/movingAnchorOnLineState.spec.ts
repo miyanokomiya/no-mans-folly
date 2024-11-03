@@ -28,6 +28,7 @@ function getMockCtx() {
       generateUuid: () => "id",
       getStyleScheme: createStyleScheme,
     }),
+    getCursorPoint: () => ({ x: 50, y: 0 }),
     setTmpShapeMap: vi.fn(),
     patchShapes: vi.fn(),
     getShapeComposite: () =>
