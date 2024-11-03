@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { mapReduce, patchPipe } from "../../../../utils/commons";
+import { mapFilter, mapReduce, patchPipe } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getRelativeRateWithinRect, TAU } from "../../../../utils/geometry";
 import { IVec2, sub } from "okageo";
@@ -85,6 +85,10 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
                     ? { ...patchAtStart[s.id], attachment: { ...latestShape.attachment, anchor: adjustedNextAnchor } }
                     : patchAtStart[s.id];
                 });
+              },
+              (src) => {
+                // Mix other shapes' patch
+                return mapFilter(patchAtStart, (_, id) => !src[id]);
               },
               (_, currentPatch) => {
                 return getPatchAfterLayouts(shapeCompositeAtStart, { update: currentPatch });
