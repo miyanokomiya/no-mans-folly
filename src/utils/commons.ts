@@ -203,19 +203,9 @@ export function fillArray<T>(count: number, initialValue: T, src: T[] = []): T[]
 }
 
 export function slideSubArray<T>(src: T[], range: [from: number, count: number], to: number): T[] {
-  const others: T[] = [];
-  const sub: T[] = [];
-
   const rangeFrom = range[0];
   const rangeTo = rangeFrom + range[1] - 1;
-  src.forEach((item, i) => {
-    if (rangeFrom <= i && i <= rangeTo) {
-      sub.push(item);
-    } else {
-      others.push(item);
-    }
-  });
-
+  const [sub, others] = splitList(src, (_, i) => rangeFrom <= i && i <= rangeTo);
   others.splice(clamp(0, src.length, to), 0, ...sub);
   return others;
 }
