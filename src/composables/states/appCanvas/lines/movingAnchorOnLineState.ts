@@ -15,6 +15,9 @@ type Option = {
   shapeId: string;
 };
 
+/**
+ * This state is intended to be stacked up on "MovingOnLine" state.
+ */
 export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let line: LineShape;
