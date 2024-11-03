@@ -230,7 +230,8 @@ function getEvenlySpacedLineAttachment(
     },
   );
 
-  const closestCandidates = points.filter((_, i) => i <= points.length - movingTargetIdSet.size);
+  const movingIndex = selectedShapeIds.findIndex((id) => id === indexShapeId);
+  const closestCandidates = points.filter((_, i) => movingIndex <= i && i <= points.length - movingTargetIdSet.size);
   const closestSplitInfo = pickMinItem(closestCandidates, (v) => v[3])!;
 
   const baseTo = { x: closestSplitInfo[1], y: 0 };
@@ -238,19 +239,23 @@ function getEvenlySpacedLineAttachment(
 
   const movingIndexRange: [from: number, to: number] = [closestSplitInfo[2], closestSplitInfo[2]];
   if (movingTargetIdSet.size > 1) {
-    const [prev, after] = splitList(
+    const [movingPrev, movingAfter] = splitList(
       Array.from(movingTargetIdSet)
         .filter((id) => id !== indexShapeId)
         .map((id) => shapeMap[id])
         .sort((a, b) => (a.attachment?.to.x ?? 1) - (b.attachment?.to.x ?? 1)),
       (s) => (s.attachment?.to.x ?? 1) <= baseTo.x,
     );
-    prev.forEach((s, i) => {
-      const info = points[i + closestSplitInfo[2] - prev.length];
+    console.log(points.length, movingPrev.length, movingAfter.length, closestSplitInfo[2]);
+    movingPrev.forEach((s, i) => {
+      const index = i + closestSplitInfo[2] - movingPrev.length;
+      console.log(i, index);
+      // const index = Math.max(0, i + closestSplitInfo[2] - prev.length);
+      const info = points[index];
       attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
       movingIndexRange[0] = Math.min(movingIndexRange[0], info[2]);
     });
-    after.forEach((s, i) => {
+    movingAfter.forEach((s, i) => {
       const info = points[i + closestSplitInfo[2] + 1];
       attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
       movingIndexRange[1] = Math.max(movingIndexRange[1], info[2]);
