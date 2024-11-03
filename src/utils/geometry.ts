@@ -1337,7 +1337,9 @@ export function getIntRectFromFloatRect(src: IRectangle): IRectangle {
   return { x, y, width, height };
 }
 
-export function getRelativeRateWithinRect(rect: IRectangle, p: IVec2): IVec2 {
+export function getRelativeRateWithinRect(rect: IRectangle, p: IVec2, shouldClamp = false): IVec2 {
   if (Math.abs(rect.width * rect.height) < MINVALUE) return { x: 0, y: 0 };
-  return { x: (p.x - rect.x) / rect.width, y: (p.y - rect.y) / rect.height };
+
+  const rawRate = { x: (p.x - rect.x) / rect.width, y: (p.y - rect.y) / rect.height };
+  return shouldClamp ? { x: clamp(0, 1, rawRate.x), y: clamp(0, 1, rawRate.y) } : rawRate;
 }

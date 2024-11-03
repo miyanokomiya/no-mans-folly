@@ -1861,4 +1861,10 @@ describe("getRelativeRateWithinRect", () => {
       y: 0,
     });
   });
+  test("should clamp within 0-1 when the flag is set true", () => {
+    expect(getRelativeRateWithinRect({ x: 0, y: 0, width: 100, height: 200 }, { x: -50, y: 250 }, true)).toEqualPoint({
+      x: 0,
+      y: 1,
+    });
+  });
 });
