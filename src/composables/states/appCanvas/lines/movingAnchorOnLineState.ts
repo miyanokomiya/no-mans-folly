@@ -2,9 +2,8 @@ import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { mapReduce, patchPipe } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
-import { TAU } from "../../../../utils/geometry";
-import { add, getRectCenter, sub } from "okageo";
-import { getClosestAnchorAtCenter } from "../../../lineAttachmentHandler";
+import { getRelativeRateWithinRect, TAU } from "../../../../utils/geometry";
+import { IVec2, sub } from "okageo";
 import { applyCurvePath, applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -27,6 +26,7 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
   let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
   let shapeCompositeAtStart: ShapeComposite;
   let patchAtStart: { [id: string]: Partial<Shape> };
+  let pointAtStart: IVec2;
 
   return {
     getLabel: () => "MovingAnchorOnLine",
@@ -36,13 +36,14 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
       patchAtStart = ctx.getTmpShapeMap();
       shapeCompositeAtStart = getNextShapeComposite(shapeComposite, { update: patchAtStart });
       line = shapeComposite.shapeMap[option.lineId] as LineShape;
-      const indexShapeAtStartEditAnchor = shapeCompositeAtStart.shapeMap[option.shapeId];
-      if (!isLineShape(line) || !shapeCompositeAtStart.attached(indexShapeAtStartEditAnchor)) {
+      const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
+      if (!isLineShape(line) || !shapeCompositeAtStart.attached(indexShapeAtStart)) {
         keepMoving = true;
         return { type: "break" };
       }
 
       edgeInfo = getLineEdgeInfo(line);
+      pointAtStart = ctx.getCursorPoint();
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -58,17 +59,13 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
             return { type: "break" };
           }
 
-          const diff = sub(event.data.current, event.data.start);
+          const diff = sub(event.data.current, pointAtStart);
           const shapeComposite = ctx.getShapeComposite();
-          const indexShape = shapeComposite.shapeMap[option.shapeId];
-
           const indexShapeAtStartEditAnchor = shapeCompositeAtStart.shapeMap[option.shapeId];
           const boundsAtStart = shapeCompositeAtStart.getWrapperRect(indexShapeAtStartEditAnchor);
-          const nextAnchor = getClosestAnchorAtCenter(
-            shapeCompositeAtStart,
-            indexShapeAtStartEditAnchor,
-            add(diff, getRectCenter(shapeComposite.getWrapperRect(indexShape))),
-          );
+          const attachedP = edgeInfo.lerpFn(indexShapeAtStartEditAnchor.attachment!.to.x);
+          const nextAnchorP = sub(attachedP, diff);
+          const nextAnchor = getRelativeRateWithinRect(boundsAtStart, nextAnchorP, true);
 
           let adjustedNextAnchor = nextAnchor;
           if (!event.data.ctrl) {
