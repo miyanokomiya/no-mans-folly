@@ -341,4 +341,30 @@ describe("getEvenlySpacedLineAttachment", () => {
     expect(result0.attachInfoMap.get(d.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
     expect(result0.attachInfoMap.get(e.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
   });
+
+  test("should evenly align between other ones: 2 items", () => {
+    const result0 = getEvenlySpacedLineAttachment(
+      { line, a, b },
+      line.id,
+      [b.id],
+      b.id,
+      { x: 60, y: 0 },
+      getLineEdgeInfo(line),
+    );
+    expect(result0.attachInfoMap.size).toBe(2);
+    expect(result0.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(result0.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
+
+    const result1 = getEvenlySpacedLineAttachment(
+      { line, a, b },
+      line.id,
+      [b.id],
+      b.id,
+      { x: 40, y: 0 },
+      getLineEdgeInfo(line),
+    );
+    expect(result1.attachInfoMap.size).toBe(2);
+    expect(result1.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
+    expect(result1.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+  });
 });

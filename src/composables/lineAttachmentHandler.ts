@@ -230,7 +230,7 @@ export function getEvenlySpacedLineAttachment(
   const remainPoints = new Set(points);
   remainPoints.delete(closestSplitInfo);
 
-  if (movingTargetIdSet.size > 1) {
+  {
     const [movingPrev, movingAfter] = splitList(
       Array.from(movingTargetIdSet)
         .filter((id) => id !== indexShapeId)
@@ -251,7 +251,7 @@ export function getEvenlySpacedLineAttachment(
     });
   }
 
-  if (fixedTargetIdSet.size > 1) {
+  {
     const sorted = Array.from(fixedTargetIdSet)
       .map((id) => shapeMap[id])
       .sort((a, b) => a.attachment!.to.x - b.attachment!.to.x);
