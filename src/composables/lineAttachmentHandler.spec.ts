@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import {
   getAttachmentAnchorPoint,
   getClosestAnchorAtCenter,
+  getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
   getLineAttachmentPatch,
   patchByMoveToAttachedPoint,
@@ -11,6 +12,7 @@ import { createShape, getCommonStruct } from "../shapes";
 import { LineShape } from "../shapes/line";
 import { RectangleShape } from "../shapes/rectangle";
 import { Shape } from "../models";
+import { getLineEdgeInfo } from "../shapes/utils/line";
 
 describe("getLineAttachmentPatch", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
@@ -265,5 +267,78 @@ describe("getEvenlySpacedLineAttachmentBetweenFixedOnes", () => {
     expect(result0.get(b.id)?.[0]).toEqualPoint({ x: 0.6, y: 0 });
     expect(result0.get(ua.id)?.[0]).toEqualPoint({ x: 0.66666666, y: 0 });
     expect(result0.get(ub.id)?.[0]).toEqualPoint({ x: 0.73333333, y: 0 });
+  });
+});
+
+describe("getEvenlySpacedLineAttachment", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
+  const a = createShape(getCommonStruct, "rectangle", {
+    id: "a",
+    p: { x: -30, y: -50 },
+    attachment: {
+      id: line.id,
+      to: { x: 0.2, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "relative",
+      rotation: 0,
+    },
+  });
+  const b = {
+    ...a,
+    p: { x: -20, y: -50 },
+    id: "b",
+    attachment: { ...a.attachment, to: { x: 0.3, y: 0 } },
+  } as Shape;
+  const c = {
+    ...a,
+    p: { x: -10, y: -50 },
+    id: "c",
+    attachment: { ...a.attachment, to: { x: 0.4, y: 0 } },
+  } as Shape;
+  const d = {
+    ...a,
+    p: { x: 3, y: -50 },
+    id: "d",
+    attachment: { ...a.attachment, to: { x: 0.8, y: 0 } },
+  } as Shape;
+  const e = {
+    ...a,
+    id: "e",
+    p: { x: 40, y: -50 },
+    attachment: { ...a.attachment, to: { x: 0.9, y: 0 } },
+  } as Shape;
+
+  test("should evenly align between other ones", () => {
+    const result0 = getEvenlySpacedLineAttachment(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      a.id,
+      { x: 50, y: 0 },
+      getLineEdgeInfo(line),
+    );
+    expect(result0.attachInfoMap.size).toBe(5);
+    expect(result0.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 0.5, y: 0 });
+    expect(result0.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 0.75, y: 0 });
+    expect(result0.attachInfoMap.get(c.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
+    expect(result0.attachInfoMap.get(d.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(result0.attachInfoMap.get(e.id)?.[0]).toEqualPoint({ x: 0.25, y: 0 });
+  });
+
+  test("should evenly align between other ones: preserved the order of selected ones", () => {
+    const result0 = getEvenlySpacedLineAttachment(
+      { line, a, b, c, d, e },
+      line.id,
+      [a.id, b.id, c.id],
+      b.id,
+      { x: 50, y: 0 },
+      getLineEdgeInfo(line),
+    );
+    expect(result0.attachInfoMap.size).toBe(5);
+    expect(result0.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 0.25, y: 0 });
+    expect(result0.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 0.5, y: 0 });
+    expect(result0.attachInfoMap.get(c.id)?.[0]).toEqualPoint({ x: 0.75, y: 0 });
+    expect(result0.attachInfoMap.get(d.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(result0.attachInfoMap.get(e.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
   });
 });

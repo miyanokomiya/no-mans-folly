@@ -1,15 +1,16 @@
 import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { fillArray, mapReduce, patchPipe, pickMinItem, splitList, toList, toMap } from "../../../../utils/commons";
+import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
-import { add, getDistanceSq, isSame, IVec2, sub } from "okageo";
+import { add, IVec2, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
+  getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
 } from "../../../lineAttachmentHandler";
-import { Shape, ShapeAttachment } from "../../../../models";
+import { ShapeAttachment } from "../../../../models";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -205,86 +206,4 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
     },
   };
-}
-
-function getEvenlySpacedLineAttachment(
-  shapeMap: { [id: string]: Shape },
-  lineId: string,
-  selectedShapeIds: string[],
-  indexShapeId: string,
-  anchorP: IVec2,
-  edgeInfo: ReturnType<typeof getLineEdgeInfo>,
-): {
-  attachInfoMap: Map<string, [to: IVec2]>;
-  attachedPoint: IVec2;
-} {
-  const line = shapeMap[lineId] as LineShape;
-  const movingTargetIdSet = new Set(selectedShapeIds);
-  const allTargetIdSet = new Set(movingTargetIdSet);
-  const fixedTargetIdSet = new Set<string>();
-  toList(shapeMap).forEach((s) => {
-    if (s.attachment?.id === line.id && !movingTargetIdSet.has(s.id)) {
-      allTargetIdSet.add(s.id);
-      fixedTargetIdSet.add(s.id);
-    }
-  });
-
-  const closed = isSame(line.p, line.q);
-  const splitSize = closed ? allTargetIdSet.size : Math.max(1, allTargetIdSet.size - 1);
-  const points = fillArray(allTargetIdSet.size, 0).map<[IVec2, rate: number, index: number, distanceSq: number]>(
-    (_, i) => {
-      const t = i / splitSize;
-      const p = edgeInfo.lerpFn(t);
-      const dd = getDistanceSq(p, anchorP);
-      return [p, t, i, dd];
-    },
-  );
-
-  const movingIndex = selectedShapeIds.findIndex((id) => id === indexShapeId);
-  const closestCandidates = points.filter((_, i) => movingIndex <= i && i <= points.length - movingTargetIdSet.size);
-  const closestSplitInfo = pickMinItem(closestCandidates, (v) => v[3])!;
-
-  const baseTo = { x: closestSplitInfo[1], y: 0 };
-  const attachInfoMap = new Map<string, [to: IVec2]>([[indexShapeId, [baseTo]]]);
-
-  const movingIndexRange: [from: number, to: number] = [closestSplitInfo[2], closestSplitInfo[2]];
-  if (movingTargetIdSet.size > 1) {
-    const [movingPrev, movingAfter] = splitList(
-      Array.from(movingTargetIdSet)
-        .filter((id) => id !== indexShapeId)
-        .map((id) => shapeMap[id])
-        .sort((a, b) => (a.attachment?.to.x ?? 1) - (b.attachment?.to.x ?? 1)),
-      (s) => (s.attachment?.to.x ?? 1) <= baseTo.x,
-    );
-    movingPrev.forEach((s, i) => {
-      const index = i + closestSplitInfo[2] - movingPrev.length;
-      const info = points[index];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-      movingIndexRange[0] = Math.min(movingIndexRange[0], info[2]);
-    });
-    movingAfter.forEach((s, i) => {
-      const info = points[i + closestSplitInfo[2] + 1];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-      movingIndexRange[1] = Math.max(movingIndexRange[1], info[2]);
-    });
-  }
-
-  if (fixedTargetIdSet.size > 1) {
-    const [prev, after] = splitList(
-      Array.from(fixedTargetIdSet)
-        .map((id) => shapeMap[id])
-        .sort((a, b) => a.attachment!.to.x - b.attachment!.to.x),
-      (_, i) => i < movingIndexRange[0],
-    );
-    prev.forEach((s, i) => {
-      const info = points[i];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-    });
-    after.forEach((s, i) => {
-      const info = points[i + movingIndexRange[1] + 1];
-      attachInfoMap.set(s.id, [{ x: info[1], y: 0 }]);
-    });
-  }
-
-  return { attachInfoMap, attachedPoint: closestSplitInfo[0] };
 }
