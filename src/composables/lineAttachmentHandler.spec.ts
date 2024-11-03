@@ -118,6 +118,16 @@ describe("getAttachmentAnchorPoint", () => {
       getStruct: getCommonStruct,
     });
     expect(getAttachmentAnchorPoint(shapeComposite, shape)).toEqualPoint({ x: 30, y: 60 });
+
+    const rotated = { ...shape, rotation: Math.PI / 4 };
+    const shapeComposite1 = newShapeComposite({
+      shapes: [rotated],
+      getStruct: getCommonStruct,
+    });
+    expect(getAttachmentAnchorPoint(shapeComposite1, rotated)).toEqualPoint({
+      x: 21.715728,
+      y: 64.142135,
+    });
   });
 });
 
