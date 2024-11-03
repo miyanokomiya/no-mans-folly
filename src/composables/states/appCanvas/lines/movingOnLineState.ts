@@ -1,4 +1,4 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
@@ -10,13 +10,12 @@ import {
   getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
 } from "../../../lineAttachmentHandler";
-import { ShapeAttachment } from "../../../../models";
+import { Shape, ShapeAttachment } from "../../../../models";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newMovingAnchorOnLineState } from "./movingAnchorOnLineState";
-import { ShapeComposite } from "../../../shapeComposite";
 
 type Option = {
   lineId: string;
@@ -33,10 +32,14 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
   let anchorP: IVec2;
   let pointAtStart: IVec2;
+  let patchAtStart: { [id: string]: Partial<Shape> };
 
-  function storeAnchor(shapeComposite: ShapeComposite) {
+  function storeAtStart(ctx: AppCanvasStateContext) {
+    const shapeComposite = ctx.getShapeComposite();
     const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
     anchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
+    pointAtStart = ctx.getCursorPoint();
+    patchAtStart = ctx.getTmpShapeMap();
   }
 
   return {
@@ -57,8 +60,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
 
       edgeInfo = getLineEdgeInfo(line);
-      storeAnchor(shapeComposite);
-      pointAtStart = ctx.getCursorPoint();
+      storeAtStart(ctx);
     },
     onResume: (ctx) => {
       ctx.setCommandExams([
@@ -66,8 +68,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         COMMAND_EXAM_SRC.EVENLY_SPACED,
         COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR,
       ]);
-      storeAnchor(ctx.getShapeComposite());
-      pointAtStart = ctx.getCursorPoint();
+      storeAtStart(ctx);
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -153,11 +154,11 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                     // Inherit both source and temporary attachment to preserve attachment state as much as possible.
                     // => Attachment can be deleted in temporary data so "mergedShapeMap" doesn't work for this purpose.
                     ...shapeComposite.shapeMap[s.id].attachment,
-                    ...shapeComposite.tmpShapeMap[s.id]?.attachment,
+                    ...patchAtStart[s.id]?.attachment,
                     id: line.id,
                     to: info[0],
                   };
-                  return { attachment };
+                  return { ...patchAtStart[s.id], attachment };
                 });
               },
               (_, currentPatch) => {
