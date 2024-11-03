@@ -111,7 +111,7 @@ export function getClosestOutlineInfoOfLine(
   }
   d += getDistance(edges[closestEdgeIndex][0], closestPedal);
   const rate = d / edgeInfo.totalLength;
-  return [closestPedal, rate];
+  return [edgeInfo.lerpFn(rate), rate];
 }
 
 function getLinePathStruce(line: LineShape): PathLengthStruct[] {
