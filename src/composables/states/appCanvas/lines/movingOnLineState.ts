@@ -43,6 +43,13 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         return { type: "break" };
       }
     },
+    onResume: (ctx) => {
+      ctx.setCommandExams([
+        COMMAND_EXAM_SRC.DISABLE_SNAP,
+        COMMAND_EXAM_SRC.EVENLY_SPACED,
+        COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR,
+      ]);
+    },
     onEnd: (ctx) => {
       ctx.setCommandExams();
 
