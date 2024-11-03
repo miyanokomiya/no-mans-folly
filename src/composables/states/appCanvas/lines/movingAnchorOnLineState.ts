@@ -4,12 +4,14 @@ import { mapReduce, patchPipe } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { TAU } from "../../../../utils/geometry";
 import { add, getRectCenter, sub } from "okageo";
-import { getAttachmentAnchorPoint, getClosestAnchorAtCenter } from "../../../lineAttachmentHandler";
+import { getClosestAnchorAtCenter } from "../../../lineAttachmentHandler";
 import { applyCurvePath, applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
-import { ShapeComposite } from "../../../shapeComposite";
+import { getNextShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { Shape } from "../../../../models";
+import { getLineEdgeInfo } from "../../../../shapes/utils/line";
 
 type Option = {
   lineId: string;
@@ -22,20 +24,25 @@ type Option = {
 export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let line: LineShape;
+  let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
   let shapeCompositeAtStart: ShapeComposite;
+  let patchAtStart: { [id: string]: Partial<Shape> };
 
   return {
     getLabel: () => "MovingAnchorOnLine",
     onStart: (ctx) => {
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      line = shapeMap[option.lineId] as LineShape;
-      if (!isLineShape(line)) {
+      patchAtStart = ctx.getTmpShapeMap();
+      shapeCompositeAtStart = getNextShapeComposite(shapeComposite, { update: patchAtStart });
+      line = shapeComposite.shapeMap[option.lineId] as LineShape;
+      const indexShapeAtStartEditAnchor = shapeCompositeAtStart.shapeMap[option.shapeId];
+      if (!isLineShape(line) || !shapeCompositeAtStart.attached(indexShapeAtStartEditAnchor)) {
         keepMoving = true;
         return { type: "break" };
       }
-      shapeCompositeAtStart = shapeComposite;
+
+      edgeInfo = getLineEdgeInfo(line);
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -51,48 +58,44 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
             return { type: "break" };
           }
 
-          const shapeComposite = ctx.getShapeComposite();
-          const shapeMap = shapeComposite.shapeMap;
-          const indexShape = shapeMap[option.shapeId];
           const diff = sub(event.data.current, event.data.start);
+          const shapeComposite = ctx.getShapeComposite();
+          const indexShape = shapeComposite.shapeMap[option.shapeId];
 
-          const indexShapeAtStartEditAnchor = shapeCompositeAtStart.mergedShapeMap[indexShape.id];
-          if (shapeCompositeAtStart.attached(indexShapeAtStartEditAnchor)) {
-            const nextAnchor = getClosestAnchorAtCenter(
-              shapeCompositeAtStart,
-              indexShapeAtStartEditAnchor,
-              add(diff, getRectCenter(shapeComposite.getWrapperRect(indexShape))),
-            );
+          const indexShapeAtStartEditAnchor = shapeCompositeAtStart.shapeMap[option.shapeId];
+          const boundsAtStart = shapeCompositeAtStart.getWrapperRect(indexShapeAtStartEditAnchor);
+          const nextAnchor = getClosestAnchorAtCenter(
+            shapeCompositeAtStart,
+            indexShapeAtStartEditAnchor,
+            add(diff, getRectCenter(shapeComposite.getWrapperRect(indexShape))),
+          );
 
-            let adjustedNextAnchor = nextAnchor;
-            if (!event.data.ctrl) {
-              const bounds = shapeComposite.getWrapperRect(indexShape);
-              const threshold = 10 * ctx.getScale();
-              adjustedNextAnchor = {
-                x: Math.abs(nextAnchor.x - 0.5) * bounds.width < threshold ? 0.5 : nextAnchor.x,
-                y: Math.abs(nextAnchor.y - 0.5) * bounds.height < threshold ? 0.5 : nextAnchor.y,
-              };
-            }
-
-            const patch = patchPipe(
-              [
-                (src) => {
-                  return mapReduce(src, (s) => {
-                    const latestShape = shapeCompositeAtStart!.mergedShapeMap[s.id];
-                    return latestShape.attachment
-                      ? { attachment: { ...latestShape.attachment, anchor: adjustedNextAnchor } }
-                      : {};
-                  });
-                },
-                (_, currentPatch) => {
-                  return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
-                },
-              ],
-              mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeMap[id]),
-            );
-            ctx.setTmpShapeMap(patch.patch);
-            return;
+          let adjustedNextAnchor = nextAnchor;
+          if (!event.data.ctrl) {
+            const threshold = 10 * ctx.getScale();
+            adjustedNextAnchor = {
+              x: Math.abs(nextAnchor.x - 0.5) * boundsAtStart.width < threshold ? 0.5 : nextAnchor.x,
+              y: Math.abs(nextAnchor.y - 0.5) * boundsAtStart.height < threshold ? 0.5 : nextAnchor.y,
+            };
           }
+
+          const patch = patchPipe(
+            [
+              (src) => {
+                return mapReduce(src, (s) => {
+                  const latestShape = shapeCompositeAtStart.shapeMap[s.id];
+                  return latestShape.attachment
+                    ? { ...patchAtStart[s.id], attachment: { ...latestShape.attachment, anchor: adjustedNextAnchor } }
+                    : patchAtStart[s.id];
+                });
+              },
+              (_, currentPatch) => {
+                return getPatchAfterLayouts(shapeCompositeAtStart, { update: currentPatch });
+              },
+            ],
+            mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeComposite.shapeMap[id]),
+          );
+          ctx.setTmpShapeMap(patch.patch);
           return;
         }
         case "pointerup": {
@@ -116,9 +119,9 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
 
-      const indexShapeAtStart = shapeCompositeAtStart.mergedShapeMap[option.shapeId];
+      const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
       if (indexShapeAtStart.attachment) {
-        const lineAnchor = getAttachmentAnchorPoint(shapeCompositeAtStart, indexShapeAtStart);
+        const lineAnchor = edgeInfo.lerpFn(indexShapeAtStart.attachment.to.x);
         applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
         renderCtx.beginPath();
         applyCurvePath(renderCtx, getLinePath(line), line.curves);
