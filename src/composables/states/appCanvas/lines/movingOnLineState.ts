@@ -16,6 +16,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newMovingAnchorOnLineState } from "./movingAnchorOnLineState";
+import { getNextShapeComposite } from "../../../shapeComposite";
 
 type Option = {
   lineId: string;
@@ -30,16 +31,16 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
   let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
-  let anchorP: IVec2;
+  let anchorPointAtStart: IVec2;
   let pointAtStart: IVec2;
   let patchAtStart: { [id: string]: Partial<Shape> };
 
   function storeAtStart(ctx: AppCanvasStateContext) {
-    const shapeComposite = ctx.getShapeComposite();
-    const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
-    anchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
     pointAtStart = ctx.getCursorPoint();
     patchAtStart = ctx.getTmpShapeMap();
+    const shapeComposite = ctx.getShapeComposite();
+    const nextShapeComposite = getNextShapeComposite(shapeComposite, { update: patchAtStart });
+    anchorPointAtStart = getAttachmentAnchorPoint(nextShapeComposite, nextShapeComposite.shapeMap[option.shapeId]);
   }
 
   return {
@@ -93,7 +94,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           const indexShape = shapeMap[option.shapeId];
           const latestShape = shapeComposite.mergedShapeMap[indexShape.id];
           const diff = sub(event.data.current, pointAtStart);
-          const movedIndexAnchorP = add(anchorP, diff);
+          const movedIndexAnchorP = add(anchorPointAtStart, diff);
 
           if (event.data.alt) {
             if (shapeComposite.attached(latestShape)) {

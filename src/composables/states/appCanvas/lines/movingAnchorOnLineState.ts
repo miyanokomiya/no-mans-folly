@@ -63,7 +63,7 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
           const diff = sub(event.data.current, pointAtStart);
           const shapeComposite = ctx.getShapeComposite();
           const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
-          const boundsAtStart = shapeCompositeAtStart.getWrapperRect(indexShapeAtStart);
+          const [localBounds] = shapeCompositeAtStart.getLocalSpace(indexShapeAtStart);
           const attachedP = edgeInfo.lerpFn(indexShapeAtStart.attachment!.to.x);
           const nextAnchorP = sub(attachedP, diff);
           const nextAnchor = getNextAttachmentAnchor(shapeCompositeAtStart, indexShapeAtStart, nextAnchorP);
@@ -72,8 +72,8 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
           if (!event.data.ctrl) {
             const threshold = 10 * ctx.getScale();
             adjustedNextAnchor = {
-              x: Math.abs(nextAnchor.x - 0.5) * boundsAtStart.width < threshold ? 0.5 : nextAnchor.x,
-              y: Math.abs(nextAnchor.y - 0.5) * boundsAtStart.height < threshold ? 0.5 : nextAnchor.y,
+              x: Math.abs(nextAnchor.x - 0.5) * localBounds.width < threshold ? 0.5 : nextAnchor.x,
+              y: Math.abs(nextAnchor.y - 0.5) * localBounds.height < threshold ? 0.5 : nextAnchor.y,
             };
           }
 
