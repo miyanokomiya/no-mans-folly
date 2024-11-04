@@ -1,3 +1,4 @@
+import { newMovingAnchorOnLineState } from "./lines/movingAnchorOnLineState";
 import { newMovingHubState } from "./movingHubState";
 import { newSelectionHubState } from "./selectionHubState";
 
@@ -5,5 +6,6 @@ import { newSelectionHubState } from "./selectionHubState";
 export const stateGenerators = {
   newSelectionHubState,
   newMovingHubState,
+  newMovingAnchorOnLineState,
 };
 export type StateGenerators = typeof stateGenerators;

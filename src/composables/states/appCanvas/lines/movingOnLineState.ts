@@ -15,7 +15,6 @@ import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { newMovingAnchorOnLineState } from "./movingAnchorOnLineState";
 import { getNextShapeComposite } from "../../../shapeComposite";
 
 type Option = {
@@ -34,6 +33,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let anchorPointAtStart: IVec2;
   let pointAtStart: IVec2;
   let patchAtStart: { [id: string]: Partial<Shape> };
+  let evenlyAligned = false;
 
   function storeAtStart(ctx: AppCanvasStateContext) {
     pointAtStart = ctx.getCursorPoint();
@@ -46,11 +46,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   return {
     getLabel: () => "MovingOnLine",
     onStart: (ctx) => {
-      ctx.setCommandExams([
-        COMMAND_EXAM_SRC.DISABLE_SNAP,
-        COMMAND_EXAM_SRC.EVENLY_SPACED,
-        COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR,
-      ]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.EVENLY_SPACED]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -61,14 +57,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
 
       edgeInfo = getLineEdgeInfo(line);
-      storeAtStart(ctx);
-    },
-    onResume: (ctx) => {
-      ctx.setCommandExams([
-        COMMAND_EXAM_SRC.DISABLE_SNAP,
-        COMMAND_EXAM_SRC.EVENLY_SPACED,
-        COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR,
-      ]);
       storeAtStart(ctx);
     },
     onEnd: (ctx) => {
@@ -90,17 +78,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
-
-          const indexShape = shapeMap[option.shapeId];
-          const latestShape = shapeComposite.mergedShapeMap[indexShape.id];
-          const diff = sub(event.data.current, pointAtStart);
-          const movedIndexAnchorP = add(anchorPointAtStart, diff);
-
-          if (event.data.alt) {
-            if (shapeComposite.attached(latestShape)) {
-              return { type: "stack-resume", getState: () => newMovingAnchorOnLineState(option) };
-            }
-          }
+          const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
 
           if (!event.data.shift) {
             const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
@@ -111,6 +89,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             }
           }
 
+          const movedIndexAnchorP = add(anchorPointAtStart, sub(event.data.current, pointAtStart));
           const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, Infinity);
           if (!closestInfo) {
             keepMoving = true;
@@ -122,28 +101,30 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           let attachInfoMap: Map<string, [to: IVec2]>;
 
           if (event.data.shift) {
+            evenlyAligned = true;
             const attachInfo = getEvenlySpacedLineAttachment(
-              shapeComposite.shapeMap,
+              shapeMap,
               line.id,
               Object.keys(selectedShapeMap),
-              indexShape.id,
+              option.shapeId,
               movedIndexAnchorP,
               edgeInfo,
             );
             attachInfoMap = attachInfo.attachInfoMap;
             lineAnchor = attachInfo.attachedPoint;
           } else {
+            evenlyAligned = false;
             const baseTo = { x: closestInfo[1], y: 0 };
             const baseToP = closestInfo[0];
             lineAnchor = baseToP;
-            attachInfoMap = new Map<string, [to: IVec2]>([[option.shapeId, [baseTo]]]);
+            attachInfoMap = new Map([[option.shapeId, [baseTo]]]);
 
             if (selectedShapes.length > 1) {
               const infoMap = getEvenlySpacedLineAttachmentBetweenFixedOnes(
-                shapeComposite.shapeMap,
+                shapeMap,
                 line.id,
                 Object.keys(selectedShapeMap),
-                indexShape.id,
+                option.shapeId,
                 baseTo.x,
               );
               for (const [k, v] of infoMap) {
@@ -163,7 +144,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                     rotation: 0,
                     // Inherit both source and temporary attachment to preserve attachment state as much as possible.
                     // => Attachment can be deleted in temporary data so "mergedShapeMap" doesn't work for this purpose.
-                    ...shapeComposite.shapeMap[s.id].attachment,
+                    ...shapeMap[s.id].attachment,
                     ...patchAtStart[s.id]?.attachment,
                     id: line.id,
                     to: info[0],
@@ -210,14 +191,16 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         applyCurvePath(renderCtx, getLinePath(line), line.curves);
         renderCtx.stroke();
 
-        const shapeComposite = ctx.getShapeComposite();
-        const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
-        const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
-        const [localBounds] = shapeComposite.getLocalSpace(latestShape);
-        applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
-        renderCtx.beginPath();
-        renderCtx.arc(latestAnchorP.x, latestAnchorP.y, getDiagonalLengthOfRect(localBounds), 0, TAU);
-        renderCtx.stroke();
+        if (!evenlyAligned) {
+          const shapeComposite = ctx.getShapeComposite();
+          const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
+          const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
+          const [localBounds] = shapeComposite.getLocalSpace(latestShape);
+          applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
+          renderCtx.beginPath();
+          renderCtx.arc(latestAnchorP.x, latestAnchorP.y, getDiagonalLengthOfRect(localBounds), 0, TAU);
+          renderCtx.stroke();
+        }
 
         applyFillStyle(renderCtx, { color: style.selectionSecondaly });
         renderCtx.beginPath();

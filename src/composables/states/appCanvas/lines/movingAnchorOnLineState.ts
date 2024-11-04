@@ -1,15 +1,14 @@
 import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { mapFilter, mapReduce, patchPipe } from "../../../../utils/commons";
+import { mapReduce, patchPipe } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { expandRectByScale, ISegment, TAU } from "../../../../utils/geometry";
-import { getRectCenter, IVec2, moveRect, sub } from "okageo";
+import { getRectCenter, moveRect, sub } from "okageo";
 import { applyCurvePath, applyLocalSpace, applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
-import { getNextShapeComposite, ShapeComposite } from "../../../shapeComposite";
+import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { Shape } from "../../../../models";
 import { getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { getNextAttachmentAnchor } from "../../../lineAttachmentHandler";
 
@@ -18,55 +17,51 @@ type Option = {
   shapeId: string;
 };
 
-/**
- * This state is intended to be stacked up on "MovingOnLine" state.
- */
 export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
-  let keepMoving = false;
   let line: LineShape;
   let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
-  let shapeCompositeAtStart: ShapeComposite;
-  let patchAtStart: { [id: string]: Partial<Shape> };
-  let pointAtStart: IVec2;
+  let subShapeComposite: ShapeComposite; // for avoid regarding temporary shapes
 
   return {
     getLabel: () => "MovingAnchorOnLine",
     onStart: (ctx) => {
+      ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
       const shapeComposite = ctx.getShapeComposite();
-      patchAtStart = ctx.getTmpShapeMap();
-      shapeCompositeAtStart = getNextShapeComposite(shapeComposite, { update: patchAtStart });
       line = shapeComposite.shapeMap[option.lineId] as LineShape;
-      const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
-      if (!isLineShape(line) || !shapeCompositeAtStart.attached(indexShapeAtStart)) {
-        keepMoving = true;
-        return { type: "break" };
+      const indexShape = shapeComposite.shapeMap[option.shapeId];
+      if (!isLineShape(line) || !shapeComposite.attached(indexShape)) {
+        return ctx.states.newSelectionHubState;
       }
 
       edgeInfo = getLineEdgeInfo(line);
-      pointAtStart = ctx.getCursorPoint();
+      const movingAllIdSet = new Set(
+        shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap())).map((s) => s.id),
+      );
+      subShapeComposite = newShapeComposite({
+        shapes: shapeComposite.shapes.filter((s) => movingAllIdSet.has(s.id)),
+        getStruct: shapeComposite.getShapeStruct,
+      });
     },
     onEnd: (ctx) => {
+      ctx.stopDragging();
       ctx.setCommandExams();
-      if (!keepMoving) {
-        ctx.setTmpShapeMap({});
-      }
+      ctx.setTmpShapeMap({});
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          if (!event.data.alt) {
-            keepMoving = true;
-            return { type: "break" };
+          const diff = sub(event.data.current, event.data.start);
+          const shapeComposite = ctx.getShapeComposite();
+          const indexShape = subShapeComposite.shapeMap[option.shapeId];
+          if (!shapeComposite.attached(indexShape)) {
+            return ctx.states.newSelectionHubState;
           }
 
-          const diff = sub(event.data.current, pointAtStart);
-          const shapeComposite = ctx.getShapeComposite();
-          const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
-          const [localBounds] = shapeCompositeAtStart.getLocalSpace(indexShapeAtStart);
-          const attachedP = edgeInfo.lerpFn(indexShapeAtStart.attachment!.to.x);
+          const [localBounds] = subShapeComposite.getLocalSpace(indexShape);
+          const attachedP = edgeInfo.lerpFn(indexShape.attachment.to.x);
           const nextAnchorP = sub(attachedP, diff);
-          const nextAnchor = getNextAttachmentAnchor(shapeCompositeAtStart, indexShapeAtStart, nextAnchorP);
+          const nextAnchor = getNextAttachmentAnchor(subShapeComposite, indexShape, nextAnchorP);
 
           let adjustedNextAnchor = nextAnchor;
           if (!event.data.ctrl) {
@@ -81,23 +76,16 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
             [
               (src) => {
                 return mapReduce(src, (s) => {
-                  const latestShape = shapeCompositeAtStart.shapeMap[s.id];
-                  return latestShape.attachment
-                    ? { ...patchAtStart[s.id], attachment: { ...latestShape.attachment, anchor: adjustedNextAnchor } }
-                    : patchAtStart[s.id];
+                  return s.attachment ? { attachment: { ...s.attachment, anchor: adjustedNextAnchor } } : {};
                 });
               },
-              (src) => {
-                // Mix other shapes' patch
-                return mapFilter(patchAtStart, (_, id) => !src[id]);
-              },
               (_, currentPatch) => {
-                return getPatchAfterLayouts(shapeCompositeAtStart, { update: currentPatch });
+                return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
               },
             ],
             mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeComposite.shapeMap[id]),
-          );
-          ctx.setTmpShapeMap(patch.patch);
+          ).patch;
+          ctx.setTmpShapeMap(patch);
           return;
         }
         case "pointerup": {
@@ -121,15 +109,15 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
 
-      const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
-      if (indexShapeAtStart.attachment) {
-        const lineAnchor = edgeInfo.lerpFn(indexShapeAtStart.attachment.to.x);
+      const indexShape = subShapeComposite.shapeMap[option.shapeId];
+      if (indexShape.attachment) {
+        const lineAnchor = edgeInfo.lerpFn(indexShape.attachment.to.x);
         applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
         renderCtx.beginPath();
         applyCurvePath(renderCtx, getLinePath(line), line.curves);
         renderCtx.stroke();
 
-        const [localBounds, rotation] = shapeCompositeAtStart.getLocalSpace(indexShapeAtStart);
+        const [localBounds, rotation] = subShapeComposite.getLocalSpace(indexShape);
         const localC = getRectCenter(localBounds);
         const localBoundsAtAnchor = moveRect(localBounds, { x: lineAnchor.x - localC.x, y: lineAnchor.y - localC.y });
         applyLocalSpace(renderCtx, localBoundsAtAnchor, rotation, () => {

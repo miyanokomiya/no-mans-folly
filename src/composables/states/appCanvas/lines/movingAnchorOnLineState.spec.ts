@@ -41,24 +41,6 @@ function getMockCtx() {
 
 describe("newMovingAnchorOnLineState", () => {
   describe("handleEvent: pointermove", () => {
-    test("should not call setTmpShapeMap when alt-key isn't held", () => {
-      const ctx = getMockCtx();
-      ctx.getSelectedShapeIdMap = () => ({ a: true });
-      ctx.getLastSelectedShapeId = () => "a";
-      const target = newMovingAnchorOnLineState({ lineId: "line", shapeId: "a" });
-      target.onStart?.(ctx);
-
-      const result0 = target.handleEvent(ctx, {
-        type: "pointermove",
-        data: { start: { x: 50, y: 0 }, current: { x: 60, y: 0 }, scale: 1 },
-      });
-      expect(result0).toEqual({ type: "break" });
-      expect(ctx.setTmpShapeMap).not.toHaveBeenCalled();
-
-      target.onEnd?.(ctx);
-      expect(ctx.setTmpShapeMap).not.toHaveBeenCalled();
-    });
-
     test("should call setTmpShapeMap with updated anchor", () => {
       const ctx = getMockCtx();
       ctx.getSelectedShapeIdMap = () => ({ a: true });

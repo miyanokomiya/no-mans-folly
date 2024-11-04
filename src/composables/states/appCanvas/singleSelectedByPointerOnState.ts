@@ -32,7 +32,16 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
             return ctx.states.newSelectionHubState;
           }
 
-          return ctx.states.newMovingHubState;
+          if (shapeComposite.attached(shape) && event.data.shift) {
+            const lineId = shape.attachment.id;
+            return () =>
+              ctx.states.newMovingAnchorOnLineState({
+                lineId,
+                shapeId: shape.id,
+              });
+          } else {
+            return ctx.states.newMovingHubState;
+          }
         }
         case "pointerup": {
           if (option?.concurrent && Date.now() - timestamp < 200) {

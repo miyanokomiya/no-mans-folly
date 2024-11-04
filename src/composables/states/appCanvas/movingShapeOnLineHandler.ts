@@ -15,9 +15,9 @@ export function handlePointerMoveOnLine(
   if (movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
-  const movingAllIdSet = new Set(shapeComposite.getAllBranchMergedShapes(movingIds).map((s) => s.id));
+  const movingIdSet = new Set(movingIds);
   const subShapeComposite = newShapeComposite({
-    shapes: shapeComposite.shapes.filter((s) => movingAllIdSet.has(s.id)),
+    shapes: shapeComposite.shapes.filter((s) => movingIdSet.has(s.id)),
     getStruct: shapeComposite.getShapeStruct,
   });
 

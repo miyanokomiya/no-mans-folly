@@ -78,6 +78,41 @@ describe("newSingleSelectedByPointerOnState", () => {
       }) as any;
       expect(result2?.().getLabel(), "moved within threshold but time passes beyond threshold").toBe("MovingHub");
     });
+
+    test("should move to MovingAnchorOnLine instead of MovingHub state when shift-key held the shape is attached", () => {
+      const ctx = getMockCtx();
+      ctx.getShapeComposite = () =>
+        newShapeComposite({
+          shapes: [
+            createShape(getCommonStruct, "line", { id: "line" }),
+            createShape<RectangleShape>(getCommonStruct, "rectangle", {
+              id: "a",
+              attachment: {
+                id: "line",
+                to: { x: 0.2, y: 0 },
+                anchor: { x: 0.5, y: 0.5 },
+                rotation: 0,
+                rotationType: "relative",
+              },
+            }),
+          ],
+          getStruct: getCommonStruct,
+        });
+      const target = newSingleSelectedByPointerOnState();
+      target.onStart?.(ctx as any);
+
+      const result0 = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      }) as any;
+      expect(result0?.().getLabel(), "moved beyond threshold").toBe("MovingHub");
+
+      const result1 = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1, shift: true },
+      }) as any;
+      expect(result1?.().getLabel(), "moved beyond threshold").toBe("MovingAnchorOnLine");
+    });
   });
 
   describe("handle pointerup", () => {
