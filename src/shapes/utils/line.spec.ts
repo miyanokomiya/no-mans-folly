@@ -1,8 +1,15 @@
 import { describe, test, expect } from "vitest";
-import { getNakedLineShape, patchByFliplineH, patchByFliplineV } from "./line";
+import {
+  getClosestOutlineInfoOfLine,
+  getLineEdgeInfo,
+  getNakedLineShape,
+  patchByFliplineH,
+  patchByFliplineV,
+} from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
 import { createLineHead } from "../lineHeads";
+import { struct as lineStruct } from "../line";
 
 describe("getNakedLineShape", () => {
   test("should return the line with minimum styles", () => {
@@ -87,5 +94,38 @@ describe("patchByFliplineV", () => {
     expect(result.body).toEqual([{ p: { x: 100, y: 100 } }]);
     expect(result.curves).toEqual([{ c1: { x: 10, y: 110 }, c2: { x: 60, y: 110 } }, { d: { x: 0, y: -10 } }]);
     expect(result.q).toEqual({ x: 100, y: 0 });
+  });
+});
+
+describe("getClosestOutlineInfoOfLine", () => {
+  test("should return the closest outline info if exists", () => {
+    const line0 = lineStruct.create({ q: { x: 100, y: 0 } });
+    expect(getClosestOutlineInfoOfLine(line0, { x: 40, y: 11 }, 10)).toEqual(undefined);
+    expect(getClosestOutlineInfoOfLine(line0, { x: 40, y: 9 }, 10)).toEqual([{ x: 40, y: 0 }, 0.4]);
+  });
+
+  test("should regard bezier segment", () => {
+    const line0 = lineStruct.create({ q: { x: 100, y: 0 }, curves: [{ c1: { x: 20, y: 20 }, c2: { x: 80, y: 20 } }] });
+    const result0 = getClosestOutlineInfoOfLine(line0, { x: 40, y: 9 }, 10);
+    expect(result0?.[0]).toEqualPoint({ x: 39.70631055859311, y: 14.55409224224895 });
+    expect(result0?.[1]).toBeCloseTo(0.4);
+  });
+
+  test("should regard arc segment", () => {
+    const line0 = lineStruct.create({ q: { x: 100, y: 0 }, curves: [{ d: { x: 0, y: 20 } }] });
+    const result0 = getClosestOutlineInfoOfLine(line0, { x: 40, y: 18 }, 10);
+    expect(result0?.[0]).toEqualPoint({ x: 39.90006665667716, y: 19.293045251336395 });
+    expect(result0?.[1]).toBeCloseTo(0.4081723);
+  });
+});
+
+describe("getLineEdgeInfo", () => {
+  test("should return lerp function based on distance", () => {
+    const line0 = lineStruct.create({
+      q: { x: 200, y: 0 },
+      curves: [{ c1: { x: 50, y: 150 }, c2: { x: 150, y: 150 } }],
+    });
+    const target = getLineEdgeInfo(line0);
+    expect(target.lerpFn(80 / target.totalLength)).toEqualPoint({ x: 34.99598644197986, y: 71.72119092860004 });
   });
 });

@@ -14,6 +14,7 @@ import { GroupShape, isGroupShape } from "../../shapes/group";
 import { ClipInspector } from "./ClipInspector";
 import { AlphaField } from "./AlphaField";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
+import { AttachmentInspector } from "./AttachmentInspector";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -147,6 +148,30 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShapes, getShapeComposite, patchShapes],
   );
 
+  // Only shapes already having "attachment" will be updated.
+  const updateAttachmentBySamePatch = useCallback(
+    (patch: Partial<Shape>, draft = false) => {
+      const shapeComposite = getShapeComposite();
+
+      const layoutPatch = getPatchByLayouts(shapeComposite, {
+        update: targetShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
+          if (s.attachment) {
+            p[s.id] = patch;
+          }
+          return p;
+        }, {}),
+      });
+
+      if (draft) {
+        setTmpShapeMap(layoutPatch);
+      } else {
+        setTmpShapeMap({});
+        patchShapes(layoutPatch);
+      }
+    },
+    [targetShapes, getShapeComposite, patchShapes, setTmpShapeMap],
+  );
+
   const alphaField = <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />;
 
   return (
@@ -194,6 +219,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
           updateTargetGroupShape={updateGroupShapesBySamePatch}
         />
       ) : undefined}
+      <AttachmentInspector targetShape={targetShape} updateTargetShape={updateAttachmentBySamePatch} />
       <button type="submit" className="hidden" />
     </form>
   );

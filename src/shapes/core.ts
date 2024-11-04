@@ -30,6 +30,7 @@ export interface ShapeContext {
 export interface ShapeSelectionScope {
   parentId?: string; // When undefined, the scope refers strict root scope ignoring transparency
   scopeKey?: string;
+  shapeType?: string;
 }
 
 export interface ShapeStruct<T extends Shape> {
@@ -129,6 +130,7 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     clipping: arg.clipping,
     cropClipBorder: arg.cropClipBorder,
     alpha: arg.alpha,
+    attachment: arg.attachment,
   };
 }
 

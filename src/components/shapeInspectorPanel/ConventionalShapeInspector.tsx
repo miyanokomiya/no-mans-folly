@@ -9,6 +9,7 @@ import { InlineField } from "../atoms/InlineField";
 import { useShapeComposite, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
 import { BlockGroupField } from "../atoms/BlockGroupField";
+import { getAttachmentByUpdatingRotation } from "../../shapes";
 
 interface Props {
   targetShape: Shape;
@@ -80,9 +81,20 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   const handleChangeRotation = useCallback(
     (val: number, draft = false) => {
       const affine = getRotateToAffine(subShapeComposite, targetShape, (val * Math.PI) / 180);
-      handleResize(affine, draft);
+      if (draft) {
+        readyState();
+
+        const patch = resizeShapeTrees(shapeComposite, [targetShape.id], affine);
+        const attachment = getAttachmentByUpdatingRotation(targetShape, patch[targetShape.id].rotation);
+        if (attachment) {
+          patch[targetShape.id].attachment = attachment;
+        }
+        updateTmpShapes(patch);
+      } else {
+        commit();
+      }
     },
-    [targetShape, subShapeComposite, handleResize],
+    [targetShape, subShapeComposite, commit, readyState, updateTmpShapes, shapeComposite],
   );
 
   return (

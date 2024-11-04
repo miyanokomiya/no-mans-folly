@@ -14,9 +14,12 @@ import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { Shape } from "../../../models";
 import { newDummyHandler, ShapeHandler } from "../../shapeHandlers/core";
-import { newMovingHubState } from "./movingHubState";
 import { newSmartBranchHandler, SmartBranchHandler } from "../../smartBranchHandler";
 import { canAttachSmartBranch } from "../../../shapes";
+import { getAttachmentAnchorPoint } from "../../lineAttachmentHandler";
+import { applyFillStyle } from "../../../utils/fillStyle";
+import { TAU } from "../../../utils/geometry";
+import { scaleGlobalAlpha } from "../../../utils/renderer";
 
 interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHandler> {
   getTargetShape: () => S;
@@ -62,7 +65,11 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
           locked: targetShape.locked,
         });
 
-        if (!shapeComposite.hasParent(targetShape) && canAttachSmartBranch(ctx.getShapeStruct, targetShape)) {
+        if (
+          !shapeComposite.hasParent(targetShape) &&
+          !shapeComposite.attached(targetShape) &&
+          canAttachSmartBranch(ctx.getShapeStruct, targetShape)
+        ) {
           smartBranchHandler = newSmartBranchHandler({
             getShapeComposite: ctx.getShapeComposite,
             targetId: targetShape.id,
@@ -100,7 +107,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                     case "rotation":
                       return () => newRotatingState({ boundingBox });
                     case "move":
-                      return () => newMovingHubState({ boundingBox });
+                      return () => ctx.states.newMovingHubState({ boundingBox });
                   }
                 }
 
@@ -193,9 +200,22 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         return src.handleEvent(ctx, event);
       },
       render: (ctx, renderCtx) => {
-        boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-        smartBranchHandler?.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-        shapeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+        const style = ctx.getStyleScheme();
+        const scale = ctx.getScale();
+        boundingBox.render(renderCtx, style, scale);
+        smartBranchHandler?.render(renderCtx, style, scale);
+        shapeHandler.render(renderCtx, style, scale);
+
+        const shapeComposite = ctx.getShapeComposite();
+        if (shapeComposite.attached(targetShape)) {
+          const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
+          scaleGlobalAlpha(renderCtx, 0.7, () => {
+            applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+            renderCtx.beginPath();
+            renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
+            renderCtx.fill();
+          });
+        }
 
         src.render?.(ctx, renderCtx);
       },

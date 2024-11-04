@@ -1,4 +1,14 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  applyAffine,
+  getCenter,
+  getDistance,
+  getOuterRectangle,
+  getRectCenter,
+  multiAffines,
+} from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
@@ -150,6 +160,14 @@ export function newShapeComposite(option: Option) {
     });
   }
 
+  function getLocalSpace(shape: Shape): [IRectangle, rotation: number] {
+    const localRectPolygon = getLocalRectPolygon(shape);
+    const c = getCenter(localRectPolygon[0], localRectPolygon[2]);
+    const width = getDistance(localRectPolygon[0], localRectPolygon[1]);
+    const height = getDistance(localRectPolygon[0], localRectPolygon[3]);
+    return [{ x: c.x - width / 2, y: c.y - height / 2, width, height }, shape.rotation];
+  }
+
   function getLocationRateOnShape(shape: Shape, p: IVec2): IVec2 {
     return geometry.getLocationRateOnRectPath(getLocalRectPolygon(shape), shape.rotation, p);
   }
@@ -204,25 +222,40 @@ export function newShapeComposite(option: Option) {
   }
 
   /**
-   * When scope is undefined, returns root shapes
+   * When scope.parent is undefined, returns root shapes
    */
   function getMergedShapesInSelectionScope(scope?: ShapeSelectionScope, parentScopeCheckOnly = false): Shape[] {
-    if (!scope?.parentId) return mergedShapeTree.map((t) => mergedShapeMap[t.id]);
+    let candidates: Shape[];
+    if (!scope?.parentId) {
+      candidates = mergedShapeTree.map((t) => mergedShapeMap[t.id]);
+    } else {
+      const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
+      candidates =
+        mergedShapeTreeMap[scope.parentId]?.children
+          .map((t) => mergedShapeMap[t.id])
+          .filter((s) => checkFn(getSelectionScope(s), scope)) ?? [];
+    }
 
-    const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
-    return (
-      mergedShapeTreeMap[scope.parentId]?.children
-        .map((t) => mergedShapeMap[t.id])
-        .filter((s) => checkFn(getSelectionScope(s), scope)) ?? []
-    );
+    return scope?.shapeType ? candidates.filter((s) => s.type === scope.shapeType) : candidates;
   }
 
   function getShapeActualPosition(shape: Shape): IVec2 {
     return getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
   }
 
-  function hasParent(shape: Shape): boolean {
+  function hasParent(shape: Shape): shape is Shape & Required<Pick<Shape, "parentId">> {
     return !!shapeMap[shape.parentId ?? ""];
+  }
+
+  function attached(shape: Shape): shape is Shape & Required<Pick<Shape, "attachment">> {
+    return !!shapeMap[shape.attachment?.id ?? ""];
+  }
+
+  function canAttach(shape: Shape): boolean {
+    if (!hasParent(shape)) return true;
+    // When the parent isn't group shape, it must be special layout shape.
+    // => This shape should follow its layout rule rather than attachment.
+    return isGroupShape(shapeMap[shape.parentId]);
   }
 
   function setDocCompositeCache(id: string, val: DocCompositionInfo, src: DocOutput) {
@@ -278,6 +311,7 @@ export function newShapeComposite(option: Option) {
     getWrapperRect,
     getWrapperRectForShapes,
     getLocalRectPolygon,
+    getLocalSpace,
     getLocationRateOnShape,
     getShapeTreeLocalRect,
     rotateShapeTree,
@@ -288,6 +322,8 @@ export function newShapeComposite(option: Option) {
     getMergedShapesInSelectionScope,
     getShapeActualPosition,
     hasParent,
+    attached,
+    canAttach,
 
     setDocCompositeCache,
     getDocCompositeCache,

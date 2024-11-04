@@ -78,6 +78,10 @@ import {
   isSameValue,
   signedCeil,
   getIntRectFromFloatRect,
+  getRelativeRateWithinRect,
+  getRelativePointWithinRect,
+  getPointLerpSlope,
+  getDiagonalLengthOfRect,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1840,5 +1844,75 @@ describe("getIntRectFromFloatRect", () => {
       width: 31,
       height: 42,
     });
+  });
+});
+
+describe("getRelativeRateWithinRect", () => {
+  test("should return relative rate within the rectangle", () => {
+    expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 100, height: 200 }, { x: 50, y: 50 })).toEqualPoint({
+      x: 0.4,
+      y: 0.15,
+    });
+  });
+  test("should regard zero sized rectangle", () => {
+    expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 0, height: 200 }, { x: 50, y: 50 })).toEqualPoint({
+      x: 10,
+      y: 20,
+    });
+    expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 100, height: 0 }, { x: 50, y: 50 })).toEqualPoint({
+      x: 10,
+      y: 20,
+    });
+  });
+  test("should clamp within 0-1 when the flag is set true", () => {
+    expect(getRelativeRateWithinRect({ x: 0, y: 0, width: 100, height: 200 }, { x: -50, y: 250 }, true)).toEqualPoint({
+      x: 0,
+      y: 1,
+    });
+  });
+});
+
+describe("getRelativePointWithinRect", () => {
+  test("should return relative point within the rectangle", () => {
+    expect(getRelativePointWithinRect({ x: 10, y: 20, width: 100, height: 200 }, { x: 0.5, y: 0.5 })).toEqualPoint({
+      x: 60,
+      y: 120,
+    });
+  });
+  test("should clamp within the rect when the flag is set true", () => {
+    expect(
+      getRelativePointWithinRect({ x: 10, y: 20, width: 100, height: 200 }, { x: -0.5, y: 1.5 }, true),
+    ).toEqualPoint({
+      x: 10,
+      y: 220,
+    });
+  });
+});
+
+describe("getPointLerpSlope", () => {
+  test("should return slope of the lerp function", () => {
+    const lerpFn = getCurveLerpFn(
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 100 },
+      ],
+      { d: { x: 0, y: 50 } },
+    );
+    expect(getPointLerpSlope(lerpFn, 0)).toBeCloseTo(Math.PI);
+    expect(getPointLerpSlope(lerpFn, 0.5)).toBeCloseTo(Math.PI / 2);
+    expect(getPointLerpSlope(lerpFn, 1)).toBeCloseTo(0);
+  });
+
+  test("should evaluate backward and forward points to derive slope", () => {
+    const lerpFn = (t: number) => (t < 0.5 ? { x: 100 * t, y: 0 } : { x: 100, y: 100 * t });
+    expect(getPointLerpSlope(lerpFn, 0.4)).toBeCloseTo(0);
+    expect(getPointLerpSlope(lerpFn, 0.5)).toBeCloseTo(Math.PI / 4);
+    expect(getPointLerpSlope(lerpFn, 0.6)).toBeCloseTo(Math.PI / 2);
+  });
+});
+
+describe("getDiagonalLengthOfRect", () => {
+  test("should return wrapper radisu of the rectangle", () => {
+    expect(getDiagonalLengthOfRect({ x: 0, y: 0, width: 3, height: 4 })).toBeCloseTo(5);
   });
 });

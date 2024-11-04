@@ -13,6 +13,7 @@ import { mergeMap } from "../../../utils/commons";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { handleCommonWheel } from "../commons";
+import { getAttachmentByUpdatingRotation } from "../../../shapes";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -63,7 +64,12 @@ export function newRotatingState(option: Option): AppCanvasState {
           let patchMap = targets.reduce<{ [id: string]: Partial<Shape> }>((m, s) => {
             const shape = shapeMap[s.id];
             if (shape) {
-              m[s.id] = shapeComposite.transformShape(shape, resizingAffine);
+              const patch = shapeComposite.transformShape(shape, resizingAffine);
+              m[s.id] = patch;
+              const attachment = getAttachmentByUpdatingRotation(shape, patch.rotation);
+              if (attachment) {
+                m[s.id].attachment = attachment;
+              }
             }
             return m;
           }, {});

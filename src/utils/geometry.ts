@@ -1336,3 +1336,25 @@ export function getIntRectFromFloatRect(src: IRectangle): IRectangle {
   const height = bottom - y;
   return { x, y, width, height };
 }
+
+export function getRelativeRateWithinRect(rect: IRectangle, p: IVec2, shouldClamp = false): IVec2 {
+  if (Math.abs(rect.width * rect.height) < MINVALUE) return { x: rect.x, y: rect.y };
+
+  const rawRate = { x: (p.x - rect.x) / rect.width, y: (p.y - rect.y) / rect.height };
+  return shouldClamp ? { x: clamp(0, 1, rawRate.x), y: clamp(0, 1, rawRate.y) } : rawRate;
+}
+
+export function getRelativePointWithinRect(rect: IRectangle, rate: IVec2, shouldClamp = false): IVec2 {
+  const adjustedRate = shouldClamp ? { x: clamp(0, 1, rate.x), y: clamp(0, 1, rate.y) } : rate;
+  return { x: rect.x + rect.width * adjustedRate.x, y: rect.y + rect.height * adjustedRate.y };
+}
+
+export function getPointLerpSlope(lerpFn: (v: number) => IVec2, t: number, d = 0.0005): number {
+  return getRadian(lerpFn(Math.min(1, t + d)), lerpFn(Math.max(0, t - d)));
+}
+
+export function getDiagonalLengthOfRect(rect: IRectangle): number {
+  const dx = rect.width;
+  const dy = rect.height;
+  return Math.sqrt(dx * dx + dy * dy);
+}

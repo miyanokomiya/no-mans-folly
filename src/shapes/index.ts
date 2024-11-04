@@ -1,13 +1,6 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
-import { BoxPadding, CommonStyle, Shape, Size } from "../models";
-import {
-  GetShapeStruct as _GetShapeStruct,
-  hasFillStyle,
-  hasStrokeStyle,
-  ShapeContext,
-  ShapeSnappingLines,
-  TextContainer,
-} from "./core";
+import { BoxPadding, CommonStyle, Shape, ShapeAttachment, Size } from "../models";
+import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
 import { ImageStore } from "../composables/imageStore";
@@ -15,6 +8,7 @@ import { getPaddingRect } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
 import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
 import { generateKeyBetween } from "../utils/findex";
+import { isObjectEmpty } from "../utils/commons";
 
 export type GetShapeStruct = _GetShapeStruct;
 
@@ -280,9 +274,16 @@ export function remapShapeIds(
     let patch: Partial<Shape> = {};
     if (s.parentId) {
       if (oldToNewMap[s.parentId]) {
-        patch = { parentId: oldToNewMap[s.parentId] };
+        patch.parentId = oldToNewMap[s.parentId];
       } else if (removeNotFound) {
-        patch = { parentId: undefined };
+        patch.parentId = undefined;
+      }
+    }
+    if (s.attachment?.id) {
+      if (oldToNewMap[s.attachment.id]) {
+        patch.attachment = { ...s.attachment, id: oldToNewMap[s.attachment.id] };
+      } else if (removeNotFound) {
+        patch.attachment = undefined;
       }
     }
 
@@ -305,16 +306,21 @@ export function refreshShapeRelations(
   const ret: { [id: string]: Partial<Shape> } = {};
 
   shapes.forEach((s) => {
+    let patch: Partial<Shape> = {};
     if (s.parentId && !availableIdSet.has(s.parentId)) {
-      ret[s.id] = { parentId: undefined };
+      patch.parentId = undefined;
+    }
+    if (s.attachment && !availableIdSet.has(s.attachment.id)) {
+      patch.attachment = undefined;
     }
 
     const struct = getStruct(s.type);
-    if (!struct.refreshRelation) return;
+    if (struct.refreshRelation) {
+      patch = { ...patch, ...struct.refreshRelation(s, availableIdSet) };
+    }
 
-    const patch = struct.refreshRelation(s, availableIdSet);
-    if (patch) {
-      ret[s.id] = ret[s.id] ? { ...ret[s.id], ...patch } : patch;
+    if (!isObjectEmpty(patch)) {
+      ret[s.id] = patch;
     }
   });
 
@@ -368,21 +374,26 @@ export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: 
  * Make sure both src and dist shapes have compatibility before calling this function.
  */
 export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: string): Shape {
-  const dist = createShape(getStruct, type, { id: src.id, findex: src.findex, parentId: src.parentId });
-  const distRect = getWrapperRect(getStruct, dist);
+  const defaultDist = createShape(getStruct, type, { id: src.id, findex: src.findex, parentId: src.parentId });
+  const defaultDistRect = getWrapperRect(getStruct, defaultDist);
   const srcRect = getWrapperRect(getStruct, { ...src, rotation: 0 });
 
-  const resizePatch = resizeShape(getStruct, dist, [
-    srcRect.width / distRect.width,
+  const resizePatch = resizeShape(getStruct, defaultDist, [
+    srcRect.width / defaultDistRect.width,
     0,
     0,
-    srcRect.height / distRect.height,
+    srcRect.height / defaultDistRect.height,
     srcRect.x,
     srcRect.y,
   ]);
 
-  const fill = hasFillStyle(src) ? { fill: src.fill } : {};
-  const stroke = hasStrokeStyle(src) ? { stroke: src.stroke } : {};
+  const dist = createShape(getStruct, type, src);
+  return { ...dist, ...resizePatch, rotation: src.rotation };
+}
 
-  return { ...dist, ...resizePatch, rotation: src.rotation, ...fill, ...stroke };
+export function getAttachmentByUpdatingRotation(shape: Shape, rotation?: number): ShapeAttachment | undefined {
+  if (rotation === undefined || !shape.attachment) return;
+  const v = rotation - shape.rotation;
+  if (v === 0) return;
+  return { ...shape.attachment, rotation: geometry.normalizeRadian(shape.attachment.rotation + v) };
 }

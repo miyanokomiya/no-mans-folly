@@ -18,7 +18,6 @@ import { newAlignBoxPaddingState } from "./alignBoxPaddingState";
 import { newAlignBoxGapState } from "./alignBoxGapState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
-import { newMovingHubState } from "../movingHubState";
 
 export const newAlignBoxSelectedState = defineIntransientState(() => {
   let targetId: string;
@@ -139,7 +138,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
                   case "rotation":
                     return () => newRotatingState({ boundingBox });
                   case "move":
-                    return () => newMovingHubState({ boundingBox });
+                    return () => ctx.states.newMovingHubState({ boundingBox });
                 }
               }
 

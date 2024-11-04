@@ -22,6 +22,7 @@ import { TreeNodeShape } from "../shapes/tree/treeNode";
 import { getNextTreeLayout } from "./shapeHandlers/treeHandler";
 import { patchPipe, toList, toMap } from "../utils/commons";
 import { generateKeyBetween } from "../utils/findex";
+import { Shape } from "../models";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -81,6 +82,23 @@ describe("newShapeComposite", () => {
           .map((s) => s.id)
           .sort(),
       ).toEqual(["a", "align", "label", "line"]);
+    });
+  });
+
+  describe("getLocalSpace", () => {
+    test("should return local space of the shape", () => {
+      const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "test0",
+        width: 10,
+        height: 20,
+        rotation: Math.PI / 2,
+      });
+
+      const shapes = [shape0];
+      const target = newShapeComposite({ shapes, getStruct: getCommonStruct });
+      const result0 = target.getLocalSpace(shape0);
+      expect(result0[0]).toEqualRect({ x: 0, y: 0, width: 10, height: 20 });
+      expect(result0[1]).toBeCloseTo(Math.PI / 2);
     });
   });
 
@@ -365,6 +383,22 @@ describe("newShapeComposite", () => {
         card1,
       ]);
     });
+
+    test("should respect shapeType of the scope", () => {
+      const group = createShape(getCommonStruct, "group", { id: "group" });
+      const rect0 = createShape(getCommonStruct, "rectangle", { id: "rect0", parentId: group.id });
+      const line0 = createShape(getCommonStruct, "line", { id: "line0", parentId: group.id });
+      const rect1 = createShape(getCommonStruct, "rectangle", { id: "rect1" });
+
+      const shapes = [group, rect0, line0, rect1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getMergedShapesInSelectionScope({ shapeType: "rectangle" })).toEqual([rect1]);
+      expect(target.getMergedShapesInSelectionScope({ parentId: group.id, shapeType: "rectangle" })).toEqual([rect0]);
+      expect(target.getMergedShapesInSelectionScope({ shapeType: "line" })).toEqual([]);
+    });
   });
 
   describe("hasParent", () => {
@@ -395,6 +429,69 @@ describe("newShapeComposite", () => {
       expect(target.hasParent(group0)).toBe(false);
       expect(target.hasParent(child0)).toBe(true);
       expect(target.hasParent(child1)).toBe(false);
+    });
+  });
+
+  describe("attached", () => {
+    test("should return true when a shape has valid attachment", () => {
+      const shape0 = createShape(getCommonStruct, "rectangle", {
+        id: "shape",
+        attachment: {
+          id: "line",
+          to: { x: 0, y: 0 },
+          anchor: { x: 0, y: 0 },
+          rotationType: "relative",
+          rotation: 0,
+        },
+      });
+      const shape1 = { ...shape0, attachment: { ...shape0.attachment, id: "unknown" } } as Shape;
+      const shape2 = { ...shape0, attachment: undefined } as Shape;
+      const line = createShape(getCommonStruct, "line", { id: "line" });
+
+      const shapes = [shape0, shape1, shape2, line];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.attached(shape0)).toBe(true);
+      expect(target.attached(shape1)).toBe(false);
+      expect(target.attached(shape2)).toBe(false);
+    });
+  });
+
+  describe("canAttach", () => {
+    test("should return true when a shape can attach to other shape", () => {
+      const group = createShape(getCommonStruct, "group", {
+        id: "group",
+      });
+      const align = createShape(getCommonStruct, "align_box", {
+        id: "align",
+      });
+      const a = createShape(getCommonStruct, "rectangle", {
+        id: "a",
+        parentId: group.id,
+      });
+      const b = {
+        id: "b",
+        parentId: align.id,
+      } as Shape;
+      const c = {
+        id: "c",
+        parentId: "unknown",
+      } as Shape;
+
+      const shapes = [group, align, a, b, c];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.canAttach(group)).toBe(true);
+      expect(target.canAttach(align)).toBe(true);
+      expect(target.canAttach(a)).toBe(true);
+      expect(target.canAttach(b)).toBe(false);
+      expect(target.canAttach(c)).toBe(true);
     });
   });
 

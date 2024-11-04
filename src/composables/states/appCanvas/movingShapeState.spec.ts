@@ -72,6 +72,40 @@ describe("newMovingShapeState", () => {
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
       expect(result).toBe(undefined);
     });
+
+    test("should clear attachment when exists", () => {
+      const ctx = getMockCtx();
+      ctx.getShapeComposite = () =>
+        newShapeComposite({
+          shapes: [
+            createShape<RectangleShape>(getCommonStruct, "rectangle", {
+              id: "a",
+              width: 50,
+              height: 50,
+              attachment: {
+                id: "line",
+                to: { x: 0.5, y: 0 },
+                anchor: { x: 0.5, y: 0.5 },
+                rotationType: "relative",
+                rotation: 0,
+              },
+            }),
+          ],
+          getStruct: getCommonStruct,
+        });
+      let tmpMap: any = {};
+      ctx.setTmpShapeMap.mockImplementation((v) => {
+        tmpMap = v;
+      });
+      const target = newMovingShapeState();
+      target.onStart?.(ctx as any);
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      });
+      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
+      expect(tmpMap["a"]).toHaveProperty("attachment");
+    });
   });
 
   describe("handle pointerup", () => {

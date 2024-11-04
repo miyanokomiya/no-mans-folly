@@ -219,6 +219,9 @@ export function getCommonCommandExams(ctx: AppCanvasStateContext): CommandExam[]
 
   const extra: CommandExam[] = [];
   const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (selectedIds.length === 1 && shapeComposite.attached(shapeMap[selectedIds[0]])) {
+    extra.push(COMMAND_EXAM_SRC.SLIDE_ATTACH_ANCHOR);
+  }
   if (canGroupShapes(shapeComposite, selectedIds)) {
     extra.push(COMMAND_EXAM_SRC.GROUP);
   }

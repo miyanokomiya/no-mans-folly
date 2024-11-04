@@ -1,3 +1,5 @@
+import { clamp } from "okageo";
+
 export function toKeyMap<T extends object>(list: T[], key: string | number): { [key: string]: T } {
   return list.reduce<{ [key: string]: T }>((p, c: any) => {
     const k = c[key];
@@ -150,12 +152,12 @@ export function pickMinItem<T>(src: T[], getValue: (item: T) => number): T | und
 
 export function splitList<T>(
   list: T[],
-  checkfn: (item: T) => boolean = (item) => !!item,
+  checkfn: (item: T, i: number) => boolean = (item) => !!item,
 ): [trueList: T[], falseList: T[]] {
   const t: T[] = [];
   const f: T[] = [];
-  list.forEach((item) => {
-    if (checkfn(item)) {
+  list.forEach((item, i) => {
+    if (checkfn(item, i)) {
       t.push(item);
     } else {
       f.push(item);
@@ -198,4 +200,12 @@ export function fillArray<T>(count: number, initialValue: T, src: T[] = []): T[]
     ret.push(initialValue);
   }
   return ret;
+}
+
+export function slideSubArray<T>(src: T[], range: [from: number, count: number], to: number): T[] {
+  const rangeFrom = range[0];
+  const rangeTo = rangeFrom + range[1] - 1;
+  const [sub, others] = splitList(src, (_, i) => rangeFrom <= i && i <= rangeTo);
+  others.splice(clamp(0, src.length, to), 0, ...sub);
+  return others;
 }
