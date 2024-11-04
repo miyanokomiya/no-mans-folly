@@ -80,6 +80,7 @@ import {
   getIntRectFromFloatRect,
   getRelativeRateWithinRect,
   getRelativePointWithinRect,
+  getPointLerpSlope,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1884,5 +1885,27 @@ describe("getRelativePointWithinRect", () => {
       x: 10,
       y: 220,
     });
+  });
+});
+
+describe("getPointLerpSlope", () => {
+  test("should return slope of the lerp function", () => {
+    const lerpFn = getCurveLerpFn(
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 100 },
+      ],
+      { d: { x: 0, y: 50 } },
+    );
+    expect(getPointLerpSlope(lerpFn, 0)).toBeCloseTo(Math.PI);
+    expect(getPointLerpSlope(lerpFn, 0.5)).toBeCloseTo(Math.PI / 2);
+    expect(getPointLerpSlope(lerpFn, 1)).toBeCloseTo(0);
+  });
+
+  test("should evaluate backward and forward points to derive slope", () => {
+    const lerpFn = (t: number) => (t < 0.5 ? { x: 100 * t, y: 0 } : { x: 100, y: 100 * t });
+    expect(getPointLerpSlope(lerpFn, 0.4)).toBeCloseTo(0);
+    expect(getPointLerpSlope(lerpFn, 0.5)).toBeCloseTo(Math.PI / 4);
+    expect(getPointLerpSlope(lerpFn, 0.6)).toBeCloseTo(Math.PI / 2);
   });
 });

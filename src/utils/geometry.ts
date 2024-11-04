@@ -1348,3 +1348,7 @@ export function getRelativePointWithinRect(rect: IRectangle, rate: IVec2, should
   const adjustedRate = shouldClamp ? { x: clamp(0, 1, rate.x), y: clamp(0, 1, rate.y) } : rate;
   return { x: rect.x + rect.width * adjustedRate.x, y: rect.y + rect.height * adjustedRate.y };
 }
+
+export function getPointLerpSlope(lerpFn: (v: number) => IVec2, t: number, d = 0.0005): number {
+  return getRadian(lerpFn(Math.min(1, t + d)), lerpFn(Math.max(0, t - d)));
+}

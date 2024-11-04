@@ -1,4 +1,4 @@
-import { AffineMatrix, clamp, getDistanceSq, getRadian, getRectCenter, isSame, IVec2, lerpPoint, rotate } from "okageo";
+import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, rotate } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
@@ -16,6 +16,7 @@ import {
   toMap,
 } from "../utils/commons";
 import {
+  getPointLerpSlope,
   getRelativePointWithinRect,
   getRelativeRateWithinRect,
   getRotateFn,
@@ -61,9 +62,7 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
 
         let nextRotation = nextAttached.rotation;
         if (nextAttachment.rotationType === "relative") {
-          const d = 0.001;
-          const [ta, tb] = d < t ? [nextLineLerpFn(t - d), toP] : [toP, nextLineLerpFn(t + d)];
-          const baseRotation = getRadian(tb, ta);
+          const baseRotation = getPointLerpSlope(nextLineLerpFn, t);
           nextRotation = nextAttachment.rotation + baseRotation;
         }
 
