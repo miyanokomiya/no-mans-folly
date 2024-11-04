@@ -4,7 +4,7 @@ import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { TAU } from "../../../../utils/geometry";
-import { add, IVec2, sub } from "okageo";
+import { add, getDistance, IVec2, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
@@ -101,7 +101,16 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             }
           }
 
-          const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, 40 * ctx.getScale());
+          {
+            const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
+            const [localBounds] = shapeComposite.getLocalSpace(latestShape);
+            if (getDistance(event.data.current, latestAnchorP) > Math.max(localBounds.width, localBounds.height)) {
+              keepMoving = true;
+              return { type: "break" };
+            }
+          }
+
+          const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, Infinity);
           if (!closestInfo) {
             keepMoving = true;
             return { type: "break" };
@@ -198,6 +207,15 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
         renderCtx.beginPath();
         applyCurvePath(renderCtx, getLinePath(line), line.curves);
+        renderCtx.stroke();
+
+        const shapeComposite = ctx.getShapeComposite();
+        const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
+        const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
+        const [localBounds] = shapeComposite.getLocalSpace(latestShape);
+        applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
+        renderCtx.beginPath();
+        renderCtx.arc(latestAnchorP.x, latestAnchorP.y, Math.max(localBounds.width, localBounds.height), 0, TAU);
         renderCtx.stroke();
 
         applyFillStyle(renderCtx, { color: style.selectionSecondaly });
