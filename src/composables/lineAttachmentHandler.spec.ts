@@ -132,6 +132,40 @@ describe("getAttachmentAnchorPoint", () => {
       y: 80,
     });
   });
+
+  test("should return anchor point: group shape", () => {
+    const group = createShape(getCommonStruct, "group", {
+      id: "group",
+      attachment: {
+        id: "line",
+        to: { x: 0.2, y: 0 },
+        anchor: { x: 0.5, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const a = createShape(getCommonStruct, "rectangle", { id: "a", parentId: group.id });
+    const b = { ...a, id: "b", p: { x: 0, y: 100 } };
+    const shapeComposite = newShapeComposite({
+      shapes: [group, a, b],
+      getStruct: getCommonStruct,
+    });
+    expect(getAttachmentAnchorPoint(shapeComposite, group)).toEqualPoint({ x: 50, y: 0 });
+
+    const rotated = { ...group, rotation: Math.PI / 2 };
+    const shapeComposite1 = newShapeComposite({
+      shapes: [
+        rotated,
+        { ...a, p: { x: 50, y: 50 }, rotation: Math.PI / 2 },
+        { ...b, p: { x: -50, y: 50 }, rotation: Math.PI / 2 },
+      ],
+      getStruct: getCommonStruct,
+    });
+    expect(getAttachmentAnchorPoint(shapeComposite1, rotated)).toEqualPoint({
+      x: 150,
+      y: 100,
+    });
+  });
 });
 
 describe("getNextAttachmentAnchor", () => {

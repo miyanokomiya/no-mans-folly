@@ -1,9 +1,7 @@
 import {
   AffineMatrix,
   clamp,
-  getCenter,
   getDistanceSq,
-  getOuterRectangle,
   getRadian,
   getRectCenter,
   isSame,
@@ -166,15 +164,13 @@ export function getAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: 
 }
 
 export function getNextAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: Shape, rate?: IVec2): IVec2 {
-  const localRectPath = shapeComposite.getLocalRectPolygon(shape);
-  const c = getCenter(localRectPath[0], localRectPath[2]);
+  const [localRect, rotation] = shapeComposite.getLocalSpace(shape);
+  const c = getRectCenter(localRect);
   if (!rate) return c;
 
-  const rotateFn = getRotateFn(shape.rotation, c);
-  const derotatedLocalRectPath = localRectPath.map((p) => rotateFn(p, true));
-  const derotatedRect = getOuterRectangle([derotatedLocalRectPath]);
-  const derotatedAnchor = getRelativePointWithinRect(derotatedRect, rate);
-  return rotateFn(derotatedAnchor);
+  const rotateFn = getRotateFn(rotation, c);
+  const localAnchor = getRelativePointWithinRect(localRect, rate);
+  return rotateFn(localAnchor);
 }
 
 export function getNextAttachmentAnchor(shapeComposite: ShapeComposite, shape: Shape, point: IVec2): IVec2 {
