@@ -1338,8 +1338,13 @@ export function getIntRectFromFloatRect(src: IRectangle): IRectangle {
 }
 
 export function getRelativeRateWithinRect(rect: IRectangle, p: IVec2, shouldClamp = false): IVec2 {
-  if (Math.abs(rect.width * rect.height) < MINVALUE) return { x: 0, y: 0 };
+  if (Math.abs(rect.width * rect.height) < MINVALUE) return { x: rect.x, y: rect.y };
 
   const rawRate = { x: (p.x - rect.x) / rect.width, y: (p.y - rect.y) / rect.height };
   return shouldClamp ? { x: clamp(0, 1, rawRate.x), y: clamp(0, 1, rawRate.y) } : rawRate;
+}
+
+export function getRelativePointWithinRect(rect: IRectangle, rate: IVec2, shouldClamp = false): IVec2 {
+  const adjustedRate = shouldClamp ? { x: clamp(0, 1, rate.x), y: clamp(0, 1, rate.y) } : rate;
+  return { x: rect.x + rect.width * adjustedRate.x, y: rect.y + rect.height * adjustedRate.y };
 }

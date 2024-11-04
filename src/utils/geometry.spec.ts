@@ -79,6 +79,7 @@ import {
   signedCeil,
   getIntRectFromFloatRect,
   getRelativeRateWithinRect,
+  getRelativePointWithinRect,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1853,18 +1854,35 @@ describe("getRelativeRateWithinRect", () => {
   });
   test("should regard zero sized rectangle", () => {
     expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 0, height: 200 }, { x: 50, y: 50 })).toEqualPoint({
-      x: 0,
-      y: 0,
+      x: 10,
+      y: 20,
     });
     expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 100, height: 0 }, { x: 50, y: 50 })).toEqualPoint({
-      x: 0,
-      y: 0,
+      x: 10,
+      y: 20,
     });
   });
   test("should clamp within 0-1 when the flag is set true", () => {
     expect(getRelativeRateWithinRect({ x: 0, y: 0, width: 100, height: 200 }, { x: -50, y: 250 }, true)).toEqualPoint({
       x: 0,
       y: 1,
+    });
+  });
+});
+
+describe("getRelativePointWithinRect", () => {
+  test("should return relative point within the rectangle", () => {
+    expect(getRelativePointWithinRect({ x: 10, y: 20, width: 100, height: 200 }, { x: 0.5, y: 0.5 })).toEqualPoint({
+      x: 60,
+      y: 120,
+    });
+  });
+  test("should clamp within the rect when the flag is set true", () => {
+    expect(
+      getRelativePointWithinRect({ x: 10, y: 20, width: 100, height: 200 }, { x: -0.5, y: 1.5 }, true),
+    ).toEqualPoint({
+      x: 10,
+      y: 220,
     });
   });
 });
