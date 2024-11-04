@@ -3,7 +3,7 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
-import { TAU } from "../../../../utils/geometry";
+import { getDiagonalLengthOfRect, TAU } from "../../../../utils/geometry";
 import { add, getDistance, IVec2, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
@@ -104,7 +104,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           if (!event.data.shift) {
             const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
             const [localBounds] = shapeComposite.getLocalSpace(latestShape);
-            if (getDistance(event.data.current, latestAnchorP) > Math.max(localBounds.width, localBounds.height)) {
+            if (getDistance(event.data.current, latestAnchorP) > getDiagonalLengthOfRect(localBounds)) {
               keepMoving = true;
               return { type: "break" };
             }
@@ -215,7 +215,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         const [localBounds] = shapeComposite.getLocalSpace(latestShape);
         applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
         renderCtx.beginPath();
-        renderCtx.arc(latestAnchorP.x, latestAnchorP.y, Math.max(localBounds.width, localBounds.height), 0, TAU);
+        renderCtx.arc(latestAnchorP.x, latestAnchorP.y, getDiagonalLengthOfRect(localBounds), 0, TAU);
         renderCtx.stroke();
 
         applyFillStyle(renderCtx, { color: style.selectionSecondaly });

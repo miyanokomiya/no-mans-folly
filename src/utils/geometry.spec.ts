@@ -81,6 +81,7 @@ import {
   getRelativeRateWithinRect,
   getRelativePointWithinRect,
   getPointLerpSlope,
+  getDiagonalLengthOfRect,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1907,5 +1908,11 @@ describe("getPointLerpSlope", () => {
     expect(getPointLerpSlope(lerpFn, 0.4)).toBeCloseTo(0);
     expect(getPointLerpSlope(lerpFn, 0.5)).toBeCloseTo(Math.PI / 4);
     expect(getPointLerpSlope(lerpFn, 0.6)).toBeCloseTo(Math.PI / 2);
+  });
+});
+
+describe("getDiagonalLengthOfRect", () => {
+  test("should return wrapper radisu of the rectangle", () => {
+    expect(getDiagonalLengthOfRect({ x: 0, y: 0, width: 3, height: 4 })).toBeCloseTo(5);
   });
 });

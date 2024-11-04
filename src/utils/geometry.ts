@@ -1352,3 +1352,9 @@ export function getRelativePointWithinRect(rect: IRectangle, rate: IVec2, should
 export function getPointLerpSlope(lerpFn: (v: number) => IVec2, t: number, d = 0.0005): number {
   return getRadian(lerpFn(Math.min(1, t + d)), lerpFn(Math.max(0, t - d)));
 }
+
+export function getDiagonalLengthOfRect(rect: IRectangle): number {
+  const dx = rect.width;
+  const dy = rect.height;
+  return Math.sqrt(dx * dx + dy * dy);
+}
