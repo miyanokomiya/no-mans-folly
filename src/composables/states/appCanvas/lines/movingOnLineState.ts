@@ -101,7 +101,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             }
           }
 
-          {
+          if (!event.data.shift) {
             const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
             const [localBounds] = shapeComposite.getLocalSpace(latestShape);
             if (getDistance(event.data.current, latestAnchorP) > Math.max(localBounds.width, localBounds.height)) {
