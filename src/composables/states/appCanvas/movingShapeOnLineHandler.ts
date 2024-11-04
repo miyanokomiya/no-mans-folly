@@ -3,7 +3,6 @@ import { isLineShape } from "../../../shapes/line";
 import { getAttachmentAnchorPoint } from "../../lineAttachmentHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { AppCanvasStateContext } from "./core";
-import { newMovingOnLineState } from "./lines/movingOnLineState";
 import { newShapeComposite } from "../../shapeComposite";
 
 export function handlePointerMoveOnLine(
@@ -33,6 +32,6 @@ export function handlePointerMoveOnLine(
 
   return {
     type: "stack-resume",
-    getState: () => newMovingOnLineState({ lineId: targetLine.id, shapeId: movingShape.id }),
+    getState: () => ctx.states.newMovingOnLineState({ lineId: targetLine.id, shapeId: movingShape.id }),
   };
 }

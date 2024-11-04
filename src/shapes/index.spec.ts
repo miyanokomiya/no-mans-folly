@@ -4,6 +4,7 @@ import {
   canHaveText,
   canHaveTextPadding,
   createShape,
+  getAttachmentByUpdatingRotation,
   getCommonStruct,
   getShapeTextBounds,
   getTextRangeRect,
@@ -25,6 +26,7 @@ import { struct as unknownStruct } from "./unknown";
 import { EllipseShape } from "./ellipse";
 import { createFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
+import { ShapeAttachment } from "../models";
 
 describe("getCommonStruct", () => {
   test("should return the struct of the type", () => {
@@ -498,5 +500,26 @@ describe("switchShapeType", () => {
     expect(result0.fill).toEqual(rect.fill);
     expect(result0.stroke).toEqual(rect.stroke);
     expect(result0.alpha).toBe(0.3);
+  });
+});
+
+describe("getAttachmentByUpdatingRotation", () => {
+  test("should return attachment for new rotation if it's passed", () => {
+    const attachment: ShapeAttachment = {
+      id: "line",
+      to: { x: 0.2, y: 0 },
+      anchor: { x: 0, y: 0 },
+      rotationType: "relative",
+      rotation: 0.2,
+    };
+    const shape = createShape(getCommonStruct, "rectangle", {
+      id: "a",
+      rotation: 0.1,
+      attachment,
+    });
+    expect(getAttachmentByUpdatingRotation(shape)).toEqual(undefined);
+    expect(getAttachmentByUpdatingRotation(shape, 0.1)).toEqual(undefined);
+    expect(getAttachmentByUpdatingRotation(shape, 0.3)).toEqual({ ...attachment, rotation: 0.4 });
+    expect(getAttachmentByUpdatingRotation(shape, -0.1)).toEqual({ ...attachment, rotation: 0 });
   });
 });

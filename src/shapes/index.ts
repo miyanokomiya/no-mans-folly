@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
-import { BoxPadding, CommonStyle, Shape, Size } from "../models";
+import { BoxPadding, CommonStyle, Shape, ShapeAttachment, Size } from "../models";
 import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
@@ -389,4 +389,11 @@ export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: str
 
   const dist = createShape(getStruct, type, src);
   return { ...dist, ...resizePatch, rotation: src.rotation };
+}
+
+export function getAttachmentByUpdatingRotation(shape: Shape, rotation?: number): ShapeAttachment | undefined {
+  if (rotation === undefined || !shape.attachment) return;
+  const v = rotation - shape.rotation;
+  if (v === 0) return;
+  return { ...shape.attachment, rotation: geometry.normalizeRadian(shape.attachment.rotation + v) };
 }
