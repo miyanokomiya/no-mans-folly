@@ -17,7 +17,7 @@ import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { fillArray, isObjectEmpty, pickMinItem, slideSubArray, splitList, toList } from "../utils/commons";
+import { fillArray, isObjectEmpty, mapEach, pickMinItem, slideSubArray, splitList, toList } from "../utils/commons";
 import {
   getRelativePointWithinRect,
   getRelativeRateWithinRect,
@@ -37,33 +37,11 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
   function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
-    const shapeList = Object.values(shapeMap);
-    const updatedEntries = Object.entries(updatedMap);
+    const attachedMap = getUpdatedAttachedMap(shapeComposite, updatedMap);
+
     const ret: { [id: string]: Partial<Shape> } = {};
-
-    const targetLineIds = new Set(updatedEntries.filter(([id]) => isLineShape(shapeMap[id])).map(([id]) => id));
-    const attachedMap = new Map<string, Set<string>>();
-    shapeList.forEach((s) => {
-      if (!s.attachment) return;
-
-      const lineId = s.attachment.id;
-      if (!targetLineIds.has(lineId)) {
-        if (!updatedMap[s.id]) return; // neither the shape nor the line changes
-
-        targetLineIds.add(lineId);
-      }
-
-      const idSet = attachedMap.get(lineId);
-      if (idSet) {
-        idSet.add(s.id);
-      } else {
-        attachedMap.set(lineId, new Set([s.id]));
-      }
-    });
-
-    targetLineIds.forEach((lineId) => {
-      const attachedIdSet = attachedMap.get(lineId);
-      if (!attachedIdSet || attachedIdSet.size === 0) return;
+    attachedMap.forEach((attachedIdSet, lineId) => {
+      if (attachedIdSet.size === 0) return;
 
       const line = shapeMap[lineId];
       if (!line || !isLineShape(line)) {
@@ -116,6 +94,49 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
   }
 
   return { onModified };
+}
+
+/**
+ * Returns Map<line id, Set<attached shape id>>
+ */
+function getUpdatedAttachedMap(
+  shapeComposite: ShapeComposite,
+  updatedMap: { [id: string]: Partial<Shape> },
+): Map<string, Set<string>> {
+  const shapeMap = shapeComposite.shapeMap;
+  const targetLineIdSet = new Set(Object.keys(updatedMap).filter((id) => isLineShape(shapeMap[id])));
+  const attachedMap = new Map<string, Set<string>>();
+
+  mapEach(shapeMap, (s, id) => {
+    const lineId = s.attachment?.id ?? updatedMap[id]?.attachment?.id;
+    if (!lineId || !targetLineIdSet.has(lineId)) return;
+
+    const idSet = attachedMap.get(lineId);
+    if (idSet) {
+      idSet.add(s.id);
+    } else {
+      attachedMap.set(lineId, new Set([s.id]));
+    }
+  });
+
+  mapEach(updatedMap, (patch, id) => {
+    if (targetLineIdSet.has(id)) return;
+
+    const s = { ...shapeMap[id], ...patch };
+    if (!s.attachment) return;
+
+    const lineId = s.attachment.id;
+    if (targetLineIdSet.has(lineId)) return;
+
+    const idSet = attachedMap.get(lineId);
+    if (idSet) {
+      idSet.add(s.id);
+    } else {
+      attachedMap.set(lineId, new Set([s.id]));
+    }
+  });
+
+  return attachedMap;
 }
 
 export function getLineAttachmentPatch(

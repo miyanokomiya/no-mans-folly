@@ -243,11 +243,11 @@ export function newShapeComposite(option: Option) {
     return getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
   }
 
-  function hasParent(shape: Shape): boolean {
+  function hasParent(shape: Shape): shape is Shape & Required<Pick<Shape, "parentId">> {
     return !!shapeMap[shape.parentId ?? ""];
   }
 
-  function attached(shape: Shape): boolean {
+  function attached(shape: Shape): shape is Shape & Required<Pick<Shape, "attachment">> {
     return !!shapeMap[shape.attachment?.id ?? ""];
   }
 
