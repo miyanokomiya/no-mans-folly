@@ -98,7 +98,7 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
             nextAttached.attachment.anchor,
             toP,
           ),
-          getRotationAffine(nextRotation - nextAttached.rotation, getRectCenter(shapeComposite.getWrapperRect(shape))),
+          getRotationAffine(nextRotation - shape.rotation, getRectCenter(shapeComposite.getWrapperRect(shape))),
         ]);
 
         const allTargetShapes = shapeComposite.getAllTransformTargets([attachedId]);
