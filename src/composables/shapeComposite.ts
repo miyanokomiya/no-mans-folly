@@ -251,6 +251,13 @@ export function newShapeComposite(option: Option) {
     return !!shapeMap[shape.attachment?.id ?? ""];
   }
 
+  function canAttach(shape: Shape): boolean {
+    if (!hasParent(shape)) return true;
+    // When the parent isn't group shape, it must be special layout shape.
+    // => This shape should follow its layout rule rather than attachment.
+    return isGroupShape(shapeMap[shape.parentId]);
+  }
+
   function setDocCompositeCache(id: string, val: DocCompositionInfo, src: DocOutput) {
     docCompositeCacheMap[id] = [val, src];
   }
@@ -316,6 +323,7 @@ export function newShapeComposite(option: Option) {
     getShapeActualPosition,
     hasParent,
     attached,
+    canAttach,
 
     setDocCompositeCache,
     getDocCompositeCache,

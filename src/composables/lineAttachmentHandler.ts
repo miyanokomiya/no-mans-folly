@@ -54,6 +54,13 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       attachedIdSet.forEach((attachedId) => {
         const shape = shapeMap[attachedId];
         const nextAttached = { ...shape, ...updatedMap[attachedId] };
+        if (!shapeComposite.canAttach(nextAttached)) {
+          if (shape.attachment) {
+            ret[attachedId] = { attachment: undefined };
+          }
+          return;
+        }
+
         const nextAttachment = nextAttached.attachment;
         if (!nextAttachment) return;
 

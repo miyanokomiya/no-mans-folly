@@ -13,6 +13,7 @@ import { LineShape } from "../shapes/line";
 import { RectangleShape } from "../shapes/rectangle";
 import { Shape } from "../models";
 import { getLineEdgeInfo } from "../shapes/utils/line";
+import { TreeNodeShape } from "../shapes/tree/treeNode";
 
 describe("getLineAttachmentPatch", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
@@ -76,6 +77,37 @@ describe("getLineAttachmentPatch", () => {
     });
     expect(result1[shapeB.id]).toHaveProperty("attachment");
     expect(result1[shapeB.id].attachment).toBe(undefined);
+  });
+
+  test("should detach unattachable shapes", () => {
+    const root = createShape(getCommonStruct, "tree_root", {
+      id: "root",
+    });
+    const nodeA = createShape(getCommonStruct, "tree_node", {
+      id: "nodeA",
+      attachment: {
+        id: line.id,
+        to: { x: 0.2, y: 0 },
+        anchor: { x: 0.5, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [line, root, nodeA],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getLineAttachmentPatch(shapeComposite, {
+      update: {
+        [nodeA.id]: {
+          treeParentId: root.id,
+          parentId: root.id,
+        } as Partial<TreeNodeShape>,
+      },
+    });
+    expect(result0[nodeA.id]).toHaveProperty("attachment");
+    expect(result0[nodeA.id].attachment).toBe(undefined);
   });
 
   test("case: rotated group shape", () => {

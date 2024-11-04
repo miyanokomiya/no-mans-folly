@@ -454,10 +454,44 @@ describe("newShapeComposite", () => {
         getStruct: getCommonStruct,
       });
 
-      // no scope => should find one among root ones
       expect(target.attached(shape0)).toBe(true);
       expect(target.attached(shape1)).toBe(false);
       expect(target.attached(shape2)).toBe(false);
+    });
+  });
+
+  describe("canAttach", () => {
+    test("should return true when a shape can attach to other shape", () => {
+      const group = createShape(getCommonStruct, "group", {
+        id: "group",
+      });
+      const align = createShape(getCommonStruct, "align_box", {
+        id: "align",
+      });
+      const a = createShape(getCommonStruct, "rectangle", {
+        id: "a",
+        parentId: group.id,
+      });
+      const b = {
+        id: "b",
+        parentId: align.id,
+      } as Shape;
+      const c = {
+        id: "c",
+        parentId: "unknown",
+      } as Shape;
+
+      const shapes = [group, align, a, b, c];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.canAttach(group)).toBe(true);
+      expect(target.canAttach(align)).toBe(true);
+      expect(target.canAttach(a)).toBe(true);
+      expect(target.canAttach(b)).toBe(false);
+      expect(target.canAttach(c)).toBe(true);
     });
   });
 
