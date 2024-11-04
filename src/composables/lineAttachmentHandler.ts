@@ -1,21 +1,20 @@
-import {
-  AffineMatrix,
-  clamp,
-  getDistanceSq,
-  getRadian,
-  getRectCenter,
-  isSame,
-  IVec2,
-  lerpPoint,
-  multiAffines,
-  rotate,
-} from "okageo";
+import { AffineMatrix, clamp, getDistanceSq, getRadian, getRectCenter, isSame, IVec2, lerpPoint, rotate } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
-import { ShapeComposite } from "./shapeComposite";
+import { getNextShapeComposite, ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { fillArray, isObjectEmpty, mapEach, pickMinItem, slideSubArray, splitList, toList } from "../utils/commons";
+import {
+  fillArray,
+  mapEach,
+  mapReduce,
+  patchPipe,
+  pickMinItem,
+  slideSubArray,
+  splitList,
+  toList,
+  toMap,
+} from "../utils/commons";
 import {
   getRelativePointWithinRect,
   getRelativeRateWithinRect,
@@ -54,37 +53,50 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       attachedIdSet.forEach((attachedId) => {
         const shape = shapeMap[attachedId];
         const nextAttached = { ...shape, ...updatedMap[attachedId] };
-        if (!nextAttached.attachment) return;
+        const nextAttachment = nextAttached.attachment;
+        if (!nextAttachment) return;
 
-        const t = nextAttached.attachment.to.x;
+        const t = nextAttachment.to.x;
         const toP = nextLineLerpFn(t);
 
         let nextRotation = nextAttached.rotation;
-        if (nextAttached.attachment.rotationType === "relative") {
+        if (nextAttachment.rotationType === "relative") {
           const d = 0.001;
           const [ta, tb] = d < t ? [nextLineLerpFn(t - d), toP] : [toP, nextLineLerpFn(t + d)];
           const baseRotation = getRadian(tb, ta);
-          nextRotation = nextAttached.attachment.rotation + baseRotation;
+          nextRotation = nextAttachment.rotation + baseRotation;
         }
 
-        const affine = multiAffines([
-          getAffineByMoveToAttachedPoint(
-            shapeComposite,
-            { ...nextAttached, rotation: nextRotation },
-            nextAttached.attachment.anchor,
-            toP,
-          ),
-          getRotationAffine(nextRotation - shape.rotation, getRectCenter(shapeComposite.getWrapperRect(shape))),
-        ]);
-
         const allTargetShapes = shapeComposite.getAllTransformTargets([attachedId]);
-        allTargetShapes.forEach(({ id }) => {
-          const s = shapeComposite.shapeMap[id];
-          const patch = shapeComposite.transformShape(s, affine);
-          if (!isObjectEmpty(patch)) {
-            ret[id] = patch;
-          }
-        });
+
+        const patch = patchPipe(
+          [
+            (src) => {
+              // Apply next rotation at first.
+              const rotateAffine = getRotationAffine(
+                nextRotation - shape.rotation,
+                getRectCenter(shapeComposite.getWrapperRect(shape)),
+              );
+              return mapReduce(src, (s) => shapeComposite.transformShape(s, rotateAffine));
+            },
+            (src, update) => {
+              // Derive translation affine based on the anchors of rotated shapes.
+              const rotatedShapeComposite = getNextShapeComposite(shapeComposite, { update });
+              const translateAffine = getAffineByMoveToAttachedPoint(
+                rotatedShapeComposite,
+                rotatedShapeComposite.shapeMap[attachedId],
+                nextAttachment.anchor,
+                toP,
+              );
+              return mapReduce(src, (s) => shapeComposite.transformShape(s, translateAffine));
+            },
+          ],
+          toMap(allTargetShapes),
+        ).patch;
+
+        for (const id in patch) {
+          ret[id] = patch[id];
+        }
       });
     });
 

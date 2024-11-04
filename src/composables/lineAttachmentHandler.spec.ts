@@ -59,7 +59,7 @@ describe("getLineAttachmentPatch", () => {
       },
     });
     expect(result1).not.toHaveProperty(shapeA.id);
-    expect(result1[shapeB.id].p).toEqualPoint({ x: -80, y: -50 });
+    expect(result1[shapeB.id].p).toEqualPoint({ x: -30, y: -50 });
     expect(result1[shapeB.id].rotation).toBeCloseTo(Math.PI / 2);
   });
 
@@ -76,6 +76,62 @@ describe("getLineAttachmentPatch", () => {
     });
     expect(result1[shapeB.id]).toHaveProperty("attachment");
     expect(result1[shapeB.id].attachment).toBe(undefined);
+  });
+
+  test("case: rotated group shape", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line",
+      body: [{ p: { x: 100, y: 0 } }],
+      q: { x: 100, y: 100 },
+    });
+    const group = createShape(getCommonStruct, "group", {
+      id: "group",
+      attachment: {
+        id: "line",
+        to: { x: 0.2, y: 0 },
+        anchor: { x: 0.5, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const a = createShape(getCommonStruct, "rectangle", {
+      id: "a",
+      parentId: group.id,
+      p: { x: 50, y: 50 },
+    });
+    const b = { ...a, id: "b", p: { x: -50, y: 50 } };
+    const shapeComposite = newShapeComposite({
+      shapes: [line, group, a, b],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getLineAttachmentPatch(shapeComposite, {
+      update: {
+        [group.id]: {},
+      },
+    });
+    expect(result0[a.id].p).toEqualPoint({ x: 40, y: 0 });
+    expect(result0[a.id]).not.toHaveProperty("rotation");
+    expect(result0[b.id].p).toEqualPoint({ x: -60, y: 0 });
+    expect(result0[b.id]).not.toHaveProperty("rotation");
+
+    const result1 = getLineAttachmentPatch(shapeComposite, {
+      update: {
+        [group.id]: {
+          attachment: {
+            id: "line",
+            to: { x: 0.8, y: 0 },
+            anchor: { x: 0.5, y: 0 },
+            rotationType: "relative",
+            rotation: 0,
+          },
+        },
+      },
+    });
+    expect(result1[a.id].p).toEqualPoint({ x: 0, y: 60 });
+    expect(result1[a.id].rotation).toBeCloseTo(Math.PI / 2);
+    expect(result1[b.id].p).toEqualPoint({ x: 0, y: -40 });
+    expect(result1[b.id].rotation).toBeCloseTo(Math.PI / 2);
   });
 });
 
