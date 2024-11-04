@@ -1,4 +1,5 @@
 import {
+  AffineMatrix,
   clamp,
   getCenter,
   getDistanceSq,
@@ -8,6 +9,7 @@ import {
   isSame,
   IVec2,
   lerpPoint,
+  multiAffines,
   rotate,
 } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
@@ -16,7 +18,12 @@ import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { fillArray, isObjectEmpty, pickMinItem, slideSubArray, splitList, toList } from "../utils/commons";
-import { getRelativePointWithinRect, getRelativeRateWithinRect, getRotateFn } from "../utils/geometry";
+import {
+  getRelativePointWithinRect,
+  getRelativeRateWithinRect,
+  getRotateFn,
+  getRotationAffine,
+} from "../utils/geometry";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -69,7 +76,8 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       const nextLine = { ...line, ...updatedMap[lineId] } as LineShape;
       const nextLineLerpFn = getLineEdgeInfo(nextLine).lerpFn;
       attachedIdSet.forEach((attachedId) => {
-        const nextAttached = { ...shapeMap[attachedId], ...updatedMap[attachedId] };
+        const shape = shapeMap[attachedId];
+        const nextAttached = { ...shape, ...updatedMap[attachedId] };
         if (!nextAttached.attachment) return;
 
         const t = nextAttached.attachment.to.x;
@@ -83,21 +91,24 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
           nextRotation = nextAttached.attachment.rotation + baseRotation;
         }
 
-        const patch =
-          patchByMoveToAttachedPoint(
+        const affine = multiAffines([
+          getAffineByMoveToAttachedPoint(
             shapeComposite,
             { ...nextAttached, rotation: nextRotation },
             nextAttached.attachment.anchor,
             toP,
-          ) ?? {};
+          ),
+          getRotationAffine(nextRotation - nextAttached.rotation, getRectCenter(shapeComposite.getWrapperRect(shape))),
+        ]);
 
-        if (nextAttached.rotation !== nextRotation) {
-          patch.rotation = nextRotation;
-        }
-
-        if (!isObjectEmpty(patch)) {
-          ret[attachedId] = patch;
-        }
+        const allTargetShapes = shapeComposite.getAllTransformTargets([attachedId]);
+        allTargetShapes.forEach(({ id }) => {
+          const s = shapeComposite.shapeMap[id];
+          const patch = shapeComposite.transformShape(s, affine);
+          if (!isObjectEmpty(patch)) {
+            ret[id] = patch;
+          }
+        });
       });
     });
 
@@ -119,14 +130,14 @@ export function getLineAttachmentPatch(
   return handler.onModified(patchInfo.update);
 }
 
-export function patchByMoveToAttachedPoint(
+export function getAffineByMoveToAttachedPoint(
   shapeComposite: ShapeComposite,
   shape: Shape,
   anchor: IVec2,
   attachedPoint: IVec2,
-): Partial<Shape> | undefined {
+): AffineMatrix {
   const anchorP = getNextAttachmentAnchorPoint(shapeComposite, shape, anchor);
-  return shapeComposite.transformShape(shape, [1, 0, 0, 1, attachedPoint.x - anchorP.x, attachedPoint.y - anchorP.y]);
+  return [1, 0, 0, 1, attachedPoint.x - anchorP.x, attachedPoint.y - anchorP.y];
 }
 
 export function getAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: Shape): IVec2 {

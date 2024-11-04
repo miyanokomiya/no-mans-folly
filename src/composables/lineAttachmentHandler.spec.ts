@@ -1,11 +1,11 @@
 import { describe, test, expect } from "vitest";
 import {
+  getAffineByMoveToAttachedPoint,
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
   getLineAttachmentPatch,
   getNextAttachmentAnchor,
-  patchByMoveToAttachedPoint,
 } from "./lineAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
@@ -79,7 +79,7 @@ describe("getLineAttachmentPatch", () => {
   });
 });
 
-describe("patchByMoveToAttachedPoint", () => {
+describe("getAffineByMoveToAttachedPoint", () => {
   test("should return shape patch to move to the point", () => {
     const shape = createShape(getCommonStruct, "rectangle", { id: "a" });
     const shapeComposite = newShapeComposite({
@@ -87,11 +87,11 @@ describe("patchByMoveToAttachedPoint", () => {
       getStruct: getCommonStruct,
     });
 
-    const result0 = patchByMoveToAttachedPoint(shapeComposite, shape, { x: 0.5, y: 0.5 }, { x: 100, y: 100 });
-    expect(result0?.p).toEqualPoint({ x: 50, y: 50 });
+    const result0 = getAffineByMoveToAttachedPoint(shapeComposite, shape, { x: 0.5, y: 0.5 }, { x: 100, y: 100 });
+    expect(result0).toEqual([1, 0, 0, 1, 50, 50]);
 
-    const result1 = patchByMoveToAttachedPoint(shapeComposite, shape, { x: 0.2, y: 0.8 }, { x: 100, y: 100 });
-    expect(result1?.p).toEqualPoint({ x: 80, y: 20 });
+    const result1 = getAffineByMoveToAttachedPoint(shapeComposite, shape, { x: 0.2, y: 0.8 }, { x: 100, y: 100 });
+    expect(result1).toEqual([1, 0, 0, 1, 80, 20]);
   });
 });
 
