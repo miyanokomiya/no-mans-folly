@@ -1,4 +1,14 @@
-import { AffineMatrix, IRectangle, IVec2, applyAffine, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  applyAffine,
+  getCenter,
+  getDistance,
+  getOuterRectangle,
+  getRectCenter,
+  multiAffines,
+} from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
@@ -150,6 +160,14 @@ export function newShapeComposite(option: Option) {
     });
   }
 
+  function getLocalSpace(shape: Shape): [IRectangle, rotation: number] {
+    const localRectPolygon = getLocalRectPolygon(shape);
+    const c = getCenter(localRectPolygon[0], localRectPolygon[2]);
+    const width = getDistance(localRectPolygon[0], localRectPolygon[1]);
+    const height = getDistance(localRectPolygon[0], localRectPolygon[3]);
+    return [{ x: c.x - width / 2, y: c.y - height / 2, width, height }, shape.rotation];
+  }
+
   function getLocationRateOnShape(shape: Shape, p: IVec2): IVec2 {
     return geometry.getLocationRateOnRectPath(getLocalRectPolygon(shape), shape.rotation, p);
   }
@@ -286,6 +304,7 @@ export function newShapeComposite(option: Option) {
     getWrapperRect,
     getWrapperRectForShapes,
     getLocalRectPolygon,
+    getLocalSpace,
     getLocationRateOnShape,
     getShapeTreeLocalRect,
     rotateShapeTree,

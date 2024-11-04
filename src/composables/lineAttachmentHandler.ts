@@ -1,11 +1,22 @@
-import { clamp, getDistanceSq, getRadian, isSame, IVec2, lerpPoint, moveRect } from "okageo";
+import {
+  clamp,
+  getCenter,
+  getDistanceSq,
+  getOuterRectangle,
+  getRadian,
+  getRectCenter,
+  isSame,
+  IVec2,
+  lerpPoint,
+  rotate,
+} from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { fillArray, isObjectEmpty, pickMinItem, slideSubArray, splitList, toList } from "../utils/commons";
-import { getRelativeRateWithinRect } from "../utils/geometry";
+import { getRelativePointWithinRect, getRelativeRateWithinRect, getRotateFn } from "../utils/geometry";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -63,18 +74,25 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
 
         const t = nextAttached.attachment.to.x;
         const toP = nextLineLerpFn(t);
-        const patch =
-          patchByMoveToAttachedPoint(shapeComposite, nextAttached, nextAttached.attachment.anchor, toP) ?? {};
 
+        let nextRotation = nextAttached.rotation;
         if (nextAttached.attachment.rotationType === "relative") {
           const d = 0.001;
           const [ta, tb] = d < t ? [nextLineLerpFn(t - d), toP] : [toP, nextLineLerpFn(t + d)];
           const baseRotation = getRadian(tb, ta);
-          const nextRotation = nextAttached.attachment.rotation + baseRotation;
+          nextRotation = nextAttached.attachment.rotation + baseRotation;
+        }
 
-          if (nextAttached.rotation !== nextRotation) {
-            patch.rotation = nextRotation;
-          }
+        const patch =
+          patchByMoveToAttachedPoint(
+            shapeComposite,
+            { ...nextAttached, rotation: nextRotation },
+            nextAttached.attachment.anchor,
+            toP,
+          ) ?? {};
+
+        if (nextAttached.rotation !== nextRotation) {
+          patch.rotation = nextRotation;
         }
 
         if (!isObjectEmpty(patch)) {
@@ -107,29 +125,30 @@ export function patchByMoveToAttachedPoint(
   anchor: IVec2,
   attachedPoint: IVec2,
 ): Partial<Shape> | undefined {
-  const bounds = shapeComposite.getWrapperRect(shape);
-  const anchorP = {
-    x: bounds.x + bounds.width * anchor.x,
-    y: bounds.y + bounds.height * anchor.y,
-  };
+  const anchorP = getNextAttachmentAnchorPoint(shapeComposite, shape, anchor);
   return shapeComposite.transformShape(shape, [1, 0, 0, 1, attachedPoint.x - anchorP.x, attachedPoint.y - anchorP.y]);
 }
 
 export function getAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: Shape): IVec2 {
-  const bounds = shapeComposite.getWrapperRect(shape);
-  const anchor = shape.attachment?.anchor ?? { x: 0.5, y: 0.5 };
-  return {
-    x: bounds.x + bounds.width * anchor.x,
-    y: bounds.y + bounds.height * anchor.y,
-  };
+  return getNextAttachmentAnchorPoint(shapeComposite, shape, shape.attachment?.anchor);
 }
 
-export function getClosestAnchorAtCenter(shapeComposite: ShapeComposite, shape: Shape, targetCenter: IVec2): IVec2 {
-  const bounds = shapeComposite.getWrapperRect(shape);
-  const anchor = shape.attachment?.anchor ?? { x: 0.5, y: 0.5 };
-  const centeredBounds = moveRect(bounds, { x: bounds.width * (anchor.x - 0.5), y: bounds.height * (anchor.y - 0.5) });
-  const rate = getRelativeRateWithinRect(centeredBounds, targetCenter);
-  return { x: 1 - clamp(0, 1, rate.x), y: 1 - clamp(0, 1, rate.y) };
+export function getNextAttachmentAnchorPoint(shapeComposite: ShapeComposite, shape: Shape, rate?: IVec2): IVec2 {
+  const localRectPath = shapeComposite.getLocalRectPolygon(shape);
+  const c = getCenter(localRectPath[0], localRectPath[2]);
+  if (!rate) return c;
+
+  const rotateFn = getRotateFn(shape.rotation, c);
+  const derotatedLocalRectPath = localRectPath.map((p) => rotateFn(p, true));
+  const derotatedRect = getOuterRectangle([derotatedLocalRectPath]);
+  const derotatedAnchor = getRelativePointWithinRect(derotatedRect, rate);
+  return rotateFn(derotatedAnchor);
+}
+
+export function getNextAttachmentAnchor(shapeComposite: ShapeComposite, shape: Shape, point: IVec2): IVec2 {
+  const localSpace = shapeComposite.getLocalSpace(shape);
+  const localPoint = rotate(point, -localSpace[1], getRectCenter(localSpace[0]));
+  return getRelativeRateWithinRect(localSpace[0], localPoint, true);
 }
 
 export function getEvenlySpacedLineAttachmentBetweenFixedOnes(

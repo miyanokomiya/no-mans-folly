@@ -2,15 +2,16 @@ import type { AppCanvasState } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { mapFilter, mapReduce, patchPipe } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
-import { getRelativeRateWithinRect, TAU } from "../../../../utils/geometry";
-import { IVec2, sub } from "okageo";
-import { applyCurvePath, applyPath } from "../../../../utils/renderer";
+import { expandRectByScale, ISegment, TAU } from "../../../../utils/geometry";
+import { getRectCenter, IVec2, moveRect, sub } from "okageo";
+import { applyCurvePath, applyLocalSpace, applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { getNextShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { Shape } from "../../../../models";
 import { getLineEdgeInfo } from "../../../../shapes/utils/line";
+import { getNextAttachmentAnchor } from "../../../lineAttachmentHandler";
 
 type Option = {
   lineId: string;
@@ -61,11 +62,11 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
 
           const diff = sub(event.data.current, pointAtStart);
           const shapeComposite = ctx.getShapeComposite();
-          const indexShapeAtStartEditAnchor = shapeCompositeAtStart.shapeMap[option.shapeId];
-          const boundsAtStart = shapeCompositeAtStart.getWrapperRect(indexShapeAtStartEditAnchor);
-          const attachedP = edgeInfo.lerpFn(indexShapeAtStartEditAnchor.attachment!.to.x);
+          const indexShapeAtStart = shapeCompositeAtStart.shapeMap[option.shapeId];
+          const boundsAtStart = shapeCompositeAtStart.getWrapperRect(indexShapeAtStart);
+          const attachedP = edgeInfo.lerpFn(indexShapeAtStart.attachment!.to.x);
           const nextAnchorP = sub(attachedP, diff);
-          const nextAnchor = getRelativeRateWithinRect(boundsAtStart, nextAnchorP, true);
+          const nextAnchor = getNextAttachmentAnchor(shapeCompositeAtStart, indexShapeAtStart, nextAnchorP);
 
           let adjustedNextAnchor = nextAnchor;
           if (!event.data.ctrl) {
@@ -128,49 +129,49 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
         applyCurvePath(renderCtx, getLinePath(line), line.curves);
         renderCtx.stroke();
 
-        const boundsAtStart = shapeCompositeAtStart.getWrapperRect(indexShapeAtStart);
-        const anchorBounds = {
-          x: lineAnchor.x - boundsAtStart.width,
-          y: lineAnchor.y - boundsAtStart.height,
-          width: boundsAtStart.width * 2,
-          height: boundsAtStart.height * 2,
-        };
-        applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
-        renderCtx.beginPath();
-        renderCtx.rect(anchorBounds.x, anchorBounds.y, anchorBounds.width, anchorBounds.height);
-        renderCtx.stroke();
+        const [localBounds, rotation] = shapeCompositeAtStart.getLocalSpace(indexShapeAtStart);
+        const localC = getRectCenter(localBounds);
+        const localBoundsAtAnchor = moveRect(localBounds, { x: lineAnchor.x - localC.x, y: lineAnchor.y - localC.y });
+        applyLocalSpace(renderCtx, localBoundsAtAnchor, rotation, () => {
+          const toOriginVec = { x: -localBoundsAtAnchor.x, y: -localBoundsAtAnchor.y };
+          const localBoundsAtOrigin = moveRect(localBoundsAtAnchor, toOriginVec);
+          const anchorBounds = expandRectByScale(localBoundsAtOrigin, 2);
+          applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
+          renderCtx.beginPath();
+          renderCtx.rect(anchorBounds.x, anchorBounds.y, anchorBounds.width, anchorBounds.height);
+          renderCtx.stroke();
 
-        const shapeComposite = ctx.getShapeComposite();
-        const latestIndexShape = shapeComposite.mergedShapeMap[option.shapeId];
-        const latestBounds = shapeComposite.getWrapperRect(latestIndexShape);
-        applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
-        renderCtx.beginPath();
-        renderCtx.rect(latestBounds.x, latestBounds.y, latestBounds.width, latestBounds.height);
-        renderCtx.stroke();
+          const latestIndexShape = ctx.getShapeComposite().mergedShapeMap[option.shapeId];
+          const guidlines: ISegment[] = [];
+          if (latestIndexShape.attachment?.anchor.x === 0.5) {
+            guidlines.push([
+              { x: anchorBounds.x + anchorBounds.width / 2, y: anchorBounds.y },
+              { x: anchorBounds.x + anchorBounds.width / 2, y: anchorBounds.y + anchorBounds.height },
+            ]);
+          }
+          if (latestIndexShape.attachment?.anchor.y === 0.5) {
+            guidlines.push([
+              { x: anchorBounds.x, y: anchorBounds.y + anchorBounds.height / 2 },
+              { x: anchorBounds.x + anchorBounds.width, y: anchorBounds.y + anchorBounds.height / 2 },
+            ]);
+          }
+          if (guidlines.length > 0) {
+            applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
+            renderCtx.beginPath();
+            guidlines.forEach((seg) =>
+              applyPath(renderCtx, [
+                { x: seg[0].x, y: seg[0].y },
+                { x: seg[1].x, y: seg[1].y },
+              ]),
+            );
+            renderCtx.stroke();
+          }
+        });
 
         applyFillStyle(renderCtx, { color: style.selectionSecondaly });
         renderCtx.beginPath();
         renderCtx.arc(lineAnchor.x, lineAnchor.y, 6 * scale, 0, TAU);
         renderCtx.fill();
-
-        if (latestIndexShape.attachment?.anchor.x === 0.5) {
-          applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
-          renderCtx.beginPath();
-          applyPath(renderCtx, [
-            { x: anchorBounds.x + anchorBounds.width / 2, y: anchorBounds.y },
-            { x: anchorBounds.x + anchorBounds.width / 2, y: anchorBounds.y + anchorBounds.height },
-          ]);
-          renderCtx.stroke();
-        }
-        if (latestIndexShape.attachment?.anchor.y === 0.5) {
-          applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
-          renderCtx.beginPath();
-          applyPath(renderCtx, [
-            { x: anchorBounds.x, y: anchorBounds.y + anchorBounds.height / 2 },
-            { x: anchorBounds.x + anchorBounds.width, y: anchorBounds.y + anchorBounds.height / 2 },
-          ]);
-          renderCtx.stroke();
-        }
       }
     },
   };

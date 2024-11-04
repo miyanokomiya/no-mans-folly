@@ -85,6 +85,23 @@ describe("newShapeComposite", () => {
     });
   });
 
+  describe("getLocalSpace", () => {
+    test("should return local space of the shape", () => {
+      const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "test0",
+        width: 10,
+        height: 20,
+        rotation: Math.PI / 2,
+      });
+
+      const shapes = [shape0];
+      const target = newShapeComposite({ shapes, getStruct: getCommonStruct });
+      const result0 = target.getLocalSpace(shape0);
+      expect(result0[0]).toEqualRect({ x: 0, y: 0, width: 10, height: 20 });
+      expect(result0[1]).toBeCloseTo(Math.PI / 2);
+    });
+  });
+
   describe("getWrapperRectForShapes", () => {
     test("should return wrapper rectangle for shapes", () => {
       const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test0", width: 10, height: 20 });

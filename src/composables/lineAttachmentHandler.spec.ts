@@ -1,10 +1,10 @@
 import { describe, test, expect } from "vitest";
 import {
   getAttachmentAnchorPoint,
-  getClosestAnchorAtCenter,
   getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
   getLineAttachmentPatch,
+  getNextAttachmentAnchor,
   patchByMoveToAttachedPoint,
 } from "./lineAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
@@ -122,45 +122,31 @@ describe("getAttachmentAnchorPoint", () => {
     });
     expect(getAttachmentAnchorPoint(shapeComposite, shape)).toEqualPoint({ x: 30, y: 60 });
 
-    const rotated = { ...shape, rotation: Math.PI / 4 };
+    const rotated = { ...shape, height: 200, rotation: Math.PI / 2 };
     const shapeComposite1 = newShapeComposite({
       shapes: [rotated],
       getStruct: getCommonStruct,
     });
     expect(getAttachmentAnchorPoint(shapeComposite1, rotated)).toEqualPoint({
-      x: 21.715728,
-      y: 64.142135,
+      x: 30,
+      y: 80,
     });
   });
 });
 
-describe("getClosestAnchorAtCenter", () => {
-  const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 200 });
-  test("should return closest anchor candidate to the point", () => {
+describe("getNextAttachmentAnchor", () => {
+  test("should return anchor rate for the point", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "a",
+      height: 200,
+      rotation: Math.PI / 2,
+    });
     const shapeComposite = newShapeComposite({
       shapes: [shape],
       getStruct: getCommonStruct,
     });
-    expect(getClosestAnchorAtCenter(shapeComposite, shape, { x: 50, y: 50 })).toEqualPoint({ x: 0.5, y: 0.75 });
-  });
-
-  test("should slide the next anchor based on current one", () => {
-    const shape1 = {
-      ...shape,
-      attachment: {
-        id: "a",
-        to: { x: 0, y: 0 },
-        anchor: { x: 1, y: 1 },
-        rotationType: "relative",
-        rotation: 0,
-      },
-    } as Shape;
-    const shapeComposite = newShapeComposite({
-      shapes: [shape1],
-      getStruct: getCommonStruct,
-    });
-    expect(getClosestAnchorAtCenter(shapeComposite, shape1, { x: 50, y: 50 })).toEqualPoint({ x: 1, y: 1 });
-    expect(getClosestAnchorAtCenter(shapeComposite, shape1, { x: 80, y: 150 })).toEqualPoint({ x: 0.7, y: 0.75 });
+    expect(getNextAttachmentAnchor(shapeComposite, shape, { x: 50, y: 100 })).toEqualPoint({ x: 0.5, y: 0.5 });
+    expect(getNextAttachmentAnchor(shapeComposite, shape, { x: 50, y: 50 })).toEqualPoint({ x: 0, y: 0.5 });
   });
 });
 
