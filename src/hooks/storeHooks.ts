@@ -124,13 +124,11 @@ export function useShapeComposite(): ShapeComposite {
  */
 export function useShapeCompositeWithoutTmpInfo(targetIds?: string[]): ShapeComposite {
   const { shapeStore } = useContext(AppCanvasContext);
-  const [shapeComposite, setShapeComposite] = useState<ShapeComposite>(shapeStore.shapeComposite);
+  const [shapeComposite, setShapeComposite] = useState<ShapeComposite>(shapeStore.staticShapeComposite);
 
   const update = useCallback(() => {
     setShapeComposite(
-      targetIds
-        ? shapeStore.shapeComposite.getSubShapeComposite(targetIds)
-        : shapeStore.shapeComposite.getShapeCompositeWithoutTmpInfo(),
+      targetIds ? shapeStore.shapeComposite.getSubShapeComposite(targetIds) : shapeStore.shapeComposite,
     );
   }, [shapeStore, targetIds]);
 

@@ -47,6 +47,11 @@ export function newShapeStore(option: Option) {
   entityStore.watch(shapeCompositeCache.update);
   tmpShapeMapCallback.bind(shapeCompositeCache.update);
 
+  const staticShapeCompositeCache = newCache(() => {
+    return newShapeComposite({ shapes: entityStore.getEntities(), getStruct: getCommonStruct });
+  });
+  entityStore.watch(staticShapeCompositeCache.update);
+
   return {
     ...entityStore,
     refresh,
@@ -69,6 +74,9 @@ export function newShapeStore(option: Option) {
      */
     get shapeComposite() {
       return shapeCompositeCache.getValue();
+    },
+    get staticShapeComposite() {
+      return staticShapeCompositeCache.getValue();
     },
   };
 }
