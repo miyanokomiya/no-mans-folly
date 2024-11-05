@@ -4,7 +4,7 @@ import { ConventionalShapeInspector } from "./ConventionalShapeInspector";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { InlineField } from "../atoms/InlineField";
 import { AppStateContext, AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
-import { Shape } from "../../models";
+import { Shape, ShapeAttachment } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { GroupConstraintInspector } from "./GroupConstraintInspector";
@@ -15,6 +15,7 @@ import { ClipInspector } from "./ClipInspector";
 import { AlphaField } from "./AlphaField";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { AttachmentInspector } from "./AttachmentInspector";
+import { patchByPartialProperties } from "../../utils/entities";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -150,13 +151,13 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
 
   // Only shapes already having "attachment" will be updated.
   const updateAttachmentBySamePatch = useCallback(
-    (patch: Partial<Shape>, draft = false) => {
+    (val: Partial<ShapeAttachment>, draft = false) => {
       const shapeComposite = getShapeComposite();
 
       const layoutPatch = getPatchByLayouts(shapeComposite, {
         update: targetShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
           if (s.attachment) {
-            p[s.id] = patch;
+            p[s.id] = patchByPartialProperties(s, { attachment: val });
           }
           return p;
         }, {}),
@@ -222,7 +223,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       <AttachmentInspector
         targetShape={targetShape}
         targetTmpShape={targetTmpShape}
-        updateTargetShape={updateAttachmentBySamePatch}
+        updateAttachment={updateAttachmentBySamePatch}
         commit={commit}
         readyState={readyState}
       />

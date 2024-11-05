@@ -57,3 +57,22 @@ export function mergeEntityPatchInfo<T extends Entity>(
 
   return ret;
 }
+
+export function patchByPartialProperties<T extends Entity>(
+  src: T,
+  partial: Partial<{ [key in keyof T]: Partial<T[key]> }>,
+): Partial<T> {
+  const ret: Partial<T> = {};
+  for (const key in partial) {
+    if (!(key in src)) continue;
+
+    if (typeof partial[key] === "object" && partial[key] !== null) {
+      if (!isObjectEmpty(partial[key])) {
+        (ret as any)[key] = { ...(src as any)[key], ...(partial[key] as any) };
+      }
+    } else {
+      ret[key] = partial[key] as any;
+    }
+  }
+  return ret;
+}

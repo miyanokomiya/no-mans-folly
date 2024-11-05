@@ -11,7 +11,7 @@ import { normalizeRadian } from "../../utils/geometry";
 interface Props {
   targetShape: Shape;
   targetTmpShape: Shape;
-  updateTargetShape: (patch: Partial<Shape>, draft?: boolean) => void;
+  updateAttachment: (patch: Partial<ShapeAttachment>, draft?: boolean) => void;
   readyState: () => void;
   commit: () => void;
 }
@@ -19,7 +19,7 @@ interface Props {
 export const AttachmentInspector: React.FC<Props> = ({
   targetShape,
   targetTmpShape,
-  updateTargetShape,
+  updateAttachment,
   readyState,
   commit,
 }) => {
@@ -27,21 +27,21 @@ export const AttachmentInspector: React.FC<Props> = ({
   const tmpAttachment = targetTmpShape.attachment;
 
   const updateAttchment = useCallback(
-    (val: ShapeAttachment, draft = false) => {
+    (val: Partial<ShapeAttachment>, draft = false) => {
       if (draft) {
         readyState();
-        updateTargetShape({ attachment: val }, draft);
+        updateAttachment(val, true);
       } else {
         commit();
       }
     },
-    [updateTargetShape, readyState, commit],
+    [updateAttachment, readyState, commit],
   );
 
   const handleAnchorRateChange = useCallback(
     (val: number, draft = false) => {
       if (!attachment) return;
-      updateAttchment({ ...attachment, to: { x: val, y: attachment.to.y } }, draft);
+      updateAttchment({ to: { x: val, y: attachment.to.y } }, draft);
     },
     [attachment, updateAttchment],
   );
@@ -49,14 +49,14 @@ export const AttachmentInspector: React.FC<Props> = ({
   const handleRelativeRotationChange = useCallback(
     (val: boolean) => {
       if (!attachment) return;
-      updateTargetShape({ attachment: { ...attachment, rotationType: val ? "relative" : "absolute", rotation: 0 } });
+      updateAttachment({ rotationType: val ? "relative" : "absolute", rotation: 0 });
     },
-    [attachment, updateTargetShape],
+    [attachment, updateAttachment],
   );
   const handleRotationChange = useCallback(
     (val: number, draft = false) => {
       if (!attachment) return;
-      updateAttchment({ ...attachment, rotation: normalizeRadian((val * Math.PI) / 180) }, draft);
+      updateAttchment({ rotation: normalizeRadian((val * Math.PI) / 180) }, draft);
     },
     [attachment, updateAttchment],
   );
@@ -68,14 +68,14 @@ export const AttachmentInspector: React.FC<Props> = ({
   const handleAnchorXChange = useCallback(
     (val: number, draft = false) => {
       if (!attachment) return;
-      updateAttchment({ ...attachment, anchor: { x: val, y: attachment.anchor.y } }, draft);
+      updateAttchment({ anchor: { x: val, y: attachment.anchor.y } }, draft);
     },
     [attachment, updateAttchment],
   );
   const handleAnchorYChange = useCallback(
     (val: number, draft = false) => {
       if (!attachment) return;
-      updateAttchment({ ...attachment, anchor: { x: attachment.anchor.x, y: val } }, draft);
+      updateAttchment({ anchor: { x: attachment.anchor.x, y: val } }, draft);
     },
     [attachment, updateAttchment],
   );

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "./entities";
+import { mergeEntityPatchInfo, normalizeEntityPatchInfo, patchByPartialProperties } from "./entities";
 import { Entity, EntityPatchInfo } from "../models";
 
 describe("normalizeEntityPatchInfo", () => {
@@ -79,6 +79,24 @@ describe("mergeEntityPatchInfo", () => {
   test("should merge 'delete'", () => {
     expect(mergeEntityPatchInfo({ delete: ["a", "b"] }, { delete: ["b", "c"] })).toEqual({
       delete: ["a", "b", "c"],
+    });
+  });
+});
+
+describe("patchByPartialProperties", () => {
+  test("should return patch for pertial properties", () => {
+    const src = { id: "a", findex: "aa", val: { x: 1, y: 2 } };
+    expect(patchByPartialProperties(src, { findex: "bb" })).toEqual({ findex: "bb" });
+    expect(patchByPartialProperties(src, { findex: "bb", val: { x: 10 } })).toEqual({
+      findex: "bb",
+      val: { x: 10, y: 2 },
+    });
+    expect(patchByPartialProperties(src, { findex: "bb", val: {} })).toEqual({
+      findex: "bb",
+    });
+    expect(patchByPartialProperties(src, { findex: "bb", val: { x: undefined } })).toEqual({
+      findex: "bb",
+      val: { x: undefined, y: 2 },
     });
   });
 });
