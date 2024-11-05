@@ -219,7 +219,13 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
           updateTargetGroupShape={updateGroupShapesBySamePatch}
         />
       ) : undefined}
-      <AttachmentInspector targetShape={targetShape} updateTargetShape={updateAttachmentBySamePatch} />
+      <AttachmentInspector
+        targetShape={targetShape}
+        targetTmpShape={targetTmpShape}
+        updateTargetShape={updateAttachmentBySamePatch}
+        commit={commit}
+        readyState={readyState}
+      />
       <button type="submit" className="hidden" />
     </form>
   );
