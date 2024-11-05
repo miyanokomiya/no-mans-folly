@@ -9,6 +9,7 @@ import { SVGElementInfo } from "../utils/svgElements";
 import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
 import { generateKeyBetween } from "../utils/findex";
 import { isObjectEmpty } from "../utils/commons";
+import { PartialProperties, patchByPartialProperties } from "../utils/entities";
 
 export type GetShapeStruct = _GetShapeStruct;
 
@@ -249,9 +250,13 @@ export function getCommonStyle(getStruct: GetShapeStruct, shape: Shape): CommonS
   return struct.getCommonStyle?.(shape);
 }
 
-export function updateCommonStyle(getStruct: GetShapeStruct, shape: Shape, val: Partial<CommonStyle>): Partial<Shape> {
+export function updateCommonStyle(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  val: PartialProperties<CommonStyle>,
+): Partial<Shape> {
   const struct = getStruct(shape.type);
-  return struct.updateCommonStyle?.(shape, val) ?? {};
+  return struct.updateCommonStyle?.(shape, patchByPartialProperties(shape as Shape & CommonStyle, val)) ?? {};
 }
 
 export function remapShapeIds(

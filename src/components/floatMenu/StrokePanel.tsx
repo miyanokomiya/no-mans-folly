@@ -13,43 +13,43 @@ const LINE_JOIN_KEYS: CanvasLineJoin[] = ["bevel", "miter", "round"];
 
 interface Props {
   stroke: StrokeStyle;
-  onChanged?: (stroke: StrokeStyle, draft?: boolean) => void;
+  onChanged?: (stroke: Partial<StrokeStyle>, draft?: boolean) => void;
 }
 
 export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
   const onColorChange = useCallback(
     (color: Color, draft = false) => {
-      onChanged?.({ ...stroke, color: { ...color, a: stroke.color.a } }, draft);
+      onChanged?.({ color: { ...color, a: stroke.color.a } }, draft);
     },
     [stroke, onChanged],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ ...stroke, color: { ...stroke.color, a: val } }, draft);
+      onChanged?.({ color: { ...stroke.color, a: val } }, draft);
     },
     [onChanged, stroke],
   );
 
   const onWidthChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ ...stroke, width: val }, draft);
+      onChanged?.({ width: val }, draft);
     },
-    [onChanged, stroke],
+    [onChanged],
   );
 
   const onDisabledChanged = useCallback(
     (val: boolean) => {
-      onChanged?.({ ...stroke, disabled: val });
+      onChanged?.({ disabled: val });
     },
-    [onChanged, stroke],
+    [onChanged],
   );
 
   const onDashChanged = useCallback(
     (val: LineDash) => {
-      onChanged?.({ ...stroke, dash: val === "solid" ? undefined : val });
+      onChanged?.({ dash: val === "solid" ? undefined : val });
     },
-    [onChanged, stroke],
+    [onChanged],
   );
 
   const dashButtons = (
@@ -71,9 +71,9 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
 
   const onCapChanged = useCallback(
     (val: CanvasLineCap) => {
-      onChanged?.({ ...stroke, lineCap: val });
+      onChanged?.({ lineCap: val });
     },
-    [onChanged, stroke],
+    [onChanged],
   );
 
   const capButtons = (
@@ -95,9 +95,9 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
 
   const onJoinChanged = useCallback(
     (val: CanvasLineJoin) => {
-      onChanged?.({ ...stroke, lineJoin: val });
+      onChanged?.({ lineJoin: val });
     },
-    [onChanged, stroke],
+    [onChanged],
   );
 
   const joinButtons = (

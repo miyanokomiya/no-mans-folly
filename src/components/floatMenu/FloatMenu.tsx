@@ -182,11 +182,11 @@ export const FloatMenu: React.FC<Option> = ({
   }, [indexShape, getShapeStruct]);
 
   const onFillChanged = useCallback(
-    (fill: FillStyle, draft = false) => {
+    (val: Partial<FillStyle>, draft = false) => {
       const ids = Object.keys(shapeStore.getSelected());
       const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { fill });
+        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { fill: val });
         return p;
       }, {});
 
@@ -202,11 +202,11 @@ export const FloatMenu: React.FC<Option> = ({
   );
 
   const onStrokeChanged = useCallback(
-    (stroke: StrokeStyle, draft = false) => {
+    (val: Partial<StrokeStyle>, draft = false) => {
       const ids = Object.keys(shapeStore.getSelected());
       const shapeMap = shapeStore.shapeComposite.shapeMap;
       const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { stroke });
+        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { stroke: val });
         return p;
       }, {});
 

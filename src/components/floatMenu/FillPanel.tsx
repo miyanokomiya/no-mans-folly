@@ -6,29 +6,29 @@ import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 interface Props {
   fill: FillStyle;
-  onChanged?: (fill: FillStyle, draft?: boolean) => void;
+  onChanged?: (fill: Partial<FillStyle>, draft?: boolean) => void;
 }
 
 export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
   const onColorChange = useCallback(
     (color: Color, draft = false) => {
-      onChanged?.({ ...fill, color: { ...color, a: fill.color.a } }, draft);
+      onChanged?.({ color: { ...color, a: fill.color.a } }, draft);
     },
     [fill, onChanged],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ ...fill, color: { ...fill.color, a: val } }, draft);
+      onChanged?.({ color: { ...fill.color, a: val } }, draft);
     },
     [onChanged, fill],
   );
 
   const onDisabledChanged = useCallback(
     (val: boolean) => {
-      onChanged?.({ ...fill, disabled: val });
+      onChanged?.({ disabled: val });
     },
-    [onChanged, fill],
+    [onChanged],
   );
 
   return (
