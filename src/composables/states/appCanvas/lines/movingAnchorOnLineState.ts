@@ -7,7 +7,7 @@ import { getRectCenter, moveRect, sub } from "okageo";
 import { applyCurvePath, applyLocalSpace, applyPath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
-import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
+import { ShapeComposite } from "../../../shapeComposite";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { getNextAttachmentAnchor } from "../../../lineAttachmentHandler";
@@ -35,13 +35,7 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
       }
 
       edgeInfo = getLineEdgeInfo(line);
-      const movingAllIdSet = new Set(
-        shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap())).map((s) => s.id),
-      );
-      subShapeComposite = newShapeComposite({
-        shapes: shapeComposite.shapes.filter((s) => movingAllIdSet.has(s.id)),
-        getStruct: shapeComposite.getShapeStruct,
-      });
+      subShapeComposite = shapeComposite.getSubShapeComposite(Object.keys(ctx.getSelectedShapeIdMap()));
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
