@@ -73,10 +73,10 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
    */
   const commit = useCallback(() => {
     const tmp = getTmpShapeMap();
-    if (Object.keys(tmp).length === 0) return;
-
-    setTmpShapeMap({});
-    patchShapes(tmp);
+    if (Object.keys(tmp).length > 0) {
+      setTmpShapeMap({});
+      patchShapes(tmp);
+    }
     breakState();
   }, [getTmpShapeMap, setTmpShapeMap, patchShapes, breakState]);
 
