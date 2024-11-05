@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { InlineField } from "../atoms/InlineField";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
-import { Shape } from "../../models";
+import { Shape, ShapeAttachment } from "../../models";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { BlockField } from "../atoms/BlockField";
 import { NumberInput } from "../atoms/inputs/NumberInput";
@@ -26,12 +26,24 @@ export const AttachmentInspector: React.FC<Props> = ({
   const attachment = targetShape.attachment;
   const tmpAttachment = targetTmpShape.attachment;
 
-  const handleAnchorRateChange = useCallback(
-    (val: number) => {
-      if (!attachment) return;
-      updateTargetShape({ attachment: { ...attachment, to: { x: val, y: attachment.to.y } } });
+  const updateAttchment = useCallback(
+    (val: ShapeAttachment, draft = false) => {
+      if (draft) {
+        readyState();
+        updateTargetShape({ attachment: val }, draft);
+      } else {
+        commit();
+      }
     },
-    [attachment, updateTargetShape],
+    [updateTargetShape, readyState, commit],
+  );
+
+  const handleAnchorRateChange = useCallback(
+    (val: number, draft = false) => {
+      if (!attachment) return;
+      updateAttchment({ ...attachment, to: { x: val, y: attachment.to.y } }, draft);
+    },
+    [attachment, updateAttchment],
   );
 
   const handleRelativeRotationChange = useCallback(
@@ -44,33 +56,28 @@ export const AttachmentInspector: React.FC<Props> = ({
   const handleRotationChange = useCallback(
     (val: number, draft = false) => {
       if (!attachment) return;
-      if (draft) {
-        readyState();
-        updateTargetShape({ attachment: { ...attachment, rotation: normalizeRadian((val * Math.PI) / 180) } }, true);
-      } else {
-        commit();
-      }
+      updateAttchment({ ...attachment, rotation: normalizeRadian((val * Math.PI) / 180) }, draft);
     },
-    [attachment, updateTargetShape, readyState, commit],
+    [attachment, updateAttchment],
   );
   const handleRotationCommit = useCallback(() => {
-    if (!attachment) return;
-    commit();
-  }, [attachment, commit]);
+    if (!tmpAttachment) return;
+    updateAttchment(tmpAttachment);
+  }, [tmpAttachment, updateAttchment]);
 
   const handleAnchorXChange = useCallback(
-    (val: number) => {
+    (val: number, draft = false) => {
       if (!attachment) return;
-      updateTargetShape({ attachment: { ...attachment, anchor: { x: val, y: attachment.anchor.y } } });
+      updateAttchment({ ...attachment, anchor: { x: val, y: attachment.anchor.y } }, draft);
     },
-    [attachment, updateTargetShape],
+    [attachment, updateAttchment],
   );
   const handleAnchorYChange = useCallback(
-    (val: number) => {
+    (val: number, draft = false) => {
       if (!attachment) return;
-      updateTargetShape({ attachment: { ...attachment, anchor: { x: attachment.anchor.x, y: val } } });
+      updateAttchment({ ...attachment, anchor: { x: attachment.anchor.x, y: val } }, draft);
     },
-    [attachment, updateTargetShape],
+    [attachment, updateAttchment],
   );
 
   if (!attachment || !tmpAttachment) return;
@@ -78,13 +85,20 @@ export const AttachmentInspector: React.FC<Props> = ({
   return (
     <BlockGroupField label="Attachment" accordionKey="attachment-inspector">
       <InlineField label="Rate" fullBody>
-        <SliderInput value={attachment.to.x} onChanged={handleAnchorRateChange} min={0} max={1} step={0.01} showValue />
+        <SliderInput
+          value={tmpAttachment.to.x}
+          onChanged={handleAnchorRateChange}
+          min={0}
+          max={1}
+          step={0.01}
+          showValue
+        />
       </InlineField>
       <BlockGroupField label="Rotation">
         <InlineField label="Relative">
-          <ToggleInput value={attachment.rotationType === "relative"} onChange={handleRelativeRotationChange} />
+          <ToggleInput value={tmpAttachment.rotationType === "relative"} onChange={handleRelativeRotationChange} />
         </InlineField>
-        {attachment.rotationType === "relative" ? (
+        {tmpAttachment.rotationType === "relative" ? (
           <InlineField label="Angle">
             <div className="w-24">
               <NumberInput
@@ -101,7 +115,7 @@ export const AttachmentInspector: React.FC<Props> = ({
       <BlockField label="Anchor" fullBody>
         <InlineField label="Left" fullBody>
           <SliderInput
-            value={attachment.anchor.x}
+            value={tmpAttachment.anchor.x}
             onChanged={handleAnchorXChange}
             min={0}
             max={1}
@@ -111,7 +125,7 @@ export const AttachmentInspector: React.FC<Props> = ({
         </InlineField>
         <InlineField label="Top" fullBody>
           <SliderInput
-            value={attachment.anchor.y}
+            value={tmpAttachment.anchor.y}
             onChanged={handleAnchorYChange}
             min={0}
             max={1}
