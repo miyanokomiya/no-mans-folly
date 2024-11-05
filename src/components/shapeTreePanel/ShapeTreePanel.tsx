@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
-import { useSelectedShapeInfo, useShapeComposite } from "../../hooks/storeHooks";
+import { useSelectedShapeInfo, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
@@ -15,7 +15,7 @@ import { selectShapesInRange } from "../../composables/states/appCanvas/commons"
 type DropOperation = "group" | "above" | "below";
 
 export const ShapeTreePanel: React.FC = () => {
-  const shapeComposite = useShapeComposite();
+  const shapeComposite = useShapeCompositeWithoutTmpInfo();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const selectionScope = useMemo(() => {
     if (!selectedLastId) return;

@@ -119,6 +119,9 @@ export function useShapeComposite(): ShapeComposite {
   return shapeComposite;
 }
 
+/**
+ * This hook can greatly reduce component evaluation when temporary shapes don't matter.
+ */
 export function useShapeCompositeWithoutTmpInfo(targetIds?: string[]): ShapeComposite {
   const { shapeStore } = useContext(AppCanvasContext);
   const [shapeComposite, setShapeComposite] = useState<ShapeComposite>(shapeStore.shapeComposite);
