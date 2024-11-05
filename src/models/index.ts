@@ -145,6 +145,7 @@ export interface UserSetting {
   debug?: "on" | "off"; // should be "off" when it's undefined
   virtualKeyboard?: "modifiers" | "off"; // should be "off" when it's undefined
   preview?: "on" | "off"; // should be "off" when it's undefined
+  attachToLine?: "on" | "off"; // should be "off" when it's undefined
 }
 
 /**

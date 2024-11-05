@@ -10,8 +10,7 @@ export function handlePointerMoveOnLine(
   event: PointerMoveEvent,
   movingIds: string[],
 ): TransitionValue<AppCanvasStateContext> {
-  if (event.data.ctrl) return;
-  if (movingIds.length === 0) return;
+  if (event.data.ctrl || movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
   const movingIdSet = new Set(movingIds);
@@ -29,6 +28,9 @@ export function handlePointerMoveOnLine(
 
   const targetLine = shapeComposite.findShapeAt(movedAnchorP, { shapeType: "line" }, movingIds, false, ctx.getScale());
   if (!targetLine || !isLineShape(targetLine)) return;
+
+  // When the latest target is attached, activate MovingOnLine state regardless of the setting.
+  if (ctx.getUserSetting().attachToLine !== "on" && !shapeComposite.mergedShapeMap[movingShape.id].attachment) return;
 
   return {
     type: "stack-resume",

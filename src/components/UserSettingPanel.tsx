@@ -71,6 +71,13 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handleAttachToLineChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ attachToLine: val ? "on" : "off" });
+    },
+    [userSettingStore],
+  );
+
   const virtualKeyboardValue = userSetting.virtualKeyboard ?? "off";
 
   return (
@@ -117,6 +124,9 @@ export const UserSettingPanel: React.FC = () => {
             </div>
           </InlineField>
         </BlockGroupField>
+        <InlineField label="Attach to line">
+          <ToggleInput value={userSetting.attachToLine === "on"} onChange={handleAttachToLineChange} />
+        </InlineField>
         <InlineField label="Preview dialog">
           <ToggleInput value={userSetting.preview === "on"} onChange={handlePreviewChange} />
         </InlineField>

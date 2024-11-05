@@ -54,7 +54,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       ctx.startDragging();
       ctx.setCursor("move");
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
 
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => !targetIdSet.has(s.id) && !isLineShape(s)),
@@ -89,7 +89,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     },
     onResume(ctx) {
       beforeMove = true;
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -140,6 +140,15 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "keydown": {
+          switch (event.data.key) {
+            case "a": {
+              ctx.patchUserSetting({ attachToLine: ctx.getUserSetting().attachToLine === "on" ? "off" : "on" });
+              return;
+            }
+          }
+          return;
         }
         default:
           return;

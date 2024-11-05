@@ -46,7 +46,11 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   return {
     getLabel: () => "MovingOnLine",
     onStart: (ctx) => {
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.EVENLY_SPACED]);
+      ctx.setCommandExams([
+        COMMAND_EXAM_SRC.DISABLE_SNAP,
+        COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF,
+        COMMAND_EXAM_SRC.EVENLY_SPACED,
+      ]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -176,6 +180,16 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             return ctx.states.newSelectionHubState;
           }
           break;
+        }
+        case "keydown": {
+          switch (event.data.key) {
+            case "a": {
+              ctx.patchUserSetting({ attachToLine: "off" });
+              keepMoving = true;
+              return { type: "break" };
+            }
+          }
+          return;
         }
         default:
           return;
