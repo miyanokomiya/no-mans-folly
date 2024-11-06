@@ -1,6 +1,9 @@
 import { EntityPatchInfo, Shape } from "../models";
+import { getConnections, isLineShape } from "../shapes/line";
+import { isLineLabelShape } from "../shapes/utils/lineLabel";
 import { isObjectEmpty, mapFilter, mergeMap, patchPipe } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
+import { DependencyMap, topSortHierarchy } from "../utils/graph";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
@@ -124,9 +127,9 @@ function getLineRelatedLayoutPatch(
   initialPatch: { [id: string]: Partial<Shape> },
 ): { [id: string]: Partial<Shape> } {
   const finishedSet = new Set<string>();
+  let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
   let nextPatch: { [id: string]: Partial<Shape> } = initialPatch;
   let nextSC = shapeComposite;
-  let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
 
   const step = (sc: ShapeComposite, currentPatch: { [id: string]: Partial<Shape> }) => {
     const result = patchPipe(
@@ -147,14 +150,59 @@ function getLineRelatedLayoutPatch(
       result.patchList.reduce((p, c) => mergeMap(p, c), {}),
       (p, id) => !finishedSet.has(id) && !isObjectEmpty(p),
     );
+  };
+
+  // Get dependency hierarchy of initial patch.
+  // => Proc "step" in this order.
+  const depMap = getLineRelatedDepMap(shapeComposite, Object.keys(initialPatch));
+  const sorted = topSortHierarchy(depMap);
+  sorted.forEach((ids) => {
+    if (ids.length === 0) return;
+
+    step(nextSC, nextPatch);
+    ids.forEach((id) => finishedSet.add(id));
+  });
+
+  // Keep procing "step" until converges.
+  // This should converge unless circular dependency exists.
+  // Even with circular dependencies, this must end due to "finishedSet".
+  while (!isObjectEmpty(nextPatch)) {
+    step(nextSC, nextPatch);
     for (const id in nextPatch) {
       finishedSet.add(id);
     }
-  };
-
-  while (!isObjectEmpty(nextPatch)) {
-    step(nextSC, nextPatch);
   }
 
   return latestPatch;
+}
+
+/**
+ * Returns dependency map only having ids as keys.
+ */
+function getLineRelatedDepMap(shapeComposite: ShapeComposite, ids: string[]): DependencyMap {
+  const depSrc: DependencyMap = new Map();
+
+  const step = (id: string) => {
+    const s = shapeComposite.shapeMap[id];
+    const deps = new Set<string>();
+
+    if (shapeComposite.attached(s)) {
+      deps.add(s.attachment.id);
+    }
+    if (isLineShape(s)) {
+      getConnections(s).forEach((c) => {
+        if (c && shapeComposite.shapeMap[c.id]) {
+          deps.add(c.id);
+        }
+      });
+    }
+    if (isLineLabelShape(shapeComposite, s)) {
+      deps.add(s.parentId);
+    }
+
+    depSrc.set(id, deps);
+  };
+  ids.forEach((id) => step(id));
+
+  return depSrc;
 }
