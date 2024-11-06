@@ -190,6 +190,7 @@ describe("patchPipe", () => {
     ).toEqual({
       patch: { a: { v: 6 } },
       result: { a: { id: "a", v: 6 }, b: { id: "b", v: 10 } },
+      patchList: [{ a: { v: 2 } }, { a: { v: 6 } }],
     });
 
     expect(
@@ -207,6 +208,7 @@ describe("patchPipe", () => {
     ).toEqual({
       patch: { a: { v: 2 }, b: { v: 32 } },
       result: { a: { id: "a", v: 2 }, b: { id: "b", v: 32 } },
+      patchList: [{ a: { v: 2 } }, { b: { v: 32 } }],
     });
   });
 });

@@ -99,15 +99,17 @@ export function patchPipe<T extends { id: string }>(
   patchFns: PatchPipeItem<T>[],
   src: { [id: string]: T },
   initialParch: { [id: string]: Partial<T> } = {},
-): { patch: { [id: string]: Partial<T> }; result: { [id: string]: T } } {
+): { patch: { [id: string]: Partial<T> }; result: { [id: string]: T }; patchList: { [id: string]: Partial<T> }[] } {
   let currentResult = src;
   let currentPatch = initialParch;
+  const patchList: { [id: string]: Partial<T> }[] = [];
   patchFns.forEach((fn) => {
     const patch = fn(currentResult, currentPatch);
     currentPatch = mergeMap(currentPatch, patch);
     currentResult = mergeMap(currentResult, currentPatch) as { [id: string]: T };
+    patchList.push(patch);
   });
-  return { patch: currentPatch, result: currentResult };
+  return { patch: currentPatch, result: currentResult, patchList };
 }
 
 export function groupBy<T>(src: T[], fn: (item: T) => string | number): { [key: string]: T[] } {

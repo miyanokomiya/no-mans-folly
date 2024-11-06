@@ -1,5 +1,5 @@
 import { EntityPatchInfo, Shape } from "../models";
-import { patchPipe } from "../utils/commons";
+import { isObjectEmpty, mapFilter, mergeMap, patchPipe } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
@@ -37,10 +37,7 @@ export function getPatchByLayouts(
         ).patch;
       },
       // Use "updatedComposite" from here that contains newly added shapes.
-      (_, patch) => getConnectedLinePatch(updatedComposite, { update: patch }),
-      (_, patch) => getCurveLinePatch(updatedComposite, { update: patch }),
-      (_, patch) => getLineLabelPatch(updatedComposite, { update: patch }),
-      (_, patch) => getLineAttachmentPatch(updatedComposite, { update: patch }),
+      (_, patch) => getLineRelatedLayoutPatch(updatedComposite, patch),
     ],
     shapeComposite.shapeMap,
   );
@@ -88,10 +85,7 @@ export function getPatchInfoByLayouts(
           {},
         ).patch;
       },
-      (_, patch) => getConnectedLinePatch(updatedComposite, { update: patch }),
-      (_, patch) => getCurveLinePatch(updatedComposite, { update: patch }),
-      (_, patch) => getLineLabelPatch(updatedComposite, { update: patch }),
-      (_, patch) => getLineAttachmentPatch(updatedComposite, { update: patch }),
+      (_, patch) => getLineRelatedLayoutPatch(updatedComposite, patch),
     ],
     shapeComposite.shapeMap,
   );
@@ -117,13 +111,51 @@ export function getPatchAfterLayouts(
     [
       () => patchInfo.update ?? {},
       // Use "updatedComposite" from here that contains newly added shapes.
-      (_, patch) => getConnectedLinePatch(updatedComposite, { update: patch }),
-      (_, patch) => getCurveLinePatch(updatedComposite, { update: patch }),
-      (_, patch) => getLineLabelPatch(updatedComposite, { update: patch }),
-      (_, patch) => getLineAttachmentPatch(updatedComposite, { update: patch }),
+      (_, patch) => getLineRelatedLayoutPatch(updatedComposite, patch),
     ],
     shapeComposite.shapeMap,
   );
 
   return result.patch;
+}
+
+function getLineRelatedLayoutPatch(
+  shapeComposite: ShapeComposite,
+  initialPatch: { [id: string]: Partial<Shape> },
+): { [id: string]: Partial<Shape> } {
+  const finishedSet = new Set<string>();
+  let nextPatch: { [id: string]: Partial<Shape> } = initialPatch;
+  let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
+
+  const step = (sc: ShapeComposite, currentPatch: { [id: string]: Partial<Shape> }) => {
+    const result = patchPipe(
+      [
+        (_, patch) => getConnectedLinePatch(sc, { update: patch }),
+        (_, patch) => getCurveLinePatch(sc, { update: patch }),
+        (_, patch) => getLineLabelPatch(sc, { update: patch }),
+        (_, patch) => getLineAttachmentPatch(sc, { update: patch }),
+      ],
+      shapeComposite.shapeMap,
+      currentPatch,
+    );
+
+    nextPatch = mapFilter(
+      result.patchList.reduce((p, c) => mergeMap(p, c), {}),
+      (p) => !isObjectEmpty(p),
+    );
+    latestPatch = mergeMap(latestPatch, result.patch);
+  };
+
+  while (!isObjectEmpty(nextPatch)) {
+    const sc = getNextShapeComposite(shapeComposite, { update: latestPatch });
+    step(sc, nextPatch);
+
+    const tmpNextPatch = mapFilter(nextPatch, (_, id) => !finishedSet.has(id));
+    for (const id in tmpNextPatch) {
+      finishedSet.add(id);
+    }
+    nextPatch = tmpNextPatch;
+  }
+
+  return latestPatch;
 }
