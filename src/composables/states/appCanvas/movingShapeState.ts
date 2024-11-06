@@ -114,11 +114,13 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;
+          const targetIdSet = new Set(targetIds);
           let patchMap = targetIds.reduce<{ [id: string]: Partial<Shape> }>((m, id) => {
             const s = shapeMap[id];
             if (s) {
               m[id] = shapeComposite.transformShape(s, affine);
-              if (s.attachment) m[id].attachment = undefined;
+              // When the shape is attached and attaching target isn't moving together, it should be detached.
+              if (s.attachment && !targetIdSet.has(s.attachment.id)) m[id].attachment = undefined;
             }
             return m;
           }, {});
