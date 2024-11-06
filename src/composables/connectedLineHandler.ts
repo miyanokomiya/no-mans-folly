@@ -32,14 +32,14 @@ export function newConnectedLineHandler(option: Option) {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
     const updatedShapeMap: { [id: string]: Shape } = {};
-    Object.entries(updatedMap).forEach(([id, patch]) => {
+    mapEach(updatedMap, (patch, id) => {
       if (shapeMap[id]) {
         updatedShapeMap[id] = { ...shapeMap[id], ...patch };
       }
     });
 
     // Update connections
-    Object.entries(updatedShapeMap).forEach(([id, shape]) => {
+    mapEach(updatedShapeMap, (shape, id) => {
       const rectPath = shapeComposite.getLocalRectPolygon(shape);
       const rotation = shape.rotation;
 
@@ -64,7 +64,7 @@ export function newConnectedLineHandler(option: Option) {
       getStruct: shapeComposite.getShapeStruct,
     });
     // Optimize line connections
-    Object.entries(ret).forEach(([id, patch]) => {
+    mapEach(ret, (patch, id) => {
       const updated = { ...shapeMap[id], ...(updatedShapeMap[id] ?? {}), ...patch } as LineShape;
       const optimized = optimizeLinePath(
         {
@@ -79,13 +79,15 @@ export function newConnectedLineHandler(option: Option) {
 
     // Update elbow bodies
     {
-      const patchedElbows = Object.entries(ret)
-        .map<LineShape>(([id, patch]) => {
-          const original = shapeMap[id] as LineShape;
-          const updated = updatedMap[id] ?? {};
-          return { ...original, ...updated, ...patch };
-        })
-        .filter((l) => l.lineType === "elbow");
+      const patchedElbows: LineShape[] = [];
+      mapEach(ret, (patch, id) => {
+        const original = shapeMap[id] as LineShape;
+        const updated = updatedMap[id] ?? {};
+        const s = { ...original, ...updated, ...patch } as LineShape;
+        if (s.lineType === "elbow") {
+          patchedElbows.push(s);
+        }
+      });
       const nextShapeMap: { [id: string]: Shape } = {};
       const elbowConnectedIds = getElbowConnectedShapeIds(patchedElbows);
       elbowConnectedIds.forEach((id) => {
@@ -131,14 +133,14 @@ export function newConnectedLineDetouchHandler(option: Option) {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
     const updatedShapeMap: { [id: string]: Shape } = {};
-    Object.entries(updatedMap).forEach(([id, patch]) => {
+    mapEach(updatedMap, (patch, id) => {
       if (shapeMap[id]) {
         updatedShapeMap[id] = { ...shapeMap[id], ...patch };
       }
     });
 
     // Update connections
-    Object.values(updatedShapeMap).forEach((shape) => {
+    mapEach(updatedShapeMap, (shape) => {
       // When a line is modified but connected shapes doesn't, the connections should be deleted.
       if (isLineShape(shape)) {
         if (shape.pConnection && !updatedShapeMap[shape.pConnection.id]) {
@@ -182,28 +184,20 @@ export function getConnectedLineInfoMap(
   const shapeMap = ctx.getShapeComposite().shapeMap;
   const targetIds = new Set(connectedTargetIds);
   const connectedLineInfoMap: { [id: string]: LineShape[] } = {};
-  Object.values(shapeMap)
-    .filter(isLineShape)
-    .forEach((line) => {
-      if (line.pConnection && targetIds.has(line.pConnection.id)) {
-        connectedLineInfoMap[line.pConnection.id] ??= [];
-        connectedLineInfoMap[line.pConnection.id].push(line);
-      }
-      if (line.qConnection && targetIds.has(line.qConnection.id)) {
-        connectedLineInfoMap[line.qConnection.id] ??= [];
-        connectedLineInfoMap[line.qConnection.id].push(line);
-      }
 
-      // Gather connected lines without duplication
-      const saved = new Set<string>();
-      line.body?.forEach((b) => {
-        if (b.c && targetIds.has(b.c.id) && !saved.has(b.c.id)) {
-          connectedLineInfoMap[b.c.id] ??= [];
-          connectedLineInfoMap[b.c.id].push(line);
-          saved.add(b.c.id);
-        }
-      });
+  mapEach(shapeMap, (line) => {
+    if (!isLineShape(line)) return;
+
+    // Gather connected lines without duplication
+    const saved = new Set<string>();
+    getConnections(line).forEach((connection) => {
+      if (connection && !saved.has(connection.id) && targetIds.has(connection.id)) {
+        saved.add(connection.id);
+        connectedLineInfoMap[connection.id] ??= [];
+        connectedLineInfoMap[connection.id].push(line);
+      }
     });
+  });
 
   return connectedLineInfoMap;
 }
@@ -217,7 +211,7 @@ export function getRotatedRectPathMap(
   const shapeComposite = ctx.getShapeComposite();
   const shapeMap = shapeComposite.shapeMap;
   const modifiedMap: { [id: string]: RotatedRectPath } = {};
-  Object.entries(updatedMap).forEach(([id, shape]) => {
+  mapEach(updatedMap, (shape, id) => {
     const s = shapeMap[id];
     if (s) {
       const merged = { ...s, ...shape };
