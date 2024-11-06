@@ -31,29 +31,43 @@ export function findBackward<T>(list: T[], predicate: (value: T, index: number, 
 }
 
 export function mergeMap<T>(src: { [key: string]: T }, override: { [key: string]: T }): { [key: string]: T } {
-  return Object.keys({ ...src, ...override }).reduce<{ [key: string]: T }>((p, c) => {
+  const finished = new Set<string>();
+
+  const step = (c: string) => {
     const s = src[c];
     const o = override[c];
     if (!s) {
-      p[c] = o;
+      return o;
     } else if (!o) {
-      p[c] = s;
+      return s;
     } else {
-      p[c] = { ...s, ...o } as T;
+      return { ...s, ...o } as T;
     }
-    return p;
-  }, {});
+  };
+
+  const ret: { [key: string]: T } = {};
+  mapEach(src, (_, key) => {
+    ret[key] = step(key);
+    finished.add(key);
+  });
+  mapEach(override, (_, key) => {
+    if (finished.has(key)) return;
+    ret[key] = step(key);
+    finished.add(key);
+  });
+  return ret;
 }
 
 export function remap<T>(src: { [id: string]: T }, newToOldMap: { [newId: string]: string }): { [id: string]: T } {
-  return Object.keys(newToOldMap).reduce<{ [id: string]: T }>((m, newId) => {
+  const ret: { [id: string]: T } = {};
+  mapReduce(newToOldMap, (_, newId) => {
     const oldId = newToOldMap[newId];
     const doc = src[oldId];
     if (doc) {
-      m[newId] = doc;
+      ret[newId] = doc;
     }
-    return m;
-  }, {});
+  });
+  return ret;
 }
 
 export function mapDataToObj<T>(src: [string, T][]): { [id: string]: T } {

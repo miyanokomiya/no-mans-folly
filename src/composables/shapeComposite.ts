@@ -402,7 +402,19 @@ export function getNextShapeComposite(
     : remainedShapes;
 
   const shapes = patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes;
-  shapes.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
+
+  let shouldSort = !!patchInfo.add?.length;
+  if (patchInfo.update) {
+    for (const id in patchInfo.update) {
+      if (patchInfo.update[id].findex) {
+        shouldSort = true;
+        break;
+      }
+    }
+  }
+  if (shouldSort) {
+    shapes.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
+  }
   return newShapeComposite({
     shapes,
     getStruct: shapeComposite.getShapeStruct,
