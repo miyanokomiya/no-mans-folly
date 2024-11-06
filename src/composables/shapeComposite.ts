@@ -37,7 +37,11 @@ interface Option {
   getStruct: shapeModule.GetShapeStruct;
   tmpShapeMap?: { [id: string]: Partial<Shape> };
   // This option must be equivalent to one derived from shapes.
-  shapeTreeInfo?: { mergedShapeTree: TreeNode[]; mergedShapeTreeMap: { [id: string]: TreeNode } };
+  shapeTreeInfo?: {
+    mergedShapeTree: TreeNode[];
+    mergedShapeTreeMap: { [id: string]: TreeNode };
+    parentRefMap: Map<string, string>;
+  };
 }
 
 export function newShapeComposite(option: Option) {
@@ -58,7 +62,10 @@ export function newShapeComposite(option: Option) {
 
   // Regard and sever circular parent references here.
   // Be careful that original shapes still keep those references.
-  const srcShapes = severCircularParentRefs(option.shapes);
+  const { shapes: srcShapes, parentRefMap } = severCircularParentRefs(
+    option.shapes,
+    option.shapeTreeInfo?.parentRefMap,
+  );
 
   const shapeMap = toMap(srcShapes);
   const mergedShapeMap = tmpShapeMap ? (mergeMap(shapeMap, tmpShapeMap) as { [id: string]: Shape }) : shapeMap;
@@ -302,6 +309,7 @@ export function newShapeComposite(option: Option) {
     mergedShapeTreeMap,
     getAllBranchMergedShapes,
     getAllTransformTargets,
+    parentRefMap,
 
     render,
     clip,
@@ -400,8 +408,12 @@ export function getNextShapeComposite(
     ? shapeComposite.shapes.filter((s) => !deletedIdSet!.has(s.id))
     : shapeComposite.shapes;
 
-  const patchedShapes = patchInfo.update
-    ? remainedShapes.map((s) => (patchInfo.update![s.id] ? { ...s, ...patchInfo.update![s.id] } : s))
+  const updateMap = patchInfo.update;
+  const patchedShapes = updateMap
+    ? remainedShapes.map((s) => {
+        const patch = updateMap[s.id];
+        return patch ? { ...s, ...patch } : s;
+      })
     : remainedShapes;
 
   const shapes = patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes;
@@ -421,6 +433,7 @@ export function getNextShapeComposite(
       : {
           mergedShapeTree: shapeComposite.mergedShapeTree,
           mergedShapeTreeMap: shapeComposite.mergedShapeTreeMap,
+          parentRefMap: shapeComposite.parentRefMap,
         },
   });
 }
@@ -567,9 +580,15 @@ export function swapShapeParent(
   return ret;
 }
 
-function severCircularParentRefs(src: Shape[]): Shape[] {
-  const parentRefMap = getParentRefMap(src);
-  return src.map((s) => (s.parentId && !parentRefMap.has(s.id) ? { ...s, parentId: undefined } : s));
+function severCircularParentRefs(
+  src: Shape[],
+  parentRefMapCache?: Map<string, string>,
+): { shapes: Shape[]; parentRefMap: Map<string, string> } {
+  const parentRefMap = parentRefMapCache ?? getParentRefMap(src);
+  return {
+    shapes: src.map((s) => (s.parentId && !parentRefMap.has(s.id) ? { ...s, parentId: undefined } : s)),
+    parentRefMap,
+  };
 }
 
 export function getAllShapeRangeWithinComposite(shapeComposite: ShapeComposite, includeBounds?: boolean) {
