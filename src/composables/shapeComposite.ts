@@ -262,6 +262,7 @@ export function newShapeComposite(option: Option) {
   }
 
   function canAttach(shape: Shape): boolean {
+    if (isLineShape(shape)) return false;
     if (!hasParent(shape)) return true;
     // When the parent isn't group shape, it must be special layout shape.
     // => This shape should follow its layout rule rather than attachment.

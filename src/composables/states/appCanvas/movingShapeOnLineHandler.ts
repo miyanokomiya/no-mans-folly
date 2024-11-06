@@ -14,6 +14,12 @@ export function handlePointerMoveOnLine(
   if (event.data.ctrl || movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
+  const isSomeUnattachable = movingIds.some((id) => {
+    const shape = shapeComposite.shapeMap[id];
+    return !shapeComposite.canAttach(shape);
+  });
+  if (isSomeUnattachable) return;
+
   const movingIdSet = new Set(movingIds);
   const subShapeComposite = newShapeComposite({
     shapes: shapeComposite.shapes.filter((s) => movingIdSet.has(s.id)),

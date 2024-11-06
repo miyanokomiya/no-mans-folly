@@ -480,8 +480,11 @@ describe("newShapeComposite", () => {
         id: "c",
         parentId: "unknown",
       } as Shape;
+      const line = createShape(getCommonStruct, "line", {
+        id: "line",
+      });
 
-      const shapes = [group, align, a, b, c];
+      const shapes = [group, align, a, b, c, line];
       const target = newShapeComposite({
         shapes,
         getStruct: getCommonStruct,
@@ -492,6 +495,7 @@ describe("newShapeComposite", () => {
       expect(target.canAttach(a)).toBe(true);
       expect(target.canAttach(b)).toBe(false);
       expect(target.canAttach(c)).toBe(true);
+      expect(target.canAttach(line)).toBe(false);
     });
   });
 
