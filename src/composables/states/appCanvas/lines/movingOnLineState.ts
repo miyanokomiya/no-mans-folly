@@ -164,6 +164,12 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           );
           ctx.setTmpShapeMap(patch.patch);
 
+          // If patch of this line exists, it means this line depends on moving shapes.
+          if (patch.patch[line.id]) {
+            keepMoving = true;
+            return { type: "break" };
+          }
+
           return;
         }
         case "pointerup": {
