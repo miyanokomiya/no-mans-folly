@@ -75,3 +75,31 @@ export function patchByPartialProperties<T extends Entity>(src: T, partial: Part
   }
   return ret;
 }
+
+export function shouldEntityOrderUpdate<T extends Entity>(patchInfo: EntityPatchInfo<T>): boolean {
+  if (patchInfo.add?.length) return true;
+  if (!patchInfo.update) return false;
+
+  for (const id in patchInfo.update) {
+    if (patchInfo.update[id].findex) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function shouldEntityTreeUpdate<T extends Entity>(
+  patchInfo: EntityPatchInfo<T>,
+  hasParent: (id: string, patch: Partial<T>) => boolean,
+): boolean {
+  if (!!patchInfo.add?.length || !!patchInfo.delete?.length) return true;
+  if (!patchInfo.update) return false;
+
+  for (const id in patchInfo.update) {
+    const patch = patchInfo.update[id];
+    if (patch.findex || hasParent(id, patch)) {
+      return true;
+    }
+  }
+  return false;
+}

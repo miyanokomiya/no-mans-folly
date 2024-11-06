@@ -125,6 +125,7 @@ function getLineRelatedLayoutPatch(
 ): { [id: string]: Partial<Shape> } {
   const finishedSet = new Set<string>();
   let nextPatch: { [id: string]: Partial<Shape> } = initialPatch;
+  let nextSC = shapeComposite;
   let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
 
   const step = (sc: ShapeComposite, currentPatch: { [id: string]: Partial<Shape> }) => {
@@ -135,26 +136,24 @@ function getLineRelatedLayoutPatch(
         (_, patch) => getLineLabelPatch(sc, { update: patch }),
         (_, patch) => getLineAttachmentPatch(sc, { update: patch }),
       ],
-      shapeComposite.shapeMap,
+      sc.shapeMap,
       currentPatch,
     );
 
+    latestPatch = mergeMap(latestPatch, result.patch);
+    nextSC = getNextShapeComposite(sc, { update: currentPatch });
+
     nextPatch = mapFilter(
       result.patchList.reduce((p, c) => mergeMap(p, c), {}),
-      (p) => !isObjectEmpty(p),
+      (p, id) => !finishedSet.has(id) && !isObjectEmpty(p),
     );
-    latestPatch = mergeMap(latestPatch, result.patch);
+    for (const id in nextPatch) {
+      finishedSet.add(id);
+    }
   };
 
   while (!isObjectEmpty(nextPatch)) {
-    const sc = getNextShapeComposite(shapeComposite, { update: latestPatch });
-    step(sc, nextPatch);
-
-    const tmpNextPatch = mapFilter(nextPatch, (_, id) => !finishedSet.has(id));
-    for (const id in tmpNextPatch) {
-      finishedSet.add(id);
-    }
-    nextPatch = tmpNextPatch;
+    step(nextSC, nextPatch);
   }
 
   return latestPatch;

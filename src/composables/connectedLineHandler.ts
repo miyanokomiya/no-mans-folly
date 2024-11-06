@@ -5,7 +5,7 @@ import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { newElbowLineHandler } from "./elbowLineHandler";
 import { optimizeLinePath } from "./lineSnapping";
-import { ShapeComposite, newShapeComposite } from "./shapeComposite";
+import { ShapeComposite, getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { mapEach, mapFilter, toList } from "../utils/commons";
 
 interface Option {
@@ -31,10 +31,11 @@ export function newConnectedLineHandler(option: Option) {
 
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
+    const updatedShapeComposite = getNextShapeComposite(shapeComposite, { update: updatedMap });
     const updatedShapeMap: { [id: string]: Shape } = {};
-    mapEach(updatedMap, (patch, id) => {
+    mapEach(updatedMap, (_, id) => {
       if (shapeMap[id]) {
-        updatedShapeMap[id] = { ...shapeMap[id], ...patch };
+        updatedShapeMap[id] = updatedShapeComposite.shapeMap[id];
       }
     });
 
@@ -59,10 +60,6 @@ export function newConnectedLineHandler(option: Option) {
       });
     });
 
-    const updatedShapeComposite = newShapeComposite({
-      shapes: toList({ ...shapeMap, ...updatedShapeMap }),
-      getStruct: shapeComposite.getShapeStruct,
-    });
     // Optimize line connections
     mapEach(ret, (patch, id) => {
       const updated = { ...shapeMap[id], ...(updatedShapeMap[id] ?? {}), ...patch } as LineShape;

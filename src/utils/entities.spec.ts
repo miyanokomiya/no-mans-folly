@@ -1,5 +1,11 @@
 import { describe, test, expect } from "vitest";
-import { mergeEntityPatchInfo, normalizeEntityPatchInfo, patchByPartialProperties } from "./entities";
+import {
+  mergeEntityPatchInfo,
+  normalizeEntityPatchInfo,
+  patchByPartialProperties,
+  shouldEntityOrderUpdate,
+  shouldEntityTreeUpdate,
+} from "./entities";
 import { Entity, EntityPatchInfo } from "../models";
 
 describe("normalizeEntityPatchInfo", () => {
@@ -98,5 +104,28 @@ describe("patchByPartialProperties", () => {
       findex: "bb",
       val: { x: undefined, y: 2 },
     });
+  });
+});
+
+describe("shouldEntityOrderUpdate", () => {
+  test("should return true shen the order would change", () => {
+    type Tmp = Entity & { val: number };
+    expect(shouldEntityOrderUpdate<Tmp>({})).toBe(false);
+    expect(shouldEntityOrderUpdate<Tmp>({ add: [{ id: "a", findex: "aa", val: 1 }] })).toBe(true);
+    expect(shouldEntityOrderUpdate<Tmp>({ update: { a: { val: 1 } } })).toBe(false);
+    expect(shouldEntityOrderUpdate<Tmp>({ update: { a: { findex: "aa" } } })).toBe(true);
+    expect(shouldEntityOrderUpdate<Tmp>({ delete: ["a"] })).toBe(false);
+  });
+});
+
+describe("shouldEntityTreeUpdate", () => {
+  test("should return true shen the tree structure would change", () => {
+    type Tmp = Entity & { val: number };
+    expect(shouldEntityTreeUpdate<Tmp>({}, () => true)).toBe(false);
+    expect(shouldEntityTreeUpdate<Tmp>({ add: [{ id: "a", findex: "aa", val: 1 }] }, () => false)).toBe(true);
+    expect(shouldEntityTreeUpdate<Tmp>({ update: { a: { val: 1 } } }, () => false)).toBe(false);
+    expect(shouldEntityTreeUpdate<Tmp>({ update: { a: { val: 1 } } }, () => true)).toBe(true);
+    expect(shouldEntityTreeUpdate<Tmp>({ update: { a: { val: 1, findex: "aa" } } }, () => false)).toBe(true);
+    expect(shouldEntityTreeUpdate<Tmp>({ delete: ["a"] }, () => false)).toBe(true);
   });
 });

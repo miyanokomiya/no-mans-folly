@@ -13,7 +13,7 @@ import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
-import { flatTree, getAllBranchIds, getBranchPath, getParentRefMap, getTree } from "../utils/tree";
+import { flatTree, getAllBranchIds, getBranchPath, getParentRefMap, getTree, TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
   ShapeContext,
@@ -30,11 +30,14 @@ import { newObjectWeakCache } from "../utils/stateful/cache";
 import { DocOutput } from "../models/document";
 import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
+import { shouldEntityOrderUpdate, shouldEntityTreeUpdate } from "../utils/entities";
 
 interface Option {
   shapes: Shape[];
   getStruct: shapeModule.GetShapeStruct;
   tmpShapeMap?: { [id: string]: Partial<Shape> };
+  // This option must be equivalent to one derived from shapes.
+  shapeTreeInfo?: { mergedShapeTree: TreeNode[]; mergedShapeTreeMap: { [id: string]: TreeNode } };
 }
 
 export function newShapeComposite(option: Option) {
@@ -60,8 +63,8 @@ export function newShapeComposite(option: Option) {
   const shapeMap = toMap(srcShapes);
   const mergedShapeMap = tmpShapeMap ? (mergeMap(shapeMap, tmpShapeMap) as { [id: string]: Shape }) : shapeMap;
   const mergedShapes = srcShapes.map((s) => mergedShapeMap[s.id]);
-  const mergedShapeTree = getTree(mergedShapes);
-  const mergedShapeTreeMap = toMap(flatTree(mergedShapeTree));
+  const mergedShapeTree = option.shapeTreeInfo?.mergedShapeTree ?? getTree(mergedShapes);
+  const mergedShapeTreeMap = option.shapeTreeInfo?.mergedShapeTreeMap ?? toMap(flatTree(mergedShapeTree));
 
   const mergedShapeContext: ShapeContext = {
     shapeMap: mergedShapeMap,
@@ -403,21 +406,22 @@ export function getNextShapeComposite(
 
   const shapes = patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes;
 
-  let shouldSort = !!patchInfo.add?.length;
-  if (patchInfo.update) {
-    for (const id in patchInfo.update) {
-      if (patchInfo.update[id].findex) {
-        shouldSort = true;
-        break;
-      }
-    }
-  }
+  const shouldSort = shouldEntityOrderUpdate(patchInfo);
+  const shouldResetTree = shouldSort || shouldEntityTreeUpdate(patchInfo, (_, patch) => !!patch.parentId);
+
   if (shouldSort) {
     shapes.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
   }
+
   return newShapeComposite({
     shapes,
     getStruct: shapeComposite.getShapeStruct,
+    shapeTreeInfo: shouldResetTree
+      ? undefined
+      : {
+          mergedShapeTree: shapeComposite.mergedShapeTree,
+          mergedShapeTreeMap: shapeComposite.mergedShapeTreeMap,
+        },
   });
 }
 
