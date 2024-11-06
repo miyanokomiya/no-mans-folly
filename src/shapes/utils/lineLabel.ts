@@ -53,7 +53,10 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
   return ret;
 }
 
-export function isLineLabelShape(shapeComposite: ShapeComposite, shape: Shape): shape is TextShape {
+export function isLineLabelShape(
+  shapeComposite: ShapeComposite,
+  shape: Shape,
+): shape is TextShape & Required<Pick<Shape, "parentId">> {
   const parent = shapeComposite.shapeMap[shape.parentId ?? ""];
   return !!parent && isLineShape(parent) && isTextShape(shape) && shape.lineAttached !== undefined;
 }
