@@ -90,18 +90,22 @@ export function mapEach<T, K extends string>(map: { [key in K]: T }, fn: (t: T, 
   }
 }
 
+export type PatchPipeItem<T extends { id: string }> = (
+  itemMap: { [id: string]: T },
+  patchMap: { [id: string]: Partial<T> },
+) => { [id: string]: Partial<T> };
+
 export function patchPipe<T extends { id: string }>(
-  patchFns: Array<
-    (itemMap: { [id: string]: T }, patchMap: { [id: string]: Partial<T> }) => { [id: string]: Partial<T> }
-  >,
+  patchFns: PatchPipeItem<T>[],
   src: { [id: string]: T },
+  initialParch: { [id: string]: Partial<T> } = {},
 ): { patch: { [id: string]: Partial<T> }; result: { [id: string]: T } } {
   let currentResult = src;
-  let currentPatch = {};
+  let currentPatch = initialParch;
   patchFns.forEach((fn) => {
     const patch = fn(currentResult, currentPatch);
     currentPatch = mergeMap(currentPatch, patch);
-    currentResult = mergeMap(currentResult, currentPatch);
+    currentResult = mergeMap(currentResult, currentPatch) as { [id: string]: T };
   });
   return { patch: currentPatch, result: currentResult };
 }
