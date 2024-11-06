@@ -153,7 +153,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                     id: line.id,
                     to: info[0],
                   };
-                  return { ...patchAtStart[s.id], attachment };
+                  return { attachment };
                 });
               },
               (_, currentPatch) => {
