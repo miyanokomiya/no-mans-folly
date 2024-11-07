@@ -66,6 +66,20 @@ describe("topSortHierarchy", () => {
       ]),
     );
     expect(result1).toEqual([["c"], ["b"], ["a"]]);
+  });
+
+  test("result isn't always optimal but correct", () => {
+    const result1 = topSortHierarchy(
+      new Map([
+        ["a", new Set(["d"])],
+        ["b", new Set(["f"])],
+        ["c", new Set(["f"])],
+        ["d", new Set(["b"])],
+        ["e", new Set(["b"])],
+        ["f", new Set()],
+      ]),
+    );
+    expect(result1).toEqual([["f"], ["b"], ["d"], ["a", "c", "e"]]);
 
     const result2 = topSortHierarchy(
       new Map([
@@ -75,7 +89,7 @@ describe("topSortHierarchy", () => {
         ["d", new Set(["c"])],
       ]),
     );
-    expect(result2).toEqual([["c"], ["b", "d"], ["a"]]);
+    expect(result2).toEqual([["c"], ["b"], ["a", "d"]]);
 
     const result3 = topSortHierarchy(
       new Map([
@@ -85,6 +99,6 @@ describe("topSortHierarchy", () => {
         ["d", new Set(["c"])],
       ]),
     );
-    expect(result3, "multiple dependencies can't be regarded").toEqual([["c"], ["d"], ["a"], ["b"]]);
+    expect(result3, "multiple dependencies can't be regarded").toEqual([["c"], ["d"], ["b"], ["a"]]);
   });
 });

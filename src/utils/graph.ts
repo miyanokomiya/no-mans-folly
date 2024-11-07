@@ -46,35 +46,43 @@ function topSortStep(
 
 /**
  * Items in the same hierarchy are independent from each other.
- * This hierarchy only regards items having single dependency. This isn't perfect but much performant.
+ * This hierarchy isn't optimal but much performant.
  */
 export function topSortHierarchy(depSrc: DependencyMap, strict = false): string[][] {
   const sorted = topSort(depSrc, strict);
+  const finishedSet = new Set<string>();
 
-  const ret: string[][] = [];
   const nodeps: string[] = [];
-  const singledeps = new Map<string, string[]>();
-  const others: string[] = [];
-
   sorted.forEach((id) => {
     const deps = depSrc.get(id);
     if (!deps || deps.size === 0) {
       nodeps.push(id);
-    } else if (deps.size === 1) {
-      const dep = deps.values().next().value!;
-      if (singledeps.has(dep)) {
-        singledeps.get(dep)!.push(id);
-      } else {
-        singledeps.set(dep, [id]);
-      }
-    } else {
-      others.push(id);
+      finishedSet.add(id);
+      return;
     }
   });
 
-  ret.push(nodeps);
-  singledeps.forEach((keys) => ret.push(keys));
-  others.forEach((key) => ret.push([key]));
+  const ret: string[][] = [nodeps];
+  let currentSet = new Set<string>();
+  sorted.forEach((id) => {
+    const deps = depSrc.get(id);
+    if (!deps || deps.size === 0) return;
+
+    for (const dep of deps) {
+      if (currentSet.has(dep)) {
+        if (currentSet.size > 0) {
+          ret.push(Array.from(currentSet));
+        }
+        currentSet = new Set([id]);
+        return;
+      }
+    }
+
+    currentSet.add(id);
+  });
+  if (currentSet.size > 0) {
+    ret.push(Array.from(currentSet));
+  }
 
   return ret;
 }
