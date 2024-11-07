@@ -50,13 +50,18 @@ export function newConnectedLineHandler(option: Option) {
         const latestLine = latestPatch ? { ...line, ...latestPatch } : line;
 
         const connections = getConnections(latestLine);
-        const index = connections.findIndex((c) => c?.id === id);
-        const connection = connections[index];
-        if (!connection) return;
+        let currentPatch = latestPatch;
+        let currentLine = latestLine;
+        connections.forEach((c, index) => {
+          if (c?.id !== id) return;
 
-        const p = getLocationFromRateOnRectPath(rectPath, rotation, connection.rate);
-        const vertexPatch = patchVertex(latestLine, index, p, connection);
-        ret[latestLine.id] = latestPatch ? { ...latestPatch, ...vertexPatch } : vertexPatch;
+          const p = getLocationFromRateOnRectPath(rectPath, rotation, c.rate);
+          const vertexPatch = patchVertex(currentLine, index, p, c);
+          currentPatch = { ...currentPatch, ...vertexPatch };
+          currentLine = { ...currentLine, ...vertexPatch };
+        });
+
+        ret[latestLine.id] = currentPatch;
       });
     });
 

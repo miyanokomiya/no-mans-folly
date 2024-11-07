@@ -65,6 +65,45 @@ describe("newConnectedLineHandler", () => {
       });
     });
 
+    test("should regard multiple connections of a line to the same shape", () => {
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        pConnection: { rate: { x: 0.1, y: 0 }, id: "a" },
+        qConnection: { rate: { x: 0, y: 1 }, id: "a" },
+        body: [
+          { p: { x: 0, y: 0 }, c: { rate: { x: 0, y: 0.5 }, id: "a" } },
+          { p: { x: 10, y: 10 }, c: { rate: { x: 1, y: 0.5 }, id: "a" } },
+        ],
+      });
+      const target = newConnectedLineHandler({
+        connectedLinesMap: {
+          a: [line],
+        },
+        ctx: {
+          getShapeComposite: () =>
+            newShapeComposite({
+              shapes: [line, a],
+              getStruct: getCommonStruct,
+            }),
+        },
+      });
+
+      expect(
+        target.onModified({
+          a: { width: 50, height: 100 } as Partial<RectangleShape>,
+        }),
+      ).toEqual({
+        line: {
+          p: { x: 5, y: 0 },
+          q: { x: 0, y: 100 },
+          body: [
+            { p: { x: 0, y: 50 }, c: { rate: { x: 0, y: 0.5 }, id: "a" } },
+            { p: { x: 50, y: 50 }, c: { rate: { x: 1, y: 0.5 }, id: "a" } },
+          ],
+        },
+      });
+    });
+
     test("should regard body connections", () => {
       const l0 = struct.create({
         id: "l0",
