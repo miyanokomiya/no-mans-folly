@@ -16,6 +16,7 @@ import {
 } from "../utils/renderer";
 import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
 import { canAddBezierControls, getModifiableBezierControls } from "../shapes/utils/curveLine";
+import { isConnectedToCenter } from "../shapes/utils/line";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
@@ -146,16 +147,14 @@ export function newLineBounding(option: Option) {
 
   function getOptimizeAnchorP(scale: number): IVec2 | undefined {
     if (!lineShape.pConnection) return;
-    const rate = lineShape.pConnection.rate;
-    if (lineShape.pConnection.id === lineShape.qConnection?.id || !isSame(rate, { x: 0.5, y: 0.5 })) return;
+    if (lineShape.pConnection.id === lineShape.qConnection?.id || !isConnectedToCenter(lineShape.pConnection)) return;
     const v = rotate({ x: 0, y: 20 }, getRadianP(lineShape));
     return add(lineShape.p, multi(v, scale));
   }
 
   function getOptimizeAnchorQ(scale: number): IVec2 | undefined {
     if (!lineShape.qConnection) return;
-    const rate = lineShape.qConnection.rate;
-    if (lineShape.qConnection.id === lineShape.pConnection?.id || !isSame(rate, { x: 0.5, y: 0.5 })) return;
+    if (lineShape.qConnection.id === lineShape.pConnection?.id || !isConnectedToCenter(lineShape.qConnection)) return;
     const v = rotate({ x: 0, y: 20 }, getRadianQ(lineShape));
     return add(lineShape.q, multi(v, scale));
   }

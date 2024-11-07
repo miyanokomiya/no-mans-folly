@@ -15,6 +15,7 @@ import { getEdges, LineShape, struct } from "../line";
 import { isBezieirControl } from "../../utils/path";
 import { BEZIER_APPROX_SIZE, getCurveLerpFn, getSegments, ISegment } from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
+import { ConnectionPoint } from "../../models";
 
 /**
  * Returns the line with minimum styles.
@@ -151,4 +152,8 @@ export function getLineEdgeInfo(line: LineShape): {
     totalLength,
     lerpFn: (rate) => getPathPointAtLengthFromStructs(pathStructs, totalLength * rate),
   };
+}
+
+export function isConnectedToCenter(c: ConnectionPoint): boolean {
+  return isSame(c.rate, { x: 0.5, y: 0.5 });
 }

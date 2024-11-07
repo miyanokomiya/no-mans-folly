@@ -3,6 +3,7 @@ import {
   getClosestOutlineInfoOfLine,
   getLineEdgeInfo,
   getNakedLineShape,
+  isConnectedToCenter,
   patchByFliplineH,
   patchByFliplineV,
 } from "./line";
@@ -127,5 +128,13 @@ describe("getLineEdgeInfo", () => {
     });
     const target = getLineEdgeInfo(line0);
     expect(target.lerpFn(80 / target.totalLength)).toEqualPoint({ x: 34.99598644197986, y: 71.72119092860004 });
+  });
+});
+
+describe("isConnectedToCenter", () => {
+  test("should return true when the connection is at the center", () => {
+    expect(isConnectedToCenter({ id: "a", rate: { x: 0.5, y: 0.5 } })).toBe(true);
+    expect(isConnectedToCenter({ id: "a", rate: { x: 0.49, y: 0.5 } })).toBe(false);
+    expect(isConnectedToCenter({ id: "a", rate: { x: 0.5, y: 0.51 } })).toBe(false);
   });
 });

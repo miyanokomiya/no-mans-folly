@@ -22,6 +22,7 @@ import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
 import { pickClosestGridLineAtPoint, snapVectorToGrid } from "./grid";
+import { isConnectedToCenter } from "../shapes/utils/line";
 
 const SNAP_THRESHOLD = 10;
 
@@ -433,8 +434,10 @@ function patchLineConnectedToShapeOutline(
 ): Partial<LineShape> {
   const pConnection = line.pConnection;
   const qConnection = line.qConnection;
-  const shouldCheckP = pConnection && pConnection.id === shape.id && !pConnection.optimized;
-  const shouldCheckQ = qConnection && qConnection.id === shape.id && !qConnection.optimized;
+  const shouldCheckP =
+    pConnection && pConnection.id === shape.id && !isConnectedToCenter(pConnection) && !pConnection.optimized;
+  const shouldCheckQ =
+    qConnection && qConnection.id === shape.id && !isConnectedToCenter(qConnection) && !qConnection.optimized;
   if (!shouldCheckP && !shouldCheckQ) return {};
 
   const points = getLinePath(line);
