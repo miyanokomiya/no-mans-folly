@@ -17,6 +17,8 @@ const en = {
     "noworkspace.warning":
       "You can start with no workspace, but your data will be gone unless it's saved to a workspace before you leave this page.",
     "noworkspace.start": "Start with no workspace",
+    update_sw: "New content available, click on reload button to update.",
+    reload: "Reload",
 
     exconnection: {
       revoke: "Revoke connections",
@@ -78,6 +80,8 @@ const ja: TranslationResource = {
     google_drive: "Google Drive",
     "noworkspace.warning": "ワークスペースを選択しないままページを離脱すると全ての変更は失われます。",
     "noworkspace.start": "ワークスペースなし",
+    update_sw: "アプリケーションに更新があります。リロードボタン押下で更新します。",
+    reload: "リロード",
 
     exconnection: {
       revoke: "連携解除",

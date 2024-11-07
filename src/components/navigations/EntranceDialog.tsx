@@ -9,6 +9,7 @@ import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import { usePageShowBackEffect } from "../../hooks/window";
 import { useTranslation, Trans } from "react-i18next";
 import { LangSelection } from "../molecules/LangSelection";
+import { registerSW } from "virtual:pwa-register";
 
 interface Props {
   open: boolean;
@@ -72,6 +73,18 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
     openGoogleDrivePicker();
   }, [googleToken, googleMode, openGoogleDrivePicker]);
 
+  const [updateSW, setUpdateSW] = useState<ReturnType<typeof registerSW>>();
+  useEffect(() => {
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        setUpdateSW(updateSW);
+      },
+    });
+  }, []);
+  const handleClickUpdate = useCallback(() => {
+    updateSW?.(true);
+  }, [updateSW]);
+
   if (googleMode === "opened") {
     return <></>;
   }
@@ -83,6 +96,23 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   return (
     <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
       <div className="w-96">
+        {updateSW ? (
+          <div className="mt-2 p-2 bg-green-100 border-2 rounded">
+            <p>
+              <Trans i18nKey="update_sw" />
+            </p>
+            <div className="mt-2 flex justify-center">
+              <button
+                type="button"
+                className="w-40 py-1 px-2 rounded flex items-center justify-center bg-white border border-gray-500 font-semibold"
+                onClick={handleClickUpdate}
+                disabled={loading}
+              >
+                {t("reload")}
+              </button>
+            </div>
+          </div>
+        ) : undefined}
         <p className="mt-2">
           <Trans i18nKey="select_workspace" components={{ tag_folder: <span className="font-bold" /> }} />
         </p>
