@@ -1,6 +1,14 @@
 import { AffineMatrix, IRectangle, IVec2, getOuterRectangle, getRectCenter, multiAffines } from "okageo";
 import { BoxPadding, CommonStyle, Shape, ShapeAttachment, Size } from "../models";
-import { GetShapeStruct as _GetShapeStruct, ShapeContext, ShapeSnappingLines, TextContainer } from "./core";
+import {
+  GetShapeStruct as _GetShapeStruct,
+  createBaseShape,
+  hasFillStyle,
+  hasStrokeStyle,
+  ShapeContext,
+  ShapeSnappingLines,
+  TextContainer,
+} from "./core";
 import { struct as unknownStruct } from "./unknown";
 import * as geometry from "../utils/geometry";
 import { ImageStore } from "../composables/imageStore";
@@ -379,7 +387,7 @@ export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: 
  * Make sure both src and dist shapes have compatibility before calling this function.
  */
 export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: string): Shape {
-  const defaultDist = createShape(getStruct, type, { id: src.id, findex: src.findex, parentId: src.parentId });
+  const defaultDist = createShape(getStruct, type, { id: src.id });
   const defaultDistRect = getWrapperRect(getStruct, defaultDist);
   const srcRect = getWrapperRect(getStruct, { ...src, rotation: 0 });
 
@@ -392,8 +400,13 @@ export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: str
     srcRect.y,
   ]);
 
-  const dist = createShape(getStruct, type, src);
-  return { ...dist, ...resizePatch, rotation: src.rotation };
+  const fill = hasFillStyle(src) ? { fill: src.fill } : {};
+  const stroke = hasStrokeStyle(src) ? { stroke: src.stroke } : {};
+
+  const basicProperties: Partial<Shape> = createBaseShape(src);
+  delete basicProperties.type;
+
+  return { ...defaultDist, ...basicProperties, ...resizePatch, ...fill, ...stroke };
 }
 
 export function getAttachmentByUpdatingRotation(shape: Shape, rotation?: number): ShapeAttachment | undefined {

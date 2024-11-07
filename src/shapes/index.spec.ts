@@ -495,11 +495,13 @@ describe("switchShapeType", () => {
       fill: createFillStyle({ color: COLORS.GRAY_1 }),
       stroke: createStrokeStyle({ color: COLORS.YELLOW }),
       alpha: 0.3,
+      parentId: "p",
     });
     const result0 = switchShapeType(getCommonStruct, rect, "ellipse") as EllipseShape;
     expect(result0.fill).toEqual(rect.fill);
     expect(result0.stroke).toEqual(rect.stroke);
     expect(result0.alpha).toBe(0.3);
+    expect(result0.parentId).toBe("p");
   });
 });
 
