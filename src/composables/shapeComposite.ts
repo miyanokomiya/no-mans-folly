@@ -439,6 +439,26 @@ export function getNextShapeComposite(
   });
 }
 
+export function replaceTmpShapeMapOfShapeComposite(
+  shapeComposite: ShapeComposite,
+  tmpShapeMap: { [id: string]: Partial<Shape> },
+): ShapeComposite {
+  const shouldResetTree = shouldEntityTreeUpdate({ update: tmpShapeMap }, (_, patch) => !!patch.parentId);
+
+  return newShapeComposite({
+    shapes: shapeComposite.shapes,
+    tmpShapeMap,
+    getStruct: shapeComposite.getShapeStruct,
+    shapeTreeInfo: shouldResetTree
+      ? undefined
+      : {
+          mergedShapeTree: shapeComposite.mergedShapeTree,
+          mergedShapeTreeMap: shapeComposite.mergedShapeTreeMap,
+          parentRefMap: shapeComposite.parentRefMap,
+        },
+  });
+}
+
 /**
  * Returns rotated wrapper rect for target shapes.
  */

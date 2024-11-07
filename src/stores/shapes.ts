@@ -3,7 +3,7 @@ import { Shape } from "../models";
 import { newEntityStore } from "./core/entities";
 import { newEntitySelectable } from "./core/entitySelectable";
 import { newCallback } from "../utils/stateful/reactives";
-import { newShapeComposite } from "../composables/shapeComposite";
+import { newShapeComposite, replaceTmpShapeMapOfShapeComposite, ShapeComposite } from "../composables/shapeComposite";
 import { newCache } from "../utils/stateful/cache";
 import { getCommonStruct } from "../shapes";
 
@@ -41,10 +41,23 @@ export function newShapeStore(option: Option) {
     entityStore.refresh(_ydoc);
   }
 
+  let shapeUpdated = true;
+  let shapeCompositeRawCache: ShapeComposite | undefined;
   const shapeCompositeCache = newCache(() => {
-    return newShapeComposite({ shapes: entityStore.getEntities(), tmpShapeMap, getStruct: getCommonStruct });
+    const shapes = entityStore.getEntities();
+    if (!shapeUpdated && shapeCompositeRawCache) {
+      shapeCompositeRawCache = replaceTmpShapeMapOfShapeComposite(shapeCompositeRawCache, tmpShapeMap);
+    } else {
+      shapeCompositeRawCache = newShapeComposite({ shapes, tmpShapeMap, getStruct: getCommonStruct });
+    }
+
+    shapeUpdated = false;
+    return shapeCompositeRawCache;
   });
-  entityStore.watch(shapeCompositeCache.update);
+  entityStore.watch(() => {
+    shapeUpdated = true;
+    shapeCompositeCache.update();
+  });
   tmpShapeMapCallback.bind(shapeCompositeCache.update);
 
   const staticShapeCompositeCache = newCache(() => {

@@ -8,6 +8,7 @@ import {
   getNextShapeComposite,
   getRotatedTargetBounds,
   newShapeComposite,
+  replaceTmpShapeMapOfShapeComposite,
   swapShapeParent,
 } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
@@ -839,6 +840,36 @@ describe("getNextShapeComposite", () => {
         update: { [shape2.id]: { findex: generateKeyBetween(null, shape0.findex) } },
       }).shapes,
     ).toEqual([{ ...shape2, findex: generateKeyBetween(null, shape0.findex) }, shape0, shape3, shape1]);
+  });
+});
+
+describe("replaceTmpShapeMapOfShapeComposite", () => {
+  test("should return next shape composite applied the patches", () => {
+    const shape0 = createShape(getCommonStruct, "group", { id: "shape0", findex: generateKeyBetween(null, null) });
+    const shape1 = createShape(getCommonStruct, "text", {
+      id: "shape1",
+      findex: generateKeyBetween(shape0.findex, null),
+    });
+
+    const shapes = [shape0, shape1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = replaceTmpShapeMapOfShapeComposite(target, {
+      [shape0.id]: { p: { x: 10, y: 10 } },
+    });
+    expect(result0.shapes).toEqual(shapes);
+    expect(result0.mergedShapes).toEqual([{ ...shape0, p: { x: 10, y: 10 } }, shape1]);
+    expect(result0.mergedShapeTree).toBe(target.mergedShapeTree);
+
+    const result1 = replaceTmpShapeMapOfShapeComposite(target, {
+      [shape0.id]: { parentId: shape0.id },
+    });
+    expect(result1.shapes).toEqual(shapes);
+    expect(result1.mergedShapes).toEqual([{ ...shape0, parentId: shape0.id }, shape1]);
+    expect(result1.mergedShapeTree).not.toBe(target.mergedShapeTree);
   });
 });
 
