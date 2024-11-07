@@ -66,7 +66,7 @@ export function newTextReadyState(): AppCanvasState {
           const point = event.data.current;
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
           vertex = snappingResult ? add(point, snappingResult.diff) : point;
-          ctx.setTmpShapeMap({});
+          ctx.redraw();
           return;
         }
         case "keydown":

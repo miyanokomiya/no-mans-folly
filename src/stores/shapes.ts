@@ -6,6 +6,7 @@ import { newCallback } from "../utils/stateful/reactives";
 import { newShapeComposite, replaceTmpShapeMapOfShapeComposite, ShapeComposite } from "../composables/shapeComposite";
 import { newCache } from "../utils/stateful/cache";
 import { getCommonStruct } from "../shapes";
+import { isObjectEmpty } from "../utils/commons";
 
 type Option = {
   ydoc: Y.Doc;
@@ -25,6 +26,9 @@ export function newShapeStore(option: Option) {
   let tmpShapeMap: { [id: string]: Partial<Shape> } = {};
 
   function setTmpShapeMap(val: { [id: string]: Partial<Shape> }) {
+    if (isObjectEmpty(tmpShapeMap) && isObjectEmpty(val)) {
+      return;
+    }
     tmpShapeMap = val;
     tmpShapeMapCallback.dispatch(new Set(Object.keys(val)));
   }
