@@ -14,6 +14,10 @@ export function newShapeInspectionState(): AppCanvasState {
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
+        case "pointerdown":
+          // This handling is intended as an escape hatch in case this state unexpectedly remains.
+          ctx.setTmpShapeMap({});
+          return ctx.states.newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, ["Break"]);
         default:
