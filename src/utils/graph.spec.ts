@@ -220,4 +220,22 @@ describe("reverseDepMap", () => {
       ]),
     );
   });
+
+  test("should ignore unknown deps", () => {
+    expect(
+      reverseDepMap(
+        new Map([
+          ["a", new Set(["b"])],
+          ["b", new Set(["c"])],
+          ["c", new Set(["d"])],
+        ]),
+      ),
+    ).toEqual(
+      new Map([
+        ["a", new Set()],
+        ["b", new Set(["a"])],
+        ["c", new Set(["b"])],
+      ]),
+    );
+  });
 });

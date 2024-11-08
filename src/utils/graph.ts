@@ -156,7 +156,10 @@ export function reverseDepMap(depSrc: DependencyMap): DependencyMap {
 
   for (const [id, deps] of depSrc) {
     for (const dep of deps) {
-      ret.get(dep)!.add(id);
+      const val = ret.get(dep);
+      if (val) {
+        val.add(id);
+      }
     }
   }
 
