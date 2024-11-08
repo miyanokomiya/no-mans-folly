@@ -173,7 +173,7 @@ describe("newConnectedLineHandler", () => {
       });
     });
 
-    test("should not delete connections when a line is modified but connected shapes arn't", () => {
+    test("should move vertices to connected points even when connected shapes arn't updated", () => {
       const target = newConnectedLineHandler({
         connectedLinesMap: {
           a: [l0, l1],
@@ -194,11 +194,11 @@ describe("newConnectedLineHandler", () => {
         l1: { p: { x: 10, y: 10 } },
       });
       expect(result).toEqual({
-        l0: { p: { x: 25, y: 50 } },
+        l0: { p: { x: 25, y: 50 }, q: { x: 20, y: 80 } },
         l1: {
           body: [
             { p: { x: 0, y: 50 }, c: { rate: { x: 0, y: 0.5 }, id: "a" } },
-            { p: { x: 10, y: 10 }, c: { rate: { x: 1, y: 0.5 }, id: "b" } },
+            { p: { x: 100, y: 50 }, c: { rate: { x: 1, y: 0.5 }, id: "b" } },
           ],
         },
       });

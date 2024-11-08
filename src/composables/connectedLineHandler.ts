@@ -41,6 +41,29 @@ export function newConnectedLineHandler(option: Option) {
 
     // Update connections
     mapEach(updatedShapeMap, (shape, id) => {
+      if (isLineShape(shape)) {
+        const latestPatch = ret[shape.id];
+        const latestLine = latestPatch ? { ...shape, ...latestPatch } : shape;
+
+        const connections = getConnections(latestLine);
+        let currentPatch = latestPatch;
+        let currentLine = latestLine;
+        connections.forEach((c, index) => {
+          if (!c?.id) return;
+          const target = updatedShapeMap[c.id] ?? shapeMap[c.id];
+          if (!target) return;
+
+          const rectPath = shapeComposite.getLocalRectPolygon(target);
+          const rotation = target.rotation;
+          const p = getLocationFromRateOnRectPath(rectPath, rotation, c.rate);
+          const vertexPatch = patchVertex(currentLine, index, p, c);
+          currentPatch = { ...currentPatch, ...vertexPatch };
+          currentLine = { ...currentLine, ...vertexPatch };
+        });
+        ret[latestLine.id] = currentPatch;
+        return;
+      }
+
       const rectPath = shapeComposite.getLocalRectPolygon(shape);
       const rotation = shape.rotation;
 
@@ -197,7 +220,7 @@ export function getConnectedLineInfoMap(
     // Gather connected lines without duplication
     const saved = new Set<string>();
     getConnections(line).forEach((connection) => {
-      if (connection && !saved.has(connection.id) && targetIds.has(connection.id)) {
+      if (connection && !saved.has(connection.id) && (targetIds.has(connection.id) || targetIds.has(line.id))) {
         saved.add(connection.id);
         connectedLineInfoMap[connection.id] ??= [];
         connectedLineInfoMap[connection.id].push(line);

@@ -1,7 +1,7 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { getConnections, isLineShape } from "../shapes/line";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
-import { isObjectEmpty, mapFilter, mergeMap, patchPipe } from "../utils/commons";
+import { isObjectEmpty, mapEach, mergeMap, patchPipe } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
 import { DependencyMap, topSortHierarchy } from "../utils/graph";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
@@ -126,6 +126,7 @@ function getLineRelatedLayoutPatch(
   shapeComposite: ShapeComposite,
   initialPatch: { [id: string]: Partial<Shape> },
 ): { [id: string]: Partial<Shape> } {
+  // When target id is in this set, its patch will be merged into "nextSC" and won't be in "nextPatch".
   const finishedSet = new Set<string>();
   let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
   let nextPatch: { [id: string]: Partial<Shape> } = initialPatch;
@@ -144,12 +145,22 @@ function getLineRelatedLayoutPatch(
     );
 
     latestPatch = mergeMap(latestPatch, result.patch);
-    nextSC = getNextShapeComposite(sc, { update: currentPatch });
 
-    nextPatch = mapFilter(
-      result.patchList.reduce((p, c) => mergeMap(p, c), {}),
-      (p, id) => !finishedSet.has(id) && !isObjectEmpty(p),
-    );
+    const rawNextPatch = result.patchList.reduce((p, c) => mergeMap(p, c), {});
+    const finishedNextPatch: typeof nextPatch = {};
+    nextPatch = {};
+    mapEach(rawNextPatch, (p, id) => {
+      if (isObjectEmpty(p, true)) return;
+      if (finishedSet.has(id)) {
+        finishedNextPatch[id] = p;
+      } else {
+        nextPatch[id] = p;
+      }
+    });
+
+    nextSC = getNextShapeComposite(sc, {
+      update: isObjectEmpty(finishedNextPatch) ? currentPatch : mergeMap(currentPatch, finishedNextPatch),
+    });
   };
 
   // Get dependency hierarchy of initial patch.
@@ -159,14 +170,22 @@ function getLineRelatedLayoutPatch(
   sorted.forEach((ids) => {
     if (ids.length === 0) return;
 
-    step(nextSC, nextPatch);
+    const nextPatchPartial = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
+      const patch = latestPatch[id];
+      if (patch) p[id] = patch;
+      return p;
+    }, {});
+
     ids.forEach((id) => finishedSet.add(id));
+    if (!isObjectEmpty(nextPatchPartial, true)) {
+      step(nextSC, nextPatchPartial);
+    }
   });
 
   // Keep procing "step" until converges.
   // This should converge unless circular dependency exists.
   // Even with circular dependencies, this must end due to "finishedSet".
-  while (!isObjectEmpty(nextPatch)) {
+  while (!isObjectEmpty(nextPatch, true)) {
     step(nextSC, nextPatch);
     for (const id in nextPatch) {
       finishedSet.add(id);
@@ -176,14 +195,10 @@ function getLineRelatedLayoutPatch(
   return latestPatch;
 }
 
-/**
- * Returns dependency map only having ids as keys.
- */
-function getLineRelatedDepMap(shapeComposite: ShapeComposite, ids: string[]): DependencyMap {
-  const depSrc: DependencyMap = new Map();
+export function getLineRelatedDepMap(shapeComposite: ShapeComposite, ids: string[]): DependencyMap {
+  const allDepMap: DependencyMap = new Map();
 
-  const step = (id: string) => {
-    const s = shapeComposite.shapeMap[id];
+  const step = (s: Shape) => {
     const deps = new Set<string>();
 
     if (shapeComposite.attached(s)) {
@@ -200,9 +215,32 @@ function getLineRelatedDepMap(shapeComposite: ShapeComposite, ids: string[]): De
       deps.add(s.parentId);
     }
 
-    depSrc.set(id, deps);
+    allDepMap.set(s.id, deps);
   };
-  ids.forEach((id) => step(id));
 
-  return depSrc;
+  shapeComposite.shapes.forEach((s) => {
+    step(s);
+  });
+
+  const relatedSet = new Set(ids);
+  const relatedStep = (id: string) => {
+    const deps = allDepMap.get(id);
+    if (!deps) return;
+
+    deps.forEach((dep) => {
+      if (relatedSet.has(dep)) return;
+
+      relatedSet.add(dep);
+      relatedStep(dep);
+    });
+  };
+  ids.forEach(relatedStep);
+
+  const ret: DependencyMap = new Map();
+  relatedSet.forEach((id) => {
+    const item = allDepMap.get(id);
+    if (!item) return;
+    ret.set(id, item);
+  });
+  return ret;
 }
