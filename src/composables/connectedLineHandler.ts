@@ -122,7 +122,11 @@ export function newConnectedLineHandler(option: Option) {
 }
 export type ConnectedLineHandler = ReturnType<typeof newConnectedLineHandler>;
 
-export function newConnectedLineDetouchHandler(option: Option) {
+interface DetachOption {
+  ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
+}
+
+export function newConnectedLineDetouchHandler(option: DetachOption) {
   /**
    * Returns patched properties that are updated in this function.
    * => Returned value doesn't inherit the content of "updatedMap".

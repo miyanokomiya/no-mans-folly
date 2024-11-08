@@ -39,10 +39,7 @@ export function newRotatingState(option: Option): AppCanvasState {
       targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
       const targetIds = targets.map((s) => s.id);
       const connectedLinesMap = getConnectedLineInfoMap(ctx, targetIds);
-      lineHandler = newConnectedLineDetouchHandler({
-        connectedLinesMap,
-        ctx,
-      });
+      lineHandler = newConnectedLineDetouchHandler({ ctx });
       connectionRenderer = newConnectionRenderer({
         connectedLinesMap,
         excludeIdSet: new Set(targetIds),

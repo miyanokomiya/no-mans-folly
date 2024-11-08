@@ -78,10 +78,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       }
 
       const connectedLinesMap = getConnectedLineInfoMap(ctx, targetIds);
-      lineHandler = newConnectedLineDetouchHandler({
-        connectedLinesMap,
-        ctx,
-      });
+      lineHandler = newConnectedLineDetouchHandler({ ctx });
       connectionRenderer = newConnectionRenderer({
         connectedLinesMap,
         excludeIdSet: new Set(targetIds),
