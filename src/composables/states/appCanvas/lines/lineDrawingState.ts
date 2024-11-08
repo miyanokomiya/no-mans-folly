@@ -20,6 +20,7 @@ import { handleCommonWheel } from "../../commons";
 import { getDefaultCurveBody } from "../../../../shapes/utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
+import { Shape } from "../../../../models";
 
 interface Option {
   shape: LineShape;
@@ -104,9 +105,21 @@ export function newLineDrawingState(option: Option): AppCanvasState {
             patch = { ...patch, body: getDefaultCurveBody(shape.p, shape.q) };
           }
 
+          const shapeComposite = ctx.getShapeComposite();
+
+          // Include connected shapes to temporary shape composite.
+          // => This is essential for connection layout to work properly.
+          const tmpShapeSet: Set<Shape> = new Set([option.shape]);
+          if (option.shape.pConnection) {
+            tmpShapeSet.add(shapeComposite.shapeMap[option.shape.pConnection.id]);
+          }
+          if (patch.qConnection) {
+            tmpShapeSet.add(shapeComposite.shapeMap[patch.qConnection.id]);
+          }
+
           const tmpShapeComposite = newShapeComposite({
-            getStruct: ctx.getShapeComposite().getShapeStruct,
-            shapes: [option.shape],
+            getStruct: shapeComposite.getShapeStruct,
+            shapes: Array.from(tmpShapeSet),
           });
           patch = getPatchAfterLayouts(tmpShapeComposite, { update: { [option.shape.id]: patch } })[option.shape.id];
 

@@ -5,6 +5,7 @@ import { LineShape } from "../../../../shapes/line";
 import { createInitialAppCanvasStateContext } from "../../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../../models/factories";
 import { newShapeComposite } from "../../../shapeComposite";
+import { RectangleShape } from "../../../../shapes/rectangle";
 
 function getMockCtx() {
   return {
@@ -96,6 +97,37 @@ describe("handleEvent", () => {
       ).toBe(ctx.states.newSelectionHubState);
       expect(ctx.addShapes).toHaveBeenCalled();
       expect(ctx.selectShape).toHaveBeenCalledWith("a");
+    });
+
+    test("should keep line connections when exist", () => {
+      const otherA = createShape(getCommonStruct, "rectangle", { id: "otherA" });
+      const otherB = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "otherB", width: 100 });
+      const shape = createShape<LineShape>(getCommonStruct, "line", {
+        id: "a",
+        p: { x: 10, y: 0 },
+        pConnection: { id: otherA.id, rate: { x: 0, y: 1 } },
+      });
+      const ctx = getMockCtx();
+      ctx.getShapeComposite = () =>
+        newShapeComposite({
+          shapes: [otherA, otherB],
+          getStruct: getCommonStruct,
+        });
+      let added: LineShape | undefined;
+      ctx.addShapes.mockImplementation(([v]) => (added = v));
+
+      const target = newLineDrawingState({ shape });
+      target.onStart?.(ctx);
+      target.handleEvent(ctx, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 100, y: 0 }, scale: 1 },
+      });
+      target.handleEvent(ctx, {
+        type: "pointerup",
+        data: { point: { x: 100, y: 0 }, options: { button: 0 } },
+      });
+      expect(added?.pConnection).toEqual(shape.pConnection);
+      expect(added?.qConnection).toEqual({ id: otherB.id, rate: { x: 1, y: 0 } });
     });
   });
 });
