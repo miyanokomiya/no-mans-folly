@@ -14,20 +14,17 @@ export function handlePointerMoveOnLine(
   if (event.data.ctrl || movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
-  const isSomeUnattachable = movingIds.some((id) => {
-    const shape = shapeComposite.shapeMap[id];
-    return !shapeComposite.canAttach(shape);
-  });
-  if (isSomeUnattachable) return;
-
   const movingIdSet = new Set(movingIds);
   const subShapeComposite = newShapeComposite({
     shapes: shapeComposite.shapes.filter((s) => movingIdSet.has(s.id)),
     getStruct: shapeComposite.getShapeStruct,
   });
 
-  const movingShape = subShapeComposite.findShapeAt(event.data.start, undefined, [], false, ctx.getScale());
-  if (!movingShape) return;
+  const movingShapeSub = subShapeComposite.findShapeAt(event.data.start, undefined, [], false, ctx.getScale());
+  if (!movingShapeSub) return;
+
+  const movingShape = shapeComposite.shapeMap[movingShapeSub.id];
+  if (!shapeComposite.canAttach(movingShape)) return;
 
   const anchorP = getAttachmentAnchorPoint(subShapeComposite, movingShape);
   const diff = sub(event.data.current, event.data.start);
