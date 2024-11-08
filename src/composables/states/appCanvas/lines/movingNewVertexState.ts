@@ -16,6 +16,7 @@ import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
+import { getLineRelatedDependantMap } from "../../../shapeRelation";
 
 interface Option {
   lineShape: LineShape;
@@ -40,10 +41,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const selectedIds = ctx.getSelectedShapeIdMap();
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && isLineSnappableShape(shapeComposite, s)),
+      const dependantMap = getLineRelatedDependantMap(shapeComposite, [option.lineShape.id]);
+      const unrelatedShapes = shapeComposite.getShapesOverlappingRect(
+        Object.values(shapeMap).filter((s) => !selectedIds[s.id] && !dependantMap.has(s.id)),
         ctx.getViewRect(),
       );
+
+      const snappableShapes = unrelatedShapes.filter((s) => isLineSnappableShape(shapeComposite, s));
       const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
 
       lineSnapping = newLineSnapping({
@@ -54,10 +58,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
 
-      const snappableLines = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => isLineShape(s)),
-        ctx.getViewRect(),
-      );
+      const snappableLines = unrelatedShapes.filter((s) => isLineShape(s));
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
