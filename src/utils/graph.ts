@@ -87,8 +87,9 @@ export function topSortHierarchy(depSrc: DependencyMap, strict = false): string[
   return ret;
 }
 
-export function getAllDependants(depMap: DependencyMap, reversedDepMap: DependencyMap, target: string): string[] {
-  const relatedSet = new Set<string>([target]);
+export function getAllDependants(depMap: DependencyMap, reversedDepMap: DependencyMap, targets: string[]): string[] {
+  const targetSet = new Set(targets);
+  const relatedSet = new Set<string>(targets);
   const finishedSet = new Set<string>();
 
   const step = (id: string) => {
@@ -110,11 +111,35 @@ export function getAllDependants(depMap: DependencyMap, reversedDepMap: Dependen
       dependants?.forEach(step);
     }
   };
-  step(target);
+  targets.forEach(step);
 
   const ret: string[] = [];
   relatedSet.forEach((id) => {
-    if (id === target) return;
+    if (targetSet.has(id)) return;
+    const item = depMap.get(id);
+    if (!item) return;
+    ret.push(id);
+  });
+  return ret;
+}
+
+export function getAllDependencies(depMap: DependencyMap, targets: string[]): string[] {
+  const targetSet = new Set(targets);
+  const relatedSet = new Set(targets);
+  const finishedSet = new Set<string>();
+
+  const step = (id: string) => {
+    if (finishedSet.has(id)) return;
+
+    finishedSet.add(id);
+    relatedSet.add(id);
+    depMap.get(id)?.forEach(step);
+  };
+  targets.forEach(step);
+
+  const ret: string[] = [];
+  relatedSet.forEach((id) => {
+    if (targetSet.has(id)) return;
     const item = depMap.get(id);
     if (!item) return;
     ret.push(id);

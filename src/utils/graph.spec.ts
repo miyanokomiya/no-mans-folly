@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { getAllDependants, reverseDepMap, topSort, topSortHierarchy } from "./graph";
+import { getAllDependants, getAllDependencies, reverseDepMap, topSort, topSortHierarchy } from "./graph";
 
 describe("topSort", () => {
   test("should return topologically sorted ids", () => {
@@ -111,9 +111,9 @@ describe("getAllDependants", () => {
       ["c", new Set("d")],
       ["d", new Set()],
     ]);
-    expect(getAllDependants(map1, reverseDepMap(map1), "c")).toEqual(["a"]);
-    expect(getAllDependants(map1, reverseDepMap(map1), "a")).toEqual([]);
-    expect(getAllDependants(map1, reverseDepMap(map1), "d")).toEqual(["c", "a"]);
+    expect(getAllDependants(map1, reverseDepMap(map1), ["c"])).toEqual(["a"]);
+    expect(getAllDependants(map1, reverseDepMap(map1), ["a"])).toEqual([]);
+    expect(getAllDependants(map1, reverseDepMap(map1), ["d"])).toEqual(["c", "a"]);
 
     const map2 = new Map<string, Set<string>>([
       ["d", new Set()],
@@ -121,10 +121,10 @@ describe("getAllDependants", () => {
       ["b", new Set(["c"])],
       ["a", new Set(["b"])],
     ]);
-    expect(getAllDependants(map2, reverseDepMap(map2), "a")).toEqual([]);
-    expect(getAllDependants(map2, reverseDepMap(map2), "b")).toEqual(["a"]);
-    expect(getAllDependants(map2, reverseDepMap(map2), "c")).toEqual(["b", "a"]);
-    expect(getAllDependants(map2, reverseDepMap(map2), "d")).toEqual(["c", "b", "a"]);
+    expect(getAllDependants(map2, reverseDepMap(map2), ["a"])).toEqual([]);
+    expect(getAllDependants(map2, reverseDepMap(map2), ["b"])).toEqual(["a"]);
+    expect(getAllDependants(map2, reverseDepMap(map2), ["c"])).toEqual(["b", "a"]);
+    expect(getAllDependants(map2, reverseDepMap(map2), ["d"])).toEqual(["c", "b", "a"]);
 
     const map3 = new Map<string, Set<string>>([
       ["a", new Set(["b"])],
@@ -132,7 +132,18 @@ describe("getAllDependants", () => {
       ["c", new Set("d")],
       ["d", new Set()],
     ]);
-    expect(getAllDependants(map3, reverseDepMap(map3), "c")).toEqual(["b", "a"]);
+    expect(getAllDependants(map3, reverseDepMap(map3), ["c"])).toEqual(["b", "a"]);
+  });
+
+  test("should regard multiple targets", () => {
+    const map1 = new Map<string, Set<string>>([
+      ["a", new Set(["c"])],
+      ["b", new Set(["d"])],
+      ["c", new Set(["e"])],
+      ["d", new Set()],
+      ["e", new Set()],
+    ]);
+    expect(getAllDependants(map1, reverseDepMap(map1), ["c", "d"])).toEqual(["a", "b"]);
   });
 
   test("should sever circular dependencies", () => {
@@ -141,8 +152,37 @@ describe("getAllDependants", () => {
       ["b", new Set(["c"])],
       ["c", new Set(["a"])],
     ]);
-    const result0 = getAllDependants(map1, reverseDepMap(map1), "c");
+    const result0 = getAllDependants(map1, reverseDepMap(map1), ["c"]);
     expect(result0).toEqual(["b", "a"]);
+  });
+});
+
+describe("getAllDependencies", () => {
+  test("should return all dependencies", () => {
+    const map1 = new Map<string, Set<string>>([
+      ["a", new Set()],
+      ["b", new Set(["a"])],
+      ["c", new Set(["b"])],
+    ]);
+    expect(getAllDependencies(map1, ["c"])).toEqual(["b", "a"]);
+
+    const map2 = new Map<string, Set<string>>([
+      ["a", new Set()],
+      ["b", new Set()],
+      ["c", new Set(["b", "a"])],
+    ]);
+    expect(getAllDependencies(map2, ["c"])).toEqual(["b", "a"]);
+  });
+
+  test("should regard multiple targets", () => {
+    const map1 = new Map<string, Set<string>>([
+      ["a", new Set(["c"])],
+      ["b", new Set(["d"])],
+      ["c", new Set(["e"])],
+      ["d", new Set()],
+      ["e", new Set()],
+    ]);
+    expect(getAllDependencies(map1, ["a", "b"])).toEqual(["c", "e", "d"]);
   });
 });
 
