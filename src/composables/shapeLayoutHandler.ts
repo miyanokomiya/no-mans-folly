@@ -10,7 +10,7 @@ import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
-import { getLineRelatedDepMap } from "./shapeRelation";
+import { getLineRelatedDependantMap } from "./shapeRelation";
 
 /**
  * Genaral porpus patch function to recalculate all layouts and automatic adjustments.
@@ -164,7 +164,7 @@ function getLineRelatedLayoutPatch(
 
   // Get dependency hierarchy of initial patch.
   // => Proc "step" in this order.
-  const depMap = getLineRelatedDepMap(shapeComposite, Object.keys(initialPatch));
+  const depMap = getLineRelatedDependantMap(shapeComposite, Object.keys(initialPatch));
   const sorted = topSortHierarchy(depMap);
   sorted.forEach((ids) => {
     if (ids.length === 0) return;
