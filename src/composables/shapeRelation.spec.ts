@@ -4,7 +4,8 @@ import { newShapeComposite } from "./shapeComposite";
 import { generateKeyBetween } from "../utils/findex";
 import { Shape } from "../models";
 import { LineShape } from "../shapes/line";
-import { getLineRelatedDependantMap } from "./shapeRelation";
+import { getLineRelatedDependantMap, getLineUnrelatedIds } from "./shapeRelation";
+import { TreeNodeShape } from "../shapes/tree/treeNode";
 
 describe("getLineRelatedDependantMap", () => {
   test("should return line related dependency map", () => {
@@ -115,5 +116,52 @@ describe("getLineRelatedDependantMap", () => {
       ]),
     );
     expect(getLineRelatedDependantMap(shapeComposite, [rectB.id])).toEqual(new Map([[rectB.id, new Set([lineB.id])]]));
+  });
+});
+
+describe("getLineUnrelatedIds", () => {
+  test("should return unrelated shape ids to the lines: regard tree structure of shapes", () => {
+    const lineA = createShape<LineShape>(getCommonStruct, "line", {
+      id: "lineA",
+      findex: generateKeyBetween(null, null),
+    });
+    const treeRoot = createShape(getCommonStruct, "tree_root", {
+      id: "treeRoot",
+      findex: generateKeyBetween(lineA.findex, null),
+      attachment: {
+        id: lineA.id,
+        to: { x: 0, y: 0 },
+        anchor: { x: 0, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const treeNodeA = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "treeNodeA",
+      findex: generateKeyBetween(treeRoot.findex, null),
+      parentId: treeRoot.id,
+      treeParentId: treeRoot.id,
+    });
+    const treeNodeB = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "treeNodeB",
+      findex: generateKeyBetween(treeNodeA.findex, null),
+      parentId: treeRoot.id,
+      treeParentId: treeRoot.id,
+    });
+    const treeRootZ = createShape(getCommonStruct, "tree_root", {
+      id: "treeRootZ",
+      findex: generateKeyBetween(treeNodeB.findex, null),
+    });
+    const treeNodeZ = createShape<TreeNodeShape>(getCommonStruct, "tree_node", {
+      id: "treeNodeZ",
+      findex: generateKeyBetween(treeRootZ.findex, null),
+      parentId: treeRootZ.id,
+      treeParentId: treeRootZ.id,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [lineA, treeRoot, treeNodeA, treeNodeB, treeRootZ, treeNodeZ],
+      getStruct: getCommonStruct,
+    });
+    expect(getLineUnrelatedIds(shapeComposite, [lineA.id])).toEqual([treeRootZ.id, treeNodeZ.id]);
   });
 });

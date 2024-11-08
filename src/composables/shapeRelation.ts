@@ -6,6 +6,7 @@ import { ShapeComposite } from "./shapeComposite";
 
 /**
  * Returns dependant shapes that can be affected by update of shapes with ids.
+ * This doesn't regard conventional tree structure of shapes.
  */
 export function getLineRelatedDependantMap(shapeComposite: ShapeComposite, ids: string[]): DependencyMap {
   const allDepMap: DependencyMap = new Map();
@@ -46,4 +47,17 @@ export function getLineRelatedDependantMap(shapeComposite: ShapeComposite, ids: 
     ret.set(id, item);
   });
   return ret;
+}
+
+/**
+ * This regards conventional tree structure of shapes.
+ */
+export function getLineUnrelatedIds(shapeComposite: ShapeComposite, ids: string[]): string[] {
+  const dependantMap = getLineRelatedDependantMap(shapeComposite, ids);
+  const relatedIdSet = new Set(
+    shapeComposite.getAllBranchMergedShapes(Array.from(dependantMap.keys())).map((s) => s.id),
+  );
+  return Object.values(shapeComposite.shapeMap)
+    .filter((s) => !relatedIdSet.has(s.id))
+    .map((s) => s.id);
 }

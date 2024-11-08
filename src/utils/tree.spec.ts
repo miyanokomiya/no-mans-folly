@@ -152,6 +152,14 @@ describe("getAllBranchIds", () => {
       { id: "b", parentId: "" },
     ]);
     expect(target.getAllBranchIds(tree, ["a", "b"])).toEqual(["a", "aa", "aaa", "b", "bb"]);
+
+    const tree2 = target.getTree([
+      { id: "c", parentId: "b" },
+      { id: "b", parentId: "a" },
+      { id: "a", parentId: "" },
+    ]);
+    expect(target.getAllBranchIds(tree2, ["a"])).toEqual(["a", "b", "c"]);
+    expect(target.getAllBranchIds(tree2, ["b"])).toEqual(["b", "c"]);
   });
 });
 
