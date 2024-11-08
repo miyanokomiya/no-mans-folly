@@ -299,10 +299,6 @@ describe("newConnectedLineDetouchHandler", () => {
 
   test("should delete connections when a line is modified but connected shapes arn't", () => {
     const target = newConnectedLineDetouchHandler({
-      connectedLinesMap: {
-        a: [l0, l1],
-        b: [l0, l1],
-      },
       ctx: {
         getShapeComposite: () =>
           newShapeComposite({
@@ -329,10 +325,6 @@ describe("newConnectedLineDetouchHandler", () => {
 
   test("should not delete connections when a line and connected shape are modified", () => {
     const target = newConnectedLineDetouchHandler({
-      connectedLinesMap: {
-        a: [l0, l1],
-        b: [l0, l1],
-      },
       ctx: {
         getShapeComposite: () =>
           newShapeComposite({
