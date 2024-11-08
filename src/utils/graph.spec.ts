@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { topSort, topSortHierarchy } from "./graph";
+import { getAllDependants, reverseDepMap, topSort, topSortHierarchy } from "./graph";
 
 describe("topSort", () => {
   test("should return topologically sorted ids", () => {
@@ -100,5 +100,84 @@ describe("topSortHierarchy", () => {
       ]),
     );
     expect(result3, "multiple dependencies can't be regarded").toEqual([["c"], ["d"], ["b"], ["a"]]);
+  });
+});
+
+describe("getAllDependants", () => {
+  test("should return all dependants of the target", () => {
+    const map1 = new Map<string, Set<string>>([
+      ["a", new Set(["b", "c"])],
+      ["b", new Set()],
+      ["c", new Set("d")],
+      ["d", new Set()],
+    ]);
+    expect(getAllDependants(map1, reverseDepMap(map1), "c")).toEqual(["a"]);
+    expect(getAllDependants(map1, reverseDepMap(map1), "a")).toEqual([]);
+    expect(getAllDependants(map1, reverseDepMap(map1), "d")).toEqual(["c", "a"]);
+
+    const map2 = new Map<string, Set<string>>([
+      ["d", new Set()],
+      ["c", new Set("d")],
+      ["b", new Set(["c"])],
+      ["a", new Set(["b"])],
+    ]);
+    expect(getAllDependants(map2, reverseDepMap(map2), "a")).toEqual([]);
+    expect(getAllDependants(map2, reverseDepMap(map2), "b")).toEqual(["a"]);
+    expect(getAllDependants(map2, reverseDepMap(map2), "c")).toEqual(["b", "a"]);
+    expect(getAllDependants(map2, reverseDepMap(map2), "d")).toEqual(["c", "b", "a"]);
+
+    const map3 = new Map<string, Set<string>>([
+      ["a", new Set(["b"])],
+      ["b", new Set(["c"])],
+      ["c", new Set("d")],
+      ["d", new Set()],
+    ]);
+    expect(getAllDependants(map3, reverseDepMap(map3), "c")).toEqual(["b", "a"]);
+  });
+
+  test("should sever circular dependencies", () => {
+    const map1 = new Map([
+      ["a", new Set(["b"])],
+      ["b", new Set(["c"])],
+      ["c", new Set(["a"])],
+    ]);
+    const result0 = getAllDependants(map1, reverseDepMap(map1), "c");
+    expect(result0).toEqual(["b", "a"]);
+  });
+});
+
+describe("reverseDepMap", () => {
+  test("should reverse dependency map", () => {
+    expect(
+      reverseDepMap(
+        new Map([
+          ["a", new Set(["b"])],
+          ["b", new Set(["c"])],
+          ["c", new Set(["a"])],
+        ]),
+      ),
+    ).toEqual(
+      new Map([
+        ["a", new Set(["c"])],
+        ["b", new Set(["a"])],
+        ["c", new Set(["b"])],
+      ]),
+    );
+
+    expect(
+      reverseDepMap(
+        new Map([
+          ["a", new Set(["b", "c"])],
+          ["b", new Set(["c"])],
+          ["c", new Set()],
+        ]),
+      ),
+    ).toEqual(
+      new Map([
+        ["a", new Set()],
+        ["b", new Set(["a"])],
+        ["c", new Set(["a", "b"])],
+      ]),
+    );
   });
 });
