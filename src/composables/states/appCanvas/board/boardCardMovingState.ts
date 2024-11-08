@@ -5,10 +5,10 @@ import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { newShapeComposite } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
-import { findBackward, findexSortFn, mapReduce } from "../../../../utils/commons";
+import { findBackward, findexSortFn, mapEach } from "../../../../utils/commons";
 import { IVec2, add, sub } from "okageo";
 import { newShapeRenderer } from "../../../shapeRenderer";
-import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
+import { generateKeyBetween, generateKeyBetweenAllowSame } from "../../../../utils/findex";
 import { isBoardRootShape } from "../../../../shapes/board/boardRoot";
 
 export function newBoardCardMovingState(option: { boardId: string }): AppCanvasState {
@@ -48,19 +48,25 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          if (event.data.ctrl) return { type: "break" };
+          if (event.data.ctrl) {
+            ctx.setTmpShapeMap(getPatchByDetachAll(ctx));
+            return { type: "break" };
+          }
 
           const shapeComposite = ctx.getShapeComposite();
           const board = findBackward(shapeComposite.shapes.filter(isBoardRootShape), (s) =>
             shapeComposite.isPointOn(s, event.data.current),
           );
 
-          if (!board) return { type: "break" };
+          if (!board) {
+            ctx.setTmpShapeMap(getPatchByDetachAll(ctx));
+            return { type: "break" };
+          }
 
           if (boardId !== board.id) {
             boardId = board.id;
             initHandler(ctx);
-            ctx.setTmpShapeMap({});
+            ctx.redraw();
           }
           diff = sub(event.data.current, event.data.start);
           const result = boardCardMovingHandler?.hitTest(event.data.current);
@@ -70,30 +76,10 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
         }
         case "pointerup": {
           const shapeComposite = ctx.getShapeComposite();
-          const shapeMap = shapeComposite.shapeMap;
 
           if (event.data.options.ctrl) {
-            const tmpShapeMap = ctx.getTmpShapeMap();
             // Disconnect cards from the board.
-            const patch = mapReduce(tmpShapeMap, (v, id) => {
-              const s = shapeMap[id];
-              if (isBoardCardShape(s) && s.parentId) {
-                return {
-                  ...v,
-                  parentId: undefined,
-                  columnId: undefined,
-                  layerId: undefined,
-                  findex: ctx.createLastIndex(),
-                };
-              } else {
-                return v;
-              }
-            });
-
-            const layoutPatch = getPatchByLayouts(shapeComposite, {
-              update: patch,
-            });
-            ctx.patchShapes(layoutPatch);
+            ctx.patchShapes(getPatchByDetachAll(ctx));
             return ctx.states.newSelectionHubState;
           }
 
@@ -162,4 +148,35 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
       }
     },
   };
+}
+
+function patchByDetach(findex: string): Partial<BoardCardShape> {
+  return {
+    parentId: undefined,
+    columnId: undefined,
+    layerId: undefined,
+    findex,
+  };
+}
+
+function getPatchByDetachAll(ctx: AppCanvasStateContext): { [id: string]: Partial<BoardCardShape> } {
+  const shapeComposite = ctx.getShapeComposite();
+  const tmpShapeMap = ctx.getTmpShapeMap();
+
+  const patch: { [id: string]: Partial<BoardCardShape> } = {};
+  let lastFindex = ctx.createLastIndex();
+  mapEach(ctx.getSelectedShapeIdMap(), (_, id) => {
+    const s = shapeComposite.shapeMap[id];
+    const v = tmpShapeMap[id];
+    if (isBoardCardShape(s) && s.parentId) {
+      const ret = patchByDetach(lastFindex);
+      lastFindex = generateKeyBetween(lastFindex, null);
+      patch[id] = { ...v, ...ret };
+    } else if (v) {
+      patch[id] = v;
+    }
+  });
+  return getPatchByLayouts(shapeComposite, {
+    update: patch,
+  });
 }
