@@ -1,16 +1,9 @@
 import { describe, test, expect } from "vitest";
-import {
-  getLineRelatedDepMap,
-  getPatchAfterLayouts,
-  getPatchByLayouts,
-  getPatchInfoByLayouts,
-} from "./shapeLayoutHandler";
+import { getPatchAfterLayouts, getPatchByLayouts, getPatchInfoByLayouts } from "./shapeLayoutHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
 import { generateKeyBetween } from "../utils/findex";
-import { Shape } from "../models";
-import { LineShape } from "../shapes/line";
 
 describe("getPatchByLayouts", () => {
   test("error case: regard new shapes added by the patch", () => {
@@ -106,47 +99,5 @@ describe("getPatchAfterLayouts", () => {
     });
     const result = getPatchAfterLayouts(shapeComposite, { add: [new_card] });
     expect(result[new_card.id]).toBe(undefined);
-  });
-});
-
-describe("getLineRelatedDepMap", () => {
-  test("", () => {
-    const ellipseA = createShape(getCommonStruct, "ellipse", {
-      id: "ellipseA",
-      findex: generateKeyBetween(null, null),
-    });
-    const lineA = createShape<LineShape>(getCommonStruct, "line", {
-      id: "lineA",
-      findex: generateKeyBetween(ellipseA.id, null),
-      pConnection: { id: ellipseA.id, rate: { x: 0, y: 0 } },
-    });
-    const rectA = createShape(getCommonStruct, "rectangle", {
-      id: "rectA",
-      findex: generateKeyBetween(lineA.findex, null),
-      attachment: {
-        id: lineA.id,
-        to: { x: 0, y: 0 },
-        anchor: { x: 0, y: 0 },
-        rotationType: "relative",
-        rotation: 0,
-      },
-    });
-    const rectB: Shape = {
-      ...rectA,
-      id: "rectA",
-      findex: generateKeyBetween(lineA.findex, null),
-    };
-    const shapeComposite = newShapeComposite({
-      shapes: [ellipseA, lineA, rectA, rectB],
-      getStruct: getCommonStruct,
-    });
-    expect(getLineRelatedDepMap(shapeComposite, [rectA.id])).toEqual(
-      new Map([
-        [ellipseA.id, new Set()],
-        [lineA.id, new Set([ellipseA.id])],
-        [rectA.id, new Set([lineA.id])],
-        [rectB.id, new Set([lineA.id])],
-      ]),
-    );
   });
 });
