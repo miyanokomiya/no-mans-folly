@@ -48,13 +48,14 @@ export function handlePointerMoveOnLine(
   };
 
   const exludeIds = movingIds.concat();
-  let targetLine = shapeComposite.findShapeAt(movedAnchorP, { shapeType: "line" }, exludeIds, false, ctx.getScale());
+  const scope = { ...shapeComposite.getSelectionScope(shapeComposite.shapeMap[movingShape.id]), shapeType: "line" };
+  let targetLine = shapeComposite.findShapeAt(movedAnchorP, scope, exludeIds, false, ctx.getScale(), true);
   while (targetLine) {
     if (isValidLine(targetLine)) {
       break;
     }
     exludeIds.push(targetLine.id);
-    targetLine = shapeComposite.findShapeAt(movedAnchorP, { shapeType: "line" }, exludeIds, false, ctx.getScale());
+    targetLine = shapeComposite.findShapeAt(movedAnchorP, scope, exludeIds, false, ctx.getScale(), true);
   }
   if (!targetLine) return;
 

@@ -400,6 +400,29 @@ describe("newShapeComposite", () => {
       expect(target.getMergedShapesInSelectionScope({ parentId: group.id, shapeType: "rectangle" })).toEqual([rect0]);
       expect(target.getMergedShapesInSelectionScope({ shapeType: "line" })).toEqual([]);
     });
+
+    test("should ignore parent scope when anyParent is set true", () => {
+      const group = createShape(getCommonStruct, "group", { id: "group" });
+      const rect0 = createShape(getCommonStruct, "rectangle", { id: "rect0", parentId: group.id });
+      const line0 = createShape(getCommonStruct, "line", { id: "line0", parentId: group.id });
+      const rect1 = createShape(getCommonStruct, "rectangle", { id: "rect1" });
+
+      const shapes = [group, rect0, line0, rect1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getMergedShapesInSelectionScope({ parentId: group.id }, false, true)).toEqual([
+        group,
+        rect0,
+        line0,
+        rect1,
+      ]);
+      expect(
+        target.getMergedShapesInSelectionScope({ parentId: group.id, shapeType: "rectangle" }, false, true),
+      ).toEqual([rect0, rect1]);
+      expect(target.getMergedShapesInSelectionScope({ shapeType: "rectangle" }, false, true)).toEqual([rect0, rect1]);
+    });
   });
 
   describe("hasParent", () => {

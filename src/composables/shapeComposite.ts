@@ -130,9 +130,10 @@ export function newShapeComposite(option: Option) {
     excludeIds?: string[],
     parentScopeCheckOnly = false,
     scale = 1,
+    anyParent = false,
   ): Shape | undefined {
     const excludeSet = new Set(excludeIds ?? []);
-    const candidates = getMergedShapesInSelectionScope(scope, parentScopeCheckOnly);
+    const candidates = getMergedShapesInSelectionScope(scope, parentScopeCheckOnly, anyParent);
     const candidate = findBackward(
       candidates,
       (s) => !excludeSet.has(s.id) && shapeModule.isPointOn(getStruct, s, p, mergedShapeContext, scale),
@@ -232,11 +233,20 @@ export function newShapeComposite(option: Option) {
   }
 
   /**
-   * When scope.parent is undefined, returns root shapes
+   * When scope.parent is undefined, returns root shapes.
+   * When "anyParent" is set true, scope.parent is ignored and parents of shapes don't matter to filtering.
    */
-  function getMergedShapesInSelectionScope(scope?: ShapeSelectionScope, parentScopeCheckOnly = false): Shape[] {
+  function getMergedShapesInSelectionScope(
+    scope?: ShapeSelectionScope,
+    parentScopeCheckOnly = false,
+    anyParent = false,
+  ): Shape[] {
     let candidates: Shape[];
-    if (!scope?.parentId) {
+    if (anyParent) {
+      candidates = srcShapes
+        .map((s) => mergedShapeMap[s.id])
+        .filter((s) => getSelectionScope(s).scopeKey === scope?.scopeKey);
+    } else if (!scope?.parentId) {
       candidates = mergedShapeTree.map((t) => mergedShapeMap[t.id]);
     } else {
       const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
