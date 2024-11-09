@@ -16,6 +16,7 @@ import { findBackward, mergeMap, toMap } from "../utils/commons";
 import { flatTree, getAllBranchIds, getBranchPath, getParentRefMap, getTree, TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
+  LineJumpMap,
   ShapeContext,
   ShapeSelectionScope,
   ShapeSnappingLines,
@@ -72,13 +73,7 @@ export function newShapeComposite(option: Option) {
   const mergedShapes = srcShapes.map((s) => mergedShapeMap[s.id]);
   const mergedShapeTree = option.shapeTreeInfo?.mergedShapeTree ?? getTree(mergedShapes);
   const mergedShapeTreeMap = option.shapeTreeInfo?.mergedShapeTreeMap ?? toMap(flatTree(mergedShapeTree));
-
-  const mergedShapeContext: ShapeContext = {
-    shapeMap: mergedShapeMap,
-    treeNodeMap: mergedShapeTreeMap,
-    getStruct,
-    lineJumpMap: getLineJumpMap(mergedShapes.filter((s) => isLineShape(s))),
-  };
+  const mergedShapeContext = newShapeContext(getStruct, mergedShapes, mergedShapeMap, mergedShapeTreeMap);
 
   const docCompositeCacheMap: { [id: string]: [info: DocCompositionInfo, src: DocOutput] } = {};
 
@@ -355,6 +350,26 @@ export function newShapeComposite(option: Option) {
   };
 }
 export type ShapeComposite = ReturnType<typeof newShapeComposite>;
+
+function newShapeContext(
+  getStruct: shapeModule.GetShapeStruct,
+  shapes: Shape[],
+  shapeMap: { [id: string]: Shape },
+  shapeTreeMap: { [id: string]: TreeNode },
+): ShapeContext {
+  let lineJumpMap: LineJumpMap;
+  return {
+    shapeMap: shapeMap,
+    treeNodeMap: shapeTreeMap,
+    getStruct,
+    get lineJumpMap() {
+      if (!lineJumpMap) {
+        lineJumpMap = getLineJumpMap(shapes.filter((s) => isLineShape(s)));
+      }
+      return lineJumpMap;
+    },
+  };
+}
 
 /**
  * "scope.scopeKey" is ignored by this function for better behavior.
