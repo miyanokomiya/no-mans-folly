@@ -1,5 +1,12 @@
 import { describe, test, expect } from "vitest";
-import { getAllDependants, getAllDependencies, reverseDepMap, topSort, topSortHierarchy } from "./graph";
+import {
+  getAllDependants,
+  getAllDependencies,
+  getSingleDependantMap,
+  reverseDepMap,
+  topSort,
+  topSortHierarchy,
+} from "./graph";
 
 describe("topSort", () => {
   test("should return topologically sorted ids", () => {
@@ -79,7 +86,7 @@ describe("topSortHierarchy", () => {
         ["f", new Set()],
       ]),
     );
-    expect(result1).toEqual([["f"], ["b"], ["d"], ["a", "c", "e"]]);
+    expect(result1).toEqual([["f"], ["b"], ["d", "e"], ["a", "c"]]);
 
     const result2 = topSortHierarchy(
       new Map([
@@ -100,6 +107,26 @@ describe("topSortHierarchy", () => {
       ]),
     );
     expect(result3, "multiple dependencies can't be regarded").toEqual([["c"], ["d"], ["b"], ["a"]]);
+  });
+});
+
+describe("getSingleDependantMap", () => {
+  test("", () => {
+    expect(
+      getSingleDependantMap(
+        new Map<string, Set<string>>([
+          ["a", new Set(["b", "c"])],
+          ["b", new Set("c")],
+          ["c", new Set("d")],
+          ["d", new Set()],
+        ]),
+      ),
+    ).toEqual(
+      new Map<string, Set<string>>([
+        ["c", new Set(["b"])],
+        ["d", new Set(["c"])],
+      ]),
+    );
   });
 });
 

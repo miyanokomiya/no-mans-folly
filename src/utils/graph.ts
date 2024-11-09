@@ -50,40 +50,75 @@ function topSortStep(
  */
 export function topSortHierarchy(depSrc: DependencyMap, strict = false): string[][] {
   const sorted = topSort(depSrc, strict);
-  const finishedSet = new Set<string>();
-
   const nodeps: string[] = [];
-  sorted.forEach((id) => {
-    const deps = depSrc.get(id);
-    if (!deps || deps.size === 0) {
-      nodeps.push(id);
-      finishedSet.add(id);
-      return;
-    }
-  });
 
-  const ret: string[][] = [nodeps];
-  let currentSet = new Set<string>();
-  sorted.forEach((id) => {
-    const deps = depSrc.get(id);
-    if (!deps || deps.size === 0) return;
-
-    for (const dep of deps) {
-      if (currentSet.has(dep)) {
-        if (currentSet.size > 0) {
-          ret.push(Array.from(currentSet));
-        }
-        currentSet = new Set([id]);
+  {
+    const finishedSet = new Set<string>();
+    sorted.forEach((id) => {
+      const deps = depSrc.get(id);
+      if (!deps || deps.size === 0) {
+        nodeps.push(id);
+        finishedSet.add(id);
         return;
       }
-    }
-
-    currentSet.add(id);
-  });
-  if (currentSet.size > 0) {
-    ret.push(Array.from(currentSet));
+    });
   }
 
+  const ret: string[][] = [nodeps];
+  {
+    const singleDependantMap = getSingleDependantMap(depSrc);
+    const finishedSet = new Set<string>();
+    let currentSet = new Set<string>();
+    sorted.forEach((id) => {
+      if (finishedSet.has(id)) return;
+      finishedSet.add(id);
+
+      const deps = depSrc.get(id);
+      if (!deps || deps.size === 0) return;
+
+      for (const dep of deps) {
+        if (currentSet.has(dep)) {
+          ret.push(Array.from(currentSet));
+
+          const nextSet = new Set<string>([id]);
+          // Pick ones having single dependent on current ones.
+          currentSet.forEach((idInCurrentSet) => {
+            const dependantSet = singleDependantMap.get(idInCurrentSet);
+            dependantSet?.forEach((did) => {
+              nextSet.add(did);
+              finishedSet.add(did);
+            });
+          });
+
+          currentSet = nextSet;
+          return;
+        }
+      }
+
+      currentSet.add(id);
+    });
+
+    if (currentSet.size > 0) {
+      ret.push(Array.from(currentSet));
+    }
+  }
+
+  return ret;
+}
+
+export function getSingleDependantMap(depSrc: DependencyMap): DependencyMap {
+  const ret: DependencyMap = new Map();
+  for (const [id, deps] of depSrc) {
+    if (deps.size !== 1) continue;
+
+    const dep = deps.values().next().value!;
+    const depandantSet = ret.get(dep);
+    if (depandantSet) {
+      depandantSet.add(id);
+    } else {
+      ret.set(dep, new Set([id]));
+    }
+  }
   return ret;
 }
 
