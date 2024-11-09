@@ -2,7 +2,7 @@ import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpP
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
-import { getNextShapeComposite, ShapeComposite } from "./shapeComposite";
+import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import {
   fillArray,
@@ -87,10 +87,10 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
             },
             (src, update) => {
               // Derive translation affine based on the anchors of rotated shapes.
-              const rotatedShapeComposite = getNextShapeComposite(shapeComposite, { update });
+              const rotatedShapeComposite = shapeComposite.getSubShapeComposite([attachedId], update);
               const translateAffine = getAffineByMoveToAttachedPoint(
                 rotatedShapeComposite,
-                rotatedShapeComposite.shapeMap[attachedId],
+                rotatedShapeComposite.mergedShapeMap[attachedId],
                 nextAttachment.anchor,
                 toP,
               );

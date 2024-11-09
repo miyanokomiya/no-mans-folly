@@ -38,12 +38,14 @@ interface Option {
   getStruct: shapeModule.GetShapeStruct;
   tmpShapeMap?: { [id: string]: Partial<Shape> };
   // This option must be equivalent to one derived from shapes.
-  shapeTreeInfo?: {
-    mergedShapeTree: TreeNode[];
-    mergedShapeTreeMap: { [id: string]: TreeNode };
-    parentRefMap: Map<string, string>;
-  };
+  shapeTreeInfo?: ShapeTreeInfo;
 }
+
+type ShapeTreeInfo = {
+  mergedShapeTree: TreeNode[];
+  mergedShapeTreeMap: { [id: string]: TreeNode };
+  parentRefMap: Map<string, string>;
+};
 
 export function newShapeComposite(option: Option) {
   // This cache has to be within this scope.
@@ -73,6 +75,7 @@ export function newShapeComposite(option: Option) {
   const mergedShapes = srcShapes.map((s) => mergedShapeMap[s.id]);
   const mergedShapeTree = option.shapeTreeInfo?.mergedShapeTree ?? getTree(mergedShapes);
   const mergedShapeTreeMap = option.shapeTreeInfo?.mergedShapeTreeMap ?? toMap(flatTree(mergedShapeTree));
+  // shape context always refers to merged shapes.
   const mergedShapeContext = newShapeContext(getStruct, mergedShapes, mergedShapeMap, mergedShapeTreeMap);
 
   const docCompositeCacheMap: { [id: string]: [info: DocCompositionInfo, src: DocOutput] } = {};
@@ -296,11 +299,32 @@ export function newShapeComposite(option: Option) {
     });
   }
 
-  function getSubShapeComposite(ids: string[]): ShapeComposite {
+  function getSubShapeComposite(ids: string[], update?: { [id: string]: Partial<Shape> }): ShapeComposite {
     const allIds = getAllBranchIds(mergedShapeTree, ids);
+    const shouldSort = shouldEntityOrderUpdate({ update });
+    const shouldResetTree = shouldSort || shouldEntityTreeUpdate({ update }, (_, patch) => "parentId" in patch);
+
+    let shapeTreeInfo: ShapeTreeInfo | undefined;
+    if (!shouldResetTree) {
+      const allIdSet = new Set(allIds);
+      shapeTreeInfo = {
+        mergedShapeTree: ids.filter((id) => allIdSet.has(id)).map((id) => mergedShapeTreeMap[id]),
+        mergedShapeTreeMap: allIds.reduce<{ [id: string]: TreeNode }>((p, id) => {
+          p[id] = mergedShapeTreeMap[id];
+          return p;
+        }, {}),
+        parentRefMap: parentRefMap,
+      };
+    }
+
     return newShapeComposite({
       getStruct,
-      shapes: allIds.map((id) => shapeMap[id]),
+      shapes: allIds.map((id) => {
+        const s = shapeMap[id];
+        const v = update?.[id];
+        return v ? { ...s, ...v } : s;
+      }),
+      shapeTreeInfo,
     });
   }
 
@@ -445,7 +469,7 @@ export function getNextShapeComposite(
   const shapes = patchInfo.add ? patchedShapes.concat(patchInfo.add) : patchedShapes;
 
   const shouldSort = shouldEntityOrderUpdate(patchInfo);
-  const shouldResetTree = shouldSort || shouldEntityTreeUpdate(patchInfo, (_, patch) => !!patch.parentId);
+  const shouldResetTree = shouldSort || shouldEntityTreeUpdate(patchInfo, (_, patch) => "parentId" in patch);
 
   if (shouldSort) {
     shapes.sort((a, b) => (a.findex <= b.findex ? -1 : 1));
@@ -468,7 +492,7 @@ export function replaceTmpShapeMapOfShapeComposite(
   shapeComposite: ShapeComposite,
   tmpShapeMap: { [id: string]: Partial<Shape> },
 ): ShapeComposite {
-  const shouldResetTree = shouldEntityTreeUpdate({ update: tmpShapeMap }, (_, patch) => !!patch.parentId);
+  const shouldResetTree = shouldEntityTreeUpdate({ update: tmpShapeMap }, (_, patch) => "parentId" in patch);
 
   return newShapeComposite({
     shapes: shapeComposite.shapes,

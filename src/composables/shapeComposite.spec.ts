@@ -615,6 +615,45 @@ describe("newShapeComposite", () => {
       expect(composite.shapeMap[group10.id].parentId).toBe(undefined);
     });
   });
+
+  describe("getSubShapeComposite", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const child1 = { ...child0, id: "child1", parentId: group0.id };
+    const group10 = { ...group0, id: "group10", parentId: group0.id };
+    const child10 = { ...child0, id: "child10", parentId: group10.id };
+    const child11 = { ...child0, id: "child11", parentId: group10.id };
+
+    test("should return sub shape composite", () => {
+      const shapes = [group0, child0, child1, group10, child10, child11];
+      const composite = newShapeComposite({ shapes, getStruct: getCommonStruct });
+
+      const sub1 = composite.getSubShapeComposite([child10.id]);
+      expect(sub1.shapes.map((s) => s.id)).toEqual([child10.id]);
+
+      const sub2 = composite.getSubShapeComposite([group10.id]);
+      expect(sub2.shapes.map((s) => s.id)).toEqual([group10.id, child10.id, child11.id]);
+    });
+
+    test("should apply update when passed", () => {
+      const shapes = [group0, child0, child1];
+      const composite = newShapeComposite({ shapes, getStruct: getCommonStruct });
+
+      const sub1 = composite.getSubShapeComposite([group0.id], {
+        [child0.id]: { parentId: undefined },
+      });
+      expect(sub1.mergedShapeTree.map((t) => t.id)).toEqual([group0.id, child0.id]);
+
+      const sub2 = composite.getSubShapeComposite([group0.id], {
+        [child0.id]: { p: { x: 1, y: 2 } },
+      });
+      expect(sub2.mergedShapeTree.map((t) => t.id)).toEqual([group0.id]);
+      expect(sub2.shapeMap[child0.id]).toEqual({ ...child0, p: { x: 1, y: 2 } });
+    });
+  });
 });
 
 describe("findBetterShapeAt", () => {
