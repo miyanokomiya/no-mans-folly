@@ -1,19 +1,48 @@
 import { EntityPatchInfo, Shape } from "../models";
-import { isObjectEmpty, mapEach, mergeMap, patchPipe } from "../utils/commons";
+import { refreshShapeRelations } from "../shapes";
+import { isObjectEmpty, mapEach, mergeMap, patchPipe, toList } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
 import { topSortHierarchy } from "../utils/graph";
+import { getAllBranchIds, getTree } from "../utils/tree";
 import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
 import { getCurveLinePatch } from "./curveLineHandler";
 import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
-import { ShapeComposite, getNextShapeComposite } from "./shapeComposite";
+import { ShapeComposite, getDeleteTargetIds, getNextShapeComposite } from "./shapeComposite";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
 import { getLineRelatedDependantMap } from "./shapeRelation";
 
 /**
- * Genaral porpus patch function to recalculate all layouts and automatic adjustments.
+ * This function doesn't recalculate layouts.
+ */
+export function getEntityPatchByDelete(
+  shapeComposite: ShapeComposite,
+  deleteIds: string[],
+  patch?: { [id: string]: Partial<Shape> },
+): EntityPatchInfo<Shape> {
+  // Apply patch before getting branch ids in case tree structure changes by the patch.
+  // => e.g. ungrouping
+  const updatedShapeMap = patch ? patchPipe([() => patch], shapeComposite.shapeMap).result : shapeComposite.shapeMap;
+  const deleteAllIds = getDeleteTargetIds(
+    shapeComposite,
+    getAllBranchIds(getTree(Object.values(updatedShapeMap)), deleteIds),
+  );
+
+  const availableIdSet = new Set(shapeComposite.shapes.map((s) => s.id));
+  deleteAllIds.forEach((id) => availableIdSet.delete(id));
+  const patchByRefreshRelation = refreshShapeRelations(
+    shapeComposite.getShapeStruct,
+    toList(updatedShapeMap),
+    availableIdSet,
+  );
+  const refreshedPatch = patch ? mergeMap(patch, patchByRefreshRelation) : patchByRefreshRelation;
+  return { update: refreshedPatch, delete: deleteAllIds };
+}
+
+/**
+ * Genaral purpose patch function to recalculate all layouts and automatic adjustments.
  * Returned patch includes src patch supplied as an argument.
  */
 export function getPatchByLayouts(

@@ -1,9 +1,54 @@
 import { describe, test, expect } from "vitest";
-import { getPatchAfterLayouts, getPatchByLayouts, getPatchInfoByLayouts } from "./shapeLayoutHandler";
+import {
+  getEntityPatchByDelete,
+  getPatchAfterLayouts,
+  getPatchByLayouts,
+  getPatchInfoByLayouts,
+} from "./shapeLayoutHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
 import { generateKeyBetween } from "../utils/findex";
+import { LineShape } from "../shapes/line";
+
+describe("getEntityPatchByDelete", () => {
+  test("should return entity patch to delete child shapes", () => {
+    const root = createShape(getCommonStruct, "board_root", {
+      id: "root",
+      findex: generateKeyBetween(null, null),
+    });
+    const column0 = createShape(getCommonStruct, "board_column", {
+      id: "column0",
+      findex: generateKeyBetween(root.findex, null),
+      parentId: root.id,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column0],
+      getStruct: getCommonStruct,
+    });
+    const result = getEntityPatchByDelete(shapeComposite, [root.id]);
+    expect(result.delete).toEqual([root.id, column0.id]);
+  });
+
+  test("should return entity patch to clear relations to deleted shapes", () => {
+    const rectangle = createShape(getCommonStruct, "rectangle", {
+      id: "rectangle",
+    });
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line",
+      pConnection: { id: rectangle.id, rate: { x: 0, y: 0 } },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rectangle, line],
+      getStruct: getCommonStruct,
+    });
+    const result = getEntityPatchByDelete(shapeComposite, [rectangle.id]);
+    expect(result.delete).toEqual([rectangle.id]);
+    expect(result.update).toStrictEqual({
+      [line.id]: { pConnection: undefined },
+    });
+  });
+});
 
 describe("getPatchByLayouts", () => {
   test("error case: regard new shapes added by the patch", () => {

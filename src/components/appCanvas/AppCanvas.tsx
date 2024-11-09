@@ -31,7 +31,7 @@ import { getGridSize, newGrid } from "../../composables/grid";
 import { FileDropArea } from "../atoms/FileDropArea";
 import { mapReduce, patchPipe } from "../../utils/commons";
 import { getDeleteTargetIds } from "../../composables/shapeComposite";
-import { getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
+import { getEntityPatchByDelete, getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 import { GridBackground } from "../atoms/GridBackground";
 import { LinkMenu } from "../linkMenu/LinkMenu";
 import { useClickable } from "../../hooks/clickable";
@@ -281,26 +281,20 @@ export const AppCanvas: React.FC = () => {
         loadShapeAssets(shapes);
       },
       deleteShapes: (ids: string[], patch) => {
-        // Apply patch before getting branch ids in case tree structure changes by the patch.
-        // => e.g. ungrouping
-        const updated = patchPipe([() => patch ?? {}], shapeStore.shapeComposite.shapeMap);
-        const targetIds = getDeleteTargetIds(
-          shapeStore.shapeComposite,
-          getAllBranchIds(getTree(Object.values(updated.result)), ids),
+        const shapeComposite = shapeStore.shapeComposite;
+        const shapePatchInfo = getPatchInfoByLayouts(
+          shapeComposite,
+          getEntityPatchByDelete(shapeComposite, ids, patch),
         );
-
-        const shapePatchInfo = getPatchInfoByLayouts(shapeStore.shapeComposite, {
-          update: patch,
-          delete: targetIds,
-        });
 
         shapeStore.transact(() => {
           if (shapePatchInfo.update) {
             shapeStore.patchEntities(shapePatchInfo.update);
           }
-          const adjustedTargetIds = shapePatchInfo.delete ?? targetIds;
-          shapeStore.deleteEntities(adjustedTargetIds);
-          documentStore.deleteDocs(adjustedTargetIds);
+          if (shapePatchInfo.delete) {
+            shapeStore.deleteEntities(shapePatchInfo.delete);
+            documentStore.deleteDocs(shapePatchInfo.delete);
+          }
         });
       },
       patchShapes: shapeStore.patchEntities,
