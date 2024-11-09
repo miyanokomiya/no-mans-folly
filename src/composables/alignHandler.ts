@@ -918,6 +918,8 @@ export function getModifiedAlignRootIds(
   if (patchInfo.delete) {
     patchInfo.delete.forEach((id) => {
       const shape = shapeMap[id];
+      if (!shape) return;
+
       if (isAlignBoxShape(shape)) {
         deletedRootIdSet.add(id);
       }

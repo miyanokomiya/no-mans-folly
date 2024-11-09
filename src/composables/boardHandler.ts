@@ -402,6 +402,8 @@ export function getModifiedBoardRootIds(
   if (patchInfo.delete) {
     patchInfo.delete.forEach((id) => {
       const shape = shapeMap[id];
+      if (!shape) return;
+
       if (isBoardRootShape(shape)) {
         deletedRootIdSet.add(shape.id);
       } else if (isParentRoot(shape)) {

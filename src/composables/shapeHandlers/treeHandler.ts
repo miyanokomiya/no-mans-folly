@@ -807,6 +807,8 @@ export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: 
   if (patchInfo.update) {
     Object.keys(patchInfo.update).forEach((id) => {
       const shape = srcComposite.shapeMap[id];
+      if (!shape) return;
+
       if (isTreeRootShape(shape)) {
         targetTreeRootIdSet.add(shape.id);
       } else if (isTreeNodeShape(shape) && isValidTreeNode(srcComposite, shape)) {
@@ -818,6 +820,8 @@ export function getModifiedTreeRootIds(srcComposite: ShapeComposite, patchInfo: 
   if (patchInfo.delete) {
     patchInfo.delete.forEach((id) => {
       const shape = srcComposite.shapeMap[id];
+      if (!shape) return;
+
       if (isTreeRootShape(shape)) {
         deletedRootIdSet.add(shape.id);
       } else if (isTreeNodeShape(shape) && isValidTreeNode(srcComposite, shape)) {

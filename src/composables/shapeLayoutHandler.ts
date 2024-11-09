@@ -1,6 +1,6 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { refreshShapeRelations } from "../shapes";
-import { isObjectEmpty, mapEach, mergeMap, patchPipe, toList } from "../utils/commons";
+import { isObjectEmpty, mapEach, mapFilter, mergeMap, patchPipe, toList } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
 import { topSortHierarchy } from "../utils/graph";
 import { getAllBranchIds, getTree } from "../utils/tree";
@@ -38,7 +38,8 @@ export function getEntityPatchByDelete(
     availableIdSet,
   );
   const refreshedPatch = patch ? mergeMap(patch, patchByRefreshRelation) : patchByRefreshRelation;
-  return { update: refreshedPatch, delete: deleteAllIds };
+  const deleteAllIdSet = new Set(deleteAllIds);
+  return { update: mapFilter(refreshedPatch, (_, id) => !deleteAllIdSet.has(id)), delete: deleteAllIds };
 }
 
 /**
@@ -92,13 +93,19 @@ export function getPatchInfoByLayouts(
     shouldDeleteIds.length > 0
       ? getNextShapeComposite(updatedCompositeBeforeDelete, { delete: shouldDeleteIds })
       : updatedCompositeBeforeDelete;
-  const adjustedPatchInfo =
-    shouldDeleteIds.length > 0
-      ? {
-          ...patchInfo,
-          delete: [...(patchInfo.delete ?? []), ...shouldDeleteIds],
-        }
-      : patchInfo;
+  const deletedAllIds = [...(patchInfo.delete ?? []), ...shouldDeleteIds];
+  const deletedAllIdSet = new Set(deletedAllIds);
+  const adjustedPatchInfo = {
+    add:
+      deletedAllIdSet.size > 0 && patchInfo.add
+        ? patchInfo.add.filter((s) => !deletedAllIdSet.has(s.id))
+        : patchInfo.add,
+    update:
+      deletedAllIdSet.size > 0 && patchInfo.update
+        ? mapFilter(patchInfo.update, (_, id) => !deletedAllIdSet.has(id))
+        : patchInfo.update,
+    delete: deletedAllIds,
+  };
 
   const patchResult = patchPipe(
     [
