@@ -382,13 +382,15 @@ export function getModifiedBoardRootIds(
   if (patchInfo.update) {
     Object.keys(patchInfo.update).forEach((id) => {
       const shape = shapeMap[id];
+      const updatedShape = updatedShapeMap[id];
+      if (!shape || !updatedShape) return;
+
       if (isBoardRootShape(shape)) {
         targetBoardRootIdSet.add(shape.id);
       } else if (isParentRoot(shape)) {
         targetBoardRootIdSet.add(shape.parentId);
       }
 
-      const updatedShape = updatedShapeMap[id];
       if (isBoardRootShape(updatedShape)) {
         targetBoardRootIdSet.add(updatedShape.id);
       } else if (isParentUpdatedRoot(updatedShape)) {

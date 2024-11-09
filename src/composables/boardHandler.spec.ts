@@ -316,6 +316,24 @@ describe("getModifiedBoardRootIds", () => {
     });
     expect(getModifiedBoardRootIds(shapeComposite, shapeComposite, {})).toEqual([]);
   });
+
+  test("should not return board roots when they are not found in either source or updated data", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [root, column0, card0],
+      getStruct: getCommonStruct,
+    });
+    const shapeCompositeWithoutRoot = shapeComposite.getSubShapeComposite([column0.id, card0.id]);
+    expect(
+      getModifiedBoardRootIds(shapeComposite, shapeCompositeWithoutRoot, {
+        update: { [root.id]: { findex: "aA" } },
+      }),
+    ).toEqual([]);
+    expect(
+      getModifiedBoardRootIds(shapeCompositeWithoutRoot, shapeComposite, {
+        update: { [root.id]: { findex: "aA" } },
+      }),
+    ).toEqual([]);
+  });
 });
 
 describe("newBoardCardMovingHandler", () => {
