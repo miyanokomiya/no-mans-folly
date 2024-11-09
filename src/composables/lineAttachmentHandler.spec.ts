@@ -165,6 +165,21 @@ describe("getLineAttachmentPatch", () => {
     expect(result1[b.id].p).toEqualPoint({ x: 0, y: -40 });
     expect(result1[b.id].rotation).toBeCloseTo(Math.PI / 2);
   });
+
+  test("should ignore unexisting shapes", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [line, shapeA, shapeB],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getLineAttachmentPatch(shapeComposite, {
+      update: {
+        [line.id]: { q: { x: 0, y: 100 } } as Partial<LineShape>,
+        unknown: { q: { x: 0, y: 100 } } as Partial<LineShape>,
+      },
+    });
+    expect(Object.keys(result0)).toEqual([shapeA.id, shapeB.id]);
+  });
 });
 
 describe("getAffineByMoveToAttachedPoint", () => {

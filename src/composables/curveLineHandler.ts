@@ -12,7 +12,7 @@ export function getCurveLinePatch(
   const ret: { [id: string]: Partial<LineShape> } = {};
   Object.entries(patchInfo.update).forEach(([id, patch]) => {
     const src = srcComposite.shapeMap[id];
-    if (!isLineShape(src)) return;
+    if (!src || !isLineShape(src)) return;
 
     const updated = { ...src, ...patch };
     if (updated.curveType !== "auto") {

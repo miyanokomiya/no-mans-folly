@@ -63,4 +63,13 @@ describe("getCurveLinePatch", () => {
     expect(res["a"]).toHaveProperty("curves");
     expect(res["a"].curves).toBe(undefined);
   });
+
+  test("should ignore unexisting shapes", () => {
+    const res0 = getCurveLinePatch(shapeComposite, {
+      update: {
+        unknown: { curveType: "auto" } as Partial<LineShape>,
+      },
+    });
+    expect(res0).toEqual({});
+  });
 });

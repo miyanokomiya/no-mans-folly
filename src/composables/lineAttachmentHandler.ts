@@ -120,7 +120,7 @@ function getUpdatedAttachedMap(
   updatedMap: { [id: string]: Partial<Shape> },
 ): Map<string, Set<string>> {
   const shapeMap = shapeComposite.shapeMap;
-  const targetLineIdSet = new Set(Object.keys(updatedMap).filter((id) => isLineShape(shapeMap[id])));
+  const targetLineIdSet = new Set(Object.keys(updatedMap).filter((id) => shapeMap[id] && isLineShape(shapeMap[id])));
   const attachedMap = new Map<string, Set<string>>();
 
   mapEach(shapeMap, (s, id) => {
