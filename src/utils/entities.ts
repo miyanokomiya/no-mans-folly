@@ -90,14 +90,14 @@ export function shouldEntityOrderUpdate<T extends Entity>(patchInfo: EntityPatch
 
 export function shouldEntityTreeUpdate<T extends Entity>(
   patchInfo: EntityPatchInfo<T>,
-  hasParent: (id: string, patch: Partial<T>) => boolean,
+  hasParentKey: (id: string, patch: Partial<T>) => boolean,
 ): boolean {
   if (!!patchInfo.add?.length || !!patchInfo.delete?.length) return true;
   if (!patchInfo.update) return false;
 
   for (const id in patchInfo.update) {
     const patch = patchInfo.update[id];
-    if (patch.findex || hasParent(id, patch)) {
+    if (patch.findex || hasParentKey(id, patch)) {
       return true;
     }
   }
