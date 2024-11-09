@@ -3,29 +3,21 @@ import { getConnections, isLineShape } from "../../../shapes/line";
 import { getAttachmentAnchorPoint } from "../../lineAttachmentHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { AppCanvasStateContext } from "./core";
-import { newShapeComposite } from "../../shapeComposite";
 import { Shape } from "../../../models";
 
 export function handlePointerMoveOnLine(
   ctx: AppCanvasStateContext,
   event: PointerMoveEvent,
   movingIds: string[],
+  indexId: string,
 ): TransitionValue<AppCanvasStateContext> {
   if (event.data.ctrl || movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
-  const movingIdSet = new Set(movingIds);
-  const subShapeComposite = newShapeComposite({
-    shapes: shapeComposite.shapes.filter((s) => movingIdSet.has(s.id)),
-    getStruct: shapeComposite.getShapeStruct,
-  });
-
-  const movingShapeSub = subShapeComposite.findShapeAt(event.data.start, undefined, [], false, ctx.getScale());
-  if (!movingShapeSub) return;
-
-  const movingShape = shapeComposite.shapeMap[movingShapeSub.id];
+  const movingShape = shapeComposite.shapeMap[indexId];
   if (!shapeComposite.canAttach(movingShape)) return;
 
+  const subShapeComposite = shapeComposite.getSubShapeComposite([movingShape.id], shapeComposite.tmpShapeMap);
   const anchorP = getAttachmentAnchorPoint(subShapeComposite, movingShape);
   const diff = sub(event.data.current, event.data.start);
   const movedAnchorP = add(anchorP, diff);

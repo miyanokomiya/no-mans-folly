@@ -34,16 +34,24 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let targetIds: string[];
   let connectionRenderer: ConnectionRenderer;
   let beforeMove = true;
+  let indexShapeId: string | undefined;
 
   return {
     getLabel: () => "MovingShape",
     onStart: (ctx) => {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
-      const targets = ctx.getShapeComposite().getAllTransformTargets(Object.keys(ctx.getSelectedShapeIdMap()));
-      if (targets.length === 0) return ctx.states.newSelectionHubState;
+      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
 
-      targetIds = targets.map((s) => s.id);
+      const subShapeComposite = shapeComposite.getSubShapeComposite(selectedIds, shapeComposite.tmpShapeMap);
+      const movingShapeSub = subShapeComposite.findShapeAt(ctx.getCursorPoint(), undefined, [], false, ctx.getScale());
+      if (movingShapeSub) {
+        indexShapeId = movingShapeSub.id;
+      }
+
+      targetIds = subShapeComposite.shapes.map((s) => s.id);
+      if (targetIds.length === 0) return ctx.states.newSelectionHubState;
+
       const targetIdSet = new Set(targetIds);
 
       // Line labels should be moved via dedicated state
@@ -98,11 +106,13 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           beforeMove = false;
-          const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, option);
-          if (onLayoutResult) return onLayoutResult;
+          if (indexShapeId) {
+            const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, indexShapeId, option);
+            if (onLayoutResult) return onLayoutResult;
 
-          const onLineResult = handlePointerMoveOnLine(ctx, event, targetIds);
-          if (onLineResult) return onLineResult;
+            const onLineResult = handlePointerMoveOnLine(ctx, event, targetIds, indexShapeId);
+            if (onLineResult) return onLineResult;
+          }
 
           const d = sub(event.data.current, event.data.start);
           snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));

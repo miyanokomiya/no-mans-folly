@@ -19,6 +19,7 @@ export function handlePointerMoveOnLayout(
   ctx: AppCanvasStateContext,
   event: PointerMoveEvent,
   movingIds: string[],
+  indexId: string,
   option?: { boundingBox?: BoundingBox },
 ): TransitionValue<AppCanvasStateContext> {
   if (event.data.ctrl) return;
@@ -33,7 +34,7 @@ export function handlePointerMoveOnLayout(
       getState: () => newBoardCardMovingState({ boardId }),
     };
   } else if (canAlign(ctx)) {
-    const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[movingIds[0]]);
+    const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[indexId]);
     const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, movingIds);
     if (shapeAtPoint) {
       const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
