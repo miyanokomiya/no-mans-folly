@@ -22,6 +22,7 @@ import {
   getRotatedRectAffine,
   getRotatedWrapperRect,
   isPointOnEllipseRotated,
+  isSameValue,
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -147,9 +148,9 @@ export const struct: ShapeStruct<EllipseShape> = {
 
     const ret: Partial<EllipseShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
-    if (rx !== shape.rx) ret.rx = rx;
-    if (ry !== shape.ry) ret.ry = ry;
-    if (rotation !== shape.rotation) ret.rotation = rotation;
+    if (!isSameValue(rx, shape.rx)) ret.rx = rx;
+    if (!isSameValue(ry, shape.ry)) ret.ry = ry;
+    if (!isSameValue(rotation, shape.rotation)) ret.rotation = rotation;
 
     return ret;
   },

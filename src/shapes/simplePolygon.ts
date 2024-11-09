@@ -34,6 +34,7 @@ import {
   getRotatedWrapperRect,
   getRotationAffine,
   isPointOnRectangle,
+  isSameValue,
   rotateRectByAngle,
   sortPointFrom,
 } from "../utils/geometry";
@@ -169,9 +170,9 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       const ret: Partial<T> = {};
       if (!isSame(p, shape.p)) ret.p = p;
-      if (width !== shape.width) ret.width = width;
-      if (height !== shape.height) ret.height = height;
-      if (rotation !== shape.rotation) ret.rotation = rotation;
+      if (!isSameValue(width, shape.width)) ret.width = width;
+      if (!isSameValue(height, shape.height)) ret.height = height;
+      if (!isSameValue(rotation, shape.rotation)) ret.rotation = rotation;
 
       return ret;
     },
