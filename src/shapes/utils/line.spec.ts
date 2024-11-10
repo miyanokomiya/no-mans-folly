@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import {
   getClosestOutlineInfoOfLine,
+  getIntersectionsBetweenLineShapeAndLine,
   getLineEdgeInfo,
   getNakedLineShape,
   isConnectedToCenter,
@@ -136,5 +137,41 @@ describe("isConnectedToCenter", () => {
     expect(isConnectedToCenter({ id: "a", rate: { x: 0.5, y: 0.5 } })).toBe(true);
     expect(isConnectedToCenter({ id: "a", rate: { x: 0.49, y: 0.5 } })).toBe(false);
     expect(isConnectedToCenter({ id: "a", rate: { x: 0.5, y: 0.51 } })).toBe(false);
+  });
+});
+
+describe("getIntersectionsBetweenLineShapeAndLine", () => {
+  test("should return intersections between line shape and a line", () => {
+    const shape0 = lineStruct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 0 },
+    });
+    const res0 = getIntersectionsBetweenLineShapeAndLine(shape0, [
+      { x: 10, y: -20 },
+      { x: 10, y: 20 },
+    ]);
+    expect(res0, "straight").toEqualPoints([{ x: 10, y: 0 }]);
+
+    const shape1 = lineStruct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 0 },
+      curves: [{ d: { x: 0, y: 50 } }],
+    });
+    const res1 = getIntersectionsBetweenLineShapeAndLine(shape1, [
+      { x: 50, y: -20 },
+      { x: 50, y: 20 },
+    ]);
+    expect(res1, "arc").toEqualPoints([{ x: 50, y: 50 }]);
+
+    const shape2 = lineStruct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 0 },
+      curves: [{ c1: { x: 0, y: 50 }, c2: { x: 100, y: 50 } }],
+    });
+    const res2 = getIntersectionsBetweenLineShapeAndLine(shape2, [
+      { x: 50, y: -20 },
+      { x: 50, y: 20 },
+    ]);
+    expect(res2, "bezier").toEqualPoints([{ x: 50, y: 37.5 }]);
   });
 });

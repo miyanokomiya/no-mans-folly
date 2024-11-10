@@ -1,5 +1,7 @@
 import {
   getApproPoints,
+  getCrossLineAndBezier3,
+  getCrossSegAndLine,
   getDistance,
   getPathPointAtLengthFromStructs,
   getPedal,
@@ -12,8 +14,15 @@ import {
   PathLengthStruct,
 } from "okageo";
 import { getEdges, LineShape, struct } from "../line";
-import { isBezieirControl } from "../../utils/path";
-import { BEZIER_APPROX_SIZE, getCurveLerpFn, getSegments, ISegment } from "../../utils/geometry";
+import { isArcControl, isBezieirControl } from "../../utils/path";
+import {
+  BEZIER_APPROX_SIZE,
+  getArcCurveParamsByNormalizedControl,
+  getCrossLineAndArcRotated,
+  getCurveLerpFn,
+  getSegments,
+  ISegment,
+} from "../../utils/geometry";
 import { pickMinItem } from "../../utils/commons";
 import { ConnectionPoint } from "../../models";
 
@@ -156,4 +165,36 @@ export function getLineEdgeInfo(line: LineShape): {
 
 export function isConnectedToCenter(c: ConnectionPoint): boolean {
   return isSame(c.rate, { x: 0.5, y: 0.5 });
+}
+
+export function getIntersectionsBetweenLineShapeAndLine(shape: LineShape, line: ISegment): IVec2[] {
+  const edges = getEdges(shape);
+  const curves = shape.curves;
+
+  const intersections: IVec2[] = [];
+  edges.forEach((seg, i) => {
+    const curve = curves?.[i];
+    if (isBezieirControl(curve)) {
+      const inter = getCrossLineAndBezier3(line, [seg[0], curve.c1, curve.c2, seg[1]]);
+      if (inter.length > 0) intersections.push(...inter);
+    } else if (isArcControl(curve)) {
+      const arcParams = getArcCurveParamsByNormalizedControl(seg, curve.d);
+      if (arcParams) {
+        const inter = getCrossLineAndArcRotated(
+          line,
+          arcParams.c,
+          arcParams.radius,
+          arcParams.radius,
+          0,
+          arcParams.counterclockwise ? arcParams.to : arcParams.from,
+          arcParams.counterclockwise ? arcParams.from : arcParams.to,
+        );
+        if (inter?.length) intersections.push(...inter);
+      }
+    } else {
+      const inter = getCrossSegAndLine(seg, line);
+      if (inter) intersections.push(inter);
+    }
+  });
+  return intersections;
 }
