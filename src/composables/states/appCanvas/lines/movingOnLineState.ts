@@ -1,10 +1,15 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
+import { mapReduce, patchPipe, pickMinItem, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
-import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
-import { getDiagonalLengthOfRect, TAU } from "../../../../utils/geometry";
-import { add, getDistance, IVec2, sub } from "okageo";
+import {
+  getClosestOutlineInfoOfLineByEdgeInfo,
+  getIntersectionsBetweenLineShapeAndLine,
+  getLineEdgeInfo,
+  LineEdgeInfo,
+} from "../../../../shapes/utils/line";
+import { getD2, getDiagonalLengthOfRect, getPointLerpSlope, ISegment, TAU } from "../../../../utils/geometry";
+import { add, getDistance, IRectangle, isParallel, IVec2, moveRect, rotate, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
@@ -16,6 +21,8 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getNextShapeComposite } from "../../../shapeComposite";
+import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult } from "../../../shapeSnapping";
+import { getLineUnrelatedIds } from "../../../shapeRelation";
 
 type Option = {
   lineId: string;
@@ -29,11 +36,16 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
-  let edgeInfo: ReturnType<typeof getLineEdgeInfo>;
+  let edgeInfo: LineEdgeInfo;
   let anchorPointAtStart: IVec2;
   let pointAtStart: IVec2;
   let patchAtStart: { [id: string]: Partial<Shape> };
   let evenlyAligned = false;
+
+  // Shape snapping works well only one shape is moving on the line.
+  let shapeSnapping: ShapeSnapping | undefined;
+  let snappingResult: SnappingResult | undefined;
+  let movingRectAtStart: IRectangle | undefined;
 
   function storeAtStart(ctx: AppCanvasStateContext) {
     pointAtStart = ctx.getCursorPoint();
@@ -41,26 +53,52 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
     const shapeComposite = ctx.getShapeComposite();
     const nextShapeComposite = getNextShapeComposite(shapeComposite, { update: patchAtStart });
     anchorPointAtStart = getAttachmentAnchorPoint(nextShapeComposite, nextShapeComposite.shapeMap[option.shapeId]);
+
+    if (shapeSnapping) {
+      movingRectAtStart = nextShapeComposite.getWrapperRect(nextShapeComposite.shapeMap[option.shapeId]);
+    }
   }
 
   return {
     getLabel: () => "MovingOnLine",
     onStart: (ctx) => {
-      ctx.setCommandExams([
-        COMMAND_EXAM_SRC.DISABLE_SNAP,
-        COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF,
-        COMMAND_EXAM_SRC.EVENLY_SPACED,
-      ]);
-
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
+      const indexShape = shapeMap[option.shapeId];
       line = shapeMap[option.lineId] as LineShape;
-      if (!isLineShape(line)) {
+      if (!indexShape || !isLineShape(line)) {
         keepMoving = true;
         return { type: "break" };
       }
 
       edgeInfo = getLineEdgeInfo(line);
+
+      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+      if (selectedIds.length === 1) {
+        const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, [option.lineId, ...selectedIds]);
+        const snappableCandidates = shapeComposite.getShapesOverlappingRect(
+          snappableCandidateIds.map((id) => shapeMap[id]),
+          ctx.getViewRect(),
+        );
+        const snappableShapes = shapeComposite.getShapesOverlappingRect(
+          snappableCandidates.filter((s) => !isLineShape(s)),
+          ctx.getViewRect(),
+        );
+        shapeSnapping = newShapeSnapping({
+          shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+          scale: ctx.getScale(),
+          gridSnapping: ctx.getGrid().getSnappingLines(),
+        });
+
+        ctx.setCommandExams([
+          COMMAND_EXAM_SRC.DISABLE_SNAP,
+          COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF,
+          COMMAND_EXAM_SRC.EVENLY_SPACED,
+        ]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF, COMMAND_EXAM_SRC.EVENLY_SPACED]);
+      }
+
       storeAtStart(ctx);
     },
     onEnd: (ctx) => {
@@ -75,11 +113,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          if (event.data.ctrl) {
-            keepMoving = true;
-            return { type: "break" };
-          }
-
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
           const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
@@ -93,8 +126,9 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             }
           }
 
-          const movedIndexAnchorP = add(anchorPointAtStart, sub(event.data.current, pointAtStart));
-          const closestInfo = getClosestOutlineInfoOfLine(line, movedIndexAnchorP, Infinity);
+          const diff = sub(event.data.current, pointAtStart);
+          const movedIndexAnchorP = add(anchorPointAtStart, diff);
+          const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, movedIndexAnchorP, Infinity);
           if (!closestInfo) {
             keepMoving = true;
             return { type: "break" };
@@ -133,6 +167,24 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               );
               for (const [k, v] of infoMap) {
                 attachInfoMap.set(k, v);
+              }
+            }
+
+            snappingResult = undefined;
+            if (!event.data.ctrl && shapeSnapping && movingRectAtStart) {
+              const result = snapPointOnLine({
+                line,
+                shapeSnapping,
+                movingRectAtStart,
+                lineAnchorRate: closestInfo[1],
+                lineAnchorP: lineAnchor,
+                anchorPointAtStart,
+                edgeInfo,
+              });
+              if (result) {
+                snappingResult = result.snappingResult;
+                lineAnchor = result.lineAnchor;
+                attachInfoMap = new Map([[option.shapeId, [{ x: result.lineAnchorRate, y: 0 }]]]);
               }
             }
           }
@@ -202,6 +254,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      const shapeComposite = ctx.getShapeComposite();
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
 
@@ -212,7 +265,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         renderCtx.stroke();
 
         if (!evenlyAligned) {
-          const shapeComposite = ctx.getShapeComposite();
           const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
           const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
           const [localBounds] = shapeComposite.getLocalSpace(latestShape);
@@ -227,6 +279,74 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         renderCtx.arc(lineAnchor.x, lineAnchor.y, 6 * scale, 0, TAU);
         renderCtx.fill();
       }
+
+      if (snappingResult) {
+        const shapeMap = shapeComposite.shapeMap;
+        renderSnappingResult(renderCtx, {
+          style,
+          scale,
+          result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
+        });
+      }
     },
+  };
+}
+
+function snapPointOnLine({
+  line,
+  shapeSnapping,
+  movingRectAtStart,
+  lineAnchorRate,
+  lineAnchorP,
+  anchorPointAtStart,
+  edgeInfo,
+}: {
+  line: LineShape;
+  shapeSnapping: ShapeSnapping;
+  movingRectAtStart: IRectangle;
+  lineAnchorRate: number;
+  lineAnchorP: IVec2;
+  anchorPointAtStart: IVec2;
+  edgeInfo: LineEdgeInfo;
+}):
+  | {
+      snappingResult: SnappingResult;
+      lineAnchorRate: number;
+      lineAnchor: IVec2;
+    }
+  | undefined {
+  const anchorDiff = sub(lineAnchorP, anchorPointAtStart);
+  const movingRect = moveRect(movingRectAtStart, anchorDiff);
+  const result = shapeSnapping.test(movingRect);
+  if (!result) return;
+
+  // Get angle at the latest anchor point on the line.
+  // Ignore guidlines parallel to this angle.
+  const baseRadian = getPointLerpSlope(edgeInfo.lerpFn, lineAnchorRate);
+  const baseVec = rotate({ x: 1, y: 0 }, baseRadian);
+  const candidateGuildlines = result?.targets.filter((t) => !isParallel(sub(t.line[1], t.line[0]), baseVec));
+  if (!candidateGuildlines || candidateGuildlines.length === 0) return;
+
+  const guideline = candidateGuildlines[0].line;
+  const guidelineVec = sub(guideline[1], guideline[0]);
+  const draftAnchor = add(anchorPointAtStart, add(result.diff, anchorDiff));
+  const crossline: ISegment = [draftAnchor, add(guidelineVec, draftAnchor)];
+  const intersections = getIntersectionsBetweenLineShapeAndLine(line, crossline);
+  const snapped = pickMinItem(intersections, (p) => getD2(sub(p, draftAnchor)));
+  if (!snapped) return;
+
+  // The anchor point is getermined but stlll need to get its rate on the line.
+  const closestInfoForIntersection = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, snapped, Infinity);
+  if (!closestInfoForIntersection) return;
+
+  return {
+    snappingResult: {
+      diff: result.diff,
+      targets: candidateGuildlines.filter((t) => isParallel(sub(t.line[1], t.line[0]), guidelineVec)),
+      intervalTargets: [],
+    },
+    lineAnchorRate: closestInfoForIntersection[1],
+    lineAnchor: snapped,
   };
 }

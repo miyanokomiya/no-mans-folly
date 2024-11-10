@@ -98,6 +98,14 @@ export function getClosestOutlineInfoOfLine(
   threshold: number,
 ): [p: IVec2, rate: number] | undefined {
   const edgeInfo = getLineEdgeInfo(line);
+  return getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, threshold);
+}
+
+export function getClosestOutlineInfoOfLineByEdgeInfo(
+  edgeInfo: LineEdgeInfo,
+  p: IVec2,
+  threshold: number,
+): [p: IVec2, rate: number] | undefined {
   const edges = edgeInfo.edges;
 
   const values = edges
@@ -162,6 +170,7 @@ export function getLineEdgeInfo(line: LineShape): {
     lerpFn: (rate) => getPathPointAtLengthFromStructs(pathStructs, totalLength * rate),
   };
 }
+export type LineEdgeInfo = ReturnType<typeof getLineEdgeInfo>;
 
 export function isConnectedToCenter(c: ConnectionPoint): boolean {
   return isSame(c.rate, { x: 0.5, y: 0.5 });
