@@ -1,5 +1,5 @@
 import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, MINVALUE, rotate } from "okageo";
-import { EntityPatchInfo, Shape } from "../models";
+import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getClosestOutlineInfoOfLineByEdgeInfo, getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
@@ -21,8 +21,10 @@ import {
   getRelativeRateWithinRect,
   getRotateFn,
   getRotationAffine,
+  TAU,
 } from "../utils/geometry";
 import { getCurveLinePatch } from "./curveLineHandler";
+import { applyFillStyle } from "../utils/fillStyle";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -310,29 +312,65 @@ export function getEvenlySpacedLineAttachment(
   return { attachInfoMap, attachedPoint: closestSplitInfo[0] };
 }
 
-export function getPatchByPreservingLineAttachments(
-  shapeComposite: ShapeComposite,
-  lineId: string,
-  linePatch: Partial<LineShape>,
-): { [id: string]: Partial<Shape> } {
-  const srcLine = shapeComposite.shapeMap[lineId];
-  if (!srcLine) return {};
+export type PreserveAttachmentHandler = {
+  setActive(val: boolean): void;
+  getPatch(linePatch: Partial<LineShape>): { [id: string]: Partial<Shape> } | undefined;
+  render(renderCtx: CanvasRenderingContext2D, style: StyleScheme, scale: number): void;
+};
 
-  const curvePatch = getCurveLinePatch(shapeComposite, { update: { [lineId]: linePatch } })[lineId];
-  const latestLine = { ...srcLine, ...linePatch, ...curvePatch } as LineShape;
-  const edgeInfo = getLineEdgeInfo(latestLine);
-  const updateByAlt: { [id: string]: Partial<Shape> } = {};
-  shapeComposite.shapes.filter((s) => {
-    if (s.attachment?.id !== latestLine.id) return;
+export function newPreserveAttachmentHandler({
+  shapeComposite,
+  lineId,
+}: {
+  shapeComposite: ShapeComposite;
+  lineId: string;
+}): PreserveAttachmentHandler {
+  let active = false;
 
-    const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
-    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, anchorP, MINVALUE);
-    if (closestInfo) {
-      updateByAlt[s.id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
-    } else {
-      updateByAlt[s.id] = { attachment: undefined };
-    }
-  });
+  function setActive(val: boolean): void {
+    active = val;
+  }
 
-  return updateByAlt;
+  function getPatch(linePatch: Partial<LineShape>): { [id: string]: Partial<Shape> } | undefined {
+    if (!active) return;
+    const srcLine = shapeComposite.shapeMap[lineId];
+    if (!srcLine) return;
+
+    const curvePatch = getCurveLinePatch(shapeComposite, { update: { [lineId]: linePatch } })[lineId];
+    const latestLine = { ...srcLine, ...linePatch, ...curvePatch } as LineShape;
+    const edgeInfo = getLineEdgeInfo(latestLine);
+    const updateByAlt: { [id: string]: Partial<Shape> } = {};
+    let changed = false;
+    shapeComposite.shapes.filter((s) => {
+      if (s.attachment?.id !== latestLine.id) return;
+      changed = true;
+
+      const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
+      const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, anchorP, MINVALUE);
+      if (closestInfo) {
+        updateByAlt[s.id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
+      } else {
+        updateByAlt[s.id] = { attachment: undefined };
+      }
+    });
+
+    return changed ? updateByAlt : undefined;
+  }
+
+  function render(renderCtx: CanvasRenderingContext2D, style: StyleScheme, scale: number): void {
+    if (!active) return;
+
+    applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+    const size = 6 * scale;
+    shapeComposite.shapes.forEach((s) => {
+      if (s.attachment?.id !== lineId) return;
+
+      const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
+      renderCtx.beginPath();
+      renderCtx.arc(anchorP.x, anchorP.y, size, 0, TAU);
+      renderCtx.fill();
+    });
+  }
+
+  return { setActive, getPatch, render };
 }

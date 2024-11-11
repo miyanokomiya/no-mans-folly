@@ -19,8 +19,7 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { getLineUnrelatedIds } from "../../../shapeRelation";
-import { getPatchByPreservingLineAttachments } from "../../../lineAttachmentHandler";
-import { Shape } from "../../../../models";
+import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -35,6 +34,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
   let elbowHandler: ElbowLineHandler | undefined;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
 
   return {
@@ -68,6 +68,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       });
 
       elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
+      preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -100,21 +101,14 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
             patch = { ...patch, body };
           }
 
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          const update = {
+            [option.lineShape.id]: patch,
+            ...preserveAttachmentHandler.getPatch(patch),
+          };
+
           const shapeComposite = ctx.getShapeComposite();
-          let update: { [id: string]: Partial<Shape> };
-
-          if (event.data.alt) {
-            update = getPatchAfterLayouts(shapeComposite, {
-              update: {
-                [option.lineShape.id]: patch,
-                ...getPatchByPreservingLineAttachments(shapeComposite, option.lineShape.id, patch),
-              },
-            });
-          } else {
-            update = getPatchAfterLayouts(shapeComposite, { update: { [option.lineShape.id]: patch } });
-          }
-
-          ctx.setTmpShapeMap(update);
+          ctx.setTmpShapeMap(getPatchAfterLayouts(shapeComposite, { update }));
           return;
         }
         case "pointerup": {
@@ -145,7 +139,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         renderCtx.fill();
       });
 
-      const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
+      const shapeComposite = ctx.getShapeComposite();
+      const line = shapeComposite.mergedShapeMap[option.lineShape.id] as LineShape;
       renderBezierControls(renderCtx, style, scale, line);
 
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
@@ -168,6 +163,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
+
+      preserveAttachmentHandler.render(renderCtx, style, scale);
     },
   };
 }
