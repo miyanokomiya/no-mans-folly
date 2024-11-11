@@ -9,7 +9,7 @@ import {
   LineEdgeInfo,
 } from "../../../../shapes/utils/line";
 import { getD2, getDiagonalLengthOfRect, getPointLerpSlope, ISegment, TAU } from "../../../../utils/geometry";
-import { add, getDistance, IRectangle, isParallel, IVec2, moveRect, rotate, sub } from "okageo";
+import { add, getDistance, getPedal, IRectangle, isParallel, IVec2, moveRect, rotate, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
@@ -322,31 +322,49 @@ function snapPointOnLine({
   if (!result) return;
 
   // Get angle at the latest anchor point on the line.
-  // Ignore guidlines parallel to this angle.
+  // Ignore guidelines parallel to this angle.
   const baseRadian = getPointLerpSlope(edgeInfo.lerpFn, lineAnchorRate);
   const baseVec = rotate({ x: 1, y: 0 }, baseRadian);
-  const candidateGuildlines = result?.targets.filter((t) => !isParallel(sub(t.line[1], t.line[0]), baseVec));
-  if (!candidateGuildlines || candidateGuildlines.length === 0) return;
+  const candidateTargets = result.targets.filter((t) => !isParallel(sub(t.line[1], t.line[0]), baseVec));
 
-  const guideline = candidateGuildlines[0].line;
-  const guidelineVec = sub(guideline[1], guideline[0]);
+  // "lines" of "intervalTargets" represent the gaps between shapes.
+  // => Perpendicular lines at vertices are the guideline candidates.
+  const perpendicularVec = rotate(baseVec, Math.PI / 2);
+  const candidateIntervals = result.intervalTargets.filter(
+    (t) => t.lines.length > 0 && !isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularVec),
+  );
+
+  const allCandidates: ISegment[] = candidateTargets.map((t) => t.line);
+  candidateIntervals.forEach((t) =>
+    t.lines.forEach((l) => {
+      const v = rotate(sub(l[1], l[0]), Math.PI / 2);
+      allCandidates.push([l[0], add(l[0], v)], [l[1], add(l[1], v)]);
+    }),
+  );
   const draftAnchor = add(anchorPointAtStart, add(result.diff, anchorDiff));
+  const guideline = pickMinItem(allCandidates, (l) => getD2(sub(draftAnchor, getPedal(draftAnchor, l))));
+  if (!guideline) return;
+
+  const guidelineVec = sub(guideline[1], guideline[0]);
   const crossline: ISegment = [draftAnchor, add(guidelineVec, draftAnchor)];
   const intersections = getIntersectionsBetweenLineShapeAndLine(line, crossline);
-  const snapped = pickMinItem(intersections, (p) => getD2(sub(p, draftAnchor)));
-  if (!snapped) return;
+  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, draftAnchor)));
+  if (!nextLineAnchorP) return;
 
   // The anchor point is getermined but stlll need to get its rate on the line.
-  const closestInfoForIntersection = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, snapped, Infinity);
-  if (!closestInfoForIntersection) return;
+  const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, nextLineAnchorP, Infinity);
+  if (!closestInfo) return;
 
+  const perpendicularGuidelineVec = rotate(guidelineVec, Math.PI / 2);
   return {
     snappingResult: {
       diff: result.diff,
-      targets: candidateGuildlines.filter((t) => isParallel(sub(t.line[1], t.line[0]), guidelineVec)),
-      intervalTargets: [],
+      targets: candidateTargets.filter((t) => isParallel(sub(t.line[1], t.line[0]), guidelineVec)),
+      intervalTargets: candidateIntervals.filter(
+        (t) => t.lines.length > 0 && isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularGuidelineVec),
+      ),
     },
-    lineAnchorRate: closestInfoForIntersection[1],
-    lineAnchor: snapped,
+    lineAnchorRate: closestInfo[1],
+    lineAnchor: nextLineAnchorP,
   };
 }
