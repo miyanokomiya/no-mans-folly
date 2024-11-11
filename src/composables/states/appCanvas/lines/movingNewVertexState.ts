@@ -17,6 +17,7 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { getLineUnrelatedIds } from "../../../shapeRelation";
+import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -30,13 +31,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
   let connectionResult: ConnectionResult | undefined;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
 
   return {
     getLabel: () => "MovingNewVertex",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -63,6 +64,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
+
+      preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
+      if (preserveAttachmentHandler.hasAttachment) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      }
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -89,9 +97,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
 
-          ctx.setTmpShapeMap(
-            getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),
-          );
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          const update = {
+            [option.lineShape.id]: patch,
+            ...preserveAttachmentHandler.getPatch(patch),
+          };
+
+          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
           return;
         }
         case "pointerup": {
@@ -138,6 +150,8 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
+
+      preserveAttachmentHandler.render(renderCtx, style, scale);
     },
   };
 }

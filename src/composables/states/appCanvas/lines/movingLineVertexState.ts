@@ -41,7 +41,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
     getLabel: () => "MovingLineVertex",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -69,6 +68,11 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
       elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
+      if (preserveAttachmentHandler.hasAttachment) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      }
     },
     onEnd: (ctx) => {
       ctx.stopDragging();

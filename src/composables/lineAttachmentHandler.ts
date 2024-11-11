@@ -316,6 +316,7 @@ export type PreserveAttachmentHandler = {
   setActive(val: boolean): void;
   getPatch(linePatch: Partial<LineShape>): { [id: string]: Partial<Shape> } | undefined;
   render(renderCtx: CanvasRenderingContext2D, style: StyleScheme, scale: number): void;
+  hasAttachment: boolean;
 };
 
 export function newPreserveAttachmentHandler({
@@ -326,6 +327,15 @@ export function newPreserveAttachmentHandler({
   lineId: string;
 }): PreserveAttachmentHandler {
   let active = false;
+
+  const anchorMap = new Map<string, IVec2>();
+  shapeComposite.shapes.filter((s) => {
+    if (s.attachment?.id !== lineId) return;
+
+    const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
+    anchorMap.set(s.id, anchorP);
+  });
+  const hasAttachment = anchorMap.size > 0;
 
   function setActive(val: boolean): void {
     active = val;
@@ -341,16 +351,16 @@ export function newPreserveAttachmentHandler({
     const edgeInfo = getLineEdgeInfo(latestLine);
     const updateByAlt: { [id: string]: Partial<Shape> } = {};
     let changed = false;
-    shapeComposite.shapes.filter((s) => {
-      if (s.attachment?.id !== latestLine.id) return;
-      changed = true;
+    anchorMap.forEach((anchorP, id) => {
+      const s = shapeComposite.shapeMap[id];
+      if (!s?.attachment) return;
 
-      const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
+      changed = true;
       const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, anchorP, MINVALUE);
       if (closestInfo) {
-        updateByAlt[s.id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
+        updateByAlt[id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
       } else {
-        updateByAlt[s.id] = { attachment: undefined };
+        updateByAlt[id] = { attachment: undefined };
       }
     });
 
@@ -362,15 +372,15 @@ export function newPreserveAttachmentHandler({
 
     applyFillStyle(renderCtx, { color: style.selectionSecondaly });
     const size = 6 * scale;
-    shapeComposite.shapes.forEach((s) => {
-      if (s.attachment?.id !== lineId) return;
+    anchorMap.forEach((anchorP, id) => {
+      const s = shapeComposite.shapeMap[id];
+      if (!s?.attachment) return;
 
-      const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
       renderCtx.beginPath();
       renderCtx.arc(anchorP.x, anchorP.y, size, 0, TAU);
       renderCtx.fill();
     });
   }
 
-  return { setActive, getPatch, render };
+  return { setActive, getPatch, render, hasAttachment };
 }
