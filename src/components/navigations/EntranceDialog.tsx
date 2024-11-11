@@ -1,6 +1,6 @@
 import { Dialog } from "../atoms/Dialog";
 import { isFileAccessAvailable } from "../../utils/devices";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchGoogleAuthTokenOrRedirect } from "../../google/utils/auth";
 import { useDrivePicker } from "../../google/hooks/drivePicker";
 import { GoogleDriveFolder } from "../../google/types";
@@ -73,17 +73,20 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
     openGoogleDrivePicker();
   }, [googleToken, googleMode, openGoogleDrivePicker]);
 
-  const [updateSW, setUpdateSW] = useState<ReturnType<typeof registerSW>>();
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const updateSWRef = useRef<(reloadPage?: boolean) => void>();
   useEffect(() => {
-    const updateSW = registerSW({
+    updateSWRef.current = registerSW({
       onNeedRefresh() {
-        setUpdateSW(updateSW);
+        setUpdateAvailable(true);
       },
     });
   }, []);
   const handleClickUpdate = useCallback(() => {
-    updateSW?.(true);
-  }, [updateSW]);
+    if (updateAvailable) {
+      updateSWRef.current?.(true);
+    }
+  }, [updateAvailable]);
 
   if (googleMode === "opened") {
     return <></>;
@@ -96,7 +99,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   return (
     <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
       <div className="w-96">
-        {updateSW ? (
+        {updateAvailable ? (
           <div className="mt-2 p-2 bg-green-100 border-2 rounded">
             <p>
               <Trans i18nKey="update_sw" />
