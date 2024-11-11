@@ -19,6 +19,8 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { getLineUnrelatedIds } from "../../../shapeRelation";
+import { getPatchByPreservingLineAttachments } from "../../../lineAttachmentHandler";
+import { Shape } from "../../../../models";
 
 interface Option {
   lineShape: LineShape;
@@ -39,7 +41,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
     getLabel: () => "MovingLineVertex",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -98,9 +100,21 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
             patch = { ...patch, body };
           }
 
-          ctx.setTmpShapeMap(
-            getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),
-          );
+          const shapeComposite = ctx.getShapeComposite();
+          let update: { [id: string]: Partial<Shape> };
+
+          if (event.data.alt) {
+            update = getPatchAfterLayouts(shapeComposite, {
+              update: {
+                [option.lineShape.id]: patch,
+                ...getPatchByPreservingLineAttachments(shapeComposite, option.lineShape.id, patch),
+              },
+            });
+          } else {
+            update = getPatchAfterLayouts(shapeComposite, { update: { [option.lineShape.id]: patch } });
+          }
+
+          ctx.setTmpShapeMap(update);
           return;
         }
         case "pointerup": {

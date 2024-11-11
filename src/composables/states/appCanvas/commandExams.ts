@@ -10,6 +10,7 @@ export const COMMAND_EXAM_SRC = {
   ATTACH_TO_LINE_TOGGLE: { command: "a", title: "Attach to line on/off" },
   ATTACH_TO_LINE_OFF: { command: "a", title: "Attach to line off" },
   SLIDE_ATTACH_ANCHOR: { command: "Shift + Drag", title: "Slide anchor" },
+  PRESERVE_ATTACHMENT: { command: getAltOrOptionStr(), title: "Preserve attachment" },
 
   LABEL_ALIGN: { command: "Shift", title: "Adjust label align" },
   LABEL_ALIGN_ACTIVATE: { command: "Shift + Drag", title: "Adjust label align" },
@@ -21,7 +22,7 @@ export const COMMAND_EXAM_SRC = {
   PADDING_ALL_SIDES: { command: getAltOrOptionStr(), title: "All sides" },
   GAP_BOTH: { command: "Shift", title: "Both gaps" },
 
-  DELETE_INER_VERTX: { command: "Shift + Click", title: "Delete inner vertex" },
+  DELETE_INER_VERTX: { command: "Shift + Click", title: "Delete vertex" },
 
   TEXT_MOVE_CURSOR: { command: "Ctrl + p, n, b, f", title: "Move cursor" },
   TEXT_BACKSPACE: { command: "Ctrl + h", title: "Backspace" },

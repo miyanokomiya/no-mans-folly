@@ -6,6 +6,7 @@ import {
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
   getLineAttachmentPatch,
   getNextAttachmentAnchor,
+  getPatchByPreservingLineAttachments,
 } from "./lineAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
@@ -521,5 +522,42 @@ describe("getEvenlySpacedLineAttachment", () => {
     expect(result1.attachInfoMap.size).toBe(2);
     expect(result1.attachInfoMap.get(a.id)?.[0]).toEqualPoint({ x: 1, y: 0 });
     expect(result1.attachInfoMap.get(b.id)?.[0]).toEqualPoint({ x: 0, y: 0 });
+  });
+});
+
+describe("getPatchByPreservingLineAttachments", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
+  const shapeA = createShape(getCommonStruct, "rectangle", {
+    id: "a",
+    p: { x: 25, y: -50 },
+    attachment: {
+      id: line.id,
+      to: { x: 0.5, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "absolute",
+      rotation: 0,
+    },
+  });
+
+  test("should leave attached shape where it was when its anchor is still on the line", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [line, shapeA],
+      getStruct: getCommonStruct,
+    });
+    const result0 = getPatchByPreservingLineAttachments(shapeComposite, line.id, { q: { x: 200, y: 0 } });
+    expect(result0).toEqual({
+      [shapeA.id]: { attachment: { ...shapeA.attachment, to: { x: 0.375, y: 0 } } },
+    });
+  });
+
+  test("should detach the shape when its anchor is no longer on the line", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [line, shapeA],
+      getStruct: getCommonStruct,
+    });
+    const result0 = getPatchByPreservingLineAttachments(shapeComposite, line.id, { q: { x: 0, y: 100 } });
+    expect(result0).toStrictEqual({
+      [shapeA.id]: { attachment: undefined },
+    });
   });
 });

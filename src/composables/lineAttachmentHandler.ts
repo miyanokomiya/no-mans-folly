@@ -1,7 +1,7 @@
-import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, rotate } from "okageo";
+import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, MINVALUE, rotate } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
-import { getLineEdgeInfo } from "../shapes/utils/line";
+import { getClosestOutlineInfoOfLineByEdgeInfo, getLineEdgeInfo } from "../shapes/utils/line";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import {
@@ -22,6 +22,7 @@ import {
   getRotateFn,
   getRotationAffine,
 } from "../utils/geometry";
+import { getCurveLinePatch } from "./curveLineHandler";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -307,4 +308,31 @@ export function getEvenlySpacedLineAttachment(
   const attachInfoMap = new Map<string, [to: IVec2]>(nextAllTargets.map((s, i) => [s.id, [{ x: points[i][1], y: 0 }]]));
 
   return { attachInfoMap, attachedPoint: closestSplitInfo[0] };
+}
+
+export function getPatchByPreservingLineAttachments(
+  shapeComposite: ShapeComposite,
+  lineId: string,
+  linePatch: Partial<LineShape>,
+): { [id: string]: Partial<Shape> } {
+  const srcLine = shapeComposite.shapeMap[lineId];
+  if (!srcLine) return {};
+
+  const curvePatch = getCurveLinePatch(shapeComposite, { update: { [lineId]: linePatch } })[lineId];
+  const latestLine = { ...srcLine, ...linePatch, ...curvePatch } as LineShape;
+  const edgeInfo = getLineEdgeInfo(latestLine);
+  const updateByAlt: { [id: string]: Partial<Shape> } = {};
+  shapeComposite.shapes.filter((s) => {
+    if (s.attachment?.id !== latestLine.id) return;
+
+    const anchorP = getAttachmentAnchorPoint(shapeComposite, s);
+    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, anchorP, MINVALUE);
+    if (closestInfo) {
+      updateByAlt[s.id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
+    } else {
+      updateByAlt[s.id] = { attachment: undefined };
+    }
+  });
+
+  return updateByAlt;
 }
