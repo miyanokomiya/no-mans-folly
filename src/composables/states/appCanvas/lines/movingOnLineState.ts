@@ -75,7 +75,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
       if (selectedIds.length === 1) {
-        const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, [option.lineId, ...selectedIds]);
+        const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, selectedIds);
         const snappableCandidates = shapeComposite.getShapesOverlappingRect(
           snappableCandidateIds.map((id) => shapeMap[id]),
           ctx.getViewRect(),
