@@ -9,6 +9,7 @@ import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { renderBezierControls } from "../../../lineBounding";
+import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -21,6 +22,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
 
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  let preserveAttachmentHandler: PreserveAttachmentHandler;
 
   function getLatestSegment(ctx: AppCanvasStateContext) {
     const shape = { ...option.lineShape, ...ctx.getTmpShapeMap()[option.lineShape.id] } as LineShape;
@@ -32,7 +34,6 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
     getLabel: () => "MovingLineSegment",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -47,6 +48,13 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
+
+      preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
+      if (preserveAttachmentHandler.hasAttachment) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      }
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -68,9 +76,13 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
 
-          ctx.setTmpShapeMap(
-            getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),
-          );
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          const update = {
+            [option.lineShape.id]: patch,
+            ...preserveAttachmentHandler.getPatch(patch),
+          };
+
+          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
           return;
         }
         case "pointerup": {
@@ -121,6 +133,8 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
+
+      preserveAttachmentHandler.render(renderCtx, style, scale);
     },
   };
 }

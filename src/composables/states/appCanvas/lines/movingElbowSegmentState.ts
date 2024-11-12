@@ -5,6 +5,7 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
+import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -17,6 +18,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
   let elbowHandler: ElbowLineHandler;
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  let preserveAttachmentHandler: PreserveAttachmentHandler;
 
   return {
     getLabel: () => "MovingElbowSegment",
@@ -24,7 +26,6 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
       if (option.lineShape.lineType !== "elbow") return ctx.states.newSelectionHubState;
 
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
       elbowHandler = newElbowLineHandler(ctx);
 
       const shapeComposite = ctx.getShapeComposite();
@@ -44,6 +45,13 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
         scale: ctx.getScale(),
         gridSnapping: isHorizontalSegment ? { v: [], h: gridLines.h } : { v: gridLines.v, h: [] },
       });
+
+      preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
+      if (preserveAttachmentHandler.hasAttachment) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      }
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -76,9 +84,13 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           let patch = patchBodyVertex(option.lineShape, option.index - 1, { ...srcBodyItem, elbow: nextElbow });
           patch = { ...patch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...patch }) };
 
-          ctx.setTmpShapeMap(
-            getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [option.lineShape.id]: patch } }),
-          );
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          const update = {
+            [option.lineShape.id]: patch,
+            ...preserveAttachmentHandler.getPatch(patch),
+          };
+
+          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
           return;
         }
         case "pointerup": {
@@ -96,11 +108,12 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
+      const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
         const shapeMap = shapeComposite.shapeMap;
-        const scale = ctx.getScale();
-        const style = ctx.getStyleScheme();
         renderSnappingResult(renderCtx, {
           style,
           scale,
@@ -108,6 +121,8 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
         });
       }
+
+      preserveAttachmentHandler.render(renderCtx, style, scale);
     },
   };
 }

@@ -17,6 +17,7 @@ import { applyPath } from "../../../../utils/renderer";
 import { fillArray } from "../../../../utils/commons";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { isArcControl } from "../../../../utils/path";
+import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -38,13 +39,13 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
   const rotateFn = getRotateFn(edgeRotation);
   let shapeSnapping: VectorSnapping;
   let snappingResult: VectorSnappingResult | undefined;
+  let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: option.p });
 
   return {
     getLabel: () => "MovingLineArc",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -73,6 +74,13 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           update: { [option.lineShape.id]: { curves } as Partial<LineShape> },
         }),
       );
+
+      preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
+      if (preserveAttachmentHandler.hasAttachment) {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      } else {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      }
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -91,11 +99,15 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
 
           const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
           curves[option.index] = d.y !== 0 ? { d } : undefined;
-          ctx.setTmpShapeMap(
-            getPatchAfterLayouts(ctx.getShapeComposite(), {
-              update: { [option.lineShape.id]: { curves } as Partial<LineShape> },
-            }),
-          );
+          const patch = { curves } as Partial<LineShape>;
+
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          const update = {
+            [option.lineShape.id]: patch,
+            ...preserveAttachmentHandler.getPatch(patch),
+          };
+
+          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
           return;
         }
         case "pointerup": {
@@ -145,6 +157,8 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
+
+      preserveAttachmentHandler.render(renderCtx, style, scale);
     },
   };
 }

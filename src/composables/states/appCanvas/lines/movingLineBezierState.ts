@@ -11,6 +11,8 @@ import { BEZIER_ANCHOR_SIZE, renderBezierControls } from "../../../lineBounding"
 import { ISegment } from "../../../../utils/geometry";
 import { fillArray } from "../../../../utils/commons";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
+import { CommandExam } from "../../types";
+import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -26,17 +28,13 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let currentBezier: BezierCurveControl | undefined;
+  let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: option.p });
 
   return {
     getLabel: () => "MovingLineBezier",
     onStart: (ctx) => {
       ctx.startDragging();
-      if (symmetricAvailable) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.BEZIER_SYMMETRICALLY, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
-      } else {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
-      }
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -63,6 +61,18 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
           update: { [option.lineShape.id]: { curves } as Partial<LineShape> },
         }),
       );
+
+      preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
+
+      const commands: CommandExam[] = [];
+      if (preserveAttachmentHandler.hasAttachment) {
+        commands.push(COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT);
+      }
+      if (symmetricAvailable) {
+        commands.push(COMMAND_EXAM_SRC.BEZIER_SYMMETRICALLY);
+      }
+      commands.push(COMMAND_EXAM_SRC.DISABLE_SNAP);
+      ctx.setCommandExams(commands);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -108,11 +118,14 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
             }
           }
 
-          ctx.setTmpShapeMap(
-            getPatchAfterLayouts(ctx.getShapeComposite(), {
-              update: { [option.lineShape.id]: { curves } as Partial<LineShape> },
-            }),
-          );
+          const patch = { curves } as Partial<LineShape>;
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          const update = {
+            [option.lineShape.id]: patch,
+            ...preserveAttachmentHandler.getPatch(patch),
+          };
+
+          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
           return;
         }
         case "pointerup": {
@@ -150,6 +163,8 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
           result: snappingResult,
         });
       }
+
+      preserveAttachmentHandler.render(renderCtx, style, scale);
     },
   };
 }
