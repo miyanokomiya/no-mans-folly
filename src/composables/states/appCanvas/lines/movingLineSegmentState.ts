@@ -38,7 +38,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
       const branchIdSet = new Set(shapeComposite.getAllBranchMergedShapes([option.lineShape.id]).map((s) => s.id));
-      // Allow to snap itself, but exluce its children.
+      // Allow to snap itself, but excluce its children.
       const snappableShapes = shapeComposite.getShapesOverlappingRect(
         Object.values(shapeMap).filter((s) => s.id === option.lineShape.id || !branchIdSet.has(s.id)),
         ctx.getViewRect(),
@@ -127,10 +127,12 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       renderCtx.fill();
 
       if (snappingResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
 

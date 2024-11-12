@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { LineShape, addNewVertex, isLineShape } from "../../../../shapes/line";
+import { LineShape, addNewVertex } from "../../../../shapes/line";
 import { IVec2, add } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
@@ -58,9 +58,8 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
 
-      const snappableLines = snappableCandidates.filter((s) => isLineShape(s));
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -86,6 +85,11 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           if (connectionResult) {
             vertex = connectionResult.p;
             snappingResult = undefined;
+
+            if (!connectionResult.connection && connectionResult.guidLines?.length === 1) {
+              snappingResult = shapeSnapping.testPointOnLine(vertex, connectionResult.guidLines[0]);
+              vertex = snappingResult ? add(vertex, snappingResult.diff) : vertex;
+            }
           } else {
             snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
             vertex = snappingResult ? add(point, snappingResult.diff) : point;
@@ -144,10 +148,12 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       }
 
       if (snappingResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
 
