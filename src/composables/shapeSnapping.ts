@@ -825,6 +825,30 @@ function snapPointOnLine({
 }): SnappingResult | undefined {
   const movingP = add(srcP, snappingResult.diff);
   const guidelineVec = sub(guideline[1], guideline[0]);
+  const candidateInfo = getSecondGuidelineCandidateInfo(snappingResult, guidelineVec);
+
+  const closestInfo = pickMinItem(
+    candidateInfo.candidates.map((seg) => {
+      const intersection = getCrossLineAndLine(seg, guideline);
+      if (!intersection) return;
+      const d2 = getD2(sub(movingP, intersection));
+      return [seg, intersection, d2] as const;
+    }),
+    (info) => info?.[2] ?? Infinity,
+  );
+  if (!closestInfo) return;
+
+  const [secondGuideline, snappedP] = closestInfo;
+  return {
+    diff: sub(snappedP, srcP),
+    ...filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
+  };
+}
+
+export function getSecondGuidelineCandidateInfo(
+  snappingResult: SnappingResult,
+  guidelineVec: IVec2,
+): Pick<SnappingResult, "targets" | "intervalTargets"> & { candidates: ISegment[] } {
   const candidateTargets = snappingResult.targets.filter((t) => !isParallel(sub(t.line[1], t.line[0]), guidelineVec));
 
   // "lines" of "intervalTargets" represent the gaps between shapes.
@@ -842,24 +866,19 @@ function snapPointOnLine({
     }),
   );
 
-  const closestInfo = pickMinItem(
-    allCandidates.map((seg) => {
-      const intersection = getCrossLineAndLine(seg, guideline);
-      if (!intersection) return;
-      const d2 = getD2(sub(movingP, intersection));
-      return [seg, intersection, d2] as const;
-    }),
-    (info) => info?.[2] ?? Infinity,
-  );
-  if (!closestInfo) return;
+  return { candidates: allCandidates, targets: candidateTargets, intervalTargets: candidateIntervals };
+}
 
-  const [secondGuideline, snappedP] = closestInfo;
-  const perpendicularSecondGuidelineVec = rotate(sub(secondGuideline[1], secondGuideline[0]), Math.PI / 2);
+export function filterSnappingTargetsBySecondGuideline(
+  snappingResult: Pick<SnappingResult, "targets" | "intervalTargets">,
+  secondGuideline: ISegment,
+): Pick<SnappingResult, "targets" | "intervalTargets"> {
+  const v = sub(secondGuideline[1], secondGuideline[0]);
+  const perpendicularV = rotate(v, Math.PI / 2);
   return {
-    diff: sub(snappedP, srcP),
-    targets: candidateTargets.filter((t) => t.line === secondGuideline),
-    intervalTargets: candidateIntervals.filter(
-      (t) => t.lines.length > 0 && isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularSecondGuidelineVec),
+    targets: snappingResult.targets.filter((t) => isParallel(sub(t.line[1], t.line[0]), v)),
+    intervalTargets: snappingResult.intervalTargets.filter(
+      (t) => t.lines.length > 0 && isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularV),
     ),
   };
 }

@@ -9,7 +9,7 @@ import {
   LineEdgeInfo,
 } from "../../../../shapes/utils/line";
 import { getD2, getDiagonalLengthOfRect, getPointLerpSlope, ISegment, TAU } from "../../../../utils/geometry";
-import { add, getDistance, getPedal, IRectangle, isParallel, IVec2, moveRect, rotate, sub } from "okageo";
+import { add, getDistance, getPedal, IRectangle, IVec2, moveRect, rotate, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
@@ -21,7 +21,14 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getNextShapeComposite } from "../../../shapeComposite";
-import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult } from "../../../shapeSnapping";
+import {
+  filterSnappingTargetsBySecondGuideline,
+  getSecondGuidelineCandidateInfo,
+  newShapeSnapping,
+  renderSnappingResult,
+  ShapeSnapping,
+  SnappingResult,
+} from "../../../shapeSnapping";
 import { getLineUnrelatedIds } from "../../../shapeRelation";
 
 type Option = {
@@ -321,48 +328,37 @@ function snapPointOnLine({
   const result = shapeSnapping.test(movingRect);
   if (!result) return;
 
-  // Get angle at the latest anchor point on the line.
-  // Ignore guidelines parallel to this angle.
-  const baseRadian = getPointLerpSlope(edgeInfo.lerpFn, lineAnchorRate);
-  const baseVec = rotate({ x: 1, y: 0 }, baseRadian);
-  const candidateTargets = result.targets.filter((t) => !isParallel(sub(t.line[1], t.line[0]), baseVec));
+  // Get slope at the latest anchor point on the line.
+  // Use this slope as first guideline to get second guideline candidates.
+  const slopeV = rotate({ x: 1, y: 0 }, getPointLerpSlope(edgeInfo.lerpFn, lineAnchorRate));
+  const candidateInfo = getSecondGuidelineCandidateInfo(result, slopeV);
 
-  // "lines" of "intervalTargets" represent the gaps between shapes.
-  // => Perpendicular lines at vertices are the guideline candidates.
-  const perpendicularVec = rotate(baseVec, Math.PI / 2);
-  const candidateIntervals = result.intervalTargets.filter(
-    (t) => t.lines.length > 0 && !isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularVec),
+  // Get currently snapped anchor that isn't on the line.
+  const snappedAnchor = add(anchorPointAtStart, add(result.diff, anchorDiff));
+  const secondGuideline = pickMinItem(candidateInfo.candidates, (l) =>
+    getD2(sub(snappedAnchor, getPedal(snappedAnchor, l))),
   );
+  if (!secondGuideline) return;
 
-  const allCandidates: ISegment[] = candidateTargets.map((t) => t.line);
-  candidateIntervals.forEach((t) =>
-    t.lines.forEach((l) => {
-      const v = rotate(sub(l[1], l[0]), Math.PI / 2);
-      allCandidates.push([l[0], add(l[0], v)], [l[1], add(l[1], v)]);
-    }),
-  );
-  const draftAnchor = add(anchorPointAtStart, add(result.diff, anchorDiff));
-  const guideline = pickMinItem(allCandidates, (l) => getD2(sub(draftAnchor, getPedal(draftAnchor, l))));
-  if (!guideline) return;
-
-  const guidelineVec = sub(guideline[1], guideline[0]);
-  const crossline: ISegment = [draftAnchor, add(guidelineVec, draftAnchor)];
-  const intersections = getIntersectionsBetweenLineShapeAndLine(line, crossline);
-  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, draftAnchor)));
+  // Slide second guideline to the snapped anchor.
+  const secondGuidelineAtSnappedAnchor: ISegment = [
+    snappedAnchor,
+    add(sub(secondGuideline[1], secondGuideline[0]), snappedAnchor),
+  ];
+  // Get intersections between the line and adjusted second guideline.
+  // This intersections are on the line and keep second guideline valid.
+  const intersections = getIntersectionsBetweenLineShapeAndLine(line, secondGuidelineAtSnappedAnchor);
+  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, snappedAnchor)));
   if (!nextLineAnchorP) return;
 
-  // The anchor point is getermined but stlll need to get its rate on the line.
+  // The anchor point is determined but stlll need to get its rate on the line.
   const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, nextLineAnchorP, Infinity);
   if (!closestInfo) return;
 
-  const perpendicularGuidelineVec = rotate(guidelineVec, Math.PI / 2);
   return {
     snappingResult: {
       diff: result.diff,
-      targets: candidateTargets.filter((t) => isParallel(sub(t.line[1], t.line[0]), guidelineVec)),
-      intervalTargets: candidateIntervals.filter(
-        (t) => t.lines.length > 0 && isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularGuidelineVec),
-      ),
+      ...filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
     },
     lineAnchorRate: closestInfo[1],
     lineAnchor: nextLineAnchorP,
