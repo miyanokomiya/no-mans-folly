@@ -372,6 +372,31 @@ describe("newShapeIntervalSnapping", () => {
         ],
       },
     ],
+    [
+      "d",
+      {
+        v: [
+          [
+            { x: 150, y: 150 },
+            { x: 150, y: 250 },
+          ],
+          [
+            { x: 250, y: 150 },
+            { x: 250, y: 250 },
+          ],
+        ],
+        h: [
+          [
+            { x: 150, y: 150 },
+            { x: 250, y: 150 },
+          ],
+          [
+            { x: 150, y: 250 },
+            { x: 250, y: 250 },
+          ],
+        ],
+      },
+    ],
   ] as [string, ShapeSnappingLines][];
 
   const target = newShapeIntervalSnapping({ shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[1]] });
@@ -556,6 +581,37 @@ describe("newShapeIntervalSnapping", () => {
         },
       },
     });
+  });
+
+  test("should not regard pairs of shapes that don't overlap each other when withinRange is set true", () => {
+    const target1 = newShapeIntervalSnapping({ shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[3]] });
+    expect(target1.test({ x: 298, y: 0, width: 0, height: 0 })).toEqual({
+      v: {
+        d: 2,
+        ad: 2,
+        target: {
+          direction: "v",
+          beforeId: "a",
+          afterId: "d",
+          lines: [
+            [
+              { x: 100, y: 0 },
+              { x: 150, y: 0 },
+            ],
+            [
+              { x: 250, y: 0 },
+              { x: 300, y: 0 },
+            ],
+          ],
+        },
+      },
+    });
+
+    const target2 = newShapeIntervalSnapping({
+      shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[3]],
+      withinRange: true,
+    });
+    expect(target2.test({ x: 298, y: 0, width: 0, height: 0 })).toBe(undefined);
   });
 });
 

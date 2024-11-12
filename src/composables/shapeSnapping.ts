@@ -472,8 +472,13 @@ interface IntervalSnappingResultTarget {
   direction: "v" | "h";
 }
 
-export function newShapeIntervalSnapping(option: Option) {
-  const info = getIntervalSnappingInfo(option.shapeSnappingList);
+type ShapeIntervalSnappingOption = Option & {
+  // When true, pairs of shapes that don't overlap each other are excluded from snapping targets.
+  withinRange?: boolean;
+};
+
+export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
+  const info = getIntervalSnappingInfo(option.shapeSnappingList, option.withinRange);
   const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
 
   function test(rect: IRectangle): InvervalSnappingResult | undefined {
@@ -576,7 +581,10 @@ export function newShapeIntervalSnapping(option: Option) {
 }
 export type ShapeIntervalSnapping = ReturnType<typeof newShapeIntervalSnapping>;
 
-function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines][]): IntervalSnappingInfo {
+function getIntervalSnappingInfo(
+  shapeSnappingList: [string, ShapeSnappingLines][],
+  withinRange = false,
+): IntervalSnappingInfo {
   const vList: IntervalSnappingTarget[] = [];
   const vFnList: IntervalSnappingTargetFn[] = [];
   const hList: IntervalSnappingTarget[] = [];
@@ -584,28 +592,29 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
 
   for (let i = 0; i < shapeSnappingList.length; i++) {
     const s0 = shapeSnappingList[i];
-    if (s0[1].v.length === 0 || s0[1].h.length === 0) continue;
+    if (s0[1].v.length === 0) continue;
+    if (withinRange && s0[1].h.length === 0) continue;
 
     const l0 = s0[1].v[0];
     const r0 = s0[1].v[s0[1].v.length - 1];
-    const t0 = s0[1].h[0];
-    const b0 = s0[1].h[s0[1].v.length - 1];
-
-    const hRange: [number, number] = [l0[0].x, r0[0].x];
-    const vRange: [number, number] = [t0[0].y, b0[0].y];
+    const vRange: [number, number] | undefined = withinRange
+      ? [s0[1].h[0][0].y, s0[1].h[s0[1].v.length - 1][0].y]
+      : undefined;
 
     for (let j = 0; j < shapeSnappingList.length; j++) {
       if (i === j) continue;
 
       const s1 = shapeSnappingList[j];
-      if (s1[1].v.length === 0 || s1[1].h.length === 0) continue;
+      if (s1[1].v.length === 0) continue;
+      if (vRange) {
+        if (s1[1].h.length === 0) continue;
+        if (!isRangeOverlapped(vRange, [s1[1].h[0][0].y, s1[1].h[s1[1].h.length - 1][0].y])) continue;
+      }
 
       const l1 = s1[1].v[0];
       const r1 = s1[1].v[s1[1].v.length - 1];
-      const t1 = s1[1].h[0];
-      const b1 = s1[1].h[s1[1].h.length - 1];
 
-      if (r0[0].x < l1[0].x && isRangeOverlapped(vRange, [t1[0].y, b1[0].y])) {
+      if (r0[0].x < l1[0].x) {
         const d = l1[0].x - r0[0].x;
 
         {
@@ -645,8 +654,34 @@ function getIntervalSnappingInfo(shapeSnappingList: [string, ShapeSnappingLines]
           });
         }
       }
+    }
+  }
 
-      if (b0[0].y < t1[0].y && isRangeOverlapped(hRange, [l1[0].x, r1[0].x])) {
+  for (let i = 0; i < shapeSnappingList.length; i++) {
+    const s0 = shapeSnappingList[i];
+    if (s0[1].h.length === 0) continue;
+    if (withinRange && s0[1].v.length === 0) continue;
+
+    const t0 = s0[1].h[0];
+    const b0 = s0[1].h[s0[1].h.length - 1];
+    const hRange: [number, number] | undefined = withinRange
+      ? [s0[1].v[0][0].x, s0[1].v[s0[1].v.length - 1][0].x]
+      : undefined;
+
+    for (let j = 0; j < shapeSnappingList.length; j++) {
+      if (i === j) continue;
+
+      const s1 = shapeSnappingList[j];
+      if (s1[1].h.length === 0) continue;
+      if (hRange) {
+        if (s1[1].v.length === 0) continue;
+        if (!isRangeOverlapped(hRange, [s1[1].v[0][0].x, s1[1].v[s1[1].v.length - 1][0].x])) continue;
+      }
+
+      const t1 = s1[1].h[0];
+      const b1 = s1[1].h[s1[1].h.length - 1];
+
+      if (b0[0].y < t1[0].y) {
         const d = t1[0].y - b0[0].y;
 
         {
