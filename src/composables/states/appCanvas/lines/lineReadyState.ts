@@ -3,7 +3,7 @@ import { getCommonAcceptableEvents, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
-import { CurveType, LineShape, LineType, isLineShape } from "../../../../shapes/line";
+import { CurveType, LineShape, LineType } from "../../../../shapes/line";
 import {
   ConnectionResult,
   LineSnapping,
@@ -41,22 +41,17 @@ export function newLineReadyState(option: Option): AppCanvasState {
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => isLineSnappableShape(shapeComposite, s)),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+
+      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
       lineSnapping = newLineSnapping({
         snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
         movingIndex: 0,
       });
 
-      const snappableLines = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => isLineShape(s)),
-        ctx.getViewRect(),
-      );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -80,6 +75,11 @@ export function newLineReadyState(option: Option): AppCanvasState {
               if (connectionResult) {
                 vertex = connectionResult?.p ?? point;
                 snappingResult = undefined;
+
+                if (!connectionResult.connection && connectionResult.guidLines?.length === 1) {
+                  snappingResult = shapeSnapping.testPointOnLine(vertex, connectionResult.guidLines[0]);
+                  vertex = snappingResult ? add(vertex, snappingResult.diff) : vertex;
+                }
               } else {
                 snappingResult = event.data.options.ctrl ? undefined : shapeSnapping.testPoint(point);
                 vertex = snappingResult ? add(point, snappingResult.diff) : point;
@@ -158,10 +158,12 @@ export function newLineReadyState(option: Option): AppCanvasState {
       }
 
       if (snappingResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
     },
