@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { LineShape, getLinePath, isLineShape, patchVertex } from "../../../../shapes/line";
+import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
 import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
@@ -59,9 +59,8 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         getShapeStruct: ctx.getShapeStruct,
       });
 
-      const snappableLines = snappableCandidates.filter((s) => isLineShape(s));
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -88,6 +87,11 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           if (connectionResult) {
             vertex = connectionResult.p;
             snappingResult = undefined;
+
+            if (!connectionResult.connection && connectionResult.guidLines?.length === 1) {
+              snappingResult = shapeSnapping.testPointOnLine(vertex, connectionResult.guidLines[0]);
+              vertex = snappingResult ? add(vertex, snappingResult.diff) : vertex;
+            }
           } else {
             snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
             vertex = snappingResult ? add(point, snappingResult.diff) : add(origin, sub(point, event.data.start));
@@ -165,6 +169,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
 

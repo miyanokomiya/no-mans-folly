@@ -558,3 +558,221 @@ describe("newShapeIntervalSnapping", () => {
     });
   });
 });
+
+describe("testPoint", () => {
+  const shapeSnappingList = [
+    [
+      "a",
+      {
+        v: [
+          [
+            { x: 0, y: 100 },
+            { x: 0, y: 0 },
+          ],
+          [
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        ],
+        h: [
+          [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+          [
+            { x: 100, y: 100 },
+            { x: 0, y: 100 },
+          ],
+        ],
+      },
+    ],
+  ] as [string, ShapeSnappingLines][];
+  const target = newShapeSnapping({ shapeSnappingList });
+
+  test("should snap to shapes either vertically or horizontally", () => {
+    expect(target.testPoint({ x: 1, y: 10 })).toEqual({
+      diff: { x: -1, y: 0 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 0, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+
+    expect(target.testPoint({ x: 10, y: 1 })).toEqual({
+      diff: { x: 0, y: -1 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+
+    expect(target.testPoint({ x: -1, y: 1 })).toEqual({
+      diff: { x: 1, y: -1 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 0, y: 100 },
+          ],
+        },
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
+});
+
+describe("testPointOnLine", () => {
+  const shapeSnappingList = [
+    [
+      "a",
+      {
+        v: [
+          [
+            { x: 0, y: 100 },
+            { x: 0, y: 0 },
+          ],
+          [
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        ],
+        h: [
+          [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+          [
+            { x: 100, y: 100 },
+            { x: 0, y: 100 },
+          ],
+        ],
+      },
+    ],
+  ] as [string, ShapeSnappingLines][];
+  const target = newShapeSnapping({ shapeSnappingList });
+
+  test("should snap to shapes either vertically or horizontally on the line", () => {
+    expect(
+      target.testPointOnLine({ x: 19, y: 1 }, [
+        { x: 0, y: -20 },
+        { x: 100, y: 80 },
+      ]),
+    ).toEqual({
+      diff: { x: 1, y: -1 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
+
+  test("should ignore grid lines parallel to the line", () => {
+    expect(
+      target.testPointOnLine({ x: 19, y: 1 }, [
+        { x: 20, y: 0 },
+        { x: 120, y: 0 },
+      ]),
+    ).toEqual(undefined);
+    expect(
+      target.testPointOnLine({ x: 99, y: 1 }, [
+        { x: 20, y: 0 },
+        { x: 120, y: 0 },
+      ]),
+    ).toEqual({
+      diff: { x: 1, y: -1 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
+
+  test("should snap to an interval position on the line", () => {
+    const shapeSnappingList2 = shapeSnappingList.concat([
+      [
+        "b",
+        {
+          v: [
+            [
+              { x: 120, y: 100 },
+              { x: 120, y: 0 },
+            ],
+            [
+              { x: 220, y: 0 },
+              { x: 220, y: 100 },
+            ],
+          ],
+          h: [
+            [
+              { x: 0, y: 0 },
+              { x: 100, y: 0 },
+            ],
+            [
+              { x: 100, y: 100 },
+              { x: 0, y: 100 },
+            ],
+          ],
+        },
+      ],
+    ]);
+    const target = newShapeSnapping({ shapeSnappingList: shapeSnappingList2 });
+    expect(
+      target.testPointOnLine({ x: 238, y: -19 }, [
+        { x: 200, y: -60 },
+        { x: 300, y: 40 },
+      ]),
+    ).toEqual({
+      diff: { x: 2, y: -1 },
+      targets: [],
+      intervalTargets: [
+        {
+          beforeId: "a",
+          afterId: "b",
+          direction: "v",
+          lines: [
+            [
+              { x: 100, y: -19 },
+              { x: 120, y: -19 },
+            ],
+            [
+              { x: 220, y: -19 },
+              { x: 240, y: -19 },
+            ],
+          ],
+        },
+      ],
+    });
+  });
+});
