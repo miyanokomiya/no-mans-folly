@@ -174,4 +174,17 @@ describe("getIntersectionsBetweenLineShapeAndLine", () => {
     ]);
     expect(res2, "bezier").toEqualPoints([{ x: 50, y: 37.5 }]);
   });
+
+  test("should treat invalid arc as straight segment", () => {
+    const shape0 = lineStruct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 0 },
+      curves: [{ d: { x: 0, y: 0 } }],
+    });
+    const res0 = getIntersectionsBetweenLineShapeAndLine(shape0, [
+      { x: 10, y: -20 },
+      { x: 10, y: 20 },
+    ]);
+    expect(res0, "straight").toEqualPoints([{ x: 10, y: 0 }]);
+  });
 });

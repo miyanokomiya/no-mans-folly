@@ -199,6 +199,9 @@ export function getIntersectionsBetweenLineShapeAndLine(shape: LineShape, line: 
           arcParams.counterclockwise ? arcParams.from : arcParams.to,
         );
         if (inter?.length) intersections.push(...inter);
+      } else {
+        const inter = getCrossSegAndLine(seg, line);
+        if (inter) intersections.push(inter);
       }
     } else {
       const inter = getCrossSegAndLine(seg, line);
