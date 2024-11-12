@@ -122,7 +122,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
         });
       }
 
-      preserveAttachmentHandler.render(renderCtx, style, scale);
+      preserveAttachmentHandler.render(renderCtx, style, scale, ctx.getTmpShapeMap());
     },
   };
 }

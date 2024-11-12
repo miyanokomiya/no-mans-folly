@@ -151,7 +151,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         });
       }
 
-      preserveAttachmentHandler.render(renderCtx, style, scale);
+      preserveAttachmentHandler.render(renderCtx, style, scale, ctx.getTmpShapeMap());
     },
   };
 }

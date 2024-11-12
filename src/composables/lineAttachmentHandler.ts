@@ -315,7 +315,12 @@ export function getEvenlySpacedLineAttachment(
 export type PreserveAttachmentHandler = {
   setActive(val: boolean): void;
   getPatch(linePatch: Partial<LineShape>): { [id: string]: Partial<Shape> } | undefined;
-  render(renderCtx: CanvasRenderingContext2D, style: StyleScheme, scale: number): void;
+  render(
+    renderCtx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    scale: number,
+    update: { [id: string]: Partial<Shape> },
+  ): void;
   hasAttachment: boolean;
 };
 
@@ -367,14 +372,21 @@ export function newPreserveAttachmentHandler({
     return changed ? updateByAlt : undefined;
   }
 
-  function render(renderCtx: CanvasRenderingContext2D, style: StyleScheme, scale: number): void {
+  function render(
+    renderCtx: CanvasRenderingContext2D,
+    style: StyleScheme,
+    scale: number,
+    update: { [id: string]: Partial<Shape> },
+  ): void {
     if (!active) return;
 
     applyFillStyle(renderCtx, { color: style.selectionSecondaly });
     const size = 6 * scale;
     anchorMap.forEach((anchorP, id) => {
       const s = shapeComposite.shapeMap[id];
-      if (!s?.attachment) return;
+      if (!s) return;
+      const latest = { ...s, ...update[id] };
+      if (!latest.attachment) return;
 
       renderCtx.beginPath();
       renderCtx.arc(anchorP.x, anchorP.y, size, 0, TAU);
