@@ -73,7 +73,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
 
-          if (connectionResult?.connection) {
+          if (connectionResult) {
             vertex = connectionResult?.p ?? point;
             snappingResult = undefined;
 
