@@ -46,6 +46,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
+        settings: ctx.getUserSetting(),
       });
 
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });

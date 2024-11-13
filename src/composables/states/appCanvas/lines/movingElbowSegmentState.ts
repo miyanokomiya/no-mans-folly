@@ -42,6 +42,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
         }),
         scale: ctx.getScale(),
         gridSnapping: isHorizontalSegment ? { v: [], h: gridLines.h } : { v: gridLines.v, h: [] },
+        settings: ctx.getUserSetting(),
       });
 
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });

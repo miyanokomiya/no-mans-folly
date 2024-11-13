@@ -47,6 +47,7 @@ import { loadShapesFromSheetFile } from "../../workspaceFile";
 import { createNewTextShapeForDocument } from "./utils/text";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { getLineUnrelatedIds } from "../../shapeRelation";
+import { isLineShape } from "../../../shapes/line";
 
 type AcceptableEvent =
   | "Break"
@@ -735,14 +736,16 @@ export function selectShapesInRange(
 }
 
 export function getSnappableCandidates(
-  ctx: Pick<AppCanvasStateContext, "getViewRect" | "getShapeComposite">,
+  ctx: Pick<AppCanvasStateContext, "getViewRect" | "getShapeComposite" | "getUserSetting">,
   targetIds: string[],
-) {
+): Shape[] {
   const shapeComposite = ctx.getShapeComposite();
   const shapeMap = shapeComposite.shapeMap;
   const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, targetIds);
+  const shapes = snappableCandidateIds.map((id) => shapeMap[id]);
+  const ignoreLine = ctx.getUserSetting().snapIgnoreLine === "on";
   return shapeComposite.getShapesOverlappingRect(
-    snappableCandidateIds.map((id) => shapeMap[id]),
+    ignoreLine ? shapes.filter((s) => !isLineShape(s)) : shapes,
     ctx.getViewRect(),
   );
 }

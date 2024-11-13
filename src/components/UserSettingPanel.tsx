@@ -78,6 +78,20 @@ export const UserSettingPanel: React.FC = () => {
     [userSettingStore],
   );
 
+  const handleSnapIgnoreLineChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ snapIgnoreLine: val ? "on" : "off" });
+    },
+    [userSettingStore],
+  );
+
+  const handleSnapIgnoreNonoverlapPairChange = useCallback(
+    (val: boolean) => {
+      userSettingStore.patchState({ snapIgnoreNonoverlapPair: val ? "on" : "off" });
+    },
+    [userSettingStore],
+  );
+
   const virtualKeyboardValue = userSetting.virtualKeyboard ?? "off";
 
   return (
@@ -122,6 +136,17 @@ export const UserSettingPanel: React.FC = () => {
                 onChange={handleGridSizeChange}
               />
             </div>
+          </InlineField>
+        </BlockGroupField>
+        <BlockGroupField label="General snap">
+          <InlineField label="Ignore line">
+            <ToggleInput value={userSetting.snapIgnoreLine === "on"} onChange={handleSnapIgnoreLineChange} />
+          </InlineField>
+          <InlineField label="Ignore non-overlapping pair">
+            <ToggleInput
+              value={userSetting.snapIgnoreNonoverlapPair === "on"}
+              onChange={handleSnapIgnoreNonoverlapPairChange}
+            />
           </InlineField>
         </BlockGroupField>
         <InlineField label="Attach to line">

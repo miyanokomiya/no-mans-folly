@@ -54,6 +54,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
+        settings: ctx.getUserSetting(),
       });
     },
     onEnd: (ctx) => {

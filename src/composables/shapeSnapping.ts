@@ -13,7 +13,7 @@ import {
 } from "okageo";
 import { getCrossLineAndLine, getD2, getRectLines, ISegment, isRangeOverlapped } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { StyleScheme } from "../models";
+import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
 import { renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -44,6 +44,7 @@ interface Option {
   shapeSnappingList: [string, ShapeSnappingLines][];
   gridSnapping?: ShapeSnappingLines;
   scale?: number;
+  settings?: Pick<UserSetting, "snapIgnoreNonoverlapPair">;
 }
 
 interface TestOption {
@@ -472,13 +473,10 @@ interface IntervalSnappingResultTarget {
   direction: "v" | "h";
 }
 
-type ShapeIntervalSnappingOption = Option & {
-  // When true, pairs of shapes that don't overlap each other are excluded from snapping targets.
-  withinRange?: boolean;
-};
+type ShapeIntervalSnappingOption = Option;
 
 export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
-  const info = getIntervalSnappingInfo(option.shapeSnappingList, option.withinRange);
+  const info = getIntervalSnappingInfo(option.shapeSnappingList, option.settings?.snapIgnoreNonoverlapPair === "on");
   const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
 
   function test(rect: IRectangle): InvervalSnappingResult | undefined {
@@ -583,6 +581,7 @@ export type ShapeIntervalSnapping = ReturnType<typeof newShapeIntervalSnapping>;
 
 function getIntervalSnappingInfo(
   shapeSnappingList: [string, ShapeSnappingLines][],
+  // When true, pairs of shapes that don't overlap each other are excluded from snapping targets.
   withinRange = false,
 ): IntervalSnappingInfo {
   const vList: IntervalSnappingTarget[] = [];

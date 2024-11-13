@@ -58,6 +58,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
+        settings: ctx.getUserSetting(),
       });
 
       elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;

@@ -44,6 +44,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
+        settings: ctx.getUserSetting(),
       });
 
       const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);

@@ -35,6 +35,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
+        settings: ctx.getUserSetting(),
       });
 
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());

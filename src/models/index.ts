@@ -146,6 +146,8 @@ export interface UserSetting {
   virtualKeyboard?: "modifiers" | "off"; // should be "off" when it's undefined
   preview?: "on" | "off"; // should be "off" when it's undefined
   attachToLine?: "on" | "off"; // should be "off" when it's undefined
+  snapIgnoreLine?: "on" | "off"; // should be "off" when it's undefined
+  snapIgnoreNonoverlapPair?: "on" | "off"; // should be "off" when it's undefined
 }
 
 /**

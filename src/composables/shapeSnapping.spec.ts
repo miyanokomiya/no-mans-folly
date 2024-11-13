@@ -583,7 +583,7 @@ describe("newShapeIntervalSnapping", () => {
     });
   });
 
-  test("should not regard pairs of shapes that don't overlap each other when withinRange is set true", () => {
+  test("should not regard pairs of shapes that don't overlap each other when the setting is set true", () => {
     const target1 = newShapeIntervalSnapping({ shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[3]] });
     expect(target1.test({ x: 298, y: 0, width: 0, height: 0 })).toEqual({
       v: {
@@ -609,7 +609,7 @@ describe("newShapeIntervalSnapping", () => {
 
     const target2 = newShapeIntervalSnapping({
       shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[3]],
-      withinRange: true,
+      settings: { snapIgnoreNonoverlapPair: "on" },
     });
     expect(target2.test({ x: 298, y: 0, width: 0, height: 0 })).toBe(undefined);
   });

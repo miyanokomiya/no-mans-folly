@@ -1,5 +1,11 @@
 import { expect, test, describe, vi } from "vitest";
-import { getCommonAcceptableEvents, handleHistoryEvent, handleStateEvent, selectShapesInRange } from "./commons";
+import {
+  getCommonAcceptableEvents,
+  getSnappableCandidates,
+  handleHistoryEvent,
+  handleStateEvent,
+  selectShapesInRange,
+} from "./commons";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
@@ -104,5 +110,52 @@ describe("selectShapesInRange", () => {
     ctx0.getLastSelectedShapeId.mockReturnValue(undefined);
     selectShapesInRange(ctx0, "child2");
     expect(ctx0.multiSelectShapes).toHaveBeenCalledWith(["child2"], true);
+  });
+});
+
+describe("getSnappableCandidates", () => {
+  const shapeComposite = newShapeComposite({
+    shapes: [
+      createShape(getCommonStruct, "rectangle", { id: "rect" }),
+      createShape(getCommonStruct, "line", { id: "line" }),
+    ],
+    getStruct: getCommonStruct,
+  });
+  const viewRect = { x: 0, y: 0, width: 200, height: 200 };
+
+  test("should ignore shapes outside the viewport", () => {
+    expect(
+      getSnappableCandidates(
+        {
+          getShapeComposite: () => shapeComposite,
+          getViewRect: () => ({ x: 0, y: 5, width: 200, height: 200 }),
+          getUserSetting: () => ({}),
+        },
+        [],
+      ),
+    ).toEqual([shapeComposite.shapes[0]]);
+  });
+
+  test("should ignore lines when the setting is set on", () => {
+    expect(
+      getSnappableCandidates(
+        {
+          getShapeComposite: () => shapeComposite,
+          getViewRect: () => viewRect,
+          getUserSetting: () => ({}),
+        },
+        [],
+      ),
+    ).toEqual(shapeComposite.shapes);
+    expect(
+      getSnappableCandidates(
+        {
+          getShapeComposite: () => shapeComposite,
+          getViewRect: () => viewRect,
+          getUserSetting: () => ({ snapIgnoreLine: "on" }),
+        },
+        [],
+      ),
+    ).toEqual([shapeComposite.shapes[0]]);
   });
 });
