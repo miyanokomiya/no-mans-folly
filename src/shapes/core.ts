@@ -59,6 +59,9 @@ export interface ShapeStruct<T extends Shape> {
    * "textBoxSize" refers to the eventual text box size including text padding.
    */
   resizeOnTextEdit?: (shape: T, textBoxSize: Size) => Partial<T> | undefined;
+  /**
+   * Lines should be sorted top-left to bottom-right in each direction.
+   */
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;

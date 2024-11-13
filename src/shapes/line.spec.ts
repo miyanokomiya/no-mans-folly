@@ -353,6 +353,25 @@ describe("struct", () => {
         ],
       });
     });
+    test("should return sort lines", () => {
+      const shape = struct.create({
+        p: { x: 10, y: 10 },
+        q: { x: 1, y: 1 },
+        body: [{ p: { x: 2, y: 3 } }],
+      });
+      expect(struct.getSnappingLines?.(shape)).toEqual({
+        h: [
+          [shape.q, shape.q],
+          [shape.body![0].p, shape.body![0].p],
+          [shape.p, shape.p],
+        ],
+        v: [
+          [shape.q, shape.q],
+          [shape.body![0].p, shape.body![0].p],
+          [shape.p, shape.p],
+        ],
+      });
+    });
   });
 });
 

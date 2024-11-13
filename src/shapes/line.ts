@@ -425,8 +425,8 @@ export const struct: ShapeStruct<LineShape> = {
   getSnappingLines(shape) {
     const path = getLinePath(shape);
     return {
-      h: path.map((p) => [p, p]),
-      v: path.map((p) => [p, p]),
+      h: path.sort((a, b) => a.y - b.y).map((p) => [p, p]),
+      v: path.sort((a, b) => a.x - b.x).map((p) => [p, p]),
     };
   },
   transparentSelection: true,
