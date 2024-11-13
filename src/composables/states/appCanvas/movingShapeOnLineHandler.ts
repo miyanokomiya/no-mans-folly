@@ -17,8 +17,8 @@ export function handlePointerMoveOnLine(
   const movingShape = shapeComposite.shapeMap[indexId];
   if (!shapeComposite.canAttach(movingShape)) return;
 
-  const subShapeComposite = shapeComposite.getSubShapeComposite([movingShape.id], shapeComposite.tmpShapeMap);
-  const anchorP = getAttachmentAnchorPoint(subShapeComposite, movingShape);
+  const subShapeComposite = shapeComposite.getSubShapeComposite([movingShape.id]);
+  const anchorP = getAttachmentAnchorPoint(subShapeComposite, subShapeComposite.shapeMap[indexId]);
   const diff = sub(event.data.current, event.data.start);
   const movedAnchorP = add(anchorP, diff);
 
