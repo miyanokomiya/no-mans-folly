@@ -766,12 +766,13 @@ export function getSnappingResultForBoundingBoxResizing(
   let snappingResult = snappingResults[0];
   const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
   const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, applyAffine(resizingAffine, p)]);
+  const guidelines = getGuidelinesFromSnappingResult(snappingResult);
 
   // Apply resizing restriction to each snapping candidate
   const result = pickMinItem(
-    snappingResult.targets
-      .map((target) =>
-        boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, target.line, {
+    guidelines
+      .map((guideline) =>
+        boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, guideline, {
           keepAspect,
           centralize,
         }),
@@ -788,7 +789,7 @@ export function getSnappingResultForBoundingBoxResizing(
     // Pick exact target when it's determined.
     snappingResult = {
       ...snappingResult,
-      targets: snappingResult.targets.filter((t) => t.line == result[2]),
+      ...filterSnappingTargetsBySecondGuideline(snappingResult, result[2]),
     };
   } else if (resizingAffine) {
     // Need recalculation to get final control lines.
@@ -856,7 +857,23 @@ export function getSecondGuidelineCandidateInfo(
     }),
   );
 
-  return { candidates: allCandidates, targets: candidateTargets, intervalTargets: candidateIntervals };
+  const partial = { targets: candidateTargets, intervalTargets: candidateIntervals };
+  getGuidelinesFromSnappingResult(partial);
+  return { candidates: getGuidelinesFromSnappingResult(partial), ...partial };
+}
+
+function getGuidelinesFromSnappingResult(
+  snappingResult: Pick<SnappingResult, "targets" | "intervalTargets">,
+): ISegment[] {
+  const allCandidates: ISegment[] = snappingResult.targets.map((t) => t.line);
+  snappingResult.intervalTargets.forEach((t) =>
+    t.lines.forEach((l) => {
+      const v = rotate(sub(l[1], l[0]), Math.PI / 2);
+      allCandidates.push([l[0], add(l[0], v)], [l[1], add(l[1], v)]);
+    }),
+  );
+
+  return allCandidates;
 }
 
 export function filterSnappingTargetsBySecondGuideline(
