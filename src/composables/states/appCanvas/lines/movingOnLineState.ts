@@ -8,8 +8,15 @@ import {
   getLineEdgeInfo,
   LineEdgeInfo,
 } from "../../../../shapes/utils/line";
-import { getD2, getDiagonalLengthOfRect, getPointLerpSlope, ISegment, TAU } from "../../../../utils/geometry";
-import { add, getDistance, getPedal, IRectangle, IVec2, moveRect, rotate, sub } from "okageo";
+import {
+  getClosestLineToRectFeaturePoints,
+  getD2,
+  getDiagonalLengthOfRect,
+  getPointLerpSlope,
+  ISegment,
+  TAU,
+} from "../../../../utils/geometry";
+import { add, getDistance, IRectangle, IVec2, moveRect, rotate, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
@@ -335,9 +342,8 @@ function snapPointOnLine({
 
   // Get currently snapped anchor that isn't on the line.
   const snappedAnchor = add(anchorPointAtStart, add(result.diff, anchorDiff));
-  const secondGuideline = pickMinItem(candidateInfo.candidates, (l) =>
-    getD2(sub(snappedAnchor, getPedal(snappedAnchor, l))),
-  );
+  // Get the closest candidate to a feature point of moving rect as second guideline.
+  const secondGuideline = getClosestLineToRectFeaturePoints(movingRect, candidateInfo.candidates);
   if (!secondGuideline) return;
 
   // Slide second guideline to the snapped anchor.

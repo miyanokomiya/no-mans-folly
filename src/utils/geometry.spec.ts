@@ -82,6 +82,8 @@ import {
   getRelativePointWithinRect,
   getPointLerpSlope,
   getDiagonalLengthOfRect,
+  getRectFeaturePoints,
+  getClosestLineToRectFeaturePoints,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -633,6 +635,22 @@ describe("getRectPoints", () => {
       { x: 11, y: 2 },
       { x: 11, y: 22 },
       { x: 1, y: 22 },
+    ]);
+  });
+});
+
+describe("getRectFeaturePoints", () => {
+  test("should return the feature points of the rectangle", () => {
+    expect(getRectFeaturePoints({ x: 1, y: 2, width: 10, height: 20 })).toEqual([
+      { x: 1, y: 2 },
+      { x: 6, y: 2 },
+      { x: 11, y: 2 },
+      { x: 11, y: 12 },
+      { x: 11, y: 22 },
+      { x: 6, y: 22 },
+      { x: 1, y: 22 },
+      { x: 1, y: 12 },
+      { x: 6, y: 12 },
     ]);
   });
 });
@@ -1914,5 +1932,62 @@ describe("getPointLerpSlope", () => {
 describe("getDiagonalLengthOfRect", () => {
   test("should return wrapper radisu of the rectangle", () => {
     expect(getDiagonalLengthOfRect({ x: 0, y: 0, width: 3, height: 4 })).toBeCloseTo(5);
+  });
+});
+
+describe("getClosestLineToRectFeaturePoints", () => {
+  test("should return the closest line to a feature point of the rectangle", () => {
+    const rect = { x: 0, y: 0, width: 100, height: 100 };
+    expect(
+      getClosestLineToRectFeaturePoints(rect, [
+        [
+          { x: 10, y: 20 },
+          { x: 20, y: 20 },
+        ],
+        [
+          { x: 10, y: 10 },
+          { x: 20, y: 10 },
+        ],
+        [
+          { x: 10, y: 30 },
+          { x: 20, y: 30 },
+        ],
+      ]),
+    ).toEqual([
+      { x: 10, y: 10 },
+      { x: 20, y: 10 },
+    ]);
+
+    expect(
+      getClosestLineToRectFeaturePoints(rect, [
+        [
+          { x: 10, y: 10 },
+          { x: 20, y: 10 },
+        ],
+        [
+          { x: 55, y: 30 },
+          { x: 55, y: 40 },
+        ],
+      ]),
+    ).toEqual([
+      { x: 55, y: 30 },
+      { x: 55, y: 40 },
+    ]);
+
+    expect(
+      getClosestLineToRectFeaturePoints(rect, [
+        [
+          { x: 10, y: 10 },
+          { x: 20, y: 10 },
+        ],
+        [
+          { x: 10, y: 45 },
+          { x: 20, y: 45 },
+        ],
+      ]),
+    ).toEqual([
+      { x: 10, y: 45 },
+      { x: 20, y: 45 },
+    ]);
   });
 });

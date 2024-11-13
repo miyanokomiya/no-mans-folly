@@ -414,6 +414,18 @@ export function getRectPoints(rect: IRectangle): IVec2[] {
   ];
 }
 
+export function getRectFeaturePoints(rect: IRectangle): IVec2[] {
+  const [tl, tr, br, bl] = getRectPoints(rect);
+  const c = getCenter(tl, br);
+  const [tc, cr, bc, cl] = [
+    { x: c.x, y: tl.y },
+    { x: tr.x, y: c.y },
+    { x: c.x, y: bl.y },
+    { x: tl.x, y: c.y },
+  ];
+  return [tl, tc, tr, cr, br, bc, bl, cl, c];
+}
+
 export function getRectLines(rect: IRectangle): [IVec2, IVec2][] {
   const [tl, tr, br, bl] = getRectPoints(rect);
   return [
@@ -1357,4 +1369,23 @@ export function getDiagonalLengthOfRect(rect: IRectangle): number {
   const dx = rect.width;
   const dy = rect.height;
   return Math.sqrt(dx * dx + dy * dy);
+}
+
+export function getClosestLineToRectFeaturePoints(rect: IRectangle, lines: ISegment[]): ISegment | undefined {
+  if (lines.length === 0) return;
+
+  const featurePoints = getRectFeaturePoints(rect);
+  return pickMinItem(
+    lines.map((line) => {
+      const d2 = pickMinItem(
+        featurePoints.map((p) => {
+          const pedal = getPedal(p, line);
+          return getD2(sub(p, pedal));
+        }),
+        (v) => v,
+      );
+      return [line, d2 ?? Infinity] as const;
+    }),
+    (info) => info?.[1] ?? Infinity,
+  )?.[0];
 }
