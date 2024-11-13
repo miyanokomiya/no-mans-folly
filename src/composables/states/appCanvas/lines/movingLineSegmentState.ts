@@ -10,6 +10,7 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { renderBezierControls } from "../../../lineBounding";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
+import { getSnappableCandidates } from "../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -36,15 +37,13 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
       const branchIdSet = new Set(shapeComposite.getAllBranchMergedShapes([option.lineShape.id]).map((s) => s.id));
       // Allow to snap itself, but excluce its children.
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => s.id === option.lineShape.id || !branchIdSet.has(s.id)),
-        ctx.getViewRect(),
+      const snappableCandidates = getSnappableCandidates(ctx, []).filter(
+        (s) => s.id === option.lineShape.id || !branchIdSet.has(s.id),
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

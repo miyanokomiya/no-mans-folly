@@ -6,6 +6,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
+import { getSnappableCandidates } from "../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -29,16 +30,13 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
       elbowHandler = newElbowLineHandler(ctx);
 
       const shapeComposite = ctx.getShapeComposite();
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeComposite.shapeMap),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = getSnappableCandidates(ctx, []);
 
       // Target elbow segment is always cardinal, so either horizontal or vertical snapping is available at once.
       const isHorizontalSegment = Math.abs(Math.sin(getRadian(targetSegment[1], targetSegment[0]))) < MINVALUE;
       const gridLines = ctx.getGrid().getSnappingLines();
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => {
+        shapeSnappingList: snappableCandidates.map((s) => {
           const lines = shapeComposite.getSnappingLines(s);
           return [s.id, isHorizontalSegment ? { v: [], h: lines.h } : { v: lines.v, h: [] }];
         }),

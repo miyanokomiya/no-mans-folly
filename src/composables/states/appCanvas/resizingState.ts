@@ -18,7 +18,6 @@ import {
 } from "../../shapeSnapping";
 import { ConnectionRenderer, getConnectedLineInfoMap, newConnectionRenderer } from "../../connectedLineHandler";
 import { patchPipe, toMap } from "../../../utils/commons";
-import { isLineShape } from "../../../shapes/line";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
@@ -28,6 +27,7 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { resizeShapeTrees } from "../../shapeResizing";
 import { getTree } from "../../../utils/tree";
+import { getSnappableCandidates } from "./commons";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -55,13 +55,12 @@ export function newResizingState(option: Option): AppCanvasState {
       const directlySelectedTargets = selectedIds.map((id) => targetShapeMap[id]);
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !targetShapeMap[s.id] && !isLineShape(s)),
-        ctx.getViewRect(),
+      const snappableCandidates = getSnappableCandidates(
+        ctx,
+        targets.map((s) => s.id),
       );
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

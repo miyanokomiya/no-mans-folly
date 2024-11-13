@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { getCommonAcceptableEvents, handleStateEvent } from "../commons";
+import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
@@ -40,8 +40,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const snappableCandidates = shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+      const snappableCandidates = getSnappableCandidates(ctx, []);
 
       const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
       lineSnapping = newLineSnapping({

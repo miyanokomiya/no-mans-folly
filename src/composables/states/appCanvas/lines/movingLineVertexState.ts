@@ -18,8 +18,8 @@ import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
-import { getLineUnrelatedIds } from "../../../shapeRelation";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
+import { getSnappableCandidates } from "../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -43,12 +43,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, [option.lineShape.id]);
-      const snappableCandidates = shapeComposite.getShapesOverlappingRect(
-        snappableCandidateIds.map((id) => shapeMap[id]),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
 
       const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
       lineSnapping = newLineSnapping({

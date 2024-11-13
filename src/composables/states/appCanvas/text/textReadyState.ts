@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "../core";
-import { getCommonAcceptableEvents, handleStateEvent } from "../commons";
+import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
 import { createShape } from "../../../../shapes";
 import { IVec2, add } from "okageo";
@@ -7,7 +7,6 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { TextShape } from "../../../../shapes/text";
 import { newTextEditingState } from "./textEditingState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
-import { isLineShape } from "../../../../shapes/line";
 import { TAU } from "../../../../utils/geometry";
 import { getInitialOutput } from "../../../../utils/textEditor";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
@@ -24,13 +23,9 @@ export function newTextReadyState(): AppCanvasState {
       ctx.setCursor();
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const snappableLines = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => isLineShape(s)),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = getSnappableCandidates(ctx, []);
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableLines.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -99,10 +94,12 @@ export function newTextReadyState(): AppCanvasState {
       renderCtx.fill();
 
       if (snappingResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
     },

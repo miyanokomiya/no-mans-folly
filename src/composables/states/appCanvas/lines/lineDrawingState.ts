@@ -21,6 +21,7 @@ import { getDefaultCurveBody } from "../../../../shapes/utils/curveLine";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { Shape } from "../../../../models";
+import { getSnappableCandidates } from "../commons";
 
 interface Option {
   shape: LineShape;
@@ -44,8 +45,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const snappableCandidates = shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+      const snappableCandidates = getSnappableCandidates(ctx, []);
 
       const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
       lineSnapping = newLineSnapping({

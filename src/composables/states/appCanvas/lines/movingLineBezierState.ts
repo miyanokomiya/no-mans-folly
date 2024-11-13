@@ -13,6 +13,7 @@ import { fillArray } from "../../../../utils/commons";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { CommandExam } from "../../types";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
+import { getSnappableCandidates } from "../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -37,11 +38,10 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
 
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+      const snappableCandidates = getSnappableCandidates(ctx, []);
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });
@@ -157,10 +157,12 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       renderOutlinedCircle(renderCtx, p, bezierSize, style.selectionSecondaly);
 
       if (snappingResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style,
           scale,
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
 

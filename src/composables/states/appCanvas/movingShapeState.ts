@@ -11,7 +11,6 @@ import {
   newConnectedLineDetouchHandler,
   newConnectionRenderer,
 } from "../../connectedLineHandler";
-import { isLineShape } from "../../../shapes/line";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
@@ -19,6 +18,7 @@ import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 import { mergeMap } from "../../../utils/commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { handlePointerMoveOnLine } from "./movingShapeOnLineHandler";
+import { getSnappableCandidates } from "./commons";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -52,8 +52,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       targetIds = subShapeComposite.shapes.map((s) => s.id);
       if (targetIds.length === 0) return ctx.states.newSelectionHubState;
 
-      const targetIdSet = new Set(targetIds);
-
       // Line labels should be moved via dedicated state
       targetIds = targetIds.filter((id) => {
         const shape = shapeMap[id];
@@ -64,12 +62,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       ctx.setCursor("move");
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
 
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !targetIdSet.has(s.id) && !isLineShape(s)),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = getSnappableCandidates(ctx, targetIds);
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

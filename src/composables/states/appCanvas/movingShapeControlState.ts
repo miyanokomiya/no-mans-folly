@@ -8,6 +8,7 @@ import { CommandExam, EditMovement } from "../types";
 import { renderOutlinedCircle } from "../../../utils/renderer";
 import { patchPipe } from "../../../utils/commons";
 import { patchLinesConnectedToShapeOutline } from "../../lineSnapping";
+import { getSnappableCandidates } from "./commons";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -47,11 +48,8 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       ctx.setCommandExams(commands);
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
       const snappableShapes =
-        option.snapType === "self"
-          ? [targetShape]
-          : shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+        option.snapType === "self" ? [targetShape] : getSnappableCandidates(ctx, [targetShape.id]);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
@@ -102,10 +100,12 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       renderOutlinedCircle(renderCtx, control, 6 * ctx.getScale(), ctx.getStyleScheme().selectionSecondaly);
 
       if (snappingResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
 

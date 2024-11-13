@@ -36,7 +36,7 @@ import {
   ShapeSnapping,
   SnappingResult,
 } from "../../../shapeSnapping";
-import { getLineUnrelatedIds } from "../../../shapeRelation";
+import { getSnappableCandidates } from "../commons";
 
 type Option = {
   lineId: string;
@@ -89,11 +89,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
       if (selectedIds.length === 1) {
-        const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, selectedIds);
-        const snappableCandidates = shapeComposite.getShapesOverlappingRect(
-          snappableCandidateIds.map((id) => shapeMap[id]),
-          ctx.getViewRect(),
-        );
+        const snappableCandidates = getSnappableCandidates(ctx, selectedIds);
         const snappableShapes = shapeComposite.getShapesOverlappingRect(
           snappableCandidates.filter((s) => !isLineShape(s)),
           ctx.getViewRect(),

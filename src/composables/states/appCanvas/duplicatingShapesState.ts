@@ -2,7 +2,6 @@ import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
 import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { isLineShape } from "../../../shapes/line";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
@@ -10,6 +9,7 @@ import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { handleCommonWheel } from "../commons";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
+import { getSnappableCandidates } from "./commons";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;
@@ -29,13 +29,10 @@ export function newDuplicatingShapesState(): AppCanvasState {
 
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !isLineShape(s)),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = getSnappableCandidates(ctx, []);
 
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

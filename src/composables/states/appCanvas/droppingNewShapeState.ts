@@ -2,11 +2,11 @@ import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
 import { AffineMatrix, IRectangle, IVec2, add, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
-import { isLineShape } from "../../../shapes/line";
 import { ShapeComposite, newShapeComposite } from "../../shapeComposite";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { handleCommonWheel } from "../commons";
+import { getSnappableCandidates } from "./commons";
 
 interface Option {
   shapes: Shape[];
@@ -38,13 +38,9 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       ctx.setCursor("grabbing");
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        Object.values(shapeMap).filter((s) => !isLineShape(s)),
-        ctx.getViewRect(),
-      );
+      const snappableCandidates = getSnappableCandidates(ctx, []);
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
       });

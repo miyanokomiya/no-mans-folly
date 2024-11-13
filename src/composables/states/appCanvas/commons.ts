@@ -46,6 +46,7 @@ import { isFollySheetFileName } from "../../../utils/fileAccess";
 import { loadShapesFromSheetFile } from "../../workspaceFile";
 import { createNewTextShapeForDocument } from "./utils/text";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
+import { getLineUnrelatedIds } from "../../shapeRelation";
 
 type AcceptableEvent =
   | "Break"
@@ -731,4 +732,17 @@ export function selectShapesInRange(
     ids.push(targetId);
     ctx.multiSelectShapes(ids, true);
   }
+}
+
+export function getSnappableCandidates(
+  ctx: Pick<AppCanvasStateContext, "getViewRect" | "getShapeComposite">,
+  targetIds: string[],
+) {
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
+  const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, targetIds);
+  return shapeComposite.getShapesOverlappingRect(
+    snappableCandidateIds.map((id) => shapeMap[id]),
+    ctx.getViewRect(),
+  );
 }
