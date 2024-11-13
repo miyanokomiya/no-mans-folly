@@ -761,52 +761,43 @@ export function getSnappingResultForBoundingBoxResizing(
     .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
     .filter((r): r is SnappingResult => !!r)
     .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
+  if (snappingResults.length === 0) return { resizingAffine, snappingResult: undefined };
 
-  let snappingResult: SnappingResult | undefined;
-  if (snappingResults.length > 0) {
-    snappingResult = snappingResults[0];
-  } else {
-    snappingResult = undefined;
-  }
+  let snappingResult = snappingResults[0];
+  const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
+  const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, applyAffine(resizingAffine, p)]);
 
-  if (snappingResult) {
-    const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
-    const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, applyAffine(resizingAffine, p)]);
-
-    // Apply resizing restriction to each snapping candidate
-    const results = snappingResult.targets
+  // Apply resizing restriction to each snapping candidate
+  const result = pickMinItem(
+    snappingResult.targets
       .map((target) =>
         boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, target.line, {
           keepAspect,
           centralize,
         }),
       )
-      .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2)
-      .sort((a, b) => a[1] - b[1]);
+      .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2),
+    (r) => r[1],
+  );
+  // No snapping result satisfies the resizing restriction or close enough to the cursor.
+  if (!result) return { resizingAffine, snappingResult: undefined };
 
+  resizingAffine = result[0];
+
+  if (result[2]) {
+    // Pick exact target when it's determined.
+    snappingResult = {
+      ...snappingResult,
+      targets: snappingResult.targets.filter((t) => t.line == result[2]),
+    };
+  } else if (resizingAffine) {
+    // Need recalculation to get final control lines.
+    const results = boundingBoxPath
+      .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+      .filter((r): r is SnappingResult => !!r)
+      .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
     if (results.length > 0) {
-      const result = results[0];
-      resizingAffine = result[0];
-
-      if (result[2]) {
-        // Pick exact target when it's determined.
-        snappingResult = {
-          ...snappingResult,
-          targets: snappingResult.targets.filter((t) => t.line == result[2]),
-        };
-      } else if (resizingAffine) {
-        // Need recalculation to get final control lines.
-        const results = boundingBoxPath
-          .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
-          .filter((r): r is SnappingResult => !!r)
-          .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
-        if (results.length > 0) {
-          snappingResult = results[0];
-        }
-      }
-    } else {
-      // No snapping result satisfies the resizing restriction or close enough to the cursor.
-      snappingResult = undefined;
+      snappingResult = results[0];
     }
   }
 
