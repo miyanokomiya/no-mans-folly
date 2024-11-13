@@ -750,11 +750,8 @@ export function getSnappingResultForBoundingBoxResizing(
   diff: IVec2,
   options?: { keepAspect?: boolean; centralize?: boolean },
 ): { resizingAffine: AffineMatrix; snappingResult: SnappingResult | undefined } {
-  const keepAspect = options?.keepAspect;
-  const centralize = options?.centralize;
-
   // Apply plain resizing
-  let resizingAffine = boundingBoxResizing.getAffine(diff, { keepAspect, centralize });
+  let resizingAffine = boundingBoxResizing.getAffine(diff, options);
 
   // Let resized bounding box snap to shapes.
   const snappingResults = boundingBoxPath
@@ -772,12 +769,9 @@ export function getSnappingResultForBoundingBoxResizing(
   const result = pickMinItem(
     guidelines
       .map((guideline) =>
-        boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, guideline, {
-          keepAspect,
-          centralize,
-        }),
+        boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, guideline, options),
       )
-      .filter((r) => r[1] <= shapeSnapping.snapThreshold * 2),
+      .filter((r): r is Exclude<typeof r, undefined> => !!r && r[1] <= shapeSnapping.snapThreshold * 2),
     (r) => r[1],
   );
   // No snapping result satisfies the resizing restriction or close enough to the cursor.

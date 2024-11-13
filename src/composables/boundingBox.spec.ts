@@ -321,17 +321,44 @@ describe("newBoundingBoxResizing", () => {
         ],
         { keepAspect: true },
       );
-      expect(affine0[0][0]).toBeCloseTo(1.3);
-      expect(affine0[0][1]).toBeCloseTo(0);
-      expect(affine0[0][2]).toBeCloseTo(0);
-      expect(affine0[0][3]).toBeCloseTo(1.3);
-      expect(affine0[0][4]).toBeCloseTo(0);
-      expect(affine0[0][5]).toBeCloseTo(0);
-      expect(affine0[1]).toBeCloseTo(getDistance({ x: 110, y: 50 }, applyAffine(affine0[0], { x: 100, y: 50 })));
-      expect(affine0[2]).toEqual([
+      expect(affine0?.[0][0]).toBeCloseTo(1.3);
+      expect(affine0?.[0][1]).toBeCloseTo(0);
+      expect(affine0?.[0][2]).toBeCloseTo(0);
+      expect(affine0?.[0][3]).toBeCloseTo(1.3);
+      expect(affine0?.[0][4]).toBeCloseTo(0);
+      expect(affine0?.[0][5]).toBeCloseTo(0);
+      expect(affine0?.[1]).toBeCloseTo(getDistance({ x: 110, y: 50 }, applyAffine(affine0![0], { x: 100, y: 50 })));
+      expect(affine0?.[2]).toEqual([
         { x: 130, y: 0 },
         { x: 130, y: 100 },
       ]);
+    });
+  });
+
+  describe("getAffineAfterSnapping", () => {
+    test("should return undefined when there's no valid snapped segment", () => {
+      const corner0 = newBoundingBoxResizing({
+        rotation: Math.PI / 4,
+        hitResult: { type: "segment", index: 1 },
+        resizingBase: {
+          direction: { x: 100, y: 0 },
+          origin: { x: 0, y: 0 },
+        },
+      });
+      const affine0 = corner0.getAffineAfterSnapping(
+        { x: 10, y: 0 },
+        [
+          [
+            { x: 100, y: 50 },
+            { x: 110, y: 50 },
+          ],
+        ],
+        [
+          { x: 0, y: 51 },
+          { x: 130, y: 51 },
+        ],
+      );
+      expect(affine0).toBe(undefined);
     });
   });
 });

@@ -372,10 +372,10 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
 
   function getAffineAfterSnapping(
     diff: IVec2,
-    movingPointInfoList: [src: IVec2, snapped: IVec2][],
+    movingPointInfoList: [src: IVec2, resizedP: IVec2][],
     snappedSegment: ISegment,
     modifire?: { keepAspect?: boolean; centralize?: boolean },
-  ): [affine: AffineMatrix, d: number, exactTarget?: ISegment] {
+  ): [affine: AffineMatrix, d: number, exactTarget?: ISegment] | undefined {
     const keepAspect = keepAspectForce || modifire?.keepAspect;
     const centralize = modifire?.centralize;
 
@@ -390,7 +390,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     let rate: number | undefined;
     let distance: number | undefined;
     let movingPointInfo: [IVec2, IVec2] | undefined;
-    movingPointInfoList.forEach(([p, snappedP]) => {
+    movingPointInfoList.forEach(([p, resizedP]) => {
       const rotatedP = rotateFn(p);
 
       // There are three kinds of guide lines depending on resizing anchor type and modifire.
@@ -404,7 +404,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
         : sub(rotatedP, adjustedRotatedDirection);
       const direction = KeepAspectSegment ? sub(rotatedP, adjustedRotatedOrigin) : adjustedRotatedDirection;
       const targetSeg = [adjustedRotatedOrigin, rotatedP];
-      const pedalRotatedMovedP = getPedal(rotateFn(snappedP), targetSeg);
+      const pedalRotatedMovedP = getPedal(rotateFn(resizedP), targetSeg);
 
       const cross = getCrossLineAndLine(rotatedSegment, targetSeg);
       if (cross) {
@@ -413,12 +413,13 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
         if (rate === undefined || distance === undefined || d <= distance) {
           rate = r;
           distance = d;
-          movingPointInfo = [p, snappedP];
+          movingPointInfo = [p, resizedP];
         }
       }
     });
     if (rate === undefined || !movingPointInfo) {
-      return [getAffine(diff, modifire), 0];
+      // this snapping is invalid for this resizing.
+      return;
     }
 
     const adjustedOrigin = centralize ? centralizedOrigin : option.resizingBase.origin;
