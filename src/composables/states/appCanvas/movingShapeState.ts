@@ -27,6 +27,7 @@ interface Option {
 export function newMovingShapeState(option?: Option): AppCanvasState {
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
+  let movingRectSub: IRectangle | undefined;
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
@@ -71,6 +72,11 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       });
       movingRect = geometry.getWrapperRect(targetIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
 
+      // When multiple shapes are selected, use the bounds of the index shape as snapping source.
+      if (targetIds.length > 1 && indexShapeId) {
+        movingRectSub = shapeComposite.getWrapperRect(shapeMap[indexShapeId]);
+      }
+
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
@@ -111,7 +117,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           }
 
           const d = sub(event.data.current, event.data.start);
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
+
+          snappingResult = event.data.ctrl
+            ? undefined
+            : (snappingResult = shapeSnapping.testWithSubRect(
+                moveRect(movingRect, d),
+                movingRectSub ? moveRect(movingRectSub, d) : undefined,
+              ));
+
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
 

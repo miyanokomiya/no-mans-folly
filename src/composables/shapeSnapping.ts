@@ -211,6 +211,23 @@ export function newShapeSnapping(option: Option) {
     return { targets, intervalTargets, diff };
   }
 
+  /**
+   * Proc "test" with two rectangles and merge their results.
+   */
+  function testWithSubRect(
+    rectMain: IRectangle,
+    rectSub?: IRectangle,
+    option?: TestOption,
+  ): SnappingResult | undefined {
+    const resultMain = test(rectMain, option);
+    if (!rectSub) return resultMain;
+
+    const resultSub = test(rectSub, option);
+    if (resultMain && resultSub) return mergetSnappingResult(resultMain, resultSub);
+
+    return resultMain ?? resultSub;
+  }
+
   function testPoint(p: IVec2): SnappingResult | undefined {
     let xClosest: [string, SnappingTmpResult] | undefined;
     let yClosest: [string, SnappingTmpResult] | undefined;
@@ -316,7 +333,7 @@ export function newShapeSnapping(option: Option) {
     });
   }
 
-  return { test, testPoint, testPointOnLine, snapThreshold };
+  return { test, testWithSubRect, testPoint, testPointOnLine, snapThreshold };
 }
 export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
 
@@ -881,5 +898,48 @@ export function filterSnappingTargetsBySecondGuideline(
     intervalTargets: snappingResult.intervalTargets.filter(
       (t) => t.lines.length > 0 && isParallel(sub(t.lines[0][1], t.lines[0][0]), perpendicularV),
     ),
+  };
+}
+
+export function mergetSnappingResult(a: SnappingResult, b: SnappingResult): SnappingResult {
+  // Filter guildelines for x-axis.
+  const infoAX = getSecondGuidelineCandidateInfo(a, { x: 1, y: 0 });
+  const infoBX = getSecondGuidelineCandidateInfo(b, { x: 1, y: 0 });
+  let diffX = a.diff.x;
+  let infoX = infoAX;
+  if (infoAX.targets.length > 0 || infoAX.intervalTargets.length > 0) {
+    if (infoBX.targets.length > 0 || infoBX.intervalTargets.length > 0) {
+      // When both results have guidelines, pick one having smaller diff.
+      if (Math.abs(a.diff.x) > Math.abs(b.diff.x)) {
+        diffX = b.diff.x;
+        infoX = infoBX;
+      }
+    }
+  } else {
+    diffX = b.diff.x;
+    infoX = infoBX;
+  }
+
+  // Parallel to x-axis.
+  const infoAY = getSecondGuidelineCandidateInfo(a, { x: 0, y: 1 });
+  const infoBY = getSecondGuidelineCandidateInfo(b, { x: 0, y: 1 });
+  let diffY = a.diff.y;
+  let infoY = infoAY;
+  if (infoAY.targets.length > 0 || infoAY.intervalTargets.length > 0) {
+    if (infoBY.targets.length > 0 || infoBY.intervalTargets.length > 0) {
+      if (Math.abs(a.diff.y) > Math.abs(b.diff.y)) {
+        diffY = b.diff.y;
+        infoY = infoBY;
+      }
+    }
+  } else {
+    diffY = b.diff.y;
+    infoY = infoBY;
+  }
+
+  return {
+    diff: { x: diffX, y: diffY },
+    targets: [...infoX.targets, ...infoY.targets],
+    intervalTargets: [...infoX.intervalTargets, ...infoY.intervalTargets],
   };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newShapeIntervalSnapping, newShapeSnapping } from "./shapeSnapping";
+import { mergetSnappingResult, newShapeIntervalSnapping, newShapeSnapping, SnappingResult } from "./shapeSnapping";
 import { ShapeSnappingLines } from "../shapes/core";
 
 describe("newShapeSnapping", () => {
@@ -827,6 +827,141 @@ describe("testPointOnLine", () => {
               { x: 240, y: -19 },
             ],
           ],
+        },
+      ],
+    });
+  });
+});
+
+describe("mergetSnappingResult", () => {
+  test("should merge two snapping results in each axis", () => {
+    const a: SnappingResult = {
+      diff: { x: 1, y: 20 },
+      targets: [
+        {
+          id: "a1",
+          line: [
+            { x: 1, y: 0 },
+            { x: 1, y: 10 },
+          ],
+        },
+        {
+          id: "a2",
+          line: [
+            { x: 0, y: 20 },
+            { x: 10, y: 20 },
+          ],
+        },
+      ],
+      intervalTargets: [
+        {
+          beforeId: "ab1",
+          afterId: "aa1",
+          lines: [
+            [
+              { x: 1, y: 0 },
+              { x: 5, y: 0 },
+            ],
+          ],
+          direction: "h",
+        },
+        {
+          beforeId: "ab2",
+          afterId: "aa2",
+          lines: [
+            [
+              { x: 0, y: 20 },
+              { x: 0, y: 25 },
+            ],
+          ],
+          direction: "v",
+        },
+      ],
+    };
+    const b: SnappingResult = {
+      diff: { x: -20, y: -2 },
+      targets: [
+        {
+          id: "b1",
+          line: [
+            { x: -20, y: 0 },
+            { x: -20, y: 10 },
+          ],
+        },
+        {
+          id: "b2",
+          line: [
+            { x: 0, y: -2 },
+            { x: 10, y: -2 },
+          ],
+        },
+      ],
+      intervalTargets: [
+        {
+          beforeId: "bb1",
+          afterId: "ba1",
+          lines: [
+            [
+              { x: -20, y: 0 },
+              { x: -5, y: 0 },
+            ],
+          ],
+          direction: "h",
+        },
+        {
+          beforeId: "bb2",
+          afterId: "ba2",
+          lines: [
+            [
+              { x: 0, y: -2 },
+              { x: 0, y: 5 },
+            ],
+          ],
+          direction: "v",
+        },
+      ],
+    };
+
+    expect(mergetSnappingResult(a, b)).toEqual({
+      diff: { x: 1, y: -2 },
+      targets: [
+        {
+          id: "a1",
+          line: [
+            { x: 1, y: 0 },
+            { x: 1, y: 10 },
+          ],
+        },
+        {
+          id: "b2",
+          line: [
+            { x: 0, y: -2 },
+            { x: 10, y: -2 },
+          ],
+        },
+      ],
+      intervalTargets: [
+        {
+          beforeId: "ab1",
+          afterId: "aa1",
+          lines: [
+            [
+              { x: 1, y: 0 },
+              { x: 5, y: 0 },
+            ],
+          ],
+          direction: "h",
+        },
+        {
+          beforeId: "bb2",
+          afterId: "ba2",
+          lines: [
+            [
+              { x: 0, y: -2 },
+              { x: 0, y: 5 },
+            ],
+          ],
+          direction: "v",
         },
       ],
     });
