@@ -56,10 +56,11 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let patchAtStart: { [id: string]: Partial<Shape> };
   let evenlyAligned = false;
 
-  // Shape snapping works well only one shape is moving on the line.
-  let shapeSnapping: ShapeSnapping | undefined;
+  // Shape snapping doesn't work well when the index shape rotates along the line.
+  // => It's still convenient most of time.
+  let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
-  let movingRectAtStart: IRectangle | undefined;
+  let movingRectAtStart: IRectangle;
 
   function storeAtStart(ctx: AppCanvasStateContext) {
     pointAtStart = ctx.getCursorPoint();
@@ -67,10 +68,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
     const shapeComposite = ctx.getShapeComposite();
     const nextShapeComposite = getNextShapeComposite(shapeComposite, { update: patchAtStart });
     anchorPointAtStart = getAttachmentAnchorPoint(nextShapeComposite, nextShapeComposite.shapeMap[option.shapeId]);
-
-    if (shapeSnapping) {
-      movingRectAtStart = nextShapeComposite.getWrapperRect(nextShapeComposite.shapeMap[option.shapeId]);
-    }
+    movingRectAtStart = nextShapeComposite.getWrapperRect(nextShapeComposite.shapeMap[option.shapeId]);
   }
 
   return {
@@ -88,27 +86,23 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       edgeInfo = getLineEdgeInfo(line);
 
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-      if (selectedIds.length === 1) {
-        const snappableCandidates = getSnappableCandidates(ctx, selectedIds);
-        const snappableShapes = shapeComposite.getShapesOverlappingRect(
-          snappableCandidates.filter((s) => !isLineShape(s)),
-          ctx.getViewRect(),
-        );
-        shapeSnapping = newShapeSnapping({
-          shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-          scale: ctx.getScale(),
-          gridSnapping: ctx.getGrid().getSnappingLines(),
-          settings: ctx.getUserSetting(),
-        });
+      const snappableCandidates = getSnappableCandidates(ctx, selectedIds);
+      const snappableShapes = shapeComposite.getShapesOverlappingRect(
+        snappableCandidates.filter((s) => !isLineShape(s)),
+        ctx.getViewRect(),
+      );
+      shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        scale: ctx.getScale(),
+        gridSnapping: ctx.getGrid().getSnappingLines(),
+        settings: ctx.getUserSetting(),
+      });
 
-        ctx.setCommandExams([
-          COMMAND_EXAM_SRC.DISABLE_SNAP,
-          COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF,
-          COMMAND_EXAM_SRC.EVENLY_SPACED,
-        ]);
-      } else {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF, COMMAND_EXAM_SRC.EVENLY_SPACED]);
-      }
+      ctx.setCommandExams([
+        COMMAND_EXAM_SRC.DISABLE_SNAP,
+        COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF,
+        COMMAND_EXAM_SRC.EVENLY_SPACED,
+      ]);
 
       storeAtStart(ctx);
     },
@@ -163,26 +157,12 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             lineAnchor = attachInfo.attachedPoint;
           } else {
             evenlyAligned = false;
-            const baseTo = { x: closestInfo[1], y: 0 };
-            const baseToP = closestInfo[0];
-            lineAnchor = baseToP;
-            attachInfoMap = new Map([[option.shapeId, [baseTo]]]);
-
-            if (selectedShapes.length > 1) {
-              const infoMap = getEvenlySpacedLineAttachmentBetweenFixedOnes(
-                shapeMap,
-                line.id,
-                Object.keys(selectedShapeMap),
-                option.shapeId,
-                baseTo.x,
-              );
-              for (const [k, v] of infoMap) {
-                attachInfoMap.set(k, v);
-              }
-            }
+            let nextTo = { x: closestInfo[1], y: 0 };
+            lineAnchor = closestInfo[0];
+            attachInfoMap = new Map([[option.shapeId, [nextTo]]]);
 
             snappingResult = undefined;
-            if (!event.data.ctrl && shapeSnapping && movingRectAtStart) {
+            if (!event.data.ctrl && movingRectAtStart) {
               const result = snapPointOnLine({
                 line,
                 shapeSnapping,
@@ -195,7 +175,21 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               if (result) {
                 snappingResult = result.snappingResult;
                 lineAnchor = result.lineAnchor;
-                attachInfoMap = new Map([[option.shapeId, [{ x: result.lineAnchorRate, y: 0 }]]]);
+                nextTo = { x: result.lineAnchorRate, y: 0 };
+                attachInfoMap = new Map([[option.shapeId, [nextTo]]]);
+              }
+            }
+
+            if (selectedShapes.length > 1) {
+              const infoMap = getEvenlySpacedLineAttachmentBetweenFixedOnes(
+                shapeMap,
+                line.id,
+                Object.keys(selectedShapeMap),
+                option.shapeId,
+                nextTo.x,
+              );
+              for (const [k, v] of infoMap) {
+                attachInfoMap.set(k, v);
               }
             }
           }
