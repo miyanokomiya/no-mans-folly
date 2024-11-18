@@ -30,7 +30,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
-import { isObjectEmpty, pickMinItem } from "../utils/commons";
+import { isObjectEmpty, pickMinItem, splitList } from "../utils/commons";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
 import { isConnectedToCenter } from "../shapes/utils/line";
@@ -70,6 +70,11 @@ export function newLineSnapping(option: Option) {
         : option.movingIndex === vertices.length - 1
           ? [vertices[vertices.length - 2]]
           : [vertices[option.movingIndex - 1], vertices[option.movingIndex + 1]];
+
+  const shapeComposite = newShapeComposite({
+    shapes: option.snappableShapes,
+    getStruct: option.getShapeStruct,
+  });
 
   function testConnection(point: IVec2, scale: number): ConnectionResult | undefined {
     const threshold = SNAP_THRESHOLD * scale;
@@ -132,9 +137,37 @@ export function newLineSnapping(option: Option) {
       // Try to snap to other shapes or girds and pick the closest guideline if exists.
       const snapped = option.shapeSnapping.testPoint(point);
       if (snapped) {
-        const guideline = pickMinItem(getGuidelinesFromSnappingResult(snapped), (seg) => {
-          return getD2(sub(point, getPedal(point, seg)));
+        const snappedP = add(point, snapped.diff);
+        // Prioritize lines not coming from outline of shapes.
+        // => It doesn't work well as a guideline to get a intersection of outline of the shape.
+        const [outlineTargets, nonOutlineTargets] = splitList(snapped.targets, (t) => {
+          const s = shapeComposite.shapeMap[t.id];
+          return s && shapeComposite.isPointOn(s, snappedP);
         });
+
+        let guideline = pickMinItem(
+          getGuidelinesFromSnappingResult({
+            ...snapped,
+            targets: nonOutlineTargets,
+          }),
+          (seg) => {
+            return getD2(sub(point, getPedal(point, seg)));
+          },
+        );
+
+        if (!guideline && outlineTargets.length > 0) {
+          guideline = pickMinItem(
+            getGuidelinesFromSnappingResult({
+              ...snapped,
+              targets: outlineTargets,
+              intervalTargets: [],
+            }),
+            (seg) => {
+              return getD2(sub(point, getPedal(point, seg)));
+            },
+          );
+        }
+
         if (guideline) {
           const guidelineV = sub(guideline[1], guideline[0]);
           if (!isZero(guidelineV)) {
@@ -152,11 +185,6 @@ export function newLineSnapping(option: Option) {
         }
       }
     }
-
-    const shapeComposite = newShapeComposite({
-      shapes: reversedSnappableShapes,
-      getStruct: option.getShapeStruct,
-    });
 
     // Try snapping to other shapes' outline
     let outline: { p: IVec2; d: number; shape: Shape; guideLine?: ISegment } | undefined;
