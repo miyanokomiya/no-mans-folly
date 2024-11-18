@@ -150,10 +150,6 @@ export const AppCanvas: React.FC = () => {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
-  const getWrapperSize = useCallback(
-    () => getWrapper()?.getBoundingClientRect() ?? { width: 0, height: 0 },
-    [getWrapper],
-  );
   const {
     setViewport,
     zoomView,
@@ -774,6 +770,7 @@ export const AppCanvas: React.FC = () => {
       canvasState={canvasState}
       scale={scale}
       viewOrigin={viewOrigin}
+      viewSize={viewSize}
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
       textEditing={textEditing}
@@ -842,7 +839,7 @@ export const AppCanvas: React.FC = () => {
           items={contextMenu.items}
           point={contextMenu.point}
           onClickItem={onClickContextMenuItem}
-          getContainerSize={getWrapperSize}
+          viewSize={viewSize}
         />
       ) : undefined}
       {userSetting.preview === "on" ? <PreviewDialog open={true} onClose={handlePreviewClose} /> : undefined}

@@ -33,7 +33,7 @@ describe("NumberInput", () => {
   ];
 
   test("should toggle children panel when a parent element is clicked", () => {
-    render(<ContextMenu items={items} point={{ x: 0, y: 0 }} />);
+    render(<ContextMenu items={items} point={{ x: 0, y: 0 }} viewSize={{ width: 200, height: 100 }} />);
 
     expect(screen.queryByText("label_root2_child0")).toBe(null);
     expect(screen.queryByText("label_root2_child1")).toBe(null);
@@ -48,7 +48,7 @@ describe("NumberInput", () => {
   });
 
   test("should close the dropdown when other dropdown in the same level opens", () => {
-    render(<ContextMenu items={items} point={{ x: 0, y: 0 }} />);
+    render(<ContextMenu items={items} point={{ x: 0, y: 0 }} viewSize={{ width: 200, height: 100 }} />);
 
     fireEvent.click(screen.getByText("label_root2"));
     fireEvent.click(screen.getByText("label_root3"));
@@ -63,7 +63,14 @@ describe("NumberInput", () => {
   test("should execute onClickItem with a childless item when it's clicked", () => {
     const keys: string[] = [];
     const onClickItem = (key: string) => keys.push(key);
-    render(<ContextMenu items={items} point={{ x: 0, y: 0 }} onClickItem={onClickItem} />);
+    render(
+      <ContextMenu
+        items={items}
+        point={{ x: 0, y: 0 }}
+        viewSize={{ width: 200, height: 100 }}
+        onClickItem={onClickItem}
+      />,
+    );
 
     expect(keys).toHaveLength(0);
     fireEvent.click(screen.getByText("label_root0"));

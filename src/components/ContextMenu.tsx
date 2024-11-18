@@ -9,11 +9,11 @@ import { Size } from "../models";
 interface Props {
   items: ContextMenuItem[];
   point: IVec2;
+  viewSize: Size;
   onClickItem?: (key: string, meta?: any) => void;
-  getContainerSize?: () => Size;
 }
 
-export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, getContainerSize }) => {
+export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSize }) => {
   const handleClick = useCallback(
     (item: ContextMenuItem) => {
       if ("separator" in item) return;
@@ -23,7 +23,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, getCon
   );
 
   const ref = useRef<HTMLDivElement>(null);
-  const { diff } = usePanelWithinViewport(ref, getContainerSize);
+  const { diff } = usePanelWithinViewport(ref, viewSize);
   const p = diff ? add(diff, point) : point;
 
   return (
@@ -111,24 +111,23 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickIte
 
 const PANEL_OFFSET = 4;
 
-const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement>, getContainerSize?: () => Size) => {
+const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement>, viewSize: Size) => {
   const [diff, setDiff] = useState<IVec2>();
 
   useEffect(() => {
-    if (!panelRef.current || !getContainerSize) return;
+    if (!panelRef.current) return;
 
-    const viewportSize = getContainerSize();
     const rect = panelRef.current.getBoundingClientRect();
     let dx = 0;
-    if (rect.right > viewportSize.width + PANEL_OFFSET) {
+    if (rect.right > viewSize.width + PANEL_OFFSET) {
       dx = -rect.width;
     }
     let dy = 0;
-    if (rect.bottom > viewportSize.height + PANEL_OFFSET) {
-      dy = viewportSize.height - rect.bottom - PANEL_OFFSET;
+    if (rect.bottom > viewSize.height + PANEL_OFFSET) {
+      dy = viewSize.height - rect.bottom - PANEL_OFFSET;
     }
     setDiff({ x: dx, y: dy });
-  }, [panelRef, getContainerSize]);
+  }, [panelRef, viewSize]);
 
   return { diff };
 };

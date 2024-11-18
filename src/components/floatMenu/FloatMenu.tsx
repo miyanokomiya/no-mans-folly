@@ -21,7 +21,6 @@ import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
 import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
-import { useWindow } from "../../hooks/window";
 import { LineHeadItems } from "./LineHeadItems";
 import { CurveType, LineShape, LineType, isLineShape } from "../../shapes/line";
 import { StackButton } from "./StackButton";
@@ -55,6 +54,7 @@ interface Option {
   canvasState: any;
   scale: number;
   viewOrigin: IVec2;
+  viewSize: Size;
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
   textEditing: boolean;
@@ -65,6 +65,7 @@ export const FloatMenu: React.FC<Option> = ({
   canvasState,
   scale,
   viewOrigin,
+  viewSize,
   indexDocAttrInfo,
   focusBack,
   textEditing,
@@ -74,7 +75,6 @@ export const FloatMenu: React.FC<Option> = ({
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getShapeStruct, setTmpShapeMap, patchShapes, createLastIndex, createFirstIndex } =
     useContext(AppStateContext);
-  const { size: windowSize } = useWindow();
   const draggable = useDraggable();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -136,8 +136,8 @@ export const FloatMenu: React.FC<Option> = ({
       return { className: rootBaseClassName + " invisible" };
     }
 
-    return getRootAttrs(targetRect, rootSize.width, rootSize.height, windowSize.width, windowSize.height, rootFixed);
-  }, [targetRect, windowSize.width, windowSize.height, rootSize.width, rootSize.height, rootFixed]);
+    return getRootAttrs(targetRect, rootSize.width, rootSize.height, viewSize.width, viewSize.height, rootFixed);
+  }, [targetRect, viewSize, rootSize.width, rootSize.height, rootFixed]);
 
   const handleMenuAnchorDrag = useCallback(
     (e: React.PointerEvent) => {
