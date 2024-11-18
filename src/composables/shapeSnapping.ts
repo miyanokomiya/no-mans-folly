@@ -869,11 +869,10 @@ export function getSecondGuidelineCandidateInfo(
   );
 
   const partial = { targets: candidateTargets, intervalTargets: candidateIntervals };
-  getGuidelinesFromSnappingResult(partial);
   return { candidates: getGuidelinesFromSnappingResult(partial), ...partial };
 }
 
-function getGuidelinesFromSnappingResult(
+export function getGuidelinesFromSnappingResult(
   snappingResult: Pick<SnappingResult, "targets" | "intervalTargets">,
 ): ISegment[] {
   const allCandidates: ISegment[] = snappingResult.targets.map((t) => t.line);

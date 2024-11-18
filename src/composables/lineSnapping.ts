@@ -1,4 +1,4 @@
-import { IRectangle, IVec2, getDistance, getPedal, getRectCenter, isSame } from "okageo";
+import { IRectangle, IVec2, add, getDistance, getPedal, getRectCenter, isSame, sub } from "okageo";
 import { GetShapeStruct, getIntersectedOutlines, getClosestOutline, isRectangularOptimizedSegment } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -8,6 +8,7 @@ import {
   TAU,
   extendSegment,
   getClosestPointTo,
+  getD2,
   isRectOverlappedH,
   isRectOverlappedV,
   isSameValue,
@@ -18,11 +19,10 @@ import { applyPath } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { isObjectEmpty, pickMinItem } from "../utils/commons";
-import { ShapeSnappingLines } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
-import { pickClosestGridLineAtPoint, snapVectorToGrid } from "./grid";
 import { isConnectedToCenter } from "../shapes/utils/line";
+import { getGuidelinesFromSnappingResult, ShapeSnapping } from "./shapeSnapping";
 
 const SNAP_THRESHOLD = 10;
 
@@ -30,7 +30,7 @@ interface Option {
   movingLine?: LineShape;
   movingIndex?: number;
   snappableShapes: Shape[];
-  gridSnapping?: ShapeSnappingLines;
+  shapeSnapping?: ShapeSnapping;
   getShapeStruct: GetShapeStruct;
 }
 
@@ -105,14 +105,20 @@ export function newLineSnapping(option: Option) {
       const seg: ISegment = [selfSnapped.guidLines[0][0], selfSnapped.p];
       lineConstrain = selfSnapped;
       extendedGuideLine = extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
-    } else if (!selfSnapped && option.gridSnapping) {
-      const closestGridInfo = pickClosestGridLineAtPoint(option.gridSnapping, point, threshold);
-      if (closestGridInfo) {
-        lineConstrain = {
-          p: closestGridInfo.p,
-          guidLines: [closestGridInfo.line],
-        };
-        extendedGuideLine = closestGridInfo.line;
+    } else if (!selfSnapped && option.shapeSnapping) {
+      // Try to snap to other shapes of girds and pick the closest guideline if exists.
+      const snapped = option.shapeSnapping.testPoint(point);
+      if (snapped) {
+        const guideline = pickMinItem(getGuidelinesFromSnappingResult(snapped), (seg) => {
+          return getD2(sub(point, getPedal(point, seg)));
+        });
+        if (guideline) {
+          lineConstrain = {
+            p: add(point, snapped.diff),
+            guidLines: [guideline],
+          };
+          extendedGuideLine = guideline;
+        }
       }
     }
 
@@ -184,17 +190,6 @@ export function newLineSnapping(option: Option) {
           ? [outline.guideLine]
           : lineConstrain?.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
       };
-    }
-
-    // Try to snap to the grid lines when "single guid line" has been found out of self lines.
-    if (selfSnapped?.guidLines.length === 1 && option.gridSnapping) {
-      const p = selfSnapped.p;
-      const guideline = selfSnapped?.guidLines[0];
-
-      const gridResult = snapVectorToGrid(option.gridSnapping, guideline[0], p, threshold);
-      if (gridResult) {
-        return { p: gridResult.p, guidLines: [guideline, ...gridResult.lines] };
-      }
     }
 
     return selfSnapped;

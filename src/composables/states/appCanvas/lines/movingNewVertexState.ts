@@ -45,19 +45,19 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
       const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
 
-      lineSnapping = newLineSnapping({
-        snappableShapes,
-        getShapeStruct: ctx.getShapeStruct,
-        movingLine: mockMovingLine,
-        movingIndex: option.index,
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-      });
-
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
+      });
+
+      lineSnapping = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: ctx.getShapeStruct,
+        movingLine: mockMovingLine,
+        movingIndex: option.index,
       });
 
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });

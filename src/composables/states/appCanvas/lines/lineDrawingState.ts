@@ -47,19 +47,20 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const snappableCandidates = getSnappableCandidates(ctx, []);
 
-      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
-      lineSnapping = newLineSnapping({
-        snappableShapes,
-        getShapeStruct: shapeComposite.getShapeStruct,
-        movingLine: shape,
-        movingIndex: 1,
-      });
-
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
+      });
+
+      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
+      lineSnapping = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: shapeComposite.getShapeStruct,
+        movingLine: shape,
+        movingIndex: 1,
       });
 
       elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;

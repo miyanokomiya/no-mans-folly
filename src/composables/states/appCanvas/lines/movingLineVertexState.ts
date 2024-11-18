@@ -45,20 +45,20 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
 
-      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
-      lineSnapping = newLineSnapping({
-        movingLine: option.lineShape,
-        movingIndex: option.index,
-        snappableShapes,
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        getShapeStruct: ctx.getShapeStruct,
-      });
-
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
+      });
+
+      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
+      lineSnapping = newLineSnapping({
+        movingLine: option.lineShape,
+        movingIndex: option.index,
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: ctx.getShapeStruct,
       });
 
       elbowHandler = option.lineShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
