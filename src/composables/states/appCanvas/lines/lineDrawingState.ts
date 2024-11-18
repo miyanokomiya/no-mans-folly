@@ -176,16 +176,17 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
       renderCtx.fill();
 
+      const shapeComposite = ctx.getShapeComposite();
       if (connectionResult) {
         renderConnectionResult(renderCtx, {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
+          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
 
       if (snappingResult) {
-        const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),

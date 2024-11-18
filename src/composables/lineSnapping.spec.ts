@@ -177,22 +177,56 @@ describe("newLineSnapping", () => {
       expect(target.testConnection({ x: 231, y: 101 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0.8, y: 1 } },
         p: { x: 230, y: 100 },
-        guidLines: [
-          [
-            { x: 230, y: -500 },
-            { x: 230, y: 500 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: {
+            x: -1,
+            y: 0,
+          },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "z",
+              line: [
+                {
+                  x: 230,
+                  y: -500,
+                },
+                {
+                  x: 230,
+                  y: 500,
+                },
+              ],
+            },
           ],
-        ],
+        },
       });
       expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0, y: 0.3 } },
         p: { x: 150, y: 30 },
-        guidLines: [
-          [
-            { x: -500, y: 30 },
-            { x: 500, y: 30 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: {
+            x: 0,
+            y: 1,
+          },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "z",
+              line: [
+                {
+                  x: -500,
+                  y: 30,
+                },
+                {
+                  x: 500,
+                  y: 30,
+                },
+              ],
+            },
           ],
-        ],
+        },
       });
     });
 
@@ -227,22 +261,56 @@ describe("newLineSnapping", () => {
       expect(target.testConnection({ x: 231, y: 101 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0.8, y: 1 } },
         p: { x: 230, y: 100 },
-        guidLines: [
-          [
-            { x: 230, y: -500 },
-            { x: 230, y: 500 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: {
+            x: -1,
+            y: 0,
+          },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "GRID",
+              line: [
+                {
+                  x: 230,
+                  y: -500,
+                },
+                {
+                  x: 230,
+                  y: 500,
+                },
+              ],
+            },
           ],
-        ],
+        },
       });
       expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0, y: 0.3 } },
         p: { x: 150, y: 30 },
-        guidLines: [
-          [
-            { x: -500, y: 30 },
-            { x: 500, y: 30 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: {
+            x: 0,
+            y: 1,
+          },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "GRID",
+              line: [
+                {
+                  x: -500,
+                  y: 30,
+                },
+                {
+                  x: 500,
+                  y: 30,
+                },
+              ],
+            },
           ],
-        ],
+        },
       });
     });
   });

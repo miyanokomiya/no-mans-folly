@@ -1,4 +1,16 @@
-import { IRectangle, IVec2, add, getDistance, getPedal, getRectCenter, isSame, sub } from "okageo";
+import {
+  IRectangle,
+  IVec2,
+  add,
+  getDistance,
+  getNorm,
+  getPedal,
+  getRectCenter,
+  isSame,
+  isZero,
+  multi,
+  sub,
+} from "okageo";
 import { GetShapeStruct, getIntersectedOutlines, getClosestOutline, isRectangularOptimizedSegment } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -22,7 +34,13 @@ import { isObjectEmpty, pickMinItem } from "../utils/commons";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
 import { isConnectedToCenter } from "../shapes/utils/line";
-import { getGuidelinesFromSnappingResult, ShapeSnapping } from "./shapeSnapping";
+import {
+  filterSnappingTargetsBySecondGuideline,
+  getGuidelinesFromSnappingResult,
+  renderSnappingResult,
+  ShapeSnapping,
+  SnappingResult,
+} from "./shapeSnapping";
 
 const SNAP_THRESHOLD = 10;
 
@@ -34,7 +52,12 @@ interface Option {
   getShapeStruct: GetShapeStruct;
 }
 
-export type ConnectionResult = { connection?: ConnectionPoint; p: IVec2; guidLines?: ISegment[] };
+export type ConnectionResult = {
+  connection?: ConnectionPoint;
+  p: IVec2;
+  guidLines?: ISegment[];
+  shapeSnappingResult?: SnappingResult;
+};
 
 export function newLineSnapping(option: Option) {
   const reversedSnappableShapes = option.snappableShapes.concat().reverse();
@@ -98,7 +121,7 @@ export function newLineSnapping(option: Option) {
     // When there're more than one guidlines, snapping point must have been determined.
     if ((selfSnapped?.guidLines.length ?? 0) > 1) return selfSnapped;
 
-    let lineConstrain: { p: IVec2; guidLines: ISegment[] } | undefined;
+    let lineConstrain: { p: IVec2; guidLines: ISegment[]; shapeSnappingResult?: SnappingResult } | undefined;
     let extendedGuideLine: ISegment | undefined;
 
     if (selfSnapped?.guidLines[0] && !isSame(selfSnapped!.p, selfSnapped.guidLines[0][0])) {
@@ -113,11 +136,19 @@ export function newLineSnapping(option: Option) {
           return getD2(sub(point, getPedal(point, seg)));
         });
         if (guideline) {
-          lineConstrain = {
-            p: add(point, snapped.diff),
-            guidLines: [guideline],
-          };
-          extendedGuideLine = guideline;
+          const guidelineV = sub(guideline[1], guideline[0]);
+          if (!isZero(guidelineV)) {
+            lineConstrain = {
+              p: add(point, snapped.diff),
+              guidLines: [],
+              shapeSnappingResult: {
+                diff: snapped.diff,
+                ...filterSnappingTargetsBySecondGuideline(snapped, guideline),
+              },
+            };
+            const v = multi(guidelineV, 1 + threshold / getNorm(guidelineV));
+            extendedGuideLine = [sub(guideline[0], v), add(guideline[1], v)];
+          }
         }
       }
     }
@@ -177,22 +208,28 @@ export function newLineSnapping(option: Option) {
       });
     }
 
-    if (outline) {
-      const connection: ConnectionPoint = {
-        rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
-        id: outline.shape.id,
-      };
+    // When there's no outline connection, abandon all except for self snapping.
+    if (!outline) return selfSnapped;
 
+    const connection: ConnectionPoint = {
+      rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
+      id: outline.shape.id,
+    };
+
+    if (lineConstrain) {
       return {
         connection,
         p: outline.p,
-        guidLines: outline.guideLine
-          ? [outline.guideLine]
-          : lineConstrain?.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
+        guidLines: lineConstrain.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
+        shapeSnappingResult: lineConstrain.shapeSnappingResult,
       };
     }
 
-    return selfSnapped;
+    return {
+      connection,
+      p: outline.p,
+      guidLines: outline.guideLine ? [outline.guideLine] : undefined,
+    };
   }
 
   return { testConnection };
@@ -201,8 +238,20 @@ export type LineSnapping = ReturnType<typeof newLineSnapping>;
 
 export function renderConnectionResult(
   ctx: CanvasRenderingContext2D,
-  option: { result: ConnectionResult; scale: number; style: StyleScheme },
+  option: {
+    result: ConnectionResult;
+    scale: number;
+    style: StyleScheme;
+    getTargetRect?: (id: string) => IRectangle | undefined;
+  },
 ) {
+  if (option.result.shapeSnappingResult) {
+    renderSnappingResult(ctx, {
+      ...option,
+      result: option.result.shapeSnappingResult,
+    });
+  }
+
   if (option.result.guidLines) {
     applyStrokeStyle(ctx, { color: option.style.selectionSecondaly, width: 2 * option.scale });
     option.result.guidLines.forEach((guide) => {
