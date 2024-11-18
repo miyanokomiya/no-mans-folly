@@ -313,6 +313,74 @@ describe("newLineSnapping", () => {
         },
       });
     });
+
+    test("should snap to gridlines when there's no other candidate", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 50 } });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [],
+        gridSnapping: {
+          h: [
+            [
+              { x: -100, y: 50 },
+              { x: 100, y: 50 },
+            ],
+          ],
+          v: [
+            [
+              { x: 30, y: -100 },
+              { x: 30, y: 100 },
+            ],
+          ],
+        },
+        scale: 1,
+      });
+      const target = newLineSnapping({
+        snappableShapes: [],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+
+      expect(target.testConnection({ x: 31, y: 49 }, 1)).toEqual({
+        p: { x: 30, y: 50 },
+        shapeSnappingResult: {
+          diff: {
+            x: -1,
+            y: 1,
+          },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "GRID",
+              line: [
+                {
+                  x: 30,
+                  y: -100,
+                },
+                {
+                  x: 30,
+                  y: 100,
+                },
+              ],
+            },
+            {
+              id: "GRID",
+              line: [
+                {
+                  x: -100,
+                  y: 50,
+                },
+                {
+                  x: 100,
+                  y: 50,
+                },
+              ],
+            },
+          ],
+        },
+      });
+    });
   });
 });
 

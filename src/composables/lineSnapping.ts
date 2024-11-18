@@ -129,7 +129,7 @@ export function newLineSnapping(option: Option) {
       lineConstrain = selfSnapped;
       extendedGuideLine = extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
     } else if (!selfSnapped && option.shapeSnapping) {
-      // Try to snap to other shapes of girds and pick the closest guideline if exists.
+      // Try to snap to other shapes or girds and pick the closest guideline if exists.
       const snapped = option.shapeSnapping.testPoint(point);
       if (snapped) {
         const guideline = pickMinItem(getGuidelinesFromSnappingResult(snapped), (seg) => {
@@ -208,28 +208,50 @@ export function newLineSnapping(option: Option) {
       });
     }
 
-    // When there's no outline connection, abandon all except for self snapping.
-    if (!outline) return selfSnapped;
+    if (outline) {
+      const connection: ConnectionPoint = {
+        rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
+        id: outline.shape.id,
+      };
 
-    const connection: ConnectionPoint = {
-      rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
-      id: outline.shape.id,
-    };
+      if (lineConstrain) {
+        return {
+          connection,
+          p: outline.p,
+          guidLines: lineConstrain.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
+          shapeSnappingResult: lineConstrain.shapeSnappingResult,
+        };
+      }
 
-    if (lineConstrain) {
       return {
         connection,
         p: outline.p,
-        guidLines: lineConstrain.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
-        shapeSnappingResult: lineConstrain.shapeSnappingResult,
+        guidLines: outline.guideLine ? [outline.guideLine] : undefined,
       };
     }
 
-    return {
-      connection,
-      p: outline.p,
-      guidLines: outline.guideLine ? [outline.guideLine] : undefined,
-    };
+    if (option.shapeSnapping) {
+      if (selfSnapped && selfSnapped.guidLines.length === 1) {
+        const snapped = option.shapeSnapping.testPointOnLine(point, selfSnapped.guidLines[0]);
+        if (snapped) {
+          return {
+            p: add(point, snapped.diff),
+            guidLines: selfSnapped.guidLines,
+            shapeSnappingResult: snapped,
+          };
+        }
+      } else {
+        const snapped = option.shapeSnapping.testPoint(point);
+        if (snapped) {
+          return {
+            p: add(point, snapped.diff),
+            shapeSnappingResult: snapped,
+          };
+        }
+      }
+    }
+
+    return selfSnapped;
   }
 
   return { testConnection };

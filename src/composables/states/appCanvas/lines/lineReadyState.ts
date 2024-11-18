@@ -11,10 +11,10 @@ import {
   newLineSnapping,
   renderConnectionResult,
 } from "../../../lineSnapping";
-import { IVec2, add } from "okageo";
+import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
+import { newShapeSnapping } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
@@ -29,8 +29,6 @@ export function newLineReadyState(option: Option): AppCanvasState {
   let vertex: IVec2 | undefined;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
-  let shapeSnapping: ShapeSnapping;
-  let snappingResult: SnappingResult | undefined;
   const coordinateRenderer = newCoordinateRenderer();
 
   return {
@@ -42,7 +40,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const snappableCandidates = getSnappableCandidates(ctx, []);
 
-      shapeSnapping = newShapeSnapping({
+      const shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
@@ -72,19 +70,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
               connectionResult = event.data.options.ctrl
                 ? undefined
                 : lineSnapping.testConnection(point, ctx.getScale());
-
-              if (connectionResult) {
-                vertex = connectionResult?.p ?? point;
-                snappingResult = undefined;
-
-                if (!connectionResult.connection && connectionResult.guidLines?.length === 1) {
-                  snappingResult = shapeSnapping.testPointOnLine(vertex, connectionResult.guidLines[0]);
-                  vertex = snappingResult ? add(vertex, snappingResult.diff) : vertex;
-                }
-              } else {
-                snappingResult = event.data.options.ctrl ? undefined : shapeSnapping.testPoint(point);
-                vertex = snappingResult ? add(point, snappingResult.diff) : point;
-              }
+              vertex = connectionResult?.p ?? point;
 
               const lineshape = createShape<LineShape>(ctx.getShapeStruct, "line", {
                 id: ctx.generateUuid(),
@@ -105,15 +91,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
         case "pointerhover": {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
-
-          if (connectionResult) {
-            vertex = connectionResult?.p ?? point;
-            snappingResult = undefined;
-          } else {
-            snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
-            vertex = snappingResult ? add(point, snappingResult.diff) : point;
-          }
-
+          vertex = connectionResult?.p ?? point;
           coordinateRenderer.saveCoord(vertex);
           ctx.redraw();
           return;
@@ -156,15 +134,6 @@ export function newLineReadyState(option: Option): AppCanvasState {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
-          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
-        });
-      }
-
-      if (snappingResult) {
-        renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
-          result: snappingResult,
           getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }

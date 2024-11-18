@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "../core";
 import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
-import { add, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
   ConnectionResult,
@@ -12,7 +11,7 @@ import {
 } from "../../../lineSnapping";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
+import { newShapeSnapping } from "../../../shapeSnapping";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
@@ -20,6 +19,7 @@ import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
+import { add, sub } from "okageo";
 
 interface Option {
   lineShape: LineShape;
@@ -32,8 +32,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
-  let shapeSnapping: ShapeSnapping;
-  let snappingResult: SnappingResult | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
 
@@ -45,7 +43,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
 
-      shapeSnapping = newShapeSnapping({
+      const shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
         scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
@@ -79,20 +77,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         case "pointermove": {
           const point = event.data.current;
           connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
-
-          if (connectionResult) {
-            vertex = connectionResult.p;
-            snappingResult = undefined;
-
-            if (!connectionResult.connection && connectionResult.guidLines?.length === 1) {
-              snappingResult = shapeSnapping.testPointOnLine(vertex, connectionResult.guidLines[0]);
-              vertex = snappingResult ? add(vertex, snappingResult.diff) : vertex;
-            }
-          } else {
-            snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
-            vertex = snappingResult ? add(point, snappingResult.diff) : add(origin, sub(point, event.data.start));
-            connectionResult = undefined;
-          }
+          vertex = connectionResult?.p ?? add(origin, sub(point, event.data.start));
 
           coordinateRenderer.saveCoord(vertex);
           let patch = patchVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
@@ -157,15 +142,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
-          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
-        });
-      }
-
-      if (snappingResult) {
-        renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
-          result: snappingResult,
           getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
         });
       }
