@@ -1,8 +1,9 @@
 import { IVec2, multi, sub, add, getRectCenter, IRectangle, clamp } from "okageo";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { EditMovement } from "../composables/states/types";
 import { Size } from "../models";
 import { useLocalStorageAdopter } from "./localStorage";
+import { useResizeObserver } from "./window";
 
 const scaleRate = 1.1;
 
@@ -215,17 +216,7 @@ export function useCanvas(
     const rect = wrapperElm.getBoundingClientRect();
     setViewSize({ width: rect.width, height: rect.height });
   }, [getWrapper]);
-
-  useEffect(() => {
-    const wrapper = getWrapper();
-    if (!wrapper) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      onResize();
-    });
-    resizeObserver.observe(wrapper);
-    return () => resizeObserver.disconnect();
-  }, [getWrapper, onResize]);
+  useResizeObserver(getWrapper(), onResize);
 
   return {
     viewSize,

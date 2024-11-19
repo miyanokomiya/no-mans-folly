@@ -235,3 +235,15 @@ export function usePageShowBackEffect(fn: () => void) {
     };
   }, []);
 }
+
+export function useResizeObserver(elm: Element | undefined | null, onResize: () => void) {
+  useEffect(() => {
+    if (!elm) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      onResize();
+    });
+    resizeObserver.observe(elm);
+    return () => resizeObserver.disconnect();
+  }, [elm, onResize]);
+}
