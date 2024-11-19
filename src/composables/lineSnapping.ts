@@ -202,8 +202,10 @@ export function newLineSnapping(option: Option) {
             extendedGuideLine[1],
           );
           if (candidates) {
-            intersection = candidates.find((c) => getDistance(c, lineConstrain!.p) <= threshold);
-            if (intersection) {
+            const origin = lineConstrain.p;
+            const closestCandidate = pickMinItem(candidates, (c) => getD2(sub(c, origin)));
+            if (closestCandidate && getDistance(closestCandidate, origin) < threshold) {
+              intersection = closestCandidate;
               priorityGuidline = lineConstrain.guidLines[0];
             }
           }
@@ -238,10 +240,12 @@ export function newLineSnapping(option: Option) {
     }
 
     if (outline) {
-      const connection: ConnectionPoint = {
-        rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
-        id: outline.shape.id,
-      };
+      const connection: ConnectionPoint | undefined = isLineShape(outline.shape)
+        ? undefined
+        : {
+            rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
+            id: outline.shape.id,
+          };
 
       if (lineConstrain) {
         return {

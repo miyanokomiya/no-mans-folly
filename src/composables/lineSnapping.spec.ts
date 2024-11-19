@@ -85,13 +85,13 @@ describe("newLineSnapping", () => {
       });
 
       // Self snapped & Outline snapped
-      expect(target.testConnection({ x: 160, y: -5 }, 1)).toEqual({
+      expect(target.testConnection({ x: 159, y: -5 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0, y: 0 } },
         p: { x: 150, y: 0 },
         guidLines: [
           [
             { x: 0, y: 0 },
-            { x: 160, y: 0 },
+            { x: 159, y: 0 },
           ],
         ],
       });

@@ -23,7 +23,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
   );
 
   const ref = useRef<HTMLDivElement>(null);
-  const { diff } = usePanelWithinViewport(ref, viewSize);
+  const [diff] = usePanelWithinViewport(ref, viewSize);
   const p = diff ? add(diff, point) : point;
 
   return (
@@ -35,7 +35,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
       }}
     >
       <div className="flex flex-col">
-        <ContextList items={items} onClickItem={handleClick} />
+        <ContextList items={items} viewSize={viewSize} onClickItem={handleClick} />
       </div>
     </div>
   );
@@ -43,10 +43,11 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
 
 interface ContextListProps {
   items: ContextMenuItem[];
+  viewSize: Size;
   onClickItem?: (item: ContextMenuItem) => void;
 }
 
-const ContextList: React.FC<ContextListProps> = ({ items, onClickItem }) => {
+const ContextList: React.FC<ContextListProps> = ({ items, viewSize, onClickItem }) => {
   const [dropdownKey, setDropdownKey] = useState("");
 
   const handleClick = useCallback(
@@ -62,18 +63,23 @@ const ContextList: React.FC<ContextListProps> = ({ items, onClickItem }) => {
     [onClickItem],
   );
 
-  return items.map((item, i) => (
-    <ContextItem key={i} item={item} dropdownKey={dropdownKey} onClickItem={handleClick} />
-  ));
+  return (
+    <div className="min-w-24">
+      {items.map((item, i) => (
+        <ContextItem key={i} item={item} viewSize={viewSize} dropdownKey={dropdownKey} onClickItem={handleClick} />
+      ))}
+    </div>
+  );
 };
 
 interface ContextItemProps {
   item: ContextMenuItem;
   dropdownKey?: string;
+  viewSize: Size;
   onClickItem?: (item: ContextMenuItem) => void;
 }
 
-const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickItem }) => {
+const ContextItem: React.FC<ContextItemProps> = ({ item, viewSize, dropdownKey, onClickItem }) => {
   const handleClick = useCallback(() => {
     onClickItem?.(item);
   }, [item, onClickItem]);
@@ -88,6 +94,7 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickIte
 
   return (
     <div className="relative">
+      {/* This div prevents redundant white space when child list displays. */}
       <div>
         <ListButton onClick={handleClick}>
           <div className="flex items-center justify-between gap-2 w-full">
@@ -101,10 +108,35 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, dropdownKey, onClickIte
         </ListButton>
       </div>
       {dropdownKey === item.key ? (
-        <div className="absolute left-full top-1/2 -translate-y-1/2 border bg-white w-max">
-          <ContextList items={item.children} onClickItem={onClickItem} />
-        </div>
+        <ChildContextList items={item.children} viewSize={viewSize} onClickItem={onClickItem} />
       ) : undefined}
+    </div>
+  );
+};
+
+interface ChildContextList {
+  items: ContextMenuItem[];
+  viewSize: Size;
+  onClickItem?: (item: ContextMenuItem) => void;
+}
+
+const ChildContextList: React.FC<ChildContextList> = ({ items, viewSize, onClickItem }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState("opacity-0 left-full top-1/2 -translate-y-1/2");
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+    setStyle(
+      (rect.right > viewSize.width + PANEL_OFFSET ? "right-full " : "left-full ") +
+        (rect.bottom > viewSize.height + PANEL_OFFSET ? "bottom-0" : "top-1/2 -translate-y-1/2"),
+    );
+  }, [viewSize]);
+
+  return (
+    <div ref={ref} className={"absolute border bg-white w-max " + style}>
+      <ContextList items={items} viewSize={viewSize} onClickItem={onClickItem} />
     </div>
   );
 };
@@ -129,5 +161,5 @@ const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement>, viewSize
     setDiff({ x: dx, y: dy });
   }, [panelRef, viewSize]);
 
-  return { diff };
+  return [diff];
 };
