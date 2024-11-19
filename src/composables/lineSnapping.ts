@@ -37,6 +37,7 @@ import { isConnectedToCenter } from "../shapes/utils/line";
 import {
   filterSnappingTargetsBySecondGuideline,
   getGuidelinesFromSnappingResult,
+  optimizeSnappingTargetInfoForPoint,
   renderSnappingResult,
   ShapeSnapping,
   SnappingResult,
@@ -247,7 +248,12 @@ export function newLineSnapping(option: Option) {
           connection,
           p: outline.p,
           guidLines: lineConstrain.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
-          shapeSnappingResult: lineConstrain.shapeSnappingResult,
+          shapeSnappingResult: lineConstrain.shapeSnappingResult
+            ? {
+                ...lineConstrain.shapeSnappingResult,
+                ...optimizeSnappingTargetInfoForPoint(lineConstrain.shapeSnappingResult, outline.p),
+              }
+            : undefined,
         };
       }
 

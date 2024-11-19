@@ -23,8 +23,11 @@ import { BoundingBoxResizing } from "./boundingBox";
 const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
 
-export interface SnappingResult {
+export interface SnappingResult extends SnappingTargetInfo {
   diff: IVec2;
+}
+
+interface SnappingTargetInfo {
   targets: SnappingResultTarget[];
   intervalTargets: IntervalSnappingResultTarget[];
 }
@@ -843,14 +846,33 @@ function snapPointOnLine({
   const [secondGuideline, snappedP] = closestInfo;
   return {
     diff: sub(snappedP, srcP),
-    ...filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
+    ...optimizeSnappingTargetInfoForPoint(
+      filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
+      snappedP,
+    ),
+  };
+}
+
+export function optimizeSnappingTargetInfoForPoint(src: SnappingTargetInfo, p: IVec2): SnappingTargetInfo {
+  return {
+    // Guidelines of "targets" have no room for optimization
+    // because the snapped point isn't always a vertex of the guideline.
+    // e.g. When the guideline is grid line, the snapped point is almost always inner point of the guideline.
+    targets: src.targets,
+    // Guidelines of "intervalTargets" can be optimized
+    // because they only fix one coordinate.
+    intervalTargets: src.intervalTargets.map((it) => {
+      const horizontal = it.direction === "h";
+      const fn = horizontal ? (v: IVec2) => ({ x: p.x, y: v.y }) : (v: IVec2) => ({ x: v.x, y: p.y });
+      return { ...it, lines: it.lines.map((l) => l.map(fn) as ISegment) };
+    }),
   };
 }
 
 export function getSecondGuidelineCandidateInfo(
   snappingResult: SnappingResult,
   guidelineVec: IVec2,
-): Pick<SnappingResult, "targets" | "intervalTargets"> & { candidates: ISegment[] } {
+): SnappingTargetInfo & { candidates: ISegment[] } {
   const candidateTargets = snappingResult.targets.filter((t) => !isParallel(sub(t.line[1], t.line[0]), guidelineVec));
 
   // "lines" of "intervalTargets" represent the gaps between shapes.
@@ -872,9 +894,7 @@ export function getSecondGuidelineCandidateInfo(
   return { candidates: getGuidelinesFromSnappingResult(partial), ...partial };
 }
 
-export function getGuidelinesFromSnappingResult(
-  snappingResult: Pick<SnappingResult, "targets" | "intervalTargets">,
-): ISegment[] {
+export function getGuidelinesFromSnappingResult(snappingResult: SnappingTargetInfo): ISegment[] {
   const allCandidates: ISegment[] = snappingResult.targets.map((t) => t.line);
   snappingResult.intervalTargets.forEach((t) =>
     t.lines.forEach((l) => {
@@ -887,9 +907,9 @@ export function getGuidelinesFromSnappingResult(
 }
 
 export function filterSnappingTargetsBySecondGuideline(
-  snappingResult: Pick<SnappingResult, "targets" | "intervalTargets">,
+  snappingResult: SnappingTargetInfo,
   secondGuideline: ISegment,
-): Pick<SnappingResult, "targets" | "intervalTargets"> {
+): SnappingTargetInfo {
   const v = sub(secondGuideline[1], secondGuideline[0]);
   const perpendicularV = rotate(v, Math.PI / 2);
   return {

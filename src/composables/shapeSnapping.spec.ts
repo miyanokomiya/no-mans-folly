@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { mergetSnappingResult, newShapeIntervalSnapping, newShapeSnapping, SnappingResult } from "./shapeSnapping";
+import {
+  mergetSnappingResult,
+  newShapeIntervalSnapping,
+  newShapeSnapping,
+  optimizeSnappingTargetInfoForPoint,
+  SnappingResult,
+} from "./shapeSnapping";
 import { ShapeSnappingLines } from "../shapes/core";
 
 describe("newShapeSnapping", () => {
@@ -819,12 +825,104 @@ describe("testPointOnLine", () => {
           direction: "v",
           lines: [
             [
-              { x: 100, y: -19 },
-              { x: 120, y: -19 },
+              { x: 100, y: -20 },
+              { x: 120, y: -20 },
             ],
             [
-              { x: 220, y: -19 },
-              { x: 240, y: -19 },
+              { x: 220, y: -20 },
+              { x: 240, y: -20 },
+            ],
+          ],
+        },
+      ],
+    });
+  });
+});
+
+describe("optimizeSnappingTargetInfoForPoint", () => {
+  test("should optimize intervalTargets", () => {
+    const result0 = optimizeSnappingTargetInfoForPoint(
+      {
+        targets: [],
+        intervalTargets: [
+          {
+            beforeId: "a",
+            afterId: "b",
+            direction: "v",
+            lines: [
+              [
+                { x: 100, y: -20 },
+                { x: 120, y: -20 },
+              ],
+              [
+                { x: 220, y: -20 },
+                { x: 240, y: -20 },
+              ],
+            ],
+          },
+        ],
+      },
+      { x: 200, y: -22 },
+    );
+    expect(result0).toEqual({
+      targets: [],
+      intervalTargets: [
+        {
+          beforeId: "a",
+          afterId: "b",
+          direction: "v",
+          lines: [
+            [
+              { x: 100, y: -22 },
+              { x: 120, y: -22 },
+            ],
+            [
+              { x: 220, y: -22 },
+              { x: 240, y: -22 },
+            ],
+          ],
+        },
+      ],
+    });
+
+    const result1 = optimizeSnappingTargetInfoForPoint(
+      {
+        targets: [],
+        intervalTargets: [
+          {
+            beforeId: "a",
+            afterId: "b",
+            direction: "h",
+            lines: [
+              [
+                { y: 100, x: -20 },
+                { y: 120, x: -20 },
+              ],
+              [
+                { y: 220, x: -20 },
+                { y: 240, x: -20 },
+              ],
+            ],
+          },
+        ],
+      },
+      { y: 200, x: -22 },
+    );
+    expect(result1).toEqual({
+      targets: [],
+      intervalTargets: [
+        {
+          beforeId: "a",
+          afterId: "b",
+          direction: "h",
+          lines: [
+            [
+              { y: 100, x: -22 },
+              { y: 120, x: -22 },
+            ],
+            [
+              { y: 220, x: -22 },
+              { y: 240, x: -22 },
             ],
           ],
         },
