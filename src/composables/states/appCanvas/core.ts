@@ -137,7 +137,15 @@ export interface ShapeHighlightEvent extends ModeStateEventBase {
   };
 }
 
-export type HighlightShapeMeta = HighlightLineVertexMeta | HighlightLineSegmentMeta | HighlightLineBezierMeta;
+export type HighlightShapeMeta =
+  | HighlightOutline
+  | HighlightLineVertexMeta
+  | HighlightLineSegmentMeta
+  | HighlightLineBezierMeta;
+
+export type HighlightOutline = {
+  type: "outline";
+};
 
 export type HighlightLineVertexMeta = {
   type: "vertex";

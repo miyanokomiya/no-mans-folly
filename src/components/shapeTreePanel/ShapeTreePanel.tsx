@@ -36,6 +36,16 @@ export const ShapeTreePanel: React.FC = () => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const getCtx = useContext(GetAppStateContext);
 
+  const handleNodeHover = useCallback(
+    (id: string) => {
+      handleEvent({
+        type: "shape-highlight",
+        data: { id, meta: { type: "outline" } },
+      });
+    },
+    [handleEvent],
+  );
+
   const handleNodeSelect = useCallback(
     (id: string, multi = false, range = false) => {
       const ctx = getCtx();
@@ -150,7 +160,13 @@ export const ShapeTreePanel: React.FC = () => {
       <ul className="relative flex flex-col items-start" style={{ gap: 1 }}>
         {rootNodeProps.map((n) => (
           <li key={n.id} className="w-full">
-            <UITreeNode {...n} dropTo={dropTo} onSelect={handleNodeSelect} onDragStart={handleStartDragging} />
+            <UITreeNode
+              {...n}
+              dropTo={dropTo}
+              onHover={handleNodeHover}
+              onSelect={handleNodeSelect}
+              onDragStart={handleStartDragging}
+            />
           </li>
         ))}
         {draggingTarget ? (
@@ -176,6 +192,7 @@ interface UITreeNodeProps {
   primeSibling: boolean;
   draggable: boolean;
   dropTo?: [string, DropOperation];
+  onHover?: (id: string) => void;
   onSelect?: (id: string, multi?: boolean, range?: boolean) => void;
   onDragStart?: (e: React.PointerEvent, id: string) => void;
   renderShape: (id: string, canvas: HTMLCanvasElement | null) => void;
@@ -191,6 +208,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   primeSibling,
   draggable,
   dropTo,
+  onHover,
   onSelect,
   onDragStart,
   renderShape,
@@ -221,6 +239,10 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   const handleNodeSelectDown = useCallback(() => {
     onSelect?.(id, true);
   }, [id, onSelect]);
+
+  const handleNodePointerEnter = useCallback(() => {
+    onHover?.(id);
+  }, [id, onHover]);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -258,8 +280,11 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
         <button
           type="button"
-          className={"px-1 rounded w-full flex items-center gap-2 select-none touch-none" + selectedClass}
+          className={
+            "px-1 rounded w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
+          }
           onPointerDown={handleNodeDown}
+          onPointerEnter={handleNodePointerEnter}
         >
           <div className="border rounded" style={{ backgroundColor: sheetColor, padding: 2 }}>
             <canvas ref={canvasRef} width="24" height="24" />
@@ -280,7 +305,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         >
           {childNode.map((c) => (
             <li key={c.id} className="w-full">
-              <UITreeNode {...c} dropTo={dropTo} onSelect={onSelect} onDragStart={onDragStart} />
+              <UITreeNode {...c} dropTo={dropTo} onHover={onHover} onSelect={onSelect} onDragStart={onDragStart} />
             </li>
           ))}
           <div className="absolute left-0 right-0 bottom-0 border-t border-gray-400" />

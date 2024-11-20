@@ -51,6 +51,18 @@ export function defineIntransientState<A extends any[]>(
             }
             break;
           }
+          case "shape-highlight": {
+            switch (event.data.meta.type) {
+              case "outline": {
+                const shapeComposite = ctx.getShapeComposite();
+                hoveredShape = shapeComposite.shapeMap[event.data.id];
+                ctx.redraw();
+                return;
+              }
+              default:
+                return;
+            }
+          }
         }
 
         return src.handleEvent(ctx, event);
@@ -72,7 +84,7 @@ export function defineIntransientState<A extends any[]>(
 
           applyStrokeStyle(renderCtx, {
             color: ctx.getStyleScheme().selectionSecondaly,
-            width: 2 * ctx.getScale(),
+            width: 3 * ctx.getScale(),
             dash: "short",
           });
           renderCtx.stroke();
