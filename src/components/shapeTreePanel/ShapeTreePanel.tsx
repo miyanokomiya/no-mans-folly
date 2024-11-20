@@ -232,7 +232,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   useEffect(() => {
     if (!prime || !rootRef.current) return;
 
-    rootRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    rootRef.current.scrollIntoView({ behavior: "instant", block: "nearest", inline: "nearest" });
   }, [prime]);
 
   const dropTarget = dropTo?.[0] === id;
@@ -262,7 +262,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
           onPointerDown={handleNodeDown}
         >
           <div className="border rounded" style={{ backgroundColor: sheetColor, padding: 2 }}>
-            <canvas ref={canvasRef} width="26" height="26" />
+            <canvas ref={canvasRef} width="24" height="24" />
           </div>
           {name}
         </button>
