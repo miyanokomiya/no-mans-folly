@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
-import { useSelectedShapeInfo, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { useSelectedShapeInfo, useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
@@ -11,10 +11,14 @@ import { isAlignBoxShape } from "../../shapes/align/alignBox";
 import { isCtrlOrMeta } from "../../utils/devices";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
+import { rednerRGBA } from "../../utils/color";
 
 type DropOperation = "group" | "above" | "below";
 
 export const ShapeTreePanel: React.FC = () => {
+  const sheet = useSelectedSheet();
+  const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+
   const shapeComposite = useShapeCompositeWithoutTmpInfo();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const selectionScope = useMemo(() => {
@@ -25,9 +29,9 @@ export const ShapeTreePanel: React.FC = () => {
 
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree.map((n) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor),
     );
-  }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope]);
+  }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
   const getCtx = useContext(GetAppStateContext);
@@ -143,9 +147,9 @@ export const ShapeTreePanel: React.FC = () => {
 
   return (
     <div>
-      <ul className="relative">
+      <ul className="relative flex flex-col items-start" style={{ gap: 1 }}>
         {rootNodeProps.map((n) => (
-          <li key={n.id}>
+          <li key={n.id} className="w-full">
             <UITreeNode {...n} dropTo={dropTo} onSelect={handleNodeSelect} onDragStart={handleStartDragging} />
           </li>
         ))}
@@ -174,6 +178,8 @@ interface UITreeNodeProps {
   dropTo?: [string, DropOperation];
   onSelect?: (id: string, multi?: boolean, range?: boolean) => void;
   onDragStart?: (e: React.PointerEvent, id: string) => void;
+  renderShape: (id: string, canvas: HTMLCanvasElement | null) => void;
+  sheetColor: string;
 }
 
 const UITreeNode: React.FC<UITreeNodeProps> = ({
@@ -187,6 +193,8 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   dropTo,
   onSelect,
   onDragStart,
+  renderShape,
+  sheetColor,
 }) => {
   const handleNodeDown = useCallback(
     (e: React.PointerEvent) => {
@@ -215,6 +223,11 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   }, [id, onSelect]);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    renderShape(id, canvasRef.current);
+  }, [id, renderShape]);
 
   useEffect(() => {
     if (!prime || !rootRef.current) return;
@@ -245,9 +258,12 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
         <button
           type="button"
-          className={"px-1 rounded w-full text-left select-none touch-none" + selectedClass}
+          className={"px-1 rounded w-full flex items-center gap-2 select-none touch-none" + selectedClass}
           onPointerDown={handleNodeDown}
         >
+          <div className="border rounded" style={{ backgroundColor: sheetColor, padding: 2 }}>
+            <canvas ref={canvasRef} width="26" height="26" />
+          </div>
           {name}
         </button>
         {primeSibling ? (
@@ -259,13 +275,16 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         {dropAboveElm}
       </div>
       {hasChildren ? (
-        <ul className="ml-2 relative border-l-2 border-gray-400">
+        <ul
+          className="ml-2 relative border-l-2 border-gray-400 flex flex-col items-start"
+          style={{ gap: 1, paddingBottom: 1 }}
+        >
           {childNode.map((c) => (
-            <li key={c.id}>
+            <li key={c.id} className="w-full">
               <UITreeNode {...c} dropTo={dropTo} onSelect={onSelect} onDragStart={onDragStart} />
             </li>
           ))}
-          <div className="absolute left-0 right-0 border-t border-gray-400" />
+          <div className="absolute left-0 right-0 bottom-0 border-t border-gray-400" />
         </ul>
       ) : undefined}
       {dropBelowElm}
@@ -279,11 +298,31 @@ function getUITreeNodeProps(
   lastSelectedId: string | undefined,
   selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
+  sheetColor: string,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = shapeComposite.getShapeStruct(shape.type).label;
   const primeSibling = isSameShapeSelectionScope(selectedScope, shapeComposite.getSelectionScope(shape));
   const draggable = isDraggableShape(shapeComposite, shape.id);
+
+  const renderShape = (id: string, canvas: HTMLCanvasElement | null) => {
+    const ctx = canvas?.getContext("2d");
+    const s = shapeComposite.shapeMap[id];
+    if (!canvas || !ctx || !s) return;
+
+    const rect = shapeComposite.getWrapperRect(s, true);
+    const w = Math.max(10, rect.width);
+    const h = Math.max(10, rect.height);
+    const [scaleW, scaleH] = [canvas.width / w, canvas.height / h];
+    const scale = Math.min(scaleW, scaleH);
+    const longSize = Math.max(w, h);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(scale, scale);
+    ctx.translate(-rect.x + (longSize - w) / 2, -rect.y + (longSize - h) / 2);
+    shapeComposite.render(ctx, s);
+    ctx.restore();
+  };
 
   return {
     id: shapeNode.id,
@@ -293,8 +332,10 @@ function getUITreeNodeProps(
     primeSibling: primeSibling,
     draggable,
     childNode: shapeNode.children.map((c) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, sheetColor),
     ),
+    renderShape,
+    sheetColor,
   };
 }
 
