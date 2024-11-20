@@ -266,11 +266,10 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
           </div>
           {name}
         </button>
-        {primeSibling ? (
-          <div className="ml-1">
-            <ToggleInput value={selected} onChange={handleNodeSelectDown} />
-          </div>
-        ) : undefined}
+        {/* Absence of this element causes layout shift for some reason. */}
+        <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
+          <ToggleInput value={selected} onChange={handleNodeSelectDown} />
+        </div>
         {dropGroupElm}
         {dropAboveElm}
       </div>
