@@ -28,11 +28,13 @@ import {
   getD2,
   getGlobalAffine,
   getMarkersOnPolygon,
+  getPointLerpSlope,
   getRectPoints,
   getRotateFn,
   getRotatedRectAffine,
   getRotatedWrapperRect,
   getRotationAffine,
+  getSegments,
   isPointOnRectangle,
   isSameValue,
   rotateRectByAngle,
@@ -46,6 +48,7 @@ import { pickMinItem } from "../utils/commons";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { getPaddingRect } from "../utils/boxPadding";
 import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
+import { getClosestOutlineInfoOfLineByEdgeInfo, getPolylineEdgeInfo } from "../utils/path";
 
 export type SimplePath = {
   path: IVec2[];
@@ -79,6 +82,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "getLocalRectPolygon"
   | "isPointOn"
   | "getClosestOutline"
+  | "getTangentAt"
   | "resize"
   | "getIntersectedOutlines"
   | "getCommonStyle"
@@ -201,11 +205,11 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       }
 
       if (!curves) {
-        // Ignore conventional markers when the shape has a curve.
+        // Check conventional markers when the shape doesn't have a curve.
         const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, localP) <= threshold);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       } else {
-        // Check each point when the shape doesn't have a curve.
+        // Ignore conventional markers when the shape has a curve.
         const rotatedClosest = path.find((m) => getDistance(m, localP) <= threshold);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
@@ -224,6 +228,17 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         const closest = pickMinItem(points, (a) => getD2(sub(a, localP)));
         return closest && getDistance(closest, localP) <= threshold ? applyAffine(transform, closest) : undefined;
       }
+    },
+    getTangentAt(shape, p) {
+      const { path, curves } = getPath(shape);
+      const edges = getSegments(path);
+      const edgeInfo = getPolylineEdgeInfo(edges, curves);
+      const detransform = getShapeDetransform(shape);
+      const localP = applyAffine(detransform, p);
+
+      const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, localP, Infinity);
+      if (!closestInfo) return shape.rotation;
+      return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
     },
     getIntersectedOutlines(shape, from, to) {
       const { path, curves } = getPath(shape);

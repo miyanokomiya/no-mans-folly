@@ -64,6 +64,7 @@ export interface ShapeStruct<T extends Shape> {
    */
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
+  getTangentAt?: (shape: T, p: IVec2) => number;
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;

@@ -1,10 +1,22 @@
-import { IVec2, MINVALUE, PathSegmentRaw, add, clamp, getDistance, getRadian, pathSegmentRawsToString } from "okageo";
+import {
+  IVec2,
+  MINVALUE,
+  PathSegmentRaw,
+  add,
+  clamp,
+  getDistance,
+  getRadian,
+  pathSegmentRawsToString,
+  sub,
+} from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
   expandRect,
   getClosestOutlineOnArc,
   getCrossLineAndArcRotated,
+  getD2,
+  getEllipseSlopeAt,
   getIntersectionBetweenCircles,
   getRotateFn,
   getRotatedRectAffine,
@@ -160,6 +172,66 @@ export const struct: ShapeStruct<MoonShape> = {
     );
 
     return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
+  },
+  getTangentAt(shape, p) {
+    const r = { x: shape.rx, y: shape.ry };
+    const ac = add(shape.p, r);
+    const ar = shape.rx;
+    const br = getMoonRadius(shape);
+    const insetLocalX = getMoonInsetLocalX(shape);
+    const bc = { x: shape.p.x + insetLocalX + br, y: ac.y };
+    const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+    if (!moonIntersections) return ellipseStruct.getTangentAt?.(shape, p) ?? shape.rotation;
+
+    let moonIntersections2 = moonIntersections;
+    if (moonIntersections.length === 1) {
+      if (Math.abs(insetLocalX) < MINVALUE) return shape.rotation;
+      if (Math.abs(insetLocalX - 2 * ar) < MINVALUE) return ellipseStruct.getTangentAt?.(shape, p) ?? shape.rotation;
+
+      // Duplicate the single intersection to make a hole.
+      moonIntersections2 = [moonIntersections[0], moonIntersections[0]];
+    }
+    moonIntersections2 ??= moonIntersections;
+
+    const rotateFn = getRotateFn(shape.rotation, ac);
+    const rotatedP = rotateFn(p, true);
+    let rotatedClosest: [IVec2, number, rad: number] | undefined;
+
+    {
+      const [afrom, ato] = moonIntersections2.map((p) => getRadian(p, ac));
+      const candidate = getClosestOutlineOnArc(
+        ac,
+        shape.rx,
+        shape.ry,
+        ato,
+        afrom,
+        rotatedP,
+        rotatedClosest?.[1] ?? Infinity,
+      );
+      if (candidate) {
+        rotatedClosest = [
+          candidate,
+          getD2(sub(candidate, rotatedP)),
+          getEllipseSlopeAt(ac, shape.rx, shape.ry, candidate),
+        ];
+      }
+    }
+
+    {
+      const brx = br;
+      const bry = (br / shape.rx) * shape.ry;
+      const [bfrom, bto] = moonIntersections2.map((p) => getRadian(p, bc));
+      const candidate = getClosestOutlineOnArc(bc, brx, bry, bto, bfrom, rotatedP, rotatedClosest?.[1] ?? Infinity);
+      if (candidate) {
+        rotatedClosest = [
+          candidate,
+          getD2(sub(candidate, rotatedP)),
+          getEllipseSlopeAt(bc, shape.rx, shape.ry, candidate),
+        ];
+      }
+    }
+
+    return (rotatedClosest?.[2] ?? 0) + shape.rotation;
   },
   canAttachSmartBranch: false,
   getTextRangeRect: undefined,

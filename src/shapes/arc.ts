@@ -6,6 +6,7 @@ import {
   clamp,
   getCenter,
   getDistance,
+  getRadian,
   multi,
   pathSegmentRawsToString,
   rotate,
@@ -21,6 +22,7 @@ import {
   getCrossLineAndArcRotated,
   getCrossSegAndSeg,
   getD2,
+  getEllipseSlopeAt,
   getGeneralArcBounds,
   getRotateFn,
   getRotatedRectAffine,
@@ -181,6 +183,84 @@ export const struct: ShapeStruct<ArcShape> = {
     }
 
     return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
+  },
+  getTangentAt(shape, p) {
+    if (Math.abs(shape.from - shape.to) <= MINVALUE) return shape.rotation;
+
+    const r = { x: shape.rx, y: shape.ry };
+    const center = add(shape.p, r);
+    const holeRate = getHoleRate(shape);
+    const fromV = { x: r.x * Math.cos(shape.from), y: r.y * Math.sin(shape.from) };
+    const toV = { x: r.x * Math.cos(shape.to), y: r.y * Math.sin(shape.to) };
+    const fromP = add(center, fromV);
+    const toP = add(center, toV);
+    const ifromP = add(center, multi(toV, holeRate));
+    const itoP = add(center, multi(fromV, holeRate));
+
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const rotatedP = rotateFn(p, true);
+    let rotatedClosest: [IVec2, number, rad: number] | undefined;
+
+    {
+      const points: [IVec2, number, ISegment][] = [];
+      (holeRate
+        ? [
+            [itoP, fromP],
+            [toP, ifromP],
+          ]
+        : [
+            [center, fromP],
+            [center, toP],
+          ]
+      ).forEach((seg) => {
+        const point = getClosestPointOnSegment(seg, rotatedP);
+        points.push([point, getD2(sub(point, rotatedP)), seg as ISegment]);
+      });
+      const candidate = pickMinItem(points, (a) => a[1]);
+      if (candidate) {
+        rotatedClosest = [candidate[0], candidate[1], getRadian(candidate[2][1], candidate[2][0])];
+      }
+    }
+
+    {
+      const candidate = getClosestOutlineOnArc(
+        center,
+        shape.rx,
+        shape.ry,
+        shape.from,
+        shape.to,
+        rotatedP,
+        rotatedClosest?.[1] ?? Infinity,
+      );
+      if (candidate) {
+        rotatedClosest = [
+          candidate,
+          getD2(sub(candidate, rotatedP)),
+          getEllipseSlopeAt(center, shape.rx, shape.ry, candidate),
+        ];
+      }
+    }
+
+    if (holeRate) {
+      const candidate = getClosestOutlineOnArc(
+        center,
+        shape.rx * holeRate,
+        shape.ry * holeRate,
+        shape.from,
+        shape.to,
+        rotatedP,
+        rotatedClosest?.[1] ?? Infinity,
+      );
+      if (candidate) {
+        rotatedClosest = [
+          candidate,
+          getD2(sub(candidate, rotatedP)),
+          getEllipseSlopeAt(center, shape.rx, shape.ry, candidate),
+        ];
+      }
+    }
+
+    return (rotatedClosest?.[2] ?? 0) + shape.rotation;
   },
   canAttachSmartBranch: false,
   // Prevent having text because text bounds is quite unstable depending on the form of the arc.

@@ -24,6 +24,7 @@ import {
   getWrapperRect,
   isPointCloseToCurveSpline,
   getRotatedAtAffine,
+  getPointLerpSlope,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -38,7 +39,13 @@ import {
 import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer";
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
-import { getSegmentVicinityFrom, getSegmentVicinityTo, isBezieirControl } from "../utils/path";
+import {
+  getClosestOutlineInfoOfLineByEdgeInfo,
+  getPolylineEdgeInfo,
+  getSegmentVicinityFrom,
+  getSegmentVicinityTo,
+  isBezieirControl,
+} from "../utils/path";
 
 export type LineType = undefined | "stright" | "elbow"; // undefined means "stright"
 export type CurveType = undefined | "auto";
@@ -428,6 +435,21 @@ export const struct: ShapeStruct<LineShape> = {
       h: path.sort((a, b) => a.y - b.y).map((p) => [p, p]),
       v: path.sort((a, b) => a.x - b.x).map((p) => [p, p]),
     };
+  },
+  getClosestOutline(shape, p, threshold) {
+    const edges = getEdges(shape);
+    const edgeInfo = getPolylineEdgeInfo(edges, shape.curves);
+
+    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, threshold);
+    return closestInfo?.[0];
+  },
+  getTangentAt(shape, p) {
+    const edges = getEdges(shape);
+    const edgeInfo = getPolylineEdgeInfo(edges, shape.curves);
+
+    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, Infinity);
+    if (!closestInfo) return shape.rotation;
+    return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
   },
   transparentSelection: true,
 };

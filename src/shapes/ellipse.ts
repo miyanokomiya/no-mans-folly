@@ -8,6 +8,7 @@ import {
   isSame,
   parsePathSegmentRaws,
   pathSegmentRawsToString,
+  rotate,
   sub,
 } from "okageo";
 import { CommonStyle, Shape } from "../models";
@@ -17,6 +18,7 @@ import {
   expandRect,
   getClosestOutlineOnEllipse,
   getCrossLineAndEllipseRotated,
+  getEllipseSlopeAt,
   getRectPoints,
   getRotateFn,
   getRotatedRectAffine,
@@ -161,6 +163,10 @@ export const struct: ShapeStruct<EllipseShape> = {
     if (!points) return;
 
     return points.length === 0 ? undefined : sortPointFrom(from, points);
+  },
+  getTangentAt(shape, p) {
+    const center = add(shape.p, { x: shape.rx, y: shape.ry });
+    return getEllipseSlopeAt(center, shape.rx, shape.ry, rotate(p, -shape.rotation, center)) + shape.rotation;
   },
   getCommonStyle,
   updateCommonStyle,

@@ -1,9 +1,11 @@
-import { IVec2, PathSegmentRaw, add, getDistance, pathSegmentRawsToString } from "okageo";
+import { IVec2, PathSegmentRaw, add, getDistance, pathSegmentRawsToString, sub } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
   getClosestOutlineOnEllipse,
   getCrossLineAndEllipseRotated,
+  getD2,
+  getEllipseSlopeAt,
   getRotateFn,
   getRotatedRectAffine,
   isPointOnEllipseRotated,
@@ -105,6 +107,51 @@ export const struct: ShapeStruct<DonutShape> = {
 
     const points = [...(outerPoints ?? []), ...(innerPoints ?? [])];
     return points.length === 0 ? undefined : sortPointFrom(from, points);
+  },
+  getTangentAt(shape, p) {
+    const r = { x: shape.rx, y: shape.ry };
+    const center = add(shape.p, r);
+    const holeRate = shape.holeRate;
+
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const rotatedP = rotateFn(p, true);
+    let rotatedClosest: [IVec2, number, rad: number] | undefined;
+
+    {
+      const candidate = getClosestOutlineOnEllipse(
+        center,
+        shape.rx,
+        shape.ry,
+        rotatedP,
+        rotatedClosest?.[1] ?? Infinity,
+      );
+      if (candidate) {
+        rotatedClosest = [
+          candidate,
+          getD2(sub(candidate, rotatedP)),
+          getEllipseSlopeAt(center, shape.rx, shape.ry, candidate),
+        ];
+      }
+    }
+
+    if (holeRate) {
+      const candidate = getClosestOutlineOnEllipse(
+        center,
+        shape.rx * holeRate,
+        shape.ry * holeRate,
+        rotatedP,
+        rotatedClosest?.[1] ?? Infinity,
+      );
+      if (candidate) {
+        rotatedClosest = [
+          candidate,
+          getD2(sub(candidate, rotatedP)),
+          getEllipseSlopeAt(center, shape.rx, shape.ry, candidate),
+        ];
+      }
+    }
+
+    return (rotatedClosest?.[2] ?? 0) + shape.rotation;
   },
   canAttachSmartBranch: false,
   getTextRangeRect: undefined,

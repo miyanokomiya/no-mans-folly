@@ -22,6 +22,8 @@ import {
   getIntersectedOutlinesOnPolygon,
   getRotatedRectAffine,
   isSameValue,
+  getSegments,
+  getPointLerpSlope,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import {
@@ -36,6 +38,7 @@ import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
 import { RectPolygonShape } from "./rectPolygon";
 import { applyPath, createSVGCurvePath } from "../utils/renderer";
+import { getClosestOutlineInfoOfLineByEdgeInfo, getPolylineEdgeInfo } from "../utils/path";
 
 export type RectangleShape = RectPolygonShape & CommonStyle & TextContainer;
 
@@ -149,6 +152,14 @@ export const struct: ShapeStruct<RectangleShape> = {
   getIntersectedOutlines(shape, from, to) {
     const polygon = getLocalRectPolygon(shape);
     return getIntersectedOutlinesOnPolygon(polygon, from, to);
+  },
+  getTangentAt(shape, p) {
+    const edges = getSegments(getLocalRectPolygon(shape));
+    const edgeInfo = getPolylineEdgeInfo(edges);
+
+    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, Infinity);
+    if (!closestInfo) return shape.rotation;
+    return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
   },
   getCommonStyle,
   updateCommonStyle,

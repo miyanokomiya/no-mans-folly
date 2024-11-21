@@ -205,6 +205,11 @@ export function getClosestOutline(
   if (struct.getClosestOutline) return struct.getClosestOutline(shape, p, threshold);
 }
 
+export function getTangentAt(getStruct: GetShapeStruct, shape: Shape, p: IVec2): number {
+  const struct = getStruct(shape.type);
+  return struct.getTangentAt?.(shape, p) ?? 0;
+}
+
 /**
  * [from, to] is treated as a segment.
  */
