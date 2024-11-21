@@ -48,7 +48,7 @@ import { pickMinItem } from "../utils/commons";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { getPaddingRect } from "../utils/boxPadding";
 import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
-import { getClosestOutlineInfoOfLineByEdgeInfo, getPolylineEdgeInfo } from "../utils/path";
+import { getClosestPointOnPolyline, getPolylineEdgeInfo } from "../utils/path";
 
 export type SimplePath = {
   path: IVec2[];
@@ -236,7 +236,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
 
-      const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, localP, Infinity);
+      const closestInfo = getClosestPointOnPolyline(edgeInfo, localP, Infinity);
       if (!closestInfo) return shape.rotation;
       return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
     },

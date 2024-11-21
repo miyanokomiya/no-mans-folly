@@ -38,7 +38,7 @@ import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
 import { RectPolygonShape } from "./rectPolygon";
 import { applyPath, createSVGCurvePath } from "../utils/renderer";
-import { getClosestOutlineInfoOfLineByEdgeInfo, getPolylineEdgeInfo } from "../utils/path";
+import { getClosestPointOnPolyline, getPolylineEdgeInfo } from "../utils/path";
 
 export type RectangleShape = RectPolygonShape & CommonStyle & TextContainer;
 
@@ -157,7 +157,7 @@ export const struct: ShapeStruct<RectangleShape> = {
     const edges = getSegments(getLocalRectPolygon(shape), true);
     const edgeInfo = getPolylineEdgeInfo(edges);
 
-    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, Infinity);
+    const closestInfo = getClosestPointOnPolyline(edgeInfo, p, Infinity);
     if (!closestInfo) return shape.rotation;
     return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
   },

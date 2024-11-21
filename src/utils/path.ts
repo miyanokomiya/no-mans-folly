@@ -300,7 +300,7 @@ export function getSegmentVicinityTo(seg: ISegment, curve?: CurveControl, origin
   return vicinity;
 }
 
-export function getPolylinePathStruce(edges: ISegment[], curves?: (CurveControl | undefined)[]): PathLengthStruct[] {
+function getPolylinePathStruct(edges: ISegment[], curves?: (CurveControl | undefined)[]): PathLengthStruct[] {
   return edges.map((edge, i) => {
     const curve = curves?.[i];
     const lerpFn = getCurveLerpFn(edge, curve);
@@ -322,7 +322,7 @@ export interface PolylineEdgeInfo {
 }
 
 export function getPolylineEdgeInfo(edges: ISegment[], curves?: (CurveControl | undefined)[]): PolylineEdgeInfo {
-  const pathStructs = getPolylinePathStruce(edges, curves);
+  const pathStructs = getPolylinePathStruct(edges, curves);
   const approxEdges = pathStructs.flatMap<ISegment>((s) => {
     if (s.curve) {
       return getSegments(getApproPoints(s.lerpFn, BEZIER_APPROX_SIZE));
@@ -340,7 +340,7 @@ export function getPolylineEdgeInfo(edges: ISegment[], curves?: (CurveControl | 
   };
 }
 
-export function getClosestOutlineInfoOfLineByEdgeInfo(
+export function getClosestPointOnPolyline(
   edgeInfo: PolylineEdgeInfo,
   p: IVec2,
   threshold: number,

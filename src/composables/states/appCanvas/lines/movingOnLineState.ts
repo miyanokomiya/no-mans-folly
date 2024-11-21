@@ -32,7 +32,7 @@ import {
   SnappingResult,
 } from "../../../shapeSnapping";
 import { getSnappableCandidates } from "../commons";
-import { getClosestOutlineInfoOfLineByEdgeInfo, PolylineEdgeInfo } from "../../../../utils/path";
+import { getClosestPointOnPolyline, PolylineEdgeInfo } from "../../../../utils/path";
 
 type Option = {
   lineId: string;
@@ -129,7 +129,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
           const diff = sub(event.data.current, pointAtStart);
           const movedIndexAnchorP = add(anchorPointAtStart, diff);
-          const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, movedIndexAnchorP, Infinity);
+          const closestInfo = getClosestPointOnPolyline(edgeInfo, movedIndexAnchorP, Infinity);
           if (!closestInfo) {
             keepMoving = true;
             return { type: "break" };
@@ -345,7 +345,7 @@ function snapPointOnLine({
   if (!nextLineAnchorP) return;
 
   // The anchor point is determined but stlll need to get its rate on the line.
-  const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, nextLineAnchorP, Infinity);
+  const closestInfo = getClosestPointOnPolyline(edgeInfo, nextLineAnchorP, Infinity);
   if (!closestInfo) return;
 
   return {

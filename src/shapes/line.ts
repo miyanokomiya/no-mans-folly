@@ -40,7 +40,7 @@ import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 import {
-  getClosestOutlineInfoOfLineByEdgeInfo,
+  getClosestPointOnPolyline,
   getPolylineEdgeInfo,
   getSegmentVicinityFrom,
   getSegmentVicinityTo,
@@ -440,14 +440,14 @@ export const struct: ShapeStruct<LineShape> = {
     const edges = getEdges(shape);
     const edgeInfo = getPolylineEdgeInfo(edges, shape.curves);
 
-    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, threshold);
+    const closestInfo = getClosestPointOnPolyline(edgeInfo, p, threshold);
     return closestInfo?.[0];
   },
   getTangentAt(shape, p) {
     const edges = getEdges(shape);
     const edgeInfo = getPolylineEdgeInfo(edges, shape.curves);
 
-    const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, Infinity);
+    const closestInfo = getClosestPointOnPolyline(edgeInfo, p, Infinity);
     if (!closestInfo) return shape.rotation;
     return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
   },

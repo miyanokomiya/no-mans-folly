@@ -1,7 +1,7 @@
 import { getCrossLineAndBezier3, getCrossSegAndLine, getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
 import { getEdges, LineShape, struct } from "../line";
 import {
-  getClosestOutlineInfoOfLineByEdgeInfo,
+  getClosestPointOnPolyline,
   getPolylineEdgeInfo,
   isArcControl,
   isBezieirControl,
@@ -82,7 +82,7 @@ export function getClosestOutlineInfoOfLine(
   threshold: number,
 ): [p: IVec2, rate: number] | undefined {
   const edgeInfo = getLineEdgeInfo(line);
-  return getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, threshold);
+  return getClosestPointOnPolyline(edgeInfo, p, threshold);
 }
 
 export function getLineEdgeInfo(line: LineShape): PolylineEdgeInfo {

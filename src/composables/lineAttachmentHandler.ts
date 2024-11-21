@@ -2,7 +2,7 @@ import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpP
 import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getLineEdgeInfo } from "../shapes/utils/line";
-import { getClosestOutlineInfoOfLineByEdgeInfo } from "../utils/path";
+import { getClosestPointOnPolyline } from "../utils/path";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import {
@@ -362,7 +362,7 @@ export function newPreserveAttachmentHandler({
       if (!s?.attachment) return;
 
       changed = true;
-      const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, anchorP, MINVALUE);
+      const closestInfo = getClosestPointOnPolyline(edgeInfo, anchorP, MINVALUE);
       if (closestInfo) {
         updateByAlt[id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
       } else {

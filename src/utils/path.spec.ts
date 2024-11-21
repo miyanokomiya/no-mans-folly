@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import {
   combineBezierPathAndPath,
   getBezierControlForArc,
+  getClosestPointOnPolyline,
   getCornerRadiusArc,
   getCrossBezierPathAndSegment,
+  getPolylineEdgeInfo,
   getSegmentVicinityFrom,
   getSegmentVicinityTo,
   getWavePathControl,
@@ -12,7 +14,7 @@ import {
   shiftBezierCurveControl,
   transformBezierCurveControl,
 } from "./path";
-import { getBezierBounds, ISegment } from "./geometry";
+import { getBezierBounds, getSegments, ISegment } from "./geometry";
 import { getDistance, getPedal } from "okageo";
 
 describe("isBezieirControl", () => {
@@ -427,5 +429,57 @@ describe("getSegmentVicinityTo", () => {
       { x: 10, y: 0 },
     ];
     expect(getSegmentVicinityTo(seg, undefined, 3)).toEqualPoint({ x: 7, y: 0 });
+  });
+});
+
+describe("getPolylineEdgeInfo", () => {
+  test("should return lerp function based on distance", () => {
+    const target = getPolylineEdgeInfo(
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 200, y: 0 },
+      ]),
+      [{ c1: { x: 50, y: 150 }, c2: { x: 150, y: 150 } }],
+    );
+    expect(target.lerpFn(80 / target.totalLength)).toEqualPoint({ x: 34.99598644197986, y: 71.72119092860004 });
+  });
+});
+
+describe("getClosestPointOnPolyline", () => {
+  test("should return the closest outline info if exists", () => {
+    const edgeInfo = getPolylineEdgeInfo(
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+    );
+    expect(getClosestPointOnPolyline(edgeInfo, { x: 40, y: 11 }, 10)).toEqual(undefined);
+    expect(getClosestPointOnPolyline(edgeInfo, { x: 40, y: 9 }, 10)).toEqual([{ x: 40, y: 0 }, 0.4]);
+  });
+
+  test("should regard bezier segment", () => {
+    const edgeInfo = getPolylineEdgeInfo(
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+      [{ c1: { x: 20, y: 20 }, c2: { x: 80, y: 20 } }],
+    );
+    const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 9 }, 10);
+    expect(result0?.[0]).toEqualPoint({ x: 39.70631055859311, y: 14.55409224224895 });
+    expect(result0?.[1]).toBeCloseTo(0.4);
+  });
+
+  test("should regard arc segment", () => {
+    const edgeInfo = getPolylineEdgeInfo(
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+      [{ d: { x: 0, y: 20 } }],
+    );
+    const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 18 }, 10);
+    expect(result0?.[0]).toEqualPoint({ x: 39.90006665667716, y: 19.293045251336395 });
+    expect(result0?.[1]).toBeCloseTo(0.4081723);
   });
 });
