@@ -69,29 +69,33 @@ describe("newLineSnapping", () => {
       // Outline snapped
       expect(target.testConnection({ x: 50, y: 105 }, 1)).toEqual({
         connection: { id: "a", rate: { x: 0.5, y: 1 } },
+        outlineSrc: "a",
         p: { x: 50, y: 100 },
       });
 
       // Outline snapped
       expect(target.testConnection({ x: 160, y: 95 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0.1, y: 1 } },
+        outlineSrc: "b",
         p: { x: 160, y: 100 },
       });
 
       // Snapped to the center of a shape
       expect(target.testConnection({ x: 49, y: 51 }, 1)).toEqual({
         connection: { id: "a", rate: { x: 0.5, y: 0.5 } },
+        outlineSrc: "a",
         p: { x: 50, y: 50 },
       });
 
       // Self snapped & Outline snapped
-      expect(target.testConnection({ x: 159, y: -5 }, 1)).toEqual({
+      expect(target.testConnection({ x: 155, y: -5 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0, y: 0 } },
+        outlineSrc: "b",
         p: { x: 150, y: 0 },
         guidLines: [
           [
             { x: 0, y: 0 },
-            { x: 159, y: 0 },
+            { x: 155, y: 0 },
           ],
         ],
       });
@@ -107,6 +111,7 @@ describe("newLineSnapping", () => {
       // Snapped to the center of a shape
       expect(target.testConnection({ x: 49, y: 51 }, 1)).toEqual({
         connection: { id: "a", rate: { x: 0.5, y: 0.5 } },
+        outlineSrc: "a",
         p: { x: 50, y: 50 },
       });
     });
@@ -176,6 +181,7 @@ describe("newLineSnapping", () => {
 
       expect(target.testConnection({ x: 231, y: 101 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0.8, y: 1 } },
+        outlineSrc: "b",
         p: { x: 230, y: 100 },
         guidLines: [],
         shapeSnappingResult: {
@@ -203,6 +209,7 @@ describe("newLineSnapping", () => {
       });
       expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0, y: 0.3 } },
+        outlineSrc: "b",
         p: { x: 150, y: 30 },
         guidLines: [],
         shapeSnappingResult: {
@@ -260,6 +267,7 @@ describe("newLineSnapping", () => {
 
       expect(target.testConnection({ x: 231, y: 101 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0.8, y: 1 } },
+        outlineSrc: "b",
         p: { x: 230, y: 100 },
         guidLines: [],
         shapeSnappingResult: {
@@ -287,6 +295,7 @@ describe("newLineSnapping", () => {
       });
       expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
         connection: { id: "b", rate: { x: 0, y: 0.3 } },
+        outlineSrc: "b",
         p: { x: 150, y: 30 },
         guidLines: [],
         shapeSnappingResult: {
