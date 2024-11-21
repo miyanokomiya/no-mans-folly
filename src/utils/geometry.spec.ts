@@ -166,6 +166,57 @@ describe("getSegments", () => {
       ],
     ]);
   });
+
+  test("should close when the flag is set true and the path isn't closed yet", () => {
+    expect(
+      getSegments(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+          { x: 10, y: 10 },
+        ],
+        true,
+      ),
+    ).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ],
+      [
+        { x: 10, y: 10 },
+        { x: 0, y: 0 },
+      ],
+    ]);
+
+    expect(
+      getSegments(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+          { x: 10, y: 10 },
+          { x: 0, y: 0 },
+        ],
+        true,
+      ),
+    ).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ],
+      [
+        { x: 10, y: 10 },
+        { x: 0, y: 0 },
+      ],
+    ]);
+  });
 });
 
 describe("extendSegment", () => {

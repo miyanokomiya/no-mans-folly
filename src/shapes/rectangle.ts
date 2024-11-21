@@ -132,7 +132,7 @@ export const struct: ShapeStruct<RectangleShape> = {
 
     return ret;
   },
-  getClosestOutline(shape, p, threshold) {
+  getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const center = getRectCenter(rect);
     const rotateFn = getRotateFn(shape.rotation, center);
@@ -140,7 +140,7 @@ export const struct: ShapeStruct<RectangleShape> = {
 
     {
       const markers = getMarkers(rect, center);
-      const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+      const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= thresholdForMarker);
       if (rotatedClosest) return rotateFn(rotatedClosest);
     }
 
@@ -154,7 +154,7 @@ export const struct: ShapeStruct<RectangleShape> = {
     return getIntersectedOutlinesOnPolygon(polygon, from, to);
   },
   getTangentAt(shape, p) {
-    const edges = getSegments(getLocalRectPolygon(shape));
+    const edges = getSegments(getLocalRectPolygon(shape), true);
     const edgeInfo = getPolylineEdgeInfo(edges);
 
     const closestInfo = getClosestOutlineInfoOfLineByEdgeInfo(edgeInfo, p, Infinity);

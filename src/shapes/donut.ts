@@ -176,7 +176,12 @@ function getMarkers(center: IVec2, rx: number, ry: number, holeRate: number): IV
   ];
 }
 
-function getClosestOutline(shape: DonutShape, p: IVec2, threshold: number): IVec2 | undefined {
+function getClosestOutline(
+  shape: DonutShape,
+  p: IVec2,
+  threshold: number,
+  thresholdForMarker = threshold,
+): IVec2 | undefined {
   const center = add(shape.p, { x: shape.rx, y: shape.ry });
   const rotateFn = getRotateFn(shape.rotation, center);
   const rotatedP = rotateFn(p, true);
@@ -184,7 +189,7 @@ function getClosestOutline(shape: DonutShape, p: IVec2, threshold: number): IVec
 
   {
     const markers = getMarkers(center, shape.rx, shape.ry, holeRate);
-    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= thresholdForMarker);
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
 

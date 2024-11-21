@@ -189,9 +189,10 @@ export function newLineSnapping(option: Option) {
     }
 
     // Try snapping to other shapes' outline
-    let outline: { p: IVec2; d: number; shape: Shape; guideLine?: ISegment } | undefined;
+    let outline: { p: IVec2; shape: Shape; guideLine?: ISegment } | undefined;
+    let outlineThreshold = threshold;
     {
-      reversedSnappableShapes.some((shape) => {
+      reversedSnappableShapes.forEach((shape) => {
         // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
         let intersection: IVec2 | undefined;
         let priorityGuidline: ISegment | undefined;
@@ -205,7 +206,7 @@ export function newLineSnapping(option: Option) {
           if (candidates) {
             const origin = lineConstrain.p;
             const closestCandidate = pickMinItem(candidates, (c) => getD2(sub(c, origin)));
-            if (closestCandidate && getDistance(closestCandidate, origin) < threshold) {
+            if (closestCandidate && getDistance(closestCandidate, origin) < outlineThreshold) {
               intersection = closestCandidate;
               priorityGuidline = lineConstrain.guidLines[0];
             }
@@ -213,16 +214,18 @@ export function newLineSnapping(option: Option) {
         }
 
         // If there's no intersection, seek the closest outline point.
-        const p = intersection ?? getClosestOutline(option.getShapeStruct, shape, point, threshold);
+        const p =
+          intersection ??
+          getClosestOutline(option.getShapeStruct, shape, point, outlineThreshold, outlineThreshold / 2);
         if (!p) {
           // If there's no close outline, check the center.
           const rect = shapeComposite.getWrapperRect(shape);
           const c = getRectCenter(rect);
           const d = getDistance(c, point);
-          if (d < threshold) {
-            outline = { p: c, d, shape };
+          if (d < outlineThreshold) {
+            outlineThreshold = d;
+            outline = { p: c, shape };
             lineConstrain = undefined;
-            return true;
           }
           return;
         }
@@ -233,9 +236,9 @@ export function newLineSnapping(option: Option) {
         }
 
         const d = getDistance(p, point);
-        if (!outline || d < outline.d) {
-          outline = { p, d, shape, guideLine: priorityGuidline };
-          return true;
+        if (d < outlineThreshold) {
+          outlineThreshold = d;
+          outline = { p, shape, guideLine: priorityGuidline };
         }
       });
     }

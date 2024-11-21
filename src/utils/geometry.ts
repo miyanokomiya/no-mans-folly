@@ -24,6 +24,7 @@ import {
   interpolateVector,
   isOnSeg,
   isParallel,
+  isSame,
   lerpPoint,
   multi,
   multiAffines,
@@ -100,10 +101,13 @@ export function isSameValue(a: number, b: number): boolean {
   return Math.abs(a - b) < MINVALUE;
 }
 
-export function getSegments(points: IVec2[]): ISegment[] {
+export function getSegments(points: IVec2[], close = false): ISegment[] {
   const ret: ISegment[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     ret.push([points[i], points[i + 1]]);
+  }
+  if (close && !isSame(points[0], points[points.length - 1])) {
+    ret.push([points[points.length - 1], points[0]]);
   }
   return ret;
 }

@@ -126,6 +126,10 @@ export const AppToolbar: React.FC = () => {
           });
           break;
         case "normal":
+          sm.handleEvent({
+            type: "state",
+            data: { name: "LineNormalReady" },
+          });
           break;
         default:
           sm.handleEvent({
@@ -180,7 +184,7 @@ export const AppToolbar: React.FC = () => {
   }, [sm, popup]);
 
   const onClickLineButton = useCallback(() => {
-    if (popup === "lines" && stateLabel === "LineReady") {
+    if (popup === "lines") {
       sm.handleEvent({
         type: "state",
         data: { name: "Break" },
@@ -190,7 +194,7 @@ export const AppToolbar: React.FC = () => {
       startLineState(lineType);
       setPopup("lines");
     }
-  }, [stateLabel, popup, lineType, sm, startLineState]);
+  }, [popup, lineType, sm, startLineState]);
 
   const onClickTextButton = useCallback(() => {
     setPopup("");

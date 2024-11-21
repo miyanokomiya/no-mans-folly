@@ -194,14 +194,19 @@ function getMarkers(center: IVec2, rx: number, ry: number): IVec2[] {
   ];
 }
 
-function getClosestOutline(shape: EllipseShape, p: IVec2, threshold: number): IVec2 | undefined {
+function getClosestOutline(
+  shape: EllipseShape,
+  p: IVec2,
+  threshold: number,
+  thresholdForMarker = threshold,
+): IVec2 | undefined {
   const center = add(shape.p, { x: shape.rx, y: shape.ry });
   const rotateFn = getRotateFn(shape.rotation, center);
   const rotatedP = rotateFn(p, true);
 
   {
     const markers = getMarkers(center, shape.rx, shape.ry);
-    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= thresholdForMarker);
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
 

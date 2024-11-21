@@ -55,6 +55,7 @@ type AcceptableEvent =
   | "LineReady"
   | "TextReady"
   | "LineTangentReady"
+  | "LineNormalReady"
   | "RectSelectReady"
   | "ShapeInspection"
   | "PanToShape";
@@ -66,6 +67,7 @@ export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): Acc
     "DroppingNewShape",
     "LineReady",
     "LineTangentReady",
+    "LineNormalReady",
     "TextReady",
     "RectSelectReady",
     "ShapeInspection",
@@ -91,6 +93,8 @@ export function handleStateEvent(
       return () => ctx.states.newLineReadyState(event.data.options);
     case "LineTangentReady":
       return ctx.states.newLineTangentReadyState;
+    case "LineNormalReady":
+      return ctx.states.newLineNormalReadyState;
     case "TextReady":
       return () => newTextReadyState();
     case "RectSelectReady":
@@ -667,6 +671,7 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
         "DroppingNewShape",
         "LineReady",
         "LineTangentReady",
+        "LineNormalReady",
         "TextReady",
         "RectSelectReady",
         "ShapeInspection",

@@ -200,9 +200,10 @@ export function getClosestOutline(
   shape: Shape,
   p: IVec2,
   threshold: number,
+  thresholdForMarker?: number,
 ): IVec2 | undefined {
   const struct = getStruct(shape.type);
-  if (struct.getClosestOutline) return struct.getClosestOutline(shape, p, threshold);
+  if (struct.getClosestOutline) return struct.getClosestOutline(shape, p, threshold, thresholdForMarker);
 }
 
 export function getTangentAt(getStruct: GetShapeStruct, shape: Shape, p: IVec2): number {

@@ -239,7 +239,12 @@ export const struct: ShapeStruct<MoonShape> = {
   patchTextPadding: undefined,
 };
 
-function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2 | undefined {
+function getClosestOutline(
+  shape: MoonShape,
+  p: IVec2,
+  threshold: number,
+  thresholdForMarker = threshold,
+): IVec2 | undefined {
   const r = { x: shape.rx, y: shape.ry };
   const ac = add(shape.p, r);
   const ar = shape.rx;
@@ -250,11 +255,12 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
   let moonIntersections2 = moonIntersections;
 
   if (!moonIntersections) {
-    return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+    return ellipseStruct.getClosestOutline?.(shape, p, threshold, thresholdForMarker);
   }
   if (moonIntersections.length === 1) {
     if (Math.abs(insetLocalX) < MINVALUE) return;
-    if (Math.abs(insetLocalX - 2 * ar) < MINVALUE) return ellipseStruct.getClosestOutline?.(shape, p, threshold);
+    if (Math.abs(insetLocalX - 2 * ar) < MINVALUE)
+      return ellipseStruct.getClosestOutline?.(shape, p, threshold, thresholdForMarker);
 
     // Duplicate the single intersection to make a hole.
     moonIntersections2 = [moonIntersections[0], moonIntersections[0]];
@@ -270,7 +276,7 @@ function getClosestOutline(shape: MoonShape, p: IVec2, threshold: number): IVec2
 
   {
     const markers = [{ x: bc.x - br, y: ac.y }, { x: shape.p.x, y: ac.y }, ...adjustedMoonIntersections];
-    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= threshold);
+    const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= thresholdForMarker);
     if (rotatedClosest) return rotateFn(rotatedClosest);
   }
 

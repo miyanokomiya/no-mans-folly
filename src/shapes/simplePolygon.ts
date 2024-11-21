@@ -180,7 +180,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       return ret;
     },
-    getClosestOutline(shape, p, threshold) {
+    getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
       const { path, curves } = getPath(shape);
       const transform = getShapeTransform(shape);
       const detransform = getShapeDetransform(shape);
@@ -194,7 +194,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
           { x: shape.width, y: cy },
           { x: cx, y: shape.height },
           { x: 0, y: cy },
-        ].find((m) => getDistance(m, localP) <= threshold);
+        ].find((m) => getDistance(m, localP) <= thresholdForMarker);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 
@@ -206,7 +206,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       if (!curves) {
         // Check conventional markers when the shape doesn't have a curve.
-        const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, localP) <= threshold);
+        const rotatedClosest = getMarkersOnPolygon(path).find((m) => getDistance(m, localP) <= thresholdForMarker);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       } else {
         // Ignore conventional markers when the shape has a curve.
@@ -231,7 +231,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     },
     getTangentAt(shape, p) {
       const { path, curves } = getPath(shape);
-      const edges = getSegments(path);
+      const edges = getSegments(path, true);
       const edgeInfo = getPolylineEdgeInfo(edges, curves);
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);

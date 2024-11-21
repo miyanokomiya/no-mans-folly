@@ -63,7 +63,7 @@ export interface ShapeStruct<T extends Shape> {
    * Lines should be sorted top-left to bottom-right in each direction.
    */
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
-  getClosestOutline?: (shape: T, p: IVec2, threshold: number) => IVec2 | undefined;
+  getClosestOutline?: (shape: T, p: IVec2, threshold: number, thresholdForMarker?: number) => IVec2 | undefined;
   getTangentAt?: (shape: T, p: IVec2) => number;
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
