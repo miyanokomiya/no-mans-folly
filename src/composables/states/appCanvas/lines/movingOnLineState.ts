@@ -2,12 +2,7 @@ import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { mapReduce, patchPipe, pickMinItem, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
-import {
-  getClosestOutlineInfoOfLineByEdgeInfo,
-  getIntersectionsBetweenLineShapeAndLine,
-  getLineEdgeInfo,
-  LineEdgeInfo,
-} from "../../../../shapes/utils/line";
+import { getIntersectionsBetweenLineShapeAndLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
 import {
   getClosestLineToRectFeaturePoints,
   getD2,
@@ -37,6 +32,7 @@ import {
   SnappingResult,
 } from "../../../shapeSnapping";
 import { getSnappableCandidates } from "../commons";
+import { getClosestOutlineInfoOfLineByEdgeInfo, PolylineEdgeInfo } from "../../../../utils/path";
 
 type Option = {
   lineId: string;
@@ -50,7 +46,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
   let keepMoving = false;
   let lineAnchor: IVec2 | undefined;
   let line: LineShape;
-  let edgeInfo: LineEdgeInfo;
+  let edgeInfo: PolylineEdgeInfo;
   let anchorPointAtStart: IVec2;
   let pointAtStart: IVec2;
   let patchAtStart: { [id: string]: Partial<Shape> };
@@ -313,7 +309,7 @@ function snapPointOnLine({
   lineAnchorRate: number;
   lineAnchorP: IVec2;
   anchorPointAtStart: IVec2;
-  edgeInfo: LineEdgeInfo;
+  edgeInfo: PolylineEdgeInfo;
 }):
   | {
       snappingResult: SnappingResult;

@@ -1,9 +1,7 @@
 import type { AppCanvasState } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
-import { newDefaultState } from "../defaultState";
-import { newLineDrawingState } from "./lineDrawingState";
-import { createShape } from "../../../../shapes";
-import { CurveType, LineShape, LineType } from "../../../../shapes/line";
+import { createShape, getTangentAt } from "../../../../shapes";
+import { LineShape } from "../../../../shapes/line";
 import {
   ConnectionResult,
   LineSnapping,
@@ -11,28 +9,36 @@ import {
   newLineSnapping,
   renderConnectionResult,
 } from "../../../lineSnapping";
-import { IVec2 } from "okageo";
+import { add, IVec2, multi, rotate, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newShapeSnapping } from "../../../shapeSnapping";
-import { TAU } from "../../../../utils/geometry";
+import { ISegment, TAU } from "../../../../utils/geometry";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { handleCommonWheel } from "../../commons";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { applyPath } from "../../../../utils/renderer";
 
-interface Option {
-  type: LineType;
-  curveType?: CurveType;
-}
-
-export function newLineReadyState(option: Option): AppCanvasState {
+export function newLineTangentReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
+  let guideline: ISegment | undefined;
   let lineSnapping: LineSnapping;
+  let lineSnappingWithoutGuideline: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   const coordinateRenderer = newCoordinateRenderer();
 
+  const getConnectionResult = (
+    point: IVec2,
+    ctrl: boolean | undefined,
+    scale: number,
+  ): ConnectionResult | undefined => {
+    const result = (ctrl ? lineSnappingWithoutGuideline : lineSnapping).testConnection(point, scale);
+    return result?.outlineSrc ? result : undefined;
+  };
+
   return {
-    getLabel: () => "LineReady",
+    getLabel: () => "LineTangentReady",
     onStart: (ctx) => {
       ctx.setCursor();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
@@ -52,7 +58,10 @@ export function newLineReadyState(option: Option): AppCanvasState {
         snappableShapes,
         shapeSnapping,
         getShapeStruct: ctx.getShapeStruct,
-        movingIndex: 0,
+      });
+      lineSnappingWithoutGuideline = newLineSnapping({
+        snappableShapes,
+        getShapeStruct: ctx.getShapeStruct,
       });
 
       vertex = ctx.getCursorPoint();
@@ -67,21 +76,23 @@ export function newLineReadyState(option: Option): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const point = event.data.point;
-              connectionResult = event.data.options.ctrl
-                ? undefined
-                : lineSnapping.testConnection(point, ctx.getScale());
+              connectionResult = getConnectionResult(point, event.data.options.ctrl, ctx.getScale());
               vertex = connectionResult?.p ?? point;
+              if (!connectionResult?.outlineSrc) return ctx.states.newSelectionHubState;
 
-              const lineshape = createShape<LineShape>(ctx.getShapeStruct, "line", {
+              const shapeComposite = ctx.getShapeComposite();
+              const target = shapeComposite.shapeMap[connectionResult.outlineSrc];
+              const r = getTangentAt(shapeComposite.getShapeStruct, target, vertex);
+              const v = multi(rotate({ x: 1, y: 0 }, r), 50);
+              const shape = createShape<LineShape>(ctx.getShapeStruct, "line", {
                 id: ctx.generateUuid(),
-                p: vertex,
-                q: vertex,
+                p: sub(vertex, v),
+                q: add(vertex, v),
                 findex: ctx.createLastIndex(),
-                lineType: option.type,
-                curveType: option.curveType,
-                pConnection: connectionResult?.connection,
               });
-              return () => newLineDrawingState({ shape: lineshape });
+              ctx.addShapes([shape]);
+              ctx.selectShape(shape.id);
+              return ctx.states.newSelectionHubState;
             }
             case 1:
               return () => newPointerDownEmptyState(event.data.options);
@@ -90,9 +101,20 @@ export function newLineReadyState(option: Option): AppCanvasState {
           }
         case "pointerhover": {
           const point = event.data.current;
-          connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
+          connectionResult = getConnectionResult(point, event.data.ctrl, ctx.getScale());
           vertex = connectionResult?.p ?? point;
           coordinateRenderer.saveCoord(vertex);
+
+          if (connectionResult?.outlineSrc) {
+            const shapeComposite = ctx.getShapeComposite();
+            const target = shapeComposite.shapeMap[connectionResult.outlineSrc];
+            const r = getTangentAt(shapeComposite.getShapeStruct, target, vertex);
+            const v = multi(rotate({ x: 1, y: 0 }, r), 50);
+            guideline = [sub(vertex, v), add(vertex, v)];
+          } else {
+            guideline = undefined;
+          }
+
           ctx.redraw();
           return;
         }
@@ -107,7 +129,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
           handleCommonWheel(ctx, event);
           return;
         case "history":
-          return newDefaultState;
+          return ctx.states.newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, getCommonAcceptableEvents());
         default:
@@ -115,26 +137,39 @@ export function newLineReadyState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
-      if (!vertex) return;
-
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
-      const vertexSize = 8 * scale;
 
-      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
+      if (vertex) {
+        coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 
-      applyFillStyle(renderCtx, { color: style.selectionPrimary });
-      renderCtx.beginPath();
-      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
-      renderCtx.fill();
+        applyFillStyle(renderCtx, { color: style.selectionPrimary });
+        renderCtx.beginPath();
+        renderCtx.arc(vertex.x, vertex.y, 8 * scale, 0, TAU);
+        renderCtx.fill();
+      }
 
-      const shapeComposite = ctx.getShapeComposite();
       if (connectionResult) {
+        const shapeComposite = ctx.getShapeComposite();
         renderConnectionResult(renderCtx, {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
           getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
+        });
+      }
+
+      if (guideline) {
+        applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 4 * scale });
+        renderCtx.beginPath();
+        applyPath(renderCtx, guideline);
+        renderCtx.stroke();
+
+        applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+        guideline.forEach((p) => {
+          renderCtx.beginPath();
+          renderCtx.arc(p.x, p.y, 6 * scale, 0, TAU);
+          renderCtx.fill();
         });
       }
     },

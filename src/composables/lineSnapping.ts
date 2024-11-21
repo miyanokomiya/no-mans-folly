@@ -55,6 +55,7 @@ interface Option {
 
 export type ConnectionResult = {
   connection?: ConnectionPoint;
+  outlineSrc?: string;
   p: IVec2;
   guidLines?: ISegment[];
   shapeSnappingResult?: SnappingResult;
@@ -251,6 +252,7 @@ export function newLineSnapping(option: Option) {
         return {
           connection,
           p: outline.p,
+          outlineSrc: outline.shape.id,
           guidLines: lineConstrain.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
           shapeSnappingResult: lineConstrain.shapeSnappingResult
             ? {
@@ -264,6 +266,7 @@ export function newLineSnapping(option: Option) {
       return {
         connection,
         p: outline.p,
+        outlineSrc: outline.shape.id,
         guidLines: outline.guideLine ? [outline.guideLine] : undefined,
       };
     }

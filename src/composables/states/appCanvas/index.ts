@@ -1,3 +1,5 @@
+import { newLineReadyState } from "./lines/lineReadyState";
+import { newLineTangentReadyState } from "./lines/lineTangentReadyState";
 import { newMovingAnchorOnLineState } from "./lines/movingAnchorOnLineState";
 import { newMovingOnLineState } from "./lines/movingOnLineState";
 import { newMovingHubState } from "./movingHubState";
@@ -9,5 +11,7 @@ export const stateGenerators = {
   newMovingHubState,
   newMovingOnLineState,
   newMovingAnchorOnLineState,
+  newLineReadyState,
+  newLineTangentReadyState,
 };
 export type StateGenerators = typeof stateGenerators;

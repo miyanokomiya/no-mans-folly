@@ -7,6 +7,8 @@ import iconLineStraight from "../../assets/icons/shape_line_straight.svg";
 import iconText from "../../assets/icons/text.svg";
 import iconLayout from "../../assets/icons/layout.svg";
 import iconSelectArea from "../../assets/icons/select_area.svg";
+import iconLineTangent from "../../assets/icons/line_tangent.svg";
+import iconLineNormal from "../../assets/icons/line_normal.svg";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { Shape } from "../../models";
 import { generateBoardTemplate } from "../../composables/boardHandler";
@@ -23,6 +25,11 @@ type PopupKey = "" | "shapes" | "lines" | "layouts";
 function getButtonClass(highlight = false) {
   return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
 }
+
+const lineButtonTypeList = lineTypeList.concat([
+  { type: "tangent", icon: iconLineTangent },
+  { type: "normal", icon: iconLineNormal },
+]);
 
 export const AppToolbar: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -108,17 +115,36 @@ export const AppToolbar: React.FC = () => {
     [sm, createShapeTemplate],
   );
 
+  const startLineState = useCallback(
+    (type: string) => {
+      setLineType(type);
+      switch (type) {
+        case "tangent":
+          sm.handleEvent({
+            type: "state",
+            data: { name: "LineTangentReady" },
+          });
+          break;
+        case "normal":
+          break;
+        default:
+          sm.handleEvent({
+            type: "state",
+            data: { name: "LineReady", options: getLineOptions(type) },
+          });
+          break;
+      }
+    },
+    [sm],
+  );
+
   const onDownLineElm = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       const type = e.currentTarget.getAttribute("data-type")!;
-      sm.handleEvent({
-        type: "state",
-        data: { name: "LineReady", options: getLineOptions(type) },
-      });
-      setLineType(type);
+      startLineState(type);
     },
-    [sm],
+    [startLineState],
   );
 
   const handleDownAreaSelect = useCallback(() => {
@@ -161,16 +187,10 @@ export const AppToolbar: React.FC = () => {
       });
       setPopup("");
     } else {
-      sm.handleEvent({
-        type: "state",
-        data: {
-          name: "LineReady",
-          options: getLineOptions(lineType),
-        },
-      });
+      startLineState(lineType);
       setPopup("lines");
     }
-  }, [stateLabel, popup, lineType, sm]);
+  }, [stateLabel, popup, lineType, sm, startLineState]);
 
   const onClickTextButton = useCallback(() => {
     setPopup("");
@@ -204,7 +224,7 @@ export const AppToolbar: React.FC = () => {
             className="bg-white absolute left-0 border p-1 rounded shadow"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
-            {lineTypeList.map((shape) => (
+            {lineButtonTypeList.map((shape) => (
               <div
                 key={shape.type}
                 className={
