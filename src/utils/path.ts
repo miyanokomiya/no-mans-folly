@@ -7,7 +7,9 @@ import {
   applyAffine,
   divideBezier3,
   getApproPoints,
+  getCrossLineAndBezier3,
   getCrossSegAndBezier3WithT,
+  getCrossSegAndLine,
   getDistance,
   getInner,
   getNorm,
@@ -24,6 +26,8 @@ import { ArcCurveControl, BezierCurveControl, CurveControl } from "../models";
 import {
   BEZIER_APPROX_SIZE,
   ISegment,
+  getArcCurveParamsByNormalizedControl,
+  getCrossLineAndArcRotated,
   getCrossSegAndSegWithT,
   getCurveLerpFn,
   getCurvePathStructs,
@@ -369,4 +373,48 @@ export function getClosestPointOnPolyline(
   d += getDistance(edges[closestEdgeIndex][0], closestPedal);
   const rate = d / edgeInfo.totalLength;
   return [edgeInfo.lerpFn(rate), rate];
+}
+
+export function getIntersectionsBetweenLineAndPolyline(
+  line: ISegment,
+  edges: ISegment[],
+  curves?: (CurveControl | undefined)[],
+): IVec2[] {
+  const intersections: IVec2[] = [];
+  edges.forEach((seg, i) => {
+    const curve = curves?.[i];
+    if (isBezieirControl(curve)) {
+      const inter = getCrossLineAndBezier3(line, [seg[0], curve.c1, curve.c2, seg[1]]);
+      if (inter.length > 0) intersections.push(...inter);
+    } else if (isArcControl(curve)) {
+      const arcParams = getArcCurveParamsByNormalizedControl(seg, curve.d);
+      if (arcParams) {
+        const inter = getCrossLineAndArcRotated(
+          line,
+          arcParams.c,
+          arcParams.radius,
+          arcParams.radius,
+          0,
+          arcParams.counterclockwise ? arcParams.to : arcParams.from,
+          arcParams.counterclockwise ? arcParams.from : arcParams.to,
+        );
+        if (inter?.length) intersections.push(...inter);
+      } else {
+        const inter = getCrossSegAndLine(seg, line);
+        if (inter) intersections.push(inter);
+      }
+    } else {
+      const inter = getCrossSegAndLine(seg, line);
+      if (inter) intersections.push(inter);
+    }
+  });
+  return intersections;
+}
+
+export function getIntersectionsBetweenSegAndPolyline(
+  seg: ISegment,
+  edges: ISegment[],
+  curves?: (CurveControl | undefined)[],
+): IVec2[] {
+  return getIntersectionsBetweenLineAndPolyline(seg, edges, curves).filter((p) => isOnSeg(p, seg));
 }

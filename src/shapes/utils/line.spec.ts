@@ -142,49 +142,15 @@ describe("isConnectedToCenter", () => {
 
 describe("getIntersectionsBetweenLineShapeAndLine", () => {
   test("should return intersections between line shape and a line", () => {
-    const shape0 = lineStruct.create({
-      p: { x: 0, y: 0 },
-      q: { x: 100, y: 0 },
-    });
-    const res0 = getIntersectionsBetweenLineShapeAndLine(shape0, [
-      { x: 10, y: -20 },
-      { x: 10, y: 20 },
-    ]);
-    expect(res0, "straight").toEqualPoints([{ x: 10, y: 0 }]);
-
-    const shape1 = lineStruct.create({
-      p: { x: 0, y: 0 },
-      q: { x: 100, y: 0 },
-      curves: [{ d: { x: 0, y: 50 } }],
-    });
-    const res1 = getIntersectionsBetweenLineShapeAndLine(shape1, [
-      { x: 50, y: -20 },
-      { x: 50, y: 20 },
-    ]);
-    expect(res1, "arc").toEqualPoints([{ x: 50, y: 50 }]);
-
-    const shape2 = lineStruct.create({
+    const shape = lineStruct.create({
       p: { x: 0, y: 0 },
       q: { x: 100, y: 0 },
       curves: [{ c1: { x: 0, y: 50 }, c2: { x: 100, y: 50 } }],
     });
-    const res2 = getIntersectionsBetweenLineShapeAndLine(shape2, [
+    const res2 = getIntersectionsBetweenLineShapeAndLine(shape, [
       { x: 50, y: -20 },
       { x: 50, y: 20 },
     ]);
     expect(res2, "bezier").toEqualPoints([{ x: 50, y: 37.5 }]);
-  });
-
-  test("should treat invalid arc as straight segment", () => {
-    const shape0 = lineStruct.create({
-      p: { x: 0, y: 0 },
-      q: { x: 100, y: 0 },
-      curves: [{ d: { x: 0, y: 0 } }],
-    });
-    const res0 = getIntersectionsBetweenLineShapeAndLine(shape0, [
-      { x: 10, y: -20 },
-      { x: 10, y: 20 },
-    ]);
-    expect(res0, "straight").toEqualPoints([{ x: 10, y: 0 }]);
   });
 });

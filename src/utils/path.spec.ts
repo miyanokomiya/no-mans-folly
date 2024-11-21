@@ -5,6 +5,8 @@ import {
   getClosestPointOnPolyline,
   getCornerRadiusArc,
   getCrossBezierPathAndSegment,
+  getIntersectionsBetweenLineAndPolyline,
+  getIntersectionsBetweenSegAndPolyline,
   getPolylineEdgeInfo,
   getSegmentVicinityFrom,
   getSegmentVicinityTo,
@@ -481,5 +483,85 @@ describe("getClosestPointOnPolyline", () => {
     const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 18 }, 10);
     expect(result0?.[0]).toEqualPoint({ x: 39.90006665667716, y: 19.293045251336395 });
     expect(result0?.[1]).toBeCloseTo(0.4081723);
+  });
+});
+
+describe("getIntersectionsBetweenLineAndPolyline", () => {
+  test("should return intersections between line shape and a line", () => {
+    const res0 = getIntersectionsBetweenLineAndPolyline(
+      [
+        { x: 10, y: 10 },
+        { x: 10, y: 30 },
+      ],
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 20 },
+        { x: 0, y: 20 },
+      ]),
+    );
+    expect(res0, "straight").toEqualPoints([
+      { x: 10, y: 0 },
+      { x: 10, y: 20 },
+    ]);
+
+    const res1 = getIntersectionsBetweenLineAndPolyline(
+      [
+        { x: 50, y: -20 },
+        { x: 50, y: 20 },
+      ],
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+      [{ d: { x: 0, y: 50 } }],
+    );
+    expect(res1, "arc").toEqualPoints([{ x: 50, y: 50 }]);
+
+    const res2 = getIntersectionsBetweenLineAndPolyline(
+      [
+        { x: 50, y: -20 },
+        { x: 50, y: 20 },
+      ],
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+      [{ c1: { x: 0, y: 50 }, c2: { x: 100, y: 50 } }],
+    );
+    expect(res2, "bezier").toEqualPoints([{ x: 50, y: 37.5 }]);
+  });
+
+  test("should treat invalid arc as straight segment", () => {
+    const res0 = getIntersectionsBetweenLineAndPolyline(
+      [
+        { x: 10, y: -20 },
+        { x: 10, y: 20 },
+      ],
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+      [{ d: { x: 0, y: 0 } }],
+    );
+    expect(res0, "straight").toEqualPoints([{ x: 10, y: 0 }]);
+  });
+});
+
+describe("getIntersectionsBetweenSegAndPolyline", () => {
+  test("should exclude intersections outside the segment", () => {
+    const res0 = getIntersectionsBetweenSegAndPolyline(
+      [
+        { x: 10, y: 10 },
+        { x: 10, y: 30 },
+      ],
+      getSegments([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 20 },
+        { x: 0, y: 20 },
+      ]),
+    );
+    expect(res0).toEqualPoints([{ x: 10, y: 20 }]);
   });
 });

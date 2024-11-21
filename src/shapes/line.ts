@@ -25,6 +25,7 @@ import {
   isPointCloseToCurveSpline,
   getRotatedAtAffine,
   getPointLerpSlope,
+  sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
@@ -41,6 +42,7 @@ import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 import {
   getClosestPointOnPolyline,
+  getIntersectionsBetweenSegAndPolyline,
   getPolylineEdgeInfo,
   getSegmentVicinityFrom,
   getSegmentVicinityTo,
@@ -450,6 +452,11 @@ export const struct: ShapeStruct<LineShape> = {
     const closestInfo = getClosestPointOnPolyline(edgeInfo, p, Infinity);
     if (!closestInfo) return shape.rotation;
     return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
+  },
+  getIntersectedOutlines(shape, from, to) {
+    const seg: ISegment = [from, to];
+    const intersections = getIntersectionsBetweenSegAndPolyline(seg, getEdges(shape), shape.curves);
+    return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
   },
   transparentSelection: true,
 };

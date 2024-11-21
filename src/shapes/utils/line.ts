@@ -1,13 +1,13 @@
-import { getCrossLineAndBezier3, getCrossSegAndLine, getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
+import { getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
 import { getEdges, LineShape, struct } from "../line";
 import {
   getClosestPointOnPolyline,
+  getIntersectionsBetweenLineAndPolyline,
   getPolylineEdgeInfo,
-  isArcControl,
   isBezieirControl,
   PolylineEdgeInfo,
 } from "../../utils/path";
-import { getArcCurveParamsByNormalizedControl, getCrossLineAndArcRotated, ISegment } from "../../utils/geometry";
+import { ISegment } from "../../utils/geometry";
 import { ConnectionPoint } from "../../models";
 
 /**
@@ -94,36 +94,5 @@ export function isConnectedToCenter(c: ConnectionPoint): boolean {
 }
 
 export function getIntersectionsBetweenLineShapeAndLine(shape: LineShape, line: ISegment): IVec2[] {
-  const edges = getEdges(shape);
-  const curves = shape.curves;
-
-  const intersections: IVec2[] = [];
-  edges.forEach((seg, i) => {
-    const curve = curves?.[i];
-    if (isBezieirControl(curve)) {
-      const inter = getCrossLineAndBezier3(line, [seg[0], curve.c1, curve.c2, seg[1]]);
-      if (inter.length > 0) intersections.push(...inter);
-    } else if (isArcControl(curve)) {
-      const arcParams = getArcCurveParamsByNormalizedControl(seg, curve.d);
-      if (arcParams) {
-        const inter = getCrossLineAndArcRotated(
-          line,
-          arcParams.c,
-          arcParams.radius,
-          arcParams.radius,
-          0,
-          arcParams.counterclockwise ? arcParams.to : arcParams.from,
-          arcParams.counterclockwise ? arcParams.from : arcParams.to,
-        );
-        if (inter?.length) intersections.push(...inter);
-      } else {
-        const inter = getCrossSegAndLine(seg, line);
-        if (inter) intersections.push(inter);
-      }
-    } else {
-      const inter = getCrossSegAndLine(seg, line);
-      if (inter) intersections.push(inter);
-    }
-  });
-  return intersections;
+  return getIntersectionsBetweenLineAndPolyline(line, getEdges(shape), shape.curves);
 }
