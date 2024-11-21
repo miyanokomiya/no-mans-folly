@@ -84,6 +84,7 @@ import {
   getDiagonalLengthOfRect,
   getRectFeaturePoints,
   getClosestLineToRectFeaturePoints,
+  getEllipseSlopeAt,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1989,5 +1990,13 @@ describe("getClosestLineToRectFeaturePoints", () => {
       { x: 10, y: 45 },
       { x: 20, y: 45 },
     ]);
+  });
+});
+
+describe("getEllipseSlopeAt", () => {
+  test("should return slope of the ellipse at the point", () => {
+    expect(getEllipseSlopeAt({ x: 10, y: 20 }, 10, 10, { x: 20, y: 30 })).toBeCloseTo(-Math.PI / 4);
+    expect(getEllipseSlopeAt({ x: 10, y: 20 }, 10, 20, { x: 20, y: 30 })).toBeLessThan(-Math.PI / 4);
+    expect(getEllipseSlopeAt({ x: 10, y: 20 }, 20, 10, { x: 20, y: 30 })).toBeGreaterThan(-Math.PI / 4);
   });
 });

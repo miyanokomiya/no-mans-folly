@@ -1389,3 +1389,8 @@ export function getClosestLineToRectFeaturePoints(rect: IRectangle, lines: ISegm
     (info) => info?.[1] ?? Infinity,
   )?.[0];
 }
+
+export function getEllipseSlopeAt(c: IVec2, rx: number, ry: number, p: IVec2): number {
+  const centeredP = sub(p, c);
+  return Math.atan2(centeredP.y * rx * rx, centeredP.x * ry * ry) - Math.PI / 2;
+}
