@@ -51,6 +51,7 @@ interface Option {
   snappableShapes: Shape[];
   shapeSnapping?: ShapeSnapping;
   getShapeStruct: GetShapeStruct;
+  threshold?: number;
 }
 
 export type ConnectionResult = {
@@ -79,7 +80,7 @@ export function newLineSnapping(option: Option) {
   });
 
   function testConnection(point: IVec2, scale: number): ConnectionResult | undefined {
-    const threshold = SNAP_THRESHOLD * scale;
+    const threshold = (option.threshold ?? SNAP_THRESHOLD) * scale;
 
     // Points in a guide line are order sensitive: The first item shouldn't be snapped point.
     // => This assumption is used for snapping to a shape's outline.
@@ -190,8 +191,11 @@ export function newLineSnapping(option: Option) {
 
     // Try snapping to other shapes' outline
     let outline: { p: IVec2; shape: Shape; guideLine?: ISegment } | undefined;
-    let outlineThreshold = threshold;
     {
+      // Set the threshold for markers up to default value, otherwise markers would be too strong.
+      const outlineThresholdForMarker = Math.min(SNAP_THRESHOLD * scale, threshold);
+      let outlineThreshold = threshold;
+
       reversedSnappableShapes.forEach((shape) => {
         // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
         let intersection: IVec2 | undefined;
@@ -216,7 +220,13 @@ export function newLineSnapping(option: Option) {
         // If there's no intersection, seek the closest outline point.
         const p =
           intersection ??
-          getClosestOutline(option.getShapeStruct, shape, point, outlineThreshold, outlineThreshold / 2);
+          getClosestOutline(
+            option.getShapeStruct,
+            shape,
+            point,
+            outlineThreshold,
+            Math.min(outlineThresholdForMarker, outlineThreshold),
+          );
         if (!p) {
           // If there's no close outline, check the center.
           const rect = shapeComposite.getWrapperRect(shape);

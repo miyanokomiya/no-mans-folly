@@ -38,7 +38,7 @@ export function newLineNormalReadyState(): AppCanvasState {
   };
 
   const getGuideline = (slope: number, point: IVec2, vertex: IVec2): ISegment => {
-    const v = multi(rotate({ x: 1, y: 0 }, slope + Math.PI / 2), 100);
+    const v = multi(rotate({ x: 1, y: 0 }, slope + Math.PI / 2), 50);
     if (getInner(sub(point, vertex), v) < 0) {
       return [vertex, sub(vertex, v)];
     } else {
@@ -67,10 +67,12 @@ export function newLineNormalReadyState(): AppCanvasState {
         snappableShapes,
         shapeSnapping,
         getShapeStruct: ctx.getShapeStruct,
+        threshold: 60,
       });
       lineSnappingWithoutGuideline = newLineSnapping({
         snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
+        threshold: 60,
       });
 
       vertex = ctx.getCursorPoint();

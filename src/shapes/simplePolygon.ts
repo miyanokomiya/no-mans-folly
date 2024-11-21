@@ -200,7 +200,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       if (options?.getOutlineSnaps) {
         const points = options.getOutlineSnaps(shape);
-        const rotatedClosest = points.find((m) => getDistance(m, localP) <= threshold);
+        const rotatedClosest = points.find((m) => getDistance(m, localP) <= thresholdForMarker);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 
@@ -210,7 +210,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       } else {
         // Ignore conventional markers when the shape has a curve.
-        const rotatedClosest = path.find((m) => getDistance(m, localP) <= threshold);
+        const rotatedClosest = path.find((m) => getDistance(m, localP) <= thresholdForMarker);
         if (rotatedClosest) return applyAffine(transform, rotatedClosest);
       }
 

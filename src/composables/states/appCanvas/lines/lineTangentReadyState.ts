@@ -58,10 +58,12 @@ export function newLineTangentReadyState(): AppCanvasState {
         snappableShapes,
         shapeSnapping,
         getShapeStruct: ctx.getShapeStruct,
+        threshold: 60,
       });
       lineSnappingWithoutGuideline = newLineSnapping({
         snappableShapes,
         getShapeStruct: ctx.getShapeStruct,
+        threshold: 60,
       });
 
       vertex = ctx.getCursorPoint();
