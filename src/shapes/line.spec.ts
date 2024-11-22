@@ -150,6 +150,21 @@ describe("struct", () => {
       const shape = struct.create({ p: { x: 1, y: 2 }, q: { x: 10, y: -20 } });
       expect(struct.getWrapperRect(shape)).toEqual({ x: 1, y: -20, width: 9, height: 22 });
     });
+
+    test("should inherit parent's rotation when shapeContext is provided and the parent is rotated", () => {
+      const parent = groupStruct.create({
+        id: "parent",
+        rotation: Math.PI / 4,
+      });
+      const shape = struct.create({
+        p: { x: 0, y: 0 },
+        body: [{ p: { x: 10, y: 10 } }, { p: { x: 0, y: 20 } }],
+        q: { x: -10, y: 10 },
+        parentId: parent.id,
+      });
+      const composite = newShapeComposite({ getStruct: getCommonStruct, shapes: [parent, shape] });
+      expect(composite.getWrapperRect(shape)).toEqualRect({ x: -10, y: 0, width: 20, height: 20 });
+    });
   });
 
   describe("getLocalRectPolygon", () => {

@@ -247,7 +247,33 @@ describe("struct", () => {
           shapes: [group, child0, child1],
           getStruct: getCommonStruct,
         }).getShapeActualPosition(group),
-      ).toEqual({ x: 1, y: 2 });
+      ).toEqualPoint({ x: 1, y: 2 });
+    });
+
+    test("should regard rotation", () => {
+      const group = struct.create({ id: "group", rotation: Math.PI / 4 });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+        rotation: Math.PI / 4,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+        rotation: Math.PI / 4,
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0, child1],
+          getStruct: getCommonStruct,
+        }).getShapeActualPosition(group),
+      ).toEqualPoint({ x: 1, y: 2 });
     });
   });
 

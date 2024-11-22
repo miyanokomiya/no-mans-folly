@@ -1,7 +1,7 @@
 import { ShapeContext, ShapeStruct, canHaveOutlineWithinGroup, createBaseShape } from "./core";
 import { ClipRule, Shape } from "../models";
 import { getRectPoints, getRotateFn, getWrapperRect } from "../utils/geometry";
-import { IVec2, applyAffine, getOuterRectangle, getRadian, getRectCenter } from "okageo";
+import { IVec2, applyAffine, getCenter, getOuterRectangle, getRadian, getRectCenter, rotate } from "okageo";
 import { splitList } from "../utils/commons";
 
 export type GroupShape = Shape & {
@@ -89,8 +89,9 @@ export const struct: ShapeStruct<GroupShape> = {
     return { v: [], h: [] };
   },
   getActualPosition(shape, shapeContext) {
-    const rect = struct.getWrapperRect(shape, shapeContext);
-    return { x: rect.x, y: rect.y };
+    const rectPath = struct.getLocalRectPolygon(shape, shapeContext);
+    const c = getCenter(rectPath[0], rectPath[2]);
+    return rotate(rectPath[0], -shape.rotation, c);
   },
   shouldDelete(shape, shapeContext) {
     // Should delete when there's no children.

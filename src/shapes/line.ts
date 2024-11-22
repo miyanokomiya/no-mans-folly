@@ -28,7 +28,7 @@ import {
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
+import { ShapeContext, ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
 import {
   clipLineHead,
   createLineHeadSVGClipPathCommand,
@@ -278,36 +278,22 @@ export const struct: ShapeStruct<LineShape> = {
     };
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
-    const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
-    // Regard curves only when bounds included.
-    // => Otherwise, the bounds doesn't represent vertices.
-    let rect = includeBounds
-      ? getCurveSplineBounds(curvePath.path, curvePath.curves)
-      : getCurveSplineBounds(getLinePath(shape), undefined);
+    if (!shapeContext || !shape.parentId) return getWrapperRectWithoutRotation(shape, shapeContext, includeBounds);
 
-    if (includeBounds) {
-      const affines = getHeadAffines(shape);
-      const headRects: IRectangle[] = [];
-      if (shape.pHead && affines.pAffine) {
-        const srcPath = getLineHeadWrapperSrcPath(shape.pHead, shape.stroke.width ?? 1);
-        headRects.push(getOuterRectangle([srcPath.map((p) => applyAffine(affines.pAffine!, p))]));
-      }
-      if (shape.qHead && affines.qAffine) {
-        const srcPath = getLineHeadWrapperSrcPath(shape.qHead, shape.stroke.width ?? 1);
-        headRects.push(getOuterRectangle([srcPath.map((p) => applyAffine(affines.qAffine!, p))]));
-      }
-      rect = headRects.length > 0 ? getWrapperRect([rect, ...headRects]) : rect;
-    }
+    const parent = shapeContext.shapeMap[shape.parentId];
+    if (!parent || parent.rotation === 0) return getWrapperRectWithoutRotation(shape, shapeContext, includeBounds);
 
-    if (includeBounds) {
-      // FIXME: This expanding isn't precise but just large enough.
-      rect = expandRect(rect, getLineWidth(shape) / 1.9);
-    }
-
-    return rect;
+    // Likewise "getLocalRectPolygon"
+    const wrapper = getWrapperRectWithoutRotation(shape);
+    const c = getRectCenter(wrapper);
+    const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
+    const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
+    const derotatedWrapper = getWrapperRectWithoutRotation(derotated, shapeContext, includeBounds);
+    const rotateAffine = getRotatedAtAffine(c, parent.rotation);
+    return getOuterRectangle([getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p))]);
   },
   getLocalRectPolygon(shape, shapeContext) {
-    const wrapper = struct.getWrapperRect(shape);
+    const wrapper = getWrapperRectWithoutRotation(shape);
     if (!shapeContext || !shape.parentId) return getRectPoints(wrapper);
 
     const parent = shapeContext.shapeMap[shape.parentId];
@@ -319,7 +305,7 @@ export const struct: ShapeStruct<LineShape> = {
     const c = getRectCenter(wrapper);
     const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
     const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
-    const derotatedWrapper = struct.getWrapperRect(derotated);
+    const derotatedWrapper = getWrapperRectWithoutRotation(derotated);
     const rotateAffine = getRotatedAtAffine(c, parent.rotation);
     return getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p));
   },
@@ -875,4 +861,34 @@ export function combineJumps(shape: LineShape, jumps?: ISegment[][]): { path: IV
   });
 
   return { path, curves };
+}
+
+function getWrapperRectWithoutRotation(shape: LineShape, shapeContext?: ShapeContext, includeBounds = false) {
+  const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
+  // Regard curves only when bounds included.
+  // => Otherwise, the bounds doesn't represent vertices.
+  let rect = includeBounds
+    ? getCurveSplineBounds(curvePath.path, curvePath.curves)
+    : getCurveSplineBounds(getLinePath(shape), undefined);
+
+  if (includeBounds) {
+    const affines = getHeadAffines(shape);
+    const headRects: IRectangle[] = [];
+    if (shape.pHead && affines.pAffine) {
+      const srcPath = getLineHeadWrapperSrcPath(shape.pHead, shape.stroke.width ?? 1);
+      headRects.push(getOuterRectangle([srcPath.map((p) => applyAffine(affines.pAffine!, p))]));
+    }
+    if (shape.qHead && affines.qAffine) {
+      const srcPath = getLineHeadWrapperSrcPath(shape.qHead, shape.stroke.width ?? 1);
+      headRects.push(getOuterRectangle([srcPath.map((p) => applyAffine(affines.qAffine!, p))]));
+    }
+    rect = headRects.length > 0 ? getWrapperRect([rect, ...headRects]) : rect;
+  }
+
+  if (includeBounds) {
+    // FIXME: This expanding isn't precise but just large enough.
+    rect = expandRect(rect, getLineWidth(shape) / 1.9);
+  }
+
+  return rect;
 }
