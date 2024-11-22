@@ -791,6 +791,9 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
     const affine = multiAffines(affines);
     if (isAlignBoxShape(s)) {
       const val = shapeComposite.transformShape(s, affine);
+      // "baseWidth" and "baseHeight" shouldn't be changed by layout logic.
+      delete val.baseWidth;
+      delete val.baseHeight;
       if (!isObjectEmpty(val)) {
         ret[s.id] = val;
       }

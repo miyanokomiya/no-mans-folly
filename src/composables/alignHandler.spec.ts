@@ -146,7 +146,7 @@ describe("getNextAlignLayout", () => {
       getStruct: getCommonStruct,
     });
     const result = getNextAlignLayout(shapeComposite, box0.id);
-    expect(result[box0.id]).toEqual({ width: 30, baseWidth: 30 });
+    expect(result[box0.id]).toEqual({ width: 30 });
     expect(result).not.toHaveProperty(rect0.id);
     expect(result).toHaveProperty(rect1.id);
   });
