@@ -76,4 +76,12 @@ describe("struct", () => {
       expect(res2?.[0].y).toBeCloseTo(10);
     });
   });
+
+  describe("getTangentAt", () => {
+    test("should return tangent at the point", () => {
+      const shape = struct.create({ width: 100, height: 100, rotation: Math.PI / 4 });
+      expect(struct.getTangentAt?.(shape, { x: 14, y: 14 })).toBeCloseTo(-Math.PI / 4);
+      expect(struct.getTangentAt?.(shape, { x: 86, y: 14 })).toBeCloseTo(Math.PI / 4);
+    });
+  });
 });

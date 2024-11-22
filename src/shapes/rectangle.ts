@@ -159,7 +159,7 @@ export const struct: ShapeStruct<RectangleShape> = {
 
     const closestInfo = getClosestPointOnPolyline(edgeInfo, p, Infinity);
     if (!closestInfo) return shape.rotation;
-    return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]) + shape.rotation;
+    return getPointLerpSlope(edgeInfo.lerpFn, closestInfo[1]);
   },
   getCommonStyle,
   updateCommonStyle,
