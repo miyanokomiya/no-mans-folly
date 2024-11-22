@@ -278,36 +278,10 @@ export const struct: ShapeStruct<LineShape> = {
     };
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
-    if (!shapeContext || !shape.parentId) return getWrapperRectWithoutRotation(shape, shapeContext, includeBounds);
-
-    const parent = shapeContext.shapeMap[shape.parentId];
-    if (!parent || parent.rotation === 0) return getWrapperRectWithoutRotation(shape, shapeContext, includeBounds);
-
-    // Likewise "getLocalRectPolygon"
-    const wrapper = getWrapperRectWithoutRotation(shape);
-    const c = getRectCenter(wrapper);
-    const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
-    const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
-    const derotatedWrapper = getWrapperRectWithoutRotation(derotated, shapeContext, includeBounds);
-    const rotateAffine = getRotatedAtAffine(c, parent.rotation);
-    return getOuterRectangle([getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p))]);
+    return getOuterRectangle([getLineLocalRectPolygon(shape, shapeContext, includeBounds)]);
   },
   getLocalRectPolygon(shape, shapeContext) {
-    const wrapper = getWrapperRectWithoutRotation(shape);
-    if (!shapeContext || !shape.parentId) return getRectPoints(wrapper);
-
-    const parent = shapeContext.shapeMap[shape.parentId];
-    if (!parent || parent.rotation === 0) return getRectPoints(wrapper);
-
-    // Lines basically don't have the concept of rotation.
-    // When a line has a rotated parent, let the line inherit the rotation to derive its local-rect polygon.
-    // => This behavior can optimize the bounds of parent group shape.
-    const c = getRectCenter(wrapper);
-    const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
-    const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
-    const derotatedWrapper = getWrapperRectWithoutRotation(derotated);
-    const rotateAffine = getRotatedAtAffine(c, parent.rotation);
-    return getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p));
+    return getLineLocalRectPolygon(shape, shapeContext);
   },
   isPointOn(shape, p, shapeContext, scale = 1) {
     const affines = getHeadAffines(shape);
@@ -863,7 +837,29 @@ export function combineJumps(shape: LineShape, jumps?: ISegment[][]): { path: IV
   return { path, curves };
 }
 
-function getWrapperRectWithoutRotation(shape: LineShape, shapeContext?: ShapeContext, includeBounds = false) {
+function getLineLocalRectPolygon(shape: LineShape, shapeContext?: ShapeContext, includeBounds = false) {
+  const wrapper = getWrapperRectWithoutRotation(shape, shapeContext, includeBounds);
+  if (!shapeContext || !shape.parentId) return getRectPoints(wrapper);
+
+  const parent = shapeContext.shapeMap[shape.parentId];
+  if (!parent || parent.rotation === 0) return getRectPoints(wrapper);
+
+  // Lines basically don't have the concept of rotation.
+  // When a line has a rotated parent, let the line inherit the rotation to derive its local-rect polygon.
+  // => This behavior can optimize the bounds of parent group shape.
+  const c = getRectCenter(wrapper);
+  const derotateAffine = getRotatedAtAffine(c, -parent.rotation);
+  const derotated = { ...shape, ...struct.resize(shape, derotateAffine) };
+  const derotatedWrapper = getWrapperRectWithoutRotation(derotated, shapeContext, includeBounds);
+  const rotateAffine = getRotatedAtAffine(c, parent.rotation);
+  return getRectPoints(derotatedWrapper).map((p) => applyAffine(rotateAffine, p));
+}
+
+function getWrapperRectWithoutRotation(
+  shape: LineShape,
+  shapeContext?: ShapeContext,
+  includeBounds = false,
+): IRectangle {
   const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
   // Regard curves only when bounds included.
   // => Otherwise, the bounds doesn't represent vertices.
