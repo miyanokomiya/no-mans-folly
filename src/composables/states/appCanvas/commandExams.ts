@@ -12,6 +12,8 @@ export const COMMAND_EXAM_SRC = {
   SLIDE_ATTACH_ANCHOR: { command: "Shift + Drag", title: "Slide anchor" },
   PRESERVE_ATTACHMENT: { command: getAltOrOptionStr(), title: "Preserve attachment" },
 
+  ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
+
   LABEL_ALIGN: { command: "Shift", title: "Adjust label align" },
   LABEL_ALIGN_ACTIVATE: { command: "Shift + Drag", title: "Adjust label align" },
 

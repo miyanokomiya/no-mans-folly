@@ -207,6 +207,10 @@ export const newLineSelectedState = defineIntransientState(() => {
             const connection = getConnection(lineShape, hitResult.index);
             ctx.setContextMenuList({
               items: [
+                {
+                  ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
+                  meta: { index: hitResult.index } as VertexMetaForContextMenu,
+                },
                 ...(connection
                   ? [
                       {
@@ -253,6 +257,13 @@ export const newLineSelectedState = defineIntransientState(() => {
                 ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
               }
               return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX.key: {
+              return () =>
+                ctx.states.newVertexAttachingState({
+                  lineShape,
+                  index: (event.data.meta as VertexMetaForContextMenu).index,
+                });
             }
             case CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H.key: {
               const patch = patchByFliplineH(lineShape);

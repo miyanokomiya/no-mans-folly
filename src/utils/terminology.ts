@@ -36,6 +36,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.makepolygon.desc"),
     };
   },
+  get ATTACH_LINE_VERTEX() {
+    return {
+      text: i18n.t("term.attach_vertex"),
+      description: i18n.t("term.attach_vertex.desc"),
+    };
+  },
 };
 
 export function parseTerminologies(src: string): TerminologyItem[] {

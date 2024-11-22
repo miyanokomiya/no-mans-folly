@@ -3,6 +3,7 @@ import { newLineReadyState } from "./lines/lineReadyState";
 import { newLineTangentReadyState } from "./lines/lineTangentReadyState";
 import { newMovingAnchorOnLineState } from "./lines/movingAnchorOnLineState";
 import { newMovingOnLineState } from "./lines/movingOnLineState";
+import { newVertexAttachingState } from "./lines/vertexAttachingState";
 import { newMovingHubState } from "./movingHubState";
 import { newSelectionHubState } from "./selectionHubState";
 
@@ -15,5 +16,6 @@ export const stateGenerators = {
   newLineReadyState,
   newLineTangentReadyState,
   newLineNormalReadyState,
+  newVertexAttachingState,
 };
 export type StateGenerators = typeof stateGenerators;

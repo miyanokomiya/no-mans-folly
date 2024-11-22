@@ -41,6 +41,8 @@ const en = {
       "linejump.desc": "Jump over background lines. This works only between straight segments.",
       makepolygon: "Make polygon",
       "makepolygon.desc": "To make a polygon, source line has to be neither an elbow nor a segment.",
+      attach_vertex: "Attach vertex",
+      "attach_vertex.desc": "Remotely attach the vertex to a shape.",
     },
 
     contextmenu: {
@@ -61,6 +63,7 @@ const en = {
       "flip.v": "Flip vertically",
       "vertex.delete": "Delete vertex",
       "vertex.detach": "Detach vertex",
+      "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
     },
   },
 };
@@ -104,6 +107,8 @@ const ja: TranslationResource = {
       "linejump.desc": "背後のラインをジャンプします。直線同士でのみジャンプが発生します。",
       makepolygon: "ポリゴン化",
       "makepolygon.desc": "エルボー、あるいは単一線分はポリゴン化できません。",
+      attach_vertex: "頂点接続",
+      "attach_vertex.desc": "頂点を遠隔でシェイプに接続します。",
     },
 
     contextmenu: {
@@ -124,6 +129,7 @@ const ja: TranslationResource = {
       "flip.v": "垂直反転",
       "vertex.delete": "頂点削除",
       "vertex.detach": "頂点接続解除",
+      "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
     },
   },
 };
