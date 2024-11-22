@@ -42,6 +42,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.attach_vertex.desc"),
     };
   },
+  get ATTACH_LINE_VERTICES() {
+    return {
+      text: i18n.t("term.attach_vertices"),
+      description: i18n.t("term.attach_vertices.desc"),
+    };
+  },
 };
 
 export function parseTerminologies(src: string): TerminologyItem[] {

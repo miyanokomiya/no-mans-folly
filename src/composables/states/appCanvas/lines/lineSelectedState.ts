@@ -233,6 +233,7 @@ export const newLineSelectedState = defineIntransientState(() => {
 
           ctx.setContextMenuList({
             items: [
+              CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
               { separator: true },
@@ -264,6 +265,9 @@ export const newLineSelectedState = defineIntransientState(() => {
                   lineShape,
                   index: (event.data.meta as VertexMetaForContextMenu).index,
                 });
+            }
+            case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES.key: {
+              return () => ctx.states.newVertexAttachingState({ lineShape });
             }
             case CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H.key: {
               const patch = patchByFliplineH(lineShape);

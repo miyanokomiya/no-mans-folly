@@ -139,6 +139,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "ATTACH_LINE_VERTEX",
     };
   },
+  get ATTACH_LINE_VERTICES() {
+    return {
+      label: i18n.t("contextmenu.vertex.attach.all"),
+      key: "ATTACH_LINE_VERTICES",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

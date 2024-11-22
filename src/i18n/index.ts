@@ -43,6 +43,8 @@ const en = {
       "makepolygon.desc": "To make a polygon, source line has to be neither an elbow nor a segment.",
       attach_vertex: "Attach vertex",
       "attach_vertex.desc": "Remotely attach the vertex to a shape.",
+      attach_vertices: "Attach all vertices",
+      "attach_vertices.desc": "Remotely attach all vertices to a shape.",
     },
 
     contextmenu: {
@@ -64,6 +66,7 @@ const en = {
       "vertex.delete": "Delete vertex",
       "vertex.detach": "Detach vertex",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
+      "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
     },
   },
 };
@@ -109,6 +112,8 @@ const ja: TranslationResource = {
       "makepolygon.desc": "エルボー、あるいは単一線分はポリゴン化できません。",
       attach_vertex: "頂点接続",
       "attach_vertex.desc": "頂点を遠隔でシェイプに接続します。",
+      attach_vertices: "全頂点接続",
+      "attach_vertices.desc": "全頂点を遠隔でシェイプに接続します。",
     },
 
     contextmenu: {
@@ -130,6 +135,7 @@ const ja: TranslationResource = {
       "vertex.delete": "頂点削除",
       "vertex.detach": "頂点接続解除",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
+      "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
     },
   },
 };

@@ -1,7 +1,7 @@
 import type { AppCanvasState } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
 import { newDefaultState } from "../defaultState";
-import { getLinePath, isLineShape, LineShape, patchVertex } from "../../../../shapes/line";
+import { getLinePath, isLineShape, LineShape, patchVertices } from "../../../../shapes/line";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { handleCommonWheel } from "../../commons";
 import { findBackward } from "../../../../utils/commons";
@@ -15,20 +15,24 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   lineShape: LineShape;
-  index: number;
+  index?: number;
 }
 
 export function newVertexAttachingState(option: Option): AppCanvasState {
   let snappableIdSet = new Set<string>();
   let candidateId: string | undefined;
-  let vertex: IVec2;
+  let verticesInfo: [index: number, IVec2][];
 
   return {
     getLabel: () => "VertexAttaching",
     onStart: (ctx) => {
       ctx.setCommandExams([COMMAND_EXAM_SRC.ATTACH_LINE_VERTEX]);
 
-      vertex = getLinePath(option.lineShape)[option.index];
+      if (option.index === undefined) {
+        verticesInfo = getLinePath(option.lineShape).map((p, i) => [i, p]);
+      } else {
+        verticesInfo = [[option.index, getLinePath(option.lineShape)[option.index]]];
+      }
       const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]).filter((s) => !isLineShape(s));
       snappableIdSet = new Set(snappableCandidates.map((s) => s.id));
     },
@@ -44,11 +48,15 @@ export function newVertexAttachingState(option: Option): AppCanvasState {
               const candidate = candidateId ? shapeComposite.shapeMap[candidateId] : undefined;
               if (!candidate) return ctx.states.newSelectionHubState;
 
-              const connection: ConnectionPoint = {
-                rate: shapeComposite.getLocationRateOnShape(candidate, vertex),
-                id: candidate.id,
-              };
-              const patch = patchVertex(option.lineShape, option.index, vertex, connection);
+              const patchInfo = verticesInfo.map<[index: number, p: IVec2, c: ConnectionPoint]>((info) => [
+                info[0],
+                info[1],
+                {
+                  rate: shapeComposite.getLocationRateOnShape(candidate, info[1]),
+                  id: candidate.id,
+                },
+              ]);
+              const patch = patchVertices(option.lineShape, patchInfo);
               ctx.patchShapes({
                 [option.lineShape.id]: patch,
               });
@@ -116,9 +124,11 @@ export function newVertexAttachingState(option: Option): AppCanvasState {
       applyFillStyle(renderCtx, {
         color: style.selectionSecondaly,
       });
-      renderCtx.beginPath();
-      renderCtx.arc(vertex.x, vertex.y, 8 * scale, 0, TAU);
-      renderCtx.fill();
+      verticesInfo.forEach(([, vertex]) => {
+        renderCtx.beginPath();
+        renderCtx.arc(vertex.x, vertex.y, 8 * scale, 0, TAU);
+        renderCtx.fill();
+      });
     },
   };
 }
