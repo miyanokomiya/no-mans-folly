@@ -6,6 +6,7 @@ import { RectangleShape } from "../shapes/rectangle";
 import { getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { EntityPatchInfo, Shape } from "../models";
 import { TextShape } from "../shapes/text";
+import { LineShape } from "../shapes/line";
 
 const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
   id: "box0",
@@ -145,7 +146,7 @@ describe("getNextAlignLayout", () => {
       getStruct: getCommonStruct,
     });
     const result = getNextAlignLayout(shapeComposite, box0.id);
-    expect(result[box0.id]).toEqual({ width: 30 });
+    expect(result[box0.id]).toEqual({ width: 30, baseWidth: 30 });
     expect(result).not.toHaveProperty(rect0.id);
     expect(result).toHaveProperty(rect1.id);
   });
@@ -176,13 +177,19 @@ describe("getNextAlignLayout", () => {
       width: 30,
       height: 30,
     });
+    const child1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "child1",
+      parentId: group0.id,
+      q: { x: 100, y: 10 },
+    });
     const shapeComposite = newShapeComposite({
-      shapes: [box0, rect0, group0, child0],
+      shapes: [box0, rect0, group0, child0, child1],
       getStruct: getCommonStruct,
     });
     const result = getNextAlignLayout(shapeComposite, box0.id);
-    expect(result[group0.id]).toEqual({ p: { x: 0, y: 40 } });
+    expect(result).not.toHaveProperty(group0.id);
     expect(result[child0.id]).toEqual({ p: { x: 0, y: 40 } });
+    expect(result[child1.id]).toEqual({ p: { x: 0, y: 40 }, q: { x: 100, y: 50 } });
   });
 
   test("should take care of group shape's position", () => {
@@ -201,7 +208,7 @@ describe("getNextAlignLayout", () => {
       getStruct: getCommonStruct,
     });
     const result = getNextAlignLayout(shapeComposite, box0.id);
-    expect(result).toHaveProperty(group0.id);
+    expect(result).not.toHaveProperty(group0.id);
     expect(result[child0.id]).toEqual({ p: { x: 0, y: 80 } });
   });
 });

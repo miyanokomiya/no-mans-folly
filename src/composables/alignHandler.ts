@@ -1,4 +1,15 @@
-import { IRectangle, IVec2, add, applyAffine, getCenter, getRectCenter, isSame, rotate, sub } from "okageo";
+import {
+  AffineMatrix,
+  IRectangle,
+  IVec2,
+  add,
+  applyAffine,
+  getCenter,
+  getRectCenter,
+  isZero,
+  multiAffines,
+  sub,
+} from "okageo";
 import { BoxValues4, Direction2, Direction4, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
@@ -26,7 +37,7 @@ import { renderArrowUnit, renderOutlinedCircle, renderRoundedSegment, renderValu
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
 import { isLineShape } from "../shapes/line";
-import { mapEach, toMap } from "../utils/commons";
+import { isObjectEmpty, toMap } from "../utils/commons";
 import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
 import { generateKeyBetween } from "../utils/findex";
 
@@ -734,11 +745,9 @@ function toLayoutNodes(
   const adjustedLayoutNodes = layoutNodes.map((node) => {
     if (rootShape.id === node.id) return node;
 
-    const shape = shapeComposite.mergedShapeMap[node.id];
-    const sc = getRectCenter(node.rect);
     return {
       ...node,
-      rect: { ...node.rect, ...rotateFn(rotate(node.rect, shape.rotation, sc), true) },
+      rect: { ...node.rect, ...rotateFn(node.rect, true) },
     };
   });
 
@@ -750,92 +759,52 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
   const layoutNodeMap = toMap(layoutNodes);
   const result = alignLayout(layoutNodes);
 
-  // Apply root rotation to layout result if the root has rotation
-  const rotatedPatchMap: { [id: string]: Partial<Shape> & Partial<AlignBoxShape> } = {};
-  if (rootShape.rotation !== 0) {
-    // Get updated shapes without rotation
-    const updated = result.map<Shape>((r) => {
-      const s = shapeComposite.shapeMap[r.id];
-      if (isAlignBoxShape(s)) {
-        return { ...s, rotation: 0, p: { x: r.rect.x, y: r.rect.y }, width: r.rect.width, height: r.rect.height };
-      } else {
-        return { ...s, rotation: 0, p: add(r.rect, layoutNodeMap[r.id].positionDiff ?? { x: 0, y: 0 }) };
-      }
-    });
-
-    // Get rotated patch info
-    const layoutRootNode = layoutNodeMap[rootId];
-    const affine = getRotatedAtAffine(getRectCenter(layoutRootNode.rect), rootShape.rotation);
-
-    updated.forEach((s) => {
-      rotatedPatchMap[s.id] = shapeComposite.transformShape(s, affine);
-    });
-  }
-
+  const rootRotateAffine =
+    rootShape.rotation !== 0
+      ? getRotatedAtAffine(getRectCenter(layoutNodeMap[rootId].rect), rootShape.rotation)
+      : undefined;
   const ret: { [id: string]: Partial<Shape> & Partial<AlignBoxShape> } = {};
   result.forEach((r) => {
     const s = shapeComposite.shapeMap[r.id];
+    const srcNode = layoutNodeMap[r.id];
     const srcPosition = shapeComposite.getShapeActualPosition(s);
-    const rotatedPatch = rotatedPatchMap[r.id] ?? {};
 
-    const patch: Partial<Shape> & Partial<AlignBoxShape> = {};
-    let updated = false;
-
-    const p = rotatedPatch.p ?? add(r.rect, layoutNodeMap[r.id].positionDiff ?? { x: 0, y: 0 });
-    if (!isSame(srcPosition, p)) {
-      patch.p = p;
-      updated = true;
+    const p = add(r.rect, layoutNodeMap[r.id].positionDiff ?? { x: 0, y: 0 });
+    const v = sub(p, srcPosition);
+    const affines: AffineMatrix[] = [];
+    if (rootRotateAffine) {
+      affines.push(rootRotateAffine);
     }
-
-    if (rootShape.rotation !== s.rotation) {
-      patch.rotation = rootShape.rotation;
-      updated = true;
+    if (!isZero(v)) {
+      affines.push([1, 0, 0, 1, v.x, v.y]);
     }
+    if (r.rect.width !== srcNode.rect.width || r.rect.height !== srcNode.rect.height) {
+      affines.push(
+        [1, 0, 0, 1, r.rect.x, r.rect.y],
+        [r.rect.width / srcNode.rect.width, 0, 0, r.rect.height / srcNode.rect.height, 0, 0],
+        [1, 0, 0, 1, -r.rect.x, -r.rect.y],
+      );
+    }
+    if (s.rotation !== 0) {
+      affines.push(getRotatedAtAffine(getRectCenter(shapeComposite.getWrapperRect(s)), -s.rotation));
+    }
+    if (affines.length === 0) return;
 
+    const affine = multiAffines(affines);
     if (isAlignBoxShape(s)) {
-      // Align box may change its size.
-      const width = rotatedPatch.width ?? r.rect.width;
-      if (width !== s.width) {
-        patch.width = width;
-        updated = true;
-      }
-
-      const height = rotatedPatch.height ?? r.rect.height;
-      if (height !== s.height) {
-        patch.height = height;
-        updated = true;
+      const val = shapeComposite.transformShape(s, affine);
+      if (!isObjectEmpty(val)) {
+        ret[s.id] = val;
       }
     } else {
       // Need to deal with all children as well when the shape isn't align box.
-      if (patch.p) {
-        // Translate all children along with the parent.
-        const v = sub(p, srcPosition);
-        shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
-          if (target.id === s.id) return;
-          ret[target.id] = { p: add(target.p, v) };
-        });
-      }
-
-      if (patch.rotation !== undefined) {
-        // Rotate all children along with the parent.
-        mapEach(shapeComposite.rotateShapeTree(s.id, rootShape.rotation), (rotationPatch, id) => {
-          if (id === s.id) return;
-
-          if (rotationPatch.p) {
-            const shape = shapeComposite.shapeMap[id];
-            const v = sub(rotationPatch.p, shape.p);
-            ret[id] ??= {};
-            ret[id].p = add(ret[id]?.p ?? shape.p, v);
-          }
-          if (rotationPatch.rotation !== undefined) {
-            ret[id] ??= {};
-            ret[id].rotation = rotationPatch.rotation;
-          }
-        });
-      }
+      shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
+        const val = shapeComposite.transformShape(target, affine);
+        if (!isObjectEmpty(val)) {
+          ret[target.id] = val;
+        }
+      });
     }
-
-    if (updated) ret[r.id] = patch;
   });
 
   return ret;
