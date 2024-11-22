@@ -5,6 +5,7 @@ import {
   add,
   applyAffine,
   getCenter,
+  getOuterRectangle,
   getRectCenter,
   isZero,
   multiAffines,
@@ -29,7 +30,6 @@ import {
   getRotationAffines,
   isPointCloseToSegment,
   isPointOnRectangle,
-  translateRect,
 } from "../utils/geometry";
 import { applyDefaultStrokeStyle, applyStrokeStyle } from "../utils/strokeStyle";
 import { applyFillStyle } from "../utils/fillStyle";
@@ -65,12 +65,10 @@ export function newAlignHandler(option: AlignHandlerOption) {
   const { rotateAffine, derotateAffine } = getRotationAffines(alignBox.rotation, getRectCenter(alignBoxRect));
 
   const siblingIds = shapeComposite.mergedShapeTreeMap[alignBox.id].children.map((c) => c.id);
-
   const siblingRects = siblingIds.map<[string, IRectangle]>((id) => {
-    const shape = shapeMap[id];
-    const derotatedShape = { ...shape, ...shapeComposite.transformShape(shape, derotateAffine) };
-    const localRect = shapeComposite.getShapeTreeLocalRect(shape);
-    return [id, translateRect(localRect, derotatedShape.p)];
+    const rectPolygon = shapeComposite.getRectPolygonForLayout(shapeMap[id]);
+    const derotatedRectPolygon = rectPolygon.map((p) => applyAffine(derotateAffine, p));
+    return [id, getOuterRectangle([derotatedRectPolygon])];
   });
 
   function hitTest(p: IVec2): AlignHitResult | undefined {

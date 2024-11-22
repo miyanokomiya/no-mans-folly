@@ -7,9 +7,10 @@ import { struct as recntagleStruct } from "../rectangle";
 import { isPointOnGroup } from "../group";
 import { TreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
 import { applyLocalSpace } from "../../utils/renderer";
-import { getRotatedRectAffine, getWrapperRect } from "../../utils/geometry";
+import { getRectPoints, getRotatedRectAffine, getRotateFn, getWrapperRect } from "../../utils/geometry";
 import { renderTransform } from "../../utils/svgElements";
 import { CHILD_MARGIN, SIBLING_MARGIN } from "../../utils/layouts/tree";
+import { getCenter, getOuterRectangle } from "okageo";
 
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 60;
@@ -104,6 +105,24 @@ export const struct: ShapeStruct<TreeRootShape> = {
   isPointOn(shape, p, shapeContext) {
     const selfResult = recntagleStruct.isPointOn(shape, p, shapeContext);
     return selfResult || (!!shapeContext && isPointOnGroup(shape, p, shapeContext));
+  },
+  getRectPolygonForLayout(shape, shapeContext) {
+    const selfRectPolygon = recntagleStruct.getLocalRectPolygon(shape, shapeContext);
+    if (!shapeContext) return selfRectPolygon;
+
+    const children = shapeContext?.treeNodeMap[shape.id].children;
+    if (!children || children.length === 0) return selfRectPolygon;
+
+    const c = getCenter(selfRectPolygon[0], selfRectPolygon[2]);
+    const rotateFn = getRotateFn(shape.rotation, c);
+    const points = [...selfRectPolygon];
+    children.forEach((c) => {
+      const s = shapeContext.shapeMap[c.id];
+      points.push(...shapeContext.getStruct(s.type).getLocalRectPolygon(s, shapeContext));
+    });
+    const derotatedPoints = points.map((p) => rotateFn(p, true));
+    const derotatedRect = getOuterRectangle([derotatedPoints]);
+    return getRectPoints(derotatedRect).map((p) => rotateFn(p));
   },
   canAttachSmartBranch: false,
   transparentSelection: true,

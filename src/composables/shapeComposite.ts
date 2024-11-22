@@ -261,6 +261,14 @@ export function newShapeComposite(option: Option) {
     return getStruct(shape.type).getActualPosition?.(shape, mergedShapeContext) ?? shape.p;
   }
 
+  function getRectPolygonForLayout(shape: Shape): IVec2[] {
+    const struct = getStruct(shape.type);
+    return (
+      struct.getRectPolygonForLayout?.(shape, mergedShapeContext) ??
+      struct.getLocalRectPolygon(shape, mergedShapeContext)
+    );
+  }
+
   function hasParent(shape: Shape): shape is Shape & Required<Pick<Shape, "parentId">> {
     return !!shapeMap[shape.parentId ?? ""];
   }
@@ -362,6 +370,7 @@ export function newShapeComposite(option: Option) {
     getSelectionScope,
     getMergedShapesInSelectionScope,
     getShapeActualPosition,
+    getRectPolygonForLayout,
     hasParent,
     attached,
     canAttach,

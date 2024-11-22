@@ -90,6 +90,11 @@ export interface ShapeStruct<T extends Shape> {
    * e.g. group shape doesn't have own position but it's derived from children.
    */
   getActualPosition?: (shape: T, shapeContext: ShapeContext) => IVec2;
+  /**
+   * Define when a shape has special local rect polygon for layout.
+   * e.g. As for tree_root shape, this returns the bounds accommodating all children.
+   */
+  getRectPolygonForLayout?: (shape: T, shapeContext: ShapeContext) => IVec2[];
   canAttachSmartBranch?: boolean;
   shouldKeepAspect?: boolean;
   /**
