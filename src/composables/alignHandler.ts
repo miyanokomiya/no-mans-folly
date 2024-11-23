@@ -771,13 +771,13 @@ export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: strin
     }
     if (r.rect.width !== srcNode.rect.width || r.rect.height !== srcNode.rect.height) {
       affines.push(
-        [1, 0, 0, 1, r.rect.x, r.rect.y],
+        [1, 0, 0, 1, srcNode.rect.x, srcNode.rect.y],
         [r.rect.width / srcNode.rect.width, 0, 0, r.rect.height / srcNode.rect.height, 0, 0],
-        [1, 0, 0, 1, -r.rect.x, -r.rect.y],
+        [1, 0, 0, 1, -srcNode.rect.x, -srcNode.rect.y],
       );
     }
     if (s.rotation !== 0) {
-      affines.push(getRotatedAtAffine(getRectCenter(shapeComposite.getWrapperRect(s)), -s.rotation));
+      affines.push(getRotatedAtAffine(getRectCenter(srcNode.rect), -s.rotation));
     }
     if (affines.length === 0) return;
 
