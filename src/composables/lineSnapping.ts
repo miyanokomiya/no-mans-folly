@@ -208,9 +208,8 @@ export function newLineSnapping(option: Option) {
             extendedGuideLine[1],
           );
           if (candidates) {
-            const origin = lineConstrain.p;
-            const closestCandidate = pickMinItem(candidates, (c) => getD2(sub(c, origin)));
-            if (closestCandidate && getDistance(closestCandidate, origin) < outlineThreshold) {
+            const closestCandidate = pickMinItem(candidates, (c) => getD2(sub(c, point)));
+            if (closestCandidate && getDistance(closestCandidate, point) < outlineThreshold) {
               intersection = closestCandidate;
               priorityGuidline = lineConstrain.guidLines[0];
             }
