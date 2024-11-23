@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePersistence } from "./hooks/persistence";
 import { getSheetURL } from "./utils/route";
 import { AppHeader } from "./components/AppHeader";
-import { AppCanvasProvider } from "./contexts/AppContext";
+import { AppCanvasProvider } from "./contexts/AppContextProvider";
 import { AppRightPanel } from "./components/AppRightPanel";
 import { EntranceDialog } from "./components/navigations/EntranceDialog";
 import { newUserSettingStore } from "./stores/userSettingStore";
