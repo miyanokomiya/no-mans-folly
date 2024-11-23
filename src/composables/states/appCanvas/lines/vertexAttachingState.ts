@@ -1,8 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
-import { newDefaultState } from "../defaultState";
 import { getLinePath, isLineShape, LineShape, patchVertices } from "../../../../shapes/line";
-import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { handleCommonWheel } from "../../commons";
 import { findBackward } from "../../../../utils/commons";
 import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
@@ -64,7 +62,7 @@ export function newVertexAttachingState(option: Option): AppCanvasState {
               return ctx.states.newSelectionHubState;
             }
             case 1:
-              return { type: "stack-resume", getState: () => newPointerDownEmptyState(event.data.options) };
+              return { type: "stack-resume", getState: () => ctx.states.newPointerDownEmptyState(event.data.options) };
             default:
               return ctx.states.newSelectionHubState;
           }
@@ -90,7 +88,7 @@ export function newVertexAttachingState(option: Option): AppCanvasState {
           handleCommonWheel(ctx, event);
           return;
         case "history":
-          return newDefaultState;
+          return ctx.states.newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, getCommonAcceptableEvents());
         default:

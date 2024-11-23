@@ -14,7 +14,6 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newShapeSnapping } from "../../../shapeSnapping";
 import { ISegment, TAU } from "../../../../utils/geometry";
-import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { handleCommonWheel } from "../../commons";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -97,7 +96,7 @@ export function newLineTangentReadyState(): AppCanvasState {
               return ctx.states.newSelectionHubState;
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return { type: "stack-resume", getState: () => ctx.states.newPointerDownEmptyState(event.data.options) };
             default:
               return ctx.states.newSelectionHubState;
           }

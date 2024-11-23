@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
-import { newDefaultState } from "../defaultState";
 import { newLineDrawingState } from "./lineDrawingState";
 import { createShape } from "../../../../shapes";
 import { CurveType, LineShape, LineType } from "../../../../shapes/line";
@@ -16,7 +15,6 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newShapeSnapping } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
-import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { handleCommonWheel } from "../../commons";
 
@@ -84,7 +82,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
               return () => newLineDrawingState({ shape: lineshape });
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return { type: "stack-resume", getState: () => ctx.states.newPointerDownEmptyState(event.data.options) };
             default:
               return ctx.states.newSelectionHubState;
           }
@@ -107,7 +105,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
           handleCommonWheel(ctx, event);
           return;
         case "history":
-          return newDefaultState;
+          return ctx.states.newSelectionHubState;
         case "state":
           return handleStateEvent(ctx, event, getCommonAcceptableEvents());
         default:
