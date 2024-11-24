@@ -45,7 +45,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
       const shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });

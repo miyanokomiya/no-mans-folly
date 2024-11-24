@@ -42,7 +42,6 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       const snappableCandidates = getSnappableCandidates(ctx, []);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -84,7 +83,7 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
+          snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point, ctx.getScale());
           const p = snappingResult ? add(point, snappingResult.diff) : point;
           coordinateRenderer.saveCoord(p);
 

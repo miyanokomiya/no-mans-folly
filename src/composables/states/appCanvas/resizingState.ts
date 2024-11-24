@@ -61,7 +61,6 @@ export function newResizingState(option: Option): AppCanvasState {
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -115,6 +114,7 @@ export function newResizingState(option: Option): AppCanvasState {
               boundingBoxPath,
               diff,
               { keepAspect, centralize },
+              ctx.getScale(),
             );
             resizingAffine = snappingInfo.resizingAffine;
             snappingResult = snappingInfo.snappingResult;

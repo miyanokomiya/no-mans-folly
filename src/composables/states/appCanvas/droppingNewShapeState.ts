@@ -41,7 +41,6 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
       const snappableCandidates = getSnappableCandidates(ctx, []);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -63,11 +62,15 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         case "pointermove": {
           const rectSize = { width: movingRect.width / 2, height: movingRect.height / 2 };
 
-          snappingResult = shapeSnapping.test({
-            ...movingRect,
-            x: event.data.current.x - rectSize.width,
-            y: event.data.current.y - rectSize.height,
-          });
+          snappingResult = shapeSnapping.test(
+            {
+              ...movingRect,
+              x: event.data.current.x - rectSize.width,
+              y: event.data.current.y - rectSize.height,
+            },
+            undefined,
+            ctx.getScale(),
+          );
           const adjustedCurrent = snappingResult ? add(event.data.current, snappingResult.diff) : event.data.current;
 
           updateP(adjustedCurrent);

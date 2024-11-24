@@ -46,7 +46,6 @@ interface SnappingTmpResult {
 interface Option {
   shapeSnappingList: [string, ShapeSnappingLines][];
   gridSnapping?: ShapeSnappingLines;
-  scale?: number;
   settings?: Pick<UserSetting, "snapIgnoreNonoverlapPair">;
 }
 
@@ -63,12 +62,12 @@ export function newShapeSnapping(option: Option) {
   const shapeSnappingList = option.shapeSnappingList;
   const gridSnapping = option.gridSnapping;
   const shapeIntervalSnapping = newShapeIntervalSnapping(option);
-  const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
   const shapeAndGridSnappingList: [string, ShapeSnappingLines][] = gridSnapping
     ? [[GRID_ID, gridSnapping], ...shapeSnappingList]
     : shapeSnappingList;
 
-  function test(rect: IRectangle, option?: TestOption): SnappingResult | undefined {
+  function test(rect: IRectangle, testOption?: TestOption, scale = 1): SnappingResult | undefined {
+    const snapThreshold = SNAP_THRESHOLD * scale;
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
 
     let xClosest: [string, SnappingTmpResult] | undefined;
@@ -113,10 +112,10 @@ export function newShapeSnapping(option: Option) {
       {
         const hList = lines.h.map<SnappingTmpResult>((line) => {
           const values: number[] = [];
-          if (!option?.disabledEdges.top && !option?.disabledEdges.bottom)
+          if (!testOption?.disabledEdges.top && !testOption?.disabledEdges.bottom)
             values.push((rectTop[0].y + rectBottom[0].y) / 2);
-          if (!option?.disabledEdges.top) values.push(rectTop[0].y);
-          if (!option?.disabledEdges.bottom) values.push(rectBottom[0].y);
+          if (!testOption?.disabledEdges.top) values.push(rectTop[0].y);
+          if (!testOption?.disabledEdges.bottom) values.push(rectBottom[0].y);
 
           return getSnappingTmpResult(line, line[0].y, values);
         });
@@ -145,7 +144,7 @@ export function newShapeSnapping(option: Option) {
       }
     });
 
-    const intervalResult = shapeIntervalSnapping.test(rect);
+    const intervalResult = shapeIntervalSnapping.test(rect, scale);
 
     if (!xClosest && !yClosest && !intervalResult) return;
 
@@ -221,17 +220,19 @@ export function newShapeSnapping(option: Option) {
     rectMain: IRectangle,
     rectSub?: IRectangle,
     option?: TestOption,
+    scale = 1,
   ): SnappingResult | undefined {
-    const resultMain = test(rectMain, option);
+    const resultMain = test(rectMain, option, scale);
     if (!rectSub) return resultMain;
 
-    const resultSub = test(rectSub, option);
+    const resultSub = test(rectSub, option, scale);
     if (resultMain && resultSub) return mergetSnappingResult(resultMain, resultSub);
 
     return resultMain ?? resultSub;
   }
 
-  function testPoint(p: IVec2): SnappingResult | undefined {
+  function testPoint(p: IVec2, scale = 1): SnappingResult | undefined {
+    const snapThreshold = SNAP_THRESHOLD * scale;
     let xClosest: [string, SnappingTmpResult] | undefined;
     let yClosest: [string, SnappingTmpResult] | undefined;
     shapeAndGridSnappingList.map(([id, lines]) => {
@@ -264,7 +265,7 @@ export function newShapeSnapping(option: Option) {
       }
     });
 
-    const intervalResult = shapeIntervalSnapping.test({ x: p.x, y: p.y, width: 0, height: 0 });
+    const intervalResult = shapeIntervalSnapping.test({ x: p.x, y: p.y, width: 0, height: 0 }, scale);
 
     if (!xClosest && !yClosest && !intervalResult) return;
 
@@ -325,8 +326,8 @@ export function newShapeSnapping(option: Option) {
     return { targets, intervalTargets, diff };
   }
 
-  function testPointOnLine(p: IVec2, guideline: ISegment): SnappingResult | undefined {
-    const firstResult = testPoint(p);
+  function testPointOnLine(p: IVec2, guideline: ISegment, scale = 1): SnappingResult | undefined {
+    const firstResult = testPoint(p, scale);
     if (!firstResult) return;
 
     return snapPointOnLine({
@@ -336,7 +337,7 @@ export function newShapeSnapping(option: Option) {
     });
   }
 
-  return { test, testWithSubRect, testPoint, testPointOnLine, snapThreshold };
+  return { test, testWithSubRect, testPoint, testPointOnLine };
 }
 export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
 
@@ -497,9 +498,9 @@ type ShapeIntervalSnappingOption = Option;
 
 export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
   const info = getIntervalSnappingInfo(option.shapeSnappingList, option.settings?.snapIgnoreNonoverlapPair === "on");
-  const snapThreshold = SNAP_THRESHOLD * (option.scale ?? 1);
 
-  function test(rect: IRectangle): InvervalSnappingResult | undefined {
+  function test(rect: IRectangle, scale = 1): InvervalSnappingResult | undefined {
+    const snapThreshold = SNAP_THRESHOLD * scale;
     const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
     const rectW = rect.width;
     const rectH = rect.height;
@@ -769,7 +770,9 @@ export function getSnappingResultForBoundingBoxResizing(
   boundingBoxPath: IVec2[],
   diff: IVec2,
   options?: { keepAspect?: boolean; centralize?: boolean },
+  scale = 1,
 ): { resizingAffine: AffineMatrix; snappingResult: SnappingResult | undefined } {
+  const snapThreshold = SNAP_THRESHOLD * scale;
   // Apply plain resizing
   let resizingAffine = boundingBoxResizing.getAffine(diff, options);
 
@@ -791,7 +794,7 @@ export function getSnappingResultForBoundingBoxResizing(
       .map((guideline) =>
         boundingBoxResizing.getAffineAfterSnapping(adjustedD, movingPointInfoList, guideline, options),
       )
-      .filter((r): r is Exclude<typeof r, undefined> => !!r && r[1] <= shapeSnapping.snapThreshold * 2),
+      .filter((r): r is Exclude<typeof r, undefined> => !!r && r[1] <= snapThreshold * 2),
     (r) => r[1],
   );
   // No snapping result satisfies the resizing restriction or close enough to the cursor.

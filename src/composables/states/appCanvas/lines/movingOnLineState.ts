@@ -89,7 +89,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -167,6 +166,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                 lineAnchorP: lineAnchor,
                 anchorPointAtStart,
                 edgeInfo,
+                scale: ctx.getScale(),
               });
               if (result) {
                 snappingResult = result.snappingResult;
@@ -302,6 +302,7 @@ function snapPointOnLine({
   lineAnchorP,
   anchorPointAtStart,
   edgeInfo,
+  scale,
 }: {
   line: LineShape;
   shapeSnapping: ShapeSnapping;
@@ -310,6 +311,7 @@ function snapPointOnLine({
   lineAnchorP: IVec2;
   anchorPointAtStart: IVec2;
   edgeInfo: PolylineEdgeInfo;
+  scale: number;
 }):
   | {
       snappingResult: SnappingResult;
@@ -319,7 +321,7 @@ function snapPointOnLine({
   | undefined {
   const anchorDiff = sub(lineAnchorP, anchorPointAtStart);
   const movingRect = moveRect(movingRectAtStart, anchorDiff);
-  const result = shapeSnapping.test(movingRect);
+  const result = shapeSnapping.test(movingRect, undefined, scale);
   if (!result) return;
 
   // Get slope at the latest anchor point on the line.

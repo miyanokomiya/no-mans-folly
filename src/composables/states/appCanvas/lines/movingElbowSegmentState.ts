@@ -40,7 +40,6 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           const lines = shapeComposite.getSnappingLines(s);
           return [s.id, isHorizontalSegment ? { v: [], h: lines.h } : { v: lines.v, h: [] }];
         }),
-        scale: ctx.getScale(),
         gridSnapping: isHorizontalSegment ? { v: [], h: gridLines.h } : { v: gridLines.v, h: [] },
         settings: ctx.getUserSetting(),
       });
@@ -65,7 +64,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           const v = sub(event.data.current, event.data.start);
           snappingResult = event.data.ctrl
             ? undefined
-            : shapeSnapping.test(moveRect(getOuterRectangle([targetSegment]), v));
+            : shapeSnapping.test(moveRect(getOuterRectangle([targetSegment]), v), undefined, ctx.getScale());
           const p = snappingResult ? add(v, add(targetSegment[0], snappingResult.diff)) : event.data.current;
 
           const elbow = srcBodyItem.elbow;

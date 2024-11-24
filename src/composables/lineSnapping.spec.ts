@@ -169,7 +169,6 @@ describe("newLineSnapping", () => {
             },
           ],
         ],
-        scale: 1,
       });
       const target = newLineSnapping({
         snappableShapes,
@@ -255,7 +254,6 @@ describe("newLineSnapping", () => {
             ],
           ],
         },
-        scale: 1,
       });
       const target = newLineSnapping({
         snappableShapes,
@@ -341,7 +339,6 @@ describe("newLineSnapping", () => {
             ],
           ],
         },
-        scale: 1,
       });
       const target = newLineSnapping({
         snappableShapes: [],

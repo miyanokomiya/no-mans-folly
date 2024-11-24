@@ -138,7 +138,7 @@ export function newLineSnapping(option: Option) {
       extendedGuideLine = extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
     } else if (!selfSnapped && option.shapeSnapping) {
       // Try to snap to other shapes or girds and pick the closest guideline if exists.
-      const snapped = option.shapeSnapping.testPoint(point);
+      const snapped = option.shapeSnapping.testPoint(point, scale);
       if (snapped) {
         const snappedP = add(point, snapped.diff);
         // Prioritize lines not coming from outline of shapes.
@@ -285,7 +285,7 @@ export function newLineSnapping(option: Option) {
 
     if (option.shapeSnapping) {
       if (selfSnapped && selfSnapped.guidLines.length === 1) {
-        const snapped = option.shapeSnapping.testPointOnLine(point, selfSnapped.guidLines[0]);
+        const snapped = option.shapeSnapping.testPointOnLine(point, selfSnapped.guidLines[0], scale);
         if (snapped) {
           return {
             p: add(point, snapped.diff),
@@ -294,7 +294,7 @@ export function newLineSnapping(option: Option) {
           };
         }
       } else {
-        const snapped = option.shapeSnapping.testPoint(point);
+        const snapped = option.shapeSnapping.testPoint(point, scale);
         if (snapped) {
           return {
             p: add(point, snapped.diff),

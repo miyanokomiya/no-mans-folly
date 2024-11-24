@@ -52,7 +52,6 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
         option.snapType === "self" ? [targetShape] : getSnappableCandidates(ctx, [targetShape.id]);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -69,7 +68,7 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
           snappingResult =
             event.data.ctrl || option.snapType === "disabled" || option.snapType === "custom"
               ? undefined
-              : shapeSnapping.testPoint(point);
+              : shapeSnapping.testPoint(point, ctx.getScale());
           const p = snappingResult ? add(point, snappingResult.diff) : point;
           const shapeComposite = ctx.getShapeComposite();
           const patch = patchPipe(

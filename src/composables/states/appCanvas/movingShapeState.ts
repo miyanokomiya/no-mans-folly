@@ -66,7 +66,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const snappableCandidates = getSnappableCandidates(ctx, targetIds);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -123,6 +122,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
             : (snappingResult = shapeSnapping.testWithSubRect(
                 moveRect(movingRect, d),
                 movingRectSub ? moveRect(movingRectSub, d) : undefined,
+                undefined,
+                ctx.getScale(),
               ));
 
           const translate = snappingResult ? add(d, snappingResult.diff) : d;

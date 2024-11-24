@@ -44,7 +44,6 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       );
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -65,7 +64,9 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.start);
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d));
+          snappingResult = event.data.ctrl
+            ? undefined
+            : shapeSnapping.test(moveRect(movingRect, d), undefined, ctx.getScale());
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
 
           let patch = patchVertices(option.lineShape, [

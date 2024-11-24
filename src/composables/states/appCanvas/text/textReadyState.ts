@@ -26,7 +26,6 @@ export function newTextReadyState(): AppCanvasState {
       const snappableCandidates = getSnappableCandidates(ctx, []);
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        scale: ctx.getScale(),
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -39,7 +38,7 @@ export function newTextReadyState(): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const point = event.data.point;
-              snappingResult = event.data.options.ctrl ? undefined : shapeSnapping.testPoint(point);
+              snappingResult = event.data.options.ctrl ? undefined : shapeSnapping.testPoint(point, ctx.getScale());
               vertex = snappingResult ? add(point, snappingResult.diff) : point;
 
               const textshape = createShape<TextShape>(ctx.getShapeStruct, "text", {
@@ -60,7 +59,7 @@ export function newTextReadyState(): AppCanvasState {
           }
         case "pointerhover": {
           const point = event.data.current;
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point);
+          snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point, ctx.getScale());
           vertex = snappingResult ? add(point, snappingResult.diff) : point;
           ctx.redraw();
           return;
