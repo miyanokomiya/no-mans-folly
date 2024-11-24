@@ -277,6 +277,8 @@ export function newShapeSnapping(option: Option) {
     const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
 
     const diff = { x: dx, y: dy };
+    if (getNorm(diff) >= snapThreshold) return;
+
     const adjustedP = add(p, diff);
     const targets: SnappingResultTarget[] = [];
     const intervalTargets: IntervalSnappingResultTarget[] = [];
@@ -334,6 +336,7 @@ export function newShapeSnapping(option: Option) {
       srcP: p,
       snappingResult: firstResult,
       guideline,
+      scale,
     });
   }
 
@@ -541,8 +544,9 @@ export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
       x: xClosest?.[1] ?? 0,
       y: yClosest?.[1] ?? 0,
     };
-    const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
+    if (getNorm(diff) >= snapThreshold) return;
 
+    const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
     const ret: InvervalSnappingResult = {};
 
     if (xClosest) {
@@ -826,12 +830,14 @@ function snapPointOnLine({
   srcP,
   snappingResult,
   guideline,
+  scale,
 }: {
   srcP: IVec2;
   snappingResult: SnappingResult;
   guideline: ISegment;
+  scale: number;
 }): SnappingResult | undefined {
-  const movingP = add(srcP, snappingResult.diff);
+  const snapThreshold = SNAP_THRESHOLD * scale;
   const guidelineVec = sub(guideline[1], guideline[0]);
   const candidateInfo = getSecondGuidelineCandidateInfo(snappingResult, guidelineVec);
 
@@ -839,7 +845,7 @@ function snapPointOnLine({
     candidateInfo.candidates.map((seg) => {
       const intersection = getCrossLineAndLine(seg, guideline);
       if (!intersection) return;
-      const d2 = getD2(sub(movingP, intersection));
+      const d2 = getD2(sub(srcP, intersection));
       return [seg, intersection, d2] as const;
     }),
     (info) => info?.[2] ?? Infinity,
@@ -847,8 +853,11 @@ function snapPointOnLine({
   if (!closestInfo) return;
 
   const [secondGuideline, snappedP] = closestInfo;
+  const diff = sub(snappedP, srcP);
+  if (getNorm(diff) >= snapThreshold) return;
+
   return {
-    diff: sub(snappedP, srcP),
+    diff,
     ...optimizeSnappingTargetInfoForPoint(
       filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
       snappedP,
