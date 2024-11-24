@@ -408,10 +408,10 @@ describe("newShapeIntervalSnapping", () => {
   const target = newShapeIntervalSnapping({ shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[1]] });
 
   test("x snapping: should return snapping result", () => {
-    expect(target.test({ x: -70, y: 0, width: 10, height: 10 }), "left side").toEqual({
+    expect(target.test({ x: -68, y: 0, width: 10, height: 10 }), "left side").toEqual({
       v: {
-        d: 10,
-        ad: 10,
+        d: 8,
+        ad: 8,
         target: {
           direction: "v",
           beforeId: "a",
@@ -430,10 +430,10 @@ describe("newShapeIntervalSnapping", () => {
       },
     });
 
-    expect(target.test({ x: 310, y: 0, width: 10, height: 10 }), "right side").toEqual({
+    expect(target.test({ x: 308, y: 0, width: 10, height: 10 }), "right side").toEqual({
       v: {
-        d: -10,
-        ad: 10,
+        d: -8,
+        ad: 8,
         target: {
           direction: "v",
           beforeId: "a",
@@ -452,10 +452,10 @@ describe("newShapeIntervalSnapping", () => {
       },
     });
 
-    expect(target.test({ x: 110, y: 0, width: 10, height: 10 }), "between").toEqual({
+    expect(target.test({ x: 112, y: 0, width: 10, height: 10 }), "between").toEqual({
       v: {
-        d: 10,
-        ad: 10,
+        d: 8,
+        ad: 8,
         target: {
           direction: "v",
           beforeId: "a",
@@ -474,10 +474,10 @@ describe("newShapeIntervalSnapping", () => {
       },
     });
 
-    expect(target.test({ x: 130, y: 0, width: 10, height: 10 }), "between").toEqual({
+    expect(target.test({ x: 127, y: 0, width: 10, height: 10 }), "between").toEqual({
       v: {
-        d: -10,
-        ad: 10,
+        d: -7,
+        ad: 7,
         target: {
           direction: "v",
           beforeId: "a",
@@ -500,10 +500,10 @@ describe("newShapeIntervalSnapping", () => {
   const target1 = newShapeIntervalSnapping({ shapeSnappingList: [shapeSnappingList[0], shapeSnappingList[2]] });
 
   test("y snapping: should return snapping result", () => {
-    expect(target1.test({ x: 0, y: -70, width: 10, height: 10 }), "top side").toEqual({
+    expect(target1.test({ x: 0, y: -68, width: 10, height: 10 }), "top side").toEqual({
       h: {
-        d: 10,
-        ad: 10,
+        d: 8,
+        ad: 8,
         target: {
           direction: "h",
           beforeId: "a",
@@ -522,10 +522,10 @@ describe("newShapeIntervalSnapping", () => {
       },
     });
 
-    expect(target1.test({ x: 0, y: 310, width: 10, height: 10 }), "bottom side").toEqual({
+    expect(target1.test({ x: 0, y: 308, width: 10, height: 10 }), "bottom side").toEqual({
       h: {
-        d: -10,
-        ad: 10,
+        d: -8,
+        ad: 8,
         target: {
           direction: "h",
           beforeId: "a",
@@ -544,10 +544,10 @@ describe("newShapeIntervalSnapping", () => {
       },
     });
 
-    expect(target1.test({ x: 0, y: 110, width: 10, height: 10 }), "between").toEqual({
+    expect(target1.test({ x: 0, y: 112, width: 10, height: 10 }), "between").toEqual({
       h: {
-        d: 10,
-        ad: 10,
+        d: 8,
+        ad: 8,
         target: {
           direction: "h",
           beforeId: "a",
@@ -566,10 +566,10 @@ describe("newShapeIntervalSnapping", () => {
       },
     });
 
-    expect(target1.test({ x: 0, y: 130, width: 10, height: 10 }), "between").toEqual({
+    expect(target1.test({ x: 0, y: 126, width: 10, height: 10 }), "between").toEqual({
       h: {
-        d: -10,
-        ad: 10,
+        d: -6,
+        ad: 6,
         target: {
           direction: "h",
           beforeId: "a",
