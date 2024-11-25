@@ -1,21 +1,15 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { mapReduce, patchPipe, pickMinItem, toList, toMap } from "../../../../utils/commons";
+import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
-import { getIntersectionsBetweenLineShapeAndLine, getLineEdgeInfo } from "../../../../shapes/utils/line";
-import {
-  getClosestLineToRectFeaturePoints,
-  getD2,
-  getDiagonalLengthOfRect,
-  getPointLerpSlope,
-  ISegment,
-  TAU,
-} from "../../../../utils/geometry";
-import { add, getDistance, IRectangle, IVec2, moveRect, rotate, sub } from "okageo";
+import { getLineEdgeInfo } from "../../../../shapes/utils/line";
+import { getDiagonalLengthOfRect, TAU } from "../../../../utils/geometry";
+import { add, getDistance, IRectangle, IVec2, moveRect, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
+  snapRectWithLineAttachment,
 } from "../../../lineAttachmentHandler";
 import { Shape, ShapeAttachment } from "../../../../models";
 import { applyCurvePath } from "../../../../utils/renderer";
@@ -23,15 +17,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getNextShapeComposite } from "../../../shapeComposite";
-import {
-  filterSnappingTargetsBySecondGuideline,
-  getSecondGuidelineCandidateInfo,
-  newShapeSnapping,
-  renderSnappingResult,
-  ShapeSnapping,
-  SNAP_THRESHOLD,
-  SnappingResult,
-} from "../../../shapeSnapping";
+import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult } from "../../../shapeSnapping";
 import { getSnappableCandidates } from "../commons";
 import { getClosestPointOnPolyline, PolylineEdgeInfo } from "../../../../utils/path";
 
@@ -157,17 +143,19 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             lineAnchor = closestInfo[0];
             attachInfoMap = new Map([[option.shapeId, [nextTo]]]);
 
+            const scale = ctx.getScale();
+            const movingRect = moveRect(movingRectAtStart, sub(lineAnchor, anchorPointAtStart));
+            const shapeSnappingResult = shapeSnapping.test(movingRect, undefined, scale);
             snappingResult = undefined;
-            if (!event.data.ctrl && movingRectAtStart) {
-              const result = snapPointOnLine({
+            if (!event.data.ctrl && shapeSnappingResult) {
+              const result = snapRectWithLineAttachment({
                 line,
-                shapeSnapping,
-                movingRectAtStart,
-                lineAnchorRate: closestInfo[1],
-                lineAnchorP: lineAnchor,
-                anchorPointAtStart,
                 edgeInfo,
-                scale: ctx.getScale(),
+                snappingResult: shapeSnappingResult,
+                movingRect,
+                movingRectAnchorRate: closestInfo[1],
+                movingRectAnchor: lineAnchor,
+                scale,
               });
               if (result) {
                 snappingResult = result.snappingResult;
@@ -292,71 +280,5 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         });
       }
     },
-  };
-}
-
-function snapPointOnLine({
-  line,
-  shapeSnapping,
-  movingRectAtStart,
-  lineAnchorRate,
-  lineAnchorP,
-  anchorPointAtStart,
-  edgeInfo,
-  scale,
-}: {
-  line: LineShape;
-  shapeSnapping: ShapeSnapping;
-  movingRectAtStart: IRectangle;
-  lineAnchorRate: number;
-  lineAnchorP: IVec2;
-  anchorPointAtStart: IVec2;
-  edgeInfo: PolylineEdgeInfo;
-  scale: number;
-}):
-  | {
-      snappingResult: SnappingResult;
-      lineAnchorRate: number;
-      lineAnchor: IVec2;
-    }
-  | undefined {
-  const anchorDiff = sub(lineAnchorP, anchorPointAtStart);
-  const movingRect = moveRect(movingRectAtStart, anchorDiff);
-  const result = shapeSnapping.test(movingRect, undefined, scale);
-  if (!result) return;
-
-  // Get slope at the latest anchor point on the line.
-  // Use this slope as first guideline to get second guideline candidates.
-  const slopeV = rotate({ x: 1, y: 0 }, getPointLerpSlope(edgeInfo.lerpFn, lineAnchorRate));
-  const candidateInfo = getSecondGuidelineCandidateInfo(result, slopeV);
-
-  // Get currently snapped anchor that isn't on the line.
-  const snappedAnchor = add(lineAnchorP, result.diff);
-  // Get the closest candidate to a feature point of moving rect as second guideline.
-  const secondGuideline = getClosestLineToRectFeaturePoints(movingRect, candidateInfo.candidates);
-  if (!secondGuideline) return;
-
-  // Slide second guideline to the snapped anchor.
-  const secondGuidelineAtSnappedAnchor: ISegment = [
-    snappedAnchor,
-    add(sub(secondGuideline[1], secondGuideline[0]), snappedAnchor),
-  ];
-  // Get intersections between the line and adjusted second guideline.
-  // This intersections are on the line and keep second guideline valid.
-  const intersections = getIntersectionsBetweenLineShapeAndLine(line, secondGuidelineAtSnappedAnchor);
-  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, lineAnchorP)));
-  if (!nextLineAnchorP || getDistance(nextLineAnchorP, lineAnchorP) >= SNAP_THRESHOLD * scale) return;
-
-  // The anchor point is determined but stlll need to get its rate on the line.
-  const closestInfo = getClosestPointOnPolyline(edgeInfo, nextLineAnchorP, Infinity);
-  if (!closestInfo) return;
-
-  return {
-    snappingResult: {
-      diff: result.diff,
-      ...filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
-    },
-    lineAnchorRate: closestInfo[1],
-    lineAnchor: nextLineAnchorP,
   };
 }

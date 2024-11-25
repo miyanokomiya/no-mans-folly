@@ -7,6 +7,7 @@ import {
   getLineAttachmentPatch,
   getNextAttachmentAnchor,
   newPreserveAttachmentHandler,
+  snapRectWithLineAttachment,
 } from "./lineAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
@@ -15,6 +16,7 @@ import { RectangleShape } from "../shapes/rectangle";
 import { Shape } from "../models";
 import { getLineEdgeInfo } from "../shapes/utils/line";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
+import { SnappingResult } from "./shapeSnapping";
 
 describe("getLineAttachmentPatch", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
@@ -575,5 +577,47 @@ describe("newPreserveAttachmentHandler", () => {
       target.setActive(false);
       expect(target.getPatch({ q: { x: 0, y: 100 } })).toBe(undefined);
     });
+  });
+});
+
+describe("snapRectWithLineAttachment", () => {
+  test("should return line attachment with snapping", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 100 } });
+    const snappingResult: SnappingResult = {
+      diff: { x: 2, y: 0 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 50, y: 0 },
+            { x: 50, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    };
+    const result0 = snapRectWithLineAttachment({
+      line,
+      edgeInfo: getLineEdgeInfo(line),
+      snappingResult,
+      movingRect: { x: 48, y: 48, width: 10, height: 10 },
+      movingRectAnchorRate: 0.58,
+      movingRectAnchor: { x: 58, y: 58 },
+      scale: 1,
+    });
+    expect(result0?.lineAnchor).toEqualPoint({ x: 60, y: 60 });
+    expect(result0?.lineAnchorRate).toBeCloseTo(0.6);
+
+    const result1 = snapRectWithLineAttachment({
+      line,
+      edgeInfo: getLineEdgeInfo(line),
+      snappingResult: { ...snappingResult, diff: { x: -2, y: 0 } },
+      movingRect: { x: 42, y: 42, width: 10, height: 10 },
+      movingRectAnchorRate: 0.42,
+      movingRectAnchor: { x: 42, y: 42 },
+      scale: 1,
+    });
+    expect(result1?.lineAnchor).toEqualPoint({ x: 40, y: 40 });
+    expect(result1?.lineAnchorRate).toBeCloseTo(0.4);
   });
 });

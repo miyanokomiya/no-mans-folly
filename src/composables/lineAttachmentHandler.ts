@@ -1,8 +1,22 @@
-import { AffineMatrix, clamp, getDistanceSq, getRectCenter, isSame, IVec2, lerpPoint, MINVALUE, rotate } from "okageo";
+import {
+  add,
+  AffineMatrix,
+  clamp,
+  getDistance,
+  getDistanceSq,
+  getRectCenter,
+  IRectangle,
+  isSame,
+  IVec2,
+  lerpPoint,
+  MINVALUE,
+  rotate,
+  sub,
+} from "okageo";
 import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
-import { getLineEdgeInfo } from "../shapes/utils/line";
-import { getClosestPointOnPolyline } from "../utils/path";
+import { getIntersectionsBetweenLineShapeAndLine, getLineEdgeInfo } from "../shapes/utils/line";
+import { getClosestPointOnPolyline, PolylineEdgeInfo } from "../utils/path";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import {
@@ -17,15 +31,24 @@ import {
   toMap,
 } from "../utils/commons";
 import {
+  getClosestLineToRectFeaturePoints,
+  getD2,
   getPointLerpSlope,
   getRelativePointWithinRect,
   getRelativeRateWithinRect,
   getRotateFn,
   getRotationAffine,
+  ISegment,
   TAU,
 } from "../utils/geometry";
 import { getCurveLinePatch } from "./curveLineHandler";
 import { applyFillStyle } from "../utils/fillStyle";
+import {
+  filterSnappingTargetsBySecondGuideline,
+  getSecondGuidelineCandidateInfo,
+  SNAP_THRESHOLD,
+  SnappingResult,
+} from "./shapeSnapping";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -396,4 +419,63 @@ export function newPreserveAttachmentHandler({
   }
 
   return { setActive, getPatch, render, hasAttachment };
+}
+
+export function snapRectWithLineAttachment({
+  line,
+  edgeInfo,
+  snappingResult,
+  movingRect,
+  movingRectAnchorRate,
+  movingRectAnchor,
+  scale,
+}: {
+  line: LineShape;
+  edgeInfo: PolylineEdgeInfo;
+  snappingResult: SnappingResult;
+  movingRect: IRectangle;
+  movingRectAnchorRate: number;
+  movingRectAnchor: IVec2;
+  scale: number;
+}):
+  | {
+      snappingResult: SnappingResult;
+      lineAnchorRate: number;
+      lineAnchor: IVec2;
+    }
+  | undefined {
+  // Get slope at the latest anchor point on the line.
+  // Use this slope as first guideline to get second guideline candidates.
+  const slopeV = rotate({ x: 1, y: 0 }, getPointLerpSlope(edgeInfo.lerpFn, movingRectAnchorRate));
+  const candidateInfo = getSecondGuidelineCandidateInfo(snappingResult, slopeV);
+
+  // Get currently snapped anchor that isn't on the line.
+  const snappedAnchor = add(movingRectAnchor, snappingResult.diff);
+  // Get the closest candidate to a feature point of moving rect as second guideline.
+  const secondGuideline = getClosestLineToRectFeaturePoints(movingRect, candidateInfo.candidates);
+  if (!secondGuideline) return;
+
+  // Slide second guideline to the snapped anchor.
+  const secondGuidelineAtSnappedAnchor: ISegment = [
+    snappedAnchor,
+    add(sub(secondGuideline[1], secondGuideline[0]), snappedAnchor),
+  ];
+  // Get intersections between the line and adjusted second guideline.
+  // This intersections are on the line and keep second guideline valid.
+  const intersections = getIntersectionsBetweenLineShapeAndLine(line, secondGuidelineAtSnappedAnchor);
+  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, movingRectAnchor)));
+  if (!nextLineAnchorP || getDistance(nextLineAnchorP, movingRectAnchor) >= SNAP_THRESHOLD * scale) return;
+
+  // The anchor point is determined but stlll need to get its rate on the line.
+  const closestInfo = getClosestPointOnPolyline(edgeInfo, nextLineAnchorP, Infinity);
+  if (!closestInfo) return;
+
+  return {
+    snappingResult: {
+      diff: snappingResult.diff,
+      ...filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
+    },
+    lineAnchorRate: closestInfo[1],
+    lineAnchor: nextLineAnchorP,
+  };
 }
