@@ -20,7 +20,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { pickMinItem } from "../utils/commons";
 import { BoundingBoxResizing } from "./boundingBox";
 
-const SNAP_THRESHOLD = 10;
+export const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
 
 export interface SnappingResult extends SnappingTargetInfo {
@@ -145,7 +145,6 @@ export function newShapeSnapping(option: Option) {
     });
 
     const intervalResult = shapeIntervalSnapping.test(rect, scale);
-
     if (!xClosest && !yClosest && !intervalResult) return;
 
     const isVInterval =
@@ -156,6 +155,8 @@ export function newShapeSnapping(option: Option) {
     const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
 
     const diff = { x: dx, y: dy };
+    if (getNorm(diff) >= snapThreshold) return;
+
     const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
     const targets: SnappingResultTarget[] = [];
     const intervalTargets: IntervalSnappingResultTarget[] = [];

@@ -29,6 +29,7 @@ import {
   newShapeSnapping,
   renderSnappingResult,
   ShapeSnapping,
+  SNAP_THRESHOLD,
   SnappingResult,
 } from "../../../shapeSnapping";
 import { getSnappableCandidates } from "../commons";
@@ -330,7 +331,7 @@ function snapPointOnLine({
   const candidateInfo = getSecondGuidelineCandidateInfo(result, slopeV);
 
   // Get currently snapped anchor that isn't on the line.
-  const snappedAnchor = add(anchorPointAtStart, add(result.diff, anchorDiff));
+  const snappedAnchor = add(lineAnchorP, result.diff);
   // Get the closest candidate to a feature point of moving rect as second guideline.
   const secondGuideline = getClosestLineToRectFeaturePoints(movingRect, candidateInfo.candidates);
   if (!secondGuideline) return;
@@ -343,8 +344,8 @@ function snapPointOnLine({
   // Get intersections between the line and adjusted second guideline.
   // This intersections are on the line and keep second guideline valid.
   const intersections = getIntersectionsBetweenLineShapeAndLine(line, secondGuidelineAtSnappedAnchor);
-  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, snappedAnchor)));
-  if (!nextLineAnchorP) return;
+  const nextLineAnchorP = pickMinItem(intersections, (p) => getD2(sub(p, lineAnchorP)));
+  if (!nextLineAnchorP || getDistance(nextLineAnchorP, lineAnchorP) >= SNAP_THRESHOLD * scale) return;
 
   // The anchor point is determined but stlll need to get its rate on the line.
   const closestInfo = getClosestPointOnPolyline(edgeInfo, nextLineAnchorP, Infinity);
