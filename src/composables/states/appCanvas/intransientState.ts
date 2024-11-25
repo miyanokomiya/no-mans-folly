@@ -57,10 +57,8 @@ export function defineIntransientState<A extends any[]>(
                 const shapeComposite = ctx.getShapeComposite();
                 hoveredShape = shapeComposite.shapeMap[event.data.id];
                 ctx.redraw();
-                return;
+                break;
               }
-              default:
-                return;
             }
           }
         }
