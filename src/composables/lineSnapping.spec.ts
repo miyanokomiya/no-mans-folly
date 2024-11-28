@@ -14,6 +14,7 @@ import { newShapeComposite } from "./shapeComposite";
 import { TextShape } from "../shapes/text";
 import { TwoSidedArrowShape } from "../shapes/twoSidedArrow";
 import { newShapeSnapping } from "./shapeSnapping";
+import { RoundedRectangleShape } from "../shapes/polygons/roundedRectangle";
 
 describe("newLineSnapping", () => {
   describe("testConnection", () => {
@@ -819,13 +820,13 @@ describe("patchLinesConnectedToShapeOutline", () => {
     });
   });
 
-  test("should reconnect lines to the outline of the shape: rectangle -> star", () => {
+  test("should reconnect lines to the outline of the shape: rectangle -> two_sided_arrow", () => {
     const arrow = createShape<TwoSidedArrowShape>(getCommonStruct, "two_sided_arrow", {
       id: "a",
       width: 100,
       height: 50,
     });
-    const shapeComposite = newShapeComposite({ shapes: [line, arrow], getStruct: getCommonStruct });
+    const shapeComposite = newShapeComposite({ shapes: [line, shapeA], getStruct: getCommonStruct });
     const res = patchLinesConnectedToShapeOutline(shapeComposite, arrow);
     expect(res).toEqual({
       line: {
@@ -872,6 +873,30 @@ describe("patchLinesConnectedToShapeOutline", () => {
     });
     const shapeComposite = newShapeComposite({ shapes: [optimized, shapeA], getStruct: getCommonStruct });
     const res = patchLinesConnectedToShapeOutline(shapeComposite, shapeA);
+    expect(res).toEqual({});
+  });
+
+  test("should ignore connections that are not on the outline", () => {
+    const shapeB = createShape<RoundedRectangleShape>(getCommonStruct, "rounded_rectangle", {
+      id: "b",
+      p: { x: 0, y: 0 },
+      width: 100,
+      height: 100,
+      rx: 10,
+      ry: 10,
+    });
+    const lineB = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line_b",
+      p: { x: -50, y: -50 },
+      q: { x: 0, y: 0 },
+      qConnection: { id: shapeB.id, rate: { x: 0, y: 0 } },
+    });
+    const shapeComposite = newShapeComposite({ shapes: [lineB, shapeB], getStruct: getCommonStruct });
+    const res = patchLinesConnectedToShapeOutline(shapeComposite, {
+      ...shapeB,
+      rx: 20,
+      ry: 20,
+    } as RoundedRectangleShape);
     expect(res).toEqual({});
   });
 

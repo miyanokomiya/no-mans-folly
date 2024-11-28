@@ -21,6 +21,7 @@ import {
   extendSegment,
   getClosestPointTo,
   getD2,
+  getLocationFromRateOnRectPath,
   isRectOverlappedH,
   isRectOverlappedV,
   isSameValue,
@@ -553,10 +554,8 @@ function patchLineConnectedToShapeOutline(
 ): Partial<LineShape> {
   const pConnection = line.pConnection;
   const qConnection = line.qConnection;
-  const shouldCheckP =
-    pConnection && pConnection.id === shape.id && !isConnectedToCenter(pConnection) && !pConnection.optimized;
-  const shouldCheckQ =
-    qConnection && qConnection.id === shape.id && !isConnectedToCenter(qConnection) && !qConnection.optimized;
+  const shouldCheckP = shouldReconnectToOutline(shapeComposite, shape.id, pConnection);
+  const shouldCheckQ = shouldReconnectToOutline(shapeComposite, shape.id, qConnection);
   if (!shouldCheckP && !shouldCheckQ) return {};
 
   const points = getLinePath(line);
@@ -584,6 +583,24 @@ function patchLineConnectedToShapeOutline(
   }
 
   return ret;
+}
+
+function shouldReconnectToOutline(
+  shapeComposite: ShapeComposite,
+  shapeId: string,
+  connection?: ConnectionPoint,
+): connection is ConnectionPoint {
+  if (connection?.id !== shapeId) return false;
+  if (isConnectedToCenter(connection) || connection.optimized) return false;
+
+  // Check if the connection point is on the outline.
+  const shape = shapeComposite.shapeMap[shapeId];
+  const rectPath = shapeComposite.getLocalRectPolygon(shape);
+  const p = getLocationFromRateOnRectPath(rectPath, shape.rotation, connection.rate);
+  // Set the threshold a bit loose.
+  // Whether the connection should be reconnected or not isn't always obvious either way.
+  const closestOutline = getClosestOutline(shapeComposite.getShapeStruct, shape, p, 0.01);
+  return !!closestOutline;
 }
 
 /**
