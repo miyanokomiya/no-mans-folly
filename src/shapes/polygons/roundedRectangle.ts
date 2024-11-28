@@ -4,7 +4,7 @@ import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "../si
 import { createBoxPadding, getPaddingRect } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
-import { getRoundedRectInnerBounds } from "../../utils/geometry";
+import { getBezierControlPaddingForBorderRadius, getRoundedRectInnerBounds } from "../../utils/geometry";
 
 export type RoundedRectangleShape = SimplePolygonShape & {
   rx: number;
@@ -78,8 +78,8 @@ function getPath(shape: RoundedRectangleShape): SimplePath {
 
 function getCornerValue(shape: RoundedRectangleShape): IVec2 {
   const { x: rx, y: ry } = getCornerRadius(shape);
-  const rate = 0.44772; // Magic value to approximate border-radius via cubic-bezier
-  return { x: rx * rate, y: ry * rate };
+  const [x, y] = getBezierControlPaddingForBorderRadius(rx, ry);
+  return { x, y };
 }
 
 function getCornerRadius(shape: RoundedRectangleShape): IVec2 {

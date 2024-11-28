@@ -1398,3 +1398,8 @@ export function getEllipseSlopeAt(c: IVec2, rx: number, ry: number, p: IVec2): n
   const centeredP = sub(p, c);
   return Math.atan2(centeredP.y * rx * rx, centeredP.x * ry * ry) - Math.PI / 2;
 }
+
+export function getBezierControlPaddingForBorderRadius(rx: number, ry: number): [rx: number, ry: number] {
+  const rate = 0.44772; // Magic value to approximate border-radius via cubic-bezier
+  return [rx * rate, ry * rate];
+}
