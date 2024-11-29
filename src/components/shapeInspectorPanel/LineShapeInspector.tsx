@@ -223,7 +223,12 @@ export const VertexField: React.FC<VertexFieldProps> = ({
   const vertexField = (
     <div className="flex items-center justify-end" onPointerEnter={handleVertexEnter}>
       {connection ? (
-        <button type="button" className="mr-2 p-1 flex-1 border rounded" title="Detach" onClick={handleDetachClick}>
+        <button
+          type="button"
+          className="mr-2 p-1 flex-1 border rounded flex justify-center items-center"
+          title="Detach"
+          onClick={handleDetachClick}
+        >
           <img className="w-6 h-6" src={iconLineDetach} alt="Detach vertex" />
         </button>
       ) : undefined}
