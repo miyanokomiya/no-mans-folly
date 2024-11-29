@@ -16,6 +16,7 @@ import { AlphaField } from "./AlphaField";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { AttachmentInspector } from "./AttachmentInspector";
 import { patchByPartialProperties } from "../../utils/entities";
+import { SheetInspectorPanel } from "./SheetInspectorPanel";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -24,7 +25,7 @@ export const ShapeInspectorPanel: React.FC = () => {
   return targetShape && targetTmpShape ? (
     <ShapeInspectorPanelWithShape targetShape={targetShape} targetTmpShape={targetTmpShape} />
   ) : (
-    <div>No shape selected</div>
+    <SheetInspectorPanel />
   );
 };
 

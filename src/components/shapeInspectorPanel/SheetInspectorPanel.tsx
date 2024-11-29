@@ -1,14 +1,15 @@
 import { useCallback, useContext, useMemo, useState } from "react";
-import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { PopupButton } from "./atoms/PopupButton";
-import { ColorPickerPanel } from "./molecules/ColorPickerPanel";
-import { COLORS, rednerRGBA } from "../utils/color";
-import { Color } from "../models";
-import { useSelectedSheet, useSelectedTmpSheet } from "../hooks/storeHooks";
-import { SliderInput } from "./atoms/inputs/SliderInput";
-import { OutsideObserver } from "./atoms/OutsideObserver";
+import { AppCanvasContext } from "../../contexts/AppCanvasContext";
+import { PopupButton } from "../atoms/PopupButton";
+import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
+import { COLORS, rednerRGBA } from "../../utils/color";
+import { Color } from "../../models";
+import { useSelectedSheet, useSelectedTmpSheet } from "../../hooks/storeHooks";
+import { SliderInput } from "../atoms/inputs/SliderInput";
+import { OutsideObserver } from "../atoms/OutsideObserver";
+import { InlineField } from "../atoms/InlineField";
 
-export const SheetConfigPanel: React.FC = () => {
+export const SheetInspectorPanel: React.FC = () => {
   const { sheetStore } = useContext(AppCanvasContext);
   const sheet = useSelectedSheet();
   const tmpSheet = useSelectedTmpSheet();
@@ -76,10 +77,14 @@ export const SheetConfigPanel: React.FC = () => {
     );
   }, [bgColor, sheet, onAlphaChanged, onColorClick]);
 
+  if (!sheet) return undefined;
+
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <p className="text-lg">Background color</p>
+      <InlineField label="Sheet name">
+        <span>{sheet.name}</span>
+      </InlineField>
+      <InlineField label="Background color">
         <OutsideObserver onClick={onClickOutside}>
           <PopupButton
             name="bgColor"
@@ -88,10 +93,10 @@ export const SheetConfigPanel: React.FC = () => {
             onClick={onClickPopupButton}
             popupPosition="left"
           >
-            <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
+            <div className="w-6 h-6 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(bgColor) }}></div>
           </PopupButton>
         </OutsideObserver>
-      </div>
+      </InlineField>
     </div>
   );
 };
