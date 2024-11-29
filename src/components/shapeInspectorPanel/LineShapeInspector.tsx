@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { LineShape, detachVertex, getConnection, getLinePath, patchVertex } from "../../shapes/line";
+import { CurveType, LineShape, detachVertex, getConnection, getLinePath, patchVertex } from "../../shapes/line";
 import { PointField } from "./PointField";
 import { IVec2 } from "okageo";
 import { ConnectionPoint, CurveControl } from "../../models";
@@ -128,6 +128,7 @@ export const LineShapeInspector: React.FC<Props> = ({
                 value={v}
                 connection={targetTmpConnections[i]}
                 curve={targetTmpCurves?.[i]}
+                curveType={targetShape.curveType}
                 onChange={handleVertexChange}
                 onCurveChange={handleCurveChange}
                 onDetachClick={handleDetachClick}
@@ -146,6 +147,7 @@ interface VertexFieldProps {
   value: IVec2;
   connection?: ConnectionPoint;
   curve?: CurveControl;
+  curveType?: CurveType;
   onChange?: (index: number, val: IVec2, draft?: boolean) => void;
   onCurveChange?: (index: number, val: CurveControl, draft?: boolean) => void;
   onDetachClick?: (index: number) => void;
@@ -157,6 +159,7 @@ export const VertexField: React.FC<VertexFieldProps> = ({
   value,
   connection,
   curve,
+  curveType,
   onChange,
   onCurveChange,
   onDetachClick,
@@ -229,17 +232,18 @@ export const VertexField: React.FC<VertexFieldProps> = ({
   );
 
   if (isBezieirControl(curve)) {
+    const editableCurve = curveType !== "auto";
     return (
       <BlockGroupField label="Bezier">
         {vertexField}
         <div>
           <div onPointerEnter={handleBezierC1Enter}>
-            <InlineField label="c1">
+            <InlineField label="c1" inert={!editableCurve}>
               <PointField value={curve.c1} onChange={handleBezierC1Change} />
             </InlineField>
           </div>
           <div onPointerEnter={handleBezierC2Enter}>
-            <InlineField label="c2">
+            <InlineField label="c2" inert={!editableCurve}>
               <PointField value={curve.c2} onChange={handleBezierC2Change} />
             </InlineField>
           </div>
