@@ -11,11 +11,11 @@ interface Props {
  * Follows the spec of "PointerDoubleClickEvent" in "src/composables/states/core.ts".
  */
 export function useClickable({ onDown, onUp, onClick, onDoubleClick }: Props) {
-  const downInfo = useRef<{ timestamp: number; button: number }>();
+  const downInfo = useRef<{ timestamp: number; button: number }>(undefined);
   const isDoubleDown = useRef(false);
 
   // Use the first pointer and ignore others
-  const pointerId = useRef<number>();
+  const pointerId = useRef<number>(undefined);
   const isValidPointer = useCallback((e: PointerEvent) => {
     return pointerId.current === undefined || pointerId.current === e.pointerId;
   }, []);

@@ -17,7 +17,7 @@ export function useLocalStorageAdopter<T>({
   initialValue: T;
   duration?: number;
 }) {
-  const initialRef = useRef<T>();
+  const initialRef = useRef<T>(undefined);
 
   // Restore the value at the first occation without delay.
   if (!initialRef.current) {

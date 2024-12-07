@@ -6,7 +6,7 @@ export function useDraggable() {
   const [dragFrom, setDragFrom] = useState<IVec2>();
   const [dragTo, setDragTo] = useState<IVec2>();
   const [total, setTotal] = useState<IVec2>();
-  const vRef = useRef<IVec2>();
+  const vRef = useRef<IVec2>(undefined);
 
   const { startDragging } = useGlobalDrag(
     useCallback(

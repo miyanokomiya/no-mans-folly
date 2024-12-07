@@ -74,7 +74,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   }, [googleToken, googleMode, openGoogleDrivePicker]);
 
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const updateSWRef = useRef<(reloadPage?: boolean) => void>();
+  const updateSWRef = useRef<(reloadPage?: boolean) => void>(undefined);
   useEffect(() => {
     updateSWRef.current = registerSW({
       onNeedRefresh() {
@@ -117,7 +117,8 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
           </div>
         ) : undefined}
         <p>
-          <Trans i18nKey="select_workspace" components={{ tag_folder: <span className="font-bold" /> }} />
+          {/* FIXME: "key" is required to avoid warning inside the library. */}
+          <Trans i18nKey="select_workspace" components={{ tag_folder: <span key="span" className="font-bold" /> }} />
         </p>
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (

@@ -24,7 +24,7 @@ export function usePointerLock(option: PointerLockOption) {
   const [locked, setLocked] = useState(false);
   const [from, setFrom] = useState<IVec2>();
   const totalDelta = useRef<IVec2>({ x: 0, y: 0 });
-  const latestPointerMoveArgs = useRef<PointerMoveArgs>();
+  const latestPointerMoveArgs = useRef<PointerMoveArgs>(undefined);
 
   const startLock = useCallback((e: MouseEvent) => {
     e.preventDefault();

@@ -22,7 +22,7 @@ export const TextEditor: React.FC<Props> = ({
   showEmojiPicker,
   setShowEmojiPicker,
 }) => {
-  const inputRef = useRef<HTMLTextAreaElement>();
+  const inputRef = useRef<HTMLTextAreaElement>(undefined);
   const [draft, setDraft] = useState("");
   const [composition, setComposition] = useState(false);
 

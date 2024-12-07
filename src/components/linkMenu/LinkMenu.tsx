@@ -16,7 +16,7 @@ interface Props {
 export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay }) => {
   const [localLinkInfo, setLocalLinkInfo] = useState<LinkInfo>();
   const [hasPointer, setHasPointer] = useState(false);
-  const gracefulCloseTimer = useRef<any>();
+  const gracefulCloseTimer = useRef<any>(undefined);
 
   const rootStyle = useMemo(() => {
     if (!localLinkInfo) return;

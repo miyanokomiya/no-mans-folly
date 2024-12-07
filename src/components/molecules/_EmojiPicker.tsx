@@ -13,7 +13,7 @@ interface Props {
  * Don't use this component directly to reduce initial bundle size.
  * Use "EmojiPicker.tsx" instead.
  */
-const _EmojiPicker: React.FC<Props> = ({ onEmojiSelect, onClose }) => {
+const EmojiPicker: React.FC<Props> = ({ onEmojiSelect, onClose }) => {
   const handleGlobalKeydown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -30,4 +30,4 @@ const _EmojiPicker: React.FC<Props> = ({ onEmojiSelect, onClose }) => {
     </div>
   );
 };
-export default _EmojiPicker;
+export default EmojiPicker;

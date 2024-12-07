@@ -143,7 +143,7 @@ const ChildContextList: React.FC<ChildContextList> = ({ items, viewSize, onClick
 
 const PANEL_OFFSET = 4;
 
-const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement>, viewSize: Size) => {
+const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement | null>, viewSize: Size) => {
   const [diff, setDiff] = useState<IVec2>();
 
   useEffect(() => {

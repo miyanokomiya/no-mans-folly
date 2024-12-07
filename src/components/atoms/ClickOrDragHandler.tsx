@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, children, className }) => {
-  const downRef = useRef<IVec2>();
+  const downRef = useRef<IVec2>(undefined);
 
   const handleDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();

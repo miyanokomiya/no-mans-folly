@@ -12,7 +12,7 @@ export const InlineField: React.FC<Props> = ({ label, inert, fullBody, children 
     return (
       <div className="flex items-center gap-2 opacity-50">
         <span>{label}</span>
-        <div className={bodyClass} {...{ inert: "" }}>
+        <div className={bodyClass} inert>
           {children}
         </div>
       </div>

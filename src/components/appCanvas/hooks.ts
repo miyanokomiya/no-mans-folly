@@ -7,7 +7,7 @@ import { Shape } from "../../models";
 import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
 
 export function useImageStore(shapeStore: ShapeStore) {
-  const imageStoreRef = useRef<ImageStore>();
+  const imageStoreRef = useRef<ImageStore>(undefined);
   const imageStore = useMemo(() => {
     const prev = imageStoreRef.current;
     if (!prev) return newImageStore();
