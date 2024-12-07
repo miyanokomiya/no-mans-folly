@@ -3,6 +3,7 @@ import {
   applyStrokeStyle,
   createStrokeStyle,
   getLineDashArrayWithCap,
+  isSameStrokeDashStyle,
   isSameStrokeStyle,
   renderStrokeSVGAttributes,
 } from "./strokeStyle";
@@ -13,6 +14,61 @@ describe("createStrokeStyle", () => {
     expect(createStrokeStyle()).toEqual({
       color: { r: 0, g: 0, b: 0, a: 1 },
     });
+  });
+});
+
+describe("isSameStrokeDashStyle", () => {
+  test("should return true when two objects have the same line dash", () => {
+    expect(isSameStrokeDashStyle({ dash: "solid" }, { dash: "solid" })).toBe(true);
+    expect(isSameStrokeDashStyle({ dash: "custom" }, { dash: "solid" })).toBe(false);
+    expect(
+      isSameStrokeDashStyle(
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 1, dash: [1, 1] },
+        },
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 1, dash: [1, 1] },
+        },
+      ),
+    ).toBe(true);
+    expect(
+      isSameStrokeDashStyle(
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 1, dash: [1, 2] },
+        },
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 1, dash: [1, 1] },
+        },
+      ),
+    ).toBe(false);
+    expect(
+      isSameStrokeDashStyle(
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 2, dash: [1, 1] },
+        },
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 1, dash: [1, 1] },
+        },
+      ),
+    ).toBe(false);
+    expect(
+      isSameStrokeDashStyle(
+        {
+          dash: "custom",
+          dashCustom: { valueType: "raw", offset: 1, dash: [1, 1] },
+        },
+        {
+          dash: "custom",
+          dashCustom: { valueType: "scale", offset: 1, dash: [1, 1] },
+        },
+      ),
+    ).toBe(false);
   });
 });
 
@@ -80,17 +136,17 @@ describe("renderStrokeSVGAttributes", () => {
       "stroke-width": 10,
       "stroke-linecap": "round",
       "stroke-linejoin": "bevel",
-      "stroke-dasharray": getLineDashArrayWithCap("dot", "round", 10).join(" "),
+      "stroke-dasharray": getLineDashArrayWithCap({ dash: "dot", lineCap: "round", width: 10 }).join(" "),
     });
   });
 });
 
 describe("getLineDashArrayWithCap", () => {
   test("should adjust dash array when line cap isn't butt", () => {
-    expect(getLineDashArrayWithCap("dot", "butt", 10)).toEqual([10, 10]);
-    expect(getLineDashArrayWithCap("dot", "round", 10)).toEqual([0.01, 20]);
-    expect(getLineDashArrayWithCap("dot", "square", 10)).toEqual([0.01, 20]);
-    expect(getLineDashArrayWithCap("short", "round", 10)).toEqual([20, 20]);
-    expect(getLineDashArrayWithCap("long", "round", 10)).toEqual([50, 20]);
+    expect(getLineDashArrayWithCap({ dash: "dot", lineCap: "butt", width: 10 })).toEqual([10, 10]);
+    expect(getLineDashArrayWithCap({ dash: "dot", lineCap: "round", width: 10 })).toEqual([0.01, 20]);
+    expect(getLineDashArrayWithCap({ dash: "dot", lineCap: "square", width: 10 })).toEqual([0.01, 20]);
+    expect(getLineDashArrayWithCap({ dash: "short", lineCap: "round", width: 10 })).toEqual([20, 20]);
+    expect(getLineDashArrayWithCap({ dash: "long", lineCap: "round", width: 10 })).toEqual([50, 20]);
   });
 });

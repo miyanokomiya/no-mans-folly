@@ -66,11 +66,18 @@ export interface StrokeStyle {
   color: Color;
   width?: number;
   dash?: LineDash;
+  dashCustom?: LineDashStruct; // This is used when "dash" is "custom"
   lineCap?: CanvasLineCap;
   lineJoin?: CanvasLineJoin;
 }
 
-export type LineDash = undefined | "solid" | "dot" | "short" | "long"; // "undefined" refers to "solid"
+export type LineDash = undefined | "solid" | "dot" | "short" | "long" | "custom"; // "undefined" refers to "solid"
+
+export type LineDashStruct = {
+  valueType: "scale" | "raw"; // When "scale", each value represents scale of target line width
+  dash: number[];
+  offset: number;
+};
 
 export interface CommonStyle {
   fill: FillStyle;

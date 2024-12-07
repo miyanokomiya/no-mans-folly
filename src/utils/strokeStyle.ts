@@ -1,4 +1,4 @@
-import { LineDash, StrokeStyle } from "../models";
+import { LineDash, LineDashStruct, StrokeStyle } from "../models";
 import { colorToHex, isSameColor, rednerRGBA } from "./color";
 import { SVGAttributes } from "./svgElements";
 
@@ -9,8 +9,8 @@ export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
   };
 }
 
-export function getLineDap(lineDap?: LineDash): LineDash {
-  return lineDap ?? "solid";
+export function getLineDash(lineDash?: LineDash): LineDash {
+  return lineDash ?? "solid";
 }
 
 export function getLineCap(lineCap?: CanvasLineCap): CanvasLineCap {
@@ -21,12 +21,27 @@ export function getLineJoin(lineJoin?: CanvasLineJoin): CanvasLineJoin {
   return lineJoin ?? "round";
 }
 
+export function isSameStrokeDashStyle(
+  a?: Pick<StrokeStyle, "dash" | "dashCustom">,
+  b?: Pick<StrokeStyle, "dash" | "dashCustom">,
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  if (a.dash !== b.dash) return false;
+  if (a.dash !== "custom") return true;
+
+  if (a.dashCustom?.valueType !== b.dashCustom?.valueType) return false;
+  if (a.dashCustom?.offset !== b.dashCustom?.offset) return false;
+  if (a.dashCustom?.dash.join(",") !== b.dashCustom?.dash.join(",")) return false;
+  return true;
+}
+
 export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
   return (
     a?.disabled === b?.disabled &&
     isSameColor(a?.color, b?.color) &&
     a?.width === b?.width &&
-    a?.dash === b?.dash &&
+    isSameStrokeDashStyle(a, b) &&
     getLineCap(a?.lineCap) === getLineCap(b?.lineCap) &&
     getLineJoin(a?.lineJoin) === getLineJoin(b?.lineJoin)
   );
@@ -36,12 +51,12 @@ export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeSt
   ctx.strokeStyle = rednerRGBA(stroke.color);
   const width = getStrokeWidth(stroke);
   ctx.lineWidth = width;
-  ctx.setLineDash(getLineDashArrayWithCap(stroke.dash, stroke.lineCap, width));
+  ctx.setLineDash(getLineDashArrayWithCap(stroke));
   ctx.lineCap = getLineCap(stroke.lineCap);
   ctx.lineJoin = getLineJoin(stroke.lineJoin);
 }
 
-export function getStrokeWidth(stroke: StrokeStyle): number {
+export function getStrokeWidth(stroke: Pick<StrokeStyle, "width" | "disabled">): number {
   if (stroke.disabled) return 0;
   return stroke.width ?? 1;
 }
@@ -54,25 +69,38 @@ export function applyDefaultStrokeStyle(ctx: CanvasRenderingContext2D) {
   ctx.lineJoin = "miter";
 }
 
-function getLineDashArray(lineDash: LineDash, width = 1): number[] {
-  switch (lineDash) {
+function getLineDashArray(stroke: Pick<StrokeStyle, "width" | "lineCap" | "dash" | "dashCustom">): number[] {
+  const width = stroke.width ?? 1;
+  switch (stroke.dash) {
     case "dot":
       return [width, width];
     case "short":
       return [width * 3, width];
     case "long":
       return [width * 6, width];
+    case "custom":
+      if (stroke.dashCustom) {
+        return getLineDashCustomArray(stroke.dashCustom, width);
+      }
+      return [];
     default:
       return [];
   }
 }
 
-export function getLineDashArrayWithCap(lineDash: LineDash, lineCap: CanvasLineCap = "butt", width = 1): number[] {
-  switch (lineCap) {
+function getLineDashCustomArray(dashStruct: LineDashStruct, width: number): number[] {
+  return dashStruct.valueType === "raw" ? dashStruct.dash : dashStruct.dash.map((v) => v * width);
+}
+
+export function getLineDashArrayWithCap(stroke: Pick<StrokeStyle, "width" | "lineCap" | "dash">): number[] {
+  if (stroke.dash === "custom") return getLineDashArray(stroke);
+
+  const width = stroke.width ?? 1;
+  switch (stroke.lineCap) {
     case "butt":
-      return getLineDashArray(lineDash, width);
+      return getLineDashArray(stroke);
     default: {
-      switch (lineDash) {
+      switch (stroke.dash) {
         case "dot":
           // Stroke part must have nonzero value to keep the direction
           return [0.01, width * 2];
@@ -96,8 +124,6 @@ export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
         "stroke-width": stroke.width,
         "stroke-linecap": getLineCap(stroke.lineCap),
         "stroke-linejoin": getLineJoin(stroke.lineJoin),
-        "stroke-dasharray": stroke.dash
-          ? getLineDashArrayWithCap(stroke.dash, stroke.lineCap, stroke.width).join(" ")
-          : undefined,
+        "stroke-dasharray": stroke.dash ? getLineDashArrayWithCap(stroke).join(" ") : undefined,
       };
 }
