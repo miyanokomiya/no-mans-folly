@@ -52,6 +52,7 @@ export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeSt
   const width = getStrokeWidth(stroke);
   ctx.lineWidth = width;
   ctx.setLineDash(getLineDashArrayWithCap(stroke));
+  ctx.lineDashOffset = getLineDashOffset(stroke);
   ctx.lineCap = getLineCap(stroke.lineCap);
   ctx.lineJoin = getLineJoin(stroke.lineJoin);
 }
@@ -65,8 +66,17 @@ export function applyDefaultStrokeStyle(ctx: CanvasRenderingContext2D) {
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 1;
   ctx.setLineDash([]);
+  ctx.lineDashOffset = 0;
   ctx.lineCap = "butt";
   ctx.lineJoin = "miter";
+}
+
+function getLineDashOffset(stroke: Pick<StrokeStyle, "dash" | "dashCustom">): number {
+  if (stroke.dash === "custom" && stroke.dashCustom) {
+    return stroke.dashCustom.offset;
+  } else {
+    return 0;
+  }
 }
 
 function getLineDashArray(stroke: Pick<StrokeStyle, "width" | "lineCap" | "dash" | "dashCustom">): number[] {
@@ -125,5 +135,6 @@ export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
         "stroke-linecap": getLineCap(stroke.lineCap),
         "stroke-linejoin": getLineJoin(stroke.lineJoin),
         "stroke-dasharray": stroke.dash ? getLineDashArrayWithCap(stroke).join(" ") : undefined,
+        "stroke-dashoffset": getLineDashOffset(stroke) || undefined,
       };
 }

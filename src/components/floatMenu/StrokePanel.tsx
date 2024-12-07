@@ -8,6 +8,7 @@ import { InlineField } from "../atoms/InlineField";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import iconCustom from "../../assets/icons/custom.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
+import { NumberInput } from "../atoms/inputs/NumberInput";
 
 const LINE_DASH_KEYS: LineDash[] = ["dot", "short", "long", "solid"];
 const LINE_CAP_KEYS: CanvasLineCap[] = ["butt", "square", "round"];
@@ -59,6 +60,10 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
     setCustomDashValue(stroke.dashCustom?.dash.join(",") ?? "");
   }, [stroke]);
 
+  const commitDashCustom = useCallback(() => {
+    onChanged?.({ dashCustom: stroke.dashCustom });
+  }, [onChanged, stroke]);
+
   const onDashCustomValueChange = useCallback(
     (val: string) => {
       const current = parseLineDashCustomValue(customDashValue);
@@ -70,9 +75,14 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
     },
     [onChanged, customDashValue],
   );
-  const onDashCustomValueBlur = useCallback(() => {
-    onChanged?.({ dashCustom: stroke.dashCustom });
-  }, [onChanged, stroke]);
+
+  const onDashCustomOffsetChange = useCallback(
+    (val: number, draft = false) => {
+      const dash = parseLineDashCustomValue(customDashValue);
+      onChanged?.({ dashCustom: { dash, valueType: "scale", offset: val } }, draft);
+    },
+    [onChanged, customDashValue],
+  );
 
   const lineDash = getLineDash(stroke.dash);
 
@@ -95,9 +105,20 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           <TextInput
             value={customDashValue}
             onChange={onDashCustomValueChange}
-            onBlur={onDashCustomValueBlur}
+            onBlur={commitDashCustom}
             keepFocus
             placeholder="1,2,3,4"
+          />
+        </div>
+      </InlineField>
+      <InlineField label="Offset:" inert={lineDash !== "custom"}>
+        <div className="w-24">
+          <NumberInput
+            value={stroke.dashCustom?.offset ?? 0}
+            onChange={onDashCustomOffsetChange}
+            onBlur={commitDashCustom}
+            slider
+            keepFocus
           />
         </div>
       </InlineField>
@@ -273,5 +294,6 @@ function parseLineDashCustomValue(str: string): number[] {
   return str
     .split(/,/)
     .map((s) => parseFloat(s))
-    .filter((v) => !isNaN(v));
+    .filter((v) => !isNaN(v))
+    .map((v) => Math.max(0, v));
 }
