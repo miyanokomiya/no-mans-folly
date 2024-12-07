@@ -1,11 +1,13 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { Color, LineDash, StrokeStyle } from "../../models";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
-import { getLineCap, getLineDap, getLineDashArrayWithCap, getLineJoin } from "../../utils/strokeStyle";
+import { getLineCap, getLineDash, getLineDashArrayWithCap, getLineJoin } from "../../utils/strokeStyle";
 import { InlineField } from "../atoms/InlineField";
 import { BlockGroupField } from "../atoms/BlockGroupField";
+import iconCustom from "../../assets/icons/custom.svg";
+import { TextInput } from "../atoms/inputs/TextInput";
 
 const LINE_DASH_KEYS: LineDash[] = ["dot", "short", "long", "solid"];
 const LINE_CAP_KEYS: CanvasLineCap[] = ["butt", "square", "round"];
@@ -52,21 +54,54 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
     [onChanged],
   );
 
+  const [customDashValue, setCustomDashValue] = useState("");
+  useEffect(() => {
+    setCustomDashValue(stroke.dashCustom?.dash.join(",") ?? "");
+  }, [stroke]);
+
+  const onDashCustomValueChange = useCallback(
+    (val: string) => {
+      const current = parseLineDashCustomValue(customDashValue);
+      const dash = parseLineDashCustomValue(val);
+      if (current.join(",") !== dash.join(",")) {
+        onChanged?.({ dashCustom: { dash, valueType: "scale", offset: 0 } }, true);
+      }
+      setCustomDashValue(val);
+    },
+    [onChanged, customDashValue],
+  );
+  const onDashCustomValueBlur = useCallback(() => {
+    onChanged?.({ dashCustom: stroke.dashCustom });
+  }, [onChanged, stroke]);
+
+  const lineDash = getLineDash(stroke.dash);
+
   const dashButtons = (
-    <InlineField label="Dash:">
+    <BlockGroupField label="Dash">
       <div className="flex items-center justify-end gap-1">
-        {LINE_DASH_KEYS.map((lineDash) => {
-          return (
-            <LineDashButton
-              key={lineDash}
-              lineDash={lineDash}
-              highlight={lineDash === getLineDap(stroke.dash)}
-              onClick={onDashChanged}
-            />
-          );
+        {LINE_DASH_KEYS.map((ld) => {
+          return <LineDashButton key={ld} lineDash={ld} highlight={ld === lineDash} onClick={onDashChanged} />;
         })}
+        <LineDashButton
+          key="custom"
+          lineDash="custom"
+          highlight={"custom" === lineDash}
+          image={iconCustom}
+          onClick={onDashChanged}
+        />
       </div>
-    </InlineField>
+      <InlineField label="Custom:" inert={lineDash !== "custom"}>
+        <div className="w-24">
+          <TextInput
+            value={customDashValue}
+            onChange={onDashCustomValueChange}
+            onBlur={onDashCustomValueBlur}
+            keepFocus
+            placeholder="1,2,3,4"
+          />
+        </div>
+      </InlineField>
+    </BlockGroupField>
   );
 
   const onCapChanged = useCallback(
@@ -154,11 +189,12 @@ interface LineDashButtonProps {
   lineDash: LineDash;
   highlight?: boolean;
   onClick?: (lineDash: LineDash) => void;
+  image?: string;
 }
 
-const LineDashButton: React.FC<LineDashButtonProps> = ({ lineDash, highlight, onClick }) => {
+const LineDashButton: React.FC<LineDashButtonProps> = ({ lineDash, highlight, onClick, image }) => {
   const dashArray = useMemo(() => {
-    return getLineDashArrayWithCap(lineDash, "butt", 4).join(" ");
+    return getLineDashArrayWithCap({ dash: lineDash, lineCap: "butt", width: 4 }).join(" ");
   }, [lineDash]);
 
   const handleClick = useCallback(() => {
@@ -172,9 +208,13 @@ const LineDashButton: React.FC<LineDashButtonProps> = ({ lineDash, highlight, on
       title={lineDash}
       onClick={handleClick}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <line stroke="#000" strokeWidth="4" strokeDasharray={dashArray} x1="2" y1="30" x2="30" y2="2" />
-      </svg>
+      {image ? (
+        <img src={image} alt="" />
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+          <line stroke="#000" strokeWidth="4" strokeDasharray={dashArray} x1="2" y1="30" x2="30" y2="2" />
+        </svg>
+      )}
     </button>
   );
 };
@@ -228,3 +268,10 @@ const LineJoinButton: React.FC<LineJoinButtonProps> = ({ lineJoin, highlight, on
     </button>
   );
 };
+
+function parseLineDashCustomValue(str: string): number[] {
+  return str
+    .split(/,/)
+    .map((s) => parseFloat(s))
+    .filter((v) => !isNaN(v));
+}
