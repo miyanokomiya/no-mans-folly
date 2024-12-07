@@ -57,7 +57,16 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
 
   const [customDashValue, setCustomDashValue] = useState("");
   useEffect(() => {
-    setCustomDashValue(stroke.dashCustom?.dash.join(",") ?? "");
+    setCustomDashValue((currentStr) => {
+      const current = parseLineDashCustomValue(currentStr);
+      const next = stroke.dashCustom?.dash.join(",") ?? "";
+      if (current.join(",") === next) {
+        // Keep current string when dash array doesn't change.
+        // Draft dash array string, such as "1,2,", can be preserved by this way.
+        return currentStr;
+      }
+      return next;
+    });
   }, [stroke]);
 
   const commitDashCustom = useCallback(() => {
@@ -100,7 +109,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           onClick={onDashChanged}
         />
       </div>
-      <InlineField label="Custom:" inert={lineDash !== "custom"}>
+      <InlineField label="Array:" inert={lineDash !== "custom"}>
         <div className="w-24">
           <TextInput
             value={customDashValue}
