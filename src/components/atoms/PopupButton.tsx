@@ -90,6 +90,7 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
   const popupAttrs = useMemo(() => {
     if (!ref.current || !opened) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     boundsState; // For exhaustive-deps
 
     const bounds = ref.current.getBoundingClientRect();

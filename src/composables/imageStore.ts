@@ -70,6 +70,7 @@ export function newImageStore(option?: Option) {
             await loadFromFile(assetId, file);
           }
         } catch (e) {
+          console.error(e);
           errors.push(assetId);
         }
       }

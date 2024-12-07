@@ -1,27 +1,25 @@
 import { IVec2 } from "okageo";
 import { StyleScheme } from "../../models";
 
-interface ShapeHandlerHitResult {}
-
-export interface ShapeHandler<H extends ShapeHandlerHitResult = any> {
-  hitTest: (p: IVec2, scale: number) => H | undefined;
+export interface ShapeHandler<HitResult = any> {
+  hitTest: (p: IVec2, scale: number) => HitResult | undefined;
   render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number) => void;
   /**
    * Returns true when "val" is different from the previous one.
    */
-  saveHitResult: (val?: H) => boolean;
-  retrieveHitResult: () => H | undefined;
+  saveHitResult: (val?: HitResult) => boolean;
+  retrieveHitResult: () => HitResult | undefined;
 }
 
-export function defineShapeHandler<H extends ShapeHandlerHitResult, O>(
-  createFn: (option: O) => Pick<ShapeHandler<H>, "hitTest"> & {
-    isSameHitResult: (a?: H, b?: H) => boolean;
-    render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: H) => void;
+export function defineShapeHandler<HitResult, O>(
+  createFn: (option: O) => Pick<ShapeHandler<HitResult>, "hitTest"> & {
+    isSameHitResult: (a?: HitResult, b?: HitResult) => boolean;
+    render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) => void;
   },
-): (option: O) => ShapeHandler<H> {
+): (option: O) => ShapeHandler<HitResult> {
   return (o) => {
     const handler = createFn(o);
-    let hitResult: H | undefined;
+    let hitResult: HitResult | undefined;
 
     return {
       ...handler,

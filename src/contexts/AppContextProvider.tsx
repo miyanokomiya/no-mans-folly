@@ -43,6 +43,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
   }, [stateContext.states.newSelectionHubState]);
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     acctx;
     stateMachine.reset();
   }, [stateMachine, acctx]);

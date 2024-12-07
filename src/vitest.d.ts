@@ -1,5 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Assertion, AsymmetricMatchersContaining } from "vitest";
+import type {
+  Assertion as SrcAssertion,
+  AsymmetricMatchersContaining as SrcAsymmetricMatchersContaining,
+} from "vitest";
 import type { IRectangle, IVec2 } from "okageo";
 
 interface CustomMatchers<R = unknown> {
@@ -9,6 +11,6 @@ interface CustomMatchers<R = unknown> {
 }
 
 declare module "vitest" {
-  interface Assertion<T = any> extends CustomMatchers<T> {}
-  interface AsymmetricMatchersContaining extends CustomMatchers {}
+  interface Assertion<T = any> extends SrcAssertion, CustomMatchers<T> {}
+  interface AsymmetricMatchersContaining extends SrcAsymmetricMatchersContaining, CustomMatchers {}
 }

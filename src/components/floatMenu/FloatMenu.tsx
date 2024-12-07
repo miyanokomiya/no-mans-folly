@@ -84,6 +84,7 @@ export const FloatMenu: React.FC<Option> = ({
   const [dragOrigin, setDragOrigin] = useState<IVec2 | undefined>();
 
   const indexShape = useMemo<Shape | undefined>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     canvasState; // For exhaustive-deps
 
     const id = shapeStore.getLastSelected();
@@ -97,6 +98,7 @@ export const FloatMenu: React.FC<Option> = ({
   }, [canvasState, shapeStore]);
 
   const selectedShapes = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     canvasState; // For exhaustive-deps
 
     const shapeComposite = shapeStore.shapeComposite;

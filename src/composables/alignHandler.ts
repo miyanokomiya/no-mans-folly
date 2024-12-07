@@ -825,8 +825,6 @@ export function getModifiedAlignRootIds(
   const shapeMap = srcComposite.shapeMap;
   const updatedShapeMap = updatedComposite.shapeMap;
 
-  srcComposite.mergedShapeTreeMap;
-
   const saveParentBoxes = (s: Shape) => {
     // Seek the shallowest align box shape.
     getBranchPath(srcComposite.mergedShapeTreeMap, s.id).some((id) => {

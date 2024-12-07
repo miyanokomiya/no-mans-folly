@@ -33,6 +33,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   const sheet = useSelectedTmpSheet();
   const smctx = useContext(AppStateContext);
   const canvasBank = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     shapeStore; // For exhaustive-deps
     return newCanvasBank();
   }, [shapeStore]);

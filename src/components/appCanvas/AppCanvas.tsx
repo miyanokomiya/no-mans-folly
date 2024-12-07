@@ -66,6 +66,7 @@ export const AppCanvas: React.FC = () => {
   const [modifierOptions, setModifierOptions] = useState<ModifierOptions>({});
 
   const canvasBank = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     shapeStore; // For exhaustive-deps
     return newCanvasBank();
   }, [shapeStore]);
@@ -179,6 +180,7 @@ export const AppCanvas: React.FC = () => {
   }, [scale, viewCanvasRect, userSetting]);
 
   const mergedDocMap = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     canvasState; // For exhaustive-deps
 
     const tmpDocMap = documentStore.getTmpDocMap();
@@ -713,6 +715,7 @@ export const AppCanvas: React.FC = () => {
   );
 
   const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     canvasState; // For exhaustive-deps
 
     const lastSelected = shapeStore.getLastSelected();

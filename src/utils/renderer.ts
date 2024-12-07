@@ -10,11 +10,19 @@ export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[],
   if (reverse) {
     for (let i = path.length - 1; i >= 0; i--) {
       const p = path[i];
-      i === path.length - 1 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      if (i === path.length - 1) {
+        ctx.moveTo(p.x, p.y);
+      } else {
+        ctx.lineTo(p.x, p.y);
+      }
     }
   } else {
     path.forEach((p, i) => {
-      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      if (i === 0) {
+        ctx.moveTo(p.x, p.y);
+      } else {
+        ctx.lineTo(p.x, p.y);
+      }
     });
   }
   if (closed) {

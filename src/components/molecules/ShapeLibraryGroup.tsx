@@ -91,6 +91,7 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
       setIndexData(data);
       setErrorMessage(undefined);
     } catch (e) {
+      console.error(e);
       setErrorMessage(t("error.network.maybe_offline"));
     } finally {
       setLoading(false);

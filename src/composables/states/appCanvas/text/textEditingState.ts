@@ -172,7 +172,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
                 // If the shape is the doc owner, keep editing it.
                 // If not, select the shape.
                 if (shapeAtPointer?.id !== option.id) {
-                  shapeAtPointer ? ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl) : ctx.clearAllSelected();
+                  if (shapeAtPointer) {
+                    ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
+                  } else {
+                    ctx.clearAllSelected();
+                  }
                   return ctx.states.newSelectionHubState;
                 }
               }

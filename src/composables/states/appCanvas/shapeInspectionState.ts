@@ -37,7 +37,6 @@ export function newShapeInspectionState(): AppCanvasState {
         const shape = shapeComposite.mergedShapeMap[selectedIds[0]];
 
         const polygon = shapeComposite.getLocalRectPolygon(shape);
-        shapeComposite.getWrapperRectForShapes;
         renderCtx.beginPath();
         applyPath(renderCtx, polygon, true);
         renderCtx.stroke();

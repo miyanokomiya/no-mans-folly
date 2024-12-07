@@ -107,7 +107,6 @@ const TerminologyPopup = ({ item, p, portal, onClose }: TerminologyPopupProps): 
       </button>
     </div>
   );
-  portal;
 
   return portal ? createPortal(elm, document.body) : elm;
 };
