@@ -48,92 +48,6 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
     [onChanged],
   );
 
-  const onDashChanged = useCallback(
-    (val: LineDash) => {
-      onChanged?.({ dash: val === "solid" ? undefined : val });
-    },
-    [onChanged],
-  );
-
-  const [customDashValue, setCustomDashValue] = useState("");
-  useEffect(() => {
-    setCustomDashValue((currentStr) => {
-      const current = parseLineDashCustomValue(currentStr);
-      const next = stroke.dashCustom?.dash.join(",") ?? "";
-      if (current.join(",") === next) {
-        // Keep current string when dash array doesn't change.
-        // Draft dash array string, such as "1,2,", can be preserved by this way.
-        return currentStr;
-      }
-      return next;
-    });
-  }, [stroke]);
-
-  const commitDashCustom = useCallback(() => {
-    onChanged?.({ dashCustom: stroke.dashCustom });
-  }, [onChanged, stroke]);
-
-  const onDashCustomValueChange = useCallback(
-    (val: string) => {
-      const current = parseLineDashCustomValue(customDashValue);
-      const dash = parseLineDashCustomValue(val);
-      if (current.join(",") !== dash.join(",")) {
-        onChanged?.({ dashCustom: { dash, valueType: "scale", offset: 0 } }, true);
-      }
-      setCustomDashValue(val);
-    },
-    [onChanged, customDashValue],
-  );
-
-  const onDashCustomOffsetChange = useCallback(
-    (val: number, draft = false) => {
-      const dash = parseLineDashCustomValue(customDashValue);
-      onChanged?.({ dashCustom: { dash, valueType: "scale", offset: val } }, draft);
-    },
-    [onChanged, customDashValue],
-  );
-
-  const lineDash = getLineDash(stroke.dash);
-
-  const dashButtons = (
-    <BlockGroupField label="Dash">
-      <div className="flex items-center justify-end gap-1">
-        {LINE_DASH_KEYS.map((ld) => {
-          return <LineDashButton key={ld} lineDash={ld} highlight={ld === lineDash} onClick={onDashChanged} />;
-        })}
-        <LineDashButton
-          key="custom"
-          lineDash="custom"
-          highlight={"custom" === lineDash}
-          image={iconCustom}
-          onClick={onDashChanged}
-        />
-      </div>
-      <InlineField label="Array:" inert={lineDash !== "custom"}>
-        <div className="w-24">
-          <TextInput
-            value={customDashValue}
-            onChange={onDashCustomValueChange}
-            onBlur={commitDashCustom}
-            keepFocus
-            placeholder="1,2,3,4"
-          />
-        </div>
-      </InlineField>
-      <InlineField label="Offset:" inert={lineDash !== "custom"}>
-        <div className="w-24">
-          <NumberInput
-            value={stroke.dashCustom?.offset ?? 0}
-            onChange={onDashCustomOffsetChange}
-            onBlur={commitDashCustom}
-            slider
-            keepFocus
-          />
-        </div>
-      </InlineField>
-    </BlockGroupField>
-  );
-
   const onCapChanged = useCallback(
     (val: CanvasLineCap) => {
       onChanged?.({ lineCap: val });
@@ -196,9 +110,9 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
         </div>
       </div>
       <BlockGroupField label="Stroke styles" accordionKey="stroke-style">
-        <div>{capButtons}</div>
-        <div>{joinButtons}</div>
-        <div>{dashButtons}</div>
+        {capButtons}
+        {joinButtons}
+        <LineDashField stroke={stroke} onChange={onChanged} />
       </BlockGroupField>
       <div className={stroke.disabled ? "opacity-50 pointer-events-none" : ""}>
         <div className="mt-2 flex items-center">
@@ -212,6 +126,99 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+interface LineDashFieldProps {
+  stroke: Pick<StrokeStyle, "dash" | "dashCustom">;
+  onChange?: (stroke: Partial<StrokeStyle>, draft?: boolean) => void;
+}
+
+const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
+  const onDashChanged = useCallback(
+    (val: LineDash) => {
+      onChange?.({ dash: val === "solid" ? undefined : val });
+    },
+    [onChange],
+  );
+
+  const [customDashValue, setCustomDashValue] = useState("");
+  useEffect(() => {
+    setCustomDashValue((currentStr) => {
+      const current = parseLineDashCustomValue(currentStr);
+      const next = stroke.dashCustom?.dash.join(",") ?? "";
+      if (current.join(",") === next) {
+        // Keep current string when dash array doesn't change.
+        // Draft dash array string, such as "1,2,", can be preserved by this way.
+        return currentStr;
+      }
+      return next;
+    });
+  }, [stroke]);
+
+  const commitDashCustom = useCallback(() => {
+    onChange?.({ dashCustom: stroke.dashCustom });
+  }, [onChange, stroke]);
+
+  const onDashCustomValueChange = useCallback(
+    (val: string) => {
+      const current = parseLineDashCustomValue(customDashValue);
+      const dash = parseLineDashCustomValue(val);
+      if (current.join(",") !== dash.join(",")) {
+        onChange?.({ dashCustom: { dash, valueType: "scale", offset: 0 } }, true);
+      }
+      setCustomDashValue(val);
+    },
+    [onChange, customDashValue],
+  );
+
+  const onDashCustomOffsetChange = useCallback(
+    (val: number, draft = false) => {
+      const dash = parseLineDashCustomValue(customDashValue);
+      onChange?.({ dashCustom: { dash, valueType: "scale", offset: val } }, draft);
+    },
+    [onChange, customDashValue],
+  );
+
+  const lineDash = getLineDash(stroke.dash);
+
+  return (
+    <BlockGroupField label="Dash">
+      <div className="flex items-center justify-end gap-1">
+        {LINE_DASH_KEYS.map((ld) => {
+          return <LineDashButton key={ld} lineDash={ld} highlight={ld === lineDash} onClick={onDashChanged} />;
+        })}
+        <LineDashButton
+          key="custom"
+          lineDash="custom"
+          highlight={"custom" === lineDash}
+          image={iconCustom}
+          onClick={onDashChanged}
+        />
+      </div>
+      <InlineField label="Array:" inert={lineDash !== "custom"}>
+        <div className="w-24">
+          <TextInput
+            value={customDashValue}
+            onChange={onDashCustomValueChange}
+            onBlur={commitDashCustom}
+            keepFocus
+            placeholder="1,2,3,4"
+          />
+        </div>
+      </InlineField>
+      <InlineField label="Offset:" inert={lineDash !== "custom"}>
+        <div className="w-24">
+          <NumberInput
+            value={stroke.dashCustom?.offset ?? 0}
+            onChange={onDashCustomOffsetChange}
+            onBlur={commitDashCustom}
+            slider
+            keepFocus
+          />
+        </div>
+      </InlineField>
+    </BlockGroupField>
   );
 };
 
