@@ -155,7 +155,7 @@ export function newShapeSnapping(option: Option) {
     const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
 
     const diff = { x: dx, y: dy };
-    if (getNorm(diff) >= snapThreshold) return;
+    if (!isWithinRectThreshold(diff, snapThreshold)) return;
 
     const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
     const targets: SnappingResultTarget[] = [];
@@ -278,7 +278,7 @@ export function newShapeSnapping(option: Option) {
     const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
 
     const diff = { x: dx, y: dy };
-    if (getNorm(diff) >= snapThreshold) return;
+    if (!isWithinRectThreshold(diff, snapThreshold)) return;
 
     const adjustedP = add(p, diff);
     const targets: SnappingResultTarget[] = [];
@@ -344,6 +344,15 @@ export function newShapeSnapping(option: Option) {
   return { test, testWithSubRect, testPoint, testPointOnLine };
 }
 export type ShapeSnapping = ReturnType<typeof newShapeSnapping>;
+
+/**
+ * For horizontal or vertical snappings, rectangular check looks more natural than circular check.
+ */
+function isWithinRectThreshold(v: IVec2, threshold: number): boolean {
+  if (Math.abs(v.x) >= threshold) return false;
+  if (Math.abs(v.y) >= threshold) return false;
+  return true;
+}
 
 export function renderSnappingResult(
   ctx: CanvasRenderingContext2D,
@@ -567,7 +576,7 @@ export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
       x: xClosest?.[1] ?? 0,
       y: yClosest?.[1] ?? 0,
     };
-    if (getNorm(diff) >= snapThreshold) return;
+    if (!isWithinRectThreshold(diff, snapThreshold)) return;
 
     const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
     const ret: InvervalSnappingResult = {};
@@ -877,7 +886,7 @@ function snapPointOnLine({
 
   const [secondGuideline, snappedP] = closestInfo;
   const diff = sub(snappedP, srcP);
-  if (getNorm(diff) >= snapThreshold) return;
+  if (!isWithinRectThreshold(diff, snapThreshold)) return;
 
   return {
     diff,
