@@ -15,7 +15,7 @@ import { getCrossLineAndLine, getD2, getRectLines, ISegment, isRangeOverlapped }
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
-import { renderArrow } from "../utils/renderer";
+import { renderArrow, scaleGlobalAlpha } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 import { pickMinItem } from "../utils/commons";
 import { BoundingBoxResizing } from "./boundingBox";
@@ -354,6 +354,28 @@ export function renderSnappingResult(
     getTargetRect?: (id: string) => IRectangle | undefined;
   },
 ) {
+  const getTargetRect = option.getTargetRect;
+
+  const allTargetIdSet = new Set(option.result.targets.map((t) => t.id));
+  option.result.intervalTargets.forEach((info) => {
+    allTargetIdSet.add(info.beforeId);
+    allTargetIdSet.add(info.afterId);
+  });
+
+  if (getTargetRect && allTargetIdSet.size > 0) {
+    scaleGlobalAlpha(ctx, 0.2, () => {
+      applyFillStyle(ctx, { color: option.style.selectionSecondaly });
+      allTargetIdSet.forEach((id) => {
+        const rect = getTargetRect(id);
+        if (!rect) return;
+
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fill();
+      });
+    });
+  }
+
   applyStrokeStyle(ctx, { color: option.style.selectionPrimary, width: 2 * option.scale });
   applyFillStyle(ctx, { color: option.style.selectionPrimary });
 
@@ -365,13 +387,13 @@ export function renderSnappingResult(
   });
   ctx.stroke();
 
-  if (!option.getTargetRect) return;
+  if (!getTargetRect) return;
 
   const arrowSize = 10 * option.scale;
 
   option.result.intervalTargets?.forEach((t) => {
-    const before = option.getTargetRect?.(t.beforeId);
-    const after = option.getTargetRect?.(t.afterId);
+    const before = getTargetRect(t.beforeId);
+    const after = getTargetRect(t.afterId);
     if (!before || !after) return;
 
     const isV = t.direction === "v";
