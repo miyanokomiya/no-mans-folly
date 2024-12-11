@@ -106,7 +106,7 @@ export function getLineDashArrayWithCap(stroke: Pick<StrokeStyle, "width" | "lin
   if (stroke.dash === "custom") return getLineDashArray(stroke);
 
   const width = stroke.width ?? 1;
-  switch (stroke.lineCap) {
+  switch (getLineCap(stroke.lineCap)) {
     case "butt":
       return getLineDashArray(stroke);
     default: {

@@ -143,6 +143,7 @@ describe("renderStrokeSVGAttributes", () => {
 
 describe("getLineDashArrayWithCap", () => {
   test("should adjust dash array when line cap isn't butt", () => {
+    expect(getLineDashArrayWithCap({ dash: "dot", lineCap: undefined, width: 10 })).toEqual([10, 10]);
     expect(getLineDashArrayWithCap({ dash: "dot", lineCap: "butt", width: 10 })).toEqual([10, 10]);
     expect(getLineDashArrayWithCap({ dash: "dot", lineCap: "round", width: 10 })).toEqual([0.01, 20]);
     expect(getLineDashArrayWithCap({ dash: "dot", lineCap: "square", width: 10 })).toEqual([0.01, 20]);
