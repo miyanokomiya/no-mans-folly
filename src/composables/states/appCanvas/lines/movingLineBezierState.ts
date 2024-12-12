@@ -162,7 +162,8 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
           style,
           scale,
           result: snappingResult,
-          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
+          getTargetRect: (id) =>
+            shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined,
         });
       }
 

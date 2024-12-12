@@ -116,7 +116,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           style,
           scale,
           result: snappingResult,
-          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeMap[id]),
+          getTargetRect: (id) => (shapeMap[id] ? shapeComposite.getWrapperRect(shapeMap[id]) : undefined),
         });
       }
 

@@ -105,7 +105,8 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) => shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]),
+          getTargetRect: (id) =>
+            shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined,
         });
       }
 
