@@ -19,7 +19,7 @@
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "emoji-mart": "^5.6.0",
-    "fractional-indexing-jittered": "^0.9.1",
+    "fractional-indexing-jittered": "https://github.com/miyanokomiya/fractional-indexing-jittered.git",
     "i18next": "^24.0.5",
     "i18next-browser-languagedetector": "^8.0.0",
     "minimatrix-polyroots": "^3.0.5",
