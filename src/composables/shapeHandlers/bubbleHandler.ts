@@ -5,7 +5,7 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { BubbleShape, getBeakControls, getBeakSize } from "../../shapes/polygons/bubble";
-import { applyLocalSpace, renderOutlinedCircle, scaleGlobalAlpha } from "../../utils/renderer";
+import { applyLocalSpace, renderOutlinedCircle, renderValueLabel, scaleGlobalAlpha } from "../../utils/renderer";
 import { getShapeDetransform } from "../../shapes/rectPolygon";
 import { getLocalAbsolutePoint } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
@@ -88,7 +88,7 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
     });
 
     if (hitResult?.type === "cornerXC" || hitResult?.type === "cornerYC") {
-      renderCornerGuidlines(ctx, shape, style, scale);
+      renderCornerGuidlines(ctx, style, scale, shape);
     }
   }
 
@@ -185,19 +185,41 @@ function renderRootGuid(
 
 export function renderCornerGuidlines(
   renderCtx: CanvasRenderingContext2D,
-  shape: BubbleShape,
   style: StyleScheme,
   scale: number,
+  shape: BubbleShape,
+  showLabel = false,
 ) {
-  applyStrokeStyle(renderCtx, {
-    color: style.selectionSecondaly,
-    width: 2 * scale,
-    dash: "short",
-  });
-
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   applyLocalSpace(renderCtx, shapeRect, shape.rotation, () => {
     const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
+
+    if (showLabel) {
+      const margin = 20 * scale;
+      renderValueLabel(
+        renderCtx,
+        `${Math.round(shape.cornerC.x * 200)}%`,
+        { x: 0, y: -margin },
+        -shape.rotation,
+        scale,
+        true,
+      );
+      renderValueLabel(
+        renderCtx,
+        `${Math.round(shape.cornerC.y * 200)}%`,
+        { x: -margin, y: 0 },
+        -shape.rotation,
+        scale,
+        true,
+      );
+    }
+
+    applyStrokeStyle(renderCtx, {
+      color: style.selectionSecondaly,
+      width: 2 * scale,
+      dash: "short",
+    });
+
     renderCtx.beginPath();
     renderCtx.rect(0, 0, cornerXC.x, cornerYC.y);
     renderCtx.stroke();

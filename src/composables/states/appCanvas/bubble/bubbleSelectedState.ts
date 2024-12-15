@@ -10,6 +10,8 @@ import { getLocalAbsolutePoint, getLocalRelativeRate } from "../../../../shapes/
 import { IVec2, applyAffine, clamp, getDistance, getInner, getPedal, sub } from "okageo";
 import { BubbleShape, getBeakControls, getMaxBeakSize } from "../../../../shapes/polygons/bubble";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
+import { COMMAND_EXAM_SRC } from "../commandExams";
+import { snapNumber } from "../../../../utils/geometry";
 
 export const newBubbleSelectedState = defineSingleSelectedHandlerState(
   (getters) => {
@@ -59,46 +61,74 @@ export const newBubbleSelectedState = defineSingleSelectedHandlerState(
                           renderFn: renderBeakControls,
                           snapType: "disabled",
                         });
-                    case "cornerXC":
+                    case "cornerXC": {
+                      let showLabel = !event.data.options.ctrl;
                       return () =>
                         movingShapeControlState<BubbleShape>({
                           targetId: targetShape.id,
-                          patchFn: (s, p) => {
-                            const rate = getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p));
-                            return { cornerC: { x: clamp(0, 0.5, rate.x), y: s.cornerC.y } };
+                          snapType: "custom",
+                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+                          patchFn: (s, p, movement) => {
+                            let nextRate = clamp(
+                              0,
+                              0.5,
+                              getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p)).x,
+                            );
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextRate = snapNumber(nextRate, 0.01);
+                              showLabel = true;
+                            }
+                            return { cornerC: { x: nextRate, y: movement.shift ? nextRate : s.cornerC.y } };
                           },
                           getControlFn: (s, scale) =>
                             applyAffine(getShapeTransform(s), getLocalCornerControl(s, scale)[0]),
                           renderFn: (stateCtx, renderCtx, latestShape) => {
                             renderCornerGuidlines(
                               renderCtx,
-                              latestShape,
                               stateCtx.getStyleScheme(),
                               stateCtx.getScale(),
+                              latestShape,
+                              showLabel,
                             );
                           },
-                          snapType: "disabled",
                         });
-                    case "cornerYC":
+                    }
+                    case "cornerYC": {
+                      let showLabel = !event.data.options.ctrl;
                       return () =>
                         movingShapeControlState<BubbleShape>({
                           targetId: targetShape.id,
-                          patchFn: (s, p) => {
-                            const rate = getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p));
-                            return { cornerC: { x: s.cornerC.x, y: clamp(0, 0.5, rate.y) } };
+                          snapType: "custom",
+                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+                          patchFn: (s, p, movement) => {
+                            let nextRate = clamp(
+                              0,
+                              0.5,
+                              getLocalRelativeRate(s, applyAffine(getShapeDetransform(s), p)).y,
+                            );
+                            if (movement.ctrl) {
+                              showLabel = false;
+                            } else {
+                              nextRate = snapNumber(nextRate, 0.01);
+                              showLabel = true;
+                            }
+                            return { cornerC: { x: movement.shift ? nextRate : s.cornerC.x, y: nextRate } };
                           },
                           getControlFn: (s, scale) =>
                             applyAffine(getShapeTransform(s), getLocalCornerControl(s, scale)[1]),
                           renderFn: (stateCtx, renderCtx, latestShape) => {
                             renderCornerGuidlines(
                               renderCtx,
-                              latestShape,
                               stateCtx.getStyleScheme(),
                               stateCtx.getScale(),
+                              latestShape,
+                              showLabel,
                             );
                           },
-                          snapType: "disabled",
                         });
+                    }
                     default:
                       return;
                   }
