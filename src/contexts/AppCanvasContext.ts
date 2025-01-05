@@ -21,9 +21,18 @@ export interface IAppCanvasContext {
   layerStore: LayerStore;
   shapeStore: ShapeStore;
   documentStore: DocumentStore;
-  undoManager: { undo: () => void; redo: () => void; setCaptureTimeout: (timeout?: number) => void };
+  undoManager: AppUndoManager;
   getStyleScheme: () => StyleScheme;
   userSettingStore: UserSettingStore;
+}
+
+export interface AppUndoManager {
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  watch: (fn: () => void) => () => void;
+  setCaptureTimeout: (timeout?: number) => void;
 }
 
 export const AppCanvasContext = createContext<IAppCanvasContext>(undefined as any);

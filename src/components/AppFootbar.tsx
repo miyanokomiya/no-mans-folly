@@ -8,11 +8,16 @@ import iconHelp from "../assets/icons/help.svg";
 import iconBMC from "../assets/externals/bmc-logo.svg";
 import { ZoomField } from "./molecules/ZoomField";
 import { getAllShapeRangeWithinComposite } from "../composables/shapeComposite";
+import { AppCanvasContext } from "../contexts/AppCanvasContext";
+import { IconButton } from "./atoms/buttons/IconButton";
+import { useCanUndoRedo } from "../hooks/undoManager";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
   const { setZoom, getScale, getShapeComposite, setViewport } = useContext(AppStateContext);
   const [popupKey, setPopupKey] = useState("");
+  const { undoManager } = useContext(AppCanvasContext);
+  const [canUndo, canRedo] = useCanUndoRedo(undoManager);
 
   const handleScaleFit = useCallback(() => {
     setPopupKey("");
@@ -60,12 +65,8 @@ export const AppFootbar: React.FC = () => {
       />
       {borderElm}
       <div className="flex gap-1 items-center">
-        <button type="button" className="w-8 h-8 border rounded flex items-center justify-center" onClick={onUndo}>
-          <img src={iconRedo} alt="Undo" className="w-6 h-6 -scale-x-100" />
-        </button>
-        <button type="button" className="w-8 h-8 border rounded flex items-center justify-center" onClick={onRedo}>
-          <img src={iconRedo} alt="Redo" className="w-6 h-6" />
-        </button>
+        <IconButton icon={iconRedo} size={8} onClick={onUndo} disabled={!canUndo} flipH />
+        <IconButton icon={iconRedo} size={8} onClick={onRedo} disabled={!canRedo} />
       </div>
       {borderElm}
       <a href={process.env.BUYMEACOFFEE_URL} target="_blank" rel="noopener" className="p-1">

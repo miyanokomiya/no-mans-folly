@@ -28,6 +28,7 @@ import { useToastMessages } from "./hooks/toastMessage";
 import { ToastMessages } from "./components/ToastMessages";
 import { useLocalStorageAdopter } from "./hooks/localStorage";
 import "./i18n";
+import { createAppUndoManager } from "./hooks/undoManager";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -102,13 +103,7 @@ function App() {
       shapeStore,
       documentStore,
       getStyleScheme: () => createStyleScheme(),
-      undoManager: {
-        undo: () => undoManager.undo(),
-        redo: () => undoManager.redo(),
-        setCaptureTimeout: (timeout = 0) => {
-          undoManager.captureTimeout = timeout;
-        },
-      },
+      undoManager: createAppUndoManager(undoManager),
     };
     return context;
   }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
