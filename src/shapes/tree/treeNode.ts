@@ -4,15 +4,12 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "../core";
 import { getTreeChildMargin, isTreeRootShape, struct as treeRootStruct } from "./treeRoot";
-import { TreeShapeBase, isTreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
+import { TREE_SHAPE_MIN_HEIGHT, TREE_SHAPE_MIN_WIDTH, TreeShapeBase, isTreeShapeBase } from "./core";
 import { createBoxPadding } from "../../utils/boxPadding";
 import { applyLocalSpace, applyPath, createSVGCurvePath } from "../../utils/renderer";
 import { getRectRotateFn } from "../../utils/geometry";
 import { getShapeTransform, getRectShapeCenter, getRectShapeRect } from "../rectPolygon";
 import { renderTransform } from "../../utils/svgElements";
-
-const MIN_WIDTH = 120;
-const MIN_HEIGHT = 50;
 
 /**
  * "parentId" should always refer to the root node.
@@ -36,8 +33,8 @@ export const struct: ShapeStruct<TreeNodeShape> = {
       type: "tree_node",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      width: arg.width ?? MIN_WIDTH,
-      height: arg.height ?? MIN_HEIGHT,
+      width: arg.width ?? TREE_SHAPE_MIN_WIDTH,
+      height: arg.height ?? TREE_SHAPE_MIN_HEIGHT,
       textPadding: arg.textPadding ?? createBoxPadding([6, 6, 6, 6]),
       maxWidth: arg.maxWidth ?? 300,
       treeParentId: arg.treeParentId ?? "",
@@ -88,12 +85,6 @@ export const struct: ShapeStruct<TreeNodeShape> = {
         body,
       ],
     };
-  },
-  resize(shape, resizingAffine) {
-    return resizeTreeShape(shape, resizingAffine, MIN_WIDTH, MIN_HEIGHT);
-  },
-  resizeOnTextEdit(shape, textBoxSize) {
-    return resizeTreeShapeOnTextEdit(shape, textBoxSize, MIN_WIDTH, MIN_HEIGHT);
   },
   immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
     if (!removeNotFound) {

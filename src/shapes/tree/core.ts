@@ -4,6 +4,9 @@ import { RectangleShape } from "../rectangle";
 import { getPaddingRect } from "../../utils/boxPadding";
 import { struct as recntagleStruct } from "../rectangle";
 
+export const TREE_SHAPE_MIN_WIDTH = 120;
+export const TREE_SHAPE_MIN_HEIGHT = 50;
+
 export type TreeShapeBase = RectangleShape &
   BoxAlign & {
     maxWidth: number;

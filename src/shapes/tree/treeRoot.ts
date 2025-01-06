@@ -5,15 +5,18 @@ import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "
 import { ShapeStruct, createBaseShape } from "../core";
 import { struct as recntagleStruct } from "../rectangle";
 import { isPointOnGroup } from "../group";
-import { TreeShapeBase, resizeTreeShape, resizeTreeShapeOnTextEdit } from "./core";
+import {
+  TREE_SHAPE_MIN_HEIGHT,
+  TREE_SHAPE_MIN_WIDTH,
+  TreeShapeBase,
+  resizeTreeShape,
+  resizeTreeShapeOnTextEdit,
+} from "./core";
 import { applyLocalSpace } from "../../utils/renderer";
 import { getRectPoints, getRotatedRectAffine, getRotateFn, getWrapperRect } from "../../utils/geometry";
 import { renderTransform } from "../../utils/svgElements";
 import { CHILD_MARGIN, SIBLING_MARGIN } from "../../utils/layouts/tree";
 import { getCenter, getOuterRectangle } from "okageo";
-
-const MIN_WIDTH = 120;
-const MIN_HEIGHT = 60;
 
 export type TreeRootShape = TreeShapeBase & {
   siblingMargin?: number;
@@ -29,8 +32,8 @@ export const struct: ShapeStruct<TreeRootShape> = {
       type: "tree_root",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      width: arg.width ?? MIN_WIDTH,
-      height: arg.height ?? MIN_HEIGHT,
+      width: arg.width ?? TREE_SHAPE_MIN_WIDTH,
+      height: arg.height ?? TREE_SHAPE_MIN_HEIGHT,
       textPadding: arg.textPadding ?? createBoxPadding([6, 6, 6, 6]),
       maxWidth: arg.maxWidth ?? 300,
       siblingMargin: arg.siblingMargin,
@@ -97,10 +100,10 @@ export const struct: ShapeStruct<TreeRootShape> = {
     return getWrapperRect([selfWrapperRect, ...rects]);
   },
   resize(shape, resizingAffine) {
-    return resizeTreeShape(shape, resizingAffine, MIN_WIDTH, MIN_HEIGHT);
+    return resizeTreeShape(shape, resizingAffine, TREE_SHAPE_MIN_WIDTH, TREE_SHAPE_MIN_HEIGHT);
   },
   resizeOnTextEdit(shape, textBoxSize) {
-    return resizeTreeShapeOnTextEdit(shape, textBoxSize, MIN_WIDTH, MIN_HEIGHT);
+    return resizeTreeShapeOnTextEdit(shape, textBoxSize, TREE_SHAPE_MIN_WIDTH, TREE_SHAPE_MIN_HEIGHT);
   },
   isPointOn(shape, p, shapeContext) {
     const selfResult = recntagleStruct.isPointOn(shape, p, shapeContext);
