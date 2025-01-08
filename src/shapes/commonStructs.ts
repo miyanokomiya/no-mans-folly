@@ -37,6 +37,8 @@ import { struct as board_lane } from "./board/boardLane";
 import { struct as board_card } from "./board/boardCard";
 import { struct as align_box } from "./align/alignBox";
 
+import { struct as frame } from "./frame";
+
 export const SHAPE_COMMON_STRUCTS: {
   [type: string]: ShapeStruct<any>;
 } = {
@@ -79,4 +81,6 @@ export const SHAPE_COMMON_STRUCTS: {
   board_lane,
   board_card,
   align_box,
+
+  frame,
 };
