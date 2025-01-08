@@ -1,11 +1,11 @@
-import { CommonStyle } from "../models";
+import { CommonStyle, Shape } from "../models";
 import { createFillStyle } from "../utils/fillStyle";
 import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { RectPolygonShape } from "./rectPolygon";
 import { struct as rectangleStruct } from "./rectangle";
 
-export type FrameShape = RectPolygonShape & CommonStyle;
+export type FrameShape = RectPolygonShape & CommonStyle & { name: string };
 
 export const struct: ShapeStruct<FrameShape> = {
   ...rectangleStruct,
@@ -18,6 +18,7 @@ export const struct: ShapeStruct<FrameShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 300,
       height: arg.height ?? 300,
+      name: arg.name ?? "new frame",
     };
   },
   resize(shape, resizingAffine) {
@@ -35,3 +36,7 @@ export const struct: ShapeStruct<FrameShape> = {
   getTextPadding: undefined,
   patchTextPadding: undefined,
 };
+
+export function isFrameShape(s: Shape): s is FrameShape {
+  return s.type === "frame";
+}
