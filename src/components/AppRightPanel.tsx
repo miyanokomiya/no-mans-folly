@@ -1,4 +1,5 @@
 import { TabPanelV } from "./atoms/TabPanelV";
+import { FramePanel } from "./FramePanel";
 import { ShapeTreeInspectorPanel } from "./shapeInspectorPanel/ShapeTreeInspectorPanel";
 import { ShapeLibraryPanel } from "./ShapeLibraryPanel";
 import { ShapeTemplatePanel } from "./ShapeTemplatePanel";
@@ -12,6 +13,7 @@ interface Props {
 export const AppRightPanel: React.FC<Props> = ({ selected, onSelect }) => {
   const items: [{ name: string }, React.ReactNode, noPadding?: boolean][] = [
     [{ name: "Inspector" }, <ShapeTreeInspectorPanel />, true],
+    [{ name: "Frames" }, <FramePanel />, true],
     [{ name: "Icons" }, <ShapeLibraryPanel />],
     [{ name: "Templates" }, <ShapeTemplatePanel />],
     [{ name: "Settings" }, <UserSettingPanel />],
