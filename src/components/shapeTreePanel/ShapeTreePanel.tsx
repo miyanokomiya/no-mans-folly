@@ -12,6 +12,7 @@ import { isCtrlOrMeta } from "../../utils/devices";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
 import { rednerRGBA } from "../../utils/color";
+import { hasSpecialOrderPriority } from "../../shapes";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -28,9 +29,9 @@ export const ShapeTreePanel: React.FC = () => {
   }, [shapeComposite, selectedLastId]);
 
   const rootNodeProps = useMemo(() => {
-    return shapeComposite.mergedShapeTree.map((n) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor),
-    );
+    return shapeComposite.mergedShapeTree
+      .filter((n) => !hasSpecialOrderPriority(shapeComposite.getShapeStruct, shapeComposite.mergedShapeMap[n.id]))
+      .map((n) => getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor));
   }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
