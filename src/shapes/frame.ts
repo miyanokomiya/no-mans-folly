@@ -25,6 +25,7 @@ export const struct: ShapeStruct<FrameShape> = {
   },
   render(ctx, shape) {
     rectangleStruct.render(ctx, shape);
+    // TODO: Avoid this rendering when it's is for PNG export.
     applyDefaultTextStyle(ctx, 18);
     ctx.textBaseline = "bottom";
     applyStrokeStyle(ctx, { color: COLORS.WHITE });
