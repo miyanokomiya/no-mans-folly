@@ -426,3 +426,15 @@ export function getOrderPriority(getStruct: GetShapeStruct, shape: Shape): numbe
   const struct = getStruct(shape.type);
   return struct.orderPriority ?? 0;
 }
+
+export function hasSpecialOrderPriority(getStruct: GetShapeStruct, shape: Shape): boolean {
+  return getOrderPriority(getStruct, shape) !== 0;
+}
+
+/**
+ * This function doesn't check if the shape already has the parent.
+ * => Because it's impossible to check if the parent really exists without all shapes.
+ */
+export function canShapeGrouped(getStruct: GetShapeStruct, shape: Shape): boolean {
+  return !hasSpecialOrderPriority(getStruct, shape);
+}

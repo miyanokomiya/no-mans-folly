@@ -3,12 +3,15 @@ import {
   canClip,
   canHaveText,
   canHaveTextPadding,
+  canShapeGrouped,
   createShape,
   getAttachmentByUpdatingRotation,
   getCommonStruct,
+  getOrderPriority,
   getShapeTextBounds,
   getTextRangeRect,
   getWrapperRect,
+  hasSpecialOrderPriority,
   isPointOn,
   refreshShapeRelations,
   remapShapeIds,
@@ -523,5 +526,27 @@ describe("getAttachmentByUpdatingRotation", () => {
     expect(getAttachmentByUpdatingRotation(shape, 0.1)).toEqual(undefined);
     expect(getAttachmentByUpdatingRotation(shape, 0.3)).toEqual({ ...attachment, rotation: 0.4 });
     expect(getAttachmentByUpdatingRotation(shape, -0.1)).toEqual({ ...attachment, rotation: 0 });
+  });
+});
+
+describe("getOrderPriority", () => {
+  test("should return order priority for each shape type", () => {
+    expect(getOrderPriority(getCommonStruct, createShape(getCommonStruct, "rectangle", {}))).toBe(0);
+    expect(getOrderPriority(getCommonStruct, createShape(getCommonStruct, "frame", {}))).toBe(-10);
+  });
+});
+
+describe("hasSpecialOrderPriority", () => {
+  test("should return true when the priority isn't 0", () => {
+    expect(hasSpecialOrderPriority(getCommonStruct, createShape(getCommonStruct, "rectangle", {}))).toBe(false);
+    expect(hasSpecialOrderPriority(getCommonStruct, createShape(getCommonStruct, "frame", {}))).toBe(true);
+  });
+});
+
+describe("canShapeGrouped", () => {
+  test("should return true when a shape can be grouped", () => {
+    expect(canShapeGrouped(getCommonStruct, createShape(getCommonStruct, "rectangle", {}))).toBe(true);
+    expect(canShapeGrouped(getCommonStruct, createShape(getCommonStruct, "rectangle", { parentId: "a" }))).toBe(true);
+    expect(canShapeGrouped(getCommonStruct, createShape(getCommonStruct, "frame", {}))).toBe(false);
   });
 });

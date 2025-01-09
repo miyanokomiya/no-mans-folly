@@ -140,6 +140,29 @@ describe("groupShapes", () => {
     });
     expect(ctx.selectShape).toHaveBeenCalledWith("group");
   });
+
+  test("should not make a group when a frame shape exists in the targets", () => {
+    const ctx = getMockCtx();
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape(getCommonStruct, "rectangle", { id: "a" }),
+          createShape(getCommonStruct, "rectangle", { id: "b" }),
+          createShape(getCommonStruct, "frame", { id: "frame" }),
+        ],
+        getStruct: getCommonStruct,
+      });
+
+    const res0 = groupShapes(ctx);
+    expect(res0).toBe(false);
+    expect(ctx.addShapes).not.toHaveBeenCalled();
+    expect(ctx.selectShape).not.toHaveBeenCalled();
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true, frame: true });
+    ctx.generateUuid = () => "group";
+    const res1 = groupShapes(ctx);
+    expect(res1).toBe(false);
+  });
 });
 
 describe("ungroupShapes", () => {
