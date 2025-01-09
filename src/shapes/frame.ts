@@ -47,6 +47,7 @@ export const struct: ShapeStruct<FrameShape> = {
   getTextRangeRect: undefined,
   getTextPadding: undefined,
   patchTextPadding: undefined,
+  orderPriority: -10,
 };
 
 export function isFrameShape(s: Shape): s is FrameShape {

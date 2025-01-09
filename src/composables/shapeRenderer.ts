@@ -23,13 +23,14 @@ interface Option {
 }
 
 export function newShapeRenderer(option: Option) {
-  const { mergedShapeMap, mergedShapeTree } = option.shapeComposite;
+  const { mergedShapeMap } = option.shapeComposite;
   const docMap = option.getDocumentMap();
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
   const canvasBank = option.canvasBank ?? newCanvasBank();
+  const sortedMergedShapeTree = option.shapeComposite.getSortedMergedShapeTree();
 
   function render(ctx: CanvasRenderingContext2D) {
-    renderShapeTree(ctx, mergedShapeTree);
+    renderShapeTree(ctx, sortedMergedShapeTree);
   }
 
   function renderShapeTree(ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {

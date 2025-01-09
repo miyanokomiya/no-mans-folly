@@ -86,6 +86,22 @@ describe("newShapeComposite", () => {
     });
   });
 
+  describe("getSortedMergedShapeTree", () => {
+    test("should sort root shapes based on orderPriority", () => {
+      const shapes = [
+        createShape(getCommonStruct, "rectangle", { id: "a" }),
+        createShape(getCommonStruct, "frame", { id: "frame1" }),
+        createShape(getCommonStruct, "rectangle", { id: "b" }),
+        createShape(getCommonStruct, "frame", { id: "frame2" }),
+      ];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getSortedMergedShapeTree().map((s) => s.id)).toEqual(["frame1", "frame2", "a", "b"]);
+    });
+  });
+
   describe("getLocalSpace", () => {
     test("should return local space of the shape", () => {
       const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {

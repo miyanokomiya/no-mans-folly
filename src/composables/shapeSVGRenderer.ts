@@ -25,12 +25,13 @@ interface Option {
 }
 
 export function newShapeSVGRenderer(option: Option) {
-  const { mergedShapeMap, mergedShapeTree } = option.shapeComposite;
+  const { mergedShapeMap } = option.shapeComposite;
   const docMap = option.getDocumentMap();
+  const sortedMergedShapeTree = option.shapeComposite.getSortedMergedShapeTree();
 
   async function render(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {
     const root = createSVGSVGElement();
-    renderShapeTree(root, ctx, mergedShapeTree);
+    renderShapeTree(root, ctx, sortedMergedShapeTree);
 
     // Gather asset files used in the SVG.
     const assetDataMap = new Map<string, { width: number; height: number; base64: string }>();
@@ -125,7 +126,7 @@ export function newShapeSVGRenderer(option: Option) {
     const root = await render(ctx);
 
     // Embed shape data to the SVG.
-    const targets = option.shapeComposite.getAllBranchMergedShapes(mergedShapeTree.map((t) => t.id));
+    const targets = option.shapeComposite.getAllBranchMergedShapes(sortedMergedShapeTree.map((t) => t.id));
     const docs: [string, DocOutput][] = targets.filter((s) => !!docMap[s.id]).map((s) => [s.id, docMap[s.id]]);
     root.appendChild(createTemplateShapeEmbedElement({ shapes: targets, docs }));
 

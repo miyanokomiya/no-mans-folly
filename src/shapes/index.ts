@@ -421,3 +421,8 @@ export function getAttachmentByUpdatingRotation(shape: Shape, rotation?: number)
   if (v === 0) return;
   return { ...shape.attachment, rotation: geometry.normalizeRadian(shape.attachment.rotation + v) };
 }
+
+export function getOrderPriority(getStruct: GetShapeStruct, shape: Shape): number {
+  const struct = getStruct(shape.type);
+  return struct.orderPriority ?? 0;
+}

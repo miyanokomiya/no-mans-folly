@@ -27,7 +27,7 @@ import { isGroupShape } from "../shapes/group";
 import { DocCompositionInfo } from "../utils/textEditor";
 import { SVGElementInfo } from "../utils/svgElements";
 import { generateKeyBetweenAllowSame, generateNKeysBetween } from "../utils/findex";
-import { newObjectWeakCache } from "../utils/stateful/cache";
+import { newCache, newObjectWeakCache } from "../utils/stateful/cache";
 import { DocOutput } from "../models/document";
 import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
@@ -79,6 +79,17 @@ export function newShapeComposite(option: Option) {
   const mergedShapeContext = newShapeContext(getStruct, mergedShapes, mergedShapeMap, mergedShapeTreeMap);
 
   const docCompositeCacheMap: { [id: string]: [info: DocCompositionInfo, src: DocOutput] } = {};
+
+  const sortedMergedShapeTreeCache = newCache(() => {
+    return mergedShapeTree
+      .concat()
+      .sort(
+        (a, b) =>
+          shapeModule.getOrderPriority(option.getStruct, mergedShapeMap[a.id]) -
+          shapeModule.getOrderPriority(option.getStruct, mergedShapeMap[b.id]),
+      );
+  });
+  const getSortedMergedShapeTree = sortedMergedShapeTreeCache.getValue;
 
   function getAllBranchMergedShapes(ids: string[]): Shape[] {
     return getAllBranchIds(mergedShapeTree, ids).map((id) => mergedShapeMap[id]);
@@ -245,7 +256,7 @@ export function newShapeComposite(option: Option) {
         .map((s) => mergedShapeMap[s.id])
         .filter((s) => getSelectionScope(s).scopeKey === scope?.scopeKey);
     } else if (!scope?.parentId) {
-      candidates = mergedShapeTree.map((t) => mergedShapeMap[t.id]);
+      candidates = getSortedMergedShapeTree().map((t) => mergedShapeMap[t.id]);
     } else {
       const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
       candidates =
@@ -348,6 +359,7 @@ export function newShapeComposite(option: Option) {
     getAllBranchMergedShapes,
     getAllTransformTargets,
     parentRefMap,
+    getSortedMergedShapeTree,
 
     render,
     clip,
