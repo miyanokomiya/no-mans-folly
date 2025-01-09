@@ -11,6 +11,8 @@ import { FrameShape } from "../shapes/frame";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { PopupButton } from "./atoms/PopupButton";
 import { TextInput } from "./atoms/inputs/TextInput";
+import { SortableListV } from "./atoms/SortableListV";
+import { generateKeyBetweenAllowSame } from "../utils/findex";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -44,16 +46,46 @@ export const FramePanel: React.FC = () => {
     [getCtx],
   );
 
+  const frameItems = useMemo<[string, React.ReactNode][]>(() => {
+    return frameShapes.map((s, i) => {
+      return [
+        s.id,
+        <div>
+          <FrameItem frame={s} index={i} onNameChange={handleNameChange} />
+        </div>,
+      ];
+    });
+  }, [frameShapes, handleNameChange]);
+
+  const handleSheetClick = useCallback((id: string) => {
+    console.log(id);
+  }, []);
+
+  const handleOrderChange = useCallback(
+    ([from, to]: [number, number]) => {
+      const ctx = getCtx();
+      const target = frameShapes[from];
+      const beforeFindex = frameShapes[to - 1]?.findex ?? null;
+      const nextFindex = frameShapes[to]?.findex ?? null;
+
+      ctx.patchShapes({
+        [target.id]: {
+          findex: generateKeyBetweenAllowSame(beforeFindex, nextFindex),
+        },
+      });
+    },
+    [frameShapes, getCtx],
+  );
+
   return (
     <div>
       <div className="flex flex-col gap-1 p-1">
-        <ul className="flex flex-col gap-1">
-          {frameShapes.map((s, i) => (
-            <li key={s.id}>
-              <FrameItem frame={s} index={i} onNameChange={handleNameChange} />
-            </li>
-          ))}
-        </ul>
+        <SortableListV
+          items={frameItems}
+          onClick={handleSheetClick}
+          onChange={handleOrderChange}
+          anchor="[data-anchor]"
+        />
         <button type="button" className="w-full p-2 border rounded flex justify-center" onClick={handleClickAdd}>
           <img src={iconAdd} alt="Add Sheet" className="w-4 h-4" />
         </button>
@@ -157,7 +189,9 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
           </PopupButton>
         </OutsideObserver>
       </div>
-      <div className="mt-1 w-24 h-32 text-sm whitespace-nowrap">{frame.id}</div>
+      <div className="mt-1 h-32 border whitespace-nowrap" data-anchor>
+        {frame.id}
+      </div>
     </div>
   );
 };
