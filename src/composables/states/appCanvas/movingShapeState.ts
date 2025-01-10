@@ -19,6 +19,8 @@ import { mergeMap } from "../../../utils/commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { handlePointerMoveOnLine } from "./movingShapeOnLineHandler";
 import { getSnappableCandidates } from "./commons";
+import { isFrameShape } from "../../../shapes/frame";
+import { getRootShapeIdsByFrame } from "../../frame";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -44,7 +46,16 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeMap = shapeComposite.shapeMap;
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
 
-      const subShapeComposite = shapeComposite.getSubShapeComposite(selectedIds, shapeComposite.tmpShapeMap);
+      const movingIdSet = new Set(selectedIds);
+      selectedIds.forEach((id) => {
+        const s = shapeMap[id];
+        if (isFrameShape(s)) {
+          getRootShapeIdsByFrame(shapeComposite, s).forEach((id) => movingIdSet.add(id));
+        }
+      });
+      const movingIds = Array.from(movingIdSet);
+
+      const subShapeComposite = shapeComposite.getSubShapeComposite(movingIds, shapeComposite.tmpShapeMap);
       const movingShapeSub = subShapeComposite.findShapeAt(ctx.getCursorPoint(), undefined, [], false, ctx.getScale());
       if (movingShapeSub) {
         indexShapeId = movingShapeSub.id;

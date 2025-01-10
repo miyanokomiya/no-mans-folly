@@ -32,6 +32,7 @@ import { DocOutput } from "../models/document";
 import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
 import { shouldEntityOrderUpdate, shouldEntityTreeUpdate } from "../utils/entities";
+import { FrameShape, isFrameShape } from "../shapes/frame";
 
 interface Option {
   shapes: Shape[];
