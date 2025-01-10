@@ -438,3 +438,8 @@ export function hasSpecialOrderPriority(getStruct: GetShapeStruct, shape: Shape)
 export function canShapeGrouped(getStruct: GetShapeStruct, shape: Shape): boolean {
   return !hasSpecialOrderPriority(getStruct, shape);
 }
+
+export function isRigidMoveShape(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.rigidMove;
+}

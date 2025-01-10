@@ -1,6 +1,7 @@
 import type { AppCanvasState } from "./core";
 import { getDistance } from "okageo";
 import { startTextEditingIfPossible } from "./commons";
+import { isRigidMoveShape } from "../../../shapes";
 
 interface Option {
   concurrent?: boolean; // Set true, when the target shape has already been selected.
@@ -39,9 +40,11 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
                 lineId,
                 shapeId: shape.id,
               });
-          } else {
-            return ctx.states.newMovingHubState;
           }
+
+          if (!option?.concurrent && isRigidMoveShape(shapeComposite.getShapeStruct, shape)) return;
+
+          return ctx.states.newMovingHubState;
         }
         case "pointerup": {
           if (option?.concurrent && Date.now() - timestamp < 200) {

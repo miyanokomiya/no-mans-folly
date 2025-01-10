@@ -120,6 +120,10 @@ export interface ShapeStruct<T extends Shape> {
    * This only affects root shapes.
    */
   orderPriority?: number;
+  /**
+   * If true, shapes are movable only when they are already selected.
+   */
+  rigidMove?: boolean;
 }
 
 /**
