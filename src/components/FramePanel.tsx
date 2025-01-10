@@ -1,10 +1,10 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import iconAdd from "../assets/icons/add_filled.svg";
 import iconDots from "../assets/icons/three_dots_v.svg";
 import { GetAppStateContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
-import { AffineMatrix, getRectCenter } from "okageo";
-import { newShapeComposite } from "../composables/shapeComposite";
+import { AffineMatrix, getRectCenter, IRectangle } from "okageo";
+import { newShapeComposite, ShapeComposite } from "../composables/shapeComposite";
 import { useShapeCompositeWithoutTmpInfo } from "../hooks/storeHooks";
 import { getAllFrameShapes } from "../composables/frame";
 import { FrameShape } from "../shapes/frame";
@@ -13,12 +13,20 @@ import { PopupButton } from "./atoms/PopupButton";
 import { TextInput } from "./atoms/inputs/TextInput";
 import { SortableListV } from "./atoms/SortableListV";
 import { generateKeyBetweenAllowSame } from "../utils/findex";
+import { newShapeRenderer } from "../composables/shapeRenderer";
+import { DocOutput } from "../models/document";
+import { ImageStore } from "../composables/imageStore";
+import { newCanvasBank } from "../composables/canvasBank";
+import { getViewportForRectWithinSize } from "../utils/geometry";
+import { Size } from "../models";
+import { useResizeObserver } from "../hooks/window";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const shapeComposite = useShapeCompositeWithoutTmpInfo();
-
   const frameShapes = useMemo(() => getAllFrameShapes(shapeComposite), [shapeComposite]);
+  const documentMap = getCtx().getDocumentMap();
+  const imageStore = getCtx().getImageStore();
 
   const handleClickAdd = useCallback(() => {
     const ctx = getCtx();
@@ -51,11 +59,13 @@ export const FramePanel: React.FC = () => {
       return [
         s.id,
         <div>
-          <FrameItem frame={s} index={i} onNameChange={handleNameChange} />
+          <FrameItem frame={s} index={i} onNameChange={handleNameChange}>
+            <FrameCanvas shapeComposite={shapeComposite} frame={s} documentMap={documentMap} imageStore={imageStore} />
+          </FrameItem>
         </div>,
       ];
     });
-  }, [frameShapes, handleNameChange]);
+  }, [frameShapes, shapeComposite, documentMap, imageStore, handleNameChange]);
 
   const handleSheetClick = useCallback((id: string) => {
     console.log(id);
@@ -97,12 +107,13 @@ export const FramePanel: React.FC = () => {
 interface FrameItemProps {
   frame: FrameShape;
   index: number;
+  children: React.ReactNode;
   selected?: boolean;
   onClick?: (id: string) => void;
   onNameChange?: (id: string, name: string) => void;
 }
 
-const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, onNameChange }) => {
+const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, children, onNameChange }) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -189,9 +200,69 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
           </PopupButton>
         </OutsideObserver>
       </div>
-      <div className="mt-1 h-32 border whitespace-nowrap" data-anchor>
-        {frame.id}
+      <div className="mt-1 border whitespace-nowrap" data-anchor>
+        {children}
       </div>
+    </div>
+  );
+};
+
+interface FrameCanvasProps {
+  shapeComposite: ShapeComposite;
+  documentMap: { [id: string]: DocOutput };
+  imageStore: ImageStore;
+  frame: FrameShape;
+}
+
+const FrameCanvas: React.FC<FrameCanvasProps> = ({ shapeComposite, documentMap, imageStore, frame }) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasBank = useMemo(() => newCanvasBank(), []);
+  const [canvasSize, setCanvasSize] = useState<Size>();
+
+  const targetRect = useMemo<IRectangle>(() => {
+    return { x: frame.p.x, y: frame.p.y, width: frame.width, height: frame.height };
+  }, [frame]);
+  const viewport = useMemo(() => {
+    return canvasSize ? getViewportForRectWithinSize(targetRect, canvasSize) : undefined;
+  }, [targetRect, canvasSize]);
+
+  const updateCanvasSize = useCallback(() => {
+    if (!wrapperRef.current) return;
+
+    const bounds = wrapperRef.current.getBoundingClientRect();
+    setCanvasSize({ width: bounds.width, height: bounds.height });
+  }, []);
+
+  useEffect(() => {
+    updateCanvasSize();
+  }, [updateCanvasSize]);
+  useResizeObserver(wrapperRef.current, updateCanvasSize);
+
+  useEffect(() => {
+    if (!canvasRef.current || !viewport) return;
+
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    ctx.resetTransform();
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.scale(1 / viewport.scale, 1 / viewport.scale);
+    ctx.translate(-viewport.p.x, -viewport.p.y);
+
+    const renderer = newShapeRenderer({
+      shapeComposite,
+      getDocumentMap: () => documentMap,
+      imageStore,
+      canvasBank,
+      targetRect,
+    });
+    renderer.render(ctx);
+  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, targetRect, viewport]);
+
+  return (
+    <div ref={wrapperRef} className="h-32">
+      {canvasSize ? <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} /> : undefined}
     </div>
   );
 };
