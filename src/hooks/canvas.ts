@@ -4,36 +4,13 @@ import { EditMovement } from "../composables/states/types";
 import { Size } from "../models";
 import { useLocalStorageAdopter } from "./localStorage";
 import { useResizeObserver } from "./window";
+import { getViewportForRectWithinSize } from "../utils/geometry";
 
 const scaleRate = 1.1;
 
 export interface MoveInfo {
   origin: IVec2;
   downAt: IVec2;
-}
-
-function centerizeView(
-  targetRect: IRectangle,
-  viewSize: {
-    width: number;
-    height: number;
-  },
-  reduceScale: (val: number) => number = (v) => v,
-): {
-  viewOrigin: IVec2;
-  scale: number;
-} {
-  const rateW = viewSize.width / targetRect.width;
-  const rateH = viewSize.height / targetRect.height;
-  const scale = rateW < rateH ? reduceScale(1 / rateW) : reduceScale(1 / rateH);
-
-  return {
-    viewOrigin: {
-      x: targetRect.x + ((targetRect.width / scale - viewSize.width) / 2) * scale,
-      y: targetRect.y + ((targetRect.height / scale - viewSize.height) / 2) * scale,
-    },
-    scale,
-  };
 }
 
 export function useCanvas(
@@ -145,8 +122,11 @@ export function useCanvas(
   );
 
   const adjustToCenter = useCallback(() => {
-    const ret = centerizeView({ x: -viewSize.width / 2, y: -viewSize.height / 2, ...viewSize }, viewSize);
-    setViewOrigin(ret.viewOrigin);
+    const ret = getViewportForRectWithinSize(
+      { x: -viewSize.width / 2, y: -viewSize.height / 2, ...viewSize },
+      viewSize,
+    );
+    setViewOrigin(ret.p);
     setScale(ret.scale);
   }, [viewSize, setViewOrigin, setScale]);
 
@@ -177,9 +157,9 @@ export function useCanvas(
         return;
       }
 
-      const ret = centerizeView(rect, viewSize, (v) => clamp(scaleMin, scaleMax, v));
+      const ret = getViewportForRectWithinSize(rect, viewSize, (v) => clamp(scaleMin, scaleMax, v));
       setScale(ret.scale);
-      setViewOrigin(ret.viewOrigin);
+      setViewOrigin(ret.p);
     },
     [scaleMin, scaleMax, adjustToCenter, viewSize, setViewOrigin, setScale],
   );

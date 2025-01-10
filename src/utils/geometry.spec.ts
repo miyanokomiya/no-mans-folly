@@ -85,6 +85,7 @@ import {
   getRectFeaturePoints,
   getClosestLineToRectFeaturePoints,
   getEllipseSlopeAt,
+  getViewportForRectWithinSize,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2049,5 +2050,20 @@ describe("getEllipseSlopeAt", () => {
     expect(getEllipseSlopeAt({ x: 10, y: 20 }, 10, 10, { x: 20, y: 30 })).toBeCloseTo(-Math.PI / 4);
     expect(getEllipseSlopeAt({ x: 10, y: 20 }, 10, 20, { x: 20, y: 30 })).toBeLessThan(-Math.PI / 4);
     expect(getEllipseSlopeAt({ x: 10, y: 20 }, 20, 10, { x: 20, y: 30 })).toBeGreaterThan(-Math.PI / 4);
+  });
+});
+
+describe("getViewportForRectWithinSize", () => {
+  test("should return position and scale to fit the rect within the size", () => {
+    const targetRect = { x: 0, y: 0, width: 100, height: 100 };
+    const ret0 = getViewportForRectWithinSize(targetRect, { width: 50, height: 100 });
+    expect(ret0.p).toEqualPoint({ x: 0, y: -50 });
+    expect(ret0.scale).toBeCloseTo(2);
+    const ret1 = getViewportForRectWithinSize(targetRect, { width: 200, height: 100 });
+    expect(ret1.p).toEqualPoint({ x: -50, y: 0 });
+    expect(ret1.scale).toBeCloseTo(1);
+    const ret2 = getViewportForRectWithinSize(targetRect, { width: 200, height: 300 });
+    expect(ret2.p).toEqualPoint({ x: 0, y: -25 });
+    expect(ret2.scale).toBeCloseTo(0.5);
   });
 });

@@ -1403,3 +1403,27 @@ export function getBezierControlPaddingForBorderRadius(rx: number, ry: number): 
   const rate = 0.44772; // Magic value to approximate border-radius via cubic-bezier
   return [rx * rate, ry * rate];
 }
+
+export function getViewportForRectWithinSize(
+  targetRect: IRectangle,
+  size: {
+    width: number;
+    height: number;
+  },
+  reduceScale: (val: number) => number = (v) => v,
+): {
+  p: IVec2;
+  scale: number;
+} {
+  const rateW = size.width / targetRect.width;
+  const rateH = size.height / targetRect.height;
+  const scale = rateW < rateH ? reduceScale(1 / rateW) : reduceScale(1 / rateH);
+
+  return {
+    p: {
+      x: targetRect.x + ((targetRect.width / scale - size.width) / 2) * scale,
+      y: targetRect.y + ((targetRect.height / scale - size.height) / 2) * scale,
+    },
+    scale,
+  };
+}
