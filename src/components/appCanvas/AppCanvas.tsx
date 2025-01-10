@@ -476,6 +476,7 @@ export const AppCanvas: React.FC = () => {
       imageStore,
       scale,
       canvasBank,
+      targetRect: viewCanvasRect,
     });
     renderer.render(ctx);
 
@@ -498,6 +499,7 @@ export const AppCanvas: React.FC = () => {
     mergedDocMap,
     imageStore,
     canvasBank,
+    viewCanvasRect,
   ]);
 
   const getMouseOptionsCustom = useCallback(

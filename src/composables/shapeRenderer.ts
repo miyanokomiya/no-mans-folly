@@ -1,10 +1,11 @@
+import { IRectangle } from "okageo";
 import { Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
 import { hasStrokeStyle } from "../shapes/core";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
-import { expandRect, getRectPoints } from "../utils/geometry";
+import { expandRect, getIsRectHitRectFn, getRectPoints } from "../utils/geometry";
 import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
@@ -20,21 +21,39 @@ interface Option {
   imageStore?: ImageStore;
   scale?: number;
   canvasBank?: CanvasBank;
+  targetRect?: IRectangle;
 }
 
 export function newShapeRenderer(option: Option) {
-  const { mergedShapeMap } = option.shapeComposite;
+  const shapeComposite = option.shapeComposite;
+  const { mergedShapeMap } = shapeComposite;
   const docMap = option.getDocumentMap();
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
   const canvasBank = option.canvasBank ?? newCanvasBank();
-  const sortedMergedShapeTree = option.shapeComposite.getSortedMergedShapeTree();
+  const sortedMergedShapeTree = shapeComposite.getSortedMergedShapeTree();
+
+  const ignoreIdSet = new Set<string>();
+  if (option.targetRect) {
+    const checkFn = getIsRectHitRectFn(option.targetRect);
+    // Check root shapes only for simplicity
+    sortedMergedShapeTree.forEach((n) => {
+      const s = mergedShapeMap[n.id];
+      const rect = shapeComposite.getWrapperRect(s, true);
+      if (!checkFn(rect)) {
+        ignoreIdSet.add(n.id);
+      }
+    });
+  }
 
   function render(ctx: CanvasRenderingContext2D) {
     renderShapeTree(ctx, sortedMergedShapeTree);
   }
 
   function renderShapeTree(ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {
-    treeNodes.forEach((n) => renderShapeTreeStepWithAlpha(ctx, n));
+    treeNodes.forEach((n) => {
+      if (ignoreIdSet.has(n.id)) return;
+      renderShapeTreeStepWithAlpha(ctx, n);
+    });
   }
 
   function renderShapeTreeStepWithAlpha(ctx: CanvasRenderingContext2D, node: TreeNode) {
@@ -48,7 +67,7 @@ export function newShapeRenderer(option: Option) {
 
     canvasBank.beginCanvas((subCanvas) => {
       // Expand the wrapper rect to make sure it accommodates edge part of the shape.
-      const rect = expandRect(option.shapeComposite.getWrapperRect(shape, true), 50);
+      const rect = expandRect(shapeComposite.getWrapperRect(shape, true), 50);
       subCanvas.width = rect.width;
       subCanvas.height = rect.height;
       const subCtx = subCanvas.getContext("2d")!;
@@ -76,13 +95,13 @@ export function newShapeRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(option.shapeComposite, shape, clips, others, ctx, () => {
+    clipWithinGroup(shapeComposite, shape, clips, others, ctx, () => {
       others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
     });
   }
 
   function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape) {
-    option.shapeComposite.render(ctx, shape, option.imageStore);
+    shapeComposite.render(ctx, shape, option.imageStore);
     renderDoc(ctx, shape);
   }
 
@@ -90,13 +109,13 @@ export function newShapeRenderer(option: Option) {
     const doc = docMap[shape.id];
     if (doc && !ignoreDocIdSet.has(shape.id) && !hasDocNoContent(doc)) {
       ctx.save();
-      const bounds = getShapeTextBounds(option.shapeComposite.getShapeStruct, shape);
+      const bounds = getShapeTextBounds(shapeComposite.getShapeStruct, shape);
       ctx.transform(...bounds.affine);
 
-      const infoCache = option.shapeComposite.getDocCompositeCache(shape.id, doc);
+      const infoCache = shapeComposite.getDocCompositeCache(shape.id, doc);
       const info = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
       if (!infoCache) {
-        option.shapeComposite.setDocCompositeCache(shape.id, info, doc);
+        shapeComposite.setDocCompositeCache(shape.id, info, doc);
       }
 
       renderDocByComposition(ctx, info.composition, info.lines, option.scale);
