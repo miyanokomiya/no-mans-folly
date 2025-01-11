@@ -9,7 +9,7 @@ import { useSelectedShape, useSelectedSheet, useShapeCompositeWithoutTmpInfo } f
 import { getAllFrameShapes } from "../../composables/frame";
 import { FrameShape } from "../../shapes/frame";
 import { OutsideObserver } from "../atoms/OutsideObserver";
-import { PopupButton } from "../atoms/PopupButton";
+import { FixedPopupButton } from "../atoms/PopupButton";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { SortableListV } from "../atoms/SortableListV";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
@@ -243,17 +243,25 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
       <div className="min-h-8 flex justify-between gap-1">
         <button
           type="button"
-          className="min-w-8 h-8 rounded px-2 bg-white border flex items-center justify-center cursor-grab"
+          className="flex-none min-w-8 h-8 rounded px-2 bg-white border flex items-center justify-center cursor-grab"
           data-anchor
         >
           {index}
         </button>
-        <div className="flex-1">{nameElm}</div>
-        <OutsideObserver onClick={closePopup}>
-          <PopupButton name="frame" popupPosition="left" popup={popupMenu} opened={popupOpen} onClick={handleMenuClick}>
-            <img src={iconDots} alt="Menu" className="w-5 h-5" />
-          </PopupButton>
-        </OutsideObserver>
+        <div>{nameElm}</div>
+        <div className="flex-none w-8 h-8">
+          <OutsideObserver onClick={closePopup}>
+            <FixedPopupButton
+              name="frame"
+              popupPosition="left"
+              popup={popupMenu}
+              opened={popupOpen}
+              onClick={handleMenuClick}
+            >
+              <img src={iconDots} alt="Menu" className="w-5 h-5" />
+            </FixedPopupButton>
+          </OutsideObserver>
+        </div>
       </div>
       <button type="button" className="mt-1 border whitespace-nowrap hover:opacity-80" data-anchor>
         {children}

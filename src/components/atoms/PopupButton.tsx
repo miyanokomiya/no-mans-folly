@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useGlobalScroll, useWindow } from "../../hooks/window";
 import { IRectangle } from "okageo";
 
@@ -123,7 +124,7 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
       >
         {children}
       </button>
-      {opened ? <div {...popupAttrs}>{popup}</div> : undefined}
+      {opened ? createPortal(<div {...popupAttrs}>{popup}</div>, document.body) : undefined}
     </div>
   );
 };
