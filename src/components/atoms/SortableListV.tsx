@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useGlobalDrag } from "../../hooks/window";
 import { IVec2, getDistance } from "okageo";
 import { LongPressStarter } from "./LongPressStarter";
@@ -101,7 +102,7 @@ export const SortableListV: React.FC<Props> = ({ items, onClick, onChange, ancho
         </div>
       ))}
       {insertion?.[1] === items.length ? borderElm : undefined}
-      {floatItem}
+      {createPortal(floatItem, document.body)}
     </div>
   );
 };
