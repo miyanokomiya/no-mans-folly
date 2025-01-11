@@ -3,10 +3,10 @@ import iconAdd from "../assets/icons/add_filled.svg";
 import iconDots from "../assets/icons/three_dots_v.svg";
 import { GetAppStateContext } from "../contexts/AppContext";
 import { createShape } from "../shapes";
-import { AffineMatrix, getRectCenter, IRectangle } from "okageo";
+import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite, ShapeComposite } from "../composables/shapeComposite";
-import { useShapeCompositeWithoutTmpInfo } from "../hooks/storeHooks";
-import { getAllFrameShapes } from "../composables/frame";
+import { useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../hooks/storeHooks";
+import { getAllFrameShapes, getFrameRect } from "../composables/frame";
 import { FrameShape } from "../shapes/frame";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { PopupButton } from "./atoms/PopupButton";
@@ -20,6 +20,8 @@ import { newCanvasBank } from "../composables/canvasBank";
 import { getViewportForRectWithinSize } from "../utils/geometry";
 import { Size } from "../models";
 import { useResizeObserver } from "../hooks/window";
+import { getLineJoin } from "../utils/strokeStyle";
+import { rednerRGBA } from "../utils/color";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -27,6 +29,8 @@ export const FramePanel: React.FC = () => {
   const frameShapes = useMemo(() => getAllFrameShapes(shapeComposite), [shapeComposite]);
   const documentMap = getCtx().getDocumentMap();
   const imageStore = getCtx().getImageStore();
+  const sheet = useSelectedSheet();
+  const backgroundColor = useMemo(() => (sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff"), [sheet]);
 
   const handleClickAdd = useCallback(() => {
     const ctx = getCtx();
@@ -60,7 +64,13 @@ export const FramePanel: React.FC = () => {
         s.id,
         <div>
           <FrameItem frame={s} index={i} onNameChange={handleNameChange}>
-            <FrameCanvas shapeComposite={shapeComposite} frame={s} documentMap={documentMap} imageStore={imageStore} />
+            <FrameCanvas
+              shapeComposite={shapeComposite}
+              frame={s}
+              documentMap={documentMap}
+              imageStore={imageStore}
+              backgroundColor={backgroundColor}
+            />
           </FrameItem>
         </div>,
       ];
@@ -212,20 +222,26 @@ interface FrameCanvasProps {
   documentMap: { [id: string]: DocOutput };
   imageStore: ImageStore;
   frame: FrameShape;
+  backgroundColor: string;
 }
 
-const FrameCanvas: React.FC<FrameCanvasProps> = ({ shapeComposite, documentMap, imageStore, frame }) => {
+const FrameCanvas: React.FC<FrameCanvasProps> = ({
+  shapeComposite,
+  documentMap,
+  imageStore,
+  frame,
+  backgroundColor,
+}) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasBank = useMemo(() => newCanvasBank(), []);
   const [canvasSize, setCanvasSize] = useState<Size>();
 
-  const targetRect = useMemo<IRectangle>(() => {
-    return { x: frame.p.x, y: frame.p.y, width: frame.width, height: frame.height };
-  }, [frame]);
+  const frameRectWithBorder = useMemo(() => getFrameRect(frame), [frame]);
+
   const viewport = useMemo(() => {
-    return canvasSize ? getViewportForRectWithinSize(targetRect, canvasSize) : undefined;
-  }, [targetRect, canvasSize]);
+    return canvasSize ? getViewportForRectWithinSize(frameRectWithBorder, canvasSize) : undefined;
+  }, [frameRectWithBorder, canvasSize]);
 
   const updateCanvasSize = useCallback(() => {
     if (!wrapperRef.current) return;
@@ -245,6 +261,7 @@ const FrameCanvas: React.FC<FrameCanvasProps> = ({ shapeComposite, documentMap, 
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
+    ctx.globalCompositeOperation = "source-over";
     ctx.resetTransform();
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.scale(1 / viewport.scale, 1 / viewport.scale);
@@ -255,14 +272,23 @@ const FrameCanvas: React.FC<FrameCanvasProps> = ({ shapeComposite, documentMap, 
       getDocumentMap: () => documentMap,
       imageStore,
       canvasBank,
-      targetRect,
+      targetRect: frameRectWithBorder,
     });
     renderer.render(ctx);
-  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, targetRect, viewport]);
+
+    // Hide outside area of the frame.
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.beginPath();
+    ctx.rect(frameRectWithBorder.x, frameRectWithBorder.y, frameRectWithBorder.width, frameRectWithBorder.height);
+    ctx.lineJoin = getLineJoin(frame.stroke.lineJoin);
+    ctx.fill();
+  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder]);
 
   return (
     <div ref={wrapperRef} className="h-32">
-      {canvasSize ? <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} /> : undefined}
+      {canvasSize ? (
+        <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} style={{ backgroundColor }} />
+      ) : undefined}
     </div>
   );
 };

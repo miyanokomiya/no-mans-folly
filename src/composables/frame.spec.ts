@@ -3,7 +3,8 @@ import { createShape, getCommonStruct } from "../shapes";
 import { FrameShape } from "../shapes/frame";
 import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
-import { getAllFrameShapes, getRootShapeIdsByFrame } from "./frame";
+import { getAllFrameShapes, getFrameRect, getRootShapeIdsByFrame } from "./frame";
+import { COLORS } from "../utils/color";
 
 describe("getAllFrameShapes", () => {
   test("getAllFrameShapes", () => {
@@ -70,5 +71,19 @@ describe("getRootShapeIdsByFrame", () => {
       getStruct: getCommonStruct,
     });
     expect(getRootShapeIdsByFrame(shapeComposite, frame)).toEqual([rect0.id]);
+  });
+});
+
+describe("getFrameRect", () => {
+  test("should return wrapper rectangle of the frame", () => {
+    const frame = createShape<FrameShape>(getCommonStruct, "frame", {
+      id: "frame",
+      p: { x: 10, y: 20 },
+      width: 100,
+      height: 200,
+      stroke: { color: COLORS.BLACK, width: 3 },
+    });
+    expect(getFrameRect(frame)).toEqualRect({ x: 10, y: 20, width: 100, height: 200 });
+    expect(getFrameRect(frame, true), "include border").toEqualRect({ x: 8.5, y: 18.5, width: 103, height: 203 });
   });
 });

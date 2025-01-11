@@ -1,7 +1,8 @@
-import { getRectCenter } from "okageo";
+import { getRectCenter, IRectangle } from "okageo";
 import { FrameShape, isFrameShape } from "../shapes/frame";
-import { isPointOnRectangle } from "../utils/geometry";
+import { expandRect, isPointOnRectangle } from "../utils/geometry";
 import { ShapeComposite } from "./shapeComposite";
+import { getStrokeWidth } from "../utils/strokeStyle";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.shapes.filter((s) => isFrameShape(s));
@@ -18,4 +19,9 @@ export function getRootShapeIdsByFrame(shapeComposite: ShapeComposite, frame: Fr
       return isPointOnRectangle(frameRect, getRectCenter(rect));
     })
     .map((s) => s.id);
+}
+
+export function getFrameRect(frame: FrameShape, includeBorder = false): IRectangle {
+  const rect = { x: frame.p.x, y: frame.p.y, width: frame.width, height: frame.height };
+  return includeBorder ? expandRect(rect, getStrokeWidth(frame.stroke) / 2) : rect;
 }
