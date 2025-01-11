@@ -53,23 +53,6 @@ export const FramePanel: React.FC = () => {
     [getCtx],
   );
 
-  const frameItems = useMemo<[string, React.ReactNode][]>(() => {
-    return frameShapes.map((s, i) => {
-      return [
-        s.id,
-        <FrameItem frame={s} index={i} onNameChange={handleNameChange} selected={s.id === lastSelectedId}>
-          <FrameThumbnail
-            shapeComposite={shapeComposite}
-            frame={s}
-            documentMap={documentMap}
-            imageStore={imageStore}
-            backgroundColor={backgroundColor}
-          />
-        </FrameItem>,
-      ];
-    });
-  }, [frameShapes, shapeComposite, documentMap, imageStore, handleNameChange, backgroundColor, lastSelectedId]);
-
   const handleSheetClick = useCallback(
     (id: string) => {
       const ctx = getCtx();
@@ -88,6 +71,16 @@ export const FramePanel: React.FC = () => {
     [getCtx, handleEvent],
   );
 
+  const handleNodeHover = useCallback(
+    (id: string) => {
+      handleEvent({
+        type: "shape-highlight",
+        data: { id, meta: { type: "outline" } },
+      });
+    },
+    [handleEvent],
+  );
+
   const handleOrderChange = useCallback(
     ([from, to]: [number, number]) => {
       const ctx = getCtx();
@@ -103,6 +96,38 @@ export const FramePanel: React.FC = () => {
     },
     [frameShapes, getCtx],
   );
+
+  const frameItems = useMemo<[string, React.ReactNode][]>(() => {
+    return frameShapes.map((s, i) => {
+      return [
+        s.id,
+        <FrameItem
+          frame={s}
+          index={i}
+          onNameChange={handleNameChange}
+          onHover={handleNodeHover}
+          selected={s.id === lastSelectedId}
+        >
+          <FrameThumbnail
+            shapeComposite={shapeComposite}
+            frame={s}
+            documentMap={documentMap}
+            imageStore={imageStore}
+            backgroundColor={backgroundColor}
+          />
+        </FrameItem>,
+      ];
+    });
+  }, [
+    frameShapes,
+    shapeComposite,
+    documentMap,
+    imageStore,
+    handleNameChange,
+    handleNodeHover,
+    backgroundColor,
+    lastSelectedId,
+  ]);
 
   return (
     <div>
@@ -127,10 +152,11 @@ interface FrameItemProps {
   children: React.ReactNode;
   selected?: boolean;
   onClick?: (id: string) => void;
+  onHover?: (id: string) => void;
   onNameChange?: (id: string, name: string) => void;
 }
 
-const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, children, onNameChange }) => {
+const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, children, onHover, onNameChange }) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -151,6 +177,10 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
   const handleNameChange = useCallback((val: string) => {
     setDraftName(val);
   }, []);
+
+  const handlePointerEnter = useCallback(() => {
+    onHover?.(frame.id);
+  }, [frame, onHover]);
 
   const handleNameClick = useCallback(
     (e: React.MouseEvent) => {
@@ -209,7 +239,7 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
   }, [selected]);
 
   return (
-    <div ref={rootRef} className={rootClass}>
+    <div ref={rootRef} className={rootClass} onPointerEnter={handlePointerEnter}>
       <div className="min-h-8 flex justify-between gap-1">
         <button
           type="button"
