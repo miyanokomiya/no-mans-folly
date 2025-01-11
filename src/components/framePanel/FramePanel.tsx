@@ -1,11 +1,11 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
-import { GetAppStateContext } from "../../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../../composables/shapeComposite";
-import { useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { useSelectedShape, useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { getAllFrameShapes } from "../../composables/frame";
 import { FrameShape } from "../../shapes/frame";
 import { OutsideObserver } from "../atoms/OutsideObserver";
@@ -18,12 +18,14 @@ import { FrameThumbnail } from "./FrameThumbnail";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
+  const { handleEvent } = useContext(AppStateMachineContext);
   const shapeComposite = useShapeCompositeWithoutTmpInfo();
   const frameShapes = useMemo(() => getAllFrameShapes(shapeComposite), [shapeComposite]);
   const documentMap = getCtx().getDocumentMap();
   const imageStore = getCtx().getImageStore();
   const sheet = useSelectedSheet();
   const backgroundColor = useMemo(() => (sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff"), [sheet]);
+  const lastSelectedId = useSelectedShape()?.id;
 
   const handleClickAdd = useCallback(() => {
     const ctx = getCtx();
@@ -55,24 +57,36 @@ export const FramePanel: React.FC = () => {
     return frameShapes.map((s, i) => {
       return [
         s.id,
-        <div>
-          <FrameItem frame={s} index={i} onNameChange={handleNameChange}>
-            <FrameThumbnail
-              shapeComposite={shapeComposite}
-              frame={s}
-              documentMap={documentMap}
-              imageStore={imageStore}
-              backgroundColor={backgroundColor}
-            />
-          </FrameItem>
-        </div>,
+        <FrameItem frame={s} index={i} onNameChange={handleNameChange} selected={s.id === lastSelectedId}>
+          <FrameThumbnail
+            shapeComposite={shapeComposite}
+            frame={s}
+            documentMap={documentMap}
+            imageStore={imageStore}
+            backgroundColor={backgroundColor}
+          />
+        </FrameItem>,
       ];
     });
-  }, [frameShapes, shapeComposite, documentMap, imageStore, handleNameChange, backgroundColor]);
+  }, [frameShapes, shapeComposite, documentMap, imageStore, handleNameChange, backgroundColor, lastSelectedId]);
 
-  const handleSheetClick = useCallback((id: string) => {
-    console.log(id);
-  }, []);
+  const handleSheetClick = useCallback(
+    (id: string) => {
+      const ctx = getCtx();
+      ctx.selectShape(id);
+      handleEvent({
+        type: "state",
+        data: {
+          name: "PanToShape",
+          options: {
+            ids: [id],
+            duration: 150,
+          },
+        },
+      });
+    },
+    [getCtx, handleEvent],
+  );
 
   const handleOrderChange = useCallback(
     ([from, to]: [number, number]) => {
@@ -121,7 +135,8 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
 
-  const rootClass = "border rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
+  const rootClass =
+    "min-w-60 border-2 rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
 
   const closePopup = useCallback(() => {
     setPopupOpen(false);
@@ -187,15 +202,22 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
     </div>
   );
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!selected || !rootRef.current) return;
+    rootRef.current.scrollIntoView({ behavior: "instant", block: "nearest", inline: "nearest" });
+  }, [selected]);
+
   return (
-    <div className={rootClass}>
+    <div ref={rootRef} className={rootClass}>
       <div className="min-h-8 flex justify-between gap-1">
-        <div
+        <button
+          type="button"
           className="min-w-8 h-8 rounded px-2 bg-white border flex items-center justify-center cursor-grab"
           data-anchor
         >
           {index}
-        </div>
+        </button>
         <div className="flex-1">{nameElm}</div>
         <OutsideObserver onClick={closePopup}>
           <PopupButton name="frame" popupPosition="left" popup={popupMenu} opened={popupOpen} onClick={handleMenuClick}>
@@ -203,9 +225,9 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
           </PopupButton>
         </OutsideObserver>
       </div>
-      <div className="mt-1 border whitespace-nowrap" data-anchor>
+      <button type="button" className="mt-1 border whitespace-nowrap hover:opacity-80" data-anchor>
         {children}
-      </div>
+      </button>
     </div>
   );
 };
