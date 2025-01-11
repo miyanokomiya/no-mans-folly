@@ -21,6 +21,8 @@ import { IRectangle } from "okageo";
 import { getIntRectFromFloatRect } from "../../../utils/geometry";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { i18n } from "../../../i18n";
+import { getRootShapeIdsByFrame } from "../../frame";
+import { isFrameShape } from "../../../shapes/frame";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -319,11 +321,24 @@ function getImageBuilderForSelectedRange(ctx: AppCanvasStateContext) {
 
 function getExportParamsForSelectedShapes(ctx: AppCanvasStateContext) {
   const shapeComposite = ctx.getShapeComposite();
-  const targetShapes = shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
-  const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
-  // Get optimal exporting range for shapes.
+  const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+
+  // Get optimal exporting range for selected shapes.
   // This range may differ from visually selected range due to the optimization.
-  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(targetShapeComposite, true));
+  const selectedShapeComposite = shapeComposite.getSubShapeComposite(selectedIds);
+  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(selectedShapeComposite, true));
+
+  // Get source shapes regarding frame shapes.
+  // Shapes sticking out frames can be cut off since the range is based on directly selected shapes.
+  const sourceIdSet = new Set(selectedIds);
+  selectedIds.forEach((id) => {
+    const s = shapeComposite.shapeMap[id];
+    if (isFrameShape(s)) {
+      getRootShapeIdsByFrame(shapeComposite, s).forEach((idInFrame) => sourceIdSet.add(idInFrame));
+    }
+  });
+  const targetShapeComposite = shapeComposite.getSubShapeComposite(Array.from(sourceIdSet));
+
   return { targetShapeComposite, range };
 }
 
