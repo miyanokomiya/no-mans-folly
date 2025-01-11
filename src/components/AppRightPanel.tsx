@@ -1,5 +1,5 @@
 import { TabPanelV } from "./atoms/TabPanelV";
-import { FramePanel } from "./FramePanel";
+import { FramePanel } from "./framePanel/FramePanel";
 import { ShapeTreeInspectorPanel } from "./shapeInspectorPanel/ShapeTreeInspectorPanel";
 import { ShapeLibraryPanel } from "./ShapeLibraryPanel";
 import { ShapeTemplatePanel } from "./ShapeTemplatePanel";

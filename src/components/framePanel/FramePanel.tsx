@@ -1,27 +1,20 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import iconAdd from "../assets/icons/add_filled.svg";
-import iconDots from "../assets/icons/three_dots_v.svg";
-import { GetAppStateContext } from "../contexts/AppContext";
-import { createShape } from "../shapes";
+import { useCallback, useContext, useMemo, useState } from "react";
+import iconAdd from "../../assets/icons/add_filled.svg";
+import iconDots from "../../assets/icons/three_dots_v.svg";
+import { GetAppStateContext } from "../../contexts/AppContext";
+import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
-import { newShapeComposite, ShapeComposite } from "../composables/shapeComposite";
-import { useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../hooks/storeHooks";
-import { getAllFrameShapes, getFrameRect } from "../composables/frame";
-import { FrameShape } from "../shapes/frame";
-import { OutsideObserver } from "./atoms/OutsideObserver";
-import { PopupButton } from "./atoms/PopupButton";
-import { TextInput } from "./atoms/inputs/TextInput";
-import { SortableListV } from "./atoms/SortableListV";
-import { generateKeyBetweenAllowSame } from "../utils/findex";
-import { newShapeRenderer } from "../composables/shapeRenderer";
-import { DocOutput } from "../models/document";
-import { ImageStore } from "../composables/imageStore";
-import { newCanvasBank } from "../composables/canvasBank";
-import { getViewportForRectWithinSize } from "../utils/geometry";
-import { Size } from "../models";
-import { useResizeObserver } from "../hooks/window";
-import { getLineJoin } from "../utils/strokeStyle";
-import { rednerRGBA } from "../utils/color";
+import { newShapeComposite } from "../../composables/shapeComposite";
+import { useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { getAllFrameShapes } from "../../composables/frame";
+import { FrameShape } from "../../shapes/frame";
+import { OutsideObserver } from "../atoms/OutsideObserver";
+import { PopupButton } from "../atoms/PopupButton";
+import { TextInput } from "../atoms/inputs/TextInput";
+import { SortableListV } from "../atoms/SortableListV";
+import { generateKeyBetweenAllowSame } from "../../utils/findex";
+import { rednerRGBA } from "../../utils/color";
+import { FrameThumbnail } from "./FrameThumbnail";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -64,7 +57,7 @@ export const FramePanel: React.FC = () => {
         s.id,
         <div>
           <FrameItem frame={s} index={i} onNameChange={handleNameChange}>
-            <FrameCanvas
+            <FrameThumbnail
               shapeComposite={shapeComposite}
               frame={s}
               documentMap={documentMap}
@@ -213,82 +206,6 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
       <div className="mt-1 border whitespace-nowrap" data-anchor>
         {children}
       </div>
-    </div>
-  );
-};
-
-interface FrameCanvasProps {
-  shapeComposite: ShapeComposite;
-  documentMap: { [id: string]: DocOutput };
-  imageStore: ImageStore;
-  frame: FrameShape;
-  backgroundColor: string;
-}
-
-const FrameCanvas: React.FC<FrameCanvasProps> = ({
-  shapeComposite,
-  documentMap,
-  imageStore,
-  frame,
-  backgroundColor,
-}) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const canvasBank = useMemo(() => newCanvasBank(), []);
-  const [canvasSize, setCanvasSize] = useState<Size>();
-
-  const frameRectWithBorder = useMemo(() => getFrameRect(frame), [frame]);
-
-  const viewport = useMemo(() => {
-    return canvasSize ? getViewportForRectWithinSize(frameRectWithBorder, canvasSize) : undefined;
-  }, [frameRectWithBorder, canvasSize]);
-
-  const updateCanvasSize = useCallback(() => {
-    if (!wrapperRef.current) return;
-
-    const bounds = wrapperRef.current.getBoundingClientRect();
-    setCanvasSize({ width: bounds.width, height: bounds.height });
-  }, []);
-
-  useEffect(() => {
-    updateCanvasSize();
-  }, [updateCanvasSize]);
-  useResizeObserver(wrapperRef.current, updateCanvasSize);
-
-  useEffect(() => {
-    if (!canvasRef.current || !viewport) return;
-
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
-
-    ctx.globalCompositeOperation = "source-over";
-    ctx.resetTransform();
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.scale(1 / viewport.scale, 1 / viewport.scale);
-    ctx.translate(-viewport.p.x, -viewport.p.y);
-
-    const renderer = newShapeRenderer({
-      shapeComposite,
-      getDocumentMap: () => documentMap,
-      imageStore,
-      canvasBank,
-      targetRect: frameRectWithBorder,
-    });
-    renderer.render(ctx);
-
-    // Hide outside area of the frame.
-    ctx.globalCompositeOperation = "destination-in";
-    ctx.beginPath();
-    ctx.rect(frameRectWithBorder.x, frameRectWithBorder.y, frameRectWithBorder.width, frameRectWithBorder.height);
-    ctx.lineJoin = getLineJoin(frame.stroke.lineJoin);
-    ctx.fill();
-  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder]);
-
-  return (
-    <div ref={wrapperRef} className="h-32">
-      {canvasSize ? (
-        <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} style={{ backgroundColor }} />
-      ) : undefined}
     </div>
   );
 };
