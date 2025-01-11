@@ -1,7 +1,42 @@
-import { describe, test, expect } from "vitest";
-import { getPatchByPointerUpOutsideLayout } from "./movingShapeLayoutHandler";
+import { describe, test, expect, vi } from "vitest";
+import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
 import { newShapeComposite } from "../../shapeComposite";
 import { createShape, getCommonStruct } from "../../../shapes";
+import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { createStyleScheme } from "../../../models/factories";
+
+function getMockCtx() {
+  return {
+    ...createInitialAppCanvasStateContext({
+      getTimestamp: Date.now,
+      generateUuid: () => "id",
+      getStyleScheme: createStyleScheme,
+    }),
+    getShapeStruct: getCommonStruct,
+  };
+}
+
+describe("handlePointerMoveOnLayout", () => {
+  test("should return undefined when any selected shape has special order priority", () => {
+    const ctx = getMockCtx();
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape(getCommonStruct, "align_box", { id: "align" }),
+          createShape(getCommonStruct, "rectangle", { id: "rect" }),
+          createShape(getCommonStruct, "frame", { id: "frame" }),
+        ],
+        getStruct: getCommonStruct,
+      });
+    ctx.getLastSelectedShapeId = vi.fn().mockReturnValue("rect");
+    ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ rect: true });
+    const event = { type: "pointermove", data: { current: { x: 0, y: 0 }, start: { x: 0, y: 0 }, scale: 1 } } as const;
+    expect(handlePointerMoveOnLayout(ctx, event, ["rect"], "rect")).not.toBe(undefined);
+
+    ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ rect: true, frame: true });
+    expect(handlePointerMoveOnLayout(ctx, event, ["rect", "frame"], "rect")).toBe(undefined);
+  });
+});
 
 describe("getPatchByPointerUpOutsideLayout", () => {
   const boardRoot = createShape(getCommonStruct, "board_root", { id: "board_root" });

@@ -32,7 +32,6 @@ import { DocOutput } from "../models/document";
 import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
 import { shouldEntityOrderUpdate, shouldEntityTreeUpdate } from "../utils/entities";
-import { FrameShape, isFrameShape } from "../shapes/frame";
 
 interface Option {
   shapes: Shape[];
@@ -290,6 +289,7 @@ export function newShapeComposite(option: Option) {
   }
 
   function canAttach(shape: Shape): boolean {
+    if (shapeModule.hasSpecialOrderPriority(getStruct, shape)) return false;
     if (isLineShape(shape)) return false;
     if (!hasParent(shape)) return true;
     // When the parent isn't group shape, it must be special layout shape.

@@ -1,4 +1,5 @@
 import { Shape } from "../../../models";
+import { canShapeGrouped } from "../../../shapes";
 import { AlignBoxShape, isAlignBoxShape } from "../../../shapes/align/alignBox";
 import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
@@ -26,6 +27,12 @@ export function handlePointerMoveOnLayout(
   if (movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
+
+  const cannotGrouped = movingIds.some((id) => {
+    const s = shapeComposite.shapeMap[id];
+    return !canShapeGrouped(shapeComposite.getShapeStruct, s);
+  });
+  if (cannotGrouped) return;
 
   const boardId = canAttendToBoard(ctx, event);
   if (boardId) {

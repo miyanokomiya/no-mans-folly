@@ -523,8 +523,11 @@ describe("newShapeComposite", () => {
       const line = createShape(getCommonStruct, "line", {
         id: "line",
       });
+      const frame = createShape(getCommonStruct, "frame", {
+        id: "frame",
+      });
 
-      const shapes = [group, align, a, b, c, line];
+      const shapes = [group, align, a, b, c, line, frame];
       const target = newShapeComposite({
         shapes,
         getStruct: getCommonStruct,
@@ -536,6 +539,7 @@ describe("newShapeComposite", () => {
       expect(target.canAttach(b)).toBe(false);
       expect(target.canAttach(c)).toBe(true);
       expect(target.canAttach(line)).toBe(false);
+      expect(target.canAttach(frame)).toBe(false);
     });
   });
 
