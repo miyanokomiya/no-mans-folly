@@ -75,7 +75,7 @@ export const FramePanel: React.FC = () => {
         </div>,
       ];
     });
-  }, [frameShapes, shapeComposite, documentMap, imageStore, handleNameChange]);
+  }, [frameShapes, shapeComposite, documentMap, imageStore, handleNameChange, backgroundColor]);
 
   const handleSheetClick = useCallback((id: string) => {
     console.log(id);
