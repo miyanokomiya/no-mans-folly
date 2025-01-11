@@ -443,3 +443,8 @@ export function isRigidMoveShape(getStruct: GetShapeStruct, shape: Shape): boole
   const struct = getStruct(shape.type);
   return !!struct.rigidMove;
 }
+
+export function isNoRotationShape(getStruct: GetShapeStruct, shape: Shape): boolean {
+  const struct = getStruct(shape.type);
+  return !!struct.noRotation;
+}

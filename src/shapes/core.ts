@@ -124,6 +124,10 @@ export interface ShapeStruct<T extends Shape> {
    * If true, shapes are movable only when they are already selected.
    */
   rigidMove?: boolean;
+  /**
+   * If true, UIs for rotation are hidden.
+   */
+  noRotation?: boolean;
 }
 
 /**

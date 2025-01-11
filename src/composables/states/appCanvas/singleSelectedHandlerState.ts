@@ -15,7 +15,7 @@ import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { Shape } from "../../../models";
 import { newDummyHandler, ShapeHandler } from "../../shapeHandlers/core";
 import { newSmartBranchHandler, SmartBranchHandler } from "../../smartBranchHandler";
-import { canAttachSmartBranch } from "../../../shapes";
+import { canAttachSmartBranch, isNoRotationShape } from "../../../shapes";
 import { getAttachmentAnchorPoint } from "../../lineAttachmentHandler";
 import { applyFillStyle } from "../../../utils/fillStyle";
 import { TAU } from "../../../utils/geometry";
@@ -63,6 +63,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         boundingBox = newBoundingBox({
           path: shapeComposite.getLocalRectPolygon(targetShape),
           locked: targetShape.locked,
+          noRotation: isNoRotationShape(shapeComposite.getShapeStruct, targetShape),
         });
 
         if (

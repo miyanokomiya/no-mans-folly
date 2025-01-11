@@ -198,6 +198,7 @@ export function newBoundingBox(option: Option): BoundingBox {
       if (moveAnchor) {
         ctx.beginPath();
         ctx.arc(moveAnchor.c.x, moveAnchor.c.y, moveAnchor.r, 0, TAU);
+        applyFillStyle(ctx, { color: style.selectionPrimary });
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = "#fff";
