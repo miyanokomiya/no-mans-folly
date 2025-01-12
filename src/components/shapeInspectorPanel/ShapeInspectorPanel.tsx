@@ -9,7 +9,7 @@ import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
 import { GroupConstraintInspector } from "./GroupConstraintInspector";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
-import { canClip } from "../../shapes";
+import { canClip, canShapeGrouped } from "../../shapes";
 import { GroupShape, isGroupShape } from "../../shapes/group";
 import { ClipInspector } from "./ClipInspector";
 import { AlphaField } from "./AlphaField";
@@ -176,6 +176,10 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
 
   const alphaField = <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />;
 
+  const groupConstraintField = canShapeGrouped(getShapeComposite().getShapeStruct, targetShape) ? (
+    <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
+  ) : undefined;
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
       {targetShapes.length >= 2 ? (
@@ -213,7 +217,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
           )}
         </>
       )}
-      <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
+      {groupConstraintField}
       {canClip(getShapeComposite().getShapeStruct, targetShape) ? (
         <ClipInspector
           targetShape={targetShape}

@@ -9,7 +9,7 @@ import { InlineField } from "../atoms/InlineField";
 import { useShapeComposite, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
 import { BlockGroupField } from "../atoms/BlockGroupField";
-import { getAttachmentByUpdatingRotation } from "../../shapes";
+import { getAttachmentByUpdatingRotation, isNoRotationShape } from "../../shapes";
 
 interface Props {
   targetShape: Shape;
@@ -97,6 +97,20 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
     [targetShape, subShapeComposite, commit, readyState, updateTmpShapes, shapeComposite],
   );
 
+  const rotationField = isNoRotationShape(shapeComposite.getShapeStruct, targetShape) ? undefined : (
+    <InlineField label={"angle"}>
+      <div className="w-24">
+        <NumberInput
+          value={(targetLocalBounds[1] * 180) / Math.PI}
+          onChange={handleChangeRotation}
+          onBlur={commit}
+          keepFocus
+          slider
+        />
+      </div>
+    </InlineField>
+  );
+
   return (
     <>
       <BlockGroupField label="Local bounds" accordionKey="shape-bounds">
@@ -106,17 +120,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
         <InlineField label={"w, h"}>
           <PointField value={targetSize} onChange={handleChangeSize} min={1} />
         </InlineField>
-        <InlineField label={"angle"}>
-          <div className="w-24">
-            <NumberInput
-              value={(targetLocalBounds[1] * 180) / Math.PI}
-              onChange={handleChangeRotation}
-              onBlur={commit}
-              keepFocus
-              slider
-            />
-          </div>
-        </InlineField>
+        {rotationField}
       </BlockGroupField>
     </>
   );
