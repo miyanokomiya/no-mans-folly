@@ -6,8 +6,8 @@ import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { useSelectedShape, useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
-import { getAllFrameShapes } from "../../composables/frame";
-import { FrameShape } from "../../shapes/frame";
+import { createNewFrameFromSrc, getAllFrameShapes } from "../../composables/frame";
+import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import { TextInput } from "../atoms/inputs/TextInput";
@@ -28,23 +28,35 @@ export const FramePanel: React.FC = () => {
   const backgroundColor = useMemo(() => (sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff"), [sheet]);
   const lastSelectedId = useSelectedShape()?.id;
 
-  const handleClickAdd = useCallback(() => {
+  const handleAdd = useCallback(() => {
     const ctx = getCtx();
-    const shapes = [
-      createShape(ctx.getShapeStruct, "frame", { id: ctx.generateUuid(), findex: ctx.createLastIndex() }),
-    ];
-    const minShapeComposite = newShapeComposite({
-      getStruct: ctx.getShapeStruct,
-      shapes,
-    });
-    const wrapper = minShapeComposite.getWrapperRectForShapes(shapes);
-    const wrapperCenter = getRectCenter(wrapper);
-    const viewCenter = getRectCenter(ctx.getViewRect());
-    const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+    let shape: FrameShape;
 
-    ctx.addShapes(shapes.map((s) => ({ ...s, ...minShapeComposite.transformShape(s, affine) })));
-    ctx.multiSelectShapes(shapes.map((s) => s.id));
-  }, [getCtx]);
+    const selectedShape = lastSelectedId ? ctx.getShapeComposite().shapeMap[lastSelectedId] : undefined;
+    if (selectedShape && isFrameShape(selectedShape)) {
+      const selectedIndex = frameShapes.findIndex((f) => f.id === selectedShape.id);
+      const nextFrame = frameShapes.at(selectedIndex + 1);
+      shape = createNewFrameFromSrc(
+        ctx.getShapeStruct,
+        selectedShape,
+        ctx.generateUuid(),
+        generateKeyBetweenAllowSame(selectedShape.findex, nextFrame?.findex),
+      );
+    } else {
+      const frame = createShape(ctx.getShapeStruct, "frame", { id: ctx.generateUuid(), findex: ctx.createLastIndex() });
+      const minShapeComposite = newShapeComposite({
+        getStruct: ctx.getShapeStruct,
+        shapes: [frame],
+      });
+      const wrapperCenter = getRectCenter(minShapeComposite.getWrapperRect(frame));
+      const viewCenter = getRectCenter(ctx.getViewRect());
+      const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+      shape = { ...frame, ...minShapeComposite.transformShape(frame, affine) } as FrameShape;
+    }
+
+    ctx.addShapes([shape]);
+    ctx.selectShape(shape.id);
+  }, [getCtx, frameShapes, lastSelectedId]);
 
   const handleNameChange = useCallback(
     (id: string, name: string) => {
@@ -149,7 +161,7 @@ export const FramePanel: React.FC = () => {
           onChange={handleOrderChange}
           anchor="[data-anchor]"
         />
-        <button type="button" className="w-full p-2 border rounded flex justify-center" onClick={handleClickAdd}>
+        <button type="button" className="w-full p-2 border rounded flex justify-center" onClick={handleAdd}>
           <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
         </button>
       </div>

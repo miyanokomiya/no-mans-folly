@@ -6,6 +6,8 @@ import { applyStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { applyDefaultTextStyle } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { applyFillStyle } from "../utils/fillStyle";
+import { GetShapeStruct } from "../shapes/core";
+import { createShape } from "../shapes";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
@@ -44,4 +46,23 @@ export function renderFrameNames(ctx: CanvasRenderingContext2D, shapeComposite: 
       ctx.fillText(text, rect.x, rect.y - mergin);
     });
   }
+}
+
+export function createNewFrameFromSrc(
+  getStruct: GetShapeStruct,
+  src: FrameShape,
+  id: string,
+  findex: string,
+): FrameShape {
+  const ret = createShape<FrameShape>(getStruct, "frame", {
+    id,
+    findex,
+    width: src.width,
+    height: src.height,
+    fill: src.fill,
+    stroke: src.stroke,
+    p: { x: src.p.x, y: src.p.y + src.height + 50 },
+  });
+
+  return ret;
 }
