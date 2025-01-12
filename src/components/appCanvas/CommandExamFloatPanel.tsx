@@ -8,6 +8,10 @@ interface Props {
   commandExams: CommandExam[];
 }
 
+/**
+ * This component is intended to be wrapped by an element having "pointer-events-none" style.
+ * Interactive elements in this component should have "pointer-events-auto" because of it.
+ */
 export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
   const [visible, setVisible] = useLocalStorageAdopter({
     key: "command-exam-float-panel",
@@ -21,14 +25,14 @@ export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
   return (
     <div className="relative pl-2 pb-2">
       {visible ? (
-        <div className="flex flex-col pointer-events-none">
+        <div className="flex flex-col">
           <CommandExamPanel commandExams={commandExams} />
         </div>
       ) : undefined}
       <button
         type="button"
         className={
-          "absolute bottom-0 left-0 w-5 h-5 pt-1 pr-1 bg-gray-300 transition " +
+          "absolute bottom-0 left-0 w-5 h-5 pt-1 pr-1 bg-gray-300 transition pointer-events-auto " +
           (visible ? "rounded-tr-xl" : "-scale-100")
         }
         onClick={handleButtonClick}

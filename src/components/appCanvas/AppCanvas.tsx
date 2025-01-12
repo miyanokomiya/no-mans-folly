@@ -829,7 +829,7 @@ export const AppCanvas: React.FC = () => {
       {userSetting.debug === "on" ? (
         <div className="fixed right-16 top-0 pointer-events-none">{sm.getStateSummary().label}</div>
       ) : undefined}
-      <div className="fixed bottom-0 left-0 flex">
+      <div className="fixed bottom-0 left-0 flex pointer-events-none">
         <CommandExamFloatPanel commandExams={commandExams} />
       </div>
       {userSetting.virtualKeyboard === "modifiers" ? (
