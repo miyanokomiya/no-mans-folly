@@ -41,6 +41,7 @@ import { PreviewDialog } from "../PreviewDialog";
 import { duplicateShapes } from "../../shapes/utils/duplicator";
 import { useImageStore, useLoadShapeAssets } from "./hooks";
 import { CommandExamFloatPanel } from "./CommandExamFloatPanel";
+import { renderFrameNames } from "../../composables/frame";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -480,8 +481,8 @@ export const AppCanvas: React.FC = () => {
     });
     renderer.render(ctx);
 
+    renderFrameNames(ctx, shapeStore.shapeComposite, scale);
     grid.renderAxisLabels(ctx, scale);
-
     sm.render(ctx);
   }, [
     shapeStore.shapeComposite,

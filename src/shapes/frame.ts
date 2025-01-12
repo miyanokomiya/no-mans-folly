@@ -1,8 +1,6 @@
 import { CommonStyle, Shape } from "../models";
-import { COLORS } from "../utils/color";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { applyDefaultTextStyle } from "../utils/renderer";
-import { applyStrokeStyle, createStrokeStyle } from "../utils/strokeStyle";
+import { createFillStyle } from "../utils/fillStyle";
+import { createStrokeStyle } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape } from "./core";
 import { RectPolygonShape } from "./rectPolygon";
 import { struct as rectangleStruct } from "./rectangle";
@@ -18,20 +16,10 @@ export const struct: ShapeStruct<FrameShape> = {
       type: "frame",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
-      width: arg.width ?? 300,
-      height: arg.height ?? 300,
+      width: arg.width ?? 800,
+      height: arg.height ?? 450,
       name: arg.name ?? "new frame",
     };
-  },
-  render(ctx, shape) {
-    rectangleStruct.render(ctx, shape);
-    // TODO: Avoid this rendering when it's is for PNG export.
-    applyDefaultTextStyle(ctx, 18);
-    ctx.textBaseline = "bottom";
-    applyStrokeStyle(ctx, { color: COLORS.WHITE });
-    ctx.strokeText(shape.name, shape.p.x, shape.p.y - 2);
-    applyFillStyle(ctx, { color: COLORS.BLACK });
-    ctx.fillText(shape.name, shape.p.x, shape.p.y - 2);
   },
   resize(shape, resizingAffine) {
     const ret = rectangleStruct.resize(shape, resizingAffine);
