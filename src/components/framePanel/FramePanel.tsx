@@ -304,7 +304,7 @@ const FrameItem: React.FC<FrameItemProps> = ({
           className="flex-none min-w-8 h-8 rounded px-2 bg-white border flex items-center justify-center cursor-grab"
           data-anchor
         >
-          {index}
+          {index + 1}
         </button>
         <div className="flex-auto">{nameElm}</div>
         <div className="flex-none w-8 h-8">
