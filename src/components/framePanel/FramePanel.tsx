@@ -62,7 +62,7 @@ export const FramePanel: React.FC = () => {
     [getCtx],
   );
 
-  const handleSheetClick = useCallback(
+  const handleFrameClick = useCallback(
     (id: string) => {
       const ctx = getCtx();
       ctx.selectShape(id);
@@ -145,12 +145,12 @@ export const FramePanel: React.FC = () => {
       <div className="flex flex-col gap-1 p-1">
         <SortableListV
           items={frameItems}
-          onClick={handleSheetClick}
+          onClick={handleFrameClick}
           onChange={handleOrderChange}
           anchor="[data-anchor]"
         />
         <button type="button" className="w-full p-2 border rounded flex justify-center" onClick={handleClickAdd}>
-          <img src={iconAdd} alt="Add Sheet" className="w-4 h-4" />
+          <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
         </button>
       </div>
     </div>
