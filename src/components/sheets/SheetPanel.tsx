@@ -5,6 +5,7 @@ import iconDots from "../../assets/icons/three_dots_v.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { getSheetURL } from "../../utils/route";
 import { OutsideObserver } from "../atoms/OutsideObserver";
+import { ListButton } from "../atoms/buttons/ListButton";
 
 interface Props {
   sheet: Sheet;
@@ -25,32 +26,32 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
     setPopupOpen(false);
   }, []);
 
-  const _onClickRename = useCallback(() => {
+  const handleRenameClick = useCallback(() => {
     setPopupOpen(false);
     setDraftName(sheet.name);
     setRenaming(true);
   }, [sheet.name]);
 
-  const _onChangeName = useCallback((val: string) => {
+  const handleNameChange = useCallback((val: string) => {
     setDraftName(val);
   }, []);
 
-  const _onClickSheet = useCallback(
+  const handleSheetClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.button !== 0) return;
 
       e.preventDefault();
 
       if (e.detail === 2) {
-        _onClickRename();
+        handleRenameClick();
       } else {
         onClickSheet?.(sheet.id);
       }
     },
-    [sheet, onClickSheet, _onClickRename],
+    [sheet, onClickSheet, handleRenameClick],
   );
 
-  const onSubmitName = useCallback(
+  const handleNameSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
       onChangeName?.(sheet.id, draftName);
@@ -63,24 +64,22 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
     setRenaming(false);
   }, []);
 
-  const onClickMenuButton = useCallback(() => {
+  const handleMenuClick = useCallback(() => {
     setPopupOpen(!popupOpen);
   }, [popupOpen]);
 
   const popupMenu = (
     <div className="flex flex-col bg-white">
-      <button type="button" className="hover:bg-gray-200 p-1" onClick={_onClickRename}>
-        Rename
-      </button>
+      <ListButton onClick={handleRenameClick}>Rename</ListButton>
     </div>
   );
 
   const content = renaming ? (
-    <form className="w-full h-full flex items-center" onSubmit={onSubmitName}>
-      <TextInput value={draftName} onChange={_onChangeName} onBlur={cancelRename} autofocus keepFocus />
+    <form className="w-full h-full flex items-center" onSubmit={handleNameSubmit}>
+      <TextInput value={draftName} onChange={handleNameChange} onBlur={cancelRename} autofocus keepFocus />
     </form>
   ) : (
-    <a href={getSheetURL(sheet.id)} onClick={_onClickSheet} className="w-full h-full flex items-center">
+    <a href={getSheetURL(sheet.id)} onClick={handleSheetClick} className="w-full h-full flex items-center">
       <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
     </a>
   );
@@ -97,7 +96,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
             popupPosition="right"
             popup={popupMenu}
             opened={popupOpen}
-            onClick={onClickMenuButton}
+            onClick={handleMenuClick}
           >
             <img src={iconDots} alt="Menu" className="w-5 h-5" />
           </FixedPopupButton>
