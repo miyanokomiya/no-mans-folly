@@ -272,12 +272,16 @@ export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
     setDraftValue(hex.replace("#", ""));
   }, [hex]);
 
+  const finish = useCallback(() => {
+    onChange?.(hexToColor(`#${draftValue.replace("#", "")}`));
+  }, [onChange, draftValue]);
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      onChange?.(hexToColor(`#${draftValue.replace("#", "")}`));
+      finish();
     },
-    [onChange, draftValue],
+    [finish],
   );
 
   return (
@@ -285,7 +289,7 @@ export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
       <div className="w-8 h-8 rounded border" style={{ backgroundColor: hex }} />
       <div className="w-20 flex items-center">
         <span className="text-lg">#</span>
-        <TextInput value={draftValue} onChange={setDraftValue} keepFocus={true} placeholder="000000" />
+        <TextInput value={draftValue} onChange={setDraftValue} onBlur={finish} keepFocus placeholder="000000" />
       </div>
     </form>
   );
