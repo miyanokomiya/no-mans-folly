@@ -28,35 +28,46 @@ export const FramePanel: React.FC = () => {
   const backgroundColor = useMemo(() => (sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff"), [sheet]);
   const lastSelectedId = useSelectedShape()?.id;
 
+  const handleInsertBelow = useCallback(
+    (id: string) => {
+      const ctx = getCtx();
+      const src = ctx.getShapeComposite().shapeMap[id] as FrameShape;
+      const srcIndex = frameShapes.findIndex((f) => f.id === src.id);
+      const nextFrame = frameShapes.at(srcIndex + 1);
+      const shape = createNewFrameFromSrc(
+        ctx.getShapeStruct,
+        src,
+        ctx.generateUuid(),
+        generateKeyBetweenAllowSame(src.findex, nextFrame?.findex),
+      );
+
+      ctx.addShapes([shape]);
+      ctx.selectShape(shape.id);
+    },
+    [getCtx, frameShapes],
+  );
+
   const handleAdd = useCallback(() => {
     const ctx = getCtx();
-    let shape: FrameShape;
-
     const selectedShape = lastSelectedId ? ctx.getShapeComposite().shapeMap[lastSelectedId] : undefined;
     if (selectedShape && isFrameShape(selectedShape)) {
-      const selectedIndex = frameShapes.findIndex((f) => f.id === selectedShape.id);
-      const nextFrame = frameShapes.at(selectedIndex + 1);
-      shape = createNewFrameFromSrc(
-        ctx.getShapeStruct,
-        selectedShape,
-        ctx.generateUuid(),
-        generateKeyBetweenAllowSame(selectedShape.findex, nextFrame?.findex),
-      );
-    } else {
-      const frame = createShape(ctx.getShapeStruct, "frame", { id: ctx.generateUuid(), findex: ctx.createLastIndex() });
-      const minShapeComposite = newShapeComposite({
-        getStruct: ctx.getShapeStruct,
-        shapes: [frame],
-      });
-      const wrapperCenter = getRectCenter(minShapeComposite.getWrapperRect(frame));
-      const viewCenter = getRectCenter(ctx.getViewRect());
-      const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
-      shape = { ...frame, ...minShapeComposite.transformShape(frame, affine) } as FrameShape;
+      handleInsertBelow(selectedShape.id);
+      return;
     }
+
+    const frame = createShape(ctx.getShapeStruct, "frame", { id: ctx.generateUuid(), findex: ctx.createLastIndex() });
+    const minShapeComposite = newShapeComposite({
+      getStruct: ctx.getShapeStruct,
+      shapes: [frame],
+    });
+    const wrapperCenter = getRectCenter(minShapeComposite.getWrapperRect(frame));
+    const viewCenter = getRectCenter(ctx.getViewRect());
+    const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+    const shape = { ...frame, ...minShapeComposite.transformShape(frame, affine) };
 
     ctx.addShapes([shape]);
     ctx.selectShape(shape.id);
-  }, [getCtx, frameShapes, lastSelectedId]);
+  }, [getCtx, lastSelectedId, handleInsertBelow]);
 
   const handleNameChange = useCallback(
     (id: string, name: string) => {
@@ -128,6 +139,7 @@ export const FramePanel: React.FC = () => {
           onNameChange={handleNameChange}
           onHover={handleNodeHover}
           selected={s.id === lastSelectedId}
+          onInsertBelow={handleInsertBelow}
           onDelete={handleDelete}
         >
           <FrameThumbnail
@@ -147,6 +159,7 @@ export const FramePanel: React.FC = () => {
     imageStore,
     handleNameChange,
     handleNodeHover,
+    handleInsertBelow,
     handleDelete,
     backgroundColor,
     lastSelectedId,
@@ -177,6 +190,7 @@ interface FrameItemProps {
   onClick?: (id: string) => void;
   onHover?: (id: string) => void;
   onNameChange?: (id: string, name: string) => void;
+  onInsertBelow?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -188,6 +202,7 @@ const FrameItem: React.FC<FrameItemProps> = ({
   children,
   onHover,
   onNameChange,
+  onInsertBelow,
   onDelete,
 }) => {
   const [popupOpen, setPopupOpen] = useState(false);
@@ -230,6 +245,10 @@ const FrameItem: React.FC<FrameItemProps> = ({
     [frame, onClick, handleRenameClick],
   );
 
+  const handleInsertBelow = useCallback(() => {
+    onInsertBelow?.(frame.id);
+  }, [frame, onInsertBelow]);
+
   const handleDelete = useCallback(() => {
     onDelete?.(frame.id);
   }, [frame, onDelete]);
@@ -252,8 +271,9 @@ const FrameItem: React.FC<FrameItemProps> = ({
   }, [popupOpen]);
 
   const popupMenu = (
-    <div className="flex flex-col bg-white">
+    <div className="w-max flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
+      <ListButton onClick={handleInsertBelow}>Insert below</ListButton>
       <ListButton onClick={handleDelete}>
         <span className="text-red-500 font-semibold">Delete</span>
       </ListButton>
