@@ -6,6 +6,7 @@ import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { TextShape } from "../../../shapes/text";
 import { newShapeComposite } from "../../shapeComposite";
+import { FrameShape } from "../../../shapes/frame";
 
 function getMockCtx() {
   return {
@@ -142,6 +143,53 @@ describe("newMovingShapeState", () => {
         data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(tmpMap["a"]).not.toHaveProperty("attachment");
+    });
+
+    test("should move shapes on selected frame shapes if shift isn't passed in the option", () => {
+      const ctx = getMockCtx();
+      ctx.getShapeComposite = () =>
+        newShapeComposite({
+          shapes: [
+            createShape<RectangleShape>(getCommonStruct, "rectangle", {
+              id: "a",
+              width: 50,
+              height: 50,
+              p: { x: 20, y: 20 },
+            }),
+            createShape<RectangleShape>(getCommonStruct, "rectangle", {
+              id: "b",
+              width: 50,
+              height: 50,
+              p: { x: 80, y: 80 },
+            }),
+            createShape<FrameShape>(getCommonStruct, "frame", { id: "frame", width: 100, height: 100 }),
+          ],
+          getStruct: getCommonStruct,
+        });
+      ctx.getSelectedShapeIdMap.mockReturnValue({ frame: true });
+      ctx.getLastSelectedShapeId.mockReturnValue("frame");
+
+      const target = newMovingShapeState();
+      target.onStart?.(ctx as any);
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      });
+      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {
+        a: { p: expect.anything() },
+        frame: { p: expect.anything() },
+      });
+
+      ctx.setTmpShapeMap.mockReset();
+      const target2 = newMovingShapeState({ shift: true });
+      target2.onStart?.(ctx as any);
+      target2.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      });
+      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {
+        frame: { p: expect.anything() },
+      });
     });
   });
 
