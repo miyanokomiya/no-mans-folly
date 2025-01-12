@@ -11,6 +11,7 @@ export const COMMAND_EXAM_SRC = {
   ATTACH_TO_LINE_OFF: { command: "a", title: "Attach to line off" },
   SLIDE_ATTACH_ANCHOR: { command: "Shift + Drag", title: "Slide anchor" },
   PRESERVE_ATTACHMENT: { command: getAltOrOptionStr(), title: "Preserve attachment" },
+  MOVE_ONLY_FRAME: { command: "Shift + Drag", title: "Move only frame" },
 
   ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
 

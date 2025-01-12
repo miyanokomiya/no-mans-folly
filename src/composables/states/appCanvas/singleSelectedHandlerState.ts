@@ -108,7 +108,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                     case "rotation":
                       return () => newRotatingState({ boundingBox });
                     case "move":
-                      return () => ctx.states.newMovingHubState({ boundingBox });
+                      return () => ctx.states.newMovingHubState({ ...event.data.options, boundingBox });
                   }
                 }
 

@@ -44,7 +44,7 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
 
           if (!option?.concurrent && isRigidMoveShape(shapeComposite.getShapeStruct, shape)) return;
 
-          return ctx.states.newMovingHubState;
+          return () => ctx.states.newMovingHubState({ ...event.data });
         }
         case "pointerup": {
           if (option?.concurrent && Date.now() - timestamp < 200) {

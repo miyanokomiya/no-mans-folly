@@ -7,8 +7,9 @@ import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
 import { newBoardLaneMovingState } from "./board/boardLaneMovingState";
 import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
+import { ModifierOptions } from "../../../utils/devices";
 
-interface Option {
+interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
 }
 
@@ -53,7 +54,7 @@ export function newMovingHubState(option?: Option): AppCanvasState {
           case "board_lane":
             return newBoardLaneMovingState;
           default:
-            return () => newMovingShapeState({ boundingBox: option?.boundingBox });
+            return () => ctx.states.newMovingShapeState(option);
         }
       } else {
         const types = new Set(unlockedSelectedIds.map((id) => shapeMap[id].type));
@@ -67,7 +68,7 @@ export function newMovingHubState(option?: Option): AppCanvasState {
           }
         }
 
-        return () => newMovingShapeState({ boundingBox: option?.boundingBox });
+        return () => ctx.states.newMovingShapeState(option);
       }
     },
     handleEvent() {},

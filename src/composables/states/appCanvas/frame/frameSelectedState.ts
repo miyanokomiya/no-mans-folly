@@ -1,12 +1,17 @@
 import { FrameShape } from "../../../../shapes/frame";
 import { getAllFrameShapes } from "../../../frame";
 import { FrameHandler, newFrameHandler } from "../../../shapeHandlers/frameHandler";
+import { COMMAND_EXAM_SRC } from "../commandExams";
+import { getCommonCommandExams } from "../commons";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 
 export const newFrameSelectedState = defineSingleSelectedHandlerState<FrameShape, FrameHandler, never>(
   (getters) => {
     return {
       getLabel: () => "FrameSelected",
+      onStart: (ctx) => {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.MOVE_ONLY_FRAME, ...getCommonCommandExams(ctx)]);
+      },
       handleEvent: (ctx, event) => {
         switch (event.type) {
           case "pointerdown":

@@ -21,8 +21,9 @@ import { handlePointerMoveOnLine } from "./movingShapeOnLineHandler";
 import { getSnappableCandidates } from "./commons";
 import { isFrameShape } from "../../../shapes/frame";
 import { getRootShapeIdsByFrame } from "../../frame";
+import { ModifierOptions } from "../../../utils/devices";
 
-interface Option {
+interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
 }
 
@@ -47,12 +48,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
 
       const movingIdSet = new Set(selectedIds);
-      selectedIds.forEach((id) => {
-        const s = shapeMap[id];
-        if (isFrameShape(s)) {
-          getRootShapeIdsByFrame(shapeComposite, s).forEach((id) => movingIdSet.add(id));
-        }
-      });
+      if (!option?.shift) {
+        selectedIds.forEach((id) => {
+          const s = shapeMap[id];
+          if (isFrameShape(s)) {
+            getRootShapeIdsByFrame(shapeComposite, s).forEach((id) => movingIdSet.add(id));
+          }
+        });
+      }
       const movingIds = Array.from(movingIdSet);
 
       const subShapeComposite = shapeComposite.getSubShapeComposite(movingIds, shapeComposite.tmpShapeMap);
