@@ -15,6 +15,7 @@ import { SortableListV } from "../atoms/SortableListV";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { rednerRGBA } from "../../utils/color";
 import { FrameThumbnail } from "./FrameThumbnail";
+import { ListButton } from "../atoms/buttons/ListButton";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -49,6 +50,14 @@ export const FramePanel: React.FC = () => {
     (id: string, name: string) => {
       const ctx = getCtx();
       ctx.patchShapes({ [id]: { name } as Partial<FrameShape> });
+    },
+    [getCtx],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      const ctx = getCtx();
+      ctx.deleteShapes([id]);
     },
     [getCtx],
   );
@@ -107,6 +116,7 @@ export const FramePanel: React.FC = () => {
           onNameChange={handleNameChange}
           onHover={handleNodeHover}
           selected={s.id === lastSelectedId}
+          onDelete={handleDelete}
         >
           <FrameThumbnail
             shapeComposite={shapeComposite}
@@ -125,6 +135,7 @@ export const FramePanel: React.FC = () => {
     imageStore,
     handleNameChange,
     handleNodeHover,
+    handleDelete,
     backgroundColor,
     lastSelectedId,
   ]);
@@ -154,9 +165,19 @@ interface FrameItemProps {
   onClick?: (id: string) => void;
   onHover?: (id: string) => void;
   onNameChange?: (id: string, name: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, children, onHover, onNameChange }) => {
+const FrameItem: React.FC<FrameItemProps> = ({
+  frame,
+  onClick,
+  selected,
+  index,
+  children,
+  onHover,
+  onNameChange,
+  onDelete,
+}) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -197,6 +218,10 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
     [frame, onClick, handleRenameClick],
   );
 
+  const handleDelete = useCallback(() => {
+    onDelete?.(frame.id);
+  }, [frame, onDelete]);
+
   const handleNameSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -216,9 +241,10 @@ const FrameItem: React.FC<FrameItemProps> = ({ frame, onClick, selected, index, 
 
   const popupMenu = (
     <div className="flex flex-col bg-white">
-      <button type="button" className="hover:bg-gray-200 p-1" onClick={handleRenameClick}>
-        Rename
-      </button>
+      <ListButton onClick={handleRenameClick}>Rename</ListButton>
+      <ListButton onClick={handleDelete}>
+        <span className="text-red-500 font-semibold">Delete</span>
+      </ListButton>
     </div>
   );
 

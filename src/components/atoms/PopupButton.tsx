@@ -95,7 +95,7 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
     boundsState; // For exhaustive-deps
 
     const bounds = ref.current.getBoundingClientRect();
-    const classBase = "z-10 fixed bg-white border rounded p-2 drop-shadow-md ";
+    const classBase = "z-10 fixed bg-white border rounded p-1 drop-shadow-md ";
     switch (popupPosition) {
       case "right":
         return {
