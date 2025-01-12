@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newMovingShapeState } from "../movingShapeState";
 import {
   BoardColumnMovingHandler,
   BoardColumnMovingHitResult,
@@ -36,7 +35,7 @@ export function newBoardColumnMovingState(): AppCanvasState {
       columnShapes = cardIds.map((id) => shapeMap[id] as BoardColumnShape).sort(findexSortFn);
 
       if (columnShapes.some((s) => !shapeMap[s.parentId ?? ""])) {
-        return newMovingShapeState;
+        return ctx.states.newMovingShapeState;
       }
 
       ctx.startDragging();

@@ -1,5 +1,4 @@
 import type { AppCanvasState } from "../core";
-import { newMovingShapeState } from "../movingShapeState";
 import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { TreeShapeBase } from "../../../../shapes/tree/core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
@@ -24,7 +23,7 @@ export function newTreeRootMovingState(option: Option): AppCanvasState {
   return {
     getLabel: () => "TreeRootMoving",
     onStart: (ctx) => {
-      movingState = newMovingShapeState();
+      movingState = ctx.states.newMovingShapeState();
       return movingState.onStart?.(ctx);
     },
     onEnd: (ctx) => {

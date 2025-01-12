@@ -1,5 +1,4 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { newMovingShapeState } from "../movingShapeState";
 import { BoardLaneMovingHandler, BoardLaneMovingHitResult, newBoardLaneMovingHandler } from "../../../boardHandler";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { newShapeComposite } from "../../../shapeComposite";
@@ -32,7 +31,7 @@ export function newBoardLaneMovingState(): AppCanvasState {
       laneShapes = cardIds.map((id) => shapeMap[id] as BoardLaneShape).sort(findexSortFn);
 
       if (laneShapes.some((s) => !shapeMap[s.parentId ?? ""])) {
-        return newMovingShapeState;
+        return ctx.states.newMovingShapeState;
       }
 
       ctx.startDragging();
