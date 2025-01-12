@@ -1,7 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newMovingLineLabelState } from "./lines/movingLineLabelState";
-import { newMovingShapeState } from "./movingShapeState";
 import { newTreeNodeMovingState } from "./tree/treeNodeMovingState";
 import { newTreeRootMovingState } from "./tree/treeRootMovingState";
 import { newBoardColumnMovingState } from "./board/boardColumnMovingState";
