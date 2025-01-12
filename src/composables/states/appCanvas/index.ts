@@ -5,6 +5,7 @@ import { newMovingAnchorOnLineState } from "./lines/movingAnchorOnLineState";
 import { newMovingOnLineState } from "./lines/movingOnLineState";
 import { newVertexAttachingState } from "./lines/vertexAttachingState";
 import { newMovingHubState } from "./movingHubState";
+import { newPanToShapeState } from "./panToShapeState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newSelectionHubState } from "./selectionHubState";
 
@@ -19,5 +20,6 @@ export const stateGenerators = {
   newLineNormalReadyState,
   newVertexAttachingState,
   newPointerDownEmptyState,
+  newPanToShapeState,
 };
 export type StateGenerators = typeof stateGenerators;

@@ -55,6 +55,7 @@ import { newDonutSelectedState } from "./states/appCanvas/donut/donutSelectedSta
 import { newMoonSelectedState } from "./states/appCanvas/moon/moonSelectedState";
 import { newGroupSelectedState } from "./states/appCanvas/group/groupSelectedState";
 import { newSpikyRectangleSelectedState } from "./states/appCanvas/spikyRectangle/spikyRectangleSelectedState";
+import { newFrameSelectedState } from "./states/appCanvas/frame/frameSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -153,6 +154,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newBoardEntitySelectedState;
     case "align_box":
       return newAlignBoxSelectedState;
+    case "frame":
+      return newFrameSelectedState;
     default:
       return newSingleSelectedState;
   }
