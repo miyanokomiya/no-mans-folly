@@ -96,6 +96,7 @@ export const FramePanel: React.FC = () => {
           options: {
             ids: [id],
             duration: 150,
+            scaling: true,
           },
         },
       });

@@ -29,28 +29,30 @@ export const newFrameSelectedState = defineSingleSelectedHandlerState<FrameShape
                     const shapeComposite = ctx.getShapeComposite();
                     const frames = getAllFrameShapes(shapeComposite);
                     const targetIndex = frames.findIndex((f) => f.id === targetShape.id);
-                    if (targetIndex === -1 || targetIndex === 0) return null;
+                    const nextId = frames.at(targetIndex - 1)?.id;
+                    if (!nextId) return null;
 
-                    const nextId = frames[targetIndex - 1].id;
                     ctx.selectShape(nextId);
                     return () =>
                       ctx.states.newPanToShapeState({
                         ids: [nextId],
                         duration: 150,
+                        scaling: true,
                       });
                   }
                   case "jump-next": {
                     const shapeComposite = ctx.getShapeComposite();
                     const frames = getAllFrameShapes(shapeComposite);
                     const targetIndex = frames.findIndex((f) => f.id === targetShape.id);
-                    if (targetIndex === -1 || targetIndex === frames.length - 1) return null;
+                    const nextId = frames.at(targetIndex + 1)?.id;
+                    if (!nextId) return null;
 
-                    const nextId = frames[targetIndex + 1].id;
                     ctx.selectShape(nextId);
                     return () =>
                       ctx.states.newPanToShapeState({
                         ids: [nextId],
                         duration: 150,
+                        scaling: true,
                       });
                   }
                 }
