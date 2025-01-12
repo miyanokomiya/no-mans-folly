@@ -254,18 +254,18 @@ const FrameItem: React.FC<FrameItemProps> = ({
     onDelete?.(frame.id);
   }, [frame, onDelete]);
 
+  const finishRename = useCallback(() => {
+    onNameChange?.(frame.id, draftName);
+    setRenaming(false);
+  }, [frame, draftName, onNameChange]);
+
   const handleNameSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      onNameChange?.(frame.id, draftName);
-      setRenaming(false);
+      finishRename();
     },
-    [frame, draftName, onNameChange],
+    [finishRename],
   );
-
-  const cancelRename = useCallback(() => {
-    setRenaming(false);
-  }, []);
 
   const handleMenuClick = useCallback(() => {
     setPopupOpen(!popupOpen);
@@ -283,7 +283,7 @@ const FrameItem: React.FC<FrameItemProps> = ({
 
   const nameElm = renaming ? (
     <form className="w-full h-full flex items-center" onSubmit={handleNameSubmit}>
-      <TextInput value={draftName} onChange={handleNameChange} onBlur={cancelRename} autofocus keepFocus />
+      <TextInput value={draftName} onChange={handleNameChange} onBlur={finishRename} autofocus keepFocus />
     </form>
   ) : (
     <div onClick={handleNameClick} className="w-full h-full px-1 flex items-center hover:bg-gray-200">

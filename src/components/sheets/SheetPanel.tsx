@@ -51,18 +51,18 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
     [sheet, onClickSheet, handleRenameClick],
   );
 
+  const finishRename = useCallback(() => {
+    onChangeName?.(sheet.id, draftName);
+    setRenaming(false);
+  }, [sheet, draftName, onChangeName]);
+
   const handleNameSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      onChangeName?.(sheet.id, draftName);
-      setRenaming(false);
+      finishRename();
     },
-    [sheet, draftName, onChangeName],
+    [finishRename],
   );
-
-  const cancelRename = useCallback(() => {
-    setRenaming(false);
-  }, []);
 
   const handleMenuClick = useCallback(() => {
     setPopupOpen(!popupOpen);
@@ -76,7 +76,7 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
 
   const content = renaming ? (
     <form className="w-full h-full flex items-center" onSubmit={handleNameSubmit}>
-      <TextInput value={draftName} onChange={handleNameChange} onBlur={cancelRename} autofocus keepFocus />
+      <TextInput value={draftName} onChange={handleNameChange} onBlur={finishRename} autofocus keepFocus />
     </form>
   ) : (
     <a href={getSheetURL(sheet.id)} onClick={handleSheetClick} className="w-full h-full flex items-center">
