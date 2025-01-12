@@ -274,7 +274,7 @@ const FrameItem: React.FC<FrameItemProps> = ({
         >
           {index}
         </button>
-        <div>{nameElm}</div>
+        <div className="flex-auto">{nameElm}</div>
         <div className="flex-none w-8 h-8">
           <OutsideObserver onClick={closePopup}>
             <FixedPopupButton
