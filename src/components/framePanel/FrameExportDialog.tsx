@@ -21,6 +21,7 @@ import { rednerRGBA } from "../../utils/color";
 interface ExportOptions {
   imageType: "png" | "svg" | "folly-svg";
   hideFrame: boolean;
+  filenamePrefix: boolean;
 }
 
 interface Props {
@@ -34,8 +35,8 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
 
   const [exportOptions, setExportOptions] = useLocalStorageAdopter<ExportOptions>({
     key: "frame-export-options",
-    version: "2",
-    initialValue: { imageType: "png", hideFrame: false },
+    version: "3",
+    initialValue: { imageType: "png", hideFrame: false, filenamePrefix: false },
     duration: 1000,
   });
 
@@ -66,13 +67,13 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     try {
       switch (exportOptions.imageType) {
         case "png":
-          await exportAsPNG(ctx, frameIdSet, setProgress, exportOptions.hideFrame);
+          await exportAsPNG(ctx, frameIdSet, setProgress, exportOptions.hideFrame, exportOptions.filenamePrefix);
           break;
         case "svg":
-          await exportAsSVG(ctx, frameIdSet, setProgress, false, exportOptions.hideFrame);
+          await exportAsSVG(ctx, frameIdSet, setProgress, false, exportOptions.hideFrame, exportOptions.filenamePrefix);
           break;
         case "folly-svg":
-          await exportAsSVG(ctx, frameIdSet, setProgress, true, exportOptions.hideFrame);
+          await exportAsSVG(ctx, frameIdSet, setProgress, true, exportOptions.hideFrame, exportOptions.filenamePrefix);
           break;
       }
       onClose();
@@ -111,6 +112,13 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   const handleHideFrameChange = useCallback(
     (val: boolean) => {
       setExportOptions((src) => ({ ...src, hideFrame: val }));
+    },
+    [setExportOptions],
+  );
+
+  const handleFilenamePrefixChange = useCallback(
+    (val: boolean) => {
+      setExportOptions((src) => ({ ...src, filenamePrefix: val }));
     },
     [setExportOptions],
   );
@@ -184,9 +192,14 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
           <InlineField label={t("export.options.hideframe")}>
             <ToggleInput value={exportOptions.hideFrame} onChange={handleHideFrameChange} />
           </InlineField>
-          <InlineField label={t("export.options.imagetype")}>
-            <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
+          <InlineField label={t("export.options.filename_prefix")}>
+            <ToggleInput value={exportOptions.filenamePrefix} onChange={handleFilenamePrefixChange} />
           </InlineField>
+          <div className="my-1">
+            <InlineField label={t("export.options.imagetype")}>
+              <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
+            </InlineField>
+          </div>
         </form>
       </div>
     </Dialog>
@@ -200,6 +213,7 @@ async function exportAsPNG(
   frameIdSet: Set<string>,
   onProgress: (progress: number) => void,
   hideFrame: boolean,
+  filenamePrefix: boolean,
 ) {
   if (frameIdSet.size === 0) return;
 
@@ -221,7 +235,8 @@ async function exportAsPNG(
     });
     const builder = newImageBuilder({ render: renderer.render, range: info.range });
     const blob = await builder.toBlob();
-    items.push([`${i + 1}_${escapeFilename(frame.name)}.png`, new Uint8Array(await blob.arrayBuffer())]);
+    const prefix = filenamePrefix ? `${i + 1}_` : "";
+    items.push([`${prefix}${escapeFilename(frame.name)}.png`, new Uint8Array(await blob.arrayBuffer())]);
     onProgress(items.length / frames.length);
   }
 
@@ -241,6 +256,7 @@ async function exportAsSVG(
   onProgress: (progress: number) => void,
   withMeta = false,
   hideFrame: boolean,
+  filenamePrefix: boolean,
 ) {
   if (frameIdSet.size === 0) return;
 
@@ -266,8 +282,9 @@ async function exportAsSVG(
       range: info.range,
     });
     const blob = await builder.toBlob();
+    const prefix = filenamePrefix ? `${i + 1}_` : "";
     items.push([
-      `${i + 1}_${escapeFilename(frame.name)}${withMeta ? ".folly" : ""}.svg`,
+      `${prefix}${escapeFilename(frame.name)}${withMeta ? ".folly" : ""}.svg`,
       new Uint8Array(await blob.arrayBuffer()),
     ]);
     onProgress(items.length / frames.length);

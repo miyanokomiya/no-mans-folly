@@ -27,6 +27,7 @@ const en = {
         all_frames: "All frames",
         imagetype: "Image type",
         hideframe: "Hide frame",
+        filename_prefix: "Add sequence number to file name",
       },
     },
 
@@ -106,6 +107,7 @@ const ja: TranslationResource = {
         all_frames: "全てのフレーム",
         imagetype: "画像タイプ",
         hideframe: "フレーム非表示",
+        filename_prefix: "ファイル名に番号付与",
       },
     },
 
