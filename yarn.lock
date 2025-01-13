@@ -4368,10 +4368,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fractional-indexing-jittered@https://github.com/miyanokomiya/fractional-indexing-jittered.git":
-  version: 0.9.1
-  resolution: "fractional-indexing-jittered@https://github.com/miyanokomiya/fractional-indexing-jittered.git#commit=e58b45df0f4784ffc0bdeeedd605a05b89f2c113"
-  checksum: e073a9d77bd252dee8d5192d1da3031e9ec0e7fa588e23f6c9f832abca1267ee563d089274090b7d31dced96e9e5c4bde521b6a7d93a9b2e8a8e58d7bd9acff9
+"fractional-indexing-jittered@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "fractional-indexing-jittered@npm:1.0.0"
+  checksum: 2bb618192dc0d5a9ab96c6a97078ecc869c242b96d1720e92abd29ccf22d033d203a5392269879b8897a8062c7a1faddfbd254245c5d8ca60ac3720ce27a4d60
   languageName: node
   linkType: hard
 
@@ -5700,7 +5700,7 @@ __metadata:
     eslint-plugin-prettier: "npm:^5.2.1"
     eslint-plugin-react-hooks: "npm:^5.1.0"
     eslint-plugin-react-refresh: "npm:^0.4.16"
-    fractional-indexing-jittered: "https://github.com/miyanokomiya/fractional-indexing-jittered.git"
+    fractional-indexing-jittered: "npm:^1.0.0"
     happy-dom: "npm:^16.3.0"
     i18next: "npm:^24.2.0"
     i18next-browser-languagedetector: "npm:^8.0.2"
