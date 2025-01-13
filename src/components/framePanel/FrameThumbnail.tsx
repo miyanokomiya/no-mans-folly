@@ -80,7 +80,7 @@ export const FrameThumbnail: React.FC<Props> = ({
   }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder]);
 
   return (
-    <div ref={wrapperRef} className="h-32">
+    <div ref={wrapperRef} className="h-full">
       {canvasSize ? (
         <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} style={{ backgroundColor }} />
       ) : undefined}

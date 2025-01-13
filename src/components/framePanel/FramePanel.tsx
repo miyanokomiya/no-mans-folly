@@ -145,13 +145,15 @@ export const FramePanel: React.FC = () => {
           onInsertBelow={handleInsertBelow}
           onDelete={handleDelete}
         >
-          <FrameThumbnail
-            shapeComposite={shapeComposite}
-            frame={s}
-            documentMap={documentMap}
-            imageStore={imageStore}
-            backgroundColor={backgroundColor}
-          />
+          <div className="h-32">
+            <FrameThumbnail
+              shapeComposite={shapeComposite}
+              frame={s}
+              documentMap={documentMap}
+              imageStore={imageStore}
+              backgroundColor={backgroundColor}
+            />
+          </div>
         </FrameItem>,
       ];
     });
