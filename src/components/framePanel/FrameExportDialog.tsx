@@ -217,12 +217,12 @@ async function exportAsPNG(
 ) {
   if (frameIdSet.size === 0) return;
 
+  onProgress(0);
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
-
-  onProgress(0);
   const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
   const items: [string, Uint8Array][] = [];
+
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
     if (!frameIdSet.has(frame.id)) continue;
@@ -235,19 +235,13 @@ async function exportAsPNG(
     });
     const builder = newImageBuilder({ render: renderer.render, range: info.range });
     const blob = await builder.toBlob();
+    const buffer = await blob.arrayBuffer();
     const prefix = filenamePrefix ? `${i + 1}_` : "";
-    items.push([`${prefix}${escapeFilename(frame.name)}.png`, new Uint8Array(await blob.arrayBuffer())]);
-    onProgress(items.length / frames.length);
+    items.push([`${prefix}${escapeFilename(frame.name)}.png`, new Uint8Array(buffer)]);
+    onProgress(items.length / frameIdSet.size);
   }
 
-  const zip = await createZip(
-    items.map((item) => ({ path: item[0], data: item[1] })),
-    true,
-  );
-  const blob = new Blob([zip], { type: "application/x-zip" });
-  const url = URL.createObjectURL(blob);
-  saveFileInWeb(url, "frames-png.zip");
-  URL.revokeObjectURL(url);
+  await saveZipAsFile("frames-png.zip", items);
 }
 
 async function exportAsSVG(
@@ -260,12 +254,12 @@ async function exportAsSVG(
 ) {
   if (frameIdSet.size === 0) return;
 
+  onProgress(0);
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
-
-  onProgress(0);
   const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
   const items: [string, Uint8Array][] = [];
+
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
     if (!frameIdSet.has(frame.id)) continue;
@@ -282,20 +276,23 @@ async function exportAsSVG(
       range: info.range,
     });
     const blob = await builder.toBlob();
+    const buffer = await blob.arrayBuffer();
     const prefix = filenamePrefix ? `${i + 1}_` : "";
-    items.push([
-      `${prefix}${escapeFilename(frame.name)}${withMeta ? ".folly" : ""}.svg`,
-      new Uint8Array(await blob.arrayBuffer()),
-    ]);
-    onProgress(items.length / frames.length);
+    const suffix = withMeta ? ".folly" : "";
+    items.push([`${prefix}${escapeFilename(frame.name)}${suffix}.svg`, new Uint8Array(buffer)]);
+    onProgress(items.length / frameIdSet.size);
   }
 
+  await saveZipAsFile(withMeta ? "frames-folly-svg.zip" : "frames-svg.zip", items);
+}
+
+async function saveZipAsFile(name: string, items: [string, Uint8Array][]) {
   const zip = await createZip(
     items.map((item) => ({ path: item[0], data: item[1] })),
     true,
   );
   const blob = new Blob([zip], { type: "application/x-zip" });
   const url = URL.createObjectURL(blob);
-  saveFileInWeb(url, withMeta ? "frames-folly-svg.zip" : "frames-svg.zip");
+  saveFileInWeb(url, name);
   URL.revokeObjectURL(url);
 }
