@@ -5,24 +5,17 @@ import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
 import { FOLLY_SVG_PREFIX } from "../../../shapes/utils/shapeTemplateUtil";
 import { ImageBuilder, newImageBuilder, newSVGImageBuilder, SVGImageBuilder } from "../../imageBuilder";
-import {
-  canGroupShapes,
-  getAllShapeRangeWithinComposite,
-  newShapeComposite,
-  ShapeComposite,
-} from "../../shapeComposite";
+import { canGroupShapes, ShapeComposite } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { newShapeRenderer } from "../../shapeRenderer";
-import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import { TransitionValue } from "../core";
 import { ContextMenuItem, ContextMenuSeparatorItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
 import { IRectangle } from "okageo";
-import { getIntRectFromFloatRect } from "../../../utils/geometry";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { i18n } from "../../../i18n";
-import { getRootShapeIdsByFrame } from "../../frame";
-import { isFrameShape } from "../../../shapes/frame";
+import { saveFileInWeb, getExportParamsForSelectedShapes, getExportParamsForSelectedRange } from "../../shapeExport";
+import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -310,47 +303,38 @@ function exportAsPNG(ctx: AppCanvasStateContext, builder: ImageBuilder) {
 }
 
 function getImageBuilderForSelectedShapes(ctx: AppCanvasStateContext) {
-  const info = getExportParamsForSelectedShapes(ctx);
+  const info = getExportParamsForSelectedShapes(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap()));
   return getImageBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
 }
 
 function getImageBuilderForSelectedRange(ctx: AppCanvasStateContext) {
-  const info = getExportParamsForSelectedRange(ctx);
+  const info = getExportParamsForSelectedRange(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap()));
   return getImageBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
 }
 
-function getExportParamsForSelectedShapes(ctx: AppCanvasStateContext) {
-  const shapeComposite = ctx.getShapeComposite();
-  const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-
-  // Get optimal exporting range for selected shapes.
-  // This range may differ from visually selected range due to the optimization.
-  const selectedShapeComposite = shapeComposite.getSubShapeComposite(selectedIds);
-  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(selectedShapeComposite, true));
-
-  // Get source shapes regarding frame shapes.
-  // Shapes sticking out frames can be cut off since the range is based on directly selected shapes.
-  const sourceIdSet = new Set(selectedIds);
-  selectedIds.forEach((id) => {
-    const s = shapeComposite.shapeMap[id];
-    if (isFrameShape(s)) {
-      getRootShapeIdsByFrame(shapeComposite, s).forEach((idInFrame) => sourceIdSet.add(idInFrame));
-    }
-  });
-  const targetShapeComposite = shapeComposite.getSubShapeComposite(Array.from(sourceIdSet));
-
-  return { targetShapeComposite, range };
+function getSVGBuilderForShapes(ctx: AppCanvasStateContext, withMeta = false) {
+  const info = getExportParamsForSelectedShapes(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap()));
+  return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
 }
 
-function getExportParamsForSelectedRange(ctx: AppCanvasStateContext) {
-  const shapeComposite = ctx.getShapeComposite();
-  const srcShapes = shapeComposite.getAllBranchMergedShapes(Object.keys(ctx.getSelectedShapeIdMap()));
-  // Get currently selected range.
-  // Unlike "getExportParamsForSelectedShapes", this function prioritizes visually selected range.
-  const range = getIntRectFromFloatRect(shapeComposite.getWrapperRectForShapes(srcShapes, true));
-  const targetShapes = shapeComposite.getShapesOverlappingRect(shapeComposite.shapes, range);
-  const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: ctx.getShapeStruct });
-  return { targetShapeComposite, range };
+function getSVGBuilderForRange(ctx: AppCanvasStateContext, withMeta = false) {
+  const info = getExportParamsForSelectedRange(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap()));
+  return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
+}
+
+function getSVGBuilderForShapesWithRange(
+  ctx: AppCanvasStateContext,
+  targetShapeComposite: ShapeComposite,
+  range: IRectangle,
+  withMeta = false,
+) {
+  const renderer = newShapeSVGRenderer({
+    shapeComposite: targetShapeComposite,
+    getDocumentMap: ctx.getDocumentMap,
+    imageStore: ctx.getImageStore(),
+    assetAPI: ctx.assetAPI,
+  });
+  return newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
 }
 
 function getImageBuilderForShapesWithRange(
@@ -391,7 +375,7 @@ async function exportRangeAsSVG(ctx: AppCanvasStateContext): Promise<void> {
   await exportAsSVG(ctx, getSVGBuilderForRange(ctx), "shapes.svg");
 }
 
-async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageBuilder, name: string): Promise<void> {
+export async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageBuilder, name: string): Promise<void> {
   try {
     const dataURL = await builder.toDataURL();
     saveFileInWeb(dataURL, name);
@@ -402,39 +386,6 @@ async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageBuilder,
     });
     console.error(e);
   }
-}
-
-function getSVGBuilderForShapes(ctx: AppCanvasStateContext, withMeta = false) {
-  const info = getExportParamsForSelectedShapes(ctx);
-  return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
-}
-
-function getSVGBuilderForRange(ctx: AppCanvasStateContext, withMeta = false) {
-  const info = getExportParamsForSelectedRange(ctx);
-  return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
-}
-
-function getSVGBuilderForShapesWithRange(
-  ctx: AppCanvasStateContext,
-  targetShapeComposite: ShapeComposite,
-  range: IRectangle,
-  withMeta = false,
-) {
-  const renderer = newShapeSVGRenderer({
-    shapeComposite: targetShapeComposite,
-    getDocumentMap: ctx.getDocumentMap,
-    imageStore: ctx.getImageStore(),
-    assetAPI: ctx.assetAPI,
-  });
-  return newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
-}
-
-function saveFileInWeb(file: string, filename: string) {
-  const a = document.createElement("a");
-  a.href = file;
-  a.download = filename;
-  a.style.display = "none";
-  a.click();
 }
 
 export function groupShapes(ctx: AppCanvasStateContext): boolean {
