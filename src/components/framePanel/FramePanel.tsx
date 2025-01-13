@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
+import iconDownload from "../../assets/icons/download.svg";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
@@ -187,7 +188,12 @@ export const FramePanel: React.FC = () => {
 
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
-      <ListButton onClick={handleExport}>Export</ListButton>
+      <ListButton onClick={handleExport}>
+        <div className="flex items-center justify-start gap-1">
+          <img src={iconDownload} alt="" className="w-6 h-6" />
+          <span>Export</span>
+        </div>
+      </ListButton>
     </div>
   );
 
