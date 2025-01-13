@@ -75,6 +75,7 @@ export const FrameThumbnail: React.FC<Props> = ({
     ctx.beginPath();
     ctx.rect(frameRectWithBorder.x, frameRectWithBorder.y, frameRectWithBorder.width, frameRectWithBorder.height);
     ctx.lineJoin = getLineJoin(frame.stroke.lineJoin);
+    ctx.fillStyle = "#000";
     ctx.fill();
   }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder]);
 
