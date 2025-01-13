@@ -19,6 +19,11 @@ const en = {
     "noworkspace.start": "Start with no workspace",
     update_sw: "New content available, click on reload button to update.",
     reload: "Reload",
+    export: "Export",
+
+    "export.options": {
+      filetype: "File type",
+    },
 
     exconnection: {
       revoke: "Revoke connections",
@@ -88,6 +93,11 @@ const ja: TranslationResource = {
     "noworkspace.start": "ワークスペースなし",
     update_sw: "アプリケーションに更新があります。リロードボタン押下で更新します。",
     reload: "リロード",
+    export: "エクスポート",
+
+    "export.options": {
+      filetype: "ファイルタイプ",
+    },
 
     exconnection: {
       revoke: "連携解除",

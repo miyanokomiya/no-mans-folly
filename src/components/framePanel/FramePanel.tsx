@@ -16,6 +16,7 @@ import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { rednerRGBA } from "../../utils/color";
 import { FrameThumbnail } from "./FrameThumbnail";
 import { ListButton } from "../atoms/buttons/ListButton";
+import { FrameExportDialog } from "./FrameExportDialog";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -166,19 +167,58 @@ export const FramePanel: React.FC = () => {
     lastSelectedId,
   ]);
 
+  const [popupOpen, setPopupOpen] = useState(false);
+  const handleMenuClick = useCallback(() => {
+    setPopupOpen(!popupOpen);
+  }, [popupOpen]);
+  const closePopup = useCallback(() => {
+    setPopupOpen(false);
+  }, []);
+
+  const [openExportDialog, setOpenExportDialog] = useState(false);
+  const handlecloseExportDialog = useCallback(() => {
+    setOpenExportDialog(false);
+  }, []);
+
+  const handleExport = useCallback(() => {
+    setPopupOpen(!popupOpen);
+    setOpenExportDialog(true);
+  }, [popupOpen]);
+
+  const popupMenu = (
+    <div className="w-max flex flex-col bg-white">
+      <ListButton onClick={handleExport}>Export</ListButton>
+    </div>
+  );
+
   return (
-    <div>
-      <div className="flex flex-col gap-1 p-1">
+    <div className="p-1 h-full">
+      <div className="h-8 flex items-center justify-between sticky">
+        <span>Frames</span>
+        <OutsideObserver onClick={closePopup}>
+          <FixedPopupButton
+            name="frame"
+            popupPosition="left"
+            popup={popupMenu}
+            opened={popupOpen}
+            onClick={handleMenuClick}
+          >
+            <img src={iconDots} alt="Menu" className="w-5 h-5" />
+          </FixedPopupButton>
+        </OutsideObserver>
+      </div>
+      <div className="my-1 flex flex-col gap-1 overflow-auto" style={{ height: "calc(100% - 4.5rem)" }}>
         <SortableListV
           items={frameItems}
           onClick={handleFrameClick}
           onChange={handleOrderChange}
           anchor="[data-anchor]"
         />
-        <button type="button" className="w-full p-2 border rounded flex justify-center" onClick={handleAdd}>
-          <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
-        </button>
       </div>
+      <button type="button" className="w-full h-8 border rounded flex items-center justify-center" onClick={handleAdd}>
+        <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
+      </button>
+      <FrameExportDialog shapeComposite={shapeComposite} open={openExportDialog} onClose={handlecloseExportDialog} />
     </div>
   );
 };
