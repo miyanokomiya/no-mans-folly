@@ -3,6 +3,13 @@ import { getIntRectFromFloatRect } from "../utils/geometry";
 import { getRootShapeIdsByFrame } from "./frame";
 import { getAllShapeRangeWithinComposite, newShapeComposite, ShapeComposite } from "./shapeComposite";
 
+export function escapeFilename(src: string): string {
+  return src.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+}
+
+/**
+ * Make sure "filename" is already valid.
+ */
 export function saveFileInWeb(file: string, filename: string) {
   const a = document.createElement("a");
   a.href = file;

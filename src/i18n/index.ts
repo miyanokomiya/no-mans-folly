@@ -19,10 +19,13 @@ const en = {
     "noworkspace.start": "Start with no workspace",
     update_sw: "New content available, click on reload button to update.",
     reload: "Reload",
-    export: "Export",
 
-    "export.options": {
-      filetype: "File type",
+    export: {
+      title: "Export",
+      frames_as_zip: "Export frames as ZIP",
+      options: {
+        imagetype: "Image type",
+      },
     },
 
     exconnection: {
@@ -93,10 +96,13 @@ const ja: TranslationResource = {
     "noworkspace.start": "ワークスペースなし",
     update_sw: "アプリケーションに更新があります。リロードボタン押下で更新します。",
     reload: "リロード",
-    export: "エクスポート",
 
-    "export.options": {
-      filetype: "ファイルタイプ",
+    export: {
+      title: "エクスポート",
+      frames_as_zip: "フレームをZIPエクスポート",
+      options: {
+        imagetype: "画像タイプ",
+      },
     },
 
     exconnection: {

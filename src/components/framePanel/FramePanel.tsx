@@ -195,17 +195,19 @@ export const FramePanel: React.FC = () => {
     <div className="p-1 h-full">
       <div className="h-8 flex items-center justify-between sticky">
         <span>Frames</span>
-        <OutsideObserver onClick={closePopup}>
-          <FixedPopupButton
-            name="frame"
-            popupPosition="left"
-            popup={popupMenu}
-            opened={popupOpen}
-            onClick={handleMenuClick}
-          >
-            <img src={iconDots} alt="Menu" className="w-5 h-5" />
-          </FixedPopupButton>
-        </OutsideObserver>
+        {frameShapes.length > 0 ? (
+          <OutsideObserver onClick={closePopup}>
+            <FixedPopupButton
+              name="frame"
+              popupPosition="left"
+              popup={popupMenu}
+              opened={popupOpen}
+              onClick={handleMenuClick}
+            >
+              <img src={iconDots} alt="Menu" className="w-5 h-5" />
+            </FixedPopupButton>
+          </OutsideObserver>
+        ) : undefined}
       </div>
       <div className="my-1 flex flex-col gap-1 overflow-auto" style={{ height: "calc(100% - 4.5rem)" }}>
         <SortableListV
@@ -218,7 +220,7 @@ export const FramePanel: React.FC = () => {
       <button type="button" className="w-full h-8 border rounded flex items-center justify-center" onClick={handleAdd}>
         <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
       </button>
-      <FrameExportDialog shapeComposite={shapeComposite} open={openExportDialog} onClose={handlecloseExportDialog} />
+      <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
     </div>
   );
 };

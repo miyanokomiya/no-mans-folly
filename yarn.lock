@@ -5317,6 +5317,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"littlezipper@npm:^0.1.4":
+  version: 0.1.4
+  resolution: "littlezipper@npm:0.1.4"
+  checksum: 0a751d8e9db71b0c6d896b7b2f9b2fc6700a0563214f0e5a803e4f76adee98d848288daf7de76c215a13cc657a6c7364134f414be07d3bd24d1f67b79ef19050
+  languageName: node
+  linkType: hard
+
 "locate-path@npm:^6.0.0":
   version: 6.0.0
   resolution: "locate-path@npm:6.0.0"
@@ -5704,6 +5711,7 @@ __metadata:
     happy-dom: "npm:^16.3.0"
     i18next: "npm:^24.2.0"
     i18next-browser-languagedetector: "npm:^8.0.2"
+    littlezipper: "npm:^0.1.4"
     minimatrix-polyroots: "npm:^3.0.5"
     nanoid: "npm:^5.0.9"
     okageo: "npm:^3.1.9"

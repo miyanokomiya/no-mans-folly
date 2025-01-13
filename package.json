@@ -22,6 +22,7 @@
     "fractional-indexing-jittered": "^1.0.0",
     "i18next": "^24.2.0",
     "i18next-browser-languagedetector": "^8.0.2",
+    "littlezipper": "^0.1.4",
     "minimatrix-polyroots": "^3.0.5",
     "nanoid": "^5.0.9",
     "okageo": "^3.1.9",
