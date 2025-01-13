@@ -36,7 +36,7 @@ export function renderFrameNames(ctx: CanvasRenderingContext2D, shapeComposite: 
   if (frameShapes.length > 0) {
     ctx.textBaseline = "bottom";
     applyDefaultTextStyle(ctx, 18 * scale);
-    applyStrokeStyle(ctx, { color: COLORS.WHITE });
+    applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
     applyFillStyle(ctx, { color: COLORS.BLACK });
     const mergin = 4 * scale;
     frameShapes.forEach((frame, i) => {
