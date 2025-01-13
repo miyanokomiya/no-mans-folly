@@ -377,8 +377,9 @@ async function exportRangeAsSVG(ctx: AppCanvasStateContext): Promise<void> {
 
 export async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageBuilder, name: string): Promise<void> {
   try {
-    const dataURL = await builder.toDataURL();
-    saveFileInWeb(dataURL, name);
+    await builder.toDataURL((dataURL) => {
+      saveFileInWeb(dataURL, name);
+    });
   } catch (e: any) {
     ctx.showToastMessage({
       text: `Failed to create image. ${e.message}`,

@@ -72,9 +72,14 @@ export function newSVGImageBuilder({ render, range }: SVGOption) {
     return new Blob([`${XML_PROLONG}\n${svg}`], { type: "image/svg+xml" });
   }
 
-  async function toDataURL(): Promise<string> {
+  /**
+   * The url will be revoked right after "fn" finishes.
+   */
+  async function toDataURL(fn: (url: string) => Promise<void> | void) {
     const blob = await toBlob();
-    return URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    await fn(url);
+    URL.revokeObjectURL(url);
   }
 
   return { toBlob, toDataURL };
