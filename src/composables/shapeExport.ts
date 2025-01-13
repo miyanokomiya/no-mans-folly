@@ -38,12 +38,18 @@ export function getExportParamsForSelectedShapes(shapeComposite: ShapeComposite,
   return { targetShapeComposite, range };
 }
 
-export function getExportParamsForSelectedRange(shapeComposite: ShapeComposite, targetIds: string[]) {
+export function getExportParamsForSelectedRange(
+  shapeComposite: ShapeComposite,
+  targetIds: string[],
+  excludeIdSet?: Set<string>,
+) {
   const srcShapes = shapeComposite.getAllBranchMergedShapes(targetIds);
   // Get currently selected range.
   // Unlike "getExportParamsForSelectedShapes", this function prioritizes visually selected range.
   const range = getIntRectFromFloatRect(shapeComposite.getWrapperRectForShapes(srcShapes, true));
-  const targetShapes = shapeComposite.getShapesOverlappingRect(shapeComposite.shapes, range);
+  const targetShapes = shapeComposite
+    .getShapesOverlappingRect(shapeComposite.shapes, range)
+    .filter((s) => !excludeIdSet?.has(s.id));
   const targetShapeComposite = newShapeComposite({ shapes: targetShapes, getStruct: shapeComposite.getShapeStruct });
   return { targetShapeComposite, range };
 }

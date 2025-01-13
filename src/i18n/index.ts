@@ -25,6 +25,7 @@ const en = {
       frames_as_zip: "Export frames as ZIP",
       options: {
         imagetype: "Image type",
+        hideframe: "Hide frame",
       },
     },
 
@@ -102,6 +103,7 @@ const ja: TranslationResource = {
       frames_as_zip: "フレームをZIPエクスポート",
       options: {
         imagetype: "画像タイプ",
+        hideframe: "フレーム非表示",
       },
     },
 

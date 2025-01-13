@@ -13,9 +13,11 @@ import { newImageBuilder, newSVGImageBuilder } from "../../composables/imageBuil
 import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
 import { LoadingDialog } from "../navigations/LoadingDialog";
 import { newShapeSVGRenderer } from "../../composables/shapeSVGRenderer";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 interface ExportOptions {
   imageType: "png" | "svg" | "folly-svg";
+  hideFrame: boolean;
 }
 
 interface Props {
@@ -29,8 +31,8 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
 
   const [exportOptions, setExportOptions] = useLocalStorageAdopter<ExportOptions>({
     key: "frame-export-options",
-    version: "1",
-    initialValue: { imageType: "png" },
+    version: "2",
+    initialValue: { imageType: "png", hideFrame: false },
     duration: 1000,
   });
 
@@ -42,13 +44,13 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     try {
       switch (exportOptions.imageType) {
         case "png":
-          await exportAsPNG(ctx, setProgress);
+          await exportAsPNG(ctx, setProgress, exportOptions.hideFrame);
           break;
         case "svg":
-          await exportAsSVG(ctx, setProgress);
+          await exportAsSVG(ctx, setProgress, false, exportOptions.hideFrame);
           break;
         case "folly-svg":
-          await exportAsSVG(ctx, setProgress, true);
+          await exportAsSVG(ctx, setProgress, true, exportOptions.hideFrame);
           break;
       }
       onClose();
@@ -84,6 +86,13 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     [setExportOptions],
   );
 
+  const handleHideFrameChange = useCallback(
+    (val: boolean) => {
+      setExportOptions((src) => ({ ...src, hideFrame: val }));
+    },
+    [setExportOptions],
+  );
+
   const fileOptions = useMemo(
     () => [
       { value: "png", label: "PNG" },
@@ -97,6 +106,9 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     <Dialog open={open} onClose={onClose} title={t("export.frames_as_zip")} actions={actions}>
       <div className="w-80">
         <form onSubmit={handleSubmit}>
+          <InlineField label={t("export.options.hideframe")}>
+            <ToggleInput value={exportOptions.hideFrame} onChange={handleHideFrameChange} />
+          </InlineField>
           <InlineField label={t("export.options.imagetype")}>
             <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
           </InlineField>
@@ -108,16 +120,17 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   );
 };
 
-async function exportAsPNG(ctx: AppCanvasStateContext, onProgress: (progress: number) => void) {
+async function exportAsPNG(ctx: AppCanvasStateContext, onProgress: (progress: number) => void, hideFrame: boolean) {
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   if (frames.length === 0) return;
 
   onProgress(0);
+  const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
   const items: [string, Uint8Array][] = [];
-  for (const i in frames) {
+  for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
-    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id]);
+    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
     const renderer = newShapeRenderer({
       shapeComposite: info.targetShapeComposite,
       getDocumentMap: ctx.getDocumentMap,
@@ -139,16 +152,22 @@ async function exportAsPNG(ctx: AppCanvasStateContext, onProgress: (progress: nu
   URL.revokeObjectURL(url);
 }
 
-async function exportAsSVG(ctx: AppCanvasStateContext, onProgress: (progress: number) => void, withMeta = false) {
+async function exportAsSVG(
+  ctx: AppCanvasStateContext,
+  onProgress: (progress: number) => void,
+  withMeta = false,
+  hideFrame: boolean,
+) {
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   if (frames.length === 0) return;
 
   onProgress(0);
+  const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
   const items: [string, Uint8Array][] = [];
-  for (const i in frames) {
+  for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
-    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id]);
+    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
     const renderer = newShapeSVGRenderer({
       shapeComposite: info.targetShapeComposite,
       getDocumentMap: ctx.getDocumentMap,
