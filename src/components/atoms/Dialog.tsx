@@ -48,7 +48,7 @@ export const Dialog: React.FC<Props> = ({
     e.stopPropagation();
   }, []);
 
-  return (
+  return open ? (
     <dialog ref={ref} onClick={onClickBackdrop} className={className}>
       {hideClose ? undefined : (
         <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={closeDialog}>
@@ -61,7 +61,7 @@ export const Dialog: React.FC<Props> = ({
         {actions ? <div className="flex justify-end gap-2 mt-4">{actions}</div> : undefined}
       </div>
     </dialog>
-  );
+  ) : undefined;
 };
 
 interface DialogButtonProps {
