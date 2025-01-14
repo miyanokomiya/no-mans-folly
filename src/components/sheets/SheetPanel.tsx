@@ -9,13 +9,23 @@ import { ListButton } from "../atoms/buttons/ListButton";
 
 interface Props {
   sheet: Sheet;
-  onClickSheet?: (id: string) => void;
   selected?: boolean;
   index: number;
+  canDeleteSheet?: boolean;
+  onClickSheet?: (id: string) => void;
   onChangeName?: (id: string, name: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, index, onChangeName }) => {
+export const SheetPanel: React.FC<Props> = ({
+  sheet,
+  onClickSheet,
+  selected,
+  index,
+  onChangeName,
+  onDelete,
+  canDeleteSheet,
+}) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -35,6 +45,11 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
   const handleNameChange = useCallback((val: string) => {
     setDraftName(val);
   }, []);
+
+  const handleDeleteClick = useCallback(() => {
+    setPopupOpen(false);
+    onDelete?.(sheet.id);
+  }, [sheet.id, onDelete]);
 
   const handleSheetClick = useCallback(
     (e: React.MouseEvent) => {
@@ -71,6 +86,9 @@ export const SheetPanel: React.FC<Props> = ({ sheet, onClickSheet, selected, ind
   const popupMenu = (
     <div className="flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
+      <ListButton onClick={handleDeleteClick} disabled={!canDeleteSheet}>
+        <span className="text-red-500 font-semibold">Delete</span>
+      </ListButton>
     </div>
   );
 

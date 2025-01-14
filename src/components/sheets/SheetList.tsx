@@ -3,7 +3,6 @@ import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { SheetPanel } from "./SheetPanel";
 import { generateUuid } from "../../utils/random";
 import iconAdd from "../../assets/icons/add_filled.svg";
-import iconDelete from "../../assets/icons/delete_filled.svg";
 import iconDropdown from "../../assets/icons/dropdown.svg";
 import { SortableListV } from "../atoms/SortableListV";
 import { useSelectedSheet, useSheets } from "../../hooks/storeHooks";
@@ -15,15 +14,17 @@ export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
   const selectedSheet = useSelectedSheet();
   const sheets = useSheets();
+  const [deleteTargetId, setDeleteTargetId] = useState<string>();
+  const canDeleteSheet = useMemo(() => sheets.length > 1, [sheets]);
 
-  const onClickSheet = useCallback(
+  const handleSheetSelect = useCallback(
     (id: string) => {
       acctx.sheetStore.selectSheet(id);
     },
     [acctx.sheetStore],
   );
 
-  const onClickAdd = useCallback(() => {
+  const handleSheetAdd = useCallback(() => {
     const currentSheets = acctx.sheetStore.getEntities();
     const selectedIndex = currentSheets.findIndex((s) => s.id === selectedSheet?.id);
     const beforeFindex = selectedSheet?.findex ?? null;
@@ -39,22 +40,29 @@ export const SheetList: React.FC = () => {
     acctx.sheetStore.selectSheet(id);
   }, [acctx.sheetStore, selectedSheet]);
 
-  const onClickDelete = useCallback(() => {
-    setOpenDeleteConfirm(true);
+  const handleSheetDeleteConfirm = useCallback((id: string) => {
+    setDeleteTargetId(id);
   }, []);
 
-  const deleteSheet = useCallback(() => {
-    setOpenDeleteConfirm(false);
-    const currentSheets = acctx.sheetStore.getEntities();
-    if (!selectedSheet || currentSheets.length <= 1) return;
+  const handleSheetDelete = useCallback(() => {
+    if (!deleteTargetId) return;
+    setDeleteTargetId(undefined);
 
-    const selectedIndex = currentSheets.findIndex((s) => s.id === selectedSheet?.id);
-    const nextSelected = currentSheets[Math.max(selectedIndex - 1, 0)].id;
-    acctx.sheetStore.selectSheet(nextSelected);
-    acctx.sheetStore.deleteEntities([selectedSheet.id]);
-  }, [acctx.sheetStore, selectedSheet]);
+    if (selectedSheet?.id === deleteTargetId) {
+      const currentSheets = acctx.sheetStore.getEntities();
+      const selectedIndex = currentSheets.findIndex((s) => s.id === selectedSheet?.id);
+      const nextSelected = currentSheets[Math.max(selectedIndex - 1, 0)].id;
+      acctx.sheetStore.selectSheet(nextSelected);
+    }
 
-  const onChangeName = useCallback(
+    acctx.sheetStore.deleteEntities([deleteTargetId]);
+  }, [acctx.sheetStore, selectedSheet, deleteTargetId]);
+
+  const handleSheetDeleteCancel = useCallback(() => {
+    setDeleteTargetId(undefined);
+  }, []);
+
+  const handleNameChange = useCallback(
     (id: string, name: string) => {
       acctx.sheetStore.patchEntity(id, { name });
     },
@@ -70,15 +78,17 @@ export const SheetList: React.FC = () => {
             sheet={s}
             selected={s.id === selectedSheet?.id}
             index={i + 1}
-            onChangeName={onChangeName}
-            onClickSheet={onClickSheet}
+            canDeleteSheet={canDeleteSheet}
+            onChangeName={handleNameChange}
+            onDelete={handleSheetDeleteConfirm}
+            onClickSheet={handleSheetSelect}
           />
         </div>,
       ];
     });
-  }, [selectedSheet, sheets, onChangeName, onClickSheet]);
+  }, [selectedSheet, sheets, canDeleteSheet, handleNameChange, handleSheetDeleteConfirm, handleSheetSelect]);
 
-  const onChangeOrder = useCallback(
+  const handleOrderChange = useCallback(
     ([from, to]: [number, number]) => {
       const target = sheets[from];
       const beforeFindex = sheets[to - 1]?.findex ?? null;
@@ -101,11 +111,6 @@ export const SheetList: React.FC = () => {
     setHidePanel((val) => !val);
   }, [setHidePanel]);
 
-  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
-  const closeDeleteConfirm = useCallback(() => {
-    setOpenDeleteConfirm(false);
-  }, []);
-
   const toggleButton = (
     <button type="button" className="w-6 h-6 p-1 border rounded" onClick={toggleHidePanel}>
       <img src={iconDropdown} alt="Toggle Panel" />
@@ -124,35 +129,37 @@ export const SheetList: React.FC = () => {
                 id={sheet.id}
                 index={i}
                 highlight={sheet.id === selectedSheet?.id}
-                onClick={onClickSheet}
+                onClick={handleSheetSelect}
               />
             ))}
           </div>
         </>
       ) : (
         <>
-          <div className="flex items-center gap-1">
-            <button type="button" className="w-6 h-6 p-1 border rounded" onClick={onClickDelete}>
-              <img src={iconDelete} alt="Delete Sheet" />
-            </button>
-            <button type="button" className="ml-auto w-6 h-6 p-1 border rounded" onClick={onClickAdd}>
+          <div className="flex items-center justify-between gap-1">
+            <button type="button" className="w-6 h-6 p-1 border rounded" onClick={handleSheetAdd}>
               <img src={iconAdd} alt="Add Sheet" />
             </button>
             <div className="rotate-90">{toggleButton}</div>
           </div>
           <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
-            <SortableListV items={sheetItems} onClick={onClickSheet} onChange={onChangeOrder} anchor="[data-anchor]" />
+            <SortableListV
+              items={sheetItems}
+              onClick={handleSheetSelect}
+              onChange={handleOrderChange}
+              anchor="[data-anchor]"
+            />
           </div>
         </>
       )}
       <Dialog
-        open={openDeleteConfirm}
-        onClose={closeDeleteConfirm}
+        open={!!deleteTargetId}
+        onClose={handleSheetDeleteCancel}
         title="Delete sheet"
         actions={
           <>
-            <DialogButtonPlain onClick={closeDeleteConfirm}>Cancel</DialogButtonPlain>
-            <DialogButtonAlert onClick={deleteSheet}>Delete</DialogButtonAlert>
+            <DialogButtonPlain onClick={handleSheetDeleteCancel}>Cancel</DialogButtonPlain>
+            <DialogButtonAlert onClick={handleSheetDelete}>Delete</DialogButtonAlert>
           </>
         }
       >
