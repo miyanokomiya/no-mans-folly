@@ -5,8 +5,9 @@ import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
 import { Color, CurveControl } from "../models";
 import { DEFAULT_FONT_SIZE } from "./textEditor";
+import { CanvasCTX } from "./types";
 
-export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[], closed = false, reverse = false) {
+export function applyPath(ctx: CanvasCTX | Path2D, path: IVec2[], closed = false, reverse = false) {
   if (reverse) {
     for (let i = path.length - 1; i >= 0; i--) {
       const p = path[i];
@@ -31,7 +32,7 @@ export function applyPath(ctx: CanvasRenderingContext2D | Path2D, path: IVec2[],
 }
 
 export function applyCurvePath(
-  ctx: CanvasRenderingContext2D | Path2D,
+  ctx: CanvasCTX | Path2D,
   path: IVec2[],
   curves: (CurveControl | undefined)[] = [],
   closed = false,
@@ -126,13 +127,7 @@ export function createSVGCurvePath(
   return ret;
 }
 
-export function renderRoundedSegment(
-  ctx: CanvasRenderingContext2D,
-  segs: ISegment[],
-  width: number,
-  bgColor: Color,
-  fgColor?: Color,
-) {
+export function renderRoundedSegment(ctx: CanvasCTX, segs: ISegment[], width: number, bgColor: Color, fgColor?: Color) {
   ctx.beginPath();
   segs.forEach((seg) => {
     ctx.moveTo(seg[0].x, seg[0].y);
@@ -148,7 +143,7 @@ export function renderRoundedSegment(
   }
 }
 
-export function renderOutlinedCircle(ctx: CanvasRenderingContext2D, p: IVec2, r: number, fillColor: Color) {
+export function renderOutlinedCircle(ctx: CanvasCTX, p: IVec2, r: number, fillColor: Color) {
   ctx.fillStyle = "#000";
   ctx.beginPath();
   ctx.arc(p.x, p.y, r, 0, TAU);
@@ -161,7 +156,7 @@ export function renderOutlinedCircle(ctx: CanvasRenderingContext2D, p: IVec2, r:
 }
 
 export function renderOutlinedDonutArc(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   p: IVec2,
   r: number,
   from: number,
@@ -188,7 +183,7 @@ export function renderOutlinedDonutArc(
   ctx.restore();
 }
 
-export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, size: number) {
+export function renderArrow(ctx: CanvasCTX, [a, b]: ISegment, size: number) {
   const v = sub(b, a);
   const n = isSame(a, b) ? { x: size, y: 0 } : multi(getUnit(v), size);
 
@@ -214,7 +209,7 @@ export function renderArrow(ctx: CanvasRenderingContext2D, [a, b]: ISegment, siz
   ctx.fill();
 }
 
-export function renderArrowUnit(ctx: CanvasRenderingContext2D, p: IVec2, rotation: number, size: number) {
+export function renderArrowUnit(ctx: CanvasCTX, p: IVec2, rotation: number, size: number) {
   const n = { x: size, y: 0 };
 
   ctx.save();
@@ -231,7 +226,7 @@ export function renderArrowUnit(ctx: CanvasRenderingContext2D, p: IVec2, rotatio
   ctx.restore();
 }
 
-export function renderSwitchDirection(ctx: CanvasRenderingContext2D, p: IVec2, rotation: number, size: number) {
+export function renderSwitchDirection(ctx: CanvasCTX, p: IVec2, rotation: number, size: number) {
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.rotate(rotation);
@@ -251,7 +246,7 @@ export function renderSwitchDirection(ctx: CanvasRenderingContext2D, p: IVec2, r
   ctx.restore();
 }
 
-export function renderRotationArrow(ctx: CanvasRenderingContext2D, p: IVec2, rotation: number, size: number) {
+export function renderRotationArrow(ctx: CanvasCTX, p: IVec2, rotation: number, size: number) {
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.rotate(rotation - Math.PI / 4);
@@ -271,7 +266,7 @@ export function renderRotationArrow(ctx: CanvasRenderingContext2D, p: IVec2, rot
   ctx.restore();
 }
 
-export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
+export function renderPlusIcon(ctx: CanvasCTX, p: IVec2, size: number) {
   const half = size / 2;
   ctx.beginPath();
   ctx.moveTo(p.x - half, p.y);
@@ -281,7 +276,7 @@ export function renderPlusIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: nu
   ctx.stroke();
 }
 
-export function renderMoveIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: number) {
+export function renderMoveIcon(ctx: CanvasCTX, p: IVec2, size: number) {
   const size_1_4 = size / 4;
   const size_1_8 = size_1_4 / 2;
   const size_3_4 = (size * 3) / 4;
@@ -319,7 +314,7 @@ export function renderMoveIcon(ctx: CanvasRenderingContext2D, p: IVec2, size: nu
   ctx.restore();
 }
 
-export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, render: () => void) {
+export function scaleGlobalAlpha(ctx: CanvasCTX, scale: number, render: () => void) {
   if (scale === 1) {
     render();
     return;
@@ -331,7 +326,7 @@ export function scaleGlobalAlpha(ctx: CanvasRenderingContext2D, scale: number, r
   ctx.globalAlpha = original;
 }
 
-export function applyLocalSpace(ctx: CanvasRenderingContext2D, rect: IRectangle, rotation: number, fn: () => void) {
+export function applyLocalSpace(ctx: CanvasCTX, rect: IRectangle, rotation: number, fn: () => void) {
   ctx.save();
 
   if (rotation === 0) {
@@ -346,7 +341,7 @@ export function applyLocalSpace(ctx: CanvasRenderingContext2D, rect: IRectangle,
   ctx.restore();
 }
 
-export function applyRotation(ctx: CanvasRenderingContext2D, rotation: number, origin: IVec2, fn: () => void) {
+export function applyRotation(ctx: CanvasCTX, rotation: number, origin: IVec2, fn: () => void) {
   ctx.save();
   ctx.translate(origin.x, origin.y);
   ctx.rotate(rotation);
@@ -356,7 +351,7 @@ export function applyRotation(ctx: CanvasRenderingContext2D, rotation: number, o
 }
 
 export function applyDefaultTextStyle(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   fontSize = DEFAULT_FONT_SIZE,
   textAlign: CanvasTextAlign = "left",
   middle = false,
@@ -368,7 +363,7 @@ export function applyDefaultTextStyle(
 }
 
 export function renderValueLabel(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   value: number | string,
   p: IVec2,
   rotation = 0,

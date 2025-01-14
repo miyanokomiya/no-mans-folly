@@ -5,6 +5,7 @@ import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "./stateful/cache";
 import { SVGElementInfo, getColorAttributes } from "./svgElements";
 import { toHexAndAlpha } from "./color";
+import { CanvasCTX } from "./types";
 
 export const DEFAULT_FONT_SIZE = 14;
 export const DEFAULT_LINEHEIGHT = 1.2;
@@ -104,7 +105,7 @@ export function getDocRawLength(doc: DocOutput): number {
   return doc.map((d) => d.insert).reduce((p, v) => p + v.length, 0);
 }
 
-export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: IRectangle) {
+export function renderDoc(ctx: CanvasCTX, doc: DocOutput, range: IRectangle) {
   const info = getDocCompositionInfo(doc, ctx, range.width, range.height);
   const lines = info.lines;
   const composition = info.composition;
@@ -114,7 +115,7 @@ export function renderDoc(ctx: CanvasRenderingContext2D, doc: DocOutput, range: 
 const LOD_THRESHOLD = 6;
 
 export function renderDocByComposition(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
   scale?: number, // If provided, text may be simplified when the visual size is too small.
@@ -388,11 +389,7 @@ export function getCursorLocation(compositionLines: DocCompositionLine[], cursor
   return { x, y };
 }
 
-export function applyDocAttributesToCtx(
-  ctx: CanvasRenderingContext2D,
-  attrs: DocAttributes = {},
-  forMeasureWidth = false,
-): void {
+export function applyDocAttributesToCtx(ctx: CanvasCTX, attrs: DocAttributes = {}, forMeasureWidth = false): void {
   const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
   const fontFamily = attrs.font ?? "Arial";
   const fontDecoration =
@@ -415,11 +412,7 @@ export function getLineHeight(attrs: DocAttributes = {}, blockAttrs: DocAttribut
   return fontSize * lineheight;
 }
 
-export function getBreakLineIndexWord(
-  ctx: CanvasRenderingContext2D,
-  word: string,
-  marginToTail: number,
-): number | undefined {
+export function getBreakLineIndexWord(ctx: CanvasCTX, word: string, marginToTail: number): number | undefined {
   const width = measureTextWidth(ctx, word);
   if (width >= marginToTail) {
     for (let i = 1; i <= word.length; i++) {
@@ -434,7 +427,7 @@ export function getBreakLineIndexWord(
 }
 
 export function getBreakIndicesForWord(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   word: string,
   marginToTail: number,
   lineWidth: number,
@@ -843,7 +836,7 @@ export function applyAttrInfoToDocOutput(pasted: DocOutput, attrs?: DocAttribute
 /**
  * Letters are split into units based on graphemes
  */
-export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext2D): Map<number, number> {
+export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasCTX): Map<number, number> {
   const ret = new Map<number, number>();
 
   let cursor = 0;
@@ -866,7 +859,7 @@ export function getDocLetterWidthMap(doc: DocOutput, ctx: CanvasRenderingContext
 }
 
 const textWidthCache = newChronoCache<string, number>({ duration: 30000, getTimestamp: Date.now });
-function measureTextWidth(ctx: CanvasRenderingContext2D, text: string): number {
+function measureTextWidth(ctx: CanvasCTX, text: string): number {
   const key = ctx.font + ":" + text;
   const cache = textWidthCache.getValue(key);
   if (cache) return cache;
@@ -1093,7 +1086,7 @@ function getDirectionGapRate(attrs?: DocAttributes): number {
 
 export function getDocCompositionInfo(
   doc: DocOutput,
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   rangeWidth: number,
   rangeHeight: number,
 ): DocCompositionInfo {
@@ -1132,7 +1125,7 @@ export function getWordRangeAtCursor(
   return [from, to - from];
 }
 
-export function calcOriginalDocSize(doc: DocOutput, ctx: CanvasRenderingContext2D, rangeWidth: number): Size {
+export function calcOriginalDocSize(doc: DocOutput, ctx: CanvasCTX, rangeWidth: number): Size {
   const adjustedDoc = doc.length === 0 ? getInitialOutput() : doc;
   const blocks = applyRangeWidthToLineWord(
     splitOutputsIntoLineWord(adjustedDoc, getDocLetterWidthMap(adjustedDoc, ctx)),

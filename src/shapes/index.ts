@@ -18,6 +18,7 @@ import { SHAPE_COMMON_STRUCTS } from "./commonStructs";
 import { generateKeyBetween } from "../utils/findex";
 import { isObjectEmpty } from "../utils/commons";
 import { PartialProperties, patchByPartialProperties } from "../utils/entities";
+import { CanvasCTX } from "../utils/types";
 
 export type GetShapeStruct = _GetShapeStruct;
 
@@ -32,7 +33,7 @@ export function createShape<T extends Shape>(getStruct: GetShapeStruct, type: st
 
 export function renderShape<T extends Shape>(
   getStruct: GetShapeStruct,
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   shape: T,
   shapeContext: ShapeContext,
   imageStore?: ImageStore,

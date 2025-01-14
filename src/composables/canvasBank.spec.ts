@@ -1,7 +1,11 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, beforeEach } from "vitest";
 import { newCanvasBank } from "./canvasBank";
 
 describe("newCanvasBank", () => {
+  beforeEach(() => {
+    (window.OffscreenCanvas as any) ??= class {};
+  });
+
   test("should create and store canvases", () => {
     const target = newCanvasBank();
     target.beginCanvas(() => {});

@@ -2,6 +2,7 @@ import { AffineMatrix, IVec2, add, applyAffine, pathSegmentRawsToString } from "
 import { LineHead } from "../../models";
 import { SVGElementInfo } from "../../utils/svgElements";
 import { applyPath, createSVGCurvePath } from "../../utils/renderer";
+import { CanvasCTX } from "../../utils/types";
 
 // This should be 6 for backward compatibility.
 export const DEFAULT_HEAD_SIZE = 6;
@@ -9,7 +10,7 @@ export const DEFAULT_HEAD_SIZE = 6;
 export interface LineHeadStruct<T extends LineHead> {
   label: string;
   create: (arg?: Partial<T>) => T;
-  render: (ctx: CanvasRenderingContext2D, head: T, transform: AffineMatrix, lineWidth: number) => void;
+  render: (ctx: CanvasCTX, head: T, transform: AffineMatrix, lineWidth: number) => void;
   createSVGElementInfo: (head: T, transform: AffineMatrix, lineWidth: number) => SVGElementInfo | undefined;
   clip: (region: Path2D, head: T, transform: AffineMatrix, lineWidth: number) => void;
   createSVGClipPathCommand: (head: T, transform: AffineMatrix, lineWidth: number) => string | undefined;

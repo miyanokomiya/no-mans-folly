@@ -1,11 +1,12 @@
 import { IRectangle } from "okageo";
+import { CanvasCTX } from "../utils/types";
 
 // Browsers usually have specific canvas size limitation.
 // Ref: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/canvas#maximum_canvas_size
 const MAX_SIZE = 10000;
 
 interface Option {
-  render: (renderCtx: CanvasRenderingContext2D) => void;
+  render: (renderCtx: CanvasCTX) => void;
   range: IRectangle;
 }
 
@@ -45,7 +46,7 @@ function createCanvas(): HTMLCanvasElement {
 }
 
 interface SVGOption {
-  render: (renderCtx: CanvasRenderingContext2D) => Promise<SVGSVGElement>;
+  render: (renderCtx: CanvasCTX) => Promise<SVGSVGElement>;
   range: IRectangle;
 }
 

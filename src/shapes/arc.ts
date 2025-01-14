@@ -36,6 +36,7 @@ import { ShapeStruct, createBaseShape } from "./core";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { pickMinItem } from "../utils/commons";
+import { CanvasCTX } from "../utils/types";
 
 export type ArcShape = EllipseShape & {
   // The arc is always drawn clockwisely "from" -> "to".
@@ -354,7 +355,7 @@ function getArcPoints(shape: ArcShape): [from: IVec2, to: IVec2] {
   ];
 }
 
-function applyShapePath(region: CanvasRenderingContext2D | Path2D, shape: ArcShape) {
+function applyShapePath(region: CanvasCTX | Path2D, shape: ArcShape) {
   const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
   const to = Math.abs(shape.from - shape.to) < MINVALUE ? shape.to + TAU : shape.to;
 

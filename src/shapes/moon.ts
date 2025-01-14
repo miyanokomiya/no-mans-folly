@@ -28,6 +28,7 @@ import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAtt
 import { ShapeStruct, createBaseShape } from "./core";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
+import { CanvasCTX } from "../utils/types";
 
 export type MoonShape = EllipseShape & {
   innsetC: IVec2;
@@ -309,7 +310,7 @@ export function getMoonRadiusRange(shape: MoonShape): [min: number, max: number]
   return [shape.rx - insetX / 2, 10 * shape.rx];
 }
 
-function applyMoonPath(ctx: CanvasRenderingContext2D | Path2D, shape: MoonShape) {
+function applyMoonPath(ctx: CanvasCTX | Path2D, shape: MoonShape) {
   const ac = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
   const rotateFn = getRotateFn(shape.rotation, ac);
   const ar = shape.rx;

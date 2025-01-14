@@ -1,24 +1,24 @@
 export interface CanvasBank {
-  beginCanvas(fn: (canvas: HTMLCanvasElement) => void): void;
+  beginCanvas(fn: (canvas: OffscreenCanvas) => void): void;
   size: () => number;
 }
 
 export function newCanvasBank(): CanvasBank {
-  const canvasList: HTMLCanvasElement[] = [];
+  const canvasList: OffscreenCanvas[] = [];
 
-  function borrowCanvas(): HTMLCanvasElement {
+  function borrowCanvas(): OffscreenCanvas {
     const item = canvasList.shift();
     if (item) return item;
 
-    const canvas = document.createElement("canvas");
+    const canvas = new OffscreenCanvas(100, 100);
     return canvas;
   }
 
-  function returnCanvas(canvas: HTMLCanvasElement) {
+  function returnCanvas(canvas: OffscreenCanvas) {
     canvasList.unshift(canvas);
   }
 
-  function beginCanvas(fn: (canvas: HTMLCanvasElement) => void): void {
+  function beginCanvas(fn: (canvas: OffscreenCanvas) => void): void {
     const canvas = borrowCanvas();
     fn(canvas);
     returnCanvas(canvas);

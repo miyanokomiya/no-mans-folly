@@ -13,6 +13,7 @@ import { LineHeadErOneOnly } from "./er_one_only";
 import { LineHeadErOneMany } from "./er_one_many";
 import { LineHeadErZeroOne } from "./er_zero_one";
 import { LineHeadErZeroMany } from "./er_zero_many";
+import { CanvasCTX } from "../../utils/types";
 
 const STRUCTS: { [type: string]: LineHeadStruct<any> } = {
   open: LineHeadOpen,
@@ -44,7 +45,7 @@ export function createLineHead<T extends LineHead>(type: string, arg?: Partial<T
 }
 
 export function renderLineHead<T extends LineHead>(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   head: T,
   transform: AffineMatrix,
   lineWidth: number,

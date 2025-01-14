@@ -7,6 +7,7 @@ import { ImageStore } from "../composables/imageStore";
 import { isSameBoxPadding } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
 import { ISegment } from "../utils/geometry";
+import { CanvasCTX } from "../utils/types";
 
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
 
@@ -41,7 +42,7 @@ export interface ShapeStruct<T extends Shape> {
    * => e.g. line shape can have child labels and the line should be clipped by them.
    * "shapeMap" and "treeNode" are used for such purpose.
    */
-  render: (ctx: CanvasRenderingContext2D, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
+  render: (ctx: CanvasCTX, shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => void;
   getClipPath?: (shape: T, shapeContext?: ShapeContext) => Path2D;
   createSVGElementInfo?: (shape: T, shapeContext?: ShapeContext, imageStore?: ImageStore) => SVGElementInfo | undefined;
   createClipSVGPath?: (shape: T, shapeContext?: ShapeContext) => string | undefined;

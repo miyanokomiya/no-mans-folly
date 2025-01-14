@@ -16,6 +16,7 @@ import { expandRect, getRectPoints } from "../utils/geometry";
 import { createSVGCurvePath } from "../utils/renderer";
 import { pathSegmentRawsToString } from "okageo";
 import { renderStrokeSVGAttributes } from "../utils/strokeStyle";
+import { CanvasCTX } from "../utils/types";
 
 interface Option {
   shapeComposite: ShapeComposite;
@@ -29,7 +30,7 @@ export function newShapeSVGRenderer(option: Option) {
   const docMap = option.getDocumentMap();
   const sortedMergedShapeTree = option.shapeComposite.getSortedMergedShapeTree();
 
-  async function render(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {
+  async function render(ctx: CanvasCTX): Promise<SVGSVGElement> {
     const root = createSVGSVGElement();
     renderShapeTree(root, ctx, sortedMergedShapeTree);
 
@@ -81,11 +82,11 @@ export function newShapeSVGRenderer(option: Option) {
     return root;
   }
 
-  function renderShapeTree(root: SVGElement, ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {
+  function renderShapeTree(root: SVGElement, ctx: CanvasCTX, treeNodes: TreeNode[]) {
     treeNodes.forEach((n) => renderShapeTreeStep(root, ctx, n));
   }
 
-  function renderShapeTreeStep(root: SVGElement, ctx: CanvasRenderingContext2D, node: TreeNode) {
+  function renderShapeTreeStep(root: SVGElement, ctx: CanvasCTX, node: TreeNode) {
     const shape = mergedShapeMap[node.id];
     const elm = renderShapeAndDoc(ctx, shape);
     if (elm) {
@@ -117,12 +118,12 @@ export function newShapeSVGRenderer(option: Option) {
     });
   }
 
-  function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape): SVGElement | undefined {
+  function renderShapeAndDoc(ctx: CanvasCTX, shape: Shape): SVGElement | undefined {
     const doc = docMap[shape.id];
     return createShapeElement(option, ctx, shape, doc);
   }
 
-  async function renderWithMeta(ctx: CanvasRenderingContext2D): Promise<SVGSVGElement> {
+  async function renderWithMeta(ctx: CanvasCTX): Promise<SVGSVGElement> {
     const root = await render(ctx);
 
     // Embed shape data to the SVG.
@@ -137,12 +138,7 @@ export function newShapeSVGRenderer(option: Option) {
 }
 export type ShapeSVGRenderer = ReturnType<typeof newShapeSVGRenderer>;
 
-function createShapeElement(
-  option: Option,
-  ctx: CanvasRenderingContext2D,
-  shape: Shape,
-  doc?: DocOutput,
-): SVGElement | undefined {
+function createShapeElement(option: Option, ctx: CanvasCTX, shape: Shape, doc?: DocOutput): SVGElement | undefined {
   const shapeElmInfo = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
   if (!shapeElmInfo) return;
 

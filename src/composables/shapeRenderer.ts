@@ -6,6 +6,7 @@ import { hasStrokeStyle } from "../shapes/core";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
 import { expandRect, getIsRectHitRectFn, getRectPoints } from "../utils/geometry";
+import { CanvasCTX } from "../utils/types";
 import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
@@ -45,18 +46,18 @@ export function newShapeRenderer(option: Option) {
     });
   }
 
-  function render(ctx: CanvasRenderingContext2D) {
+  function render(ctx: CanvasCTX) {
     renderShapeTree(ctx, sortedMergedShapeTree);
   }
 
-  function renderShapeTree(ctx: CanvasRenderingContext2D, treeNodes: TreeNode[]) {
+  function renderShapeTree(ctx: CanvasCTX, treeNodes: TreeNode[]) {
     treeNodes.forEach((n) => {
       if (ignoreIdSet.has(n.id)) return;
       renderShapeTreeStepWithAlpha(ctx, n);
     });
   }
 
-  function renderShapeTreeStepWithAlpha(ctx: CanvasRenderingContext2D, node: TreeNode) {
+  function renderShapeTreeStepWithAlpha(ctx: CanvasCTX, node: TreeNode) {
     const shape = mergedShapeMap[node.id];
     const alpha = shape.alpha;
     if (alpha === 0) return;
@@ -81,7 +82,7 @@ export function newShapeRenderer(option: Option) {
     });
   }
 
-  function renderShapeTreeStep(ctx: CanvasRenderingContext2D, node: TreeNode, shape: Shape) {
+  function renderShapeTreeStep(ctx: CanvasCTX, node: TreeNode, shape: Shape) {
     renderShapeAndDoc(ctx, shape);
     if (node.children.length === 0) return;
 
@@ -100,12 +101,12 @@ export function newShapeRenderer(option: Option) {
     });
   }
 
-  function renderShapeAndDoc(ctx: CanvasRenderingContext2D, shape: Shape) {
+  function renderShapeAndDoc(ctx: CanvasCTX, shape: Shape) {
     shapeComposite.render(ctx, shape, option.imageStore);
     renderDoc(ctx, shape);
   }
 
-  function renderDoc(ctx: CanvasRenderingContext2D, shape: Shape) {
+  function renderDoc(ctx: CanvasCTX, shape: Shape) {
     const doc = docMap[shape.id];
     if (doc && !ignoreDocIdSet.has(shape.id) && !hasDocNoContent(doc)) {
       ctx.save();
@@ -132,7 +133,7 @@ function clipWithinGroup(
   groupShape: GroupShape,
   clips: TreeNode[],
   others: TreeNode[],
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   renderMain: () => void,
 ) {
   const regions: [Path2D, StrokeStyle?, cropClipBorder?: boolean][] = [];

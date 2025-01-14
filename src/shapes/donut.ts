@@ -15,6 +15,7 @@ import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "
 import { ShapeStruct, createBaseShape } from "./core";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
+import { CanvasCTX } from "../utils/types";
 
 export type DonutShape = EllipseShape & {
   holeRate: number;
@@ -212,7 +213,7 @@ function getClosestOutline(
   }
 }
 
-function applyDonutPath(ctx: CanvasRenderingContext2D | Path2D, shape: DonutShape) {
+function applyDonutPath(ctx: CanvasCTX | Path2D, shape: DonutShape) {
   const holeRate = shape.holeRate;
   const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
   const rotateFn = getRotateFn(shape.rotation, c);

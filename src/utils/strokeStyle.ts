@@ -1,6 +1,7 @@
 import { LineDash, LineDashStruct, StrokeStyle } from "../models";
 import { colorToHex, isSameColor, rednerRGBA } from "./color";
 import { SVGAttributes } from "./svgElements";
+import { CanvasCTX } from "./types";
 
 export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
   return {
@@ -47,7 +48,7 @@ export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
   );
 }
 
-export function applyStrokeStyle(ctx: CanvasRenderingContext2D, stroke: StrokeStyle) {
+export function applyStrokeStyle(ctx: CanvasCTX, stroke: StrokeStyle) {
   ctx.strokeStyle = rednerRGBA(stroke.color);
   const width = getStrokeWidth(stroke);
   ctx.lineWidth = width;
@@ -62,7 +63,7 @@ export function getStrokeWidth(stroke: Pick<StrokeStyle, "width" | "disabled">):
   return stroke.width ?? 1;
 }
 
-export function applyDefaultStrokeStyle(ctx: CanvasRenderingContext2D) {
+export function applyDefaultStrokeStyle(ctx: CanvasCTX) {
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 1;
   ctx.setLineDash([]);

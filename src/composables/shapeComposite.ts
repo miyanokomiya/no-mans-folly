@@ -32,6 +32,7 @@ import { DocOutput } from "../models/document";
 import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
 import { shouldEntityOrderUpdate, shouldEntityTreeUpdate } from "../utils/entities";
+import { CanvasCTX } from "../utils/types";
 
 interface Option {
   shapes: Shape[];
@@ -117,7 +118,7 @@ export function newShapeComposite(option: Option) {
     return [...unboundParents, ...branchShapes];
   }
 
-  function render(ctx: CanvasRenderingContext2D, shape: Shape, imageStore?: ImageStore) {
+  function render(ctx: CanvasCTX, shape: Shape, imageStore?: ImageStore) {
     shapeModule.renderShape(getStruct, ctx, shape, mergedShapeContext, imageStore);
   }
 

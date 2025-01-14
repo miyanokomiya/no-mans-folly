@@ -8,6 +8,7 @@ import { COLORS } from "../utils/color";
 import { applyFillStyle } from "../utils/fillStyle";
 import { GetShapeStruct } from "../shapes/core";
 import { createShape } from "../shapes";
+import { CanvasCTX } from "../utils/types";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
@@ -31,7 +32,7 @@ export function getFrameRect(frame: FrameShape, includeBorder = false): IRectang
   return includeBorder ? expandRect(rect, getStrokeWidth(frame.stroke) / 2) : rect;
 }
 
-export function renderFrameNames(ctx: CanvasRenderingContext2D, shapeComposite: ShapeComposite, scale = 1) {
+export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite, scale = 1) {
   const frameShapes = getAllFrameShapes(shapeComposite);
   if (frameShapes.length > 0) {
     ctx.textBaseline = "bottom";
