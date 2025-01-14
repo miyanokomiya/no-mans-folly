@@ -6,6 +6,7 @@ import { defineShapeHandler } from "./core";
 import { applyLocalSpace, applyPath, renderOutlinedCircle } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { MoonShape, getMoonInsetLocalX, getMoonRadius } from "../../shapes/moon";
+import { CanvasCTX } from "../../utils/types";
 
 export const ANCHOR_SIZE = 6;
 export const ANCHOR_MARGIN = 16;
@@ -45,7 +46,7 @@ export const newMoonHandler = defineShapeHandler<HitResult, Option>((option) => 
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const anchors = getAnchors();
 
@@ -74,7 +75,7 @@ export const newMoonHandler = defineShapeHandler<HitResult, Option>((option) => 
 });
 export type MoonHandler = ReturnType<typeof newMoonHandler>;
 
-export function renderMoonOutline(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, shape: MoonShape) {
+export function renderMoonOutline(ctx: CanvasCTX, style: StyleScheme, scale: number, shape: MoonShape) {
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.rx * 2, height: shape.ry * 2 };
   applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
     applyStrokeStyle(ctx, { color: style.selectionSecondaly, dash: "dot", width: 4 * scale });
@@ -87,7 +88,7 @@ export function renderMoonOutline(ctx: CanvasRenderingContext2D, style: StyleSch
   });
 }
 
-export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleScheme, path: IVec2[]) {
+export function renderShapeBounds(ctx: CanvasCTX, style: StyleScheme, path: IVec2[]) {
   applyStrokeStyle(ctx, { color: style.selectionPrimary });
   ctx.beginPath();
   applyPath(ctx, path, true);

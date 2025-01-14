@@ -27,9 +27,10 @@ import {
 } from "../utils/textEditor";
 import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
+import { CanvasCTX } from "../utils/types";
 
 export function newTextEditorController() {
-  let _ctx: CanvasRenderingContext2D;
+  let _ctx: CanvasCTX;
   let _doc: DocOutput;
   let docLength = 0;
   let outputLength = 0;
@@ -44,7 +45,7 @@ export function newTextEditorController() {
 
   let isIME = false;
 
-  function setRenderingContext(ctx: CanvasRenderingContext2D) {
+  function setRenderingContext(ctx: CanvasCTX) {
     if (_ctx) {
       _ctx = ctx;
       updateComposition();
@@ -358,7 +359,7 @@ export function newTextEditorController() {
     _selection = 0;
   }
 
-  function render(ctx: CanvasRenderingContext2D) {
+  function render(ctx: CanvasCTX) {
     if (!_ctx) {
       setRenderingContext(ctx);
       updateComposition();
@@ -435,7 +436,7 @@ export function newTextEditorController() {
 export type TextEditorController = ReturnType<typeof newTextEditorController>;
 
 function renderSelection(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   {
     composition,
     compositionLines,
@@ -462,7 +463,7 @@ function renderSelection(
 }
 
 function renderCursor(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   {
     composition,
     compositionLines,

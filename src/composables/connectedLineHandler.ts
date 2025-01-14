@@ -7,6 +7,7 @@ import { newElbowLineHandler } from "./elbowLineHandler";
 import { optimizeLinePath } from "./lineSnapping";
 import { ShapeComposite, getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { mapEach, mapFilter, toList } from "../utils/commons";
+import { CanvasCTX } from "../utils/types";
 
 interface Option {
   connectedLinesMap: {
@@ -251,12 +252,7 @@ export function getRotatedRectPathMap(
 }
 
 export interface ConnectionRenderer {
-  render(
-    ctx: CanvasRenderingContext2D,
-    patchMap: { [id: string]: Partial<Shape> },
-    style: StyleScheme,
-    scale: number,
-  ): void;
+  render(ctx: CanvasCTX, patchMap: { [id: string]: Partial<Shape> }, style: StyleScheme, scale: number): void;
 }
 export function newConnectionRenderer(option: {
   connectedLinesMap: { [id: string]: LineShape[] };
@@ -271,12 +267,7 @@ export function newConnectionRenderer(option: {
     });
   });
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    patchMap: { [id: string]: Partial<Shape> },
-    style: StyleScheme,
-    scale: number,
-  ) {
+  function render(ctx: CanvasCTX, patchMap: { [id: string]: Partial<Shape> }, style: StyleScheme, scale: number) {
     renderPatchedVertices(ctx, {
       lines: Object.values(mapFilter(patchMap, (_, id) => indirectLineIds.has(id))),
       style,
@@ -288,7 +279,7 @@ export function newConnectionRenderer(option: {
 }
 
 function renderPatchedVertices(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   option: { lines: Partial<LineShape>[]; scale: number; style: StyleScheme },
 ) {
   applyFillStyle(ctx, { color: option.style.selectionSecondaly });

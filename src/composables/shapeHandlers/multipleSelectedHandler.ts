@@ -5,6 +5,7 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU } from "../../utils/geometry";
 import { StyleScheme } from "../../models";
 import { isLineShape } from "../../shapes/line";
+import { CanvasCTX } from "../../utils/types";
 
 const ANCHOR_SIZE = 6;
 
@@ -34,7 +35,7 @@ export const newMultipleSelectedHandler = defineShapeHandler<HitResult, Option>(
     if (info) return { type: "rotation", info };
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
     const threshold = ANCHOR_SIZE * scale;
 
     applyFillStyle(ctx, { color: style.selectionPrimary });

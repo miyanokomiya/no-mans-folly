@@ -9,6 +9,7 @@ import { applyCurvePath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
+import { CanvasCTX } from "../utils/types";
 
 interface Option {
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
@@ -58,7 +59,7 @@ export type LineLabelHandler = ReturnType<typeof newLineLabelHandler>;
 
 export function renderParentLineRelation(
   ctx: Pick<AppCanvasStateContext, "getStyleScheme" | "getScale">,
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   textShape: TextShape,
   parentLineShape: LineShape,
 ) {

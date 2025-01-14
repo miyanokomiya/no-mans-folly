@@ -5,6 +5,7 @@ import { getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, renderOutlinedCircle } from "../../utils/renderer";
 import { DonutShape } from "../../shapes/donut";
+import { CanvasCTX } from "../../utils/types";
 
 export const ANCHOR_SIZE = 6;
 
@@ -40,7 +41,7 @@ export const newDonutHandler = defineShapeHandler<HitResult, Option>((option) =>
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const anchors = getAnchors();
 

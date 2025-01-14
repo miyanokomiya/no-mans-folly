@@ -20,6 +20,7 @@ import { DocOutput } from "../models/document";
 import { getInitialOutput } from "../utils/textEditor";
 import { getShapeDetransform, getShapeTransform, getRectShapeRect } from "../shapes/rectPolygon";
 import { generateKeyBetween } from "../utils/findex";
+import { CanvasCTX } from "../utils/types";
 
 // Never change these values to avoid messing up findex between different type entities.
 const COLUMN_FINDEX_FROM = "a0";
@@ -154,7 +155,7 @@ export function newBoardHandler(option: Option) {
     return anchors.find((a) => getD2(sub(a.p, localP)) <= t2);
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BoardHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: BoardHitResult) {
     const threshold = ANCHOR_SIZE * scale;
 
     ctx.save();
@@ -636,12 +637,7 @@ export function newBoardCardMovingHandler(option: BoardCardMovingOption) {
     };
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    _scale: number,
-    hitResult?: BoardCardMovingHitResult,
-  ) {
+  function render(ctx: CanvasCTX, style: StyleScheme, _scale: number, hitResult?: BoardCardMovingHitResult) {
     if (hitResult) {
       ctx.save();
       ctx.transform(...rootTransform);
@@ -750,12 +746,7 @@ export function newBoardColumnMovingHandler(option: BoardColumnMovingOption) {
     };
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    _scale: number,
-    hitResult?: BoardColumnMovingHitResult,
-  ) {
+  function render(ctx: CanvasCTX, style: StyleScheme, _scale: number, hitResult?: BoardColumnMovingHitResult) {
     ctx.save();
     ctx.transform(...rootTransform);
 
@@ -873,12 +864,7 @@ export function newBoardLaneMovingHandler(option: BoardLaneMovingOption) {
     };
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    _scale: number,
-    hitResult?: BoardLaneMovingHitResult,
-  ) {
+  function render(ctx: CanvasCTX, style: StyleScheme, _scale: number, hitResult?: BoardLaneMovingHitResult) {
     ctx.save();
     ctx.transform(...rootTransform);
 

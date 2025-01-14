@@ -41,6 +41,7 @@ import { isLineShape } from "../shapes/line";
 import { isObjectEmpty, toMap } from "../utils/commons";
 import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
 import { generateKeyBetween } from "../utils/findex";
+import { CanvasCTX } from "../utils/types";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -158,7 +159,7 @@ export function newAlignHandler(option: AlignHandlerOption) {
     return;
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: AlignHitResult) {
     if (hitResult) {
       applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * 2 * scale });
       ctx.beginPath();
@@ -467,7 +468,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     return;
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
     const alignItemsThreshold = ALIGN_ITEMS_ANCHOR_SIZE * scale;
     const segThreshold = PADDING_ANCHOR_SIZE * scale;
@@ -606,12 +607,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     }
   }
 
-  function renderModifiedPadding(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    scale: number,
-    nextPadding?: BoxValues4,
-  ) {
+  function renderModifiedPadding(ctx: CanvasCTX, style: StyleScheme, scale: number, nextPadding?: BoxValues4) {
     const segThreshold = PADDING_ANCHOR_SIZE * scale;
 
     ctx.save();
@@ -662,7 +658,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     }
   }
 
-  function renderModifiedGap(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, nextGap?: IVec2) {
+  function renderModifiedGap(ctx: CanvasCTX, style: StyleScheme, scale: number, nextGap?: IVec2) {
     const segThreshold = PADDING_ANCHOR_SIZE * scale;
 
     ctx.save();

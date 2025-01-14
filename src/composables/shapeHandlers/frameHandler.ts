@@ -8,6 +8,7 @@ import { FrameShape } from "../../shapes/frame";
 import { getAllFrameShapes, getFrameRect } from "../frame";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
+import { CanvasCTX } from "../../utils/types";
 
 export const ANCHOR_SIZE = 6;
 export const ANCHOR_SIZE_JUMP = 10;
@@ -52,7 +53,7 @@ export const newFrameHandler = defineShapeHandler<FrameHitResult, Option>((optio
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: FrameHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: FrameHitResult) {
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       const thresholdJump = ANCHOR_SIZE_JUMP * scale;
       const [anchorBack, anchorNext] = getJumpAnchors(scale);

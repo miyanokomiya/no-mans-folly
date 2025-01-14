@@ -49,6 +49,7 @@ import {
   SNAP_THRESHOLD,
   SnappingResult,
 } from "./shapeSnapping";
+import { CanvasCTX } from "../utils/types";
 
 export interface LineAttachmentHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
@@ -339,12 +340,7 @@ export function getEvenlySpacedLineAttachment(
 export type PreserveAttachmentHandler = {
   setActive(val: boolean): void;
   getPatch(linePatch: Partial<LineShape>): { [id: string]: Partial<Shape> } | undefined;
-  render(
-    renderCtx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    scale: number,
-    update: { [id: string]: Partial<Shape> },
-  ): void;
+  render(renderCtx: CanvasCTX, style: StyleScheme, scale: number, update: { [id: string]: Partial<Shape> }): void;
   hasAttachment: boolean;
 };
 
@@ -397,7 +393,7 @@ export function newPreserveAttachmentHandler({
   }
 
   function render(
-    renderCtx: CanvasRenderingContext2D,
+    renderCtx: CanvasCTX,
     style: StyleScheme,
     scale: number,
     update: { [id: string]: Partial<Shape> },

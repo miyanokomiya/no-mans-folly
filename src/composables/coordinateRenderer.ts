@@ -4,10 +4,11 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { logRound } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
+import { CanvasCTX } from "../utils/types";
 
 export type CoordinateRenderer = {
   saveCoord: (p?: IVec2) => void;
-  render: (ctx: CanvasRenderingContext2D, viewRect: IRectangle, scale: number) => void;
+  render: (ctx: CanvasCTX, viewRect: IRectangle, scale: number) => void;
 };
 
 type Option = {
@@ -21,7 +22,7 @@ export function newCoordinateRenderer(option?: Option) {
     coord = p;
   }
 
-  function render(ctx: CanvasRenderingContext2D, viewRect: IRectangle, scale: number) {
+  function render(ctx: CanvasCTX, viewRect: IRectangle, scale: number) {
     if (!coord) return;
 
     const size = 20 * scale;

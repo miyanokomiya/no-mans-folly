@@ -17,6 +17,7 @@ import {
 import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
 import { canAddBezierControls, getModifiableBezierControls } from "../shapes/utils/curveLine";
 import { isConnectedToCenter } from "../shapes/utils/line";
+import { CanvasCTX } from "../utils/types";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
@@ -298,7 +299,7 @@ export function newLineBounding(option: Option) {
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, scale = 1) {
+  function render(ctx: CanvasCTX, scale = 1) {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
     const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
@@ -536,12 +537,7 @@ function isElbow(lineShape: LineShape): boolean {
   return lineShape.lineType === "elbow";
 }
 
-export function renderBezierControls(
-  ctx: CanvasRenderingContext2D,
-  style: StyleScheme,
-  scale: number,
-  lineShape: LineShape,
-) {
+export function renderBezierControls(ctx: CanvasCTX, style: StyleScheme, scale: number, lineShape: LineShape) {
   const edges = getEdges(lineShape);
   const bezierAnchors = getModifiableBezierControls(lineShape);
   const bezierSize = BEZIER_ANCHOR_SIZE * scale;
@@ -626,7 +622,7 @@ function hitTestBeziers(
 }
 
 function renderBeziers(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   vertices: IVec2[],
   bezierViewAnchors: ([BezierAnchorInfo, BezierAnchorInfo] | undefined)[],
   bezierSize: number,

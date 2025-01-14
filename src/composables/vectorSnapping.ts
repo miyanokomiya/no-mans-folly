@@ -7,6 +7,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 import { snapVectorToGrid } from "./grid";
+import { CanvasCTX } from "../utils/types";
 
 const SNAP_THRESHOLD = 10;
 
@@ -76,7 +77,7 @@ export function newVectorSnapping(option: Option) {
 export type VectorSnapping = ReturnType<typeof newVectorSnapping>;
 
 export function renderVectorSnappingResult(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   option: { result: VectorSnappingResult; scale: number; style: StyleScheme },
 ) {
   if (option.result.guidLines) {

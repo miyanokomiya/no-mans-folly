@@ -9,6 +9,7 @@ import { applyLocalSpace, renderOutlinedCircle, renderValueLabel, scaleGlobalAlp
 import { getShapeDetransform } from "../../shapes/rectPolygon";
 import { getLocalAbsolutePoint } from "../../shapes/simplePolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
+import { CanvasCTX } from "../../utils/types";
 
 const ANCHOR_SIZE = 6;
 const ANCHOR_SIZE_L = 10;
@@ -56,7 +57,7 @@ export const newBubbleHandler = defineShapeHandler<BubbleHitResult, Option>((opt
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: BubbleHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: BubbleHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const thresholdL = ANCHOR_SIZE_L * scale;
     const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
@@ -109,7 +110,7 @@ export function getLocalCornerControl(shape: BubbleShape, scale: number): [IVec2
 }
 
 export function renderBeakGuidlines(
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   shape: BubbleShape,
   style: StyleScheme,
   scale: number,
@@ -155,7 +156,7 @@ export function renderBeakGuidlines(
 }
 
 function renderRootGuid(
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   style: StyleScheme,
   scale: number,
   origin: IVec2,
@@ -184,7 +185,7 @@ function renderRootGuid(
 }
 
 export function renderCornerGuidlines(
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   style: StyleScheme,
   scale: number,
   shape: BubbleShape,

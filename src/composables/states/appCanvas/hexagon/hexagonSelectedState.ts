@@ -14,6 +14,7 @@ import {
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
 import { AppCanvasStateContext } from "../core";
+import { CanvasCTX } from "../../../../utils/types";
 
 export const newHexagonSelectedState = defineSingleSelectedHandlerState<HexagonShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -153,7 +154,7 @@ export const newHexagonSelectedState = defineSingleSelectedHandlerState<HexagonS
     }),
 );
 
-function renderAngle(ctx: AppCanvasStateContext, renderCtx: CanvasRenderingContext2D, shape: HexagonShape) {
+function renderAngle(ctx: AppCanvasStateContext, renderCtx: CanvasCTX, shape: HexagonShape) {
   const s = getNormalizedSimplePolygonShape(shape);
   const origin = { x: 0, y: s.height * s.c0.y };
   const rad = getRadian({ x: s.width * s.c0.x, y: 0 }, origin);

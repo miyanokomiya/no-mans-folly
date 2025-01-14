@@ -6,6 +6,7 @@ import { defineShapeHandler } from "./core";
 import { applyLocalSpace, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { CrossShape } from "../../shapes/polygons/cross";
+import { CanvasCTX } from "../../utils/types";
 
 const ANCHOR_SIZE = 6;
 
@@ -41,7 +42,7 @@ export const newCrossHandler = defineShapeHandler<CrossHitResult, Option>((optio
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: CrossHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: CrossHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const { controlSizeP } = getAnchors();
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
@@ -68,7 +69,7 @@ export const newCrossHandler = defineShapeHandler<CrossHitResult, Option>((optio
 });
 
 export function renderMovingCrossAnchor(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   style: StyleScheme,
   scale: number,
   shape: CrossShape,

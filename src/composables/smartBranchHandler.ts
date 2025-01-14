@@ -9,6 +9,7 @@ import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 import { generateKeyBetween } from "../utils/findex";
+import { CanvasCTX } from "../utils/types";
 
 const CHILD_MARGIN = 100;
 const SIBLING_MARGIN = 25;
@@ -54,7 +55,7 @@ const getBaseHandler = defineShapeHandler<HitResult, Option>((option) => {
     return { index, previewShapes };
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
     const threshold = ANCHOR_SIZE * scale;
     applyFillStyle(ctx, { color: style.selectionPrimary });
 

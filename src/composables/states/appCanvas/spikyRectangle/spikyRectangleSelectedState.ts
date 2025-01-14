@@ -13,6 +13,7 @@ import { newSimplePolygonHandler, SimplePolygonHandler } from "../../../shapeHan
 import { StyleScheme } from "../../../../models";
 import { applyLocalSpace, renderValueLabel } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { CanvasCTX } from "../../../../utils/types";
 
 export const newSpikyRectangleSelectedState = defineSingleSelectedHandlerState<
   SpikyRectangleShape,
@@ -170,7 +171,7 @@ function getLocalCornerControl(shape: SpikyRectangleShape, scale: number): [IVec
 }
 
 function renderCornerGuidlinesForRadius(
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   style: StyleScheme,
   scale: number,
   shape: SpikyRectangleShape,
@@ -213,7 +214,7 @@ function renderCornerGuidlinesForRadius(
 }
 
 function renderCornerGuidlinesForSpike(
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   style: StyleScheme,
   scale: number,
   shape: SpikyRectangleShape,

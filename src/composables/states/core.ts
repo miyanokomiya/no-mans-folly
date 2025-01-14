@@ -2,6 +2,7 @@ import { IVec2 } from "okageo";
 import { EditMovement, HoverMovement, KeyOptions, MouseOptions } from "./types";
 import { ModifierOptions } from "../../utils/devices";
 import { newCallback } from "../../utils/stateful/reactives";
+import { CanvasCTX } from "../../utils/types";
 
 type TransitionType = "break" | "stack-restart" | "stack-resume";
 
@@ -23,7 +24,7 @@ export interface ModeStateBase<C, E = ModeStateEvent> {
    */
   _resolved?: Promise<TransitionValue<C, ModeStateEvent>>;
   handleEvent: (ctx: C, e: E) => TransitionValue<C, ModeStateEvent>;
-  render?: (ctx: C, renderCtx: CanvasRenderingContext2D) => void;
+  render?: (ctx: C, renderCtx: CanvasCTX) => void;
 }
 
 type StateStackItem<C, E = ModeStateEvent> = {
@@ -34,7 +35,7 @@ type StateStackItem<C, E = ModeStateEvent> = {
 export interface StateMachine<E = ModeStateEvent> {
   getStateSummary: () => { label: string };
   handleEvent: (event: E) => void;
-  render: (ctx: CanvasRenderingContext2D) => void;
+  render: (ctx: CanvasCTX) => void;
   reset: () => void;
   dispose: () => void;
   // This will be resolved when "onStart" of the initial state finishes
@@ -167,7 +168,7 @@ export function newStateMachine<C, E = ModeStateEvent>(
     callback.dispatch();
   }
 
-  function render(renderCtx: CanvasRenderingContext2D) {
+  function render(renderCtx: CanvasCTX) {
     const ctx = getCtx();
     const current = getCurrentState();
     current.state.render?.(ctx, renderCtx);

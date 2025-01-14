@@ -30,6 +30,7 @@ import { AppCanvasStateContext } from "../states/appCanvas/core";
 import { getPatchByLayouts } from "../shapeLayoutHandler";
 import { patchPipe } from "../../utils/commons";
 import { patchLinesConnectedToShapeOutline } from "../lineSnapping";
+import { CanvasCTX } from "../../utils/types";
 
 export const ANCHOR_SIZE = 6;
 export const DIRECTION_ANCHOR_SIZE = 10;
@@ -78,12 +79,7 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
     }
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    scale: number,
-    hitResult?: SimplePolygonHitResult,
-  ) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: SimplePolygonHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const directionThreshold = DIRECTION_ANCHOR_SIZE * scale;
     const anchors = getAnchors(scale);
@@ -130,7 +126,7 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
 });
 export type SimplePolygonHandler = ReturnType<typeof newSimplePolygonHandler>;
 
-export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleScheme, path: IVec2[]) {
+export function renderShapeBounds(ctx: CanvasCTX, style: StyleScheme, path: IVec2[]) {
   applyStrokeStyle(ctx, { color: style.selectionPrimary });
   ctx.beginPath();
   applyPath(ctx, path, true);

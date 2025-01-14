@@ -1,9 +1,10 @@
 import { IVec2 } from "okageo";
 import { StyleScheme } from "../../models";
+import { CanvasCTX } from "../../utils/types";
 
 export interface ShapeHandler<HitResult = any> {
   hitTest: (p: IVec2, scale: number) => HitResult | undefined;
-  render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number) => void;
+  render: (ctx: CanvasCTX, style: StyleScheme, scale: number) => void;
   /**
    * Returns true when "val" is different from the previous one.
    */
@@ -14,7 +15,7 @@ export interface ShapeHandler<HitResult = any> {
 export function defineShapeHandler<HitResult, O>(
   createFn: (option: O) => Pick<ShapeHandler<HitResult>, "hitTest"> & {
     isSameHitResult: (a?: HitResult, b?: HitResult) => boolean;
-    render: (ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) => void;
+    render: (ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) => void;
   },
 ): (option: O) => ShapeHandler<HitResult> {
   return (o) => {

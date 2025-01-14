@@ -15,6 +15,7 @@ import { defineShapeHandler } from "./core";
 import { dropDownTreeLayout } from "../../utils/layouts/dropDownTree";
 import { getShapeDetransform, getShapeTransform, getRectShapeCenter, getRectShapeRect } from "../../shapes/rectPolygon";
 import { renderOutlinedCircle, scaleGlobalAlpha } from "../../utils/renderer";
+import { CanvasCTX } from "../../utils/types";
 
 const ANCHOR_SIZE = 9;
 const ANCHOR_MARGIN = 30;
@@ -197,7 +198,7 @@ export const newTreeHandler = defineShapeHandler<TreeHitResult, Option>((option)
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: TreeHitResult) {
     const anchors = getAnchors(scale);
     const threshold = ANCHOR_SIZE * scale;
     const thresholdForMargin = MARGIN_ANCHOR_SIZE * scale;
@@ -539,12 +540,7 @@ export const newTreeNodeMovingHandler = defineShapeHandler<TreeNodeMovingResult,
     }
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    scale: number,
-    movingResult?: TreeNodeMovingResult,
-  ) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, movingResult?: TreeNodeMovingResult) {
     ctx.save();
     ctx.transform(...rootTransform);
     ctx.translate(-root.p.x, -root.p.y);
@@ -931,7 +927,7 @@ function getPatchToConvertRootToNode(graftTargetShape: TreeShapeBase): Partial<T
 }
 
 function renderMovingPreview(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   direction: Direction4,
   dropdown: Direction4 | undefined,
   parentRect: IRectangle,

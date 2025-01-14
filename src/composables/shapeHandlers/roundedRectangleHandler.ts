@@ -6,6 +6,7 @@ import { applyLocalSpace, renderOutlinedCircle, renderValueLabel } from "../../u
 import { getShapeDetransform } from "../../shapes/rectPolygon";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { RoundedRectangleShape } from "../../shapes/polygons/roundedRectangle";
+import { CanvasCTX } from "../../utils/types";
 
 const ANCHOR_SIZE = 6;
 
@@ -39,12 +40,7 @@ export const newRoundedRectangleHandler = defineShapeHandler<RoundedRectangleHit
     }
   }
 
-  function render(
-    ctx: CanvasRenderingContext2D,
-    style: StyleScheme,
-    scale: number,
-    hitResult?: RoundedRectangleHitResult,
-  ) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: RoundedRectangleHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const [cornerXC, cornerYC] = getLocalCornerControl(shape, scale);
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
@@ -85,7 +81,7 @@ export function getLocalCornerControl(shape: RoundedRectangleShape, scale: numbe
 }
 
 export function renderCornerGuidlines(
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   style: StyleScheme,
   scale: number,
   shape: RoundedRectangleShape,

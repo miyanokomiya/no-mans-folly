@@ -2,6 +2,7 @@ import { IVec2, IRectangle } from "okageo";
 import type { ModeStateBase, ModeStateContextBase, ModeStateEvent, ModeStateEventBase, WheelEvent } from "./core";
 import type { CommandExam, ContextMenuItem, EditMovement, ToastMessage } from "./types";
 import { StyleScheme, UserSetting } from "../../models";
+import { CanvasCTX } from "../../utils/types";
 
 export interface CanvasStateContext extends ModeStateContextBase {
   generateUuid: () => string;
@@ -10,7 +11,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   patchUserSetting: (patch: Partial<UserSetting>) => void;
 
   redraw: () => void;
-  getRenderCtx: () => CanvasRenderingContext2D | undefined;
+  getRenderCtx: () => CanvasCTX | undefined;
   setViewport: (rect?: IRectangle) => void;
   zoomView: (step: number, center?: boolean) => number;
   setZoom: (value: number, center?: boolean) => number;

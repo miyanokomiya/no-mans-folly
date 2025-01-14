@@ -43,6 +43,7 @@ import {
   ShapeSnapping,
   SnappingResult,
 } from "./shapeSnapping";
+import { CanvasCTX } from "../utils/types";
 
 const SNAP_THRESHOLD = 10;
 
@@ -313,7 +314,7 @@ export function newLineSnapping(option: Option) {
 export type LineSnapping = ReturnType<typeof newLineSnapping>;
 
 export function renderConnectionResult(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   option: {
     result: ConnectionResult;
     scale: number;

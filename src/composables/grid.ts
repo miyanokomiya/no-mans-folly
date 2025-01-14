@@ -4,6 +4,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { ShapeSnappingLines } from "../shapes/core";
 import { pickMinItem } from "../utils/commons";
+import { CanvasCTX } from "../utils/types";
 
 const GRID_LABEL_STEP_SIZE = 100;
 
@@ -55,7 +56,7 @@ export function newGrid({ size, range, disabled }: Option) {
     return { v: segmentsV, h: segmentsH };
   }
 
-  function renderAxisLabels(ctx: CanvasRenderingContext2D, scale = 1) {
+  function renderAxisLabels(ctx: CanvasCTX, scale = 1) {
     ctx.save();
 
     applyFillStyle(ctx, { color: COLORS.BLACK });

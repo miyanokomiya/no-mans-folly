@@ -9,10 +9,11 @@ import { renderOutlinedCircle } from "../../../utils/renderer";
 import { patchPipe } from "../../../utils/commons";
 import { patchLinesConnectedToShapeOutline } from "../../lineSnapping";
 import { getSnappableCandidates } from "./commons";
+import { CanvasCTX } from "../../../utils/types";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
-  renderCtx: CanvasRenderingContext2D,
+  renderCtx: CanvasCTX,
   latestShape: T,
 ) => void;
 

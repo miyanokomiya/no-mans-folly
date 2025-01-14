@@ -5,6 +5,7 @@ import { defineShapeHandler } from "./core";
 import { CylinderShape } from "../../shapes/polygons/cylinder";
 import { applyLocalSpace, renderOutlinedCircle } from "../../utils/renderer";
 import { getShapeDetransform } from "../../shapes/rectPolygon";
+import { CanvasCTX } from "../../utils/types";
 
 const ANCHOR_SIZE = 6;
 
@@ -44,7 +45,7 @@ export const newCylinderHandler = defineShapeHandler<CylinderHitResult, Option>(
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: CylinderHitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: CylinderHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       (
@@ -72,12 +73,7 @@ export const newCylinderHandler = defineShapeHandler<CylinderHitResult, Option>(
   };
 });
 
-export function renderMovingCylinderAnchor(
-  ctx: CanvasRenderingContext2D,
-  style: StyleScheme,
-  scale: number,
-  shape: CylinderShape,
-) {
+export function renderMovingCylinderAnchor(ctx: CanvasCTX, style: StyleScheme, scale: number, shape: CylinderShape) {
   const nextControlP = {
     x: shape.width * shape.c0.x,
     y: shape.height * shape.c0.y,

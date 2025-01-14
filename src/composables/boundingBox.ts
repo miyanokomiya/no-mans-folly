@@ -29,6 +29,7 @@ import { newCircleHitTest } from "./shapeHitTest";
 import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { ShapeHandler, defineShapeHandler } from "./shapeHandlers/core";
+import { CanvasCTX } from "../utils/types";
 
 const ANCHOR_SIZE = 5;
 
@@ -55,7 +56,7 @@ export type BoundingBox = ShapeHandler<HitResult> & {
   getRotation: () => number;
   getCenter: () => IVec2;
   renderResizedBounding: (
-    ctx: CanvasRenderingContext2D,
+    ctx: CanvasCTX,
     style: StyleScheme,
     scale: number,
     resizingAffine?: AffineMatrix,
@@ -153,7 +154,7 @@ export function newBoundingBox(option: Option): BoundingBox {
       }
     }
 
-    function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+    function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
       const anchors = getAnchors(scale);
       const rotationAnchor = getRotationAnchor(scale);
       const moveAnchor = getMoveAnchor(scale);
@@ -243,7 +244,7 @@ export function newBoundingBox(option: Option): BoundingBox {
   const handler = getHandler(option);
 
   function renderResizedBounding(
-    ctx: CanvasRenderingContext2D,
+    ctx: CanvasCTX,
     style: StyleScheme,
     scale: number,
     resizingAffine?: AffineMatrix,

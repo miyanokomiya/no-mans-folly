@@ -6,6 +6,7 @@ import { defineShapeHandler } from "./core";
 import { applyLocalSpace, applyPath, renderOutlinedCircle } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { ArcShape, getHoleRate } from "../../shapes/arc";
+import { CanvasCTX } from "../../utils/types";
 
 export const ANCHOR_SIZE = 6;
 export const ANCHOR_MARGIN = 16;
@@ -46,7 +47,7 @@ export const newArcHandler = defineShapeHandler<HitResult, Option>((option) => {
     }
   }
 
-  function render(ctx: CanvasRenderingContext2D, style: StyleScheme, scale: number, hitResult?: HitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
     const threshold = ANCHOR_SIZE * scale;
     const anchors = getAnchors(scale);
 
@@ -78,7 +79,7 @@ export const newArcHandler = defineShapeHandler<HitResult, Option>((option) => {
 });
 export type ArcHandler = ReturnType<typeof newArcHandler>;
 
-export function renderShapeBounds(ctx: CanvasRenderingContext2D, style: StyleScheme, path: IVec2[]) {
+export function renderShapeBounds(ctx: CanvasCTX, style: StyleScheme, path: IVec2[]) {
   applyStrokeStyle(ctx, { color: style.selectionPrimary });
   ctx.beginPath();
   applyPath(ctx, path, true);

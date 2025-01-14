@@ -19,6 +19,7 @@ import { renderArrow, scaleGlobalAlpha } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 import { pickMinItem } from "../utils/commons";
 import { BoundingBoxResizing } from "./boundingBox";
+import { CanvasCTX } from "../utils/types";
 
 export const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
@@ -355,7 +356,7 @@ function isWithinRectThreshold(v: IVec2, threshold: number): boolean {
 }
 
 export function renderSnappingResult(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasCTX,
   option: {
     result: SnappingResult;
     style: StyleScheme;
