@@ -17,6 +17,7 @@ import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { FrameThumbnail } from "./FrameThumbnail";
 import { useSelectedSheet } from "../../hooks/storeHooks";
 import { rednerRGBA } from "../../utils/color";
+import { addSuffixToAvoidDuplication } from "../../utils/text";
 
 interface ExportOptions {
   imageType: "png" | "svg" | "folly-svg";
@@ -208,6 +209,8 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   );
 };
 
+type ZipItem = [name: string, ext: string, Uint8Array];
+
 async function exportAsPNG(
   ctx: AppCanvasStateContext,
   frameIdSet: Set<string>,
@@ -221,7 +224,7 @@ async function exportAsPNG(
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
-  const items: [string, Uint8Array][] = [];
+  const items: ZipItem[] = [];
 
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
@@ -237,7 +240,7 @@ async function exportAsPNG(
     const blob = await builder.toBlob();
     const buffer = await blob.arrayBuffer();
     const prefix = filenamePrefix ? `${i + 1}_` : "";
-    items.push([`${prefix}${escapeFilename(frame.name)}.png`, new Uint8Array(buffer)]);
+    items.push([`${prefix}${escapeFilename(frame.name)}`, "png", new Uint8Array(buffer)]);
     onProgress(items.length / frameIdSet.size);
   }
 
@@ -258,7 +261,7 @@ async function exportAsSVG(
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
-  const items: [string, Uint8Array][] = [];
+  const items: ZipItem[] = [];
 
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
@@ -278,17 +281,18 @@ async function exportAsSVG(
     const blob = await builder.toBlob();
     const buffer = await blob.arrayBuffer();
     const prefix = filenamePrefix ? `${i + 1}_` : "";
-    const suffix = withMeta ? ".folly" : "";
-    items.push([`${prefix}${escapeFilename(frame.name)}${suffix}.svg`, new Uint8Array(buffer)]);
+    const suffix = withMeta ? "folly." : "";
+    items.push([`${prefix}${escapeFilename(frame.name)}`, `${suffix}svg`, new Uint8Array(buffer)]);
     onProgress(items.length / frameIdSet.size);
   }
 
   await saveZipAsFile(withMeta ? "frames-folly-svg.zip" : "frames-svg.zip", items);
 }
 
-async function saveZipAsFile(name: string, items: [string, Uint8Array][]) {
+async function saveZipAsFile(name: string, items: ZipItem[]) {
+  const names = addSuffixToAvoidDuplication(items.map(([name]) => name));
   const zip = await createZip(
-    items.map((item) => ({ path: item[0], data: item[1] })),
+    items.map(([, ext, data], i) => ({ path: `${names[i]}.${ext}`, data })),
     true,
   );
   const blob = new Blob([zip], { type: "application/x-zip" });
