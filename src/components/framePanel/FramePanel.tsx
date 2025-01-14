@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import iconDownload from "../../assets/icons/download.svg";
+import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
@@ -16,7 +17,7 @@ import { SortableListV } from "../atoms/SortableListV";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { rednerRGBA } from "../../utils/color";
 import { FrameThumbnail } from "./FrameThumbnail";
-import { ListButton } from "../atoms/buttons/ListButton";
+import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 import { FrameExportDialog } from "./FrameExportDialog";
 
 export const FramePanel: React.FC = () => {
@@ -190,12 +191,9 @@ export const FramePanel: React.FC = () => {
 
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
-      <ListButton onClick={handleExport}>
-        <div className="flex items-center justify-start gap-1">
-          <img src={iconDownload} alt="" className="w-6 h-6" />
-          <span>Export</span>
-        </div>
-      </ListButton>
+      <ListIconButton icon={iconDownload} onClick={handleExport}>
+        Export
+      </ListIconButton>
     </div>
   );
 
@@ -325,9 +323,9 @@ const FrameItem: React.FC<FrameItemProps> = ({
     <div className="w-max flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
       <ListButton onClick={handleInsertBelow}>Insert below</ListButton>
-      <ListButton onClick={handleDelete}>
+      <ListIconButton icon={iconDustbinRed} onClick={handleDelete}>
         <span className="text-red-500 font-semibold">Delete</span>
-      </ListButton>
+      </ListIconButton>
     </div>
   );
 

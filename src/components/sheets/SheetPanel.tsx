@@ -2,10 +2,11 @@ import { useCallback, useState } from "react";
 import { Sheet } from "../../models";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import iconDots from "../../assets/icons/three_dots_v.svg";
+import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { getSheetURL } from "../../utils/route";
 import { OutsideObserver } from "../atoms/OutsideObserver";
-import { ListButton } from "../atoms/buttons/ListButton";
+import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 
 interface Props {
   sheet: Sheet;
@@ -86,9 +87,9 @@ export const SheetPanel: React.FC<Props> = ({
   const popupMenu = (
     <div className="flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
-      <ListButton onClick={handleDeleteClick} disabled={!canDeleteSheet}>
+      <ListIconButton icon={iconDustbinRed} onClick={handleDeleteClick} disabled={!canDeleteSheet}>
         <span className="text-red-500 font-semibold">Delete</span>
-      </ListButton>
+      </ListIconButton>
     </div>
   );
 

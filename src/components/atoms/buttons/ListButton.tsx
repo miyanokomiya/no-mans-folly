@@ -22,6 +22,21 @@ export const ListButton: React.FC<Props> = ({ onClick, type, disabled, children 
   );
 };
 
+interface ListIconButtonProps extends Props {
+  icon: string;
+}
+
+export const ListIconButton: React.FC<ListIconButtonProps> = ({ onClick, type, disabled, children, icon }) => {
+  return (
+    <ListButton type={type} disabled={disabled} onClick={onClick}>
+      <div className="flex items-center justify-start gap-1">
+        <img src={icon} alt="" className="w-5 h-5" />
+        <span>{children}</span>
+      </div>
+    </ListButton>
+  );
+};
+
 interface LinkProps {
   children: React.ReactNode;
   href: string;
