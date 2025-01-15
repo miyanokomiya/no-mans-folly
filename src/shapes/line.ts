@@ -48,6 +48,7 @@ import {
   getSegmentVicinityTo,
   isBezieirControl,
 } from "../utils/path";
+import { SVGElementInfo } from "../utils/svgElements";
 
 export type LineType = undefined | "stright" | "elbow"; // undefined means "stright"
 export type CurveType = undefined | "auto";
@@ -208,8 +209,13 @@ export const struct: ShapeStruct<LineShape> = {
       });
     }
 
-    const pHeadInfo = shape.pHead ? createLineHeadSVGElementInfo(shape.pHead, pAffine!, defaultWidth) : undefined;
-    const qHeadInfo = shape.qHead ? createLineHeadSVGElementInfo(shape.qHead, qAffine!, defaultWidth) : undefined;
+    const heads: SVGElementInfo[] = [];
+    const pHeadInfo =
+      shape.pHead && pAffine ? createLineHeadSVGElementInfo(shape.pHead, pAffine, defaultWidth) : undefined;
+    const qHeadInfo =
+      shape.qHead && qAffine ? createLineHeadSVGElementInfo(shape.qHead, qAffine, defaultWidth) : undefined;
+    if (pHeadInfo) heads.push(pHeadInfo);
+    if (qHeadInfo) heads.push(qHeadInfo);
 
     return {
       tag: "g",
@@ -266,14 +272,18 @@ export const struct: ShapeStruct<LineShape> = {
                 ]),
           ],
         },
-        {
-          tag: "g",
-          attributes: {
-            ...renderFillSVGAttributes({ ...shape.stroke, disabled: false }),
-            ...renderStrokeSVGAttributes({ ...shape.stroke, dash: undefined, disabled: false }),
-          },
-          children: [...(pHeadInfo ? [pHeadInfo] : []), ...(qHeadInfo ? [qHeadInfo] : [])],
-        },
+        ...(heads.length > 0
+          ? [
+              {
+                tag: "g",
+                attributes: {
+                  ...renderFillSVGAttributes({ ...shape.stroke, disabled: false }),
+                  ...renderStrokeSVGAttributes({ ...shape.stroke, dash: undefined, disabled: false }),
+                },
+                children: heads,
+              },
+            ]
+          : []),
       ],
     };
   },
