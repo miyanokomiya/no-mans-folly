@@ -165,55 +165,56 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     [frames],
   );
 
-  return progress === undefined ? (
-    <Dialog open={open} onClose={onClose} title={t("export.export_frames")} actions={actions}>
-      <div className="flex gap-4">
-        <div className="w-60">
-          <p className="mb-1 text-md font-medium">{t("export.target_frames")}</p>
-          <div className="px-1">
-            <ToggleInput value={frameIdSet.size === frames.length} onChange={handleAllFramesClick}>
-              {t("export.options.all_frames")}
-            </ToggleInput>
-          </div>
-          <div className="mt-1 max-h-[50vh] border overflow-auto flex flex-col items-center gap-1">
-            {frames.map((f, i) => (
-              <div key={f.id} className="w-full">
-                <div className="px-1 text-ellipsis">
-                  <ToggleInput value={frameIdSet.has(f.id)} name={f.id} onChange={handleFrameClick}>
-                    {i + 1}. {f.name}
-                  </ToggleInput>
+  return (
+    <>
+      <Dialog open={open} onClose={onClose} title={t("export.export_frames")} actions={actions}>
+        <div className="flex gap-4">
+          <div className="w-60">
+            <p className="mb-1 text-md font-medium">{t("export.target_frames")}</p>
+            <div className="px-1">
+              <ToggleInput value={frameIdSet.size === frames.length} onChange={handleAllFramesClick}>
+                {t("export.options.all_frames")}
+              </ToggleInput>
+            </div>
+            <div className="mt-1 max-h-[50vh] border overflow-auto flex flex-col items-center gap-1">
+              {frames.map((f, i) => (
+                <div key={f.id} className="w-full">
+                  <div className="px-1 text-ellipsis">
+                    <ToggleInput value={frameIdSet.has(f.id)} name={f.id} onChange={handleFrameClick}>
+                      {i + 1}. {f.name}
+                    </ToggleInput>
+                  </div>
+                  <div className="w-full h-16">
+                    <FrameThumbnail
+                      shapeComposite={shapeComposite}
+                      documentMap={documentMap}
+                      imageStore={imageStore}
+                      backgroundColor={backgroundColor}
+                      frame={f}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-16">
-                  <FrameThumbnail
-                    shapeComposite={shapeComposite}
-                    documentMap={documentMap}
-                    imageStore={imageStore}
-                    backgroundColor={backgroundColor}
-                    frame={f}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <p className="mb-1 text-md font-medium">{t("options")}</p>
-          <InlineField label={t("export.options.hideframe")}>
-            <ToggleInput value={exportOptions.hideFrame} onChange={handleHideFrameChange} />
-          </InlineField>
-          <InlineField label={t("export.options.sequence_prefix")}>
-            <ToggleInput value={exportOptions.sequencePrefix} onChange={handleFilenamePrefixChange} />
-          </InlineField>
-          <div className="my-1">
-            <InlineField label={t("export.options.imagetype")}>
-              <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
+          <form onSubmit={handleSubmit}>
+            <p className="mb-1 text-md font-medium">{t("options")}</p>
+            <InlineField label={t("export.options.hideframe")}>
+              <ToggleInput value={exportOptions.hideFrame} onChange={handleHideFrameChange} />
             </InlineField>
-          </div>
-        </form>
-      </div>
-    </Dialog>
-  ) : (
-    <LoadingDialog open={open} progress={progress} />
+            <InlineField label={t("export.options.sequence_prefix")}>
+              <ToggleInput value={exportOptions.sequencePrefix} onChange={handleFilenamePrefixChange} />
+            </InlineField>
+            <div className="my-1">
+              <InlineField label={t("export.options.imagetype")}>
+                <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
+              </InlineField>
+            </div>
+          </form>
+        </div>
+      </Dialog>
+      <LoadingDialog open={progress !== undefined} progress={progress} />
+    </>
   );
 };
 
