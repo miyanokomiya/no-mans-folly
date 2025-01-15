@@ -19,12 +19,15 @@ const en = {
     "noworkspace.start": "Start with no workspace",
     update_sw: "New content available, click on reload button to update.",
     reload: "Reload",
+    cancel: "Cancel",
+    options: "Options",
 
     export: {
       title: "Export",
       export_frames: "Export frames",
+      target_frames: "Target frames",
       options: {
-        all_frames: "All frames",
+        all_frames: "All",
         imagetype: "Image type",
         hideframe: "Hide frame",
         sequence_prefix: "Add sequence number to name",
@@ -99,12 +102,15 @@ const ja: TranslationResource = {
     "noworkspace.start": "ワークスペースなし",
     update_sw: "アプリケーションに更新があります。リロードボタン押下で更新します。",
     reload: "リロード",
+    cancel: "キャンセル",
+    options: "設定",
 
     export: {
       title: "エクスポート",
       export_frames: "フレームエクスポート",
+      target_frames: "対象フレーム",
       options: {
-        all_frames: "全てのフレーム",
+        all_frames: "全て",
         imagetype: "画像タイプ",
         hideframe: "フレーム非表示",
         sequence_prefix: "名前に番号付与",
