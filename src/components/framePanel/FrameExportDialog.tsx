@@ -233,6 +233,7 @@ async function exportAsPNG(
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
+  const ext = "png";
   const items: ZipItem[] = [];
 
   for (let i = 0; i < frames.length; i++) {
@@ -246,10 +247,18 @@ async function exportAsPNG(
       imageStore: ctx.getImageStore(),
     });
     const builder = newImageBuilder({ render: renderer.render, range: info.range });
+
+    const prefix = filenamePrefix ? `${i + 1}_` : "";
+    const name = `${prefix}${escapeFilename(frame.name)}`;
+
+    if (frameIdSet.size === 1) {
+      saveFileInWeb(builder.toDataURL(), `${name}.${ext}`);
+      return;
+    }
+
     const blob = await builder.toBlob();
     const buffer = await blob.arrayBuffer();
-    const prefix = filenamePrefix ? `${i + 1}_` : "";
-    items.push([`${prefix}${escapeFilename(frame.name)}`, "png", new Uint8Array(buffer)]);
+    items.push([name, ext, new Uint8Array(buffer)]);
     onProgress(items.length / frameIdSet.size);
   }
 
@@ -270,6 +279,7 @@ async function exportAsSVG(
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
+  const ext = withMeta ? "folly.svg" : "svg";
   const items: ZipItem[] = [];
 
   for (let i = 0; i < frames.length; i++) {
@@ -287,11 +297,19 @@ async function exportAsSVG(
       render: withMeta ? renderer.renderWithMeta : renderer.render,
       range: info.range,
     });
+
+    const prefix = filenamePrefix ? `${i + 1}_` : "";
+    const name = `${prefix}${escapeFilename(frame.name)}`;
+
+    if (frameIdSet.size === 1) {
+      return builder.toDataURL(async (url) => {
+        saveFileInWeb(url, `${name}.${ext}`);
+      });
+    }
+
     const blob = await builder.toBlob();
     const buffer = await blob.arrayBuffer();
-    const prefix = filenamePrefix ? `${i + 1}_` : "";
-    const suffix = withMeta ? "folly." : "";
-    items.push([`${prefix}${escapeFilename(frame.name)}`, `${suffix}svg`, new Uint8Array(buffer)]);
+    items.push([name, ext, new Uint8Array(buffer)]);
     onProgress(items.length / frameIdSet.size);
   }
 
