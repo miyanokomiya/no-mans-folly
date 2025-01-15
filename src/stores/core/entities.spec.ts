@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { newEntityStore, newSingleEntityStore } from "./entities";
 import * as Y from "yjs";
 import { generateKeyBetween } from "../../utils/findex";
+import { toMap } from "../../utils/commons";
 
 describe("newEntityStore", () => {
   describe("getEntities", () => {
@@ -16,6 +17,7 @@ describe("newEntityStore", () => {
         { id: "a", findex: "0" },
         { id: "b", findex: "1" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
   });
 
@@ -49,12 +51,14 @@ describe("newEntityStore", () => {
       const store = newEntityStore({ name: "test", ydoc });
       store.addEntity({ id: "a", findex: "0" });
       expect(store.getEntities()).toEqual([{ id: "a", findex: "0" }]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
 
       store.addEntity({ id: "b", findex: "1" });
       expect(store.getEntities()).toEqual([
         { id: "a", findex: "0" },
         { id: "b", findex: "1" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
 
     test("should add latest findex when an entity doens't have it", () => {
@@ -62,11 +66,14 @@ describe("newEntityStore", () => {
       const store = newEntityStore({ name: "test", ydoc });
       store.addEntity({ id: "a", findex: "" });
       expect(store.getEntities()).toEqual([{ id: "a", findex: "a0" }]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
+
       store.addEntity({ id: "b", findex: "" });
       expect(store.getEntities()).toEqual([
         { id: "a", findex: "a0" },
         { id: "b", findex: "a1" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
   });
 
@@ -82,6 +89,7 @@ describe("newEntityStore", () => {
         { id: "a", findex: "0" },
         { id: "b", findex: "1" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
 
     test("should add latest findex when an entity doens't have it", () => {
@@ -95,12 +103,15 @@ describe("newEntityStore", () => {
         { id: "a", findex: "a0" },
         { id: "b", findex: "a1" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
+
       store.addEntities([{ id: "c", findex: "" }]);
       expect(store.getEntities()).toEqual([
         { id: "a", findex: "a0" },
         { id: "b", findex: "a1" },
         { id: "c", findex: "a2" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
   });
 
@@ -113,6 +124,7 @@ describe("newEntityStore", () => {
       store.getEntities();
       store.deleteEntities(["a"]);
       expect(store.getEntities()).toEqual([{ id: "b", findex: "1" }]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
 
     test("should remove multiple entities: complex deletion order", () => {
@@ -129,6 +141,7 @@ describe("newEntityStore", () => {
         { id: "a", findex: "0" },
         { id: "c", findex: "2" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
     });
   });
 
@@ -146,6 +159,7 @@ describe("newEntityStore", () => {
         { id: "b", findex: "1" },
         { id: "a", findex: "10" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
       expect(count).toBe(3);
     });
 
@@ -158,6 +172,7 @@ describe("newEntityStore", () => {
       store.addEntity({ id: "a", findex: "0" });
       store.patchEntity("a", { findex: undefined });
       expect(store.getEntities()).toEqual([{ id: "a" }]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
       expect(store.getEntities()[0]).not.toHaveProperty("findex");
       expect(count).toBe(2);
     });
@@ -177,6 +192,7 @@ describe("newEntityStore", () => {
         { id: "a", findex: "10" },
         { id: "b", findex: "20" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
       expect(count).toBe(3);
     });
   });
@@ -242,7 +258,10 @@ describe("newEntityStore", () => {
         { id: "a", findex: "0" },
         { id: "b", findex: "1" },
       ]);
+      expect(store.getEntityMap()).toEqual(toMap(store.getEntities()));
       expect(count).toBe(2);
+      expect(store.getEntities(), "should be the same object unless changes").toBe(store.getEntities());
+      expect(store.getEntityMap(), "should be the same object unless changes").toBe(store.getEntityMap());
 
       unwatch();
       store.patchEntity("a", { findex: "0" });

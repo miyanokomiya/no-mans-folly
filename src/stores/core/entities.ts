@@ -48,12 +48,11 @@ export function newEntityStore<T extends Entity>(option: Option) {
   }
 
   function getEntityMap(): { [id: string]: T } {
-    return toMap(getEntities());
+    return entityListCache.getEntityMap();
   }
 
   function getEntity(id: string): T | undefined {
-    const ye = entityMap.get(id);
-    return ye ? toEntity<T>(ye) : undefined;
+    return entityListCache.getEntityMap()[id];
   }
 
   function addEntity(entity: T) {
@@ -231,12 +230,14 @@ export function observeEntityMap(
 
 function newEntityListCache<T extends Entity>(entityMap: Y.Map<Y.Map<any>>) {
   let entityListCache: T[] = [];
+  let entityMapCache: { [key: string]: T } = {};
   let dirtyKeyMap: ObserveKeyMap = new Map();
 
   function refresh() {
     const list = Array.from(entityMap.values()).map((ye) => toEntity<T>(ye));
     list.sort(findexSortFn);
     entityListCache = list;
+    entityMapCache = toMap(entityListCache);
     dirtyKeyMap = new Map();
   }
 
@@ -273,13 +274,15 @@ function newEntityListCache<T extends Entity>(entityMap: Y.Map<Y.Map<any>>) {
 
       switch (v.action) {
         case "add":
-        case "update":
+        case "update": {
+          const entity = toEntity<T>(entityMap.get(id)!);
           if (indexMap.has(id)) {
-            entityListCache[indexMap.get(id)!] = toEntity(entityMap.get(id)!);
+            entityListCache[indexMap.get(id)!] = entity;
           } else {
-            entityListCache.push(toEntity(entityMap.get(id)!));
+            entityListCache.push(entity);
           }
           break;
+        }
         case "delete":
           if (indexMap.has(id)) {
             entityListCache.splice(indexMap.get(id)!, 1);
@@ -289,6 +292,7 @@ function newEntityListCache<T extends Entity>(entityMap: Y.Map<Y.Map<any>>) {
     }
 
     entityListCache.sort(findexSortFn);
+    entityMapCache = toMap(entityListCache);
     dirtyKeyMap = new Map();
   }
 
@@ -297,13 +301,21 @@ function newEntityListCache<T extends Entity>(entityMap: Y.Map<Y.Map<any>>) {
     return entityListCache;
   }
 
+  /**
+   * This map doesn't keep stable order of entities.
+   */
+  function getEntityMap(): { [id: string]: T } {
+    patchEntityListCache();
+    return entityMapCache;
+  }
+
   function setDirtyKeyMap(keyMap: ObserveKeyMap) {
     for (const [key, v] of keyMap) {
       dirtyKeyMap.set(key, v);
     }
   }
 
-  return { refresh, getEntityList, setDirtyKeyMap };
+  return { refresh, getEntityList, getEntityMap, setDirtyKeyMap };
 }
 
 function toEntity<T extends Entity>(yEntity: Y.Map<any>): T {

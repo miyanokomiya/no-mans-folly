@@ -14,7 +14,7 @@ export function newSheetStore(option: Option) {
     ydoc: option.ydoc,
   });
 
-  const selectedIdStore = newValueStore(entityStore.getEntities()[0]?.id ?? "");
+  const selectedIdStore = newValueStore(entityStore.getEntities().at(0)?.id ?? "");
   function getSelectedSheet(): Sheet | undefined {
     return entityStore.getEntity(selectedIdStore.getValue()) ?? entityStore.getEntities()[0];
   }
@@ -25,8 +25,8 @@ export function newSheetStore(option: Option) {
   }
 
   entityStore.watch(() => {
-    if (!entityStore.getEntityMap()[selectedIdStore.getValue()]) {
-      selectedIdStore.setValue(entityStore.getEntities()[0]?.id ?? "");
+    if (!entityStore.getEntity(selectedIdStore.getValue())) {
+      selectedIdStore.setValue(entityStore.getEntities().at(0)?.id ?? "");
     }
   });
 
