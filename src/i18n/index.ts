@@ -22,7 +22,7 @@ const en = {
 
     export: {
       title: "Export",
-      frames_as_zip: "Export frames as ZIP",
+      export_frames: "Export frames",
       options: {
         all_frames: "All frames",
         imagetype: "Image type",
@@ -102,7 +102,7 @@ const ja: TranslationResource = {
 
     export: {
       title: "エクスポート",
-      frames_as_zip: "フレームをZIPエクスポート",
+      export_frames: "フレームエクスポート",
       options: {
         all_frames: "全てのフレーム",
         imagetype: "画像タイプ",

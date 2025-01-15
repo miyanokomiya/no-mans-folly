@@ -83,7 +83,14 @@ export function newSVGImageBuilder({ render, range }: SVGOption) {
     URL.revokeObjectURL(url);
   }
 
-  return { toBlob, toDataURL };
+  async function getSvgElement() {
+    if (!elm) {
+      await procRender();
+    }
+    return elm;
+  }
+
+  return { toBlob, toDataURL, getSvgElement };
 }
 export type SVGImageBuilder = ReturnType<typeof newSVGImageBuilder>;
 

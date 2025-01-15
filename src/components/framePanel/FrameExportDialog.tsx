@@ -20,7 +20,7 @@ import { rednerRGBA } from "../../utils/color";
 import { addSuffixToAvoidDuplication } from "../../utils/text";
 
 interface ExportOptions {
-  imageType: "png" | "svg" | "folly-svg";
+  imageType: "png" | "svg" | "folly-svg" | "print";
   hideFrame: boolean;
   filenamePrefix: boolean;
 }
@@ -76,8 +76,10 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
         case "folly-svg":
           await exportAsSVG(ctx, frameIdSet, setProgress, true, exportOptions.hideFrame, exportOptions.filenamePrefix);
           break;
+        case "print":
+          await printAsDocument(ctx, frameIdSet, setProgress, exportOptions.hideFrame, exportOptions.filenamePrefix);
+          break;
       }
-      onClose();
     } catch (e) {
       ctx.showToastMessage({
         text: "Failed to create image",
@@ -87,7 +89,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     } finally {
       setProgress(undefined);
     }
-  }, [frameIdSet, exportOptions, onClose, getCtx]);
+  }, [frameIdSet, exportOptions, getCtx]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -129,6 +131,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
       { value: "png", label: "PNG" },
       { value: "svg", label: "SVG" },
       { value: "folly-svg", label: "Folly SVG" },
+      { value: "print", label: "Print" },
     ],
     [],
   );
@@ -162,7 +165,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   );
 
   return progress === undefined ? (
-    <Dialog open={open} onClose={onClose} title={t("export.frames_as_zip")} actions={actions}>
+    <Dialog open={open} onClose={onClose} title={t("export.export_frames")} actions={actions}>
       <div className="w-80">
         <div className="px-1">
           <ToggleInput value={frameIdSet.size === frames.length} onChange={handleAllFramesClick}>
@@ -299,4 +302,72 @@ async function saveZipAsFile(name: string, items: ZipItem[]) {
   const url = URL.createObjectURL(blob);
   saveFileInWeb(url, name);
   URL.revokeObjectURL(url);
+}
+
+async function printAsDocument(
+  ctx: AppCanvasStateContext,
+  frameIdSet: Set<string>,
+  onProgress: (progress: number) => void,
+  hideFrame: boolean,
+  filenamePrefix: boolean,
+) {
+  if (frameIdSet.size === 0) return;
+
+  let subwindow: Window | null = null;
+  try {
+    subwindow = window.open(undefined, "_blank");
+    if (!subwindow) return;
+
+    onProgress(0);
+    const shapeComposite = ctx.getShapeComposite();
+    const frames = getAllFrameShapes(shapeComposite);
+    const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
+    const items: [name: string, SVGElement][] = [];
+
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      if (!frameIdSet.has(frame.id)) continue;
+
+      const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
+      const renderer = newShapeSVGRenderer({
+        shapeComposite: info.targetShapeComposite,
+        getDocumentMap: ctx.getDocumentMap,
+        imageStore: ctx.getImageStore(),
+        assetAPI: ctx.assetAPI,
+      });
+      const builder = newSVGImageBuilder({
+        render: renderer.render,
+        range: info.range,
+      });
+      const svg = await builder.getSvgElement();
+      const prefix = filenamePrefix ? `${i + 1}. ` : "";
+      items.push([`${prefix}${frame.name}`, svg]);
+      onProgress(items.length / frameIdSet.size);
+    }
+
+    const fragment = subwindow.document.createDocumentFragment();
+    items.forEach(([name, svg]) => {
+      fragment.appendChild(createFrameBlock(subwindow!, name, svg));
+    });
+    subwindow.document.body.appendChild(fragment);
+    subwindow.document.title = "Frames";
+    subwindow.print();
+  } finally {
+    subwindow?.close();
+  }
+}
+
+function createFrameBlock(subwindow: Window, name: string, svg: SVGElement): HTMLElement {
+  const div = subwindow.document.createElement("div");
+  div.style.breakAfter = "page";
+  const h2 = subwindow.document.createElement("h2");
+  h2.textContent = name;
+  h2.style.fontSize = "20px";
+  h2.style.margin = "0 0 4px 0";
+  h2.style.padding = "0";
+  h2.style.fontFamily = "Arial";
+  h2.style.fontWeight = "400";
+  div.appendChild(h2);
+  div.appendChild(svg);
+  return div;
 }
