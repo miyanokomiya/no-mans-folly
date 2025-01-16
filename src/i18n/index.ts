@@ -31,6 +31,11 @@ const en = {
         imagetype: "Image type",
         hideframe: "Hide frame",
         sequence_prefix: "Add sequence number to name",
+        print_options: "Print options",
+        hidename_onprint: "Hide frame name",
+      },
+      imagetypes: {
+        print: "Print",
       },
     },
 
@@ -114,6 +119,11 @@ const ja: TranslationResource = {
         imagetype: "画像タイプ",
         hideframe: "フレーム非表示",
         sequence_prefix: "名前に番号付与",
+        print_options: "印刷オプション",
+        hidename_onprint: "フレーム名前非表示",
+      },
+      imagetypes: {
+        print: "印刷",
       },
     },
 

@@ -18,11 +18,13 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { useSelectedSheet } from "../../hooks/storeHooks";
 import { rednerRGBA } from "../../utils/color";
 import { addSuffixToAvoidDuplication } from "../../utils/text";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 
 interface ExportOptions {
   imageType: "png" | "svg" | "folly-svg" | "print";
-  hideFrame: boolean;
-  sequencePrefix: boolean;
+  hideFrame?: boolean;
+  sequencePrefix?: boolean;
+  hideNameOnPrint?: boolean;
 }
 
 interface Props {
@@ -37,7 +39,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   const [exportOptions, setExportOptions] = useLocalStorageAdopter<ExportOptions>({
     key: "frame-export-options",
     version: "4",
-    initialValue: { imageType: "png", hideFrame: false, sequencePrefix: false },
+    initialValue: { imageType: "png" },
     duration: 1000,
   });
 
@@ -68,16 +70,16 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     try {
       switch (exportOptions.imageType) {
         case "png":
-          await exportAsPNG(ctx, frameIdSet, setProgress, exportOptions.hideFrame, exportOptions.sequencePrefix);
+          await exportAsPNG(ctx, frameIdSet, setProgress, exportOptions);
           break;
         case "svg":
-          await exportAsSVG(ctx, frameIdSet, setProgress, false, exportOptions.hideFrame, exportOptions.sequencePrefix);
+          await exportAsSVG(ctx, frameIdSet, setProgress, false, exportOptions);
           break;
         case "folly-svg":
-          await exportAsSVG(ctx, frameIdSet, setProgress, true, exportOptions.hideFrame, exportOptions.sequencePrefix);
+          await exportAsSVG(ctx, frameIdSet, setProgress, true, exportOptions);
           break;
         case "print":
-          await printAsDocument(ctx, frameIdSet, setProgress, exportOptions.hideFrame, exportOptions.sequencePrefix);
+          await printAsDocument(ctx, frameIdSet, setProgress, exportOptions);
           break;
       }
     } catch (e) {
@@ -127,14 +129,21 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     [setExportOptions],
   );
 
+  const handleHideNameOnPrintChange = useCallback(
+    (val: boolean) => {
+      setExportOptions((src) => ({ ...src, hideNameOnPrint: val }));
+    },
+    [setExportOptions],
+  );
+
   const fileOptions = useMemo(
     () => [
       { value: "png", label: "PNG" },
       { value: "svg", label: "SVG" },
       { value: "folly-svg", label: "Folly SVG" },
-      { value: "print", label: "Print" },
+      { value: "print", label: t("export.imagetypes.print") },
     ],
-    [],
+    [t],
   );
 
   const documentMap = getCtx().getDocumentMap();
@@ -200,16 +209,23 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
           <form onSubmit={handleSubmit}>
             <p className="mb-1 text-md font-medium">{t("options")}</p>
             <InlineField label={t("export.options.hideframe")}>
-              <ToggleInput value={exportOptions.hideFrame} onChange={handleHideFrameChange} />
+              <ToggleInput value={!!exportOptions.hideFrame} onChange={handleHideFrameChange} />
             </InlineField>
             <InlineField label={t("export.options.sequence_prefix")}>
-              <ToggleInput value={exportOptions.sequencePrefix} onChange={handleFilenamePrefixChange} />
+              <ToggleInput value={!!exportOptions.sequencePrefix} onChange={handleFilenamePrefixChange} />
             </InlineField>
             <div className="my-1">
               <InlineField label={t("export.options.imagetype")}>
                 <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
               </InlineField>
             </div>
+            {exportOptions.imageType === "print" ? (
+              <BlockGroupField label={t("export.options.print_options")}>
+                <InlineField label={t("export.options.hidename_onprint")}>
+                  <ToggleInput value={!!exportOptions.hideNameOnPrint} onChange={handleHideNameOnPrintChange} />
+                </InlineField>
+              </BlockGroupField>
+            ) : undefined}
           </form>
         </div>
       </Dialog>
@@ -224,15 +240,14 @@ async function exportAsPNG(
   ctx: AppCanvasStateContext,
   frameIdSet: Set<string>,
   onProgress: (progress: number) => void,
-  hideFrame: boolean,
-  filenamePrefix: boolean,
+  options: Pick<ExportOptions, "hideFrame" | "sequencePrefix">,
 ) {
   if (frameIdSet.size === 0) return;
 
   onProgress(0);
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
-  const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
+  const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
   const ext = "png";
   const items: ZipItem[] = [];
 
@@ -248,7 +263,7 @@ async function exportAsPNG(
     });
     const builder = newImageBuilder({ render: renderer.render, range: info.range });
 
-    const prefix = filenamePrefix ? `${i + 1}_` : "";
+    const prefix = options.sequencePrefix ? `${i + 1}_` : "";
     const name = `${prefix}${escapeFilename(frame.name)}`;
 
     if (frameIdSet.size === 1) {
@@ -269,16 +284,15 @@ async function exportAsSVG(
   ctx: AppCanvasStateContext,
   frameIdSet: Set<string>,
   onProgress: (progress: number) => void,
-  withMeta = false,
-  hideFrame: boolean,
-  filenamePrefix: boolean,
+  withMeta: boolean,
+  options: Pick<ExportOptions, "hideFrame" | "sequencePrefix">,
 ) {
   if (frameIdSet.size === 0) return;
 
   onProgress(0);
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
-  const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
+  const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
   const ext = withMeta ? "folly.svg" : "svg";
   const items: ZipItem[] = [];
 
@@ -298,7 +312,7 @@ async function exportAsSVG(
       range: info.range,
     });
 
-    const prefix = filenamePrefix ? `${i + 1}_` : "";
+    const prefix = options.sequencePrefix ? `${i + 1}_` : "";
     const name = `${prefix}${escapeFilename(frame.name)}`;
 
     if (frameIdSet.size === 1) {
@@ -332,8 +346,7 @@ async function printAsDocument(
   ctx: AppCanvasStateContext,
   frameIdSet: Set<string>,
   onProgress: (progress: number) => void,
-  hideFrame: boolean,
-  filenamePrefix: boolean,
+  options: Pick<ExportOptions, "hideFrame" | "sequencePrefix" | "hideNameOnPrint">,
 ) {
   if (frameIdSet.size === 0) return;
 
@@ -345,7 +358,7 @@ async function printAsDocument(
     onProgress(0);
     const shapeComposite = ctx.getShapeComposite();
     const frames = getAllFrameShapes(shapeComposite);
-    const excludeIdSet = new Set(hideFrame ? frames.map((f) => f.id) : []);
+    const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
     const items: [name: string, SVGElement][] = [];
 
     for (let i = 0; i < frames.length; i++) {
@@ -364,14 +377,14 @@ async function printAsDocument(
         range: info.range,
       });
       const svg = await builder.getSvgElement();
-      const prefix = filenamePrefix ? `${i + 1}. ` : "";
+      const prefix = options.sequencePrefix ? `${i + 1}. ` : "";
       items.push([`${prefix}${frame.name}`, svg]);
       onProgress(items.length / frameIdSet.size);
     }
 
     const fragment = subwindow.document.createDocumentFragment();
     items.forEach(([name, svg]) => {
-      fragment.appendChild(createFrameBlock(subwindow!, name, svg));
+      fragment.appendChild(createFrameBlock(subwindow!, name, svg, options.hideNameOnPrint));
     });
     subwindow.document.body.appendChild(fragment);
     subwindow.document.title = "Frames";
@@ -381,17 +394,21 @@ async function printAsDocument(
   }
 }
 
-function createFrameBlock(subwindow: Window, name: string, svg: SVGElement): HTMLElement {
+function createFrameBlock(subwindow: Window, name: string, svg: SVGElement, hideName = false): HTMLElement {
   const div = subwindow.document.createElement("div");
   div.style.breakAfter = "page";
-  const h2 = subwindow.document.createElement("h2");
-  h2.textContent = name;
-  h2.style.fontSize = "20px";
-  h2.style.margin = "0 0 4px 0";
-  h2.style.padding = "0";
-  h2.style.fontFamily = "Arial";
-  h2.style.fontWeight = "400";
-  div.appendChild(h2);
+
+  if (!hideName) {
+    const h2 = subwindow.document.createElement("h2");
+    h2.textContent = name;
+    h2.style.fontSize = "20px";
+    h2.style.margin = "0 0 4px 0";
+    h2.style.padding = "0";
+    h2.style.fontFamily = "Arial";
+    h2.style.fontWeight = "400";
+    div.appendChild(h2);
+  }
+
   div.appendChild(svg);
   return div;
 }
