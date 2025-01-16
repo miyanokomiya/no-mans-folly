@@ -300,7 +300,7 @@ export function renderSVGDocByComposition(
         });
       }
 
-      lineElement.children!.push({
+      const tspan = {
         tag: "tspan",
         attributes: {
           x: group.bounds.x,
@@ -310,7 +310,22 @@ export function renderSVGDocByComposition(
           "font-style": group.attributes?.italic ? "italic" : undefined,
         },
         children: [group.text],
-      });
+      };
+
+      if (group.attributes.link) {
+        lineElement.children!.push({
+          tag: "a",
+          attributes: {
+            href: group.attributes.link,
+            "xlink:href": group.attributes.link,
+            target: "_blank",
+            rel: "noopener",
+          },
+          children: [tspan],
+        });
+      } else {
+        lineElement.children!.push(tspan);
+      }
     });
 
     index += line.outputs.length;
