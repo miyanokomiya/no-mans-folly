@@ -418,3 +418,25 @@ export function getIntersectionsBetweenSegAndPolyline(
 ): IVec2[] {
   return getIntersectionsBetweenLineAndPolyline(seg, edges, curves).filter((p) => isOnSeg(p, seg));
 }
+
+export function reverseBezierPath(path: BezierPath): BezierPath {
+  return {
+    path: path.path.concat().reverse(),
+    curves: path.curves.map((c) => (c ? { c1: c.c2, c2: c.c1 } : undefined)).reverse(),
+  };
+}
+
+export function flipBezierPathV(path: BezierPath, originY: number): BezierPath {
+  const t = 2 * originY;
+  return {
+    path: path.path.map(({ x, y }) => ({ x, y: t - y })),
+    curves: path.curves.map((c) =>
+      c
+        ? {
+            c1: { x: c.c1.x, y: t - c.c1.y },
+            c2: { x: c.c2.x, y: t - c.c2.y },
+          }
+        : undefined,
+    ),
+  };
+}

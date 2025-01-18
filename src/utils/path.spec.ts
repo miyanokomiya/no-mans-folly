@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   combineBezierPathAndPath,
+  flipBezierPathV,
   getBezierControlForArc,
   getClosestPointOnPolyline,
   getCornerRadiusArc,
@@ -13,6 +14,7 @@ import {
   getWavePathControl,
   isArcControl,
   isBezieirControl,
+  reverseBezierPath,
   shiftBezierCurveControl,
   transformBezierCurveControl,
 } from "./path";
@@ -563,5 +565,52 @@ describe("getIntersectionsBetweenSegAndPolyline", () => {
       ]),
     );
     expect(res0).toEqualPoints([{ x: 10, y: 20 }]);
+  });
+});
+
+describe("reverseBezierPath", () => {
+  test("should reverse bezier path", () => {
+    expect(
+      reverseBezierPath({
+        path: [
+          { x: 0, y: 0 },
+          { x: 100, y: 0 },
+          { x: 100, y: 100 },
+        ],
+        curves: [undefined, { c1: { x: 120, y: 20 }, c2: { x: 120, y: 80 } }],
+      }),
+    ).toEqual({
+      path: [
+        { x: 100, y: 100 },
+        { x: 100, y: 0 },
+        { x: 0, y: 0 },
+      ],
+      curves: [{ c1: { x: 120, y: 80 }, c2: { x: 120, y: 20 } }, undefined],
+    });
+  });
+});
+
+describe("flipBezierPathV", () => {
+  test("should flip bezier path vertically", () => {
+    expect(
+      flipBezierPathV(
+        {
+          path: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+          curves: [undefined, { c1: { x: 120, y: 20 }, c2: { x: 120, y: 80 } }],
+        },
+        100,
+      ),
+    ).toEqual({
+      path: [
+        { x: 0, y: 200 },
+        { x: 100, y: 200 },
+        { x: 100, y: 100 },
+      ],
+      curves: [undefined, { c1: { x: 120, y: 180 }, c2: { x: 120, y: 120 } }],
+    });
   });
 });
