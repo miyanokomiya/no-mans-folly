@@ -85,6 +85,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "arc", icon: iconDonutArc },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
+  { type: "curly_bracket", icon: iconWave },
 ];
 
 export const lineTypeList: ShapeTypeItem[] = [
