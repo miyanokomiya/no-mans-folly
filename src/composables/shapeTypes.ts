@@ -56,6 +56,7 @@ import { newMoonSelectedState } from "./states/appCanvas/moon/moonSelectedState"
 import { newGroupSelectedState } from "./states/appCanvas/group/groupSelectedState";
 import { newSpikyRectangleSelectedState } from "./states/appCanvas/spikyRectangle/spikyRectangleSelectedState";
 import { newFrameSelectedState } from "./states/appCanvas/frame/frameSelectedState";
+import { newCurlyBracketSelectedState } from "./states/appCanvas/brackets/curlyBracketSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -131,6 +132,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newDocumentSymbolSelectedState;
     case "wave":
       return newWaveSelectedState;
+    case "curly_bracket":
+      return newCurlyBracketSelectedState;
     case "triangle":
       return newTriangleSelectedState;
     case "parallelogram":
