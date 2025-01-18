@@ -20,6 +20,7 @@ import iconMoon from "../assets/icons/shape_moon.svg";
 import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
+import iconCurlyBracket from "../assets/icons/shape_curly_bracket.svg";
 
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineCurve from "../assets/icons/shape_line_curve.svg";
@@ -86,7 +87,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "arc", icon: iconDonutArc },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
-  { type: "curly_bracket", icon: iconWave },
+  { type: "curly_bracket", icon: iconCurlyBracket },
 ];
 
 export const lineTypeList: ShapeTypeItem[] = [
