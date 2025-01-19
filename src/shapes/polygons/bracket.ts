@@ -50,10 +50,12 @@ function getPath(shape: BracketShape): SimplePath {
     };
   }
 
-  const [b] = getBezierControlPaddingForBorderRadius(r, r);
+  // Although using "outerR = r + thickness" would be an option, it doesn't look that nice nor doesn't work well with small "r".
+  const outerR = r;
+  const [b, outerB] = getBezierControlPaddingForBorderRadius(r, outerR);
   const curvedPath = [
-    { x: 0, y: r },
-    { x: r, y: 0 },
+    { x: 0, y: outerR },
+    { x: outerR, y: 0 },
     { x: w, y: 0 },
     { x: w, y: thickness },
     { x: thickness + r, y: thickness },
@@ -62,13 +64,16 @@ function getPath(shape: BracketShape): SimplePath {
     { x: thickness + r, y: h - thickness },
     { x: w, y: h - thickness },
     { x: w, y: h },
-    { x: r, y: h },
-    { x: 0, y: h - r },
+    { x: outerR, y: h },
+    { x: 0, y: h - outerR },
   ];
   return {
     path: curvedPath,
     curves: [
-      { c1: { x: curvedPath[0].x, y: curvedPath[0].y - b }, c2: { x: curvedPath[1].x - b, y: curvedPath[1].y } },
+      {
+        c1: { x: curvedPath[0].x, y: curvedPath[0].y - outerB },
+        c2: { x: curvedPath[1].x - outerB, y: curvedPath[1].y },
+      },
       undefined,
       undefined,
       undefined,
@@ -78,7 +83,10 @@ function getPath(shape: BracketShape): SimplePath {
       undefined,
       undefined,
       undefined,
-      { c1: { x: curvedPath[10].x - b, y: curvedPath[10].y }, c2: { x: curvedPath[11].x, y: curvedPath[11].y + b } },
+      {
+        c1: { x: curvedPath[10].x - outerB, y: curvedPath[10].y },
+        c2: { x: curvedPath[11].x, y: curvedPath[11].y + outerB },
+      },
     ],
   };
 }
@@ -88,5 +96,6 @@ export function getBracketThickness(shape: BracketShape): number {
 }
 
 export function getBracketRadius(shape: BracketShape): number {
-  return Math.max(0, Math.min(shape.r, shape.width / 2, shape.height / 2));
+  const thickness = getBracketThickness(shape);
+  return Math.max(0, Math.min(shape.r, shape.width - thickness, shape.height / 2 - thickness));
 }

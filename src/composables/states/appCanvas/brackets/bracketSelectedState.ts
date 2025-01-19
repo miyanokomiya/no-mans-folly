@@ -64,7 +64,7 @@ export const newBracketSelectedState = defineSingleSelectedHandlerState<BracketS
                           patchFn: (shape, p, movement) => {
                             const localP = applyAffine(getShapeDetransform(shape), p);
                             const thickness = getBracketThickness(shape);
-                            let nextValue = getBracketRadius({ ...shape, r: localP.x - thickness });
+                            let nextValue = getBracketRadius({ ...shape, r: localP.y - thickness });
                             if (movement.ctrl) {
                               showLabel = false;
                             } else {
@@ -117,5 +117,5 @@ function getThicknessControl(shape: BracketShape): IVec2 {
 function getRadiusControl(shape: BracketShape): IVec2 {
   const thickness = getBracketThickness(shape);
   const r = getBracketRadius(shape);
-  return { x: thickness + r, y: thickness };
+  return { x: thickness, y: thickness + r };
 }
