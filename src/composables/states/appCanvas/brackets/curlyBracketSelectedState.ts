@@ -51,7 +51,7 @@ export const newCurlyBracketSelectedState = defineSingleSelectedHandlerState<
 
                             renderValueLabel(
                               renderCtx,
-                              shape.thickness,
+                              getBracketThickness(shape),
                               applyAffine(getShapeTransform(shape), getThicknessControl(shape)),
                               0,
                               ctx.getScale(),
@@ -78,5 +78,6 @@ export const newCurlyBracketSelectedState = defineSingleSelectedHandlerState<
 );
 
 function getThicknessControl(shape: CurlyBracketShape): IVec2 {
-  return { x: shape.width, y: shape.thickness };
+  const thickness = getBracketThickness(shape);
+  return { x: shape.width, y: thickness };
 }
