@@ -27,6 +27,7 @@ import { struct as two_sided_arrow } from "./twoSidedArrow";
 import { struct as cross } from "./polygons/cross";
 import { struct as diagonal_cross } from "./polygons/diagonalCross";
 import { struct as wave } from "./polygons/wave";
+import { struct as bracket } from "./polygons/bracket";
 import { struct as curly_bracket } from "./polygons/curlyBracket";
 import { struct as line_polygon } from "./polygons/linePolygon";
 
@@ -73,6 +74,7 @@ export const SHAPE_COMMON_STRUCTS: {
   cross,
   diagonal_cross,
   wave,
+  bracket,
   curly_bracket,
   line_polygon,
 

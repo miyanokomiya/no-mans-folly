@@ -20,6 +20,7 @@ import iconMoon from "../assets/icons/shape_moon.svg";
 import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
+import iconBracket from "../assets/icons/shape_bracket.svg";
 import iconCurlyBracket from "../assets/icons/shape_curly_bracket.svg";
 
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
@@ -58,6 +59,7 @@ import { newGroupSelectedState } from "./states/appCanvas/group/groupSelectedSta
 import { newSpikyRectangleSelectedState } from "./states/appCanvas/spikyRectangle/spikyRectangleSelectedState";
 import { newFrameSelectedState } from "./states/appCanvas/frame/frameSelectedState";
 import { newCurlyBracketSelectedState } from "./states/appCanvas/brackets/curlyBracketSelectedState";
+import { newBracketSelectedState } from "./states/appCanvas/brackets/bracketSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -87,6 +89,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "arc", icon: iconDonutArc },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
+  { type: "bracket", icon: iconBracket },
   { type: "curly_bracket", icon: iconCurlyBracket },
 ];
 
@@ -133,6 +136,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newDocumentSymbolSelectedState;
     case "wave":
       return newWaveSelectedState;
+    case "bracket":
+      return newBracketSelectedState;
     case "curly_bracket":
       return newCurlyBracketSelectedState;
     case "triangle":
