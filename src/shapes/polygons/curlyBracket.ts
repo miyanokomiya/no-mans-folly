@@ -37,19 +37,19 @@ function getPath(shape: CurlyBracketShape): SimplePath {
   const y1 = 0.1 * h;
   const x2 = 0.1 * w;
   const y2 = 0.3 * h;
-  const x3 = 0.1 * w;
+  const x3 = x2;
   const y3 = 0.4 * h;
 
   const cx1 = 0.5 * w;
   const cx2 = 0.3 * w;
   const cy2 = 0.05 * h;
-  const cx3 = 0.1 * w;
+  const cx3 = x2;
   const cy3 = 0.15 * h;
-  const cx4 = 0.1 * w;
+  const cx4 = x3;
   const cy4 = 0.25 * h;
 
   const outerBeak = { x: 0, y: cy };
-  const innerBeak = { x: x3 + thickness / 2, y: cy };
+  const innerBeak = { x: x3 + thickness * 0.75, y: cy };
 
   const outerTopPath = {
     path: [
