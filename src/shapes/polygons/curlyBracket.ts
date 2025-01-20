@@ -20,7 +20,7 @@ export const struct: ShapeStruct<CurlyBracketShape> = {
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 50,
       height: arg.height ?? 100,
-      thickness: 5,
+      thickness: 10,
     };
   },
   getTextRangeRect: undefined,
