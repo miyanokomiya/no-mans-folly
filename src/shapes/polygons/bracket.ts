@@ -34,7 +34,10 @@ function getPath(shape: BracketShape): SimplePath {
   const h = shape.height;
   const thickness = getBracketThickness(shape);
   const r = getBracketRadius(shape);
+  return getBracketPath(w, h, thickness, r);
+}
 
+export function getBracketPath(w: number, h: number, thickness: number, r: number, optimalRadius = false): SimplePath {
   if (r === 0) {
     return {
       path: [
@@ -50,42 +53,51 @@ function getPath(shape: BracketShape): SimplePath {
     };
   }
 
-  // Although using "outerR = r + thickness" would be an option, it doesn't look that nice nor doesn't work well with small "r".
-  const outerR = r;
-  const [b, outerB] = getBezierControlPaddingForBorderRadius(r, outerR);
+  const innerRx = Math.min(r, w - thickness);
+  const innerRy = r;
+  const [innerBx, innerBy] = getBezierControlPaddingForBorderRadius(innerRx, innerRy);
+  const outerRx = innerRx + (optimalRadius ? thickness : 0);
+  const outerRy = innerRy + (optimalRadius ? thickness : 0);
+  const [outerBx, outerBy] = getBezierControlPaddingForBorderRadius(outerRx, outerRy);
   const curvedPath = [
-    { x: 0, y: outerR },
-    { x: outerR, y: 0 },
+    { x: 0, y: outerRy },
+    { x: outerRx, y: 0 },
     { x: w, y: 0 },
     { x: w, y: thickness },
-    { x: thickness + r, y: thickness },
-    { x: thickness, y: thickness + r },
-    { x: thickness, y: h - thickness - r },
-    { x: thickness + r, y: h - thickness },
+    { x: thickness + innerRx, y: thickness },
+    { x: thickness, y: thickness + innerRy },
+    { x: thickness, y: h - thickness - innerRy },
+    { x: thickness + innerRx, y: h - thickness },
     { x: w, y: h - thickness },
     { x: w, y: h },
-    { x: outerR, y: h },
-    { x: 0, y: h - outerR },
+    { x: outerRx, y: h },
+    { x: 0, y: h - outerRy },
   ];
   return {
     path: curvedPath,
     curves: [
       {
-        c1: { x: curvedPath[0].x, y: curvedPath[0].y - outerB },
-        c2: { x: curvedPath[1].x - outerB, y: curvedPath[1].y },
+        c1: { x: curvedPath[0].x, y: curvedPath[0].y - outerBy },
+        c2: { x: curvedPath[1].x - outerBx, y: curvedPath[1].y },
       },
       undefined,
       undefined,
       undefined,
-      { c1: { x: curvedPath[4].x - b, y: curvedPath[4].y }, c2: { x: curvedPath[5].x, y: curvedPath[5].y - b } },
+      {
+        c1: { x: curvedPath[4].x - innerBx, y: curvedPath[4].y },
+        c2: { x: curvedPath[5].x, y: curvedPath[5].y - innerBy },
+      },
       undefined,
-      { c1: { x: curvedPath[6].x, y: curvedPath[6].y + b }, c2: { x: curvedPath[7].x - b, y: curvedPath[7].y } },
+      {
+        c1: { x: curvedPath[6].x, y: curvedPath[6].y + innerBy },
+        c2: { x: curvedPath[7].x - innerBx, y: curvedPath[7].y },
+      },
       undefined,
       undefined,
       undefined,
       {
-        c1: { x: curvedPath[10].x - outerB, y: curvedPath[10].y },
-        c2: { x: curvedPath[11].x, y: curvedPath[11].y + outerB },
+        c1: { x: curvedPath[10].x - outerBx, y: curvedPath[10].y },
+        c2: { x: curvedPath[11].x, y: curvedPath[11].y + outerBy },
       },
     ],
   };
@@ -97,5 +109,5 @@ export function getBracketThickness(shape: BracketShape): number {
 
 export function getBracketRadius(shape: BracketShape): number {
   const thickness = getBracketThickness(shape);
-  return Math.max(0, Math.min(shape.r, shape.width - thickness, shape.height / 2 - thickness));
+  return Math.max(0, Math.min(shape.r, shape.height / 2 - thickness));
 }
