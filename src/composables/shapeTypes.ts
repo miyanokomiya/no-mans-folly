@@ -23,6 +23,7 @@ import iconWave from "../assets/icons/shape_wave.svg";
 import iconBracket from "../assets/icons/shape_bracket.svg";
 import iconRoundBracket from "../assets/icons/shape_round_bracket.svg";
 import iconCurlyBracket from "../assets/icons/shape_curly_bracket.svg";
+import iconAngleBracket from "../assets/icons/shape_angle_bracket.svg";
 
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
 import iconLineCurve from "../assets/icons/shape_line_curve.svg";
@@ -61,6 +62,7 @@ import { newSpikyRectangleSelectedState } from "./states/appCanvas/spikyRectangl
 import { newFrameSelectedState } from "./states/appCanvas/frame/frameSelectedState";
 import { newCurlyBracketSelectedState } from "./states/appCanvas/brackets/curlyBracketSelectedState";
 import { newBracketSelectedState } from "./states/appCanvas/brackets/bracketSelectedState";
+import { newAngleBracketSelectedState } from "./states/appCanvas/brackets/angleBracketSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -88,11 +90,12 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "diagonal_cross", icon: iconDiagonalCross },
   { type: "donut", icon: iconDonut },
   { type: "arc", icon: iconDonutArc },
-  { type: "moon", icon: iconMoon },
-  { type: "wave", icon: iconWave },
   { type: "bracket", icon: iconBracket },
   { type: "round_bracket", icon: iconRoundBracket },
   { type: "curly_bracket", icon: iconCurlyBracket },
+  { type: "angle_bracket", icon: iconAngleBracket },
+  { type: "moon", icon: iconMoon },
+  { type: "wave", icon: iconWave },
 ];
 
 export const lineTypeList: ShapeTypeItem[] = [
@@ -141,6 +144,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
     case "bracket":
     case "round_bracket":
       return newBracketSelectedState;
+    case "angle_bracket":
+      return newAngleBracketSelectedState;
     case "curly_bracket":
       return newCurlyBracketSelectedState;
     case "triangle":
