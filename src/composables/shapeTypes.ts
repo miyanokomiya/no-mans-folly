@@ -21,6 +21,7 @@ import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
 import iconBracket from "../assets/icons/shape_bracket.svg";
+import iconRoundBracket from "../assets/icons/shape_round_bracket.svg";
 import iconCurlyBracket from "../assets/icons/shape_curly_bracket.svg";
 
 import iconLineStraight from "../assets/icons/shape_line_straight.svg";
@@ -90,6 +91,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
   { type: "bracket", icon: iconBracket },
+  { type: "round_bracket", icon: iconRoundBracket },
   { type: "curly_bracket", icon: iconCurlyBracket },
 ];
 
@@ -137,6 +139,7 @@ export function getSingleShapeSelectedStateFn(type: string) {
     case "wave":
       return newWaveSelectedState;
     case "bracket":
+    case "round_bracket":
       return newBracketSelectedState;
     case "curly_bracket":
       return newCurlyBracketSelectedState;

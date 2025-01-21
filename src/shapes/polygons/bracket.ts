@@ -38,7 +38,7 @@ function getPath(shape: BracketShape): SimplePath {
 }
 
 export function getBracketPath(w: number, h: number, thickness: number, r: number, optimalRadius = false): SimplePath {
-  if (r === 0) {
+  if (!optimalRadius && r === 0) {
     return {
       path: [
         { x: 0, y: 0 },
@@ -104,7 +104,7 @@ export function getBracketPath(w: number, h: number, thickness: number, r: numbe
 }
 
 export function getBracketThickness(shape: BracketShape): number {
-  return Math.max(0, Math.min(shape.thickness, shape.width / 2, shape.height / 2));
+  return Math.max(0, Math.min(shape.thickness, shape.width, shape.height / 2));
 }
 
 export function getBracketRadius(shape: BracketShape): number {
