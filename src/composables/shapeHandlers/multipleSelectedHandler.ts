@@ -1,9 +1,9 @@
-import { IVec2, MINVALUE, getDistance, getRectCenter } from "okageo";
+import { IVec2, getDistance, getRectCenter } from "okageo";
 import { ShapeComposite } from "../shapeComposite";
 import { defineShapeHandler } from "./core";
 import { applyFillStyle } from "../../utils/fillStyle";
-import { TAU } from "../../utils/geometry";
-import { StyleScheme } from "../../models";
+import { isSameValue, TAU } from "../../utils/geometry";
+import { Shape, StyleScheme } from "../../models";
 import { isLineShape } from "../../shapes/line";
 import { CanvasCTX } from "../../utils/types";
 
@@ -24,10 +24,11 @@ interface Option {
 
 export const newMultipleSelectedHandler = defineShapeHandler<HitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
-  const rotationAnchorInfoList: RotationAnchorInfo[] = option.targetIds
-    .map((id) => shapeComposite.shapeMap[id])
-    .filter((s) => !isLineShape(s) && Math.abs(s.rotation - option.rotation) > MINVALUE)
-    .map((s) => [s.id, s.rotation, getRectCenter(shapeComposite.getWrapperRect(s))]);
+
+  const rotationAnchorInfoList: RotationAnchorInfo[] = getIncoordinateAngledShapes(
+    option.targetIds.map((id) => shapeComposite.shapeMap[id]),
+    option.rotation,
+  ).map((s) => [s.id, s.rotation, getRectCenter(shapeComposite.getWrapperRect(s))]);
 
   function hitTest(p: IVec2, scale: number): HitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
@@ -62,3 +63,16 @@ export const newMultipleSelectedHandler = defineShapeHandler<HitResult, Option>(
   };
 });
 export type MultipleSelectedHandler = ReturnType<typeof newMultipleSelectedHandler>;
+
+function getIncoordinateAngledShapes(shapes: Shape[], origin: number) {
+  const checkFn = getIsCoordinateAngleFn(origin);
+  return shapes.filter((s) => !isLineShape(s) && !checkFn(s.rotation));
+}
+
+export function getIsCoordinateAngleFn(origin: number): (r: number) => boolean {
+  return (r) => {
+    const cos = Math.cos(r - origin);
+    const sin = Math.sin(r - origin);
+    return isSameValue(Math.abs(cos * sin), 0);
+  };
+}

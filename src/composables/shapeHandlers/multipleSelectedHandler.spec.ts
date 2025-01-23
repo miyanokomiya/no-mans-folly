@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { newMultipleSelectedHandler } from "./multipleSelectedHandler";
+import { getIsCoordinateAngleFn, newMultipleSelectedHandler } from "./multipleSelectedHandler";
 import { newShapeComposite } from "../shapeComposite";
 import { createShape, getCommonStruct } from "../../shapes";
 import { RectangleShape } from "../../shapes/rectangle";
@@ -19,14 +19,14 @@ describe("hitTest", () => {
       p: { x: 0, y: 10 },
       width: 10,
       height: 10,
-      rotation: Math.PI / 2,
+      rotation: Math.PI / 3,
     });
     const c = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "c",
       p: { x: 0, y: 20 },
       width: 10,
       height: 10,
-      rotation: Math.PI / 2,
+      rotation: Math.PI / 3,
     });
     const d = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "d",
@@ -63,7 +63,7 @@ describe("hitTest", () => {
     const target1 = newMultipleSelectedHandler({
       getShapeComposite: () => shapeComposite,
       targetIds: shapes.map((s) => s.id),
-      rotation: Math.PI / 2,
+      rotation: Math.PI / 3,
     });
     expect(target1.hitTest({ x: 5, y: 4 }, 1)).toEqual({
       type: "rotation",
@@ -103,5 +103,23 @@ describe("hitTest", () => {
     });
     expect(target0.hitTest({ x: 5, y: 20 }, 1)).toBe(undefined);
     expect(target0.hitTest({ x: 5, y: 5 }, 1)?.info[0]).toBe("a");
+  });
+});
+
+describe("getIsCoordinateAngleFn", () => {
+  test("should return true when the angle is coordinate", () => {
+    const fn1 = getIsCoordinateAngleFn(0);
+    expect(fn1(Math.PI / 3)).toBe(false);
+    expect(fn1(Math.PI / 2)).toBe(true);
+    expect(fn1(Math.PI)).toBe(true);
+    expect(fn1(Math.PI * 1.5)).toBe(true);
+    expect(fn1(Math.PI * 2)).toBe(true);
+
+    const fn2 = getIsCoordinateAngleFn(Math.PI / 3);
+    expect(fn2((Math.PI / 3) * 0.5)).toBe(false);
+    expect(fn2((Math.PI / 3) * 1.5)).toBe(false);
+    expect(fn2(Math.PI / 3 + Math.PI / 2)).toBe(true);
+    expect(fn2(Math.PI / 3 + Math.PI)).toBe(true);
+    expect(fn2(Math.PI / 3 + (Math.PI * 3) / 2)).toBe(true);
   });
 });
