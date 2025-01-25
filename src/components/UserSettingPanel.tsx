@@ -1,11 +1,11 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import { AppCanvasContext } from "../contexts/AppCanvasContext";
+import { useCallback } from "react";
 import { ToggleInput } from "./atoms/inputs/ToggleInput";
 import { SelectInput } from "./atoms/inputs/SelectInput";
 import { InlineField } from "./atoms/InlineField";
 import { UserSetting } from "../models";
 import { BlockGroupField } from "./atoms/BlockGroupField";
 import { NumberInput } from "./atoms/inputs/NumberInput";
+import { useUserSetting } from "../hooks/storeHooks";
 
 const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], undefined>; label: string }[] = [
   { value: "off", label: "Off" },
@@ -13,83 +13,76 @@ const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], u
 ];
 
 export const UserSettingPanel: React.FC = () => {
-  const { userSettingStore } = useContext(AppCanvasContext);
-  const [userSetting, setUserSetting] = useState(userSettingStore.getState());
-
-  useEffect(() => {
-    return userSettingStore.watch(() => {
-      setUserSetting(userSettingStore.getState());
-    });
-  }, [userSettingStore]);
+  const [userSetting, patchUserSetting] = useUserSetting();
 
   const handleDebugChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ debug: val ? "on" : undefined });
+      patchUserSetting({ debug: val ? "on" : undefined });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleWheelActionChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ wheelAction: val ? "pan" : undefined });
+      patchUserSetting({ wheelAction: val ? "pan" : undefined });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleLeftDragActionChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ leftDragAction: val ? "pan" : undefined });
+      patchUserSetting({ leftDragAction: val ? "pan" : undefined });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleModifierSupportChange = useCallback(
     (val: UserSetting["virtualKeyboard"]) => {
-      userSettingStore.patchState({ virtualKeyboard: val });
+      patchUserSetting({ virtualKeyboard: val });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleGridChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ grid: val ? "on" : "off" });
+      patchUserSetting({ grid: val ? "on" : "off" });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handlePreviewChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ preview: val ? "on" : "off" });
+      patchUserSetting({ preview: val ? "on" : "off" });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleGridSizeChange = useCallback(
     (val: number) => {
-      userSettingStore.patchState({ gridSize: val });
+      patchUserSetting({ gridSize: val });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleAttachToLineChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ attachToLine: val ? "on" : "off" });
+      patchUserSetting({ attachToLine: val ? "on" : "off" });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleSnapIgnoreLineChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ snapIgnoreLine: val ? "on" : "off" });
+      patchUserSetting({ snapIgnoreLine: val ? "on" : "off" });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const handleSnapIgnoreNonoverlapPairChange = useCallback(
     (val: boolean) => {
-      userSettingStore.patchState({ snapIgnoreNonoverlapPair: val ? "on" : "off" });
+      patchUserSetting({ snapIgnoreNonoverlapPair: val ? "on" : "off" });
     },
-    [userSettingStore],
+    [patchUserSetting],
   );
 
   const virtualKeyboardValue = userSetting.virtualKeyboard ?? "off";

@@ -1,8 +1,13 @@
 import { useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { Shape, Sheet } from "../models";
+import { Shape, Sheet, UserSetting } from "../models";
 import { ShapeStore } from "../stores/shapes";
 import { ShapeComposite } from "../composables/shapeComposite";
+
+export function useUserSetting(): [UserSetting, patchUserSetting: (patch: Partial<UserSetting>) => void] {
+  const { userSettingStore } = useContext(AppCanvasContext);
+  return [useSyncExternalStore(userSettingStore.watch, userSettingStore.getState), userSettingStore.patchState];
+}
 
 export function useSelectedSheet(): Sheet | undefined {
   const { sheetStore } = useContext(AppCanvasContext);
