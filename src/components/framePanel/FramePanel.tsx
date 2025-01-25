@@ -1,5 +1,4 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import iconDownload from "../../assets/icons/download.svg";
 import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
@@ -19,6 +18,7 @@ import { rednerRGBA } from "../../utils/color";
 import { FrameThumbnail } from "./FrameThumbnail";
 import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 import { FrameExportDialog } from "./FrameExportDialog";
+import { FrameToolPanel } from "./FrameToolPanel";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -198,7 +198,7 @@ export const FramePanel: React.FC = () => {
   );
 
   return (
-    <div className="p-1 h-full">
+    <div className="p-1 h-full grid grid-cols-1 grid-rows-[max-content_1fr_max-content] gap-1">
       <div className="h-8 flex items-center justify-between sticky">
         <span>Frames</span>
         {frameShapes.length > 0 ? (
@@ -215,7 +215,7 @@ export const FramePanel: React.FC = () => {
           </OutsideObserver>
         ) : undefined}
       </div>
-      <div className="my-1 flex flex-col gap-1 overflow-auto" style={{ height: "calc(100% - 4.5rem)" }}>
+      <div className="overflow-auto">
         <SortableListV
           items={frameItems}
           onClick={handleFrameClick}
@@ -223,9 +223,9 @@ export const FramePanel: React.FC = () => {
           anchor="[data-anchor]"
         />
       </div>
-      <button type="button" className="w-full h-8 border rounded flex items-center justify-center" onClick={handleAdd}>
-        <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
-      </button>
+      <div>
+        <FrameToolPanel onFrameAdd={handleAdd} />
+      </div>
       <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
     </div>
   );
