@@ -17,13 +17,16 @@ import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { AttachmentInspector } from "./AttachmentInspector";
 import { patchByPartialProperties } from "../../utils/entities";
 import { SheetInspectorPanel } from "./SheetInspectorPanel";
+import { ShapeSelectionPanel } from "./ShapeSelectionPanel";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
-  const targetTmpShape = useSelectedTmpShape();
 
-  return targetShape && targetTmpShape ? (
-    <ShapeInspectorPanelWithShape targetShape={targetShape} targetTmpShape={targetTmpShape} />
+  return targetShape ? (
+    <div className="flex flex-col gap-2">
+      <ShapeSelectionPanel />
+      <ShapeInspectorPanelWithShape targetShape={targetShape} />
+    </div>
   ) : (
     <SheetInspectorPanel />
   );
@@ -31,12 +34,12 @@ export const ShapeInspectorPanel: React.FC = () => {
 
 interface ShapeInspectorPanelWithShapeProps {
   targetShape: Shape;
-  targetTmpShape: Shape;
 }
 
-const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({ targetShape, targetTmpShape }) => {
+const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> = ({ targetShape }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(GetAppStateContext)();
+  const targetTmpShape = useSelectedTmpShape() ?? targetShape;
 
   const targetShapes = useSelectedShapes();
   const targetTmpShapes = useSelectedTmpShapes();
