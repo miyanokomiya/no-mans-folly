@@ -7,6 +7,7 @@ import {
   createShape,
   getAttachmentByUpdatingRotation,
   getCommonStruct,
+  getLabel,
   getOrderPriority,
   getShapeTextBounds,
   getTextRangeRect,
@@ -68,6 +69,16 @@ describe("renderShape", () => {
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();
+  });
+});
+
+describe("getLabel", () => {
+  test("should return the label of the shape", () => {
+    const rect = createShape(getCommonStruct, "rectangle", {});
+    const line = createShape(getCommonStruct, "line", {});
+    expect(getLabel(getCommonStruct, rect)).toBe("Rectangle");
+    expect(getLabel(getCommonStruct, line)).toBe("Line");
+    expect(getLabel(getCommonStruct, { ...line, type: "unknown_type" })).toBe("Unknown");
   });
 });
 

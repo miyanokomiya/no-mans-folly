@@ -12,7 +12,7 @@ import { isCtrlOrMeta } from "../../utils/devices";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
 import { rednerRGBA } from "../../utils/color";
-import { hasSpecialOrderPriority } from "../../shapes";
+import { getLabel, hasSpecialOrderPriority } from "../../shapes";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -326,7 +326,7 @@ function getUITreeNodeProps(
   sheetColor: string,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
-  const label = shapeComposite.getShapeStruct(shape.type).label;
+  const label = getLabel(shapeComposite.getShapeStruct, shape);
   const primeSibling = isSameShapeSelectionScope(selectedScope, shapeComposite.getSelectionScope(shape));
   const draggable = isDraggableShape(shapeComposite, shape.id);
 

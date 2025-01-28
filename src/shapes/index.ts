@@ -42,6 +42,11 @@ export function renderShape<T extends Shape>(
   struct.render(ctx, shape, shapeContext, imageStore);
 }
 
+export function getLabel(getStruct: GetShapeStruct, shape: Shape): string {
+  const struct = getStruct(shape.type);
+  return struct.label;
+}
+
 export function clipShape(getStruct: GetShapeStruct, shape: Shape, shapeContext: ShapeContext): Path2D | undefined {
   const struct = getStruct(shape.type);
   return struct.getClipPath?.(shape, shapeContext);
