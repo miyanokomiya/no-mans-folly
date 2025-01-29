@@ -9,6 +9,7 @@ import { BlockGroupField } from "../atoms/BlockGroupField";
 import iconCustom from "../../assets/icons/custom.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { NumberInput } from "../atoms/inputs/NumberInput";
+import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
 
 const LINE_DASH_KEYS: LineDash[] = ["dot", "short", "long", "solid"];
 const LINE_CAP_KEYS: CanvasLineCap[] = ["butt", "square", "round"];
@@ -181,20 +182,12 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   );
 
   const lineDash = getLineDash(stroke.dash);
+  const lineDashOptions = useMemo(getLineDashOptions, []);
 
   return (
     <BlockGroupField label="Dash">
-      <div className="flex items-center justify-end gap-1">
-        {LINE_DASH_KEYS.map((ld) => {
-          return <LineDashButton key={ld} lineDash={ld} highlight={ld === lineDash} onClick={onDashChanged} />;
-        })}
-        <LineDashButton
-          key="custom"
-          lineDash="custom"
-          highlight={"custom" === lineDash}
-          image={iconCustom}
-          onClick={onDashChanged}
-        />
+      <div className="flex justify-end">
+        <RadioSelectInput value={lineDash} options={lineDashOptions} onChange={onDashChanged} />
       </div>
       <InlineField label="Array:" inert={lineDash !== "custom"}>
         <div className="w-24">
@@ -219,40 +212,6 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
         </div>
       </InlineField>
     </BlockGroupField>
-  );
-};
-
-interface LineDashButtonProps {
-  lineDash: LineDash;
-  highlight?: boolean;
-  onClick?: (lineDash: LineDash) => void;
-  image?: string;
-}
-
-const LineDashButton: React.FC<LineDashButtonProps> = ({ lineDash, highlight, onClick, image }) => {
-  const dashArray = useMemo(() => {
-    return getLineDashArrayWithCap({ dash: lineDash, lineCap: "butt", width: 4 }).join(" ");
-  }, [lineDash]);
-
-  const handleClick = useCallback(() => {
-    onClick?.(lineDash);
-  }, [lineDash, onClick]);
-
-  return (
-    <button
-      type="button"
-      className={"w-8 h-8 p-1 flex item-center justify-center border rounded" + (highlight ? " border-sky-400" : "")}
-      title={lineDash}
-      onClick={handleClick}
-    >
-      {image ? (
-        <img src={image} alt="" />
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-          <line stroke="#000" strokeWidth="4" strokeDasharray={dashArray} x1="2" y1="30" x2="30" y2="2" />
-        </svg>
-      )}
-    </button>
   );
 };
 
@@ -312,4 +271,28 @@ function parseLineDashCustomValue(str: string): number[] {
     .map((s) => parseFloat(s))
     .filter((v) => !isNaN(v))
     .map((v) => Math.max(0, v));
+}
+
+function getLineDashOptions() {
+  const ret = LINE_DASH_KEYS.map((ld) => ({
+    value: ld,
+    element: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 p-1">
+        <line
+          stroke="#000"
+          strokeWidth="4"
+          strokeDasharray={getLineDashArrayWithCap({ dash: ld, lineCap: "butt", width: 4 }).join(" ")}
+          x1="2"
+          y1="30"
+          x2="30"
+          y2="2"
+        />
+      </svg>
+    ),
+  }));
+  ret.push({
+    value: "custom",
+    element: <img src={iconCustom} alt="" className="w-8 h-8 p-1" />,
+  });
+  return ret;
 }

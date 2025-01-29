@@ -10,7 +10,7 @@ export function createStrokeStyle(arg: Partial<StrokeStyle> = {}): StrokeStyle {
   };
 }
 
-export function getLineDash(lineDash?: LineDash): LineDash {
+export function getLineDash(lineDash?: LineDash): Exclude<LineDash, undefined> {
   return lineDash ?? "solid";
 }
 
