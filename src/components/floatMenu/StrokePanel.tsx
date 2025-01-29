@@ -56,45 +56,11 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
     [onChanged],
   );
 
-  const capButtons = (
-    <InlineField label="Cap:">
-      <div className="flex items-center justify-end gap-1">
-        {LINE_CAP_KEYS.map((lineCap) => {
-          return (
-            <LineCapButton
-              key={lineCap}
-              lineCap={lineCap}
-              highlight={lineCap === getLineCap(stroke.lineCap)}
-              onClick={onCapChanged}
-            />
-          );
-        })}
-      </div>
-    </InlineField>
-  );
-
   const onJoinChanged = useCallback(
     (val: CanvasLineJoin) => {
       onChanged?.({ lineJoin: val });
     },
     [onChanged],
-  );
-
-  const joinButtons = (
-    <InlineField label="Join:">
-      <div className="flex items-center justify-end gap-1">
-        {LINE_JOIN_KEYS.map((lineJoin) => {
-          return (
-            <LineJoinButton
-              key={lineJoin}
-              lineJoin={lineJoin}
-              highlight={lineJoin === getLineJoin(stroke.lineJoin)}
-              onClick={onJoinChanged}
-            />
-          );
-        })}
-      </div>
-    </InlineField>
   );
 
   return (
@@ -111,8 +77,20 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
         </div>
       </div>
       <BlockGroupField label="Stroke styles" accordionKey="stroke-style">
-        {capButtons}
-        {joinButtons}
+        <InlineField label="Cap:">
+          <RadioSelectInput
+            value={getLineCap(stroke.lineCap)}
+            options={useMemo(getLineCapOptions, [])}
+            onChange={onCapChanged}
+          />
+        </InlineField>
+        <InlineField label="Join:">
+          <RadioSelectInput
+            value={getLineJoin(stroke.lineJoin)}
+            options={useMemo(getLineJoinOptions, [])}
+            onChange={onJoinChanged}
+          />
+        </InlineField>
         <LineDashField stroke={stroke} onChange={onChanged} />
       </BlockGroupField>
       <div className={stroke.disabled ? "opacity-50 pointer-events-none" : ""}>
@@ -182,12 +160,11 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   );
 
   const lineDash = getLineDash(stroke.dash);
-  const lineDashOptions = useMemo(getLineDashOptions, []);
 
   return (
     <BlockGroupField label="Dash">
       <div className="flex justify-end">
-        <RadioSelectInput value={lineDash} options={lineDashOptions} onChange={onDashChanged} />
+        <RadioSelectInput value={lineDash} options={useMemo(getLineDashOptions, [])} onChange={onDashChanged} />
       </div>
       <InlineField label="Array:" inert={lineDash !== "custom"}>
         <div className="w-24">
@@ -215,62 +192,34 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   );
 };
 
-interface LineCapButtonProps {
-  lineCap: CanvasLineCap;
-  highlight?: boolean;
-  onClick?: (val: CanvasLineCap) => void;
-}
-
-const LineCapButton: React.FC<LineCapButtonProps> = ({ lineCap, highlight, onClick }) => {
-  const handleClick = useCallback(() => {
-    onClick?.(lineCap);
-  }, [lineCap, onClick]);
-
-  return (
-    <button
-      type="button"
-      className={"w-8 h-8 p-1 flex item-center justify-center border rounded" + (highlight ? " border-sky-400" : "")}
-      title={lineCap}
-      onClick={handleClick}
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path fill="none" stroke="#000" strokeWidth="12" strokeLinecap={lineCap} d="M6,15 L24,15" />
-      </svg>
-    </button>
-  );
-};
-
-interface LineJoinButtonProps {
-  lineJoin: CanvasLineJoin;
-  highlight?: boolean;
-  onClick?: (val: CanvasLineJoin) => void;
-}
-
-const LineJoinButton: React.FC<LineJoinButtonProps> = ({ lineJoin, highlight, onClick }) => {
-  const handleClick = useCallback(() => {
-    onClick?.(lineJoin);
-  }, [lineJoin, onClick]);
-
-  return (
-    <button
-      type="button"
-      className={"w-8 h-8 p-1 flex item-center justify-center border rounded" + (highlight ? " border-sky-400" : "")}
-      title={lineJoin}
-      onClick={handleClick}
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path fill="none" stroke="#000" strokeWidth="10" strokeLinejoin={lineJoin} d="M6,28 L15,8 L24,28" />
-      </svg>
-    </button>
-  );
-};
-
 function parseLineDashCustomValue(str: string): number[] {
   return str
     .split(/,/)
     .map((s) => parseFloat(s))
     .filter((v) => !isNaN(v))
     .map((v) => Math.max(0, v));
+}
+
+function getLineCapOptions() {
+  return LINE_CAP_KEYS.map((value) => ({
+    value,
+    element: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 p-1">
+        <path fill="none" stroke="#000" strokeWidth="12" strokeLinecap={value} d="M6,15 L24,15" />
+      </svg>
+    ),
+  }));
+}
+
+function getLineJoinOptions() {
+  return LINE_JOIN_KEYS.map((value) => ({
+    value,
+    element: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 p-1">
+        <path fill="none" stroke="#000" strokeWidth="10" strokeLinejoin={value} d="M6,28 L15,8 L24,28" />
+      </svg>
+    ),
+  }));
 }
 
 function getLineDashOptions() {
