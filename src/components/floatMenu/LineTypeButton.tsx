@@ -8,8 +8,8 @@ import iconLineElbowCurve from "../../assets/icons/shape_line_elbow_curve.svg";
 import iconLinePolygon from "../../assets/icons/shape_line_polygon.svg";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { AppText } from "../molecules/AppText";
-import { IconButton } from "../atoms/buttons/IconButton";
 import { InlineField } from "../atoms/InlineField";
+import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
 
 const LINE_LIST = [
   { type: "straight", icon: iconLineStraight },
@@ -124,22 +124,22 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({
     [onTypeClick],
   );
 
-  const lines = LINE_LIST.map((item) => (
-    <IconButton
-      key={item.type}
-      value={item.type}
-      icon={item.icon}
-      size={10}
-      highlight={itemType === item.type}
-      onClick={handleTypeClick}
-    />
-  ));
+  const options = useMemo(
+    () =>
+      LINE_LIST.map((item) => ({
+        value: item.type,
+        element: <img src={item.icon} alt="" className="w-8 h-8 p-1" />,
+      })),
+    [],
+  );
 
   return (
     <div className="p-2 flex flex-col gap-1 w-max">
       {polygon ? undefined : (
         <>
-          <div className="flex gap-1">{lines}</div>
+          <InlineField label={<AppText portal>Type</AppText>}>
+            <RadioSelectInput value={itemType} options={options} onChange={handleTypeClick} />
+          </InlineField>
           <InlineField label={<AppText portal>[[LINE_JUMP]]</AppText>}>
             <ToggleInput value={jump} onChange={onJumpChange} />
           </InlineField>
