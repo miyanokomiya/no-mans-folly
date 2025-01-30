@@ -16,57 +16,70 @@ import { SliderInput } from "../atoms/inputs/SliderInput";
 import { DEFAULT_FONT_SIZE, DEFAULT_LINEHEIGHT } from "../../utils/textEditor";
 import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
 import { TextLink } from "./texts/TextLink";
+import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
 interface AlignPanelProps {
+  value: string;
   onClick?: (value: string) => void;
 }
 
-const AlignPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
+const AlignPanel: React.FC<AlignPanelProps> = ({ value, onClick }) => {
   const onClickButton = useCallback(
-    (e: React.MouseEvent) => {
-      const type = e.currentTarget.getAttribute("data-type")!;
-      onClick?.(type);
+    (val: string) => {
+      onClick?.(val);
     },
     [onClick],
   );
 
+  const options = useMemo(
+    () => [
+      { value: "left", element: <img src={iconAlignLeft} alt="Align Left" className="w-8 h-8 p-1" /> },
+      { value: "center", element: <img src={iconAlignCenter} alt="Align Center" className="w-8 h-8 p-1" /> },
+      { value: "right", element: <img src={iconAlignRight} alt="Align Right" className="w-8 h-8 p-1" /> },
+    ],
+    [],
+  );
+
   return (
-    <div className="flex gap-1">
-      <button type="button" className="w-10 p-1 rounded border" data-type="left" onClick={onClickButton}>
-        <img src={iconAlignLeft} alt="Align Left" />
-      </button>
-      <button type="button" className="w-10 p-1 rounded border" data-type="center" onClick={onClickButton}>
-        <img src={iconAlignCenter} alt="Align Center" />
-      </button>
-      <button type="button" className="w-10 p-1 rounded border" data-type="right" onClick={onClickButton}>
-        <img src={iconAlignRight} alt="Align Right" />
-      </button>
+    <div className="p-1">
+      <RadioSelectInput value={value} options={options} onChange={onClickButton} />
     </div>
   );
 };
 
-const DirectionPanel: React.FC<AlignPanelProps> = ({ onClick }) => {
+interface DirectionPanelProps {
+  value: string;
+  onClick?: (value: string) => void;
+}
+
+const DirectionPanel: React.FC<DirectionPanelProps> = ({ value, onClick }) => {
   const onClickButton = useCallback(
-    (e: React.MouseEvent) => {
-      const type = e.currentTarget.getAttribute("data-type")!;
-      onClick?.(type);
+    (val: string) => {
+      onClick?.(val);
     },
     [onClick],
   );
 
+  const options = useMemo(
+    () => [
+      { value: "top", element: <img src={iconDirectionTop} alt="Direction Top" className="w-8 h-8 p-1" /> },
+      {
+        value: "middle",
+        element: <img src={iconDirectionMiddle} alt="Direction Middle" className="w-8 h-8 p-1" />,
+      },
+      {
+        value: "bottom",
+        element: <img src={iconDirectionBottom} alt="Direction Bottom" className="w-8 h-8 p-1" />,
+      },
+    ],
+    [],
+  );
+
   return (
-    <div className="flex gap-1">
-      <button type="button" className="w-10 p-1 rounded border" data-type="top" onClick={onClickButton}>
-        <img src={iconDirectionTop} alt="Direction Top" />
-      </button>
-      <button type="button" className="w-10 p-1 rounded border" data-type="middle" onClick={onClickButton}>
-        <img src={iconDirectionMiddle} alt="Direction Middle" />
-      </button>
-      <button type="button" className="w-10 p-1 rounded border" data-type="bottom" onClick={onClickButton}>
-        <img src={iconDirectionBottom} alt="Direction Bottom" />
-      </button>
+    <div className="p-1">
+      <RadioSelectInput value={value} options={options} onChange={onClickButton} />
     </div>
   );
 };
@@ -225,7 +238,7 @@ export const TextItems: React.FC<Props> = ({
       <PopupButton
         name="align"
         opened={popupedKey === "align"}
-        popup={<AlignPanel onClick={onAlignChanged} />}
+        popup={<AlignPanel value={getAlign(docAttrInfo)} onClick={onAlignChanged} />}
         onClick={onAlignClick}
         defaultDirection={defaultDirection}
       >
@@ -236,7 +249,7 @@ export const TextItems: React.FC<Props> = ({
       <PopupButton
         name="direction"
         opened={popupedKey === "direction"}
-        popup={<DirectionPanel onClick={onDirectionChanged} />}
+        popup={<DirectionPanel value={getDirection(docAttrInfo)} onClick={onDirectionChanged} />}
         onClick={onDirectionClick}
         defaultDirection={defaultDirection}
       >
@@ -261,8 +274,12 @@ export const TextItems: React.FC<Props> = ({
   );
 };
 
+function getAlign(docAttrInfo: DocAttrInfo): string {
+  return docAttrInfo.block?.align ?? "left";
+}
+
 function getAlignIcon(docAttrInfo: DocAttrInfo) {
-  switch (docAttrInfo.block?.align) {
+  switch (getAlign(docAttrInfo)) {
     case "center":
       return iconAlignCenter;
     case "right":
@@ -272,8 +289,12 @@ function getAlignIcon(docAttrInfo: DocAttrInfo) {
   }
 }
 
+function getDirection(docAttrInfo: DocAttrInfo): string {
+  return docAttrInfo.block?.direction ?? "top";
+}
+
 function getDirectionIcon(docAttrInfo: DocAttrInfo) {
-  switch (docAttrInfo.doc?.direction) {
+  switch (getDirection(docAttrInfo)) {
     case "middle":
       return iconDirectionMiddle;
     case "bottom":
