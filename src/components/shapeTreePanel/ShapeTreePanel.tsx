@@ -265,11 +265,15 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     ) : undefined;
   const dropAboveElm =
     dropTarget && dropTo[1] === "above" ? (
-      <div className={"absolute w-full h-1 bg-green-500 rounded-xs -translate-y-1/2 left-0 top-0 pointer-events-none"} />
+      <div
+        className={"absolute w-full h-1 bg-green-500 rounded-xs -translate-y-1/2 left-0 top-0 pointer-events-none"}
+      />
     ) : undefined;
   const dropBelowElm =
     dropTarget && dropTo[1] === "below" ? (
-      <div className={"absolute w-full h-1 bg-green-500 rounded-xs translate-y-1/2 left-0 bottom-0 pointer-events-none"} />
+      <div
+        className={"absolute w-full h-1 bg-green-500 rounded-xs translate-y-1/2 left-0 bottom-0 pointer-events-none"}
+      />
     ) : undefined;
 
   const hasChildren = childNode.length > 0;

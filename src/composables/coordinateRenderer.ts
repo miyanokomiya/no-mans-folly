@@ -52,5 +52,5 @@ export function newCoordinateRenderer(option?: Option) {
 
 function formatValue(v: number): string {
   const rounded = logRound(-2, v);
-  return Math.abs(v - rounded) < MINVALUE ? `${rounded-xs}` : `${rounded-xs}..`;
+  return Math.abs(v - rounded) < MINVALUE ? `${rounded}` : `${rounded}..`;
 }
