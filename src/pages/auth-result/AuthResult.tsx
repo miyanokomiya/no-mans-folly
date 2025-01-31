@@ -30,14 +30,14 @@ export const AuthResult: React.FC<Props> = ({ callbackAction, backHome }) => {
     );
 
   const buttonBlock = backHome ? (
-    <a href="/" className="w-52 p-2 rounded bg-blue-400 text-white flex items-center justify-center gap-2">
+    <a href="/" className="w-52 p-2 rounded-xs bg-blue-400 text-white flex items-center justify-center gap-2">
       Back
     </a>
   ) : (
     <>
       <button
         type="button"
-        className="w-52 p-2 rounded bg-blue-400 text-white flex items-center justify-center gap-2"
+        className="w-52 p-2 rounded-xs bg-blue-400 text-white flex items-center justify-center gap-2"
         onClick={() => window.close()}
       >
         Close this page

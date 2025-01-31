@@ -85,7 +85,7 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
     <OutsideObserver onClick={handleGlobalClick}>
       {localLinkInfo ? (
         <div
-          className="fixed top-0 left-0 p-2 border bg-white max-w-96 truncate rounded shadow"
+          className="fixed top-0 left-0 p-2 border bg-white max-w-96 truncate rounded-xs shadow-xs"
           style={rootStyle}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}

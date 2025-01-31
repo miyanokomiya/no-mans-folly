@@ -82,10 +82,10 @@ const GroupItem: React.FC<GroupItemProps> = ({ type, label, count, onFilter, onD
     <div className="py-1 flex items-center justify-between">
       <span>{label}</span>
       <span className="ml-auto">({count})</span>
-      <button type="button" className="ml-2 p-1 rounded hover:bg-gray-200" onClick={handleFilter}>
+      <button type="button" className="ml-2 p-1 rounded-xs hover:bg-gray-200" onClick={handleFilter}>
         <img src={iconFilter} alt="" className="w-4 h-4" />
       </button>
-      <button type="button" className="p-1 rounded hover:bg-gray-200" onClick={handleDeselect}>
+      <button type="button" className="p-1 rounded-xs hover:bg-gray-200" onClick={handleDeselect}>
         <img src={iconDelete} alt="" className="w-4 h-4" />
       </button>
     </div>

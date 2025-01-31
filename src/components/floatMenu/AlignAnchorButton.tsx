@@ -103,7 +103,7 @@ const AnchorPanel: React.FC<AnchorPanelProps> = ({ onClick }) => {
 
   const table = useMemo(() => {
     return anchorList.map((icon, i) => (
-      <button key={icon} type="button" className="rounded border" data-index={i} onClick={onClickButton}>
+      <button key={icon} type="button" className="rounded-xs border" data-index={i} onClick={onClickButton}>
         <img src={icon} alt={altList[i]} className="w-8 h-8" />
       </button>
     ));

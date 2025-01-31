@@ -94,20 +94,20 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
 
   const loading = !!googleMode;
 
-  const buttonStyle = "w-60 py-2 px-4 rounded flex items-center justify-center";
+  const buttonStyle = "w-60 py-2 px-4 rounded-xs flex items-center justify-center";
 
   return (
     <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
       <div className="w-96">
         {updateAvailable ? (
-          <div className="mb-4 p-2 bg-green-100 border-2 rounded">
+          <div className="mb-4 p-2 bg-green-100 border-2 rounded-xs">
             <p>
               <Trans i18nKey="update_sw" />
             </p>
             <div className="mt-2 flex justify-center">
               <button
                 type="button"
-                className="w-40 py-1 px-2 rounded flex items-center justify-center bg-white border border-gray-500 font-semibold"
+                className="w-40 py-1 px-2 rounded-xs flex items-center justify-center bg-white border border-gray-500 font-semibold"
                 onClick={handleClickUpdate}
                 disabled={loading}
               >
@@ -128,7 +128,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
               onClick={onOpenWorkspace}
               disabled={loading}
             >
-              <img src={folderColoredIcon} alt="" className="w-8 h-8 bg-white rounded" />
+              <img src={folderColoredIcon} alt="" className="w-8 h-8 bg-white rounded-xs" />
               <span className="w-full text-center text-lg">{t("local_folder")}</span>
             </button>
           ) : (
@@ -142,7 +142,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
             onClick={handleGoogleClick}
             disabled={loading}
           >
-            <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
+            <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded-xs" />
             <span className="w-full text-center text-lg">{t(googleMode ? "loading" : "google_drive")}</span>
           </button>
           <a href="/terms/privacy-policy/" target="_blank" className="mt-2 text-blue-500 underline font-semibold">

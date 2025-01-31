@@ -112,13 +112,13 @@ export const SheetList: React.FC = () => {
   }, [setHidePanel]);
 
   const toggleButton = (
-    <button type="button" className="w-6 h-6 p-1 border rounded" onClick={toggleHidePanel}>
+    <button type="button" className="w-6 h-6 p-1 border rounded-xs" onClick={toggleHidePanel}>
       <img src={iconDropdown} alt="Toggle Panel" />
     </button>
   );
 
   return (
-    <div className="bg-white border rounded flex flex-col p-1 gap-1">
+    <div className="bg-white border rounded-xs flex flex-col p-1 gap-1">
       {hidePanel ? (
         <>
           <div className="-rotate-90">{toggleButton}</div>
@@ -137,7 +137,7 @@ export const SheetList: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center justify-between gap-1">
-            <button type="button" className="w-6 h-6 p-1 border rounded" onClick={handleSheetAdd}>
+            <button type="button" className="w-6 h-6 p-1 border rounded-xs" onClick={handleSheetAdd}>
               <img src={iconAdd} alt="Add Sheet" />
             </button>
             <div className="rotate-90">{toggleButton}</div>
@@ -186,7 +186,7 @@ const MinSheetButton: React.FC<MinSheetButtonProps> = ({ id, index, highlight, o
   return (
     <button
       type="button"
-      className={"min-w-6 px-1 border rounded" + (highlight ? " border-sky-400" : "")}
+      className={"min-w-6 px-1 border rounded-xs" + (highlight ? " border-sky-400" : "")}
       key={id}
       onClick={handleClick}
     >

@@ -38,7 +38,7 @@ export const ToastItem: React.FC<ToastItemProps> = ({ text, type, closeToastMess
   return (
     <div
       className={
-        "min-w-40 pl-4 rounded shadow flex items-center justify-between transition-all " +
+        "min-w-40 pl-4 rounded-xs shadow-xs flex items-center justify-between transition-all " +
         (fade ? "-translate-y-20 opacity-0 " : "") +
         getToastClass(type)
       }

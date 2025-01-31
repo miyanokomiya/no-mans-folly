@@ -172,7 +172,7 @@ export const ShapeTreePanel: React.FC = () => {
         ))}
         {draggingTarget ? (
           <div
-            className="fixed left-6 px-1 w-40 h-4 rounded left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+            className="fixed left-6 px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
             style={{
               top: `${draggingTarget[2].y}px`,
             }}
@@ -261,15 +261,15 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   const dropTarget = dropTo?.[0] === id;
   const dropGroupElm =
     dropTarget && dropTo[1] === "group" ? (
-      <div className="absolute inset-0 border-2 border-green-500 rounded pointer-events-none" />
+      <div className="absolute inset-0 border-2 border-green-500 rounded-xs pointer-events-none" />
     ) : undefined;
   const dropAboveElm =
     dropTarget && dropTo[1] === "above" ? (
-      <div className={"absolute w-full h-1 bg-green-500 rounded -translate-y-1/2 left-0 top-0 pointer-events-none"} />
+      <div className={"absolute w-full h-1 bg-green-500 rounded-xs -translate-y-1/2 left-0 top-0 pointer-events-none"} />
     ) : undefined;
   const dropBelowElm =
     dropTarget && dropTo[1] === "below" ? (
-      <div className={"absolute w-full h-1 bg-green-500 rounded translate-y-1/2 left-0 bottom-0 pointer-events-none"} />
+      <div className={"absolute w-full h-1 bg-green-500 rounded-xs translate-y-1/2 left-0 bottom-0 pointer-events-none"} />
     ) : undefined;
 
   const hasChildren = childNode.length > 0;
@@ -282,12 +282,12 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         <button
           type="button"
           className={
-            "px-1 rounded w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
+            "px-1 rounded-xs w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
           }
           onPointerDown={handleNodeDown}
           onPointerEnter={handleNodePointerEnter}
         >
-          <div className="border rounded" style={{ backgroundColor: sheetColor, padding: 2 }}>
+          <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
             <canvas ref={canvasRef} width="24" height="24" />
           </div>
           {name}

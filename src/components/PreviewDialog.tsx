@@ -314,7 +314,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
       <div className="w-full h-full relative">
         <div
           ref={wrapperRef}
-          className="w-full h-full outline-none"
+          className="w-full h-full outline-hidden"
           style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}
           onPointerDown={onMouseDown}
           onPointerMove={onMouseHover}

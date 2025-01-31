@@ -31,7 +31,7 @@ export const SheetPanel: React.FC<Props> = ({
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
 
-  const rootClass = "border rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
+  const rootClass = "border rounded-xs flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
 
   const closePopup = useCallback(() => {
     setPopupOpen(false);
@@ -106,7 +106,7 @@ export const SheetPanel: React.FC<Props> = ({
   return (
     <div className={rootClass}>
       <div className="flex justify-between">
-        <div className="rounded px-2 bg-white border flex items-center flex-1 mr-1 cursor-grab" data-anchor>
+        <div className="rounded-xs px-2 bg-white border flex items-center flex-1 mr-1 cursor-grab" data-anchor>
           {index}
         </div>
         <OutsideObserver onClick={closePopup}>

@@ -28,7 +28,7 @@ export const ImageWithSkeleton: React.FC<Props> = ({ src, alt, className, skelet
     <>
       <img ref={imgRef} alt={alt} className={className + (loaded ? "" : " hidden")} />
       <FadeIn className="duration-1000 delay-100">
-        <div className={skeletonClassName + " rounded bg-gray-200 animate-pulse" + (loaded ? " hidden" : "")} />
+        <div className={skeletonClassName + " rounded-xs bg-gray-200 animate-pulse" + (loaded ? " hidden" : "")} />
       </FadeIn>
     </>
   );

@@ -114,7 +114,7 @@ const ZoomButton: React.FC<ZoomButtonProps> = ({ children, onZoom }) => {
   return (
     <button
       type="button"
-      className="bg-white w-8 h-8 rounded border select-none touch-none text-xl flex items-center justify-center"
+      className="bg-white w-8 h-8 rounded-xs border select-none touch-none text-xl flex items-center justify-center"
       onPointerDown={handleDown}
       onContextMenu={handleContextMenu}
     >

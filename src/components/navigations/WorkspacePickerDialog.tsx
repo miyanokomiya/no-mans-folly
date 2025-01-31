@@ -125,11 +125,11 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
           {fileAccessAvailable ? (
             <button
               type="button"
-              className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+              className="w-52 py-2 px-4 rounded-xs bg-blue-400 text-white flex items-center gap-2"
               onClick={onLocalFolderSelect}
               disabled={loading}
             >
-              <img src={folderColoredIcon} alt="" className="w-8 h-8 bg-white rounded" />
+              <img src={folderColoredIcon} alt="" className="w-8 h-8 bg-white rounded-xs" />
               <span className="w-full text-center text-lg">Local folder</span>
             </button>
           ) : (
@@ -139,11 +139,11 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
         <div className="mt-4 flex flex-col items-center">
           <button
             type="button"
-            className="w-52 py-2 px-4 rounded bg-blue-400 text-white flex items-center gap-2"
+            className="w-52 py-2 px-4 rounded-xs bg-blue-400 text-white flex items-center gap-2"
             onClick={handleGoogleClick}
             disabled={loading}
           >
-            <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded" />
+            <img src={googleDriveLogo} alt="" className="w-8 h-8 bg-white rounded-xs" />
             <span className="w-full text-center text-lg">{googleMode ? "Loading..." : "Google Drive"}</span>
           </button>
         </div>

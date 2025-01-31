@@ -64,7 +64,7 @@ const ModifierButton: React.FC<ModifierButtonProps> = ({ modifier, value, onChan
     <LongPressStarter>
       <button
         type="button"
-        className={"border rounded w-14 h-12 touch-none " + (value ? "bg-lime-200" : "bg-gray-200")}
+        className={"border rounded-xs w-14 h-12 touch-none " + (value ? "bg-lime-200" : "bg-gray-200")}
         onPointerDown={handleDown}
         onPointerUp={handleUp}
       >

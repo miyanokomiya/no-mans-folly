@@ -71,7 +71,7 @@ interface DialogButtonProps {
 
 export const DialogButtonPlain: React.FC<DialogButtonProps> = ({ onClick, children }) => {
   return (
-    <button type="button" className="py-1 px-2 border rounded" onClick={onClick}>
+    <button type="button" className="py-1 px-2 border rounded-xs" onClick={onClick}>
       {children}
     </button>
   );
@@ -79,7 +79,7 @@ export const DialogButtonPlain: React.FC<DialogButtonProps> = ({ onClick, childr
 
 export const DialogButtonPrimary: React.FC<DialogButtonProps> = ({ onClick, children }) => {
   return (
-    <button type="button" className="py-1 px-2 border rounded bg-blue-400 text-white" onClick={onClick}>
+    <button type="button" className="py-1 px-2 border rounded-xs bg-blue-400 text-white" onClick={onClick}>
       {children}
     </button>
   );
@@ -87,7 +87,7 @@ export const DialogButtonPrimary: React.FC<DialogButtonProps> = ({ onClick, chil
 
 export const DialogButtonAlert: React.FC<DialogButtonProps> = ({ onClick, children }) => {
   return (
-    <button type="button" className="py-1 px-2 border rounded bg-red-400 text-white" onClick={onClick}>
+    <button type="button" className="py-1 px-2 border rounded-xs bg-red-400 text-white" onClick={onClick}>
       {children}
     </button>
   );

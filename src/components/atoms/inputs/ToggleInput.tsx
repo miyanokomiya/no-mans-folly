@@ -15,7 +15,7 @@ export const ToggleInput: React.FC<Props> = ({ value, onChange, children, name }
 
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-2">
-      <div className={"w-4 h-4 border border-black rounded " + (value ? "bg-blue-500" : "")}>
+      <div className={"w-4 h-4 border border-black rounded-xs " + (value ? "bg-blue-500" : "")}>
         {value ? <img src={iconCheck} alt="" /> : undefined}
       </div>
       {children}

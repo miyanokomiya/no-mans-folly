@@ -225,7 +225,7 @@ export const VertexField: React.FC<VertexFieldProps> = ({
       {connection ? (
         <button
           type="button"
-          className="mr-2 p-1 flex-1 border rounded flex justify-center items-center"
+          className="mr-2 p-1 flex-1 border rounded-xs flex justify-center items-center"
           title="Detach"
           onClick={handleDetachClick}
         >

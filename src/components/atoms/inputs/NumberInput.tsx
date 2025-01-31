@@ -99,7 +99,7 @@ export const NumberInput: React.FC<Props> = ({
   const siderView = slider && !disabled && isPointerLockAvailable();
   const inputClass = [
     "py-1 px-2 w-full text-right",
-    siderView ? "rounded-l" : "rounded",
+    siderView ? "rounded-l" : "rounded-xs",
     disabled ? " bg-gray-100" : "",
   ].join(" ");
 

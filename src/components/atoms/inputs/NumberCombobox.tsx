@@ -61,7 +61,7 @@ export const NumberCombobox: React.FC<Props> = ({
   );
 
   const popupAttrs = useMemo(() => {
-    const base = "absolute left-1/2 bg-white text-right border rounded shadow-md z-10";
+    const base = "absolute left-1/2 bg-white text-right border rounded-xs shadow-md z-10";
     return defaultDirection === "top"
       ? {
           className: base + " top-0",
@@ -79,7 +79,7 @@ export const NumberCombobox: React.FC<Props> = ({
         <input
           type="number"
           data-keep-focus
-          className="border rounded w-full text-right px-2 py-1"
+          className="border rounded-xs w-full text-right px-2 py-1"
           value={value}
           onFocus={onFocused}
           onInput={onInput}
@@ -92,7 +92,7 @@ export const NumberCombobox: React.FC<Props> = ({
             {options.map((o) => (
               <button
                 type="button"
-                className="hover:bg-gray-200 px-2 py-1 rounded"
+                className="hover:bg-gray-200 px-2 py-1 rounded-xs"
                 key={o.value}
                 data-value={o.value}
                 onClick={onSelected}

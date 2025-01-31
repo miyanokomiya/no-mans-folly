@@ -40,7 +40,7 @@ export const GroupAccordion: React.FC<GroupAccordionProps> = ({
 
   return (
     <div>
-      <button type="button" onClick={handleClick} className="border rounded p-2 w-full text-left">
+      <button type="button" onClick={handleClick} className="border rounded-xs p-2 w-full text-left">
         {label}
       </button>
       {selectedName === name ? (
@@ -237,7 +237,7 @@ const ListItem: React.FC<ListItemProps> = ({ name, item, level, path, size, onIc
 
   return (
     <div style={{ marginLeft: `${level / 2}rem` }}>
-      <button type="button" onClick={toggle} className="border rounded p-2 w-full text-left">
+      <button type="button" onClick={toggle} className="border rounded-xs p-2 w-full text-left">
         <p>{name}</p>
       </button>
       {!expanded ? undefined : (
@@ -314,7 +314,7 @@ export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDra
   return (
     <li title={name}>
       <ClickOrDragHandler
-        className={"rounded cursor-pointer hover:bg-gray-200 " + wrapperClass}
+        className={"rounded-xs cursor-pointer hover:bg-gray-200 " + wrapperClass}
         onClick={handleClick}
         onDragStart={handleDragStart}
       >

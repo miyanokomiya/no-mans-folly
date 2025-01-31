@@ -490,7 +490,7 @@ export const FloatMenu: React.FC<Option> = ({
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
         <ClickOrDragHandler onClick={handleMenuAnchorClick} onDragStart={handleMenuAnchorDrag}>
-          <div className={"w-3 h-8 border rounded touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
+          <div className={"w-3 h-8 border rounded-xs touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
         </ClickOrDragHandler>
         {indexCommonStyle?.fill ? (
           <PopupButton
@@ -516,7 +516,7 @@ export const FloatMenu: React.FC<Option> = ({
           >
             <div className="w-8 h-8 flex justify-center items-center">
               <div
-                className="w-1.5 h-9 border rounded-sm rotate-45"
+                className="w-1.5 h-9 border rounded-xs rotate-45"
                 style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
               ></div>
             </div>
@@ -591,7 +591,7 @@ export const FloatMenu: React.FC<Option> = ({
         ) : undefined}
         <button
           type="button"
-          className="w-10 h-10 border rounded bg-white p-1 flex justify-center items-center"
+          className="w-10 h-10 border rounded-xs bg-white p-1 flex justify-center items-center"
           onClick={handleContextMenuClick}
         >
           <img src={menuIcon} alt="Context menu" className="w-6 h-6" />
@@ -602,7 +602,7 @@ export const FloatMenu: React.FC<Option> = ({
 };
 
 const TOP_LOCATED_KEY = "top-located";
-const rootBaseClassName = "fixed border rounded shadow w-max h-max bg-white px-1 top-0 left-0";
+const rootBaseClassName = "fixed border rounded-xs shadow-xs w-max h-max bg-white px-1 top-0 left-0";
 
 function getRootAttrs(
   targetRect: IRectangle,

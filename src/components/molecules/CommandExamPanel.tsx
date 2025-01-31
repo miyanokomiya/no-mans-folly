@@ -17,11 +17,11 @@ export const CommandExamPanel: React.FC<Props> = ({ commandExams }) => {
   }, [commandExams]);
 
   return (
-    <div className="transition-opacity duration-500 bg-gray-300 bg-opacity-80 px-2 rounded" style={{ opacity }}>
+    <div className="transition-opacity duration-500 bg-gray-300 bg-opacity-80 px-2 rounded-xs" style={{ opacity }}>
       {commandExams.map((c) => (
         <div key={c.title} className="flex">
           {c.command ? (
-            <div className="mr-2 px-1 font-semibold bg-gray-400 bg-opacity-70 rounded min-w-4">{c.command}</div>
+            <div className="mr-2 px-1 font-semibold bg-gray-400 bg-opacity-70 rounded-xs min-w-4">{c.command}</div>
           ) : undefined}
           <div>{c.title}</div>
         </div>

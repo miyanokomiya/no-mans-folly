@@ -56,7 +56,7 @@ export const AppHeader: React.FC<Props> = ({
     setPopupedKey("");
   }, []);
   const storageMessage = useMemo(() => {
-    const baseClass = "rounded h-7 px-2 flex items-center text-white select-none ";
+    const baseClass = "rounded-xs h-7 px-2 flex items-center text-white select-none ";
 
     if (!canSyncWorkspace) {
       return (

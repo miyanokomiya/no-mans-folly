@@ -84,10 +84,10 @@ export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange })
             placeholder="Attach a link"
           />
         </div>
-        <button type="submit" className="w-8 h-8 p-1 border rounded">
+        <button type="submit" className="w-8 h-8 p-1 border rounded-xs">
           <img src={iconAdd} alt="Add" />
         </button>
-        <button type="button" className="w-8 h-8 p-1 border rounded" onClick={handleDelete}>
+        <button type="button" className="w-8 h-8 p-1 border rounded-xs" onClick={handleDelete}>
           <img src={iconDelete} alt="Delete" />
         </button>
       </form>

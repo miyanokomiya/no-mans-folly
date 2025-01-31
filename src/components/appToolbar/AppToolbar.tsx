@@ -23,7 +23,7 @@ import { AffineMatrix, getRectCenter } from "okageo";
 type PopupKey = "" | "shapes" | "lines" | "layouts";
 
 function getButtonClass(highlight = false) {
-  return "w-10 h-10 p-1 rounded border-2 " + (highlight ? "border-cyan-400" : "");
+  return "w-10 h-10 p-1 rounded-xs border-2 " + (highlight ? "border-cyan-400" : "");
 }
 
 const lineButtonTypeList = lineTypeList.concat([
@@ -216,7 +216,7 @@ export const AppToolbar: React.FC = () => {
       case "shapes":
         return (
           <div
-            className="bg-white absolute left-0 border p-1 rounded shadow w-max"
+            className="bg-white absolute left-0 border p-1 rounded-xs shadow-xs w-max"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             <ShapeListPanel onShapeTypeClick={handleShapeTypeClick} onShapeTypeDragStart={handleShapeTypeDragStart} />
@@ -225,14 +225,14 @@ export const AppToolbar: React.FC = () => {
       case "lines":
         return (
           <div
-            className="bg-white absolute left-0 border p-1 rounded shadow"
+            className="bg-white absolute left-0 border p-1 rounded-xs shadow-xs"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             {lineButtonTypeList.map((shape) => (
               <div
                 key={shape.type}
                 className={
-                  "w-10 h-10 border p-1 rounded mb-1 last:mb-0 cursor-pointer touch-none" +
+                  "w-10 h-10 border p-1 rounded-xs mb-1 last:mb-0 cursor-pointer touch-none" +
                   (lineType === shape.type ? " border-2 border-cyan-400" : "")
                 }
                 data-type={shape.type}
@@ -246,7 +246,7 @@ export const AppToolbar: React.FC = () => {
       case "layouts":
         return (
           <div
-            className="bg-white absolute left-0 border p-1 rounded shadow w-max"
+            className="bg-white absolute left-0 border p-1 rounded-xs shadow-xs w-max"
             style={{ top: "50%", transform: "translate(-100%, -50%)" }}
           >
             <LayoutShapeListPanel
@@ -262,7 +262,7 @@ export const AppToolbar: React.FC = () => {
 
   return (
     <OutsideObserver onClick={handleClosePopup}>
-      <div className="bg-white relative border border-1 p-1 rounded shadow flex flex-col">
+      <div className="bg-white relative border border-1 p-1 rounded-xs shadow-xs flex flex-col">
         <button
           type="button"
           className={getButtonClass(stateLabel === "RectangleSelectingReady")}

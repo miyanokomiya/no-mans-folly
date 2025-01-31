@@ -149,9 +149,9 @@ export const FloatDialog: React.FC<Props> = ({
   };
 
   return open ? (
-    <div ref={ref} className={"border-2 shadow rounded " + className} style={positionStyle}>
+    <div ref={ref} className={"border-2 shadow-xs rounded-xs " + className} style={positionStyle}>
       <div
-        className="px-1 border rounded bg-gray-200 flex items-center cursor-move select-none"
+        className="px-1 border rounded-xs bg-gray-200 flex items-center cursor-move select-none"
         onPointerDown={handleDown}
       >
         {title ? <AppText className="text-lg font-medium">{title}</AppText> : undefined}

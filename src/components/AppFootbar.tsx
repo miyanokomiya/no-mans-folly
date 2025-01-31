@@ -55,7 +55,7 @@ export const AppFootbar: React.FC = () => {
   const borderElm = <div className="h-6 border" />;
 
   return (
-    <div className="p-1 border rounded bg-white flex gap-2 items-center select-none">
+    <div className="p-1 border rounded-xs bg-white flex gap-2 items-center select-none">
       <ZoomField
         scale={getScale()}
         onScaleChange={setZoom}

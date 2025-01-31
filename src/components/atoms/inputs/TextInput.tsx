@@ -48,7 +48,7 @@ export const TextInput: React.FC<Props> = ({
         value={value}
         onChange={_onChange}
         onBlur={onBlur}
-        className="border rounded py-1 px-2 w-full"
+        className="border rounded-xs py-1 px-2 w-full"
         placeholder={placeholder}
       />
       {clearable && value ? (

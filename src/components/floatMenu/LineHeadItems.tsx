@@ -146,7 +146,7 @@ export const LineHeadItems: React.FC<Props> = ({
           </div>
         </PopupButton>
       </div>
-      <button type="button" className="w-7 h-7 p-1 border rounded" onClick={onHeadSwapClick}>
+      <button type="button" className="w-7 h-7 p-1 border rounded-xs" onClick={onHeadSwapClick}>
         <img src={iconHeadSwap} alt="Swap heads" />
       </button>
       <div onPointerEnter={handleLastVertexEnter} onPointerLeave={handleLeave}>
@@ -205,7 +205,7 @@ const LineHeadPanel: React.FC<LineHeadPanelProps> = ({ head, onChange, flip }) =
           <button
             key={t}
             type="button"
-            className={"w-10 h-10 p-1 rounded border" + (selected ? " border-cyan-400" : "")}
+            className={"w-10 h-10 p-1 rounded-xs border" + (selected ? " border-cyan-400" : "")}
             data-type={t}
             onClick={handleTypeChange}
           >

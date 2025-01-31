@@ -56,7 +56,7 @@ export const PopupButton: React.FC<Option> = ({
       <button
         ref={buttonRef}
         type="button"
-        className="border rounded bg-white p-1 flex justify-center items-center"
+        className="border rounded-xs bg-white p-1 flex justify-center items-center"
         onClick={onButtonClick}
       >
         {children}
@@ -95,7 +95,7 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
     boundsState; // For exhaustive-deps
 
     const bounds = ref.current.getBoundingClientRect();
-    const classBase = "z-10 fixed bg-white border rounded p-1 drop-shadow-md ";
+    const classBase = "z-10 fixed bg-white border rounded-xs p-1 drop-shadow-md ";
     switch (popupPosition) {
       case "right":
         return {
@@ -119,7 +119,7 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
     <div ref={ref}>
       <button
         type="button"
-        className="border rounded bg-white p-1 flex justify-center items-center"
+        className="border rounded-xs bg-white p-1 flex justify-center items-center"
         onClick={onButtonClick}
       >
         {children}
@@ -136,7 +136,7 @@ function getPopupAttrs(
   popupPosition?: Option["popupPosition"],
   defaultDirection?: PopupDirection,
 ) {
-  const classBase = "z-10 absolute bg-white border rounded drop-shadow-md ";
+  const classBase = "z-10 absolute bg-white border rounded-xs drop-shadow-md ";
   if (!buttonBounds || !popupBounds) {
     // Make invisbile until "popupBounds" is determined.
     return { className: classBase + "invisible " + (defaultDirection === "top" ? "bottom-0" : "") };

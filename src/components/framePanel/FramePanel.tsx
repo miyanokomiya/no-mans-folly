@@ -259,7 +259,7 @@ const FrameItem: React.FC<FrameItemProps> = ({
   const [draftName, setDraftName] = useState("");
 
   const rootClass =
-    "min-w-60 border-2 rounded flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
+    "min-w-60 border-2 rounded-xs flex flex-col p-1 bg-white relative" + (selected ? " border-sky-400" : "");
 
   const closePopup = useCallback(() => {
     setPopupOpen(false);
@@ -350,7 +350,7 @@ const FrameItem: React.FC<FrameItemProps> = ({
       <div className="min-h-8 flex justify-between gap-1">
         <button
           type="button"
-          className="flex-none min-w-8 h-8 rounded px-2 bg-white border flex items-center justify-center cursor-grab"
+          className="flex-none min-w-8 h-8 rounded-xs px-2 bg-white border flex items-center justify-center cursor-grab"
           data-anchor
         >
           {index + 1}

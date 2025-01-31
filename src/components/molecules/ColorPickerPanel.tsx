@@ -115,7 +115,7 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
           {isEyedropperAvailable() ? (
             <button
               type="button"
-              className="w-8 h-8 border rounded flex items-center justify-center"
+              className="w-8 h-8 border rounded-xs flex items-center justify-center"
               onClick={handleEyedropperClick}
             >
               <img src={eyeDropperIcon} alt="Eyedropper" className="w-6 h-6" />
@@ -286,7 +286,7 @@ export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-1">
-      <div className="w-8 h-8 rounded border" style={{ backgroundColor: hex }} />
+      <div className="w-8 h-8 rounded-xs border" style={{ backgroundColor: hex }} />
       <div className="w-20 flex items-center">
         <span className="text-lg">#</span>
         <TextInput value={draftValue} onChange={setDraftValue} onBlur={finish} keepFocus placeholder="000000" />

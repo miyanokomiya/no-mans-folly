@@ -314,7 +314,7 @@ describe("getWavePathControl", () => {
 });
 
 describe("getCornerRadiusArc", () => {
-  test("should return corner point when the corner isn't rounded", () => {
+  test("should return corner point when the corner isn't rounded-xs", () => {
     const p1 = { x: 0, y: 0 };
     expect(getCornerRadiusArc({ x: 0, y: 0 }, p1, { x: 0, y: 10 }, 4)).toEqual([p1, p1, p1]);
     expect(getCornerRadiusArc({ x: -10, y: 0 }, p1, { x: 0, y: 10 }, 0)).toEqual([p1, p1, p1]);

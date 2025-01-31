@@ -27,7 +27,7 @@ export function SelectInput<T extends ValueType>({
     <select
       value={value}
       onChange={handleChange}
-      className="border rounded py-1 px-2 w-full"
+      className="border rounded-xs py-1 px-2 w-full"
       data-keep-focus={keepFocus}
     >
       {options.map((o) => (

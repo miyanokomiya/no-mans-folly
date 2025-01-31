@@ -24,7 +24,7 @@ export const IconButton: React.FC<Props> = ({ value, icon, size, highlight, flip
   return (
     <button
       type="button"
-      className={className + " border p-1 rounded touch-none" + (highlight ? " border-2 border-cyan-400" : "")}
+      className={className + " border p-1 rounded-xs touch-none" + (highlight ? " border-2 border-cyan-400" : "")}
       disabled={disabled}
       onClick={handleClick}
     >
