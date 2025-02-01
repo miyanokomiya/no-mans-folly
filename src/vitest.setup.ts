@@ -40,3 +40,12 @@ expect.extend({
     };
   },
 });
+
+if (!global.localStorage) {
+  let storage: { [key: string]: any } = {};
+  global.localStorage = {
+    getItem: (key: string) => storage[key],
+    setItem: (key: string, value: any) => (storage[key] = value),
+    clear: () => (storage = {}),
+  } as any;
+}
