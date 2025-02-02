@@ -49,7 +49,7 @@ export const Dialog: React.FC<Props> = ({
   }, []);
 
   return open ? (
-    <dialog ref={ref} onClick={onClickBackdrop} className={className}>
+    <dialog ref={ref} onClick={onClickBackdrop} className={"m-auto " + className}>
       {hideClose ? undefined : (
         <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={closeDialog}>
           <img src={iconDelete} alt="Close" />
