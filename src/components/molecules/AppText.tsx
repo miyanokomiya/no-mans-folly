@@ -96,7 +96,7 @@ const TerminologyPopup = ({ item, p, portal, onClose }: TerminologyPopupProps): 
 
   const elm = (
     <div
-      className="p-2 border rounded-xs bg-white shadow-xs fixed max-w-60"
+      className="p-2 border rounded-xs bg-white shadow-xs fixed max-w-60 select-none touch-none"
       style={{ left: p.x, top: p.y }}
       onClick={handleClick}
     >
