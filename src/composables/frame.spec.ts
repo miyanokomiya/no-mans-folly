@@ -3,7 +3,13 @@ import { createShape, getCommonStruct } from "../shapes";
 import { FrameShape } from "../shapes/frame";
 import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
-import { getAllFrameShapes, getFrameRect, getFrameShapeIdsInBranches, getRootShapeIdsByFrame } from "./frame";
+import {
+  getAllFrameShapes,
+  getFrameRect,
+  getFrameShapeIdsInBranches,
+  getFrameTree,
+  getRootShapeIdsByFrame,
+} from "./frame";
 import { COLORS } from "../utils/color";
 import { FrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 
@@ -127,5 +133,49 @@ describe("getFrameRect", () => {
     });
     expect(getFrameRect(frame)).toEqualRect({ x: 10, y: 20, width: 100, height: 200 });
     expect(getFrameRect(frame, true), "include border").toEqualRect({ x: 8.5, y: 18.5, width: 103, height: 203 });
+  });
+});
+
+describe("getFrameTree", () => {
+  const frame_align = createShape<FrameAlignGroupShape>(getCommonStruct, "frame_align_group", {
+    id: "frame_align",
+    p: { x: 0, y: 0 },
+    width: 20,
+    height: 20,
+  });
+  const frame1 = createShape<FrameShape>(getCommonStruct, "frame", {
+    id: "frame1",
+  });
+  const frame2 = {
+    ...frame1,
+    id: "frame2",
+    parentId: frame_align.id,
+  };
+  const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect0",
+  });
+
+  test("should return frame related tree", () => {
+    const shapes = [frame1, frame2, frame_align, rect0];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+    expect(getFrameTree(shapeComposite)).toEqual([
+      {
+        id: "frame1",
+        children: [],
+      },
+      {
+        id: "frame_align",
+        children: [
+          {
+            id: "frame2",
+            parentId: "frame_align",
+            children: [],
+          },
+        ],
+      },
+    ]);
   });
 });

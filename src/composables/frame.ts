@@ -11,6 +11,7 @@ import { createShape, getOrderPriority } from "../shapes";
 import { CanvasCTX } from "../utils/types";
 import { FrameGroup } from "../shapes/frameGroups/core";
 import { isFrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
+import { TreeNode } from "../utils/tree";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
@@ -46,36 +47,39 @@ export function getFrameRect(frame: FrameShape, includeBorder = false): IRectang
   return includeBorder ? expandRect(rect, getStrokeWidth(frame.stroke) / 2) : rect;
 }
 
-export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite, scale = 1) {
-  const frameShapes = getAllFrameShapes(shapeComposite);
-  if (frameShapes.length > 0) {
-    ctx.textBaseline = "bottom";
-    applyDefaultTextStyle(ctx, 18 * scale);
-    applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
-    applyFillStyle(ctx, { color: COLORS.BLACK });
-    const mergin = 4 * scale;
-    frameShapes.forEach((frame, i) => {
-      const rect = getFrameRect(frame, true);
-      const text = `${i + 1}. ${frame.name}`;
-      ctx.strokeText(text, rect.x, rect.y - mergin);
-      ctx.fillText(text, rect.x, rect.y - mergin);
-    });
-  }
+export function getFrameTree(shapeComposite: ShapeComposite): TreeNode[] {
+  return shapeComposite.mergedShapeTree.filter((n) => {
+    const s = shapeComposite.shapeMap[n.id];
+    return isFrameShape(s) || isFrameAlignGroupShape(s);
+  });
+}
 
-  const frameGroupShapes = getAllFrameGroupShapes(shapeComposite);
-  if (frameGroupShapes.length > 0) {
-    ctx.textBaseline = "bottom";
-    applyDefaultTextStyle(ctx, 18 * scale);
-    applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
-    applyFillStyle(ctx, { color: COLORS.BLACK });
-    const mergin = 4 * scale;
-    frameGroupShapes.forEach((frameGroup, i) => {
-      const rect = shapeComposite.getWrapperRect(frameGroup, true);
-      const text = `${i + 1}. ${frameGroup.name}`;
-      ctx.strokeText(text, rect.x, rect.y - mergin);
-      ctx.fillText(text, rect.x, rect.y - mergin);
-    });
-  }
+export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite, scale = 1) {
+  const frameTree = getFrameTree(shapeComposite);
+  if (frameTree.length === 0) return;
+
+  ctx.textBaseline = "bottom";
+  applyDefaultTextStyle(ctx, 18 * scale);
+  applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
+  applyFillStyle(ctx, { color: COLORS.BLACK });
+  frameTree.forEach((node, i) => renderFrameNameStep(ctx, shapeComposite, node, i, scale));
+}
+
+function renderFrameNameStep(
+  ctx: CanvasCTX,
+  shapeComposite: ShapeComposite,
+  node: TreeNode,
+  index: number,
+  scale: number,
+) {
+  const shape = shapeComposite.mergedShapeMap[node.id] as FrameShape | FrameGroup;
+  const rect = shapeComposite.getWrapperRect(shape, true);
+  const text = `${index + 1}. ${shape.name}`;
+  const mergin = 4 * scale;
+  ctx.strokeText(text, rect.x, rect.y - mergin);
+  ctx.fillText(text, rect.x, rect.y - mergin);
+
+  node.children.forEach((c, j) => renderFrameNameStep(ctx, shapeComposite, c, j, scale));
 }
 
 export function createNewFrameFromSrc(

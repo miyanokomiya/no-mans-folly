@@ -10,13 +10,12 @@ import { getModifierOptions } from "../../utils/devices";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
 import { rednerRGBA } from "../../utils/color";
 import { FrameShape, isFrameShape } from "../../shapes/frame";
-import { isFrameAlignGroupShape } from "../../shapes/frameGroups/frameAlignGroup";
 import { FrameItem } from "./FrameItem";
 import { FrameThumbnail } from "./FrameThumbnail";
 import { ImageStore } from "../../composables/imageStore";
 import { DocOutput } from "../../models/document";
 import { FrameGroup } from "../../shapes/frameGroups/core";
-import { createNewFrameFromSrc, getAllFrameShapes } from "../../composables/frame";
+import { createNewFrameFromSrc, getAllFrameShapes, getFrameTree } from "../../composables/frame";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 
 type DropOperation = "above" | "below";
@@ -37,24 +36,19 @@ export const FrameTreePanel: React.FC = () => {
   }, [shapeComposite, selectedLastId]);
 
   const rootNodeProps = useMemo(() => {
-    return shapeComposite.mergedShapeTree
-      .filter((n) => {
-        const s = shapeComposite.shapeMap[n.id];
-        return isFrameShape(s) || isFrameAlignGroupShape(s);
-      })
-      .map((n, i) =>
-        getUITreeNodeProps(
-          shapeComposite,
-          selectedIdMap,
-          selectedLastId,
-          selectionScope,
-          n,
-          i,
-          sheetColor,
-          documentMap,
-          imageStore,
-        ),
-      );
+    return getFrameTree(shapeComposite).map((n, i) =>
+      getUITreeNodeProps(
+        shapeComposite,
+        selectedIdMap,
+        selectedLastId,
+        selectionScope,
+        n,
+        i,
+        sheetColor,
+        documentMap,
+        imageStore,
+      ),
+    );
   }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope, sheetColor, documentMap, imageStore]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
@@ -70,7 +64,7 @@ export const FrameTreePanel: React.FC = () => {
   );
 
   const handleNodeSelect = useCallback(
-    (id: string, multi = false, range = false) => {
+    (id: string, multi = false, range = false, noZoom = false) => {
       const ctx = getCtx();
 
       if (multi) {
@@ -79,16 +73,18 @@ export const FrameTreePanel: React.FC = () => {
         selectShapesInRange(ctx, id);
       } else {
         ctx.selectShape(id);
-        handleEvent({
-          type: "state",
-          data: {
-            name: "PanToShape",
-            options: {
-              ids: [id],
-              duration: 150,
+        if (!noZoom) {
+          handleEvent({
+            type: "state",
+            data: {
+              name: "PanToShape",
+              options: {
+                ids: [id],
+                duration: 150,
+              },
             },
-          },
-        });
+          });
+        }
       }
     },
     [getCtx, handleEvent],
@@ -254,7 +250,7 @@ interface UITreeNodeProps {
   draggable: boolean;
   dropTo?: [string, DropOperation];
   onHover?: (id: string) => void;
-  onSelect?: (id: string, multi?: boolean, range?: boolean) => void;
+  onSelect?: (id: string, multi?: boolean, range?: boolean, noZoom?: boolean) => void;
   onDragStart?: (e: React.PointerEvent, id: string) => void;
   onNameChange?: (id: string, name: string) => void;
   onInsertBelow?: (id: string) => void;
@@ -282,7 +278,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   getThumbnail,
 }) => {
   const handleSelect = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent, noZoom = false) => {
       const option = getModifierOptions(e);
       if (option.ctrl && primeSibling) {
         onSelect?.(id, true);
@@ -294,7 +290,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
       }
 
       if (!selected) {
-        onSelect?.(id);
+        onSelect?.(id, false, false, noZoom);
       }
     },
     [id, onSelect, primeSibling, selected],
@@ -302,7 +298,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
 
   const handleNodeDown = useCallback(
     (e: React.PointerEvent) => {
-      handleSelect(e);
+      handleSelect(e, true);
 
       if (draggable) {
         onDragStart?.(e, id);
