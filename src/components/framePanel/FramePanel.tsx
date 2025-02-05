@@ -19,6 +19,7 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 import { FrameExportDialog } from "./FrameExportDialog";
 import { FrameToolPanel } from "./FrameToolPanel";
+import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -126,12 +127,13 @@ export const FramePanel: React.FC = () => {
       const target = frameShapes[from];
       const beforeFindex = frameShapes[to - 1]?.findex ?? null;
       const nextFindex = frameShapes[to]?.findex ?? null;
-
-      ctx.patchShapes({
+      const patch = {
         [target.id]: {
           findex: generateKeyBetweenAllowSame(beforeFindex, nextFindex),
         },
-      });
+      };
+      const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), { update: patch });
+      ctx.patchShapes(layoutPatch);
     },
     [frameShapes, getCtx],
   );

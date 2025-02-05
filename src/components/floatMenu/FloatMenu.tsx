@@ -33,7 +33,7 @@ import { newElbowLineHandler } from "../../composables/elbowLineHandler";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { BoxPaddingButton } from "./BoxPaddingButton";
 import { getPatchByChangingCurveType } from "../../shapes/utils/curveLine";
-import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
+import { getPatchAfterLayouts, getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { getShapeTypeList } from "../../composables/shapeTypes";
@@ -430,15 +430,21 @@ export const FloatMenu: React.FC<Option> = ({
 
   const onClickStackLast = useCallback(() => {
     const ids = selectedShapes.filter((s) => !stackOrderDisabled(getShapeStruct, s)).map((s) => s.id);
-    patchShapes(patchShapesOrderToLast(ids, createLastIndex()));
+    const layoutPatch = getPatchByLayouts(shapeStore.shapeComposite, {
+      update: patchShapesOrderToLast(ids, createLastIndex()),
+    });
+    patchShapes(layoutPatch);
     focusBack?.();
-  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createLastIndex]);
+  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createLastIndex, shapeStore]);
 
   const onClickStackFirst = useCallback(() => {
     const ids = selectedShapes.filter((s) => !stackOrderDisabled(getShapeStruct, s)).map((s) => s.id);
-    patchShapes(patchShapesOrderToFirst(ids, createFirstIndex()));
+    const layoutPatch = getPatchByLayouts(shapeStore.shapeComposite, {
+      update: patchShapesOrderToFirst(ids, createFirstIndex()),
+    });
+    patchShapes(layoutPatch);
     focusBack?.();
-  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createFirstIndex]);
+  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createFirstIndex, shapeStore]);
 
   const canIndexShapeHaveTextPadding = useMemo<boolean>(() => {
     if (!indexShape) return false;
