@@ -19,9 +19,15 @@ export function getFrameAlignLayoutPatch(
   );
 
   const layoutResult = patchPipe(patchFns, {});
+  const resultEntries = Object.entries(layoutResult.patch);
+  if (resultEntries.length === 0) return {};
+
+  // Remove temporary effect to get shapes in a frame based on their original places.
+  // FIXME: Here isn't the best place to get this static shape composite.
+  const staticShapeComposite = getNextShapeComposite(shapeComposite, {});
   const layoutPatch: { [id: string]: Partial<Shape> } = {};
-  Object.entries(layoutResult.patch).forEach(([id, val]) => {
-    const shape = shapeComposite.shapeMap[id];
+  resultEntries.forEach(([id, val]) => {
+    const shape = staticShapeComposite.shapeMap[id];
 
     if (isFrameShape(shape)) {
       const nextFrame = layoutResult.result[id] as FrameShape;
@@ -29,10 +35,9 @@ export function getFrameAlignLayoutPatch(
 
       const v = sub(nextFrame.p, shape.p);
       const affine: AffineMatrix = [1, 0, 0, 1, v.x, v.y];
-      const chidlren = getRootShapeIdsByFrame(shapeComposite, shape);
-      chidlren.forEach((cid) => {
-        const c = shapeComposite.shapeMap[cid];
-        layoutPatch[cid] = shapeComposite.transformShape(c, affine);
+      const chidlren = getRootShapeIdsByFrame(staticShapeComposite, shape);
+      staticShapeComposite.getAllTransformTargets(chidlren).forEach((c) => {
+        layoutPatch[c.id] = staticShapeComposite.transformShape(c, affine);
       });
     } else {
       layoutPatch[id] = val;
