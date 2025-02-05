@@ -42,7 +42,7 @@ import { struct as board_card } from "./board/boardCard";
 import { struct as align_box } from "./align/alignBox";
 
 import { struct as frame } from "./frame";
-import { struct as frame_align_group } from "./frameGroups/alignBoxForFrame";
+import { struct as frame_align_group } from "./frameGroups/frameAlignGroup";
 
 export const SHAPE_COMMON_STRUCTS: {
   [type: string]: ShapeStruct<any>;

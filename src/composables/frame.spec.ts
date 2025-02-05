@@ -5,6 +5,7 @@ import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
 import { getAllFrameShapes, getFrameRect, getRootShapeIdsByFrame } from "./frame";
 import { COLORS } from "../utils/color";
+import { FrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 
 describe("getAllFrameShapes", () => {
   test("getAllFrameShapes", () => {
@@ -71,6 +72,28 @@ describe("getRootShapeIdsByFrame", () => {
       getStruct: getCommonStruct,
     });
     expect(getRootShapeIdsByFrame(shapeComposite, frame)).toEqual([rect0.id]);
+  });
+
+  test("should ignore shapes having same or small order priority", () => {
+    const frame1 = {
+      ...frame,
+      id: "frame1",
+      width: 20,
+      height: 20,
+    };
+    const frame_align = createShape<FrameAlignGroupShape>(getCommonStruct, "frame_align_group", {
+      id: "frame_align",
+      p: { x: 0, y: 0 },
+      width: 20,
+      height: 20,
+    });
+    const shapes = [frame, frame1, frame_align];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      tmpShapeMap: { [rect0.id]: { p: { x: 10, y: 10 } } },
+      getStruct: getCommonStruct,
+    });
+    expect(getRootShapeIdsByFrame(shapeComposite, frame)).toEqual([]);
   });
 });
 

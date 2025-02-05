@@ -7,10 +7,10 @@ import { applyDefaultTextStyle } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { applyFillStyle } from "../utils/fillStyle";
 import { GetShapeStruct } from "../shapes/core";
-import { createShape } from "../shapes";
+import { createShape, getOrderPriority } from "../shapes";
 import { CanvasCTX } from "../utils/types";
 import { FrameGroup } from "../shapes/frameGroups/core";
-import { isFrameAlignGroupShape } from "../shapes/frameGroups/alignBoxForFrame";
+import { isFrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
@@ -22,10 +22,13 @@ export function getAllFrameGroupShapes(shapeComposite: ShapeComposite): FrameGro
 
 export function getRootShapeIdsByFrame(shapeComposite: ShapeComposite, frame: FrameShape): string[] {
   const frameRect = shapeComposite.getWrapperRect(frame);
+  const frameOrderPriority = getOrderPriority(shapeComposite.getShapeStruct, frame);
+
   return shapeComposite.mergedShapeTree
     .filter((t) => {
       const s = shapeComposite.mergedShapeMap[t.id];
-      if (isFrameShape(s)) return false;
+      const orderPriority = getOrderPriority(shapeComposite.getShapeStruct, s);
+      if (orderPriority <= frameOrderPriority) return false;
 
       const rect = shapeComposite.getWrapperRect(s);
       return isPointOnRectangle(frameRect, getRectCenter(rect));
