@@ -299,30 +299,18 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     {
       type: "resize-by-segment",
       index: 1,
-      p:
-        alignBox.direction === 0
-          ? {
-              x: alignBoxRect.x + alignBoxRect.width / 2,
-              y: alignBoxRect.y + alignBoxRect.height,
-            }
-          : {
-              x: alignBoxRect.x + alignBoxRect.width,
-              y: alignBoxRect.y + alignBoxRect.height / 2,
-            },
+      p: {
+        x: alignBoxRect.x + alignBoxRect.width,
+        y: alignBoxRect.y + alignBoxRect.height / 2,
+      },
     },
     {
       type: "resize-by-segment",
       index: 2,
-      p:
-        alignBox.direction === 0
-          ? {
-              x: alignBoxRect.x + alignBoxRect.width,
-              y: alignBoxRect.y + alignBoxRect.height / 2,
-            }
-          : {
-              x: alignBoxRect.x + alignBoxRect.width / 2,
-              y: alignBoxRect.y + alignBoxRect.height,
-            },
+      p: {
+        x: alignBoxRect.x + alignBoxRect.width / 2,
+        y: alignBoxRect.y + alignBoxRect.height,
+      },
     },
   ];
 
