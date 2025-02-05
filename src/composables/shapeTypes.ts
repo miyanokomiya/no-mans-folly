@@ -63,6 +63,7 @@ import { newFrameSelectedState } from "./states/appCanvas/frame/frameSelectedSta
 import { newCurlyBracketSelectedState } from "./states/appCanvas/brackets/curlyBracketSelectedState";
 import { newBracketSelectedState } from "./states/appCanvas/brackets/bracketSelectedState";
 import { newAngleBracketSelectedState } from "./states/appCanvas/brackets/angleBracketSelectedState";
+import { newFrameAlignGroupSelectedState } from "./states/appCanvas/frameAlign/frameAlignGroupSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -174,6 +175,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newAlignBoxSelectedState;
     case "frame":
       return newFrameSelectedState;
+    case "frame_align_group":
+      return newFrameAlignGroupSelectedState;
     default:
       return newSingleSelectedState;
   }

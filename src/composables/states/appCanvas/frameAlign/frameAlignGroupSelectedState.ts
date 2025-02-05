@@ -9,13 +9,12 @@ import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
-import { newRotatingState } from "../rotatingState";
 import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
-import { handleAlignBoxHitResult } from "./utils";
+import { handleAlignBoxHitResult } from "../align/utils";
 
-export const newAlignBoxSelectedState = defineIntransientState(() => {
+export const newFrameAlignGroupSelectedState = defineIntransientState(() => {
   let targetId: string;
   let boundingBox: BoundingBox;
   let alignBoxHandler: AlignBoxHandler;
@@ -28,6 +27,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(target),
       locked: target.locked,
+      noRotation: true,
     });
     alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,
@@ -72,8 +72,6 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
                   case "corner":
                   case "segment":
                     return () => newResizingState({ boundingBox, hitResult });
-                  case "rotation":
-                    return () => newRotatingState({ boundingBox });
                   case "move":
                     return () => ctx.states.newMovingHubState({ boundingBox });
                 }

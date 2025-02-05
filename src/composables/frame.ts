@@ -16,6 +16,11 @@ export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] 
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
 }
 
+export function getFrameShapeIdsInBranches(shapeComposite: ShapeComposite, branchIds: string[]): string[] {
+  const allCandidates = shapeComposite.getAllBranchMergedShapes(branchIds);
+  return allCandidates.filter((s) => isFrameShape(s)).map((s) => s.id);
+}
+
 export function getAllFrameGroupShapes(shapeComposite: ShapeComposite): FrameGroup[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameAlignGroupShape(s));
 }

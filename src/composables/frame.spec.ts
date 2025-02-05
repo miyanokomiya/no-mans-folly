@@ -3,12 +3,12 @@ import { createShape, getCommonStruct } from "../shapes";
 import { FrameShape } from "../shapes/frame";
 import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
-import { getAllFrameShapes, getFrameRect, getRootShapeIdsByFrame } from "./frame";
+import { getAllFrameShapes, getFrameRect, getFrameShapeIdsInBranches, getRootShapeIdsByFrame } from "./frame";
 import { COLORS } from "../utils/color";
 import { FrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 
 describe("getAllFrameShapes", () => {
-  test("getAllFrameShapes", () => {
+  test("should return all frames", () => {
     const frame0 = createShape<FrameShape>(getCommonStruct, "frame", { id: "frame0" });
     const frame1 = { ...frame0, id: "frame1" };
     const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "rect0" });
@@ -20,6 +20,25 @@ describe("getAllFrameShapes", () => {
       getStruct: getCommonStruct,
     });
     expect(getAllFrameShapes(shapeComposite)).toEqual([frame0, frame1]);
+  });
+});
+
+describe("getFrameShapeIdsInBranches", () => {
+  test("should return all frames within the branches", () => {
+    const frameGroup0 = createShape(getCommonStruct, "frame_align_group", { id: "frameGroup0" });
+    const frame0 = createShape<FrameShape>(getCommonStruct, "frame", { id: "frame0", parentId: frameGroup0.id });
+    const frame1 = { ...frame0, id: "frame1" };
+    const frame2 = { ...frame0, id: "frame2", parentId: undefined };
+    const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "rect0" });
+    const shapes = [frameGroup0, frame0, frame1, frame2, rect0];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      tmpShapeMap: { [rect0.id]: { p: { x: 10, y: 10 } } },
+      getStruct: getCommonStruct,
+    });
+    expect(getFrameShapeIdsInBranches(shapeComposite, [])).toEqual([]);
+    expect(getFrameShapeIdsInBranches(shapeComposite, [frameGroup0.id])).toEqual([frame0.id, frame1.id]);
+    expect(getFrameShapeIdsInBranches(shapeComposite, [frame2.id])).toEqual([frame2.id]);
   });
 });
 
