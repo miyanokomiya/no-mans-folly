@@ -8,6 +8,7 @@ import { getAlignLayoutPatchFunctions } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
 import { getCurveLinePatch } from "./curveLineHandler";
+import { getFrameAlignLayoutPatch } from "./frameGroups/frameAlignGroupHandler";
 import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { ShapeComposite, getDeleteTargetIds, getNextShapeComposite } from "./shapeComposite";
@@ -55,6 +56,7 @@ export function getPatchByLayouts(
   const result = patchPipe(
     [
       () => patchInfo.update ?? {},
+      () => getFrameAlignLayoutPatch(shapeComposite, patchInfo),
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       (_, patch) => {
@@ -110,6 +112,7 @@ export function getPatchInfoByLayouts(
   const patchResult = patchPipe(
     [
       () => adjustedPatchInfo.update ?? {},
+      () => getFrameAlignLayoutPatch(shapeComposite, adjustedPatchInfo),
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       (_, patch) => {

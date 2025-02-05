@@ -3,6 +3,8 @@ import { canShapeGrouped } from "../../../shapes";
 import { AlignBoxShape, isAlignBoxShape } from "../../../shapes/align/alignBox";
 import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
+import { isFrameShape } from "../../../shapes/frame";
+import { FrameAlignGroupShape, isFrameAlignGroupShape } from "../../../shapes/frameGroups/frameAlignGroup";
 import { findBackward, mergeMap } from "../../../utils/commons";
 import { canAttendToAlignBox } from "../../alignHandler";
 import { BoundingBox } from "../../boundingBox";
@@ -12,6 +14,7 @@ import { PointerMoveEvent, TransitionValue } from "../core";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
 import { newBoardCardMovingState } from "./board/boardCardMovingState";
 import { AppCanvasStateContext } from "./core";
+import { newMovingFrameInAlignState } from "./frameAlign/movingFrameInAlignState";
 
 /**
  * Returns layout dedicated moving state when target shapes are on a layout.
@@ -104,5 +107,43 @@ function shouldDetachParentWhenOutside(shapeMap: { [id: string]: Shape }, id: st
   const parent = shapeMap[shape.parentId];
   if (!parent) return false;
 
-  return isAlignBoxShape(parent) || isBoardRootShape(parent);
+  return isFrameAlignGroupShape(parent) || isAlignBoxShape(parent) || isBoardRootShape(parent);
+}
+
+/**
+ * Parallel to "handlePointerMoveOnLayout" but for frame layouts.
+ */
+export function handlePointerMoveOnFrameLayout(
+  ctx: AppCanvasStateContext,
+  event: PointerMoveEvent,
+  movingIds: string[],
+  indexId: string,
+  option?: { boundingBox?: BoundingBox },
+): TransitionValue<AppCanvasStateContext> {
+  if (event.data.ctrl) return;
+  if (movingIds.length === 0) return;
+
+  const shapeComposite = ctx.getShapeComposite();
+
+  const frameIds = movingIds.filter((id) => {
+    const s = shapeComposite.shapeMap[id];
+    return isFrameShape(s);
+  });
+  if (frameIds.length === 0) return;
+
+  const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[indexId]);
+  const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, movingIds);
+  if (shapeAtPoint) {
+    const layoutShape = getClosestShapeByType<FrameAlignGroupShape>(
+      shapeComposite,
+      shapeAtPoint.id,
+      "frame_align_group",
+    );
+    if (layoutShape) {
+      return {
+        type: "stack-resume",
+        getState: () => newMovingFrameInAlignState({ boundingBox: option?.boundingBox, alignBoxId: layoutShape.id }),
+      };
+    }
+  }
 }

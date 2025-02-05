@@ -12,7 +12,11 @@ import {
   newConnectionRenderer,
 } from "../../connectedLineHandler";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { getPatchByPointerUpOutsideLayout, handlePointerMoveOnLayout } from "./movingShapeLayoutHandler";
+import {
+  getPatchByPointerUpOutsideLayout,
+  handlePointerMoveOnLayout,
+  handlePointerMoveOnFrameLayout,
+} from "./movingShapeLayoutHandler";
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 import { mergeMap } from "../../../utils/commons";
@@ -122,6 +126,9 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
         case "pointermove": {
           beforeMove = false;
           if (indexShapeId) {
+            const onFrameLayoutResult = handlePointerMoveOnFrameLayout(ctx, event, targetIds, indexShapeId, option);
+            if (onFrameLayoutResult) return onFrameLayoutResult;
+
             const onLayoutResult = handlePointerMoveOnLayout(ctx, event, targetIds, indexShapeId, option);
             if (onLayoutResult) return onLayoutResult;
 
