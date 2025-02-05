@@ -9,9 +9,15 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { GetShapeStruct } from "../shapes/core";
 import { createShape } from "../shapes";
 import { CanvasCTX } from "../utils/types";
+import { FrameGroup } from "../shapes/frameGroups/core";
+import { isFrameAlignGroupShape } from "../shapes/frameGroups/alignBoxForFrame";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
+}
+
+export function getAllFrameGroupShapes(shapeComposite: ShapeComposite): FrameGroup[] {
+  return shapeComposite.mergedShapes.filter((s) => isFrameAlignGroupShape(s));
 }
 
 export function getRootShapeIdsByFrame(shapeComposite: ShapeComposite, frame: FrameShape): string[] {
@@ -43,6 +49,21 @@ export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite,
     frameShapes.forEach((frame, i) => {
       const rect = getFrameRect(frame, true);
       const text = `${i + 1}. ${frame.name}`;
+      ctx.strokeText(text, rect.x, rect.y - mergin);
+      ctx.fillText(text, rect.x, rect.y - mergin);
+    });
+  }
+
+  const frameGroupShapes = getAllFrameGroupShapes(shapeComposite);
+  if (frameGroupShapes.length > 0) {
+    ctx.textBaseline = "bottom";
+    applyDefaultTextStyle(ctx, 18 * scale);
+    applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
+    applyFillStyle(ctx, { color: COLORS.BLACK });
+    const mergin = 4 * scale;
+    frameGroupShapes.forEach((frameGroup, i) => {
+      const rect = shapeComposite.getWrapperRect(frameGroup, true);
+      const text = `${i + 1}. ${frameGroup.name}`;
       ctx.strokeText(text, rect.x, rect.y - mergin);
       ctx.fillText(text, rect.x, rect.y - mergin);
     });

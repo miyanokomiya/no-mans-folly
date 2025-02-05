@@ -50,27 +50,30 @@ export const FramePanel: React.FC = () => {
     [getCtx, frameShapes],
   );
 
-  const handleAdd = useCallback(() => {
-    const ctx = getCtx();
-    const selectedShape = lastSelectedId ? ctx.getShapeComposite().shapeMap[lastSelectedId] : undefined;
-    if (selectedShape && isFrameShape(selectedShape)) {
-      handleInsertBelow(selectedShape.id);
-      return;
-    }
+  const handleAdd = useCallback(
+    (type: string) => {
+      const ctx = getCtx();
+      const selectedShape = lastSelectedId ? ctx.getShapeComposite().shapeMap[lastSelectedId] : undefined;
+      if (selectedShape && isFrameShape(selectedShape)) {
+        handleInsertBelow(selectedShape.id);
+        return;
+      }
 
-    const frame = createShape(ctx.getShapeStruct, "frame", { id: ctx.generateUuid(), findex: ctx.createLastIndex() });
-    const minShapeComposite = newShapeComposite({
-      getStruct: ctx.getShapeStruct,
-      shapes: [frame],
-    });
-    const wrapperCenter = getRectCenter(minShapeComposite.getWrapperRect(frame));
-    const viewCenter = getRectCenter(ctx.getViewRect());
-    const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
-    const shape = { ...frame, ...minShapeComposite.transformShape(frame, affine) };
+      const frame = createShape(ctx.getShapeStruct, type, { id: ctx.generateUuid(), findex: ctx.createLastIndex() });
+      const minShapeComposite = newShapeComposite({
+        getStruct: ctx.getShapeStruct,
+        shapes: [frame],
+      });
+      const wrapperCenter = getRectCenter(minShapeComposite.getWrapperRect(frame));
+      const viewCenter = getRectCenter(ctx.getViewRect());
+      const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
+      const shape = { ...frame, ...minShapeComposite.transformShape(frame, affine) };
 
-    ctx.addShapes([shape]);
-    ctx.selectShape(shape.id);
-  }, [getCtx, lastSelectedId, handleInsertBelow]);
+      ctx.addShapes([shape]);
+      ctx.selectShape(shape.id);
+    },
+    [getCtx, lastSelectedId, handleInsertBelow],
+  );
 
   const handleNameChange = useCallback(
     (id: string, name: string) => {
@@ -224,7 +227,7 @@ export const FramePanel: React.FC = () => {
         />
       </div>
       <div>
-        <FrameToolPanel onFrameAdd={handleAdd} />
+        <FrameToolPanel onShapeAdd={handleAdd} />
       </div>
       <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
     </div>
