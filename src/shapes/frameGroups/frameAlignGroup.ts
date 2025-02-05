@@ -13,6 +13,9 @@ export const struct: ShapeStruct<FrameAlignGroupShape> = {
     return {
       ...alignBoxStruct.create(arg),
       type: "frame_align_group",
+      gapC: arg.gapC ?? 10,
+      gapR: arg.gapR ?? 10,
+      padding: arg.padding ?? [10, 10, 10, 10],
       name: arg.name ?? "new align",
     };
   },
