@@ -65,6 +65,7 @@ export function handleAlignBoxHitResult(
           resizeFn: (_, affine) => {
             return { [targetShape.id]: shapeComposite.transformShape(targetShape, affine) };
           },
+          hideBoundingBox: true,
         });
     }
   }

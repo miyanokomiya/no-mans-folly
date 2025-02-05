@@ -34,6 +34,7 @@ interface Option {
   hitResult: HitResult;
   // Set this option to implement exclusive resizing result with conventional resizing behavior.
   resizeFn?: (targetMap: { [id: string]: Shape }, affine: AffineMatrix) => { [id: string]: Partial<Shape> };
+  hideBoundingBox?: boolean;
 }
 
 export function newResizingState(option: Option): AppCanvasState {
@@ -213,7 +214,10 @@ export function newResizingState(option: Option): AppCanvasState {
       renderCtx.beginPath();
       shapes.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
       renderCtx.stroke();
-      option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), scale, resizingAffine);
+
+      if (!option.hideBoundingBox) {
+        option.boundingBox.renderResizedBounding(renderCtx, ctx.getStyleScheme(), scale, resizingAffine);
+      }
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
