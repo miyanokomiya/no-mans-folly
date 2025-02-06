@@ -171,6 +171,8 @@ export const FrameTreePanel: React.FC = () => {
       setDropTo([target.id, "adopt"]);
     } else if (offsetRate < 0.5) {
       setDropTo([id, "above"]);
+    } else if (offsetRate < 1 && target.children.length > 0) {
+      setDropTo([target.children[0].id, "above"]);
     } else {
       // Note: "offsetRate" can be greater than 1. The destination should be below the target in that case.
       setDropTo([id, "below"]);
