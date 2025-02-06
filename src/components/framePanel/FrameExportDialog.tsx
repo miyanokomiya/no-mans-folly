@@ -189,7 +189,12 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
       <Dialog open={open} onClose={onClose} title={t("export.export_frames")} actions={actions}>
         <div className="flex gap-4">
           <div className="w-60">
-            <p className="mb-1 text-md font-medium">{t("export.target_frames")}</p>
+            <div className="mb-1 flex items-center gap-2 font-medium text-md">
+              <span>{t("export.target_frames")}</span>
+              <span>
+                ({frameIdSet.size}/{frames.length})
+              </span>
+            </div>
             <div className="px-1">
               <ToggleInput value={frameIdSet.size === frames.length} onChange={handleAllFramesClick}>
                 {t("export.options.all_frames")}
