@@ -6,7 +6,7 @@ import { SelectInput } from "../atoms/inputs/SelectInput";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { InlineField } from "../atoms/InlineField";
 import { GetAppStateContext } from "../../contexts/AppContext";
-import { getAllFrameShapes } from "../../composables/frame";
+import { getAllFrameShapes, getFrameTree } from "../../composables/frame";
 import { escapeFilename, getExportParamsForSelectedRange, saveFileInWeb } from "../../composables/shapeExport";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
 import { newImageBuilder, newSVGImageBuilder } from "../../composables/imageBuilder";
@@ -19,6 +19,8 @@ import { useSelectedSheet } from "../../hooks/storeHooks";
 import { rednerRGBA } from "../../utils/color";
 import { addSuffixToAvoidDuplication } from "../../utils/text";
 import { BlockGroupField } from "../atoms/BlockGroupField";
+import { FrameShape, isFrameShape } from "../../shapes/frame";
+import { isFrameAlignGroupShape } from "../../shapes/frameGroups/frameAlignGroup";
 
 interface ExportOptions {
   imageType: "png" | "svg" | "folly-svg" | "print";
@@ -47,6 +49,10 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   const frames = useMemo(() => getAllFrameShapes(shapeComposite), [shapeComposite]);
   const [frameIdSet, setFrameIdSet] = useState(() => new Set(frames.map((f) => f.id)));
   const [progress, setProgress] = useState<number>();
+
+  const frameTree = useMemo(() => {
+    return getFrameTree(shapeComposite);
+  }, [shapeComposite]);
 
   useEffect(() => {
     if (!open) return;
@@ -151,18 +157,6 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   const sheet = useSelectedSheet();
   const backgroundColor = useMemo(() => (sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff"), [sheet]);
 
-  const handleFrameClick = useCallback((val: boolean, name: string) => {
-    setFrameIdSet((src) => {
-      const ret = new Set(src);
-      if (val) {
-        ret.add(name);
-        return ret;
-      } else {
-        ret.delete(name);
-        return ret;
-      }
-    });
-  }, []);
   const handleAllFramesClick = useCallback(
     (val: boolean) => {
       if (val) {
@@ -172,6 +166,21 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
       }
     },
     [frames],
+  );
+
+  const getThumbnail = useCallback(
+    (frame: FrameShape) => {
+      return (
+        <FrameThumbnail
+          shapeComposite={shapeComposite}
+          documentMap={documentMap}
+          imageStore={imageStore}
+          backgroundColor={backgroundColor}
+          frame={frame}
+        />
+      );
+    },
+    [shapeComposite, documentMap, imageStore, backgroundColor],
   );
 
   return (
@@ -185,25 +194,35 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
                 {t("export.options.all_frames")}
               </ToggleInput>
             </div>
-            <div className="mt-1 max-h-[50vh] border overflow-auto flex flex-col items-center gap-1">
-              {frames.map((f, i) => (
-                <div key={f.id} className="w-full">
-                  <div className="px-1 text-ellipsis">
-                    <ToggleInput value={frameIdSet.has(f.id)} name={f.id} onChange={handleFrameClick}>
-                      {i + 1}. {f.name}
-                    </ToggleInput>
-                  </div>
-                  <div className="w-full h-16">
-                    <FrameThumbnail
-                      shapeComposite={shapeComposite}
-                      documentMap={documentMap}
-                      imageStore={imageStore}
-                      backgroundColor={backgroundColor}
-                      frame={f}
+            <div className="max-h-[50vh] overflow-auto flex flex-col gap-2 border p-1">
+              {frameTree.map((tree, i) => {
+                const shapeMap = shapeComposite.shapeMap;
+                const shape = shapeMap[tree.id];
+                if (isFrameAlignGroupShape(shape)) {
+                  return (
+                    <FrameGroupList
+                      key={shape.id}
+                      index={i}
+                      label={shape.name}
+                      frames={tree.children.map((c) => shapeMap[c.id] as FrameShape)}
+                      getThumbnail={getThumbnail}
+                      selectedSet={frameIdSet}
+                      onChange={setFrameIdSet}
                     />
-                  </div>
-                </div>
-              ))}
+                  );
+                } else if (isFrameShape(shape)) {
+                  return (
+                    <FrameItem
+                      key={shape.id}
+                      index={i}
+                      frame={shape}
+                      getThumbnail={getThumbnail}
+                      selectedSet={frameIdSet}
+                      onChange={setFrameIdSet}
+                    />
+                  );
+                }
+              })}
             </div>
           </div>
           <form onSubmit={handleSubmit}>
@@ -231,6 +250,115 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
       </Dialog>
       <LoadingDialog open={progress !== undefined} progress={progress} />
     </>
+  );
+};
+
+interface FrameGroupListProps {
+  index: number;
+  label: string;
+  frames: FrameShape[];
+  getThumbnail: (frame: FrameShape) => React.ReactNode;
+  selectedSet: Set<string>;
+  onChange: (fn: (prev: Set<string>) => Set<string>) => void;
+}
+
+const FrameGroupList: React.FC<FrameGroupListProps> = ({
+  index,
+  label,
+  frames,
+  getThumbnail,
+  selectedSet,
+  onChange,
+}) => {
+  const handleFrameClick = useCallback(
+    (val: boolean, id: string) => {
+      onChange((prev) => {
+        const ret = new Set(prev);
+        if (val) {
+          ret.add(id);
+        } else {
+          ret.delete(id);
+        }
+        return ret;
+      });
+    },
+    [onChange],
+  );
+  const handleAllFramesClick = useCallback(
+    (val: boolean) => {
+      onChange((prev) => {
+        const ret = new Set(prev);
+        if (val && frames.some((f) => !prev.has(f.id))) {
+          frames.forEach((f) => ret.add(f.id));
+        } else {
+          frames.forEach((f) => ret.delete(f.id));
+        }
+        return ret;
+      });
+    },
+    [frames, onChange],
+  );
+
+  return (
+    <div>
+      <div className="px-1">
+        <ToggleInput value={frames.every((f) => selectedSet.has(f.id))} onChange={handleAllFramesClick}>
+          <span className="font-bold">
+            {index + 1}: {label}
+          </span>
+        </ToggleInput>
+      </div>
+      <div className="ml-2 py-1 pl-1 border-l border-b border-gray-500">
+        <div className="border flex flex-col items-center gap-1">
+          {frames.map((f, i) => (
+            <div key={f.id} className="w-full">
+              <div className="px-1 text-ellipsis">
+                <ToggleInput value={selectedSet.has(f.id)} name={f.id} onChange={handleFrameClick}>
+                  {i + 1}. {f.name}
+                </ToggleInput>
+              </div>
+              <div className="w-full h-16">{getThumbnail(f)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface FrameItemProps {
+  index: number;
+  frame: FrameShape;
+  getThumbnail: (frame: FrameShape) => React.ReactNode;
+  selectedSet: Set<string>;
+  onChange: (fn: (prev: Set<string>) => Set<string>) => void;
+}
+
+const FrameItem: React.FC<FrameItemProps> = ({ index, frame, getThumbnail, selectedSet, onChange }) => {
+  const handleFrameClick = useCallback(
+    (val: boolean, id: string) => {
+      onChange((prev) => {
+        const ret = new Set(prev);
+        if (val) {
+          ret.add(id);
+        } else {
+          ret.delete(id);
+        }
+        return ret;
+      });
+    },
+    [onChange],
+  );
+
+  return (
+    <div className="border">
+      <div className="px-1 text-ellipsis">
+        <ToggleInput value={selectedSet.has(frame.id)} name={frame.id} onChange={handleFrameClick}>
+          {index + 1}. {frame.name}
+        </ToggleInput>
+      </div>
+      <div className="w-full h-16">{getThumbnail(frame)}</div>
+    </div>
   );
 };
 
