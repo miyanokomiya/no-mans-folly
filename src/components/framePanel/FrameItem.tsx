@@ -33,7 +33,7 @@ export const FrameItem: React.FC<Props> = ({
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
 
-  const rootClass = "w-full min-w-60 border-2 rounded-xs flex flex-col p-1 relative";
+  const rootClass = "w-full min-w-60 border rounded-xs flex flex-col relative" + (children ? "" : " p-1");
 
   const closePopup = useCallback(() => {
     setPopupOpen(false);
@@ -127,7 +127,7 @@ export const FrameItem: React.FC<Props> = ({
           {index + 1}
         </button>
         <div className="flex-auto">{nameElm}</div>
-        <div className="flex-none w-8 h-8">
+        <div className="flex-none w-8 h-8 flex items-center justify-center">
           <OutsideObserver onClick={closePopup}>
             <FixedPopupButton
               name="frame"
@@ -142,7 +142,7 @@ export const FrameItem: React.FC<Props> = ({
         </div>
       </div>
       {children ? (
-        <div className="mt-1 border whitespace-nowrap hover:opacity-80" onPointerDown={handleDown}>
+        <div className="border whitespace-nowrap hover:opacity-80" onPointerDown={handleDown}>
           {children}
         </div>
       ) : undefined}

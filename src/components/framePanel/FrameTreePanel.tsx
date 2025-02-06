@@ -337,7 +337,12 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : " hover:bg-gray-200";
 
   return (
-    <div ref={rootRef} data-id={id} data-draggable={draggable || undefined} className="relative">
+    <div
+      ref={rootRef}
+      data-id={id}
+      data-draggable={draggable || undefined}
+      className={"relative" + (childNode.length === 0 ? " pt-1" : " pb-1")}
+    >
       <div data-anchor-root className="flex items-center relative">
         <div
           className={"rounded-xs w-full flex items-center gap-2 select-none touch-none" + selectedClass}
@@ -359,10 +364,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         {dropAboveElm}
       </div>
       {hasChildren ? (
-        <ul
-          className="ml-2 pl-2 relative border-l-2 border-gray-400 flex flex-col items-start"
-          style={{ gap: 1, paddingBottom: 1 }}
-        >
+        <ul className="ml-2 pl-2 pb-1 relative border-l-2 border-gray-400 flex flex-col items-start">
           {childNode.map((c) => (
             <li key={c.id} className="w-full">
               <UITreeNode
