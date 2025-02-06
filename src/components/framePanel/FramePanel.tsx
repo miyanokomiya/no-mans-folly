@@ -32,7 +32,7 @@ export const FramePanel: React.FC = () => {
       const viewCenter = getRectCenter(ctx.getViewRect());
       const affine: AffineMatrix = [1, 0, 0, 1, viewCenter.x - wrapperCenter.x, viewCenter.y - wrapperCenter.y];
       const adjusted = { ...shape, ...minShapeComposite.transformShape(shape, affine) };
-      ctx.addShapes([adjusted]);
+      ctx.updateShapes({ add: [adjusted] });
       ctx.selectShape(shape.id);
     },
     [getCtx],

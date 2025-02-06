@@ -8,7 +8,9 @@ import { ShapeStruct, createBaseShape, textContainerModule } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
 
 const DEFAULT_LONG = 300;
-const DEFAULT_SHORT = 100;
+// It's better to use the same value as "EMPTY_SIZE" in "src/utils/layouts/align.ts".
+// Otherwise, newly created empty align box shape changes its size just by moving.
+const DEFAULT_SHORT = 180;
 
 export type AlignBoxShape = RectangleShape & {
   direction: Direction2;

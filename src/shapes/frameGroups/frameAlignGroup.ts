@@ -3,6 +3,7 @@ import { mapReduce } from "../../utils/commons";
 import { ShapeStruct, textContainerModule } from "../core";
 import { AlignBoxShape, struct as alignBoxStruct } from "../align/alignBox";
 import { FrameGroup } from "./core";
+import { createFillStyle } from "../../utils/fillStyle";
 
 export type FrameAlignGroupShape = AlignBoxShape & FrameGroup;
 
@@ -13,6 +14,7 @@ export const struct: ShapeStruct<FrameAlignGroupShape> = {
     return {
       ...alignBoxStruct.create(arg),
       type: "frame_align_group",
+      fill: arg.fill ?? createFillStyle({ disabled: true }),
       gapC: arg.gapC ?? 10,
       gapR: arg.gapR ?? 10,
       padding: arg.padding ?? [10, 10, 10, 10],

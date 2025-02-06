@@ -13,6 +13,8 @@ describe("getFrameAlignLayoutPatch", () => {
     gapC: 10,
     gapR: 10,
     padding: [10, 10, 10, 10],
+    width: 100,
+    height: 100,
   });
   const frame1 = createShape<FrameShape>(getCommonStruct, "frame", {
     id: "frame1",
@@ -47,6 +49,7 @@ describe("getFrameAlignLayoutPatch", () => {
         },
       },
       frame_align_group1: {
+        width: 120,
         height: 120,
       },
       shape1: {
@@ -78,6 +81,7 @@ describe("getFrameAlignLayoutPatch", () => {
         },
       },
       frame_align_group1: {
+        width: 120,
         height: 120,
       },
     });
