@@ -195,7 +195,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
               {frameTree.map((tree, i) => {
                 const shapeMap = shapeComposite.shapeMap;
                 const shape = shapeMap[tree.id];
-                if (isFrameAlignGroupShape(shape)) {
+                if (isFrameAlignGroupShape(shape) && tree.children.length > 0) {
                   return (
                     <FrameGroupList
                       key={shape.id}
