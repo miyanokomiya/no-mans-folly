@@ -15,14 +15,9 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { ImageStore } from "../../composables/imageStore";
 import { DocOutput } from "../../models/document";
 import { FrameGroup } from "../../shapes/frameGroups/core";
-import {
-  createNewFrameFromSrc,
-  createNewFrameGroupFromSrc,
-  getAllFrameGroupShapes,
-  getAllFrameShapes,
-  getFrameTree,
-} from "../../composables/frame";
+import { getFrameTree } from "../../composables/frame";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
+import { createShape } from "../../shapes";
 
 type DropOperation = "above" | "below" | "adopt";
 
@@ -50,6 +45,7 @@ export const FrameTreePanel: React.FC = () => {
         selectionScope,
         n,
         i,
+        0,
         sheetColor,
         documentMap,
         imageStore,
@@ -194,34 +190,20 @@ export const FrameTreePanel: React.FC = () => {
       const ctx = getCtx();
       const src = shapeComposite.shapeMap[id];
 
-      if (isFrameShape(src)) {
-        const frameShapes = getAllFrameShapes(shapeComposite);
-        const srcIndex = frameShapes.findIndex((f) => f.id === src.id);
-        const nextFrame = frameShapes.at(srcIndex + 1);
-        const shape = createNewFrameFromSrc(
-          ctx.getShapeStruct,
-          src,
-          ctx.generateUuid(),
-          generateKeyBetweenAllowSame(src.findex, nextFrame?.findex),
-        );
-
-        ctx.updateShapes({ add: [shape] });
-        ctx.selectShape(shape.id);
-      } else {
-        const frameGroupShapes = getAllFrameGroupShapes(shapeComposite);
-        const srcIndex = frameGroupShapes.findIndex((f) => f.id === src.id);
-        const nextFrameGroup = frameGroupShapes.at(srcIndex + 1);
-        const shape = createNewFrameGroupFromSrc(
-          ctx.getShapeStruct,
-          src,
-          ctx.generateUuid(),
-          generateKeyBetweenAllowSame(src.findex, nextFrameGroup?.findex),
-          shapeComposite.getWrapperRect(src).height,
-        );
-
-        ctx.updateShapes({ add: [shape] });
-        ctx.selectShape(shape.id);
-      }
+      const siblings = shapeComposite.hasParent(src)
+        ? shapeComposite.mergedShapeTreeMap[src.parentId].children
+        : shapeComposite.mergedShapeTree;
+      const srcIndex = siblings.findIndex((s) => s.id === src.id);
+      const nextId = siblings.at(srcIndex + 1)?.id;
+      const nextShape = nextId ? shapeComposite.shapeMap[nextId] : undefined;
+      const shape = createShape(shapeComposite.getShapeStruct, src.type, {
+        ...src,
+        id: ctx.generateUuid(),
+        findex: generateKeyBetweenAllowSame(src.findex, nextShape?.findex),
+        p: { x: src.p.x, y: src.p.y + shapeComposite.getWrapperRect(src).height + 50 },
+      });
+      ctx.updateShapes({ add: [shape] });
+      ctx.selectShape(shape.id);
     },
     [getCtx, shapeComposite],
   );
@@ -269,6 +251,7 @@ interface UITreeNodeProps {
   id: string;
   name: string;
   index: number;
+  level: number;
   childNode: UITreeNodeProps[];
   selected: boolean;
   prime: boolean;
@@ -289,6 +272,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   id,
   name,
   index,
+  level,
   childNode,
   selected,
   prime,
@@ -371,7 +355,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
       ref={rootRef}
       data-id={id}
       data-draggable={draggable || undefined}
-      className={"relative" + (childNode.length === 0 ? " pt-1" : " pb-1")}
+      className={"relative" + (level === 0 ? " pb-1" : " pt-1")}
     >
       <div data-anchor-root className="flex items-center relative">
         <div
@@ -425,6 +409,7 @@ function getUITreeNodeProps(
   selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
   index: number,
+  level: number,
   sheetColor: string,
   documentMap: { [id: string]: DocOutput },
   imageStore: ImageStore,
@@ -436,6 +421,7 @@ function getUITreeNodeProps(
     id: shapeNode.id,
     name: shape.name,
     index,
+    level,
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
     primeSibling: primeSibling,
@@ -448,6 +434,7 @@ function getUITreeNodeProps(
         selectedScope,
         c,
         i,
+        level + 1,
         sheetColor,
         documentMap,
         imageStore,
