@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { createZip } from "littlezipper";
 import { Dialog, DialogButtonPlain, DialogButtonPrimary } from "../atoms/Dialog";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SelectInput } from "../atoms/inputs/SelectInput";
@@ -7,28 +6,20 @@ import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { InlineField } from "../atoms/InlineField";
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { getAllFrameShapes, getFrameTree } from "../../composables/frame";
-import { escapeFilename, getExportParamsForSelectedRange, saveFileInWeb } from "../../composables/shapeExport";
-import { newShapeRenderer } from "../../composables/shapeRenderer";
-import { newImageBuilder, newSVGImageBuilder } from "../../composables/imageBuilder";
-import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
 import { LoadingDialog } from "../navigations/LoadingDialog";
-import { newShapeSVGRenderer } from "../../composables/shapeSVGRenderer";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { FrameThumbnail } from "./FrameThumbnail";
 import { useSelectedSheet } from "../../hooks/storeHooks";
 import { rednerRGBA } from "../../utils/color";
-import { addSuffixToAvoidDuplication } from "../../utils/text";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { isFrameAlignGroupShape } from "../../shapes/frameGroups/frameAlignGroup";
-import { TreeNode } from "../../utils/tree";
-
-interface ExportOptions {
-  imageType: "png" | "svg" | "folly-svg" | "print";
-  hideFrame?: boolean;
-  sequencePrefix?: boolean;
-  hideNameOnPrint?: boolean;
-}
+import {
+  exportFrameAsPNG,
+  exportFrameAsSVG,
+  ExportFrameOptions,
+  printFrameAsDocument,
+} from "../../composables/states/appCanvas/utils/shapeExport";
 
 interface Props {
   open: boolean;
@@ -39,7 +30,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const getCtx = useContext(GetAppStateContext);
 
-  const [exportOptions, setExportOptions] = useLocalStorageAdopter<ExportOptions>({
+  const [exportOptions, setExportOptions] = useLocalStorageAdopter<ExportFrameOptions>({
     key: "frame-export-options",
     version: "4",
     initialValue: { imageType: "png" },
@@ -77,16 +68,16 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     try {
       switch (exportOptions.imageType) {
         case "png":
-          await exportAsPNG(ctx, frameIdSet, setProgress, exportOptions);
+          await exportFrameAsPNG(ctx, frameIdSet, setProgress, exportOptions);
           break;
         case "svg":
-          await exportAsSVG(ctx, frameIdSet, setProgress, false, exportOptions);
+          await exportFrameAsSVG(ctx, frameIdSet, setProgress, false, exportOptions);
           break;
         case "folly-svg":
-          await exportAsSVG(ctx, frameIdSet, setProgress, true, exportOptions);
+          await exportFrameAsSVG(ctx, frameIdSet, setProgress, true, exportOptions);
           break;
         case "print":
-          await printAsDocument(ctx, frameIdSet, setProgress, exportOptions);
+          await printFrameAsDocument(ctx, frameIdSet, setProgress, exportOptions);
           break;
       }
     } catch (e) {
@@ -117,7 +108,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
 
   const handleFileTypeChange = useCallback(
     (val: string) => {
-      setExportOptions((src) => ({ ...src, imageType: val as ExportOptions["imageType"] }));
+      setExportOptions((src) => ({ ...src, imageType: val as ExportFrameOptions["imageType"] }));
     },
     [setExportOptions],
   );
@@ -367,197 +358,3 @@ const FrameItem: React.FC<FrameItemProps> = ({ index, frame, getThumbnail, selec
     </div>
   );
 };
-
-type ZipItem = [name: string, ext: string, Uint8Array];
-
-async function exportAsPNG(
-  ctx: AppCanvasStateContext,
-  frameIdSet: Set<string>,
-  onProgress: (progress: number) => void,
-  options: Pick<ExportOptions, "hideFrame" | "sequencePrefix">,
-) {
-  if (frameIdSet.size === 0) return;
-
-  onProgress(0);
-  const shapeComposite = ctx.getShapeComposite();
-  const frames = getAllFrameShapes(shapeComposite);
-  const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
-  const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
-  const ext = "png";
-  const items: ZipItem[] = [];
-
-  for (let i = 0; i < frames.length; i++) {
-    const frame = frames[i];
-    if (!frameIdSet.has(frame.id)) continue;
-
-    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
-    const renderer = newShapeRenderer({
-      shapeComposite: info.targetShapeComposite,
-      getDocumentMap: ctx.getDocumentMap,
-      imageStore: ctx.getImageStore(),
-    });
-    const builder = newImageBuilder({ render: renderer.render, range: info.range });
-
-    const prefix = options.sequencePrefix ? `${indexTextMap.get(frame.id)}_` : "";
-    const name = `${prefix}${escapeFilename(frame.name)}`;
-
-    if (frameIdSet.size === 1) {
-      saveFileInWeb(builder.toDataURL(), `${name}.${ext}`);
-      return;
-    }
-
-    const blob = await builder.toBlob();
-    const buffer = await blob.arrayBuffer();
-    items.push([name, ext, new Uint8Array(buffer)]);
-    onProgress(items.length / frameIdSet.size);
-  }
-
-  await saveZipAsFile("frames-png.zip", items);
-}
-
-async function exportAsSVG(
-  ctx: AppCanvasStateContext,
-  frameIdSet: Set<string>,
-  onProgress: (progress: number) => void,
-  withMeta: boolean,
-  options: Pick<ExportOptions, "hideFrame" | "sequencePrefix">,
-) {
-  if (frameIdSet.size === 0) return;
-
-  onProgress(0);
-  const shapeComposite = ctx.getShapeComposite();
-  const frames = getAllFrameShapes(shapeComposite);
-  const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
-  const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
-  const ext = withMeta ? "folly.svg" : "svg";
-  const items: ZipItem[] = [];
-
-  for (let i = 0; i < frames.length; i++) {
-    const frame = frames[i];
-    if (!frameIdSet.has(frame.id)) continue;
-
-    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
-    const renderer = newShapeSVGRenderer({
-      shapeComposite: info.targetShapeComposite,
-      getDocumentMap: ctx.getDocumentMap,
-      imageStore: ctx.getImageStore(),
-      assetAPI: ctx.assetAPI,
-    });
-    const builder = newSVGImageBuilder({
-      render: withMeta ? renderer.renderWithMeta : renderer.render,
-      range: info.range,
-    });
-
-    const prefix = options.sequencePrefix ? `${indexTextMap.get(frame.id)}_` : "";
-    const name = `${prefix}${escapeFilename(frame.name)}`;
-
-    if (frameIdSet.size === 1) {
-      return builder.toDataURL(async (url) => {
-        saveFileInWeb(url, `${name}.${ext}`);
-      });
-    }
-
-    const blob = await builder.toBlob();
-    const buffer = await blob.arrayBuffer();
-    items.push([name, ext, new Uint8Array(buffer)]);
-    onProgress(items.length / frameIdSet.size);
-  }
-
-  await saveZipAsFile(withMeta ? "frames-folly-svg.zip" : "frames-svg.zip", items);
-}
-
-async function saveZipAsFile(name: string, items: ZipItem[]) {
-  const names = addSuffixToAvoidDuplication(items.map(([name]) => name));
-  const zip = await createZip(
-    items.map(([, ext, data], i) => ({ path: `${names[i]}.${ext}`, data })),
-    true,
-  );
-  const blob = new Blob([zip], { type: "application/x-zip" });
-  const url = URL.createObjectURL(blob);
-  saveFileInWeb(url, name);
-  URL.revokeObjectURL(url);
-}
-
-async function printAsDocument(
-  ctx: AppCanvasStateContext,
-  frameIdSet: Set<string>,
-  onProgress: (progress: number) => void,
-  options: Pick<ExportOptions, "hideFrame" | "sequencePrefix" | "hideNameOnPrint">,
-) {
-  if (frameIdSet.size === 0) return;
-
-  let subwindow: Window | null = null;
-  try {
-    subwindow = window.open(undefined, "_blank");
-    if (!subwindow) return;
-
-    onProgress(0);
-    const shapeComposite = ctx.getShapeComposite();
-    const frames = getAllFrameShapes(shapeComposite);
-    const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
-    const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
-    const items: [name: string, SVGElement][] = [];
-
-    for (let i = 0; i < frames.length; i++) {
-      const frame = frames[i];
-      if (!frameIdSet.has(frame.id)) continue;
-
-      const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
-      const renderer = newShapeSVGRenderer({
-        shapeComposite: info.targetShapeComposite,
-        getDocumentMap: ctx.getDocumentMap,
-        imageStore: ctx.getImageStore(),
-        assetAPI: ctx.assetAPI,
-      });
-      const builder = newSVGImageBuilder({
-        render: renderer.render,
-        range: info.range,
-      });
-      const svg = await builder.getSvgElement();
-      const prefix = options.sequencePrefix ? `${indexTextMap.get(frame.id)}_` : "";
-      items.push([`${prefix}${frame.name}`, svg]);
-      onProgress(items.length / frameIdSet.size);
-    }
-
-    const fragment = subwindow.document.createDocumentFragment();
-    items.forEach(([name, svg]) => {
-      fragment.appendChild(createFrameBlock(subwindow!, name, svg, options.hideNameOnPrint));
-    });
-    subwindow.document.body.appendChild(fragment);
-    subwindow.document.title = "Frames";
-    subwindow.print();
-  } finally {
-    subwindow?.close();
-  }
-}
-
-function createFrameBlock(subwindow: Window, name: string, svg: SVGElement, hideName = false): HTMLElement {
-  const div = subwindow.document.createElement("div");
-  div.style.breakAfter = "page";
-
-  if (!hideName) {
-    const h2 = subwindow.document.createElement("h2");
-    h2.textContent = name;
-    h2.style.fontSize = "20px";
-    h2.style.margin = "0 0 4px 0";
-    h2.style.padding = "0";
-    h2.style.fontFamily = "Arial";
-    h2.style.fontWeight = "400";
-    div.appendChild(h2);
-  }
-
-  div.appendChild(svg);
-  return div;
-}
-
-function getFrameIndexTextMap(frameTree: TreeNode[]): Map<string, string> {
-  const ret = new Map<string, string>();
-  frameTree.forEach((tree, i) => {
-    const rootText = `${i + 1}`;
-    ret.set(tree.id, rootText);
-    tree.children.forEach((c, j) => {
-      ret.set(c.id, `${rootText}-${j + 1}`);
-    });
-  });
-  return ret;
-}
