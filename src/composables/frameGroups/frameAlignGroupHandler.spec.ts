@@ -57,6 +57,31 @@ describe("getFrameAlignLayoutPatch", () => {
       },
     });
   });
+
+  test("should regard newly added frames", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [frameAlign1, frame1, shape1, shape2],
+      getStruct: getCommonStruct,
+    });
+
+    const frame2 = {
+      ...frame1,
+      id: "frame2",
+      parentId: frameAlign1.id,
+    };
+    const result1 = getFrameAlignLayoutPatch(shapeComposite, { add: [frame2] });
+    expect(result1).toEqual({
+      frame2: {
+        p: {
+          x: 1010,
+          y: 10,
+        },
+      },
+      frame_align_group1: {
+        height: 120,
+      },
+    });
+  });
 });
 
 describe("getDummyShapeCompositeForFrameAlign", () => {

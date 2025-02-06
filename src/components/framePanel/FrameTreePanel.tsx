@@ -197,7 +197,7 @@ export const FrameTreePanel: React.FC = () => {
         generateKeyBetweenAllowSame(src.findex, nextFrame?.findex),
       );
 
-      ctx.addShapes([shape]);
+      ctx.updateShapes({ add: [shape] });
       ctx.selectShape(shape.id);
     },
     [getCtx, shapeComposite],
@@ -206,7 +206,7 @@ export const FrameTreePanel: React.FC = () => {
   const handleDelete = useCallback(
     (id: string) => {
       const ctx = getCtx();
-      ctx.deleteShapes([id]);
+      ctx.updateShapes({ delete: [id] });
     },
     [getCtx],
   );

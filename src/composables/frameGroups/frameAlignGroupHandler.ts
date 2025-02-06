@@ -27,9 +27,10 @@ export function getFrameAlignLayoutPatch(
   const staticShapeComposite = getNextShapeComposite(shapeComposite, {});
   const layoutPatch: { [id: string]: Partial<Shape> } = {};
   resultEntries.forEach(([id, val]) => {
+    // This can be undefined when it's newly added frame shape.
     const shape = staticShapeComposite.shapeMap[id];
 
-    if (isFrameShape(shape)) {
+    if (shape && isFrameShape(shape)) {
       const nextFrame = layoutResult.result[id] as FrameShape;
       layoutPatch[id] = val;
 

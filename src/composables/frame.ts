@@ -91,6 +91,7 @@ export function createNewFrameFromSrc(
   const ret = createShape<FrameShape>(getStruct, "frame", {
     id,
     findex,
+    parentId: src.parentId,
     width: src.width,
     height: src.height,
     fill: src.fill,
