@@ -21,6 +21,7 @@ import { addSuffixToAvoidDuplication } from "../../utils/text";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { isFrameAlignGroupShape } from "../../shapes/frameGroups/frameAlignGroup";
+import { TreeNode } from "../../utils/tree";
 
 interface ExportOptions {
   imageType: "png" | "svg" | "folly-svg" | "print";
@@ -376,6 +377,7 @@ async function exportAsPNG(
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
+  const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
   const ext = "png";
   const items: ZipItem[] = [];
 
@@ -391,7 +393,7 @@ async function exportAsPNG(
     });
     const builder = newImageBuilder({ render: renderer.render, range: info.range });
 
-    const prefix = options.sequencePrefix ? `${i + 1}_` : "";
+    const prefix = options.sequencePrefix ? `${indexTextMap.get(frame.id)}_` : "";
     const name = `${prefix}${escapeFilename(frame.name)}`;
 
     if (frameIdSet.size === 1) {
@@ -421,6 +423,7 @@ async function exportAsSVG(
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
   const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
+  const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
   const ext = withMeta ? "folly.svg" : "svg";
   const items: ZipItem[] = [];
 
@@ -440,7 +443,7 @@ async function exportAsSVG(
       range: info.range,
     });
 
-    const prefix = options.sequencePrefix ? `${i + 1}_` : "";
+    const prefix = options.sequencePrefix ? `${indexTextMap.get(frame.id)}_` : "";
     const name = `${prefix}${escapeFilename(frame.name)}`;
 
     if (frameIdSet.size === 1) {
@@ -487,6 +490,7 @@ async function printAsDocument(
     const shapeComposite = ctx.getShapeComposite();
     const frames = getAllFrameShapes(shapeComposite);
     const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
+    const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
     const items: [name: string, SVGElement][] = [];
 
     for (let i = 0; i < frames.length; i++) {
@@ -505,7 +509,7 @@ async function printAsDocument(
         range: info.range,
       });
       const svg = await builder.getSvgElement();
-      const prefix = options.sequencePrefix ? `${i + 1}. ` : "";
+      const prefix = options.sequencePrefix ? `${indexTextMap.get(frame.id)}_` : "";
       items.push([`${prefix}${frame.name}`, svg]);
       onProgress(items.length / frameIdSet.size);
     }
@@ -539,4 +543,16 @@ function createFrameBlock(subwindow: Window, name: string, svg: SVGElement, hide
 
   div.appendChild(svg);
   return div;
+}
+
+function getFrameIndexTextMap(frameTree: TreeNode[]): Map<string, string> {
+  const ret = new Map<string, string>();
+  frameTree.forEach((tree, i) => {
+    const rootText = `${i + 1}`;
+    ret.set(tree.id, rootText);
+    tree.children.forEach((c, j) => {
+      ret.set(c.id, `${rootText}-${j + 1}`);
+    });
+  });
+  return ret;
 }
