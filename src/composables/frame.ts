@@ -12,6 +12,7 @@ import { CanvasCTX } from "../utils/types";
 import { FrameGroup } from "../shapes/frameGroups/core";
 import { isFrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 import { TreeNode } from "../utils/tree";
+import { Shape } from "../models";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
@@ -97,6 +98,23 @@ export function createNewFrameFromSrc(
     fill: src.fill,
     stroke: src.stroke,
     p: { x: src.p.x, y: src.p.y + src.height + 50 },
+  });
+
+  return ret;
+}
+
+export function createNewFrameGroupFromSrc(
+  getStruct: GetShapeStruct,
+  src: Shape,
+  id: string,
+  findex: string,
+  height: number,
+): Shape {
+  const ret = createShape(getStruct, src.type, {
+    ...src,
+    id,
+    findex,
+    p: { x: src.p.x, y: src.p.y + height + 50 },
   });
 
   return ret;

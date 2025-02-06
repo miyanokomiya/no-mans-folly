@@ -15,7 +15,13 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { ImageStore } from "../../composables/imageStore";
 import { DocOutput } from "../../models/document";
 import { FrameGroup } from "../../shapes/frameGroups/core";
-import { createNewFrameFromSrc, getAllFrameShapes, getFrameTree } from "../../composables/frame";
+import {
+  createNewFrameFromSrc,
+  createNewFrameGroupFromSrc,
+  getAllFrameGroupShapes,
+  getAllFrameShapes,
+  getFrameTree,
+} from "../../composables/frame";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 
 type DropOperation = "above" | "below" | "adopt";
@@ -186,19 +192,36 @@ export const FrameTreePanel: React.FC = () => {
   const handleInsertBelow = useCallback(
     (id: string) => {
       const ctx = getCtx();
-      const src = shapeComposite.shapeMap[id] as FrameShape;
-      const frameShapes = getAllFrameShapes(shapeComposite);
-      const srcIndex = frameShapes.findIndex((f) => f.id === src.id);
-      const nextFrame = frameShapes.at(srcIndex + 1);
-      const shape = createNewFrameFromSrc(
-        ctx.getShapeStruct,
-        src,
-        ctx.generateUuid(),
-        generateKeyBetweenAllowSame(src.findex, nextFrame?.findex),
-      );
+      const src = shapeComposite.shapeMap[id];
 
-      ctx.updateShapes({ add: [shape] });
-      ctx.selectShape(shape.id);
+      if (isFrameShape(src)) {
+        const frameShapes = getAllFrameShapes(shapeComposite);
+        const srcIndex = frameShapes.findIndex((f) => f.id === src.id);
+        const nextFrame = frameShapes.at(srcIndex + 1);
+        const shape = createNewFrameFromSrc(
+          ctx.getShapeStruct,
+          src,
+          ctx.generateUuid(),
+          generateKeyBetweenAllowSame(src.findex, nextFrame?.findex),
+        );
+
+        ctx.updateShapes({ add: [shape] });
+        ctx.selectShape(shape.id);
+      } else {
+        const frameGroupShapes = getAllFrameGroupShapes(shapeComposite);
+        const srcIndex = frameGroupShapes.findIndex((f) => f.id === src.id);
+        const nextFrameGroup = frameGroupShapes.at(srcIndex + 1);
+        const shape = createNewFrameGroupFromSrc(
+          ctx.getShapeStruct,
+          src,
+          ctx.generateUuid(),
+          generateKeyBetweenAllowSame(src.findex, nextFrameGroup?.findex),
+          shapeComposite.getWrapperRect(src).height,
+        );
+
+        ctx.updateShapes({ add: [shape] });
+        ctx.selectShape(shape.id);
+      }
     },
     [getCtx, shapeComposite],
   );
