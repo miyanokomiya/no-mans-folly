@@ -18,7 +18,7 @@ import { FrameGroup } from "../../shapes/frameGroups/core";
 import { createNewFrameFromSrc, getAllFrameShapes, getFrameTree } from "../../composables/frame";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 
-type DropOperation = "above" | "below";
+type DropOperation = "above" | "below" | "adopt";
 
 export const FrameTreePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -94,6 +94,8 @@ export const FrameTreePanel: React.FC = () => {
     (targetId: string, toId: string, operation: DropOperation) => {
       const ctx = getCtx();
       const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
+      // Prevent deleting shapes by this operation.
+      delete patchInfo.delete;
       ctx.updateShapes(patchInfo);
     },
     [shapeComposite, getCtx],
@@ -159,13 +161,14 @@ export const FrameTreePanel: React.FC = () => {
     }
 
     const target = shapeComposite.mergedShapeTreeMap[id];
+    const isGroup = !isFrameShape(shapeComposite.shapeMap[id]);
     const rect = wrapperElm.querySelector("[data-anchor-root]")!.getBoundingClientRect();
     const offsetRate = (draggingTarget[1].y - rect.top) / rect.height;
 
-    if (offsetRate < 0.5) {
+    if (isGroup && 0.4 < offsetRate && offsetRate < 0.6) {
+      setDropTo([target.id, "adopt"]);
+    } else if (offsetRate < 0.5) {
       setDropTo([id, "above"]);
-    } else if (offsetRate < 1 && target.children.length > 0) {
-      setDropTo([target.children[0].id, "above"]);
     } else {
       // Note: "offsetRate" can be greater than 1. The destination should be below the target in that case.
       setDropTo([id, "below"]);
@@ -320,6 +323,10 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   }, [prime]);
 
   const dropTarget = dropTo?.[0] === id;
+  const dropGroupElm =
+    dropTarget && dropTo[1] === "adopt" ? (
+      <div className="absolute inset-0 border-2 border-green-500 rounded-xs pointer-events-none" />
+    ) : undefined;
   const dropAboveElm =
     dropTarget && dropTo[1] === "above" ? (
       <div
@@ -361,6 +368,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             {getThumbnail ? <div className="h-24">{getThumbnail()}</div> : undefined}
           </FrameItem>
         </div>
+        {dropGroupElm}
         {dropAboveElm}
       </div>
       {hasChildren ? (

@@ -1108,8 +1108,8 @@ describe("swapShapeParent", () => {
     expect(swapShapeParent(composite, target.id, group0.id, "above", () => "")).toEqual({
       update: { [target.id]: { findex: "a9V" } },
     });
-    expect(swapShapeParent(composite, target.id, group0.id, "below", () => "")).toEqual({
-      update: { [target.id]: { findex: "aC" } },
+    expect(swapShapeParent(composite, target.id, last.id, "below", () => "")).toEqual({
+      update: { [target.id]: { findex: "aa" } },
     });
   });
 
@@ -1165,6 +1165,24 @@ describe("swapShapeParent", () => {
         [target.id]: { parentId: group0.id, findex: "aE" },
       },
     });
+
+    expect(
+      swapShapeParent(composite, target.id, empty.id, "adopt", () => ""),
+      "to empty group",
+    ).toEqual({
+      update: {
+        [target.id]: { parentId: empty.id },
+      },
+    });
+
+    expect(
+      swapShapeParent(composite, target.id, group0.id, "adopt", () => ""),
+      "to a group having children",
+    ).toEqual({
+      update: {
+        [target.id]: { parentId: group0.id, findex: "aE" },
+      },
+    });
   });
 
   test("should delete the original group when it no longer has children", () => {
@@ -1184,6 +1202,22 @@ describe("swapShapeParent", () => {
       update: { [target.id]: { parentId: group0.id, findex: "aA" } },
       delete: [group1.id],
     });
+  });
+
+  test("should return empty patch when nothing changes", () => {
+    const shapes = [first, group0, child0, child1, child2, last];
+    const composite = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    expect(swapShapeParent(composite, first.id, first.id, "above", () => "")).toEqual({});
+    expect(swapShapeParent(composite, first.id, group0.id, "above", () => "")).toEqual({});
+    expect(swapShapeParent(composite, last.id, group0.id, "below", () => "")).toEqual({});
+    expect(swapShapeParent(composite, child1.id, child2.id, "above", () => "")).toEqual({});
+    expect(swapShapeParent(composite, child2.id, child1.id, "below", () => "")).toEqual({});
+    expect(swapShapeParent(composite, child2.id, group0.id, "adopt", () => "")).toEqual({});
+    expect(swapShapeParent(composite, child2.id, group0.id, "group", () => "")).toEqual({});
   });
 });
 
