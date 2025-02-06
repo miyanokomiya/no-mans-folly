@@ -1,4 +1,5 @@
 import { useCallback, useContext, useMemo, useState } from "react";
+import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import iconDownload from "../../assets/icons/download.svg";
 import { GetAppStateContext } from "../../contexts/AppContext";
@@ -11,9 +12,8 @@ import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
-import { ListIconButton } from "../atoms/buttons/ListButton";
+import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 import { FrameExportDialog } from "./FrameExportDialog";
-import { FrameToolPanel } from "./FrameToolPanel";
 import { FrameTreePanel } from "./FrameTreePanel";
 
 export const FramePanel: React.FC = () => {
@@ -67,12 +67,12 @@ export const FramePanel: React.FC = () => {
     [getCtx, lastSelectedId, handleInsertBelow],
   );
 
-  const [popupOpen, setPopupOpen] = useState(false);
-  const handleMenuClick = useCallback(() => {
-    setPopupOpen(!popupOpen);
-  }, [popupOpen]);
+  const [popupOpen, setPopupOpen] = useState("");
+  const handleMenuClick = useCallback((key: string) => {
+    setPopupOpen((v) => (v === key ? "" : key));
+  }, []);
   const closePopup = useCallback(() => {
-    setPopupOpen(false);
+    setPopupOpen("");
   }, []);
 
   const [openExportDialog, setOpenExportDialog] = useState(false);
@@ -81,13 +81,13 @@ export const FramePanel: React.FC = () => {
   }, []);
 
   const handleExport = useCallback(() => {
-    setPopupOpen(!popupOpen);
+    setPopupOpen("");
     setOpenExportDialog(true);
-  }, [popupOpen]);
+  }, []);
 
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
-      <ListIconButton icon={iconDownload} onClick={handleExport}>
+      <ListIconButton icon={iconDownload} onClick={handleExport} disabled={frameShapes.length === 0}>
         Export
       </ListIconButton>
     </div>
@@ -95,29 +95,58 @@ export const FramePanel: React.FC = () => {
 
   return (
     <div className="p-1 h-full grid grid-cols-1 grid-rows-[max-content_1fr_max-content] gap-1">
-      <div className="h-8 flex items-center justify-between sticky">
+      <div className="h-8 flex items-center justify-between gap-1">
         <span>Frames</span>
-        {frameShapes.length > 0 ? (
-          <OutsideObserver onClick={closePopup}>
+        <OutsideObserver onClick={closePopup}>
+          <div className="flex gap-1">
+            <FrameAddButton opened={popupOpen === "add"} onClick={handleMenuClick} onAdd={handleAdd} />
             <FixedPopupButton
               name="frame"
               popupPosition="left"
               popup={popupMenu}
-              opened={popupOpen}
+              opened={popupOpen === "frame"}
               onClick={handleMenuClick}
             >
               <img src={iconDots} alt="Menu" className="w-5 h-5" />
             </FixedPopupButton>
-          </OutsideObserver>
-        ) : undefined}
+          </div>
+        </OutsideObserver>
       </div>
-      <div className="overflow-auto flex flex-col gap-2">
+      <div className="overflow-auto">
         <FrameTreePanel />
-      </div>
-      <div>
-        <FrameToolPanel onShapeAdd={handleAdd} />
       </div>
       <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
     </div>
+  );
+};
+
+interface FrameAddButtonProps {
+  opened: boolean;
+  onClick: (key: string) => void;
+  onAdd?: (type: string) => void;
+}
+
+const FrameAddButton: React.FC<FrameAddButtonProps> = ({ opened, onClick, onAdd }) => {
+  const handleFrameAdd = useCallback(() => {
+    onAdd?.("frame");
+  }, [onAdd]);
+
+  const handleFrameGroupAdd = useCallback(() => {
+    onAdd?.("frame_align_group");
+  }, [onAdd]);
+
+  const popupMenuAdd = (
+    <div className="w-max flex flex-col bg-white">
+      <ListButton onClick={handleFrameAdd}>Frame</ListButton>
+      <ListButton onClick={handleFrameGroupAdd}>Frame group</ListButton>
+    </div>
+  );
+
+  return (
+    <FixedPopupButton name="add" popupPosition="left" popup={popupMenuAdd} opened={opened} onClick={onClick}>
+      <div className="w-5 h-5 flex items-center justify-center">
+        <img src={iconAdd} alt="Add Frame" className="w-4 h-4" />
+      </div>
+    </FixedPopupButton>
   );
 };

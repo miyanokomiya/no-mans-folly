@@ -12,7 +12,7 @@ export const ListButton: React.FC<Props> = ({ onClick, type, disabled, children 
 
   return (
     <button
-      className={className + (disabled ? "line-through cursor-default" : "hover:bg-gray-200")}
+      className={className + (disabled ? "line-through cursor-default opacity-50" : "hover:bg-gray-200")}
       type={type ?? "button"}
       disabled={disabled}
       onClick={onClick}
