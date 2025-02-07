@@ -1,6 +1,6 @@
 import { createZip } from "littlezipper";
 import { addSuffixToAvoidDuplication } from "../../../../utils/text";
-import { getAllFrameShapes, getFrameTree } from "../../../frame";
+import { getAllFrameGroupShapes, getAllFrameShapes, getFrameTree } from "../../../frame";
 import { newImageBuilder, newSVGImageBuilder } from "../../../imageBuilder";
 import { escapeFilename, getExportParamsForSelectedRange, saveFileInWeb } from "../../../shapeExport";
 import { newShapeRenderer } from "../../../shapeRenderer";
@@ -40,7 +40,13 @@ export async function exportFrameAsPNG(
   onProgress(0);
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
-  const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
+
+  const frameGroups = getAllFrameGroupShapes(shapeComposite);
+  const excludeIdSet = new Set(frameGroups.map((f) => f.id));
+  if (options.hideFrame) {
+    frames.forEach((f) => excludeIdSet.add(f.id));
+  }
+
   const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
   const ext = "png";
   const items: ZipItem[] = [];
@@ -86,7 +92,13 @@ export async function exportFrameAsSVG(
   onProgress(0);
   const shapeComposite = ctx.getShapeComposite();
   const frames = getAllFrameShapes(shapeComposite);
-  const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
+
+  const frameGroups = getAllFrameGroupShapes(shapeComposite);
+  const excludeIdSet = new Set(frameGroups.map((f) => f.id));
+  if (options.hideFrame) {
+    frames.forEach((f) => excludeIdSet.add(f.id));
+  }
+
   const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
   const ext = withMeta ? "folly.svg" : "svg";
   const items: ZipItem[] = [];
@@ -141,7 +153,13 @@ export async function printFrameAsDocument(
     onProgress(0);
     const shapeComposite = ctx.getShapeComposite();
     const frames = getAllFrameShapes(shapeComposite);
-    const excludeIdSet = new Set(options.hideFrame ? frames.map((f) => f.id) : []);
+
+    const frameGroups = getAllFrameGroupShapes(shapeComposite);
+    const excludeIdSet = new Set(frameGroups.map((f) => f.id));
+    if (options.hideFrame) {
+      frames.forEach((f) => excludeIdSet.add(f.id));
+    }
+
     const indexTextMap = getFrameIndexTextMap(getFrameTree(shapeComposite));
     const items: [name: string, SVGElement][] = [];
 
