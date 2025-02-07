@@ -1,6 +1,7 @@
 import { isFrameShape } from "../shapes/frame";
+import { isFrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 import { getIntRectFromFloatRect } from "../utils/geometry";
-import { getRootShapeIdsByFrame } from "./frame";
+import { getRootShapeIdsByFrame, getRootShapeIdsByFrameGroup } from "./frame";
 import { getAllShapeRangeWithinComposite, newShapeComposite, ShapeComposite } from "./shapeComposite";
 
 export function escapeFilename(src: string): string {
@@ -31,6 +32,8 @@ export function getExportParamsForSelectedShapes(shapeComposite: ShapeComposite,
     const s = shapeComposite.shapeMap[id];
     if (isFrameShape(s)) {
       getRootShapeIdsByFrame(shapeComposite, s).forEach((idInFrame) => sourceIdSet.add(idInFrame));
+    } else if (isFrameAlignGroupShape(s)) {
+      getRootShapeIdsByFrameGroup(shapeComposite, s).forEach((idInFrameGroup) => sourceIdSet.add(idInFrameGroup));
     }
   });
   const targetShapeComposite = shapeComposite.getSubShapeComposite(Array.from(sourceIdSet));

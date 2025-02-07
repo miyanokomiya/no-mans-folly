@@ -42,6 +42,15 @@ export function getRootShapeIdsByFrame(shapeComposite: ShapeComposite, frame: Fr
     .map((s) => s.id);
 }
 
+export function getRootShapeIdsByFrameGroup(shapeComposite: ShapeComposite, frameGroup: FrameGroup): string[] {
+  const idSet = new Set<string>();
+  shapeComposite.mergedShapeTreeMap[frameGroup.id]?.children.forEach((c) => {
+    const ids = getRootShapeIdsByFrame(shapeComposite, shapeComposite.mergedShapeMap[c.id] as FrameShape);
+    ids.forEach((id) => idSet.add(id));
+  });
+  return Array.from(idSet);
+}
+
 export function getFrameRect(frame: FrameShape, includeBorder = false): IRectangle {
   const rect = { x: frame.p.x, y: frame.p.y, width: frame.width, height: frame.height };
   return includeBorder ? expandRect(rect, getStrokeWidth(frame.stroke) / 2) : rect;

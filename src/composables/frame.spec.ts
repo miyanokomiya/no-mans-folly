@@ -9,10 +9,12 @@ import {
   getFrameShapeIdsInBranches,
   getFrameTree,
   getRootShapeIdsByFrame,
+  getRootShapeIdsByFrameGroup,
   moveFrameWithContent,
 } from "./frame";
 import { COLORS } from "../utils/color";
 import { FrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
+import { FrameGroup } from "../shapes/frameGroups/core";
 
 describe("getAllFrameShapes", () => {
   test("should return all frames", () => {
@@ -120,6 +122,34 @@ describe("getRootShapeIdsByFrame", () => {
       getStruct: getCommonStruct,
     });
     expect(getRootShapeIdsByFrame(shapeComposite, frame)).toEqual([]);
+  });
+});
+
+describe("getRootShapeIdsByFrame", () => {
+  const frameGroup = createShape<FrameGroup>(getCommonStruct, "frame_align_group", {
+    id: "frameGroup",
+  });
+  const frame = createShape<FrameShape>(getCommonStruct, "frame", {
+    id: "frame",
+    p: { x: 0, y: 0 },
+    width: 100,
+    height: 100,
+    parentId: frameGroup.id,
+  });
+  const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect0",
+    p: { x: 40, y: 40 },
+    width: 100,
+    height: 100,
+  });
+
+  test("should return ids of conventional shapes that are in the frame belonging to the group", () => {
+    const shapes = [frameGroup, frame, rect0];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+    expect(getRootShapeIdsByFrameGroup(shapeComposite, frameGroup)).toEqual([rect0.id]);
   });
 });
 
