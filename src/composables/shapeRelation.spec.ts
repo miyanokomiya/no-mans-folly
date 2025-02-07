@@ -4,7 +4,7 @@ import { newShapeComposite } from "./shapeComposite";
 import { generateKeyBetween } from "../utils/findex";
 import { Shape } from "../models";
 import { LineShape } from "../shapes/line";
-import { getLineRelatedDependantMap, getLineUnrelatedIds } from "./shapeRelation";
+import { getLineRelatedDependantMap, getLineUnrelatedIds, isParentDisconnected } from "./shapeRelation";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
 
 describe("getLineRelatedDependantMap", () => {
@@ -163,5 +163,32 @@ describe("getLineUnrelatedIds", () => {
       getStruct: getCommonStruct,
     });
     expect(getLineUnrelatedIds(shapeComposite, [lineA.id])).toEqual([treeRootZ.id, treeNodeZ.id]);
+  });
+});
+
+describe("isParentDisconnected", () => {
+  const group0 = createShape(getCommonStruct, "group", {
+    id: "group0",
+  });
+  const rect0 = createShape(getCommonStruct, "rectangle", {
+    id: "rect0",
+    parentId: group0.id,
+  });
+  const rect1 = {
+    ...rect0,
+    id: "rect1",
+    parentId: undefined,
+  };
+  const shapeComposite = newShapeComposite({
+    shapes: [group0, rect0, rect1],
+    getStruct: getCommonStruct,
+  });
+
+  test("should return true when the shape has a parent but will have none by the patch", () => {
+    expect(isParentDisconnected(shapeComposite, rect0)).toBe(false);
+    expect(isParentDisconnected(shapeComposite, rect0, {})).toBe(false);
+    expect(isParentDisconnected(shapeComposite, rect0, { parentId: "unknown" })).toBe(false);
+    expect(isParentDisconnected(shapeComposite, rect0, { parentId: undefined })).toBe(true);
+    expect(isParentDisconnected(shapeComposite, rect1, { parentId: undefined })).toBe(false);
   });
 });

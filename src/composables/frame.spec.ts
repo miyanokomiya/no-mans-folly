@@ -9,6 +9,7 @@ import {
   getFrameShapeIdsInBranches,
   getFrameTree,
   getRootShapeIdsByFrame,
+  moveFrameWithContent,
 } from "./frame";
 import { COLORS } from "../utils/color";
 import { FrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
@@ -177,5 +178,23 @@ describe("getFrameTree", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("moveFrameWithContent", () => {
+  test("should return patch for the frame and the shapes on it", () => {
+    const frame0 = createShape(getCommonStruct, "frame", { id: "frame0", p: { x: 10, y: 20 } });
+    const rect0 = createShape(getCommonStruct, "rectangle", { id: "rect0", p: { x: 30, y: 20 } });
+    const rect1 = { ...rect0, id: "rect1", p: { x: 10, y: 40 } };
+    const shapes = [frame0, rect0, rect1];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+    expect(moveFrameWithContent(shapeComposite, frame0.id, { x: 100, y: 200 })).toEqual({
+      frame0: { p: { x: 100, y: 200 } },
+      rect0: { p: { x: 120, y: 200 } },
+      rect1: { p: { x: 100, y: 220 } },
+    });
   });
 });

@@ -15,9 +15,12 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { ImageStore } from "../../composables/imageStore";
 import { DocOutput } from "../../models/document";
 import { FrameGroup } from "../../shapes/frameGroups/core";
-import { getFrameTree } from "../../composables/frame";
+import { getFrameTree, moveFrameWithContent } from "../../composables/frame";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { createShape } from "../../shapes";
+import { findBetterShapePositionsNearByShape } from "../../composables/shapePosition";
+import { mergeEntityPatchInfo } from "../../utils/entities";
+import { isParentDisconnected } from "../../composables/shapeRelation";
 
 type DropOperation = "above" | "below" | "adopt";
 
@@ -98,7 +101,18 @@ export const FrameTreePanel: React.FC = () => {
       const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
       // Prevent deleting shapes by this operation.
       delete patchInfo.delete;
-      ctx.updateShapes(patchInfo);
+
+      const target = shapeComposite.shapeMap[targetId];
+      if (isParentDisconnected(shapeComposite, target, patchInfo.update?.[targetId])) {
+        const p = findBetterShapePositionsNearByShape(shapeComposite, target.parentId, [targetId])[0];
+        ctx.updateShapes(
+          mergeEntityPatchInfo(patchInfo, {
+            update: moveFrameWithContent(shapeComposite, targetId, p),
+          }),
+        );
+      } else {
+        ctx.updateShapes(patchInfo);
+      }
     },
     [shapeComposite, getCtx],
   );

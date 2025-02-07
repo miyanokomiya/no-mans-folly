@@ -1,4 +1,4 @@
-import { getRectCenter, IRectangle } from "okageo";
+import { AffineMatrix, getRectCenter, IRectangle, IVec2 } from "okageo";
 import { FrameShape, isFrameShape } from "../shapes/frame";
 import { expandRect, isPointOnRectangle } from "../utils/geometry";
 import { ShapeComposite } from "./shapeComposite";
@@ -11,6 +11,7 @@ import { CanvasCTX } from "../utils/types";
 import { FrameGroup } from "../shapes/frameGroups/core";
 import { isFrameAlignGroupShape } from "../shapes/frameGroups/frameAlignGroup";
 import { TreeNode } from "../utils/tree";
+import { Shape } from "../models";
 
 export function getAllFrameShapes(shapeComposite: ShapeComposite): FrameShape[] {
   return shapeComposite.mergedShapes.filter((s) => isFrameShape(s));
@@ -79,4 +80,22 @@ function renderFrameNameStep(
   ctx.fillText(text, rect.x, rect.y - mergin);
 
   node.children.forEach((c, j) => renderFrameNameStep(ctx, shapeComposite, c, j, scale));
+}
+
+export function moveFrameWithContent(
+  shapeComposite: ShapeComposite,
+  frameId: string,
+  p: IVec2,
+): { [id: string]: Partial<Shape> } {
+  const frame = shapeComposite.shapeMap[frameId] as FrameShape;
+  const shapeIds = getRootShapeIdsByFrame(shapeComposite, frame);
+  const affine: AffineMatrix = [1, 0, 0, 1, p.x - frame.p.x, p.y - frame.p.y];
+  const ret: { [id: string]: Partial<Shape> } = {
+    [frameId]: shapeComposite.transformShape(frame, affine),
+  };
+  shapeIds.forEach((id) => {
+    const s = shapeComposite.shapeMap[id];
+    ret[id] = shapeComposite.transformShape(s, affine);
+  });
+  return ret;
 }

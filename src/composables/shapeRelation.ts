@@ -61,3 +61,11 @@ export function getLineUnrelatedIds(shapeComposite: ShapeComposite, ids: string[
     .filter((s) => !relatedIdSet.has(s.id))
     .map((s) => s.id);
 }
+
+export function isParentDisconnected(
+  shapeComposite: ShapeComposite,
+  shape: Shape,
+  patch?: Partial<Shape>,
+): shape is Shape & Required<Pick<Shape, "parentId">> {
+  return !!(shape && shapeComposite.hasParent(shape) && patch && "parentId" in patch && !patch.parentId);
+}
