@@ -20,7 +20,7 @@ import { getBranchPath } from "../utils/tree";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
-import { createShape } from "../shapes";
+import { createShape, hasSpecialOrderPriority } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import {
   ISegment,
@@ -875,7 +875,8 @@ export function getModifiedAlignRootIds(
   return Array.from(targetRootIdSet).filter((id) => !deletedRootIdSet.has(id));
 }
 
-export function canAttendToAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
+export function canJoinAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
+  if (hasSpecialOrderPriority(shapeComposite.getShapeStruct, shape)) return false;
   if (isLineShape(shape)) return false;
   if (!shape.parentId) return true;
 

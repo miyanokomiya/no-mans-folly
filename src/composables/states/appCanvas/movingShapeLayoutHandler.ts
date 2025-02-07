@@ -1,12 +1,11 @@
 import { Shape } from "../../../models";
-import { canShapeGrouped } from "../../../shapes";
 import { AlignBoxShape, isAlignBoxShape } from "../../../shapes/align/alignBox";
 import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
 import { isFrameShape } from "../../../shapes/frame";
 import { FrameAlignGroupShape, isFrameAlignGroupShape } from "../../../shapes/frameGroups/frameAlignGroup";
 import { findBackward, mergeMap } from "../../../utils/commons";
-import { canAttendToAlignBox } from "../../alignHandler";
+import { canJoinAlignBox } from "../../alignHandler";
 import { BoundingBox } from "../../boundingBox";
 import { ShapeComposite, findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
@@ -30,13 +29,6 @@ export function handlePointerMoveOnLayout(
   if (movingIds.length === 0) return;
 
   const shapeComposite = ctx.getShapeComposite();
-
-  const cannotGrouped = movingIds.some((id) => {
-    const s = shapeComposite.shapeMap[id];
-    return !canShapeGrouped(shapeComposite.getShapeStruct, s);
-  });
-  if (cannotGrouped) return;
-
   const boardId = canAttendToBoard(ctx, event);
   if (boardId) {
     return {
@@ -63,7 +55,8 @@ function canAttendToBoard(ctx: AppCanvasStateContext, event: PointerMoveEvent): 
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
   const shapeComposite = ctx.getShapeComposite();
   const shapes = ids.map((id) => shapeComposite.shapeMap[id]);
-  if (shapes.some((s) => !isBoardCardShape(s))) return;
+  // Allow unalignable shapes to be mixed so that connected lines are dealt with well.
+  if (!shapes.some((s) => isBoardCardShape(s))) return;
 
   const board = findBackward(shapeComposite.shapes.filter(isBoardRootShape), (s) =>
     shapeComposite.isPointOn(s, event.data.current),
@@ -93,7 +86,8 @@ export function getPatchByPointerUpOutsideLayout(
 function canAlign(ctx: AppCanvasStateContext) {
   const shapeComposite = ctx.getShapeComposite();
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
-  return ids.every((id) => canAttendToAlignBox(shapeComposite, shapeComposite.shapeMap[id]));
+  // Allow unalignable shapes to be mixed so that connected lines are dealt with well.
+  return ids.some((id) => canJoinAlignBox(shapeComposite, shapeComposite.shapeMap[id]));
 }
 
 /**

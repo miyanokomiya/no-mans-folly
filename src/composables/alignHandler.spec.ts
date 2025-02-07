@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { canAttendToAlignBox, getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
+import { canJoinAlignBox, getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { AlignBoxShape } from "../shapes/align/alignBox";
 import { RectangleShape } from "../shapes/rectangle";
@@ -289,7 +289,7 @@ describe("getModifiedAlignRootIds", () => {
   });
 });
 
-describe("canAttendToAlignBox", () => {
+describe("canJoinAlignBox", () => {
   test("should return true when a shape can attend to align box", () => {
     const rect0 = createShape(getCommonStruct, "rectangle", {
       id: "rect0",
@@ -320,16 +320,24 @@ describe("canAttendToAlignBox", () => {
       id: "align_child",
       parentId: align.id,
     });
+    const frame = createShape(getCommonStruct, "frame", {
+      id: "frame",
+    });
+    const frameAlignGroup = createShape(getCommonStruct, "frame_align_group", {
+      id: "frameAlignGroup",
+    });
     const shapeComposite = newShapeComposite({
-      shapes: [rect0, line0, label0, group0, child0, child1, align, align_child],
+      shapes: [rect0, line0, label0, group0, child0, child1, align, align_child, frame, frameAlignGroup],
       getStruct: getCommonStruct,
     });
-    expect(canAttendToAlignBox(shapeComposite, rect0)).toBe(true);
-    expect(canAttendToAlignBox(shapeComposite, line0)).toBe(false);
-    expect(canAttendToAlignBox(shapeComposite, label0)).toBe(false);
-    expect(canAttendToAlignBox(shapeComposite, group0)).toBe(true);
-    expect(canAttendToAlignBox(shapeComposite, child0), "child of group shape").toBe(false);
-    expect(canAttendToAlignBox(shapeComposite, child1), "child of missing shape").toBe(true);
-    expect(canAttendToAlignBox(shapeComposite, align_child), "child of align box shape").toBe(true);
+    expect(canJoinAlignBox(shapeComposite, rect0)).toBe(true);
+    expect(canJoinAlignBox(shapeComposite, line0)).toBe(false);
+    expect(canJoinAlignBox(shapeComposite, label0)).toBe(false);
+    expect(canJoinAlignBox(shapeComposite, group0)).toBe(true);
+    expect(canJoinAlignBox(shapeComposite, child0), "child of group shape").toBe(false);
+    expect(canJoinAlignBox(shapeComposite, child1), "child of missing shape").toBe(true);
+    expect(canJoinAlignBox(shapeComposite, align_child), "child of align box shape").toBe(true);
+    expect(canJoinAlignBox(shapeComposite, frame)).toBe(false);
+    expect(canJoinAlignBox(shapeComposite, frameAlignGroup)).toBe(false);
   });
 });

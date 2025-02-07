@@ -62,9 +62,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       const subShapeComposite = shapeComposite.getSubShapeComposite(movingIds, shapeComposite.tmpShapeMap);
       const movingShapeSub = subShapeComposite.findShapeAt(ctx.getCursorPoint(), undefined, [], false, ctx.getScale());
-      if (movingShapeSub) {
-        indexShapeId = movingShapeSub.id;
-      }
+      indexShapeId = movingShapeSub?.id ?? ctx.getLastSelectedShapeId();
 
       targetIds = subShapeComposite.shapes.map((s) => s.id);
       if (targetIds.length === 0) return ctx.states.newSelectionHubState;

@@ -17,7 +17,7 @@ function getMockCtx() {
 }
 
 describe("handlePointerMoveOnLayout", () => {
-  test("should return undefined when any selected shape has special order priority", () => {
+  test("should return undefined when no shape can attend layouts", () => {
     const ctx = getMockCtx();
     ctx.getShapeComposite = () =>
       newShapeComposite({
@@ -34,7 +34,10 @@ describe("handlePointerMoveOnLayout", () => {
     expect(handlePointerMoveOnLayout(ctx, event, ["rect"], "rect")).not.toBe(undefined);
 
     ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ rect: true, frame: true });
-    expect(handlePointerMoveOnLayout(ctx, event, ["rect", "frame"], "rect")).toBe(undefined);
+    expect(handlePointerMoveOnLayout(ctx, event, ["rect", "frame"], "rect")).not.toBe(undefined);
+
+    ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ frame: true });
+    expect(handlePointerMoveOnLayout(ctx, event, ["frame"], "frame")).toBe(undefined);
   });
 });
 
