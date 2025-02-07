@@ -80,7 +80,7 @@ export const NumberCombobox: React.FC<Props> = ({
           type="number"
           data-keep-focus
           className="border rounded-xs w-full text-right px-2 py-1"
-          value={value}
+          value={draftValue}
           onFocus={onFocused}
           onInput={onInput}
         />
