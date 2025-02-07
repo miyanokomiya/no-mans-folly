@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
+import iconLoope from "../../assets/icons/loope.svg";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import { TextInput } from "../atoms/inputs/TextInput";
@@ -16,6 +17,7 @@ interface Props {
   onNameChange?: (id: string, name: string) => void;
   onInsertBelow?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onZoomIn?: (id: string, scaling?: boolean) => void;
 }
 
 export const FrameItem: React.FC<Props> = ({
@@ -28,6 +30,7 @@ export const FrameItem: React.FC<Props> = ({
   onNameChange,
   onInsertBelow,
   onDelete,
+  onZoomIn,
 }) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -96,6 +99,14 @@ export const FrameItem: React.FC<Props> = ({
     setPopupOpen(!popupOpen);
   }, [popupOpen]);
 
+  const handleZoomIn = useCallback(() => {
+    onZoomIn?.(id, true);
+  }, [onZoomIn, id]);
+
+  const handleMoveTo = useCallback(() => {
+    onZoomIn?.(id);
+  }, [onZoomIn, id]);
+
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
@@ -142,8 +153,25 @@ export const FrameItem: React.FC<Props> = ({
         </div>
       </div>
       {children ? (
-        <div className="border whitespace-nowrap hover:opacity-80" onPointerDown={handleDown}>
-          {children}
+        <div className="relative border whitespace-nowrap">
+          <div onPointerDown={handleDown}>{children}</div>
+          <div className="absolute right-1 bottom-1 w-8 h-8 overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center rotate-45">
+              <button
+                type="button"
+                className="border border-gray-500 bg-white hover:bg-gray-200 w-1/2 h-full rounded-l-full border-r-0"
+                onClick={handleZoomIn}
+                title="Zoom in"
+              />
+              <button
+                type="button"
+                className="border border-gray-500 bg-white hover:bg-gray-200 w-1/2 h-full rounded-r-full border-l-0"
+                onClick={handleMoveTo}
+                title="Move to"
+              />
+            </div>
+            <img src={iconLoope} alt="Zoom in" className="w-5 h-5 absolute top-1/2 left-1/2 -translate-1/2" />
+          </div>
         </div>
       ) : undefined}
     </div>

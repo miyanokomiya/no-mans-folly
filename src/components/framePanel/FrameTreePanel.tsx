@@ -68,8 +68,25 @@ export const FrameTreePanel: React.FC = () => {
     [handleEvent],
   );
 
+  const handleNodeZoomIn = useCallback(
+    (id: string, scaling?: boolean) => {
+      handleEvent({
+        type: "state",
+        data: {
+          name: "PanToShape",
+          options: {
+            ids: [id],
+            duration: 150,
+            scaling,
+          },
+        },
+      });
+    },
+    [handleEvent],
+  );
+
   const handleNodeSelect = useCallback(
-    (id: string, multi = false, range = false, noZoom = false) => {
+    (id: string, multi = false, range = false) => {
       const ctx = getCtx();
 
       if (multi) {
@@ -78,21 +95,9 @@ export const FrameTreePanel: React.FC = () => {
         selectShapesInRange(ctx, id);
       } else {
         ctx.selectShape(id);
-        if (!noZoom) {
-          handleEvent({
-            type: "state",
-            data: {
-              name: "PanToShape",
-              options: {
-                ids: [id],
-                duration: 150,
-              },
-            },
-          });
-        }
       }
     },
-    [getCtx, handleEvent],
+    [getCtx],
   );
 
   const handleDrop = useCallback(
@@ -242,6 +247,7 @@ export const FrameTreePanel: React.FC = () => {
               dropTo={dropTo}
               onHover={handleNodeHover}
               onSelect={handleNodeSelect}
+              onZoomIn={handleNodeZoomIn}
               onDragStart={handleStartDragging}
               onNameChange={handleNameChange}
               onInsertBelow={handleInsertBelow}
@@ -275,7 +281,8 @@ interface UITreeNodeProps {
   draggable: boolean;
   dropTo?: [string, DropOperation];
   onHover?: (id: string) => void;
-  onSelect?: (id: string, multi?: boolean, range?: boolean, noZoom?: boolean) => void;
+  onSelect?: (id: string, multi?: boolean, range?: boolean) => void;
+  onZoomIn?: (id: string, scaling?: boolean) => void;
   onDragStart?: (e: React.PointerEvent, id: string) => void;
   onNameChange?: (id: string, name: string) => void;
   onInsertBelow?: (id: string) => void;
@@ -297,6 +304,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   dropTo,
   onHover,
   onSelect,
+  onZoomIn,
   onDragStart,
   onNameChange,
   onInsertBelow,
@@ -304,7 +312,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   getThumbnail,
 }) => {
   const handleSelect = useCallback(
-    (e: React.MouseEvent, noZoom = false) => {
+    (e: React.MouseEvent) => {
       const option = getModifierOptions(e);
       if (option.ctrl && primeSibling) {
         onSelect?.(id, true);
@@ -316,7 +324,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
       }
 
       if (!selected) {
-        onSelect?.(id, false, false, noZoom);
+        onSelect?.(id, false, false);
       }
     },
     [id, onSelect, primeSibling, selected],
@@ -324,7 +332,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
 
   const handleNodeDown = useCallback(
     (e: React.PointerEvent) => {
-      handleSelect(e, true);
+      handleSelect(e);
 
       if (draggable) {
         onDragStart?.(e, id);
@@ -387,6 +395,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             onNameChange={onNameChange}
             onInsertBelow={onInsertBelow}
             onDelete={onDelete}
+            onZoomIn={onZoomIn}
           >
             {getThumbnail ? <div className="h-24">{getThumbnail()}</div> : undefined}
           </FrameItem>
@@ -403,6 +412,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
                 dropTo={dropTo}
                 onHover={onHover}
                 onSelect={onSelect}
+                onZoomIn={onZoomIn}
                 onDragStart={onDragStart}
                 onNameChange={onNameChange}
                 onInsertBelow={onInsertBelow}
