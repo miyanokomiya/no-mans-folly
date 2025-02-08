@@ -87,6 +87,10 @@ const en = {
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
     },
+
+    floatmenu: {
+      grow_direction: "Grow direction",
+    },
   },
 };
 type TranslationResource = typeof en;
@@ -174,6 +178,10 @@ const ja: TranslationResource = {
       "vertex.detach": "頂点接続解除",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
+    },
+
+    floatmenu: {
+      grow_direction: "拡大方向",
     },
   },
 };

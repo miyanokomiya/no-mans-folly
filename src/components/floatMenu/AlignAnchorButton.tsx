@@ -1,27 +1,21 @@
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { BoxAlign } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
-import iconTL from "../../assets/icons/anchor_tl.svg";
-import iconTC from "../../assets/icons/anchor_tc.svg";
-import iconTR from "../../assets/icons/anchor_tr.svg";
-import iconCL from "../../assets/icons/anchor_cl.svg";
-import iconCC from "../../assets/icons/anchor_cc.svg";
-import iconCR from "../../assets/icons/anchor_cr.svg";
-import iconBL from "../../assets/icons/anchor_bl.svg";
-import iconBC from "../../assets/icons/anchor_bc.svg";
-import iconBR from "../../assets/icons/anchor_br.svg";
+import iconExpandDirectionTL from "../../assets/icons/expand_direction_tl.svg";
+import iconExpandDirectionT from "../../assets/icons/expand_direction_t.svg";
+import iconExpandDirectionNewtral from "../../assets/icons/expand_direction_newtral.svg";
 
-const anchorList = [iconTL, iconTC, iconTR, iconCL, iconCC, iconCR, iconBL, iconBC, iconBR];
-const altList = [
-  "Top Left",
-  "Top Center",
-  "Top Right",
-  "Center Left",
-  "Center Center",
-  "Center Right",
-  "Bottom Left",
-  "Bottom Center",
-  "Bottom Right",
+const iconList: [string, style: string, alt: string][] = [
+  [iconExpandDirectionTL, "", "Top Left"],
+  [iconExpandDirectionT, "", "Top Center"],
+  [iconExpandDirectionTL, "rotate-90", "Top Right"],
+  [iconExpandDirectionT, "-rotate-90", "Center Left"],
+  [iconExpandDirectionNewtral, "", "Center Center"],
+  [iconExpandDirectionT, "rotate-90", "Center Right"],
+  [iconExpandDirectionTL, "-rotate-90", "Bottom Left"],
+  [iconExpandDirectionT, "rotate-180", "Bottom Center"],
+  [iconExpandDirectionTL, "rotate-180", "Bottom Right"],
 ];
 
 interface Props {
@@ -43,19 +37,23 @@ export const AlignAnchorButton: React.FC<Props> = ({
     let ret = 0;
 
     switch (boxAlign.hAlign) {
+      case "right":
+        break;
       case "center":
         ret += 1;
         break;
-      case "right":
+      default:
         ret += 2;
         break;
     }
 
     switch (boxAlign.vAlign) {
+      case "bottom":
+        break;
       case "center":
         ret += 3;
         break;
-      case "bottom":
+      default:
         ret += 6;
         break;
     }
@@ -66,33 +64,38 @@ export const AlignAnchorButton: React.FC<Props> = ({
   const onIndexChange = useCallback(
     (index: number) => {
       onChange?.({
-        hAlign: (["left", "center", "right"] as const)[index % 3],
-        vAlign: (["top", "center", "bottom"] as const)[Math.floor(index / 3)],
+        hAlign: (["right", "center", "left"] as const)[index % 3],
+        vAlign: (["bottom", "center", "top"] as const)[Math.floor(index / 3)],
       });
     },
     [onChange],
   );
+
+  const iconInfo = iconList[index];
 
   return (
     <div className="flex gap-1 items-center">
       <PopupButton
         name="align-anchor"
         opened={popupedKey === "align-anchor"}
-        popup={<AnchorPanel onClick={onIndexChange} />}
+        popup={<AnchorPanel index={index} onClick={onIndexChange} />}
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
       >
-        <img className="w-8 h-8" src={anchorList[index]} alt="Anchor" />
+        <img className={"w-8 h-8 " + iconInfo[1]} src={iconInfo[0]} alt="Anchor" />
       </PopupButton>
     </div>
   );
 };
 
 interface AnchorPanelProps {
+  index: number;
   onClick?: (index: number) => void;
 }
 
-const AnchorPanel: React.FC<AnchorPanelProps> = ({ onClick }) => {
+const AnchorPanel: React.FC<AnchorPanelProps> = ({ index, onClick }) => {
+  const { t } = useTranslation();
+
   const onClickButton = useCallback(
     (e: React.MouseEvent) => {
       const type = parseInt(e.currentTarget.getAttribute("data-index")!);
@@ -102,12 +105,23 @@ const AnchorPanel: React.FC<AnchorPanelProps> = ({ onClick }) => {
   );
 
   const table = useMemo(() => {
-    return anchorList.map((icon, i) => (
-      <button key={icon} type="button" className="rounded-xs border" data-index={i} onClick={onClickButton}>
-        <img src={icon} alt={altList[i]} className="w-8 h-8" />
+    return iconList.map(([icon, style, alt], i) => (
+      <button
+        key={icon + style}
+        type="button"
+        className={"rounded-xs border" + (index === i ? " bg-sky-200" : "")}
+        data-index={i}
+        onClick={onClickButton}
+      >
+        <img src={icon} alt={alt} className={"w-8 h-8 " + style} />
       </button>
     ));
-  }, [onClickButton]);
+  }, [index, onClickButton]);
 
-  return <div className="w-max grid grid-cols-3 gap-1">{table}</div>;
+  return (
+    <div className="p-1">
+      <p>{t("floatmenu.grow_direction")}</p>
+      <div className="mt-1 w-max grid grid-cols-3 gap-1">{table}</div>
+    </div>
+  );
 };
