@@ -108,3 +108,26 @@ export function moveFrameWithContent(
   });
   return ret;
 }
+
+/**
+ * Returned list doesn't contain "targetId".
+ */
+export function getAllShapeIdsOnTheFrameOrFrameGroup(shapeComposite: ShapeComposite, targetId: string): string[] {
+  const idSet = new Set<string>([]);
+  const target = shapeComposite.shapeMap[targetId];
+  if (isFrameShape(target)) {
+    getRootShapeIdsByFrame(shapeComposite, target).forEach((idInFrame) => {
+      idSet.add(idInFrame);
+    });
+  } else {
+    shapeComposite.mergedShapeTreeMap[target.id].children.forEach((frameNode) => {
+      const frame = shapeComposite.shapeMap[frameNode.id] as FrameShape;
+      idSet.add(frame.id);
+      getRootShapeIdsByFrame(shapeComposite, frame).forEach((idInFrame) => {
+        idSet.add(idInFrame);
+      });
+    });
+  }
+
+  return shapeComposite.getAllBranchMergedShapes(Array.from(idSet)).map((s) => s.id);
+}

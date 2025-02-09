@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
+import { getNextShapeComposite, ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
 import { useSelectedShapeInfo, useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
@@ -15,12 +15,17 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { ImageStore } from "../../composables/imageStore";
 import { DocOutput } from "../../models/document";
 import { FrameGroup } from "../../shapes/frameGroups/core";
-import { getFrameTree, moveFrameWithContent } from "../../composables/frame";
+import { getAllShapeIdsOnTheFrameOrFrameGroup, getFrameTree, moveFrameWithContent } from "../../composables/frame";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { createShape } from "../../shapes";
-import { findBetterShapePositionsNearByShape } from "../../composables/shapePosition";
+import {
+  findBetterRectanglePositionsNearByShape,
+  findBetterShapePositionsNearByShape,
+} from "../../composables/shapePosition";
 import { mergeEntityPatchInfo } from "../../utils/entities";
 import { isParentDisconnected } from "../../composables/shapeRelation";
+import { duplicateShapes } from "../../shapes/utils/duplicator";
+import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 
 type DropOperation = "above" | "below" | "adopt";
 
@@ -229,6 +234,51 @@ export const FrameTreePanel: React.FC = () => {
     [getCtx, shapeComposite],
   );
 
+  const handleDuplicate = useCallback(
+    (id: string) => {
+      const ctx = getCtx();
+      const src = shapeComposite.shapeMap[id];
+
+      const siblings = shapeComposite.hasParent(src)
+        ? shapeComposite.mergedShapeTreeMap[src.parentId].children
+        : shapeComposite.mergedShapeTree;
+      const srcIndex = siblings.findIndex((s) => s.id === src.id);
+      const nextId = siblings.at(srcIndex + 1)?.id;
+      const nextShape = nextId ? shapeComposite.shapeMap[nextId] : undefined;
+
+      const branchIds = getAllShapeIdsOnTheFrameOrFrameGroup(shapeComposite, id);
+      const availableIdSet = new Set(shapeComposite.shapes.map((s) => s.id));
+      const duplicated = duplicateShapes(
+        shapeComposite.getShapeStruct,
+        [src, ...branchIds.map((id) => shapeComposite.shapeMap[id])],
+        Object.entries(ctx.getDocumentMap()),
+        ctx.generateUuid,
+        ctx.createLastIndex(),
+        availableIdSet,
+        findBetterRectanglePositionsNearByShape(shapeComposite, src.id, shapeComposite.getWrapperRect(src)),
+        true,
+      );
+      const [duplicatedSrc, ...others] = duplicated.shapes;
+      let adjusted = [
+        { ...duplicatedSrc, findex: generateKeyBetweenAllowSame(src.findex, nextShape?.findex) },
+        ...others,
+      ];
+
+      // Need to proc layouts here when the src shape has a parent.
+      // => Newly added shapes can't move along with newly added frames.
+      // => Because layouts have to assume newly added ones already have valid positions, but it's hardly guaranteed.
+      if (shapeComposite.hasParent(src)) {
+        const tmpShapeComposite = getNextShapeComposite(shapeComposite, { add: adjusted });
+        const layoutPatch = getPatchByLayouts(tmpShapeComposite, { update: { [duplicatedSrc.id]: {} } });
+        adjusted = adjusted.map((s) => (layoutPatch?.[s.id] ? { ...s, ...layoutPatch[s.id] } : s));
+      }
+
+      ctx.updateShapes({ add: adjusted });
+      ctx.selectShape(duplicatedSrc.id);
+    },
+    [getCtx, shapeComposite],
+  );
+
   const handleDelete = useCallback(
     (id: string) => {
       const ctx = getCtx();
@@ -251,6 +301,7 @@ export const FrameTreePanel: React.FC = () => {
               onDragStart={handleStartDragging}
               onNameChange={handleNameChange}
               onInsertBelow={handleInsertBelow}
+              onDuplicate={handleDuplicate}
               onDelete={handleDelete}
             />
           </li>
@@ -286,6 +337,7 @@ interface UITreeNodeProps {
   onDragStart?: (e: React.PointerEvent, id: string) => void;
   onNameChange?: (id: string, name: string) => void;
   onInsertBelow?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
   onDelete?: (id: string) => void;
   sheetColor: string;
   getThumbnail?: () => React.ReactNode;
@@ -308,6 +360,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   onDragStart,
   onNameChange,
   onInsertBelow,
+  onDuplicate,
   onDelete,
   getThumbnail,
 }) => {
@@ -394,6 +447,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             onSelect={handleSelect}
             onNameChange={onNameChange}
             onInsertBelow={onInsertBelow}
+            onDuplicate={onDuplicate}
             onDelete={onDelete}
             onZoomIn={onZoomIn}
           >
@@ -416,6 +470,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
                 onDragStart={onDragStart}
                 onNameChange={onNameChange}
                 onInsertBelow={onInsertBelow}
+                onDuplicate={onDuplicate}
                 onDelete={onDelete}
               />
             </li>

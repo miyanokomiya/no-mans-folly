@@ -5,6 +5,7 @@ import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
 import {
   getAllFrameShapes,
+  getAllShapeIdsOnTheFrameOrFrameGroup,
   getFrameRect,
   getFrameShapeIdsInBranches,
   getFrameTree,
@@ -226,5 +227,72 @@ describe("moveFrameWithContent", () => {
       rect0: { p: { x: 120, y: 200 } },
       rect1: { p: { x: 100, y: 220 } },
     });
+  });
+});
+
+describe("getAllShapeIdsOnTheFrameOrFrameGroup", () => {
+  const frame = createShape<FrameShape>(getCommonStruct, "frame", {
+    id: "frame",
+    p: { x: 0, y: 0 },
+    width: 100,
+    height: 100,
+  });
+  const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect0",
+    p: { x: 40, y: 40 },
+    width: 100,
+    height: 100,
+  });
+  const rect1 = {
+    ...rect0,
+    id: "rect1",
+    p: { x: 60, y: 60 },
+  };
+  const group = createShape<RectangleShape>(getCommonStruct, "group", { id: "group" });
+  const rect2 = {
+    ...rect0,
+    id: "rect2",
+    p: { x: 20, y: 20 },
+    parentId: group.id,
+  };
+  const rect3 = {
+    ...rect0,
+    id: "rect3",
+    p: { x: 40, y: 40 },
+    parentId: group.id,
+  };
+
+  test("should return all shapes on the frame", () => {
+    const shapes = [frame, rect0, rect1, rect2, rect3, group];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      tmpShapeMap: { [rect0.id]: { p: { x: 10, y: 10 } } },
+      getStruct: getCommonStruct,
+    });
+    expect(getAllShapeIdsOnTheFrameOrFrameGroup(shapeComposite, frame.id)).toEqual([
+      rect0.id,
+      group.id,
+      rect2.id,
+      rect3.id,
+    ]);
+  });
+
+  test("should return all shapes on the frame group", () => {
+    const frameGroup = createShape<FrameShape>(getCommonStruct, "frame_align_group", {
+      id: "frameGroup",
+    });
+    const shapes = [frameGroup, { ...frame, parentId: frameGroup.id }, rect0, rect1, rect2, rect3, group];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      tmpShapeMap: { [rect0.id]: { p: { x: 10, y: 10 } } },
+      getStruct: getCommonStruct,
+    });
+    expect(getAllShapeIdsOnTheFrameOrFrameGroup(shapeComposite, frameGroup.id)).toEqual([
+      frame.id,
+      rect0.id,
+      group.id,
+      rect2.id,
+      rect3.id,
+    ]);
   });
 });

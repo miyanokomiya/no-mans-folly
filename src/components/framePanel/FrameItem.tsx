@@ -16,6 +16,7 @@ interface Props {
   onSelect?: (e: React.MouseEvent) => void;
   onNameChange?: (id: string, name: string) => void;
   onInsertBelow?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
   onDelete?: (id: string) => void;
   onZoomIn?: (id: string, scaling?: boolean) => void;
 }
@@ -29,6 +30,7 @@ export const FrameItem: React.FC<Props> = ({
   onSelect,
   onNameChange,
   onInsertBelow,
+  onDuplicate,
   onDelete,
   onZoomIn,
 }) => {
@@ -78,6 +80,10 @@ export const FrameItem: React.FC<Props> = ({
     onInsertBelow?.(id);
   }, [id, onInsertBelow]);
 
+  const handleDuplicate = useCallback(() => {
+    onDuplicate?.(id);
+  }, [id, onDuplicate]);
+
   const handleDelete = useCallback(() => {
     onDelete?.(id);
   }, [id, onDelete]);
@@ -111,6 +117,7 @@ export const FrameItem: React.FC<Props> = ({
     <div className="w-max flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
       <ListButton onClick={handleInsertBelow}>Insert below</ListButton>
+      <ListButton onClick={handleDuplicate}>Duplicate</ListButton>
       <ListIconButton icon={iconDustbinRed} onClick={handleDelete}>
         <span className="text-red-500 font-semibold">Delete</span>
       </ListIconButton>
