@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FloatDialog } from "./atoms/FloatDialog";
-import { useSelectedTmpSheet, useShapeComposite } from "../hooks/storeHooks";
+import { useDocumentMap, useSelectedTmpSheet, useShapeComposite } from "../hooks/storeHooks";
 import { newShapeRenderer } from "../composables/shapeRenderer";
 import { useCanvas } from "../hooks/canvas";
 import { AppStateContext } from "../contexts/AppContext";
@@ -29,7 +29,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { shapeStore, documentStore } = useContext(AppCanvasContext);
+  const { shapeStore } = useContext(AppCanvasContext);
   const sheet = useSelectedTmpSheet();
   const smctx = useContext(AppStateContext);
   const canvasBank = useMemo(() => {
@@ -59,6 +59,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
     editStartPoint,
   } = useCanvas(getWrapper, { viewStateKey: "preview_view_state" });
   const shapeComposite = useShapeComposite();
+  const documentMap = useDocumentMap();
 
   useEffect(() => {
     if (!open) return;
@@ -73,24 +74,13 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
 
     const renderer = newShapeRenderer({
       shapeComposite: shapeComposite,
-      getDocumentMap: smctx.getDocumentMap,
+      getDocumentMap: () => documentMap,
       imageStore: smctx.getImageStore(),
       scale,
       canvasBank,
     });
     renderer.render(ctx);
-  }, [
-    open,
-    shapeComposite,
-    documentStore,
-    smctx,
-    scale,
-    viewOrigin.x,
-    viewOrigin.y,
-    canvasBank,
-    canvasState,
-    viewSize,
-  ]);
+  }, [open, shapeComposite, documentMap, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank, canvasState, viewSize]);
 
   const focus = useCallback(() => {
     wrapperRef.current?.focus();

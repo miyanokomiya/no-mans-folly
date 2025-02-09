@@ -1,6 +1,11 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getNextShapeComposite, ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
-import { useSelectedShapeInfo, useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import {
+  useDocumentMapWithoutTmpInfo,
+  useSelectedShapeInfo,
+  useSelectedSheet,
+  useShapeCompositeWithoutTmpInfo,
+} from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
@@ -33,7 +38,7 @@ export const FrameTreePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
-  const documentMap = getCtx().getDocumentMap();
+  const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getCtx().getImageStore();
 
   const shapeComposite = useShapeCompositeWithoutTmpInfo();

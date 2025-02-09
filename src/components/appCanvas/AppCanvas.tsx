@@ -23,13 +23,13 @@ import { FloatMenu } from "../floatMenu/FloatMenu";
 import { generateUuid } from "../../utils/random";
 import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";
 import { rednerRGBA } from "../../utils/color";
-import { useSelectedTmpSheet } from "../../hooks/storeHooks";
+import { useDocumentMap, useSelectedTmpSheet } from "../../hooks/storeHooks";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
 import { getAllBranchIds, getTree } from "../../utils/tree";
 import { ContextMenu } from "../ContextMenu";
 import { getGridSize, newGrid } from "../../composables/grid";
 import { FileDropArea } from "../atoms/FileDropArea";
-import { mapReduce, patchPipe } from "../../utils/commons";
+import { patchPipe } from "../../utils/commons";
 import { getDeleteTargetIds } from "../../composables/shapeComposite";
 import { getEntityPatchByDelete, getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 import { GridBackground } from "../atoms/GridBackground";
@@ -180,16 +180,7 @@ export const AppCanvas: React.FC = () => {
     });
   }, [scale, viewCanvasRect, userSetting]);
 
-  const mergedDocMap = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    canvasState; // For exhaustive-deps
-
-    const tmpDocMap = documentStore.getTmpDocMap();
-    return mapReduce(documentStore.getDocMap(), (doc, id) => {
-      if (!tmpDocMap[id]) return doc;
-      return documentStore.patchDocDryRun(id, tmpDocMap[id]);
-    });
-  }, [documentStore, canvasState]);
+  const mergedDocMap = useDocumentMap();
 
   const [focused, setFocused] = useState(false);
   const focus = useCallback(

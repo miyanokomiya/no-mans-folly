@@ -3,6 +3,8 @@ import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Shape, Sheet, UserSetting } from "../models";
 import { ShapeStore } from "../stores/shapes";
 import { ShapeComposite } from "../composables/shapeComposite";
+import { DocOutput } from "../models/document";
+import { mapReduce } from "../utils/commons";
 
 export function useUserSetting(): [UserSetting, patchUserSetting: (patch: Partial<UserSetting>) => void] {
   const { userSettingStore } = useContext(AppCanvasContext);
@@ -206,5 +208,42 @@ export function useHasShape(shapeStore: ShapeStore): boolean {
   return useSyncExternalStore(
     shapeStore.watch,
     useCallback(() => shapeStore.shapeComposite.shapes.length > 0, [shapeStore]),
+  );
+}
+
+export function useDocumentMap(): { [id: string]: DocOutput } {
+  const { documentStore } = useContext(AppCanvasContext);
+  const [value, setValue] = useState<{ [id: string]: DocOutput }>({});
+
+  const update = useCallback(() => {
+    const tmpDocMap = documentStore.getTmpDocMap();
+    setValue(
+      mapReduce(documentStore.getDocMap(), (doc, id) => {
+        if (!tmpDocMap[id]) return doc;
+        return documentStore.patchDocDryRun(id, tmpDocMap[id]);
+      }),
+    );
+  }, [documentStore]);
+
+  useEffect(() => {
+    update();
+    const list = [documentStore.watch(update), documentStore.watchTmpDocMap(update)];
+    return () => list.forEach((fn) => fn());
+  }, [documentStore, update]);
+
+  return value;
+}
+
+export function useDocumentMapWithoutTmpInfo(): { [id: string]: DocOutput } {
+  const { documentStore } = useContext(AppCanvasContext);
+  return useSyncExternalStore(
+    useCallback(
+      (onChange: () => void) => {
+        const list = [documentStore.watch(onChange)];
+        return () => list.forEach((fn) => fn());
+      },
+      [documentStore],
+    ),
+    useCallback(() => documentStore.getDocMap(), [documentStore]),
   );
 }
