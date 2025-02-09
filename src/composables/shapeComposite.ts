@@ -243,7 +243,6 @@ export function newShapeComposite(option: Option) {
   }
 
   /**
-   * When scope.parent is undefined, returns root shapes.
    * When "anyParent" is set true, scope.parent is ignored and parents of shapes don't matter to filtering.
    */
   function getMergedShapesInSelectionScope(
@@ -256,7 +255,19 @@ export function newShapeComposite(option: Option) {
       candidates = srcShapes
         .map((s) => mergedShapeMap[s.id])
         .filter((s) => getSelectionScope(s).scopeKey === scope?.scopeKey);
-    } else if (!scope?.parentId) {
+    } else if (!scope) {
+      const shapeSet = new Set<Shape>();
+      getSortedMergedShapeTree().forEach((t) => {
+        const s = mergedShapeMap[t.id];
+        shapeSet.add(s);
+        if (shapeModule.isTransparentSelection(getStruct, s)) {
+          t.children.forEach((ct) => {
+            shapeSet.add(mergedShapeMap[ct.id]);
+          });
+        }
+      });
+      candidates = Array.from(shapeSet);
+    } else if (!scope.parentId) {
       candidates = getSortedMergedShapeTree().map((t) => mergedShapeMap[t.id]);
     } else {
       const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;

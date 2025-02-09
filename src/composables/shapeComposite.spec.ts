@@ -391,7 +391,13 @@ describe("newShapeComposite", () => {
         shapes,
         getStruct: getCommonStruct,
       });
-      expect(target.getMergedShapesInSelectionScope()).toEqual([board0, board1]);
+      expect(
+        target
+          .getMergedShapesInSelectionScope()
+          .map((s) => s.id)
+          .sort(),
+      ).toEqual(shapes.map((s) => s.id).sort());
+      expect(target.getMergedShapesInSelectionScope({ parentId: undefined })).toEqual([board0, board1]);
       expect(target.getMergedShapesInSelectionScope({ parentId: board0.id, scopeKey: "board_column" })).toEqual([
         column0,
       ]);
