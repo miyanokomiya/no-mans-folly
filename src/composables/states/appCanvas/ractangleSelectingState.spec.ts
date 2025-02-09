@@ -108,6 +108,7 @@ describe("newRectangleSelectingState", () => {
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node1"], false);
 
+      ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: -200, y: 280 }, current: { x: 10, y: 80 }, scale: 1 },
@@ -115,12 +116,16 @@ describe("newRectangleSelectingState", () => {
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], false);
 
+      ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: -200, y: 280 }, current: { x: 10, y: -10 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], false);
+      expect(ctx.multiSelectShapes, "should pick parent scope when whole family are inside").toHaveBeenCalledWith(
+        ["tree_root"],
+        false,
+      );
     });
 
     test("should keep current selection scope when keepSelection is true", () => {
@@ -137,6 +142,7 @@ describe("newRectangleSelectingState", () => {
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).not.toHaveBeenCalled();
 
+      ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: -200, y: 10 }, current: { x: 10, y: 180 }, scale: 1 },
@@ -144,12 +150,16 @@ describe("newRectangleSelectingState", () => {
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0"], true);
 
+      ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 10 }, current: { x: 10, y: 280 }, scale: 1 },
+        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
-      expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], true);
+      expect(ctx.multiSelectShapes, "should respect initial scope").toHaveBeenCalledWith(
+        ["tree_node0", "tree_node1"],
+        true,
+      );
     });
 
     test("should prioritize the parent scope when the parent is covered by the range", () => {
@@ -166,6 +176,7 @@ describe("newRectangleSelectingState", () => {
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0"], false);
 
+      ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: -200, y: 210 }, current: { x: 10, y: -10 }, scale: 1 },
