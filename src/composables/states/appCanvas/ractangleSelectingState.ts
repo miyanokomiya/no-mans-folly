@@ -4,7 +4,7 @@ import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath, scaleGlobalAlpha } from "../../../utils/renderer";
 import { isTransparentSelection } from "../../../shapes";
-import { ShapeSelectionScope } from "../../../shapes/core";
+import { isStrictRootScope, ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
@@ -19,7 +19,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
   const keepSelection = option?.keepSelection ?? false;
   let rectangle: IRectangle;
   let targetIdSet = new Set<string>();
-  let selectionScope: ShapeSelectionScope | null | undefined; // null: root scope, undefined: root scope but not determined
+  let selectionScope: ShapeSelectionScope | undefined;
   let hasInitialSelectionScope: boolean;
 
   const getScope = () => {
@@ -90,11 +90,10 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           } else if (targetIdSet.size === 1) {
             const id = Array.from(targetIdSet)[0];
             selectionScope = composite.getSelectionScope(shapeMap[id]) ?? null;
-          } else if (selectionScope === null) {
-            // When the scope is determined to root, only root shapes should be selected.
-            // => Ignore transparent scope
+          } else if (isStrictRootScope(selectionScope)) {
             Array.from(targetIdSet).forEach((id) => {
-              if (shapeMap[id].parentId) {
+              const s = shapeMap[id];
+              if (composite.hasParent(s)) {
                 targetIdSet.delete(id);
               }
             });
@@ -102,7 +101,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
             // Pick a scope if any selected shape has a parent.
             const hasParentId = Array.from(targetIdSet).find((id) => composite.getSelectionScope(shapeMap[id]));
             // If no shape has a parent, determine root as curreent scope.
-            selectionScope = hasParentId ? composite.getSelectionScope(shapeMap[hasParentId]) : null;
+            selectionScope = hasParentId ? composite.getSelectionScope(shapeMap[hasParentId]) : { parentId: undefined };
           }
 
           const nextScope = getScope();

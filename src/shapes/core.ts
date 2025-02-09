@@ -24,7 +24,7 @@ export interface ShapeContext {
  * Selection scope strategy
  * - When a scope is undefined, root shapes and children of transparent root shapes are selection candidates.
  * - When a scope is defined
- *   - When parentId is undefined, root shapes are selection candidates.
+ *   - When parentId is undefined, root shapes are selection candidates. (strict root)
  *   - When parentId is defined, its children are selection candidates.
  *   - When parentId and scopeKey are defined, its children having the same scopeKey are selection candidates.
  */
@@ -202,6 +202,10 @@ export function isSameShapeParentScope(a?: ShapeSelectionScope, b?: ShapeSelecti
     return a.parentId === b.parentId;
   }
   return a === b;
+}
+
+export function isStrictRootScope(a?: ShapeSelectionScope): boolean {
+  return !!a && !a.parentId;
 }
 
 export function hasFillStyle(shape: Shape): shape is Shape & { fill: FillStyle } {

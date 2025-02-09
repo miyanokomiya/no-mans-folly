@@ -5,6 +5,7 @@ import {
   hasFillStyle,
   hasStrokeStyle,
   isInvisibleClippingShape,
+  isStrictRootScope,
   isSameShapeParentScope,
   isSameShapeSelectionScope,
   textContainerModule,
@@ -84,6 +85,15 @@ describe("isSameShapeParentScope", () => {
     expect(isSameShapeParentScope({ parentId: "a" }, { parentId: "b" })).toBe(false);
     expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "a", scopeKey: "c" })).toBe(true);
     expect(isSameShapeParentScope({ parentId: "a", scopeKey: "b" }, { parentId: "c", scopeKey: "b" })).toBe(false);
+  });
+});
+
+describe("isStrictRootScope", () => {
+  test("should return true when a scope refers to root", () => {
+    expect(isStrictRootScope(undefined)).toBe(false);
+    expect(isStrictRootScope({})).toBe(true);
+    expect(isStrictRootScope({ parentId: undefined })).toBe(true);
+    expect(isStrictRootScope({ parentId: "a" })).toBe(false);
   });
 });
 
