@@ -69,3 +69,12 @@ export function isParentDisconnected(
 ): shape is Shape & Required<Pick<Shape, "parentId">> {
   return !!(shape && shapeComposite.hasParent(shape) && patch && "parentId" in patch && !patch.parentId);
 }
+
+export function getNextSiblingId(shapeComposite: ShapeComposite, id: string): string | undefined {
+  const src = shapeComposite.shapeMap[id];
+  const siblings = shapeComposite.hasParent(src)
+    ? shapeComposite.mergedShapeTreeMap[src.parentId].children
+    : shapeComposite.mergedShapeTree;
+  const srcIndex = siblings.findIndex((s) => s.id === src.id);
+  return siblings.at(srcIndex + 1)?.id;
+}

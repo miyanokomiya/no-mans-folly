@@ -4,7 +4,12 @@ import { newShapeComposite } from "./shapeComposite";
 import { generateKeyBetween } from "../utils/findex";
 import { Shape } from "../models";
 import { LineShape } from "../shapes/line";
-import { getLineRelatedDependantMap, getLineUnrelatedIds, isParentDisconnected } from "./shapeRelation";
+import {
+  getLineRelatedDependantMap,
+  getLineUnrelatedIds,
+  getNextSiblingId,
+  isParentDisconnected,
+} from "./shapeRelation";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
 
 describe("getLineRelatedDependantMap", () => {
@@ -190,5 +195,49 @@ describe("isParentDisconnected", () => {
     expect(isParentDisconnected(shapeComposite, rect0, { parentId: "unknown" })).toBe(false);
     expect(isParentDisconnected(shapeComposite, rect0, { parentId: undefined })).toBe(true);
     expect(isParentDisconnected(shapeComposite, rect1, { parentId: undefined })).toBe(false);
+  });
+});
+
+describe("getNextSiblingId", () => {
+  test("should return next sibling id: root shapes", () => {
+    const rect0 = createShape(getCommonStruct, "rectangle", {
+      id: "rect0",
+      findex: generateKeyBetween(null, null),
+    });
+    const rect1 = {
+      ...rect0,
+      id: "rect1",
+      findex: generateKeyBetween(rect0.findex, null),
+    };
+    const shapeComposite = newShapeComposite({
+      shapes: [rect0, rect1],
+      getStruct: getCommonStruct,
+    });
+    expect(getNextSiblingId(shapeComposite, rect0.id)).toBe(rect1.id);
+    expect(getNextSiblingId(shapeComposite, rect1.id)).toBe(undefined);
+  });
+
+  test("should return next sibling id: child shapes", () => {
+    const group = createShape(getCommonStruct, "group", {
+      id: "group",
+      findex: generateKeyBetween(null, null),
+    });
+    const rect0 = createShape(getCommonStruct, "rectangle", {
+      id: "rect0",
+      findex: generateKeyBetween(group.findex, null),
+      parentId: group.id,
+    });
+    const rect1 = {
+      ...rect0,
+      id: "rect1",
+      findex: generateKeyBetween(rect0.findex, null),
+    };
+    const shapeComposite = newShapeComposite({
+      shapes: [group, rect0, rect1],
+      getStruct: getCommonStruct,
+    });
+    expect(getNextSiblingId(shapeComposite, group.id)).toBe(undefined);
+    expect(getNextSiblingId(shapeComposite, rect0.id)).toBe(rect1.id);
+    expect(getNextSiblingId(shapeComposite, rect1.id)).toBe(undefined);
   });
 });

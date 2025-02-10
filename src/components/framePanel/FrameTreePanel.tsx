@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { getNextShapeComposite, ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
+import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
 import {
   useDocumentMapWithoutTmpInfo,
   useSelectedShapeInfo,
@@ -20,17 +20,11 @@ import { FrameThumbnail } from "./FrameThumbnail";
 import { ImageStore } from "../../composables/imageStore";
 import { DocOutput } from "../../models/document";
 import { FrameGroup } from "../../shapes/frameGroups/core";
-import { getAllShapeIdsOnTheFrameOrFrameGroup, getFrameTree, moveFrameWithContent } from "../../composables/frame";
-import { generateKeyBetweenAllowSame } from "../../utils/findex";
-import { createShape } from "../../shapes";
-import {
-  findBetterRectanglePositionsNearByShape,
-  findBetterShapePositionsNearByShape,
-} from "../../composables/shapePosition";
+import { getFrameTree, moveFrameWithContent } from "../../composables/frame";
+import { findBetterShapePositionsNearByShape } from "../../composables/shapePosition";
 import { mergeEntityPatchInfo } from "../../utils/entities";
 import { isParentDisconnected } from "../../composables/shapeRelation";
-import { duplicateShapes } from "../../shapes/utils/duplicator";
-import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
+import { duplicateFrameTreeItem, insertFrameTreeItem } from "../../composables/states/appCanvas/utils/frame";
 
 type DropOperation = "above" | "below" | "adopt";
 
@@ -219,69 +213,21 @@ export const FrameTreePanel: React.FC = () => {
   const handleInsertBelow = useCallback(
     (id: string) => {
       const ctx = getCtx();
-      const src = shapeComposite.shapeMap[id];
-
-      const siblings = shapeComposite.hasParent(src)
-        ? shapeComposite.mergedShapeTreeMap[src.parentId].children
-        : shapeComposite.mergedShapeTree;
-      const srcIndex = siblings.findIndex((s) => s.id === src.id);
-      const nextId = siblings.at(srcIndex + 1)?.id;
-      const nextShape = nextId ? shapeComposite.shapeMap[nextId] : undefined;
-      const shape = createShape(shapeComposite.getShapeStruct, src.type, {
-        ...src,
-        id: ctx.generateUuid(),
-        findex: generateKeyBetweenAllowSame(src.findex, nextShape?.findex),
-        p: { x: src.p.x, y: src.p.y + shapeComposite.getWrapperRect(src).height + 50 },
-      });
+      const shape = insertFrameTreeItem(ctx, id);
       ctx.updateShapes({ add: [shape] });
       ctx.selectShape(shape.id);
     },
-    [getCtx, shapeComposite],
+    [getCtx],
   );
 
   const handleDuplicate = useCallback(
     (id: string) => {
       const ctx = getCtx();
-      const src = shapeComposite.shapeMap[id];
-
-      const siblings = shapeComposite.hasParent(src)
-        ? shapeComposite.mergedShapeTreeMap[src.parentId].children
-        : shapeComposite.mergedShapeTree;
-      const srcIndex = siblings.findIndex((s) => s.id === src.id);
-      const nextId = siblings.at(srcIndex + 1)?.id;
-      const nextShape = nextId ? shapeComposite.shapeMap[nextId] : undefined;
-
-      const branchIds = getAllShapeIdsOnTheFrameOrFrameGroup(shapeComposite, id);
-      const availableIdSet = new Set(shapeComposite.shapes.map((s) => s.id));
-      const duplicated = duplicateShapes(
-        shapeComposite.getShapeStruct,
-        [src, ...branchIds.map((id) => shapeComposite.shapeMap[id])],
-        Object.entries(ctx.getDocumentMap()),
-        ctx.generateUuid,
-        ctx.createLastIndex(),
-        availableIdSet,
-        findBetterRectanglePositionsNearByShape(shapeComposite, src.id, shapeComposite.getWrapperRect(src)),
-        true,
-      );
-      const [duplicatedSrc, ...others] = duplicated.shapes;
-      let adjusted = [
-        { ...duplicatedSrc, findex: generateKeyBetweenAllowSame(src.findex, nextShape?.findex) },
-        ...others,
-      ];
-
-      // Need to proc layouts here when the src shape has a parent.
-      // => Newly added shapes can't move along with newly added frames.
-      // => Because layouts have to assume newly added ones already have valid positions, but it's hardly guaranteed.
-      if (shapeComposite.hasParent(src)) {
-        const tmpShapeComposite = getNextShapeComposite(shapeComposite, { add: adjusted });
-        const layoutPatch = getPatchByLayouts(tmpShapeComposite, { update: { [duplicatedSrc.id]: {} } });
-        adjusted = adjusted.map((s) => (layoutPatch?.[s.id] ? { ...s, ...layoutPatch[s.id] } : s));
-      }
-
-      ctx.updateShapes({ add: adjusted });
-      ctx.selectShape(duplicatedSrc.id);
+      const shapes = duplicateFrameTreeItem(ctx, id);
+      ctx.updateShapes({ add: shapes });
+      ctx.selectShape(shapes[0].id);
     },
-    [getCtx, shapeComposite],
+    [getCtx],
   );
 
   const handleDelete = useCallback(
