@@ -70,7 +70,16 @@ export const PopupButton: React.FC<Option> = ({
   );
 };
 
-export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, opened, onClick, popupPosition }) => {
+type FixedPopupButtonOption = Omit<Option, "defaultDirection">;
+
+export const FixedPopupButton: React.FC<FixedPopupButtonOption> = ({
+  children,
+  popup,
+  name,
+  opened,
+  onClick,
+  popupPosition,
+}) => {
   const onButtonClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -80,7 +89,9 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
   );
 
   const ref = useRef<HTMLDivElement>(null);
+  const refPopup = useRef<HTMLDivElement>(null);
   const [boundsState, setBoundsState] = useState<any>();
+  const [translateY, setTranslateY] = useState<number>();
 
   const onGlobalScroll = useCallback(() => {
     if (!opened || !ref.current) return;
@@ -95,25 +106,46 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
     boundsState; // For exhaustive-deps
 
     const bounds = ref.current.getBoundingClientRect();
-    const classBase = "z-10 fixed bg-white border rounded-xs p-1 drop-shadow-md ";
+    const classBase =
+      "z-10 fixed bg-white border rounded-xs p-1 drop-shadow-md " + (translateY === undefined ? "opacity-0 " : "");
+    const translateAdjustment = translateY ? ` translateY(${translateY}px)` : "";
+
     switch (popupPosition) {
       case "right":
         return {
           className: classBase,
-          style: { left: bounds.left, top: bounds.bottom },
+          style: { left: bounds.left, top: bounds.bottom, transform: translateAdjustment },
         };
       case "left":
         return {
           className: classBase,
-          style: { transform: "translateX(-100%)", left: bounds.right, top: bounds.bottom },
+          style: { transform: "translateX(-100%)" + translateAdjustment, left: bounds.right, top: bounds.bottom },
         };
       default:
         return {
           className: classBase,
-          style: { transform: "translateX(-50%)", left: bounds.left + bounds.width / 2, top: bounds.bottom },
+          style: {
+            transform: "translateX(-50%)" + translateAdjustment,
+            left: bounds.left + bounds.width / 2,
+            top: bounds.bottom,
+          },
         };
     }
-  }, [popupPosition, opened, boundsState]);
+  }, [popupPosition, opened, boundsState, translateY]);
+
+  useEffect(() => {
+    if (opened && ref.current && refPopup.current) {
+      const buttonBounds = ref.current.getBoundingClientRect();
+      const popupBounds = refPopup.current.getBoundingClientRect();
+      if (buttonBounds.bottom + popupBounds.height > window.innerHeight) {
+        setTranslateY(-buttonBounds.height - popupBounds.height);
+      } else {
+        setTranslateY(0);
+      }
+    } else {
+      setTranslateY(undefined);
+    }
+  }, [opened, boundsState]);
 
   return (
     <div ref={ref}>
@@ -124,7 +156,14 @@ export const FixedPopupButton: React.FC<Option> = ({ children, popup, name, open
       >
         {children}
       </button>
-      {opened ? createPortal(<div {...popupAttrs}>{popup}</div>, document.body) : undefined}
+      {opened
+        ? createPortal(
+            <div ref={refPopup} {...popupAttrs}>
+              {popup}
+            </div>,
+            document.body,
+          )
+        : undefined}
     </div>
   );
 };
