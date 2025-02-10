@@ -5,7 +5,7 @@ import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 import { getAllShapeIdsOnTheFrameOrFrameGroup } from "../../../frame";
 import { getNextShapeComposite } from "../../../shapeComposite";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
-import { findBetterRectanglePositionsNearByShape } from "../../../shapePosition";
+import { findBetterRectanglePositionsBelowShape } from "../../../shapePosition";
 import { getNextSiblingId } from "../../../shapeRelation";
 import { AppCanvasStateContext } from "../core";
 
@@ -49,7 +49,7 @@ export function duplicateFrameTreeItem(
     ctx.generateUuid,
     ctx.createLastIndex(),
     availableIdSet,
-    findBetterRectanglePositionsNearByShape(shapeComposite, src.id, shapeComposite.getWrapperRect(src)),
+    findBetterRectanglePositionsBelowShape(shapeComposite, src.id, shapeComposite.getWrapperRect(src)),
     true,
   );
   const [duplicatedSrc, ...others] = duplicated.shapes;

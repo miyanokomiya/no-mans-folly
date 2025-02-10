@@ -80,10 +80,10 @@ describe("duplicateFrameTreeItem", () => {
     const result0 = duplicateFrameTreeItem(getCtx(), frameGroup.id);
     expect(result0.map((s) => s.type)).toEqual([frameGroup.type, frame0.type, frame1.type, rect.type]);
     expect(result0.map((s) => s.p)).toEqualPoints([
-      { x: -540, y: 0 },
-      { x: -540, y: 0 },
-      { x: -440, y: 0 },
-      { x: -530, y: 10 },
+      { x: 0, y: 520 },
+      { x: 0, y: 520 },
+      { x: 100, y: 520 },
+      { x: 10, y: 530 },
     ]);
   });
 });

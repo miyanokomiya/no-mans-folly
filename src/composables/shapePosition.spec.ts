@@ -1,5 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { findBetterRectanglePositionsNearByShape, findBetterShapePositionsNearByShape } from "./shapePosition";
+import {
+  findBetterRectanglePositionNearByShape,
+  findBetterRectanglePositionsBelowShape,
+  findBetterShapePositionsNearByShape,
+} from "./shapePosition";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
@@ -60,26 +64,39 @@ describe("findBetterShapePositionsNearByShape", () => {
   });
 });
 
-describe("findBetterRectanglePositionsNearByShape", () => {
-  test("should return shape positions near by the source shape based on their wrapper rectangles", () => {
+describe("findBetterRectanglePositionNearByShape", () => {
+  test("should return the position near by the source shape", () => {
     const shapeComposite = newShapeComposite({
       shapes: [rectA, rectB, rectC, src],
       getStruct: getCommonStruct,
     });
-    expect(findBetterRectanglePositionsNearByShape(shapeComposite, src.id, { width: 100, height: 200 })).toEqualPoint({
+    expect(findBetterRectanglePositionNearByShape(shapeComposite, src.id, { width: 100, height: 200 })).toEqualPoint({
       x: -140,
       y: 0,
     });
   });
 
-  test("should return shape positions that don't overlap others", () => {
+  test("should return the position that doesn't overlap shapes", () => {
     const shapeComposite = newShapeComposite({
       shapes: [rectA, rectB, rectC, rectD, src],
       getStruct: getCommonStruct,
     });
-    expect(findBetterRectanglePositionsNearByShape(shapeComposite, src.id, { width: 100, height: 200 })).toEqualPoint({
+    expect(findBetterRectanglePositionNearByShape(shapeComposite, src.id, { width: 100, height: 200 })).toEqualPoint({
       x: -140,
       y: 120,
+    });
+  });
+});
+
+describe("findBetterRectanglePositionsBelowShape", () => {
+  test("should return the position below the source shape without overlapping shapes", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [rectA, rectB, rectC, rectD, src],
+      getStruct: getCommonStruct,
+    });
+    expect(findBetterRectanglePositionsBelowShape(shapeComposite, src.id, { width: 100, height: 200 })).toEqualPoint({
+      x: 0,
+      y: 540,
     });
   });
 });
