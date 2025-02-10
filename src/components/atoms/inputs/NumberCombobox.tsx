@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { OutsideObserver } from "../OutsideObserver";
 
 interface Props {
@@ -22,6 +22,10 @@ export const NumberCombobox: React.FC<Props> = ({
 }) => {
   const [draftValue, setDraftValue] = useState(value);
   const [opened, setOpened] = useState(false);
+
+  useEffect(() => {
+    setDraftValue(value);
+  }, [value]);
 
   const onFocused = useCallback(() => {
     setOpened(true);
@@ -52,9 +56,9 @@ export const NumberCombobox: React.FC<Props> = ({
 
   const onInput = useCallback(
     (e: any) => {
-      const value = e.target.value;
-      setDraftValue(value);
-      const val = Math.min(Math.max(value, min), max);
+      const v = e.target.value;
+      setDraftValue(v);
+      const val = Math.min(Math.max(v, min), max);
       onChanged?.(val, true);
     },
     [min, max, onChanged],
