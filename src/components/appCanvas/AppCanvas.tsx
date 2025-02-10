@@ -472,7 +472,7 @@ export const AppCanvas: React.FC = () => {
     });
     renderer.render(ctx);
 
-    renderFrameNames(ctx, shapeStore.shapeComposite, scale);
+    renderFrameNames(ctx, shapeStore.shapeComposite, userSetting.frameLabelSize, scale);
     grid.renderAxisLabels(ctx, scale);
     sm.render(ctx);
   }, [
@@ -492,6 +492,7 @@ export const AppCanvas: React.FC = () => {
     imageStore,
     canvasBank,
     viewCanvasRect,
+    userSetting,
   ]);
 
   const getMouseOptionsCustom = useCallback(

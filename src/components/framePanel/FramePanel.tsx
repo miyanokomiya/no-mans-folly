@@ -13,6 +13,7 @@ import { FixedPopupButton } from "../atoms/PopupButton";
 import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 import { FrameExportDialog } from "./FrameExportDialog";
 import { FrameTreePanel } from "./FrameTreePanel";
+import { FrameToolPanel } from "./FrameToolPanel";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -86,6 +87,7 @@ export const FramePanel: React.FC = () => {
       <div className="overflow-auto">
         <FrameTreePanel />
       </div>
+      <FrameToolPanel />
       <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
     </div>
   );

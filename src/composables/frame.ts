@@ -63,12 +63,13 @@ export function getFrameTree(shapeComposite: ShapeComposite): TreeNode[] {
   });
 }
 
-export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite, scale = 1) {
+export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite, size = 18, scale = 1) {
+  if (size <= 0) return;
   const frameTree = getFrameTree(shapeComposite);
   if (frameTree.length === 0) return;
 
   ctx.textBaseline = "bottom";
-  applyDefaultTextStyle(ctx, 18 * scale);
+  applyDefaultTextStyle(ctx, size * scale);
   applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
   applyFillStyle(ctx, { color: COLORS.BLACK });
   frameTree.forEach((node, i) => renderFrameNameStep(ctx, shapeComposite, node, i, scale));
