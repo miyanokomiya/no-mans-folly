@@ -4820,13 +4820,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"happy-dom@npm:^16.8.1":
-  version: 16.8.1
-  resolution: "happy-dom@npm:16.8.1"
+"happy-dom@npm:^17.0.2":
+  version: 17.0.2
+  resolution: "happy-dom@npm:17.0.2"
   dependencies:
     webidl-conversions: "npm:^7.0.0"
     whatwg-mimetype: "npm:^3.0.0"
-  checksum: 3e6e4ce3bf67871304fadc7a0e661397b3d6c12de149cafce5a9062b47038a4c12f5f29c2fc9a070be3e56f2b5a1625cc79570e1fd1a30ffea9aa107f844d57b
+  checksum: 8a3ec3e391f4ff2f62533b85f848f887ef51a7a9788c1972ce5416a352d8dc7cf4e58fa94cdb44597830dc6c2b60e7eaaf285c643746f985e896223092a7dd14
   languageName: node
   linkType: hard
 
@@ -5954,7 +5954,7 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^5.1.0"
     eslint-plugin-react-refresh: "npm:^0.4.19"
     fractional-indexing-jittered: "npm:^1.0.0"
-    happy-dom: "npm:^16.8.1"
+    happy-dom: "npm:^17.0.2"
     i18next: "npm:^24.2.2"
     i18next-browser-languagedetector: "npm:^8.0.2"
     littlezipper: "npm:^0.1.5"
