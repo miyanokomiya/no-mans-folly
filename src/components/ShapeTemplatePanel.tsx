@@ -6,7 +6,7 @@ import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { duplicateShapes } from "../shapes/utils/duplicator";
 
-const TEMPLATE_LIST = ["Flowchart", "Sequence", "Misc"];
+const TEMPLATE_LIST = ["Flowchart", "Sequence", "Presentation", "Misc"];
 
 export const ShapeTemplatePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
