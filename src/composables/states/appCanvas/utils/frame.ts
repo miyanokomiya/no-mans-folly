@@ -1,4 +1,5 @@
 import { Shape } from "../../../../models";
+import { DocOutput } from "../../../../models/document";
 import { createShape } from "../../../../shapes";
 import { duplicateShapes } from "../../../../shapes/utils/duplicator";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
@@ -35,7 +36,7 @@ export function insertFrameTreeItem(
 export function duplicateFrameTreeItem(
   ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getDocumentMap" | "generateUuid" | "createLastIndex">,
   srcId: string,
-): Shape[] {
+): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
   const shapeComposite = ctx.getShapeComposite();
   const src = shapeComposite.shapeMap[srcId];
   const nextId = getNextSiblingId(shapeComposite, srcId);
@@ -57,12 +58,15 @@ export function duplicateFrameTreeItem(
     { ...duplicatedSrc, findex: generateKeyBetweenAllowSame(src.findex, nextShape?.findex) },
     ...others,
   ];
-  if (!shapeComposite.hasParent(src)) return adjusted;
+  if (!shapeComposite.hasParent(src)) return { shapes: adjusted, docMap: duplicated.docMap };
 
   // Need to proc layouts here when the src shape has a parent.
   // => Newly added shapes can't move along with newly added frames.
   // => Because layouts have to assume newly added ones already have valid positions, but it's hardly guaranteed.
   const tmpShapeComposite = getNextShapeComposite(shapeComposite, { add: adjusted });
   const layoutPatch = getPatchByLayouts(tmpShapeComposite, { update: { [duplicatedSrc.id]: {} } });
-  return adjusted.map((s) => (layoutPatch?.[s.id] ? { ...s, ...layoutPatch[s.id] } : s));
+  return {
+    shapes: adjusted.map((s) => (layoutPatch?.[s.id] ? { ...s, ...layoutPatch[s.id] } : s)),
+    docMap: duplicated.docMap,
+  };
 }

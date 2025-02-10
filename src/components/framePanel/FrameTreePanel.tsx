@@ -223,9 +223,9 @@ export const FrameTreePanel: React.FC = () => {
   const handleDuplicate = useCallback(
     (id: string) => {
       const ctx = getCtx();
-      const shapes = duplicateFrameTreeItem(ctx, id);
-      ctx.updateShapes({ add: shapes });
-      ctx.selectShape(shapes[0].id);
+      const info = duplicateFrameTreeItem(ctx, id);
+      ctx.updateShapes({ add: info.shapes }, info.docMap);
+      ctx.selectShape(info.shapes[0].id);
     },
     [getCtx],
   );

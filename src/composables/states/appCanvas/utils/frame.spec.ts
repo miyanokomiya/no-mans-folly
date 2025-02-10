@@ -41,7 +41,7 @@ function getCtx() {
         shapes: [frameGroup, frame0, frame1, rect],
         getStruct: getCommonStruct,
       }),
-    getDocumentMap: () => ({}),
+    getDocumentMap: () => ({ [rect.id]: [] }),
     generateUuid: () => `${++count}`,
     createLastIndex: () => generateKeyBetween(rect.findex, null),
   };
@@ -69,8 +69,9 @@ describe("insertFrameTreeItem", () => {
 describe("duplicateFrameTreeItem", () => {
   test("should duplicate a frame in the frame align group and align it", () => {
     const result0 = duplicateFrameTreeItem(getCtx(), frame0.id);
-    expect(result0.map((s) => s.type)).toEqual([frame0.type, rect.type]);
-    expect(result0.map((s) => s.p)).toEqualPoints([
+    expect(result0.docMap).toEqual({ 2: [] });
+    expect(result0.shapes.map((s) => s.type)).toEqual([frame0.type, rect.type]);
+    expect(result0.shapes.map((s) => s.p)).toEqualPoints([
       { x: 120, y: 10 },
       { x: 130, y: 20 },
     ]);
@@ -78,8 +79,9 @@ describe("duplicateFrameTreeItem", () => {
 
   test("should duplicate a frame group", () => {
     const result0 = duplicateFrameTreeItem(getCtx(), frameGroup.id);
-    expect(result0.map((s) => s.type)).toEqual([frameGroup.type, frame0.type, frame1.type, rect.type]);
-    expect(result0.map((s) => s.p)).toEqualPoints([
+    expect(result0.docMap).toEqual({ 4: [] });
+    expect(result0.shapes.map((s) => s.type)).toEqual([frameGroup.type, frame0.type, frame1.type, rect.type]);
+    expect(result0.shapes.map((s) => s.p)).toEqualPoints([
       { x: 0, y: 520 },
       { x: 0, y: 520 },
       { x: 100, y: 520 },
