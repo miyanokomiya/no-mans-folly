@@ -149,6 +149,7 @@ export interface UserSetting {
   leftDragAction?: "rect-select" | "pan"; // should be "rect-select" when it's undefined
   grid?: "on" | "off"; // should be "on" when it's undefined
   gridSize?: number; // should be 50 when it's undefined
+  gridType?: "dot" | "line" | "dash"; // should be "dot" when it's undefined
   debug?: "on" | "off"; // should be "off" when it's undefined
   virtualKeyboard?: "modifiers" | "off"; // should be "off" when it's undefined
   preview?: "on" | "off"; // should be "off" when it's undefined

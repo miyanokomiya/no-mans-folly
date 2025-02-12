@@ -64,6 +64,13 @@ export const UserSettingPanel: React.FC = () => {
     [patchUserSetting],
   );
 
+  const handleGridTypeChange = useCallback(
+    (val: string) => {
+      patchUserSetting({ gridType: val as any });
+    },
+    [patchUserSetting],
+  );
+
   const handleAttachToLineChange = useCallback(
     (val: boolean) => {
       patchUserSetting({ attachToLine: val ? "on" : "off" });
@@ -127,6 +134,19 @@ export const UserSettingPanel: React.FC = () => {
                 slider={true}
                 value={userSetting.gridSize ?? 50}
                 onChange={handleGridSizeChange}
+              />
+            </div>
+          </InlineField>
+          <InlineField label="Type">
+            <div className="w-24">
+              <SelectInput
+                value={userSetting.gridType ?? "dot"}
+                options={[
+                  { value: "dot", label: "Dot" },
+                  { value: "line", label: "Line" },
+                  { value: "dash", label: "Dash" },
+                ]}
+                onChange={handleGridTypeChange}
               />
             </div>
           </InlineField>

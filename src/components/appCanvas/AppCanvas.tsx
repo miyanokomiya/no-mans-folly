@@ -812,7 +812,12 @@ export const AppCanvas: React.FC = () => {
         <FileDropArea typeRegs={DroppableFileRegs} onDrop={onDrop}>
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
             {grid.disabled ? undefined : (
-              <GridBackground x={grid.range.x / scale} y={grid.range.y / scale} size={grid.size / scale} />
+              <GridBackground
+                x={grid.range.x / scale}
+                y={grid.range.y / scale}
+                size={grid.size / scale}
+                type={userSetting.gridType}
+              />
             )}
           </div>
           <canvas ref={canvasRef} {...canvasAttrs}></canvas>
