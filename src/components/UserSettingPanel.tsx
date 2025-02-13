@@ -1,19 +1,32 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ToggleInput } from "./atoms/inputs/ToggleInput";
 import { SelectInput } from "./atoms/inputs/SelectInput";
 import { InlineField } from "./atoms/InlineField";
-import { UserSetting } from "../models";
+import { Color, UserSetting } from "../models";
 import { BlockGroupField } from "./atoms/BlockGroupField";
 import { NumberInput } from "./atoms/inputs/NumberInput";
 import { useUserSetting } from "../hooks/storeHooks";
+import { OutsideObserver } from "./atoms/OutsideObserver";
+import { PopupButton } from "./atoms/PopupButton";
+import { ColorPickerPanel } from "./molecules/ColorPickerPanel";
+import { parseRGBA, rednerRGBA } from "../utils/color";
+import { GRID_DEFAULT_COLOR } from "../composables/grid";
 
 const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], undefined>; label: string }[] = [
   { value: "off", label: "Off" },
   { value: "modifiers", label: "Modifiers" },
 ];
 
+const gridTypeOptions: { value: Exclude<UserSetting["gridType"], undefined>; label: string }[] = [
+  { value: "dot", label: "Dot" },
+  { value: "line", label: "Line" },
+  { value: "dash", label: "Dash" },
+];
+
 export const UserSettingPanel: React.FC = () => {
   const [userSetting, patchUserSetting] = useUserSetting();
+  const [popupedKey, setPopupedKey] = useState<string>();
+  const closePopup = useCallback(() => setPopupedKey(undefined), []);
 
   const handleDebugChange = useCallback(
     (val: boolean) => {
@@ -71,6 +84,13 @@ export const UserSettingPanel: React.FC = () => {
     [patchUserSetting],
   );
 
+  const handleGridColorChange = useCallback(
+    (val: Color) => {
+      patchUserSetting({ gridColor: rednerRGBA(val) });
+    },
+    [patchUserSetting],
+  );
+
   const handleAttachToLineChange = useCallback(
     (val: boolean) => {
       patchUserSetting({ attachToLine: val ? "on" : "off" });
@@ -123,7 +143,7 @@ export const UserSettingPanel: React.FC = () => {
           </div>
         </BlockGroupField>
         <BlockGroupField label="Grid">
-          <InlineField label="Grid">
+          <InlineField label="On">
             <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange} />
           </InlineField>
           <InlineField label="Size">
@@ -141,14 +161,33 @@ export const UserSettingPanel: React.FC = () => {
             <div className="w-24">
               <SelectInput
                 value={userSetting.gridType ?? "dot"}
-                options={[
-                  { value: "dot", label: "Dot" },
-                  { value: "line", label: "Line" },
-                  { value: "dash", label: "Dash" },
-                ]}
+                options={gridTypeOptions}
                 onChange={handleGridTypeChange}
               />
             </div>
+          </InlineField>
+          <InlineField label="Color">
+            <OutsideObserver onClick={closePopup}>
+              <PopupButton
+                name="bgColor"
+                opened={popupedKey === "bgColor"}
+                popup={
+                  <div className="p-2">
+                    <ColorPickerPanel
+                      color={parseRGBA(userSetting.gridColor ?? GRID_DEFAULT_COLOR)}
+                      onChange={handleGridColorChange}
+                    />
+                  </div>
+                }
+                onClick={setPopupedKey}
+                popupPosition="left"
+              >
+                <div
+                  className="w-6 h-6 border-2 rounded-full"
+                  style={{ backgroundColor: userSetting.gridColor ?? GRID_DEFAULT_COLOR }}
+                />
+              </PopupButton>
+            </OutsideObserver>
           </InlineField>
         </BlockGroupField>
         <BlockGroupField label="General snap">

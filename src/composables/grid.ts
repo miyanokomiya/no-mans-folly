@@ -6,6 +6,7 @@ import { ShapeSnappingLines } from "../shapes/core";
 import { pickMinItem } from "../utils/commons";
 import { CanvasCTX } from "../utils/types";
 
+export const GRID_DEFAULT_COLOR = "rgba(40,40,40,1)";
 const GRID_LABEL_STEP_SIZE = 100;
 
 interface Option {

@@ -817,6 +817,7 @@ export const AppCanvas: React.FC = () => {
                 y={grid.range.y / scale}
                 size={grid.size / scale}
                 type={userSetting.gridType}
+                color={userSetting.gridColor}
               />
             )}
           </div>
