@@ -9,33 +9,37 @@ interface Props {
 }
 
 export const GridBackground: React.FC<Props> = ({ x, y, size, type, color }) => {
-  color ??= GRID_DEFAULT_COLOR;
+  if (size <= 0) return undefined;
+
+  const ncolor = color ?? GRID_DEFAULT_COLOR;
+  const nx = x % size;
+  const ny = y % size;
 
   return type === "line" ? (
     <div
       className="w-full h-full bg-repeat"
       style={{
-        backgroundPosition: `${-x}px ${-y}px`,
+        backgroundPosition: `${-nx}px ${-ny}px`,
         backgroundSize: `${size}px ${size}px`,
-        backgroundImage: `linear-gradient(to right, ${color} 1px, transparent 1px), linear-gradient(to bottom, ${color} 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(to right, ${ncolor} 1px, transparent 1px), linear-gradient(to bottom, ${ncolor} 1px, transparent 1px)`,
       }}
     />
   ) : type === "dash" ? (
     <div
       className="w-full h-full bg-repeat"
       style={{
-        backgroundPosition: `${-x - size / 2}px ${-y - size / 2}px`,
+        backgroundPosition: `${-nx - size / 2}px ${-ny - size / 2}px`,
         backgroundSize: `${size}px ${size}px`,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M 0 5 L 10 5 M 5 0 L 5 10' stroke='${color}' stroke-dasharray='1' stroke-dashoffset='-0.5' stroke-width='${20 / size}' /%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M 0 5 L 10 5 M 5 0 L 5 10' stroke='${ncolor}' stroke-dasharray='1' stroke-dashoffset='-0.5' stroke-width='${20 / size}' /%3E%3C/svg%3E")`,
       }}
     />
   ) : (
     <div
       className="w-full h-full bg-repeat"
       style={{
-        backgroundPosition: `${size / 2 - x}px ${size / 2 - y}px`,
+        backgroundPosition: `${size / 2 - nx}px ${size / 2 - ny}px`,
         backgroundSize: `${size}px ${size}px`,
-        backgroundImage: `radial-gradient(circle, ${color} 2.5px, transparent 2.5px)`,
+        backgroundImage: `radial-gradient(circle, ${ncolor} 2.5px, transparent 2.5px)`,
       }}
     />
   );
