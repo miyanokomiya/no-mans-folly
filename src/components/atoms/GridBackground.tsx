@@ -24,9 +24,9 @@ export const GridBackground: React.FC<Props> = ({ x, y, size, type, color }) => 
     <div
       className="w-full h-full bg-repeat"
       style={{
-        backgroundPosition: `${-x}px ${-y}px`,
+        backgroundPosition: `${-x - size / 2}px ${-y - size / 2}px`,
         backgroundSize: `${size}px ${size}px`,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M 0 0 L 10 0 M 0 0 L 0 10' stroke='${color}' stroke-dasharray='1' stroke-dashoffset='0.4' stroke-width='0.5' /%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M 0 5 L 10 5 M 5 0 L 5 10' stroke='${color}' stroke-dasharray='1' stroke-dashoffset='-0.5' stroke-width='${20 / size}' /%3E%3C/svg%3E")`,
       }}
     />
   ) : (
@@ -35,7 +35,7 @@ export const GridBackground: React.FC<Props> = ({ x, y, size, type, color }) => 
       style={{
         backgroundPosition: `${size / 2 - x}px ${size / 2 - y}px`,
         backgroundSize: `${size}px ${size}px`,
-        backgroundImage: `radial-gradient(circle, ${color} 2px, transparent 2px)`,
+        backgroundImage: `radial-gradient(circle, ${color} 2.5px, transparent 2.5px)`,
       }}
     />
   );
