@@ -64,7 +64,7 @@ export const NumberInput: React.FC<Props> = ({
 
   const handlePointerLockMove = useCallback(
     (args: PointerMoveArgs) => {
-      const next = Math.round(startValue.current + args.totalDelta.x);
+      const next = Math.round(startValue.current + args.totalDelta.x / 2);
       onChange?.(adjustValue(next), true);
     },
     [onChange, adjustValue],
@@ -74,7 +74,7 @@ export const NumberInput: React.FC<Props> = ({
     (args?: PointerMoveArgs) => {
       if (!args) return;
 
-      const next = Math.round(startValue.current + args.totalDelta.x);
+      const next = Math.round(startValue.current + args.totalDelta.x / 2);
       onChange?.(adjustValue(next));
     },
     [onChange, adjustValue],
