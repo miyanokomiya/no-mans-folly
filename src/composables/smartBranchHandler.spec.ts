@@ -2,12 +2,15 @@ import { describe, test, expect } from "vitest";
 import {
   getAbovePosition,
   getBelowPosition,
+  getBranchObstacles,
   getLeftPosition,
   getRightPosition,
   newSmartBranchHandler,
 } from "./smartBranchHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
+import { RectPolygonShape } from "../shapes/rectPolygon";
+import { LineShape } from "../shapes/line";
 
 describe("newSmartBranchHandler", () => {
   const rect = createShape(getCommonStruct, "rectangle", { id: "a", findex: "aA" });
@@ -39,6 +42,30 @@ describe("newSmartBranchHandler", () => {
       expect(result[1].type).toBe("line");
       expect(result[1].findex > result[0].findex).toBe(true);
     });
+  });
+});
+
+describe("getBranchObstacles", () => {
+  test("should ignore lines and shapes with special order priority", () => {
+    const rect = createShape<RectPolygonShape>(getCommonStruct, "rectangle", { id: "rect", width: 10, height: 10 });
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line",
+      p: { x: 10, y: 10 },
+      q: { x: 20, y: 20 },
+    });
+    const frame = createShape<RectPolygonShape>(getCommonStruct, "frame", {
+      id: "frame",
+      p: { x: 30, y: 30 },
+      width: 10,
+      height: 10,
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect, line, frame],
+      getStruct: getCommonStruct,
+    });
+    const result = getBranchObstacles(shapeComposite);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqualRect({ x: 0, y: 0, width: 10, height: 10 });
   });
 });
 

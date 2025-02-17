@@ -1,6 +1,6 @@
 import { AffineMatrix, IRectangle, IVec2, getDistance, getOuterRectangle, getRectCenter, moveRect } from "okageo";
 import { Shape, StyleScheme } from "../models";
-import { cloneShapes, createShape, getIntersectedOutlines } from "../shapes";
+import { cloneShapes, createShape, getIntersectedOutlines, hasSpecialOrderPriority } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
 import { getOptimalElbowBody } from "../utils/elbowLine";
@@ -125,11 +125,7 @@ function createBranch(
   const findexForShape = generateKeyBetween(lastFindex, null);
   const findexForElbow = generateKeyBetween(findexForShape, null);
 
-  const obstacles = Object.values(shapeComposite.shapeMap)
-    .filter((s) => !isLineShape(s))
-    .map((s) => {
-      return shapeComposite.getWrapperRect(s);
-    });
+  const obstacles = getBranchObstacles(shapeComposite);
   const baseQ = getTargetPosition(hitResult.index, bounds, obstacles);
   const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - bounds.x, baseQ.y - bounds.y];
   const moved: Shape = { ...shape, findex: findexForShape, ...shapeComposite.transformShape(shape, affine) };
@@ -157,6 +153,13 @@ function createBranch(
   });
 
   return [moved, elbow];
+}
+
+export function getBranchObstacles(shapeComposite: ShapeComposite): IRectangle[] {
+  const getShapeStruct = shapeComposite.getShapeStruct;
+  return shapeComposite.shapes
+    .filter((s) => !isLineShape(s) && !hasSpecialOrderPriority(getShapeStruct, s))
+    .map((s) => shapeComposite.getWrapperRect(s));
 }
 
 function getTargetPosition(index: number, src: IRectangle, obstacles: IRectangle[]): IVec2 {
