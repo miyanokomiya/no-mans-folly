@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { newDefaultState } from "../defaultState";
-import { LineShape, patchVertex } from "../../../../shapes/line";
+import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
 import {
   ConnectionResult,
   LineSnapping,
@@ -24,12 +24,16 @@ import { Shape } from "../../../../models";
 import { getSnappableCandidates } from "../commons";
 
 interface Option {
+  // This state creates "body" for the line, so that the "body" value of this shape does nothing.
   shape: LineShape;
 }
 
 export function newLineDrawingState(option: Option): AppCanvasState {
-  let shape = option.shape;
-  let vertex = option.shape.q;
+  const srcShape: LineShape = { ...option.shape, body: [] };
+  const linePath = getLinePath(srcShape);
+  const movingIndex = linePath.length - 1;
+  let latestShape = srcShape;
+  let vertex = linePath[movingIndex];
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
@@ -56,12 +60,12 @@ export function newLineDrawingState(option: Option): AppCanvasState {
         snappableShapes,
         shapeSnapping,
         getShapeStruct: shapeComposite.getShapeStruct,
-        movingLine: shape,
-        movingIndex: 1,
+        movingLine: srcShape,
+        movingIndex,
         ignoreCurrentLine: true,
       });
 
-      elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
+      elbowHandler = srcShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -75,27 +79,26 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           vertex = connectionResult?.p ?? point;
 
           coordinateRenderer.saveCoord(vertex);
-          let patch = patchVertex(option.shape, 1, vertex, connectionResult?.connection);
+          let patch = patchVertex(srcShape, movingIndex, vertex, connectionResult?.connection);
 
-          const optimized = optimizeLinePath(ctx, { ...option.shape, ...patch });
+          const optimized = optimizeLinePath(ctx, { ...srcShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
 
           if (elbowHandler) {
-            const body = elbowHandler.optimizeElbow({ ...option.shape, ...patch });
+            const body = elbowHandler.optimizeElbow({ ...srcShape, ...patch });
             patch = { ...patch, body };
-          } else if (option.shape.curveType === "auto") {
+          } else if (srcShape.curveType === "auto") {
             // Append middle vertex to make a curve
-            getDefaultCurveBody(shape.p, shape.q);
-            patch = { ...patch, body: getDefaultCurveBody(shape.p, shape.q) };
+            patch = { ...patch, body: getDefaultCurveBody(srcShape.p, patch.q ?? latestShape.q) };
           }
 
           const shapeComposite = ctx.getShapeComposite();
 
           // Include connected shapes to temporary shape composite.
           // => This is essential for connection layout to work properly.
-          const tmpShapeSet: Set<Shape> = new Set([option.shape]);
-          if (option.shape.pConnection) {
-            tmpShapeSet.add(shapeComposite.shapeMap[option.shape.pConnection.id]);
+          const tmpShapeSet: Set<Shape> = new Set([srcShape]);
+          if (srcShape.pConnection) {
+            tmpShapeSet.add(shapeComposite.shapeMap[srcShape.pConnection.id]);
           }
           if (patch.qConnection) {
             tmpShapeSet.add(shapeComposite.shapeMap[patch.qConnection.id]);
@@ -105,14 +108,14 @@ export function newLineDrawingState(option: Option): AppCanvasState {
             getStruct: shapeComposite.getShapeStruct,
             shapes: Array.from(tmpShapeSet),
           });
-          patch = getPatchAfterLayouts(tmpShapeComposite, { update: { [option.shape.id]: patch } })[option.shape.id];
+          patch = getPatchAfterLayouts(tmpShapeComposite, { update: { [srcShape.id]: patch } })[srcShape.id];
 
-          shape = { ...option.shape, ...patch };
+          latestShape = { ...srcShape, ...patch };
           ctx.redraw();
           return;
         }
         case "pointerup": {
-          if (isSame(shape.p, shape.q)) {
+          if (isSame(latestShape.p, latestShape.q)) {
             // When the line has zero length, continue drawing it at first.
             // When it happens again, cancel drawing the line.
             if (!hoverMode) {
@@ -123,8 +126,8 @@ export function newLineDrawingState(option: Option): AppCanvasState {
             }
           }
 
-          ctx.addShapes([shape]);
-          ctx.selectShape(shape.id);
+          ctx.addShapes([latestShape]);
+          ctx.selectShape(latestShape.id);
           return ctx.states.newSelectionHubState;
         }
         case "keydown":
@@ -145,10 +148,10 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     },
     render(ctx, renderCtx) {
       const lineShapeComposite = newShapeComposite({
-        shapes: [shape],
+        shapes: [latestShape],
         getStruct: ctx.getShapeStruct,
       });
-      lineShapeComposite.render(renderCtx, shape);
+      lineShapeComposite.render(renderCtx, latestShape);
 
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
