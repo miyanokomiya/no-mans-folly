@@ -29,7 +29,7 @@ interface Option {
 
 export function newLineDrawingState(option: Option): AppCanvasState {
   let shape = option.shape;
-  let vertex = option.shape.p;
+  let vertex = option.shape.q;
   let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
@@ -58,6 +58,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
         getShapeStruct: shapeComposite.getShapeStruct,
         movingLine: shape,
         movingIndex: 1,
+        ignoreCurrentLine: true,
       });
 
       elbowHandler = option.shape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;

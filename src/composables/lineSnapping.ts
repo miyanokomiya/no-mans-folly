@@ -54,6 +54,9 @@ interface Option {
   shapeSnapping?: ShapeSnapping;
   getShapeStruct: GetShapeStruct;
   threshold?: number;
+  // When true, prevent snapping to the line made by current point and adjacent vertex.
+  // This is useful when current point is just a dummy or doesn't have much meaning.
+  ignoreCurrentLine?: boolean;
 }
 
 export type ConnectionResult = {
@@ -89,7 +92,7 @@ export function newLineSnapping(option: Option) {
     let selfSnapped: { p: IVec2; guidLines: ISegment[] } | undefined;
 
     // Try snapping to adjacent vertices: On a line.
-    if (option.movingLine && option.movingIndex !== undefined) {
+    if (!option.ignoreCurrentLine && option.movingLine && option.movingIndex !== undefined) {
       const targetVertex = vertices[option.movingIndex];
       const candidates = adjacentVertices.map<[IVec2, ISegment, number]>((adjacent) => {
         const guidLine: ISegment = [targetVertex, adjacent];
