@@ -35,7 +35,7 @@ describe("newSmartBranchHandler", () => {
   describe("createBranch", () => {
     test("should return branch shapes based on the hit result", () => {
       const hit = target.hitTest({ x: 140, y: 50 }, 1);
-      const result = target.createBranch(hit!, () => "b", rect.findex);
+      const result = target.createBranch(hit!.index, () => "b", rect.findex);
       expect(result).toHaveLength(2);
       expect(result[0].type).toBe("rectangle");
       expect(result[0].findex > rect.findex).toBe(true);

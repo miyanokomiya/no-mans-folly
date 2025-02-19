@@ -65,12 +65,16 @@ describe("newSingleSelectedByPointerOnState", () => {
       }) as any;
       expect(result0?.().getLabel(), "moved beyond threshold").toBe("MovingHub");
 
+      target.onEnd?.(ctx as any);
+      target.onStart?.(ctx as any);
       const result1 = target.handleEvent(ctx as any, {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
       }) as any;
       expect(result1, "moved within threshold").toBe(undefined);
 
+      target.onEnd?.(ctx as any);
+      target.onStart?.(ctx as any);
       vi.advanceTimersByTime(150);
       const result2 = target.handleEvent(ctx as any, {
         type: "pointermove",

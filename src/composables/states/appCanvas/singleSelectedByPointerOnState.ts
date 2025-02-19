@@ -1,21 +1,21 @@
 import type { AppCanvasState } from "./core";
-import { getDistance } from "okageo";
 import { startTextEditingIfPossible } from "./commons";
 import { isRigidMoveShape } from "../../../shapes";
+import { newFuzzyDrag } from "../../pointer";
 
 interface Option {
   concurrent?: boolean; // Set true, when the target shape has already been selected.
 }
 
 export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasState {
-  let timestamp = 0;
+  const fuzzyDrag = newFuzzyDrag();
 
   return {
     getLabel: () => "SingleSelectedByPointerOn",
     onStart: (ctx) => {
       ctx.showFloatMenu();
       ctx.startDragging();
-      timestamp = Date.now();
+      fuzzyDrag.onDown(Date.now());
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -24,8 +24,8 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          if (Date.now() - timestamp < 100 && getDistance(event.data.current, event.data.start) < 8 * ctx.getScale())
-            return;
+          fuzzyDrag.onMove(Date.now(), event.data);
+          if (!fuzzyDrag.isDragging()) return;
 
           const shapeComposite = ctx.getShapeComposite();
           const shape = shapeComposite.shapeMap[ctx.getLastSelectedShapeId() ?? ""];
@@ -47,7 +47,7 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
           return () => ctx.states.newMovingHubState({ ...event.data });
         }
         case "pointerup": {
-          if (option?.concurrent && Date.now() - timestamp < 200) {
+          if (option?.concurrent && Date.now() - fuzzyDrag.getTimestampOnDown() < 200) {
             const result = startTextEditingIfPossible(ctx, ctx.getLastSelectedShapeId(), event.data.point);
             if (result) return result;
           }

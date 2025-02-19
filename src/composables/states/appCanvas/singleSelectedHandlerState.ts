@@ -114,15 +114,12 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
                 if (smartBranchHandler) {
                   const smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, ctx.getScale());
+                  smartBranchHandler.saveHitResult(smartBranchHitResult);
                   if (smartBranchHitResult) {
-                    const branchShapes = smartBranchHandler.createBranch(
-                      smartBranchHitResult,
-                      ctx.generateUuid,
-                      ctx.createLastIndex(),
-                    );
-                    ctx.addShapes(branchShapes);
-                    ctx.selectShape(branchShapes[0].id);
-                    return;
+                    return () =>
+                      ctx.states.newSmartBranchPointerDownState({
+                        smartBranchHandler: smartBranchHandler!,
+                      });
                   }
                 }
 

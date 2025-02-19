@@ -1,3 +1,4 @@
+import { newLineDrawingState } from "./lines/lineDrawingState";
 import { newLineNormalReadyState } from "./lines/lineNormalReadyState";
 import { newLineReadyState } from "./lines/lineReadyState";
 import { newLineTangentReadyState } from "./lines/lineTangentReadyState";
@@ -9,6 +10,7 @@ import { newMovingShapeState } from "./movingShapeState";
 import { newPanToShapeState } from "./panToShapeState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newSelectionHubState } from "./selectionHubState";
+import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
@@ -18,10 +20,12 @@ export const stateGenerators = {
   newMovingOnLineState,
   newMovingAnchorOnLineState,
   newLineReadyState,
+  newLineDrawingState,
   newLineTangentReadyState,
   newLineNormalReadyState,
   newVertexAttachingState,
   newPointerDownEmptyState,
   newPanToShapeState,
+  newSmartBranchPointerDownState,
 };
 export type StateGenerators = typeof stateGenerators;

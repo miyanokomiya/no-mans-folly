@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2, getDistance, getOuterRectangle, getRectCenter, moveRect } from "okageo";
-import { Shape, StyleScheme } from "../models";
+import { Direction4, Shape, StyleScheme } from "../models";
 import { cloneShapes, createShape, getIntersectedOutlines, hasSpecialOrderPriority } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
@@ -16,13 +16,17 @@ const SIBLING_MARGIN = 25;
 const ANCHOR_SIZE = 7;
 const ANCHOR_MARGIN = 34;
 
-interface HitResult {
-  index: number; // index of anchor array: [top, right, bottom, left]
-  previewShapes: [Shape, LineShape];
+interface SmartBranchHitResult {
+  index: Direction4;
+  previewShapes: [Shape, LineShape]; // Their IDs are mocked.
 }
 
-export type SmartBranchHandler = ShapeHandler<HitResult> & {
-  createBranch(hitResult: Pick<HitResult, "index">, generateId: () => string, lastFindex: string): [Shape, LineShape];
+export type SmartBranchHandler = ShapeHandler<SmartBranchHitResult> & {
+  createBranch(
+    branchIndex: SmartBranchHitResult["index"],
+    generateId: () => string,
+    lastFindex: string,
+  ): [Shape, LineShape];
 };
 
 interface Option {
@@ -30,7 +34,7 @@ interface Option {
   targetId: string;
 }
 
-const getBaseHandler = defineShapeHandler<HitResult, Option>((option) => {
+const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId];
   const bounds = getOuterRectangle([shapeComposite.getLocalRectPolygon(shape)]);
@@ -45,17 +49,18 @@ const getBaseHandler = defineShapeHandler<HitResult, Option>((option) => {
     ];
   }
 
-  function hitTest(p: IVec2, scale = 1): HitResult | undefined {
+  function hitTest(p: IVec2, scale = 1): SmartBranchHitResult | undefined {
     const threshold = ANCHOR_SIZE * scale;
 
-    const index = getAnchors(scale).findIndex((a) => getDistance(a, p) <= threshold);
+    const index = getAnchors(scale).findIndex((a) => getDistance(a, p) <= threshold) as Direction4 | -1;
     if (index === -1) return;
 
-    const previewShapes = createBranch(shapeComposite, shape, bounds, { index }, () => "mock", shape.findex);
+    let count = 0;
+    const previewShapes = createBranch(shapeComposite, shape, bounds, index, () => `mock_${count++}`, shape.findex);
     return { index, previewShapes };
   }
 
-  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: HitResult) {
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: SmartBranchHitResult) {
     const threshold = ANCHOR_SIZE * scale;
     applyFillStyle(ctx, { color: style.selectionPrimary });
 
@@ -99,12 +104,12 @@ export function newSmartBranchHandler(option: Option): SmartBranchHandler {
 
   return {
     ...getBaseHandler(option),
-    createBranch: (hitResult: Pick<HitResult, "index">, generateId: () => string, lastFindex: string) =>
-      createBranch(shapeComposite, shape, bounds, hitResult, generateId, lastFindex),
+    createBranch: (branchIndex: SmartBranchHitResult["index"], generateId: () => string, lastFindex: string) =>
+      createBranch(shapeComposite, shape, bounds, branchIndex, generateId, lastFindex),
   };
 }
 
-function isSameHitResult(a?: HitResult, b?: HitResult): boolean {
+function isSameHitResult(a?: SmartBranchHitResult, b?: SmartBranchHitResult): boolean {
   if (a && b) {
     return a.index === b.index;
   } else {
@@ -116,7 +121,7 @@ function createBranch(
   shapeComposite: ShapeComposite,
   src: Shape,
   bounds: IRectangle,
-  hitResult: Pick<HitResult, "index">,
+  branchIndex: SmartBranchHitResult["index"],
   generateId: () => string,
   lastFindex: string,
 ): [Shape, LineShape] {
@@ -126,7 +131,7 @@ function createBranch(
   const findexForElbow = generateKeyBetween(findexForShape, null);
 
   const obstacles = getBranchObstacles(shapeComposite);
-  const baseQ = getTargetPosition(hitResult.index, bounds, obstacles);
+  const baseQ = getTargetPosition(branchIndex, bounds, obstacles);
   const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - bounds.x, baseQ.y - bounds.y];
   const moved: Shape = { ...shape, findex: findexForShape, ...shapeComposite.transformShape(shape, affine) };
 
@@ -135,10 +140,9 @@ function createBranch(
   const pCenter = getRectCenter(pRect);
   const qCenter = getRectCenter(qRect);
   const p =
-    getIntersectedOutlines(getShapeStruct, src, getPBasePoint(hitResult.index, pCenter, qCenter), pCenter)?.[0] ??
-    pCenter;
+    getIntersectedOutlines(getShapeStruct, src, getPBasePoint(branchIndex, pCenter, qCenter), pCenter)?.[0] ?? pCenter;
   const q =
-    getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(hitResult.index, pCenter, qCenter), qCenter)?.[0] ??
+    getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(branchIndex, pCenter, qCenter), qCenter)?.[0] ??
     qCenter;
 
   const elbow = createShape<LineShape>(getShapeStruct, "line", {
