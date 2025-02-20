@@ -42,6 +42,7 @@ import { duplicateShapes } from "../../shapes/utils/duplicator";
 import { useImageStore, useLoadShapeAssets } from "./hooks";
 import { CommandExamFloatPanel } from "./CommandExamFloatPanel";
 import { renderFrameNames } from "../../composables/frame";
+import { FloatMenuOption } from "../../composables/states/commons";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -55,7 +56,7 @@ export const AppCanvas: React.FC = () => {
 
   const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
-  const [floatMenuAvailable, setFloatMenuAvailable] = useState(false);
+  const [floatMenuOption, setFloatMenuOption] = useState<FloatMenuOption>();
   const [textEditing, setTextEditing] = useState(false);
   const [textEditorPosition, setTextEditorPosition] = useState<IVec2>({ x: 0, y: 0 });
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -219,8 +220,8 @@ export const AppCanvas: React.FC = () => {
       getCursorPoint: () => viewToCanvas(getMousePoint()),
 
       toView: canvasToView,
-      showFloatMenu: () => setFloatMenuAvailable(true),
-      hideFloatMenu: () => setFloatMenuAvailable(false),
+      showFloatMenu: (option) => setFloatMenuOption(option ?? {}),
+      hideFloatMenu: () => setFloatMenuOption(undefined),
       setContextMenuList(val) {
         if (val) {
           setContextMenu({ items: val.items, point: canvasToView(val.point) });
@@ -763,12 +764,14 @@ export const AppCanvas: React.FC = () => {
     />
   ) : undefined;
 
-  const floatMenu = floatMenuAvailable ? (
+  const floatMenu = floatMenuOption ? (
     <FloatMenu
       canvasState={canvasState}
       scale={scale}
       viewOrigin={viewOrigin}
       viewSize={viewSize}
+      targetRect={floatMenuOption.targetRect}
+      type={floatMenuOption.type}
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
       textEditing={textEditing}

@@ -24,7 +24,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
   getCursorPoint: () => IVec2; // must be canvas space
 
   toView: (p: IVec2) => IVec2;
-  showFloatMenu: () => void;
+  showFloatMenu: (option?: FloatMenuOption) => void;
   hideFloatMenu: () => void;
   setContextMenuList: (val?: { items: ContextMenuItem[]; point: IVec2 }) => void;
   setCommandExams: (exams?: CommandExam[]) => void;
@@ -40,6 +40,11 @@ export interface HistoryEvent extends ModeStateEventBase {
   type: "history";
   data: "undo" | "redo";
 }
+
+export type FloatMenuOption = {
+  targetRect?: IRectangle;
+  type?: string;
+};
 
 export type CanvasStateEvent = ModeStateEvent | HistoryEvent;
 
