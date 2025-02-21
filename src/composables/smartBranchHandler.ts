@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2, getDistance, getOuterRectangle, getRectCenter, moveRect } from "okageo";
-import { Direction4, Shape, StyleScheme } from "../models";
+import { Direction4, Shape, StyleScheme, UserSetting } from "../models";
 import { cloneShapes, createShape, getIntersectedOutlines, hasSpecialOrderPriority } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
@@ -16,7 +16,7 @@ const SIBLING_MARGIN = 25;
 const ANCHOR_SIZE = 7;
 const ANCHOR_MARGIN = 34;
 
-interface SmartBranchHitResult {
+export interface SmartBranchHitResult {
   index: Direction4;
   previewShapes: [Shape, LineShape]; // Their IDs are mocked.
 }
@@ -26,12 +26,16 @@ export type SmartBranchHandler = ShapeHandler<SmartBranchHitResult> & {
     branchIndex: SmartBranchHitResult["index"],
     generateId: () => string,
     lastFindex: string,
+    branchTemplate?: BranchTemplate,
   ): [Shape, LineShape];
 };
+
+type BranchTemplate = Pick<UserSetting, "smartBranchLine">;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
   targetId: string;
+  branchTemplate?: BranchTemplate;
 }
 
 const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option) => {
@@ -56,7 +60,15 @@ const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option)
     if (index === -1) return;
 
     let count = 0;
-    const previewShapes = createBranch(shapeComposite, shape, bounds, index, () => `mock_${count++}`, shape.findex);
+    const previewShapes = createBranch(
+      shapeComposite,
+      shape,
+      bounds,
+      index,
+      () => `mock_${count++}`,
+      shape.findex,
+      option.branchTemplate,
+    );
     return { index, previewShapes };
   }
 
@@ -104,8 +116,21 @@ export function newSmartBranchHandler(option: Option): SmartBranchHandler {
 
   return {
     ...getBaseHandler(option),
-    createBranch: (branchIndex: SmartBranchHitResult["index"], generateId: () => string, lastFindex: string) =>
-      createBranch(shapeComposite, shape, bounds, branchIndex, generateId, lastFindex),
+    createBranch: (
+      branchIndex: SmartBranchHitResult["index"],
+      generateId: () => string,
+      lastFindex: string,
+      branchTemplate: BranchTemplate = {},
+    ) =>
+      createBranch(
+        shapeComposite,
+        shape,
+        bounds,
+        branchIndex,
+        generateId,
+        lastFindex,
+        branchTemplate ?? option.branchTemplate,
+      ),
   };
 }
 
@@ -124,6 +149,7 @@ function createBranch(
   branchIndex: SmartBranchHitResult["index"],
   generateId: () => string,
   lastFindex: string,
+  branchTemplate: BranchTemplate = {},
 ): [Shape, LineShape] {
   const getShapeStruct = shapeComposite.getShapeStruct;
   const shape = cloneShapes(getShapeStruct, [src], generateId)[0];
@@ -146,9 +172,10 @@ function createBranch(
     qCenter;
 
   const elbow = createShape<LineShape>(getShapeStruct, "line", {
+    lineType: "elbow",
+    ...branchTemplate.smartBranchLine,
     id: generateId(),
     findex: findexForElbow,
-    lineType: "elbow",
     p,
     q,
     pConnection: { id: src.id, rate: shapeComposite.getLocationRateOnShape(src, p) },

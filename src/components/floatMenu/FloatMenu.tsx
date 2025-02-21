@@ -7,6 +7,7 @@ import { useDraggable } from "../../hooks/draggable";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { FloatMenuInspector } from "./FloatMenuInspector";
 import { useSelectedShapes, useShapeComposite } from "../../hooks/storeHooks";
+import { FloatMenuSmartBranch } from "./FloatMenuSmartBranch";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -34,6 +35,7 @@ export const FloatMenu: React.FC<Option> = ({
   viewOrigin,
   viewSize,
   targetRect,
+  type,
   indexDocAttrInfo,
   focusBack,
   textEditing,
@@ -115,16 +117,24 @@ export const FloatMenu: React.FC<Option> = ({
   return adjustedTargetRect ? (
     <div ref={rootRef} {...rootAttrs}>
       <div className="flex gap-1 items-center">
-        <ClickOrDragHandler onClick={handleMenuAnchorClick} onDragStart={handleMenuAnchorDrag}>
-          <div className={"w-3 h-8 border rounded-xs touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
+        <ClickOrDragHandler
+          onClick={handleMenuAnchorClick}
+          onDragStart={handleMenuAnchorDrag}
+          className="self-stretch my-1"
+        >
+          <div className={"w-3 h-full border rounded-xs touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
         </ClickOrDragHandler>
-        <FloatMenuInspector
-          canvasState={canvasState}
-          indexDocAttrInfo={indexDocAttrInfo}
-          focusBack={focusBack}
-          textEditing={textEditing}
-          onContextMenu={onContextMenu}
-        />
+        {type === "smart-branch" ? (
+          <FloatMenuSmartBranch />
+        ) : (
+          <FloatMenuInspector
+            canvasState={canvasState}
+            indexDocAttrInfo={indexDocAttrInfo}
+            focusBack={focusBack}
+            textEditing={textEditing}
+            onContextMenu={onContextMenu}
+          />
+        )}
       </div>
     </div>
   ) : undefined;

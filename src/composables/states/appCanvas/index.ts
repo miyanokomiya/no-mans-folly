@@ -11,6 +11,7 @@ import { newPanToShapeState } from "./panToShapeState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newSelectionHubState } from "./selectionHubState";
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
+import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
@@ -27,5 +28,6 @@ export const stateGenerators = {
   newPointerDownEmptyState,
   newPanToShapeState,
   newSmartBranchPointerDownState,
+  newSmartBranchSettingState,
 };
 export type StateGenerators = typeof stateGenerators;

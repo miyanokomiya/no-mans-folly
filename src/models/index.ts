@@ -158,6 +158,7 @@ export interface UserSetting {
   snapIgnoreLine?: "on" | "off"; // should be "off" when it's undefined
   snapIgnoreNonoverlapPair?: "on" | "off"; // should be "off" when it's undefined
   frameLabelSize?: number; // should be 18 when it's undefined
+  smartBranchLine?: Partial<Shape>;
 }
 
 /**

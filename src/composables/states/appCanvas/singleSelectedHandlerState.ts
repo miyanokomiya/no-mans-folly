@@ -20,6 +20,7 @@ import { getAttachmentAnchorPoint } from "../../lineAttachmentHandler";
 import { applyFillStyle } from "../../../utils/fillStyle";
 import { TAU } from "../../../utils/geometry";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
+import { COMMAND_EXAM_SRC } from "./commandExams";
 
 interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHandler> {
   getTargetShape: () => S;
@@ -27,13 +28,20 @@ interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHand
   getBoundingBox: () => BoundingBox;
 }
 
+type DefOption = {
+  hideSmartBranch?: boolean;
+};
+
 /**
  * "handleEvent" can be overridden by returning "null" from the custom handler.
  */
 export function defineSingleSelectedHandlerState<S extends Shape, H extends ShapeHandler, A extends any[]>(
   createFn: (getters: SingleSelectedHandlerStateGetters<S, H>, ...o: A) => AppCanvasState,
   newHandlerFn?: (ctx: AppCanvasStateContext, targetShape: S) => H,
+  option?: DefOption,
 ): (...o: A) => AppCanvasState {
+  const hideSmartBranch = option?.hideSmartBranch ?? false;
+
   return defineIntransientState((...o: A) => {
     let targetShape: S;
     let shapeHandler: H;
@@ -67,6 +75,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         });
 
         if (
+          !hideSmartBranch &&
           !shapeComposite.hasParent(targetShape) &&
           !shapeComposite.attached(targetShape) &&
           canAttachSmartBranch(ctx.getShapeStruct, targetShape)
@@ -74,6 +83,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
           smartBranchHandler = newSmartBranchHandler({
             getShapeComposite: ctx.getShapeComposite,
             targetId: targetShape.id,
+            branchTemplate: ctx.getUserSetting(),
           });
         }
 
@@ -169,6 +179,9 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             if (smartBranchHandler) {
               const smartBranchHitResult = smartBranchHandler.hitTest(event.data.current, ctx.getScale());
               if (smartBranchHandler.saveHitResult(smartBranchHitResult)) {
+                ctx.setCommandExams(
+                  smartBranchHitResult ? [COMMAND_EXAM_SRC.SMART_BRANCH_SETTING] : getCommonCommandExams(ctx),
+                );
                 ctx.redraw();
                 return;
               }
@@ -185,12 +198,21 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                 return handleIntransientEvent(ctx, event);
             }
           }
-          case "contextmenu":
+          case "contextmenu": {
+            if (smartBranchHandler) {
+              const smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, ctx.getScale());
+              smartBranchHandler.saveHitResult(smartBranchHitResult);
+              if (smartBranchHitResult) {
+                return () => ctx.states.newSmartBranchSettingState({ smartBranchHandler: smartBranchHandler! });
+              }
+            }
+
             ctx.setContextMenuList({
               items: getMenuItemsForSelectedShapes(ctx),
               point: event.data.point,
             });
             return;
+          }
           default:
             return handleIntransientEvent(ctx, event);
         }

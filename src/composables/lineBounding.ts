@@ -446,11 +446,7 @@ export function newLineBounding(option: Option) {
           break;
         }
         case "vertex": {
-          applyFillStyle(ctx, { color: style.selectionSecondaly });
-          const p = vertices[hitResult.index];
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
-          ctx.fill();
+          renderVertexAnchorHighlight(ctx, style, scale, vertices[hitResult.index]);
           break;
         }
         case "segment":
@@ -651,4 +647,12 @@ function renderBeziers(
       }
     });
   });
+}
+
+export function renderVertexAnchorHighlight(ctx: CanvasCTX, style: StyleScheme, scale: number, p: IVec2) {
+  const vertexSize = VERTEX_R * scale;
+  applyFillStyle(ctx, { color: style.selectionSecondaly });
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+  ctx.fill();
 }
