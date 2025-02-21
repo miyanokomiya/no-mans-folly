@@ -148,8 +148,11 @@ export const AppCanvas: React.FC = () => {
   useEffect(() => {
     return userSettingStore.watch(() => {
       setUserSetting(userSettingStore.getState());
+      sm.handleEvent({
+        type: "user-setting-change",
+      });
     });
-  }, [userSettingStore]);
+  }, [userSettingStore, sm]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const getWrapper = useCallback(() => wrapperRef.current, []);

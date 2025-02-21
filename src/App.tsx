@@ -29,6 +29,7 @@ import { ToastMessages } from "./components/ToastMessages";
 import { useLocalStorageAdopter } from "./hooks/localStorage";
 import "./i18n";
 import { createAppUndoManager } from "./hooks/undoManager";
+import { newThrottle } from "./utils/stateful/throttle";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -87,9 +88,14 @@ function App() {
     });
   }, []);
   useEffect(() => {
-    return userSetting.watch(() => {
-      localStorage.setItem(USER_SETTING_KEY, JSON.stringify(userSetting.getState()));
-    });
+    const saveFn = newThrottle(
+      () => {
+        localStorage.setItem(USER_SETTING_KEY, JSON.stringify(userSetting.getState()));
+      },
+      100,
+      true,
+    );
+    return userSetting.watch(saveFn);
   }, [userSetting]);
 
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();

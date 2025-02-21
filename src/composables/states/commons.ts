@@ -36,17 +36,21 @@ export interface CanvasStateContext extends ModeStateContextBase {
   setCaptureTimeout: (timeout?: number) => void;
 }
 
-export interface HistoryEvent extends ModeStateEventBase {
-  type: "history";
-  data: "undo" | "redo";
-}
-
 export type FloatMenuOption = {
   targetRect?: IRectangle;
   type?: string;
 };
 
-export type CanvasStateEvent = ModeStateEvent | HistoryEvent;
+export interface HistoryEvent extends ModeStateEventBase {
+  type: "history";
+  data: "undo" | "redo";
+}
+
+export type UserSettingChangeEvent = {
+  type: "user-setting-change";
+};
+
+export type CanvasStateEvent = ModeStateEvent | HistoryEvent | UserSettingChangeEvent;
 
 export type CanvasState = ModeStateBase<CanvasStateContext, CanvasStateEvent>;
 
