@@ -1,17 +1,19 @@
 import { getLinePath } from "../../../../shapes/line";
+import { COLORS } from "../../../../utils/color";
+import { applyFillStyle } from "../../../../utils/fillStyle";
 import { scaleGlobalAlpha } from "../../../../utils/renderer";
-import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { renderVertexAnchorHighlight } from "../../../lineBounding";
 import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { SmartBranchHandler, SmartBranchHitResult } from "../../../smartBranchHandler";
+import { handleCommonWheel } from "../../commons";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState, HighlightLineVertexMeta } from "../core";
-import { defineIntransientState } from "../intransientState";
 
 type Option = {
   smartBranchHandler: SmartBranchHandler;
 };
 
-function newStateSrc(option: Option): AppCanvasState {
+export function newSmartBranchSettingState(option: Option): AppCanvasState {
   let hitResult: SmartBranchHitResult;
   let localShapeComposite: ShapeComposite;
   let highlightLineVertexMeta: HighlightLineVertexMeta | undefined;
@@ -32,9 +34,18 @@ function newStateSrc(option: Option): AppCanvasState {
         targetRect: localShapeComposite.getWrapperRectForShapes(localShapeComposite.shapes, true),
         type: "smart-branch",
       });
+      ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
+    },
+    onResume: (ctx) => {
+      ctx.showFloatMenu({
+        targetRect: localShapeComposite.getWrapperRectForShapes(localShapeComposite.shapes, true),
+        type: "smart-branch",
+      });
+      ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
+      ctx.setCommandExams();
       if (canceled) return;
 
       const branchShapes = option.smartBranchHandler.createBranch(
@@ -49,7 +60,12 @@ function newStateSrc(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointerdown": {
-          return ctx.states.newSelectionHubState;
+          ctx.hideFloatMenu();
+          ctx.setCommandExams();
+          return {
+            type: "stack-resume",
+            getState: () => ctx.states.newPointerDownEmptyState({ ...event.data.options, preventSelecting: true }),
+          };
         }
         case "user-setting-change": {
           hitResult = {
@@ -84,6 +100,11 @@ function newStateSrc(option: Option): AppCanvasState {
               canceled = true;
               return ctx.states.newSelectionHubState;
           }
+          return;
+        }
+        case "wheel": {
+          handleCommonWheel(ctx, event);
+          return;
         }
       }
     },
@@ -91,21 +112,18 @@ function newStateSrc(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
 
-      scaleGlobalAlpha(renderCtx, 0.5, () => {
-        hitResult.previewShapes.forEach((s) => {
-          localShapeComposite.render(renderCtx, s);
+      scaleGlobalAlpha(renderCtx, 0.7, () => {
+        applyFillStyle(renderCtx, {
+          color: COLORS.GRAY_1,
         });
+        const rect = ctx.getViewRect();
+        renderCtx.beginPath();
+        renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
+        renderCtx.fill();
       });
-
-      const rect = localShapeComposite.getWrapperRectForShapes(localShapeComposite.shapes);
-      applyStrokeStyle(renderCtx, {
-        color: style.selectionSecondaly,
-        width: 3 * scale,
-        dash: "short",
+      hitResult.previewShapes.forEach((s) => {
+        localShapeComposite.render(renderCtx, s);
       });
-      renderCtx.beginPath();
-      renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
-      renderCtx.stroke();
 
       if (highlightLineVertexMeta) {
         const line = hitResult.previewShapes[1];
@@ -115,5 +133,3 @@ function newStateSrc(option: Option): AppCanvasState {
     },
   };
 }
-
-export const newSmartBranchSettingState = defineIntransientState<[Option]>(newStateSrc);

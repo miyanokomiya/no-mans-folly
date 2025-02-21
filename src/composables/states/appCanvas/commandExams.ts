@@ -2,6 +2,8 @@ import { getAltOrOptionStr, getCtrlOrMetaStr } from "../../../utils/devices";
 import { CommandExam } from "../types";
 
 export const COMMAND_EXAM_SRC = {
+  CANCEL: { command: "Escape", title: "Cancel" },
+
   PAN_CANVAS: { command: "Space", title: "Pan canvas" },
   DISABLE_SNAP: { command: getCtrlOrMetaStr(), title: "Disable snapping" },
   DISABLE_LINE_VERTEX_SNAP: { command: getCtrlOrMetaStr(), title: "Disable snapping" },

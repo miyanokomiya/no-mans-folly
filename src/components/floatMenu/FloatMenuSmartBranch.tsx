@@ -70,6 +70,12 @@ export const FloatMenuSmartBranch: React.FC = () => {
     [handleLineChange],
   );
 
+  const handleReset = useCallback(() => {
+    patchUserSetting({
+      smartBranchLine: undefined,
+    });
+  }, [patchUserSetting]);
+
   const highlighShape = useCallback(
     (meta: HighlightShapeMeta) => {
       handleEvent({
@@ -81,9 +87,18 @@ export const FloatMenuSmartBranch: React.FC = () => {
   );
 
   return (
-    <div className="flex gap-1.5 items-center">
+    <div className="flex gap-1.5 items-center py-1">
       <div>
-        <h3 className="mb-1">Smart branch settings</h3>
+        <div className="mb-1 flex items-center justify-between">
+          <h3 className="mb-1">Smart branch settings</h3>
+          <button
+            type="button"
+            className={"px-2 py-1 border rounded-sm" + (userSetting.smartBranchLine ? "" : " invisible")}
+            onClick={handleReset}
+          >
+            Reset
+          </button>
+        </div>
         <div className="flex gap-1 items-center">
           <PopupButton
             name="fill"

@@ -143,6 +143,8 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
               case 1:
                 return () => newPointerDownEmptyState(event.data.options);
               case 2: {
+                if (smartBranchHandler?.hitTest(event.data.point, ctx.getScale())) return;
+
                 return handleCommonPointerDownRightOnSingleSelection(
                   ctx,
                   event,

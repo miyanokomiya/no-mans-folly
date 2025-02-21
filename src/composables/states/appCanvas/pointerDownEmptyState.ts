@@ -7,6 +7,7 @@ interface Option {
   ctrl?: boolean; // when true, pass "keepSelection: true" to "RectangleSelectingState"
   button?: number;
   boundingBox?: BoundingBox; // when passed, moves to "SelectionHub" after panning
+  preventSelecting?: boolean; // when true, next state bacomes "SelectionHub" when it's supposed to be "RectangleSelecting"
 }
 
 export function newPointerDownEmptyState(option?: Option): AppCanvasState {
@@ -17,10 +18,14 @@ export function newPointerDownEmptyState(option?: Option): AppCanvasState {
     onStart(ctx) {
       const setting = ctx.getUserSetting();
 
+      const toSelectingFn = option?.preventSelecting
+        ? () => ctx.states.newSelectionHubState({ boundingBox: option.boundingBox })
+        : () => newRectangleSelectingState({ keepSelection: option?.ctrl });
+
       if (option?.button === 1) {
         switch (setting.leftDragAction) {
           case "pan":
-            return () => newRectangleSelectingState({ keepSelection: option?.ctrl });
+            return toSelectingFn;
           default:
             return { type: "stack-resume", getState: newPanningState };
         }
@@ -32,7 +37,7 @@ export function newPointerDownEmptyState(option?: Option): AppCanvasState {
           return { type: "stack-resume", getState: newPanningState };
         }
         default:
-          return () => newRectangleSelectingState({ keepSelection: option?.ctrl });
+          return toSelectingFn;
       }
     },
     onResume(ctx) {

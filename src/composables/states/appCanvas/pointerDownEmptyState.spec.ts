@@ -64,5 +64,14 @@ describe("newPointerDownEmptyState", () => {
       );
       expect(sm.getStateSummary().label).toBe("RectangleSelecting");
     });
+
+    test("should not move to RectangleSelecting state if preventSelecting is set true", () => {
+      const ctx = getMockCtx({ leftDragAction: "pan" });
+      const sm = newStateMachine(
+        () => ctx as any,
+        () => newPointerDownEmptyState({ button: 1, preventSelecting: true }),
+      );
+      expect(sm.getStateSummary().label).toBe("Default");
+    });
   });
 });
