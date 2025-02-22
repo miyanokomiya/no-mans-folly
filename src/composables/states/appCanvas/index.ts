@@ -10,6 +10,7 @@ import { newMovingShapeState } from "./movingShapeState";
 import { newPanToShapeState } from "./panToShapeState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newSelectionHubState } from "./selectionHubState";
+import { newSmartBranchChildMarginState } from "./smartBranch/smartBranchChildMarginState";
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";
 
@@ -29,5 +30,6 @@ export const stateGenerators = {
   newPanToShapeState,
   newSmartBranchPointerDownState,
   newSmartBranchSettingState,
+  newSmartBranchChildMarginState,
 };
 export type StateGenerators = typeof stateGenerators;

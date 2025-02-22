@@ -11,8 +11,8 @@ import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
 
-const CHILD_MARGIN = 100;
-const SIBLING_MARGIN = 25;
+export const SMART_BRANCH_CHILD_MARGIN = 100;
+export const SMART_BRANCH_SIBLING_MARGIN = 25;
 const ANCHOR_SIZE = 7;
 const ANCHOR_MARGIN = 34;
 
@@ -22,15 +22,17 @@ export interface SmartBranchHitResult {
 }
 
 export type SmartBranchHandler = ShapeHandler<SmartBranchHitResult> & {
+  // Should use this method to create proper shapes.
   createBranch(
     branchIndex: SmartBranchHitResult["index"],
     generateId: () => string,
     lastFindex: string,
-    branchTemplate?: BranchTemplate,
   ): [Shape, LineShape];
+  // Stored hit result is migrated as well when it exists.
+  changeBranchTemplate(branchTemplate: BranchTemplate): SmartBranchHandler;
 };
 
-type BranchTemplate = Pick<UserSetting, "smartBranchLine">;
+type BranchTemplate = Pick<UserSetting, "smartBranchLine" | "smartBranchChildMargin" | "smartBranchSiblingMargin">;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -114,23 +116,34 @@ export function newSmartBranchHandler(option: Option): SmartBranchHandler {
   const shape = shapeComposite.shapeMap[option.targetId];
   const bounds = getOuterRectangle([shapeComposite.getLocalRectPolygon(shape)]);
 
+  const base = getBaseHandler(option);
   return {
-    ...getBaseHandler(option),
-    createBranch: (
-      branchIndex: SmartBranchHitResult["index"],
-      generateId: () => string,
-      lastFindex: string,
-      branchTemplate: BranchTemplate = {},
-    ) =>
-      createBranch(
-        shapeComposite,
-        shape,
-        bounds,
-        branchIndex,
-        generateId,
-        lastFindex,
-        branchTemplate ?? option.branchTemplate,
-      ),
+    ...base,
+    createBranch: (branchIndex: SmartBranchHitResult["index"], generateId: () => string, lastFindex: string) =>
+      createBranch(shapeComposite, shape, bounds, branchIndex, generateId, lastFindex, option.branchTemplate),
+    changeBranchTemplate: (branchTemplate: BranchTemplate) => {
+      const ret = newSmartBranchHandler({
+        ...option,
+        branchTemplate,
+      });
+      const hitResult = base.retrieveHitResult();
+      if (hitResult) {
+        let count = 0;
+        ret.saveHitResult({
+          index: hitResult.index,
+          previewShapes: createBranch(
+            shapeComposite,
+            shape,
+            bounds,
+            hitResult.index,
+            () => `mock_${count++}`,
+            shape.findex,
+            branchTemplate,
+          ),
+        });
+      }
+      return ret;
+    },
   };
 }
 
@@ -157,7 +170,13 @@ function createBranch(
   const findexForElbow = generateKeyBetween(findexForShape, null);
 
   const obstacles = getBranchObstacles(shapeComposite);
-  const baseQ = getTargetPosition(branchIndex, bounds, obstacles);
+  const baseQ = getTargetPosition(
+    branchIndex,
+    bounds,
+    obstacles,
+    branchTemplate.smartBranchChildMargin,
+    branchTemplate.smartBranchSiblingMargin,
+  );
   const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - bounds.x, baseQ.y - bounds.y];
   const moved: Shape = { ...shape, findex: findexForShape, ...shapeComposite.transformShape(shape, affine) };
 
@@ -193,18 +212,24 @@ export function getBranchObstacles(shapeComposite: ShapeComposite): IRectangle[]
     .map((s) => shapeComposite.getWrapperRect(s));
 }
 
-function getTargetPosition(index: number, src: IRectangle, obstacles: IRectangle[]): IVec2 {
+function getTargetPosition(
+  index: number,
+  src: IRectangle,
+  obstacles: IRectangle[],
+  childMargin = SMART_BRANCH_CHILD_MARGIN,
+  siblingMargin = SMART_BRANCH_SIBLING_MARGIN,
+): IVec2 {
   switch (index) {
     case 0:
-      return getAbovePosition(src, obstacles);
+      return getAbovePosition(src, obstacles, childMargin, siblingMargin);
     case 1:
-      return getRightPosition(src, obstacles);
+      return getRightPosition(src, obstacles, childMargin, siblingMargin);
     case 2:
-      return getBelowPosition(src, obstacles);
+      return getBelowPosition(src, obstacles, childMargin, siblingMargin);
     case 3:
-      return getLeftPosition(src, obstacles);
+      return getLeftPosition(src, obstacles, childMargin, siblingMargin);
     default:
-      return getBelowPosition(src, obstacles);
+      return getBelowPosition(src, obstacles, childMargin, siblingMargin);
   }
 }
 
@@ -237,8 +262,8 @@ function getQBasePoint(index: number, pCenter: IVec2, qCenter: IVec2): IVec2 {
 export function getBelowPosition(
   src: IRectangle,
   obstacles: IRectangle[],
-  childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN,
+  childMargin = SMART_BRANCH_CHILD_MARGIN,
+  siblingMargin = SMART_BRANCH_SIBLING_MARGIN,
 ): IVec2 {
   return seekH({ ...src, y: src.y + src.height + childMargin }, obstacles, src.width + siblingMargin);
 }
@@ -246,8 +271,8 @@ export function getBelowPosition(
 export function getAbovePosition(
   src: IRectangle,
   obstacles: IRectangle[],
-  childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN,
+  childMargin = SMART_BRANCH_CHILD_MARGIN,
+  siblingMargin = SMART_BRANCH_SIBLING_MARGIN,
 ): IVec2 {
   return seekH({ ...src, y: src.y - (src.height + childMargin) }, obstacles, src.width + siblingMargin);
 }
@@ -255,8 +280,8 @@ export function getAbovePosition(
 export function getRightPosition(
   src: IRectangle,
   obstacles: IRectangle[],
-  childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN,
+  childMargin = SMART_BRANCH_CHILD_MARGIN,
+  siblingMargin = SMART_BRANCH_SIBLING_MARGIN,
 ): IVec2 {
   return seekV({ ...src, x: src.x + src.width + childMargin }, obstacles, src.height + siblingMargin);
 }
@@ -264,8 +289,8 @@ export function getRightPosition(
 export function getLeftPosition(
   src: IRectangle,
   obstacles: IRectangle[],
-  childMargin = CHILD_MARGIN,
-  siblingMargin = SIBLING_MARGIN,
+  childMargin = SMART_BRANCH_CHILD_MARGIN,
+  siblingMargin = SMART_BRANCH_SIBLING_MARGIN,
 ): IVec2 {
   return seekV({ ...src, x: src.x - (src.width + childMargin) }, obstacles, src.height + siblingMargin);
 }

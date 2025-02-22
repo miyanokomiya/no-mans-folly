@@ -43,6 +43,23 @@ describe("newSmartBranchHandler", () => {
       expect(result[1].findex > result[0].findex).toBe(true);
     });
   });
+
+  describe("changeBranchTemplate", () => {
+    test("should return new handler with the template", () => {
+      const result0 = target.changeBranchTemplate({ smartBranchChildMargin: 200 });
+      expect(target.createBranch(0, () => "b", rect.findex)[0].p).toEqualPoint({ x: 0, y: -200 });
+      expect(result0.createBranch(0, () => "b", rect.findex)[0].p).toEqualPoint({ x: 0, y: -300 });
+      expect(result0.retrieveHitResult()).toBe(undefined);
+    });
+
+    test("should migrate hit result with the handler", () => {
+      const hit = target.hitTest({ x: 140, y: 50 }, 1);
+      target.saveHitResult(hit);
+      const result0 = target.changeBranchTemplate({ smartBranchChildMargin: 200 });
+      expect(hit?.previewShapes[0].p).toEqualPoint({ x: 200, y: 0 });
+      expect(result0.hitTest({ x: 140, y: 50 }, 1)?.previewShapes[0].p).toEqualPoint({ x: 300, y: 0 });
+    });
+  });
 });
 
 describe("getBranchObstacles", () => {
