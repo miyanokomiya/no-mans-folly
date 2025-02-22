@@ -1,6 +1,6 @@
 import { COLORS } from "../../../../utils/color";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { renderValueLabel, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { SMART_BRANCH_CHILD_MARGIN, SmartBranchHandler } from "../../../smartBranchHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -54,7 +54,13 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
               v = event.data.start.y - event.data.current.y;
               break;
           }
+
           nextChildMargin = Math.max(0, defaultChildMargin + v);
+
+          if (!event.data.ctrl) {
+            nextChildMargin = Math.round(nextChildMargin);
+          }
+
           const nextBranchTemplate = {
             ...ctx.getUserSetting(),
             smartBranchChildMargin: nextChildMargin,
@@ -72,6 +78,9 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
+      const nextHitResult = nextSmartBranchHandler.retrieveHitResult();
+      if (!nextHitResult) return;
+
       // const style = ctx.getStyleScheme();
       // const scale = ctx.getScale();
 
@@ -84,10 +93,12 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
         renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
         renderCtx.fill();
       });
-      const nextHitResult = nextSmartBranchHandler.retrieveHitResult();
-      nextHitResult?.previewShapes.forEach((s) => {
+      nextHitResult.previewShapes.forEach((s) => {
         localShapeComposite.render(renderCtx, s);
       });
+
+      const p = nextHitResult.previewShapes[1].q;
+      renderValueLabel(renderCtx, nextChildMargin, p);
     },
   };
 }
