@@ -27,12 +27,16 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
       const result = option.smartBranchHandler.retrieveHitResult();
       if (!result) return ctx.states.newSelectionHubState;
 
-      latestSmartBranchHandler = option.smartBranchHandler;
+      // Ignore obstacles while tweaking smart-branch settings.
+      latestSmartBranchHandler = option.smartBranchHandler.clone({ ignoreObstacles: true });
+      const smartBranchHitResult = latestSmartBranchHandler.retrieveHitResult();
+      if (!smartBranchHitResult) return ctx.states.newSelectionHubState;
+
       localShapeComposite = newShapeComposite({
-        shapes: result.previewShapes,
+        shapes: smartBranchHitResult.previewShapes,
         getStruct: ctx.getShapeComposite().getShapeStruct,
       });
-      smartBranchSettingHandler = newSmartBranchSettingHandler({ smartBranchHitResult: result });
+      smartBranchSettingHandler = newSmartBranchSettingHandler({ smartBranchHitResult: smartBranchHitResult });
       ctx.showFloatMenu({
         targetRect: localShapeComposite.getWrapperRectForShapes(localShapeComposite.shapes, true),
         type: "smart-branch",
@@ -51,14 +55,12 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
       ctx.setCommandExams();
       if (canceled) return;
 
-      const hitResult = latestSmartBranchHandler.retrieveHitResult();
-      if (!hitResult) return;
+      // Retrieve the handler regarding obstacles.
+      const handler = latestSmartBranchHandler.clone({ ignoreObstacles: false });
+      const smartBranchHitResult = handler.retrieveHitResult();
+      if (!smartBranchHitResult) return;
 
-      const branchShapes = latestSmartBranchHandler.createBranch(
-        hitResult.index,
-        ctx.generateUuid,
-        ctx.createLastIndex(),
-      );
+      const branchShapes = handler.createBranch(smartBranchHitResult.index, ctx.generateUuid, ctx.createLastIndex());
       ctx.addShapes(branchShapes);
       ctx.selectShape(branchShapes[0].id);
     },
@@ -124,8 +126,8 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
       }
     },
     render: (ctx, renderCtx) => {
-      const hitResult = latestSmartBranchHandler.retrieveHitResult();
-      if (!hitResult) return;
+      const smartBranchHitResult = latestSmartBranchHandler.retrieveHitResult();
+      if (!smartBranchHitResult) return;
 
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
@@ -140,13 +142,13 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
         renderCtx.fill();
       });
 
-      hitResult.previewShapes.forEach((s) => {
+      smartBranchHitResult.previewShapes.forEach((s) => {
         localShapeComposite.render(renderCtx, s);
       });
       smartBranchSettingHandler.render(renderCtx, style, scale);
 
       if (highlightLineVertexMeta) {
-        const line = hitResult.previewShapes[1];
+        const line = smartBranchHitResult.previewShapes[1];
         const p = getLinePath(line)[highlightLineVertexMeta.index];
         renderVertexAnchorHighlight(renderCtx, style, scale, p);
       }

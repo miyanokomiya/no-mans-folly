@@ -57,7 +57,34 @@ describe("newSmartBranchHandler", () => {
       target.saveHitResult(hit);
       const result0 = target.changeBranchTemplate({ smartBranchChildMargin: 200 });
       expect(hit?.previewShapes[0].p).toEqualPoint({ x: 200, y: 0 });
-      expect(result0.hitTest({ x: 140, y: 50 }, 1)?.previewShapes[0].p).toEqualPoint({ x: 300, y: 0 });
+      expect(result0.retrieveHitResult()?.previewShapes[0].p).toEqualPoint({ x: 300, y: 0 });
+    });
+  });
+
+  describe("clone", () => {
+    const rectB = createShape(getCommonStruct, "rectangle", { id: "b", findex: "aB", p: { x: 0, y: 200 } });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect, rectB],
+      getStruct: getCommonStruct,
+    });
+    const target = newSmartBranchHandler({
+      getShapeComposite: () => shapeComposite,
+      targetId: "a",
+    });
+
+    test("should return new handler with patched option", () => {
+      const result0 = target.clone({ ignoreObstacles: true });
+      expect(target.createBranch(2, () => "c", rect.findex)[0].p).toEqualPoint({ x: 125, y: 200 });
+      expect(result0.createBranch(2, () => "c", rect.findex)[0].p).toEqualPoint({ x: 0, y: 200 });
+      expect(result0.retrieveHitResult()).toBe(undefined);
+    });
+
+    test("should migrate hit result with the handler", () => {
+      const hit = target.hitTest({ x: 50, y: 140 }, 1);
+      target.saveHitResult(hit);
+      const result0 = target.clone({ ignoreObstacles: true });
+      expect(hit?.previewShapes[0].p).toEqualPoint({ x: 125, y: 200 });
+      expect(result0.retrieveHitResult()?.previewShapes[0].p).toEqualPoint({ x: 0, y: 200 });
     });
   });
 });

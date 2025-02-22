@@ -30,6 +30,7 @@ export type SmartBranchHandler = ShapeHandler<SmartBranchHitResult> & {
   ): [Shape, LineShape];
   // Stored hit result is migrated as well when it exists.
   changeBranchTemplate(branchTemplate: BranchTemplate): SmartBranchHandler;
+  clone(optionPatch?: Partial<Option>): SmartBranchHandler;
 };
 
 type BranchTemplate = Pick<UserSetting, "smartBranchLine" | "smartBranchChildMargin" | "smartBranchSiblingMargin">;
@@ -38,6 +39,7 @@ interface Option {
   getShapeComposite: () => ShapeComposite;
   targetId: string;
   branchTemplate?: BranchTemplate;
+  ignoreObstacles?: boolean;
 }
 
 const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option) => {
@@ -112,15 +114,22 @@ const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option)
 });
 
 export function newSmartBranchHandler(option: Option): SmartBranchHandler {
-  const shapeComposite = option.getShapeComposite();
-  const shape = shapeComposite.shapeMap[option.targetId];
-  const bounds = getOuterRectangle([shapeComposite.getLocalRectPolygon(shape)]);
+  const srcShapeComposite = option.getShapeComposite();
+  const shape = srcShapeComposite.shapeMap[option.targetId];
+  const bounds = getOuterRectangle([srcShapeComposite.getLocalRectPolygon(shape)]);
+  const shapeComposite = option.ignoreObstacles
+    ? newShapeComposite({
+        getStruct: srcShapeComposite.getShapeStruct,
+        shapes: srcShapeComposite.getAllBranchMergedShapes([option.targetId]),
+      })
+    : srcShapeComposite;
 
   const base = getBaseHandler(option);
   return {
     ...base,
-    createBranch: (branchIndex: SmartBranchHitResult["index"], generateId: () => string, lastFindex: string) =>
-      createBranch(shapeComposite, shape, bounds, branchIndex, generateId, lastFindex, option.branchTemplate),
+    createBranch: (branchIndex: SmartBranchHitResult["index"], generateId: () => string, lastFindex: string) => {
+      return createBranch(shapeComposite, shape, bounds, branchIndex, generateId, lastFindex, option.branchTemplate);
+    },
     changeBranchTemplate: (branchTemplate: BranchTemplate) => {
       const ret = newSmartBranchHandler({
         ...option,
@@ -131,15 +140,19 @@ export function newSmartBranchHandler(option: Option): SmartBranchHandler {
         let count = 0;
         ret.saveHitResult({
           index: hitResult.index,
-          previewShapes: createBranch(
-            shapeComposite,
-            shape,
-            bounds,
-            hitResult.index,
-            () => `mock_${count++}`,
-            shape.findex,
-            branchTemplate,
-          ),
+          previewShapes: ret.createBranch(hitResult.index, () => `mock_${count++}`, shape.findex),
+        });
+      }
+      return ret;
+    },
+    clone: (optionPatch) => {
+      const ret = newSmartBranchHandler({ ...option, ...optionPatch });
+      const hitResult = base.retrieveHitResult();
+      if (hitResult) {
+        let count = 0;
+        ret.saveHitResult({
+          index: hitResult.index,
+          previewShapes: ret.createBranch(hitResult.index, () => `mock_${count++}`, shape.findex),
         });
       }
       return ret;
