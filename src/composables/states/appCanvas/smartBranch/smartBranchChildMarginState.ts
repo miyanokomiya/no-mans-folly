@@ -3,6 +3,7 @@ import { applyFillStyle } from "../../../../utils/fillStyle";
 import { renderValueLabel, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { SMART_BRANCH_CHILD_MARGIN, SmartBranchHandler } from "../../../smartBranchHandler";
+import { renderSmartBranchChildMarginAnchor } from "../../../smartBranchSettingHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState } from "../core";
 
@@ -81,8 +82,8 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
       const nextHitResult = nextSmartBranchHandler.retrieveHitResult();
       if (!nextHitResult) return;
 
-      // const style = ctx.getStyleScheme();
-      // const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+      const scale = ctx.getScale();
 
       scaleGlobalAlpha(renderCtx, 0.7, () => {
         applyFillStyle(renderCtx, {
@@ -98,6 +99,7 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
       });
 
       const p = nextHitResult.previewShapes[1].q;
+      renderSmartBranchChildMarginAnchor(renderCtx, style, scale, p, nextHitResult.index, true);
       renderValueLabel(renderCtx, nextChildMargin, p);
     },
   };
