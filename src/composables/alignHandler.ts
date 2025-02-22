@@ -178,7 +178,7 @@ export function newAlignHandler(option: AlignHandlerOption) {
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 const ALIGN_ITEMS_ANCHOR_SIZE = 7;
-const PADDING_ANCHOR_SIZE = 8;
+const PADDING_ANCHOR_SIZE = 4;
 
 export type AlignBoxHitResult =
   | AlignBoxDirectionHitResult
@@ -459,7 +459,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: AlignBoxHitResult) {
     const threshold = DIRECTION_ANCHOR_SIZE * scale;
     const alignItemsThreshold = ALIGN_ITEMS_ANCHOR_SIZE * scale;
-    const segThreshold = PADDING_ANCHOR_SIZE * scale;
+    const segThreshold = 2 * PADDING_ANCHOR_SIZE * scale;
     const resizeThreshold = ANCHOR_SIZE * scale;
 
     ctx.save();
@@ -596,7 +596,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
   }
 
   function renderModifiedPadding(ctx: CanvasCTX, style: StyleScheme, scale: number, nextPadding?: BoxValues4) {
-    const segThreshold = PADDING_ANCHOR_SIZE * scale;
+    const segThreshold = 2 * PADDING_ANCHOR_SIZE * scale;
 
     ctx.save();
     ctx.transform(...rotateAffine);
@@ -647,7 +647,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
   }
 
   function renderModifiedGap(ctx: CanvasCTX, style: StyleScheme, scale: number, nextGap?: IVec2) {
-    const segThreshold = PADDING_ANCHOR_SIZE * scale;
+    const segThreshold = 2 * PADDING_ANCHOR_SIZE * scale;
 
     ctx.save();
     ctx.transform(...rotateAffine);

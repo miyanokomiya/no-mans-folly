@@ -7,7 +7,7 @@ import { COLORS } from "../utils/color";
 import { Direction4, StyleScheme } from "../models";
 import { CanvasCTX } from "../utils/types";
 
-const ANCHOR_SIZE = 8;
+const ANCHOR_SIZE = 4;
 const ANCHOR_SEG_SIZE = 60;
 
 export interface SmartBranchSettingHitResult {
@@ -34,7 +34,7 @@ export const newSmartBranchSettingHandler = defineShapeHandler<SmartBranchSettin
       }
     },
     render(ctx, style, scale, hitResult) {
-      const threshold = ANCHOR_SIZE * scale;
+      const threshold = 2 * ANCHOR_SIZE * scale;
       renderRoundedSegment(
         ctx,
         [getChildMarginAnchorLocal(scale)],
@@ -58,7 +58,7 @@ export function renderSmartBranchChildMarginAnchor(
   branchIndex: Direction4,
   highlight = false,
 ) {
-  const threshold = ANCHOR_SIZE * scale;
+  const threshold = 2 * ANCHOR_SIZE * scale;
   renderRoundedSegment(
     ctx,
     [getChildMarginAnchor(p, branchIndex, scale)],
