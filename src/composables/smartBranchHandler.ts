@@ -3,13 +3,13 @@ import { Direction4, Shape, StyleScheme, UserSetting } from "../models";
 import { cloneShapes, createShape, getIntersectedOutlines, hasSpecialOrderPriority } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
-import { getOptimalElbowBody } from "../utils/elbowLine";
 import { newRectHitRectHitTest } from "./shapeHitTest";
 import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
+import { getPatchAfterLayouts } from "./shapeLayoutHandler";
 
 export const SMART_BRANCH_CHILD_MARGIN = 100;
 export const SMART_BRANCH_SIBLING_MARGIN = 25;
@@ -202,7 +202,12 @@ function createSmartBranch(
     branchTemplate.smartBranchSiblingMargin,
   );
   const affine: AffineMatrix = [1, 0, 0, 1, baseQ.x - bounds.x, baseQ.y - bounds.y];
-  const moved: Shape = { ...shape, findex: findexForShape, ...shapeComposite.transformShape(shape, affine) };
+  const moved: Shape = {
+    ...shape,
+    id: generateId(),
+    findex: findexForShape,
+    ...shapeComposite.transformShape(shape, affine),
+  };
 
   const pRect = shapeComposite.getWrapperRect(src);
   const qRect = moveRect(pRect, { x: baseQ.x - bounds.x, y: baseQ.y - bounds.y });
@@ -214,19 +219,27 @@ function createSmartBranch(
     getIntersectedOutlines(getShapeStruct, moved, getQBasePoint(branchIndex, pCenter, qCenter), qCenter)?.[0] ??
     qCenter;
 
-  const elbow = createShape<LineShape>(getShapeStruct, "line", {
-    lineType: "elbow",
-    ...branchTemplate.smartBranchLine,
+  const line = createShape<LineShape>(getShapeStruct, "line", {
     id: generateId(),
     findex: findexForElbow,
+    lineType: "elbow",
     p,
     q,
     pConnection: { id: src.id, rate: shapeComposite.getLocationRateOnShape(src, p) },
     qConnection: { id: moved.id, rate: shapeComposite.getLocationRateOnShape(moved, q) },
-    body: getOptimalElbowBody(p, q, pRect, qRect, 30).map((a) => ({ p: a })),
   });
 
-  return [moved, elbow];
+  const sm = newShapeComposite({
+    getStruct: shapeComposite.getShapeStruct,
+    shapes: [src, moved, line],
+  });
+  const patch = getPatchAfterLayouts(sm, {
+    update: {
+      [line.id]: branchTemplate.smartBranchLine ?? {},
+    },
+  });
+
+  return [moved, line].map((s) => (patch[s.id] ? { ...s, ...patch[s.id] } : s)) as [Shape, LineShape];
 }
 
 export function getBranchObstacles(shapeComposite: ShapeComposite): IRectangle[] {

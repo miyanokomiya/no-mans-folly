@@ -34,8 +34,10 @@ describe("newSmartBranchHandler", () => {
 
   describe("createBranch", () => {
     test("should return branch shapes based on the hit result", () => {
+      let count = 0;
+      const genId = () => `${count++}`;
       const hit = target.hitTest({ x: 140, y: 50 }, 1);
-      const result = target.createBranch(hit!.index, () => "b", rect.findex);
+      const result = target.createBranch(hit!.index, genId, rect.findex);
       expect(result).toHaveLength(2);
       expect(result[0].type).toBe("rectangle");
       expect(result[0].findex > rect.findex).toBe(true);
@@ -46,9 +48,11 @@ describe("newSmartBranchHandler", () => {
 
   describe("changeBranchTemplate", () => {
     test("should return new handler with the template", () => {
+      let count = 0;
+      const genId = () => `${count++}`;
       const result0 = target.changeBranchTemplate({ smartBranchChildMargin: 200 });
-      expect(target.createBranch(0, () => "b", rect.findex)[0].p).toEqualPoint({ x: 0, y: -200 });
-      expect(result0.createBranch(0, () => "b", rect.findex)[0].p).toEqualPoint({ x: 0, y: -300 });
+      expect(target.createBranch(0, genId, rect.findex)[0].p).toEqualPoint({ x: 0, y: -200 });
+      expect(result0.createBranch(0, genId, rect.findex)[0].p).toEqualPoint({ x: 0, y: -300 });
       expect(result0.retrieveHitResult()).toBe(undefined);
     });
 
@@ -74,8 +78,10 @@ describe("newSmartBranchHandler", () => {
 
     test("should return new handler with patched option", () => {
       const result0 = target.clone({ ignoreObstacles: true });
-      expect(target.createBranch(2, () => "c", rect.findex)[0].p).toEqualPoint({ x: 125, y: 200 });
-      expect(result0.createBranch(2, () => "c", rect.findex)[0].p).toEqualPoint({ x: 0, y: 200 });
+      let count = 0;
+      const genId = () => `${count++}`;
+      expect(target.createBranch(2, genId, rect.findex)[0].p).toEqualPoint({ x: 125, y: 200 });
+      expect(result0.createBranch(2, genId, rect.findex)[0].p).toEqualPoint({ x: 0, y: 200 });
       expect(result0.retrieveHitResult()).toBe(undefined);
     });
 
