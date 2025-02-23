@@ -2,7 +2,7 @@ import { rotate, sub } from "okageo";
 import { renderOverlay } from "../../../../utils/renderer";
 import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { SMART_BRANCH_CHILD_MARGIN, SmartBranchHandler } from "../../../smartBranchHandler";
-import { renderSmartBranchChildMarginAnchor } from "../../../smartBranchSettingHandler";
+import { renderSmartBranchSiblingMarginAnchor } from "../../../smartBranchSettingHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState } from "../core";
 
@@ -10,22 +10,22 @@ type Option = {
   smartBranchHandler: SmartBranchHandler;
 };
 
-export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
+export function newSmartBranchSiblingMarginState(option: Option): AppCanvasState {
   let previewShapeComposite: ShapeComposite;
   let nextSmartBranchHandler: SmartBranchHandler;
-  let defaultChildMargin: number;
-  let nextChildMargin: number;
+  let defaultSiblingMargin: number;
+  let nextSiblingMargin: number;
   let showLabel = false;
 
   return {
-    getLabel: () => "SmartBranchChildMargin",
+    getLabel: () => "SmartBranchSiblingMargin",
     onStart: (ctx) => {
       const result = option.smartBranchHandler.retrieveHitResult();
       if (!result) return ctx.states.newSelectionHubState;
 
       nextSmartBranchHandler = option.smartBranchHandler;
-      defaultChildMargin = ctx.getUserSetting().smartBranchChildMargin ?? SMART_BRANCH_CHILD_MARGIN;
-      nextChildMargin = defaultChildMargin;
+      defaultSiblingMargin = ctx.getUserSetting().smartBranchSiblingMargin ?? SMART_BRANCH_CHILD_MARGIN;
+      nextSiblingMargin = defaultSiblingMargin;
       previewShapeComposite = newShapeComposite({
         shapes: result.previewShapes,
         getStruct: ctx.getShapeComposite().getShapeStruct,
@@ -43,25 +43,25 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
 
       switch (event.type) {
         case "pointermove": {
-          const v = -rotate(sub(event.data.current, event.data.start), (-Math.PI / 2) * result.index).y;
-          nextChildMargin = Math.max(0, defaultChildMargin + v);
+          const v = -rotate(sub(event.data.current, event.data.start), (-Math.PI / 2) * result.index).x;
+          nextSiblingMargin = Math.max(0, defaultSiblingMargin + v);
 
           if (!event.data.ctrl) {
-            nextChildMargin = Math.round(nextChildMargin);
+            nextSiblingMargin = Math.round(nextSiblingMargin);
           }
           showLabel = !event.data.ctrl;
 
           const nextBranchTemplate = {
             ...ctx.getUserSetting(),
-            smartBranchChildMargin: nextChildMargin,
+            smartBranchSiblingMargin: nextSiblingMargin,
           };
           nextSmartBranchHandler = nextSmartBranchHandler.changeBranchTemplate(nextBranchTemplate);
           ctx.redraw();
           return;
         }
         case "pointerup": {
-          if (defaultChildMargin !== nextChildMargin) {
-            ctx.patchUserSetting({ smartBranchChildMargin: nextChildMargin });
+          if (defaultSiblingMargin !== nextSiblingMargin) {
+            ctx.patchUserSetting({ smartBranchSiblingMargin: nextSiblingMargin });
           }
           return () => ctx.states.newSmartBranchSettingState({ smartBranchHandler: nextSmartBranchHandler });
         }
@@ -79,14 +79,14 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
         previewShapeComposite.render(renderCtx, s);
       });
 
-      renderSmartBranchChildMarginAnchor(
+      renderSmartBranchSiblingMarginAnchor(
         renderCtx,
         style,
         scale,
         previewShapeComposite,
         nextHitResult.previewShapes[0],
         nextHitResult.index,
-        nextChildMargin,
+        nextSiblingMargin,
         true,
         showLabel,
       );

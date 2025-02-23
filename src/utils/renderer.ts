@@ -379,3 +379,14 @@ export function renderValueLabel(
     ctx.fillText(`${value}`, p.x, p.y);
   });
 }
+
+export function renderOverlay(ctx: CanvasCTX, rect: IRectangle) {
+  scaleGlobalAlpha(ctx, 0.8, () => {
+    applyFillStyle(ctx, {
+      color: COLORS.GRAY_1,
+    });
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.width, rect.height);
+    ctx.fill();
+  });
+}

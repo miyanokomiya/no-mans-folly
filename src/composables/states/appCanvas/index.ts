@@ -13,6 +13,7 @@ import { newSelectionHubState } from "./selectionHubState";
 import { newSmartBranchChildMarginState } from "./smartBranch/smartBranchChildMarginState";
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";
+import { newSmartBranchSiblingMarginState } from "./smartBranch/smartBranchSiblingMarginState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
@@ -31,5 +32,6 @@ export const stateGenerators = {
   newSmartBranchPointerDownState,
   newSmartBranchSettingState,
   newSmartBranchChildMarginState,
+  newSmartBranchSiblingMarginState,
 };
 export type StateGenerators = typeof stateGenerators;

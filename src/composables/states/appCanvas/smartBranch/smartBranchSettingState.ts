@@ -1,7 +1,5 @@
 import { getLinePath } from "../../../../shapes/line";
-import { COLORS } from "../../../../utils/color";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { renderOverlay } from "../../../../utils/renderer";
 import { renderVertexAnchorHighlight } from "../../../lineBounding";
 import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { SmartBranchHandler } from "../../../smartBranchHandler";
@@ -15,7 +13,7 @@ type Option = {
 };
 
 export function newSmartBranchSettingState(option: Option): AppCanvasState {
-  let localShapeComposite: ShapeComposite;
+  let previewShapeComposite: ShapeComposite;
   let highlightLineVertexMeta: HighlightLineVertexMeta | undefined;
   let canceled = false;
   let smartBranchSettingHandler: SmartBranchSettingHandler;
@@ -32,20 +30,24 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
       const smartBranchHitResult = latestSmartBranchHandler.retrieveHitResult();
       if (!smartBranchHitResult) return ctx.states.newSelectionHubState;
 
-      localShapeComposite = newShapeComposite({
+      previewShapeComposite = newShapeComposite({
         shapes: smartBranchHitResult.previewShapes,
         getStruct: ctx.getShapeComposite().getShapeStruct,
       });
-      smartBranchSettingHandler = newSmartBranchSettingHandler({ smartBranchHitResult: smartBranchHitResult });
+      smartBranchSettingHandler = newSmartBranchSettingHandler({
+        smartBranchHitResult: smartBranchHitResult,
+        previewShapeComposite,
+        smartBranchSiblingMargin: ctx.getUserSetting().smartBranchSiblingMargin,
+      });
       ctx.showFloatMenu({
-        targetRect: localShapeComposite.getWrapperRectForShapes(localShapeComposite.shapes, true),
+        targetRect: previewShapeComposite.getWrapperRectForShapes(previewShapeComposite.shapes, true),
         type: "smart-branch",
       });
       ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
     },
     onResume: (ctx) => {
       ctx.showFloatMenu({
-        targetRect: localShapeComposite.getWrapperRectForShapes(localShapeComposite.shapes, true),
+        targetRect: previewShapeComposite.getWrapperRectForShapes(previewShapeComposite.shapes, true),
         type: "smart-branch",
       });
       ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
@@ -73,6 +75,13 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
               canceled = true;
               return () =>
                 ctx.states.newSmartBranchChildMarginState({
+                  smartBranchHandler: latestSmartBranchHandler,
+                });
+            }
+            case "sibling-margin": {
+              canceled = true;
+              return () =>
+                ctx.states.newSmartBranchSiblingMarginState({
                   smartBranchHandler: latestSmartBranchHandler,
                 });
             }
@@ -132,18 +141,9 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
 
-      scaleGlobalAlpha(renderCtx, 0.7, () => {
-        applyFillStyle(renderCtx, {
-          color: COLORS.GRAY_1,
-        });
-        const rect = ctx.getViewRect();
-        renderCtx.beginPath();
-        renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
-        renderCtx.fill();
-      });
-
+      renderOverlay(renderCtx, ctx.getViewRect());
       smartBranchHitResult.previewShapes.forEach((s) => {
-        localShapeComposite.render(renderCtx, s);
+        previewShapeComposite.render(renderCtx, s);
       });
       smartBranchSettingHandler.render(renderCtx, style, scale);
 
