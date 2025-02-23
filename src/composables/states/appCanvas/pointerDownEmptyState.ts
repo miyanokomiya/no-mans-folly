@@ -8,6 +8,7 @@ interface Option {
   button?: number;
   boundingBox?: BoundingBox; // when passed, moves to "SelectionHub" after panning
   preventSelecting?: boolean; // when true, next state bacomes "SelectionHub" when it's supposed to be "RectangleSelecting"
+  renderWhilePanning?: AppCanvasState["render"];
 }
 
 export function newPointerDownEmptyState(option?: Option): AppCanvasState {
@@ -27,14 +28,14 @@ export function newPointerDownEmptyState(option?: Option): AppCanvasState {
           case "pan":
             return toSelectingFn;
           default:
-            return { type: "stack-resume", getState: newPanningState };
+            return { type: "stack-resume", getState: () => newPanningState({ render: option?.renderWhilePanning }) };
         }
       }
 
       switch (setting.leftDragAction) {
         case "pan": {
           timestampForLeftPan = Date.now();
-          return { type: "stack-resume", getState: newPanningState };
+          return { type: "stack-resume", getState: () => newPanningState({ render: option?.renderWhilePanning }) };
         }
         default:
           return toSelectingFn;

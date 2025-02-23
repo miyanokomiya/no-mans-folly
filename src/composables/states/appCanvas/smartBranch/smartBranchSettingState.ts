@@ -16,6 +16,23 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
   let smartBranchSettingHandler: SmartBranchSettingHandler;
   let latestSmartBranchHandler: SmartBranchHandler;
 
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    const smartBranchHitResult = latestSmartBranchHandler.retrieveHitResult();
+    if (!smartBranchHitResult) return;
+
+    const style = ctx.getStyleScheme();
+    const scale = ctx.getScale();
+
+    renderOverlay(renderCtx, ctx.getViewRect());
+    smartBranchSettingHandler.render(renderCtx, style, scale);
+
+    if (highlightLineVertexMeta) {
+      const line = smartBranchHitResult.previewShapes[1];
+      const p = getLinePath(line)[highlightLineVertexMeta.index];
+      renderVertexAnchorHighlight(renderCtx, style, scale, p);
+    }
+  };
+
   return {
     getLabel: () => "SmartBranchSetting",
     onStart: (ctx) => {
@@ -80,7 +97,12 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
           ctx.setCommandExams();
           return {
             type: "stack-resume",
-            getState: () => ctx.states.newPointerDownEmptyState({ ...event.data.options, preventSelecting: true }),
+            getState: () =>
+              ctx.states.newPointerDownEmptyState({
+                ...event.data.options,
+                preventSelecting: true,
+                renderWhilePanning: render,
+              }),
           };
         }
         case "user-setting-change": {
@@ -140,21 +162,6 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
         }
       }
     },
-    render: (ctx, renderCtx) => {
-      const smartBranchHitResult = latestSmartBranchHandler.retrieveHitResult();
-      if (!smartBranchHitResult) return;
-
-      const style = ctx.getStyleScheme();
-      const scale = ctx.getScale();
-
-      renderOverlay(renderCtx, ctx.getViewRect());
-      smartBranchSettingHandler.render(renderCtx, style, scale);
-
-      if (highlightLineVertexMeta) {
-        const line = smartBranchHitResult.previewShapes[1];
-        const p = getLinePath(line)[highlightLineVertexMeta.index];
-        renderVertexAnchorHighlight(renderCtx, style, scale, p);
-      }
-    },
+    render,
   };
 }
