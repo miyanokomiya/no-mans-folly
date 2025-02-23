@@ -1,8 +1,8 @@
 import { rotate, sub } from "okageo";
 import { renderOverlay } from "../../../../utils/renderer";
-import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
-import { SMART_BRANCH_CHILD_MARGIN, SmartBranchHandler } from "../../../smartBranchHandler";
-import { renderSmartBranchSiblingMarginAnchor } from "../../../smartBranchSettingHandler";
+import { newShapeComposite } from "../../../shapeComposite";
+import { SMART_BRANCH_SIBLING_MARGIN, SmartBranchHandler } from "../../../smartBranchHandler";
+import { renderSmartBranchPreview, renderSmartBranchSiblingMarginAnchor } from "../../../smartBranchSettingHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState } from "../core";
 
@@ -11,7 +11,6 @@ type Option = {
 };
 
 export function newSmartBranchSiblingMarginState(option: Option): AppCanvasState {
-  let previewShapeComposite: ShapeComposite;
   let nextSmartBranchHandler: SmartBranchHandler;
   let defaultSiblingMargin: number;
   let nextSiblingMargin: number;
@@ -24,12 +23,8 @@ export function newSmartBranchSiblingMarginState(option: Option): AppCanvasState
       if (!result) return ctx.states.newSelectionHubState;
 
       nextSmartBranchHandler = option.smartBranchHandler;
-      defaultSiblingMargin = ctx.getUserSetting().smartBranchSiblingMargin ?? SMART_BRANCH_CHILD_MARGIN;
+      defaultSiblingMargin = ctx.getUserSetting().smartBranchSiblingMargin ?? SMART_BRANCH_SIBLING_MARGIN;
       nextSiblingMargin = defaultSiblingMargin;
-      previewShapeComposite = newShapeComposite({
-        shapes: result.previewShapes,
-        getStruct: ctx.getShapeComposite().getShapeStruct,
-      });
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
     },
@@ -73,19 +68,19 @@ export function newSmartBranchSiblingMarginState(option: Option): AppCanvasState
 
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-
-      renderOverlay(renderCtx, ctx.getViewRect());
-      nextHitResult.previewShapes.forEach((s) => {
-        previewShapeComposite.render(renderCtx, s);
+      const previewShapeComposite = newShapeComposite({
+        shapes: nextHitResult.previewShapes,
+        getStruct: ctx.getShapeComposite().getShapeStruct,
       });
 
+      renderOverlay(renderCtx, ctx.getViewRect());
+      renderSmartBranchPreview(renderCtx, previewShapeComposite, nextHitResult, nextSiblingMargin);
       renderSmartBranchSiblingMarginAnchor(
         renderCtx,
         style,
         scale,
         previewShapeComposite,
-        nextHitResult.previewShapes[0],
-        nextHitResult.index,
+        nextHitResult,
         nextSiblingMargin,
         true,
         showLabel,

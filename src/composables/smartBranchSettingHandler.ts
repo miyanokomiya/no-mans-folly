@@ -6,7 +6,10 @@ import { ISegment, isPointCloseToSegment } from "../utils/geometry";
 import { COLORS } from "../utils/color";
 import { Direction4, Shape, StyleScheme } from "../models";
 import { CanvasCTX } from "../utils/types";
-import { ShapeComposite } from "./shapeComposite";
+import { newShapeComposite, ShapeComposite } from "./shapeComposite";
+import { cloneShapes, createShape } from "../shapes";
+import { getPatchAfterLayouts } from "./shapeLayoutHandler";
+import { RectangleShape } from "../shapes/rectangle";
 
 const ANCHOR_SIZE = 4;
 const ANCHOR_SEG_SIZE = 60;
@@ -50,11 +53,10 @@ export const newSmartBranchSettingHandler = defineShapeHandler<SmartBranchSettin
       }
     },
     render(ctx, style, scale, hitResult) {
-      renderSiblingPreview(
+      renderSmartBranchPreview(
         ctx,
         option.previewShapeComposite,
-        previewShape,
-        option.smartBranchHitResult.index,
+        option.smartBranchHitResult,
         smartBranchSiblingMargin,
       );
 
@@ -112,15 +114,18 @@ export function renderSmartBranchSiblingMarginAnchor(
   style: StyleScheme,
   scale: number,
   previewShapeComposite: ShapeComposite,
-  previewShape: Shape,
-  branchIndex: Direction4,
+  smartBranchHitResult: SmartBranchHitResult,
   margin: number,
   highlight = false,
   showLabel = false,
 ) {
   const threshold = 2 * ANCHOR_SIZE * scale;
-  renderSiblingPreview(ctx, previewShapeComposite, previewShape, branchIndex, margin);
-  const seg = getSiblingMarginAnchor(previewShapeComposite.getWrapperRect(previewShape), branchIndex, margin, scale);
+  const seg = getSiblingMarginAnchor(
+    previewShapeComposite.getWrapperRect(smartBranchHitResult.previewShapes[0]),
+    smartBranchHitResult.index,
+    margin,
+    scale,
+  );
   renderRoundedSegment(
     ctx,
     [seg],
@@ -152,23 +157,57 @@ function getSiblingMarginAnchor(rect: IRectangle, branchIndex: Direction4, margi
     : [add(p, { x: -segSize / 2, y: 0 }), add(p, { x: segSize / 2, y: 0 })];
 }
 
-function renderSiblingPreview(
+export function renderSmartBranchPreview(
   ctx: CanvasCTX,
   previewShapeComposite: ShapeComposite,
-  previewShape: Shape,
-  branchIndex: Direction4,
-  margin: number,
+  smartBranchHitResult: SmartBranchHitResult,
+  smartBranchSiblingMargin: number,
 ) {
+  const branchIndex = smartBranchHitResult.index;
+  const [previewShape, previewLine] = smartBranchHitResult.previewShapes;
   const rect = previewShapeComposite.getWrapperRect(previewShape);
-  const v = rotate({ x: -rect.width - margin, y: 0 }, (Math.PI / 2) * branchIndex);
-  const sibling = { ...previewShape, ...previewShapeComposite.transformShape(previewShape, [1, 0, 0, 1, v.x, v.y]) };
-  const vSub = rotate({ x: rect.width + margin, y: 0 }, (Math.PI / 2) * branchIndex);
-  const siblingSub = {
-    ...previewShape,
-    ...previewShapeComposite.transformShape(previewShape, [1, 0, 0, 1, vSub.x, vSub.y]),
-  };
+  const v1 = rotate({ x: -rect.width - smartBranchSiblingMargin, y: 0 }, (Math.PI / 2) * branchIndex);
+  const v2 = rotate(v1, Math.PI);
+
+  const mockSrc = createShape<RectangleShape>(previewShapeComposite.getShapeStruct, "rectangle", {
+    id: previewLine.pConnection?.id,
+    p: add(
+      add(previewLine.p, { x: -rect.width / 2, y: -rect.height / 2 }),
+      rotate({ x: 0, y: rect.height / 2 }, (Math.PI / 2) * branchIndex),
+    ),
+    width: rect.width,
+    height: rect.height,
+  });
+
+  let count = 0;
+  const fistShapes = cloneShapes(
+    previewShapeComposite.getShapeStruct,
+    [mockSrc, previewShape, previewLine],
+    () => `${previewShape}_dummy_${count++}`,
+  );
+  const secondShapes = cloneShapes(
+    previewShapeComposite.getShapeStruct,
+    [mockSrc, previewShape, previewLine],
+    () => `${previewShape}_dummy_${count++}`,
+  );
+
+  const sm = newShapeComposite({
+    getStruct: previewShapeComposite.getShapeStruct,
+    shapes: [previewShape, ...fistShapes, ...secondShapes],
+  });
+  const patch = getPatchAfterLayouts(sm, {
+    update: {
+      [fistShapes[1].id]: previewShapeComposite.transformShape(previewShape, [1, 0, 0, 1, v1.x, v1.y]),
+      [secondShapes[1].id]: previewShapeComposite.transformShape(previewShape, [1, 0, 0, 1, v2.x, v2.y]),
+    },
+  });
+
   scaleGlobalAlpha(ctx, 0.7, () => {
-    previewShapeComposite.render(ctx, sibling);
-    previewShapeComposite.render(ctx, siblingSub);
+    [fistShapes[1], fistShapes[2], secondShapes[1], secondShapes[2]].forEach((s) => {
+      sm.render(ctx, { ...s, ...patch[s.id] });
+    });
+  });
+  previewShapeComposite.shapes.forEach((s) => {
+    sm.render(ctx, { ...s, ...patch[s.id] });
   });
 }

@@ -33,7 +33,10 @@ export type SmartBranchHandler = ShapeHandler<SmartBranchHitResult> & {
   clone(optionPatch?: Partial<Option>): SmartBranchHandler;
 };
 
-type BranchTemplate = Pick<UserSetting, "smartBranchLine" | "smartBranchChildMargin" | "smartBranchSiblingMargin">;
+export type BranchTemplate = Pick<
+  UserSetting,
+  "smartBranchLine" | "smartBranchChildMargin" | "smartBranchSiblingMargin"
+>;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -64,7 +67,7 @@ const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option)
     if (index === -1) return;
 
     let count = 0;
-    const previewShapes = createBranch(
+    const previewShapes = createSmartBranch(
       shapeComposite,
       shape,
       bounds,
@@ -128,7 +131,15 @@ export function newSmartBranchHandler(option: Option): SmartBranchHandler {
   return {
     ...base,
     createBranch: (branchIndex: SmartBranchHitResult["index"], generateId: () => string, lastFindex: string) => {
-      return createBranch(shapeComposite, shape, bounds, branchIndex, generateId, lastFindex, option.branchTemplate);
+      return createSmartBranch(
+        shapeComposite,
+        shape,
+        bounds,
+        branchIndex,
+        generateId,
+        lastFindex,
+        option.branchTemplate,
+      );
     },
     changeBranchTemplate: (branchTemplate: BranchTemplate) => {
       const ret = newSmartBranchHandler({
@@ -168,7 +179,7 @@ function isSameHitResult(a?: SmartBranchHitResult, b?: SmartBranchHitResult): bo
   }
 }
 
-function createBranch(
+function createSmartBranch(
   shapeComposite: ShapeComposite,
   src: Shape,
   bounds: IRectangle,

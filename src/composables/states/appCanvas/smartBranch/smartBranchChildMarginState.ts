@@ -1,8 +1,12 @@
 import { rotate, sub } from "okageo";
 import { renderOverlay } from "../../../../utils/renderer";
-import { newShapeComposite, ShapeComposite } from "../../../shapeComposite";
-import { SMART_BRANCH_CHILD_MARGIN, SmartBranchHandler } from "../../../smartBranchHandler";
-import { renderSmartBranchChildMarginAnchor } from "../../../smartBranchSettingHandler";
+import { newShapeComposite } from "../../../shapeComposite";
+import {
+  SMART_BRANCH_CHILD_MARGIN,
+  SMART_BRANCH_SIBLING_MARGIN,
+  SmartBranchHandler,
+} from "../../../smartBranchHandler";
+import { renderSmartBranchPreview, renderSmartBranchChildMarginAnchor } from "../../../smartBranchSettingHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState } from "../core";
 
@@ -11,7 +15,6 @@ type Option = {
 };
 
 export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
-  let previewShapeComposite: ShapeComposite;
   let nextSmartBranchHandler: SmartBranchHandler;
   let defaultChildMargin: number;
   let nextChildMargin: number;
@@ -26,10 +29,6 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
       nextSmartBranchHandler = option.smartBranchHandler;
       defaultChildMargin = ctx.getUserSetting().smartBranchChildMargin ?? SMART_BRANCH_CHILD_MARGIN;
       nextChildMargin = defaultChildMargin;
-      previewShapeComposite = newShapeComposite({
-        shapes: result.previewShapes,
-        getStruct: ctx.getShapeComposite().getShapeStruct,
-      });
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
     },
@@ -73,12 +72,18 @@ export function newSmartBranchChildMarginState(option: Option): AppCanvasState {
 
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-
-      renderOverlay(renderCtx, ctx.getViewRect());
-      nextHitResult.previewShapes.forEach((s) => {
-        previewShapeComposite.render(renderCtx, s);
+      const previewShapeComposite = newShapeComposite({
+        shapes: nextHitResult.previewShapes,
+        getStruct: ctx.getShapeComposite().getShapeStruct,
       });
 
+      renderOverlay(renderCtx, ctx.getViewRect());
+      renderSmartBranchPreview(
+        renderCtx,
+        previewShapeComposite,
+        nextHitResult,
+        ctx.getUserSetting().smartBranchSiblingMargin ?? SMART_BRANCH_SIBLING_MARGIN,
+      );
       renderSmartBranchChildMarginAnchor(
         renderCtx,
         style,
