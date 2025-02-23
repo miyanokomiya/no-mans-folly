@@ -5,7 +5,6 @@ import { newShapeComposite } from "../../../shapeComposite";
 import { SmartBranchHandler } from "../../../smartBranchHandler";
 import { newSmartBranchSettingHandler, SmartBranchSettingHandler } from "../../../smartBranchSettingHandler";
 import { handleCommonWheel } from "../../commons";
-import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState, HighlightLineVertexMeta } from "../core";
 
 type Option = {
@@ -14,7 +13,6 @@ type Option = {
 
 export function newSmartBranchSettingState(option: Option): AppCanvasState {
   let highlightLineVertexMeta: HighlightLineVertexMeta | undefined;
-  let canceled = false;
   let smartBranchSettingHandler: SmartBranchSettingHandler;
   let latestSmartBranchHandler: SmartBranchHandler;
 
@@ -42,7 +40,6 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
         targetRect: previewShapeComposite.getWrapperRectForShapes(previewShapeComposite.shapes, true),
         type: "smart-branch",
       });
-      ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
     },
     onResume: (ctx) => {
       const smartBranchHitResult = latestSmartBranchHandler.retrieveHitResult();
@@ -56,21 +53,9 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
         targetRect: previewShapeComposite.getWrapperRectForShapes(previewShapeComposite.shapes, true),
         type: "smart-branch",
       });
-      ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
-      ctx.setCommandExams();
-      if (canceled) return;
-
-      // Retrieve the handler regarding obstacles.
-      const handler = latestSmartBranchHandler.clone({ ignoreObstacles: false });
-      const smartBranchHitResult = handler.retrieveHitResult();
-      if (!smartBranchHitResult) return;
-
-      const branchShapes = handler.createBranch(smartBranchHitResult.index, ctx.generateUuid, ctx.createLastIndex());
-      ctx.addShapes(branchShapes);
-      ctx.selectShape(branchShapes[0].id);
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
@@ -78,14 +63,12 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
           const hitResult = smartBranchSettingHandler.hitTest(event.data.point, ctx.getScale());
           switch (hitResult?.type) {
             case "child-margin": {
-              canceled = true;
               return () =>
                 ctx.states.newSmartBranchChildMarginState({
                   smartBranchHandler: latestSmartBranchHandler,
                 });
             }
             case "sibling-margin": {
-              canceled = true;
               return () =>
                 ctx.states.newSmartBranchSiblingMarginState({
                   smartBranchHandler: latestSmartBranchHandler,
@@ -135,19 +118,16 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
           return;
         }
         case "history": {
-          canceled = true;
           return ctx.states.newSelectionHubState;
         }
         case "keydown": {
           switch (event.data.key) {
             case "Escape":
-              canceled = true;
               return ctx.states.newSelectionHubState;
             case "z":
             case "Z":
               if (event.data.ctrl) {
                 // Break this state by history operations since they don't work with this state.
-                canceled = true;
                 return ctx.states.newSelectionHubState;
               }
               return;
