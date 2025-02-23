@@ -125,6 +125,14 @@ export function newSmartBranchSettingState(option: Option): AppCanvasState {
             case "Escape":
               canceled = true;
               return ctx.states.newSelectionHubState;
+            case "z":
+            case "Z":
+              if (event.data.ctrl) {
+                // Break this state by history operations since they don't work with this state.
+                canceled = true;
+                return ctx.states.newSelectionHubState;
+              }
+              return;
           }
           return;
         }
