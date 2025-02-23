@@ -1,15 +1,14 @@
-import { add, getCenter, getRectCenter, IRectangle, rotate } from "okageo";
+import { add, getCenter, getRectCenter, IRectangle, rotate, sub } from "okageo";
 import { defineShapeHandler } from "./shapeHandlers/core";
 import { SMART_BRANCH_SIBLING_MARGIN, SmartBranchHitResult } from "./smartBranchHandler";
 import { renderRoundedSegment, renderValueLabel, scaleGlobalAlpha } from "../utils/renderer";
-import { ISegment, isPointCloseToSegment } from "../utils/geometry";
+import { getLocationFromRateOnRectPath, getRotateFn, ISegment, isPointCloseToSegment } from "../utils/geometry";
 import { COLORS } from "../utils/color";
 import { Direction4, Shape, StyleScheme } from "../models";
 import { CanvasCTX } from "../utils/types";
 import { newShapeComposite, ShapeComposite } from "./shapeComposite";
-import { cloneShapes, createShape } from "../shapes";
+import { cloneShapes } from "../shapes";
 import { getPatchAfterLayouts } from "./shapeLayoutHandler";
-import { RectangleShape } from "../shapes/rectangle";
 
 const ANCHOR_SIZE = 4;
 const ANCHOR_SEG_SIZE = 60;
@@ -165,19 +164,24 @@ export function renderSmartBranchPreview(
 ) {
   const branchIndex = smartBranchHitResult.index;
   const [previewShape, previewLine] = smartBranchHitResult.previewShapes;
+  if (!previewLine.pConnection) return;
+
   const rect = previewShapeComposite.getWrapperRect(previewShape);
-  const v1 = rotate({ x: -rect.width - smartBranchSiblingMargin, y: 0 }, (Math.PI / 2) * branchIndex);
+  const rotateFn = getRotateFn((Math.PI / 2) * branchIndex);
+  const v1 = rotateFn({ x: -rect.width - smartBranchSiblingMargin, y: 0 });
   const v2 = rotate(v1, Math.PI);
 
-  const mockSrc = createShape<RectangleShape>(previewShapeComposite.getShapeStruct, "rectangle", {
-    id: previewLine.pConnection?.id,
-    p: add(
-      add(previewLine.p, { x: -rect.width / 2, y: -rect.height / 2 }),
-      rotate({ x: 0, y: rect.height / 2 }, (Math.PI / 2) * branchIndex),
-    ),
-    width: rect.width,
-    height: rect.height,
-  });
+  const pOrigin = getLocationFromRateOnRectPath(
+    previewShapeComposite.getLocalRectPolygon(previewShape),
+    previewShape.rotation,
+    previewLine.pConnection.rate,
+  );
+  const srcV = sub(previewLine.p, pOrigin);
+  const mockSrc = {
+    ...previewShape,
+    id: previewLine.pConnection.id,
+    ...previewShapeComposite.transformShape(previewShape, [1, 0, 0, 1, srcV.x, srcV.y]),
+  };
 
   let count = 0;
   const fistShapes = cloneShapes(
