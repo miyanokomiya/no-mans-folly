@@ -23,11 +23,13 @@ import { newShapeRenderer, ShapeRenderer } from "../../composables/shapeRenderer
 type DropOperation = "group" | "above" | "below";
 
 export const ShapeTreePanel: React.FC = () => {
+  const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
 
   const shapeComposite = useShapeCompositeWithoutTmpInfo();
   const documentMap = useDocumentMapWithoutTmpInfo();
+  const imageStore = getCtx().getImageStore();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const selectionScope = useMemo(() => {
     if (!selectedLastId) return;
@@ -36,8 +38,13 @@ export const ShapeTreePanel: React.FC = () => {
   }, [shapeComposite, selectedLastId]);
 
   const shapeRenderer = useMemo(() => {
-    return newShapeRenderer({ shapeComposite, getDocumentMap: () => documentMap, scale: 1 });
-  }, [shapeComposite, documentMap]);
+    return newShapeRenderer({
+      shapeComposite,
+      getDocumentMap: () => documentMap,
+      imageStore,
+      scale: 1,
+    });
+  }, [imageStore, shapeComposite, documentMap]);
 
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree
@@ -48,7 +55,6 @@ export const ShapeTreePanel: React.FC = () => {
   }, [shapeComposite, shapeRenderer, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
-  const getCtx = useContext(GetAppStateContext);
 
   const handleNodeHover = useCallback(
     (id: string) => {
