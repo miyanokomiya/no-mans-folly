@@ -1,6 +1,11 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
-import { useSelectedShapeInfo, useSelectedSheet, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import {
+  useDocumentMapWithoutTmpInfo,
+  useSelectedShapeInfo,
+  useSelectedSheet,
+  useShapeCompositeWithoutTmpInfo,
+} from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { ShapeSelectionScope, isSameShapeSelectionScope } from "../../shapes/core";
@@ -22,6 +27,7 @@ export const ShapeTreePanel: React.FC = () => {
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
 
   const shapeComposite = useShapeCompositeWithoutTmpInfo();
+  const documentMap = useDocumentMapWithoutTmpInfo();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const selectionScope = useMemo(() => {
     if (!selectedLastId) return;
@@ -30,8 +36,8 @@ export const ShapeTreePanel: React.FC = () => {
   }, [shapeComposite, selectedLastId]);
 
   const shapeRenderer = useMemo(() => {
-    return newShapeRenderer({ shapeComposite });
-  }, [shapeComposite]);
+    return newShapeRenderer({ shapeComposite, getDocumentMap: () => documentMap, scale: 1 });
+  }, [shapeComposite, documentMap]);
 
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree
