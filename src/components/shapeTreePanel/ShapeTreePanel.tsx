@@ -13,6 +13,7 @@ import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
 import { rednerRGBA } from "../../utils/color";
 import { getLabel, hasSpecialOrderPriority } from "../../shapes";
+import { newShapeRenderer, ShapeRenderer } from "../../composables/shapeRenderer";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -28,11 +29,17 @@ export const ShapeTreePanel: React.FC = () => {
     return shapeComposite.getSelectionScope(shapeComposite.shapeMap[selectedLastId]);
   }, [shapeComposite, selectedLastId]);
 
+  const shapeRenderer = useMemo(() => {
+    return newShapeRenderer({ shapeComposite });
+  }, [shapeComposite]);
+
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree
       .filter((n) => !hasSpecialOrderPriority(shapeComposite.getShapeStruct, shapeComposite.mergedShapeMap[n.id]))
-      .map((n) => getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor));
-  }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
+      .map((n) =>
+        getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor, shapeRenderer),
+      );
+  }, [shapeComposite, shapeRenderer, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
   const getCtx = useContext(GetAppStateContext);
@@ -328,6 +335,7 @@ function getUITreeNodeProps(
   selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
   sheetColor: string,
+  shapeRenderer: ShapeRenderer,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = getLabel(shapeComposite.getShapeStruct, shape);
@@ -349,7 +357,7 @@ function getUITreeNodeProps(
     ctx.save();
     ctx.scale(scale, scale);
     ctx.translate(-rect.x + (longSize - w) / 2, -rect.y + (longSize - h) / 2);
-    shapeComposite.render(ctx, s);
+    shapeRenderer.renderShape(ctx, id);
     ctx.restore();
   };
 
@@ -361,7 +369,7 @@ function getUITreeNodeProps(
     primeSibling: primeSibling,
     draggable,
     childNode: shapeNode.children.map((c) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, sheetColor),
+      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, sheetColor, shapeRenderer),
     ),
     renderShape,
     sheetColor,

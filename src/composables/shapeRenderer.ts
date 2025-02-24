@@ -17,7 +17,7 @@ import { ShapeComposite } from "./shapeComposite";
 
 interface Option {
   shapeComposite: ShapeComposite;
-  getDocumentMap: () => { [id: string]: DocOutput };
+  getDocumentMap?: () => { [id: string]: DocOutput };
   ignoreDocIds?: string[];
   imageStore?: ImageStore;
   scale?: number;
@@ -28,7 +28,7 @@ interface Option {
 export function newShapeRenderer(option: Option) {
   const shapeComposite = option.shapeComposite;
   const { mergedShapeMap } = shapeComposite;
-  const docMap = option.getDocumentMap();
+  const docMap = option.getDocumentMap?.() ?? {};
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
   const canvasBank = option.canvasBank ?? newCanvasBank();
   const sortedMergedShapeTree = shapeComposite.getSortedMergedShapeTree();
@@ -48,6 +48,12 @@ export function newShapeRenderer(option: Option) {
 
   function render(ctx: CanvasCTX) {
     renderShapeTree(ctx, sortedMergedShapeTree);
+  }
+
+  function renderShape(ctx: CanvasCTX, id: string) {
+    const tree = shapeComposite.mergedShapeTreeMap[id];
+    if (!tree) return;
+    renderShapeTree(ctx, [tree]);
   }
 
   function renderShapeTree(ctx: CanvasCTX, treeNodes: TreeNode[]) {
@@ -124,7 +130,7 @@ export function newShapeRenderer(option: Option) {
     }
   }
 
-  return { render };
+  return { render, renderShape };
 }
 export type ShapeRenderer = ReturnType<typeof newShapeRenderer>;
 
