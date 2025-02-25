@@ -45,7 +45,7 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     const shapeComposite = ctx.getShapeComposite();
     const latestLineShape = shapeComposite.mergedShapeMap[lineShape.id] as LineShape;
     const patchedLineShape = linePatch ? { ...latestLineShape, ...linePatch } : latestLineShape;
-    const segmentSrc = getLinePath(patchedLineShape);
+    const segmentSrc = getSegments(getLinePath(patchedLineShape))[option.index];
     const segment: ISegment = originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
     lineSegmentEditingHandler = newLineSegmentEditingHandler({ segment });
   };
@@ -106,7 +106,7 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
           return;
         }
         case "line-segment-change": {
-          const segmentSrc = getLinePath(lineShape);
+          const segmentSrc = getSegments(getLinePath(lineShape))[option.index];
           const segment: ISegment = originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
           const p = add(multi(rotate({ x: 1, y: 0 }, getRadian(segment[1], segment[0])), event.data.size), segment[0]);
           const linePatch = patchVertex(lineShape, option.index + 1 - originIndex, p, undefined);
