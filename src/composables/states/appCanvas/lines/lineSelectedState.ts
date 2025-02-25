@@ -9,6 +9,7 @@ import {
   deleteVertex,
   detachVertex,
   getConnection,
+  getLinePath,
   getRelativePointOn,
   patchBodyVertex,
   patchConnection,
@@ -35,11 +36,13 @@ import { isObjectEmpty } from "../../../../utils/commons";
 import { newRotatingState } from "../rotatingState";
 import { newBoundingBox } from "../../../boundingBox";
 import { patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/line";
+import { getSegments } from "../../../../utils/geometry";
+import { getDistanceSq } from "okageo";
 
 type VertexMetaForContextMenu = {
   index: number;
 };
-type SegmentMetaForContextMenu = VertexMetaForContextMenu;
+type SegmentMetaForContextMenu = VertexMetaForContextMenu & { originIndex: 0 | 1 };
 
 export const newLineSelectedState = defineIntransientState(() => {
   let lineShape: LineShape;
@@ -232,11 +235,14 @@ export const newLineSelectedState = defineIntransientState(() => {
             return;
           } else if (hitResult?.type === "segment") {
             if (lineShape.lineType !== "elbow" && !lineShape.curves?.[hitResult.index]) {
+              const seg = getSegments(getLinePath(lineShape))[hitResult.index];
+              const originIndex =
+                getDistanceSq(seg[0], event.data.point) <= getDistanceSq(seg[1], event.data.point) ? 1 : 0;
               ctx.setContextMenuList({
                 items: [
                   {
                     ...CONTEXT_MENU_ITEM_SRC.SEGMENT_LENGTH,
-                    meta: { index: hitResult.index } as SegmentMetaForContextMenu,
+                    meta: { index: hitResult.index, originIndex } as SegmentMetaForContextMenu,
                   },
                   CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
                   CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
@@ -286,10 +292,12 @@ export const newLineSelectedState = defineIntransientState(() => {
                 });
             }
             case CONTEXT_MENU_ITEM_SRC.SEGMENT_LENGTH.key: {
+              const meta = event.data.meta as SegmentMetaForContextMenu;
               return () =>
                 ctx.states.newLineSegmentEditingState({
                   lineShape,
-                  index: (event.data.meta as SegmentMetaForContextMenu).index,
+                  index: meta.index,
+                  originIndex: meta.originIndex,
                 });
             }
             case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES.key: {

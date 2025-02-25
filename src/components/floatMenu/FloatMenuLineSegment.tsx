@@ -41,26 +41,22 @@ export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex })
   }, [handleEvent, sizeSrc]);
 
   return (
-    <div className="flex gap-1.5 items-center py-1">
-      <div>
-        <div className="mb-1 flex items-center gap-2 justify-between">
-          <h3 className="mb-1">Smart branch settings</h3>
-          <button
-            type="button"
-            className={"px-2 py-1 border rounded-sm" + (sizeSrc !== sizeLatest ? "" : " invisible")}
-            onClick={handleLengthReset}
-          >
-            Reset
-          </button>
-        </div>
-        <div className="flex gap-1 items-center">
-          <InlineField label="Length">
-            <div className="w-20">
-              <NumberInput value={sizeLatest} onChange={handleLengthChange} min={0} slider keepFocus />
-            </div>
-          </InlineField>
-        </div>
+    <div className="py-1">
+      <div className="mb-1 flex items-center gap-6 justify-between">
+        <h3 className="mb-1">Line segment</h3>
+        <button
+          type="button"
+          className={"px-2 py-1 border rounded-sm" + (sizeSrc !== sizeLatest ? "" : " invisible")}
+          onClick={handleLengthReset}
+        >
+          Reset
+        </button>
       </div>
+      <InlineField label="Length">
+        <div className="w-20">
+          <NumberInput value={sizeLatest} onChange={handleLengthChange} min={0} slider keepFocus />
+        </div>
+      </InlineField>
     </div>
   );
 };
