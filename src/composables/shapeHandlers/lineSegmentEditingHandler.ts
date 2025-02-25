@@ -1,4 +1,4 @@
-import { ISegment, snapNumberCeil } from "../../utils/geometry";
+import { ISegment, normalizeRadian, snapNumberCeil } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyPath, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
@@ -18,9 +18,9 @@ interface Option {
 export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option>((option) => {
   const segment = option.segment;
   const [origin, other] = segment;
-  const radian = getRadian(other, origin);
   const totalSize = getDistance(origin, other);
   const originV = rotate({ x: 1, y: 0 }, option.originRadian);
+  const radian = getRadian(other, origin);
 
   return {
     hitTest(p, scale) {
@@ -81,13 +81,13 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
 
         const step = 5;
         const count = 90 / step;
-        const base = snapNumberCeil(((radian - radianRange / 2) * 180) / Math.PI, step);
+        const base = snapNumberCeil(((radian - option.originRadian - radianRange / 2) * 180) / Math.PI, step);
 
         const info = [...Array(count)].map<[ISegment, number]>((_, i) => {
           const a = base + i * step;
           const r = (a * Math.PI) / 180;
-          const v = rotate({ x: 1, y: 0 }, r);
-          const l = (a % 45 === 0 ? 30 : i % 15 === 0 ? 21 : 15) * scale;
+          const v = rotate({ x: 1, y: 0 }, r + option.originRadian);
+          const l = (a % 45 === 0 ? 30 : a % 15 === 0 ? 21 : 15) * scale;
           const p = add(origin, multi(v, radius));
           return [[p, add(p, multi(v, l))], a];
         });
@@ -99,10 +99,11 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
         ctx.stroke();
         info.forEach(([seg, a]) => {
           if (a % 15 !== 0) return;
-          renderValueLabel(ctx, Math.round(a), seg[1], 0, scale, true);
+          const na = (normalizeRadian((a * Math.PI) / 180) * 180) / Math.PI;
+          renderValueLabel(ctx, Math.round(na), seg[1], 0, scale, true);
         });
         if (!info.some(([, a]) => a === 0)) {
-          renderValueLabel(ctx, 0, add(origin, multi({ x: 1, y: 0 }, radius + 30 * scale)), 0, scale, true);
+          renderValueLabel(ctx, 0, add(origin, multi(originV, radius + 30 * scale)), 0, scale, true);
         }
       }
 

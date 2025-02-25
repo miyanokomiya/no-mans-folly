@@ -16,6 +16,7 @@ interface Option {
   lineShape: LineShape;
   index: number;
   originIndex?: 0 | 1;
+  relativeRadian?: boolean;
 }
 
 export function newLineSegmentEditingState(option: Option): AppCanvasState {
@@ -23,6 +24,7 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
   let cancel = false;
   let lineSegmentEditingHandler: LineSegmentEditingHandler;
   const originIndex = option.originIndex ?? 0;
+  const relativeRadian = !!option.relativeRadian;
 
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
     const style = ctx.getStyleScheme();
@@ -46,8 +48,20 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     const shapeComposite = ctx.getShapeComposite();
     const latestLineShape = shapeComposite.mergedShapeMap[lineShape.id] as LineShape;
     const patchedLineShape = linePatch ? { ...latestLineShape, ...linePatch } : latestLineShape;
-    const segmentSrc = getSegments(getLinePath(patchedLineShape))[option.index];
+    const vertices = getLinePath(patchedLineShape);
+    const segmentSrc = getSegments(vertices)[option.index];
     const segment: ISegment = originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
+
+    if (relativeRadian) {
+      const relativeOrigin = vertices.at(option.index + (originIndex === 1 ? 1 : -1));
+      if (relativeOrigin) {
+        lineSegmentEditingHandler = newLineSegmentEditingHandler({
+          segment,
+          originRadian: getRadian(relativeOrigin, segment[0]),
+        });
+        return;
+      }
+    }
     lineSegmentEditingHandler = newLineSegmentEditingHandler({ segment, originRadian: 0 });
   };
 

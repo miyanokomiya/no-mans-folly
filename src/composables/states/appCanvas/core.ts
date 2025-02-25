@@ -169,5 +169,6 @@ export interface LineSegmentChangeEvent extends ModeStateEventBase {
   data: {
     size?: number;
     radian?: number;
+    relativeRadian?: boolean;
   };
 }
