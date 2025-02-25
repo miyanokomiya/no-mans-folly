@@ -12,6 +12,7 @@ interface HitResult {
 
 interface Option {
   segment: ISegment;
+  originRadian: number;
 }
 
 export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option>((option) => {
@@ -19,6 +20,7 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
   const [origin, other] = segment;
   const radian = getRadian(other, origin);
   const totalSize = getDistance(origin, other);
+  const originV = rotate({ x: 1, y: 0 }, option.originRadian);
 
   return {
     hitTest(p, scale) {
@@ -33,6 +35,19 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
       ctx.beginPath();
       applyPath(ctx, segment);
       ctx.stroke();
+
+      {
+        const originSeg = [add(origin, multi(originV, totalSize * 0.7)), origin];
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
+        ctx.beginPath();
+        applyPath(ctx, originSeg);
+        ctx.stroke();
+
+        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
+        ctx.beginPath();
+        ctx.arc(origin.x, origin.y, totalSize * 0.5, option.originRadian, radian);
+        ctx.stroke();
+      }
 
       {
         const normalV = rotate({ x: 1, y: 0 }, radian + Math.PI / 2);

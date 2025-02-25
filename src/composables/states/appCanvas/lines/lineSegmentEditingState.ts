@@ -1,4 +1,4 @@
-import { add, getOuterRectangle, getRadian, multi, rotate } from "okageo";
+import { add, getDistance, getOuterRectangle, getRadian, multi, rotate } from "okageo";
 import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
 import { getSegments, ISegment } from "../../../../utils/geometry";
 import { renderOverlay } from "../../../../utils/renderer";
@@ -10,6 +10,7 @@ import { handleCommonWheel } from "../../commons";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { isObjectEmpty } from "../../../../utils/commons";
+import { ShapeComposite } from "../../../shapeComposite";
 
 interface Option {
   lineShape: LineShape;
@@ -47,7 +48,7 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     const patchedLineShape = linePatch ? { ...latestLineShape, ...linePatch } : latestLineShape;
     const segmentSrc = getSegments(getLinePath(patchedLineShape))[option.index];
     const segment: ISegment = originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
-    lineSegmentEditingHandler = newLineSegmentEditingHandler({ segment });
+    lineSegmentEditingHandler = newLineSegmentEditingHandler({ segment, originRadian: 0 });
   };
 
   return {
@@ -106,11 +107,15 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
           return;
         }
         case "line-segment-change": {
-          const segmentSrc = getSegments(getLinePath(lineShape))[option.index];
-          const segment: ISegment = originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
-          const p = add(multi(rotate({ x: 1, y: 0 }, getRadian(segment[1], segment[0])), event.data.size), segment[0]);
-          const linePatch = patchVertex(lineShape, option.index + 1 - originIndex, p, undefined);
-          ctx.setTmpShapeMap({ [lineShape.id]: linePatch });
+          const linePatch = patchLine(
+            ctx.getShapeComposite(),
+            lineShape.id,
+            option.index,
+            originIndex,
+            event.data.size,
+            event.data.radian,
+          );
+          ctx.setTmpShapeMap(linePatch ? { [lineShape.id]: linePatch } : {});
           setupHandler(ctx, linePatch);
           return;
         }
@@ -133,4 +138,33 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     },
     render,
   };
+}
+
+function patchLine(
+  shapeComposite: ShapeComposite,
+  id: string,
+  index: number,
+  originIndex: number,
+  size: number | undefined,
+  radian: number | undefined,
+) {
+  const src = shapeComposite.shapeMap[id] as LineShape;
+  const segmentsSrc = getSegments(getLinePath(src))[index];
+  const segmentSrc: ISegment = originIndex === 1 ? [segmentsSrc[1], segmentsSrc[0]] : segmentsSrc;
+
+  const latestLineShape = shapeComposite.mergedShapeMap[id] as LineShape;
+  const segmentsLatest = getSegments(getLinePath(latestLineShape))[index];
+  const segmentLatest: ISegment = originIndex === 1 ? [segmentsLatest[1], segmentsLatest[0]] : segmentsLatest;
+
+  if (size !== undefined) {
+    const p = add(multi(rotate({ x: 1, y: 0 }, getRadian(segmentLatest[1], segmentLatest[0])), size), segmentSrc[0]);
+    return patchVertex(src, index + 1 - originIndex, p, undefined);
+  }
+  if (radian !== undefined) {
+    const p = add(
+      multi(rotate({ x: 1, y: 0 }, radian), getDistance(segmentLatest[0], segmentLatest[1])),
+      segmentSrc[0],
+    );
+    return patchVertex(src, index + 1 - originIndex, p, undefined);
+  }
 }
