@@ -140,6 +140,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "ATTACH_LINE_VERTICES",
     };
   },
+  get SEGMENT_LENGTH() {
+    return {
+      label: i18n.t("contextmenu.segment.length"),
+      key: "SEGMENT_LENGTH",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

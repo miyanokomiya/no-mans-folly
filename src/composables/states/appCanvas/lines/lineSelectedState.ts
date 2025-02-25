@@ -39,6 +39,7 @@ import { patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/lin
 type VertexMetaForContextMenu = {
   index: number;
 };
+type SegmentMetaForContextMenu = VertexMetaForContextMenu;
 
 export const newLineSelectedState = defineIntransientState(() => {
   let lineShape: LineShape;
@@ -223,12 +224,30 @@ export const newLineSelectedState = defineIntransientState(() => {
                   ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX,
                   meta: { index: hitResult.index } as VertexMetaForContextMenu,
                 },
-                { separator: true },
+                CONTEXT_MENU_ITEM_SRC.SEPARATOR,
                 ...getMenuItemsForSelectedShapes(ctx),
               ],
               point: event.data.point,
             });
             return;
+          } else if (hitResult?.type === "segment") {
+            if (lineShape.lineType !== "elbow" && !lineShape.curves?.[hitResult.index]) {
+              ctx.setContextMenuList({
+                items: [
+                  {
+                    ...CONTEXT_MENU_ITEM_SRC.SEGMENT_LENGTH,
+                    meta: { index: hitResult.index } as SegmentMetaForContextMenu,
+                  },
+                  CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
+                  CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
+                  CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
+                  CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                  ...getMenuItemsForSelectedShapes(ctx),
+                ],
+                point: event.data.point,
+              });
+              return;
+            }
           }
 
           ctx.setContextMenuList({
@@ -236,7 +255,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
-              { separator: true },
+              CONTEXT_MENU_ITEM_SRC.SEPARATOR,
               ...getMenuItemsForSelectedShapes(ctx),
             ],
             point: event.data.point,
@@ -264,6 +283,13 @@ export const newLineSelectedState = defineIntransientState(() => {
                 ctx.states.newVertexAttachingState({
                   lineShape,
                   index: (event.data.meta as VertexMetaForContextMenu).index,
+                });
+            }
+            case CONTEXT_MENU_ITEM_SRC.SEGMENT_LENGTH.key: {
+              return () =>
+                ctx.states.newLineSegmentEditingState({
+                  lineShape,
+                  index: (event.data.meta as SegmentMetaForContextMenu).index,
                 });
             }
             case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES.key: {

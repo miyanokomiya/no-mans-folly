@@ -1,6 +1,7 @@
 import { newLineDrawingState } from "./lines/lineDrawingState";
 import { newLineNormalReadyState } from "./lines/lineNormalReadyState";
 import { newLineReadyState } from "./lines/lineReadyState";
+import { newLineSegmentEditingState } from "./lines/lineSegmentEditingState";
 import { newLineTangentReadyState } from "./lines/lineTangentReadyState";
 import { newMovingAnchorOnLineState } from "./lines/movingAnchorOnLineState";
 import { newMovingOnLineState } from "./lines/movingOnLineState";
@@ -27,6 +28,7 @@ export const stateGenerators = {
   newLineTangentReadyState,
   newLineNormalReadyState,
   newVertexAttachingState,
+  newLineSegmentEditingState,
   newPointerDownEmptyState,
   newPanToShapeState,
   newSmartBranchPointerDownState,

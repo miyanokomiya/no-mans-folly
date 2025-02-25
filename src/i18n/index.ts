@@ -86,6 +86,7 @@ const en = {
       "vertex.detach": "Detach vertex",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
+      "segment.length": "Segment length",
     },
 
     floatmenu: {
@@ -178,6 +179,7 @@ const ja: TranslationResource = {
       "vertex.detach": "頂点接続解除",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
+      "segment.length": "辺の長さ",
     },
 
     floatmenu: {
