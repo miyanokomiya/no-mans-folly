@@ -12,12 +12,11 @@ interface HitResult {
 
 interface Option {
   segment: ISegment;
-  originIndex: 0 | 1;
 }
 
 export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option>((option) => {
   const segment = option.segment;
-  const [origin, other] = option.originIndex === 0 ? segment : [segment[1], segment[0]];
+  const [origin, other] = segment;
 
   return {
     hitTest(p, scale) {

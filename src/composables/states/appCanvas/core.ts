@@ -69,7 +69,8 @@ export type AppCanvasEvent =
   | ContextMenuItemEvent
   | FileDropEvent
   | CloseEmojiPicker
-  | ShapeHighlightEvent;
+  | ShapeHighlightEvent
+  | LineSegmentChangeEvent;
 
 interface ChangeSelectionEvent extends ModeStateEventBase {
   type: "selection";
@@ -162,3 +163,10 @@ export type HighlightLineBezierMeta = {
   index: number;
   subIndex: 0 | 1;
 };
+
+export interface LineSegmentChangeEvent extends ModeStateEventBase {
+  type: "line-segment-change";
+  data: {
+    size: number;
+  };
+}

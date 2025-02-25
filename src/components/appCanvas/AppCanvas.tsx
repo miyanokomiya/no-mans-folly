@@ -769,12 +769,11 @@ export const AppCanvas: React.FC = () => {
 
   const floatMenu = floatMenuOption ? (
     <FloatMenu
+      {...floatMenuOption}
       canvasState={canvasState}
       scale={scale}
       viewOrigin={viewOrigin}
       viewSize={viewSize}
-      targetRect={floatMenuOption.targetRect}
-      type={floatMenuOption.type}
       indexDocAttrInfo={indexDocAttrInfo}
       focusBack={focusBackTextEditor}
       textEditing={textEditing}

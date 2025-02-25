@@ -39,6 +39,7 @@ export interface CanvasStateContext extends ModeStateContextBase {
 export type FloatMenuOption = {
   targetRect?: IRectangle;
   type?: string;
+  data?: any;
 };
 
 export interface HistoryEvent extends ModeStateEventBase {

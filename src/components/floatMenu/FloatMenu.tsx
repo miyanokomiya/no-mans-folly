@@ -8,6 +8,8 @@ import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { FloatMenuInspector } from "./FloatMenuInspector";
 import { useSelectedShapes, useShapeComposite } from "../../hooks/storeHooks";
 import { FloatMenuSmartBranch } from "./FloatMenuSmartBranch";
+import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
+import { FloatMenuOption } from "../../composables/states/commons";
 
 // Use default root height until it's derived from actual element.
 // => It's useful to prevent the menu from slightly translating at the first appearance.
@@ -16,18 +18,16 @@ const ROOT_HEIGHT = 44;
 // Keep and restore the fixed location.
 let rootFixedCache: IVec2 | undefined;
 
-interface Option {
+type Option = FloatMenuOption & {
   canvasState: any;
   scale: number;
   viewOrigin: IVec2;
   viewSize: Size;
-  targetRect?: IRectangle;
-  type?: string;
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
   textEditing: boolean;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
-}
+};
 
 export const FloatMenu: React.FC<Option> = ({
   canvasState,
@@ -36,6 +36,7 @@ export const FloatMenu: React.FC<Option> = ({
   viewSize,
   targetRect,
   type,
+  data,
   indexDocAttrInfo,
   focusBack,
   textEditing,
@@ -126,6 +127,8 @@ export const FloatMenu: React.FC<Option> = ({
         </ClickOrDragHandler>
         {type === "smart-branch" ? (
           <FloatMenuSmartBranch />
+        ) : type === "line-segment" ? (
+          <FloatMenuLineSegment {...data} />
         ) : (
           <FloatMenuInspector
             canvasState={canvasState}
