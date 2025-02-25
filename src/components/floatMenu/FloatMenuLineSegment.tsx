@@ -74,7 +74,7 @@ export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex })
       </InlineField>
       <InlineField label="Angle">
         <div className="w-20">
-          <NumberInput value={(radianLatest * 180) / Math.PI} onChange={handleAngleChange} min={0} slider keepFocus />
+          <NumberInput value={(radianLatest * 180) / Math.PI} onChange={handleAngleChange} slider keepFocus />
         </div>
       </InlineField>
     </div>
