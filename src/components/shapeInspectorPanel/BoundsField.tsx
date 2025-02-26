@@ -33,7 +33,13 @@ export const BoundsField: React.FC<Props> = ({ bounds, draftBounds, onBoundsChan
         <PointField value={draftBounds} onChange={handleChangePosition} />
       </InlineField>
       <InlineField label={"w, h"}>
-        <PointField value={{ x: draftBounds.width, y: draftBounds.height }} onChange={handleChangeSize} min={1} />
+        <PointField
+          value={{ x: draftBounds.width, y: draftBounds.height }}
+          onChange={handleChangeSize}
+          min={1}
+          disabledX={bounds.width === 0}
+          disabledY={bounds.height === 0}
+        />
       </InlineField>
     </BlockGroupField>
   );

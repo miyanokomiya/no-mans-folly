@@ -29,6 +29,11 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   const shapeComposite = useShapeComposite();
   const subShapeComposite = useShapeCompositeWithoutTmpInfo(useMemo(() => [targetShape.id], [targetShape.id]));
 
+  const srcSize = useMemo<IVec2>(() => {
+    const [b] = getRectWithRotationFromRectPolygon(subShapeComposite.getLocalRectPolygon(targetShape));
+    return { x: b.width, y: b.height };
+  }, [targetShape, subShapeComposite]);
+
   const targetLocalBounds = useMemo<[IRectangle, rotation: number]>(() => {
     return getRectWithRotationFromRectPolygon(shapeComposite.getLocalRectPolygon(targetTmpShape));
   }, [targetTmpShape, shapeComposite]);
@@ -118,7 +123,13 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
           <PointField value={targetLocation} onChange={handleChangePosition} />
         </InlineField>
         <InlineField label={"w, h"}>
-          <PointField value={targetSize} onChange={handleChangeSize} min={1} />
+          <PointField
+            value={targetSize}
+            onChange={handleChangeSize}
+            min={1}
+            disabledX={srcSize.x === 0}
+            disabledY={srcSize.y === 0}
+          />
         </InlineField>
         {rotationField}
       </BlockGroupField>
@@ -141,7 +152,7 @@ function getScaleToAffine(subShapeComposite: ShapeComposite, shape: Shape, to: I
   return multiAffines([
     [1, 0, 0, 1, origin.x, origin.y],
     [cos, sin, -sin, cos, 0, 0],
-    [to.x / rect.width, 0, 0, to.y / rect.height, 0, 0],
+    [rect.width === 0 ? 1 : to.x / rect.width, 0, 0, rect.height === 0 ? 1 : to.y / rect.height, 0, 0],
     [cos, -sin, sin, cos, 0, 0],
     [1, 0, 0, 1, -origin.x, -origin.y],
   ]);

@@ -8,9 +8,11 @@ interface Props {
   max?: number;
   min?: number;
   disabled?: boolean;
+  disabledX?: boolean;
+  disabledY?: boolean;
 }
 
-export const PointField: React.FC<Props> = ({ value, onChange, min, max, disabled }) => {
+export const PointField: React.FC<Props> = ({ value, onChange, min, max, disabled, disabledX, disabledY }) => {
   const latestValue = useRef(value);
   latestValue.current = value;
 
@@ -41,7 +43,7 @@ export const PointField: React.FC<Props> = ({ value, onChange, min, max, disable
           onBlur={commit}
           min={min}
           max={max}
-          disabled={disabled}
+          disabled={disabled || disabledX}
           keepFocus
           slider
         />
@@ -53,7 +55,7 @@ export const PointField: React.FC<Props> = ({ value, onChange, min, max, disable
           onBlur={commit}
           min={min}
           max={max}
-          disabled={disabled}
+          disabled={disabled || disabledY}
           keepFocus
           slider
         />

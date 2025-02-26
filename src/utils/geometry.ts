@@ -473,7 +473,7 @@ export function getRotatedWrapperRectAt(rect: IRectangle, rotation: number, orig
  * => [tl, tr, br, bl]
  */
 export function getRectWithRotationFromRectPolygon(rectPolygon: IVec2[]): [rect: IRectangle, rotation: number] {
-  const r = getRadian(rectPolygon[1], rectPolygon[0]);
+  const r = getRectPathRotation(rectPolygon);
   if (r === 0) {
     return [
       {
