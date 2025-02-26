@@ -18,12 +18,12 @@ describe("newLineBounding", () => {
 
       expect(target.hitTest({ x: 0, y: 30 })).toEqual({
         type: "move-anchor",
-        index: 0,
+        index: -1,
       });
 
       expect(target.hitTest({ x: 0, y: -30 })).toEqual({
         type: "rotate-anchor",
-        index: 0,
+        index: -1,
       });
 
       expect(target.hitTest({ x: -1, y: 0 })).toEqual({
@@ -132,7 +132,7 @@ describe("newLineBounding", () => {
 
         expect(target.hitTest({ x: 0, y: -20 })).toEqual({
           type: "optimize",
-          index: 0,
+          index: -1,
         });
         expect(target.hitTest({ x: 100, y: 20 })).toEqual({
           type: "optimize",

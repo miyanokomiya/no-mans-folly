@@ -183,7 +183,7 @@ export function newLineBounding(option: Option) {
       const moveAnchor = getMoveAnchor(scale);
       const testFn = newCircleHitTest(moveAnchor, boundsAnchorSize);
       if (testFn.test(p)) {
-        return { type: "move-anchor", index: 0 };
+        return { type: "move-anchor", index: -1 };
       }
     }
 
@@ -191,7 +191,7 @@ export function newLineBounding(option: Option) {
       const moveAnchor = getRotateAnchor(scale);
       const testFn = newCircleHitTest(moveAnchor, boundsAnchorSize);
       if (testFn.test(p)) {
-        return { type: "rotate-anchor", index: 0 };
+        return { type: "rotate-anchor", index: -1 };
       }
     }
 
@@ -200,7 +200,7 @@ export function newLineBounding(option: Option) {
       if (optimizeAnchorP) {
         const testFn = newCircleHitTest(optimizeAnchorP, vertexSize * ADD_VERTEX_ANCHOR_RATE);
         if (testFn.test(p)) {
-          return { type: "optimize", index: 0 };
+          return { type: "optimize", index: -1 };
         }
       }
     }

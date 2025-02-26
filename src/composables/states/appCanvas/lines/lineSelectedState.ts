@@ -38,6 +38,7 @@ import { newBoundingBox } from "../../../boundingBox";
 import { patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/line";
 import { getSegments } from "../../../../utils/geometry";
 import { getDistanceSq } from "okageo";
+import { ContextMenuItem } from "../../types";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -162,8 +163,8 @@ export const newLineSelectedState = defineIntransientState(() => {
               return () => newPointerDownEmptyState(event.data.options);
             case 2: {
               const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
-              // Prioritize the context menu for a vertex
-              if (hitResult?.type === "vertex") return;
+              lineBounding.saveHitResult(hitResult);
+              if (hitResult) return;
 
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,
@@ -207,57 +208,45 @@ export const newLineSelectedState = defineIntransientState(() => {
           }
         case "contextmenu": {
           const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
+          const items: ContextMenuItem[] = [];
           if (hitResult?.type === "vertex") {
             const connection = getConnection(lineShape, hitResult.index);
-            ctx.setContextMenuList({
-              items: [
-                {
-                  ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
-                  meta: { index: hitResult.index } as VertexMetaForContextMenu,
-                },
-                ...(connection
-                  ? [
-                      {
-                        ...CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX,
-                        meta: { index: hitResult.index } as VertexMetaForContextMenu,
-                      },
-                    ]
-                  : []),
-                {
-                  ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX,
-                  meta: { index: hitResult.index } as VertexMetaForContextMenu,
-                },
-                CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                ...getMenuItemsForSelectedShapes(ctx),
-              ],
-              point: event.data.point,
+            items.push({
+              ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
+              meta: { index: hitResult.index } as VertexMetaForContextMenu,
             });
-            return;
-          } else if (hitResult?.type === "segment" || hitResult?.type === "arc-anchor") {
-            if (lineShape.lineType !== "elbow") {
-              const seg = getSegments(getLinePath(lineShape))[hitResult.index];
+            if (connection) {
+              items.push({
+                ...CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX,
+                meta: { index: hitResult.index } as VertexMetaForContextMenu,
+              });
+            }
+            items.push(
+              {
+                ...CONTEXT_MENU_ITEM_SRC.DELETE_LINE_VERTEX,
+                meta: { index: hitResult.index } as VertexMetaForContextMenu,
+              },
+              CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+            );
+          } else if (hitResult) {
+            const segs = getSegments(getLinePath(lineShape));
+            if (0 <= hitResult.index && hitResult.index < segs.length) {
+              const seg = segs[hitResult.index];
               const originIndex =
                 getDistanceSq(seg[0], event.data.point) <= getDistanceSq(seg[1], event.data.point) ? 1 : 0;
-              ctx.setContextMenuList({
-                items: [
-                  {
-                    ...CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT,
-                    meta: { index: hitResult.index, originIndex } as SegmentMetaForContextMenu,
-                  },
-                  CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
-                  CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
-                  CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
-                  CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                  ...getMenuItemsForSelectedShapes(ctx),
-                ],
-                point: event.data.point,
-              });
-              return;
+              items.push(
+                {
+                  ...CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT,
+                  meta: { index: hitResult.index, originIndex } as SegmentMetaForContextMenu,
+                },
+                CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+              );
             }
           }
 
           ctx.setContextMenuList({
             items: [
+              ...items,
               CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
