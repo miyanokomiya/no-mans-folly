@@ -1,7 +1,7 @@
 import { add, getDistance, getOuterRectangle, getRadian, multi, rotate } from "okageo";
 import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
 import { getSegments } from "../../../../utils/geometry";
-import { renderOverlay } from "../../../../utils/renderer";
+import { applyPath, renderOutlinedCircle, renderOverlay } from "../../../../utils/renderer";
 import {
   getSegmentOriginRadian,
   getTargetSegment,
@@ -14,6 +14,7 @@ import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { isObjectEmpty } from "../../../../utils/commons";
 import { ShapeComposite } from "../../../shapeComposite";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 interface Option {
   lineShape: LineShape;
@@ -32,6 +33,16 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     const style = ctx.getStyleScheme();
     const scale = ctx.getScale();
     renderOverlay(renderCtx, ctx.getViewRect());
+    const shapeComposite = ctx.getShapeComposite();
+    const latestLineShape = shapeComposite.mergedShapeMap[lineShape.id] as LineShape;
+    const vertices = getLinePath(latestLineShape);
+    applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, dash: "short", width: 2 * scale });
+    renderCtx.beginPath();
+    applyPath(renderCtx, vertices);
+    renderCtx.stroke();
+    vertices.forEach((v) => {
+      renderOutlinedCircle(renderCtx, v, 4 * scale, style.selectionSecondaly);
+    });
     lineSegmentEditingHandler.render(renderCtx, style, scale);
   };
 

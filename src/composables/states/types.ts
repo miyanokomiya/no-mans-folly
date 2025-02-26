@@ -23,6 +23,7 @@ export type ContextMenuItem = ContextMenuActionItem | ContextMenuSeparatorItem;
 export type ContextMenuActionItem = {
   label: string;
   key: string;
+  icon?: string;
   meta?: any;
   children?: ContextMenuItem[];
 };

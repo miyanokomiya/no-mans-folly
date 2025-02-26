@@ -88,7 +88,14 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, viewSize, dropdownKey, 
   if (!item.children || item.children.length === 0)
     return (
       <ListButton onClick={handleClick}>
-        <AppText portal={true}>{item.label}</AppText>
+        {item.icon ? (
+          <div className="flex items-center gap-1">
+            <img src={item.icon} alt="" className="w-6 h-6" />
+            <AppText portal={true}>{item.label}</AppText>
+          </div>
+        ) : (
+          <AppText portal={true}>{item.label}</AppText>
+        )}
       </ListButton>
     );
 

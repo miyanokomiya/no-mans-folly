@@ -16,12 +16,15 @@ import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { i18n } from "../../../i18n";
 import { saveFileInWeb, getExportParamsForSelectedShapes, getExportParamsForSelectedRange } from "../../shapeExport";
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
+import iconRefinement from "../../../assets/icons/refinement.svg";
+import iconDustbinRed from "../../../assets/icons/dustbin_red.svg";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
     return {
       label: i18n.t("contextmenu.delete"),
       key: "DELETE_SHAPE",
+      icon: iconDustbinRed,
     };
   },
   get DUPLICATE_SHAPE() {
@@ -140,10 +143,11 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "ATTACH_LINE_VERTICES",
     };
   },
-  get SEGMENT_LENGTH() {
+  get REFINE_SEGMENT() {
     return {
-      label: i18n.t("contextmenu.segment.length"),
-      key: "SEGMENT_LENGTH",
+      label: i18n.t("contextmenu.segment.refine"),
+      key: "REFINE_SEGMENT",
+      icon: iconRefinement,
     };
   },
 

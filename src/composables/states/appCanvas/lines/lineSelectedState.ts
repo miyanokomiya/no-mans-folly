@@ -241,7 +241,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               ctx.setContextMenuList({
                 items: [
                   {
-                    ...CONTEXT_MENU_ITEM_SRC.SEGMENT_LENGTH,
+                    ...CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT,
                     meta: { index: hitResult.index, originIndex } as SegmentMetaForContextMenu,
                   },
                   CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
@@ -291,7 +291,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                   index: (event.data.meta as VertexMetaForContextMenu).index,
                 });
             }
-            case CONTEXT_MENU_ITEM_SRC.SEGMENT_LENGTH.key: {
+            case CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT.key: {
               const meta = event.data.meta as SegmentMetaForContextMenu;
               return () =>
                 ctx.states.newLineSegmentEditingState({
