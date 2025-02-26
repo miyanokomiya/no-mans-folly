@@ -87,61 +87,59 @@ export const FloatMenuSmartBranch: React.FC = () => {
   );
 
   return (
-    <div className="flex gap-1.5 items-center py-1">
-      <div>
-        <div className="mb-1 flex items-center justify-between">
-          <h3 className="mb-1">Smart branch settings</h3>
-          <button
-            type="button"
-            className={"px-2 py-1 border rounded-sm" + (userSetting.smartBranchLine ? "" : " invisible")}
-            onClick={handleReset}
-          >
-            Reset
-          </button>
-        </div>
-        <div className="flex gap-1 items-center">
-          <PopupButton
-            name="fill"
-            opened={popupKey === "fill"}
-            popup={<FillPanel fill={indexLineShape.fill} onChanged={onFillChanged} />}
-            onClick={onClickPopupButton}
-            defaultDirection={popupButtonCommonProps.defaultDirection}
-          >
+    <div className="p-1">
+      <div className="mb-1 flex items-center justify-between">
+        <h3 className="mb-1">Smart branch settings</h3>
+        <button
+          type="button"
+          className={"px-2 py-1 border rounded-sm" + (userSetting.smartBranchLine ? "" : " invisible")}
+          onClick={handleReset}
+        >
+          Reset
+        </button>
+      </div>
+      <div className="flex gap-1 items-center">
+        <PopupButton
+          name="fill"
+          opened={popupKey === "fill"}
+          popup={<FillPanel fill={indexLineShape.fill} onChanged={onFillChanged} />}
+          onClick={onClickPopupButton}
+          defaultDirection={popupButtonCommonProps.defaultDirection}
+        >
+          <div
+            className="w-8 h-8 border-2 rounded-full"
+            style={{ backgroundColor: rednerRGBA(indexLineShape.fill.color) }}
+          ></div>
+        </PopupButton>
+        <PopupButton
+          name="stroke"
+          opened={popupKey === "stroke"}
+          popup={<StrokePanel stroke={indexLineShape.stroke} onChanged={onStrokeChanged} />}
+          onClick={onClickPopupButton}
+          defaultDirection={popupButtonCommonProps.defaultDirection}
+        >
+          <div className="w-8 h-8 flex justify-center items-center">
             <div
-              className="w-8 h-8 border-2 rounded-full"
-              style={{ backgroundColor: rednerRGBA(indexLineShape.fill.color) }}
+              className="w-1.5 h-9 border rounded-xs rotate-45"
+              style={{ backgroundColor: rednerRGBA(indexLineShape.stroke.color) }}
             ></div>
-          </PopupButton>
-          <PopupButton
-            name="stroke"
-            opened={popupKey === "stroke"}
-            popup={<StrokePanel stroke={indexLineShape.stroke} onChanged={onStrokeChanged} />}
-            onClick={onClickPopupButton}
-            defaultDirection={popupButtonCommonProps.defaultDirection}
-          >
-            <div className="w-8 h-8 flex justify-center items-center">
-              <div
-                className="w-1.5 h-9 border rounded-xs rotate-45"
-                style={{ backgroundColor: rednerRGBA(indexLineShape.stroke.color) }}
-              ></div>
-            </div>
-          </PopupButton>
-          <div className="h-8 mx-0.5 border"></div>
-          <LineTypeButton
-            {...popupButtonCommonProps}
-            currentType={indexLineShape.lineType}
-            currentCurve={indexLineShape.curveType}
-            onChange={onLineTypeChanged}
-            jump={indexLineShape.jump}
-            onJumpChange={onLineJumpChanged}
-          />
-          <LineHeadItems
-            {...popupButtonCommonProps}
-            lineShape={indexLineShape}
-            onChange={onLineHeadChanged}
-            highlighShape={highlighShape}
-          />
-        </div>
+          </div>
+        </PopupButton>
+        <div className="h-8 mx-0.5 border"></div>
+        <LineTypeButton
+          {...popupButtonCommonProps}
+          currentType={indexLineShape.lineType}
+          currentCurve={indexLineShape.curveType}
+          onChange={onLineTypeChanged}
+          jump={indexLineShape.jump}
+          onJumpChange={onLineJumpChanged}
+        />
+        <LineHeadItems
+          {...popupButtonCommonProps}
+          lineShape={indexLineShape}
+          onChange={onLineHeadChanged}
+          highlighShape={highlighShape}
+        />
       </div>
     </div>
   );

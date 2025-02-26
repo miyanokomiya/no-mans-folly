@@ -74,7 +74,7 @@ export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex, o
   }, [handleEvent]);
 
   return (
-    <div className="py-1">
+    <div className="p-1">
       <div className="mb-1 flex items-center gap-6 justify-between">
         <h3 className="mb-1">Line segment</h3>
         <button

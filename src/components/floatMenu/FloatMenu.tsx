@@ -117,14 +117,16 @@ export const FloatMenu: React.FC<Option> = ({
 
   return adjustedTargetRect ? (
     <div ref={rootRef} {...rootAttrs}>
-      <div className="flex gap-1 items-center">
+      <div className="absolute top-0 -left-[20px] bg-white px-1 h-9 rounded-l">
         <ClickOrDragHandler
           onClick={handleMenuAnchorClick}
           onDragStart={handleMenuAnchorDrag}
           className="self-stretch my-1"
         >
-          <div className={"w-3 h-full border rounded-xs touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
+          <div className={"w-3 h-7 border rounded-xs touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
         </ClickOrDragHandler>
+      </div>
+      <div>
         {type === "smart-branch" ? (
           <FloatMenuSmartBranch />
         ) : type === "line-segment" ? (
@@ -144,7 +146,7 @@ export const FloatMenu: React.FC<Option> = ({
 };
 
 const TOP_LOCATED_KEY = "top-located";
-const rootBaseClassName = "fixed border rounded-xs shadow-xs w-max h-max bg-white px-1 top-0 left-0";
+const rootBaseClassName = "fixed border rounded-xs rounded-tl-none shadow-xs w-max h-max bg-white top-0 left-0";
 
 function getRootAttrs(
   targetRect: IRectangle,
@@ -163,8 +165,9 @@ function getRootAttrs(
     y: toBottom ? targetRect.y + targetRect.height + yMargin : topY,
   };
 
+  const minX = 16;
   const dx = Math.min(windowWidth - (p.x + rootWidth / 2), 0);
-  const tx = p.x - rootWidth / 2 < 0 ? "0" : `calc(${p.x + dx}px - 50%)`;
+  const tx = p.x - rootWidth / 2 < minX ? `${minX}px` : `calc(${p.x + dx}px - 50%)`;
   const dy = Math.min(windowHeight - (p.y + rootHeight), 0);
   const ty = p.y < 0 ? "0" : `calc(${p.y + dy}px)`;
   return {
