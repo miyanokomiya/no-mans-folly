@@ -13,6 +13,7 @@ import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { isObjectEmpty } from "../../../../utils/commons";
 import { ShapeComposite } from "../../../shapeComposite";
+import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   lineShape: LineShape;
@@ -131,16 +132,20 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
             return;
           }
 
+          const shapeComposite = ctx.getShapeComposite();
           const linePatch = patchLine(
-            ctx.getShapeComposite(),
+            shapeComposite,
             lineShape.id,
             option.index,
             originIndex,
             event.data.size,
             event.data.radian,
           );
-          ctx.setTmpShapeMap(linePatch ? { [lineShape.id]: linePatch } : {});
-          setupHandler(ctx, linePatch);
+          const patch = linePatch
+            ? getPatchAfterLayouts(shapeComposite, { update: { [lineShape.id]: linePatch } })
+            : {};
+          ctx.setTmpShapeMap(patch);
+          setupHandler(ctx, patch[lineShape.id]);
           return;
         }
         case "history": {
