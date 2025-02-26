@@ -9,6 +9,11 @@ import { SVGElementInfo } from "../utils/svgElements";
 import { ISegment } from "../utils/geometry";
 import { CanvasCTX } from "../utils/types";
 
+/**
+ * Use this value as standard threshold for segment-hit test.
+ */
+export const THRESHOLD_FOR_SEGMENT = 6;
+
 export type GetShapeStruct = (type: string) => ShapeStruct<any>;
 
 export type LineJumpMap = Map<string, ISegment[][]>;

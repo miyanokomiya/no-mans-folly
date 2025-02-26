@@ -28,7 +28,14 @@ import {
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
-import { ShapeContext, ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "./core";
+import {
+  ShapeContext,
+  ShapeStruct,
+  THRESHOLD_FOR_SEGMENT,
+  createBaseShape,
+  getCommonStyle,
+  updateCommonStyle,
+} from "./core";
 import {
   clipLineHead,
   createLineHeadSVGClipPathCommand,
@@ -307,8 +314,7 @@ export const struct: ShapeStruct<LineShape> = {
     }
 
     const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
-    if (isPointCloseToCurveSpline(curvePath.path, curvePath.curves, p, Math.max(shape.stroke.width ?? 1, 4 * scale)))
-      return true;
+    if (isPointCloseToCurveSpline(curvePath.path, curvePath.curves, p, THRESHOLD_FOR_SEGMENT * scale)) return true;
     if (!shapeContext) return false;
 
     const treeNode = shapeContext.treeNodeMap[shape.id];
