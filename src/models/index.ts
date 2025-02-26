@@ -161,6 +161,7 @@ export interface UserSetting {
   smartBranchLine?: Partial<Shape>;
   smartBranchChildMargin?: number; // should 100 when it's undefined
   smartBranchSiblingMargin?: number; // should 25 when it's undefined
+  lineSegmentRelativeAngle?: "on" | "off"; // should "off" when it's undefined
 }
 
 /**

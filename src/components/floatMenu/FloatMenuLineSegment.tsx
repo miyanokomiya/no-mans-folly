@@ -4,27 +4,34 @@ import { AppStateMachineContext } from "../../contexts/AppContext";
 import { useShapeComposite } from "../../hooks/storeHooks";
 import { getLinePath, LineShape } from "../../shapes/line";
 import { getDistance, getRadian } from "okageo";
-import { getSegments, normalizeRadian } from "../../utils/geometry";
+import { normalizeRadian } from "../../utils/geometry";
 import { InlineField } from "../atoms/InlineField";
+import { BlockGroupField } from "../atoms/BlockGroupField";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
+import { getSegmentOriginRadian, getTargetSegment } from "../../composables/shapeHandlers/lineSegmentEditingHandler";
 
 interface Props {
   shapeId: string;
   segmentIndex: number;
+  originIndex: 0 | 1;
+  relativeAngle?: boolean;
 }
 
-export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex }) => {
+export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex, originIndex, relativeAngle }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const shapeComposite = useShapeComposite();
 
   const lineShapeSrc = shapeComposite.shapeMap[shapeId] as LineShape;
-  const segmentSrc = getSegments(getLinePath(lineShapeSrc))[segmentIndex];
+  const segmentSrc = getTargetSegment(getLinePath(lineShapeSrc), segmentIndex, originIndex);
   const sizeSrc = getDistance(segmentSrc[0], segmentSrc[1]);
   const radianSrc = getRadian(segmentSrc[1], segmentSrc[0]);
 
   const lineShapeLatest = shapeComposite.mergedShapeMap[shapeId] as LineShape;
-  const segmentLatest = getSegments(getLinePath(lineShapeLatest))[segmentIndex];
+  const verticesLatest = getLinePath(lineShapeLatest);
+  const segmentLatest = getTargetSegment(verticesLatest, segmentIndex, originIndex);
   const sizeLatest = getDistance(segmentLatest[0], segmentLatest[1]);
   const radianLatest = getRadian(segmentLatest[1], segmentLatest[0]);
+  const originRadianLatest = getSegmentOriginRadian(verticesLatest, segmentIndex, originIndex, relativeAngle);
 
   const changed = sizeSrc !== sizeLatest || radianSrc !== radianLatest;
 
@@ -40,9 +47,20 @@ export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex })
 
   const handleAngleChange = useCallback(
     (val: number) => {
+      const radian = (val * Math.PI) / 180 + originRadianLatest;
       handleEvent({
         type: "line-segment-change",
-        data: { radian: (val * Math.PI) / 180 },
+        data: { radian },
+      });
+    },
+    [handleEvent, originRadianLatest],
+  );
+
+  const handleRelativeOriginChange = useCallback(
+    (val: boolean) => {
+      handleEvent({
+        type: "line-segment-change",
+        data: { relativeAngle: val },
       });
     },
     [handleEvent],
@@ -51,9 +69,9 @@ export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex })
   const handleReset = useCallback(() => {
     handleEvent({
       type: "line-segment-change",
-      data: { size: sizeSrc, radian: radianSrc },
+      data: { reset: true },
     });
-  }, [handleEvent, sizeSrc, radianSrc]);
+  }, [handleEvent]);
 
   return (
     <div className="py-1">
@@ -67,21 +85,28 @@ export const FloatMenuLineSegment: React.FC<Props> = ({ shapeId, segmentIndex })
           Reset
         </button>
       </div>
-      <InlineField label="Length">
-        <div className="w-20">
-          <NumberInput value={sizeLatest} onChange={handleLengthChange} min={0} slider keepFocus />
-        </div>
-      </InlineField>
-      <InlineField label="Angle">
-        <div className="w-20">
-          <NumberInput
-            value={(normalizeRadian(radianLatest) * 180) / Math.PI}
-            onChange={handleAngleChange}
-            slider
-            keepFocus
-          />
-        </div>
-      </InlineField>
+      <div className="flex flex-col gap-1">
+        <InlineField label="Length">
+          <div className="w-20">
+            <NumberInput value={sizeLatest} onChange={handleLengthChange} min={0} slider keepFocus />
+          </div>
+        </InlineField>
+        <BlockGroupField label="Angle">
+          <InlineField label="Degree">
+            <div className="w-20">
+              <NumberInput
+                value={(normalizeRadian(radianLatest - originRadianLatest) * 180) / Math.PI}
+                onChange={handleAngleChange}
+                slider
+                keepFocus
+              />
+            </div>
+          </InlineField>
+          <InlineField label="Relative">
+            <ToggleInput value={relativeAngle} onChange={handleRelativeOriginChange} />
+          </InlineField>
+        </BlockGroupField>
+      </div>
     </div>
   );
 };

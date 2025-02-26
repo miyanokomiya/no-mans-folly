@@ -1,8 +1,8 @@
-import { ISegment, normalizeRadian, snapNumberCeil } from "../../utils/geometry";
+import { getSegments, ISegment, normalizeRadian, snapNumberCeil } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyPath, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { add, getDistance, getRadian, multi, rotate } from "okageo";
+import { add, getDistance, getRadian, IVec2, multi, rotate } from "okageo";
 
 const ANCHOR_THRESHOLD = 6;
 
@@ -122,3 +122,23 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
   };
 });
 export type LineSegmentEditingHandler = ReturnType<typeof newLineSegmentEditingHandler>;
+
+export function getSegmentOriginRadian(
+  vertices: IVec2[],
+  index: number,
+  originIndex: 0 | 1,
+  relativeAngle = false,
+): number {
+  if (!relativeAngle) return 0;
+
+  const segment = getTargetSegment(vertices, index, originIndex);
+  const relativeOrigin = vertices.at(index + (originIndex === 1 ? 1 : -1));
+  if (!relativeOrigin) return 0;
+
+  return getRadian(relativeOrigin, segment[0]);
+}
+
+export function getTargetSegment(vertices: IVec2[], index: number, originIndex: 0 | 1): ISegment {
+  const segmentSrc = getSegments(vertices)[index];
+  return originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
+}

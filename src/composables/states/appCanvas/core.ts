@@ -166,9 +166,11 @@ export type HighlightLineBezierMeta = {
 
 export interface LineSegmentChangeEvent extends ModeStateEventBase {
   type: "line-segment-change";
-  data: {
-    size?: number;
-    radian?: number;
-    relativeRadian?: boolean;
-  };
+  data:
+    | {
+        size?: number;
+        radian?: number;
+      }
+    | { relativeAngle: boolean }
+    | { reset: boolean };
 }
