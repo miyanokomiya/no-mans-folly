@@ -21,6 +21,7 @@ import {
   ISegment,
   TAU,
   getCrossLineAndLine,
+  getRectPathRotation,
   getRotateFn,
   isPointCloseToSegment,
   snapRadianByAngle,
@@ -68,7 +69,7 @@ export type BoundingBox = ShapeHandler<HitResult> & {
 
 export function newBoundingBox(option: Option): BoundingBox {
   const [tl, tr, br, bl] = option.path;
-  const rotation = getRadian(tr, tl);
+  const rotation = getRectPathRotation(option.path);
   const center = getCenter(tl, br);
   const segments = [
     [tl, tr],
@@ -264,7 +265,7 @@ export function newBoundingBox(option: Option): BoundingBox {
 
     if (showLabel) {
       const c = getCenter(rotatedPath[0], rotatedPath[2]);
-      const r = getRadian(rotatedPath[1], rotatedPath[0]);
+      const r = getRectPathRotation(rotatedPath);
       renderValueLabel(ctx, `${Math.round((r * 180) / Math.PI)}°`, c, 0, scale, true);
     }
   }

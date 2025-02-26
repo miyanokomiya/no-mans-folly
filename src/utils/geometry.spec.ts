@@ -86,6 +86,7 @@ import {
   getClosestLineToRectFeaturePoints,
   getEllipseSlopeAt,
   getViewportForRectWithinSize,
+  getRectPathRotation,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2065,5 +2066,43 @@ describe("getViewportForRectWithinSize", () => {
     const ret2 = getViewportForRectWithinSize(targetRect, { width: 200, height: 300 });
     expect(ret2.p).toEqualPoint({ x: 0, y: -25 });
     expect(ret2.scale).toBeCloseTo(0.5);
+  });
+});
+
+describe("getRectPathRotation", () => {
+  test("should return rotation of the rectangle path", () => {
+    expect(
+      getRectPathRotation([
+        { x: 0, y: 0 },
+        { x: 0, y: 10 },
+        { x: -10, y: 10 },
+      ]),
+    ).toBeCloseTo(0);
+    expect(
+      getRectPathRotation([
+        { x: 0, y: 0 },
+        { x: 0, y: 10 },
+        { x: -10, y: 10 },
+        { x: -10, y: 0 },
+      ]),
+    ).toBeCloseTo(Math.PI / 2);
+    expect(
+      getRectPathRotation([
+        { x: 0, y: 0 },
+        { x: 0, y: 0 },
+        { x: -10, y: 10 },
+        { x: -10, y: 10 },
+      ]),
+      "zero height",
+    ).toBeCloseTo(Math.PI / 4);
+    expect(
+      getRectPathRotation([
+        { x: 0, y: 0 },
+        { x: 10, y: 10 },
+        { x: 10, y: 10 },
+        { x: 0, y: 0 },
+      ]),
+      "zero width",
+    ).toBeCloseTo(Math.PI / 4);
   });
 });

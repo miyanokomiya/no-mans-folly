@@ -1427,3 +1427,9 @@ export function getViewportForRectWithinSize(
     scale,
   };
 }
+
+export function getRectPathRotation(rectPath: IVec2[]): number {
+  if (rectPath.length < 4) return 0;
+  const [tl, tr, , bl] = rectPath;
+  return isSame(tr, tl) ? getRadian(bl, tl) - Math.PI / 2 : getRadian(tr, tl);
+}

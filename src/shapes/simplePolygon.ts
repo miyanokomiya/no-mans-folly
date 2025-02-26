@@ -29,6 +29,7 @@ import {
   getGlobalAffine,
   getMarkersOnPolygon,
   getPointLerpSlope,
+  getRectPathRotation,
   getRectPoints,
   getRotateFn,
   getRotatedRectAffine,
@@ -170,7 +171,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const width = getDistance(localRectPolygon[0], localRectPolygon[1]);
       const height = getDistance(localRectPolygon[0], localRectPolygon[3]);
       const p = { x: center.x - width / 2, y: center.y - height / 2 };
-      const rotation = getRadian(localRectPolygon[1], localRectPolygon[0]);
+      const rotation = getRectPathRotation(localRectPolygon);
 
       const ret: Partial<T> = {};
       if (!isSame(p, shape.p)) ret.p = p;

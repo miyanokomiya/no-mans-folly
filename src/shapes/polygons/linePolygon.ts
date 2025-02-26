@@ -1,4 +1,4 @@
-import { ShapeStruct, createBaseShape } from "../core";
+import { ShapeStruct, THRESHOLD_FOR_SEGMENT, createBaseShape } from "../core";
 import { SimplePath, SimplePolygonShape, getStructForSimplePolygon } from "../simplePolygon";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
@@ -6,7 +6,8 @@ import { LineBodyItem, LineShape } from "../line";
 import { Shape } from "../../models";
 import { AffineMatrix, applyAffine } from "okageo";
 import { transformBezierCurveControl } from "../../utils/path";
-import { isSizeChanged } from "../rectPolygon";
+import { getShapeDetransform, isSizeChanged } from "../rectPolygon";
+import { isPointCloseToCurveSpline } from "../../utils/geometry";
 
 export type LinePolygonShape = SimplePolygonShape & {
   path: SimplePath;
@@ -32,16 +33,25 @@ export const struct: ShapeStruct<LinePolygonShape> = {
       srcLine: arg.srcLine ?? { vertices: [] },
     };
   },
+  isPointOn(shape, p, shapeContext, scale = 1) {
+    if (isStraightSegment(shape.path)) {
+      const detransform = getShapeDetransform(shape);
+      const localP = applyAffine(detransform, p);
+      if (isPointCloseToCurveSpline(shape.path.path, shape.path.curves, localP, THRESHOLD_FOR_SEGMENT * scale))
+        return true;
+    }
+    return baseStruct.isPointOn(shape, p, shapeContext, scale);
+  },
   resize(shape, resizingAffine) {
     const patch = baseStruct.resize(shape, resizingAffine);
     if (!isSizeChanged(shape, patch)) return patch;
 
     const ret: Partial<LinePolygonShape> = { ...patch };
     const affine: AffineMatrix = [
-      (ret.width ?? shape.width) / shape.width,
+      shape.width === 0 ? 1 : (ret.width ?? shape.width) / shape.width,
       0,
       0,
-      (ret.height ?? shape.height) / shape.height,
+      shape.height === 0 ? 1 : (ret.height ?? shape.height) / shape.height,
       0,
       0,
     ];
@@ -68,4 +78,8 @@ function getPath(shape: LinePolygonShape): SimplePath {
 
 export function isLinePolygonShape(shape: Shape): shape is LinePolygonShape {
   return shape.type === "line_polygon";
+}
+
+function isStraightSegment(path: SimplePath): boolean {
+  return path.path.length === 2 && !path.curves?.at(0);
 }
