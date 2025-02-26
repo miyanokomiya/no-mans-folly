@@ -233,8 +233,8 @@ export const newLineSelectedState = defineIntransientState(() => {
               point: event.data.point,
             });
             return;
-          } else if (hitResult?.type === "segment") {
-            if (lineShape.lineType !== "elbow" && !lineShape.curves?.[hitResult.index]) {
+          } else if (hitResult?.type === "segment" || hitResult?.type === "arc-anchor") {
+            if (lineShape.lineType !== "elbow") {
               const seg = getSegments(getLinePath(lineShape))[hitResult.index];
               const originIndex =
                 getDistanceSq(seg[0], event.data.point) <= getDistanceSq(seg[1], event.data.point) ? 1 : 0;
