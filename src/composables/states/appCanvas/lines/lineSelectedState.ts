@@ -55,6 +55,7 @@ export const newLineSelectedState = defineIntransientState(() => {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
       lineBounding = newLineBounding({ lineShape, styleScheme: ctx.getStyleScheme() });
+      lineBounding.saveHitResult(lineBounding.hitTest(ctx.getCursorPoint(), ctx.getScale()));
       ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams(ctx)]);
     },
     onEnd: (ctx) => {
