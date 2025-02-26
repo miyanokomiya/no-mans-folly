@@ -5,6 +5,7 @@ import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { add, getDistance, getRadian, IVec2, multi, rotate } from "okageo";
 
 const ANCHOR_THRESHOLD = 6;
+const SCALE_SIZES = [10, 20, 30];
 
 interface HitResult {
   type: "switch-origin";
@@ -37,11 +38,12 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
       ctx.stroke();
 
       const protractorRate = 0.5;
+      const scaleSizes = SCALE_SIZES.map((v) => v * scale);
       {
         const normalV = rotate({ x: 1, y: 0 }, radian + Math.PI / 2);
-        const long = multi(normalV, 30 * scale);
-        const middle = multi(normalV, 21 * scale);
-        const short = multi(normalV, 15 * scale);
+        const long = multi(normalV, scaleSizes[2]);
+        const middle = multi(normalV, scaleSizes[1]);
+        const short = multi(normalV, scaleSizes[0]);
         const step = scale < 0.1 ? 1 : scale < 4 ? 10 : 100;
         const longStep = 10;
         const stepV = rotate({ x: 1, y: 0 }, radian);
@@ -87,7 +89,7 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
           const a = base + i * step;
           const r = (a * Math.PI) / 180;
           const v = rotate({ x: 1, y: 0 }, r + option.originRadian);
-          const l = (a % 45 === 0 ? 30 : a % 15 === 0 ? 21 : 15) * scale;
+          const l = a % 45 === 0 ? scaleSizes[2] : a % 15 === 0 ? scaleSizes[1] : scaleSizes[0];
           const p = add(origin, multi(v, radius));
           return [[p, add(p, multi(v, l))], a];
         });
@@ -132,13 +134,17 @@ export function getSegmentOriginRadian(
   if (!relativeAngle) return 0;
 
   const segment = getTargetSegment(vertices, index, originIndex);
-  const relativeOrigin = vertices.at(index + (originIndex === 1 ? 1 : -1));
+  const relativeOrigin = getSegmentPreviousPoint(vertices, index, originIndex);
   if (!relativeOrigin) return 0;
 
   return getRadian(relativeOrigin, segment[0]);
 }
 
+function getSegmentPreviousPoint(vertices: IVec2[], index: number, originIndex: 0 | 1): IVec2 | undefined {
+  return vertices.at(Math.max(0, index + (originIndex === 1 ? 2 : -1)));
+}
+
 export function getTargetSegment(vertices: IVec2[], index: number, originIndex: 0 | 1): ISegment {
   const segmentSrc = getSegments(vertices)[index];
-  return originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : [segmentSrc[0], segmentSrc[1]];
+  return originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : segmentSrc;
 }
