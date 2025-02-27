@@ -37,6 +37,26 @@ describe("newBoundingBox", () => {
       });
       expect(target1.hitTest({ x: -18, y: -18 }, 1)).toEqual({ type: "move", index: 0 });
     });
+
+    test("should return hit information for zero width bounds", () => {
+      const target = newBoundingBox({
+        path: getRectPoints({ x: 0, y: 0, width: 0, height: 100 }),
+      });
+      expect(target.hitTest({ x: -10, y: 0 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 0, y: 0 }, 1)).toEqual({ type: "segment", index: 0 });
+      expect(target.hitTest({ x: 0, y: 50 }, 1)).toEqual({ type: "area", index: 0 });
+      expect(target.hitTest({ x: 0, y: 100 }, 1)).toEqual({ type: "segment", index: 2 });
+    });
+
+    test("should return hit information for zero height bounds", () => {
+      const target = newBoundingBox({
+        path: getRectPoints({ x: 0, y: 0, width: 100, height: 0 }),
+      });
+      expect(target.hitTest({ x: -10, y: 0 }, 1)).toEqual(undefined);
+      expect(target.hitTest({ x: 0, y: 0 }, 1)).toEqual({ type: "segment", index: 3 });
+      expect(target.hitTest({ x: 50, y: 0 }, 1)).toEqual({ type: "area", index: 0 });
+      expect(target.hitTest({ x: 100, y: 0 }, 1)).toEqual({ type: "segment", index: 1 });
+    });
   });
 
   describe("getResizingBase", () => {

@@ -9,6 +9,7 @@ import {
   getPedal,
   getRadian,
   isOnPolygon,
+  isSame,
   multi,
   multiAffines,
   rotate,
@@ -78,6 +79,11 @@ export function newBoundingBox(option: Option): BoundingBox {
     [bl, tl],
   ];
 
+  // When either size is zero, the target needs to be treated like a line.
+  // => Only none zero size can be resized.
+  const zeroW = isSame(tl, tr);
+  const zeroH = isSame(tl, bl);
+
   const getHandler = defineShapeHandler<HitResult, Option>((option) => {
     function getAnchors(scale = 1): IVec2[][] {
       const scaledAnchorSize = ANCHOR_SIZE * scale;
@@ -140,6 +146,20 @@ export function newBoundingBox(option: Option): BoundingBox {
       }
 
       const anchors = getAnchors(scale);
+
+      if (zeroW) {
+        if (isOnPolygon(p, anchors[1])) return { type: "segment", index: 0 };
+        if (isOnPolygon(p, anchors[3])) return { type: "segment", index: 2 };
+        if (isPointCloseToSegment(segments[1], p, scaledAnchorSize)) return { type: "area", index: 0 };
+        return;
+      }
+      if (zeroH) {
+        if (isOnPolygon(p, anchors[1])) return { type: "segment", index: 1 };
+        if (isOnPolygon(p, anchors[3])) return { type: "segment", index: 3 };
+        if (isPointCloseToSegment(segments[0], p, scaledAnchorSize)) return { type: "area", index: 0 };
+        return;
+      }
+
       const cornerIndex = anchors.findIndex((a) => isOnPolygon(p, a));
       if (cornerIndex > -1) {
         return { type: "corner", index: cornerIndex };
@@ -188,6 +208,18 @@ export function newBoundingBox(option: Option): BoundingBox {
         ctx.stroke();
       });
 
+      if (hitResult?.type === "segment" && (zeroW || zeroH)) {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+        applyFillStyle(ctx, { color: COLORS.WHITE });
+        ctx.lineWidth = 2 * scale;
+        const a = anchors[hitResult.index];
+        ctx.beginPath();
+        applyPath(ctx, a, true);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
       if (rotationAnchor) {
         ctx.beginPath();
         ctx.arc(rotationAnchor.c.x, rotationAnchor.c.y, rotationAnchor.r, 0, TAU);

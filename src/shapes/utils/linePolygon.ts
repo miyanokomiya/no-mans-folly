@@ -142,7 +142,5 @@ export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): SimplePath
 
 export function canMakePolygon(line: LineShape): boolean {
   if (line.lineType === "elbow") return false;
-  if (!!line.body && line.body.length > 0) return true;
-  // When a line has a curved segment, it can consist a polygon.
-  return !!line.curves && !!line.curves[0];
+  return true;
 }
