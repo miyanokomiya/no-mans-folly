@@ -360,6 +360,19 @@ export function newShapeComposite(option: Option) {
     });
   }
 
+  /**
+   * Returns [root parent, ..., direct parent]
+   */
+  function getBranchPathTo(id: string): string[] {
+    const ret: string[] = [];
+    let current = parentRefMap.get(id);
+    while (current) {
+      ret.unshift(current);
+      current = parentRefMap.get(current);
+    }
+    return ret;
+  }
+
   return {
     getShapeStruct: getStruct,
     shapes: srcShapes,
@@ -399,6 +412,7 @@ export function newShapeComposite(option: Option) {
     hasParent,
     attached,
     canAttach,
+    getBranchPathTo,
 
     setDocCompositeCache,
     getDocCompositeCache,
@@ -445,10 +459,16 @@ export function findBetterShapeAt(
 
   // Seek in the parent scope
   const result2 = shapeComposite.findShapeAt(p, { parentId: scope.parentId }, excludeIds, undefined, scale);
-  if (result2) return result2;
+  // Seek with no scope
+  const result3 = shapeComposite.findShapeAt(p, undefined, excludeIds, undefined, scale);
 
-  // Lift the scope
-  return shapeComposite.findShapeAt(p, undefined, excludeIds, undefined, scale);
+  if (result2 && result3) {
+    // Pick result3 when result2 isn't in any branch of it.
+    const result2BranchPath = shapeComposite.getBranchPathTo(result2.id);
+    return result2BranchPath.includes(result3.id) ? result2 : result3;
+  }
+
+  return result2 ?? result3;
 }
 
 /**

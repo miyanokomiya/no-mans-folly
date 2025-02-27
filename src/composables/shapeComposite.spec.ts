@@ -680,6 +680,25 @@ describe("newShapeComposite", () => {
       expect(sub2.shapeMap[child0.id]).toEqual({ ...child0, p: { x: 1, y: 2 } });
     });
   });
+
+  describe("getBranchPathTo", () => {
+    const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: group0.id,
+    });
+    const group10 = { ...group0, id: "group10", parentId: group0.id };
+    const child10 = { ...child0, id: "child10", parentId: group10.id };
+
+    test("should return branch path", () => {
+      const shapes = [group0, child0, group10, child10];
+      const composite = newShapeComposite({ shapes, getStruct: getCommonStruct });
+      expect(composite.getBranchPathTo(group0.id)).toEqual([]);
+      expect(composite.getBranchPathTo(child0.id)).toEqual([group0.id]);
+      expect(composite.getBranchPathTo(group10.id)).toEqual([group0.id]);
+      expect(composite.getBranchPathTo(child10.id)).toEqual([group0.id, group10.id]);
+    });
+  });
 });
 
 describe("findBetterShapeAt", () => {
@@ -726,6 +745,40 @@ describe("findBetterShapeAt", () => {
     expect(findBetterShapeAt(target, { x: 7, y: 17 }, { parentId: group0.id })).toEqual(child1);
     // group scope => when there's no direct child at the point, try to find one among root ones
     expect(findBetterShapeAt(target, { x: 3, y: 3 }, { parentId: group0.id })).toEqual(shape0);
+  });
+
+  test("should find better shape at the point: frame group & frame & shape on the frame", () => {
+    const frameGroup = createShape(getCommonStruct, "frame_align_group", { id: "frameGroup" });
+    const frame = createShape<RectangleShape>(getCommonStruct, "frame", {
+      id: "frame",
+      parentId: frameGroup.id,
+      p: { x: 5, y: 5 },
+      width: 10,
+      height: 10,
+    });
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "shape",
+      parentId: frameGroup.id,
+      p: { x: 10, y: 10 },
+      width: 10,
+      height: 10,
+    });
+
+    const shapes = [frameGroup, frame, shape];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+
+    // no scope => should find any
+    expect(findBetterShapeAt(target, { x: 3, y: 3 })?.id).toBe(frameGroup.id);
+    expect(findBetterShapeAt(target, { x: 7, y: 7 })?.id).toBe(frame.id);
+    expect(findBetterShapeAt(target, { x: 12, y: 12 })?.id).toBe(shape.id);
+
+    // frame group scope => should find any
+    expect(findBetterShapeAt(target, { x: 3, y: 3 }, { parentId: frameGroup.id })?.id).toBe(frameGroup.id);
+    expect(findBetterShapeAt(target, { x: 7, y: 7 }, { parentId: frameGroup.id })?.id).toBe(frame.id);
+    expect(findBetterShapeAt(target, { x: 12, y: 12 }, { parentId: frameGroup.id })?.id).toBe(shape.id);
   });
 
   const board0 = createShape<BoardRootShape>(getCommonStruct, "board_root", {
