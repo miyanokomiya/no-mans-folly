@@ -59,6 +59,7 @@ import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/sv
 import { getPaddingRect } from "../utils/boxPadding";
 import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
 import { getClosestPointOnPolyline, getPolylineEdgeInfo } from "../utils/path";
+import { createLineStrokeSVGElementInfo, renderLineStroke } from "./line";
 
 export type SimplePath = {
   path: IVec2[];
@@ -110,13 +111,18 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       applyLocalSpace(ctx, rect, shape.rotation, () => {
         ctx.beginPath();
         applyCurvePath(ctx, path, curves, !polyline);
-        if (!shape.fill.disabled && !polyline) {
-          applyFillStyle(ctx, shape.fill);
-          ctx.fill("evenodd");
-        }
-        if (!shape.stroke.disabled) {
-          applyStrokeStyle(ctx, shape.stroke);
-          ctx.stroke();
+
+        if (polyline) {
+          renderLineStroke(ctx, shape);
+        } else {
+          if (!shape.fill.disabled) {
+            applyFillStyle(ctx, shape.fill);
+            ctx.fill("evenodd");
+          }
+          if (!shape.stroke.disabled) {
+            applyStrokeStyle(ctx, shape.stroke);
+            ctx.stroke();
+          }
         }
       });
     },
@@ -136,16 +142,25 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const { path, curves } = getPath(shape);
       const polyline = isPolyline(shape);
 
-      return {
-        tag: "path",
-        attributes: {
-          transform: renderTransform(transform),
-          d: pathSegmentRawsToString(createSVGCurvePath(path, curves, !polyline)),
-          "fill-rule": "evenodd",
-          ...(polyline ? { fill: "none" } : renderFillSVGAttributes(shape.fill)),
-          ...renderStrokeSVGAttributes(shape.stroke),
-        },
-      };
+      return polyline
+        ? {
+            tag: "g",
+            attributes: {
+              transform: renderTransform(transform),
+              fill: "none",
+            },
+            children: createLineStrokeSVGElementInfo(shape, pathSegmentRawsToString(createSVGCurvePath(path, curves))),
+          }
+        : {
+            tag: "path",
+            attributes: {
+              transform: renderTransform(transform),
+              d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)),
+              "fill-rule": "evenodd",
+              ...renderFillSVGAttributes(shape.fill),
+              ...renderStrokeSVGAttributes(shape.stroke),
+            },
+          };
     },
     createClipSVGPath(shape) {
       const { path, curves } = getPath(shape);

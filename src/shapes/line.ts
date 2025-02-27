@@ -56,6 +56,7 @@ import {
   isBezieirControl,
 } from "../utils/path";
 import { SVGElementInfo } from "../utils/svgElements";
+import { CanvasCTX } from "../utils/types";
 
 export type LineType = undefined | "stright" | "elbow"; // undefined means "stright"
 export type CurveType = undefined | "auto";
@@ -159,17 +160,7 @@ export const struct: ShapeStruct<LineShape> = {
     const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
     applyCurvePath(ctx, curvePath.path, curvePath.curves);
 
-    if (!shape.fill.disabled) {
-      applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined });
-      ctx.stroke();
-      if (!shape.stroke.disabled) {
-        applyStrokeStyle(ctx, { ...shape.stroke, width: getLineStrokeWidth(shape) });
-        ctx.stroke();
-      }
-    } else {
-      applyStrokeStyle(ctx, shape.stroke);
-      ctx.stroke();
-    }
+    renderLineStroke(ctx, shape);
 
     if (region) {
       ctx.restore();
@@ -250,34 +241,7 @@ export const struct: ShapeStruct<LineShape> = {
         {
           tag: "g",
           attributes: { fill: "none", "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
-          children: [
-            ...(shape.fill.disabled
-              ? [
-                  {
-                    tag: "path",
-                    attributes: {
-                      d: pathStr,
-                      ...renderStrokeSVGAttributes(shape.stroke),
-                    },
-                  },
-                ]
-              : [
-                  {
-                    tag: "path",
-                    attributes: {
-                      d: pathStr,
-                      ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false, color: shape.fill.color }),
-                    },
-                  },
-                  {
-                    tag: "path",
-                    attributes: {
-                      d: pathStr,
-                      ...renderStrokeSVGAttributes({ ...shape.stroke, width: getLineStrokeWidth(shape) }),
-                    },
-                  },
-                ]),
-          ],
+          children: createLineStrokeSVGElementInfo(shape, pathStr),
         },
         ...(heads.length > 0
           ? [
@@ -775,7 +739,50 @@ export function getLineWidth(shape: LineShape): number {
   return getStrokeWidth(shape.stroke);
 }
 
-function getLineStrokeWidth(shape: LineShape): number {
+export function renderLineStroke(ctx: CanvasCTX, shape: Pick<LineShape, "fill" | "stroke">) {
+  if (!shape.fill.disabled) {
+    applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined });
+    ctx.stroke();
+    if (!shape.stroke.disabled) {
+      applyStrokeStyle(ctx, { ...shape.stroke, width: getLineStrokeWidth(shape) });
+      ctx.stroke();
+    }
+  } else {
+    applyStrokeStyle(ctx, shape.stroke);
+    ctx.stroke();
+  }
+}
+
+export function createLineStrokeSVGElementInfo(shape: Pick<LineShape, "fill" | "stroke">, pathStr: string) {
+  return shape.fill.disabled
+    ? [
+        {
+          tag: "path",
+          attributes: {
+            d: pathStr,
+            ...renderStrokeSVGAttributes(shape.stroke),
+          },
+        },
+      ]
+    : [
+        {
+          tag: "path",
+          attributes: {
+            d: pathStr,
+            ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false, color: shape.fill.color }),
+          },
+        },
+        {
+          tag: "path",
+          attributes: {
+            d: pathStr,
+            ...renderStrokeSVGAttributes({ ...shape.stroke, width: getLineStrokeWidth(shape) }),
+          },
+        },
+      ];
+}
+
+function getLineStrokeWidth(shape: Pick<LineShape, "fill" | "stroke">): number {
   return getStrokeWidth(shape.stroke) * (shape.fill.disabled ? 1 : 0.8);
 }
 
