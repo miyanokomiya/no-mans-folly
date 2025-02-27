@@ -64,7 +64,12 @@ export function convertPaddingType(padding: BoxPadding, rect: IRectangle, type?:
   if (type === "relative") {
     return {
       type,
-      value: [absValue[0] / rect.height, absValue[1] / rect.width, absValue[2] / rect.height, absValue[3] / rect.width],
+      value: [
+        rect.height === 0 ? 0 : absValue[0] / rect.height,
+        rect.width === 0 ? 0 : absValue[1] / rect.width,
+        rect.height === 0 ? 0 : absValue[2] / rect.height,
+        rect.width === 0 ? 0 : absValue[3] / rect.width,
+      ],
     };
   } else {
     return {

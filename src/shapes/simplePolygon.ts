@@ -1,5 +1,6 @@
 import {
   AffineMatrix,
+  IDENTITY_AFFINE,
   IRectangle,
   IVec2,
   add,
@@ -31,6 +32,7 @@ import {
   getPointLerpSlope,
   getRectPathRotation,
   getRectPoints,
+  getRelativeRateWithinRect,
   getRotateFn,
   getRotatedRectAffine,
   getRotatedWrapperRect,
@@ -323,10 +325,7 @@ export function getLocalAbsolutePoint(shape: SimplePolygonShape, relativeRate: I
 }
 
 export function getLocalRelativeRate(shape: SimplePolygonShape, absP: IVec2): IVec2 {
-  return {
-    x: absP.x / shape.width,
-    y: absP.y / shape.height,
-  };
+  return getRelativeRateWithinRect({ x: 0, y: 0, width: shape.width, height: shape.height }, absP);
 }
 
 export function getMigrateRelativePointFn(
@@ -342,10 +341,12 @@ export function migrateRelativePoint(src: IVec2, srcSize: Size, nextSize: Partia
   const d = { x: srcSize.width * (src.x - origin.x), y: srcSize.height * (src.y - origin.y) };
   const nextW = nextSize.width ?? srcSize.width;
   const nextH = nextSize.height ?? srcSize.height;
-  return { x: d.x / nextW + origin.x, y: d.y / nextH + origin.y };
+  return { x: nextW === 0 ? 0 : d.x / nextW + origin.x, y: nextH === 0 ? 0 : d.y / nextH + origin.y };
 }
 
 export function getAffineByRightExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  if (src.width === 0) return IDENTITY_AFFINE;
+
   const origin = applyAffine(getShapeTransform(src), {
     x: 0,
     y: src.height / 2,
@@ -361,6 +362,8 @@ export function getAffineByRightExpansion(src: SimplePolygonShape, p: IVec2, min
 }
 
 export function getAffineByLeftExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  if (src.width === 0) return IDENTITY_AFFINE;
+
   const origin = applyAffine(getShapeTransform(src), {
     x: src.width,
     y: src.height / 2,
@@ -376,6 +379,8 @@ export function getAffineByLeftExpansion(src: SimplePolygonShape, p: IVec2, min 
 }
 
 export function getAffineByTopExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  if (src.height === 0) return IDENTITY_AFFINE;
+
   const origin = applyAffine(getShapeTransform(src), {
     x: src.width / 2,
     y: src.height,
@@ -391,6 +396,8 @@ export function getAffineByTopExpansion(src: SimplePolygonShape, p: IVec2, min =
 }
 
 export function getAffineByBottomExpansion(src: SimplePolygonShape, p: IVec2, min = 10): AffineMatrix {
+  if (src.height === 0) return IDENTITY_AFFINE;
+
   const origin = applyAffine(getShapeTransform(src), {
     x: src.width / 2,
     y: 0,

@@ -76,6 +76,17 @@ describe("convertPaddingType", () => {
       value: [10, 20, 30, 40],
     });
   });
+
+  test("should regard zero size", () => {
+    expect(convertPaddingType({ value: [10, 20, 30, 40] }, { x: 0, y: 0, width: 0, height: 200 }, "relative")).toEqual({
+      type: "relative",
+      value: [0.05, 0, 0.15, 0],
+    });
+    expect(convertPaddingType({ value: [10, 20, 30, 40] }, { x: 0, y: 0, width: 100, height: 0 }, "relative")).toEqual({
+      type: "relative",
+      value: [0, 0.2, 0, 0.4],
+    });
+  });
 });
 
 describe("getBoxPaddingValue", () => {

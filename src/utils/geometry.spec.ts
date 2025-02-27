@@ -1928,12 +1928,12 @@ describe("getRelativeRateWithinRect", () => {
   });
   test("should regard zero sized rectangle", () => {
     expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 0, height: 200 }, { x: 50, y: 50 })).toEqualPoint({
-      x: 10,
-      y: 20,
+      x: 0,
+      y: 0.15,
     });
     expect(getRelativeRateWithinRect({ x: 10, y: 20, width: 100, height: 0 }, { x: 50, y: 50 })).toEqualPoint({
-      x: 10,
-      y: 20,
+      x: 0.4,
+      y: 0,
     });
   });
   test("should clamp within 0-1 when the flag is set true", () => {
