@@ -1,18 +1,19 @@
-import { add, getDistance, getOuterRectangle, getRadian, multi, rotate } from "okageo";
-import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
+import { getDistance, getOuterRectangle, getRadian } from "okageo";
+import { getLinePath, LineShape } from "../../../../shapes/line";
 import { getSegments } from "../../../../utils/geometry";
 import { applyPath, renderOutlinedCircle, renderOverlay } from "../../../../utils/renderer";
 import {
   getSegmentOriginRadian,
+  getSegmentRadian,
   getTargetSegment,
   LineSegmentEditingHandler,
   newLineSegmentEditingHandler,
+  patchLineSegment,
 } from "../../../shapeHandlers/lineSegmentEditingHandler";
 import { handleCommonWheel } from "../../commons";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { isObjectEmpty } from "../../../../utils/commons";
-import { ShapeComposite } from "../../../shapeComposite";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
@@ -28,6 +29,8 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
   let cancel = false;
   let lineSegmentEditingHandler: LineSegmentEditingHandler;
   let relativeAngle = false;
+  // Keep segment radian in case the segment becomes zero sized.
+  let segmentRadian = 0;
 
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
     const style = ctx.getStyleScheme();
@@ -46,28 +49,43 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     lineSegmentEditingHandler.render(renderCtx, style, scale);
   };
 
-  const setupUIs = (ctx: AppCanvasStateContext) => {
-    ctx.showFloatMenu({
-      targetRect: getOuterRectangle([getSegments(getLinePath(lineShape))[option.index]]),
-      type: "line-segment",
-      data: {
-        shapeId: lineShape.id,
-        segmentIndex: option.index,
-        originIndex,
-        relativeAngle,
-      },
-    });
-    ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
-  };
-  const setupHandler = (ctx: AppCanvasStateContext, linePatch?: Partial<LineShape>) => {
+  const updateState = (ctx: AppCanvasStateContext, linePatch?: Partial<LineShape>) => {
     const shapeComposite = ctx.getShapeComposite();
+
+    const shapeSrc = shapeComposite.shapeMap[lineShape.id] as LineShape;
+    const verticesSrc = getLinePath(shapeSrc);
+    const segmentSrc = getTargetSegment(verticesSrc, option.index, originIndex);
+    const radianSrc = getRadian(segmentSrc[1], segmentSrc[0]);
+    const sizeSrc = getDistance(segmentSrc[0], segmentSrc[1]);
+    const originRadian = getSegmentOriginRadian(verticesSrc, option.index, originIndex, relativeAngle);
+
     const latestLineShape = shapeComposite.mergedShapeMap[lineShape.id] as LineShape;
     const patchedLineShape = linePatch ? { ...latestLineShape, ...linePatch } : latestLineShape;
     const vertices = getLinePath(patchedLineShape);
     const segment = getTargetSegment(vertices, option.index, originIndex);
+    const radian = getSegmentRadian(segmentSrc, segment);
+    const size = getDistance(segment[0], segment[1]);
+
+    if (size !== 0) {
+      segmentRadian = radian;
+    }
+
     lineSegmentEditingHandler = newLineSegmentEditingHandler({
       segment,
-      originRadian: getSegmentOriginRadian(vertices, option.index, originIndex, relativeAngle),
+      segmentSrc,
+      originRadian,
+      segmentRadian,
+    });
+
+    ctx.showFloatMenu({
+      targetRect: getOuterRectangle([getSegments(getLinePath(lineShape))[option.index]]),
+      type: "line-segment",
+      data: {
+        size: getDistance(segment[0], segment[1]),
+        radian: segmentRadian - originRadian,
+        relativeAngle,
+        changed: radianSrc !== radian || sizeSrc !== size,
+      },
     });
   };
 
@@ -75,11 +93,12 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     getLabel: () => "LineSegmentEditing",
     onStart: (ctx) => {
       relativeAngle = ctx.getUserSetting().lineSegmentRelativeAngle === "on";
-      setupUIs(ctx);
-      setupHandler(ctx);
+      updateState(ctx);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
     },
     onResume: (ctx) => {
-      setupUIs(ctx);
+      updateState(ctx);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.CANCEL]);
     },
     onEnd: (ctx) => {
       ctx.hideFloatMenu();
@@ -128,35 +147,36 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
           return;
         }
         case "line-segment-change": {
+          if ("reset" in event.data) {
+            ctx.setTmpShapeMap({});
+            updateState(ctx);
+            return;
+          }
+
           if ("relativeAngle" in event.data) {
             relativeAngle = event.data.relativeAngle;
-            setupUIs(ctx);
-            setupHandler(ctx);
+            updateState(ctx);
             ctx.patchUserSetting({ lineSegmentRelativeAngle: relativeAngle ? "on" : "off" });
             ctx.redraw();
             return;
           }
 
-          if ("reset" in event.data) {
-            ctx.setTmpShapeMap({});
-            setupHandler(ctx);
-            return;
-          }
-
           const shapeComposite = ctx.getShapeComposite();
-          const linePatch = patchLine(
+          const linePatch = patchLineSegment(
             shapeComposite,
             lineShape.id,
             option.index,
             originIndex,
+            segmentRadian,
             event.data.size,
             event.data.radian,
+            relativeAngle,
           );
           const patch = linePatch
             ? getPatchAfterLayouts(shapeComposite, { update: { [lineShape.id]: linePatch } })
             : {};
           ctx.setTmpShapeMap(patch);
-          setupHandler(ctx, patch[lineShape.id]);
+          updateState(ctx, patch[lineShape.id]);
           return;
         }
         case "history": {
@@ -178,31 +198,4 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
     },
     render,
   };
-}
-
-function patchLine(
-  shapeComposite: ShapeComposite,
-  id: string,
-  index: number,
-  originIndex: 0 | 1,
-  size: number | undefined,
-  radian: number | undefined,
-) {
-  const src = shapeComposite.shapeMap[id] as LineShape;
-  const segmentSrc = getTargetSegment(getLinePath(src), index, originIndex);
-
-  const latestLineShape = shapeComposite.mergedShapeMap[id] as LineShape;
-  const segmentLatest = getTargetSegment(getLinePath(latestLineShape), index, originIndex);
-
-  if (size !== undefined) {
-    const p = add(multi(rotate({ x: 1, y: 0 }, getRadian(segmentLatest[1], segmentLatest[0])), size), segmentSrc[0]);
-    return patchVertex(src, index + 1 - originIndex, p, undefined);
-  }
-  if (radian !== undefined) {
-    const p = add(
-      multi(rotate({ x: 1, y: 0 }, radian), getDistance(segmentLatest[0], segmentLatest[1])),
-      segmentSrc[0],
-    );
-    return patchVertex(src, index + 1 - originIndex, p, undefined);
-  }
 }

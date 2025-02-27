@@ -2,7 +2,9 @@ import { getSegments, ISegment, normalizeRadian, snapNumberCeil } from "../../ut
 import { defineShapeHandler } from "./core";
 import { applyPath, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { add, getDistance, getRadian, IVec2, multi, rotate } from "okageo";
+import { add, getDistance, getRadian, isSame, IVec2, multi, rotate } from "okageo";
+import { ShapeComposite } from "../shapeComposite";
+import { getLinePath, LineShape, patchVertex } from "../../shapes/line";
 
 const ANCHOR_THRESHOLD = 6;
 const SCALE_SIZES = [10, 20, 30];
@@ -13,7 +15,9 @@ interface HitResult {
 
 interface Option {
   segment: ISegment;
+  segmentSrc: ISegment;
   originRadian: number;
+  segmentRadian: number;
 }
 
 export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option>((option) => {
@@ -21,7 +25,7 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
   const [origin, other] = segment;
   const totalSize = getDistance(origin, other);
   const originV = rotate({ x: 1, y: 0 }, option.originRadian);
-  const radian = getRadian(other, origin);
+  const radian = option.segmentRadian;
 
   return {
     hitTest(p, scale) {
@@ -56,12 +60,12 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
         applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
         ctx.beginPath();
         segs.forEach((seg, i) => {
-          if (protractorIndex - 1 < i && i < protractorIndex + 2) return;
+          if (0 < i && protractorIndex - 1 < i && i < protractorIndex + 2) return;
           applyPath(ctx, seg);
         });
         ctx.stroke();
         segs.forEach((seg, i) => {
-          if (protractorIndex - 1 < i && i < protractorIndex + 2) return;
+          if (0 < i && protractorIndex - 1 < i && i < protractorIndex + 2) return;
           if (i % longStep !== 0) return;
           renderValueLabel(ctx, step * i, seg[1], 0, scale, true);
         });
@@ -147,4 +151,42 @@ function getSegmentPreviousPoint(vertices: IVec2[], index: number, originIndex: 
 export function getTargetSegment(vertices: IVec2[], index: number, originIndex: 0 | 1): ISegment {
   const segmentSrc = getSegments(vertices)[index];
   return originIndex === 1 ? [segmentSrc[1], segmentSrc[0]] : segmentSrc;
+}
+
+/**
+ * Return source radian when the latest one is zero sized.
+ */
+export function getSegmentRadian(segmentSrc: ISegment, segmentLatest: ISegment): number {
+  const zeroSized = isSame(segmentLatest[0], segmentLatest[1]);
+  return zeroSized ? getRadian(segmentSrc[1], segmentSrc[0]) : getRadian(segmentLatest[1], segmentLatest[0]);
+}
+
+export function patchLineSegment(
+  shapeComposite: ShapeComposite,
+  id: string,
+  index: number,
+  originIndex: 0 | 1,
+  segmentRadian: number,
+  size: number | undefined,
+  radian: number | undefined,
+  relativeAngle: boolean,
+): Partial<LineShape> | undefined {
+  const src = shapeComposite.shapeMap[id] as LineShape;
+  const verticesSrc = getLinePath(src);
+  const segmentSrc = getTargetSegment(verticesSrc, index, originIndex);
+
+  if (size !== undefined) {
+    const p = add(multi(rotate({ x: 1, y: 0 }, segmentRadian), size), segmentSrc[0]);
+    return patchVertex(src, index + 1 - originIndex, p, undefined);
+  }
+  if (radian !== undefined) {
+    const latestLineShape = shapeComposite.mergedShapeMap[id] as LineShape;
+    const segmentLatest = getTargetSegment(getLinePath(latestLineShape), index, originIndex);
+    const originRadian = getSegmentOriginRadian(verticesSrc, index, originIndex, relativeAngle);
+    const p = add(
+      multi(rotate({ x: 1, y: 0 }, radian + originRadian), getDistance(segmentLatest[0], segmentLatest[1])),
+      segmentSrc[0],
+    );
+    return patchVertex(src, index + 1 - originIndex, p, undefined);
+  }
 }
