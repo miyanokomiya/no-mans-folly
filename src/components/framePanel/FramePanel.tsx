@@ -6,7 +6,7 @@ import { GetAppStateContext } from "../../contexts/AppContext";
 import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../../composables/shapeComposite";
-import { useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { useStaticShapeComposite } from "../../hooks/storeHooks";
 import { getAllFrameShapes } from "../../composables/frame";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { FixedPopupButton } from "../atoms/PopupButton";
@@ -17,7 +17,7 @@ import { FrameToolPanel } from "./FrameToolPanel";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
-  const shapeComposite = useShapeCompositeWithoutTmpInfo();
+  const shapeComposite = useStaticShapeComposite();
 
   const frameShapes = useMemo(() => getAllFrameShapes(shapeComposite), [shapeComposite]);
 

@@ -1,5 +1,5 @@
 import { useCallback, useContext } from "react";
-import { useSelectedShapes, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { useSelectedShapes, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { groupBy } from "../../utils/commons";
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { getLabel } from "../../shapes";
@@ -9,7 +9,7 @@ import iconFilter from "../../assets/icons/filter.svg";
 
 export const ShapeSelectionPanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
-  const shapeComposite = useShapeCompositeWithoutTmpInfo();
+  const shapeComposite = useStaticShapeComposite();
   const selectedShapes = useSelectedShapes();
   const grouped = groupBy(selectedShapes, (s) => s.type);
   const sorted = Object.entries(grouped).sort((a, b) => {

@@ -68,20 +68,12 @@ export function useShapeComposite(): ShapeComposite {
 /**
  * This hook can greatly reduce component evaluation when temporary shapes don't matter.
  */
-export function useShapeCompositeWithoutTmpInfo(targetIds?: string[]): ShapeComposite {
+export function useStaticShapeComposite(): ShapeComposite {
   const { shapeStore } = useContext(AppCanvasContext);
-  const [value, setValue] = useState<ShapeComposite>(shapeStore.staticShapeComposite);
-
-  const update = useCallback(() => {
-    setValue(targetIds ? shapeStore.shapeComposite.getSubShapeComposite(targetIds) : shapeStore.shapeComposite);
-  }, [shapeStore, targetIds]);
-
-  useEffect(() => {
-    update();
-    return shapeStore.watch(update);
-  }, [shapeStore, update]);
-
-  return value;
+  return useSyncExternalStore(
+    shapeStore.watch,
+    useCallback(() => shapeStore.staticShapeComposite, [shapeStore]),
+  );
 }
 
 export function useSelectedTmpShape(): Shape | undefined {

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { AffineMatrix, IRectangle } from "okageo";
 import { Shape } from "../../models";
-import { useShapeComposite, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { useShapeComposite, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
 import { BoundsField } from "./BoundsField";
 
@@ -22,7 +22,10 @@ export const MultipleShapesInspector: React.FC<Props> = ({
 }) => {
   const shapeComposite = useShapeComposite();
   const targetIds = useMemo(() => targetShapes.map((s) => s.id), [targetShapes]);
-  const subShapeComposite = useShapeCompositeWithoutTmpInfo(targetIds);
+  const staticShapeComposite = useStaticShapeComposite();
+  const subShapeComposite = useMemo(() => {
+    return staticShapeComposite.getSubShapeComposite(targetIds);
+  }, [staticShapeComposite, targetIds]);
 
   const targetLocalBounds = useMemo<IRectangle>(() => {
     return shapeComposite.getWrapperRectForShapes(targetShapes);

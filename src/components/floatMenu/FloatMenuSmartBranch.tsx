@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { LineHeadItems } from "./LineHeadItems";
 import { LineTypeButton } from "./LineTypeButton";
-import { useShapeCompositeWithoutTmpInfo, useUserSetting } from "../../hooks/storeHooks";
+import { useStaticShapeComposite, useUserSetting } from "../../hooks/storeHooks";
 import { createShape } from "../../shapes";
 import { CurveType, LineShape, LineType } from "../../shapes/line";
 import { FillStyle, LineHead } from "../../models";
@@ -14,7 +14,7 @@ import { AppStateMachineContext } from "../../contexts/AppContext";
 
 export const FloatMenuSmartBranch: React.FC = () => {
   const { handleEvent } = useContext(AppStateMachineContext);
-  const staticShapeComposite = useShapeCompositeWithoutTmpInfo();
+  const staticShapeComposite = useStaticShapeComposite();
   const [userSetting, patchUserSetting] = useUserSetting();
   const [popupKey, setPopupKey] = useState("");
   const onClickPopupButton = useCallback((name: string) => {

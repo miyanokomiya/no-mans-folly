@@ -4,7 +4,7 @@ import {
   useDocumentMapWithoutTmpInfo,
   useSelectedShapeInfo,
   useSelectedSheet,
-  useShapeCompositeWithoutTmpInfo,
+  useStaticShapeComposite,
 } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
@@ -35,7 +35,7 @@ export const FrameTreePanel: React.FC = () => {
   const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getCtx().getImageStore();
 
-  const shapeComposite = useShapeCompositeWithoutTmpInfo();
+  const shapeComposite = useStaticShapeComposite();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
   const selectionScope = useMemo(() => {
     if (!selectedLastId) return;

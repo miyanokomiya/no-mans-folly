@@ -6,7 +6,7 @@ import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { InlineField } from "../atoms/InlineField";
-import { useShapeComposite, useShapeCompositeWithoutTmpInfo } from "../../hooks/storeHooks";
+import { useShapeComposite, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { getAttachmentByUpdatingRotation, isNoRotationShape } from "../../shapes";
@@ -27,7 +27,10 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   readyState,
 }) => {
   const shapeComposite = useShapeComposite();
-  const subShapeComposite = useShapeCompositeWithoutTmpInfo(useMemo(() => [targetShape.id], [targetShape.id]));
+  const staticShapeComposite = useStaticShapeComposite();
+  const subShapeComposite = useMemo(() => {
+    return staticShapeComposite.getSubShapeComposite([targetShape.id]);
+  }, [staticShapeComposite, targetShape.id]);
 
   const srcSize = useMemo<IVec2>(() => {
     const [b] = getRectWithRotationFromRectPolygon(subShapeComposite.getLocalRectPolygon(targetShape));

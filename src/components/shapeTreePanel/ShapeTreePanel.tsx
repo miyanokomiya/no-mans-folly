@@ -4,7 +4,7 @@ import {
   useDocumentMapWithoutTmpInfo,
   useSelectedShapeInfo,
   useSelectedSheet,
-  useShapeCompositeWithoutTmpInfo,
+  useStaticShapeComposite,
 } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
@@ -27,7 +27,7 @@ export const ShapeTreePanel: React.FC = () => {
   const sheet = useSelectedSheet();
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
 
-  const shapeComposite = useShapeCompositeWithoutTmpInfo();
+  const shapeComposite = useStaticShapeComposite();
   const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getCtx().getImageStore();
   const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
