@@ -37,8 +37,7 @@ export const struct: ShapeStruct<LinePolygonShape> = {
     if (isStraightSegment(shape.path)) {
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
-      if (isPointCloseToCurveSpline(shape.path.path, shape.path.curves, localP, THRESHOLD_FOR_SEGMENT * scale))
-        return true;
+      return isPointCloseToCurveSpline(shape.path.path, shape.path.curves, localP, THRESHOLD_FOR_SEGMENT * scale);
     }
     return baseStruct.isPointOn(shape, p, shapeContext, scale);
   },
