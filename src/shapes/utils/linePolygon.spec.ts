@@ -25,6 +25,10 @@ describe("patchLinePolygonFromLine", () => {
       { p: { x: 100, y: 50 } },
       { p: { x: 0, y: 50 } },
     ]);
+    expect(result.polygonType).toBe(undefined);
+
+    const result1 = patchLinePolygonFromLine(getCommonStruct, line, 1);
+    expect(result1.polygonType).toBe(1);
   });
 
   test("should convert arc segment to bezier segment", () => {

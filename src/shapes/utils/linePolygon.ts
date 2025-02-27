@@ -19,10 +19,11 @@ import { getRectShapeCenter } from "../rectPolygon";
 export function patchLinePolygonFromLine(
   getStruct: GetShapeStruct,
   line: LineShape,
+  polyline?: 1,
 ): Partial<LineShape & LinePolygonShape> {
   const result = createLinePolygonFromLine(getStruct, line);
   const patch = mapReduce<any, any, any>(line, () => undefined);
-  return { ...patch, ...result };
+  return { ...patch, ...result, polygonType: polyline };
 }
 
 function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): LinePolygonShape {

@@ -133,6 +133,7 @@ export const FloatMenuSmartBranch: React.FC = () => {
           onChange={onLineTypeChanged}
           jump={indexLineShape.jump}
           onJumpChange={onLineJumpChanged}
+          hidePolygon
         />
         <LineHeadItems
           {...popupButtonCommonProps}

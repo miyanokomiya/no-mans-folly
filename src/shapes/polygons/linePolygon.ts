@@ -31,6 +31,7 @@ export const struct: ShapeStruct<LinePolygonShape> = {
       height: arg.height ?? 100,
       path: arg.path ?? { path: [] },
       srcLine: arg.srcLine ?? { vertices: [] },
+      polygonType: arg.polygonType,
     };
   },
   isPointOn(shape, p, shapeContext, scale = 1) {

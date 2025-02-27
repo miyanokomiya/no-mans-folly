@@ -32,7 +32,7 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
   },
   get MAKE_POLYGON() {
     return {
-      text: i18n.t("makepolygon"),
+      text: i18n.t("term.makepolygon"),
       description: i18n.t("term.makepolygon.desc"),
     };
   },

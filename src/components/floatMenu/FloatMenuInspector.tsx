@@ -36,7 +36,7 @@ import menuIcon from "../../assets/icons/three_dots_v.svg";
 import { getShapeTypeList } from "../../composables/shapeTypes";
 import { ShapeTypeButton } from "./ShapeTypeButton";
 import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
-import { isLinePolygonShape } from "../../shapes/polygons/linePolygon";
+import { isLinePolygonShape, LinePolygonShape } from "../../shapes/polygons/linePolygon";
 import { canMakePolygon, patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 
@@ -294,22 +294,35 @@ export const FloatMenuInspector: React.FC<Props> = ({
   );
 
   const onLinePolygonChanged = useCallback(
-    (val: boolean) => {
+    (val: boolean, polyline?: boolean) => {
       const shapeComposite = shapeStore.shapeComposite;
       const shapeMap = shapeComposite.shapeMap;
       const selectedIds = Object.keys(shapeStore.getSelected());
+      const patch: { [id: string]: Partial<Shape> } = {};
 
       if (val) {
-        const lines = selectedIds.map((id) => shapeMap[id]).filter(isLineShape);
-        patchShapes(mapReduce(toMap(lines), (line) => patchLinePolygonFromLine(shapeComposite.getShapeStruct, line)));
+        selectedIds.forEach((id) => {
+          const shape = shapeMap[id];
+          if (isLineShape(shape)) {
+            patch[id] = patchLinePolygonFromLine(shapeComposite.getShapeStruct, shape, polyline ? 1 : undefined);
+          } else if (isLinePolygonShape(shape)) {
+            if (polyline && shape.polygonType !== 1) {
+              patch[id] = { polygonType: 1 } as Partial<LinePolygonShape>;
+            } else if (!polyline && shape.polygonType !== undefined) {
+              patch[id] = { polygonType: undefined } as Partial<LinePolygonShape>;
+            }
+          }
+        });
       } else {
-        const linePolygons = selectedIds.map((id) => shapeMap[id]).filter(isLinePolygonShape);
-        patchShapes(
-          mapReduce(toMap(linePolygons), (linePolygon) =>
-            patchLineFromLinePolygon(shapeComposite.getShapeStruct, linePolygon),
-          ),
-        );
+        selectedIds.forEach((id) => {
+          const shape = shapeMap[id];
+          if (isLinePolygonShape(shape)) {
+            patch[id] = patchLineFromLinePolygon(shapeComposite.getShapeStruct, shape);
+          }
+        });
       }
+
+      patchShapes(patch);
     },
     [shapeStore, patchShapes],
   );
@@ -478,7 +491,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
             onChange={onLineTypeChanged}
             jump={indexLineShape.jump}
             onJumpChange={onLineJumpChanged}
-            polygon={false}
+            polygonType={"line"}
             onPolygonChange={onLinePolygonChanged}
             canMakePolygon={canMakePolygon(indexLineShape)}
           />
@@ -500,7 +513,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
           <LineTypeButton
             {...popupButtonCommonProps}
             onChange={onLineTypeChanged}
-            polygon={true}
+            polygonType={indexLinePolygonShape.polygonType === 1 ? "polyline" : "polygon"}
             onPolygonChange={onLinePolygonChanged}
           />
         </>

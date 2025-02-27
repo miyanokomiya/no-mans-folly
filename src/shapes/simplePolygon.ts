@@ -18,9 +18,15 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { ShapeStruct, TextContainer, getCommonStyle, updateCommonStyle, textContainerModule } from "./core";
 import {
-  ISegment,
+  ShapeStruct,
+  TextContainer,
+  getCommonStyle,
+  updateCommonStyle,
+  textContainerModule,
+  THRESHOLD_FOR_SEGMENT,
+} from "./core";
+import {
   expandRect,
   getApproxCurvePoints,
   getClosestPointOnSegment,
@@ -38,6 +44,7 @@ import {
   getRotatedWrapperRect,
   getRotationAffine,
   getSegments,
+  isPointCloseToCurveSpline,
   isPointOnRectangle,
   isSameValue,
   rotateRectByAngle,
@@ -63,6 +70,7 @@ export type SimplePolygonShape = RectPolygonShape &
   TextContainer & {
     // Default direction should be 1: undefined should mean 1.
     direction?: Direction4;
+    polygonType?: 1; // undefined: polygon, 1: polyline
   };
 
 /**
@@ -97,11 +105,12 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
       const { path, curves } = getPath(shape);
+      const polyline = isPolyline(shape);
 
       applyLocalSpace(ctx, rect, shape.rotation, () => {
         ctx.beginPath();
-        applyCurvePath(ctx, path, curves, true);
-        if (!shape.fill.disabled) {
+        applyCurvePath(ctx, path, curves, !polyline);
+        if (!shape.fill.disabled && !polyline) {
           applyFillStyle(ctx, shape.fill);
           ctx.fill("evenodd");
         }
@@ -125,14 +134,15 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     createSVGElementInfo(shape) {
       const transform = getShapeTransform(shape);
       const { path, curves } = getPath(shape);
+      const polyline = isPolyline(shape);
 
       return {
         tag: "path",
         attributes: {
           transform: renderTransform(transform),
-          d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)),
+          d: pathSegmentRawsToString(createSVGCurvePath(path, curves, !polyline)),
           "fill-rule": "evenodd",
-          ...renderFillSVGAttributes(shape.fill),
+          ...(polyline ? { fill: "none" } : renderFillSVGAttributes(shape.fill)),
           ...renderStrokeSVGAttributes(shape.stroke),
         },
       };
@@ -156,13 +166,17 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const rotateFn = getRotateFn(shape.rotation, c);
       return getRectPoints(rect).map((p) => rotateFn(p));
     },
-    isPointOn(shape, p) {
+    isPointOn(shape, p, _, scale = 1) {
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
       const { path, curves } = getPath(shape);
 
       if (!curves) return isOnPolygon(localP, path);
       if (!isPointOnRectangle(getCurveSplineBounds(path, curves), localP)) return false;
+
+      if (isPolyline(shape)) {
+        return isPointCloseToCurveSpline(path, curves, localP, THRESHOLD_FOR_SEGMENT * scale);
+      }
 
       const points = getApproxCurvePoints(path, curves);
       return isOnPolygon(localP, points);
@@ -219,8 +233,8 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
 
       {
         const points: IVec2[] = [];
-        path.forEach((p, i) => {
-          const seg: ISegment = [p, path[i + 1 < path.length ? i + 1 : 0]];
+        const edges = getSegments(path, !isPolyline(shape));
+        edges.forEach((seg, i) => {
           const curve = curves?.[i];
           if (curve) {
             points.push(getClosestPointOnBezier3([seg[0], curve.c1, curve.c2, seg[1]], localP, 0.01));
@@ -234,7 +248,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     },
     getTangentAt(shape, p) {
       const { path, curves } = getPath(shape);
-      const edges = getSegments(path, true);
+      const edges = getSegments(path, !isPolyline(shape));
       const edgeInfo = getPolylineEdgeInfo(edges, curves);
       const detransform = getShapeDetransform(shape);
       const localP = applyAffine(detransform, p);
@@ -251,8 +265,8 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const localTo = applyAffine(detransform, to);
 
       const intersections: IVec2[] = [];
-      path.forEach((p, i) => {
-        const seg: ISegment = [p, path[i + 1 < path.length ? i + 1 : 0]];
+      const edges = getSegments(path, !isPolyline(shape));
+      edges.forEach((seg, i) => {
         const curve = curves?.[i];
         if (curve) {
           const inter = getCrossSegAndBezier3([localFrom, localTo], [seg[0], curve.c1, curve.c2, seg[1]]);
@@ -517,4 +531,8 @@ export function getSimpleShapeTextRangeRect<T extends SimplePolygonShape>(
   }
 
   return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+}
+
+function isPolyline(shape: SimplePolygonShape): boolean {
+  return shape.polygonType === 1;
 }
