@@ -55,10 +55,8 @@ export const FloatMenu: React.FC<Option> = ({
   const selectedMap = useShapeSelectedMap();
 
   const adjustedTargetRect = useMemo<IRectangle | undefined>(() => {
-    if (!targetRect) return;
-
     const selectedShapes = Object.keys(selectedMap).map((id) => shapeComposite.shapeMap[id]);
-    if (selectedShapes.length === 0) return;
+    if (!targetRect && selectedShapes.length === 0) return;
 
     const rect = targetRect ?? shapeComposite.getWrapperRectForShapes(selectedShapes, true);
     const p = canvasToView(scale, viewOrigin, rect);
