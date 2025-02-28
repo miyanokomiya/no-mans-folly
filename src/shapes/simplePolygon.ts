@@ -186,12 +186,13 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       const localP = applyAffine(detransform, p);
       const { path, curves } = getPath(shape);
 
-      if (!curves) return isOnPolygon(localP, path);
-      if (!isPointOnRectangle(getCurveSplineBounds(path, curves), localP)) return false;
-
+      // Should check polyline before rectangle filtering since polyline has extra threshold.
       if (isPolyline(shape)) {
         return isPointCloseToCurveSpline(path, curves, localP, THRESHOLD_FOR_SEGMENT * scale);
       }
+
+      if (!isPointOnRectangle(getCurveSplineBounds(path, curves), localP)) return false;
+      if (!curves) return isOnPolygon(localP, path);
 
       const points = getApproxCurvePoints(path, curves);
       return isOnPolygon(localP, points);

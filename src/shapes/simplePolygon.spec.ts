@@ -77,6 +77,20 @@ describe("getStructForSimplePolygon", () => {
       expect(target.isPointOn(shape, { x: 1, y: 2 })).toBe(false);
       expect(target.isPointOn(shape, { x: 3, y: 2 })).toBe(true);
     });
+
+    test("should return true if a point is close to the polyline", () => {
+      const polyline = { ...shape, polygonType: 1 } as SimplePolygonShape;
+      expect(target.isPointOn(polyline, { x: 0, y: -1 })).toBe(true);
+      expect(target.isPointOn(polyline, { x: 0, y: 5 })).toBe(true);
+      expect(target.isPointOn(polyline, { x: 0, y: 7 })).toBe(false);
+      expect(target.isPointOn(polyline, { x: 93, y: 50 })).toBe(false);
+      expect(target.isPointOn(polyline, { x: 95, y: 50 })).toBe(true);
+      expect(target.isPointOn(polyline, { x: 101, y: 50 })).toBe(true);
+
+      // These are false because the collision is based on normal vector of each segment.
+      expect(target.isPointOn(polyline, { x: -1, y: 0 })).toBe(false);
+      expect(target.isPointOn(polyline, { x: 100, y: 101 })).toBe(false);
+    });
   });
 
   describe("resize", () => {
