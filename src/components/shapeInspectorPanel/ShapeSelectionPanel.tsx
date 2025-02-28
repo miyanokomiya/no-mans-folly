@@ -1,5 +1,5 @@
-import { useCallback, useContext } from "react";
-import { useSelectedShapes, useStaticShapeComposite } from "../../hooks/storeHooks";
+import { useCallback, useContext, useMemo } from "react";
+import { useShapeSelectedMap, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { groupBy } from "../../utils/commons";
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { getLabel } from "../../shapes";
@@ -10,12 +10,22 @@ import iconFilter from "../../assets/icons/filter.svg";
 export const ShapeSelectionPanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const shapeComposite = useStaticShapeComposite();
-  const selectedShapes = useSelectedShapes();
-  const grouped = groupBy(selectedShapes, (s) => s.type);
-  const sorted = Object.entries(grouped).sort((a, b) => {
-    const v = b[1].length - a[1].length;
-    return v === 0 ? a[0].localeCompare(b[0]) : v;
-  });
+  const selectedMap = useShapeSelectedMap();
+
+  const selectedShapes = useMemo(() => {
+    return Object.keys(selectedMap).map((id) => shapeComposite.shapeMap[id]);
+  }, [shapeComposite, selectedMap]);
+
+  const grouped = useMemo(() => groupBy(selectedShapes, (s) => s.type), [selectedShapes]);
+
+  const sorted = useMemo(
+    () =>
+      Object.entries(grouped).sort((a, b) => {
+        const v = b[1].length - a[1].length;
+        return v === 0 ? a[0].localeCompare(b[0]) : v;
+      }),
+    [grouped],
+  );
 
   const handleFilter = useCallback(
     (type: string) => {

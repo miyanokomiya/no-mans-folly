@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { Shape, Sheet, UserSetting } from "../models";
 import { ShapeStore } from "../stores/shapes";
@@ -116,61 +116,6 @@ export function useSelectedShape(): Shape | undefined {
   );
 }
 
-export function useSelectedShapes(): Shape[] {
-  const { shapeStore } = useContext(AppCanvasContext);
-  const [value, setValue] = useState<Shape[]>([]);
-
-  const update = useCallback(() => {
-    const shapeMap = shapeStore.shapeComposite.shapeMap;
-    setValue(Object.keys(shapeStore.getSelected()).map((id) => shapeMap[id]));
-  }, [shapeStore]);
-
-  useEffect(() => {
-    update();
-    const clears = [
-      shapeStore.watch(() => {
-        update();
-      }),
-      shapeStore.watchSelected(() => {
-        update();
-      }),
-    ];
-
-    return () => clears.forEach((f) => f());
-  }, [shapeStore, update]);
-
-  return value;
-}
-
-export function useSelectedTmpShapes(): Shape[] {
-  const { shapeStore } = useContext(AppCanvasContext);
-  const [value, setValue] = useState<Shape[]>([]);
-
-  const update = useCallback(() => {
-    const shapeMap = shapeStore.shapeComposite.mergedShapeMap;
-    setValue(Object.keys(shapeStore.getSelected()).map((id) => shapeMap[id]));
-  }, [shapeStore]);
-
-  useEffect(() => {
-    update();
-    const clears = [
-      shapeStore.watch(() => {
-        update();
-      }),
-      shapeStore.watchTmpShapeMap(() => {
-        update();
-      }),
-      shapeStore.watchSelected(() => {
-        update();
-      }),
-    ];
-
-    return () => clears.forEach((f) => f());
-  }, [shapeStore, update]);
-
-  return value;
-}
-
 export function useShapeSelectedMap(): { [id: string]: true } {
   const { shapeStore } = useContext(AppCanvasContext);
   return useSyncExternalStore(shapeStore.watchSelected, shapeStore.getSelected);
@@ -193,25 +138,25 @@ export function useHasShape(shapeStore: ShapeStore): boolean {
 
 export function useDocumentMap(): { [id: string]: DocOutput } {
   const { documentStore } = useContext(AppCanvasContext);
-  const [value, setValue] = useState<{ [id: string]: DocOutput }>({});
 
-  const update = useCallback(() => {
-    const tmpDocMap = documentStore.getTmpDocMap();
-    setValue(
-      mapReduce(documentStore.getDocMap(), (doc, id) => {
-        if (!tmpDocMap[id]) return doc;
-        return documentStore.patchDocDryRun(id, tmpDocMap[id]);
-      }),
-    );
-  }, [documentStore]);
+  const docMap = useDocumentMapWithoutTmpInfo();
+  const tmpDocMap = useSyncExternalStore(
+    useCallback(
+      (onChange: () => void) => {
+        const list = [documentStore.watchTmpDocMap(onChange)];
+        return () => list.forEach((fn) => fn());
+      },
+      [documentStore],
+    ),
+    documentStore.getTmpDocMap,
+  );
 
-  useEffect(() => {
-    update();
-    const list = [documentStore.watch(update), documentStore.watchTmpDocMap(update)];
-    return () => list.forEach((fn) => fn());
-  }, [documentStore, update]);
-
-  return value;
+  return useMemo(() => {
+    return mapReduce(docMap, (doc, id) => {
+      if (!tmpDocMap[id]) return doc;
+      return documentStore.patchDocDryRun(id, tmpDocMap[id]);
+    });
+  }, [documentStore, docMap, tmpDocMap]);
 }
 
 export function useDocumentMapWithoutTmpInfo(): { [id: string]: DocOutput } {
@@ -224,6 +169,6 @@ export function useDocumentMapWithoutTmpInfo(): { [id: string]: DocOutput } {
       },
       [documentStore],
     ),
-    useCallback(() => documentStore.getDocMap(), [documentStore]),
+    documentStore.getDocMap,
   );
 }

@@ -1,5 +1,5 @@
-import { useCallback, useContext } from "react";
-import { useSelectedShape, useSelectedShapes, useSelectedTmpShape, useSelectedTmpShapes } from "../../hooks/storeHooks";
+import { useCallback, useContext, useMemo } from "react";
+import { useSelectedShape, useSelectedTmpShape, useShapeComposite, useShapeSelectedMap } from "../../hooks/storeHooks";
 import { ConventionalShapeInspector } from "./ConventionalShapeInspector";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { InlineField } from "../atoms/InlineField";
@@ -41,8 +41,14 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
   const { getTmpShapeMap, setTmpShapeMap, patchShapes, getShapeComposite } = useContext(GetAppStateContext)();
   const targetTmpShape = useSelectedTmpShape() ?? targetShape;
 
-  const targetShapes = useSelectedShapes();
-  const targetTmpShapes = useSelectedTmpShapes();
+  const shapeComposite = useShapeComposite();
+  const selectedMap = useShapeSelectedMap();
+  const targetShapes = useMemo(() => {
+    return Object.keys(selectedMap).map((id) => shapeComposite.shapeMap[id]);
+  }, [shapeComposite, selectedMap]);
+  const targetTmpShapes = useMemo(() => {
+    return Object.keys(selectedMap).map((id) => shapeComposite.mergedShapeMap[id]);
+  }, [shapeComposite, selectedMap]);
 
   const readyState = useCallback(() => {
     handleEvent({

@@ -6,7 +6,7 @@ import { DocAttrInfo } from "../../models/document";
 import { useDraggable } from "../../hooks/draggable";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { FloatMenuInspector } from "./FloatMenuInspector";
-import { useSelectedShapes, useShapeComposite } from "../../hooks/storeHooks";
+import { useShapeComposite, useShapeSelectedMap } from "../../hooks/storeHooks";
 import { FloatMenuSmartBranch } from "./FloatMenuSmartBranch";
 import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
 import { FloatMenuOption } from "../../composables/states/commons";
@@ -52,17 +52,20 @@ export const FloatMenu: React.FC<Option> = ({
   const [dragOrigin, setDragOrigin] = useState<IVec2 | undefined>();
 
   const shapeComposite = useShapeComposite();
-  const selectedShapes = useSelectedShapes();
+  const selectedMap = useShapeSelectedMap();
 
   const adjustedTargetRect = useMemo<IRectangle | undefined>(() => {
-    if (!targetRect && selectedShapes.length === 0) return;
+    if (!targetRect) return;
+
+    const selectedShapes = Object.keys(selectedMap).map((id) => shapeComposite.shapeMap[id]);
+    if (selectedShapes.length === 0) return;
 
     const rect = targetRect ?? shapeComposite.getWrapperRectForShapes(selectedShapes, true);
     const p = canvasToView(scale, viewOrigin, rect);
     const width = rect.width / scale;
     const height = rect.height / scale;
     return { x: p.x, y: p.y, width, height };
-  }, [viewOrigin, scale, targetRect, shapeComposite, selectedShapes]);
+  }, [viewOrigin, scale, targetRect, shapeComposite, selectedMap]);
 
   useEffect(() => {
     if (!rootRef.current) return;
