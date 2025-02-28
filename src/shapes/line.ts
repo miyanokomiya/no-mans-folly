@@ -748,8 +748,10 @@ export function renderLineStroke(ctx: CanvasCTX, shape: Pick<LineShape, "fill" |
       ctx.stroke();
     }
   } else {
-    applyStrokeStyle(ctx, shape.stroke);
-    ctx.stroke();
+    if (!shape.stroke.disabled) {
+      applyStrokeStyle(ctx, shape.stroke);
+      ctx.stroke();
+    }
   }
 }
 
