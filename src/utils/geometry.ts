@@ -617,6 +617,10 @@ export function snapNumber(value: number, step = 1): number {
   return Math.round(value / step) * step;
 }
 
+export function snapNumberFloor(value: number, step = 1): number {
+  return Math.floor(value / step) * step;
+}
+
 export function snapNumberCeil(value: number, step = 1): number {
   return Math.ceil(value / step) * step;
 }

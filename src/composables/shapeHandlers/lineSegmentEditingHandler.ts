@@ -1,4 +1,4 @@
-import { getSegments, ISegment, normalizeRadian, snapNumberCeil } from "../../utils/geometry";
+import { getSegments, ISegment, normalizeRadian, snapNumberCeil, snapNumberFloor } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyPath, renderOutlinedCircle, renderValueLabel } from "../../utils/renderer";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
@@ -78,7 +78,7 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
         applyPath(ctx, originSeg);
         ctx.stroke();
 
-        const radianRange = Math.PI / 2;
+        const radianRange = Math.PI * 0.51;
         const radius = totalSize * protractorRate;
         applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 2 * scale });
         ctx.beginPath();
@@ -86,8 +86,9 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
         ctx.stroke();
 
         const step = 5;
-        const count = 90 / step;
         const base = snapNumberCeil(((radian - option.originRadian - radianRange / 2) * 180) / Math.PI, step);
+        const to = snapNumberFloor(((radian - option.originRadian + radianRange / 2) * 180) / Math.PI, step);
+        const count = (to - base) / step + 1;
 
         const info = [...Array(count)].map<[ISegment, number]>((_, i) => {
           const a = base + i * step;

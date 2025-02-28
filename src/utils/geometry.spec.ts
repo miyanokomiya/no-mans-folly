@@ -87,6 +87,7 @@ import {
   getEllipseSlopeAt,
   getViewportForRectWithinSize,
   getRectPathRotation,
+  snapNumberFloor,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -887,6 +888,17 @@ describe("snapRadianByAngle", () => {
   test("should return snapped radian based on angle", () => {
     expect(snapRadianByAngle((11 * Math.PI) / 180, 5)).toBeCloseTo((10 * Math.PI) / 180);
     expect(snapRadianByAngle((11 * Math.PI) / 180, 3)).toBeCloseTo((12 * Math.PI) / 180);
+  });
+});
+
+describe("snapNumberFloor", () => {
+  test("should return snapped number due ceil rule", () => {
+    expect(snapNumberFloor(-5.1, 5)).toBe(-10);
+    expect(snapNumberFloor(-1, 5)).toBeCloseTo(-5);
+    expect(snapNumberFloor(0, 5)).toBe(0);
+    expect(snapNumberFloor(4.9, 5)).toBe(0);
+    expect(snapNumberFloor(5, 5)).toBe(5);
+    expect(snapNumberFloor(9, 5)).toBe(5);
   });
 });
 
