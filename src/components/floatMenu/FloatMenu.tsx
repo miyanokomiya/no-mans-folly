@@ -47,6 +47,7 @@ export const FloatMenu: React.FC<Option> = ({
   const rootRef = useRef<HTMLDivElement>(null);
   const [rootSize, setRootSize] = useState<Size>({ width: 0, height: ROOT_HEIGHT });
   // Once the menu was dragged, stick it to the location.
+  // This point refers to the drag-anchor.
   const [rootFixed, setRootFixed] = useState<IVec2 | undefined>(rootFixedCache);
   const [dragOrigin, setDragOrigin] = useState<IVec2 | undefined>();
 
@@ -89,7 +90,7 @@ export const FloatMenu: React.FC<Option> = ({
       rootSize.height,
       viewSize.width,
       viewSize.height,
-      rootFixed,
+      rootFixed ? { x: rootFixed.x + rootSize.width / 2, y: rootFixed.y } : undefined,
     );
   }, [adjustedTargetRect, viewSize, rootSize.width, rootSize.height, rootFixed]);
 
@@ -98,7 +99,7 @@ export const FloatMenu: React.FC<Option> = ({
       if (!rootRef.current) return;
 
       const bounds = rootRef.current.getBoundingClientRect();
-      setDragOrigin({ x: bounds.x + bounds.width / 2, y: bounds.y });
+      setDragOrigin({ x: bounds.x, y: bounds.y });
       draggable.clear();
       draggable.startDrag(e);
     },
