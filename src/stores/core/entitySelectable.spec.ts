@@ -22,6 +22,20 @@ describe("newEntitySelectable", () => {
     expect(target.getSelected()).toEqual({ a: true });
   });
 
+  test("should return the same instance when nothing changes", () => {
+    const entityMap: any = { a: {}, b: {}, c: {} };
+    const target = newEntitySelectable({
+      getEntityMap: () => entityMap,
+      watchEntities: () => {
+        return () => {};
+      },
+    });
+    target.multiSelect(["a", "b", "c"]);
+    expect(target.getSelected()).toBe(target.getSelected());
+    target.multiSelect(["a", "b"]);
+    expect(target.getSelected()).toBe(target.getSelected());
+  });
+
   describe("dispose", () => {
     test("should clean up callbacks", () => {
       const clear = vi.fn();

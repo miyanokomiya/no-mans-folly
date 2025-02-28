@@ -171,26 +171,14 @@ export function useSelectedTmpShapes(): Shape[] {
   return value;
 }
 
-export function useSelectedShapeInfo(): { idMap: { [id: string]: true }; lastId?: string } {
+export function useShapeSelectedMap(): { [id: string]: true } {
   const { shapeStore } = useContext(AppCanvasContext);
-  const [value, setValue] = useState<{ idMap: { [id: string]: true }; lastId?: string }>({ idMap: {} });
+  return useSyncExternalStore(shapeStore.watchSelected, shapeStore.getSelected);
+}
 
-  const update = useCallback(() => {
-    setValue({ idMap: shapeStore.getSelected(), lastId: shapeStore.getLastSelected() });
-  }, [shapeStore]);
-
-  useEffect(() => {
-    update();
-    const clears = [
-      shapeStore.watchSelected(() => {
-        update();
-      }),
-    ];
-
-    return () => clears.forEach((f) => f());
-  }, [shapeStore, update]);
-
-  return value;
+export function useShapeLastSelectedId(): string | undefined {
+  const { shapeStore } = useContext(AppCanvasContext);
+  return useSyncExternalStore(shapeStore.watchSelected, shapeStore.getLastSelected);
 }
 
 /**

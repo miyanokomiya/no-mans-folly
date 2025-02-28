@@ -2,8 +2,9 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
 import {
   useDocumentMapWithoutTmpInfo,
-  useSelectedShapeInfo,
   useSelectedSheet,
+  useShapeLastSelectedId,
+  useShapeSelectedMap,
   useStaticShapeComposite,
 } from "../../hooks/storeHooks";
 import { TreeNode } from "../../utils/tree";
@@ -30,11 +31,12 @@ export const ShapeTreePanel: React.FC = () => {
   const shapeComposite = useStaticShapeComposite();
   const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getCtx().getImageStore();
-  const { idMap: selectedIdMap, lastId: selectedLastId } = useSelectedShapeInfo();
+  const selectedIdMap = useShapeSelectedMap();
+  const selectedLastId = useShapeLastSelectedId();
   const selectionScope = useMemo(() => {
     if (!selectedLastId) return;
-
-    return shapeComposite.getSelectionScope(shapeComposite.shapeMap[selectedLastId]);
+    const s = shapeComposite.shapeMap[selectedLastId];
+    return s ? shapeComposite.getSelectionScope(s) : undefined;
   }, [shapeComposite, selectedLastId]);
 
   const shapeRenderer = useMemo(() => {

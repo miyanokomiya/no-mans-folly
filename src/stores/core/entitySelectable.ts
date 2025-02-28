@@ -7,6 +7,9 @@ type Option<T> = {
 };
 
 export function newEntitySelectable<T>(option: Option<T>) {
+  let selectedMap: { [id: string]: true } = {};
+  let lastSelected: string | undefined = undefined;
+
   const unwatch = option.watchEntities(() => {
     // Check if selected entities still exist.
     // If not, get them deselected.
@@ -20,7 +23,11 @@ export function newEntitySelectable<T>(option: Option<T>) {
 
   const selectedCallback = newCallback();
   const selectable = okaselect.useItemSelectable(option.getEntityMap, {
-    onUpdated: selectedCallback.dispatch,
+    onUpdated: () => {
+      selectedMap = selectable.getSelected();
+      lastSelected = selectable.getLastSelected();
+      selectedCallback.dispatch();
+    },
   });
 
   function dispose() {
@@ -29,8 +36,8 @@ export function newEntitySelectable<T>(option: Option<T>) {
 
   return {
     watchSelected: selectedCallback.bind,
-    getSelected: selectable.getSelected,
-    getLastSelected: selectable.getLastSelected,
+    getSelected: () => selectedMap,
+    getLastSelected: () => lastSelected,
     select: selectable.select,
     multiSelect: selectable.multiSelect,
     selectAll: selectable.selectAll,
