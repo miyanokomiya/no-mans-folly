@@ -57,6 +57,27 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       ...o,
     );
 
+    const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+      const style = ctx.getStyleScheme();
+      const scale = ctx.getScale();
+      boundingBox.render(renderCtx, style, scale);
+      smartBranchHandler?.render(renderCtx, style, scale);
+      shapeHandler.render(renderCtx, style, scale);
+
+      const shapeComposite = ctx.getShapeComposite();
+      if (shapeComposite.attached(targetShape)) {
+        const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
+        scaleGlobalAlpha(renderCtx, 0.7, () => {
+          applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+          renderCtx.beginPath();
+          renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
+          renderCtx.fill();
+        });
+      }
+
+      src.render?.(ctx, renderCtx);
+    };
+
     return {
       ...src,
       onStart: (ctx) => {
@@ -138,10 +159,12 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                   event,
                   targetShape.id,
                   ctx.getShapeComposite().getSelectionScope(targetShape),
+                  undefined,
+                  render,
                 );
               }
               case 1:
-                return () => newPointerDownEmptyState(event.data.options);
+                return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
               case 2: {
                 if (smartBranchHandler?.hitTest(event.data.point, ctx.getScale())) return;
 
@@ -221,26 +244,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
         return src.handleEvent(ctx, event);
       },
-      render: (ctx, renderCtx) => {
-        const style = ctx.getStyleScheme();
-        const scale = ctx.getScale();
-        boundingBox.render(renderCtx, style, scale);
-        smartBranchHandler?.render(renderCtx, style, scale);
-        shapeHandler.render(renderCtx, style, scale);
-
-        const shapeComposite = ctx.getShapeComposite();
-        if (shapeComposite.attached(targetShape)) {
-          const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
-          scaleGlobalAlpha(renderCtx, 0.7, () => {
-            applyFillStyle(renderCtx, { color: style.selectionSecondaly });
-            renderCtx.beginPath();
-            renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
-            renderCtx.fill();
-          });
-        }
-
-        src.render?.(ctx, renderCtx);
-      },
+      render,
     };
   });
 }

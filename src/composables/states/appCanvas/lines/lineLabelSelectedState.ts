@@ -15,6 +15,7 @@ import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { AppCanvasState } from "../core";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -24,6 +25,11 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
   let shape: TextShape;
   let parentLineShape: LineShape;
   let boundingBox: BoundingBox;
+
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    renderParentLineRelation(ctx, renderCtx, shape, parentLineShape);
+    boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+  };
 
   return {
     getLabel: () => "LineLabelSelected",
@@ -78,10 +84,12 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
                 event,
                 shape.id,
                 shapeComposite.getSelectionScope(shape),
+                undefined,
+                render,
               );
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
               return handleCommonPointerDownRightOnSingleSelection(
@@ -119,9 +127,6 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
           return handleIntransientEvent(ctx, event);
       }
     },
-    render: (ctx, renderCtx) => {
-      renderParentLineRelation(ctx, renderCtx, shape, parentLineShape);
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-    },
+    render,
   };
 });

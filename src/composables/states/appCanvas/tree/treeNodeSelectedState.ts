@@ -1,4 +1,4 @@
-import type { AppCanvasStateContext } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
   handleCommonPointerDownRightOnSingleSelection,
@@ -49,6 +49,11 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
     );
     ctx.selectShape(treeNode.id);
   }
+
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+    boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+  };
 
   return {
     getLabel: () => "TreeNodeSelected",
@@ -140,10 +145,12 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
                 event,
                 treeNodeShape.id,
                 ctx.getShapeComposite().getSelectionScope(treeNodeShape),
+                undefined,
+                render,
               );
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,
@@ -214,9 +221,6 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
           return handleIntransientEvent(ctx, event);
       }
     },
-    render: (ctx, renderCtx) => {
-      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-    },
+    render,
   };
 });

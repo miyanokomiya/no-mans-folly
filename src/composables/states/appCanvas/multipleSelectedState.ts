@@ -14,7 +14,7 @@ import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { ContextMenuItem } from "../types";
 import { isGroupShape } from "../../../shapes/group";
 import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
-import { AppCanvasStateContext } from "./core";
+import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { splitList } from "../../../utils/commons";
 
 interface Option {
@@ -41,6 +41,30 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
       rotation: rotation,
     });
   }
+
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    const scale = ctx.getScale();
+    const style = ctx.getStyleScheme();
+    const shapeComposite = ctx.getShapeComposite();
+    const shapes = Object.entries(shapeComposite.shapeMap)
+      .filter(([id]) => selectedIdMap[id])
+      .map(([, s]) => s);
+
+    const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
+
+    applyStrokeStyle(renderCtx, { color: style.locked, width: 2 * scale });
+    renderCtx.beginPath();
+    locked.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
+    renderCtx.stroke();
+
+    applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
+    renderCtx.beginPath();
+    unlocked.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
+    renderCtx.stroke();
+
+    boundingBox.render(renderCtx, ctx.getStyleScheme(), scale);
+    handler.render(renderCtx, style, scale);
+  };
 
   return {
     getLabel: () => "MultipleSelected",
@@ -125,7 +149,8 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               const shapeComposite = ctx.getShapeComposite();
               const shape = findBetterShapeAt(shapeComposite, event.data.point, scode, undefined, ctx.getScale());
               if (!shape) {
-                return () => newPointerDownEmptyState({ ...event.data.options, boundingBox });
+                return () =>
+                  newPointerDownEmptyState({ ...event.data.options, boundingBox, renderWhilePanning: render });
               }
 
               if (!event.data.options.ctrl) {
@@ -149,7 +174,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               return;
             }
             case 1:
-              return () => newPointerDownEmptyState({ ...event.data.options, boundingBox });
+              return () => newPointerDownEmptyState({ ...event.data.options, boundingBox, renderWhilePanning: render });
             case 2: {
               const shapeComposite = ctx.getShapeComposite();
               const shapeAtPointer = findBetterShapeAt(
@@ -209,28 +234,6 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
           return handleIntransientEvent(ctx, event);
       }
     },
-    render: (ctx, renderCtx) => {
-      const scale = ctx.getScale();
-      const style = ctx.getStyleScheme();
-      const shapeComposite = ctx.getShapeComposite();
-      const shapes = Object.entries(shapeComposite.shapeMap)
-        .filter(([id]) => selectedIdMap[id])
-        .map(([, s]) => s);
-
-      const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
-
-      applyStrokeStyle(renderCtx, { color: style.locked, width: 2 * scale });
-      renderCtx.beginPath();
-      locked.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
-      renderCtx.stroke();
-
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
-      renderCtx.beginPath();
-      unlocked.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
-      renderCtx.stroke();
-
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), scale);
-      handler.render(renderCtx, style, scale);
-    },
+    render,
   };
 });

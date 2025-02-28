@@ -1,4 +1,4 @@
-import type { AppCanvasStateContext } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import {
   getCommonCommandExams,
   handleCommonPointerDownLeftOnSingleSelection,
@@ -34,6 +34,13 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
       alignBoxId: targetId,
     });
   }
+
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    const style = ctx.getStyleScheme();
+    const scale = ctx.getScale();
+    boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+    alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
+  };
 
   return {
     getLabel: () => "AlignBoxSelected",
@@ -84,10 +91,12 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
                 event,
                 targetShape.id,
                 ctx.getShapeComposite().getSelectionScope(targetShape),
+                undefined,
+                render,
               );
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,
@@ -121,11 +130,6 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
           return handleIntransientEvent(ctx, event);
       }
     },
-    render: (ctx, renderCtx) => {
-      const style = ctx.getStyleScheme();
-      const scale = ctx.getScale();
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      alignBoxHandler.render(renderCtx, style, scale, alignBoxHitResult);
-    },
+    render,
   };
 });

@@ -586,6 +586,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
   selectedId: string,
   selectionScope?: ShapeSelectionScope,
   excludeIds?: string[],
+  renderWhilePanning?: AppCanvasState["render"],
 ): TransitionValue<AppCanvasStateContext> {
   const shapeComposite = ctx.getShapeComposite();
   const shapeAtPointer = findBetterShapeAt(
@@ -596,7 +597,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
     ctx.getScale(),
   );
   if (!shapeAtPointer) {
-    return () => newPointerDownEmptyState(event.data.options);
+    return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning });
   }
 
   if (!event.data.options.ctrl) {

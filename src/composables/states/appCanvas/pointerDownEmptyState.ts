@@ -47,6 +47,7 @@ export function newPointerDownEmptyState(option?: Option): AppCanvasState {
       // Clear selection when left-panning finished shortly.
       if (setting.leftDragAction === "pan" && now - timestampForLeftPan < 150) {
         ctx.clearAllSelected();
+        return ctx.states.newSelectionHubState;
       }
 
       return option?.boundingBox

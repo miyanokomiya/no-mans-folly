@@ -21,11 +21,29 @@ import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectP
 import { applyAffine, clamp } from "okageo";
 import { applyPath, renderValueLabel } from "../../../../utils/renderer";
 import { getRotatedTargetBounds } from "../../../shapeComposite";
+import { AppCanvasState } from "../core";
 
 export const newTreeRootSelectedState = defineIntransientState(() => {
   let treeRootShape: TreeRootShape;
   let treeHandler: ReturnType<typeof newTreeHandler>;
   let boundingBox: BoundingBox;
+
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    const shapeComposite = ctx.getShapeComposite();
+    applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: ctx.getScale() * 2 });
+
+    const path = getRotatedTargetBounds(
+      shapeComposite,
+      shapeComposite.getAllBranchMergedShapes([treeRootShape.id]).map((s) => s.id),
+      treeRootShape.rotation,
+    );
+    renderCtx.beginPath();
+    applyPath(renderCtx, path, true);
+    renderCtx.stroke();
+
+    treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+    boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
+  };
 
   return {
     getLabel: () => "TreeRootSelected",
@@ -175,10 +193,12 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
                 event,
                 treeRootShape.id,
                 ctx.getShapeComposite().getSelectionScope(treeRootShape),
+                undefined,
+                render,
               );
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
             case 2: {
               return handleCommonPointerDownRightOnSingleSelection(
                 ctx,
@@ -213,21 +233,6 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
           return handleIntransientEvent(ctx, event);
       }
     },
-    render: (ctx, renderCtx) => {
-      const shapeComposite = ctx.getShapeComposite();
-      applyStrokeStyle(renderCtx, { color: ctx.getStyleScheme().selectionSecondaly, width: ctx.getScale() * 2 });
-
-      const path = getRotatedTargetBounds(
-        shapeComposite,
-        shapeComposite.getAllBranchMergedShapes([treeRootShape.id]).map((s) => s.id),
-        treeRootShape.rotation,
-      );
-      renderCtx.beginPath();
-      applyPath(renderCtx, path, true);
-      renderCtx.stroke();
-
-      treeHandler.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-      boundingBox.render(renderCtx, ctx.getStyleScheme(), ctx.getScale());
-    },
+    render,
   };
 });

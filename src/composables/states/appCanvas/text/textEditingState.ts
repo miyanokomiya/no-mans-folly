@@ -63,6 +63,23 @@ export function newTextEditingState(option: Option): AppCanvasState {
     return tmpDoc ? ctx.patchDocDryRun(option.id, tmpDoc) : docOutput;
   }
 
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
+    if (!shape || !textEditorController) return;
+
+    renderCtx.save();
+    renderCtx.transform(...textBounds.affine);
+
+    const style = ctx.getStyleScheme();
+    applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
+    renderCtx.beginPath();
+    renderCtx.strokeRect(textBounds.range.x, textBounds.range.x, textBounds.range.width, textBounds.range.height);
+    renderCtx.stroke();
+
+    textEditorController.render(renderCtx);
+    renderCtx.restore();
+  };
+
   return {
     getLabel: () => "TextEditing",
     onStart: (ctx) => {
@@ -175,7 +192,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
                   if (shapeAtPointer) {
                     ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
                   } else {
-                    ctx.clearAllSelected();
+                    return {
+                      type: "stack-resume",
+                      getState: () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render }),
+                    };
                   }
                   return ctx.states.newSelectionHubState;
                 }
@@ -195,7 +215,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
               ctx.stopTextEditing();
               return {
                 type: "stack-resume",
-                getState: () => newPointerDownEmptyState(event.data.options),
+                getState: () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render }),
               };
             default:
               return;
@@ -295,22 +315,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
           return;
       }
     },
-    render(ctx, renderCtx) {
-      const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
-      if (!shape || !textEditorController) return;
-
-      renderCtx.save();
-      renderCtx.transform(...textBounds.affine);
-
-      const style = ctx.getStyleScheme();
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * ctx.getScale() });
-      renderCtx.beginPath();
-      renderCtx.strokeRect(textBounds.range.x, textBounds.range.x, textBounds.range.width, textBounds.range.height);
-      renderCtx.stroke();
-
-      textEditorController.render(renderCtx);
-      renderCtx.restore();
-    },
+    render,
   };
 }
 

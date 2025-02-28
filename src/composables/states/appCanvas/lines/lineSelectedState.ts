@@ -39,6 +39,7 @@ import { patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/lin
 import { getSegments } from "../../../../utils/geometry";
 import { getDistanceSq } from "okageo";
 import { ContextMenuItem } from "../../types";
+import { AppCanvasState } from "../core";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -48,6 +49,10 @@ type SegmentMetaForContextMenu = VertexMetaForContextMenu & { originIndex: 0 | 1
 export const newLineSelectedState = defineIntransientState(() => {
   let lineShape: LineShape;
   let lineBounding: LineBounding;
+
+  const render: AppCanvasState["render"] = (ctx, renderCtx) => {
+    lineBounding.render(renderCtx, ctx.getScale());
+  };
 
   return {
     getLabel: () => "LineSelected",
@@ -158,10 +163,11 @@ export const newLineSelectedState = defineIntransientState(() => {
                 lineShape.id,
                 ctx.getShapeComposite().getSelectionScope(lineShape),
                 [lineShape.id],
+                render,
               );
             }
             case 1:
-              return () => newPointerDownEmptyState(event.data.options);
+              return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
             case 2: {
               const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
               lineBounding.saveHitResult(hitResult);
@@ -332,8 +338,6 @@ export const newLineSelectedState = defineIntransientState(() => {
           return handleIntransientEvent(ctx, event);
       }
     },
-    render: (ctx, renderCtx) => {
-      lineBounding.render(renderCtx, ctx.getScale());
-    },
+    render,
   };
 });
