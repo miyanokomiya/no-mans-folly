@@ -51,9 +51,9 @@ export const newLineSegmentEditingHandler = defineShapeHandler<HitResult, Option
         const step = scale < 0.1 ? 1 : scale < 4 ? 10 : 100;
         const longStep = 10;
         const stepV = rotate({ x: 1, y: 0 }, radian);
-        const baseCount = Math.floor(totalSize / step);
+        const baseCount = Math.round(totalSize / step);
         const protractorIndex = baseCount * protractorRate;
-        const segs = [...Array(baseCount + 10)].map((_, i) => {
+        const segs = [...Array(baseCount + 11)].map((_, i) => {
           const p = add(origin, multi(stepV, step * i));
           return [p, add(p, i % longStep === 0 ? long : i % (longStep / 2) === 0 ? middle : short)];
         });
