@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import iconDownload from "../../assets/icons/download.svg";
@@ -14,6 +14,7 @@ import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
 import { FrameExportDialog } from "./FrameExportDialog";
 import { FrameTreePanel } from "./FrameTreePanel";
 import { FrameToolPanel } from "./FrameToolPanel";
+import { Slideshow, SlideshowHandle } from "./Slideshow";
 
 export const FramePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
@@ -57,8 +58,19 @@ export const FramePanel: React.FC = () => {
     setOpenExportDialog(true);
   }, []);
 
+  const slideshowRef = useRef<SlideshowHandle>(null);
+  const handleSlideshowPlay = useCallback(() => {
+    setPopupOpen("");
+    slideshowRef.current?.play();
+  }, []);
+
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
+      {document.fullscreenEnabled ? (
+        <ListIconButton icon={iconDownload} onClick={handleSlideshowPlay} disabled={frameShapes.length === 0}>
+          Slideshow
+        </ListIconButton>
+      ) : undefined}
       <ListIconButton icon={iconDownload} onClick={handleExport} disabled={frameShapes.length === 0}>
         Export
       </ListIconButton>
@@ -89,6 +101,7 @@ export const FramePanel: React.FC = () => {
       </div>
       <FrameToolPanel />
       <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
+      <Slideshow ref={slideshowRef} />
     </div>
   );
 };
