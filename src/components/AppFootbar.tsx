@@ -11,6 +11,7 @@ import { getAllShapeRangeWithinComposite } from "../composables/shapeComposite";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { IconButton } from "./atoms/buttons/IconButton";
 import { useCanUndoRedo } from "../hooks/undoManager";
+import { useUserSetting } from "../hooks/storeHooks";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -18,6 +19,7 @@ export const AppFootbar: React.FC = () => {
   const [popupKey, setPopupKey] = useState("");
   const { undoManager } = useContext(AppCanvasContext);
   const [canUndo, canRedo] = useCanUndoRedo(undoManager);
+  const [userSetting] = useUserSetting();
 
   const handleScaleFit = useCallback(() => {
     setPopupKey("");
@@ -54,7 +56,7 @@ export const AppFootbar: React.FC = () => {
 
   const borderElm = <div className="h-6 border" />;
 
-  return (
+  return userSetting.displayMode === "no-hud" ? undefined : (
     <div className="p-1 border rounded-xs bg-white flex gap-2 items-center select-none">
       <ZoomField
         scale={getScale()}

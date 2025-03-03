@@ -3,16 +3,18 @@ import { CommandExamPanel } from "../molecules/CommandExamPanel";
 import iconDropdown from "../../assets/icons/dropdown.svg";
 import { useCallback } from "react";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import { UserSetting } from "../../models";
 
 interface Props {
   commandExams: CommandExam[];
+  displayMode?: UserSetting["displayMode"];
 }
 
 /**
  * This component is intended to be wrapped by an element having "pointer-events-none" style.
  * Interactive elements in this component should have "pointer-events-auto" because of it.
  */
-export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
+export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams, displayMode }) => {
   const [visible, setVisible] = useLocalStorageAdopter({
     key: "command-exam-float-panel",
     version: "1",
@@ -22,7 +24,7 @@ export const CommandExamFloatPanel: React.FC<Props> = ({ commandExams }) => {
 
   const handleButtonClick = useCallback(() => setVisible((v) => !v), [setVisible]);
 
-  return (
+  return displayMode === "no-hud" ? undefined : (
     <div className="relative pl-2 pb-2">
       {visible ? (
         <div className="flex flex-col">

@@ -23,6 +23,11 @@ const gridTypeOptions: { value: Exclude<UserSetting["gridType"], undefined>; lab
   { value: "dash", label: "Dash" },
 ];
 
+const displayModeOptions: { value: Exclude<UserSetting["displayMode"], undefined>; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "no-hud", label: "No HUD" },
+];
+
 export const UserSettingPanel: React.FC = () => {
   const [userSetting, patchUserSetting] = useUserSetting();
   const [popupedKey, setPopupedKey] = useState<string>();
@@ -108,6 +113,13 @@ export const UserSettingPanel: React.FC = () => {
   const handleSnapIgnoreNonoverlapPairChange = useCallback(
     (val: boolean) => {
       patchUserSetting({ snapIgnoreNonoverlapPair: val ? "on" : "off" });
+    },
+    [patchUserSetting],
+  );
+
+  const handleDisplayModeChange = useCallback(
+    (val: string) => {
+      patchUserSetting({ displayMode: val as any });
     },
     [patchUserSetting],
   );
@@ -206,6 +218,15 @@ export const UserSettingPanel: React.FC = () => {
         </InlineField>
         <InlineField label="Preview dialog">
           <ToggleInput value={userSetting.preview === "on"} onChange={handlePreviewChange} />
+        </InlineField>
+        <InlineField label="Display mode">
+          <div className="w-24">
+            <SelectInput
+              value={userSetting.displayMode ?? "default"}
+              options={displayModeOptions}
+              onChange={handleDisplayModeChange}
+            />
+          </div>
         </InlineField>
       </div>
     </div>

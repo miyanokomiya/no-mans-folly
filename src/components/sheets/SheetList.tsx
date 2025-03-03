@@ -9,11 +9,13 @@ import { useSelectedSheet, useSheets } from "../../hooks/storeHooks";
 import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import { useUserSetting } from "../../hooks/storeHooks";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
   const selectedSheet = useSelectedSheet();
   const sheets = useSheets();
+  const [userSetting] = useUserSetting();
   const [deleteTargetId, setDeleteTargetId] = useState<string>();
   const canDeleteSheet = useMemo(() => sheets.length > 1, [sheets]);
 
@@ -117,7 +119,7 @@ export const SheetList: React.FC = () => {
     </button>
   );
 
-  return (
+  return userSetting.displayMode === "no-hud" ? undefined : (
     <div className="bg-white border rounded-xs flex flex-col p-1 gap-1">
       {hidePanel ? (
         <>

@@ -19,6 +19,7 @@ import { lineTypeList } from "../../composables/shapeTypes";
 import { LayoutShapeListPanel, ShapeListPanel } from "./ShapeListPanel";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { AffineMatrix, getRectCenter } from "okageo";
+import { useUserSetting } from "../../hooks/storeHooks";
 
 type PopupKey = "" | "shapes" | "lines" | "layouts";
 
@@ -35,6 +36,7 @@ export const AppToolbar: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const getCtx = useContext(GetAppStateContext);
+  const [userSetting] = useUserSetting();
 
   const [stateLabel, setStateLabel] = useState("");
   useEffect(() => {
@@ -260,7 +262,7 @@ export const AppToolbar: React.FC = () => {
     }
   }
 
-  return (
+  return userSetting.displayMode === "no-hud" ? undefined : (
     <OutsideObserver onClick={handleClosePopup}>
       <div className="bg-white relative border border-1 p-1 rounded-xs shadow-xs flex flex-col">
         <button

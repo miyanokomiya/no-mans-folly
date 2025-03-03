@@ -833,7 +833,7 @@ export const AppCanvas: React.FC = () => {
         <div className="fixed right-16 top-0 pointer-events-none">{sm.getStateSummary().label}</div>
       ) : undefined}
       <div className="fixed bottom-0 left-0 flex pointer-events-none">
-        <CommandExamFloatPanel commandExams={commandExams} />
+        <CommandExamFloatPanel commandExams={commandExams} displayMode={userSetting.displayMode} />
       </div>
       {userSetting.virtualKeyboard === "modifiers" ? (
         <div className="pointer-events-auto fixed bottom-2 left-1/2 -translate-x-1/2">

@@ -159,9 +159,10 @@ export interface UserSetting {
   snapIgnoreNonoverlapPair?: "on" | "off"; // should be "off" when it's undefined
   frameLabelSize?: number; // should be 18 when it's undefined
   smartBranchLine?: Partial<Shape>;
-  smartBranchChildMargin?: number; // should 100 when it's undefined
-  smartBranchSiblingMargin?: number; // should 25 when it's undefined
-  lineSegmentRelativeAngle?: "on" | "off"; // should "off" when it's undefined
+  smartBranchChildMargin?: number; // should be 100 when it's undefined
+  smartBranchSiblingMargin?: number; // should be 25 when it's undefined
+  lineSegmentRelativeAngle?: "on" | "off"; // should be "off" when it's undefined
+  displayMode?: "default" | "no-hud"; // should be "default" when it's undefined
 }
 
 /**

@@ -7,6 +7,7 @@ import { useGlobalKeydownEffect } from "../hooks/window";
 import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
 import { CleanSheetDialog } from "./navigations/CleanSheetDialog";
 import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
+import { useUserSetting } from "../hooks/storeHooks";
 
 interface Props {
   onClickOpen: () => void;
@@ -40,6 +41,7 @@ export const AppHeader: React.FC<Props> = ({
   // Used for pretending to save
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
+  const [userSetting] = useUserSetting();
 
   const onClickPopupButton = useCallback(
     (name: string) => {
@@ -208,7 +210,7 @@ export const AppHeader: React.FC<Props> = ({
     isWorkspaceStable,
   ]);
 
-  return (
+  return userSetting.displayMode === "no-hud" ? undefined : (
     <OutsideObserver className="h-10 px-1 bg-white rounded-b flex items-center" onClick={closePopup}>
       <PopupButton
         name="file"

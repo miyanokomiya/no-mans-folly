@@ -58,6 +58,8 @@ export function newGrid({ size, range, disabled }: Option) {
   }
 
   function renderAxisLabels(ctx: CanvasCTX, scale = 1) {
+    if (disabled) return;
+
     ctx.save();
 
     applyFillStyle(ctx, { color: COLORS.BLACK });
