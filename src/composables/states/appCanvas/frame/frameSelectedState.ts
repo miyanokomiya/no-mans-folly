@@ -1,5 +1,5 @@
 import { FrameShape } from "../../../../shapes/frame";
-import { getAllFrameShapes } from "../../../frame";
+import { getAllFrameIdsInTreeOrder } from "../../../frame";
 import { FrameHandler, newFrameHandler } from "../../../shapeHandlers/frameHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getCommonCommandExams } from "../commons";
@@ -27,9 +27,9 @@ export const newFrameSelectedState = defineSingleSelectedHandlerState<FrameShape
                 switch (hitResult.type) {
                   case "jump-back": {
                     const shapeComposite = ctx.getShapeComposite();
-                    const frames = getAllFrameShapes(shapeComposite);
-                    const targetIndex = frames.findIndex((f) => f.id === targetShape.id);
-                    const nextId = frames.at(targetIndex - 1)?.id;
+                    const ids = getAllFrameIdsInTreeOrder(shapeComposite);
+                    const targetIndex = ids.indexOf(targetShape.id);
+                    const nextId = ids[targetIndex - 1];
                     if (!nextId) return null;
 
                     ctx.selectShape(nextId);
@@ -42,9 +42,9 @@ export const newFrameSelectedState = defineSingleSelectedHandlerState<FrameShape
                   }
                   case "jump-next": {
                     const shapeComposite = ctx.getShapeComposite();
-                    const frames = getAllFrameShapes(shapeComposite);
-                    const targetIndex = frames.findIndex((f) => f.id === targetShape.id);
-                    const nextId = frames.at(targetIndex + 1)?.id;
+                    const ids = getAllFrameIdsInTreeOrder(shapeComposite);
+                    const targetIndex = ids.indexOf(targetShape.id);
+                    const nextId = ids.at(targetIndex + 1);
                     if (!nextId) return null;
 
                     ctx.selectShape(nextId);

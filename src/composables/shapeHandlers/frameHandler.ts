@@ -5,7 +5,7 @@ import { getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, renderArrowUnit, renderOutlinedCircle } from "../../utils/renderer";
 import { FrameShape } from "../../shapes/frame";
-import { getAllFrameShapes, getFrameRect } from "../frame";
+import { getAllFrameIdsInTreeOrder, getFrameRect } from "../frame";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 import { CanvasCTX } from "../../utils/types";
@@ -30,10 +30,10 @@ export const newFrameHandler = defineShapeHandler<FrameHitResult, Option>((optio
   const shape = shapeComposite.shapeMap[option.targetId] as FrameShape;
   const shapeRect = getFrameRect(shape);
   const rotateFn = getRotateFn(shape.rotation, getRectCenter(shapeRect));
-  const frames = getAllFrameShapes(shapeComposite);
-  const targetIndex = frames.findIndex((f) => f.id === shape.id);
+  const frameIds = getAllFrameIdsInTreeOrder(shapeComposite);
+  const targetIndex = frameIds.indexOf(shape.id);
   const canJumpBack = 0 < targetIndex;
-  const canJumpNext = targetIndex < frames.length - 1;
+  const canJumpNext = targetIndex < frameIds.length - 1;
 
   function getJumpAnchors(scale: number): HitAnchor[] {
     const y = shapeRect.height + ANCHOR_SIZE_JUMP * 1.2 * scale;
