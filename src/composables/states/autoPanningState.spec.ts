@@ -22,6 +22,13 @@ describe("newAutoPanningState", () => {
     expect(ctx.setViewport).toHaveBeenCalledTimes(6);
   });
 
+  test("should regard zero duration", async () => {
+    const ctx = getMockCtx();
+    const target = newAutoPanningState({ viewRect: { x: 100, y: 100, width: 100, height: 200 }, duration: 0 });
+    target.onStart?.(ctx);
+    expect(ctx.setViewport).toHaveBeenCalledTimes(1);
+  });
+
   describe("handle pointerdown", () => {
     test("should break the state", async () => {
       const ctx = getMockCtx();

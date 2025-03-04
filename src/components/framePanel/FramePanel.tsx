@@ -2,6 +2,7 @@ import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import iconAdd from "../../assets/icons/add_filled.svg";
 import iconDots from "../../assets/icons/three_dots_v.svg";
 import iconDownload from "../../assets/icons/download.svg";
+import iconSlideshow from "../../assets/icons/slideshow.svg";
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { createShape } from "../../shapes";
 import { AffineMatrix, getRectCenter } from "okageo";
@@ -67,7 +68,7 @@ export const FramePanel: React.FC = () => {
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
       {document.fullscreenEnabled ? (
-        <ListIconButton icon={iconDownload} onClick={handleSlideshowPlay} disabled={frameShapes.length === 0}>
+        <ListIconButton icon={iconSlideshow} onClick={handleSlideshowPlay} disabled={frameShapes.length === 0}>
           Slideshow
         </ListIconButton>
       ) : undefined}

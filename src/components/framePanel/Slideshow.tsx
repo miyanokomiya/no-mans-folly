@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRe
 import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { getAllFrameShapes, getFrameRect } from "../../composables/frame";
 import { isFrameShape } from "../../shapes/frame";
-import { GetAppStateContext } from "../../contexts/AppContext";
+import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { getViewportForRectWithinSize } from "../../utils/geometry";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
 import { newCanvasBank } from "../../composables/canvasBank";
@@ -20,53 +20,84 @@ interface Props {
 export const Slideshow: React.FC<Props> = ({ ref, onClose }) => {
   const rootRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const [show, setShow] = useState(false);
+  const [frameId, setFrameId] = useState<string>();
+  const getCtx = useContext(GetAppStateContext);
+  const { handleEvent } = useContext(AppStateMachineContext);
 
   useImperativeHandle(ref, () => {
     return {
       play: async () => {
         if (!rootRef.current || !bodyRef.current) return;
 
+        const ctx = getCtx();
+        const sc = ctx.getShapeComposite();
+        const id = ctx.getLastSelectedShapeId();
+        if (id && sc.shapeMap[id] && isFrameShape(sc.shapeMap[id])) {
+          setFrameId(id);
+        } else {
+          setFrameId(getAllFrameShapes(sc).at(0)?.id);
+        }
+
         try {
           rootRef.current.showModal();
-          setShow(true);
           await bodyRef.current.requestFullscreen();
         } catch {
           rootRef.current?.close();
-          setShow(false);
+          setFrameId(undefined);
         }
       },
     };
-  }, []);
+  }, [getCtx]);
+
+  const handleFullscreenchange = useCallback(() => {
+    if (document.fullscreenElement || !frameId) return;
+
+    rootRef.current?.close();
+    setFrameId(undefined);
+    onClose?.();
+
+    const ctx = getCtx();
+    ctx.selectShape(frameId);
+    // Need to wait until window resize finishes.
+    // Set a bit slow animation to avoid flickering.
+    setTimeout(() => {
+      handleEvent({
+        type: "state",
+        data: {
+          name: "PanToShape",
+          options: {
+            ids: [frameId],
+            duration: 300,
+            scaling: true,
+          },
+        },
+      });
+    }, 100);
+  }, [getCtx, handleEvent, frameId, onClose]);
 
   useEffect(() => {
     const bodyElm = bodyRef.current;
     if (!bodyElm) return;
 
-    const handleFullscreenchange = () => {
-      if (!document.fullscreenElement) {
-        rootRef.current?.close();
-        setShow(false);
-        onClose?.();
-      }
-    };
     bodyElm.addEventListener("fullscreenchange", handleFullscreenchange);
-
     return () => {
       bodyElm.removeEventListener("fullscreenchange", handleFullscreenchange);
     };
-  }, [onClose]);
+  }, [handleFullscreenchange]);
 
   return (
     <dialog ref={rootRef}>
       <div ref={bodyRef} className="fixed inset-0 bg-white">
-        {show ? <SlideshowBody /> : undefined}
+        {frameId ? <SlideshowBody frameId={frameId} setFrameId={setFrameId} /> : undefined}
       </div>
     </dialog>
   );
 };
 
-const SlideshowBody: React.FC = () => {
+const SlideshowBody: React.FC<{
+  frameId: string;
+  setFrameId: React.Dispatch<React.SetStateAction<string | undefined>>;
+}> = ({ frameId, setFrameId }) => {
   const getCtx = useContext(GetAppStateContext);
   const shapeComposite = useStaticShapeComposite();
   const documentMap = useDocumentMapWithoutTmpInfo();
@@ -74,17 +105,7 @@ const SlideshowBody: React.FC = () => {
   const canvasBank = useMemo(() => newCanvasBank(), []);
   const sheet = useSelectedSheet();
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
-  const [frameId, setFrameId] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const ctx = getCtx();
-    const sc = ctx.getShapeComposite();
-    const id = ctx.getLastSelectedShapeId() ?? getAllFrameShapes(sc).at(0)?.id;
-    if (!id || !sc.shapeMap[id] || !isFrameShape(sc.shapeMap[id])) return;
-
-    setFrameId(id);
-  }, [getCtx]);
 
   const frame = useMemo(() => {
     if (!frameId) return;
@@ -165,7 +186,7 @@ const SlideshowBody: React.FC = () => {
         }
       }
     },
-    [getCtx],
+    [getCtx, setFrameId],
   );
   useGlobalKeydownEffect(handleKeydown);
 

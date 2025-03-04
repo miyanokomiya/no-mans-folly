@@ -17,8 +17,14 @@ export const newAutoPanningState = defineAsyncState((asyncCtx, option: Option) =
     getLabel: () => "AutoPanning",
     onStart: (ctx) => {
       const initialViewRect = ctx.getViewRect();
-      let t = 0;
 
+      if (duration === 0) {
+        ctx.setViewport(option.viewRect);
+        asyncCtx.resolve({ type: "break" });
+        return;
+      }
+
+      let t = 0;
       function proc() {
         timer = setTimeout(() => {
           t = Math.min(t + STEP, duration);
