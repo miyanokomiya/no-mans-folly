@@ -72,7 +72,7 @@ export const Slideshow: React.FC<Props> = ({ ref, onClose }) => {
           },
         },
       });
-    }, 100);
+    }, 200);
   }, [getCtx, handleEvent, frameId, onClose]);
 
   useEffect(() => {
