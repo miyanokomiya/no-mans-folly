@@ -4,6 +4,7 @@ import { FrameShape } from "../shapes/frame";
 import { RectangleShape } from "../shapes/rectangle";
 import { newShapeComposite } from "./shapeComposite";
 import {
+  getAllFrameIdsInTreeOrder,
   getAllFrameShapes,
   getAllShapeIdsOnTheFrameOrFrameGroup,
   getFrameRect,
@@ -209,6 +210,39 @@ describe("getFrameTree", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("getAllFrameIdsInTreeOrder", () => {
+  const frame_align = createShape<FrameAlignGroupShape>(getCommonStruct, "frame_align_group", {
+    id: "frame_align",
+    p: { x: 0, y: 0 },
+    width: 20,
+    height: 20,
+  });
+  const frame1 = createShape<FrameShape>(getCommonStruct, "frame", {
+    id: "frame1",
+  });
+  const frame2 = {
+    ...frame1,
+    id: "frame2",
+    parentId: frame_align.id,
+  };
+  const frame3 = {
+    ...frame1,
+    id: "frame3",
+  };
+  const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect0",
+  });
+
+  test("should return frame ids in tree order", () => {
+    const shapes = [frame_align, frame1, frame2, rect0, frame3];
+    const shapeComposite = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+    expect(getAllFrameIdsInTreeOrder(shapeComposite)).toEqual([frame2.id, frame1.id, frame3.id]);
   });
 });
 

@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite } from "../../hooks/storeHooks";
-import { getAllFrameShapes, getFrameRect } from "../../composables/frame";
+import { getAllFrameIdsInTreeOrder, getFrameRect } from "../../composables/frame";
 import { isFrameShape } from "../../shapes/frame";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { getViewportForRectWithinSize } from "../../utils/geometry";
@@ -35,7 +35,7 @@ export const Slideshow: React.FC<Props> = ({ ref, onClose }) => {
         if (id && sc.shapeMap[id] && isFrameShape(sc.shapeMap[id])) {
           setFrameId(id);
         } else {
-          setFrameId(getAllFrameShapes(sc).at(0)?.id);
+          setFrameId(getAllFrameIdsInTreeOrder(sc).at(0));
         }
 
         try {
@@ -163,11 +163,11 @@ const SlideshowBody: React.FC<{
         case "Enter": {
           const ctx = getCtx();
           const sc = ctx.getShapeComposite();
-          const frames = getAllFrameShapes(sc);
+          const ids = getAllFrameIdsInTreeOrder(sc);
           setFrameId((id) => {
-            const index = frames.findIndex((f) => f.id === id);
-            const next = frames.at(index + 1);
-            return next?.id ?? id;
+            const index = id ? ids.indexOf(id) : -1;
+            const next = ids.at(index + 1);
+            return next ?? id;
           });
           break;
         }
@@ -176,11 +176,11 @@ const SlideshowBody: React.FC<{
         case "Backspace": {
           const ctx = getCtx();
           const sc = ctx.getShapeComposite();
-          const frames = getAllFrameShapes(sc);
+          const ids = getAllFrameIdsInTreeOrder(sc);
           setFrameId((id) => {
-            const index = frames.findIndex((f) => f.id === id);
-            const prev = frames.at(Math.max(0, index - 1));
-            return prev?.id ?? id;
+            const index = id ? ids.indexOf(id) : 1;
+            const prev = ids.at(Math.max(0, index - 1));
+            return prev ?? id;
           });
           break;
         }

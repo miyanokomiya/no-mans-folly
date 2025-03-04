@@ -63,6 +63,21 @@ export function getFrameTree(shapeComposite: ShapeComposite): TreeNode[] {
   });
 }
 
+export function getAllFrameIdsInTreeOrder(shapeComposite: ShapeComposite): string[] {
+  const ret: string[] = [];
+  const tree = getFrameTree(shapeComposite);
+  const shapeMap = shapeComposite.shapeMap;
+  tree.forEach((t) => {
+    const root = shapeMap[t.id];
+    if (isFrameShape(root)) {
+      ret.push(t.id);
+    } else {
+      ret.push(...t.children.map((c) => c.id));
+    }
+  });
+  return ret;
+}
+
 export function renderFrameNames(ctx: CanvasCTX, shapeComposite: ShapeComposite, size = 18, scale = 1) {
   if (size <= 0) return;
   const frameTree = getFrameTree(shapeComposite);
