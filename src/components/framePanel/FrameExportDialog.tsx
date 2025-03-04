@@ -23,10 +23,11 @@ import {
 
 interface Props {
   open: boolean;
+  targetId?: string;
   onClose: () => void;
 }
 
-export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
+export const FrameExportDialog: React.FC<Props> = ({ open, onClose, targetId }) => {
   const { t } = useTranslation();
   const getCtx = useContext(GetAppStateContext);
 
@@ -50,6 +51,16 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     if (!open) return;
 
     setFrameIdSet((src) => {
+      if (targetId) {
+        const shapeComposite = getCtx().getShapeComposite();
+        const target = shapeComposite.shapeMap[targetId];
+        if (target && isFrameShape(target)) {
+          return new Set([targetId]);
+        } else {
+          return new Set(shapeComposite.mergedShapeTreeMap[targetId]?.children.map((c) => c.id));
+        }
+      }
+
       // Preserve previous selections if possible, or select all.
       const nextAllSet = new Set(frames.map((f) => f.id));
       const preservedSet = new Set(Array.from(src).filter((id) => nextAllSet.has(id)));
@@ -60,7 +71,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
         return preservedSet;
       }
     });
-  }, [open, frames]);
+  }, [open, frames, targetId, getCtx]);
 
   const handleExport = useCallback(async () => {
     const ctx = getCtx();

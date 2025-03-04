@@ -5,7 +5,7 @@ import iconLoope from "../../assets/icons/loope.svg";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import { TextInput } from "../atoms/inputs/TextInput";
-import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
+import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
 
 interface Props {
   id: string;
@@ -20,6 +20,7 @@ interface Props {
   onInsertBelow?: (id: string) => void;
   onDuplicate?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onExport?: (id: string) => void;
   onZoomIn?: (id: string, scaling?: boolean) => void;
 }
 
@@ -36,6 +37,7 @@ export const FrameItem: React.FC<Props> = ({
   onInsertBelow,
   onDuplicate,
   onDelete,
+  onExport,
   onZoomIn,
 }) => {
   const [popupOpen, setPopupOpen] = useState(false);
@@ -95,6 +97,10 @@ export const FrameItem: React.FC<Props> = ({
     onDelete?.(id);
   }, [id, onDelete]);
 
+  const handleExport = useCallback(() => {
+    onExport?.(id);
+  }, [id, onExport]);
+
   const finishRename = useCallback(() => {
     onNameChange?.(id, draftName);
     setRenaming(false);
@@ -123,8 +129,12 @@ export const FrameItem: React.FC<Props> = ({
   const popupMenu = (
     <div className="w-max flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
+      <ListSpacer />
       <ListButton onClick={handleInsertBelow}>Insert below</ListButton>
       <ListButton onClick={handleDuplicate}>Duplicate</ListButton>
+      <ListSpacer />
+      <ListButton onClick={handleExport}>Export</ListButton>
+      <ListSpacer />
       <ListIconButton icon={iconDustbinRed} onClick={handleDelete}>
         <span className="text-red-500 font-semibold">Delete</span>
       </ListIconButton>

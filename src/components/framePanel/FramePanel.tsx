@@ -50,12 +50,19 @@ export const FramePanel: React.FC = () => {
   }, []);
 
   const [openExportDialog, setOpenExportDialog] = useState(false);
+  const [exportTargetId, setExportTargetId] = useState<string>();
   const handlecloseExportDialog = useCallback(() => {
+    setExportTargetId(undefined);
     setOpenExportDialog(false);
   }, []);
 
   const handleExport = useCallback(() => {
     setPopupOpen("");
+    setOpenExportDialog(true);
+  }, []);
+
+  const handleExportByFrame = useCallback((id: string) => {
+    setExportTargetId(id);
     setOpenExportDialog(true);
   }, []);
 
@@ -98,10 +105,10 @@ export const FramePanel: React.FC = () => {
         </OutsideObserver>
       </div>
       <div className="overflow-auto">
-        <FrameTreePanel />
+        <FrameTreePanel onFrameExport={handleExportByFrame} />
       </div>
       <FrameToolPanel />
-      <FrameExportDialog open={openExportDialog} onClose={handlecloseExportDialog} />
+      <FrameExportDialog open={openExportDialog} targetId={exportTargetId} onClose={handlecloseExportDialog} />
       <Slideshow ref={slideshowRef} />
     </div>
   );

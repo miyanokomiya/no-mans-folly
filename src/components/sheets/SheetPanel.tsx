@@ -6,7 +6,7 @@ import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { getSheetURL } from "../../utils/route";
 import { OutsideObserver } from "../atoms/OutsideObserver";
-import { ListButton, ListIconButton } from "../atoms/buttons/ListButton";
+import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
 
 interface Props {
   sheet: Sheet;
@@ -87,6 +87,7 @@ export const SheetPanel: React.FC<Props> = ({
   const popupMenu = (
     <div className="flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
+      <ListSpacer />
       <ListIconButton icon={iconDustbinRed} onClick={handleDeleteClick} disabled={!canDeleteSheet}>
         <span className="text-red-500 font-semibold">Delete</span>
       </ListIconButton>

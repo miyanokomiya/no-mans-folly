@@ -29,7 +29,11 @@ import { duplicateFrameTreeItem, insertFrameTreeItem } from "../../composables/s
 
 type DropOperation = "above" | "below" | "adopt";
 
-export const FrameTreePanel: React.FC = () => {
+type Props = {
+  onFrameExport?: (id: string) => void;
+};
+
+export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
   const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
@@ -256,6 +260,7 @@ export const FrameTreePanel: React.FC = () => {
               onInsertBelow={handleInsertBelow}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onExport={onFrameExport}
             />
           </li>
         ))}
@@ -292,6 +297,7 @@ interface UITreeNodeProps {
   onInsertBelow?: (id: string) => void;
   onDuplicate?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onExport?: (id: string) => void;
   sheetColor: string;
   getThumbnail?: () => React.ReactNode;
 }
@@ -315,6 +321,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   onInsertBelow,
   onDuplicate,
   onDelete,
+  onExport,
   getThumbnail,
 }) => {
   const handleSelect = useCallback(
@@ -403,6 +410,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             onInsertBelow={onInsertBelow}
             onDuplicate={onDuplicate}
             onDelete={onDelete}
+            onExport={onExport}
             onZoomIn={onZoomIn}
           >
             {getThumbnail ? <div className="h-24">{getThumbnail()}</div> : undefined}
@@ -426,6 +434,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
                 onInsertBelow={onInsertBelow}
                 onDuplicate={onDuplicate}
                 onDelete={onDelete}
+                onExport={onExport}
               />
             </li>
           ))}

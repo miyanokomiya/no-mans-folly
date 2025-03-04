@@ -107,7 +107,7 @@ export const FixedPopupButton: React.FC<FixedPopupButtonOption> = ({
 
     const bounds = ref.current.getBoundingClientRect();
     const classBase =
-      "z-10 fixed bg-white border rounded-xs p-1 drop-shadow-md " + (translateY === undefined ? "opacity-0 " : "");
+      "z-10 fixed bg-white border rounded-xs drop-shadow-md " + (translateY === undefined ? "opacity-0 " : "");
     const translateAdjustment = translateY ? ` translateY(${translateY}px)` : "";
 
     switch (popupPosition) {
