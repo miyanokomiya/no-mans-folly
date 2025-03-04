@@ -11,6 +11,8 @@ interface Props {
   id: string;
   name: string;
   index: number;
+  prime?: boolean;
+  selected?: boolean;
   children?: React.ReactNode;
   onDown?: (e: React.PointerEvent) => void;
   onSelect?: (e: React.MouseEvent) => void;
@@ -25,6 +27,8 @@ export const FrameItem: React.FC<Props> = ({
   id,
   name,
   index,
+  prime,
+  selected,
   children,
   onDown,
   onSelect,
@@ -38,7 +42,10 @@ export const FrameItem: React.FC<Props> = ({
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
 
-  const rootClass = "w-full min-w-60 border rounded-xs flex flex-col relative" + (children ? "" : " p-1");
+  const rootClass =
+    "w-full min-w-60 border rounded-xs flex flex-col relative" +
+    (children ? "" : " p-1") +
+    (prime ? " border-red-300 bg-red-300" : selected ? " border-yellow-300 bg-yellow-300" : "");
 
   const closePopup = useCallback(() => {
     setPopupOpen(false);

@@ -378,7 +378,6 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     ) : undefined;
 
   const hasChildren = childNode.length > 0;
-  const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : " hover:bg-gray-200";
 
   return (
     <div
@@ -387,15 +386,17 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
       data-draggable={draggable || undefined}
       className={"relative" + (level === 0 ? " pb-1" : " pt-1")}
     >
-      <div data-anchor-root className="flex items-center relative">
+      <div data-anchor-root className={"flex items-center relative"}>
         <div
-          className={"rounded-xs w-full flex items-center gap-2 select-none touch-none" + selectedClass}
+          className="rounded-xs w-full flex items-center gap-2 select-none touch-none"
           onPointerEnter={handleNodePointerEnter}
         >
           <FrameItem
             id={id}
             name={name}
             index={index}
+            prime={prime}
+            selected={selected}
             onDown={handleNodeDown}
             onSelect={handleSelect}
             onNameChange={onNameChange}
