@@ -134,6 +134,13 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
     [setExportOptions],
   );
 
+  const handleRoundFloatChange = useCallback(
+    (val: boolean) => {
+      setExportOptions((src) => ({ ...src, roundFloat: val }));
+    },
+    [setExportOptions],
+  );
+
   const fileOptions = useMemo(
     () => [
       { value: "png", label: "PNG" },
@@ -235,6 +242,14 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose }) => {
                 <SelectInput value={exportOptions.imageType} options={fileOptions} onChange={handleFileTypeChange} />
               </InlineField>
             </div>
+            {exportOptions.imageType === "svg" || exportOptions.imageType === "folly-svg" ? (
+              <BlockGroupField label={t("export.options.svg_options")}>
+                <InlineField label={t("export.options.round_float")}>
+                  <ToggleInput value={!!exportOptions.roundFloat} onChange={handleRoundFloatChange} />
+                </InlineField>
+                <p className="text-sm">{"(e.g. 10.00000001 -> 10)"}</p>
+              </BlockGroupField>
+            ) : undefined}
             {exportOptions.imageType === "print" ? (
               <BlockGroupField label={t("export.options.print_options")}>
                 <InlineField label={t("export.options.hidename_onprint")}>

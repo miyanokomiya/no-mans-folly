@@ -22,6 +22,28 @@ describe("createSVGElement", () => {
     expect(result0.id).toBe("a");
     expect(result0.getAttribute("width")).toBe("10");
   });
+
+  test("should return SVG element: rounded coordinates", () => {
+    const path = createSVGElement<SVGPathElement>(
+      "rect",
+      { id: "a", d: "M 11.8999999999 0 L 1 2.4999999999999", transform: "matrix(1,0,0,1,21.399999999,11.399999999)" },
+      undefined,
+      { roundFloat: true },
+    );
+    expect(path.getAttribute("d")).toBe("M 11.9 0 L 1 2.5");
+    expect(path.getAttribute("transform")).toBe("matrix(1 0 0 1 21.4 11.4)");
+
+    const rect = createSVGElement<SVGRectElement>(
+      "rect",
+      { id: "a", x: "1.8999999999", y: "2.8999999999", width: "11.8999999999", height: "21.8999999999" },
+      undefined,
+      { roundFloat: true },
+    );
+    expect(rect.getAttribute("x")).toBe("1.9");
+    expect(rect.getAttribute("y")).toBe("2.9");
+    expect(rect.getAttribute("width")).toBe("11.9");
+    expect(rect.getAttribute("height")).toBe("21.9");
+  });
 });
 
 describe("renderTransform", () => {

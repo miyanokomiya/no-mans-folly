@@ -5,7 +5,7 @@ import { getShapeTextBounds } from "../shapes";
 import { hasStrokeStyle } from "../shapes/core";
 import { blobToBase64 } from "../utils/fileAccess";
 import { createTemplateShapeEmbedElement } from "../shapes/utils/shapeTemplateUtil";
-import { createSVGElement, createSVGSVGElement, renderTransform } from "../utils/svgElements";
+import { createSVGElement, createSVGSVGElement, renderTransform, SVGElementOption } from "../utils/svgElements";
 import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
@@ -18,12 +18,12 @@ import { pathSegmentRawsToString } from "okageo";
 import { renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { CanvasCTX } from "../utils/types";
 
-interface Option {
+type Option = {
   shapeComposite: ShapeComposite;
   getDocumentMap: () => { [id: string]: DocOutput };
   imageStore?: ImageStore;
   assetAPI: AssetAPI;
-}
+} & SVGElementOption;
 
 export function newShapeSVGRenderer(option: Option) {
   const { mergedShapeMap } = option.shapeComposite;
@@ -143,7 +143,7 @@ function createShapeElement(option: Option, ctx: CanvasCTX, shape: Shape, doc?: 
   if (!shapeElmInfo) return;
 
   if (!doc || hasDocNoContent(doc)) {
-    const shapeElm = createSVGElement(shapeElmInfo.tag, shapeElmInfo.attributes, shapeElmInfo.children);
+    const shapeElm = createSVGElement(shapeElmInfo.tag, shapeElmInfo.attributes, shapeElmInfo.children, option);
     return shapeElm;
   }
 
@@ -158,7 +158,7 @@ function createShapeElement(option: Option, ctx: CanvasCTX, shape: Shape, doc?: 
     docElmInfo.attributes ??= {};
     docElmInfo.attributes.transform = renderTransform(bounds.affine);
   }
-  const wrapperElm = createSVGElement("g", undefined, [shapeElmInfo, docElmInfo]);
+  const wrapperElm = createSVGElement("g", undefined, [shapeElmInfo, docElmInfo], option);
   return wrapperElm;
 }
 

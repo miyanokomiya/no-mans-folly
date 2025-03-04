@@ -1438,3 +1438,14 @@ export function getRectPathRotation(rectPath: IVec2[]): number {
   const [tl, tr, , bl] = rectPath;
   return isSame(tr, tl) ? getRadian(bl, tl) - Math.PI / 2 : getRadian(tr, tl);
 }
+
+const MINVALUE_SCALE = Math.pow(10, -Math.round(Math.log10(MINVALUE)));
+
+/**
+ * This one should be used only when the value no longer needs to be precise.
+ * e.g. 9.9999999999 => 10
+ */
+export function roundFloatingError(val: number): number {
+  const n = Math.round(val * MINVALUE_SCALE) / MINVALUE_SCALE;
+  return Math.abs(val - n) < MINVALUE ? n : val;
+}

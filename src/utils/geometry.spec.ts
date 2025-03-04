@@ -88,6 +88,7 @@ import {
   getViewportForRectWithinSize,
   getRectPathRotation,
   snapNumberFloor,
+  roundFloatingError,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2116,5 +2117,15 @@ describe("getRectPathRotation", () => {
       ]),
       "zero width",
     ).toBeCloseTo(Math.PI / 4);
+  });
+});
+
+describe("roundFloatingError", () => {
+  test("should round floating error", () => {
+    expect(roundFloatingError(0.0001)).toBe(0.0001);
+    expect(roundFloatingError(9e-10)).toBe(0);
+    expect(roundFloatingError(9.9999999999)).toBe(10);
+    expect(roundFloatingError(9.6999999999)).toBe(9.7);
+    expect(roundFloatingError(9.6499999999)).toBe(9.65);
   });
 });

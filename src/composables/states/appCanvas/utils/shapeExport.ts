@@ -27,6 +27,7 @@ export interface ExportFrameOptions {
   hideFrame?: boolean;
   sequencePrefix?: boolean;
   hideNameOnPrint?: boolean;
+  roundFloat?: boolean;
 }
 
 export async function exportFrameAsPNG(
@@ -85,7 +86,7 @@ export async function exportFrameAsSVG(
   frameIdSet: Set<string>,
   onProgress: (progress: number) => void,
   withMeta: boolean,
-  options: Pick<ExportFrameOptions, "hideFrame" | "sequencePrefix">,
+  options: Pick<ExportFrameOptions, "hideFrame" | "sequencePrefix" | "roundFloat">,
 ) {
   if (frameIdSet.size === 0) return;
 
@@ -113,6 +114,7 @@ export async function exportFrameAsSVG(
       getDocumentMap: ctx.getDocumentMap,
       imageStore: ctx.getImageStore(),
       assetAPI: ctx.assetAPI,
+      roundFloat: options.roundFloat,
     });
     const builder = newSVGImageBuilder({
       render: withMeta ? renderer.renderWithMeta : renderer.render,
