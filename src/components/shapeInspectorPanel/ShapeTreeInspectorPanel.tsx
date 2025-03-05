@@ -6,11 +6,7 @@ export const ShapeTreeInspectorPanel: React.FC = () => {
   return (
     <div className="h-full">
       <ResizablePanelV
-        top={
-          <div className="p-2">
-            <ShapeTreePanel />
-          </div>
-        }
+        top={<ShapeTreePanel />}
         bottom={
           <div className="p-2 pt-0">
             <ShapeInspectorPanel />

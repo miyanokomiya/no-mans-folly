@@ -27,6 +27,7 @@ export const ShapeTreePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
   const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const shapeComposite = useStaticShapeComposite();
   const documentMap = useDocumentMapWithoutTmpInfo();
@@ -133,6 +134,7 @@ export const ShapeTreePanel: React.FC = () => {
   );
 
   useEffect(() => {
+    if (!rootRef.current) return;
     if (!draggingTarget) {
       setDropTo(undefined);
       return;
@@ -155,6 +157,21 @@ export const ShapeTreePanel: React.FC = () => {
       return;
     }
 
+    const anchorRootElm = wrapperElm.querySelector<HTMLElement>("[data-anchor-root]")!;
+    const anchorRootRect = anchorRootElm.getBoundingClientRect();
+
+    {
+      const margin = 40;
+      const shift = 6;
+      const rootRect = rootRef.current.getBoundingClientRect();
+      const p = draggingTarget[2];
+      if (p.y <= rootRect.top + margin) {
+        rootRef.current.scrollBy({ top: -shift });
+      } else if (rootRect.bottom - margin <= p.y) {
+        rootRef.current.scrollBy({ top: shift });
+      }
+    }
+
     const id = wrapperElm.getAttribute("data-id")!;
     if (id === draggingTarget[1]) {
       setDropTo(undefined);
@@ -162,8 +179,7 @@ export const ShapeTreePanel: React.FC = () => {
     }
 
     const target = shapeComposite.mergedShapeTreeMap[id];
-    const rect = wrapperElm.querySelector("[data-anchor]")!.getBoundingClientRect();
-    const offsetRate = (draggingTarget[2].y - rect.top) / rect.height;
+    const offsetRate = (draggingTarget[2].y - anchorRootRect.top) / anchorRootRect.height;
 
     if (offsetRate < 0.4) {
       setDropTo([id, "above"]);
@@ -178,7 +194,7 @@ export const ShapeTreePanel: React.FC = () => {
   }, [draggingTarget, shapeComposite]);
 
   return (
-    <div>
+    <div ref={rootRef} className="h-full p-2 overflow-auto">
       <ul className="relative flex flex-col items-start" style={{ gap: 1 }}>
         {rootNodeProps.map((n) => (
           <li key={n.id} className="w-full">
@@ -302,7 +318,7 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
 
   return (
     <div ref={rootRef} data-id={id} data-draggable={draggable || undefined} className="relative">
-      <div data-anchor className="flex items-center relative">
+      <div data-anchor-root className="flex items-center relative">
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
         <button
           type="button"

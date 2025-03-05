@@ -104,7 +104,7 @@ export const FramePanel: React.FC = () => {
           </div>
         </OutsideObserver>
       </div>
-      <div className="overflow-auto">
+      <div className="overflow-hidden">
         <FrameTreePanel onFrameExport={handleExportByFrame} />
       </div>
       <FrameToolPanel />
