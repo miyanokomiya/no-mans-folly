@@ -100,7 +100,7 @@ const ContextItem: React.FC<ContextItemProps> = ({ item, viewSize, dropdownKey, 
     );
 
   return (
-    <div className="relative">
+    <div className="relative border-b last:border-none">
       {/* This div prevents redundant white space when child list displays. */}
       <div>
         <ListButton onClick={handleClick}>

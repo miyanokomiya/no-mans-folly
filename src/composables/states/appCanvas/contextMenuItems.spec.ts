@@ -6,12 +6,14 @@ import { createStyleScheme } from "../../../models/factories";
 import { newShapeComposite } from "../../shapeComposite";
 import {
   CONTEXT_MENU_ITEM_SRC,
+  createFrameForShapes,
   getMenuItemsForSelectedShapes,
   groupShapes,
   handleContextItemEvent,
   isSameContextItem,
   ungroupShapes,
 } from "./contextMenuItems";
+import { RectPolygonShape } from "../../../shapes/rectPolygon";
 
 function getMockCtx() {
   return {
@@ -191,5 +193,48 @@ describe("ungroupShapes", () => {
       b: { parentId: undefined },
     });
     expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a", "b"]);
+  });
+});
+
+describe("createFrameForShapes", () => {
+  test("should create a frame accommodating shapes", () => {
+    const ctx = getMockCtx();
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape<RectPolygonShape>(getCommonStruct, "rectangle", {
+            id: "a",
+            p: { x: 0, y: 0 },
+            width: 30,
+            height: 30,
+          }),
+          createShape<RectPolygonShape>(getCommonStruct, "rectangle", {
+            id: "b",
+            p: { x: 100, y: 0 },
+            width: 30,
+            height: 30,
+          }),
+        ],
+        getStruct: getCommonStruct,
+      });
+
+    const res0 = createFrameForShapes(ctx, 10);
+    expect(res0).toBe(false);
+    expect(ctx.addShapes).not.toHaveBeenCalled();
+    expect(ctx.selectShape).not.toHaveBeenCalled();
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
+    ctx.generateUuid = () => "frame";
+    const res1 = createFrameForShapes(ctx, 10);
+    expect(res1).toBe(true);
+    expect(ctx.addShapes).toHaveBeenCalledWith([
+      createShape<RectPolygonShape>(getCommonStruct, "frame", {
+        id: "frame",
+        p: { x: -10.5, y: -10.5 },
+        width: 151,
+        height: 51,
+      }),
+    ]);
+    expect(ctx.selectShape).toHaveBeenCalledWith("frame");
   });
 });

@@ -211,13 +211,18 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
           const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
           const items: ContextMenuItem[] = [];
 
-          if (canGroupShapes(shapeComposite, targetIds)) {
+          const canGroup = canGroupShapes(shapeComposite, targetIds);
+          if (canGroup) {
             items.push(CONTEXT_MENU_ITEM_SRC.GROUP);
           }
 
           const groups = targetIds.map((id) => shapeMap[id]).filter(isGroupShape);
           if (groups.length > 0) {
             items.push(CONTEXT_MENU_ITEM_SRC.UNGROUP);
+          }
+
+          if (canGroup) {
+            items.push(CONTEXT_MENU_ITEM_SRC.CREATE_FRAME);
           }
 
           if (items.length > 0) {

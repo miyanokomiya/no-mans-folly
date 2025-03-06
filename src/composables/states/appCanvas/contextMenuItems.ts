@@ -18,6 +18,8 @@ import { saveFileInWeb, getExportParamsForSelectedShapes, getExportParamsForSele
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import iconRefinement from "../../../assets/icons/refinement.svg";
 import iconDustbinRed from "../../../assets/icons/dustbin_red.svg";
+import { RectPolygonShape } from "../../../shapes/rectPolygon";
+import { expandRect } from "../../../utils/geometry";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -49,6 +51,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.ungroup"),
       key: "UNGROUP",
+    };
+  },
+  get CREATE_FRAME() {
+    return {
+      label: i18n.t("contextmenu.create_frame"),
+      key: "CREATE_FRAME",
     };
   },
   get LOCK() {
@@ -228,6 +236,10 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.UNGROUP.key: {
       ungroupShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.CREATE_FRAME.key: {
+      createFrameForShapes(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.LOCK.key: {
@@ -428,6 +440,32 @@ export function ungroupShapes(ctx: AppCanvasStateContext): boolean {
 
   ctx.deleteShapes(Array.from(groupIdSet), patch);
   ctx.multiSelectShapes(Object.keys(patch));
+  return true;
+}
+
+/**
+ * Default margin doesn't have much meaning here. It's just to make the frame look a bit better.
+ */
+export function createFrameForShapes(ctx: AppCanvasStateContext, margin = 10): boolean {
+  const shapeComposite = ctx.getShapeComposite();
+  const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (targetIds.length === 0 || !canGroupShapes(shapeComposite, targetIds)) return false;
+
+  const rect = expandRect(
+    shapeComposite.getWrapperRectForShapes(
+      targetIds.map((id) => shapeComposite.shapeMap[id]),
+      true,
+    ),
+    margin,
+  );
+  const frame = createShape<RectPolygonShape>(shapeComposite.getShapeStruct, "frame", {
+    id: ctx.generateUuid(),
+    p: { x: rect.x, y: rect.y },
+    width: rect.width,
+    height: rect.height,
+  });
+  ctx.addShapes([frame]);
+  ctx.selectShape(frame.id);
   return true;
 }
 
