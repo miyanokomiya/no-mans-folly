@@ -89,6 +89,7 @@ import {
   getRectPathRotation,
   snapNumberFloor,
   roundFloatingError,
+  getOverlappedAreaOfRects,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1027,6 +1028,42 @@ describe("isRectOverlappedV", () => {
     expect(isRectOverlappedV(rect, { x: 10, y: 0, width: 80, height: 100 })).toBe(true);
     expect(isRectOverlappedV(rect, { x: 110, y: 0, width: 100, height: 100 })).toBe(false);
     expect(isRectOverlappedV(rect, { x: -110, y: 0, width: 100, height: 100 })).toBe(false);
+  });
+});
+
+describe("getOverlappedAreaOfRects", () => {
+  test("should return true if rectangles overlap vertically", () => {
+    const rect: IRectangle = { x: 0, y: 0, width: 100, height: 100 };
+    expect(getOverlappedAreaOfRects([rect, rect])).toEqualRect(rect);
+    expect(getOverlappedAreaOfRects([rect, { x: 10, y: 0, width: 100, height: 100 }])).toEqualRect({
+      x: 10,
+      y: 0,
+      width: 90,
+      height: 100,
+    });
+    expect(getOverlappedAreaOfRects([rect, { x: -10, y: 0, width: 100, height: 100 }])).toEqualRect({
+      x: 0,
+      y: 0,
+      width: 90,
+      height: 100,
+    });
+    expect(getOverlappedAreaOfRects([rect, { x: 10, y: 0, width: 80, height: 100 }])).toEqualRect({
+      x: 10,
+      y: 0,
+      width: 80,
+      height: 100,
+    });
+    expect(getOverlappedAreaOfRects([rect, { x: -10, y: -10, width: 120, height: 120 }])).toEqualRect(rect);
+    expect(getOverlappedAreaOfRects([rect, { x: 10, y: 10, width: 80, height: 80 }])).toEqualRect({
+      x: 10,
+      y: 10,
+      width: 80,
+      height: 80,
+    });
+    expect(getOverlappedAreaOfRects([rect, { x: 110, y: 0, width: 100, height: 100 }])).toBe(undefined);
+    expect(getOverlappedAreaOfRects([rect, { x: -110, y: 0, width: 100, height: 100 }])).toBe(undefined);
+    expect(getOverlappedAreaOfRects([rect, { x: 100, y: 0, width: 100, height: 100 }])).toBe(undefined);
+    expect(getOverlappedAreaOfRects([rect, { x: 0, y: 100, width: 100, height: 100 }])).toBe(undefined);
   });
 });
 

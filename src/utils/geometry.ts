@@ -652,6 +652,24 @@ export function isRectOverlappedV(a: IRectangle, b: IRectangle): boolean {
   return isRangeOverlapped([a.x, a.x + a.width], [b.x, b.x + b.width]);
 }
 
+export function getOverlappedAreaOfRects(rects: IRectangle[]): IRectangle | undefined {
+  if (rects.length === 0) return;
+
+  let x = -Infinity;
+  let y = -Infinity;
+  let right = Infinity;
+  let bottom = Infinity;
+  rects.forEach((r) => {
+    x = Math.max(x, r.x);
+    y = Math.max(y, r.y);
+    right = Math.min(right, r.x + r.width);
+    bottom = Math.min(bottom, r.y + r.height);
+  });
+  const width = right - x;
+  const height = bottom - y;
+  return width > 0 && height > 0 ? { x, y, width, height } : undefined;
+}
+
 export function getCrossLineAndLine(line0: IVec2[], line1: IVec2[]): IVec2 | undefined {
   if (isParallel(sub(line0[0], line0[1]), sub(line1[0], line1[1]))) return;
 

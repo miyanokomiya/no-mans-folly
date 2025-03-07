@@ -5,7 +5,7 @@ import { getShapeTextBounds } from "../shapes";
 import { hasStrokeStyle } from "../shapes/core";
 import { GroupShape, isGroupShape } from "../shapes/group";
 import { splitList } from "../utils/commons";
-import { expandRect, getIsRectHitRectFn, getRectPoints } from "../utils/geometry";
+import { expandRect, getIsRectHitRectFn, getOverlappedAreaOfRects, getRectPoints } from "../utils/geometry";
 import { CanvasCTX } from "../utils/types";
 import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
@@ -76,8 +76,11 @@ export function newShapeRenderer(option: Option) {
     }
 
     canvasBank.beginCanvas((subCanvas) => {
-      // Expand the wrapper rect to make sure it accommodates edge part of the shape.
-      const rect = expandRect(shapeComposite.getWrapperRect(shape, true), 50);
+      // Expand the wrapper rect a bit to make sure it accommodates edge part of the shape.
+      const shapeRect = expandRect(shapeComposite.getWrapperRect(shape, true), 2);
+      // Seek minimal rect to make canvas size as small as possible.
+      const rect = option.targetRect ? getOverlappedAreaOfRects([shapeRect, option.targetRect]) : shapeRect;
+      if (!rect) return;
 
       // Adjust the size of sub canvas along with the scale.
       // => This prevents the shape from being blurry in main canvas.
