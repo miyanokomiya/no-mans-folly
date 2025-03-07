@@ -15,6 +15,9 @@ import { CanvasBank, newCanvasBank } from "./canvasBank";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";
 
+// Should avoid making too large canvas that significantly reduces performance.
+const MAX_CANVAS_SIZE = 2000;
+
 interface Option {
   shapeComposite: ShapeComposite;
   getDocumentMap?: () => { [id: string]: DocOutput };
@@ -75,15 +78,25 @@ export function newShapeRenderer(option: Option) {
     canvasBank.beginCanvas((subCanvas) => {
       // Expand the wrapper rect to make sure it accommodates edge part of the shape.
       const rect = expandRect(shapeComposite.getWrapperRect(shape, true), 50);
-      subCanvas.width = rect.width;
-      subCanvas.height = rect.height;
+
+      // Adjust the size of sub canvas along with the scale.
+      // => This prevents the shape from being blurry in main canvas.
+      let invScale = option.scale ? 1 / option.scale : 1;
+      const longEdge = Math.max(rect.width, rect.height);
+      if (longEdge * invScale > MAX_CANVAS_SIZE) {
+        invScale = MAX_CANVAS_SIZE / longEdge;
+      }
+
+      subCanvas.width = rect.width * invScale;
+      subCanvas.height = rect.height * invScale;
       const subCtx = subCanvas.getContext("2d")!;
       subCtx.reset();
-      subCtx.clearRect(0, 0, rect.width, rect.height);
+      subCtx.clearRect(0, 0, subCanvas.width, subCanvas.height);
+      subCtx.scale(invScale, invScale);
       subCtx.translate(-rect.x, -rect.y);
       renderShapeTreeStep(subCtx, node, shape);
       scaleGlobalAlpha(ctx, alpha, () => {
-        ctx.drawImage(subCanvas, 0, 0, rect.width, rect.height, rect.x, rect.y, rect.width, rect.height);
+        ctx.drawImage(subCanvas, 0, 0, subCanvas.width, subCanvas.height, rect.x, rect.y, rect.width, rect.height);
       });
     });
   }
