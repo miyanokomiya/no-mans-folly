@@ -96,15 +96,16 @@ export const NumberInput: React.FC<Props> = ({
     [value, startLock, disabled],
   );
 
-  const siderView = slider && !disabled && isPointerLockAvailable();
+  const sliderView = slider && !disabled && isPointerLockAvailable();
   const inputClass = [
-    "py-1 px-2 w-full text-right",
-    siderView ? "rounded-l" : "rounded-xs",
+    "py-1 px-2 w-full text-right border rounded-xs",
+    sliderView ? "rounded-r-none border-r-0" : "",
+    locked ? "border-blue-400" : "",
     disabled ? " bg-gray-100" : "",
   ].join(" ");
 
   return (
-    <div className={"w-full flex items-center border" + (locked ? " border-blue-400" : "")}>
+    <div className="w-full flex items-center">
       <input
         ref={ref}
         type="text"
@@ -116,9 +117,9 @@ export const NumberInput: React.FC<Props> = ({
         placeholder={placeholder}
         disabled={disabled}
       />
-      {siderView ? (
+      {sliderView ? (
         <div
-          className="w-4 h-8 bg-gray-300 cursor-col-resize rounded-r"
+          className="w-4 h-8.5 bg-gray-300 cursor-col-resize rounded-r-xs"
           onMouseDown={handleDownSlider}
           onMouseUp={stopLock}
         />
