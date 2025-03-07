@@ -526,7 +526,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
       ) : undefined}
       <button
         type="button"
-        className="w-10 h-10 border rounded-xs bg-white p-1 flex justify-center items-center"
+        className="w-10.5 h-10.5 border rounded-xs bg-white flex justify-center items-center"
         onClick={handleContextMenuClick}
       >
         <img src={menuIcon} alt="Context menu" className="w-6 h-6" />

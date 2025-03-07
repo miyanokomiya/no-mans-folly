@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { LineHead } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 
-import iconHeadSwap from "../../assets/icons/head_swap.svg";
+import iconSwap from "../../assets/icons/swap.svg";
 import iconHeadNone from "../../assets/icons/head_none.svg";
 import iconHeadOpen from "../../assets/icons/head_open.svg";
 
@@ -147,7 +147,7 @@ export const LineHeadItems: React.FC<Props> = ({
         </PopupButton>
       </div>
       <button type="button" className="w-7 h-7 p-1 border rounded-xs" onClick={onHeadSwapClick}>
-        <img src={iconHeadSwap} alt="Swap heads" />
+        <img src={iconSwap} alt="Swap heads" />
       </button>
       <div onPointerEnter={handleLastVertexEnter} onPointerLeave={handleLeave}>
         <PopupButton

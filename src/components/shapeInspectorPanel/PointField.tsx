@@ -1,7 +1,7 @@
 import { IVec2 } from "okageo";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { useCallback, useRef } from "react";
-import iconHeadSwap from "../../assets/icons/head_swap.svg";
+import iconSwap from "../../assets/icons/swap.svg";
 
 interface Props {
   value: IVec2;
@@ -66,7 +66,7 @@ export const PointField: React.FC<Props> = ({
       </div>
       {swappable ? (
         <button type="button" className="rounded-xs p-0.5 border hover:bg-gray-200 w-6 h-6" onClick={handleSwap}>
-          <img src={iconHeadSwap} alt="Swap" className="w-full h-full" />
+          <img src={iconSwap} alt="Swap" className="w-full h-full" />
         </button>
       ) : undefined}
       <div className={fieldClassName}>
