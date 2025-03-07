@@ -7,6 +7,7 @@ import iconTrapezoid from "../assets/icons/shape_trapezoid.svg";
 import iconParallelogram from "../assets/icons/shape_parallelogram.svg";
 import iconCapsule from "../assets/icons/shape_capsule.svg";
 import iconChevron from "../assets/icons/shape_chevron.svg";
+import iconRibbon from "../assets/icons/shape_ribbon.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
 import iconDocumentSymbol from "../assets/icons/shape_document_symbol.svg";
 import iconStar from "../assets/icons/shape_star.svg";
@@ -66,6 +67,7 @@ import { newBracketSelectedState } from "./states/appCanvas/brackets/bracketSele
 import { newAngleBracketSelectedState } from "./states/appCanvas/brackets/angleBracketSelectedState";
 import { newFrameAlignGroupSelectedState } from "./states/appCanvas/frameAlign/frameAlignGroupSelectedState";
 import { newChevronSelectedState } from "./states/appCanvas/chevron/chevronSelectedState";
+import { newRibbonSelectedState } from "./states/appCanvas/ribbon/ribbonSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -80,6 +82,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "parallelogram", icon: iconParallelogram },
   { type: "capsule", icon: iconCapsule },
   { type: "chevron", icon: iconChevron },
+  { type: "ribbon", icon: iconRibbon },
   { type: "cylinder", icon: iconCylinder },
   { type: "document_symbol", icon: iconDocumentSymbol },
   { type: "star", icon: iconStar },
@@ -160,6 +163,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newCapsuleSelectedState;
     case "chevron":
       return newChevronSelectedState;
+    case "ribbon":
+      return newRibbonSelectedState;
     case "cross":
     case "diagonal_cross":
       return newDiagonalCrossSelectedState;
