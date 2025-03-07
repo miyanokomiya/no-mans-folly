@@ -17,6 +17,7 @@ import { struct as triangle } from "./polygons/triangle";
 import { struct as trapezoid } from "./polygons/trapezoid";
 import { struct as parallelogram } from "./polygons/parallelogram";
 import { struct as capsule } from "./polygons/capsule";
+import { struct as chevron } from "./polygons/chevron";
 import { struct as cylinder } from "./polygons/cylinder";
 import { struct as document_symbol } from "./polygons/documentSymbol";
 import { struct as star } from "./polygons/star";
@@ -63,6 +64,7 @@ export const SHAPE_COMMON_STRUCTS: {
   trapezoid,
   parallelogram,
   capsule,
+  chevron,
   cylinder,
   document_symbol,
   star,

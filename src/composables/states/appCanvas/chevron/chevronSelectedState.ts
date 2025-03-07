@@ -1,22 +1,19 @@
-import { CapsuleShape } from "../../../../shapes/polygons/capsule";
+import { ChevronShape } from "../../../../shapes/polygons/chevron";
 import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import {
   EDGE_ANCHOR_MARGIN,
   SimplePolygonHandler,
-  getCornerRadiusLXMovingState,
-  getCornerRadiusLYMovingState,
   getCornerRadiusRXMovingState,
-  getCornerRadiusRYMovingState,
   getResizeByState,
   handleSwitchDirection4,
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
 
-export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleShape, SimplePolygonHandler, never>(
+export const newChevronSelectedState = defineSingleSelectedHandlerState<ChevronShape, SimplePolygonHandler, never>(
   (getters) => {
     return {
-      getLabel: () => "CapsuleSelected",
+      getLabel: () => "ChevronSelected",
       handleEvent: (ctx, event) => {
         switch (event.type) {
           case "pointerdown":
@@ -30,26 +27,15 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
                 shapeHandler.saveHitResult(hitResult);
                 if (hitResult) {
                   switch (hitResult.type) {
-                    case "c0x":
-                      return () => getCornerRadiusLXMovingState(targetShape, "c0", event.data.options);
-                    case "c1x":
-                      return () => getCornerRadiusRXMovingState(targetShape, "c1", event.data.options);
-                    case "c0y":
-                      return () => getCornerRadiusLYMovingState(targetShape, "c0", event.data.options);
-                    case "c1y":
-                      return () => getCornerRadiusRYMovingState(targetShape, "c1", event.data.options);
+                    case "c0":
+                      return () =>
+                        getCornerRadiusRXMovingState(targetShape, "c0", event.data.options, {
+                          disableProportional: true,
+                        });
                     case "left":
-                      return () =>
-                        getResizeByState(3, shapeComposite, targetShape, [
-                          ["c0", { x: 0, y: 0 }],
-                          ["c1", { x: 1, y: 0 }],
-                        ]);
+                      return () => getResizeByState(3, shapeComposite, targetShape, [["c0", { x: 1, y: 0 }]]);
                     case "right":
-                      return () =>
-                        getResizeByState(1, shapeComposite, targetShape, [
-                          ["c0", { x: 0, y: 0 }],
-                          ["c1", { x: 1, y: 0 }],
-                        ]);
+                      return () => getResizeByState(1, shapeComposite, targetShape, [["c0", { x: 1, y: 0 }]]);
                     case "direction4": {
                       return handleSwitchDirection4(ctx, targetShape);
                     }
@@ -67,23 +53,16 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
       targetId: target.id,
       getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
-        const marginX = (EDGE_ANCHOR_MARGIN / s.width) * scale;
-        const marginY = (EDGE_ANCHOR_MARGIN / s.height) * scale;
+        const marginY = s.height === 0 ? 0 : (EDGE_ANCHOR_MARGIN / s.height) * scale;
         const list = getDirectionalLocalAbsolutePoints(target, s, [
           { x: s.c0.x, y: -marginY },
-          { x: s.c1.x, y: -marginY },
-          { x: -marginX, y: s.c0.y },
-          { x: 1 + marginX, y: s.c1.y },
           { x: 0, y: 0.5 },
           { x: 1, y: 0.5 },
         ]);
         return [
-          ["c0x", list[0]],
-          ["c1x", list[1]],
-          ["c0y", list[2]],
-          ["c1y", list[3]],
-          ["left", list[4]],
-          ["right", list[5]],
+          ["c0", list[0]],
+          ["left", list[1]],
+          ["right", list[2]],
         ];
       },
       direction4: true,

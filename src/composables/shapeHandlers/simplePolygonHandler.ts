@@ -133,10 +133,15 @@ export function renderShapeBounds(ctx: CanvasCTX, style: StyleScheme, path: IVec
   ctx.stroke();
 }
 
+type CornerRadiusMovingStateOption = {
+  disableProportional?: boolean;
+};
+
 export function getCornerRadiusLXMovingState<S extends SimplePolygonShape>(
   shape: S,
   key: keyof S,
   mouseOptions: MouseOptions,
+  option?: CornerRadiusMovingStateOption,
 ) {
   const getC = (s: S) => s[key] as IVec2;
 
@@ -144,7 +149,7 @@ export function getCornerRadiusLXMovingState<S extends SimplePolygonShape>(
   return movingShapeControlState<S>({
     targetId: shape.id,
     snapType: "custom",
-    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
@@ -155,7 +160,12 @@ export function getCornerRadiusLXMovingState<S extends SimplePolygonShape>(
         nextCX = Math.round(nextCX * s.width) / s.width;
         showLabel = true;
       }
-      return { [key]: { x: nextCX, y: movement.shift ? (nextCX * s.width) / s.height : getC(s).y } } as Partial<S>;
+      return {
+        [key]: {
+          x: nextCX,
+          y: movement.shift && !option?.disableProportional ? (nextCX * s.width) / s.height : getC(s).y,
+        },
+      } as Partial<S>;
     },
     getControlFn: (shape, scale) => {
       const s = getNormalizedSimplePolygonShape(shape);
@@ -183,6 +193,7 @@ export function getCornerRadiusRXMovingState<S extends SimplePolygonShape>(
   shape: S,
   key: keyof S,
   mouseOptions: MouseOptions,
+  option?: CornerRadiusMovingStateOption,
 ) {
   const getC = (s: S) => s[key] as IVec2;
 
@@ -190,7 +201,7 @@ export function getCornerRadiusRXMovingState<S extends SimplePolygonShape>(
   return movingShapeControlState<S>({
     targetId: shape.id,
     snapType: "custom",
-    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
@@ -202,7 +213,10 @@ export function getCornerRadiusRXMovingState<S extends SimplePolygonShape>(
         showLabel = true;
       }
       return {
-        [key]: { x: nextCX, y: movement.shift ? (s.width - nextCX * s.width) / s.height : getC(s).y },
+        [key]: {
+          x: nextCX,
+          y: movement.shift && !option?.disableProportional ? (s.width - nextCX * s.width) / s.height : getC(s).y,
+        },
       } as Partial<S>;
     },
     getControlFn: (shape, scale) => {
@@ -231,6 +245,7 @@ export function getCornerRadiusLYMovingState<S extends SimplePolygonShape>(
   shape: S,
   key: keyof S,
   mouseOptions: MouseOptions,
+  option?: CornerRadiusMovingStateOption,
 ) {
   const getC = (s: S) => s[key] as IVec2;
 
@@ -238,7 +253,7 @@ export function getCornerRadiusLYMovingState<S extends SimplePolygonShape>(
   return movingShapeControlState<S>({
     targetId: shape.id,
     snapType: "custom",
-    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
@@ -249,7 +264,12 @@ export function getCornerRadiusLYMovingState<S extends SimplePolygonShape>(
         nextCY = Math.round(nextCY * s.height) / s.height;
         showLabel = true;
       }
-      return { [key]: { x: movement.shift ? (nextCY * s.height) / s.width : getC(s).x, y: nextCY } } as Partial<S>;
+      return {
+        [key]: {
+          x: movement.shift && !option?.disableProportional ? (nextCY * s.height) / s.width : getC(s).x,
+          y: nextCY,
+        },
+      } as Partial<S>;
     },
     getControlFn: (shape, scale) => {
       const s = getNormalizedSimplePolygonShape(shape);
@@ -277,6 +297,7 @@ export function getCornerRadiusRYMovingState<S extends SimplePolygonShape>(
   shape: S,
   key: keyof S,
   mouseOptions: MouseOptions,
+  option?: CornerRadiusMovingStateOption,
 ) {
   const getC = (s: S) => s[key] as IVec2;
 
@@ -284,7 +305,7 @@ export function getCornerRadiusRYMovingState<S extends SimplePolygonShape>(
   return movingShapeControlState<S>({
     targetId: shape.id,
     snapType: "custom",
-    extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
+    extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
@@ -295,7 +316,12 @@ export function getCornerRadiusRYMovingState<S extends SimplePolygonShape>(
         nextCY = Math.round(nextCY * s.height) / s.height;
         showLabel = true;
       }
-      return { [key]: { x: movement.shift ? (nextCY * s.height) / s.width : getC(s).x, y: nextCY } } as Partial<S>;
+      return {
+        [key]: {
+          x: movement.shift && !option?.disableProportional ? (nextCY * s.height) / s.width : getC(s).x,
+          y: nextCY,
+        },
+      } as Partial<S>;
     },
     getControlFn: (shape, scale) => {
       const s = getNormalizedSimplePolygonShape(shape);
