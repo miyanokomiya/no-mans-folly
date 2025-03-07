@@ -9,6 +9,7 @@ import {
   handleSwitchDirection4,
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
+import { divideSafely } from "../../../../utils/geometry";
 
 export const newChevronSelectedState = defineSingleSelectedHandlerState<ChevronShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -53,7 +54,7 @@ export const newChevronSelectedState = defineSingleSelectedHandlerState<ChevronS
       targetId: target.id,
       getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
-        const marginY = s.height === 0 ? 0 : (EDGE_ANCHOR_MARGIN / s.height) * scale;
+        const marginY = divideSafely(EDGE_ANCHOR_MARGIN, s.height, 0) * scale;
         const list = getDirectionalLocalAbsolutePoints(target, s, [
           { x: s.c0.x, y: -marginY },
           { x: 0, y: 0.5 },

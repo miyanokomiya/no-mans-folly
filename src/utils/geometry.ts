@@ -63,6 +63,10 @@ export function isSameSize(a: Size, b: Size): boolean {
   return Math.abs(a.width - b.width) < MINVALUE && Math.abs(a.height - b.height) < MINVALUE;
 }
 
+export function divideSafely(dividee: number, divider: number, fallback: number): number {
+  return divider === 0 ? fallback : dividee / divider;
+}
+
 export function getRotateFn(radian: number, origin?: IVec2): (p: IVec2, reverse?: boolean) => IVec2 {
   if (radian === 0) return identityFn;
 

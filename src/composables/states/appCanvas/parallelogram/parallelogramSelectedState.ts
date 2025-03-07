@@ -3,7 +3,7 @@ import { movingShapeControlState } from "../movingShapeControlState";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
-import { getCrossLineAndLine, snapAngle } from "../../../../utils/geometry";
+import { divideSafely, getCrossLineAndLine, snapAngle } from "../../../../utils/geometry";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
@@ -152,7 +152,7 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
         const s = getNormalizedSimplePolygonShape(target);
         const list = getDirectionalLocalAbsolutePoints(target, s, [
           s.c0,
-          { x: getCrControlXRate(s), y: (-EDGE_ANCHOR_MARGIN / s.height) * scale },
+          { x: getCrControlXRate(s), y: divideSafely(-EDGE_ANCHOR_MARGIN, s.height, 0) * scale },
           { x: 0, y: 0.5 },
           { x: 1, y: 0.5 },
         ]);
@@ -168,11 +168,11 @@ export const newParallelogramSelectedState = defineSingleSelectedHandlerState<
 );
 
 function getCrControlYRate(shape: ParallelogramShape, scale: number) {
-  return (-EDGE_ANCHOR_MARGIN / shape.height) * scale;
+  return divideSafely(-EDGE_ANCHOR_MARGIN, shape.height, 0) * scale;
 }
 
 function getCrControlXRate(shape: ParallelogramShape) {
-  return getCrControlOriginXRate(shape) + (shape.cr ?? 0) / shape.width;
+  return getCrControlOriginXRate(shape) + divideSafely(shape.cr ?? 0, shape.width, 0);
 }
 
 function getCrControlOriginXRate(shape: ParallelogramShape) {

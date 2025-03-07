@@ -11,6 +11,7 @@ import {
 } from "../../../shapeHandlers/simplePolygonHandler";
 import { movingShapeControlState } from "../movingShapeControlState";
 import { applyAffine, clamp } from "okageo";
+import { divideSafely } from "../../../../utils/geometry";
 
 export const newArrowSelectedState = defineSingleSelectedHandlerState<OneSidedArrowShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -103,7 +104,7 @@ export const newArrowSelectedState = defineSingleSelectedHandlerState<OneSidedAr
         const s = getNormalizedSimplePolygonShape(target);
         const list = getDirectionalLocalAbsolutePoints(target, s, [
           s.headControl,
-          { x: s.tailControl.x - (EDGE_ANCHOR_MARGIN / s.width) * scale, y: s.tailControl.y },
+          { x: s.tailControl.x - divideSafely(EDGE_ANCHOR_MARGIN, s.width, 0) * scale, y: s.tailControl.y },
           { x: 0, y: 0.5 },
           { x: 1, y: 0.5 },
         ]);

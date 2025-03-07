@@ -12,6 +12,7 @@ import {
   handleSwitchDirection4,
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
+import { divideSafely } from "../../../../utils/geometry";
 
 export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -67,8 +68,8 @@ export const newCapsuleSelectedState = defineSingleSelectedHandlerState<CapsuleS
       targetId: target.id,
       getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
-        const marginX = (EDGE_ANCHOR_MARGIN / s.width) * scale;
-        const marginY = (EDGE_ANCHOR_MARGIN / s.height) * scale;
+        const marginX = divideSafely(EDGE_ANCHOR_MARGIN, s.width, 0) * scale;
+        const marginY = divideSafely(EDGE_ANCHOR_MARGIN, s.height, 0) * scale;
         const list = getDirectionalLocalAbsolutePoints(target, s, [
           { x: s.c0.x, y: -marginY },
           { x: s.c1.x, y: -marginY },

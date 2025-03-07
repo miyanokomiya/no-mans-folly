@@ -11,6 +11,7 @@ import {
   handleSwitchDirection4,
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
+import { divideSafely } from "../../../../utils/geometry";
 
 export const newTriangleSelectedState = defineSingleSelectedHandlerState<TriangleShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -143,13 +144,13 @@ export const newTriangleSelectedState = defineSingleSelectedHandlerState<Triangl
 );
 
 function getCrControlYRate(shape: TriangleShape, scale: number) {
-  return 1 + (EDGE_ANCHOR_MARGIN / shape.height) * scale;
+  return 1 + divideSafely(EDGE_ANCHOR_MARGIN, shape.height, 0) * scale;
 }
 
 function getCrControlXRate(shape: TriangleShape) {
-  return (shape.cr ?? 0) / shape.width;
+  return divideSafely(shape.cr ?? 0, shape.width, 0);
 }
 
 function getC0ControlYRate(shape: TriangleShape, scale: number) {
-  return (-EDGE_ANCHOR_MARGIN / shape.height) * scale;
+  return divideSafely(-EDGE_ANCHOR_MARGIN, shape.height, 0) * scale;
 }

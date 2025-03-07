@@ -11,6 +11,7 @@ import {
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
 import { renderValueLabel } from "../../../../utils/renderer";
+import { divideSafely } from "../../../../utils/geometry";
 
 export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -101,5 +102,8 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
 );
 
 function getSizeControlRate(shape: StarShape, scale: number): IVec2 {
-  return { x: (shape.size - 3) / (getMaxStarSize() - 3), y: 1 + (EDGE_ANCHOR_MARGIN / shape.height) * scale };
+  return {
+    x: (shape.size - 3) / (getMaxStarSize() - 3),
+    y: 1 + divideSafely(EDGE_ANCHOR_MARGIN, shape.height, 0) * scale,
+  };
 }

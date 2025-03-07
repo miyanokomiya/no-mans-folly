@@ -90,6 +90,7 @@ import {
   snapNumberFloor,
   roundFloatingError,
   getOverlappedAreaOfRects,
+  divideSafely,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -117,6 +118,16 @@ describe("isSameSize", () => {
     expect(isSameSize({ width: 1, height: 2 }, { width: 1, height: 1 })).toBe(false);
     expect(isSameSize({ width: 1, height: 2 }, { width: 1.0000001, height: 2 })).toBe(true);
     expect(isSameSize({ width: 1, height: 2 }, { width: 1, height: 2.0000001 })).toBe(true);
+  });
+});
+
+describe("divideSafely", () => {
+  test("should fallback when zero division happens", () => {
+    expect(divideSafely(1, 10, 50)).toBeCloseTo(0.1);
+    expect(divideSafely(1, -10, 50)).toBeCloseTo(-0.1);
+    expect(divideSafely(0, 10, 50)).toBeCloseTo(0);
+    expect(divideSafely(1, 0, 50)).toBeCloseTo(50);
+    expect(divideSafely(0, 0, 50)).toBeCloseTo(50);
   });
 });
 
