@@ -45,6 +45,8 @@ export const struct: ShapeStruct<EmojiShape> = {
     ctx.font = `${shape.height * 0.9}px Arial`;
     ctx.textBaseline = "bottom";
     ctx.textAlign = "center";
+    // Need to reset fillStyle, otherwise opacity affects rendering.
+    ctx.fillStyle = "#000";
     ctx.fillText(shape.emoji, shape.width / 2, shape.height);
 
     if (!shape.stroke.disabled) {
