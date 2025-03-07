@@ -4,11 +4,12 @@ import { HexagonShape } from "../../../../shapes/polygons/hexagon";
 import { add, applyAffine, clamp, getRadian, rotate } from "okageo";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
-import { getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
-import { COMMAND_EXAM_SRC } from "../commandExams";
+import { divideSafely, getCrossLineAndLine, snapRadianByAngle } from "../../../../utils/geometry";
 import { renderValueLabel } from "../../../../utils/renderer";
 import {
+  EDGE_ANCHOR_MARGIN,
   SimplePolygonHandler,
+  getCornerRadiusLXMovingState,
   getResizeByState,
   handleSwitchDirection2,
   newSimplePolygonHandler,
@@ -33,13 +34,17 @@ export const newHexagonSelectedState = defineSingleSelectedHandlerState<HexagonS
                 shapeHandler.saveHitResult(hitResult);
                 if (hitResult) {
                   switch (hitResult.type) {
+                    case "c0x_d":
+                      return () =>
+                        getCornerRadiusLXMovingState(targetShape, "c0", event.data.options, {
+                          disableProportional: true,
+                        });
                     case "c0x":
                       return () => {
                         let showLabel = !event.data.options.ctrl;
                         return movingShapeControlState<HexagonShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
-                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
                           patchFn: (shape, p, movement) => {
                             const s = getNormalizedSimplePolygonShape(shape);
                             const localP = applyAffine(getShapeDetransform(s), p);
@@ -80,7 +85,6 @@ export const newHexagonSelectedState = defineSingleSelectedHandlerState<HexagonS
                         return movingShapeControlState<HexagonShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
-                          extraCommands: [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
                           patchFn: (shape, p, movement) => {
                             const s = getNormalizedSimplePolygonShape(shape);
                             const localP = applyAffine(getShapeDetransform(s), p);
@@ -135,19 +139,22 @@ export const newHexagonSelectedState = defineSingleSelectedHandlerState<HexagonS
     newSimplePolygonHandler({
       getShapeComposite: ctx.getShapeComposite,
       targetId: target.id,
-      getAnchors: () => {
+      getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
+        const marginY = divideSafely(EDGE_ANCHOR_MARGIN, s.height, 0) * scale;
         const list = getDirectionalLocalAbsolutePoints(target, s, [
+          { x: s.c0.x, y: -marginY },
           { x: s.c0.x, y: 0 },
           { x: 0, y: s.c0.y },
           { x: 0.5, y: 1 },
           { x: 1, y: 0.5 },
         ]);
         return [
-          ["c0x", list[0]],
-          ["c0y", list[1]],
-          ["bottom", list[2]],
-          ["right", list[3]],
+          ["c0x_d", list[0]],
+          ["c0x", list[1]],
+          ["c0y", list[2]],
+          ["bottom", list[3]],
+          ["right", list[4]],
         ];
       },
       direction4: true,
