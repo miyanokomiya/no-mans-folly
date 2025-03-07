@@ -221,7 +221,7 @@ export function newResizingState(option: Option): AppCanvasState {
 
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
-        const shapeMap = shapeComposite.shapeMap;
+        const shapeMap = shapeComposite.mergedShapeMap;
         renderSnappingResult(renderCtx, {
           style,
           scale,

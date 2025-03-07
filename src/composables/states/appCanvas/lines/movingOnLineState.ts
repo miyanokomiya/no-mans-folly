@@ -271,7 +271,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
 
       if (snappingResult) {
-        const shapeMap = shapeComposite.shapeMap;
+        const shapeMap = shapeComposite.mergedShapeMap;
         renderSnappingResult(renderCtx, {
           style,
           scale,

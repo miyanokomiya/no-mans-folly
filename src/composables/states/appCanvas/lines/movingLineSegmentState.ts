@@ -134,7 +134,9 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           scale: ctx.getScale(),
           result: snappingResult,
           getTargetRect: (id) =>
-            shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined,
+            shapeComposite.mergedShapeMap[id]
+              ? shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id])
+              : undefined,
         });
       }
 

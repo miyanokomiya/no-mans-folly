@@ -1,5 +1,5 @@
-import { IVec2, applyAffine, clamp, getDistance, getRectCenter, sub } from "okageo";
-import { Direction4, StyleScheme } from "../../models";
+import { IVec2, applyAffine, clamp, getCenter, getDistance, getRectCenter, sub } from "okageo";
+import { Direction4, Shape, StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { TAU, getRadianForDirection4, getRotateFn } from "../../utils/geometry";
@@ -388,7 +388,23 @@ export function getResizeByState<S extends SimplePolygonShape, K = keyof S>(
     renderFn: (ctx, renderCtx, shape) => {
       renderShapeBounds(renderCtx, ctx.getStyleScheme(), shapeComposite.getLocalRectPolygon(shape));
     },
+    // Make extra grid lines based on the resizing origin.
+    extraGridOrigins: [[shape.id, getExtraGridOriginBy(shapeComposite, shape, by)]],
   });
+}
+
+function getExtraGridOriginBy(shapeComposite: ShapeComposite, shape: Shape, by: Direction4): IVec2 {
+  const rectPolygon = shapeComposite.getLocalRectPolygon(shape);
+  switch (by) {
+    case 0:
+      return getCenter(rectPolygon[2], rectPolygon[3]);
+    case 1:
+      return getCenter(rectPolygon[3], rectPolygon[0]);
+    case 2:
+      return getCenter(rectPolygon[0], rectPolygon[1]);
+    default:
+      return getCenter(rectPolygon[1], rectPolygon[2]);
+  }
 }
 
 export function handleSwitchDirection2(

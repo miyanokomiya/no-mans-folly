@@ -10,6 +10,7 @@ import { patchPipe } from "../../../utils/commons";
 import { patchLinesConnectedToShapeOutline } from "../../lineSnapping";
 import { getSnappableCandidates } from "./commons";
 import { CanvasCTX } from "../../../utils/types";
+import { ShapeSnappingLines } from "../../../shapes/core";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -28,6 +29,7 @@ interface Option<T extends Shape> {
    */
   getControlFn: (s: T, scale: number) => IVec2;
   snapType?: "disabled" | "self" | "custom";
+  extraGridOrigins?: [owner: string, IVec2][];
   renderFn?: RenderShapeControlFn<T>;
   extraCommands?: CommandExam[];
 }
@@ -51,8 +53,37 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       const shapeComposite = ctx.getShapeComposite();
       const snappableShapes =
         option.snapType === "self" ? [targetShape] : getSnappableCandidates(ctx, [targetShape.id]);
+      let shapeSnappingList = snappableShapes.map<[string, ShapeSnappingLines]>((s) => [
+        s.id,
+        shapeComposite.getSnappingLines(s),
+      ]);
+
+      if (option.extraGridOrigins) {
+        const viewRect = ctx.getViewRect();
+        const [t, r, b, l] = [viewRect.y, viewRect.x + viewRect.width, viewRect.y + viewRect.height, viewRect.x];
+        shapeSnappingList = shapeSnappingList.concat(
+          option.extraGridOrigins.map(([owner, p]) => [
+            owner,
+            {
+              h: [
+                [
+                  { x: l, y: p.y },
+                  { x: r, y: p.y },
+                ],
+              ],
+              v: [
+                [
+                  { x: p.x, y: t },
+                  { x: p.x, y: b },
+                ],
+              ],
+            },
+          ]),
+        );
+      }
+
       shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+        shapeSnappingList: shapeSnappingList,
         gridSnapping: ctx.getGrid().getSnappingLines(),
         settings: ctx.getUserSetting(),
       });
@@ -107,7 +138,9 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
           scale: ctx.getScale(),
           result: snappingResult,
           getTargetRect: (id) =>
-            shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined,
+            shapeComposite.mergedShapeMap[id]
+              ? shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id])
+              : undefined,
         });
       }
 

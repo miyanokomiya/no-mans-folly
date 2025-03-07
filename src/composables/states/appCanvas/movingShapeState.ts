@@ -202,7 +202,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       renderCtx.strokeRect(movingRect.x + affine[4], movingRect.y + affine[5], movingRect.width, movingRect.height);
 
       if (snappingResult) {
-        const shapeMap = shapeComposite.shapeMap;
+        const shapeMap = shapeComposite.mergedShapeMap;
         renderSnappingResult(renderCtx, {
           style,
           scale,
