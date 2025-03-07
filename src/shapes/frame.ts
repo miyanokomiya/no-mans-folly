@@ -38,6 +38,16 @@ export const struct: ShapeStruct<FrameShape> = {
   orderPriority: -10,
   rigidMove: true,
   noRotation: true,
+  sizePresets: [
+    { value: { width: 3840, height: 2160 }, label: "4K" },
+    { value: { width: 2560, height: 1440 }, label: "2K" },
+    { value: { width: 1920, height: 1080 }, label: "Full HD" },
+    { value: { width: 1600, height: 1200 }, label: "4:3" },
+    { value: { width: 1600, height: 900 }, label: "16:9" },
+    { value: { width: 1280, height: 720 }, label: "HD" },
+    { value: { width: 1024, height: 768 }, label: "XGA" },
+    { value: { width: 800, height: 600 }, label: "4:3" },
+  ],
 };
 
 export function isFrameShape(s: Shape): s is FrameShape {

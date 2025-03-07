@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { PointField } from "./PointField";
-import { AffineMatrix, IRectangle, IVec2, getCenter, multiAffines } from "okageo";
-import { Shape } from "../../models";
+import { AffineMatrix, IRectangle, IVec2, getCenter, isSame, multiAffines } from "okageo";
+import { Shape, Size } from "../../models";
 import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { ShapeComposite } from "../../composables/shapeComposite";
@@ -9,7 +9,8 @@ import { InlineField } from "../atoms/InlineField";
 import { useShapeComposite, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
 import { BlockGroupField } from "../atoms/BlockGroupField";
-import { getAttachmentByUpdatingRotation, isNoRotationShape } from "../../shapes";
+import { getAttachmentByUpdatingRotation, getSizePresets, isNoRotationShape } from "../../shapes";
+import { SelectInput } from "../atoms/inputs/SelectInput";
 
 interface Props {
   targetShape: Shape;
@@ -51,12 +52,12 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 
   const handleResize = useCallback(
     (affine: AffineMatrix, draft = false) => {
-      if (draft) {
-        readyState();
+      readyState();
 
-        const patch = resizeShapeTrees(shapeComposite, [targetShape.id], affine);
-        updateTmpShapes(patch);
-      } else {
+      const patch = resizeShapeTrees(shapeComposite, [targetShape.id], affine);
+      updateTmpShapes(patch);
+
+      if (!draft) {
         commit();
       }
     },
@@ -73,17 +74,10 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
 
   const handleChangeSize = useCallback(
     (val: IVec2, draft = false) => {
-      if (draft) {
-        readyState();
-
-        const affine = getScaleToAffine(subShapeComposite, targetShape, val);
-        const patch = resizeShapeTrees(subShapeComposite, [targetShape.id], affine);
-        updateTmpShapes(patch);
-      } else {
-        commit();
-      }
+      const affine = getScaleToAffine(subShapeComposite, targetShape, val);
+      handleResize(affine, draft);
     },
-    [commit, readyState, updateTmpShapes, targetShape, subShapeComposite],
+    [handleResize, targetShape, subShapeComposite],
   );
 
   const handleChangeRotation = useCallback(
@@ -105,6 +99,39 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
     [targetShape, subShapeComposite, commit, readyState, updateTmpShapes, shapeComposite],
   );
 
+  const sizePresetOptions = useMemo<{ value: string; label: string; size: Size }[] | undefined>(() => {
+    const presets = getSizePresets(staticShapeComposite.getShapeStruct, targetShape);
+    if (!presets) return;
+
+    return [
+      { value: "0", size: { width: 0, height: 0 }, label: "Custom" },
+      ...presets.map((pre) => {
+        const size = pre.value;
+        const label = `${pre.label} (${size.width} x ${size.height})`;
+        return { value: label, label, size };
+      }),
+    ];
+  }, [staticShapeComposite, targetShape]);
+
+  const sizePreset = useMemo(() => {
+    if (!sizePresetOptions) return;
+
+    const option = sizePresetOptions.find(({ size }) => isSame(targetSize, { x: size.width, y: size.height }));
+    return option?.value ?? sizePresetOptions[0].value;
+  }, [targetSize, sizePresetOptions]);
+
+  const handleSizePresetChange = useCallback(
+    (val: string) => {
+      const option = sizePresetOptions?.find(({ value }) => value === val);
+      if (!option) return;
+
+      const size = { x: option.size.width, y: option.size.height };
+      const affine = getScaleToAffine(subShapeComposite, targetShape, size);
+      handleResize(affine);
+    },
+    [handleResize, subShapeComposite, targetShape, sizePresetOptions],
+  );
+
   const rotationField = isNoRotationShape(shapeComposite.getShapeStruct, targetShape) ? undefined : (
     <InlineField label={"angle"}>
       <div className="w-24">
@@ -119,24 +146,38 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
     </InlineField>
   );
 
+  const sizeField = (
+    <InlineField label={"w, h"}>
+      <PointField
+        value={targetSize}
+        onChange={handleChangeSize}
+        min={1}
+        disabledX={srcSize.x === 0}
+        disabledY={srcSize.y === 0}
+        swappable
+      />
+    </InlineField>
+  );
+
   return (
-    <>
-      <BlockGroupField label="Local bounds" accordionKey="shape-bounds">
-        <InlineField label={"x, y"}>
-          <PointField value={targetLocation} onChange={handleChangePosition} />
-        </InlineField>
-        <InlineField label={"w, h"}>
-          <PointField
-            value={targetSize}
-            onChange={handleChangeSize}
-            min={1}
-            disabledX={srcSize.x === 0}
-            disabledY={srcSize.y === 0}
-          />
-        </InlineField>
-        {rotationField}
-      </BlockGroupField>
-    </>
+    <BlockGroupField label="Local bounds" accordionKey="shape-bounds">
+      <InlineField label={"x, y"}>
+        <PointField value={targetLocation} onChange={handleChangePosition} />
+      </InlineField>
+      {sizePresetOptions && sizePreset ? (
+        <BlockGroupField label="Size">
+          {sizeField}
+          <InlineField label="Preset">
+            <div className="w-50">
+              <SelectInput value={sizePreset} options={sizePresetOptions} onChange={handleSizePresetChange} />
+            </div>
+          </InlineField>
+        </BlockGroupField>
+      ) : (
+        sizeField
+      )}
+      {rotationField}
+    </BlockGroupField>
   );
 };
 

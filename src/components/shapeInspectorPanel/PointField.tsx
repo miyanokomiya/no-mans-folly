@@ -1,6 +1,7 @@
 import { IVec2 } from "okageo";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { useCallback, useRef } from "react";
+import iconHeadSwap from "../../assets/icons/head_swap.svg";
 
 interface Props {
   value: IVec2;
@@ -10,9 +11,19 @@ interface Props {
   disabled?: boolean;
   disabledX?: boolean;
   disabledY?: boolean;
+  swappable?: boolean;
 }
 
-export const PointField: React.FC<Props> = ({ value, onChange, min, max, disabled, disabledX, disabledY }) => {
+export const PointField: React.FC<Props> = ({
+  value,
+  onChange,
+  min,
+  max,
+  disabled,
+  disabledX,
+  disabledY,
+  swappable,
+}) => {
   const latestValue = useRef(value);
   latestValue.current = value;
 
@@ -34,9 +45,14 @@ export const PointField: React.FC<Props> = ({ value, onChange, min, max, disable
     [onChange],
   );
 
+  const handleSwap = useCallback(() => {
+    onChange?.({ x: latestValue.current.y, y: latestValue.current.x });
+  }, [onChange]);
+
+  const fieldClassName = swappable ? "w-21" : "w-24";
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-24">
+    <div className={"flex items-center" + (swappable ? " gap-1" : " gap-2")}>
+      <div className={fieldClassName}>
         <NumberInput
           value={value.x}
           onChange={handleChangeX}
@@ -48,7 +64,12 @@ export const PointField: React.FC<Props> = ({ value, onChange, min, max, disable
           slider
         />
       </div>
-      <div className="w-24">
+      {swappable ? (
+        <button type="button" className="rounded-xs p-0.5 border hover:bg-gray-200 w-6 h-6" onClick={handleSwap}>
+          <img src={iconHeadSwap} alt="Swap" className="w-full h-full" />
+        </button>
+      ) : undefined}
+      <div className={fieldClassName}>
         <NumberInput
           value={value.y}
           onChange={handleChangeY}

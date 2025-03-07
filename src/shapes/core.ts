@@ -134,6 +134,7 @@ export interface ShapeStruct<T extends Shape> {
    * If true, UIs for rotation are hidden.
    */
   noRotation?: boolean;
+  sizePresets?: { value: Size; label: string }[];
 }
 
 /**

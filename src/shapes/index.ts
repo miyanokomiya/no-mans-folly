@@ -454,3 +454,8 @@ export function isNoRotationShape(getStruct: GetShapeStruct, shape: Shape): bool
   const struct = getStruct(shape.type);
   return !!struct.noRotation;
 }
+
+export function getSizePresets(getStruct: GetShapeStruct, shape: Shape): { value: Size; label: string }[] | undefined {
+  const struct = getStruct(shape.type);
+  return struct.sizePresets;
+}
