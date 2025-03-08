@@ -1,7 +1,14 @@
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { StarShape, getMaxStarSize, getRawStarOrigin, getRawStarPath } from "../../../../shapes/polygons/star";
-import { IVec2, applyAffine, clamp, getDistance } from "okageo";
+import {
+  StarShape,
+  getCoordinateStarC0,
+  getFlatStarC0,
+  getMaxStarSize,
+  getRawStarOrigin,
+  getRawStarPath,
+} from "../../../../shapes/polygons/star";
+import { IVec2, applyAffine, clamp } from "okageo";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import {
@@ -10,8 +17,9 @@ import {
   handleSwitchDirection4,
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
-import { renderValueLabel } from "../../../../utils/renderer";
-import { divideSafely, getCrossLineAndLine, getRotateFn, ISegment } from "../../../../utils/geometry";
+import { applyPath, renderValueLabel } from "../../../../utils/renderer";
+import { divideSafely, ISegment } from "../../../../utils/geometry";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -31,10 +39,13 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                   switch (hitResult.type) {
                     case "c0":
                       return () => {
+                        let guideline: ISegment | undefined = undefined;
+
                         return movingShapeControlState<StarShape>({
                           targetId: targetShape.id,
                           snapType: "custom",
                           patchFn: (shape, p, movement) => {
+                            guideline = undefined;
                             if (shape.height === 0) return { c0: shape.c0 };
 
                             const s = getNormalizedSimplePolygonShape(shape);
@@ -43,22 +54,41 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                               y: applyAffine(getShapeDetransform(s), p).y,
                             };
 
-                            if (!movement.ctrl && s.size > 4) {
+                            if (!movement.ctrl) {
+                              const scale = ctx.getScale();
+                              const threshold = 8 * scale;
                               const c = { x: s.width / 2, y: s.height / 2 };
-                              const starOrigin = getRawStarOrigin(s);
-                              const scaleY = starOrigin.y / c.y;
-                              const path = getRawStarPath(s).path;
-                              const guideline = [path[2], path[path.length - 2]].map((v) => ({
-                                x: v.x,
-                                y: v.y / scaleY,
-                              })) as ISegment;
-                              const r = (2 * Math.PI) / s.size / 2;
-                              const rotateFn = getRotateFn(r, c);
-                              const rp = rotateFn(localP);
-                              const intersection = getCrossLineAndLine(guideline, [c, rp]);
-                              if (intersection && getDistance(intersection, rp) < 8 * ctx.getScale()) {
-                                localP = { x: localP.x, y: rotateFn(intersection, true).y };
+                              // Set c0 bit enough to make the shape concave but avoid losing area.
+                              const concave = getNormalizedSimplePolygonShape({ ...s, c0: { x: 0.5, y: 0.49 } });
+                              const concavePath = getRawStarPath(concave).path;
+                              const concaveOrigin = getRawStarOrigin(concave);
+                              const concaveScaleY = concaveOrigin.y / c.y;
+
+                              let concaveLocalP = { x: localP.x, y: localP.y * concaveScaleY };
+                              const d = concaveOrigin.y - concaveLocalP.y;
+
+                              {
+                                const snappedD = (1 - getFlatStarC0(s).y) * (s.height / 2);
+                                if (Math.abs(snappedD - d) < threshold) {
+                                  concaveLocalP = { x: concaveLocalP.x, y: concaveOrigin.y - snappedD };
+                                  const shapeTransform = getShapeTransform(s);
+                                  guideline = [concavePath[0], concavePath[2]].map((v) =>
+                                    applyAffine(shapeTransform, v),
+                                  ) as ISegment;
+                                }
                               }
+
+                              if (!guideline && s.size > 4) {
+                                const guide = [concavePath[2], concavePath[concavePath.length - 2]];
+                                const snappedD = concaveOrigin.y - getCoordinateStarC0(s).y * s.height;
+                                if (Math.abs(snappedD - d) < threshold) {
+                                  concaveLocalP = { x: concaveLocalP.x, y: concaveOrigin.y - snappedD };
+                                  const shapeTransform = getShapeTransform(s);
+                                  guideline = guide.map((v) => applyAffine(shapeTransform, v)) as ISegment;
+                                }
+                              }
+
+                              localP = { x: concaveLocalP.x, y: concaveLocalP.y / concaveScaleY };
                             }
 
                             const nextCY = clamp(0, 0.5, localP.y / s.height);
@@ -70,6 +100,19 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                               x: shape.width * s.c0.x,
                               y: shape.height * s.c0.y,
                             });
+                          },
+                          renderFn: (ctx, renderCtx) => {
+                            if (!guideline) return;
+
+                            const style = ctx.getStyleScheme();
+                            const scale = ctx.getScale();
+                            applyStrokeStyle(renderCtx, {
+                              color: style.selectionSecondaly,
+                              width: 3 * scale,
+                            });
+                            renderCtx.beginPath();
+                            applyPath(renderCtx, guideline);
+                            renderCtx.stroke();
                           },
                         });
                       };

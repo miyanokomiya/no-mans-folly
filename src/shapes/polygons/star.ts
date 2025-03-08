@@ -1,4 +1,4 @@
-import { IVec2, clamp } from "okageo";
+import { IVec2, clamp, getNorm, getRadian } from "okageo";
 import { ShapeStruct, createBaseShape } from "../core";
 import {
   SimplePath,
@@ -10,6 +10,7 @@ import {
 import { createBoxPadding } from "../../utils/boxPadding";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
+import { getCrossLineAndLine, getRotateFn } from "../../utils/geometry";
 
 export type StarShape = SimplePolygonShape & {
   /**
@@ -118,7 +119,7 @@ export function getRawStarOrigin(shape: StarShape): IVec2 {
   return { x: shape.width / 2, y: height / 2 };
 }
 
-function getSizeGapScale(shape: StarShape): IVec2 {
+export function getSizeGapScale(shape: StarShape): IVec2 {
   const size = getSize(shape);
   const unitR = (Math.PI * 2) / size;
   const from = -Math.PI / 2;
@@ -144,4 +145,32 @@ function getSizeGapScale(shape: StarShape): IVec2 {
 
   // Each side expect for top can have gap because this shape is based on the top.
   return { x: 1 / w, y: 1 / ((1 + h) / 2) };
+}
+
+/**
+ * Returns maximum c0 that makes the shape convex.
+ */
+export function getFlatStarC0(shape: StarShape): IVec2 {
+  const gapScale = getSizeGapScale({ ...shape, c0: { x: 0.5, y: 0.5 } });
+  return shape.size % 2 === 0 ? { x: 0.5, y: 1 - 1 / gapScale.x } : { x: 0.5, y: gapScale.y - 1 };
+}
+
+export function getCoordinateStarC0(shape: StarShape): IVec2 {
+  const concave = { ...shape, c0: { x: 0.5, y: 0.49 } };
+  const concavePath = getRawStarPath(concave).path;
+  const gapScale = getSizeGapScale(concave);
+  const guide = [concavePath[2], concavePath[concavePath.length - 2]];
+  const concaveOrigin = getRawStarOrigin(concave);
+  const r = Math.PI / 2 + getRadian(concavePath[1], concaveOrigin);
+  const rotateFn = getRotateFn(r, concaveOrigin);
+  const intersection = getCrossLineAndLine([concaveOrigin, rotateFn(concavePath[0])], guide);
+  if (!intersection) return shape.c0;
+
+  const aspectRatio = shape.height / shape.width;
+  const gapRatio = gapScale.y / gapScale.x;
+  const dy = getNorm({
+    x: (intersection.x - concaveOrigin.x) * aspectRatio * gapRatio,
+    y: intersection.y - concaveOrigin.y,
+  });
+  return { x: 0.5, y: (concaveOrigin.y - dy) / shape.height };
 }
