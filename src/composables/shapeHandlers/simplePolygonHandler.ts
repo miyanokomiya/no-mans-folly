@@ -151,6 +151,8 @@ export function getCornerRadiusLXMovingState<S extends SimplePolygonShape>(
     snapType: "custom",
     extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
+      if (shape.width === 0 || shape.height === 0) return {};
+
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
       let nextCX = clamp(0, 0.5, localP.x / s.width);
@@ -203,6 +205,8 @@ export function getCornerRadiusRXMovingState<S extends SimplePolygonShape>(
     snapType: "custom",
     extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
+      if (shape.width === 0 || shape.height === 0) return {};
+
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
       let nextCX = clamp(0.5, 1, localP.x / s.width);
@@ -255,6 +259,8 @@ export function getCornerRadiusLYMovingState<S extends SimplePolygonShape>(
     snapType: "custom",
     extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
+      if (shape.width === 0 || shape.height === 0) return {};
+
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
       let nextCY = clamp(0, 0.5, localP.y / s.height);
@@ -307,6 +313,8 @@ export function getCornerRadiusRYMovingState<S extends SimplePolygonShape>(
     snapType: "custom",
     extraCommands: option?.disableProportional ? [] : [COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY],
     patchFn: (shape, p, movement) => {
+      if (shape.width === 0 || shape.height === 0) return {};
+
       const s = getNormalizedSimplePolygonShape(shape);
       const localP = applyAffine(getShapeDetransform(s), p);
       let nextCY = clamp(0, 0.5, localP.y / s.height);
