@@ -119,7 +119,7 @@ export function getRawStarOrigin(shape: StarShape): IVec2 {
   return { x: shape.width / 2, y: height / 2 };
 }
 
-export function getSizeGapScale(shape: StarShape): IVec2 {
+function getSizeGapScale(shape: StarShape): IVec2 {
   const size = getSize(shape);
   const unitR = (Math.PI * 2) / size;
   const from = -Math.PI / 2;
@@ -152,9 +152,12 @@ export function getSizeGapScale(shape: StarShape): IVec2 {
  */
 export function getFlatStarC0(shape: StarShape): IVec2 {
   const gapScale = getSizeGapScale({ ...shape, c0: { x: 0.5, y: 0.5 } });
-  return shape.size % 2 === 0 ? { x: 0.5, y: 1 - 1 / gapScale.x } : { x: 0.5, y: gapScale.y - 1 };
+  return shape.size % 2 === 0 ? { x: 0.5, y: (1 - 1 / gapScale.x) / 2 } : { x: 0.5, y: 1 - 1 / gapScale.y };
 }
 
+/**
+ * Returns c0 that makes the shape look coordinate.
+ */
 export function getCoordinateStarC0(shape: StarShape): IVec2 {
   const concave = { ...shape, c0: { x: 0.5, y: 0.49 } };
   const concavePath = getRawStarPath(concave).path;
@@ -172,5 +175,5 @@ export function getCoordinateStarC0(shape: StarShape): IVec2 {
     x: (intersection.x - concaveOrigin.x) * aspectRatio * gapRatio,
     y: intersection.y - concaveOrigin.y,
   });
-  return { x: 0.5, y: (concaveOrigin.y - dy) / shape.height };
+  return { x: 0.5, y: (concaveOrigin.y - dy) / (shape.height * gapScale.y) };
 }

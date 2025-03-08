@@ -5,7 +5,6 @@ import {
   getCoordinateStarC0,
   getFlatStarC0,
   getMaxStarSize,
-  getRawStarOrigin,
   getRawStarPath,
 } from "../../../../shapes/polygons/star";
 import { IVec2, applyAffine, clamp } from "okageo";
@@ -57,20 +56,15 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                             if (!movement.ctrl) {
                               const scale = ctx.getScale();
                               const threshold = 8 * scale;
-                              const c = { x: s.width / 2, y: s.height / 2 };
                               // Set c0 bit enough to make the shape concave but avoid losing area.
                               const concave = getNormalizedSimplePolygonShape({ ...s, c0: { x: 0.5, y: 0.49 } });
                               const concavePath = getRawStarPath(concave).path;
-                              const concaveOrigin = getRawStarOrigin(concave);
-                              const concaveScaleY = concaveOrigin.y / c.y;
-
-                              let concaveLocalP = { x: localP.x, y: localP.y * concaveScaleY };
-                              const d = concaveOrigin.y - concaveLocalP.y;
 
                               {
-                                const snappedD = (1 - getFlatStarC0(s).y) * (s.height / 2);
-                                if (Math.abs(snappedD - d) < threshold) {
-                                  concaveLocalP = { x: concaveLocalP.x, y: concaveOrigin.y - snappedD };
+                                const snappedC0 = getFlatStarC0(s);
+                                const snapped = { x: localP.x, y: snappedC0.y * s.height };
+                                if (Math.abs(snapped.y - localP.y) < threshold) {
+                                  localP = snapped;
                                   const shapeTransform = getShapeTransform(s);
                                   guideline = [concavePath[0], concavePath[2]].map((v) =>
                                     applyAffine(shapeTransform, v),
@@ -80,15 +74,14 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
 
                               if (!guideline && s.size > 4) {
                                 const guide = [concavePath[2], concavePath[concavePath.length - 2]];
-                                const snappedD = concaveOrigin.y - getCoordinateStarC0(s).y * s.height;
-                                if (Math.abs(snappedD - d) < threshold) {
-                                  concaveLocalP = { x: concaveLocalP.x, y: concaveOrigin.y - snappedD };
+                                const snappedC0 = getCoordinateStarC0(s);
+                                const snapped = { x: localP.x, y: snappedC0.y * s.height };
+                                if (Math.abs(snapped.y - localP.y) < threshold) {
+                                  localP = snapped;
                                   const shapeTransform = getShapeTransform(s);
                                   guideline = guide.map((v) => applyAffine(shapeTransform, v)) as ISegment;
                                 }
                               }
-
-                              localP = { x: concaveLocalP.x, y: concaveLocalP.y / concaveScaleY };
                             }
 
                             const nextCY = clamp(0, 0.5, localP.y / s.height);
