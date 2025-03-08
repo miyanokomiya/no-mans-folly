@@ -151,8 +151,28 @@ function getSizeGapScale(shape: StarShape): IVec2 {
  * Returns maximum c0 that makes the shape convex.
  */
 export function getFlatStarC0(shape: StarShape): IVec2 {
+  // Both gap scales are always 1 when the size is a multiple of 4.
+  if (shape.size % 4 === 0) {
+    const c = { x: shape.width / 2, y: shape.height / 2 };
+    const convex = { ...shape, c0: { x: 0.5, y: 0 } };
+    const convexPath = getRawStarPath(convex).path;
+    const guide = [convexPath[0], convexPath[2]];
+    const r = Math.PI / 2 + getRadian(convexPath[1], c);
+    const rotateFn = getRotateFn(r, c);
+    const intersection = getCrossLineAndLine([c, rotateFn(convexPath[0])], guide);
+    if (!intersection) return shape.c0;
+
+    const aspectRatio = shape.height / shape.width;
+    const dy = getNorm({
+      x: (intersection.x - c.x) * aspectRatio,
+      y: intersection.y - c.y,
+    });
+    return { x: 0.5, y: (c.y - dy) / shape.height };
+  }
+
   const gapScale = getSizeGapScale({ ...shape, c0: { x: 0.5, y: 0.5 } });
-  return shape.size % 2 === 0 ? { x: 0.5, y: (1 - 1 / gapScale.x) / 2 } : { x: 0.5, y: 1 - 1 / gapScale.y };
+  if (shape.size % 2 === 0) return { x: 0.5, y: (1 - 1 / gapScale.x) / 2 };
+  return { x: 0.5, y: 1 - 1 / gapScale.y };
 }
 
 /**
