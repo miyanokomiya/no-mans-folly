@@ -12,6 +12,10 @@ import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 
 export type StarShape = SimplePolygonShape & {
+  /**
+   * The point of this rate aren't always on the inner perimeter
+   * because the center of inner circule can move when the size is odd number.
+   */
   c0: IVec2;
   size: number;
 };
@@ -101,6 +105,17 @@ export function getRawStarPath(shape: StarShape): SimplePath {
   }
 
   return { path };
+}
+
+/**
+ * Returns the star origin.
+ * When the size is even number, the origin is at the center of the shape.
+ * When the size is odd number, the origin isn't always at the center.
+ */
+export function getRawStarOrigin(shape: StarShape): IVec2 {
+  const gapRate = getSizeGapScale(shape);
+  const height = shape.height * gapRate.y;
+  return { x: shape.width / 2, y: height / 2 };
 }
 
 function getSizeGapScale(shape: StarShape): IVec2 {

@@ -1,7 +1,7 @@
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { movingShapeControlState } from "../movingShapeControlState";
-import { StarShape, getMaxStarSize } from "../../../../shapes/polygons/star";
-import { IVec2, applyAffine, clamp } from "okageo";
+import { StarShape, getMaxStarSize, getRawStarOrigin, getRawStarPath } from "../../../../shapes/polygons/star";
+import { IVec2, applyAffine, clamp, getDistance } from "okageo";
 import { getShapeDetransform, getShapeTransform } from "../../../../shapes/rectPolygon";
 import { getDirectionalLocalAbsolutePoints, getNormalizedSimplePolygonShape } from "../../../../shapes/simplePolygon";
 import {
@@ -11,7 +11,7 @@ import {
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
 import { renderValueLabel } from "../../../../utils/renderer";
-import { divideSafely } from "../../../../utils/geometry";
+import { divideSafely, getCrossLineAndLine, getRotateFn, ISegment } from "../../../../utils/geometry";
 
 export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -33,11 +33,34 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                       return () => {
                         return movingShapeControlState<StarShape>({
                           targetId: targetShape.id,
-                          snapType: "disabled",
-                          patchFn: (shape, p) => {
-                            // Disregard snapping since the value doesn't have concrete meaning.
+                          snapType: "custom",
+                          patchFn: (shape, p, movement) => {
+                            if (shape.height === 0) return { c0: shape.c0 };
+
                             const s = getNormalizedSimplePolygonShape(shape);
-                            const localP = applyAffine(getShapeDetransform(s), p);
+                            let localP = {
+                              x: s.width / 2,
+                              y: applyAffine(getShapeDetransform(s), p).y,
+                            };
+
+                            if (!movement.ctrl && s.size > 4) {
+                              const c = { x: s.width / 2, y: s.height / 2 };
+                              const starOrigin = getRawStarOrigin(s);
+                              const scaleY = starOrigin.y / c.y;
+                              const path = getRawStarPath(s).path;
+                              const guideline = [path[2], path[path.length - 2]].map((v) => ({
+                                x: v.x,
+                                y: v.y / scaleY,
+                              })) as ISegment;
+                              const r = (2 * Math.PI) / s.size / 2;
+                              const rotateFn = getRotateFn(r, c);
+                              const rp = rotateFn(localP);
+                              const intersection = getCrossLineAndLine(guideline, [c, rp]);
+                              if (intersection && getDistance(intersection, rp) < 8 * ctx.getScale()) {
+                                localP = { x: localP.x, y: rotateFn(intersection, true).y };
+                              }
+                            }
+
                             const nextCY = clamp(0, 0.5, localP.y / s.height);
                             return { c0: { x: shape.c0.x, y: nextCY } };
                           },
