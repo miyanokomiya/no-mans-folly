@@ -133,6 +133,16 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                           },
                         });
                       };
+                    case "sizeType": {
+                      ctx.updateShapes({
+                        update: {
+                          [targetShape.id]: {
+                            sizeType: targetShape.sizeType !== 1 ? 1 : undefined,
+                          } as Partial<StarShape>,
+                        },
+                      });
+                      return ctx.states.newSelectionHubState;
+                    }
                     case "direction4": {
                       return handleSwitchDirection4(ctx, targetShape);
                     }
@@ -150,10 +160,15 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
       targetId: target.id,
       getAnchors: (scale) => {
         const s = getNormalizedSimplePolygonShape(target);
-        const list = getDirectionalLocalAbsolutePoints(target, s, [s.c0, getSizeControlRate(s, scale)]);
+        const list = getDirectionalLocalAbsolutePoints(target, s, [
+          s.c0,
+          getSizeControlRate(s, scale),
+          getSizeTypeControlRate(s, scale),
+        ]);
         return [
           ["c0", list[0]],
           ["size", list[1]],
+          ["sizeType", list[2], "button"],
         ];
       },
       direction4: true,
@@ -164,5 +179,12 @@ function getSizeControlRate(shape: StarShape, scale: number): IVec2 {
   return {
     x: (shape.size - 3) / (getMaxStarSize() - 3),
     y: 1 + divideSafely(EDGE_ANCHOR_MARGIN, shape.height, 0) * scale,
+  };
+}
+
+function getSizeTypeControlRate(shape: StarShape, scale: number): IVec2 {
+  return {
+    x: 1 + divideSafely(EDGE_ANCHOR_MARGIN, shape.width, 0) * scale,
+    y: 1 - divideSafely(EDGE_ANCHOR_MARGIN, shape.height, 0) * scale,
   };
 }

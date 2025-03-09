@@ -19,6 +19,11 @@ export type StarShape = SimplePolygonShape & {
    */
   c0: IVec2;
   size: number;
+  /**
+   * undefined, 0: fulfilled within the bounds
+   * 1: regular polygon within the bounds
+   */
+  sizeType?: 0 | 1;
 };
 
 export const struct: ShapeStruct<StarShape> = {
@@ -35,6 +40,7 @@ export const struct: ShapeStruct<StarShape> = {
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
       c0: arg.c0 ?? { x: 0.5, y: 0.25 },
       size: arg.size ?? 5,
+      sizeType: arg.sizeType,
       direction: arg.direction,
     };
   },
@@ -120,6 +126,8 @@ export function getRawStarOrigin(shape: StarShape): IVec2 {
 }
 
 function getSizeGapScale(shape: StarShape): IVec2 {
+  if (isRegularPolygon(shape)) return { x: 1, y: 1 };
+
   const size = getSize(shape);
   const unitR = (Math.PI * 2) / size;
   const from = -Math.PI / 2;
@@ -151,8 +159,10 @@ function getSizeGapScale(shape: StarShape): IVec2 {
  * Returns maximum c0 that makes the shape convex.
  */
 export function getFlatStarC0(shape: StarShape): IVec2 {
-  // Both gap scales are always 1 when the size is a multiple of 4.
-  if (shape.size % 4 === 0) {
+  // Both gap scales are always 1 either when
+  // - the size is a multiple of 4.
+  // - it's a regular polygon.
+  if (shape.size % 4 === 0 || isRegularPolygon(shape)) {
     const c = { x: shape.width / 2, y: shape.height / 2 };
     const convex = { ...shape, c0: { x: 0.5, y: 0 } };
     const convexPath = getRawStarPath(convex).path;
@@ -196,4 +206,8 @@ export function getCoordinateStarC0(shape: StarShape): IVec2 {
     y: intersection.y - concaveOrigin.y,
   });
   return { x: 0.5, y: (concaveOrigin.y - dy) / (shape.height * gapScale.y) };
+}
+
+function isRegularPolygon(shape: StarShape): boolean {
+  return shape.sizeType === 1;
 }

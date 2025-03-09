@@ -36,7 +36,8 @@ export const ANCHOR_SIZE = 6;
 export const DIRECTION_ANCHOR_SIZE = 10;
 export const EDGE_ANCHOR_MARGIN = 20;
 
-type HitAnchor = [type: string, IVec2];
+type InteractionType = "button";
+type HitAnchor = [type: string, IVec2, InteractionType?];
 
 interface SimplePolygonHitResult {
   type: string;
@@ -87,12 +88,17 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
 
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       anchors
-        .map<[IVec2, boolean]>((a) => [a[1], a[0] === hitResult?.type])
-        .forEach(([p, highlight]) => {
+        .map<[IVec2, boolean, InteractionType?]>((a) => [a[1], a[0] === hitResult?.type, a[2]])
+        .forEach(([p, highlight, interactionType]) => {
           if (highlight) {
             renderOutlinedCircle(ctx, p, threshold, style.selectionSecondaly);
           } else {
-            renderOutlinedCircle(ctx, p, threshold, style.transformAnchor);
+            renderOutlinedCircle(
+              ctx,
+              p,
+              threshold,
+              interactionType === "button" ? style.selectionPrimary : style.transformAnchor,
+            );
           }
         });
 
