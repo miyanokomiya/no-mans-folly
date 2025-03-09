@@ -10,6 +10,7 @@ import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
 import { getPatchAfterLayouts } from "./shapeLayoutHandler";
+import { newShapeRenderer } from "./shapeRenderer";
 
 export const SMART_BRANCH_CHILD_MARGIN = 100;
 export const SMART_BRANCH_SIBLING_MARGIN = 25;
@@ -91,15 +92,15 @@ const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option)
     });
 
     if (hitResult) {
-      const shapeComposite = newShapeComposite({
-        shapes: hitResult.previewShapes,
+      const previewShapeComposite = newShapeComposite({
+        shapes: hitResult.previewShapes.map((s) => ({ ...s, alpha: (s.alpha ?? 1) * 0.3 })),
         getStruct: option.getShapeComposite().getShapeStruct,
       });
-      hitResult.previewShapes.forEach((s) => {
-        ctx.globalAlpha = 0.5;
-        shapeComposite.render(ctx, s);
-        ctx.globalAlpha = 1;
+      const renderer = newShapeRenderer({
+        shapeComposite: previewShapeComposite,
+        scale,
       });
+      renderer.render(ctx);
 
       applyFillStyle(ctx, { color: style.selectionSecondaly });
       const target = anchors[hitResult.index];
