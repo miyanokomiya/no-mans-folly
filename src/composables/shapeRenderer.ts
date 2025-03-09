@@ -90,8 +90,10 @@ export function newShapeRenderer(option: Option) {
         invScale = MAX_CANVAS_SIZE / longEdge;
       }
 
-      subCanvas.width = rect.width * invScale;
-      subCanvas.height = rect.height * invScale;
+      // Have to avoid zero-sized canvas, otherwise "drawImage" throws an error.
+      // HTMLCanvas converts size value to integer.
+      subCanvas.width = Math.max(1, rect.width * invScale);
+      subCanvas.height = Math.max(1, rect.height * invScale);
       const subCtx = subCanvas.getContext("2d")!;
       subCtx.reset();
       subCtx.clearRect(0, 0, subCanvas.width, subCanvas.height);

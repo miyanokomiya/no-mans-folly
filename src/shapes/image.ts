@@ -41,7 +41,7 @@ export const struct: ShapeStruct<ImageShape> = {
     }
 
     const img = imageStore?.getImage(shape.assetId ?? "");
-    if (img) {
+    if (img && img.width * img.height > 0 && shape.width * shape.height > 0) {
       ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, shape.width, shape.height);
     } else {
       ctx.fillStyle = "#aaa";
