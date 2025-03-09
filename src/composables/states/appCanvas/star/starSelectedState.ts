@@ -19,6 +19,7 @@ import {
 import { applyPath, renderValueLabel } from "../../../../utils/renderer";
 import { divideSafely, ISegment } from "../../../../utils/geometry";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { newShapeRenderer } from "../../../shapeRenderer";
 
 export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, SimplePolygonHandler, never>(
   (getters) => {
@@ -150,6 +151,30 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
                 }
               }
             }
+        }
+      },
+      render: (ctx, renderCtx) => {
+        const shapeHandler = getters.getShapeHandler();
+        const hitResult = shapeHandler.retrieveHitResult();
+        switch (hitResult?.type) {
+          case "sizeType": {
+            const shapeComposite = ctx.getShapeComposite();
+            const targetShape = getters.getTargetShape();
+            const subShapeComposite = shapeComposite.getSubShapeComposite([targetShape.id], {
+              [targetShape.id]: {
+                sizeType: targetShape.sizeType !== 1 ? 1 : undefined,
+                alpha: (targetShape.alpha ?? 1) * 0.3,
+              } as StarShape,
+            });
+            const renderer = newShapeRenderer({
+              shapeComposite: subShapeComposite,
+              getDocumentMap: ctx.getDocumentMap,
+              imageStore: ctx.getImageStore(),
+              scale: ctx.getScale(),
+            });
+            renderer.render(renderCtx);
+            break;
+          }
         }
       },
     };
