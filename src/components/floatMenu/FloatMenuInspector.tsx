@@ -87,12 +87,14 @@ export const FloatMenuInspector: React.FC<Props> = ({
   const [popupedKey, setPopupedKey] = useState("");
 
   const onClickPopupButton = useCallback(
-    (name: string) => {
+    (name: string, option?: { keepFocus?: boolean }) => {
       if (popupedKey === name) {
         setPopupedKey("");
       } else {
         setPopupedKey(name);
       }
+
+      if (option?.keepFocus) return;
       focusBack?.();
     },
     [popupedKey, focusBack],

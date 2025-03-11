@@ -99,7 +99,7 @@ const LineheightPanel: React.FC<LineheightPanelProps> = ({ value, onChange }) =>
 
 interface Props {
   popupedKey: string;
-  setPopupedKey: (key: string) => void;
+  setPopupedKey: (key: string, option?: { keepFocus?: boolean }) => void;
   defaultDirection?: PopupDirection; // bottom by default
   onInlineChanged?: (val: DocAttributes, draft?: boolean) => void;
   onBlockChanged?: (val: DocAttributes, draft?: boolean) => void;
@@ -160,7 +160,7 @@ export const TextItems: React.FC<Props> = ({
   );
 
   const onActivateCombobox = useCallback(() => {
-    setPopupedKey("");
+    setPopupedKey("", { keepFocus: true });
   }, [setPopupedKey]);
 
   const onColorChanged = useCallback(
