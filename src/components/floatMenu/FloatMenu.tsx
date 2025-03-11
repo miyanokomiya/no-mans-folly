@@ -1,5 +1,6 @@
 import { IRectangle, IVec2, add, getRectCenter } from "okageo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Size } from "../../models";
 import { canvasToView } from "../../hooks/canvas";
 import { DocAttrInfo } from "../../models/document";
@@ -117,7 +118,8 @@ export const FloatMenu: React.FC<Option> = ({
     rootFixedCache = rootFixed;
   }, [rootFixed]);
 
-  return adjustedTargetRect ? (
+  if (!adjustedTargetRect) return;
+  return createPortal(
     <div ref={rootRef} {...rootAttrs}>
       <div className="absolute top-0 -left-[20px] bg-white px-1 h-9 rounded-l">
         <ClickOrDragHandler
@@ -143,8 +145,9 @@ export const FloatMenu: React.FC<Option> = ({
           />
         )}
       </div>
-    </div>
-  ) : undefined;
+    </div>,
+    document.body,
+  );
 };
 
 const TOP_LOCATED_KEY = "top-located";
