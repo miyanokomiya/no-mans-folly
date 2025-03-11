@@ -94,7 +94,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
 
   const loading = !!googleMode;
 
-  const buttonStyle = "w-60 py-2 px-4 rounded-xs flex items-center justify-center";
+  const buttonStyle = "w-60 py-2 px-4 rounded-xs flex items-center justify-center hover:opacity-70";
 
   return (
     <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
