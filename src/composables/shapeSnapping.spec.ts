@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  getGuidelinesFromSnappingResult,
   mergetSnappingResult,
   newShapeIntervalSnapping,
   newShapeSnapping,
@@ -1012,6 +1013,125 @@ describe("optimizeSnappingTargetInfoForPoint", () => {
         },
       ],
     });
+  });
+});
+
+describe("getGuidelinesFromSnappingResult", () => {
+  test("should filter guidelines running at the point", () => {
+    expect(
+      getGuidelinesFromSnappingResult(
+        {
+          targets: [
+            {
+              id: "",
+              line: [
+                { x: 0, y: 0 },
+                { x: 0, y: 50 },
+              ],
+            },
+            {
+              id: "",
+              line: [
+                { x: 200, y: 0 },
+                { x: 200, y: 50 },
+              ],
+            },
+            {
+              id: "",
+              line: [
+                { x: 0, y: 100 },
+                { x: 100, y: 100 },
+              ],
+            },
+          ],
+          intervalTargets: [],
+        },
+        { x: 200, y: 100 },
+      ),
+    ).toEqual([
+      [
+        { x: 200, y: 0 },
+        { x: 200, y: 50 },
+      ],
+      [
+        { x: 0, y: 100 },
+        { x: 100, y: 100 },
+      ],
+    ]);
+
+    expect(
+      getGuidelinesFromSnappingResult(
+        {
+          targets: [
+            {
+              id: "",
+              line: [
+                { x: 0, y: 100 },
+                { x: 100, y: 100 },
+              ],
+            },
+          ],
+          intervalTargets: [
+            {
+              beforeId: "",
+              afterId: "",
+              lines: [
+                [
+                  { x: 0, y: 0 },
+                  { x: 100, y: 0 },
+                ],
+                [
+                  { x: 200, y: 0 },
+                  { x: 300, y: 0 },
+                ],
+              ],
+              direction: "h",
+            },
+          ],
+        },
+        { x: 200, y: 100 },
+      ),
+    ).toEqual([
+      [
+        { x: 0, y: 100 },
+        { x: 100, y: 100 },
+      ],
+      [
+        { x: 200, y: 0 },
+        { x: 200, y: 100 },
+      ],
+    ]);
+
+    expect(
+      getGuidelinesFromSnappingResult(
+        {
+          targets: [],
+          intervalTargets: [
+            {
+              beforeId: "",
+              afterId: "",
+              lines: [
+                [
+                  { x: 0, y: 0 },
+                  { x: 0, y: 100 },
+                ],
+                [
+                  { x: 0, y: 200 },
+                  { x: 0, y: 300 },
+                ],
+              ],
+              direction: "h",
+            },
+          ],
+        },
+        { x: 100, y: 200 },
+      ),
+    ).toEqual([
+      [
+        { x: 0, y: 200 },
+        { x: -100, y: 200 },
+      ],
+    ]);
   });
 });
 

@@ -6,6 +6,7 @@ import {
   add,
   applyAffine,
   getNorm,
+  isOnLine,
   isParallel,
   moveRect,
   rotate,
@@ -966,7 +967,7 @@ export function getSecondGuidelineCandidateInfo(
   return { candidates: getGuidelinesFromSnappingResult(partial), ...partial };
 }
 
-export function getGuidelinesFromSnappingResult(snappingResult: SnappingTargetInfo): ISegment[] {
+export function getGuidelinesFromSnappingResult(snappingResult: SnappingTargetInfo, filterAt?: IVec2): ISegment[] {
   const allCandidates: ISegment[] = snappingResult.targets.map((t) => t.line);
   snappingResult.intervalTargets.forEach((t) =>
     t.lines.forEach((l) => {
@@ -974,8 +975,7 @@ export function getGuidelinesFromSnappingResult(snappingResult: SnappingTargetIn
       allCandidates.push([l[0], add(l[0], v)], [l[1], add(l[1], v)]);
     }),
   );
-
-  return allCandidates;
+  return filterAt ? allCandidates.filter((seg) => isOnLine(filterAt, seg)) : allCandidates;
 }
 
 export function filterSnappingTargetsBySecondGuideline(

@@ -26,7 +26,6 @@ describe("newLineSnapping", () => {
         width: 100,
         height: 100,
       }),
-      createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 }),
     ];
 
     test("should return connection result: End vertex", () => {
@@ -443,6 +442,90 @@ describe("newLineSnapping", () => {
               line: [
                 { x: 150, y: -31 },
                 { x: 150, y: 100 },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    test("should snap to the intersection of interval grid and shape outline", () => {
+      const movingLine0 = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: 0, y: 30 },
+        q: { x: 40, y: 30 },
+      });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes.map((s) => [s.id, sc.getSnappingLines(s)]),
+      });
+
+      const target0 = newLineSnapping({
+        snappableShapes: [
+          ...snappableShapes,
+          createShape<LineShape>(getCommonStruct, "line", {
+            id: "line0",
+            p: { x: -150, y: 0 },
+            q: { x: 0, y: -150 },
+          }),
+          createShape<LineShape>(getCommonStruct, "line", {
+            id: "line1",
+            p: { x: 200, y: 0 },
+            q: { x: 350, y: -150 },
+          }),
+        ],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine: movingLine0,
+        movingIndex: 1,
+      });
+      expect(target0.testConnection({ x: -48, y: -102 }, 1), "connected to the shape").toEqual({
+        outlineSrc: "line0",
+        p: { x: -50, y: -100 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: { x: -2, y: 0 },
+          targets: [],
+          intervalTargets: [
+            {
+              afterId: "b",
+              beforeId: "a",
+              direction: "v",
+              lines: [
+                [
+                  { x: -50, y: -100 },
+                  { x: 0, y: -100 },
+                ],
+                [
+                  { x: 100, y: -100 },
+                  { x: 150, y: -100 },
+                ],
+              ],
+            },
+          ],
+        },
+      });
+      expect(target0.testConnection({ x: 298, y: -102 }, 1), "connected to the shape").toEqual({
+        outlineSrc: "line1",
+        p: { x: 300, y: -100 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: { x: 2, y: 0 },
+          targets: [],
+          intervalTargets: [
+            {
+              afterId: "b",
+              beforeId: "a",
+              direction: "v",
+              lines: [
+                [
+                  { x: 100, y: -100 },
+                  { x: 150, y: -100 },
+                ],
+                [
+                  { x: 250, y: -100 },
+                  { x: 300, y: -100 },
+                ],
               ],
             },
           ],

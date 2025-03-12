@@ -173,7 +173,7 @@ export function newLineSnapping(option: Option) {
       const snapped = option.shapeSnapping.testPoint(point, scale);
       if (snapped) {
         const snappedP = add(point, snapped.diff);
-        const allGuidelines = getGuidelinesFromSnappingResult(snapped);
+        const allGuidelines = getGuidelinesFromSnappingResult(snapped, snappedP);
         if (allGuidelines.length > 1) {
           const connected = snapped.targets
             .map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id])
