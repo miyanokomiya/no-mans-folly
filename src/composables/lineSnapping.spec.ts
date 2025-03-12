@@ -81,10 +81,10 @@ describe("newLineSnapping", () => {
       });
 
       // Snapped to the center of a shape
-      expect(target.testConnection({ x: 49, y: 51 }, 1)).toEqual({
-        connection: { id: "a", rate: { x: 0.5, y: 0.5 } },
-        outlineSrc: "a",
-        p: { x: 50, y: 50 },
+      expect(target.testConnection({ x: 199, y: 51 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0.5, y: 0.5 } },
+        outlineSrc: "b",
+        p: { x: 200, y: 50 },
       });
 
       // Self snapped & Outline snapped
@@ -233,6 +233,115 @@ describe("newLineSnapping", () => {
             },
           ],
         },
+      });
+    });
+
+    test("should snap to shape outline along other line", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: -200, y: -200 },
+        q: { x: -100, y: -200 },
+      });
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 20, y: -50 },
+        q: { x: 20, y: 50 },
+      });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [
+          [
+            "line",
+            {
+              h: [],
+              v: [
+                [
+                  { x: 20, y: -50 },
+                  { x: 20, y: 50 },
+                ],
+              ],
+            },
+          ],
+        ],
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes: [...snappableShapes, line],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target1.testConnection({ x: 18, y: 1 }, 1)).toEqual({
+        connection: { id: "a", rate: { x: 0.2, y: 0 } },
+        outlineSrc: "a",
+        p: { x: 20, y: 0 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: { x: 2, y: 0 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "line",
+              line: [
+                { x: 20, y: -50 },
+                { x: 20, y: 50 },
+              ],
+            },
+          ],
+        },
+      });
+
+      const target2 = newLineSnapping({
+        snappableShapes: [
+          createShape<EllipseShape>(getCommonStruct, "ellipse", { id: "e", rx: 50, ry: 25 }),
+          createShape<LineShape>(getCommonStruct, "line", { id: "line", p: { x: 20, y: -50 }, q: { x: 20, y: 50 } }),
+        ],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      const result2 = target2.testConnection({ x: 20, y: 5 }, 1);
+      expect(result2?.outlineSrc).toBe("e");
+      expect(result2?.connection?.rate).toEqualPoint({ x: 0.2, y: 0.1 });
+    });
+
+    test("should snap to shape outline that is parallel to self snapped constraint", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: -200, y: 0 },
+        q: { x: -100, y: 0 },
+      });
+      const shapeSnapping = newShapeSnapping({ shapeSnappingList: [] });
+      const target = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+
+      expect(target.testConnection({ x: 18, y: 1 }, 1)).toEqual({
+        connection: { id: "a", rate: { x: 0.18, y: 0 } },
+        outlineSrc: "a",
+        p: { x: 18, y: 0 },
+        guidLines: [
+          [
+            { x: -200, y: 0 },
+            { x: 18, y: 0 },
+          ],
+        ],
+      });
+      expect(target.testConnection({ x: 2, y: 1 }, 1)).toEqual({
+        connection: { id: "a", rate: { x: 0, y: 0 } },
+        outlineSrc: "a",
+        p: { x: 0, y: 0 },
+        guidLines: [
+          [
+            { x: -200, y: 0 },
+            { x: 2, y: 0 },
+          ],
+        ],
       });
     });
 

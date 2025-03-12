@@ -1,6 +1,7 @@
 import {
   IRectangle,
   IVec2,
+  MINVALUE,
   add,
   getDistance,
   getNorm,
@@ -247,64 +248,66 @@ export function newLineSnapping(option: Option) {
     // Try snapping to other shapes' outline
     let outline: { p: IVec2; shape: Shape; guideLine?: ISegment } | undefined;
     {
-      // Set the threshold for markers up to default value, otherwise markers would be too strong.
-      const outlineThresholdForMarker = Math.min(SNAP_THRESHOLD * scale, threshold);
       let outlineThreshold = threshold;
 
-      reversedSnappableShapes.forEach((shape) => {
-        // When src point is snapped to adjacent points, check if it has a close intersection along with the snapping guide lines.
-        let intersection: IVec2 | undefined;
-        let priorityGuidline: ISegment | undefined;
-        if (lineConstrain && extendedGuideLine) {
+      if (lineConstrain && extendedGuideLine) {
+        // Seed the closest intersection between the guideline and shape outline.
+        reversedSnappableShapes.forEach((shape) => {
           const candidates = getIntersectedOutlines(
             option.getShapeStruct,
             shape,
             extendedGuideLine[0],
             extendedGuideLine[1],
           );
-          if (candidates) {
-            const closestCandidate = pickMinItem(candidates, (c) => getD2(sub(c, point)));
-            if (closestCandidate && getDistance(closestCandidate, point) < outlineThreshold) {
-              intersection = closestCandidate;
-              priorityGuidline = lineConstrain.guidLines[0];
-            }
-          }
-        }
+          const closestCandidate = pickMinItem(candidates ?? [], (c) => getD2(sub(c, point)));
+          const d = closestCandidate ? getDistance(closestCandidate, point) : Infinity;
 
-        // If there's no intersection, seek the closest outline point.
-        const p =
-          intersection ??
-          getClosestOutline(
+          if (threshold < d && selfSnapped) {
+            // When there's no close intersection with self-snapped constraint,
+            // check if current point is already on the outline in case the constraint and the outline are parallel.
+            const p = getClosestOutline(option.getShapeStruct, shape, lineConstrain.p, MINVALUE, MINVALUE);
+            if (p) {
+              outlineThreshold = 0;
+              outline = { p: lineConstrain.p, shape, guideLine: lineConstrain.guidLines[0] };
+            }
+            return;
+          }
+
+          if (closestCandidate && d < outlineThreshold) {
+            outlineThreshold = d;
+            outline = { p: closestCandidate, shape, guideLine: lineConstrain.guidLines[0] };
+          }
+        });
+      } else {
+        // Set the threshold for markers up to default value, otherwise markers would be too strong.
+        const outlineThresholdForMarker = Math.min(SNAP_THRESHOLD * scale, threshold);
+        reversedSnappableShapes.forEach((shape) => {
+          const p = getClosestOutline(
             option.getShapeStruct,
             shape,
             point,
             outlineThreshold,
             Math.min(outlineThresholdForMarker, outlineThreshold),
           );
-        if (!p) {
-          // If there's no close outline, check the center.
-          const rect = shapeComposite.getWrapperRect(shape);
-          const c = getRectCenter(rect);
-          const d = getDistance(c, point);
+          if (!p) {
+            // If there's no close outline, check the center.
+            const rect = shapeComposite.getWrapperRect(shape);
+            const c = getRectCenter(rect);
+            const d = getDistance(c, point);
+            if (d < outlineThreshold) {
+              outlineThreshold = d;
+              outline = { p: c, shape };
+            }
+            return;
+          }
+
+          const d = getDistance(p, point);
           if (d < outlineThreshold) {
             outlineThreshold = d;
-            outline = { p: c, shape };
-            lineConstrain = undefined;
+            outline = { p, shape };
           }
-          return;
-        }
-
-        // Abandon the line constrain when the closest outline is found indenpendently from it.
-        if (!intersection) {
-          lineConstrain = undefined;
-        }
-
-        const d = getDistance(p, point);
-        if (d < outlineThreshold) {
-          outlineThreshold = d;
-          outline = { p, shape, guideLine: priorityGuidline };
-        }
-      });
+        });
+      }
     }
 
     if (outline) {
