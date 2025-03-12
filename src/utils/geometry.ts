@@ -633,6 +633,11 @@ export function sortNumFn(a: number, b: number): number {
   return a - b;
 }
 
+export function isRangeAccommodatingValue(range: [number, number], v: number): boolean {
+  const [a0, a1] = range.toSorted(sortNumFn);
+  return a0 <= v && v <= a1;
+}
+
 export function isRangeOverlapped(a: [number, number], b: [number, number]): boolean {
   const [a0, a1] = [a[0], a[1]].sort(sortNumFn);
   const [b0, b1] = [b[0], b[1]].sort(sortNumFn);

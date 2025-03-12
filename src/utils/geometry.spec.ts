@@ -91,6 +91,7 @@ import {
   roundFloatingError,
   getOverlappedAreaOfRects,
   divideSafely,
+  isRangeAccommodatingValue,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -923,6 +924,20 @@ describe("snapNumberCeil", () => {
     expect(snapNumberCeil(1, 5)).toBe(5);
     expect(snapNumberCeil(5, 5)).toBe(5);
     expect(snapNumberCeil(5.1, 5)).toBe(10);
+  });
+});
+
+describe("isRangeAccommodatingValue", () => {
+  test("should return true when the value is within the range", () => {
+    expect(isRangeAccommodatingValue([-1, 2], -2)).toBe(false);
+    expect(isRangeAccommodatingValue([-1, 2], -1)).toBe(true);
+    expect(isRangeAccommodatingValue([-1, 2], 0)).toBe(true);
+    expect(isRangeAccommodatingValue([-1, 2], 2)).toBe(true);
+    expect(isRangeAccommodatingValue([-1, 2], 3)).toBe(false);
+
+    expect(isRangeAccommodatingValue([2, -1], -2)).toBe(false);
+    expect(isRangeAccommodatingValue([2, -1], -1)).toBe(true);
+    expect(isRangeAccommodatingValue([2, -1], 3)).toBe(false);
   });
 });
 

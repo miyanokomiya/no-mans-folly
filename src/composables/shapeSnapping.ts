@@ -11,7 +11,14 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { getCrossLineAndLine, getD2, getRectLines, ISegment, isRangeOverlapped } from "../utils/geometry";
+import {
+  getCrossLineAndLine,
+  getD2,
+  getRectLines,
+  ISegment,
+  isRangeAccommodatingValue,
+  isRangeOverlapped,
+} from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -248,7 +255,17 @@ export function newShapeSnapping(option: Option) {
           (v) => v.ad,
         );
         if (closest) {
-          xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
+          if (xClosest && xClosest[1].ad === closest.ad) {
+            const ad = closest.ad;
+            const closestOverlapped = vList.find(
+              (v) => v.ad <= ad && isRangeAccommodatingValue([v.line[0].y, v.line[1].y], p.y),
+            );
+            if (closestOverlapped) {
+              xClosest = [id, closestOverlapped];
+            }
+          } else {
+            xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
+          }
         }
       }
 
@@ -262,7 +279,17 @@ export function newShapeSnapping(option: Option) {
           (v) => v.ad,
         );
         if (closest) {
-          yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
+          if (yClosest && yClosest[1].ad === closest.ad) {
+            const ad = closest.ad;
+            const closestOverlapped = hList.find(
+              (h) => h.ad <= ad && isRangeAccommodatingValue([h.line[0].x, h.line[1].x], p.x),
+            );
+            if (closestOverlapped) {
+              yClosest = [id, closestOverlapped];
+            }
+          } else {
+            yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
+          }
         }
       }
     });

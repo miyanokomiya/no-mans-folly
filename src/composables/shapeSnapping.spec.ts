@@ -701,6 +701,90 @@ describe("testPoint", () => {
       intervalTargets: [],
     });
   });
+
+  test("should prioritize overlapped segments", () => {
+    const shapeSnappingList2 = [
+      ...shapeSnappingList,
+      [
+        "b",
+        {
+          v: [
+            [
+              { x: 100, y: 200 },
+              { x: 100, y: 100 },
+            ],
+            [
+              { x: 200, y: 100 },
+              { x: 200, y: 200 },
+            ],
+          ],
+          h: [
+            [
+              { x: 100, y: 100 },
+              { x: 200, y: 100 },
+            ],
+            [
+              { x: 200, y: 200 },
+              { x: 100, y: 200 },
+            ],
+          ],
+        },
+      ],
+    ] as [string, ShapeSnappingLines][];
+    const target = newShapeSnapping({ shapeSnappingList: shapeSnappingList2 });
+    expect(target.testPoint({ x: 90, y: 101 })).toEqual({
+      diff: { x: 0, y: -1 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 0, y: 100 },
+            { x: 100, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+    expect(target.testPoint({ x: 110, y: 101 })).toEqual({
+      diff: { x: 0, y: -1 },
+      targets: [
+        {
+          id: "b",
+          line: [
+            { x: 100, y: 100 },
+            { x: 200, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+    expect(target.testPoint({ x: 101, y: 90 })).toEqual({
+      diff: { x: -1, y: 0 },
+      targets: [
+        {
+          id: "a",
+          line: [
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+    expect(target.testPoint({ x: 101, y: 110 })).toEqual({
+      diff: { x: -1, y: 0 },
+      targets: [
+        {
+          id: "b",
+          line: [
+            { x: 100, y: 100 },
+            { x: 100, y: 200 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+    });
+  });
 });
 
 describe("testPointOnLine", () => {
