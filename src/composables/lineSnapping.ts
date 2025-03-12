@@ -28,7 +28,7 @@ import {
   pickLongSegment,
 } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { applyPath } from "../utils/renderer";
+import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { isObjectEmpty, pickMinItem, splitList } from "../utils/commons";
@@ -138,6 +138,33 @@ export function newLineSnapping(option: Option) {
     let extendedGuideLine: ISegment | undefined;
 
     if (selfSnapped?.guidLines[0] && !isSame(selfSnapped!.p, selfSnapped.guidLines[0][0])) {
+      if (selfSnapped.guidLines.length === 1 && option.shapeSnapping) {
+        const snapped = option.shapeSnapping.testPointOnLine(point, selfSnapped.guidLines[0], scale);
+        if (snapped) {
+          const snappedP = add(point, snapped.diff);
+          const connected = snapped.targets
+            .map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id])
+            .find((s) => s && shapeComposite.isPointOnOutline(s, snappedP));
+          if (connected) {
+            return {
+              connection: {
+                rate: shapeComposite.getLocationRateOnShape(connected, snappedP),
+                id: connected.id,
+              },
+              outlineSrc: connected.id,
+              p: snappedP,
+              guidLines: [pickLongSegment(...selfSnapped.guidLines[0], snappedP)],
+            };
+          }
+
+          return {
+            p: snappedP,
+            guidLines: [pickLongSegment(...selfSnapped.guidLines[0], snappedP)],
+            shapeSnappingResult: snapped,
+          };
+        }
+      }
+
       const seg: ISegment = [selfSnapped.guidLines[0][0], selfSnapped.p];
       lineConstrain = selfSnapped;
       extendedGuideLine = extendSegment(seg, 1 + threshold / getDistance(seg[0], seg[1]));
@@ -146,6 +173,29 @@ export function newLineSnapping(option: Option) {
       const snapped = option.shapeSnapping.testPoint(point, scale);
       if (snapped) {
         const snappedP = add(point, snapped.diff);
+        const allGuidelines = getGuidelinesFromSnappingResult(snapped);
+        if (allGuidelines.length > 1) {
+          const connected = snapped.targets
+            .map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id])
+            .find((s) => s && shapeComposite.isPointOnOutline(s, snappedP));
+          if (connected) {
+            return {
+              connection: {
+                rate: shapeComposite.getLocationRateOnShape(connected, snappedP),
+                id: connected.id,
+              },
+              p: snappedP,
+              outlineSrc: connected.id,
+              shapeSnappingResult: snapped,
+            };
+          }
+
+          return {
+            p: snappedP,
+            shapeSnappingResult: snapped,
+          };
+        }
+
         // Prioritize lines not coming from outline of shapes.
         // => It doesn't work well as a guideline to get a intersection of outline of the shape.
         const [outlineTargets, nonOutlineTargets] = splitList(snapped.targets, (t) => {
@@ -288,28 +338,7 @@ export function newLineSnapping(option: Option) {
       };
     }
 
-    if (option.shapeSnapping) {
-      if (selfSnapped && selfSnapped.guidLines.length === 1) {
-        const snapped = option.shapeSnapping.testPointOnLine(point, selfSnapped.guidLines[0], scale);
-        if (snapped) {
-          return {
-            p: add(point, snapped.diff),
-            guidLines: selfSnapped.guidLines,
-            shapeSnappingResult: snapped,
-          };
-        }
-      } else {
-        const snapped = option.shapeSnapping.testPoint(point, scale);
-        if (snapped) {
-          return {
-            p: add(point, snapped.diff),
-            shapeSnappingResult: snapped,
-          };
-        }
-      }
-    }
-
-    return selfSnapped;
+    return lineConstrain ?? selfSnapped;
   }
 
   return { testConnection };
@@ -330,6 +359,18 @@ export function renderConnectionResult(
       ...option,
       result: option.result.shapeSnappingResult,
     });
+  }
+
+  if (option.result.outlineSrc) {
+    const rect = option.getTargetRect?.(option.result.outlineSrc);
+    if (rect) {
+      scaleGlobalAlpha(ctx, 0.2, () => {
+        applyFillStyle(ctx, { color: option.style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fill();
+      });
+    }
   }
 
   if (option.result.guidLines) {

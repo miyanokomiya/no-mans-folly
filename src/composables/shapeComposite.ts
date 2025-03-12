@@ -2,6 +2,7 @@ import {
   AffineMatrix,
   IRectangle,
   IVec2,
+  MINVALUE,
   applyAffine,
   getCenter,
   getDistance,
@@ -158,6 +159,10 @@ export function newShapeComposite(option: Option) {
 
   function isPointOn(shape: Shape, p: IVec2): boolean {
     return shapeModule.isPointOn(getStruct, shape, p, mergedShapeContext);
+  }
+
+  function isPointOnOutline(shape: Shape, p: IVec2): boolean {
+    return !!shapeModule.getClosestOutline(getStruct, shape, p, MINVALUE, MINVALUE);
   }
 
   function transformShape<T extends Shape>(shape: T, resizingAffine: AffineMatrix): Partial<T> {
@@ -394,6 +399,7 @@ export function newShapeComposite(option: Option) {
 
     findShapeAt,
     isPointOn,
+    isPointOnOutline,
     transformShape,
     getWrapperRect,
     getWrapperRectForShapes,

@@ -279,6 +279,20 @@ describe("pickMinItem", () => {
   });
 });
 
+describe("pickMinItemWithValue", () => {
+  test("should return an item and the value that is minimum in the list", () => {
+    const items = [
+      { id: "a", value: 2 },
+      { id: "b", value: 1 },
+      { id: "c", value: 4 },
+    ];
+    expect(target.pickMinItemWithValue(items, (item) => item.value)).toEqual([items[1], 1]);
+  });
+  test("should return undefined when there's no item", () => {
+    expect(target.pickMinItemWithValue([], () => 0)).toEqual(undefined);
+  });
+});
+
 describe("splitList", () => {
   test("should split list by checkFn", () => {
     expect(target.splitList([1, 2, 3, 4, 5], (n) => n < 3)).toEqual([

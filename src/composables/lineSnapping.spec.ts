@@ -322,7 +322,7 @@ describe("newLineSnapping", () => {
       });
     });
 
-    test("should snap to gridlines when there's no other candidate", () => {
+    test("should snap to grid lines", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "a", q: { x: 100, y: 50 } });
       const shapeSnapping = newShapeSnapping({
         shapeSnappingList: [],
@@ -382,6 +382,186 @@ describe("newLineSnapping", () => {
                   x: 100,
                   y: 50,
                 },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    test("should snap to grid lines based on shape bounds with preserving the original line", () => {
+      const movingLine0 = createShape<LineShape>(getCommonStruct, "line", {
+        id: "a",
+        p: { x: 0, y: 30 },
+        q: { x: 40, y: 30 },
+      });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [[snappableShapes[1].id, sc.getSnappingLines(snappableShapes[1])]],
+      });
+
+      const target0 = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine: movingLine0,
+        movingIndex: 1,
+      });
+      expect(target0.testConnection({ x: 148, y: 31 }, 1), "connected to the shape").toEqual({
+        connection: { id: "b", rate: { x: 0, y: 0.3 } },
+        outlineSrc: "b",
+        p: { x: 150, y: 30 },
+        guidLines: [
+          [
+            { x: 0, y: 30 },
+            { x: 150, y: 30 },
+          ],
+        ],
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine: { ...movingLine0, p: { x: 0, y: -30 }, q: { x: 40, y: -30 } },
+        movingIndex: 1,
+      });
+      expect(target1.testConnection({ x: 148, y: -31 }, 1), "not connected to the shape").toEqual({
+        p: { x: 150, y: -30 },
+        guidLines: [
+          [
+            { x: 0, y: -30 },
+            { x: 150, y: -30 },
+          ],
+        ],
+        shapeSnappingResult: {
+          diff: { x: 2, y: 1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "b",
+              line: [
+                { x: 150, y: -31 },
+                { x: 150, y: 100 },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    test("should snap to the intersection of grid lines based on shape bounds", () => {
+      const movingLine0 = createShape<LineShape>(getCommonStruct, "line", {
+        id: "a",
+        p: { x: 0, y: 30 },
+        q: { x: 40, y: 30 },
+      });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes.map((s) => [s.id, sc.getSnappingLines(s)]),
+        gridSnapping: {
+          h: [],
+          v: [
+            [
+              { x: 80, y: -100 },
+              { x: 80, y: 100 },
+            ],
+            [
+              { x: 120, y: -100 },
+              { x: 120, y: 100 },
+            ],
+            [
+              { x: 170, y: -100 },
+              { x: 170, y: 100 },
+            ],
+          ],
+        },
+      });
+
+      const target0 = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine: movingLine0,
+        movingIndex: 1,
+      });
+      expect(target0.testConnection({ x: 78, y: 1 }, 1), "connected to the shape").toEqual({
+        connection: { id: "a", rate: { x: 0.8, y: 0 } },
+        outlineSrc: "a",
+        p: { x: 80, y: 0 },
+        shapeSnappingResult: {
+          diff: { x: 2, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "GRID",
+              line: [
+                { x: 80, y: -100 },
+                { x: 80, y: 100 },
+              ],
+            },
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 0 },
+                { x: 100, y: 0 },
+              ],
+            },
+          ],
+        },
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine: { ...movingLine0, p: { x: 0, y: -30 }, q: { x: 40, y: -30 } },
+        movingIndex: 1,
+      });
+      expect(target1.testConnection({ x: 118, y: 1 }, 1), "not connected to the shape").toEqual({
+        p: { x: 120, y: 0 },
+        shapeSnappingResult: {
+          diff: { x: 2, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "GRID",
+              line: [
+                { x: 120, y: -100 },
+                { x: 120, y: 100 },
+              ],
+            },
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 0 },
+                { x: 120, y: 0 },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(target1.testConnection({ x: 168, y: 1 }, 1), "connected to the shape").toEqual({
+        connection: { id: "b", rate: { x: 0.2, y: 0 } },
+        outlineSrc: "b",
+        p: { x: 170, y: 0 },
+        shapeSnappingResult: {
+          diff: { x: 2, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "GRID",
+              line: [
+                { x: 170, y: -100 },
+                { x: 170, y: 100 },
+              ],
+            },
+            {
+              id: "b",
+              line: [
+                { x: 150, y: 0 },
+                { x: 250, y: 0 },
               ],
             },
           ],
