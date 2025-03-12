@@ -28,7 +28,7 @@ import {
   pickLongSegment,
 } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
+import { applyCurvePath, applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { isObjectEmpty, pickMinItem, splitList } from "../utils/commons";
@@ -351,25 +351,42 @@ export function renderConnectionResult(
     result: ConnectionResult;
     scale: number;
     style: StyleScheme;
-    getTargetRect?: (id: string) => IRectangle | undefined;
+    shapeComposite: ShapeComposite;
   },
 ) {
+  const shapeComposite = option.shapeComposite;
+  const getTargetRect = (id: string) =>
+    shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined;
+
   if (option.result.shapeSnappingResult) {
     renderSnappingResult(ctx, {
-      ...option,
       result: option.result.shapeSnappingResult,
+      getTargetRect,
+      scale: option.scale,
+      style: option.style,
     });
   }
 
   if (option.result.outlineSrc) {
-    const rect = option.getTargetRect?.(option.result.outlineSrc);
-    if (rect) {
-      scaleGlobalAlpha(ctx, 0.2, () => {
-        applyFillStyle(ctx, { color: option.style.selectionSecondaly });
-        ctx.beginPath();
-        ctx.rect(rect.x, rect.y, rect.width, rect.height);
-        ctx.fill();
-      });
+    const shape = shapeComposite.shapeMap[option.result.outlineSrc];
+    if (shape) {
+      if (isLineShape(shape)) {
+        const linePath = getLinePath(shape);
+        applyCurvePath(ctx, linePath, shape.curves);
+        applyStrokeStyle(ctx, {
+          color: option.style.selectionSecondaly,
+          width: 2 * option.scale,
+        });
+        ctx.stroke();
+      } else {
+        const rect = option.shapeComposite.getWrapperRect(shape);
+        scaleGlobalAlpha(ctx, 0.2, () => {
+          applyFillStyle(ctx, { color: option.style.selectionSecondaly });
+          ctx.beginPath();
+          ctx.rect(rect.x, rect.y, rect.width, rect.height);
+          ctx.fill();
+        });
+      }
     }
   }
 

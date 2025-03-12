@@ -141,8 +141,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           result: connectionResult,
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
-          getTargetRect: (id) =>
-            shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined,
+          shapeComposite,
         });
       }
 
