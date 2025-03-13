@@ -31,6 +31,10 @@ describe("getIntersectedOutlines", () => {
     const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1 });
     const res = struct.getIntersectedOutlines?.(shape, { x: 70, y: 0 }, { x: 70, y: 100 });
     expect(res).toHaveLength(4);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 70, y: 0 }, { x: 70, y: 50 })).toHaveLength(2);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 70, y: 0 }, { x: 70, y: 5 })).toHaveLength(1);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 70, y: 50 }, { x: 70, y: 100 })).toHaveLength(2);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 70, y: 95 }, { x: 70, y: 100 })).toHaveLength(1);
   });
 
   test("should return intersections: rotated", () => {

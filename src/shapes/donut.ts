@@ -1,4 +1,4 @@
-import { IVec2, PathSegmentRaw, add, getDistance, pathSegmentRawsToString, sub } from "okageo";
+import { IVec2, PathSegmentRaw, add, getDistance, isOnSeg, pathSegmentRawsToString, sub } from "okageo";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   TAU,
@@ -106,7 +106,7 @@ export const struct: ShapeStruct<DonutShape> = {
       shape.rotation,
     );
 
-    const points = [...(outerPoints ?? []), ...(innerPoints ?? [])];
+    const points = [...(outerPoints ?? []), ...(innerPoints ?? [])].filter((p) => isOnSeg(p, [from, to]) ?? p);
     return points.length === 0 ? undefined : sortPointFrom(from, points);
   },
   getTangentAt(shape, p) {

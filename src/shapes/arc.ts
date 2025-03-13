@@ -7,6 +7,7 @@ import {
   getCenter,
   getDistance,
   getRadian,
+  isOnSeg,
   multi,
   pathSegmentRawsToString,
   rotate,
@@ -166,6 +167,8 @@ export const struct: ShapeStruct<ArcShape> = {
     }
 
     {
+      const pushIfOnSeg = (p: IVec2) => (isOnSeg(p, [from, to]) ?? p) && intersections.push(p);
+
       if (holeRate) {
         getCrossLineAndArcRotated(
           [from, to],
@@ -175,11 +178,11 @@ export const struct: ShapeStruct<ArcShape> = {
           shape.rotation,
           shape.from,
           shape.to,
-        )?.forEach((p) => intersections.push(p));
+        )?.forEach(pushIfOnSeg);
       }
 
       getCrossLineAndArcRotated([from, to], center, shape.rx, shape.ry, shape.rotation, shape.from, shape.to)?.forEach(
-        (p) => intersections.push(p),
+        pushIfOnSeg,
       );
     }
 

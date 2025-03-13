@@ -5,6 +5,7 @@ import {
   getCenter,
   getDistance,
   getRadian,
+  isOnSeg,
   isSame,
   parsePathSegmentRaws,
   pathSegmentRawsToString,
@@ -159,9 +160,10 @@ export const struct: ShapeStruct<EllipseShape> = {
   getClosestOutline,
   getIntersectedOutlines(shape, from, to) {
     const center = add(shape.p, { x: shape.rx, y: shape.ry });
-    const points = getCrossLineAndEllipseRotated([from, to], center, shape.rx, shape.ry, shape.rotation);
-    if (!points) return;
+    const candidates = getCrossLineAndEllipseRotated([from, to], center, shape.rx, shape.ry, shape.rotation);
+    if (!candidates) return;
 
+    const points = candidates.filter((p) => isOnSeg(p, [from, to]) ?? p);
     return points.length === 0 ? undefined : sortPointFrom(from, points);
   },
   getTangentAt(shape, p) {

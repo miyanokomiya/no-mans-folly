@@ -6,6 +6,7 @@ import {
   clamp,
   getDistance,
   getRadian,
+  isOnSeg,
   pathSegmentRawsToString,
   sub,
 } from "okageo";
@@ -172,7 +173,8 @@ export const struct: ShapeStruct<MoonShape> = {
       intersections.push(p),
     );
 
-    return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
+    const points = intersections.filter((p) => isOnSeg(p, [from, to]) ?? p);
+    return points.length > 0 ? sortPointFrom(from, points) : undefined;
   },
   getTangentAt(shape, p) {
     const r = { x: shape.rx, y: shape.ry };

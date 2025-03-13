@@ -28,6 +28,12 @@ describe("getIntersectedOutlines", () => {
       { x: 50, y: 75 },
       { x: 50, y: 100 },
     ]);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 50, y: -50 }, { x: 50, y: 80 })).toEqualPoints([
+      { x: 50, y: 75 },
+    ]);
+    expect(struct.getIntersectedOutlines?.(shape, { x: 50, y: 80 }, { x: 50, y: 150 })).toEqualPoints([
+      { x: 50, y: 100 },
+    ]);
   });
 
   test("should return intersected outline along with the hole: rotated", () => {
