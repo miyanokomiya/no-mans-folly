@@ -93,6 +93,7 @@ import {
   divideSafely,
   isRangeAccommodatingValue,
   doesRectAccommodateRect,
+  isRectOverlapped,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1055,6 +1056,26 @@ describe("isRectOverlappedV", () => {
     expect(isRectOverlappedV(rect, { x: 10, y: 0, width: 80, height: 100 })).toBe(true);
     expect(isRectOverlappedV(rect, { x: 110, y: 0, width: 100, height: 100 })).toBe(false);
     expect(isRectOverlappedV(rect, { x: -110, y: 0, width: 100, height: 100 })).toBe(false);
+  });
+});
+
+describe("isRectOverlapped", () => {
+  test("should return true if rectangles overlap", () => {
+    const rect1: IRectangle = { x: 0, y: 0, width: 100, height: 100 };
+    const rect2: IRectangle = { x: 50, y: 50, width: 100, height: 100 };
+    const rect3: IRectangle = { x: 200, y: 0, width: 100, height: 100 };
+    const rect4: IRectangle = { x: 25, y: 25, width: 50, height: 50 };
+    const rect5: IRectangle = { x: 100, y: 0, width: 100, height: 100 };
+    const rect6: IRectangle = { x: 100, y: 100, width: 100, height: 100 };
+    const rect7: IRectangle = { x: 0, y: 200, width: 100, height: 100 };
+
+    expect(isRectOverlapped(rect1, rect1)).toBe(true);
+    expect(isRectOverlapped(rect1, rect2)).toBe(true);
+    expect(isRectOverlapped(rect1, rect3)).toBe(false);
+    expect(isRectOverlapped(rect1, rect4)).toBe(true);
+    expect(isRectOverlapped(rect1, rect5)).toBe(true);
+    expect(isRectOverlapped(rect1, rect6)).toBe(true);
+    expect(isRectOverlapped(rect1, rect7)).toBe(false);
   });
 });
 

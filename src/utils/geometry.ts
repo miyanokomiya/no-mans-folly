@@ -661,6 +661,10 @@ export function isRectOverlappedV(a: IRectangle, b: IRectangle): boolean {
   return isRangeOverlapped([a.x, a.x + a.width], [b.x, b.x + b.width]);
 }
 
+export function isRectOverlapped(a: IRectangle, b: IRectangle): boolean {
+  return isRectOverlappedH(a, b) && isRectOverlappedV(a, b);
+}
+
 /**
  * Returns a rectangle only when it has non-zero area.
  */

@@ -49,7 +49,7 @@ import { createNewTextShapeForDocument } from "./utils/text";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { getLineUnrelatedIds } from "../../shapeRelation";
 import { isLineShape } from "../../../shapes/line";
-import { doesRectAccommodateRect, getRectLines, isRectOverlappedH, isRectOverlappedV } from "../../../utils/geometry";
+import { doesRectAccommodateRect, getRectLines, isRectOverlapped } from "../../../utils/geometry";
 
 type AcceptableEvent =
   | "Break"
@@ -788,5 +788,5 @@ export function isShapeInteratctiveWithinViewport(
   }
 
   // Check if the viewport overlaps with the shape's wrapper rect
-  return isRectOverlappedH(viewRect, wrapperRect) && isRectOverlappedV(viewRect, wrapperRect);
+  return isRectOverlapped(viewRect, wrapperRect);
 }

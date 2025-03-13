@@ -96,6 +96,13 @@ describe("newSmartBranchHandler", () => {
 });
 
 describe("getBranchObstacles", () => {
+  const src = createShape<RectPolygonShape>(getCommonStruct, "rectangle", {
+    id: "src",
+    p: { x: -100, y: -100 },
+    width: 5,
+    height: 5,
+  });
+
   test("should ignore lines and shapes with special order priority", () => {
     const rect = createShape<RectPolygonShape>(getCommonStruct, "rectangle", { id: "rect", width: 10, height: 10 });
     const line = createShape<LineShape>(getCommonStruct, "line", {
@@ -110,12 +117,29 @@ describe("getBranchObstacles", () => {
       height: 10,
     });
     const shapeComposite = newShapeComposite({
-      shapes: [rect, line, frame],
+      shapes: [rect, line, frame, src],
       getStruct: getCommonStruct,
     });
-    const result = getBranchObstacles(shapeComposite);
+    const result = getBranchObstacles(shapeComposite, src);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqualRect({ x: 0, y: 0, width: 10, height: 10 });
+  });
+
+  test("should ignore shapes overlapping the source shape", () => {
+    const rect = createShape<RectPolygonShape>(getCommonStruct, "rectangle", { id: "rect", width: 10, height: 10 });
+    const rect2 = { ...rect, id: "rect2", p: { x: 10, y: 10 } };
+    const rect3 = { ...rect, id: "rect3", p: { x: 20, y: 20 } };
+    const shapeComposite = newShapeComposite({
+      shapes: [rect, rect2, rect3, src],
+      getStruct: getCommonStruct,
+    });
+    const r0 = { x: 0, y: 0, width: 10, height: 10 };
+    const r1 = { x: 10, y: 10, width: 10, height: 10 };
+    const r2 = { x: 20, y: 20, width: 10, height: 10 };
+    expect(getBranchObstacles(shapeComposite, { ...src, p: { x: -2, y: -2 } })).toEqual([r1, r2]);
+    expect(getBranchObstacles(shapeComposite, { ...src, p: { x: 2, y: 2 } })).toEqual([r1, r2]);
+    expect(getBranchObstacles(shapeComposite, { ...src, p: { x: 12, y: 12 } })).toEqual([r0, r2]);
+    expect(getBranchObstacles(shapeComposite, { ...src, p: { x: 22, y: 22 } })).toEqual([r0, r1]);
   });
 });
 

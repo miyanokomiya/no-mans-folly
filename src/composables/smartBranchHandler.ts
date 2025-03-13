@@ -4,7 +4,7 @@ import { cloneShapes, createShape, getIntersectedOutlines, hasSpecialOrderPriori
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
 import { newRectHitRectHitTest } from "./shapeHitTest";
-import { TAU, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
+import { TAU, isRectOverlapped, isRectOverlappedH, isRectOverlappedV } from "../utils/geometry";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 import { generateKeyBetween } from "../utils/findex";
@@ -194,7 +194,7 @@ function createSmartBranch(
   const findexForShape = generateKeyBetween(lastFindex, null);
   const findexForElbow = generateKeyBetween(findexForShape, null);
 
-  const obstacles = getBranchObstacles(shapeComposite);
+  const obstacles = getBranchObstacles(shapeComposite, src);
   const baseQ = getTargetPosition(
     branchIndex,
     bounds,
@@ -243,11 +243,16 @@ function createSmartBranch(
   return [moved, line].map((s) => (patch[s.id] ? { ...s, ...patch[s.id] } : s)) as [Shape, LineShape];
 }
 
-export function getBranchObstacles(shapeComposite: ShapeComposite): IRectangle[] {
+export function getBranchObstacles(shapeComposite: ShapeComposite, src: Shape): IRectangle[] {
   const getShapeStruct = shapeComposite.getShapeStruct;
-  return shapeComposite.shapes
-    .filter((s) => !isLineShape(s) && !hasSpecialOrderPriority(getShapeStruct, s))
-    .map((s) => shapeComposite.getWrapperRect(s));
+  const srcBounds = shapeComposite.getWrapperRect(src);
+  return (
+    shapeComposite.shapes
+      .filter((s) => s.id !== src.id && !isLineShape(s) && !hasSpecialOrderPriority(getShapeStruct, s))
+      .map((s) => shapeComposite.getWrapperRect(s))
+      // Ignore shapes accommodating the source shape.
+      .filter((rect) => !isRectOverlapped(rect, srcBounds))
+  );
 }
 
 function getTargetPosition(
