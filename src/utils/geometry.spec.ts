@@ -92,6 +92,7 @@ import {
   getOverlappedAreaOfRects,
   divideSafely,
   isRangeAccommodatingValue,
+  doesRectAccommodateRect,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2190,5 +2191,37 @@ describe("roundFloatingError", () => {
     expect(roundFloatingError(9.9999999999)).toBe(10);
     expect(roundFloatingError(9.6999999999)).toBe(9.7);
     expect(roundFloatingError(9.6499999999)).toBe(9.65);
+  });
+});
+
+describe("doesRectAccommodateRect", () => {
+  test("should return true if outer rectangle accommodates inner rectangle", () => {
+    const outer = { x: 0, y: 0, width: 100, height: 100 };
+    const inner = { x: 10, y: 10, width: 50, height: 50 };
+    expect(doesRectAccommodateRect(outer, inner)).toBe(true);
+  });
+
+  test("should return false if outer rectangle does not accommodate inner rectangle", () => {
+    const outer = { x: 0, y: 0, width: 100, height: 100 };
+    const inner = { x: 10, y: 10, width: 150, height: 50 };
+    expect(doesRectAccommodateRect(outer, inner)).toBe(false);
+  });
+
+  test("should return false if inner rectangle is partially outside outer rectangle", () => {
+    const outer = { x: 0, y: 0, width: 100, height: 100 };
+    const inner = { x: 50, y: 50, width: 60, height: 60 };
+    expect(doesRectAccommodateRect(outer, inner)).toBe(false);
+  });
+
+  test("should return true if inner rectangle is exactly the same as outer rectangle", () => {
+    const outer = { x: 0, y: 0, width: 100, height: 100 };
+    const inner = { x: 0, y: 0, width: 100, height: 100 };
+    expect(doesRectAccommodateRect(outer, inner)).toBe(true);
+  });
+
+  test("should return true if inner rectangle is at the edge of outer rectangle", () => {
+    const outer = { x: 0, y: 0, width: 100, height: 100 };
+    const inner = { x: 0, y: 0, width: 50, height: 50 };
+    expect(doesRectAccommodateRect(outer, inner)).toBe(true);
   });
 });

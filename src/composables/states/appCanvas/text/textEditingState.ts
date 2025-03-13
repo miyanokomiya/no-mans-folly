@@ -6,6 +6,7 @@ import {
   handleFileDrop,
   handleHistoryEvent,
   handleStateEvent,
+  isShapeInteratctiveWithinViewport,
   newDocClipboard,
 } from "../commons";
 import { AppCanvasState, AppCanvasStateContext } from "../core";
@@ -189,7 +190,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
                 // If the shape is the doc owner, keep editing it.
                 // If not, select the shape.
                 if (shapeAtPointer?.id !== option.id) {
-                  if (shapeAtPointer) {
+                  if (shapeAtPointer && isShapeInteratctiveWithinViewport(ctx, shapeAtPointer)) {
                     ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
                   } else {
                     return {

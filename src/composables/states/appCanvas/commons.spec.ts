@@ -4,6 +4,7 @@ import {
   getSnappableCandidates,
   handleHistoryEvent,
   handleStateEvent,
+  isShapeInteratctiveWithinViewport,
   selectShapesInRange,
 } from "./commons";
 import { createShape, getCommonStruct } from "../../../shapes";
@@ -11,6 +12,7 @@ import { RectangleShape } from "../../../shapes/rectangle";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
 import { newShapeComposite } from "../../shapeComposite";
+import { DonutShape } from "../../../shapes/donut";
 
 function getMockCtx() {
   return {
@@ -157,5 +159,100 @@ describe("getSnappableCandidates", () => {
         [],
       ),
     ).toEqual([shapeComposite.shapes[0]]);
+  });
+});
+
+describe("isShapeInteratctiveWithinViewport", () => {
+  test("should return true if the shape is interactive and within the viewport", () => {
+    const shape = createShape<DonutShape>(getCommonStruct, "donut", {
+      id: "donut",
+      p: { x: 0, y: 0 },
+      rx: 50,
+      ry: 25,
+      holeRate: 0.5,
+    });
+    const sc = newShapeComposite({ shapes: [shape], getStruct: getCommonStruct });
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: -49, y: -50, width: 200, height: 200 }),
+        },
+        shape,
+      ),
+      "accommodates the shape",
+    ).toBe(true);
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 50, y: 50, width: 200, height: 200 }),
+        },
+        shape,
+      ),
+      "intersected with the bounds",
+    ).toBe(true);
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 20, y: 10, width: 5, height: 5 }),
+        },
+        shape,
+      ),
+      "accommodated by the shape",
+    ).toBe(false);
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 20, y: 10, width: 10, height: 10 }),
+        },
+        shape,
+      ),
+      "intersected with the hole",
+    ).toBe(true);
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 40, y: 22, width: 5, height: 5 }),
+        },
+        shape,
+      ),
+      "inside the hole",
+    ).toBe(false);
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 70, y: 30, width: 10, height: 10 }),
+        },
+        shape,
+      ),
+      "intersected with the hole",
+    ).toBe(true);
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 80, y: 35, width: 5, height: 5 }),
+        },
+        shape,
+      ),
+      "accommodated by the shape",
+    ).toBe(false);
+
+    // This case should be true but the logic is imperfect.
+    expect(
+      isShapeInteratctiveWithinViewport(
+        {
+          getShapeComposite: () => sc,
+          getViewRect: () => ({ x: 20, y: 10, width: 60, height: 30 }),
+        },
+        shape,
+      ),
+      "between the outline and the hole",
+    ).toBe(false);
   });
 });

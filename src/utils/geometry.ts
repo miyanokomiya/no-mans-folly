@@ -1479,3 +1479,12 @@ export function roundFloatingError(val: number): number {
   const n = Math.round(val * MINVALUE_SCALE) / MINVALUE_SCALE;
   return Math.abs(val - n) < MINVALUE ? n : val;
 }
+
+export function doesRectAccommodateRect(outer: IRectangle, inner: IRectangle): boolean {
+  return (
+    outer.x <= inner.x &&
+    outer.y <= inner.y &&
+    outer.x + outer.width >= inner.x + inner.width &&
+    outer.y + outer.height >= inner.y + inner.height
+  );
+}

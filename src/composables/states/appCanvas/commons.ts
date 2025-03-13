@@ -14,6 +14,7 @@ import {
 import {
   canHaveText,
   createShape,
+  getIntersectedOutlines,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
@@ -48,6 +49,7 @@ import { createNewTextShapeForDocument } from "./utils/text";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { getLineUnrelatedIds } from "../../shapeRelation";
 import { isLineShape } from "../../../shapes/line";
+import { doesRectAccommodateRect, getRectLines, isRectOverlappedH, isRectOverlappedV } from "../../../utils/geometry";
 
 type AcceptableEvent =
   | "Break"
@@ -596,7 +598,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
     excludeIds,
     ctx.getScale(),
   );
-  if (!shapeAtPointer) {
+  if (!shapeAtPointer || !isShapeInteratctiveWithinViewport(ctx, shapeAtPointer)) {
     return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning });
   }
 
@@ -631,7 +633,8 @@ export function handleCommonPointerDownRightOnSingleSelection(
     excludeIds,
     ctx.getScale(),
   );
-  if (!shapeAtPointer || shapeAtPointer.id === selectedId) return;
+  if (!shapeAtPointer || shapeAtPointer.id === selectedId || !isShapeInteratctiveWithinViewport(ctx, shapeAtPointer))
+    return;
 
   ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
   return;
@@ -642,7 +645,7 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
     case "pointerdoubleclick": {
       const shapeComposite = ctx.getShapeComposite();
       const shape = shapeComposite.findShapeAt(event.data.point, undefined, undefined, undefined, ctx.getScale());
-      if (shape) {
+      if (shape && isShapeInteratctiveWithinViewport(ctx, shape)) {
         return startTextEditingIfPossible(ctx, shape.id, event.data.point);
       }
       return;
@@ -759,4 +762,31 @@ export function getSnappableCandidates(
     ignoreLine ? shapes.filter((s) => !isLineShape(s)) : shapes,
     ctx.getViewRect(),
   );
+}
+
+/**
+ * Returns true when the shape is supposed to be interactive within the viewport.
+ * Main idea: When the shape fully accommodates the viewport, the shape looks like just a background.
+ */
+export function isShapeInteratctiveWithinViewport(
+  ctx: Pick<AppCanvasStateContext, "getViewRect" | "getShapeComposite">,
+  shape: Shape,
+): boolean {
+  const viewRect = ctx.getViewRect();
+  const shapeComposite = ctx.getShapeComposite();
+  const wrapperRect = shapeComposite.getWrapperRect(shape);
+
+  // Check if the viewport accommodates the shape
+  if (doesRectAccommodateRect(viewRect, wrapperRect)) return true;
+
+  if (shapeComposite.getShapeStruct(shape.type).getIntersectedOutlines) {
+    // Check if the viewport overlaps with the shape's outlines
+    // FIXME: This logic isn't perfect when the shape has a hole.
+    return getRectLines(viewRect).some((seg) =>
+      getIntersectedOutlines(shapeComposite.getShapeStruct, shape, seg[0], seg[1]),
+    );
+  }
+
+  // Check if the viewport overlaps with the shape's wrapper rect
+  return isRectOverlappedH(viewRect, wrapperRect) && isRectOverlappedV(viewRect, wrapperRect);
 }

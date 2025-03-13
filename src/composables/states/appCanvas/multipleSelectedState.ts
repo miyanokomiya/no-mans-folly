@@ -1,4 +1,4 @@
-import { getCommonCommandExams, handleIntransientEvent } from "./commons";
+import { getCommonCommandExams, handleIntransientEvent, isShapeInteratctiveWithinViewport } from "./commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
@@ -148,7 +148,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
 
               const shapeComposite = ctx.getShapeComposite();
               const shape = findBetterShapeAt(shapeComposite, event.data.point, scode, undefined, ctx.getScale());
-              if (!shape) {
+              if (!shape || !isShapeInteratctiveWithinViewport(ctx, shape)) {
                 return () =>
                   newPointerDownEmptyState({ ...event.data.options, boundingBox, renderWhilePanning: render });
               }
@@ -184,7 +184,12 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                 undefined,
                 ctx.getScale(),
               );
-              if (!shapeAtPointer || selectedIdMap[shapeAtPointer.id]) return;
+              if (
+                !shapeAtPointer ||
+                selectedIdMap[shapeAtPointer.id] ||
+                !isShapeInteratctiveWithinViewport(ctx, shapeAtPointer)
+              )
+                return;
 
               ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
               return;

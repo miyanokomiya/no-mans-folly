@@ -1,5 +1,5 @@
 import type { AppCanvasState } from "./core";
-import { getCommonCommandExams, handleIntransientEvent } from "./commons";
+import { getCommonCommandExams, handleIntransientEvent, isShapeInteratctiveWithinViewport } from "./commons";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { defineIntransientState } from "./intransientState";
@@ -25,7 +25,7 @@ const state: AppCanvasState = {
           case 0: {
             const shapeComposite = ctx.getShapeComposite();
             const shape = shapeComposite.findShapeAt(event.data.point, undefined, undefined, undefined, ctx.getScale());
-            if (shape) {
+            if (shape && isShapeInteratctiveWithinViewport(ctx, shape)) {
               ctx.selectShape(shape.id, event.data.options.ctrl);
               if (!event.data.options.ctrl) {
                 if (event.data.options.alt) {

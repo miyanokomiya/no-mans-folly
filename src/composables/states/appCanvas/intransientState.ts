@@ -9,6 +9,7 @@ import { getShapeTextBounds } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 import { getLinePath, isLineShape } from "../../../shapes/line";
+import { isShapeInteratctiveWithinViewport } from "./commons";
 
 /**
  * Event flow specifications.
@@ -37,10 +38,13 @@ export function defineIntransientState<A extends any[]>(
               undefined,
               ctx.getScale(),
             );
-            const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
+            const interactiveShape = shape && isShapeInteratctiveWithinViewport(ctx, shape) ? shape : undefined;
+            const linkInfo = interactiveShape
+              ? getInlineLinkInfoAt(shapeComposite, interactiveShape, event.data.current)
+              : undefined;
 
-            if (hoveredShape?.id !== shape?.id) {
-              hoveredShape = shape;
+            if (hoveredShape?.id !== interactiveShape?.id) {
+              hoveredShape = interactiveShape;
               ctx.redraw();
             }
 
