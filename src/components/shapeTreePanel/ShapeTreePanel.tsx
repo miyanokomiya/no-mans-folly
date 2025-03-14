@@ -386,7 +386,7 @@ function getUITreeNodeProps(
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.scale(scale, scale);
-    ctx.translate(-rect.x + (longSize - w) / 2, -rect.y + (longSize - h) / 2);
+    ctx.translate(-rect.x + (longSize - rect.width) / 2, -rect.y + (longSize - rect.height) / 2);
     shapeRenderer.renderShape(ctx, id);
     ctx.restore();
   };
