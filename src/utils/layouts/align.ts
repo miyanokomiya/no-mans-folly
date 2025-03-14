@@ -196,11 +196,16 @@ function calcAlignRectMap(
       const rect = childWrapperRect
         ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
         : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
-      ret.set(node.id, {
+      const boxRect = {
         ...from,
         width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
         height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
-      });
+      };
+      ret.set(node.id, boxRect);
+
+      const paddingV = node.padding ? node.padding[0] + node.padding[2] : 0;
+      const spaceH = boxRect.height - paddingV;
+      justifyChildrenInLineV(ret, node, spaceH, gapR, treeNode);
     } else {
       let maxHeight = 0;
       treeNode.children.forEach((c, i) => {
@@ -262,7 +267,6 @@ function calcAlignRectMap(
 
       const paddingH = node.padding ? node.padding[1] + node.padding[3] : 0;
       const spaceW = boxRect.width - paddingH;
-
       justifyChildrenInLineH(ret, node, spaceW, gapC, treeNode);
     }
   } else {
@@ -356,6 +360,96 @@ function justifyChildrenInLineH(
           const crect = ret.get(c.id)!;
           ret.set(c.id, { ...crect, x: acc });
           return acc + crect.width + d;
+        }, d);
+      });
+      break;
+    }
+    default: {
+      // "start" by default
+      break;
+    }
+  }
+}
+
+function justifyChildrenInLineV(
+  ret: Map<string, IRectangle>,
+  node: AlignLayoutBox,
+  spaceH: number,
+  gapR: number,
+  treeNode: TreeNode,
+) {
+  const getLineHeight = (line: TreeNode[]) => {
+    return line.reduce((acc, c) => acc + ret.get(c.id)!.height, 0) + (line.length - 1) * gapR;
+  };
+  const getLineHeightWithoutGap = (line: TreeNode[]) => {
+    return line.reduce((acc, c) => acc + ret.get(c.id)!.height, 0);
+  };
+
+  switch (node.justifyContent) {
+    case "center": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+        const lineHeight = getLineHeight(line);
+        if (spaceH === lineHeight) return;
+
+        const d = (spaceH - lineHeight) / 2;
+        line.forEach((c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, y: crect.y + d });
+        });
+      });
+      break;
+    }
+    case "end": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+        const lineHeight = getLineHeight(line);
+        if (spaceH === lineHeight) return;
+
+        const d = spaceH - lineHeight;
+        line.forEach((c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, y: crect.y + d });
+        });
+      });
+      break;
+    }
+    case "space-between": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+        const lineHeight = getLineHeightWithoutGap(line);
+        if (spaceH === lineHeight) return;
+
+        const d = (spaceH - lineHeight) / (line.length - 1);
+        line.reduce((acc, c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, y: acc });
+          return acc + crect.height + d;
+        }, 0);
+      });
+      break;
+    }
+    case "space-around": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+        const lineHeight = getLineHeightWithoutGap(line);
+        if (spaceH === lineHeight) return;
+
+        const d = (spaceH - lineHeight) / line.length;
+        line.reduce((acc, c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, y: acc });
+          return acc + crect.height + d;
+        }, d / 2);
+      });
+      break;
+    }
+    case "space-evenly": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+        const lineHeight = getLineHeightWithoutGap(line);
+        if (spaceH === lineHeight) return;
+
+        const d = (spaceH - lineHeight) / (line.length + 1);
+        line.reduce((acc, c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, y: acc });
+          return acc + crect.height + d;
         }, d);
       });
       break;
