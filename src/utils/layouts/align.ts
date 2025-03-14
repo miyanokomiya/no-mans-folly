@@ -332,7 +332,7 @@ function justifyChildrenInLineH(
           const crect = ret.get(c.id)!;
           ret.set(c.id, { ...crect, x: acc });
           return acc + crect.width + d;
-        }, 0);
+        }, ret.get(line[0].id)!.x);
       });
       break;
     }
@@ -342,11 +342,14 @@ function justifyChildrenInLineH(
         if (spaceW === lineWidth) return;
 
         const d = (spaceW - lineWidth) / line.length;
-        line.reduce((acc, c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, x: acc });
-          return acc + crect.width + d;
-        }, d / 2);
+        line.reduce(
+          (acc, c) => {
+            const crect = ret.get(c.id)!;
+            ret.set(c.id, { ...crect, x: acc });
+            return acc + crect.width + d;
+          },
+          d / 2 + ret.get(line[0].id)!.x,
+        );
       });
       break;
     }
@@ -356,11 +359,14 @@ function justifyChildrenInLineH(
         if (spaceW === lineWidth) return;
 
         const d = (spaceW - lineWidth) / (line.length + 1);
-        line.reduce((acc, c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, x: acc });
-          return acc + crect.width + d;
-        }, d);
+        line.reduce(
+          (acc, c) => {
+            const crect = ret.get(c.id)!;
+            ret.set(c.id, { ...crect, x: acc });
+            return acc + crect.width + d;
+          },
+          d + ret.get(line[0].id)!.x,
+        );
       });
       break;
     }
@@ -422,7 +428,7 @@ function justifyChildrenInLineV(
           const crect = ret.get(c.id)!;
           ret.set(c.id, { ...crect, y: acc });
           return acc + crect.height + d;
-        }, 0);
+        }, ret.get(line[0].id)!.y);
       });
       break;
     }
@@ -432,11 +438,14 @@ function justifyChildrenInLineV(
         if (spaceH === lineHeight) return;
 
         const d = (spaceH - lineHeight) / line.length;
-        line.reduce((acc, c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, y: acc });
-          return acc + crect.height + d;
-        }, d / 2);
+        line.reduce(
+          (acc, c) => {
+            const crect = ret.get(c.id)!;
+            ret.set(c.id, { ...crect, y: acc });
+            return acc + crect.height + d;
+          },
+          d / 2 + ret.get(line[0].id)!.y,
+        );
       });
       break;
     }
@@ -446,11 +455,14 @@ function justifyChildrenInLineV(
         if (spaceH === lineHeight) return;
 
         const d = (spaceH - lineHeight) / (line.length + 1);
-        line.reduce((acc, c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, y: acc });
-          return acc + crect.height + d;
-        }, d);
+        line.reduce(
+          (acc, c) => {
+            const crect = ret.get(c.id)!;
+            ret.set(c.id, { ...crect, y: acc });
+            return acc + crect.height + d;
+          },
+          d + ret.get(line[0].id)!.y,
+        );
       });
       break;
     }
