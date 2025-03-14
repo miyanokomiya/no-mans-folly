@@ -474,39 +474,31 @@ function justifyChildrenInLineV(
 }
 
 /**
- * Assumes all rectangles are aligned at the top in each row.
+ * When isRow is false, Assumes all rectangles are aligned at the left in each column.
+ * When isRow is true,  Assumes all rectangles are aligned at the top in each row.
  */
-function getRowLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode): string[][] {
+function getLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode, isRow: boolean): string[][] {
   const ret: string[][] = [[]];
-  let x = -Infinity;
-  let y = -Infinity;
+  let primary = -Infinity;
+  let secondary = -Infinity;
   treeNode.children.forEach((c) => {
     const crect = rectMap.get(c.id)!;
-    if (crect.x <= x && y < crect.y) {
+    const primaryValue = isRow ? crect.x : crect.y;
+    const secondaryValue = isRow ? crect.y : crect.x;
+    if (primaryValue <= primary && secondary < secondaryValue) {
       ret.push([]);
-      y = crect.y;
+      secondary = secondaryValue;
     }
     ret[ret.length - 1].push(c.id);
-    x = crect.x;
+    primary = primaryValue;
   });
   return ret;
 }
 
-/**
- * Assumes all rectangles are aligned at the left in each column.
- */
+function getRowLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode): string[][] {
+  return getLineIds(rectMap, treeNode, true);
+}
+
 function getColumnLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode): string[][] {
-  const ret: string[][] = [[]];
-  let x = -Infinity;
-  let y = -Infinity;
-  treeNode.children.forEach((c) => {
-    const crect = rectMap.get(c.id)!;
-    if (crect.y <= y && x < crect.x) {
-      ret.push([]);
-      x = crect.x;
-    }
-    ret[ret.length - 1].push(c.id);
-    y = crect.y;
-  });
-  return ret;
+  return getLineIds(rectMap, treeNode, false);
 }
