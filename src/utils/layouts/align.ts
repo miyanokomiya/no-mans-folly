@@ -287,6 +287,9 @@ function justifyChildrenInLineH(
   const getLineWidth = (line: TreeNode[]) => {
     return line.reduce((acc, c) => acc + ret.get(c.id)!.width, 0) + (line.length - 1) * gapC;
   };
+  const getLineWidthWithoutGap = (line: TreeNode[]) => {
+    return line.reduce((acc, c) => acc + ret.get(c.id)!.width, 0);
+  };
 
   switch (node.justifyContent) {
     case "center": {
@@ -316,12 +319,45 @@ function justifyChildrenInLineH(
       break;
     }
     case "space-between": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+        const lineWidth = getLineWidthWithoutGap(line);
+        if (spaceW === lineWidth) return;
+
+        const d = (spaceW - lineWidth) / (line.length - 1);
+        line.reduce((acc, c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x: acc });
+          return acc + crect.width + d;
+        }, 0);
+      });
       break;
     }
     case "space-around": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+        const lineWidth = getLineWidthWithoutGap(line);
+        if (spaceW === lineWidth) return;
+
+        const d = (spaceW - lineWidth) / line.length;
+        line.reduce((acc, c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x: acc });
+          return acc + crect.width + d;
+        }, d / 2);
+      });
       break;
     }
     case "space-evenly": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+        const lineWidth = getLineWidthWithoutGap(line);
+        if (spaceW === lineWidth) return;
+
+        const d = (spaceW - lineWidth) / (line.length + 1);
+        line.reduce((acc, c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x: acc });
+          return acc + crect.width + d;
+        }, d);
+      });
       break;
     }
     default: {
