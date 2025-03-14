@@ -181,13 +181,13 @@ function calcAlignRectMap(
 
       if (node.alignItems && node.alignItems !== "start") {
         const alignCenter = node.alignItems === "center";
-        Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
-          const lineWidth = Math.max(...line.map((c) => ret.get(c.id)!.width));
-          line.forEach((c) => {
-            const rect = ret.get(c.id)!;
+        getColumnLineIds(ret, treeNode).forEach((line) => {
+          const lineWidth = Math.max(...line.map((id) => ret.get(id)!.width));
+          line.forEach((id) => {
+            const rect = ret.get(id)!;
             const d = lineWidth - rect.width;
             if (d !== 0) {
-              ret.set(c.id, { ...rect, x: alignCenter ? rect.x + d / 2 : rect.x + d });
+              ret.set(id, { ...rect, x: alignCenter ? rect.x + d / 2 : rect.x + d });
             }
           });
         });
@@ -243,13 +243,13 @@ function calcAlignRectMap(
 
       if (node.alignItems && node.alignItems !== "start") {
         const alignCenter = node.alignItems === "center";
-        Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
-          const lineHeight = Math.max(...line.map((c) => ret.get(c.id)!.height));
-          line.forEach((c) => {
-            const rect = ret.get(c.id)!;
+        getRowLineIds(ret, treeNode).forEach((line) => {
+          const lineHeight = Math.max(...line.map((id) => ret.get(id)!.height));
+          line.forEach((id) => {
+            const rect = ret.get(id)!;
             const d = lineHeight - rect.height;
             if (d !== 0) {
-              ret.set(c.id, { ...rect, y: alignCenter ? rect.y + d / 2 : rect.y + d });
+              ret.set(id, { ...rect, y: alignCenter ? rect.y + d / 2 : rect.y + d });
             }
           });
         });
@@ -288,84 +288,84 @@ function justifyChildrenInLineH(
   gapC: number,
   treeNode: TreeNode,
 ) {
-  const getLineWidth = (line: TreeNode[]) => {
-    return line.reduce((acc, c) => acc + ret.get(c.id)!.width, 0) + (line.length - 1) * gapC;
+  const getLineWidth = (line: string[]) => {
+    return line.reduce((acc, id) => acc + ret.get(id)!.width, 0) + (line.length - 1) * gapC;
   };
-  const getLineWidthWithoutGap = (line: TreeNode[]) => {
-    return line.reduce((acc, c) => acc + ret.get(c.id)!.width, 0);
+  const getLineWidthWithoutGap = (line: string[]) => {
+    return line.reduce((acc, id) => acc + ret.get(id)!.width, 0);
   };
 
   switch (node.justifyContent) {
     case "center": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+      getRowLineIds(ret, treeNode).forEach((line) => {
         const lineWidth = getLineWidth(line);
         if (spaceW === lineWidth) return;
 
         const d = (spaceW - lineWidth) / 2;
-        line.forEach((c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, x: crect.x + d });
+        line.forEach((id) => {
+          const crect = ret.get(id)!;
+          ret.set(id, { ...crect, x: crect.x + d });
         });
       });
       break;
     }
     case "end": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+      getRowLineIds(ret, treeNode).forEach((line) => {
         const lineWidth = getLineWidth(line);
         if (spaceW === lineWidth) return;
 
         const d = spaceW - lineWidth;
-        line.forEach((c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, x: crect.x + d });
+        line.forEach((id) => {
+          const crect = ret.get(id)!;
+          ret.set(id, { ...crect, x: crect.x + d });
         });
       });
       break;
     }
     case "space-between": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+      getRowLineIds(ret, treeNode).forEach((line) => {
         const lineWidth = getLineWidthWithoutGap(line);
         if (spaceW === lineWidth) return;
 
         const d = (spaceW - lineWidth) / (line.length - 1);
-        line.reduce((acc, c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, x: acc });
+        line.reduce((acc, id) => {
+          const crect = ret.get(id)!;
+          ret.set(id, { ...crect, x: acc });
           return acc + crect.width + d;
-        }, ret.get(line[0].id)!.x);
+        }, ret.get(line[0])!.x);
       });
       break;
     }
     case "space-around": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+      getRowLineIds(ret, treeNode).forEach((line) => {
         const lineWidth = getLineWidthWithoutGap(line);
         if (spaceW === lineWidth) return;
 
         const d = (spaceW - lineWidth) / line.length;
         line.reduce(
-          (acc, c) => {
-            const crect = ret.get(c.id)!;
-            ret.set(c.id, { ...crect, x: acc });
+          (acc, id) => {
+            const crect = ret.get(id)!;
+            ret.set(id, { ...crect, x: acc });
             return acc + crect.width + d;
           },
-          d / 2 + ret.get(line[0].id)!.x,
+          d / 2 + ret.get(line[0])!.x,
         );
       });
       break;
     }
     case "space-evenly": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+      getRowLineIds(ret, treeNode).forEach((line) => {
         const lineWidth = getLineWidthWithoutGap(line);
         if (spaceW === lineWidth) return;
 
         const d = (spaceW - lineWidth) / (line.length + 1);
         line.reduce(
-          (acc, c) => {
-            const crect = ret.get(c.id)!;
-            ret.set(c.id, { ...crect, x: acc });
+          (acc, id) => {
+            const crect = ret.get(id)!;
+            ret.set(id, { ...crect, x: acc });
             return acc + crect.width + d;
           },
-          d + ret.get(line[0].id)!.x,
+          d + ret.get(line[0])!.x,
         );
       });
       break;
@@ -384,84 +384,84 @@ function justifyChildrenInLineV(
   gapR: number,
   treeNode: TreeNode,
 ) {
-  const getLineHeight = (line: TreeNode[]) => {
-    return line.reduce((acc, c) => acc + ret.get(c.id)!.height, 0) + (line.length - 1) * gapR;
+  const getLineHeight = (line: string[]) => {
+    return line.reduce((acc, id) => acc + ret.get(id)!.height, 0) + (line.length - 1) * gapR;
   };
-  const getLineHeightWithoutGap = (line: TreeNode[]) => {
-    return line.reduce((acc, c) => acc + ret.get(c.id)!.height, 0);
+  const getLineHeightWithoutGap = (line: string[]) => {
+    return line.reduce((acc, id) => acc + ret.get(id)!.height, 0);
   };
 
   switch (node.justifyContent) {
     case "center": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+      getColumnLineIds(ret, treeNode).forEach((line) => {
         const lineHeight = getLineHeight(line);
         if (spaceH === lineHeight) return;
 
         const d = (spaceH - lineHeight) / 2;
-        line.forEach((c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, y: crect.y + d });
+        line.forEach((id) => {
+          const crect = ret.get(id)!;
+          ret.set(id, { ...crect, y: crect.y + d });
         });
       });
       break;
     }
     case "end": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+      getColumnLineIds(ret, treeNode).forEach((line) => {
         const lineHeight = getLineHeight(line);
         if (spaceH === lineHeight) return;
 
         const d = spaceH - lineHeight;
-        line.forEach((c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, y: crect.y + d });
+        line.forEach((id) => {
+          const crect = ret.get(id)!;
+          ret.set(id, { ...crect, y: crect.y + d });
         });
       });
       break;
     }
     case "space-between": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+      getColumnLineIds(ret, treeNode).forEach((line) => {
         const lineHeight = getLineHeightWithoutGap(line);
         if (spaceH === lineHeight) return;
 
         const d = (spaceH - lineHeight) / (line.length - 1);
-        line.reduce((acc, c) => {
-          const crect = ret.get(c.id)!;
-          ret.set(c.id, { ...crect, y: acc });
+        line.reduce((acc, id) => {
+          const crect = ret.get(id)!;
+          ret.set(id, { ...crect, y: acc });
           return acc + crect.height + d;
-        }, ret.get(line[0].id)!.y);
+        }, ret.get(line[0])!.y);
       });
       break;
     }
     case "space-around": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+      getColumnLineIds(ret, treeNode).forEach((line) => {
         const lineHeight = getLineHeightWithoutGap(line);
         if (spaceH === lineHeight) return;
 
         const d = (spaceH - lineHeight) / line.length;
         line.reduce(
-          (acc, c) => {
-            const crect = ret.get(c.id)!;
-            ret.set(c.id, { ...crect, y: acc });
+          (acc, id) => {
+            const crect = ret.get(id)!;
+            ret.set(id, { ...crect, y: acc });
             return acc + crect.height + d;
           },
-          d / 2 + ret.get(line[0].id)!.y,
+          d / 2 + ret.get(line[0])!.y,
         );
       });
       break;
     }
     case "space-evenly": {
-      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.x)).forEach((line) => {
+      getColumnLineIds(ret, treeNode).forEach((line) => {
         const lineHeight = getLineHeightWithoutGap(line);
         if (spaceH === lineHeight) return;
 
         const d = (spaceH - lineHeight) / (line.length + 1);
         line.reduce(
-          (acc, c) => {
-            const crect = ret.get(c.id)!;
-            ret.set(c.id, { ...crect, y: acc });
+          (acc, id) => {
+            const crect = ret.get(id)!;
+            ret.set(id, { ...crect, y: acc });
             return acc + crect.height + d;
           },
-          d + ret.get(line[0].id)!.y,
+          d + ret.get(line[0])!.y,
         );
       });
       break;
@@ -471,4 +471,42 @@ function justifyChildrenInLineV(
       break;
     }
   }
+}
+
+/**
+ * Assumes all rectangles are aligned at the top in each row.
+ */
+function getRowLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode): string[][] {
+  const ret: string[][] = [[]];
+  let x = -Infinity;
+  let y = -Infinity;
+  treeNode.children.forEach((c) => {
+    const crect = rectMap.get(c.id)!;
+    if (crect.x <= x && y < crect.y) {
+      ret.push([]);
+      y = crect.y;
+    }
+    ret[ret.length - 1].push(c.id);
+    x = crect.x;
+  });
+  return ret;
+}
+
+/**
+ * Assumes all rectangles are aligned at the left in each column.
+ */
+function getColumnLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode): string[][] {
+  const ret: string[][] = [[]];
+  let x = -Infinity;
+  let y = -Infinity;
+  treeNode.children.forEach((c) => {
+    const crect = rectMap.get(c.id)!;
+    if (crect.y <= y && x < crect.x) {
+      ret.push([]);
+      x = crect.x;
+    }
+    ret[ret.length - 1].push(c.id);
+    y = crect.y;
+  });
+  return ret;
 }
