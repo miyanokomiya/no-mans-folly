@@ -525,4 +525,90 @@ describe("getAlignRelativeRectMap", () => {
       ]),
     );
   });
+
+  describe("justfy-items", () => {
+    describe("vertical", () => {
+      const entiteis = [
+        entity0,
+        { ...entity0, id: "entity00", rect: { x: 0, y: 0, width: 30, height: 30 } },
+        entity1,
+        { ...entity1, id: "entity01", rect: { x: 0, y: 0, width: 10, height: 30 } },
+      ];
+
+      test("should take care of justify-content: horizontal & one break & justify-content center", () => {
+        const nodes: AlignLayoutNode[] = [
+          {
+            ...box0,
+            rect: { x: 0, y: 0, width: 200, height: 10 },
+            baseWidth: 200,
+            baseHeight: undefined,
+            justifyContent: "center",
+            direction: 1,
+          },
+          ...entiteis,
+        ];
+        const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+        const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+        expect(result0).toEqual(
+          new Map([
+            ["box0", { x: 0, y: 0, width: 200, height: 30 }],
+            ["entity0", { x: 45, y: 0, width: 20, height: 30 }],
+            ["entity00", { x: 75, y: 0, width: 30, height: 30 }],
+            ["entity1", { x: 115, y: 0, width: 20, height: 30 }],
+            ["entity01", { x: 145, y: 0, width: 10, height: 30 }],
+          ]),
+        );
+      });
+
+      test("should take care of justify-content: horizontal & two break & justify-content center", () => {
+        const nodes: AlignLayoutNode[] = [
+          {
+            ...box0,
+            rect: { x: 0, y: 0, width: 80, height: 10 },
+            baseWidth: 80,
+            baseHeight: undefined,
+            justifyContent: "center",
+            direction: 1,
+          },
+          ...entiteis,
+        ];
+        const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+        const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+        expect(result0).toEqual(
+          new Map([
+            ["box0", { x: 0, y: 0, width: 80, height: 70 }],
+            ["entity0", { x: 10, y: 0, width: 20, height: 30 }],
+            ["entity00", { x: 40, y: 0, width: 30, height: 30 }],
+            ["entity1", { x: 20, y: 40, width: 20, height: 30 }],
+            ["entity01", { x: 50, y: 40, width: 10, height: 30 }],
+          ]),
+        );
+      });
+
+      test("should take care of justify-content: horizontal & one break & justify-content end", () => {
+        const nodes: AlignLayoutNode[] = [
+          {
+            ...box0,
+            rect: { x: 0, y: 0, width: 200, height: 10 },
+            baseWidth: 200,
+            baseHeight: undefined,
+            justifyContent: "end",
+            direction: 1,
+          },
+          ...entiteis,
+        ];
+        const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+        const result0 = getAlignRelativeRectMap(nodeMap, getTree(nodes));
+        expect(result0).toEqual(
+          new Map([
+            ["box0", { x: 0, y: 0, width: 200, height: 30 }],
+            ["entity0", { x: 90, y: 0, width: 20, height: 30 }],
+            ["entity00", { x: 120, y: 0, width: 30, height: 30 }],
+            ["entity1", { x: 160, y: 0, width: 20, height: 30 }],
+            ["entity01", { x: 190, y: 0, width: 10, height: 30 }],
+          ]),
+        );
+      });
+    });
+  });
 });

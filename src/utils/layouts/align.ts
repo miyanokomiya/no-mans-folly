@@ -42,6 +42,7 @@ export interface AlignLayoutBox extends AlignLayoutBase {
    * "start" by default.
    */
   alignItems?: "start" | "center" | "end";
+  justifyContent?: "start" | "center" | "end" | "space-between" | "space-around" | "space-evenly";
 }
 
 export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
@@ -252,11 +253,17 @@ function calcAlignRectMap(
       const rect = childWrapperRect
         ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
         : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
-      ret.set(node.id, {
+      const boxRect = {
         ...from,
         width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
         height: node.baseHeight === undefined ? rect.height : Math.max(rect.height, node.baseHeight),
-      });
+      };
+      ret.set(node.id, boxRect);
+
+      const paddingH = node.padding ? node.padding[1] + node.padding[3] : 0;
+      const spaceW = boxRect.width - paddingH;
+
+      justifyChildrenInLineH(ret, node, spaceW, gapC, treeNode);
     }
   } else {
     ret.set(node.id, { ...node.rect, ...from });
@@ -267,5 +274,59 @@ function calcAlignRectMap(
     return remain < rect.height;
   } else {
     return remain < rect.width;
+  }
+}
+
+function justifyChildrenInLineH(
+  ret: Map<string, IRectangle>,
+  node: AlignLayoutBox,
+  spaceW: number,
+  gapC: number,
+  treeNode: TreeNode,
+) {
+  const getLineWidth = (line: TreeNode[]) => {
+    return line.reduce((acc, c) => acc + ret.get(c.id)!.width, 0) + (line.length - 1) * gapC;
+  };
+
+  switch (node.justifyContent) {
+    case "center": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+        const lineWidth = getLineWidth(line);
+        if (spaceW === lineWidth) return;
+
+        const d = (spaceW - lineWidth) / 2;
+        line.forEach((c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x: crect.x + d });
+        });
+      });
+      break;
+    }
+    case "end": {
+      Object.values(groupBy(treeNode.children, (c) => ret.get(c.id)!.y)).forEach((line) => {
+        const lineWidth = getLineWidth(line);
+        if (spaceW === lineWidth) return;
+
+        const d = spaceW - lineWidth;
+        line.forEach((c) => {
+          const crect = ret.get(c.id)!;
+          ret.set(c.id, { ...crect, x: crect.x + d });
+        });
+      });
+      break;
+    }
+    case "space-between": {
+      break;
+    }
+    case "space-around": {
+      break;
+    }
+    case "space-evenly": {
+      break;
+    }
+    default: {
+      // "start" by default
+      break;
+    }
   }
 }
