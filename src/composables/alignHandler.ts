@@ -646,7 +646,34 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     ctx.restore();
   }
 
-  return { hitTest, render, getModifiedPadding, renderModifiedPadding, getModifiedGap, renderModifiedGap };
+  function isSameHitResult(a: AlignBoxHitResult | undefined, b: AlignBoxHitResult | undefined): boolean {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (a.type !== b.type) return false;
+
+    switch (a.type) {
+      case "direction":
+        return a.direction === (b as AlignBoxDirectionHitResult).direction;
+      case "align-items":
+        return a.value === (b as AlignBoxAlignItemsHitResult).value;
+      case "justify-content":
+        return a.value === (b as AlignBoxJustifyContentHitResult).value;
+      case "resize-by-segment":
+        return a.index === (b as AlignBoxResizeHitResult).index;
+      default:
+        return true;
+    }
+  }
+
+  return {
+    hitTest,
+    render,
+    getModifiedPadding,
+    renderModifiedPadding,
+    getModifiedGap,
+    renderModifiedGap,
+    isSameHitResult,
+  };
 }
 export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
 

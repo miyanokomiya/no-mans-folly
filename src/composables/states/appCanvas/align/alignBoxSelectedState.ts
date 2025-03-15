@@ -109,15 +109,19 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
               return;
           }
         case "pointerhover": {
-          alignBoxHitResult = alignBoxHandler.hitTest(event.data.current, ctx.getScale());
-          if (alignBoxHitResult) {
-            boundingBox.saveHitResult();
-          } else {
-            const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-            boundingBox.saveHitResult(hitBounding);
+          const nextAlignBoxHitResult = alignBoxHandler.hitTest(event.data.current, ctx.getScale());
+          if (!alignBoxHandler.isSameHitResult(nextAlignBoxHitResult, alignBoxHitResult)) {
+            alignBoxHitResult = nextAlignBoxHitResult;
+            ctx.redraw();
           }
 
-          ctx.redraw();
+          if (nextAlignBoxHitResult) {
+            if (boundingBox.saveHitResult()) ctx.redraw();
+          } else {
+            const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
+            if (boundingBox.saveHitResult(hitBounding)) ctx.redraw();
+          }
+
           break;
         }
         case "contextmenu":

@@ -137,6 +137,73 @@ describe("newAlignBoxHandler", () => {
       expect(target.getModifiedGap("gap-c", { x: 0, y: 0 }, { x: -50, y: 0 })).toEqual({ x: 0, y: 10 });
     });
   });
+
+  describe("isSameHitResult", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const target = newAlignBoxHandler({
+      getShapeComposite: () => shapeComposite,
+      alignBoxId: box0.id,
+    });
+
+    test("should return true for undefined hit results", () => {
+      expect(target.isSameHitResult(undefined, undefined)).toBe(true);
+    });
+
+    test("should return false when one hit result is undefined", () => {
+      const hitResult = { type: "direction", direction: 0, p: { x: 0, y: 0 } } as const;
+      expect(target.isSameHitResult(hitResult, undefined)).toBe(false);
+      expect(target.isSameHitResult(undefined, hitResult)).toBe(false);
+    });
+
+    test("should return true for identical hit results", () => {
+      const hitResult1 = { type: "optimize-width", p: { x: 0, y: 0 } } as const;
+      const hitResult2 = { type: "optimize-width", p: { x: 0, y: 0 } } as const;
+      expect(target.isSameHitResult(hitResult1, hitResult2)).toBe(true);
+    });
+
+    test("should return false for different hit result types", () => {
+      const hitResult1 = { type: "optimize-width", p: { x: 0, y: 0 } } as const;
+      const hitResult2 = { type: "optimize-height", p: { x: 0, y: 0 } } as const;
+      expect(target.isSameHitResult(hitResult1, hitResult2)).toBe(false);
+    });
+
+    test("should return false for different hit result values", () => {
+      const p = { x: 0, y: 0 };
+      expect(
+        target.isSameHitResult({ type: "direction", direction: 1, p }, { type: "direction", direction: 0, p }),
+      ).toBe(false);
+      expect(
+        target.isSameHitResult({ type: "direction", direction: 1, p }, { type: "direction", direction: 1, p }),
+      ).toBe(true);
+      expect(
+        target.isSameHitResult({ type: "align-items", value: "start", p }, { type: "align-items", value: "end", p }),
+      ).toBe(false);
+      expect(
+        target.isSameHitResult({ type: "align-items", value: "start", p }, { type: "align-items", value: "start", p }),
+      ).toBe(true);
+      expect(
+        target.isSameHitResult(
+          { type: "justify-content", value: "start", p },
+          { type: "justify-content", value: "end", p },
+        ),
+      ).toBe(false);
+      expect(
+        target.isSameHitResult(
+          { type: "justify-content", value: "start", p },
+          { type: "justify-content", value: "start", p },
+        ),
+      ).toBe(true);
+      expect(
+        target.isSameHitResult({ type: "resize-by-segment", index: 1, p }, { type: "resize-by-segment", index: 0, p }),
+      ).toBe(false);
+      expect(
+        target.isSameHitResult({ type: "resize-by-segment", index: 1, p }, { type: "resize-by-segment", index: 1, p }),
+      ).toBe(true);
+    });
+  });
 });
 
 describe("getNextAlignLayout", () => {
