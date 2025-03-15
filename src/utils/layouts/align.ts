@@ -4,7 +4,6 @@ import { TreeNode, getTree } from "../tree";
 import { LayoutFn, LayoutNode } from "./core";
 import { getWrapperRect } from "../geometry";
 import { getNegativePaddingRect } from "../boxPadding";
-import { groupBy } from "../commons";
 
 const EMPTY_SIZE = 180;
 
