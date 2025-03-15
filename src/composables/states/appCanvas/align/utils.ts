@@ -1,3 +1,4 @@
+import { EntityPatchInfo, Shape } from "../../../../models";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { AlignBoxHitResult } from "../../../alignHandler";
 import { newBoundingBox } from "../../../boundingBox";
@@ -13,6 +14,50 @@ export function handleAlignBoxHitResult(
   targetShape: AlignBoxShape,
   alignBoxHitResult: AlignBoxHitResult,
 ): TransitionValue<AppCanvasStateContext> {
+  const shapeComposite = ctx.getShapeComposite();
+
+  switch (alignBoxHitResult.type) {
+    case "padding-top":
+    case "padding-right":
+    case "padding-bottom":
+    case "padding-left": {
+      const type = alignBoxHitResult.type;
+      return () => newAlignBoxPaddingState({ type, alignBoxId: targetShape.id });
+    }
+    case "gap-r":
+    case "gap-c": {
+      const type = alignBoxHitResult.type;
+      return () => newAlignBoxGapState({ type, alignBoxId: targetShape.id });
+    }
+    case "resize-by-segment": {
+      const index = alignBoxHitResult.index;
+      const boundingBox = newBoundingBox({
+        path: ctx.getShapeComposite().getLocalRectPolygon(targetShape),
+        locked: targetShape.locked,
+      });
+      return () =>
+        newResizingState({
+          boundingBox,
+          hitResult: { type: "segment", index },
+          resizeFn: (_, affine) => {
+            return { [targetShape.id]: shapeComposite.transformShape(targetShape, affine) };
+          },
+          hideBoundingBox: true,
+        });
+    }
+  }
+
+  const layoutPatch = getPatchByAlignBoxHitResult(ctx, targetShape, alignBoxHitResult);
+  if (layoutPatch) {
+    ctx.patchShapes(layoutPatch);
+  }
+}
+
+export function getPatchByAlignBoxHitResult(
+  ctx: AppCanvasStateContext,
+  targetShape: AlignBoxShape,
+  alignBoxHitResult: AlignBoxHitResult,
+): EntityPatchInfo<Shape>["update"] {
   const shapeComposite = ctx.getShapeComposite();
 
   let patch: Partial<AlignBoxShape> | undefined;
@@ -46,40 +91,11 @@ export function handleAlignBoxHitResult(
       patch = { baseHeight: undefined };
       break;
     }
-    case "padding-top":
-    case "padding-right":
-    case "padding-bottom":
-    case "padding-left": {
-      const type = alignBoxHitResult.type;
-      return () => newAlignBoxPaddingState({ type, alignBoxId: targetShape.id });
-    }
-    case "gap-r":
-    case "gap-c": {
-      const type = alignBoxHitResult.type;
-      return () => newAlignBoxGapState({ type, alignBoxId: targetShape.id });
-    }
-    case "resize-by-segment": {
-      const index = alignBoxHitResult.index;
-      const boundingBox = newBoundingBox({
-        path: ctx.getShapeComposite().getLocalRectPolygon(targetShape),
-        locked: targetShape.locked,
-      });
-      return () =>
-        newResizingState({
-          boundingBox,
-          hitResult: { type: "segment", index },
-          resizeFn: (_, affine) => {
-            return { [targetShape.id]: shapeComposite.transformShape(targetShape, affine) };
-          },
-          hideBoundingBox: true,
-        });
-    }
   }
 
   if (patch) {
-    const layoutPatch = getPatchByLayouts(shapeComposite, {
+    return getPatchByLayouts(shapeComposite, {
       update: { [targetShape.id]: patch },
     });
-    ctx.patchShapes(layoutPatch);
   }
 }

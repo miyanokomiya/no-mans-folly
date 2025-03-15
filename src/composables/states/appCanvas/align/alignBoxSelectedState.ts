@@ -13,7 +13,7 @@ import { newRotatingState } from "../rotatingState";
 import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
-import { handleAlignBoxHitResult } from "./utils";
+import { getPatchByAlignBoxHitResult, handleAlignBoxHitResult } from "./utils";
 
 export const newAlignBoxSelectedState = defineIntransientState(() => {
   let targetId: string;
@@ -52,6 +52,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
       initHandler(ctx);
     },
     onEnd: (ctx) => {
+      ctx.setTmpShapeMap({});
       ctx.hideFloatMenu();
       ctx.setCommandExams();
       ctx.setContextMenuList();
@@ -113,9 +114,14 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
           if (!alignBoxHandler.isSameHitResult(nextAlignBoxHitResult, alignBoxHitResult)) {
             alignBoxHitResult = nextAlignBoxHitResult;
             ctx.redraw();
+
+            const patch = alignBoxHitResult
+              ? getPatchByAlignBoxHitResult(ctx, targetShape, alignBoxHitResult)
+              : undefined;
+            ctx.setTmpShapeMap(patch ?? {});
           }
 
-          if (nextAlignBoxHitResult) {
+          if (alignBoxHitResult) {
             if (boundingBox.saveHitResult()) ctx.redraw();
           } else {
             const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
