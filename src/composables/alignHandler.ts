@@ -183,6 +183,7 @@ const PADDING_ANCHOR_SIZE = 4;
 export type AlignBoxHitResult =
   | AlignBoxDirectionHitResult
   | AlignBoxAlignItemsHitResult
+  | AlignBoxJustifyContentHitResult
   | AlignBoxBaseSizeHitResult
   | AlignBoxPaddingHitResult
   | AlignBoxGapHitResult
@@ -197,6 +198,12 @@ type AlignBoxDirectionHitResult = {
 type AlignBoxAlignItemsHitResult = {
   type: "align-items";
   value: AlignBoxShape["alignItems"];
+  p: IVec2;
+};
+
+type AlignBoxJustifyContentHitResult = {
+  type: "justify-content";
+  value: AlignBoxShape["justifyContent"];
   p: IVec2;
 };
 
@@ -250,50 +257,12 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
           p: { x: alignBoxRect.x - DIRECTION_ANCHOR_SIZE * 3, y: alignBoxRect.y + DIRECTION_ANCHOR_SIZE * 2 },
         };
 
-  const alignItemsAnchors: AlignBoxAlignItemsHitResult[] = [
-    {
-      type: "align-items",
-      value: "start",
-      p:
-        alignBox.direction === 0
-          ? {
-              x: alignBoxRectWithPadding.x + DIRECTION_ANCHOR_SIZE,
-              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
-            }
-          : {
-              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
-              y: alignBoxRectWithPadding.y + DIRECTION_ANCHOR_SIZE,
-            },
-    },
-    {
-      type: "align-items",
-      value: "center",
-      p:
-        alignBox.direction === 0
-          ? {
-              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width / 2,
-              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
-            }
-          : {
-              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
-              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height / 2,
-            },
-    },
-    {
-      type: "align-items",
-      value: "end",
-      p:
-        alignBox.direction === 0
-          ? {
-              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width - DIRECTION_ANCHOR_SIZE,
-              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
-            }
-          : {
-              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
-              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height - DIRECTION_ANCHOR_SIZE,
-            },
-    },
-  ];
+  const alignItemsAnchors: AlignBoxAlignItemsHitResult[] = getAlignItemsAnchors(alignBox, alignBoxRectWithPadding);
+
+  const justifyContentAnchors: AlignBoxJustifyContentHitResult[] = getJustifyContentAnchors(
+    alignBox,
+    alignBoxRectWithPadding,
+  );
 
   const resizeAnchors: AlignBoxResizeHitResult[] = [
     {
@@ -434,6 +403,13 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
       return alignItemsAnchor;
     }
 
+    const justifyContentAnchor = justifyContentAnchors.find(
+      ({ p }) => getD2(sub(p, derotatedP)) <= alignItemsThresholdD2,
+    );
+    if (justifyContentAnchor && justifyContentAnchor.value !== (alignBox.justifyContent ?? "start")) {
+      return justifyContentAnchor;
+    }
+
     if (baseWidthOptimizeAnchor && getD2(sub(baseWidthOptimizeAnchor.p, derotatedP)) <= thresholdD2) {
       return baseWidthOptimizeAnchor;
     }
@@ -480,27 +456,29 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
         ctx.fill();
       });
 
-      alignItemsAnchors.forEach((a) => {
+      [...alignItemsAnchors, ...justifyContentAnchors].forEach((a) => {
         ctx.beginPath();
         ctx.arc(a.p.x, a.p.y, alignItemsThreshold, 0, TAU);
         ctx.fill();
       });
 
-      const selectedAlignItemsIndex = alignBox.alignItems === "center" ? 1 : alignBox.alignItems === "end" ? 2 : 0;
       applyFillStyle(ctx, { color: COLORS.WHITE });
+      const selectedAlignItemsAnchor =
+        alignItemsAnchors.find((a) => a.value === alignBox.alignItems) ?? alignItemsAnchors[0];
       ctx.beginPath();
-      ctx.arc(
-        alignItemsAnchors[selectedAlignItemsIndex].p.x,
-        alignItemsAnchors[selectedAlignItemsIndex].p.y,
-        alignItemsThreshold * 0.5,
-        0,
-        TAU,
-      );
+      ctx.arc(selectedAlignItemsAnchor.p.x, selectedAlignItemsAnchor.p.y, alignItemsThreshold * 0.5, 0, TAU);
+      ctx.fill();
+
+      const selectedJustifyContentAnchor =
+        justifyContentAnchors.find((a) => a.value === alignBox.justifyContent) ?? justifyContentAnchors[0];
+      ctx.beginPath();
+      ctx.arc(selectedJustifyContentAnchor.p.x, selectedJustifyContentAnchor.p.y, alignItemsThreshold * 0.5, 0, TAU);
       ctx.fill();
 
       if (hitResult) {
         switch (hitResult.type) {
-          case "align-items": {
+          case "align-items":
+          case "justify-content": {
             applyFillStyle(ctx, { color: style.selectionSecondaly });
             ctx.beginPath();
             ctx.arc(hitResult.p.x, hitResult.p.y, alignItemsThreshold, 0, TAU);
@@ -672,6 +650,148 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
 }
 export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
 
+function getAlignItemsAnchors(
+  alignBox: AlignBoxShape,
+  alignBoxRectWithPadding: IRectangle,
+): AlignBoxAlignItemsHitResult[] {
+  return [
+    {
+      type: "align-items",
+      value: "start",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x + DIRECTION_ANCHOR_SIZE,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + DIRECTION_ANCHOR_SIZE,
+            },
+    },
+    {
+      type: "align-items",
+      value: "center",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width / 2,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height / 2,
+            },
+    },
+    {
+      type: "align-items",
+      value: "end",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width - DIRECTION_ANCHOR_SIZE,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height - DIRECTION_ANCHOR_SIZE,
+            },
+    },
+  ];
+}
+
+function getJustifyContentAnchors(
+  alignBox: AlignBoxShape,
+  alignBoxRectWithPadding: IRectangle,
+): AlignBoxJustifyContentHitResult[] {
+  return [
+    {
+      type: "justify-content",
+      value: "start",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + DIRECTION_ANCHOR_SIZE,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + DIRECTION_ANCHOR_SIZE,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
+            },
+    },
+    {
+      type: "justify-content",
+      value: "center",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height / 2,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width / 2,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
+            },
+    },
+    {
+      type: "justify-content",
+      value: "space-between",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2.5,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.65,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.65,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2.5,
+            },
+    },
+    {
+      type: "justify-content",
+      value: "space-around",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2.5,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.75,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.75,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2.5,
+            },
+    },
+    {
+      type: "justify-content",
+      value: "space-evenly",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2.5,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height * 0.85,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width * 0.85,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2.5,
+            },
+    },
+    {
+      type: "justify-content",
+      value: "end",
+      p:
+        alignBox.direction === 0
+          ? {
+              x: alignBoxRectWithPadding.x - DIRECTION_ANCHOR_SIZE * 2,
+              y: alignBoxRectWithPadding.y + alignBoxRectWithPadding.height - DIRECTION_ANCHOR_SIZE,
+            }
+          : {
+              x: alignBoxRectWithPadding.x + alignBoxRectWithPadding.width - DIRECTION_ANCHOR_SIZE,
+              y: alignBoxRectWithPadding.y - DIRECTION_ANCHOR_SIZE * 2,
+            },
+    },
+  ];
+}
+
 /**
  * "positionDiff" represents the vector from the location of the wrapper rectangle of the shape to the location of the shape.
  * When a shape has children but doesn't accommodate them (e.g. tree_root), the wrapper rectangle doesn't always represent the shape.
@@ -705,6 +825,7 @@ function treeToLayoutNode(result: AlignLayoutNodeWithMeta[], shapeComposite: Sha
       baseHeight: shape.baseHeight,
       padding: shape.padding,
       alignItems: shape.alignItems,
+      justifyContent: shape.justifyContent,
     });
 
     treeNode.children.forEach((c) => {

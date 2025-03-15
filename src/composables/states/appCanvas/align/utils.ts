@@ -32,6 +32,12 @@ export function handleAlignBoxHitResult(
       }
       break;
     }
+    case "justify-content": {
+      if (alignBoxHitResult.value !== targetShape.justifyContent) {
+        patch = { justifyContent: alignBoxHitResult.value };
+      }
+      break;
+    }
     case "optimize-width": {
       patch = { baseWidth: undefined };
       break;
