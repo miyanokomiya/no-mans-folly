@@ -445,9 +445,13 @@ export function renderConnectionResult(
     const shape = shapeComposite.shapeMap[id];
     if (!shape) return;
 
-    if (isLineShape(shape)) {
-      const linePath = getLinePath(shape);
-      applyCurvePath(ctx, linePath, shape.curves);
+    const outlinePaths = getOutlinePaths(option.shapeComposite.getShapeStruct, shape);
+    if (outlinePaths && outlinePaths.length > 0) {
+      applyStrokeStyle(ctx, { color: option.style.selectionSecondaly });
+      ctx.beginPath();
+      outlinePaths.forEach((path) => {
+        applyCurvePath(ctx, path.path, path.curves);
+      });
       applyStrokeStyle(ctx, {
         color: option.style.selectionSecondaly,
         width: 2 * option.scale,
