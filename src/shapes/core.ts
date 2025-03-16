@@ -78,6 +78,7 @@ export interface ShapeStruct<T extends Shape> {
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
   /**
    * Returns the outline paths.
+   * The path should be manually closed when it's a polygon.
    * It can be mulpiple paths when a shape has holes.
    */
   getOutlinePaths?: (shape: T) => BezierPath[];

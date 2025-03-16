@@ -300,7 +300,15 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
     getOutlinePaths: (shape) => {
       const path = getPath(shape);
       const transform = getShapeTransform(shape);
-      return [transformBezierPath({ path: path.path, curves: path.curves ?? [] }, transform)];
+      const transformed = transformBezierPath({ path: path.path, curves: path.curves ?? [] }, transform);
+      return [
+        isPolyline(shape) || isSame(transformed.path[0], transformed.path.at(-1)!)
+          ? transformed
+          : {
+              path: transformed.path.concat([transformed.path[0]]),
+              curves: transformed.curves,
+            },
+      ];
     },
     getCommonStyle,
     updateCommonStyle,
