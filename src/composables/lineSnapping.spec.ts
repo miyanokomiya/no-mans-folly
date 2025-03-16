@@ -1,5 +1,5 @@
 import { expect, describe, test } from "vitest";
-import { createShape, getCommonStruct, isPointOn } from "../shapes";
+import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import {
   getOptimizedSegment,
@@ -314,12 +314,14 @@ describe("newLineSnapping", () => {
       });
       const line1 = createShape<LineShape>(getCommonStruct, "line", {
         id: "line1",
+        findex: "aA",
         p: { x: 0, y: 0 },
         q: { x: 100, y: 100 },
         curves: [{ d: { x: 0, y: 10 } }],
       });
       const line2 = createShape<LineShape>(getCommonStruct, "line", {
         id: "line2",
+        findex: "aB",
         p: { x: 100, y: 0 },
         q: { x: 0, y: 100 },
         curves: [{ d: { x: 0, y: -20 } }],
@@ -333,8 +335,8 @@ describe("newLineSnapping", () => {
       });
       const result1 = target1.testConnection({ x: 55, y: 70 }, 1);
       expect(result1).toEqual({
-        outlineSrc: line1.id,
-        outlineSubSrc: line2.id,
+        outlineSrc: line2.id,
+        outlineSubSrc: line1.id,
         p: expect.anything(),
       });
       const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: [line1, line2] });

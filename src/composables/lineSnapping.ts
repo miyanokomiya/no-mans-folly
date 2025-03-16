@@ -345,7 +345,13 @@ export function newLineSnapping(option: Option) {
 
             const closestCandidate = pickMinItem(candidates ?? [], (c) => getD2(sub(c.p, outlineP)));
             if (closestCandidate) {
-              outline = { p: closestCandidate.p, shape: outline.shape, subshape: closestCandidate.shape };
+              // Pick foward one as main shape.
+              // Although this comparison doesn't regard the hierarchy of shapes, it's enough for most cases and efficient.
+              if (outline.shape.findex < closestCandidate.shape.findex) {
+                outline = { p: closestCandidate.p, shape: closestCandidate.shape, subshape: outline.shape };
+              } else {
+                outline = { p: closestCandidate.p, shape: outline.shape, subshape: closestCandidate.shape };
+              }
             }
           }
         }
@@ -353,18 +359,13 @@ export function newLineSnapping(option: Option) {
     }
 
     if (outline) {
-      let connection: ConnectionPoint | undefined = isLineShape(outline.shape)
-        ? undefined
-        : {
-            rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
-            id: outline.shape.id,
-          };
-      if (!connection && outline.subshape && !isLineShape(outline.subshape)) {
-        connection = {
-          rate: shapeComposite.getLocationRateOnShape(outline.subshape, outline.p),
-          id: outline.subshape.id,
-        };
-      }
+      const connectionTarget = getConnectedPrimeShape(outline.shape, outline.subshape);
+      const connection = connectionTarget
+        ? {
+            rate: shapeComposite.getLocationRateOnShape(connectionTarget, outline.p),
+            id: connectionTarget.id,
+          }
+        : undefined;
 
       if (lineConstrain) {
         return {
@@ -396,6 +397,12 @@ export function newLineSnapping(option: Option) {
   return { testConnection };
 }
 export type LineSnapping = ReturnType<typeof newLineSnapping>;
+
+function getConnectedPrimeShape(main?: Shape, sub?: Shape): Shape | undefined {
+  const connectionTarget1 = main && !isLineShape(main) ? main : undefined;
+  const connectionTarget2 = sub && !isLineShape(sub) ? sub : undefined;
+  return connectionTarget1 ?? connectionTarget2;
+}
 
 function getBezierIntersections(
   beziers: ([IVec2, IVec2] | [IVec2, IVec2, IVec2, IVec2])[],
