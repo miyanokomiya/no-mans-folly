@@ -15,8 +15,6 @@ import { TextShape } from "../shapes/text";
 import { TwoSidedArrowShape } from "../shapes/twoSidedArrow";
 import { newShapeSnapping } from "./shapeSnapping";
 import { RoundedRectangleShape } from "../shapes/polygons/roundedRectangle";
-import { connect } from "http2";
-import { gunzip } from "zlib";
 
 describe("newLineSnapping", () => {
   describe("testConnection", () => {
