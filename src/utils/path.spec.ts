@@ -682,12 +682,45 @@ describe("covertEllipseToBezier", () => {
     const rx = 50;
     const ry = 20;
     const rotation = 0;
-    const result = covertEllipseToBezier(center, rx, ry, rotation);
+    const result = covertEllipseToBezier(center, rx, ry, rotation, -Math.PI, Math.PI);
     expect(result.path).toHaveLength(5);
     expect(result.curves).toHaveLength(4);
     expect(result.path[0], "closed path").toEqualPoint(result.path.at(-1)!);
+    expect(result.path[0]).toEqualPoint({ x: 0, y: 20 });
+    expect(result.path[1]).toEqualPoint({ x: 50, y: 0 });
+    expect(result.path[2]).toEqualPoint({ x: 100, y: 20 });
+    expect(result.path[3]).toEqualPoint({ x: 50, y: 40 });
+    expect(result.path.at(-1)).toEqualPoint({ x: 0, y: 20 });
     expect(result.curves[0]?.c1).toEqualPoint({ x: 0, y: 8.954305 });
     expect(result.curves[0]?.c2).toEqualPoint({ x: 22.3857625, y: 0 });
+  });
+
+  test("should handle angle range", () => {
+    const center = { x: 50, y: 20 };
+    const rx = 50;
+    const ry = 20;
+    const rotation = 0;
+    const result = covertEllipseToBezier(center, rx, ry, rotation, -Math.PI / 2, Math.PI / 2);
+    expect(result.path).toHaveLength(5);
+    expect(result.curves).toHaveLength(4);
+    expect(result.path[0]).toEqualPoint({ x: 50, y: 0 });
+    expect(result.path[1].x).toBeGreaterThan(75);
+    expect(result.path[2]).toEqualPoint({ x: 100, y: 20 });
+    expect(result.path.at(-1)).toEqualPoint({ x: 50, y: 40 });
+  });
+
+  test("should handle counterclockwise", () => {
+    const center = { x: 50, y: 20 };
+    const rx = 50;
+    const ry = 20;
+    const rotation = 0;
+    const result = covertEllipseToBezier(center, rx, ry, rotation, -Math.PI / 2, Math.PI / 2, true);
+    expect(result.path).toHaveLength(5);
+    expect(result.curves).toHaveLength(4);
+    expect(result.path[0]).toEqualPoint({ x: 50, y: 0 });
+    expect(result.path[1].x).toBeLessThan(25);
+    expect(result.path[2]).toEqualPoint({ x: 0, y: 20 });
+    expect(result.path.at(-1)).toEqualPoint({ x: 50, y: 40 });
   });
 
   test("should handle rotation", () => {
@@ -695,7 +728,7 @@ describe("covertEllipseToBezier", () => {
     const rx = 50;
     const ry = 20;
     const rotation = Math.PI / 4;
-    const result = covertEllipseToBezier(center, rx, ry, rotation);
+    const result = covertEllipseToBezier(center, rx, ry, rotation, -Math.PI, Math.PI);
     expect(result.path).toHaveLength(5);
     expect(result.curves).toHaveLength(4);
     expect(result.path[0], "closed path").toEqualPoint(result.path.at(-1)!);
@@ -705,14 +738,14 @@ describe("covertEllipseToBezier", () => {
 
   test("should handle zero radii", () => {
     const center = { x: 50, y: 50 };
-    const result1 = covertEllipseToBezier(center, 0, 10, 0);
+    const result1 = covertEllipseToBezier(center, 0, 10, 0, -Math.PI, Math.PI);
     expect(result1.path).toEqualPoints([
       { x: 50, y: 40 },
       { x: 50, y: 60 },
     ]);
     expect(result1.curves).toHaveLength(0);
 
-    const result2 = covertEllipseToBezier(center, 10, 0, 0);
+    const result2 = covertEllipseToBezier(center, 10, 0, 0, -Math.PI, Math.PI);
     expect(result2.path).toEqualPoints([
       { x: 40, y: 50 },
       { x: 60, y: 50 },

@@ -497,7 +497,15 @@ export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): BezierPath
   return ret;
 }
 
-export function covertEllipseToBezier(c: IVec2, rx: number, ry: number, rotation: number): BezierPath {
+export function covertEllipseToBezier(
+  c: IVec2,
+  rx: number,
+  ry: number,
+  rotation: number,
+  from: number,
+  to: number,
+  counterclockwise = false,
+): BezierPath {
   if (rx === 0 || ry === 0)
     return {
       path: [
@@ -512,10 +520,11 @@ export function covertEllipseToBezier(c: IVec2, rx: number, ry: number, rotation
   const arcLerpFn = getArcLerpFn({
     c,
     radius: rx,
-    from: -Math.PI,
-    to: Math.PI,
+    from,
+    to,
+    counterclockwise,
   });
-  const partialSegs = getSegments([{ x: c.x - rx, y: c.y }, ...partials.map((n) => arcLerpFn(n / partials.length))]);
+  const partialSegs = getSegments([arcLerpFn(0), ...partials.map((n) => arcLerpFn(n / partials.length))]);
   const partialBeziers = partialSegs.map((partialSeg) => {
     return getBezierControlForArc(c, partialSeg[0], partialSeg[1]);
   });
