@@ -90,7 +90,7 @@ function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LineP
   };
 }
 
-function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curves"]): SimplePath {
+export function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curves"]): SimplePath {
   const ret: SimplePath = { path: [], curves: [] };
 
   getSegments(vertices).map((seg, i) => {

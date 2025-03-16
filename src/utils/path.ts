@@ -266,6 +266,13 @@ export function shiftBezierCurveControl(c: BezierCurveControl, v: IVec2): Bezier
   return { c1: add(c.c1, v), c2: add(c.c2, v) };
 }
 
+export function transformBezierPath(path: BezierPath, affine: AffineMatrix): BezierPath {
+  return {
+    path: path.path.map((p) => applyAffine(affine, p)),
+    curves: path.curves.map((c) => (c ? transformBezierCurveControl(c, affine) : undefined)),
+  };
+}
+
 export function transformBezierCurveControl(c: BezierCurveControl, affine: AffineMatrix): BezierCurveControl {
   return { c1: applyAffine(affine, c.c1), c2: applyAffine(affine, c.c2) };
 }

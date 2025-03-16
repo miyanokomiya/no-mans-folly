@@ -17,6 +17,7 @@ import {
   reverseBezierPath,
   shiftBezierCurveControl,
   transformBezierCurveControl,
+  transformBezierPath,
 } from "./path";
 import { getBezierBounds, getSegments, ISegment } from "./geometry";
 import { getDistance, getPedal } from "okageo";
@@ -377,6 +378,29 @@ describe("shiftBezierCurveControl", () => {
     const res0 = shiftBezierCurveControl({ c1: { x: 0, y: 0 }, c2: { x: 10, y: 20 } }, { x: 100, y: 200 });
     expect(res0.c1).toEqualPoint({ x: 100, y: 200 });
     expect(res0.c2).toEqualPoint({ x: 110, y: 220 });
+  });
+});
+
+describe("transformBezierPath", () => {
+  test("should transform the path", () => {
+    const bezier = {
+      path: [
+        { x: 2, y: 0 },
+        { x: 8, y: 0 },
+        { x: 10, y: 2 },
+        { x: 10, y: 8 },
+      ],
+      curves: [undefined, { c1: { x: 10, y: 1 }, c2: { x: 10, y: 2 } }, undefined],
+    };
+    expect(transformBezierPath(bezier, [2, 0, 0, 3, 0, 0])).toEqual({
+      path: [
+        { x: 4, y: 0 },
+        { x: 16, y: 0 },
+        { x: 20, y: 6 },
+        { x: 20, y: 24 },
+      ],
+      curves: [undefined, { c1: { x: 20, y: 3 }, c2: { x: 20, y: 6 } }, undefined],
+    });
   });
 });
 
