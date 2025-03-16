@@ -153,6 +153,9 @@ export const struct: ShapeStruct<RectangleShape> = {
     const polygon = getLocalRectPolygon(shape);
     return getIntersectedOutlinesOnPolygon(polygon, from, to);
   },
+  getOutlinePaths(shape) {
+    return [{ path: getLocalRectPolygon(shape), curves: [] }];
+  },
   getTangentAt(shape, p) {
     const edges = getSegments(getLocalRectPolygon(shape), true);
     const edgeInfo = getPolylineEdgeInfo(edges);

@@ -19,6 +19,7 @@ import { generateKeyBetween } from "../utils/findex";
 import { isObjectEmpty } from "../utils/commons";
 import { PartialProperties, patchByPartialProperties } from "../utils/entities";
 import { CanvasCTX } from "../utils/types";
+import { BezierPath } from "../utils/path";
 
 export type GetShapeStruct = _GetShapeStruct;
 
@@ -228,6 +229,11 @@ export function getIntersectedOutlines(
 ): IVec2[] | undefined {
   const struct = getStruct(shape.type);
   if (struct.getIntersectedOutlines) return struct.getIntersectedOutlines(shape, from, to);
+}
+
+export function getOutlinePaths(getStruct: GetShapeStruct, shape: Shape): BezierPath[] | undefined {
+  const struct = getStruct(shape.type);
+  return struct.getOutlinePaths?.(shape);
 }
 
 export function getShapeTextBounds(

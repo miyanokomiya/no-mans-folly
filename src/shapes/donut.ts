@@ -16,6 +16,7 @@ import { ShapeStruct, createBaseShape } from "./core";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { CanvasCTX } from "../utils/types";
+import { covertEllipseToBezier } from "../utils/path";
 
 export type DonutShape = EllipseShape & {
   holeRate: number;
@@ -108,6 +109,13 @@ export const struct: ShapeStruct<DonutShape> = {
 
     const points = [...(outerPoints ?? []), ...(innerPoints ?? [])].filter((p) => isOnSeg(p, [from, to]) ?? p);
     return points.length === 0 ? undefined : sortPointFrom(from, points);
+  },
+  getOutlinePaths(shape) {
+    const holeRate = shape.holeRate;
+    const c = { x: shape.p.x + shape.rx, y: shape.p.y + shape.ry };
+    const outerEllipse = covertEllipseToBezier(c, shape.rx, shape.ry, shape.rotation, 0, TAU);
+    const innerEllipse = covertEllipseToBezier(c, shape.rx * holeRate, shape.ry * holeRate, shape.rotation, 0, TAU);
+    return [outerEllipse, innerEllipse];
   },
   getTangentAt(shape, p) {
     const r = { x: shape.rx, y: shape.ry };

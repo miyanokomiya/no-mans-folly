@@ -38,6 +38,7 @@ import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/sv
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { pickMinItem } from "../utils/commons";
 import { CanvasCTX } from "../utils/types";
+import { covertEllipseToBezier } from "../utils/path";
 
 export type ArcShape = EllipseShape & {
   // The arc is always drawn clockwisely "from" -> "to".
@@ -187,6 +188,38 @@ export const struct: ShapeStruct<ArcShape> = {
     }
 
     return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
+  },
+  getOutlinePaths(shape) {
+    const r = { x: shape.rx, y: shape.ry };
+    const center = add(shape.p, r);
+    const holeRate = getHoleRate(shape);
+    const outerEllipse = covertEllipseToBezier(center, shape.rx, shape.ry, shape.rotation, shape.from, shape.to);
+
+    if (!holeRate) {
+      return [
+        {
+          path: [...outerEllipse.path, outerEllipse.path[0]],
+          curves: outerEllipse.curves,
+        },
+      ];
+    }
+
+    const innerEllipse = covertEllipseToBezier(
+      center,
+      shape.rx * holeRate,
+      shape.ry * holeRate,
+      shape.rotation,
+      shape.to,
+      shape.from,
+      true,
+    );
+
+    return [
+      {
+        path: [...outerEllipse.path, ...innerEllipse.path, outerEllipse.path[0]],
+        curves: [...outerEllipse.curves, undefined, ...innerEllipse.curves, undefined],
+      },
+    ];
   },
   getTangentAt(shape, p) {
     if (Math.abs(shape.from - shape.to) <= MINVALUE) return shape.rotation;

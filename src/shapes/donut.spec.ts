@@ -64,3 +64,25 @@ describe("struct", () => {
     });
   });
 });
+
+describe("getOutlinePaths", () => {
+  test("should return the outline paths", () => {
+    const shape = struct.create({ rx: 50, ry: 20, holeRate: 0.5 });
+    const result = struct.getOutlinePaths!(shape);
+    expect(result).toHaveLength(2);
+    expect(result[0].path).toHaveLength(5);
+    expect(result[0].path[0]).toEqualPoint({ x: 100, y: 20 });
+    expect(result[0].path[1]).toEqualPoint({ x: 50, y: 40 });
+    expect(result[0].path[2]).toEqualPoint({ x: 0, y: 20 });
+    expect(result[0].path[3]).toEqualPoint({ x: 50, y: 0 });
+    expect(result[0].path[4]).toEqualPoint({ x: 100, y: 20 });
+    expect(result[0].curves).toHaveLength(4);
+    expect(result[1].path).toHaveLength(5);
+    expect(result[1].path[0]).toEqualPoint({ x: 75, y: 20 });
+    expect(result[1].path[1]).toEqualPoint({ x: 50, y: 30 });
+    expect(result[1].path[2]).toEqualPoint({ x: 25, y: 20 });
+    expect(result[1].path[3]).toEqualPoint({ x: 50, y: 10 });
+    expect(result[1].path[4]).toEqualPoint({ x: 75, y: 20 });
+    expect(result[1].curves).toHaveLength(4);
+  });
+});

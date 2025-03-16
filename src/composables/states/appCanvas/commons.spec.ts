@@ -243,7 +243,6 @@ describe("isShapeInteratctiveWithinViewport", () => {
       "accommodated by the shape",
     ).toBe(false);
 
-    // This case should be true but the logic is imperfect.
     expect(
       isShapeInteratctiveWithinViewport(
         {
@@ -253,6 +252,6 @@ describe("isShapeInteratctiveWithinViewport", () => {
         shape,
       ),
       "between the outline and the hole",
-    ).toBe(false);
+    ).toBe(true);
   });
 });

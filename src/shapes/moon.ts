@@ -30,6 +30,7 @@ import { ShapeStruct, createBaseShape } from "./core";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { CanvasCTX } from "../utils/types";
+import { covertEllipseToBezier } from "../utils/path";
 
 export type MoonShape = EllipseShape & {
   innsetC: IVec2;
@@ -175,6 +176,41 @@ export const struct: ShapeStruct<MoonShape> = {
 
     const points = intersections.filter((p) => isOnSeg(p, [from, to]) ?? p);
     return points.length > 0 ? sortPointFrom(from, points) : undefined;
+  },
+  getOutlinePaths(shape) {
+    const ac = add(shape.p, { x: shape.rx, y: shape.ry });
+    const rotateFn = getRotateFn(shape.rotation, ac);
+    const ar = shape.rx;
+    const br = getMoonRadius(shape);
+    const insetLocalX = getMoonInsetLocalX(shape);
+    const bc = rotateFn({ x: shape.p.x + insetLocalX + br, y: ac.y });
+    const moonIntersections = getIntersectionBetweenCircles(ac, ar, bc, br);
+    if (!moonIntersections) {
+      return ellipseStruct.getOutlinePaths?.(shape) ?? [];
+    }
+    if (moonIntersections.length === 1) {
+      if (Math.abs(insetLocalX) < MINVALUE) return [];
+      return ellipseStruct.getOutlinePaths?.(shape) ?? [];
+    }
+
+    const [afrom, ato] = moonIntersections.map(
+      (p) => getRadian({ x: (p.x - ac.x) * shape.rx, y: (p.y - ac.y) * shape.ry }) - shape.rotation,
+    );
+    const outerPath = covertEllipseToBezier(ac, shape.rx, shape.ry, shape.rotation, ato, afrom);
+
+    const brx = br;
+    const bry = (br / shape.rx) * shape.ry;
+    const [bfrom, bto] = moonIntersections.map(
+      (p) => getRadian({ x: (p.x - bc.x) * brx, y: (p.y - bc.y) * bry }) - shape.rotation,
+    );
+    const innerPath = covertEllipseToBezier(bc, brx, bry, shape.rotation, bfrom, bto, true);
+
+    return [
+      {
+        path: [...outerPath.path, ...innerPath.path.slice(1)],
+        curves: [...outerPath.curves, ...innerPath.curves],
+      },
+    ];
   },
   getTangentAt(shape, p) {
     const r = { x: shape.rx, y: shape.ry };

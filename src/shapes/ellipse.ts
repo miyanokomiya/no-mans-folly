@@ -39,6 +39,7 @@ import {
 } from "./core";
 import { getPaddingRect } from "../utils/boxPadding";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
+import { covertEllipseToBezier } from "../utils/path";
 
 export type EllipseShape = Shape &
   CommonStyle &
@@ -165,6 +166,10 @@ export const struct: ShapeStruct<EllipseShape> = {
 
     const points = candidates.filter((p) => isOnSeg(p, [from, to]) ?? p);
     return points.length === 0 ? undefined : sortPointFrom(from, points);
+  },
+  getOutlinePaths(shape) {
+    const center = add(shape.p, { x: shape.rx, y: shape.ry });
+    return [covertEllipseToBezier(center, shape.rx, shape.ry, shape.rotation, -Math.PI, Math.PI)];
   },
   getTangentAt(shape, p) {
     const center = add(shape.p, { x: shape.rx, y: shape.ry });

@@ -102,3 +102,24 @@ describe("getClosestOutline", () => {
     expect(struct.getClosestOutline?.(shape, { x: 90, y: 80 }, 2)).toEqualPoint({ x: 90, y: 80 });
   });
 });
+
+describe("getOutlinePaths", () => {
+  test("should return outline paths", () => {
+    const shape = struct.create({ rx: 50, ry: 50, holeRate: 0.5, from: 0, to: Math.PI });
+    const result = struct.getOutlinePaths!(shape);
+    expect(result[0].path).toHaveLength(11);
+    expect(result[0].path[0]).toEqualPoint({ x: 100, y: 50 });
+    expect(result[0].path[2]).toEqualPoint({ x: 50, y: 100 });
+    expect(result[0].path[4]).toEqualPoint({ x: 0, y: 50 });
+    expect(result[0].path[5]).toEqualPoint({ x: 25, y: 50 });
+    expect(result[0].path[7]).toEqualPoint({ x: 50, y: 75 });
+    expect(result[0].path[9]).toEqualPoint({ x: 75, y: 50 });
+    expect(result[0].path[10]).toEqualPoint({ x: 100, y: 50 });
+    expect(result[0].curves).toHaveLength(10);
+    expect(result[0].curves[3]).not.toBe(undefined);
+    expect(result[0].curves[4]).toBe(undefined);
+    expect(result[0].curves[5]).not.toBe(undefined);
+    expect(result[0].curves[8]).not.toBe(undefined);
+    expect(result[0].curves[9]).toBe(undefined);
+  });
+});

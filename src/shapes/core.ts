@@ -8,6 +8,7 @@ import { isSameBoxPadding } from "../utils/boxPadding";
 import { SVGElementInfo } from "../utils/svgElements";
 import { ISegment } from "../utils/geometry";
 import { CanvasCTX } from "../utils/types";
+import { BezierPath } from "../utils/path";
 
 /**
  * Use this value as standard threshold for segment-hit test.
@@ -75,6 +76,11 @@ export interface ShapeStruct<T extends Shape> {
    * [from, to] should be treated as a segment rather than a line.
    */
   getIntersectedOutlines?: (shape: T, from: IVec2, to: IVec2) => IVec2[] | undefined;
+  /**
+   * Returns the outline paths.
+   * It can be mulpiple paths when a shape has holes.
+   */
+  getOutlinePaths?: (shape: T) => BezierPath[];
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
   /**

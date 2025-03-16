@@ -137,3 +137,18 @@ describe("getClosestOutline", () => {
     expect(struct.getClosestOutline?.(shape, { x: 150, y: 1 }, 2)).toBe(undefined);
   });
 });
+
+describe("getOutlinePaths", () => {
+  test("should return outline paths", () => {
+    const shape = struct.create({ rx: 50, ry: 50, innsetC: { x: 0.5, y: 0.5 }, radiusRate: 1 });
+    const res = struct.getOutlinePaths!(shape);
+    expect(res).toHaveLength(1);
+    expect(res[0].path).toHaveLength(9);
+    expect(res[0].path[0]).toEqualPoint({ x: 75, y: 93.3012702 });
+    expect(res[0].path[2]).toEqualPoint({ x: 0, y: 50 });
+    expect(res[0].path[4]).toEqualPoint({ x: 75, y: 6.6987298 });
+    expect(res[0].path[6]).toEqualPoint({ x: 50, y: 50 });
+    expect(res[0].path[8]).toEqualPoint({ x: 75, y: 93.3012702 });
+    expect(res[0].curves).toHaveLength(8);
+  });
+});

@@ -15,6 +15,7 @@ import {
   canHaveText,
   createShape,
   getIntersectedOutlines,
+  getOutlinePaths,
   patchShapesOrderToLast,
   resizeOnTextEdit,
   shouldResizeOnTextEdit,
@@ -49,7 +50,7 @@ import { createNewTextShapeForDocument } from "./utils/text";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { getLineUnrelatedIds } from "../../shapeRelation";
 import { isLineShape } from "../../../shapes/line";
-import { doesRectAccommodateRect, getRectLines, isRectOverlapped } from "../../../utils/geometry";
+import { doesRectAccommodateRect, getRectLines, isPointOnRectangle, isRectOverlapped } from "../../../utils/geometry";
 
 type AcceptableEvent =
   | "Break"
@@ -781,10 +782,16 @@ export function isShapeInteratctiveWithinViewport(
 
   if (shapeComposite.getShapeStruct(shape.type).getIntersectedOutlines) {
     // Check if the viewport overlaps with the shape's outlines
-    // FIXME: This logic isn't perfect when the shape has a hole.
-    return getRectLines(viewRect).some((seg) =>
+    const intersected = getRectLines(viewRect).some((seg) =>
       getIntersectedOutlines(shapeComposite.getShapeStruct, shape, seg[0], seg[1]),
     );
+    if (intersected) return true;
+
+    // Check if the viewport accommodates the shape's holes
+    const outlinePaths = getOutlinePaths(shapeComposite.getShapeStruct, shape);
+    if (outlinePaths && outlinePaths.length > 1) {
+      return outlinePaths.some((path) => path.path.some((p) => isPointOnRectangle(viewRect, p)));
+    }
   }
 
   // Check if the viewport overlaps with the shape's wrapper rect

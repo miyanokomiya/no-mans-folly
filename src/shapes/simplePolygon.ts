@@ -58,7 +58,7 @@ import { pickMinItem } from "../utils/commons";
 import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/svgElements";
 import { getPaddingRect } from "../utils/boxPadding";
 import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
-import { getClosestPointOnPolyline, getPolylineEdgeInfo } from "../utils/path";
+import { getClosestPointOnPolyline, getPolylineEdgeInfo, transformBezierPath } from "../utils/path";
 import { createLineStrokeSVGElementInfo, renderLineStroke } from "./line";
 
 export type SimplePath = {
@@ -94,6 +94,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "getLocalRectPolygon"
   | "isPointOn"
   | "getClosestOutline"
+  | "getOutlinePaths"
   | "getTangentAt"
   | "resize"
   | "getIntersectedOutlines"
@@ -295,6 +296,11 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       return intersections.length > 0
         ? sortPointFrom(localFrom, intersections).map((p) => applyAffine(transform, p))
         : undefined;
+    },
+    getOutlinePaths: (shape) => {
+      const path = getPath(shape);
+      const transform = getShapeTransform(shape);
+      return [transformBezierPath({ path: path.path, curves: path.curves ?? [] }, transform)];
     },
     getCommonStyle,
     updateCommonStyle,

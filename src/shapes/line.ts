@@ -48,6 +48,7 @@ import { applyCurvePath, applyPath, createSVGCurvePath } from "../utils/renderer
 import { isTextShape } from "./text";
 import { struct as textStruct } from "./text";
 import {
+  convertLinePathToSimplePath,
   getClosestPointOnPolyline,
   getIntersectionsBetweenSegAndPolyline,
   getPolylineEdgeInfo,
@@ -397,6 +398,10 @@ export const struct: ShapeStruct<LineShape> = {
     const seg: ISegment = [from, to];
     const intersections = getIntersectionsBetweenSegAndPolyline(seg, getEdges(shape), shape.curves);
     return intersections.length > 0 ? sortPointFrom(from, intersections) : undefined;
+  },
+  getOutlinePaths(shape) {
+    const path = convertLinePathToSimplePath(getLinePath(shape), shape.curves);
+    return [{ path: path.path, curves: path.curves ?? [] }];
   },
   transparentSelection: true,
 };
