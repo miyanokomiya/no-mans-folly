@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   combineBezierPathAndPath,
+  convertLinePathToSimplePath,
+  covertArcToBezier,
   flipBezierPathV,
   getBezierControlForArc,
   getClosestPointOnPolyline,
@@ -20,7 +22,7 @@ import {
   transformBezierPath,
 } from "./path";
 import { getBezierBounds, getSegments, ISegment } from "./geometry";
-import { getDistance, getPedal } from "okageo";
+import { getArcLerpFn, getDistance, getPedal } from "okageo";
 
 describe("isBezieirControl", () => {
   test("should return true iff the control is of bezier", () => {
@@ -636,5 +638,39 @@ describe("flipBezierPathV", () => {
       ],
       curves: [undefined, { c1: { x: 120, y: 180 }, c2: { x: 120, y: 120 } }],
     });
+  });
+});
+
+describe("convertLinePathToSimplePath", () => {
+  test("should convert line path to simple path", () => {
+    const vertices = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+    ];
+    const result = convertLinePathToSimplePath(vertices, [{ d: { x: 0, y: 50 } }]);
+    const arcLerpFn = getArcLerpFn(50, 50, vertices[0], vertices[1], false, false, 0);
+    expect(result.path).toEqualPoints([
+      vertices[0],
+      arcLerpFn(1 / 4),
+      arcLerpFn(2 / 4),
+      arcLerpFn(3 / 4),
+      vertices[1],
+      vertices[2],
+    ]);
+    expect(result.curves).toHaveLength(5);
+  });
+});
+
+describe("covertArcToBezier", () => {
+  test("should convert arc path to bezier path", () => {
+    const seg: ISegment = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+    ];
+    const result = covertArcToBezier(seg, { d: { x: 0, y: 50 } });
+    const arcLerpFn = getArcLerpFn(50, 50, seg[0], seg[1], false, false, 0);
+    expect(result.path).toEqualPoints([seg[0], arcLerpFn(1 / 4), arcLerpFn(2 / 4), arcLerpFn(3 / 4), seg[1]]);
+    expect(result.curves).toHaveLength(4);
   });
 });

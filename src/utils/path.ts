@@ -27,6 +27,7 @@ import {
   BEZIER_APPROX_SIZE,
   ISegment,
   getArcCurveParamsByNormalizedControl,
+  getArcLerpFn,
   getCrossLineAndArcRotated,
   getCrossSegAndSegWithT,
   getCurveLerpFn,
@@ -446,4 +447,51 @@ export function flipBezierPathV(path: BezierPath, originY: number): BezierPath {
         : undefined,
     ),
   };
+}
+
+export function convertLinePathToSimplePath(vertices: IVec2[], curves?: (CurveControl | undefined)[]): BezierPath {
+  const ret: BezierPath = { path: [], curves: [] };
+
+  getSegments(vertices).map((seg, i) => {
+    const c = curves?.[i];
+    if (!c || !isArcControl(c)) {
+      ret.path.push(seg[0]);
+      ret.curves!.push(c);
+      return;
+    }
+
+    const path = covertArcToBezier(seg, c);
+    ret.path.push(...path.path.slice(0, path.path.length - 1));
+    if (path.curves) ret.curves!.push(...path.curves);
+  });
+  ret.path.push(vertices[vertices.length - 1]);
+  return ret;
+}
+
+export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): BezierPath {
+  const ret: BezierPath = { path: [], curves: [] };
+
+  const arcParams = getArcCurveParamsByNormalizedControl(seg, c.d);
+  if (!arcParams) {
+    ret.path.push(...seg);
+    ret.curves.push(undefined);
+    return ret;
+  }
+
+  // Split the arc into 4 partials since bezier approximation only works well with arc within 90 degree.
+  const partials = [1, 2, 3, 4];
+  const arcLerpFn = getArcLerpFn(arcParams);
+  const partialSegs = getSegments([seg[0], ...partials.map((n) => arcLerpFn(n / partials.length))]);
+  const partialBeziers = partialSegs.map((partialSeg) => {
+    return getBezierControlForArc(arcParams.c, partialSeg[0], partialSeg[1]);
+  });
+
+  partialBeziers.forEach((partialBezier, i) => {
+    const partialSeg = partialSegs[i];
+    ret.path.push(partialSeg[0]);
+    ret.curves.push(partialBezier);
+  });
+  ret.path.push(partialSegs[partialSegs.length - 1][1]);
+
+  return ret;
 }

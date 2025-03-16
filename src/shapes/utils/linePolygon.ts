@@ -1,20 +1,12 @@
 import { createShape, GetShapeStruct, getWrapperRect, resizeShape } from "..";
-import { getBezierControlForArc, isArcControl } from "../../utils/path";
 import { getLinePath, LineShape } from "../line";
 import { LinePolygonShape } from "../polygons/linePolygon";
-import { SimplePath } from "../simplePolygon";
-import {
-  getArcCurveParamsByNormalizedControl,
-  getArcLerpFn,
-  getRotationAffine,
-  getSegments,
-  ISegment,
-} from "../../utils/geometry";
+import { getRotationAffine } from "../../utils/geometry";
 import { mapReduce } from "../../utils/commons";
-import { AffineMatrix, IVec2, multiAffines } from "okageo";
-import { ArcCurveControl } from "../../models";
+import { AffineMatrix, multiAffines } from "okageo";
 import { getNakedLineShape } from "./line";
 import { getRectShapeCenter } from "../rectPolygon";
+import { convertLinePathToSimplePath } from "../../utils/path";
 
 export function patchLinePolygonFromLine(
   getStruct: GetShapeStruct,
@@ -38,7 +30,7 @@ function createLinePolygonFromLine(getStruct: GetShapeStruct, line: LineShape): 
     p,
     path: {
       path: polygonPath.path,
-      curves: polygonPath.curves,
+      curves: polygonPath.curves.some((c) => c !== undefined) ? polygonPath.curves : undefined,
     },
     srcLine: {
       vertices: normalizedVertices.map((p) => ({ p })),
@@ -88,57 +80,6 @@ function createLineFromLinePolygon(getStruct: GetShapeStruct, linePolygon: LineP
     ...normalizedLine,
     ...resizeShape(getStruct, normalizedLine, shiftAffine),
   };
-}
-
-export function convertLinePathToSimplePath(vertices: IVec2[], curves: LineShape["curves"]): SimplePath {
-  const ret: SimplePath = { path: [], curves: [] };
-
-  getSegments(vertices).map((seg, i) => {
-    const c = curves?.[i];
-    if (!c || !isArcControl(c)) {
-      ret.path.push(seg[0]);
-      ret.curves!.push(c);
-      return;
-    }
-
-    const path = covertArcToBezier(seg, c);
-    ret.path.push(...path.path.slice(0, path.path.length - 1));
-    if (path.curves) ret.curves!.push(...path.curves);
-  });
-  ret.path.push(vertices[vertices.length - 1]);
-  if (ret.curves!.every((c) => !c)) {
-    ret.curves = undefined;
-  }
-
-  return ret;
-}
-
-export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): SimplePath {
-  const ret: Required<SimplePath> = { path: [], curves: [] };
-
-  const arcParams = getArcCurveParamsByNormalizedControl(seg, c.d);
-  if (!arcParams) {
-    ret.path.push(...seg);
-    ret.curves.push(undefined);
-    return ret;
-  }
-
-  // Split the arc into 4 partials since bezier approximation only works well with arc within 90 degree.
-  const partials = [1, 2, 3, 4];
-  const arcLerpFn = getArcLerpFn(arcParams);
-  const partialSegs = getSegments([seg[0], ...partials.map((n) => arcLerpFn(n / partials.length))]);
-  const partialBeziers = partialSegs.map((partialSeg) => {
-    return getBezierControlForArc(arcParams.c, partialSeg[0], partialSeg[1]);
-  });
-
-  partialBeziers.forEach((partialBezier, i) => {
-    const partialSeg = partialSegs[i];
-    ret.path.push(partialSeg[0]);
-    ret.curves.push(partialBezier);
-  });
-  ret.path.push(partialSegs[partialSegs.length - 1][1]);
-
-  return ret;
 }
 
 export function canMakePolygon(line: LineShape): boolean {
