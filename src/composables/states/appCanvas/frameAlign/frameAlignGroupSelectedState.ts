@@ -12,7 +12,7 @@ import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { AlignBoxHandler, AlignBoxHitResult, newAlignBoxHandler } from "../../../alignHandler";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
-import { handleAlignBoxHitResult } from "../align/utils";
+import { getPatchByAlignBoxHitResult, handleAlignBoxHitResult } from "../align/utils";
 
 export const newFrameAlignGroupSelectedState = defineIntransientState(() => {
   let targetId: string;
@@ -107,15 +107,23 @@ export const newFrameAlignGroupSelectedState = defineIntransientState(() => {
               return;
           }
         case "pointerhover": {
-          alignBoxHitResult = alignBoxHandler.hitTest(event.data.current, ctx.getScale());
-          if (alignBoxHitResult) {
-            boundingBox.saveHitResult();
-          } else {
-            const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
-            boundingBox.saveHitResult(hitBounding);
+          const nextAlignBoxHitResult = alignBoxHandler.hitTest(event.data.current, ctx.getScale());
+          if (!alignBoxHandler.isSameHitResult(nextAlignBoxHitResult, alignBoxHitResult)) {
+            alignBoxHitResult = nextAlignBoxHitResult;
+            ctx.redraw();
+
+            const patch = alignBoxHitResult
+              ? getPatchByAlignBoxHitResult(ctx, targetShape, alignBoxHitResult)
+              : undefined;
+            ctx.setTmpShapeMap(patch ?? {});
           }
 
-          ctx.redraw();
+          if (alignBoxHitResult) {
+            if (boundingBox.saveHitResult()) ctx.redraw();
+          } else {
+            const hitBounding = boundingBox.hitTest(event.data.current, ctx.getScale());
+            if (boundingBox.saveHitResult(hitBounding)) ctx.redraw();
+          }
           break;
         }
         case "contextmenu":
