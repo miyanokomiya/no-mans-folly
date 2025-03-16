@@ -15,6 +15,8 @@ import { TextShape } from "../shapes/text";
 import { TwoSidedArrowShape } from "../shapes/twoSidedArrow";
 import { newShapeSnapping } from "./shapeSnapping";
 import { RoundedRectangleShape } from "../shapes/polygons/roundedRectangle";
+import { connect } from "http2";
+import { gunzip } from "zlib";
 
 describe("newLineSnapping", () => {
   describe("testConnection", () => {
@@ -342,6 +344,69 @@ describe("newLineSnapping", () => {
       const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: [line1, line2] });
       expect(sc.isPointOn(line1, result1!.p)).toBe(true);
       expect(sc.isPointOn(line2, result1!.p)).toBe(true);
+    });
+
+    test("should connect to shape's outline even if a gridline and shape's outline are overlapped", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: -200, y: -200 },
+        q: { x: -100, y: -200 },
+      });
+      const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "rect",
+        p: { x: 0, y: 0 },
+        width: 100,
+        height: 100,
+      });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [
+          [
+            rect.id,
+            {
+              h: [
+                [
+                  { x: -50, y: 0 },
+                  { x: 50, y: 0 },
+                ],
+              ],
+              v: [
+                [
+                  { x: 0, y: -50 },
+                  { x: 0, y: 50 },
+                ],
+              ],
+            },
+          ],
+        ],
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes: [rect],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      const result1 = target1.testConnection({ x: 20, y: 1 }, 1);
+      expect(result1).toEqual({
+        connection: { id: "rect", rate: { x: 0.2, y: 0 } },
+        outlineSrc: rect.id,
+        p: { x: 20, y: 0 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: { x: 0, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: rect.id,
+              line: [
+                { x: -50, y: 0 },
+                { x: 50, y: 0 },
+              ],
+            },
+          ],
+        },
+      });
     });
 
     test("should snap to shape outline that is parallel to self snapped constraint", () => {

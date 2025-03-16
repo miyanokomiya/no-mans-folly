@@ -391,7 +391,26 @@ export function newLineSnapping(option: Option) {
       };
     }
 
-    return lineConstrain ?? selfSnapped;
+    const snapped = lineConstrain ?? selfSnapped;
+    if (snapped) {
+      // Check if the snapped point is on the outline of the shape.
+      // When a guideline is parallel to the outline, their intersection isn't found up to this point.
+      const connectionTarget = reversedSnappableShapes.find((shape) => {
+        return !isLineShape(shape) && !!getClosestOutline(option.getShapeStruct, shape, snapped.p, MINVALUE, MINVALUE);
+      });
+      return connectionTarget
+        ? {
+            ...snapped,
+            connection: {
+              rate: shapeComposite.getLocationRateOnShape(connectionTarget, snapped.p),
+              id: connectionTarget.id,
+            },
+            outlineSrc: connectionTarget.id,
+          }
+        : snapped;
+    }
+
+    return;
   }
 
   return { testConnection };
