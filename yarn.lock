@@ -5960,7 +5960,7 @@ __metadata:
     littlezipper: "npm:^0.1.5"
     minimatrix-polyroots: "npm:^3.0.5"
     nanoid: "npm:^5.0.9"
-    okageo: "npm:^3.1.9"
+    okageo: "npm:^3.1.11"
     okaselect: "npm:^0.1.0"
     postcss: "npm:^8.5.1"
     prettier: "npm:^3.5.0"
@@ -6077,10 +6077,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"okageo@npm:^3.1.9":
-  version: 3.1.9
-  resolution: "okageo@npm:3.1.9"
-  checksum: 4e5af4057cad1d214a20e6150779a4391eeea23dfb0343b97a2ba602e3593347bf2dcaf0af26283dede513f95b12fb230dc6264004798db3f06c81e496dc78f2
+"okageo@npm:^3.1.11":
+  version: 3.1.11
+  resolution: "okageo@npm:3.1.11"
+  checksum: db29a3fce196d87c95727a2131cd29688972de1318154d5a8eba8c0e15e67a4fc0975306f2a837fbf830c4d30f9a024e552a3ae4c1437457603b3ada10b273bd
   languageName: node
   linkType: hard
 

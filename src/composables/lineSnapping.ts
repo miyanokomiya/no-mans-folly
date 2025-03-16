@@ -3,6 +3,8 @@ import {
   IVec2,
   MINVALUE,
   add,
+  getCrossBezier3AndBezier3,
+  getCrossSegAndBezier3,
   getDistance,
   getNorm,
   getPedal,
@@ -12,7 +14,13 @@ import {
   multi,
   sub,
 } from "okageo";
-import { GetShapeStruct, getIntersectedOutlines, getClosestOutline, isRectangularOptimizedSegment } from "../shapes";
+import {
+  GetShapeStruct,
+  getIntersectedOutlines,
+  getClosestOutline,
+  isRectangularOptimizedSegment,
+  getOutlinePaths,
+} from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, getLinePath, isLineShape } from "../shapes/line";
@@ -21,6 +29,7 @@ import {
   TAU,
   extendSegment,
   getClosestPointTo,
+  getCrossSegAndSeg,
   getD2,
   getLocationFromRateOnRectPath,
   isRectOverlappedH,
@@ -45,6 +54,7 @@ import {
   SnappingResult,
 } from "./shapeSnapping";
 import { CanvasCTX } from "../utils/types";
+import { BezierPath } from "../utils/path";
 
 const SNAP_THRESHOLD = 10;
 
@@ -63,6 +73,7 @@ interface Option {
 export type ConnectionResult = {
   connection?: ConnectionPoint;
   outlineSrc?: string;
+  outlineSubSrc?: string;
   p: IVec2;
   guidLines?: ISegment[];
   shapeSnappingResult?: SnappingResult;
@@ -246,7 +257,7 @@ export function newLineSnapping(option: Option) {
     }
 
     // Try snapping to other shapes' outline
-    let outline: { p: IVec2; shape: Shape; guideLine?: ISegment } | undefined;
+    let outline: { p: IVec2; shape: Shape; guideLine?: ISegment; subshape?: Shape } | undefined;
     {
       let outlineThreshold = threshold;
 
@@ -281,13 +292,14 @@ export function newLineSnapping(option: Option) {
       } else {
         // Set the threshold for markers up to default value, otherwise markers would be too strong.
         const outlineThresholdForMarker = Math.min(SNAP_THRESHOLD * scale, threshold);
+        const closeShapes: Shape[] = [];
         reversedSnappableShapes.forEach((shape) => {
           const p = getClosestOutline(
             option.getShapeStruct,
             shape,
             point,
-            outlineThreshold,
-            Math.min(outlineThresholdForMarker, outlineThreshold),
+            threshold,
+            Math.min(outlineThresholdForMarker, threshold),
           );
           if (!p) {
             // If there's no close outline, check the center.
@@ -303,20 +315,56 @@ export function newLineSnapping(option: Option) {
 
           const d = getDistance(p, point);
           if (d < outlineThreshold) {
-            outlineThreshold = d;
+            if (outline) {
+              closeShapes.push(outline.shape);
+            }
             outline = { p, shape };
+            outlineThreshold = d;
+          } else if (d < threshold) {
+            closeShapes.push(shape);
           }
         });
+
+        if (outline && closeShapes.length > 0) {
+          const outlineP = outline.p;
+          const srcOutlinePaths = getOutlinePaths(option.getShapeStruct, outline.shape);
+          if (srcOutlinePaths && srcOutlinePaths.length > 0) {
+            const srcBeziers = getBezierSegmentList(srcOutlinePaths);
+            const candidates: (typeof outline)[] = [];
+
+            closeShapes.forEach((shape) => {
+              const outlinePaths = getOutlinePaths(option.getShapeStruct, shape);
+              if (!outlinePaths) return;
+
+              const intersections = getBezierIntersections(getBezierSegmentList(outlinePaths), srcBeziers);
+              const closestCandidate = pickMinItem(intersections, (p) => getD2(sub(p, point)));
+              if (closestCandidate && getDistance(closestCandidate, point) < threshold) {
+                candidates.push({ p: closestCandidate, shape });
+              }
+            });
+
+            const closestCandidate = pickMinItem(candidates ?? [], (c) => getD2(sub(c.p, outlineP)));
+            if (closestCandidate) {
+              outline = { p: closestCandidate.p, shape: outline.shape, subshape: closestCandidate.shape };
+            }
+          }
+        }
       }
     }
 
     if (outline) {
-      const connection: ConnectionPoint | undefined = isLineShape(outline.shape)
+      let connection: ConnectionPoint | undefined = isLineShape(outline.shape)
         ? undefined
         : {
             rate: shapeComposite.getLocationRateOnShape(outline.shape, outline.p),
             id: outline.shape.id,
           };
+      if (!connection && outline.subshape && !isLineShape(outline.subshape)) {
+        connection = {
+          rate: shapeComposite.getLocationRateOnShape(outline.subshape, outline.p),
+          id: outline.subshape.id,
+        };
+      }
 
       if (lineConstrain) {
         return {
@@ -337,6 +385,7 @@ export function newLineSnapping(option: Option) {
         connection,
         p: outline.p,
         outlineSrc: outline.shape.id,
+        outlineSubSrc: outline.subshape?.id,
         guidLines: outline.guideLine ? [outline.guideLine] : undefined,
       };
     }
@@ -347,6 +396,28 @@ export function newLineSnapping(option: Option) {
   return { testConnection };
 }
 export type LineSnapping = ReturnType<typeof newLineSnapping>;
+
+function getBezierIntersections(
+  beziers: ([IVec2, IVec2] | [IVec2, IVec2, IVec2, IVec2])[],
+  srcBeziers: ([IVec2, IVec2] | [IVec2, IVec2, IVec2, IVec2])[],
+): IVec2[] {
+  const intersections: IVec2[] = [];
+  beziers.forEach((path) => {
+    srcBeziers.forEach((srcPath) => {
+      if (path.length === 4 && srcPath.length === 4) {
+        intersections.push(...getCrossBezier3AndBezier3(srcPath, path));
+      } else if (path.length === 2 && srcPath.length === 4) {
+        intersections.push(...getCrossSegAndBezier3(path, srcPath));
+      } else if (path.length === 4 && srcPath.length === 2) {
+        intersections.push(...getCrossSegAndBezier3(srcPath, path));
+      } else if (path.length === 2 && srcPath.length === 2) {
+        const intersection = getCrossSegAndSeg(srcPath, path);
+        if (intersection) intersections.push(intersection);
+      }
+    });
+  });
+  return intersections;
+}
 
 export function renderConnectionResult(
   ctx: CanvasCTX,
@@ -370,28 +441,31 @@ export function renderConnectionResult(
     });
   }
 
-  if (option.result.outlineSrc) {
-    const shape = shapeComposite.shapeMap[option.result.outlineSrc];
-    if (shape) {
-      if (isLineShape(shape)) {
-        const linePath = getLinePath(shape);
-        applyCurvePath(ctx, linePath, shape.curves);
-        applyStrokeStyle(ctx, {
-          color: option.style.selectionSecondaly,
-          width: 2 * option.scale,
-        });
-        ctx.stroke();
-      } else {
-        const rect = option.shapeComposite.getWrapperRect(shape);
-        scaleGlobalAlpha(ctx, 0.2, () => {
-          applyFillStyle(ctx, { color: option.style.selectionSecondaly });
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.width, rect.height);
-          ctx.fill();
-        });
-      }
+  const highlightShape = (id: string) => {
+    const shape = shapeComposite.shapeMap[id];
+    if (!shape) return;
+
+    if (isLineShape(shape)) {
+      const linePath = getLinePath(shape);
+      applyCurvePath(ctx, linePath, shape.curves);
+      applyStrokeStyle(ctx, {
+        color: option.style.selectionSecondaly,
+        width: 2 * option.scale,
+      });
+      ctx.stroke();
+    } else {
+      const rect = option.shapeComposite.getWrapperRect(shape);
+      scaleGlobalAlpha(ctx, 0.2, () => {
+        applyFillStyle(ctx, { color: option.style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fill();
+      });
     }
-  }
+  };
+
+  if (option.result.outlineSrc) highlightShape(option.result.outlineSrc);
+  if (option.result.outlineSubSrc) highlightShape(option.result.outlineSubSrc);
 
   if (option.result.guidLines) {
     applyStrokeStyle(ctx, { color: option.style.selectionSecondaly, width: 2 * option.scale });
@@ -683,4 +757,16 @@ function getClosestEndPoint(getShapeStruct: GetShapeStruct, shape: Shape, seg: I
     originalEndPoint,
     getIntersectedOutlines(getShapeStruct, shape, extendedSeg[0], extendedSeg[1]) ?? [],
   );
+}
+
+function getBezierSegmentList(beziers: BezierPath[]): ([IVec2, IVec2, IVec2, IVec2] | [IVec2, IVec2])[] {
+  const ret: ([IVec2, IVec2, IVec2, IVec2] | [IVec2, IVec2])[] = [];
+  beziers.forEach((path) => {
+    path.path.forEach((p, i) => {
+      if (i === path.path.length - 1) return;
+      const c = path.curves[i];
+      ret.push(c ? [p, c.c1, c.c2, path.path[i + 1]] : [p, path.path[i + 1]]);
+    });
+  });
+  return ret;
 }

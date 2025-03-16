@@ -1,5 +1,5 @@
 import { expect, describe, test } from "vitest";
-import { createShape, getCommonStruct } from "../shapes";
+import { createShape, getCommonStruct, isPointOn } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import {
   getOptimizedSegment,
@@ -304,6 +304,42 @@ describe("newLineSnapping", () => {
       const result2 = target2.testConnection({ x: 20, y: 5 }, 1);
       expect(result2?.outlineSrc).toBe("e");
       expect(result2?.connection?.rate).toEqualPoint({ x: 0.2, y: 0.1 });
+    });
+
+    test("should snap to an intersection between shape outlines", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: -200, y: -200 },
+        q: { x: -100, y: -200 },
+      });
+      const line1 = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line1",
+        p: { x: 0, y: 0 },
+        q: { x: 100, y: 100 },
+        curves: [{ d: { x: 0, y: 10 } }],
+      });
+      const line2 = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line2",
+        p: { x: 100, y: 0 },
+        q: { x: 0, y: 100 },
+        curves: [{ d: { x: 0, y: -20 } }],
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes: [line1, line2],
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      const result1 = target1.testConnection({ x: 55, y: 70 }, 1);
+      expect(result1).toEqual({
+        outlineSrc: line1.id,
+        outlineSubSrc: line2.id,
+        p: expect.anything(),
+      });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: [line1, line2] });
+      expect(sc.isPointOn(line1, result1!.p)).toBe(true);
+      expect(sc.isPointOn(line2, result1!.p)).toBe(true);
     });
 
     test("should snap to shape outline that is parallel to self snapped constraint", () => {
