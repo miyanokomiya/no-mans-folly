@@ -3,6 +3,7 @@ import {
   combineBezierPathAndPath,
   convertLinePathToSimplePath,
   covertArcToBezier,
+  covertEllipseToBezier,
   flipBezierPathV,
   getBezierControlForArc,
   getClosestPointOnPolyline,
@@ -22,7 +23,7 @@ import {
   transformBezierPath,
 } from "./path";
 import { getBezierBounds, getSegments, ISegment } from "./geometry";
-import { getArcLerpFn, getDistance, getPedal } from "okageo";
+import { getArcLerpFn, getDistance, getPedal, rotate } from "okageo";
 
 describe("isBezieirControl", () => {
   test("should return true iff the control is of bezier", () => {
@@ -672,5 +673,50 @@ describe("covertArcToBezier", () => {
     const arcLerpFn = getArcLerpFn(50, 50, seg[0], seg[1], false, false, 0);
     expect(result.path).toEqualPoints([seg[0], arcLerpFn(1 / 4), arcLerpFn(2 / 4), arcLerpFn(3 / 4), seg[1]]);
     expect(result.curves).toHaveLength(4);
+  });
+});
+
+describe("covertEllipseToBezier", () => {
+  test("should convert ellipse to bezier path", () => {
+    const center = { x: 50, y: 20 };
+    const rx = 50;
+    const ry = 20;
+    const rotation = 0;
+    const result = covertEllipseToBezier(center, rx, ry, rotation);
+    expect(result.path).toHaveLength(5);
+    expect(result.curves).toHaveLength(4);
+    expect(result.path[0], "closed path").toEqualPoint(result.path.at(-1)!);
+    expect(result.curves[0]?.c1).toEqualPoint({ x: 0, y: 8.954305 });
+    expect(result.curves[0]?.c2).toEqualPoint({ x: 22.3857625, y: 0 });
+  });
+
+  test("should handle rotation", () => {
+    const center = { x: 50, y: 20 };
+    const rx = 50;
+    const ry = 20;
+    const rotation = Math.PI / 4;
+    const result = covertEllipseToBezier(center, rx, ry, rotation);
+    expect(result.path).toHaveLength(5);
+    expect(result.curves).toHaveLength(4);
+    expect(result.path[0], "closed path").toEqualPoint(result.path.at(-1)!);
+    expect(result.curves[0]?.c1).toEqualPoint(rotate({ x: 0, y: 8.954305 }, Math.PI / 4, center));
+    expect(result.curves[0]?.c2).toEqualPoint(rotate({ x: 22.3857625, y: 0 }, Math.PI / 4, center));
+  });
+
+  test("should handle zero radii", () => {
+    const center = { x: 50, y: 50 };
+    const result1 = covertEllipseToBezier(center, 0, 10, 0);
+    expect(result1.path).toEqualPoints([
+      { x: 50, y: 40 },
+      { x: 50, y: 60 },
+    ]);
+    expect(result1.curves).toHaveLength(0);
+
+    const result2 = covertEllipseToBezier(center, 10, 0, 0);
+    expect(result2.path).toEqualPoints([
+      { x: 40, y: 50 },
+      { x: 60, y: 50 },
+    ]);
+    expect(result2.curves).toHaveLength(0);
   });
 });

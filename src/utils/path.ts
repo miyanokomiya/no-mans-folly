@@ -20,6 +20,7 @@ import {
   getUnit,
   isOnSeg,
   multi,
+  multiAffines,
   sub,
 } from "okageo";
 import { ArcCurveControl, BezierCurveControl, CurveControl } from "../models";
@@ -478,7 +479,7 @@ export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): BezierPath
     return ret;
   }
 
-  // Split the arc into 4 partials since bezier approximation only works well with arc within 90 degree.
+  // Split the arc into 4 partials since bezier approximation only works well with arc within 90 degrees.
   const partials = [1, 2, 3, 4];
   const arcLerpFn = getArcLerpFn(arcParams);
   const partialSegs = getSegments([seg[0], ...partials.map((n) => arcLerpFn(n / partials.length))]);
@@ -494,4 +495,47 @@ export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): BezierPath
   ret.path.push(partialSegs[partialSegs.length - 1][1]);
 
   return ret;
+}
+
+export function covertEllipseToBezier(c: IVec2, rx: number, ry: number, rotation: number): BezierPath {
+  if (rx === 0 || ry === 0)
+    return {
+      path: [
+        { x: c.x - rx, y: c.y - ry },
+        { x: c.x + rx, y: c.y + ry },
+      ],
+      curves: [],
+    };
+
+  // Split the arc into 4 partials since bezier approximation only works well with arc within 90 degrees.
+  const partials = [1, 2, 3, 4];
+  const arcLerpFn = getArcLerpFn({
+    c,
+    radius: rx,
+    from: -Math.PI,
+    to: Math.PI,
+  });
+  const partialSegs = getSegments([{ x: c.x - rx, y: c.y }, ...partials.map((n) => arcLerpFn(n / partials.length))]);
+  const partialBeziers = partialSegs.map((partialSeg) => {
+    return getBezierControlForArc(c, partialSeg[0], partialSeg[1]);
+  });
+
+  const arcPath: BezierPath = { path: [], curves: [] };
+  partialBeziers.forEach((partialBezier, i) => {
+    const partialSeg = partialSegs[i];
+    arcPath.path.push(partialSeg[0]);
+    arcPath.curves.push(partialBezier);
+  });
+  arcPath.path.push(partialSegs[partialSegs.length - 1][1]);
+
+  const sin = Math.sin(rotation);
+  const cos = Math.cos(rotation);
+  const affine = multiAffines([
+    [1, 0, 0, 1, c.x, c.y],
+    [cos, sin, -sin, cos, 0, 0],
+    [1, 0, 0, ry / rx, 0, 0],
+    [1, 0, 0, 1, -c.x, -c.y],
+  ]);
+
+  return transformBezierPath(arcPath, affine);
 }
