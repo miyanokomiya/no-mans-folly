@@ -33,7 +33,7 @@ export function newLineReadyState(option: Option): AppCanvasState {
     getLabel: () => "LineReady",
     onStart: (ctx) => {
       ctx.setCursor();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP, COMMAND_EXAM_SRC.TOGGLE_GRID]);
 
       const shapeComposite = ctx.getShapeComposite();
       const snappableCandidates = getSnappableCandidates(ctx, []);
@@ -97,6 +97,10 @@ export function newLineReadyState(option: Option): AppCanvasState {
           switch (event.data.key) {
             case "Escape":
               return ctx.states.newSelectionHubState;
+            case "g":
+              if (event.data.shift) return;
+              ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
+              return () => newLineReadyState(option);
             default:
               return;
           }
