@@ -534,15 +534,14 @@ export function covertEllipseToBezier(
     counterclockwise,
   });
   const partialSegs = getSegments([arcLerpFn(0), ...partials.map((n) => arcLerpFn(n / partials.length))]);
-  const partialBeziers = partialSegs.map((partialSeg) => {
+  const partialBezierControls = partialSegs.map((partialSeg) => {
     return getBezierControlForArc(c, partialSeg[0], partialSeg[1]);
   });
 
   const arcPath: BezierPath = { path: [], curves: [] };
-  partialBeziers.forEach((partialBezier, i) => {
-    const partialSeg = partialSegs[i];
+  partialSegs.forEach((partialSeg, i) => {
     arcPath.path.push(partialSeg[0]);
-    arcPath.curves.push(partialBezier);
+    arcPath.curves.push(partialBezierControls[i]);
   });
   arcPath.path.push(partialSegs[partialSegs.length - 1][1]);
 
