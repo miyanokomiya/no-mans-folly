@@ -223,9 +223,13 @@ export function newShapeComposite(option: Option) {
     return ret;
   }
 
+  /**
+   * Returns shapes that are overlapping with the rect.
+   * `includesBounds` is set true on calculating shape bounds.
+   */
   function getShapesOverlappingRect(shapes: Shape[], rect: IRectangle): Shape[] {
     const checkFn = geometry.getIsRectHitRectFn(rect);
-    return shapes.filter((s) => checkFn(getWrapperRect(s)));
+    return shapes.filter((s) => checkFn(getWrapperRect(s, true)));
   }
 
   function getSnappingLines(shape: Shape): ShapeSnappingLines {
