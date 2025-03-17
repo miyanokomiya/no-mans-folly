@@ -448,10 +448,16 @@ function getBezierIntersections(
   srcBeziers: ([IVec2, IVec2] | [IVec2, IVec2, IVec2, IVec2])[],
 ): IVec2[] {
   const intersections: IVec2[] = [];
-  beziers.forEach((path) => {
-    srcBeziers.forEach((srcPath) => {
+  for (let i = 0; i < beziers.length; i++) {
+    const path = beziers[i];
+    for (let j = 0; j < srcBeziers.length; j++) {
+      const srcPath = srcBeziers[j];
       if (path.length === 4 && srcPath.length === 4) {
-        intersections.push(...getCrossBezier3AndBezier3(srcPath, path, 10));
+        // Ignore when two cubic bezier curves are the same.
+        // TODO: This may ought to be done in the library.
+        if (path.some((p) => srcPath.some((sp) => !isSame(p, sp)))) {
+          intersections.push(...getCrossBezier3AndBezier3(srcPath, path, 30));
+        }
       } else if (path.length === 2 && srcPath.length === 4) {
         intersections.push(...getCrossSegAndBezier3(path, srcPath));
       } else if (path.length === 4 && srcPath.length === 2) {
@@ -460,8 +466,12 @@ function getBezierIntersections(
         const intersection = getCrossSegAndSeg(srcPath, path);
         if (intersection) intersections.push(intersection);
       }
-    });
-  });
+
+      // Limit the number of intersections.
+      // 9 is the maximum number of intersections between cubic bezier curves.
+      if (intersections.length > 9) return intersections;
+    }
+  }
   return intersections;
 }
 
