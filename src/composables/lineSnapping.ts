@@ -304,6 +304,8 @@ export function newLineSnapping(option: Option) {
         reversedSnappableShapes.forEach((shape) => {
           const p = getClosestOutline(option.getShapeStruct, shape, point, outlineThreshold, outlineThreshold);
           if (!p) {
+            if (isLineShape(shape)) return;
+
             // If there's no close outline, check the center.
             const rect = shapeComposite.getWrapperRect(shape);
             const c = getRectCenter(rect);

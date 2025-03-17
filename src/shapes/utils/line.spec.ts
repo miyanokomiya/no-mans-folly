@@ -116,7 +116,7 @@ describe("getClosestOutlineInfoOfLine", () => {
   test("should regard arc segment", () => {
     const line0 = lineStruct.create({ q: { x: 100, y: 0 }, curves: [{ d: { x: 0, y: 20 } }] });
     const result0 = getClosestOutlineInfoOfLine(line0, { x: 40, y: 18 }, 10);
-    expect(result0?.[0]).toEqualPoint({ x: 39.8582636, y: 19.28715194 });
+    expect(result0?.[0]).toEqualPoint({ x: 39.816488, y: 19.2812392 });
     expect(result0?.[1]).toBeCloseTo(0.4081723);
   });
 });

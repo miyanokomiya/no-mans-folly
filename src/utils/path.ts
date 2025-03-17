@@ -319,21 +319,45 @@ function getPolylinePathStruct(
   edges: ISegment[],
   curves?: (CurveControl | undefined)[],
 ): PathLengthStructWithApproxSize[] {
-  return edges.map((edge, i) => {
+  const ret: PathLengthStructWithApproxSize[] = [];
+  const approxSize = BEZIER_APPROX_SIZE;
+  edges.forEach((edge, i) => {
     const curve = curves?.[i];
-    const lerpFn = getCurveLerpFn(edge, curve);
-    let points: IVec2[] = edge;
-    let approxEdges = [edge];
     if (curve) {
-      // Arc needs more points to approximate in general.
-      const approxSize = BEZIER_APPROX_SIZE * (isArcControl(curve) ? 4 : 1);
-      points = getApproPoints(lerpFn, approxSize);
-      approxEdges = getSegments(points);
-      return { lerpFn, length: getPolylineLength(points), curve: true, approxEdges, approxSize };
+      if (isArcControl(curve)) {
+        const arcParams = getArcCurveParamsByNormalizedControl(edge, curve.d);
+        if (!arcParams) {
+          ret.push({ lerpFn: getCurveLerpFn(edge), length: getPolylineLength(edge), curve: false, approxSize: 0 });
+          return;
+        }
+
+        // Split the arc into 4 bezier curves.
+        // => Dealing with the arc as a whole isn't much precise.
+        const bezierPath = covertEllipseToBezier(
+          arcParams.c,
+          arcParams.radius,
+          arcParams.radius,
+          0,
+          arcParams.from,
+          arcParams.to,
+          arcParams.counterclockwise,
+        );
+        bezierPath.path.forEach((p, i) => {
+          if (i === bezierPath.path.length - 1) return;
+
+          const lerpFn = getCurveLerpFn([p, bezierPath.path[i + 1]], bezierPath.curves?.[i]);
+          ret.push({ lerpFn, length: getPolylineLength(getApproPoints(lerpFn, approxSize)), curve: true, approxSize });
+        });
+        return;
+      }
+
+      const lerpFn = getCurveLerpFn(edge, curve);
+      ret.push({ lerpFn, length: getPolylineLength(getApproPoints(lerpFn, approxSize)), curve: true, approxSize });
     } else {
-      return { lerpFn, length: getPolylineLength(points), curve: false, approxEdges, approxSize: 0 };
+      ret.push({ lerpFn: getCurveLerpFn(edge), length: getPolylineLength(edge), curve: false, approxSize: 0 });
     }
   });
+  return ret;
 }
 
 export interface PolylineEdgeInfo {
