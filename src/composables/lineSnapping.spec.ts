@@ -492,7 +492,7 @@ describe("newLineSnapping", () => {
         movingLine,
         movingIndex: 1,
       });
-      const result1 = target1.testConnection({ x: 55, y: 70 }, 1);
+      const result1 = target1.testConnection({ x: 57, y: 70 }, 1);
       expect(result1).toEqual({
         outlineSrc: line2.id,
         outlineSubSrc: line1.id,

@@ -261,7 +261,7 @@ export function newLineSnapping(option: Option) {
     // Try snapping to other shapes' outline
     let outline: { p: IVec2; shape: Shape; guideLine?: ISegment; subshape?: Shape } | undefined;
     {
-      let outlineThreshold = threshold;
+      let intersectionThreshold = threshold;
 
       if (lineConstrain && extendedGuideLine) {
         // Seed the closest intersection between the guideline and shape outline.
@@ -282,27 +282,26 @@ export function newLineSnapping(option: Option) {
             // check if current point is already on the outline in case the constraint and the outline are parallel.
             const p = getClosestOutline(option.getShapeStruct, shape, lineConstrain.p, MINVALUE, MINVALUE);
             if (p) {
-              // outlineThreshold = 0;
               outline = { p: lineConstrain.p, shape, guideLine: lineConstrain.guidLines[0] };
             }
             return;
           }
 
-          if (closestCandidate && d < outlineThreshold) {
-            outlineThreshold = d;
+          if (closestCandidate && d < intersectionThreshold) {
+            intersectionThreshold = d;
             outline = { p: closestCandidate, shape, guideLine: lineConstrain.guidLines[0] };
           }
         });
       }
 
-      outlineThreshold = lineConstrain
-        ? Math.min(getDistance(lineConstrain.p, point) / (outline ? 2 : 1), outlineThreshold) // Prioritize the intersection a bit if exists.
-        : outlineThreshold;
+      let outlineThreshold = lineConstrain
+        ? Math.min(getDistance(lineConstrain.p, point) / (outline ? 2 : 1), intersectionThreshold) // Prioritize the intersection a bit if exists.
+        : intersectionThreshold;
 
       if (outlineThreshold > 0) {
         const closeShapes: Shape[] = [];
         reversedSnappableShapes.forEach((shape) => {
-          const p = getClosestOutline(option.getShapeStruct, shape, point, outlineThreshold, outlineThreshold);
+          const p = getClosestOutline(option.getShapeStruct, shape, point, threshold, threshold);
           if (!p) {
             if (isLineShape(shape)) return;
 
@@ -350,7 +349,7 @@ export function newLineSnapping(option: Option) {
                 }
 
                 const closestCandidate = pickMinItem(intersections, (p) => getD2(sub(p, point)));
-                if (closestCandidate && getDistance(closestCandidate, point) < threshold) {
+                if (closestCandidate && getDistance(closestCandidate, point) < intersectionThreshold) {
                   candidates.push(closestCandidate);
                 }
               }
@@ -378,7 +377,7 @@ export function newLineSnapping(option: Option) {
 
               const intersections = getBezierIntersections(getBezierSegmentList(outlinePaths), srcBeziers);
               const closestCandidate = pickMinItem(intersections, (p) => getD2(sub(p, point)));
-              if (closestCandidate && getDistance(closestCandidate, point) < threshold) {
+              if (closestCandidate && getDistance(closestCandidate, point) < intersectionThreshold) {
                 candidates.push({ p: closestCandidate, shape });
               }
             });
@@ -438,11 +437,12 @@ export function newLineSnapping(option: Option) {
         };
       }
 
+      const outlineSrc = connection?.id ?? outline.shape.id;
       return {
         connection,
         p: outline.p,
-        outlineSrc: outline.shape.id,
-        outlineSubSrc: outline.subshape?.id,
+        outlineSrc,
+        outlineSubSrc: outlineSrc === outline.subshape?.id ? outline.shape.id : outline.subshape?.id,
         guidLines: outline.guideLine ? [outline.guideLine] : undefined,
       };
     }
