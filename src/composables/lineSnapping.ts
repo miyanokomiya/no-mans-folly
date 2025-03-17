@@ -317,19 +317,51 @@ export function newLineSnapping(option: Option) {
 
           const d = getDistance(p, point);
           if (d < outlineThreshold) {
-            if (outline) {
-              closeShapes.push(outline.shape);
-            }
             outline = { p, shape };
             outlineThreshold = d;
             lineConstrain = undefined;
             extendedGuideLine = undefined;
-          } else if (d < threshold) {
+          }
+          if (d < threshold) {
             closeShapes.push(shape);
           }
         });
 
-        if (outline && closeShapes.length > 0) {
+        if (outline && closeShapes.length === 1 && outline.shape.id === closeShapes[0].id) {
+          const outlineP = outline.p;
+          const outlinePaths = getOutlinePaths(option.getShapeStruct, outline.shape);
+          const candidates: IVec2[] = [];
+          outlinePaths?.forEach((outlinePath) => {
+            const srcBeziers = getBezierSegmentList([outlinePath]);
+            for (let i = 0; i < srcBeziers.length - 1; i++) {
+              const path1 = srcBeziers[i];
+
+              for (let j = i + 1; j < srcBeziers.length; j++) {
+                const path2 = srcBeziers[j];
+                let intersections = getBezierIntersections([path1], [path2]);
+
+                // Ignore the intersection at the split point of adjacent segments.
+                // When two segments aren't smoothly connected, they have obvious feature point.
+                // => Outline intersection snapping isn't essential in that case.
+                if (j === i + 1) {
+                  intersections = intersections.filter((p) => !isSame(p, path2[0]));
+                }
+
+                const closestCandidate = pickMinItem(intersections, (p) => getD2(sub(p, point)));
+                if (closestCandidate && getDistance(closestCandidate, point) < threshold) {
+                  candidates.push(closestCandidate);
+                }
+              }
+            }
+          });
+
+          const closestCandidate = pickMinItem(candidates ?? [], (p) => getD2(sub(p, outlineP)));
+          if (closestCandidate) {
+            outline = { p: closestCandidate, shape: outline.shape };
+            lineConstrain = undefined;
+            extendedGuideLine = undefined;
+          }
+        } else if (outline && closeShapes.length > 0) {
           const outlineP = outline.p;
           const srcOutlinePaths = getOutlinePaths(option.getShapeStruct, outline.shape);
           if (srcOutlinePaths && srcOutlinePaths.length > 0) {
@@ -337,6 +369,8 @@ export function newLineSnapping(option: Option) {
             const candidates: (typeof outline)[] = [];
 
             closeShapes.forEach((shape) => {
+              if (outline?.shape.id === shape.id) return;
+
               const outlinePaths = getOutlinePaths(option.getShapeStruct, shape);
               if (!outlinePaths) return;
 
@@ -455,8 +489,9 @@ function getBezierIntersections(
       if (path.length === 4 && srcPath.length === 4) {
         // Ignore when two cubic bezier curves are the same.
         // TODO: This may ought to be done in the library.
-        if (path.some((p) => srcPath.some((sp) => !isSame(p, sp)))) {
-          intersections.push(...getCrossBezier3AndBezier3(srcPath, path, 30));
+        if (path.some((p, k) => !isSame(p, srcPath[k]))) {
+          // Note: 50 is too much since it often freezes the browser when two curves are similar.
+          intersections.push(...getCrossBezier3AndBezier3(srcPath, path, MINVALUE, 30));
         }
       } else if (path.length === 2 && srcPath.length === 4) {
         intersections.push(...getCrossSegAndBezier3(path, srcPath));
