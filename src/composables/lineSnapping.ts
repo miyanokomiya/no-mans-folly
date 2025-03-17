@@ -186,10 +186,12 @@ export function newLineSnapping(option: Option) {
       if (snapped) {
         const snappedP = add(point, snapped.diff);
         const allGuidelines = getGuidelinesFromSnappingResult(snapped, snappedP);
+        // When there're more than one guidelines, snapping point must have been determined.
+        // TODO: It's still possible to find better point by checking shape outlines.
         if (allGuidelines.length > 1) {
           const connected = snapped.targets
             .map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id])
-            .find((s) => s && shapeComposite.isPointOnOutline(s, snappedP));
+            .find((s) => s && !isLineShape(s) && shapeComposite.isPointOnOutline(s, snappedP));
           if (connected) {
             return {
               connection: {
@@ -264,6 +266,8 @@ export function newLineSnapping(option: Option) {
       if (lineConstrain && extendedGuideLine) {
         // Seed the closest intersection between the guideline and shape outline.
         reversedSnappableShapes.forEach((shape) => {
+          if (!lineConstrain || !extendedGuideLine) return;
+
           const candidates = getIntersectedOutlines(
             option.getShapeStruct,
             shape,
@@ -273,12 +277,12 @@ export function newLineSnapping(option: Option) {
           const closestCandidate = pickMinItem(candidates ?? [], (c) => getD2(sub(c, point)));
           const d = closestCandidate ? getDistance(closestCandidate, point) : Infinity;
 
-          if (threshold < d && selfSnapped) {
-            // When there's no close intersection with self-snapped constraint,
+          if (threshold < d && !outline && !isLineShape(shape)) {
+            // When there's no close intersection with a constraint so far,
             // check if current point is already on the outline in case the constraint and the outline are parallel.
             const p = getClosestOutline(option.getShapeStruct, shape, lineConstrain.p, MINVALUE, MINVALUE);
             if (p) {
-              outlineThreshold = 0;
+              // outlineThreshold = 0;
               outline = { p: lineConstrain.p, shape, guideLine: lineConstrain.guidLines[0] };
             }
             return;
@@ -289,18 +293,16 @@ export function newLineSnapping(option: Option) {
             outline = { p: closestCandidate, shape, guideLine: lineConstrain.guidLines[0] };
           }
         });
-      } else {
-        // Set the threshold for markers up to default value, otherwise markers would be too strong.
-        const outlineThresholdForMarker = Math.min(SNAP_THRESHOLD * scale, threshold);
+      }
+
+      outlineThreshold = lineConstrain
+        ? Math.min(getDistance(lineConstrain.p, point) / (outline ? 2 : 1), outlineThreshold) // Prioritize the intersection a bit if exists.
+        : outlineThreshold;
+
+      if (outlineThreshold > 0) {
         const closeShapes: Shape[] = [];
         reversedSnappableShapes.forEach((shape) => {
-          const p = getClosestOutline(
-            option.getShapeStruct,
-            shape,
-            point,
-            threshold,
-            Math.min(outlineThresholdForMarker, threshold),
-          );
+          const p = getClosestOutline(option.getShapeStruct, shape, point, outlineThreshold, outlineThreshold);
           if (!p) {
             // If there's no close outline, check the center.
             const rect = shapeComposite.getWrapperRect(shape);
@@ -320,6 +322,8 @@ export function newLineSnapping(option: Option) {
             }
             outline = { p, shape };
             outlineThreshold = d;
+            lineConstrain = undefined;
+            extendedGuideLine = undefined;
           } else if (d < threshold) {
             closeShapes.push(shape);
           }
@@ -352,6 +356,8 @@ export function newLineSnapping(option: Option) {
               } else {
                 outline = { p: closestCandidate.p, shape: outline.shape, subshape: closestCandidate.shape };
               }
+              lineConstrain = undefined;
+              extendedGuideLine = undefined;
             }
           }
         }
@@ -360,7 +366,7 @@ export function newLineSnapping(option: Option) {
 
     if (outline) {
       const connectionTarget = getConnectedPrimeShape(outline.shape, outline.subshape);
-      const connection = connectionTarget
+      let connection = connectionTarget
         ? {
             rate: shapeComposite.getLocationRateOnShape(connectionTarget, outline.p),
             id: connectionTarget.id,
@@ -368,10 +374,24 @@ export function newLineSnapping(option: Option) {
         : undefined;
 
       if (lineConstrain) {
+        if (!connection) {
+          const connected = lineConstrain.shapeSnappingResult?.targets.find((t) => {
+            const s = shapeComposite.shapeMap[t.id];
+            return outline && s && !isLineShape(s) && shapeComposite.isPointOnOutline(s, outline.p);
+          });
+          if (connected) {
+            connection = {
+              rate: shapeComposite.getLocationRateOnShape(shapeComposite.shapeMap[connected.id], outline.p),
+              id: connected.id,
+            };
+          }
+        }
+        const outlineSrc = connection?.id ?? outline.shape.id;
         return {
           connection,
           p: outline.p,
-          outlineSrc: outline.shape.id,
+          outlineSrc,
+          outlineSubSrc: outlineSrc === outline.shape.id ? undefined : outline.shape.id,
           guidLines: lineConstrain.guidLines.map((g) => pickLongSegment(g[0], g[1], outline!.p)),
           shapeSnappingResult: lineConstrain.shapeSnappingResult
             ? {

@@ -306,6 +306,165 @@ describe("newLineSnapping", () => {
       expect(result2?.connection?.rate).toEqualPoint({ x: 0.2, y: 0.1 });
     });
 
+    test("should snap to shape outline along other line: Snap a shape then snap to a line", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: -200, y: -200 },
+        q: { x: -100, y: -200 },
+      });
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 20, y: -50 },
+        q: { x: 20, y: 50 },
+      });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [
+          [
+            "a",
+            {
+              h: [
+                [
+                  { x: 0, y: 0 },
+                  { x: 100, y: 0 },
+                ],
+              ],
+              v: [],
+            },
+          ],
+        ],
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes: [line, ...snappableShapes],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target1.testConnection({ x: 18, y: 1 }, 1)).toEqual({
+        connection: { id: "a", rate: { x: 0.2, y: 0 } },
+        outlineSrc: "a",
+        outlineSubSrc: "line",
+        p: { x: 20, y: 0 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: { x: 0, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 0 },
+                { x: 100, y: 0 },
+              ],
+            },
+          ],
+        },
+      });
+
+      const target2 = newLineSnapping({
+        snappableShapes: [...snappableShapes, line],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target2.testConnection({ x: 18, y: 1 }, 1)).toEqual({
+        connection: { id: "a", rate: { x: 0.2, y: 0 } },
+        outlineSrc: "a",
+        outlineSubSrc: "line",
+        p: { x: 20, y: 0 },
+        guidLines: [],
+        shapeSnappingResult: {
+          diff: { x: 0, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 0 },
+                { x: 100, y: 0 },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    test("should snap to shape outline along other line: the intersection of grid lines of shapes", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "moving",
+        p: { x: -200, y: -200 },
+        q: { x: -100, y: -200 },
+      });
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 20, y: -50 },
+        q: { x: 20, y: 50 },
+      });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [
+          [
+            "a",
+            {
+              h: [
+                [
+                  { x: 0, y: 0 },
+                  { x: 100, y: 0 },
+                ],
+              ],
+              v: [],
+            },
+          ],
+          [
+            "line",
+            {
+              h: [],
+              v: [
+                [
+                  { x: 20, y: -50 },
+                  { x: 20, y: 50 },
+                ],
+              ],
+            },
+          ],
+        ],
+      });
+
+      const target1 = newLineSnapping({
+        snappableShapes: [...snappableShapes, line],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target1.testConnection({ x: 18, y: 1 }, 1)).toEqual({
+        connection: { id: "a", rate: { x: 0.2, y: 0 } },
+        outlineSrc: "a",
+        p: { x: 20, y: 0 },
+        shapeSnappingResult: {
+          diff: { x: 2, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "line",
+              line: [
+                { x: 20, y: -50 },
+                { x: 20, y: 50 },
+              ],
+            },
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 0 },
+                { x: 100, y: 0 },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
     test("should snap to an intersection between shape outlines", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", {
         id: "moving",
@@ -689,12 +848,12 @@ describe("newLineSnapping", () => {
         movingLine: movingLine0,
         movingIndex: 1,
       });
-      expect(target0.testConnection({ x: -48, y: -102 }, 1), "connected to the shape").toEqual({
+      expect(target0.testConnection({ x: -52, y: -102 }, 1), "connected to the shape").toEqual({
         outlineSrc: "line0",
         p: { x: -50, y: -100 },
         guidLines: [],
         shapeSnappingResult: {
-          diff: { x: -2, y: 0 },
+          diff: { x: 2, y: 0 },
           targets: [],
           intervalTargets: [
             {
