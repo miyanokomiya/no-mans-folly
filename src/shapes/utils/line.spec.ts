@@ -109,14 +109,14 @@ describe("getClosestOutlineInfoOfLine", () => {
   test("should regard bezier segment", () => {
     const line0 = lineStruct.create({ q: { x: 100, y: 0 }, curves: [{ c1: { x: 20, y: 20 }, c2: { x: 80, y: 20 } }] });
     const result0 = getClosestOutlineInfoOfLine(line0, { x: 40, y: 9 }, 10);
-    expect(result0?.[0]).toEqualPoint({ x: 39.70631055859311, y: 14.55409224224895 });
+    expect(result0?.[0]).toEqualPoint({ x: 39.60592371, y: 14.54526294 });
     expect(result0?.[1]).toBeCloseTo(0.4);
   });
 
   test("should regard arc segment", () => {
     const line0 = lineStruct.create({ q: { x: 100, y: 0 }, curves: [{ d: { x: 0, y: 20 } }] });
     const result0 = getClosestOutlineInfoOfLine(line0, { x: 40, y: 18 }, 10);
-    expect(result0?.[0]).toEqualPoint({ x: 39.90006665667716, y: 19.293045251336395 });
+    expect(result0?.[0]).toEqualPoint({ x: 39.8582636, y: 19.28715194 });
     expect(result0?.[1]).toBeCloseTo(0.4081723);
   });
 });

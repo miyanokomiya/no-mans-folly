@@ -1290,14 +1290,14 @@ describe("getRelativePointOnCurvePath", () => {
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(0, 3);
     const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
-    expect(ret10.x).toBeCloseTo(1.434, 3);
-    expect(ret10.y).toBeCloseTo(-2.226, 3);
+    expect(ret10.x).toBeCloseTo(1.4376, 3);
+    expect(ret10.y).toBeCloseTo(-2.2295, 3);
     const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
     expect(ret50.x).toBeCloseTo(10, 3);
     expect(ret50.y).toBeCloseTo(0, 3);
     const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
-    expect(ret90.x).toBeCloseTo(12.226, 3);
-    expect(ret90.y).toBeCloseTo(8.566, 3);
+    expect(ret90.x).toBeCloseTo(12.2133, 3);
+    expect(ret90.y).toBeCloseTo(8.5784, 3);
     const ret100 = getRelativePointOnCurvePath(path, controls, 1);
     expect(ret100.x).toBeCloseTo(10, 3);
     expect(ret100.y).toBeCloseTo(10, 3);
@@ -1313,14 +1313,14 @@ describe("getRelativePointOnCurvePath", () => {
     expect(ret0.x).toBeCloseTo(0, 3);
     expect(ret0.y).toBeCloseTo(0, 3);
     const ret10 = getRelativePointOnCurvePath(path, controls, 0.1);
-    expect(ret10.x).toBeCloseTo(0.245, 3);
-    expect(ret10.y).toBeCloseTo(1.545, 3);
+    expect(ret10.x).toBeCloseTo(0.24622, 3);
+    expect(ret10.y).toBeCloseTo(1.5497, 3);
     const ret50 = getRelativePointOnCurvePath(path, controls, 0.5);
-    expect(ret50.x).toBeCloseTo(5, 3);
+    expect(ret50.x).toBeCloseTo(5.02428, 3);
     expect(ret50.y).toBeCloseTo(5, 3);
     const ret90 = getRelativePointOnCurvePath(path, controls, 0.9);
-    expect(ret90.x).toBeCloseTo(9.755, 3);
-    expect(ret90.y).toBeCloseTo(1.545, 3);
+    expect(ret90.x).toBeCloseTo(9.7686, 3);
+    expect(ret90.y).toBeCloseTo(1.5034, 3);
     const ret100 = getRelativePointOnCurvePath(path, controls, 1);
     expect(ret100.x).toBeCloseTo(10, 3);
     expect(ret100.y).toBeCloseTo(0, 3);
@@ -1674,15 +1674,15 @@ describe("getApproxCurvePoints", () => {
       ],
       [{ d: { x: 5, y: 5 } }],
     );
-    expect(ret0.length).toBe(11);
+    expect(ret0.length).toBe(21);
     expect(ret0[0].x).toBeCloseTo(0, 3);
     expect(ret0[0].y).toBeCloseTo(0, 3);
-    expect(ret0[3].x).toBeCloseTo(2.061, 3);
-    expect(ret0[3].y).toBeCloseTo(4.045, 3);
-    expect(ret0[5].x).toBeCloseTo(5, 3);
-    expect(ret0[5].y).toBeCloseTo(5, 3);
-    expect(ret0[10].x).toBeCloseTo(10, 3);
-    expect(ret0[10].y).toBeCloseTo(0, 3);
+    expect(ret0[6].x).toBeCloseTo(2.061, 3);
+    expect(ret0[6].y).toBeCloseTo(4.045, 3);
+    expect(ret0[10].x).toBeCloseTo(5, 3);
+    expect(ret0[10].y).toBeCloseTo(5, 3);
+    expect(ret0[20].x).toBeCloseTo(10, 3);
+    expect(ret0[20].y).toBeCloseTo(0, 3);
   });
 
   test("should getApproxCurvePoints bezier curve", () => {
@@ -1693,15 +1693,15 @@ describe("getApproxCurvePoints", () => {
       ],
       [{ c1: { x: 2, y: 5 }, c2: { x: 8, y: 5 } }],
     );
-    expect(ret0.length).toBe(11);
+    expect(ret0.length).toBe(21);
     expect(ret0[0].x).toBeCloseTo(0, 3);
     expect(ret0[0].y).toBeCloseTo(0, 3);
-    expect(ret0[3].x).toBeCloseTo(2.664, 3);
-    expect(ret0[3].y).toBeCloseTo(3.15, 3);
-    expect(ret0[5].x).toBeCloseTo(5, 3);
-    expect(ret0[5].y).toBeCloseTo(3.75, 3);
-    expect(ret0[10].x).toBeCloseTo(10, 3);
-    expect(ret0[10].y).toBeCloseTo(0, 3);
+    expect(ret0[6].x).toBeCloseTo(2.664, 3);
+    expect(ret0[6].y).toBeCloseTo(3.15, 3);
+    expect(ret0[10].x).toBeCloseTo(5, 3);
+    expect(ret0[10].y).toBeCloseTo(3.75, 3);
+    expect(ret0[20].x).toBeCloseTo(10, 3);
+    expect(ret0[20].y).toBeCloseTo(0, 3);
   });
 });
 

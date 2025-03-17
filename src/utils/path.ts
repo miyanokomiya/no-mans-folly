@@ -42,6 +42,8 @@ export type BezierPath = { path: IVec2[]; curves: (BezierCurveControl | undefine
 
 export type PathLocation = [point: IVec2, segmentIndex: number, segmentRate: number];
 
+type PathLengthStructWithApproxSize = PathLengthStruct & { approxSize: number };
+
 export function isBezieirControl(c: CurveControl | undefined): c is BezierCurveControl {
   return !!c && "c1" in c;
 }
@@ -313,17 +315,24 @@ export function getSegmentVicinityTo(seg: ISegment, curve?: CurveControl, origin
   return vicinity;
 }
 
-function getPolylinePathStruct(edges: ISegment[], curves?: (CurveControl | undefined)[]): PathLengthStruct[] {
+function getPolylinePathStruct(
+  edges: ISegment[],
+  curves?: (CurveControl | undefined)[],
+): PathLengthStructWithApproxSize[] {
   return edges.map((edge, i) => {
     const curve = curves?.[i];
     const lerpFn = getCurveLerpFn(edge, curve);
     let points: IVec2[] = edge;
     let approxEdges = [edge];
     if (curve) {
-      points = getApproPoints(lerpFn, BEZIER_APPROX_SIZE);
+      // Arc needs more points to approximate in general.
+      const approxSize = BEZIER_APPROX_SIZE * (isArcControl(curve) ? 4 : 1);
+      points = getApproPoints(lerpFn, approxSize);
       approxEdges = getSegments(points);
+      return { lerpFn, length: getPolylineLength(points), curve: true, approxEdges, approxSize };
+    } else {
+      return { lerpFn, length: getPolylineLength(points), curve: false, approxEdges, approxSize: 0 };
     }
-    return { lerpFn, length: getPolylineLength(points), curve: !!curve, approxEdges };
   });
 }
 
@@ -338,7 +347,7 @@ export function getPolylineEdgeInfo(edges: ISegment[], curves?: (CurveControl | 
   const pathStructs = getPolylinePathStruct(edges, curves);
   const approxEdges = pathStructs.flatMap<ISegment>((s) => {
     if (s.curve) {
-      return getSegments(getApproPoints(s.lerpFn, BEZIER_APPROX_SIZE));
+      return getSegments(getApproPoints(s.lerpFn, s.approxSize));
     } else {
       return [[s.lerpFn(0), s.lerpFn(1)]];
     }

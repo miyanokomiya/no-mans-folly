@@ -1044,7 +1044,7 @@ describe("getRadianQ", () => {
         }),
         5,
       ),
-    ).toBeCloseTo(2.073, 3);
+    ).toBeCloseTo(2.068, 3);
   });
 });
 

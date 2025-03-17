@@ -36,7 +36,7 @@ import {
 import { CurveControl, Direction4, Size } from "../models";
 import { pickMinItem } from "./commons";
 
-export const BEZIER_APPROX_SIZE = 10;
+export const BEZIER_APPROX_SIZE = 20;
 
 export type ISegment = [IVec2, IVec2];
 

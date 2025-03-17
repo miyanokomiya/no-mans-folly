@@ -140,16 +140,14 @@ describe("attachLabelToLine", () => {
     });
     const label0 = textStruct.create({ p: { x: 45, y: -100 }, width: 10, height: 10 });
     const ret0 = attachLabelToLine(line0, label0);
-    expect(ret0.p!.x).toBeCloseTo(45, 3);
-    expect(ret0.p!.y).toBeCloseTo(-47.5, 3);
+    expect(ret0.p).toEqualPoint({ x: 45.1168847, y: -47.4998576 });
     expect(ret0.hAlign).toBe("center");
     expect(ret0.vAlign).toBe("bottom");
     expect(ret0.lineAttached).toBeCloseTo(0.25, 3);
 
     const label1 = textStruct.create({ p: { x: 200, y: 45 }, width: 10, height: 10 });
     const ret1 = attachLabelToLine(line0, label1);
-    expect(ret1.p!.x).toBeCloseTo(137.5, 3);
-    expect(ret1.p!.y).toBeCloseTo(45, 3);
+    expect(ret1.p).toEqualPoint({ x: 137.4998576, y: 45.1168847 });
     expect(ret1.hAlign).toBe("left");
     expect(ret1.vAlign).toBe("center");
     expect(ret1.lineAttached).toBeCloseTo(0.75, 3);

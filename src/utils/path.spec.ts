@@ -497,7 +497,7 @@ describe("getClosestPointOnPolyline", () => {
       [{ c1: { x: 20, y: 20 }, c2: { x: 80, y: 20 } }],
     );
     const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 9 }, 10);
-    expect(result0?.[0]).toEqualPoint({ x: 39.70631055859311, y: 14.55409224224895 });
+    expect(result0?.[0]).toEqualPoint({ x: 39.605923717159484, y: 14.545262945220578 });
     expect(result0?.[1]).toBeCloseTo(0.4);
   });
 
@@ -510,7 +510,7 @@ describe("getClosestPointOnPolyline", () => {
       [{ d: { x: 0, y: 20 } }],
     );
     const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 18 }, 10);
-    expect(result0?.[0]).toEqualPoint({ x: 39.90006665667716, y: 19.293045251336395 });
+    expect(result0?.[0]).toEqualPoint({ x: 39.85826366796558, y: 19.287151943585926 });
     expect(result0?.[1]).toBeCloseTo(0.4081723);
   });
 });

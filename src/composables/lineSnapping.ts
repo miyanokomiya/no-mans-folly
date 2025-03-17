@@ -431,7 +431,7 @@ function getBezierIntersections(
   beziers.forEach((path) => {
     srcBeziers.forEach((srcPath) => {
       if (path.length === 4 && srcPath.length === 4) {
-        intersections.push(...getCrossBezier3AndBezier3(srcPath, path));
+        intersections.push(...getCrossBezier3AndBezier3(srcPath, path, 10));
       } else if (path.length === 2 && srcPath.length === 4) {
         intersections.push(...getCrossSegAndBezier3(path, srcPath));
       } else if (path.length === 4 && srcPath.length === 2) {
