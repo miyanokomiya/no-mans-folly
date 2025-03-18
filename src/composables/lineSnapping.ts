@@ -23,7 +23,7 @@ import {
 } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
-import { LineShape, getLinePath, isLineShape } from "../shapes/line";
+import { LineShape, getConnection, getLinePath, isLineShape } from "../shapes/line";
 import {
   ISegment,
   TAU,
@@ -155,23 +155,13 @@ export function newLineSnapping(option: Option) {
         if (snapped) {
           const snappedP = add(point, snapped.diff);
           // Seek connected shape at the determined point.
-          const connected = seekConnectedShapeAt(shapeComposite, snapped, snappedP);
-          if (connected) {
-            return {
-              connection: {
-                rate: shapeComposite.getLocationRateOnShape(connected, snappedP),
-                id: connected.id,
-              },
-              outlineSrc: connected.id,
-              p: snappedP,
-              guidLines: [pickLongSegment(...selfSnapped.guidLines[0], snappedP)],
-            };
-          }
-
+          const connection = seekConnecionAt(shapeComposite, snapped, snappedP);
           return {
             p: snappedP,
             guidLines: [pickLongSegment(...selfSnapped.guidLines[0], snappedP)],
-            shapeSnappingResult: snapped,
+            shapeSnappingResult: connection ? undefined : snapped,
+            connection,
+            outlineSrc: connection?.id,
           };
         }
       }
@@ -190,23 +180,12 @@ export function newLineSnapping(option: Option) {
         if (allGuidelines.length > 1) {
           const snappedP = add(point, snapped.diff);
           // Seek connected shape at the determined point.
-          const connected = seekConnectedShapeAt(shapeComposite, snapped, snappedP);
-
-          if (connected) {
-            return {
-              connection: {
-                rate: shapeComposite.getLocationRateOnShape(connected, snappedP),
-                id: connected.id,
-              },
-              p: snappedP,
-              outlineSrc: connected.id,
-              shapeSnappingResult: snapped,
-            };
-          }
-
+          const connection = seekConnecionAt(shapeComposite, snapped, snappedP);
           return {
             p: snappedP,
             shapeSnappingResult: snapped,
+            connection,
+            outlineSrc: connection?.id,
           };
         }
 
@@ -473,12 +452,12 @@ export function newLineSnapping(option: Option) {
 }
 export type LineSnapping = ReturnType<typeof newLineSnapping>;
 
-// Seek connected shape at the exact point.
-function seekConnectedShapeAt(
+// Seek a connection shape at the exact point.
+function seekConnecionAt(
   shapeComposite: ShapeComposite,
   snapped: SnappingResult,
   point: IVec2,
-): Shape | undefined {
+): ConnectionPoint | undefined {
   const targetShapes = snapped.targets.map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id]);
   let connected = targetShapes.find((s) => s && !isLineShape(s) && shapeComposite.isPointOnOutline(s, point));
   if (!connected) {
@@ -488,7 +467,27 @@ function seekConnectedShapeAt(
       return isSame(getRectCenter(shapeComposite.getWrapperRect(s)), point);
     });
   }
-  return connected;
+  if (connected) {
+    return {
+      rate: shapeComposite.getLocationRateOnShape(connected, point),
+      id: connected.id,
+    };
+  }
+
+  // Check lines if there's any connected vertex at the point.
+  // => If found any, it should be available to the point as well.
+  for (const s of targetShapes) {
+    if (!s || !isLineShape(s)) continue;
+
+    const vertices = getLinePath(s);
+    const index = vertices.findIndex((v) => isSame(v, point));
+    if (index === -1) continue;
+
+    const connection = getConnection(s, index);
+    if (!connection) continue;
+
+    return connection;
+  }
 }
 
 function getConnectedPrimeShape(main?: Shape, sub?: Shape): Shape | undefined {

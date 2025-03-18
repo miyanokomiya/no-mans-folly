@@ -176,6 +176,39 @@ describe("newLineSnapping", () => {
       });
     });
 
+    test("should inherit the connection from the snapped vertex", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 200, y: -100 },
+        q: { x: 100, y: -50 },
+      });
+      const otherline = createShape<LineShape>(getCommonStruct, "line", {
+        id: "otherline",
+        p: { x: 0, y: -100 },
+        q: { x: 220, y: 0 },
+        // Note: Set wrong connection to check if the result inherits it.
+        qConnection: { id: "z", rate: { x: 0.1, y: 0 } },
+      });
+      const snappableShapes2 = [...snappableShapes, otherline];
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes2 });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes2.map((s) => [s.id, sc.getSnappingLines(s)]),
+      });
+      const target = newLineSnapping({
+        snappableShapes: snappableShapes2,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target.testConnection({ x: 220, y: 1 }, 1)).toEqual({
+        connection: { id: "z", rate: { x: 0.1, y: 0 } },
+        outlineSrc: "z",
+        p: { x: 220, y: 0 },
+        shapeSnappingResult: expect.anything(),
+      });
+    });
+
     test("should return connection result: Inner vertex", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", {
         id: "line",
