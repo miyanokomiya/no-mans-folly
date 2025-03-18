@@ -38,7 +38,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
   const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
-    const snappableCandidates = getSnappableCandidates(ctx, []);
+    const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
     const shapeSnapping = newShapeSnapping({
       shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
       gridSnapping: ctx.getGrid().getSnappingLines(),

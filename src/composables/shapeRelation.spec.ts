@@ -125,6 +125,27 @@ describe("getLineRelatedDependantMap", () => {
 });
 
 describe("getLineUnrelatedIds", () => {
+  test("attached shapes should be excluded", () => {
+    const lineA = createShape<LineShape>(getCommonStruct, "line", {
+      id: "lineA",
+    });
+    const rect0 = createShape(getCommonStruct, "rectangle", {
+      id: "rect0",
+      attachment: {
+        id: lineA.id,
+        to: { x: 0, y: 0 },
+        anchor: { x: 0, y: 0 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [lineA, rect0],
+      getStruct: getCommonStruct,
+    });
+    expect(getLineUnrelatedIds(shapeComposite, [lineA.id])).toEqual([]);
+  });
+
   test("should return unrelated shape ids to the lines: regard tree structure of shapes", () => {
     const lineA = createShape<LineShape>(getCommonStruct, "line", {
       id: "lineA",
