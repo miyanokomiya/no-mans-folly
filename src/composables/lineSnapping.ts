@@ -154,9 +154,8 @@ export function newLineSnapping(option: Option) {
         const snapped = option.shapeSnapping.testPointOnLine(point, selfSnapped.guidLines[0], scale);
         if (snapped) {
           const snappedP = add(point, snapped.diff);
-          const connected = snapped.targets
-            .map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id])
-            .find((s) => s && shapeComposite.isPointOnOutline(s, snappedP));
+          // Seek connected shape at the determined point.
+          const connected = seekConnectedShapeAt(shapeComposite, snapped, snappedP);
           if (connected) {
             return {
               connection: {
@@ -189,9 +188,10 @@ export function newLineSnapping(option: Option) {
         // When there're more than one guidelines, snapping point must have been determined.
         // TODO: It's still possible to find better point by checking shape outlines.
         if (allGuidelines.length > 1) {
-          const connected = snapped.targets
-            .map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id])
-            .find((s) => s && !isLineShape(s) && shapeComposite.isPointOnOutline(s, snappedP));
+          const snappedP = add(point, snapped.diff);
+          // Seek connected shape at the determined point.
+          const connected = seekConnectedShapeAt(shapeComposite, snapped, snappedP);
+
           if (connected) {
             return {
               connection: {
@@ -472,6 +472,24 @@ export function newLineSnapping(option: Option) {
   return { testConnection };
 }
 export type LineSnapping = ReturnType<typeof newLineSnapping>;
+
+// Seek connected shape at the exact point.
+function seekConnectedShapeAt(
+  shapeComposite: ShapeComposite,
+  snapped: SnappingResult,
+  point: IVec2,
+): Shape | undefined {
+  const targetShapes = snapped.targets.map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id]);
+  let connected = targetShapes.find((s) => s && !isLineShape(s) && shapeComposite.isPointOnOutline(s, point));
+  if (!connected) {
+    // Check center connection
+    connected = targetShapes.find((s) => {
+      if (!s || isLineShape(s)) return;
+      return isSame(getRectCenter(shapeComposite.getWrapperRect(s)), point);
+    });
+  }
+  return connected;
+}
 
 function getConnectedPrimeShape(main?: Shape, sub?: Shape): Shape | undefined {
   const connectionTarget1 = main && !isLineShape(main) ? main : undefined;

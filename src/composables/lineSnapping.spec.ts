@@ -30,7 +30,12 @@ describe("newLineSnapping", () => {
 
     test("should return connection result: End vertex", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 100 } });
-      const target = newLineSnapping({ snappableShapes, getShapeStruct: getCommonStruct, movingLine, movingIndex: 1 });
+      const target = newLineSnapping({
+        snappableShapes,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
       expect(target.testConnection({ x: -20, y: 10 }, 1)).toEqual(undefined);
 
       // Self snapped: Horizontally
@@ -96,6 +101,76 @@ describe("newLineSnapping", () => {
           [
             { x: 0, y: 0 },
             { x: 155, y: 0 },
+          ],
+        ],
+      });
+    });
+
+    test("should snap to the center of a shape while snapping to two grid lines", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 100 } });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes.map((s) => [s.id, sc.getSnappingLines(s)]),
+      });
+      const target = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target.testConnection({ x: 199, y: 51 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0.5, y: 0.5 } },
+        outlineSrc: "b",
+        p: { x: 200, y: 50 },
+        shapeSnappingResult: {
+          diff: { x: 1, y: -1 },
+          intervalTargets: [],
+          targets: [
+            {
+              id: "b",
+              line: [
+                { x: 200, y: 0 },
+                { x: 200, y: 100 },
+              ],
+            },
+            {
+              id: "b",
+              line: [
+                { x: 150, y: 50 },
+                { x: 250, y: 50 },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    test("should snap to the center of a shape while snapping to a grid line and self segment", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 200, y: 0 },
+        q: { x: 100, y: 100 },
+      });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes.map((s) => [s.id, sc.getSnappingLines(s)]),
+      });
+      const target = newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target.testConnection({ x: 199, y: 51 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0.5, y: 0.5 } },
+        outlineSrc: "b",
+        p: { x: 200, y: 50 },
+        guidLines: [
+          [
+            { x: 200, y: 0 },
+            { x: 200, y: 51 },
           ],
         ],
       });
