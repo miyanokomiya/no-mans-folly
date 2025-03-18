@@ -1,14 +1,7 @@
 import { expect, describe, test, vi, afterEach, beforeEach } from "vitest";
-import { newCache, newChronoCache, newObjectWeakCache } from "./cache";
+import { newCache, newCacheWithArg, newChronoCache, newObjectWeakCache } from "./cache";
 
 describe("newCache", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test("should return cached value and reset it if update func is called", () => {
     let count = 0;
     const cache = newCache(() => count);
@@ -20,7 +13,28 @@ describe("newCache", () => {
   });
 });
 
+describe("newCacheWithArg", () => {
+  test("should return cached value derived from the first argument provided after update func is called", () => {
+    let count = 0;
+    const cache = newCacheWithArg((label: string) => `${label}_${count}`);
+    expect(cache.getValue("a")).toBe("a_0");
+    expect(cache.getValue("b")).toBe("a_0");
+    count++;
+    expect(cache.getValue("b")).toBe("a_0");
+    cache.update();
+    expect(cache.getValue("c")).toBe("c_1");
+    expect(cache.getValue("d")).toBe("c_1");
+  });
+});
+
 describe("newChronoCache", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test("should return cached value if it exists", () => {
     const target = newChronoCache<string, number>({ duration: 10, getTimestamp: () => 0 });
     target.setValue("b", 1);

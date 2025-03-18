@@ -1,14 +1,8 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
 import { createShape, getTangentAt } from "../../../../shapes";
 import { LineShape } from "../../../../shapes/line";
-import {
-  ConnectionResult,
-  LineSnapping,
-  isLineSnappableShape,
-  newLineSnapping,
-  renderConnectionResult,
-} from "../../../lineSnapping";
+import { ConnectionResult, isLineSnappableShape, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 import { add, IVec2, multi, rotate, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
@@ -18,21 +12,47 @@ import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { handleCommonWheel } from "../../commons";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { applyPath } from "../../../../utils/renderer";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
 
 export function newLineTangentReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
   let guideline: ISegment | undefined;
-  let lineSnapping: LineSnapping;
-  let lineSnappingWithoutGuideline: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   const coordinateRenderer = newCoordinateRenderer();
+
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, []);
+
+    const shapeSnapping = newShapeSnapping({
+      shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+
+    const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
+    return {
+      withGuideline: newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: ctx.getShapeStruct,
+        threshold: 60,
+      }),
+      withoutGuideline: newLineSnapping({
+        snappableShapes,
+        getShapeStruct: ctx.getShapeStruct,
+        threshold: 60,
+      }),
+    };
+  });
 
   const getConnectionResult = (
     point: IVec2,
     ctrl: boolean | undefined,
-    scale: number,
+    ctx: AppCanvasStateContext,
   ): ConnectionResult | undefined => {
-    const result = (ctrl ? lineSnappingWithoutGuideline : lineSnapping).testConnection(point, scale);
+    const snapping = lineSnappingCache.getValue(ctx);
+    const result = (ctrl ? snapping.withoutGuideline : snapping.withGuideline).testConnection(point, ctx.getScale());
     return result?.outlineSrc ? result : undefined;
   };
 
@@ -41,31 +61,11 @@ export function newLineTangentReadyState(): AppCanvasState {
     onStart: (ctx) => {
       ctx.setCursor();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
-
-      const shapeComposite = ctx.getShapeComposite();
-      const snappableCandidates = getSnappableCandidates(ctx, []);
-
-      const shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
-
-      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
-      lineSnapping = newLineSnapping({
-        snappableShapes,
-        shapeSnapping,
-        getShapeStruct: ctx.getShapeStruct,
-        threshold: 60,
-      });
-      lineSnappingWithoutGuideline = newLineSnapping({
-        snappableShapes,
-        getShapeStruct: ctx.getShapeStruct,
-        threshold: 60,
-      });
-
       vertex = ctx.getCursorPoint();
       coordinateRenderer.saveCoord(vertex);
+    },
+    onResume: () => {
+      lineSnappingCache.update();
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -76,7 +76,7 @@ export function newLineTangentReadyState(): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const point = event.data.point;
-              connectionResult = getConnectionResult(point, event.data.options.ctrl, ctx.getScale());
+              connectionResult = getConnectionResult(point, event.data.options.ctrl, ctx);
               vertex = connectionResult?.p ?? point;
               if (!connectionResult?.outlineSrc) return ctx.states.newSelectionHubState;
 
@@ -101,7 +101,7 @@ export function newLineTangentReadyState(): AppCanvasState {
           }
         case "pointerhover": {
           const point = event.data.current;
-          connectionResult = getConnectionResult(point, event.data.ctrl, ctx.getScale());
+          connectionResult = getConnectionResult(point, event.data.ctrl, ctx);
           vertex = connectionResult?.p ?? point;
           coordinateRenderer.saveCoord(vertex);
 
@@ -127,6 +127,7 @@ export function newLineTangentReadyState(): AppCanvasState {
           }
         case "wheel":
           handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
           return;
         case "history":
           return ctx.states.newSelectionHubState;

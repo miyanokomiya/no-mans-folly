@@ -22,6 +22,28 @@ export function newCache<T>(resetValue: () => T) {
   };
 }
 
+export function newCacheWithArg<T, K>(resetValue: (k: K) => T) {
+  let value: T;
+  let isDirty = true;
+
+  function getValue(k: K): T {
+    if (isDirty) {
+      value = resetValue(k);
+      isDirty = false;
+    }
+    return value;
+  }
+
+  function update() {
+    isDirty = true;
+  }
+
+  return {
+    update,
+    getValue,
+  };
+}
+
 /**
  * Each cached value is cleared when it isn't gotten for "duration".
  * Deletion schedule isn't precise.

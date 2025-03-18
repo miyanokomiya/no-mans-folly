@@ -1,9 +1,8 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newDefaultState } from "../defaultState";
 import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
 import {
   ConnectionResult,
-  LineSnapping,
   isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
@@ -22,6 +21,7 @@ import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { Shape } from "../../../../models";
 import { getSnappableCandidates } from "../commons";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
 
 interface Option {
   // This state creates "body" for the line, so that the "body" value of this shape does nothing.
@@ -34,38 +34,37 @@ export function newLineDrawingState(option: Option): AppCanvasState {
   const movingIndex = linePath.length - 1;
   let latestShape = srcShape;
   let vertex = linePath[movingIndex];
-  let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
   const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
   let hoverMode = false;
+
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, []);
+    const shapeSnapping = newShapeSnapping({
+      shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+    const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
+    return newLineSnapping({
+      snappableShapes,
+      shapeSnapping,
+      getShapeStruct: shapeComposite.getShapeStruct,
+      movingLine: srcShape,
+      movingIndex,
+      ignoreCurrentLine: true,
+    });
+  });
 
   return {
     getLabel: () => "LineDrawing",
     onStart: (ctx) => {
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
-
-      const shapeComposite = ctx.getShapeComposite();
-      const snappableCandidates = getSnappableCandidates(ctx, []);
-
-      const shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
-
-      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
-      lineSnapping = newLineSnapping({
-        snappableShapes,
-        shapeSnapping,
-        getShapeStruct: shapeComposite.getShapeStruct,
-        movingLine: srcShape,
-        movingIndex,
-        ignoreCurrentLine: true,
-      });
-
-      elbowHandler = srcShape.lineType === "elbow" ? newElbowLineHandler(ctx) : undefined;
+      elbowHandler =
+        srcShape.lineType === "elbow" ? newElbowLineHandler({ getShapeComposite: ctx.getShapeComposite }) : undefined;
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -75,7 +74,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
+          connectionResult = event.data.ctrl
+            ? undefined
+            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
           vertex = connectionResult?.p ?? point;
 
           coordinateRenderer.saveCoord(vertex);
@@ -139,6 +140,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
           }
         case "wheel":
           handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
           return;
         case "history":
           return newDefaultState;

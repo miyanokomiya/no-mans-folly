@@ -1,10 +1,9 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { LineShape, addNewVertex } from "../../../../shapes/line";
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
   ConnectionResult,
-  LineSnapping,
   isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
@@ -18,6 +17,8 @@ import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { handleCommonWheel } from "../../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -27,42 +28,43 @@ interface Option {
 
 export function newMovingNewVertexState(option: Option): AppCanvasState {
   let vertex = option.p;
-  let lineSnapping: LineSnapping;
   let connectionResult: ConnectionResult | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
+
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
+    const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
+    const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
+    const shapeSnapping = newShapeSnapping({
+      shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+    return newLineSnapping({
+      snappableShapes,
+      shapeSnapping,
+      getShapeStruct: ctx.getShapeStruct,
+      movingLine: mockMovingLine,
+      movingIndex: option.index,
+    });
+  });
 
   return {
     getLabel: () => "MovingNewVertex",
     onStart: (ctx) => {
       ctx.startDragging();
-
       const shapeComposite = ctx.getShapeComposite();
-      const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
-
-      const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
-      const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
-
-      const shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
-
-      lineSnapping = newLineSnapping({
-        snappableShapes,
-        shapeSnapping,
-        getShapeStruct: ctx.getShapeStruct,
-        movingLine: mockMovingLine,
-        movingIndex: option.index,
-      });
-
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
       if (preserveAttachmentHandler.hasAttachment) {
         ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
       } else {
         ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
       }
+    },
+    onResume: () => {
+      lineSnappingCache.update();
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -73,7 +75,9 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          connectionResult = event.data.ctrl ? undefined : lineSnapping.testConnection(point, ctx.getScale());
+          connectionResult = event.data.ctrl
+            ? undefined
+            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
           vertex = connectionResult?.p ?? point;
 
           coordinateRenderer.saveCoord(vertex);
@@ -100,6 +104,10 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
+          return;
         default:
           return;
       }
