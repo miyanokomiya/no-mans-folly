@@ -1,16 +1,24 @@
 import type { AppCanvasState, AppCanvasStateContext } from "./core";
-import { IVec2, add } from "okageo";
+import { IVec2 } from "okageo";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
+import { newShapeSnapping } from "../../shapeSnapping";
 import { Shape } from "../../../models";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { CommandExam, EditMovement } from "../types";
-import { renderOutlinedCircle } from "../../../utils/renderer";
+import { renderOutlinedCircle, scaleGlobalAlpha } from "../../../utils/renderer";
 import { patchPipe } from "../../../utils/commons";
-import { patchLinesConnectedToShapeOutline } from "../../lineSnapping";
+import {
+  ConnectionResult,
+  newLineSnapping,
+  patchLinesConnectedToShapeOutline,
+  renderConnectionResult,
+} from "../../lineSnapping";
 import { getSnappableCandidates } from "./commons";
 import { CanvasCTX } from "../../../utils/types";
-import { ShapeSnappingLines } from "../../../shapes/core";
+import { newCacheWithArg } from "../../../utils/stateful/cache";
+import { createShape } from "../../../shapes";
+import { LineShape } from "../../../shapes/line";
+import { handleCommonWheel } from "../commons";
 
 export type RenderShapeControlFn<T extends Shape> = (
   ctx: AppCanvasStateContext,
@@ -29,15 +37,38 @@ interface Option<T extends Shape> {
    */
   getControlFn: (s: T, scale: number) => IVec2;
   snapType?: "disabled" | "self" | "custom";
-  extraGridOrigins?: [owner: string, IVec2][];
+  movingOrigin?: IVec2;
   renderFn?: RenderShapeControlFn<T>;
   extraCommands?: CommandExam[];
 }
 
 export function movingShapeControlState<T extends Shape>(option: Option<T>): AppCanvasState {
   let targetShape: T;
-  let shapeSnapping: ShapeSnapping;
-  let snappingResult: SnappingResult | undefined;
+
+  let connectionResult: ConnectionResult | undefined;
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, [targetShape.id]);
+    const shapeSnapping = newShapeSnapping({
+      shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+    const dummyLine = option.movingOrigin
+      ? createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
+          id: "dummy",
+          p: option.movingOrigin,
+          q: option.getControlFn(targetShape, ctx.getScale()),
+        })
+      : undefined;
+    return newLineSnapping({
+      snappableShapes: snappableCandidates,
+      shapeSnapping,
+      getShapeStruct: shapeComposite.getShapeStruct,
+      movingLine: dummyLine,
+      movingIndex: dummyLine ? 1 : undefined,
+    });
+  });
 
   return {
     getLabel: () => "MovingShapeControl",
@@ -49,44 +80,6 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       const commands = option.extraCommands ?? [];
       if (!option.snapType || option.snapType === "custom") commands.unshift(COMMAND_EXAM_SRC.DISABLE_SNAP);
       ctx.setCommandExams(commands);
-
-      const shapeComposite = ctx.getShapeComposite();
-      const snappableShapes =
-        option.snapType === "self" ? [targetShape] : getSnappableCandidates(ctx, [targetShape.id]);
-      let shapeSnappingList = snappableShapes.map<[string, ShapeSnappingLines]>((s) => [
-        s.id,
-        shapeComposite.getSnappingLines(s),
-      ]);
-
-      if (option.extraGridOrigins) {
-        const viewRect = ctx.getViewRect();
-        const [t, r, b, l] = [viewRect.y, viewRect.x + viewRect.width, viewRect.y + viewRect.height, viewRect.x];
-        shapeSnappingList = shapeSnappingList.concat(
-          option.extraGridOrigins.map(([owner, p]) => [
-            owner,
-            {
-              h: [
-                [
-                  { x: l, y: p.y },
-                  { x: r, y: p.y },
-                ],
-              ],
-              v: [
-                [
-                  { x: p.x, y: t },
-                  { x: p.x, y: b },
-                ],
-              ],
-            },
-          ]),
-        );
-      }
-
-      shapeSnapping = newShapeSnapping({
-        shapeSnappingList: shapeSnappingList,
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
     },
     onEnd: (ctx) => {
       ctx.setTmpShapeMap({});
@@ -97,11 +90,11 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          snappingResult =
+          connectionResult =
             event.data.ctrl || option.snapType === "disabled" || option.snapType === "custom"
               ? undefined
-              : shapeSnapping.testPoint(point, ctx.getScale());
-          const p = snappingResult ? add(point, snappingResult.diff) : point;
+              : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
+          const p = connectionResult?.p ?? point;
           const shapeComposite = ctx.getShapeComposite();
           const patch = patchPipe(
             [
@@ -122,25 +115,35 @@ export function movingShapeControlState<T extends Shape>(option: Option<T>): App
           if (event.data.keys.has(targetShape.id)) return ctx.states.newSelectionHubState;
           return;
         }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
+          return;
         default:
           return;
       }
     },
     render: (ctx, renderCtx) => {
-      const tmpShape: T = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
-      const control = option.getControlFn(tmpShape, ctx.getScale());
-      renderOutlinedCircle(renderCtx, control, 6 * ctx.getScale(), ctx.getStyleScheme().selectionSecondaly);
+      const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+      const vertexSize = 6 * scale;
 
-      if (snappingResult) {
+      scaleGlobalAlpha(renderCtx, 0.5, () => {
+        const srcOontrol = option.getControlFn(targetShape, scale);
+        renderOutlinedCircle(renderCtx, srcOontrol, vertexSize, style.transformAnchor);
+      });
+
+      const tmpShape: T = { ...targetShape, ...ctx.getTmpShapeMap()[targetShape.id] };
+      const control = option.getControlFn(tmpShape, scale);
+      renderOutlinedCircle(renderCtx, control, vertexSize, style.selectionSecondaly);
+
+      if (connectionResult) {
         const shapeComposite = ctx.getShapeComposite();
-        renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
-          result: snappingResult,
-          getTargetRect: (id) =>
-            shapeComposite.mergedShapeMap[id]
-              ? shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id])
-              : undefined,
+        renderConnectionResult(renderCtx, {
+          result: connectionResult,
+          scale,
+          style,
+          shapeComposite,
         });
       }
 

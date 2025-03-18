@@ -402,12 +402,11 @@ export function getResizeByState<S extends SimplePolygonShape, K = keyof S>(
     renderFn: (ctx, renderCtx, shape) => {
       renderShapeBounds(renderCtx, ctx.getStyleScheme(), shapeComposite.getLocalRectPolygon(shape));
     },
-    // Make extra grid lines based on the resizing origin.
-    extraGridOrigins: [[shape.id, getExtraGridOriginBy(shapeComposite, shape, by)]],
+    movingOrigin: getResizeByOrigin(shapeComposite, shape, by),
   });
 }
 
-function getExtraGridOriginBy(shapeComposite: ShapeComposite, shape: Shape, by: Direction4): IVec2 {
+function getResizeByOrigin(shapeComposite: ShapeComposite, shape: Shape, by: Direction4): IVec2 {
   const rectPolygon = shapeComposite.getLocalRectPolygon(shape);
   switch (by) {
     case 0:
