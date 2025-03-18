@@ -71,9 +71,6 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       }
       pointerMargin = sub(origin, ctx.getCursorPoint());
     },
-    onResume: () => {
-      lineSnappingCache.update();
-    },
     onEnd: (ctx) => {
       ctx.stopDragging();
       ctx.setTmpShapeMap({});

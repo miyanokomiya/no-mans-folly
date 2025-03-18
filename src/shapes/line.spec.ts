@@ -357,14 +357,32 @@ describe("struct", () => {
       });
       expect(struct.getSnappingLines?.(shape)).toEqual({
         h: [
-          [shape.p, shape.p],
-          [shape.body![0].p, shape.body![0].p],
-          [shape.q, shape.q],
+          [
+            { x: shape.p.x - 0.5, y: shape.p.y },
+            { x: shape.p.x + 0.5, y: shape.p.y },
+          ],
+          [
+            { x: shape.body![0].p.x - 0.5, y: shape.body![0].p.y },
+            { x: shape.body![0].p.x + 0.5, y: shape.body![0].p.y },
+          ],
+          [
+            { x: shape.q.x - 0.5, y: shape.q.y },
+            { x: shape.q.x + 0.5, y: shape.q.y },
+          ],
         ],
         v: [
-          [shape.p, shape.p],
-          [shape.body![0].p, shape.body![0].p],
-          [shape.q, shape.q],
+          [
+            { x: shape.p.x, y: shape.p.y - 0.5 },
+            { x: shape.p.x, y: shape.p.y + 0.5 },
+          ],
+          [
+            { x: shape.body![0].p.x, y: shape.body![0].p.y - 0.5 },
+            { x: shape.body![0].p.x, y: shape.body![0].p.y + 0.5 },
+          ],
+          [
+            { x: shape.q.x, y: shape.q.y - 0.5 },
+            { x: shape.q.x, y: shape.q.y + 0.5 },
+          ],
         ],
       });
     });
@@ -376,14 +394,32 @@ describe("struct", () => {
       });
       expect(struct.getSnappingLines?.(shape)).toEqual({
         h: [
-          [shape.q, shape.q],
-          [shape.body![0].p, shape.body![0].p],
-          [shape.p, shape.p],
+          [
+            { x: shape.q.x - 0.5, y: shape.q.y },
+            { x: shape.q.x + 0.5, y: shape.q.y },
+          ],
+          [
+            { x: shape.body![0].p.x - 0.5, y: shape.body![0].p.y },
+            { x: shape.body![0].p.x + 0.5, y: shape.body![0].p.y },
+          ],
+          [
+            { x: shape.p.x - 0.5, y: shape.p.y },
+            { x: shape.p.x + 0.5, y: shape.p.y },
+          ],
         ],
         v: [
-          [shape.q, shape.q],
-          [shape.body![0].p, shape.body![0].p],
-          [shape.p, shape.p],
+          [
+            { x: shape.q.x, y: shape.q.y - 0.5 },
+            { x: shape.q.x, y: shape.q.y + 0.5 },
+          ],
+          [
+            { x: shape.body![0].p.x, y: shape.body![0].p.y - 0.5 },
+            { x: shape.body![0].p.x, y: shape.body![0].p.y + 0.5 },
+          ],
+          [
+            { x: shape.p.x, y: shape.p.y - 0.5 },
+            { x: shape.p.x, y: shape.p.y + 0.5 },
+          ],
         ],
       });
     });

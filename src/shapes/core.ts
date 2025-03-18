@@ -68,6 +68,7 @@ export interface ShapeStruct<T extends Shape> {
   resizeOnTextEdit?: (shape: T, textBoxSize: Size) => Partial<T> | undefined;
   /**
    * Lines should be sorted top-left to bottom-right in each direction.
+   * Each line should have non-zero length at least.
    */
   getSnappingLines?: (shape: T) => ShapeSnappingLines;
   getClosestOutline?: (shape: T, p: IVec2, threshold: number, thresholdForMarker?: number) => IVec2 | undefined;

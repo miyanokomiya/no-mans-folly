@@ -1,11 +1,11 @@
-import type { AppCanvasState } from "../core";
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { LineShape, getEdges } from "../../../../shapes/line";
-import { IVec2, add, getSymmetry, isSame } from "okageo";
+import { IVec2, getSymmetry, isSame } from "okageo";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { BezierCurveControl, CurveControl } from "../../../../models";
 import { renderOutlinedCircle } from "../../../../utils/renderer";
-import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult } from "../../../shapeSnapping";
+import { newShapeSnapping } from "../../../shapeSnapping";
 import { isBezieirControl } from "../../../../utils/path";
 import { BEZIER_ANCHOR_SIZE, renderBezierControls } from "../../../lineBounding";
 import { ISegment } from "../../../../utils/geometry";
@@ -14,6 +14,9 @@ import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { CommandExam } from "../../types";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { ConnectionResult, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import { handleCommonWheel } from "../../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -26,11 +29,29 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
   const edges = getEdges(option.lineShape);
   const edge = edges[option.index];
   const symmetricAvailable = checkSymmetricAvailable(option.lineShape, option.index, option.subIndex);
-  let shapeSnapping: ShapeSnapping;
-  let snappingResult: SnappingResult | undefined;
+  let connectionResult: ConnectionResult | undefined;
   let currentBezier: BezierCurveControl | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
   const coordinateRenderer = newCoordinateRenderer({ coord: option.p });
+
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
+    const shapeSnapping = newShapeSnapping({
+      // The snapping lines of the moving line are available since they dont change along with curve constrol.
+      shapeSnappingList: [...snappableCandidates, option.lineShape].map((s) => [
+        s.id,
+        shapeComposite.getSnappingLines(s),
+      ]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+    return newLineSnapping({
+      snappableShapes: snappableCandidates,
+      shapeSnapping,
+      getShapeStruct: ctx.getShapeStruct,
+    });
+  });
 
   return {
     getLabel: () => "MovingLineBezier",
@@ -38,14 +59,6 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       ctx.startDragging();
 
       const shapeComposite = ctx.getShapeComposite();
-
-      const snappableCandidates = getSnappableCandidates(ctx, []);
-      shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
-
       const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
       const currentCurve = option.lineShape.curves?.[option.index];
       if (isBezieirControl(currentCurve)) {
@@ -83,8 +96,10 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const point = event.data.current;
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.testPoint(point, ctx.getScale());
-          const p = snappingResult ? add(point, snappingResult.diff) : point;
+          connectionResult = event.data.ctrl
+            ? undefined
+            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
+          const p = connectionResult?.p ?? point;
           coordinateRenderer.saveCoord(p);
 
           const curves = fillArray(option.index + 1, undefined, option.lineShape.curves);
@@ -138,6 +153,10 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
+          return;
         default:
           return;
       }
@@ -156,16 +175,13 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
       const p = option.subIndex === 0 ? curve.c1 : curve.c2;
       renderOutlinedCircle(renderCtx, p, bezierSize, style.selectionSecondaly);
 
-      if (snappingResult) {
+      if (connectionResult) {
         const shapeComposite = ctx.getShapeComposite();
-        renderSnappingResult(renderCtx, {
-          style,
-          scale,
-          result: snappingResult,
-          getTargetRect: (id) =>
-            shapeComposite.mergedShapeMap[id]
-              ? shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id])
-              : undefined,
+        renderConnectionResult(renderCtx, {
+          result: connectionResult,
+          scale: ctx.getScale(),
+          style: ctx.getStyleScheme(),
+          shapeComposite,
         });
       }
 

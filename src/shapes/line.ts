@@ -374,9 +374,20 @@ export const struct: ShapeStruct<LineShape> = {
   },
   getSnappingLines(shape) {
     const path = getLinePath(shape);
+    const v = 0.5;
     return {
-      h: path.toSorted((a, b) => a.y - b.y).map((p) => [p, p]),
-      v: path.toSorted((a, b) => a.x - b.x).map((p) => [p, p]),
+      h: path
+        .toSorted((a, b) => a.y - b.y)
+        .map((p) => [
+          { x: p.x - v, y: p.y },
+          { x: p.x + v, y: p.y },
+        ]),
+      v: path
+        .toSorted((a, b) => a.x - b.x)
+        .map((p) => [
+          { x: p.x, y: p.y - v },
+          { x: p.x, y: p.y + v },
+        ]),
     };
   },
   getClosestOutline(shape, p, threshold) {
