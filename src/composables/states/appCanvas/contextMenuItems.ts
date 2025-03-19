@@ -158,6 +158,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       icon: iconRefinement,
     };
   },
+  get CREATE_VN_NODE() {
+    return {
+      label: i18n.t("contextmenu.vertex.vnnode.create"),
+      key: "CREATE_VN_NODE",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

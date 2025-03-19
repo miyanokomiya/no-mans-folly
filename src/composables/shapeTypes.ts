@@ -68,6 +68,7 @@ import { newAngleBracketSelectedState } from "./states/appCanvas/brackets/angleB
 import { newFrameAlignGroupSelectedState } from "./states/appCanvas/frameAlign/frameAlignGroupSelectedState";
 import { newChevronSelectedState } from "./states/appCanvas/chevron/chevronSelectedState";
 import { newRibbonSelectedState } from "./states/appCanvas/ribbon/ribbonSelectedState";
+import { newVNNodeSelectedState } from "./states/appCanvas/vectorNetworks/vnNodeSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -183,6 +184,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newBoardEntitySelectedState;
     case "align_box":
       return newAlignBoxSelectedState;
+    case "vn_node":
+      return newVNNodeSelectedState;
     case "frame":
       return newFrameSelectedState;
     case "frame_align_group":

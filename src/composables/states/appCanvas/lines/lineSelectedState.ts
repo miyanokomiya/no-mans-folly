@@ -40,6 +40,7 @@ import { getSegments } from "../../../../utils/geometry";
 import { getDistanceSq } from "okageo";
 import { ContextMenuItem } from "../../types";
 import { AppCanvasState } from "../core";
+import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -218,10 +219,16 @@ export const newLineSelectedState = defineIntransientState(() => {
           const items: ContextMenuItem[] = [];
           if (hitResult?.type === "vertex") {
             const connection = getConnection(lineShape, hitResult.index);
-            items.push({
-              ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
-              meta: { index: hitResult.index } as VertexMetaForContextMenu,
-            });
+            items.push(
+              {
+                ...CONTEXT_MENU_ITEM_SRC.CREATE_VN_NODE,
+                meta: { index: hitResult.index } as VertexMetaForContextMenu,
+              },
+              {
+                ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
+                meta: { index: hitResult.index } as VertexMetaForContextMenu,
+              },
+            );
             if (connection) {
               items.push({
                 ...CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX,
@@ -278,6 +285,23 @@ export const newLineSelectedState = defineIntransientState(() => {
               if (!isObjectEmpty(patch)) {
                 ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
               }
+              return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.CREATE_VN_NODE.key: {
+              const index = (event.data.meta as VertexMetaForContextMenu).index;
+              const p = getLinePath(lineShape)[index];
+              const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                id: ctx.generateUuid(),
+                findex: ctx.createLastIndex(),
+                p: { x: p.x - 4, y: p.y - 4 },
+              });
+              ctx.updateShapes({
+                add: [vnnode],
+                update: {
+                  [lineShape.id]: patchConnection(lineShape, index, { id: vnnode.id, rate: { x: 0.5, y: 0.5 } }),
+                },
+              });
+              ctx.selectShape(vnnode.id);
               return ctx.states.newSelectionHubState;
             }
             case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX.key: {

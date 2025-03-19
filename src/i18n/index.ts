@@ -89,6 +89,7 @@ const en = {
       "vertex.detach": "Detach vertex",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
+      "vertex.vnnode.create": "Create VNNode",
       "segment.refine": "Refine segment",
     },
 
@@ -185,6 +186,7 @@ const ja: TranslationResource = {
       "vertex.detach": "頂点接続解除",
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
+      "vertex.vnnode.create": "VNノード作成",
       "segment.refine": "辺精密編集",
     },
 
