@@ -1,14 +1,13 @@
 import { IVec2, applyAffine, getOuterRectangle } from "okageo";
 import { Shape } from "../../../models";
-import { applyCurvePath, applyPath } from "../../../utils/renderer";
+import { applyCurvePath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
 import { LinkInfo } from "../types";
-import { getShapeTextBounds } from "../../../shapes";
+import { getHighlightPaths, getOutlinePaths, getShapeTextBounds } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
-import { getLinePath, isLineShape } from "../../../shapes/line";
 import { isShapeInteratctiveWithinViewport } from "./commons";
 
 /**
@@ -75,15 +74,9 @@ export function defineIntransientState<A extends any[]>(
         if (hoveredShape && !ctx.getSelectedShapeIdMap()[hoveredShape.id]) {
           renderCtx.beginPath();
 
-          if (isLineShape(hoveredShape)) {
-            const linePath = getLinePath(hoveredShape);
-            applyCurvePath(renderCtx, linePath, hoveredShape.curves);
-          } else {
-            const shapeComposite = ctx.getShapeComposite();
-            const path = shapeComposite.getLocalRectPolygon(hoveredShape);
-            applyPath(renderCtx, path, true);
-          }
-
+          (
+            getHighlightPaths(ctx.getShapeStruct, hoveredShape) ?? getOutlinePaths(ctx.getShapeStruct, hoveredShape)
+          )?.forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
           applyStrokeStyle(renderCtx, {
             color: ctx.getStyleScheme().selectionSecondaly,
             width: 3 * ctx.getScale(),

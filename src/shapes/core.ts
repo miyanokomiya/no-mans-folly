@@ -83,6 +83,11 @@ export interface ShapeStruct<T extends Shape> {
    * It can be mulpiple paths when a shape has holes.
    */
   getOutlinePaths?: (shape: T) => BezierPath[];
+  /**
+   * This path is used to highlight the shape.
+   * Unlike "getOutlinePaths", this path isn't used for hit test or anything othan than related to appearance.
+   */
+  getHighlightPaths?: (shape: T) => BezierPath[];
   getCommonStyle?: (shape: T) => CommonStyle | undefined;
   updateCommonStyle?: (shape: T, val: Partial<T>) => Partial<T>;
   /**
