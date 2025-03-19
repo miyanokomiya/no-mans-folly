@@ -2,14 +2,15 @@ import { IRectangle, getOuterRectangle } from "okageo";
 import type { AppCanvasState } from "./core";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
-import { applyPath, scaleGlobalAlpha } from "../../../utils/renderer";
-import { isTransparentSelection } from "../../../shapes";
+import { applyCurvePath, scaleGlobalAlpha } from "../../../utils/renderer";
+import { getHighlightPaths, getOutlinePaths, isTransparentSelection } from "../../../shapes";
 import { isStrictRootScope, ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { applyFillStyle } from "../../../utils/fillStyle";
 import { splitList } from "../../../utils/commons";
+import { Shape } from "../../../models";
 
 interface Option {
   keepSelection?: boolean;
@@ -154,14 +155,21 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
 
       const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
 
+      renderCtx.beginPath();
+
+      const applyPath = (s: Shape) =>
+        (getHighlightPaths(ctx.getShapeStruct, s) ?? getOutlinePaths(ctx.getShapeStruct, s))?.forEach((path) =>
+          applyCurvePath(renderCtx, path.path, path.curves),
+        );
+
       applyStrokeStyle(renderCtx, { color: style.locked, width: 2 * scale });
       renderCtx.beginPath();
-      locked.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
+      locked.forEach((s) => applyPath(s));
       renderCtx.stroke();
 
       applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 * scale });
       renderCtx.beginPath();
-      unlocked.forEach((s) => applyPath(renderCtx, composite.getLocalRectPolygon(s), true));
+      unlocked.forEach((s) => applyPath(s));
       renderCtx.stroke();
 
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
