@@ -11,6 +11,7 @@ import {
 import { ShapeStruct, createBaseShape } from "../core";
 import { renderTransform } from "../../utils/svgElements";
 import { covertEllipseToBezier } from "../../utils/path";
+import { getCommonStyle, updateCommonStyle } from "../core";
 
 /**
  * VnNode shape is supposed to be a dot.
@@ -63,7 +64,7 @@ export const struct: ShapeStruct<VnNodeShape> = {
     };
   },
   getWrapperRect(shape, _, includeBounds) {
-    const rect = getArcBounds(shape);
+    const rect = getArcBounds(shape, includeBounds);
     if (!includeBounds) return rect;
     return expandRect(rect, getStrokeWidth(shape.stroke) / 2);
   },
@@ -81,14 +82,14 @@ export const struct: ShapeStruct<VnNodeShape> = {
     return {
       h: [
         [
-          { x: shape.p.x, y: shape.p.y },
-          { x: shape.p.x + 2 * shape.r, y: shape.p.y },
+          { x: shape.p.x - shape.r, y: shape.p.y },
+          { x: shape.p.x + shape.r, y: shape.p.y },
         ],
       ],
       v: [
         [
-          { x: shape.p.x, y: shape.p.y },
-          { x: shape.p.x, y: shape.p.y + 2 * shape.r },
+          { x: shape.p.x, y: shape.p.y - shape.r },
+          { x: shape.p.x, y: shape.p.y + shape.r },
         ],
       ],
     };
@@ -96,16 +97,25 @@ export const struct: ShapeStruct<VnNodeShape> = {
   getHighlightPaths(shape) {
     return [covertEllipseToBezier(shape.p, shape.r, shape.r, shape.rotation, -Math.PI, Math.PI)];
   },
+  getCommonStyle,
+  updateCommonStyle,
   noRotation: true,
 };
 
-function getArcBounds(shape: VnNodeShape) {
-  return {
-    x: shape.p.x,
-    y: shape.p.y,
-    width: 0,
-    height: 0,
-  };
+function getArcBounds(shape: VnNodeShape, includeBounds = false) {
+  return includeBounds
+    ? {
+        x: shape.p.x - shape.r,
+        y: shape.p.y - shape.r,
+        width: shape.r * 2,
+        height: shape.r * 2,
+      }
+    : {
+        x: shape.p.x,
+        y: shape.p.y,
+        width: 0,
+        height: 0,
+      };
 }
 
 function getLocalRectPolygon(shape: VnNodeShape): IVec2[] {
