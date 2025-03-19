@@ -21,6 +21,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import {
   ISegment,
   TAU,
+  divideSafely,
   getCrossLineAndLine,
   getRectPathRotation,
   getRotateFn,
@@ -384,8 +385,8 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
     }
 
     const rotatedScale = {
-      x: xResizable ? 1 + rotatedDiff.x / adjustedRotatedDirection.x : 1,
-      y: yResizable ? 1 + rotatedDiff.y / adjustedRotatedDirection.y : 1,
+      x: xResizable ? 1 + divideSafely(rotatedDiff.x, adjustedRotatedDirection.x, 0) : 1,
+      y: yResizable ? 1 + divideSafely(rotatedDiff.y, adjustedRotatedDirection.y, 0) : 1,
     };
 
     const adjustedRotatedScale = !keepAspect
@@ -444,7 +445,7 @@ export function newBoundingBoxResizing(option: BoundingBoxResizingOption) {
       const cross = getCrossLineAndLine(rotatedSegment, targetSeg);
       if (cross) {
         const d = getDistance(cross, pedalRotatedMovedP);
-        const r = getNorm(sub(cross, adjustedRotatedOrigin)) / getNorm(direction);
+        const r = divideSafely(getNorm(sub(cross, adjustedRotatedOrigin)), getNorm(direction), 1);
         if (rate === undefined || distance === undefined || d <= distance) {
           rate = r;
           distance = d;

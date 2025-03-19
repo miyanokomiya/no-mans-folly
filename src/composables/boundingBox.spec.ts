@@ -1,7 +1,7 @@
 import { expect, describe, test } from "vitest";
 import { newBoundingBox, newBoundingBoxResizing, newBoundingBoxRotating } from "./boundingBox";
 import { getRectPoints } from "../utils/geometry";
-import { applyAffine, getDistance } from "okageo";
+import { applyAffine, getDistance, IDENTITY_AFFINE } from "okageo";
 
 describe("newBoundingBox", () => {
   describe("hitTest", () => {
@@ -314,6 +314,19 @@ describe("newBoundingBoxResizing", () => {
       expect(affine1[3]).toBeCloseTo(1);
       expect(affine1[4]).toBeCloseTo(0);
       expect(affine1[5]).toBeCloseTo(0);
+    });
+
+    test("should handle zero sized bounds", () => {
+      const corner0 = newBoundingBoxResizing({
+        rotation: 0,
+        hitResult: { type: "corner", index: 0 },
+        resizingBase: {
+          direction: { x: 0, y: 0 },
+          origin: { x: 100, y: 100 },
+        },
+      });
+      const affine0 = corner0.getAffine({ x: -10, y: -20 });
+      expect(affine0).toEqual(IDENTITY_AFFINE);
     });
   });
 
