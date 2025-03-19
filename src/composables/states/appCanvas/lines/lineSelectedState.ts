@@ -293,7 +293,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
                 id: ctx.generateUuid(),
                 findex: ctx.createLastIndex(),
-                p: { x: p.x - 4, y: p.y - 4 },
+                p,
               });
               ctx.updateShapes({
                 add: [vnnode],

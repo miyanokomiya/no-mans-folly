@@ -28,7 +28,7 @@ interface Option {
 export const newVnNodeHandler = defineShapeHandler<HitResult, Option>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shape = shapeComposite.shapeMap[option.targetId] as VnNodeShape;
-  const center = add(shape.p, { x: shape.r, y: shape.r });
+  const center = shape.p;
 
   function getMoveAnchor(scale = 1): { c: IVec2; r: number } | undefined {
     if (shape.locked) return;

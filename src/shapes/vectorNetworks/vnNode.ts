@@ -1,14 +1,7 @@
-import { IVec2, add, applyAffine, getCenter, isSame, sub } from "okageo";
+import { IVec2, applyAffine, isSame, sub } from "okageo";
 import { CommonStyle, Shape } from "../../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
-import {
-  TAU,
-  expandRect,
-  getD2,
-  getRectPoints,
-  getRotatedRectAffine,
-  getRotatedWrapperRect,
-} from "../../utils/geometry";
+import { TAU, expandRect, getD2, getRectPoints, getRotatedRectAffine } from "../../utils/geometry";
 import {
   applyStrokeStyle,
   createStrokeStyle,
@@ -40,7 +33,7 @@ export const struct: ShapeStruct<VnNodeShape> = {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.beginPath();
-    ctx.arc(shape.p.x + shape.r, shape.p.y + shape.r, shape.r, 0, TAU);
+    ctx.arc(shape.p.x, shape.p.y, shape.r, 0, TAU);
     if (!shape.fill.disabled) {
       applyFillStyle(ctx, shape.fill);
       ctx.fill();
@@ -59,8 +52,8 @@ export const struct: ShapeStruct<VnNodeShape> = {
     return {
       tag: "ellipse",
       attributes: {
-        cx: shape.r,
-        cy: shape.r,
+        cx: 0,
+        cy: 0,
         rx: shape.r,
         ry: shape.r,
         transform: renderTransform(affine),
@@ -70,54 +63,46 @@ export const struct: ShapeStruct<VnNodeShape> = {
     };
   },
   getWrapperRect(shape, _, includeBounds) {
-    let rect = getArcBounds(shape);
-    if (includeBounds) {
-      rect = expandRect(rect, getStrokeWidth(shape.stroke) / 2);
-    }
-    return getRotatedWrapperRect(rect, shape.rotation);
+    const rect = getArcBounds(shape);
+    if (!includeBounds) return rect;
+    return expandRect(rect, getStrokeWidth(shape.stroke) / 2);
   },
   getLocalRectPolygon,
   isPointOn(shape, p) {
-    const c = add(shape.p, { x: shape.r, y: shape.r });
-    return getD2(sub(c, p)) <= shape.r ** 2;
+    return getD2(sub(shape.p, p)) <= shape.r ** 2;
   },
   resize(shape, resizingAffine) {
-    const rectPolygon = getLocalRectPolygon(shape).map((p) => applyAffine(resizingAffine, p));
-    const c = getCenter(rectPolygon[0], rectPolygon[2]);
-    const p = sub(c, { x: shape.r, y: shape.r });
-
+    const p = applyAffine(resizingAffine, shape.p);
     const ret: Partial<VnNodeShape> = {};
     if (!isSame(p, shape.p)) ret.p = p;
-
     return ret;
   },
   getSnappingLines(shape) {
     return {
       h: [
         [
-          { x: shape.p.x, y: shape.p.y + shape.r },
-          { x: shape.p.x + 2 * shape.r, y: shape.p.y + shape.r },
+          { x: shape.p.x, y: shape.p.y },
+          { x: shape.p.x + 2 * shape.r, y: shape.p.y },
         ],
       ],
       v: [
         [
-          { x: shape.p.x + shape.r, y: shape.p.y },
-          { x: shape.p.x + shape.r, y: shape.p.y + 2 * shape.r },
+          { x: shape.p.x, y: shape.p.y },
+          { x: shape.p.x, y: shape.p.y + 2 * shape.r },
         ],
       ],
     };
   },
   getHighlightPaths(shape) {
-    const center = add(shape.p, { x: shape.r, y: shape.r });
-    return [covertEllipseToBezier(center, shape.r, shape.r, shape.rotation, -Math.PI, Math.PI)];
+    return [covertEllipseToBezier(shape.p, shape.r, shape.r, shape.rotation, -Math.PI, Math.PI)];
   },
   noRotation: true,
 };
 
 function getArcBounds(shape: VnNodeShape) {
   return {
-    x: shape.p.x + shape.r,
-    y: shape.p.y + shape.r,
+    x: shape.p.x,
+    y: shape.p.y,
     width: 0,
     height: 0,
   };

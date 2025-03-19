@@ -26,7 +26,7 @@ function getState(): AppCanvasState {
     const scale = ctx.getScale();
     applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 3 * scale });
     renderCtx.beginPath();
-    renderCtx.arc(shape.p.x + shape.r, shape.p.y + shape.r, shape.r, 0, TAU);
+    renderCtx.arc(shape.p.x, shape.p.y, shape.r, 0, TAU);
     renderCtx.stroke();
     shapeHandler.render(renderCtx, style, scale);
   };
