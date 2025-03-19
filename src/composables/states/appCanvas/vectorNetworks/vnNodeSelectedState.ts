@@ -65,8 +65,10 @@ function getState(): AppCanvasState {
                     pConnection: { id: shape.id, rate: { x: 0.5, y: 0.5 } },
                     stroke: siblingLine?.stroke,
                     fill: siblingLine?.fill,
+                    parentId: siblingLine?.parentId,
+                    alpha: siblingLine?.alpha,
                   });
-                  return () => ctx.states.newLineDrawingState({ shape: newLine });
+                  return () => ctx.states.newVnEdgeDrawingState({ shape: newLine });
                 }
               }
 

@@ -1,0 +1,180 @@
+import type { AppCanvasState, AppCanvasStateContext } from "../core";
+import { newDefaultState } from "../defaultState";
+import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
+import { ConnectionResult, isLineSnappableShape, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import { applyFillStyle } from "../../../../utils/fillStyle";
+import { COMMAND_EXAM_SRC } from "../commandExams";
+import { newShapeSnapping } from "../../../shapeSnapping";
+import { isSame } from "okageo";
+import { TAU } from "../../../../utils/geometry";
+import { newShapeComposite } from "../../../shapeComposite";
+import { handleCommonWheel } from "../../commons";
+import { newCoordinateRenderer } from "../../../coordinateRenderer";
+import { getSnappableCandidates } from "../commons";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { isVNNodeShape, VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
+import { createShape } from "../../../../shapes";
+import { newShapeRenderer } from "../../../shapeRenderer";
+
+interface Option {
+  // This state creates a stright edge, so that the "body" value of this shape does nothing.
+  shape: LineShape;
+}
+
+/**
+ * Works similarly to `newLineDrawingState`, but this state is dedicated to creating a vector network edge.
+ */
+export function newVnEdgeDrawingState(option: Option): AppCanvasState {
+  const srcShape: LineShape = { ...option.shape, body: [] };
+  const linePath = getLinePath(srcShape);
+  const movingIndex = linePath.length - 1;
+  let latestShape = srcShape;
+  let vnNode: VnNodeShape | undefined;
+  let vertex = linePath[movingIndex];
+  let connectionResult: ConnectionResult | undefined;
+  const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
+  let hoverMode = false;
+
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, []);
+    const shapeSnapping = newShapeSnapping({
+      shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+    const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
+    return newLineSnapping({
+      snappableShapes,
+      shapeSnapping,
+      getShapeStruct: shapeComposite.getShapeStruct,
+      movingLine: srcShape,
+      movingIndex,
+      ignoreCurrentLine: true,
+    });
+  });
+
+  return {
+    getLabel: () => "VnEdgeDrawing",
+    onStart: (ctx) => {
+      ctx.startDragging();
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+    },
+    onEnd: (ctx) => {
+      ctx.stopDragging();
+      ctx.setCommandExams();
+    },
+    handleEvent: (ctx, event) => {
+      switch (event.type) {
+        case "pointermove": {
+          const shapeComposite = ctx.getShapeComposite();
+          const point = event.data.current;
+          connectionResult = event.data.ctrl
+            ? undefined
+            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
+
+          if (connectionResult?.connection) {
+            const shapeComposite = ctx.getShapeComposite();
+            const connected = shapeComposite.shapeMap[connectionResult.connection.id];
+            // Dismiss the connection if the connected shape is not a VN node.
+            if (!connected || !isVNNodeShape(connected)) {
+              connectionResult = { ...connectionResult, connection: undefined };
+            }
+          }
+
+          vertex = connectionResult?.p ?? point;
+          coordinateRenderer.saveCoord(vertex);
+
+          if (!connectionResult?.connection) {
+            const srcNode = srcShape.pConnection ? shapeComposite.shapeMap[srcShape.pConnection.id] : undefined;
+            vnNode = vnNode
+              ? { ...vnNode, p: vertex }
+              : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                  ...srcNode,
+                  id: ctx.generateUuid(),
+                  findex: ctx.createLastIndex(),
+                  p: vertex,
+                });
+          } else {
+            vnNode = undefined;
+          }
+
+          const patch = patchVertex(
+            srcShape,
+            movingIndex,
+            vertex,
+            vnNode ? { id: vnNode.id, rate: { x: 0.5, y: 0.5 } } : connectionResult?.connection,
+          );
+          latestShape = { ...srcShape, ...patch };
+          ctx.redraw();
+          return;
+        }
+        case "pointerup": {
+          if (isSame(latestShape.p, latestShape.q)) {
+            // When the line has zero length, continue drawing it at first.
+            // When it happens again, cancel drawing the line.
+            if (!hoverMode) {
+              hoverMode = true;
+              return;
+            } else {
+              return ctx.states.newSelectionHubState;
+            }
+          }
+
+          if (vnNode) {
+            ctx.addShapes([latestShape, vnNode]);
+            ctx.selectShape(vnNode.id);
+          } else {
+            ctx.addShapes([latestShape]);
+            ctx.selectShape(latestShape.qConnection?.id ?? latestShape.id);
+          }
+          return ctx.states.newSelectionHubState;
+        }
+        case "keydown":
+          switch (event.data.key) {
+            case "Escape":
+              return ctx.states.newSelectionHubState;
+            default:
+              return;
+          }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
+          return;
+        case "history":
+          return newDefaultState;
+        default:
+          return;
+      }
+    },
+    render(ctx, renderCtx) {
+      const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+      const shapeComposite = ctx.getShapeComposite();
+      const previewShapes = vnNode ? [latestShape, { ...vnNode, alpha: (vnNode.alpha ?? 1) / 2 }] : [latestShape];
+
+      const previewShapeComposite = newShapeComposite({
+        shapes: previewShapes,
+        getStruct: ctx.getShapeStruct,
+      });
+      newShapeRenderer({ shapeComposite: previewShapeComposite, scale }).render(renderCtx);
+
+      coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
+
+      const vertexSize = 8 * scale;
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
+      renderCtx.beginPath();
+      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
+      renderCtx.fill();
+
+      if (connectionResult) {
+        renderConnectionResult(renderCtx, {
+          result: connectionResult,
+          scale,
+          style,
+          shapeComposite,
+        });
+      }
+    },
+  };
+}

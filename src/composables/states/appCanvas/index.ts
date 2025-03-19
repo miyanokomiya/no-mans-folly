@@ -15,6 +15,7 @@ import { newSmartBranchChildMarginState } from "./smartBranch/smartBranchChildMa
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";
 import { newSmartBranchSiblingMarginState } from "./smartBranch/smartBranchSiblingMarginState";
+import { newVnEdgeDrawingState } from "./vectorNetworks/vnEdgeDrawingState";
 import { newVNNodeSelectedState } from "./vectorNetworks/vnNodeSelectedState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
@@ -37,5 +38,6 @@ export const stateGenerators = {
   newSmartBranchChildMarginState,
   newSmartBranchSiblingMarginState,
   newVNNodeSelectedState,
+  newVnEdgeDrawingState,
 };
 export type StateGenerators = typeof stateGenerators;
