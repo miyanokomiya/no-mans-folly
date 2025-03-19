@@ -843,7 +843,7 @@ export function getSnappingResultForBoundingBoxResizing(
 
   // Let resized bounding box snap to shapes.
   const snappingResults = boundingBoxPath
-    .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+    .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p), scale))
     .filter((r): r is SnappingResult => !!r)
     .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
   if (snappingResults.length === 0) return { resizingAffine, snappingResult: undefined };
@@ -876,7 +876,7 @@ export function getSnappingResultForBoundingBoxResizing(
   } else if (resizingAffine) {
     // Need recalculation to get final control lines.
     const results = boundingBoxPath
-      .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p)))
+      .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p), scale))
       .filter((r): r is SnappingResult => !!r)
       .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
     if (results.length > 0) {
