@@ -4,6 +4,7 @@ import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { TAU } from "../../../../utils/geometry";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { newVnNodeHandler, VnNodeHandler } from "../../../shapeHandlers/vnNodeHandler";
+import { generateFindexBefore } from "../../../shapeRelation";
 import { getAnyConnectedLineInfoAtNode } from "../../../vectorNetwork";
 import {
   handleCommonPointerDownLeftOnSingleSelection,
@@ -59,7 +60,7 @@ function getState(): AppCanvasState {
                   const siblingLine = connectedInfo ? (sc.shapeMap[connectedInfo[0]] as LineShape) : undefined;
                   const newLine = createShape<LineShape>(ctx.getShapeStruct, "line", {
                     id: ctx.generateUuid(),
-                    findex: ctx.createLastIndex(),
+                    findex: generateFindexBefore(sc, shape.id),
                     p,
                     q: p,
                     pConnection: { id: shape.id, rate: { x: 0.5, y: 0.5 } },

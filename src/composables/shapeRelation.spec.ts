@@ -9,6 +9,8 @@ import {
   getLineUnrelatedIds,
   getNextSiblingId,
   isParentDisconnected,
+  generateFindexBefore,
+  generateFindexAfter,
 } from "./shapeRelation";
 import { TreeNodeShape } from "../shapes/tree/treeNode";
 
@@ -260,5 +262,60 @@ describe("getNextSiblingId", () => {
     expect(getNextSiblingId(shapeComposite, group.id)).toBe(undefined);
     expect(getNextSiblingId(shapeComposite, rect0.id)).toBe(rect1.id);
     expect(getNextSiblingId(shapeComposite, rect1.id)).toBe(undefined);
+  });
+});
+
+describe("generateFindexBefore, generateFindexNext", () => {
+  const rect0 = createShape(getCommonStruct, "rectangle", {
+    id: "rect0",
+    findex: generateKeyBetween(null, null),
+  });
+  const rect1 = {
+    ...rect0,
+    id: "rect1",
+    findex: generateKeyBetween(rect0.findex, null),
+  };
+  const rect2 = {
+    ...rect0,
+    id: "rect2",
+    findex: generateKeyBetween(rect1.findex, null),
+  };
+  const shapeComposite = newShapeComposite({
+    shapes: [rect0, rect1, rect2],
+    getStruct: getCommonStruct,
+  });
+
+  test("should generate findex before the target shape", () => {
+    const result0 = generateFindexBefore(shapeComposite, rect0.id);
+    expect(result0 < rect0.findex).toBe(true);
+
+    const result1 = generateFindexBefore(shapeComposite, rect1.id);
+    expect(rect0.findex < result1).toBe(true);
+    expect(result1 < rect1.findex).toBe(true);
+
+    const result2 = generateFindexBefore(shapeComposite, rect2.id);
+    expect(rect1.findex < result2).toBe(true);
+    expect(result2 < rect2.findex).toBe(true);
+  });
+
+  test("should generate findex after the target shape", () => {
+    const result0 = generateFindexAfter(shapeComposite, rect0.id);
+    console.log(rect0.findex, result0);
+    expect(rect0.findex < result0).toBe(true);
+
+    const result1 = generateFindexAfter(shapeComposite, rect1.id);
+    expect(rect1.findex < result1).toBe(true);
+    expect(result1 < rect2.findex).toBe(true);
+
+    const result2 = generateFindexAfter(shapeComposite, rect2.id);
+    expect(rect2.findex < result2).toBe(true);
+  });
+
+  test("should handle unknown shape id", () => {
+    const result0 = generateFindexBefore(shapeComposite, "unknown");
+    expect(rect2.findex < result0).toBe(true);
+
+    const result1 = generateFindexAfter(shapeComposite, "unknown");
+    expect(rect2.findex < result1).toBe(true);
   });
 });

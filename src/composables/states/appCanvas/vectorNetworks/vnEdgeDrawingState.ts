@@ -15,6 +15,7 @@ import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { isVNNodeShape, VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { createShape } from "../../../../shapes";
 import { newShapeRenderer } from "../../../shapeRenderer";
+import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 
 interface Option {
   // This state creates a stright edge, so that the "body" value of this shape does nothing.
@@ -54,11 +55,23 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
     });
   });
 
+  const createMovingVnNode = (ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const srcConnectedNode = srcShape.pConnection ? shapeComposite.shapeMap[srcShape.pConnection.id] : undefined;
+    return createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+      ...srcConnectedNode,
+      id: ctx.generateUuid(),
+      findex: generateFindexAfter(shapeComposite, srcShape.id),
+      p: vertex,
+    });
+  };
+
   return {
     getLabel: () => "VnEdgeDrawing",
     onStart: (ctx) => {
       ctx.startDragging();
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      vnNode = createMovingVnNode(ctx);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -74,7 +87,6 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
             : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
 
           if (connectionResult?.connection) {
-            const shapeComposite = ctx.getShapeComposite();
             const connected = shapeComposite.shapeMap[connectionResult.connection.id];
             // Dismiss the connection if the connected shape is not a VN node.
             if (!connected || !isVNNodeShape(connected)) {
@@ -86,15 +98,7 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
           coordinateRenderer.saveCoord(vertex);
 
           if (!connectionResult?.connection) {
-            const srcNode = srcShape.pConnection ? shapeComposite.shapeMap[srcShape.pConnection.id] : undefined;
-            vnNode = vnNode
-              ? { ...vnNode, p: vertex }
-              : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
-                  ...srcNode,
-                  id: ctx.generateUuid(),
-                  findex: ctx.createLastIndex(),
-                  p: vertex,
-                });
+            vnNode = vnNode ? { ...vnNode, p: vertex } : createMovingVnNode(ctx);
           } else {
             vnNode = undefined;
           }
@@ -105,7 +109,17 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
             vertex,
             vnNode ? { id: vnNode.id, rate: { x: 0.5, y: 0.5 } } : connectionResult?.connection,
           );
-          latestShape = { ...srcShape, ...patch };
+
+          let findex = srcShape.findex;
+          if (connectionResult?.connection) {
+            // Bring the line to the back of the currently connected VN node.
+            const vnnode = shapeComposite.shapeMap[connectionResult.connection.id];
+            if (vnnode.findex < findex) {
+              findex = generateFindexBefore(shapeComposite, connectionResult.connection.id);
+            }
+          }
+
+          latestShape = { ...srcShape, ...patch, findex };
           ctx.redraw();
           return;
         }

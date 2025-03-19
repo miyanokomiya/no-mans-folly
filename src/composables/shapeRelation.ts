@@ -1,6 +1,7 @@
 import { Shape } from "../models";
 import { getConnections, isLineShape } from "../shapes/line";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
+import { generateKeyBetweenAllowSame } from "../utils/findex";
 import { DependencyMap, getAllDependants, reverseDepMap } from "../utils/graph";
 import { ShapeComposite } from "./shapeComposite";
 
@@ -77,4 +78,31 @@ export function getNextSiblingId(shapeComposite: ShapeComposite, id: string): st
     : shapeComposite.mergedShapeTree;
   const srcIndex = siblings.findIndex((s) => s.id === src.id);
   return siblings.at(srcIndex + 1)?.id;
+}
+
+export function generateFindexBefore(shapeComposite: ShapeComposite, targetId: string): string {
+  const shape = shapeComposite.shapeMap[targetId];
+  if (!shape) return generateKeyBetweenAllowSame(shapeComposite.shapes.at(-1)?.findex, undefined);
+
+  const siblings = getSiblingShapes(shapeComposite, shape.parentId);
+  const targetIndex = siblings.findIndex((s) => s.id === shape.id);
+  return targetIndex === 0
+    ? generateKeyBetweenAllowSame(undefined, shape.findex)
+    : generateKeyBetweenAllowSame(siblings[targetIndex - 1].findex, shape.findex);
+}
+
+export function generateFindexAfter(shapeComposite: ShapeComposite, targetId: string): string {
+  const shape = shapeComposite.shapeMap[targetId];
+  if (!shape) return generateKeyBetweenAllowSame(shapeComposite.shapes.at(-1)?.findex, undefined);
+
+  const siblings = getSiblingShapes(shapeComposite, shape.parentId);
+  const targetIndex = siblings.findIndex((s) => s.id === shape.id);
+  return targetIndex === siblings.length - 1
+    ? generateKeyBetweenAllowSame(shape.findex, undefined)
+    : generateKeyBetweenAllowSame(shape.findex, siblings[targetIndex + 1].findex);
+}
+
+function getSiblingShapes(shapeComposite: ShapeComposite, parentId?: string) {
+  const parentNode = parentId ? shapeComposite.mergedShapeTreeMap[parentId] : undefined;
+  return (parentNode?.children ?? shapeComposite.mergedShapeTree).map((t) => shapeComposite.shapeMap[t.id]);
 }
