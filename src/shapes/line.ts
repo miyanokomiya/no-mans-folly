@@ -106,7 +106,7 @@ export const struct: ShapeStruct<LineShape> = {
       type: "line",
       rotation: 0, // should always be "0" or just ignored
       fill: arg.fill ?? createFillStyle({ disabled: true }),
-      stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
+      stroke: arg.stroke ?? createStrokeStyle({ width: 2, lineCap: "round" }), // set rounded cap by default since it works nicely with other lines
       q: arg.q ?? { x: 100, y: 0 },
       pHead: arg.pHead,
       qHead: arg.qHead,
