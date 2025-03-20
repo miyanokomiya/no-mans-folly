@@ -30,6 +30,7 @@ function getButtonClass(highlight = false) {
 const lineButtonTypeList = lineTypeList.concat([
   { type: "tangent", icon: iconLineTangent },
   { type: "normal", icon: iconLineNormal },
+  { type: "vn_node_insert", icon: iconLineNormal },
 ]);
 
 export const AppToolbar: React.FC = () => {
@@ -131,6 +132,12 @@ export const AppToolbar: React.FC = () => {
           sm.handleEvent({
             type: "state",
             data: { name: "LineNormalReady" },
+          });
+          break;
+        case "vn_node_insert":
+          sm.handleEvent({
+            type: "state",
+            data: { name: "VnNodeInsertReady" },
           });
           break;
         default:
