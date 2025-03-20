@@ -416,7 +416,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
   const handleContextMenuClick = useCallback(
     (e: React.MouseEvent) => {
       const bounds = (e.target as HTMLElement).getBoundingClientRect();
-      onContextMenu({ x: bounds.right, y: bounds.top }, true);
+      onContextMenu({ x: (bounds.left + bounds.right) / 2, y: bounds.bottom }, true);
     },
     [onContextMenu],
   );

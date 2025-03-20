@@ -5,6 +5,7 @@ import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
 import { AppText } from "./molecules/AppText";
 import iconDropdown from "../assets/icons/dropdown.svg";
 import { Size } from "../models";
+import { createPortal } from "react-dom";
 
 interface Props {
   items: ContextMenuItem[];
@@ -26,7 +27,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
   const [diff] = usePanelWithinViewport(ref, viewSize);
   const p = diff ? add(diff, point) : point;
 
-  return (
+  return createPortal(
     <div
       ref={ref}
       className={"fixed border left-0 top-0 bg-white" + (diff ? "" : " opacity-0")}
@@ -37,7 +38,8 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
       <div className="flex flex-col">
         <ContextList items={items} viewSize={viewSize} onClickItem={handleClick} />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
