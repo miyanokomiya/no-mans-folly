@@ -132,7 +132,7 @@ export function getShapePatchInfoBySplitingLineAt(
       q: vertices[sameVertexIndex],
       qConnection: connection,
       body: cleanArray(line.body?.slice(0, sameVertexIndex - 1)),
-      curves: cleanArray(line.curves?.slice(0, sameVertexIndex - 1)),
+      curves: cleanArray(line.curves?.slice(0, sameVertexIndex)),
     };
     const newLineSrc: Partial<LineShape> = {
       p: vertices[sameVertexIndex],

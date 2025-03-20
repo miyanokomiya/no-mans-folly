@@ -269,6 +269,49 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     );
   });
 
+  test("should handle split at the vertex: at the start of arc segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 50, y: 50 },
+      curves: [undefined, { d: { x: 0.5, y: 25 } }],
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
+    expect(currentLinePatch).toHaveProperty("body");
+    expect(currentLinePatch.body).toEqual(undefined);
+    expect(currentLinePatch).toHaveProperty("curves");
+    expect(currentLinePatch.curves).toEqual(undefined);
+    expect(currentLinePatch.q).toEqualPoint({ x: 50, y: 0 });
+    expect(newLineSrc.p).toEqualPoint({ x: 50, y: 0 });
+    expect(newLineSrc.body).toEqual(undefined);
+    expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
+
+    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)).toEqual(
+      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1),
+    );
+  });
+
+  test("should handle split at the vertex: at the end of arc segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 50, y: 50 },
+      curves: [{ d: { x: 0.5, y: 25 } }],
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
+    expect(currentLinePatch).toHaveProperty("body");
+    expect(currentLinePatch.body).toEqual(undefined);
+    expect(currentLinePatch.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
+    expect(currentLinePatch.q).toEqualPoint({ x: 50, y: 0 });
+    expect(newLineSrc.p).toEqualPoint({ x: 50, y: 0 });
+    expect(newLineSrc.body).toEqual(undefined);
+    expect(newLineSrc.curves).toEqual(undefined);
+
+    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)).toEqual(
+      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1),
+    );
+  });
+
   test("should handle split at the first or last vertex", () => {
     const cb = { id: "b", rate: { x: 0.5, y: 0.5 } };
     const line = createShape<LineShape>(getCommonStruct, "line", {
