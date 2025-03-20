@@ -19,6 +19,7 @@ import { patchByPartialProperties } from "../../utils/entities";
 import { SheetInspectorPanel } from "./SheetInspectorPanel";
 import { ShapeSelectionPanel } from "./ShapeSelectionPanel";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
+import { BlockGroupField } from "../atoms/BlockGroupField";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -191,11 +192,23 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [updateTargetShapesBySamePatch],
   );
 
-  const alphaField = <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />;
-  const noExportField = (
-    <InlineField label="No export">
-      <ToggleInput value={targetTmpShape.noExport ?? false} onChange={handleNoExportChange} />
-    </InlineField>
+  const handleLockedChange = useCallback(
+    (checked: boolean) => {
+      updateTargetShapesBySamePatch({ locked: checked });
+    },
+    [updateTargetShapesBySamePatch],
+  );
+
+  const statusField = (
+    <BlockGroupField label="Status" accordionKey="inspector-status">
+      <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />
+      <InlineField label="Locked">
+        <ToggleInput value={targetTmpShape.locked ?? false} onChange={handleLockedChange} />
+      </InlineField>
+      <InlineField label="No export">
+        <ToggleInput value={targetTmpShape.noExport ?? false} onChange={handleNoExportChange} />
+      </InlineField>
+    </BlockGroupField>
   );
 
   const groupConstraintField = canShapeGrouped(getShapeComposite().getShapeStruct, targetShape) ? (
@@ -206,8 +219,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
       {targetShapes.length >= 2 ? (
         <>
-          {alphaField}
-          {noExportField}
+          {statusField}
           <MultipleShapesInspector
             targetShapes={targetShapes}
             targetTmpShapes={targetTmpShapes}
@@ -219,8 +231,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       ) : (
         <>
           <ShapeTypeBlock type={targetShape.type} />
-          {alphaField}
-          {noExportField}
+          {statusField}
           {isLineShape(targetShape) ? (
             <LineShapeInspector
               targetShape={targetShape}
