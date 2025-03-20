@@ -132,7 +132,7 @@ describe("newLineBounding", () => {
 
         expect(target.hitTest({ x: 0, y: -20 })).toEqual({
           type: "optimize",
-          index: -1,
+          index: 0,
         });
         expect(target.hitTest({ x: 100, y: 20 })).toEqual({
           type: "optimize",
