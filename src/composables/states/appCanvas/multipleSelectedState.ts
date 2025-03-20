@@ -47,7 +47,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
     const scale = ctx.getScale();
     const style = ctx.getStyleScheme();
     const shapeComposite = ctx.getShapeComposite();
-    const shapes = Object.entries(shapeComposite.shapeMap)
+    const shapes = Object.entries(shapeComposite.mergedShapeMap)
       .filter(([id]) => selectedIdMap[id])
       .map(([, s]) => s);
 

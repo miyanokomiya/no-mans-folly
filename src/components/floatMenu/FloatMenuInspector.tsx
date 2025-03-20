@@ -39,6 +39,7 @@ import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnappin
 import { isLinePolygonShape, LinePolygonShape } from "../../shapes/polygons/linePolygon";
 import { canMakePolygon, patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
+import { FloatMenuVnNodeItems } from "./FloatMenuVnNodeItems";
 
 interface Props {
   canvasState: any;
@@ -522,6 +523,9 @@ export const FloatMenuInspector: React.FC<Props> = ({
       ) : undefined}
       {indexTextShape ? (
         <AlignAnchorButton {...popupButtonCommonProps} boxAlign={indexTextShape} onChange={onAlignAnchorChangeed} />
+      ) : undefined}
+      {indexShape ? (
+        <FloatMenuVnNodeItems {...popupButtonCommonProps} indexShape={indexShape} focusBack={focusBack} />
       ) : undefined}
       {canChangeStack ? (
         <StackButton {...popupButtonCommonProps} onClickLast={onClickStackLast} onClickFirst={onClickStackFirst} />
