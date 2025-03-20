@@ -33,6 +33,7 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { ShapeHandler, defineShapeHandler } from "./shapeHandlers/core";
 import { CanvasCTX } from "../utils/types";
+import { getShapeStatusColor } from "./states/appCanvas/utils/style";
 
 const ANCHOR_SIZE = 5;
 
@@ -52,6 +53,7 @@ interface Option {
   noRotation?: boolean;
   noMoveAnchor?: boolean;
   locked?: boolean;
+  noExport?: boolean;
 }
 
 export type BoundingBox = ShapeHandler<HitResult> & {
@@ -183,12 +185,13 @@ export function newBoundingBox(option: Option): BoundingBox {
 
       ctx.beginPath();
       applyPath(ctx, option.path, true);
-      if (option.locked) {
-        applyStrokeStyle(ctx, { color: style.locked, width: style.selectionLineWidth * scale });
-      } else if (hitResult?.type === "area") {
+      if (hitResult?.type === "area") {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
       } else {
-        applyStrokeStyle(ctx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
+        applyStrokeStyle(ctx, {
+          color: getShapeStatusColor(style, option) ?? style.selectionPrimary,
+          width: style.selectionLineWidth * scale,
+        });
       }
       ctx.stroke();
 

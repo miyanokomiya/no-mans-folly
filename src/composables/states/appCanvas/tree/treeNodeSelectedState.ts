@@ -74,6 +74,7 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
         noRotation: true,
         noMoveAnchor: true,
         locked: treeNodeShape.locked,
+        noExport: treeNodeShape.noExport,
       });
     },
     onEnd: (ctx) => {

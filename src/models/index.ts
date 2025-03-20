@@ -52,6 +52,7 @@ export interface StyleScheme {
   transformAnchor: Color;
   alert: Color;
   locked: Color;
+  noExport: Color;
 }
 
 export interface Color {

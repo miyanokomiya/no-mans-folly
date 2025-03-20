@@ -15,7 +15,7 @@ import { ContextMenuItem } from "../types";
 import { isGroupShape } from "../../../shapes/group";
 import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
-import { splitList } from "../../../utils/commons";
+import { getShapeStatusColor } from "./utils/style";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -50,17 +50,15 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
       .filter(([id]) => selectedIdMap[id])
       .map(([, s]) => s);
 
-    const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
-
-    applyStrokeStyle(renderCtx, { color: style.locked, width: 2 * scale });
-    renderCtx.beginPath();
-    locked.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
-    renderCtx.stroke();
-
-    applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale });
-    renderCtx.beginPath();
-    unlocked.forEach((s) => applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true));
-    renderCtx.stroke();
+    shapes.forEach((s) => {
+      applyStrokeStyle(renderCtx, {
+        color: getShapeStatusColor(style, s) ?? style.selectionSecondaly,
+        width: 2 * scale,
+      });
+      renderCtx.beginPath();
+      applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true);
+      renderCtx.stroke();
+    });
 
     boundingBox.render(renderCtx, ctx.getStyleScheme(), scale);
     handler.render(renderCtx, style, scale);

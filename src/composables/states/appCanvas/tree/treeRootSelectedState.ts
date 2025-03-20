@@ -57,6 +57,7 @@ export const newTreeRootSelectedState = defineIntransientState(() => {
       boundingBox = newBoundingBox({
         path: shapeComposite.getLocalRectPolygon(treeRootShape),
         locked: treeRootShape.locked,
+        noExport: treeRootShape.noExport,
       });
     },
     onEnd: (ctx) => {

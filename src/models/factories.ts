@@ -12,5 +12,6 @@ export function createStyleScheme(): StyleScheme {
     transformAnchor: createColor(250, 250, 55),
     alert: createColor(224, 0, 0),
     locked: createColor(168, 85, 247),
+    noExport: createColor(211, 84, 0),
   };
 }

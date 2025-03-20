@@ -28,6 +28,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(target),
       locked: target.locked,
+      noExport: target.noExport,
     });
     alignBoxHandler = newAlignBoxHandler({
       getShapeComposite: ctx.getShapeComposite,

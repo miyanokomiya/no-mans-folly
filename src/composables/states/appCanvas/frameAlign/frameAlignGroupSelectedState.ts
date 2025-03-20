@@ -27,6 +27,7 @@ export const newFrameAlignGroupSelectedState = defineIntransientState(() => {
     boundingBox = newBoundingBox({
       path: ctx.getShapeComposite().getLocalRectPolygon(target),
       locked: target.locked,
+      noExport: target.noExport,
       noRotation: true,
     });
     alignBoxHandler = newAlignBoxHandler({

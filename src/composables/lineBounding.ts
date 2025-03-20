@@ -19,6 +19,7 @@ import { canAddBezierControls, getModifiableBezierControls } from "../shapes/uti
 import { isConnectedToCenter } from "../shapes/utils/line";
 import { CanvasCTX } from "../utils/types";
 import { THRESHOLD_FOR_SEGMENT } from "../shapes/core";
+import { getShapeStatusColor } from "./states/appCanvas/utils/style";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
@@ -358,12 +359,12 @@ export function newLineBounding(option: Option) {
       });
     }
 
-    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
+    applyStrokeStyle(ctx, { color: getShapeStatusColor(style, lineShape) ?? style.selectionPrimary, width: 3 * scale });
     vertices.forEach((p, i) => {
       if (!availableVertexIndex.has(i)) return;
 
       if (connections[i]) {
-        applyFillStyle(ctx, { color: style.selectionPrimary });
+        applyFillStyle(ctx, { color: getShapeStatusColor(style, lineShape) ?? style.selectionPrimary });
       } else {
         ctx.fillStyle = "#fff";
       }

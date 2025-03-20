@@ -9,8 +9,8 @@ import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { applyFillStyle } from "../../../utils/fillStyle";
-import { splitList } from "../../../utils/commons";
 import { Shape } from "../../../models";
+import { getShapeStatusColor } from "./utils/style";
 
 interface Option {
   keepSelection?: boolean;
@@ -153,24 +153,20 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         .filter(([id]) => selectedIds[id] || targetIdSet.has(id))
         .map(([, s]) => s);
 
-      const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
-
-      renderCtx.beginPath();
-
       const applyPath = (s: Shape) =>
         (getHighlightPaths(ctx.getShapeStruct, s) ?? getOutlinePaths(ctx.getShapeStruct, s))?.forEach((path) =>
           applyCurvePath(renderCtx, path.path, path.curves),
         );
 
-      applyStrokeStyle(renderCtx, { color: style.locked, width: 2 * scale });
-      renderCtx.beginPath();
-      locked.forEach((s) => applyPath(s));
-      renderCtx.stroke();
-
-      applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 3 * scale });
-      renderCtx.beginPath();
-      unlocked.forEach((s) => applyPath(s));
-      renderCtx.stroke();
+      shapes.forEach((s) => {
+        applyStrokeStyle(renderCtx, {
+          color: getShapeStatusColor(style, s) ?? style.selectionSecondaly,
+          width: 2 * scale,
+        });
+        renderCtx.beginPath();
+        applyPath(s);
+        renderCtx.stroke();
+      });
 
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       scaleGlobalAlpha(renderCtx, 0.05, () => {

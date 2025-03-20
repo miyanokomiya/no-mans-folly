@@ -34,6 +34,7 @@ export function handleAlignBoxHitResult(
       const boundingBox = newBoundingBox({
         path: ctx.getShapeComposite().getLocalRectPolygon(targetShape),
         locked: targetShape.locked,
+        noExport: targetShape.noExport,
       });
       return () =>
         newResizingState({

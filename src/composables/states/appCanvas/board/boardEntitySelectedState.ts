@@ -74,6 +74,7 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
         noRotation: !isBoardRoot,
         noMoveAnchor: !isBoardRoot,
         locked: targetShape.locked,
+        noExport: targetShape.noExport,
       });
 
       ctx.showFloatMenu();

@@ -92,6 +92,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         boundingBox = newBoundingBox({
           path: shapeComposite.getLocalRectPolygon(targetShape),
           locked: targetShape.locked,
+          noExport: targetShape.noExport,
           noRotation: isNoRotationShape(shapeComposite.getShapeStruct, targetShape),
         });
 

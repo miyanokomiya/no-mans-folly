@@ -166,3 +166,12 @@ export function toHexAndAlpha(str?: string | null): [string, number] | undefined
   const rgba = str ? (parseRGBA(str) ?? hexToColor(str)) : undefined;
   return rgba ? [colorToHex(rgba), rgba.a] : undefined;
 }
+
+export function getMiddleColor(a: RGBA, b: RGBA): RGBA {
+  return {
+    r: (a.r + b.r) / 2,
+    g: (a.g + b.g) / 2,
+    b: (a.b + b.b) / 2,
+    a: (a.a + b.a) / 2,
+  };
+}
