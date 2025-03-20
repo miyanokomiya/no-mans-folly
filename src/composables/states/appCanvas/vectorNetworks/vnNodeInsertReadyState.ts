@@ -18,8 +18,8 @@ import { newShapeComposite } from "../../../shapeComposite";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { getSegmentIndexCloseAt, getShapePatchInfoBySplitingLineAt } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
-import { generateKeyBetween } from "../../../../utils/findex";
 import { seekNearbyVnNode } from "../../../vectorNetwork";
+import { generateFindexBefore } from "../../../shapeRelation";
 
 export function newVnNodeInsertReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -84,7 +84,6 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
               if (!connectionResult?.outlineSrc || !vnnode) return ctx.states.newSelectionHubState;
 
               const vnnodeId = vnnode.id;
-              const vnnodeFindex = vnnode.findex;
               const p = connectionResult.p;
               const shapeComposite = ctx.getShapeComposite();
               // This threshold isn't so important since targets are already chosen for the point.
@@ -120,7 +119,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
                   ...shape,
                   ...splitPatch[0],
                   id: ctx.generateUuid(),
-                  findex: generateKeyBetween(shape.findex, vnnodeFindex),
+                  findex: generateFindexBefore(shapeComposite, shape.id),
                   pConnection: connection,
                 });
                 newShapes.push(newLine);

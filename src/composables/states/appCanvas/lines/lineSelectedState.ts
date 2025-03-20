@@ -42,7 +42,7 @@ import { ContextMenuItem } from "../../types";
 import { AppCanvasState } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { generateKeyBetween } from "../../../../utils/findex";
-import { generateFindexAfter } from "../../../shapeRelation";
+import { generateFindexBefore } from "../../../shapeRelation";
 import { seekNearbyVnNode } from "../../../vectorNetwork";
 
 type VertexMetaForContextMenu = {
@@ -325,7 +325,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               const newLine = createShape<LineShape>(ctx.getShapeStruct, "line", {
                 ...splitPatch[0],
                 id: ctx.generateUuid(),
-                findex: generateFindexAfter(sc, lineShape.id),
+                findex: generateFindexBefore(sc, lineShape.id),
                 pConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
               });
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
