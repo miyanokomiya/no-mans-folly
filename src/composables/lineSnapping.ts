@@ -162,7 +162,7 @@ export function newLineSnapping(option: Option) {
             guidLines: [pickLongSegment(...selfSnapped.guidLines[0], snappedP)],
             shapeSnappingResult: connection ? undefined : snapped,
             connection,
-            outlineSrc: connection?.id,
+            outlineSrc: connection?.id ?? seekOutlinedShapeWithinSnappedAt(shapeComposite, snapped, snappedP)?.id,
           };
         }
       }
@@ -185,7 +185,7 @@ export function newLineSnapping(option: Option) {
             p: snappedP,
             shapeSnappingResult: snapped,
             connection,
-            outlineSrc: connection?.id,
+            outlineSrc: connection?.id ?? seekOutlinedShapeWithinSnappedAt(shapeComposite, snapped, snappedP)?.id,
           };
         }
 
@@ -224,7 +224,7 @@ export function newLineSnapping(option: Option) {
           if (!isZero(guidelineV)) {
             lineConstrain = {
               p: add(point, snapped.diff),
-              guidLines: [],
+              guidLines: [guideline],
               shapeSnappingResult: {
                 diff: snapped.diff,
                 ...filterSnappingTargetsBySecondGuideline(snapped, guideline),
@@ -495,6 +495,15 @@ function seekConnecionAt(
 
     return connection;
   }
+}
+
+function seekOutlinedShapeWithinSnappedAt(
+  shapeComposite: ShapeComposite,
+  snapped: SnappingResult,
+  point: IVec2,
+): Shape | undefined {
+  const targetShapes = snapped.targets.map<Shape | undefined>((t) => shapeComposite.shapeMap[t.id]);
+  return targetShapes.find((s) => s && shapeComposite.isPointOnOutline(s, point));
 }
 
 function getConnectedPrimeShape(main?: Shape, sub?: Shape): Shape | undefined {

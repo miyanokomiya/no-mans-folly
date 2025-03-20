@@ -290,7 +290,12 @@ describe("newLineSnapping", () => {
         connection: { id: "b", rate: { x: 0.8, y: 1 } },
         outlineSrc: "b",
         p: { x: 230, y: 100 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: 230, y: -500 },
+            { x: 230, y: 500 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: {
             x: -1,
@@ -318,7 +323,12 @@ describe("newLineSnapping", () => {
         connection: { id: "b", rate: { x: 0, y: 0.3 } },
         outlineSrc: "b",
         p: { x: 150, y: 30 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: -500, y: 30 },
+            { x: 500, y: 30 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: {
             x: 0,
@@ -383,7 +393,12 @@ describe("newLineSnapping", () => {
         connection: { id: "a", rate: { x: 0.2, y: 0 } },
         outlineSrc: "a",
         p: { x: 20, y: 0 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: 20, y: -50 },
+            { x: 20, y: 50 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: { x: 2, y: 0 },
           intervalTargets: [],
@@ -454,7 +469,12 @@ describe("newLineSnapping", () => {
         outlineSrc: "a",
         outlineSubSrc: "line",
         p: { x: 20, y: 0 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: { x: 0, y: -1 },
           intervalTargets: [],
@@ -482,7 +502,12 @@ describe("newLineSnapping", () => {
         outlineSrc: "a",
         outlineSubSrc: "line",
         p: { x: 20, y: 0 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: { x: 0, y: -1 },
           intervalTargets: [],
@@ -657,7 +682,12 @@ describe("newLineSnapping", () => {
         connection: { id: "rect", rate: { x: 0.2, y: 0 } },
         outlineSrc: rect.id,
         p: { x: 20, y: 0 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: -50, y: 0 },
+            { x: 50, y: 0 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: { x: 0, y: -1 },
           intervalTargets: [],
@@ -744,7 +774,12 @@ describe("newLineSnapping", () => {
         connection: { id: "b", rate: { x: 0.8, y: 1 } },
         outlineSrc: "b",
         p: { x: 230, y: 100 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: 230, y: -500 },
+            { x: 230, y: 500 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: {
             x: -1,
@@ -772,7 +807,12 @@ describe("newLineSnapping", () => {
         connection: { id: "b", rate: { x: 0, y: 0.3 } },
         outlineSrc: "b",
         p: { x: 150, y: 30 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: -500, y: 30 },
+            { x: 500, y: 30 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: {
             x: 0,
@@ -959,7 +999,12 @@ describe("newLineSnapping", () => {
       expect(target0.testConnection({ x: -52, y: -102 }, 1), "connected to the shape").toEqual({
         outlineSrc: "line0",
         p: { x: -50, y: -100 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: -50, y: -102 },
+            { x: -50, y: -52 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: { x: 2, y: 0 },
           targets: [],
@@ -985,7 +1030,12 @@ describe("newLineSnapping", () => {
       expect(target0.testConnection({ x: 298, y: -102 }, 1), "connected to the shape").toEqual({
         outlineSrc: "line1",
         p: { x: 300, y: -100 },
-        guidLines: [],
+        guidLines: [
+          [
+            { x: 300, y: -102 },
+            { x: 300, y: -52 },
+          ],
+        ],
         shapeSnappingResult: {
           diff: { x: 2, y: 0 },
           targets: [],
