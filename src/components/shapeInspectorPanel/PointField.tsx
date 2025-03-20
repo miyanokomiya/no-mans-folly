@@ -49,9 +49,11 @@ export const PointField: React.FC<Props> = ({
     onChange?.({ x: latestValue.current.y, y: latestValue.current.x });
   }, [onChange]);
 
-  const fieldClassName = swappable ? "w-21" : "w-24";
+  const showSwap = swappable && !disabled && !disabledX && !disabledY;
+
+  const fieldClassName = showSwap ? "w-21" : "w-24";
   return (
-    <div className={"flex items-center" + (swappable ? " gap-1" : " gap-2")}>
+    <div className={"flex items-center" + (showSwap ? " gap-1" : " gap-2")}>
       <div className={fieldClassName}>
         <NumberInput
           value={value.x}
@@ -64,7 +66,7 @@ export const PointField: React.FC<Props> = ({
           slider
         />
       </div>
-      {swappable ? (
+      {showSwap ? (
         <button type="button" className="rounded-xs p-0.5 border hover:bg-gray-200 w-6 h-6" onClick={handleSwap}>
           <img src={iconSwap} alt="Swap" className="w-full h-full" />
         </button>
