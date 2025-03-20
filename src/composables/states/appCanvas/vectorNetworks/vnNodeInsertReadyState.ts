@@ -144,12 +144,17 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
           vertex = connectionResult?.p ?? point;
 
           const shapeComposite = ctx.getShapeComposite();
+          const targetShapes = [connectionResult?.outlineSrc, connectionResult?.outlineSubSrc]
+            .map((id) => (id ? shapeComposite.shapeMap[id] : undefined))
+            .filter((s): s is LineShape => !!s && isLineShape(s));
           // Regard up to two lines.
           // TODO: It's possible to regard more than two line.
           // => There's no good way to seek lines exactly running through the point.
-          targetIds = [connectionResult?.outlineSrc, connectionResult?.outlineSubSrc].filter(
-            (s): s is string => !!s && isLineShape(shapeComposite.shapeMap[s]),
-          );
+          targetIds = targetShapes.map((s) => s.id);
+          // Inherit parent when all target share the same parent.
+          const parentId = targetShapes.every((s) => s.parentId === targetShapes.at(0)?.parentId)
+            ? targetShapes.at(0)?.parentId
+            : undefined;
           vnnode =
             targetIds.length > 0
               ? vnnode
@@ -158,6 +163,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
                     id: ctx.createLastIndex(),
                     findex: ctx.createLastIndex(),
                     p: vertex,
+                    parentId,
                   })
               : undefined;
 
