@@ -148,6 +148,7 @@ export function newLineSnapping(option: Option) {
 
     let lineConstrain: { p: IVec2; guidLines: ISegment[]; shapeSnappingResult?: SnappingResult } | undefined;
     let extendedGuideLine: ISegment | undefined;
+    let guidelineDetermined: ConnectionResult | undefined;
 
     if (selfSnapped?.guidLines[0] && !isSame(selfSnapped!.p, selfSnapped.guidLines[0][0])) {
       if (selfSnapped.guidLines.length === 1 && option.shapeSnapping) {
@@ -175,13 +176,12 @@ export function newLineSnapping(option: Option) {
       if (snapped) {
         const snappedP = add(point, snapped.diff);
         const allGuidelines = getGuidelinesFromSnappingResult(snapped, snappedP);
-        // When there're more than one guidelines, snapping point must have been determined.
-        // TODO: It's still possible to find better point by checking shape outlines.
+        // When there're more than one guidelines, keep this result as most probable one.
         if (allGuidelines.length > 1) {
           const snappedP = add(point, snapped.diff);
           // Seek connected shape at the determined point.
           const connection = seekConnecionAt(shapeComposite, snapped, snappedP);
-          return {
+          guidelineDetermined = {
             p: snappedP,
             shapeSnappingResult: snapped,
             connection,
@@ -241,6 +241,9 @@ export function newLineSnapping(option: Option) {
     let outline: { p: IVec2; shape: Shape; guideLine?: ISegment; subshape?: Shape } | undefined;
     {
       let intersectionThreshold = threshold;
+      if (guidelineDetermined) {
+        intersectionThreshold = getDistance(guidelineDetermined.p, point);
+      }
 
       if (lineConstrain && extendedGuideLine) {
         // Seed the closest intersection between the guideline and shape outline.
@@ -378,6 +381,8 @@ export function newLineSnapping(option: Option) {
       }
     }
 
+    if (outline && !outline.guideLine && guidelineDetermined) return guidelineDetermined;
+
     if (outline) {
       const connectionTarget = getConnectedPrimeShape(outline.shape, outline.subshape);
       let connection = connectionTarget
@@ -425,6 +430,8 @@ export function newLineSnapping(option: Option) {
         guidLines: outline.guideLine ? [outline.guideLine] : undefined,
       };
     }
+
+    if (guidelineDetermined) return guidelineDetermined;
 
     const snapped = lineConstrain ?? selfSnapped;
     if (snapped) {

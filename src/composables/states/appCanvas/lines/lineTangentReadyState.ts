@@ -52,8 +52,7 @@ export function newLineTangentReadyState(): AppCanvasState {
     ctx: AppCanvasStateContext,
   ): ConnectionResult | undefined => {
     const snapping = lineSnappingCache.getValue(ctx);
-    const result = (ctrl ? snapping.withoutGuideline : snapping.withGuideline).testConnection(point, ctx.getScale());
-    return result?.outlineSrc ? result : undefined;
+    return (ctrl ? snapping.withoutGuideline : snapping.withGuideline).testConnection(point, ctx.getScale());
   };
 
   return {
