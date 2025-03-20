@@ -39,7 +39,7 @@ export function newAlignBoxGapState(option: Option): AppCanvasState {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
 
-          nextGap = alignBoxHandler.getModifiedGap(option.type, event.data.start, event.data.current, {
+          nextGap = alignBoxHandler.getModifiedGap(option.type, event.data.startAbs, event.data.current, {
             both: event.data.shift,
           });
           if (nextGap) {

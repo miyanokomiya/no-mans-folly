@@ -84,11 +84,11 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 80 }, scale: 1 },
+        data: { start: { x: -200, y: -10 }, startAbs: { x: -200, y: -10 }, current: { x: 10, y: 80 }, scale: 1 },
       });
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
+        data: { start: { x: -200, y: -10 }, startAbs: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_root"], false);
@@ -103,7 +103,7 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 280 }, current: { x: 10, y: 180 }, scale: 1 },
+        data: { start: { x: -200, y: 280 }, startAbs: { x: -200, y: 280 }, current: { x: 10, y: 180 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node1"], false);
@@ -111,7 +111,7 @@ describe("newRectangleSelectingState", () => {
       ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 280 }, current: { x: 10, y: 80 }, scale: 1 },
+        data: { start: { x: -200, y: 280 }, startAbs: { x: -200, y: 280 }, current: { x: 10, y: 80 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0", "tree_node1"], false);
@@ -119,7 +119,7 @@ describe("newRectangleSelectingState", () => {
       ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 280 }, current: { x: 10, y: -10 }, scale: 1 },
+        data: { start: { x: -200, y: 280 }, startAbs: { x: -200, y: 280 }, current: { x: 10, y: -10 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes, "should pick parent scope when whole family are inside").toHaveBeenCalledWith(
@@ -137,7 +137,7 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 10 }, current: { x: 10, y: 80 }, scale: 1 },
+        data: { start: { x: -200, y: 10 }, startAbs: { x: -200, y: 10 }, current: { x: 10, y: 80 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe("newRectangleSelectingState", () => {
       ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 10 }, current: { x: 10, y: 180 }, scale: 1 },
+        data: { start: { x: -200, y: 10 }, startAbs: { x: -200, y: 10 }, current: { x: 10, y: 180 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0"], true);
@@ -153,7 +153,7 @@ describe("newRectangleSelectingState", () => {
       ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
+        data: { start: { x: -200, y: -10 }, startAbs: { x: -200, y: -10 }, current: { x: 10, y: 280 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes, "should respect initial scope").toHaveBeenCalledWith(
@@ -171,7 +171,7 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 210 }, current: { x: 10, y: 80 }, scale: 1 },
+        data: { start: { x: -200, y: 210 }, startAbs: { x: -200, y: 210 }, current: { x: 10, y: 80 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_node0"], false);
@@ -179,7 +179,7 @@ describe("newRectangleSelectingState", () => {
       ctx.multiSelectShapes.mockReset();
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -200, y: 210 }, current: { x: 10, y: -10 }, scale: 1 },
+        data: { start: { x: -200, y: 210 }, startAbs: { x: -200, y: 210 }, current: { x: 10, y: -10 }, scale: 1 },
       });
       target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["tree_root"], false);
@@ -195,7 +195,7 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -10, y: -10 }, current: { x: 60, y: 60 }, scale: 1 },
+        data: { start: { x: -10, y: -10 }, startAbs: { x: -10, y: -10 }, current: { x: 60, y: 60 }, scale: 1 },
       });
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a"], false);
@@ -210,7 +210,7 @@ describe("newRectangleSelectingState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: -10, y: -10 }, current: { x: 60, y: 60 }, scale: 1 },
+        data: { start: { x: -10, y: -10 }, startAbs: { x: -10, y: -10 }, current: { x: 60, y: 60 }, scale: 1 },
       });
       const result = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a"], true);

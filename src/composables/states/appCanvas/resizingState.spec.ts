@@ -42,7 +42,7 @@ describe("newResizingState", () => {
       target.onStart?.(ctx as any);
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 10 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 10 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenCalledWith({
         a: {

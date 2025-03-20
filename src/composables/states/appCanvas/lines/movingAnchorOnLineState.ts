@@ -45,7 +45,7 @@ export function newMovingAnchorOnLineState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          const diff = sub(event.data.current, event.data.start);
+          const diff = sub(event.data.current, event.data.startAbs);
           const shapeComposite = ctx.getShapeComposite();
           const indexShape = subShapeComposite.shapeMap[option.shapeId];
           if (!shapeComposite.attached(indexShape)) {

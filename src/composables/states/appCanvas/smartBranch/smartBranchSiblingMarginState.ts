@@ -38,7 +38,7 @@ export function newSmartBranchSiblingMarginState(option: Option): AppCanvasState
 
       switch (event.type) {
         case "pointermove": {
-          const v = -rotate(sub(event.data.current, event.data.start), (-Math.PI / 2) * result.index).x;
+          const v = -rotate(sub(event.data.current, event.data.startAbs), (-Math.PI / 2) * result.index).x;
           nextSiblingMargin = Math.max(0, defaultSiblingMargin + v);
 
           if (!event.data.ctrl) {

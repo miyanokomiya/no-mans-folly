@@ -33,7 +33,7 @@ describe("handleEvent", () => {
       target.onStart?.(ctx);
       target.handleEvent(ctx, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 11, y: 0 }, ctrl: true, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 11, y: 0 }, ctrl: true, scale: 1 },
       });
       expect(
         target.handleEvent(ctx, {
@@ -52,7 +52,7 @@ describe("handleEvent", () => {
       target.onStart?.(ctx);
       target.handleEvent(ctx, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(
         target.handleEvent(ctx, {
@@ -77,7 +77,7 @@ describe("handleEvent", () => {
       target.onStart?.(ctx);
       target.handleEvent(ctx, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, ctrl: true, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, ctrl: true, scale: 1 },
       });
       expect(
         target.handleEvent(ctx, {
@@ -87,7 +87,7 @@ describe("handleEvent", () => {
       ).toBe(undefined);
       target.handleEvent(ctx, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 11, y: 0 }, ctrl: true, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 11, y: 0 }, ctrl: true, scale: 1 },
       });
       expect(
         target.handleEvent(ctx, {
@@ -120,7 +120,7 @@ describe("handleEvent", () => {
       target.onStart?.(ctx);
       target.handleEvent(ctx, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 100, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 100, y: 0 }, scale: 1 },
       });
       target.handleEvent(ctx, {
         type: "pointerup",

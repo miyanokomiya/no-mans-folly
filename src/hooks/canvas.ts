@@ -28,6 +28,8 @@ export function useCanvas(
   const [moveType, setMoveType] = useState<"move" | "drag" | undefined>();
   // In the view space
   const [editStartPoint, setEditStartPoint] = useState<IVec2>();
+  // In the canvas space
+  const [editStartCanvasPoint, setEditStartCanvasPoint] = useState<IVec2>();
   const [editStartViewOrigin, setEditStartViewOrigin] = useState<IVec2>();
 
   // Prepare ref for mouse point to reduce recalculation.
@@ -72,20 +74,23 @@ export function useCanvas(
   const endMoving = useCallback(() => {
     setMoveType(undefined);
     setEditStartPoint(undefined);
+    setEditStartCanvasPoint(undefined);
     setEditStartViewOrigin(undefined);
   }, []);
 
   const startMoving = useCallback(() => {
     setMoveType("move");
     setEditStartPoint(getMousePoint());
+    setEditStartCanvasPoint(viewToCanvas(getMousePoint()));
     setEditStartViewOrigin(viewOrigin);
-  }, [viewOrigin, getMousePoint]);
+  }, [viewOrigin, getMousePoint, viewToCanvas]);
 
   const startDragging = useCallback(() => {
     setMoveType("drag");
     setEditStartPoint(getMousePoint());
+    setEditStartCanvasPoint(viewToCanvas(getMousePoint()));
     setEditStartViewOrigin(viewOrigin);
-  }, [viewOrigin, getMousePoint]);
+  }, [viewOrigin, getMousePoint, viewToCanvas]);
 
   const viewCanvasRect = useMemo<IRectangle>(
     () => ({
@@ -100,7 +105,7 @@ export function useCanvas(
   const viewCenter = useMemo(() => getRectCenter({ x: 0, y: 0, ...viewSize }), [viewSize]);
 
   const panView = useCallback(
-    (editMovement: EditMovement) => {
+    (editMovement: Omit<EditMovement, "startAbs">) => {
       if (!editStartViewOrigin) return;
       setViewOrigin(add(editStartViewOrigin, sub(editMovement.start, editMovement.current)));
     },
@@ -202,6 +207,7 @@ export function useCanvas(
     viewSize,
     setViewSize,
     editStartPoint,
+    editStartCanvasPoint,
     getMousePoint,
     setMousePoint,
     scale,

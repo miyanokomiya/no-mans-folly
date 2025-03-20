@@ -45,7 +45,7 @@ describe("newRotatingState", () => {
       target.onStart?.(ctx as any);
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 10, y: 0 }, current: { x: 0, y: 10 }, scale: 1 },
+        data: { start: { x: 10, y: 0 }, startAbs: { x: 10, y: 0 }, current: { x: 0, y: 10 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenCalled();
     });
@@ -85,7 +85,7 @@ describe("newRotatingState", () => {
       target.onStart?.(ctx as any);
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 50, y: 25 }, current: { x: 25, y: 50 }, scale: 1 },
+        data: { start: { x: 50, y: 25 }, startAbs: { x: 50, y: 25 }, current: { x: 25, y: 50 }, scale: 1 },
       });
       expect(data["a"].rotation).toBeCloseTo(-Math.PI * 0.75);
       expect(data["a"].attachment?.rotation).toBeCloseTo(Math.PI);

@@ -3,11 +3,12 @@ import { ModifierOptions } from "../../utils/devices";
 
 export type EditMovement = {
   current: IVec2;
-  start: IVec2;
+  start: IVec2; // This can change when the viewport is moved while editing.
+  startAbs: IVec2; // This isn't affected by the viewport shift while editing.
   scale: number;
 } & ModifierOptions;
 
-export type HoverMovement = Omit<EditMovement, "start">;
+export type HoverMovement = Omit<EditMovement, "start" | "startAbs">;
 
 export type KeyOptions = {
   key: string;

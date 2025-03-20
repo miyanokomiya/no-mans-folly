@@ -54,7 +54,7 @@ export function newRotatingState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           freeAngle = !!event.data.ctrl;
-          resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.start, event.data.current, freeAngle);
+          resizingAffine = boundingBoxRotatingRotating.getAffine(event.data.startAbs, event.data.current, freeAngle);
 
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = ctx.getShapeComposite().shapeMap;

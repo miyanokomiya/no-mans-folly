@@ -48,7 +48,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          rectangle = getOuterRectangle([[event.data.start, event.data.current]]);
+          rectangle = getOuterRectangle([[event.data.startAbs, event.data.current]]);
           const hitTest = newRectInRectHitTest(rectangle);
           const composite = ctx.getShapeComposite();
           const shapeMap = composite.mergedShapeMap;

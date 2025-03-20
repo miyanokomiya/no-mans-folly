@@ -48,7 +48,7 @@ export function newRotatingLineLabelState(option: Option): AppCanvasState {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
           freeAngle = !!event.data.ctrl;
-          const affineSrc = boundingBoxRotating.getAffine(event.data.start, event.data.current, freeAngle);
+          const affineSrc = boundingBoxRotating.getAffine(event.data.startAbs, event.data.current, freeAngle);
           const patch = { [labelShape.id]: shapeComposite.transformShape(labelShape, affineSrc) };
           const labelPatch = lineLabelHandler.onModified(patch);
           const mergedPatch = mergeMap(patch, labelPatch);

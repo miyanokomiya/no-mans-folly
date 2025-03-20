@@ -58,7 +58,7 @@ describe("newDroppingNewShapeState", () => {
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.redraw).toHaveBeenNthCalledWith(1);
       expect(result).toBe(undefined);
@@ -73,7 +73,7 @@ describe("newDroppingNewShapeState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       const result2 = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       expect(ctx.addShapes).toHaveBeenNthCalledWith(1, [{ ...getOption().shapes[0], p: { x: -40, y: -50 } }], {

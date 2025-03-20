@@ -58,7 +58,7 @@ describe("newDuplicatingShapesState", () => {
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.redraw).toHaveBeenNthCalledWith(1);
       expect(result).toBe(undefined);
@@ -78,7 +78,7 @@ describe("newDuplicatingShapesState", () => {
 
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 200, y: 0 }, scale: 1, ctrl: true },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 200, y: 0 }, scale: 1, ctrl: true },
       });
       const result2 = target.handleEvent(ctx as any, { type: "pointerup" } as any);
       const group = createShape(getCommonStruct, "group", { id: "1", findex: "ab" });

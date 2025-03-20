@@ -40,7 +40,7 @@ export function newAlignBoxPaddingState(option: Option): AppCanvasState {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
 
-          nextPadding = alignBoxHandler.getModifiedPadding(option.type, event.data.start, event.data.current, {
+          nextPadding = alignBoxHandler.getModifiedPadding(option.type, event.data.startAbs, event.data.current, {
             bothSides: event.data.shift,
             allSides: event.data.alt,
           });

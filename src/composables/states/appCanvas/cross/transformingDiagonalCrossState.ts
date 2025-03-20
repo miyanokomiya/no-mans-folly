@@ -45,7 +45,7 @@ export function newTransformingDiagonalCrossState(option: Option): AppCanvasStat
         case "pointermove": {
           if (targetShape.width === 0) return;
 
-          const diff = sub(event.data.current, event.data.start);
+          const diff = sub(event.data.current, event.data.startAbs);
 
           const { width, height } = targetShape;
           const nextControlP = rotateFn(add(diff, srcControlP), true);

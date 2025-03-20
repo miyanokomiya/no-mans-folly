@@ -63,7 +63,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          const d = sub(event.data.current, event.data.start);
+          const d = sub(event.data.current, event.data.startAbs);
           snappingResult = event.data.ctrl
             ? undefined
             : shapeSnapping.test(moveRect(movingRect, d), undefined, ctx.getScale());

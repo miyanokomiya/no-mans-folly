@@ -68,7 +68,7 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
             initHandler(ctx);
             ctx.redraw();
           }
-          diff = sub(event.data.current, event.data.start);
+          diff = sub(event.data.current, event.data.startAbs);
           const result = boardCardMovingHandler?.hitTest(event.data.current);
           ctx.redraw();
           boardMovingHitResult = result;

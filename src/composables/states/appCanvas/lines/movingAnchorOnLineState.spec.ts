@@ -50,7 +50,14 @@ describe("newMovingAnchorOnLineState", () => {
 
       const result0 = target.handleEvent(ctx, {
         type: "pointermove",
-        data: { start: { x: 50, y: 0 }, current: { x: 60, y: 0 }, scale: 1, alt: true, ctrl: true },
+        data: {
+          start: { x: 50, y: 0 },
+          startAbs: { x: 50, y: 0 },
+          current: { x: 60, y: 0 },
+          scale: 1,
+          alt: true,
+          ctrl: true,
+        },
       });
       expect(result0).toBe(undefined);
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {

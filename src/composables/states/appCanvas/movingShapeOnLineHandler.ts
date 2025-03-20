@@ -19,7 +19,7 @@ export function handlePointerMoveOnLine(
 
   const subShapeComposite = shapeComposite.getSubShapeComposite([movingShape.id]);
   const anchorP = getAttachmentAnchorPoint(subShapeComposite, subShapeComposite.shapeMap[indexId]);
-  const diff = sub(event.data.current, event.data.start);
+  const diff = sub(event.data.current, event.data.startAbs);
   const movedAnchorP = add(anchorP, diff);
 
   const isValidLine = (shape: Shape): boolean => {

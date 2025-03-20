@@ -61,7 +61,7 @@ describe("newSingleSelectedByPointerOnState", () => {
 
       const result0 = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       }) as any;
       expect(result0?.().getLabel(), "moved beyond threshold").toBe("MovingHub");
 
@@ -69,7 +69,7 @@ describe("newSingleSelectedByPointerOnState", () => {
       target.onStart?.(ctx as any);
       const result1 = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
       }) as any;
       expect(result1, "moved within threshold").toBe(undefined);
 
@@ -78,7 +78,7 @@ describe("newSingleSelectedByPointerOnState", () => {
       vi.advanceTimersByTime(150);
       const result2 = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 2, y: 0 }, scale: 1 },
       }) as any;
       expect(result2?.().getLabel(), "moved within threshold but time passes beyond threshold").toBe("MovingHub");
     });
@@ -107,13 +107,13 @@ describe("newSingleSelectedByPointerOnState", () => {
 
       const result0 = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       }) as any;
       expect(result0?.().getLabel(), "moved beyond threshold").toBe("MovingHub");
 
       const result1 = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1, shift: true },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1, shift: true },
       }) as any;
       expect(result1?.().getLabel(), "moved beyond threshold").toBe("MovingAnchorOnLine");
     });

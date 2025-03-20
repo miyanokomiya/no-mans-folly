@@ -68,7 +68,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
               },
             };
           } else {
-            const d = sub(event.data.current, event.data.start);
+            const d = sub(event.data.current, event.data.startAbs);
             const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
             const shapeComposite = ctx.getShapeComposite();
             patch = patchPipe(

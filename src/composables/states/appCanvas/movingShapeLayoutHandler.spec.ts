@@ -30,7 +30,10 @@ describe("handlePointerMoveOnLayout", () => {
       });
     ctx.getLastSelectedShapeId = vi.fn().mockReturnValue("rect");
     ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ rect: true });
-    const event = { type: "pointermove", data: { current: { x: 0, y: 0 }, start: { x: 0, y: 0 }, scale: 1 } } as const;
+    const event = {
+      type: "pointermove",
+      data: { current: { x: 0, y: 0 }, start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, scale: 1 },
+    } as const;
     expect(handlePointerMoveOnLayout(ctx, event, ["rect"], "rect")).not.toBe(undefined);
 
     ctx.getSelectedShapeIdMap = vi.fn().mockReturnValue({ rect: true, frame: true });

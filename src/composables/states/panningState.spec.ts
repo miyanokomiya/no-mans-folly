@@ -33,7 +33,7 @@ describe("newPanningState", () => {
     test('should execute "panView"', () => {
       const ctx = getMockCtx();
       const target = newPanningState();
-      const data = { current: { x: 1, y: 2 }, start: { x: 10, y: 20 }, scale: 1 };
+      const data = { current: { x: 1, y: 2 }, start: { x: 10, y: 20 }, startAbs: { x: 20, y: 20 }, scale: 1 };
       const result = target.handleEvent(ctx, {
         type: "pointermove",
         data,

@@ -55,7 +55,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
       expect(result).toBe(undefined);
@@ -68,7 +68,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
       expect(result).toBe(undefined);
@@ -102,7 +102,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
       expect(tmpMap["a"]).toHaveProperty("attachment");
@@ -140,7 +140,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(tmpMap["a"]).not.toHaveProperty("attachment");
     });
@@ -173,7 +173,7 @@ describe("newMovingShapeState", () => {
       target.onStart?.(ctx as any);
       target.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {
         a: { p: expect.anything() },
@@ -185,7 +185,7 @@ describe("newMovingShapeState", () => {
       target2.onStart?.(ctx as any);
       target2.handleEvent(ctx as any, {
         type: "pointermove",
-        data: { start: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
       expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {
         frame: { p: expect.anything() },

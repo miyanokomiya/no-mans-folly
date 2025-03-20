@@ -68,7 +68,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
           const extraDistance = EXTRA_DISTANCE * ctx.getScale();
           const d = sub(
             { x: event.data.current.x + extraDistance, y: event.data.current.y + extraDistance },
-            event.data.start,
+            event.data.startAbs,
           );
           snappingResult = event.data.ctrl
             ? undefined

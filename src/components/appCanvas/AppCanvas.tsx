@@ -174,6 +174,7 @@ export const AppCanvas: React.FC = () => {
     setMousePoint,
     removeRootPosition,
     editStartPoint,
+    editStartCanvasPoint,
   } = useCanvas(getWrapper, { viewStateKey: "view_state" });
 
   const grid = useMemo(() => {
@@ -559,19 +560,30 @@ export const AppCanvas: React.FC = () => {
 
       const p = removeRootPosition({ x: e.pageX, y: e.pageY });
       setMousePoint(p);
-      if (!editStartPoint) return;
+      if (!editStartPoint || !editStartCanvasPoint) return;
 
       sm.handleEvent({
         type: "pointermove",
         data: {
           start: viewToCanvas(editStartPoint),
+          startAbs: editStartCanvasPoint,
           current: viewToCanvas(p),
           scale: scale,
           ...getMouseOptionsCustom(e),
         },
       });
     },
-    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, getMouseOptionsCustom, isValidPointer],
+    [
+      editStartPoint,
+      editStartCanvasPoint,
+      removeRootPosition,
+      scale,
+      setMousePoint,
+      viewToCanvas,
+      sm,
+      getMouseOptionsCustom,
+      isValidPointer,
+    ],
   );
   useGlobalMousemoveEffect(onMouseMove);
 

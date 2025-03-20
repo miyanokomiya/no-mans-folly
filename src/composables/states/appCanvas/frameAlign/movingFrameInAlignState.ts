@@ -85,7 +85,7 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
             initHandler(ctx);
           }
 
-          diff = sub(event.data.current, event.data.start);
+          diff = sub(event.data.current, event.data.startAbs);
           const result = alignHandler.hitTest(event.data.current);
           hitResult = result;
           ctx.redraw();

@@ -57,6 +57,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
     setMousePoint,
     removeRootPosition,
     editStartPoint,
+    editStartCanvasPoint,
   } = useCanvas(getWrapper, { viewStateKey: "preview_view_state" });
   const shapeComposite = useShapeComposite();
   const documentMap = useDocumentMap();
@@ -186,19 +187,20 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
 
       const p = removeRootPosition({ x: e.pageX, y: e.pageY });
       setMousePoint(p);
-      if (!editStartPoint) return;
+      if (!editStartPoint || !editStartCanvasPoint) return;
 
       sm.handleEvent({
         type: "pointermove",
         data: {
           start: viewToCanvas(editStartPoint),
+          startAbs: editStartCanvasPoint,
           current: viewToCanvas(p),
           scale: scale,
           ...getMouseOptions(e),
         },
       });
     },
-    [editStartPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, isValidPointer],
+    [editStartPoint, editStartCanvasPoint, removeRootPosition, scale, setMousePoint, viewToCanvas, sm, isValidPointer],
   );
   useGlobalMousemoveEffect(onMouseMove);
 

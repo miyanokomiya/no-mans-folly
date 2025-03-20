@@ -137,7 +137,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
             if (onLineResult) return onLineResult;
           }
 
-          const d = sub(event.data.current, event.data.start);
+          const d = sub(event.data.current, event.data.startAbs);
 
           snappingResult = event.data.ctrl
             ? undefined

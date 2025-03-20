@@ -103,7 +103,7 @@ export function newResizingState(option: Option): AppCanvasState {
         case "pointermove": {
           const keepAspect = event.data.shift;
           const centralize = event.data.alt;
-          const diff = sub(event.data.current, event.data.start);
+          const diff = sub(event.data.current, event.data.startAbs);
           const boundingBoxPath = getMovingBoundingBoxPoints(option.boundingBox.path, option.hitResult);
           if (event.data.ctrl) {
             resizingAffine = boundingBoxResizing.getAffine(diff, { keepAspect, centralize });

@@ -23,7 +23,7 @@ export function newFuzzyDrag(option?: FuzzyDragOption) {
     onMove: (timestamp: number, movement: EditMovement) => {
       if (
         timestamp - timestampOnDown < fuzzyDuration &&
-        getDistanceSq(movement.current, movement.start) < Math.pow(fuzzyDistance * movement.scale, 2)
+        getDistanceSq(movement.current, movement.startAbs) < Math.pow(fuzzyDistance * movement.scale, 2)
       )
         return;
 
