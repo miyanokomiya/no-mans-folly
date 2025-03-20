@@ -202,7 +202,7 @@ export function newLineBounding(option: Option) {
       if (optimizeAnchorP) {
         const testFn = newCircleHitTest(optimizeAnchorP, vertexSize * ADD_VERTEX_ANCHOR_RATE);
         if (testFn.test(p)) {
-          return { type: "optimize", index: -1 };
+          return { type: "optimize", index: 0 };
         }
       }
     }
