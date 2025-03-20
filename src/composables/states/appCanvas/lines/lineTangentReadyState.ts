@@ -121,6 +121,11 @@ export function newLineTangentReadyState(): AppCanvasState {
           switch (event.data.key) {
             case "Escape":
               return ctx.states.newSelectionHubState;
+            case "g":
+              if (event.data.shift) return;
+              ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
+              lineSnappingCache.update();
+              return;
             default:
               return;
           }

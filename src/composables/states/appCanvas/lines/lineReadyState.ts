@@ -96,7 +96,8 @@ export function newLineReadyState(option: Option): AppCanvasState {
             case "g":
               if (event.data.shift) return;
               ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
-              return () => newLineReadyState(option);
+              lineSnappingCache.update();
+              return;
             default:
               return;
           }

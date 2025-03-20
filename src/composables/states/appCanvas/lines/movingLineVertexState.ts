@@ -116,6 +116,18 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
+        case "keydown":
+          switch (event.data.key) {
+            case "Escape":
+              return ctx.states.newSelectionHubState;
+            case "g":
+              if (event.data.shift) return;
+              ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
+              lineSnappingCache.update();
+              return;
+            default:
+              return;
+          }
         case "wheel":
           handleCommonWheel(ctx, event);
           lineSnappingCache.update();

@@ -1,7 +1,7 @@
-import type { AppCanvasState } from "./core";
+import type { AppCanvasState, AppCanvasStateContext } from "./core";
 import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
+import { SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import * as geometry from "../../../utils/geometry";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import {
@@ -26,13 +26,14 @@ import { getSnappableCandidates } from "./commons";
 import { FrameShape } from "../../../shapes/frame";
 import { getFrameShapeIdsInBranches, getRootShapeIdsByFrame } from "../../frame";
 import { ModifierOptions } from "../../../utils/devices";
+import { newCacheWithArg } from "../../../utils/stateful/cache";
+import { handleCommonWheel } from "../commons";
 
 interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
 }
 
 export function newMovingShapeState(option?: Option): AppCanvasState {
-  let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
   let movingRectSub: IRectangle | undefined;
   let boundingBox: BoundingBox;
@@ -43,6 +44,16 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let connectionRenderer: ConnectionRenderer;
   let beforeMove = true;
   let indexShapeId: string | undefined;
+
+  const snappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, targetIds);
+    return newShapeSnapping({
+      shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+  });
 
   return {
     getLabel: () => "MovingShape",
@@ -77,12 +88,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       ctx.setCursor("move");
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
 
-      const snappableCandidates = getSnappableCandidates(ctx, targetIds);
-      shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
       movingRect = geometry.getWrapperRect(targetIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
 
       // When multiple shapes are selected, use the bounds of the index shape as snapping source.
@@ -136,12 +141,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
           snappingResult = event.data.ctrl
             ? undefined
-            : (snappingResult = shapeSnapping.testWithSubRect(
-                moveRect(movingRect, d),
-                movingRectSub ? moveRect(movingRectSub, d) : undefined,
-                undefined,
-                ctx.getScale(),
-              ));
+            : (snappingResult = snappingCache
+                .getValue(ctx)
+                .testWithSubRect(
+                  moveRect(movingRect, d),
+                  movingRectSub ? moveRect(movingRectSub, d) : undefined,
+                  undefined,
+                  ctx.getScale(),
+                ));
 
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
@@ -183,9 +190,21 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
               ctx.patchUserSetting({ attachToLine: ctx.getUserSetting().attachToLine === "on" ? "off" : "on" });
               return;
             }
+            case "Escape":
+              return ctx.states.newSelectionHubState;
+            case "g":
+              if (event.data.shift) return;
+              ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
+              snappingCache.update();
+              return;
+            default:
+              return;
           }
-          return;
         }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          snappingCache.update();
+          return;
         default:
           return;
       }
