@@ -7,6 +7,7 @@ import {
   isConnectedToCenter,
   patchByFliplineH,
   patchByFliplineV,
+  getShapePatchInfoBySplitingLineAt,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
@@ -152,5 +153,55 @@ describe("getIntersectionsBetweenLineShapeAndLine", () => {
       { x: 50, y: 20 },
     ]);
     expect(res2, "bezier").toEqualPoints([{ x: 50, y: 37.5 }]);
+  });
+});
+
+describe("getShapePatchInfoBySplitingLineAt", () => {
+  test("should return new line source and current line patch when splitting at a point: straight segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      curves: [undefined, { d: { x: 0.5, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 })!;
+    expect(newLineSrc.p).toEqualPoint({ x: 20, y: 0 });
+    expect(newLineSrc.body).toHaveLength(1);
+    expect(newLineSrc.body?.[0].p).toEqualPoint({ x: 50, y: 0 });
+    expect(newLineSrc.curves).toEqual([undefined, { d: { x: 0.5, y: 25 } }]);
+    expect(newLineSrc.q).toEqualPoint({ x: 100, y: 0 });
+    expect(currentLinePatch.q).toEqualPoint({ x: 20, y: 0 });
+    expect(currentLinePatch.body).toBe(undefined);
+    expect(currentLinePatch.curves).toBe(undefined);
+  });
+
+  test("should return new line source and current line patch when splitting at a point: curve segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      curves: [undefined, { d: { x: 0.5, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 1, { x: 75, y: 25 })!;
+    expect(newLineSrc.p).toEqualPoint({ x: 75, y: 25 });
+    expect(newLineSrc.body).toBe(undefined);
+    expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: expect.anything() } }]);
+    expect((newLineSrc.curves as any)?.[0].d.y).toBeCloseTo(7.32233);
+    expect(newLineSrc.q).toEqualPoint({ x: 100, y: 0 });
+    expect(currentLinePatch.q).toEqualPoint({ x: 75, y: 25 });
+    expect(currentLinePatch.body?.[0].p).toEqualPoint({ x: 50, y: 0 });
+    expect(currentLinePatch.curves).toEqual([undefined, { d: { x: 0.5, y: expect.anything() } }]);
+    expect((currentLinePatch.curves as any)?.[1].d.y).toBeCloseTo(7.32233);
+  });
+
+  test("should return undefined if no closest point is found", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      curves: [{ c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    const result = getShapePatchInfoBySplitingLineAt(line, 0, { x: 200, y: 200 });
+    expect(result).toBeUndefined();
   });
 });

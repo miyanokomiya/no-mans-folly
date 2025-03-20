@@ -19,11 +19,13 @@ import {
   isBezieirControl,
   reverseBezierPath,
   shiftBezierCurveControl,
+  splitPathAtRate,
   transformBezierCurveControl,
   transformBezierPath,
 } from "./path";
 import { getBezierBounds, getSegments, ISegment } from "./geometry";
 import { getArcLerpFn, getDistance, getPedal, rotate } from "okageo";
+import { ArcCurveControl, BezierCurveControl } from "../models";
 
 describe("isBezieirControl", () => {
   test("should return true iff the control is of bezier", () => {
@@ -751,5 +753,81 @@ describe("covertEllipseToBezier", () => {
       { x: 60, y: 50 },
     ]);
     expect(result2.curves).toHaveLength(0);
+  });
+});
+
+describe("splitPathAtRate", () => {
+  test("should split a straight segment at the given rate", () => {
+    const path = {
+      edge: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ] as ISegment,
+    };
+    const [seg0, seg1] = splitPathAtRate(path, 0.5);
+    expect(seg0.edge).toEqualPoints([
+      { x: 0, y: 0 },
+      { x: 5, y: 0 },
+    ]);
+    expect(seg1.edge).toEqualPoints([
+      { x: 5, y: 0 },
+      { x: 10, y: 0 },
+    ]);
+  });
+
+  test("should split a bezier curve at the given rate", () => {
+    const path = {
+      edge: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ] as ISegment,
+      curve: { c1: { x: 2, y: 5 }, c2: { x: 8, y: 5 } },
+    };
+    const [seg0, seg1] = splitPathAtRate(path, 0.5);
+    expect(seg0.edge[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(seg0.edge[1]).toEqualPoint({ x: 5, y: 3.75 });
+    expect((seg0.curve as BezierCurveControl).c1).toEqualPoint({ x: 1, y: 2.5 });
+    expect((seg0.curve as BezierCurveControl).c2).toEqualPoint({ x: 3, y: 3.75 });
+
+    expect(seg1.edge[0]).toEqualPoint({ x: 5, y: 3.75 });
+    expect(seg1.edge[1]).toEqualPoint({ x: 10, y: 0 });
+    expect((seg1.curve as BezierCurveControl).c1).toEqualPoint({ x: 7, y: 3.75 });
+    expect((seg1.curve as BezierCurveControl).c2).toEqualPoint({ x: 9, y: 2.5 });
+  });
+
+  test("should split an arc at the given rate", () => {
+    const path = {
+      edge: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ] as ISegment,
+      curve: { d: { x: 0, y: 5 } },
+    };
+    const [seg0, seg1] = splitPathAtRate(path, 0.5);
+    expect(seg0.edge[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(seg0.edge[1]).toEqualPoint({ x: 5, y: 5 });
+    expect((seg0.curve as ArcCurveControl).d.y).toBeCloseTo(1.46446);
+
+    expect(seg1.edge[0]).toEqualPoint({ x: 5, y: 5 });
+    expect(seg1.edge[1]).toEqualPoint({ x: 10, y: 0 });
+    expect((seg1.curve as ArcCurveControl).d.y).toBeCloseTo(1.46446);
+  });
+
+  test("should split an arc at the given rate: negative control value", () => {
+    const path = {
+      edge: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ] as ISegment,
+      curve: { d: { x: 0, y: -5 } },
+    };
+    const [seg0, seg1] = splitPathAtRate(path, 0.5);
+    expect(seg0.edge[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(seg0.edge[1]).toEqualPoint({ x: 5, y: -5 });
+    expect((seg0.curve as ArcCurveControl).d.y).toBeCloseTo(-1.46446);
+
+    expect(seg1.edge[0]).toEqualPoint({ x: 5, y: -5 });
+    expect(seg1.edge[1]).toEqualPoint({ x: 10, y: 0 });
+    expect((seg1.curve as ArcCurveControl).d.y).toBeCloseTo(-1.46446);
   });
 });

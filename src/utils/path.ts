@@ -7,6 +7,7 @@ import {
   applyAffine,
   divideBezier3,
   getApproPoints,
+  getCenter,
   getCrossLineAndBezier3,
   getCrossSegAndBezier3WithT,
   getCrossSegAndLine,
@@ -19,8 +20,10 @@ import {
   getRadian,
   getUnit,
   isOnSeg,
+  lerpPoint,
   multi,
   multiAffines,
+  rotate,
   sub,
 } from "okageo";
 import { ArcCurveControl, BezierCurveControl, CurveControl } from "../models";
@@ -579,4 +582,54 @@ export function covertEllipseToBezier(
   ]);
 
   return transformBezierPath(arcPath, affine);
+}
+
+type SinglePath = { edge: ISegment; curve?: CurveControl };
+export function splitPathAtRate(path: SinglePath, rate: number): [SinglePath, SinglePath] {
+  const getSegmentResult = (): [SinglePath, SinglePath] => {
+    const p = lerpPoint(path.edge[0], path.edge[1], rate);
+    return [{ edge: [path.edge[0], p] }, { edge: [p, path.edge[1]] }];
+  };
+
+  if (!path.curve) {
+    return getSegmentResult();
+  }
+
+  if (isBezieirControl(path.curve)) {
+    const [seg0, seg1] = divideBezier3([path.edge[0], path.curve.c1, path.curve.c2, path.edge[1]], rate);
+    return [
+      { edge: [seg0[0], seg0[3]], curve: { c1: seg0[1], c2: seg0[2] } },
+      { edge: [seg1[0], seg1[3]], curve: { c1: seg1[1], c2: seg1[2] } },
+    ];
+  }
+
+  const arcParams = getArcCurveParamsByNormalizedControl(path.edge, path.curve.d);
+  if (!arcParams) {
+    return getSegmentResult();
+  }
+
+  const p = add(
+    arcParams.c,
+    rotate(
+      { x: arcParams.radius, y: 0 },
+      ((arcParams.from + arcParams.to) / 2) * (arcParams.counterclockwise ? -1 : 1),
+    ),
+  );
+
+  const seg0: ISegment = [path.edge[0], p];
+  const seg1: ISegment = [p, path.edge[1]];
+  const srcD = path.curve.d;
+  const getDY = (seg: ISegment) => {
+    return (Math.abs(srcD.y) - getDistance(getCenter(seg[0], seg[1]), arcParams.c)) * Math.sign(srcD.y);
+  };
+  return [
+    {
+      edge: seg0,
+      curve: { d: { x: 0.5, y: getDY(seg0) } },
+    },
+    {
+      edge: seg1,
+      curve: { d: { x: 0.5, y: getDY(seg1) } },
+    },
+  ];
 }

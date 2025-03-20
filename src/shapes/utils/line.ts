@@ -1,4 +1,4 @@
-import { getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
+import { getRectCenter, getSymmetry, isSame, IVec2, MINVALUE } from "okageo";
 import { getEdges, LineShape, struct } from "../line";
 import {
   getClosestPointOnPolyline,
@@ -6,6 +6,7 @@ import {
   getPolylineEdgeInfo,
   isBezieirControl,
   PolylineEdgeInfo,
+  splitPathAtRate,
 } from "../../utils/path";
 import { ISegment } from "../../utils/geometry";
 import { ConnectionPoint } from "../../models";
@@ -95,4 +96,42 @@ export function isConnectedToCenter(c: ConnectionPoint): boolean {
 
 export function getIntersectionsBetweenLineShapeAndLine(shape: LineShape, line: ISegment): IVec2[] {
   return getIntersectionsBetweenLineAndPolyline(line, getEdges(shape), shape.curves);
+}
+
+export function getShapePatchInfoBySplitingLineAt(
+  line: LineShape,
+  index: number,
+  p: IVec2,
+): [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>] | undefined {
+  const edge = getEdges(line)[index];
+  const curve = line.curves?.[index];
+  const closestInfo = getClosestPointOnPolyline(getPolylineEdgeInfo([edge], [curve]), p, MINVALUE);
+  if (!closestInfo) return;
+
+  const rate = closestInfo[1];
+  const splitResult = splitPathAtRate({ edge, curve }, rate);
+
+  const filledCurves: LineShape["curves"] = line.curves?.concat() ?? [];
+  for (let i = 0; i < edge.length; i++) {
+    if (filledCurves[i] === undefined) {
+      filledCurves[i] = undefined;
+    }
+  }
+
+  const cleanArray = (arr?: any[]) => {
+    return arr?.every((v) => v === undefined) ? undefined : arr;
+  };
+
+  const currentLinePatch: Partial<LineShape> = {
+    q: splitResult[0].edge[1],
+    body: cleanArray(line.body?.slice(0, index)),
+    curves: cleanArray([...filledCurves.slice(0, index), splitResult[1].curve]),
+  };
+  const newLineSrc: Partial<LineShape> = {
+    p: splitResult[1].edge[0],
+    q: line.q,
+    body: cleanArray(line.body?.slice(index)),
+    curves: cleanArray([splitResult[1].curve, ...(line.curves?.slice(index + 1) ?? [])]),
+  };
+  return [newLineSrc, currentLinePatch];
 }
