@@ -333,6 +333,8 @@ export const newLineSelectedState = defineIntransientState(() => {
                 p: newLine.p,
               });
 
+              // TODO: Attached shapes need to be updated as well.
+
               ctx.updateShapes({
                 add: [newLine, vnnode],
                 update: {

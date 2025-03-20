@@ -1,5 +1,5 @@
 import { getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
-import { getEdges, LineShape, struct } from "../line";
+import { getConnection, getEdges, getLinePath, LineShape, struct } from "../line";
 import {
   getClosestPointOnPolyline,
   getIntersectionsBetweenLineAndPolyline,
@@ -109,6 +109,31 @@ export function getShapePatchInfoBySplitingLineAt(
   const closestInfo = getClosestPointOnPolyline(getPolylineEdgeInfo([edge], [curve]), p, threshold);
   if (!closestInfo) return;
 
+  const vertices = getLinePath(line);
+
+  // Check if the closest point is a vertex.
+  const sameVertexIndex = vertices.findIndex((v) => isSame(v, closestInfo[0]));
+  if (sameVertexIndex !== -1) {
+    if (sameVertexIndex === 0 || sameVertexIndex === vertices.length - 1) return;
+
+    const connection = getConnection(line, sameVertexIndex);
+    const currentLinePatch: Partial<LineShape> = {
+      q: vertices[sameVertexIndex],
+      qConnection: connection,
+      body: cleanArray(line.body?.slice(0, sameVertexIndex - 1)),
+      curves: cleanArray(line.curves?.slice(0, sameVertexIndex - 1)),
+    };
+    const newLineSrc: Partial<LineShape> = {
+      p: vertices[sameVertexIndex],
+      pConnection: connection,
+      q: line.q,
+      qConnection: line.qConnection,
+      body: cleanArray(line.body?.slice(sameVertexIndex)),
+      curves: cleanArray(line.curves?.slice(sameVertexIndex)),
+    };
+    return [newLineSrc, currentLinePatch];
+  }
+
   const rate = closestInfo[1];
   const splitResult = splitPathAtRate({ edge, curve }, rate);
 
@@ -118,10 +143,6 @@ export function getShapePatchInfoBySplitingLineAt(
       filledCurves[i] = undefined;
     }
   }
-
-  const cleanArray = (arr?: any[]) => {
-    return arr?.every((v) => v === undefined) ? undefined : arr;
-  };
 
   const currentLinePatch: Partial<LineShape> = {
     q: splitResult[0].edge[1],
@@ -136,4 +157,8 @@ export function getShapePatchInfoBySplitingLineAt(
     curves: cleanArray([splitResult[1].curve, ...(line.curves?.slice(index + 1) ?? [])]),
   };
   return [newLineSrc, currentLinePatch];
+}
+
+function cleanArray(arr?: any[]) {
+  return arr?.every((v) => v === undefined) ? undefined : arr;
 }

@@ -226,4 +226,39 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.body?.[0].c).toEqual(cb);
     expect(newLineSrc.qConnection).toEqual(cc);
   });
+
+  test("should handle split at the vertex", () => {
+    const cb = { id: "b", rate: { x: 0.5, y: 0.5 } };
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 25, y: 0 } }, { p: { x: 50, y: 0 }, c: cb }, { p: { x: 50, y: 50 } }],
+      q: { x: 100, y: 50 },
+      curves: [undefined, undefined, { d: { x: 0.5, y: 25 } }],
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)!;
+    expect(currentLinePatch.body).toEqual([{ p: { x: 25, y: 0 } }]);
+    expect(currentLinePatch).toHaveProperty("curves");
+    expect(currentLinePatch.curves).toEqual(undefined);
+    expect(currentLinePatch.q).toEqualPoint({ x: 50, y: 0 });
+    expect(currentLinePatch.qConnection).toEqual(cb);
+    expect(newLineSrc.p).toEqualPoint({ x: 50, y: 0 });
+    expect(newLineSrc.body).toEqual([{ p: { x: 50, y: 50 } }]);
+    expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
+    expect(newLineSrc.pConnection).toEqual(cb);
+
+    expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)).toEqual(
+      getShapePatchInfoBySplitingLineAt(line, 2, { x: 50, y: 0 }, 1),
+    );
+  });
+
+  test("should handle split at the first or last vertex", () => {
+    const cb = { id: "b", rate: { x: 0.5, y: 0.5 } };
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      q: { x: 50, y: 50 },
+      body: [{ p: { x: 50, y: 0 }, c: cb }],
+    });
+    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 0, y: 0 }, 1)).toBeUndefined();
+    expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 50 }, 1)).toBeUndefined();
+  });
 });
