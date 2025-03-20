@@ -3,13 +3,12 @@ import type { AppCanvasState } from "./core";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyCurvePath, scaleGlobalAlpha } from "../../../utils/renderer";
-import { getHighlightPaths, getOutlinePaths, isTransparentSelection } from "../../../shapes";
+import { getHighlightPaths, isTransparentSelection } from "../../../shapes";
 import { isStrictRootScope, ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { applyFillStyle } from "../../../utils/fillStyle";
-import { Shape } from "../../../models";
 import { getShapeStatusColor } from "./utils/style";
 
 interface Option {
@@ -153,18 +152,15 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
         .filter(([id]) => selectedIds[id] || targetIdSet.has(id))
         .map(([, s]) => s);
 
-      const applyPath = (s: Shape) =>
-        (getHighlightPaths(ctx.getShapeStruct, s) ?? getOutlinePaths(ctx.getShapeStruct, s))?.forEach((path) =>
-          applyCurvePath(renderCtx, path.path, path.curves),
-        );
-
       shapes.forEach((s) => {
         applyStrokeStyle(renderCtx, {
           color: getShapeStatusColor(style, s) ?? style.selectionSecondaly,
           width: 2 * scale,
         });
         renderCtx.beginPath();
-        applyPath(s);
+        getHighlightPaths(ctx.getShapeStruct, s, true)?.forEach((path) =>
+          applyCurvePath(renderCtx, path.path, path.curves),
+        );
         renderCtx.stroke();
       });
 

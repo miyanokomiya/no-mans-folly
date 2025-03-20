@@ -1,6 +1,6 @@
 import { getCommonCommandExams, handleIntransientEvent, isShapeInteratctiveWithinViewport } from "./commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
-import { applyPath } from "../../../utils/renderer";
+import { applyCurvePath } from "../../../utils/renderer";
 import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
@@ -16,6 +16,7 @@ import { isGroupShape } from "../../../shapes/group";
 import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { getShapeStatusColor } from "./utils/style";
+import { getHighlightPaths } from "../../../shapes";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -56,7 +57,9 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
         width: 2 * scale,
       });
       renderCtx.beginPath();
-      applyPath(renderCtx, shapeComposite.getLocalRectPolygon(s), true);
+      getHighlightPaths(ctx.getShapeStruct, s, true)?.forEach((path) =>
+        applyCurvePath(renderCtx, path.path, path.curves),
+      );
       renderCtx.stroke();
     });
 

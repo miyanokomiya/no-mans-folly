@@ -236,9 +236,15 @@ export function getOutlinePaths(getStruct: GetShapeStruct, shape: Shape): Bezier
   return struct.getOutlinePaths?.(shape);
 }
 
-export function getHighlightPaths(getStruct: GetShapeStruct, shape: Shape): BezierPath[] | undefined {
+export function getHighlightPaths(
+  getStruct: GetShapeStruct,
+  shape: Shape,
+  fallbackOutline = false,
+): BezierPath[] | undefined {
   const struct = getStruct(shape.type);
-  return struct.getHighlightPaths?.(shape);
+  const highlight = struct.getHighlightPaths?.(shape);
+  if (highlight) return highlight;
+  if (fallbackOutline) return getOutlinePaths(getStruct, shape);
 }
 
 export function getShapeTextBounds(
