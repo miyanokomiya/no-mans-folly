@@ -158,7 +158,15 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
           vnnode =
             targetIds.length > 0
               ? vnnode
-                ? { ...vnnode, p: vertex }
+                ? {
+                    ...vnnode,
+                    // Inherit the latest nearby node properties.
+                    ...seekNearbyVnNode(shapeComposite, targetIds),
+                    id: vnnode.id,
+                    findex: vnnode.findex,
+                    p: vertex,
+                    parentId,
+                  }
                 : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
                     ...seekNearbyVnNode(shapeComposite, targetIds),
                     id: ctx.createLastIndex(),
