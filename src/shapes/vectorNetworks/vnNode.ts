@@ -28,6 +28,7 @@ export const struct: ShapeStruct<VnNodeShape> = {
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
       r: arg.r ?? 4,
+      noExport: arg.noExport ?? true, // Set true by default because it's supposed to be a helper shape.
     };
   },
   render(ctx, shape) {

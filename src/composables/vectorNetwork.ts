@@ -1,5 +1,7 @@
 import { getConnections, isLineShape } from "../shapes/line";
+import { isVNNodeShape, VnNodeShape } from "../shapes/vectorNetworks/vnNode";
 import { ShapeComposite } from "./shapeComposite";
+import { getLineRelatedDependantMap } from "./shapeRelation";
 
 export function getConnectedLineInfoListAtNode(
   shapeComposite: ShapeComposite,
@@ -30,6 +32,22 @@ export function getAnyConnectedLineInfoAtNode(
       const c = connections[j];
       if (c?.id !== nodeId) continue;
       return [s.id, i];
+    }
+  }
+}
+
+/**
+ * Seek a VN node shape that is near by the given source shapes.
+ * e.g. Let new node inherit style properties from use this node.
+ */
+export function seekNearbyVnNode(shapeComposite: ShapeComposite, srcIds: string[]): VnNodeShape | undefined {
+  const depMap = getLineRelatedDependantMap(shapeComposite, srcIds);
+  for (const [, depSet] of depMap) {
+    for (const id of depSet) {
+      const src = shapeComposite.shapeMap[id];
+      if (src && isVNNodeShape(src)) {
+        return src;
+      }
     }
   }
 }

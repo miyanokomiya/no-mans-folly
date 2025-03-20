@@ -15,6 +15,7 @@ import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { AppCanvasState } from "../core";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
+import { getShapeStatusColor } from "../utils/style";
 
 export const newVNNodeSelectedState = defineIntransientState(getState);
 
@@ -25,7 +26,10 @@ function getState(): AppCanvasState {
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
     const style = ctx.getStyleScheme();
     const scale = ctx.getScale();
-    applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
+    applyStrokeStyle(renderCtx, {
+      color: getShapeStatusColor(style, shape) ?? style.selectionPrimary,
+      width: style.selectionLineWidth * scale,
+    });
     renderCtx.beginPath();
     renderCtx.arc(shape.p.x, shape.p.y, shape.r, 0, TAU);
     renderCtx.stroke();

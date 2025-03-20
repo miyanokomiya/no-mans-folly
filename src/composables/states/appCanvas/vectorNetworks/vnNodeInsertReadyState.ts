@@ -19,6 +19,7 @@ import { newShapeRenderer } from "../../../shapeRenderer";
 import { getSegmentIndexCloseAt, getShapePatchInfoBySplitingLineAt } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
 import { generateKeyBetween } from "../../../../utils/findex";
+import { seekNearbyVnNode } from "../../../vectorNetwork";
 
 export function newVnNodeInsertReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -160,6 +161,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
               ? vnnode
                 ? { ...vnnode, p: vertex }
                 : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                    ...seekNearbyVnNode(shapeComposite, targetIds),
                     id: ctx.createLastIndex(),
                     findex: ctx.createLastIndex(),
                     p: vertex,

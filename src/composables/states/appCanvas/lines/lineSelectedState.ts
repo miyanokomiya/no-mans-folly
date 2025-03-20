@@ -43,6 +43,7 @@ import { AppCanvasState } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { generateKeyBetween } from "../../../../utils/findex";
 import { generateFindexAfter } from "../../../shapeRelation";
+import { seekNearbyVnNode } from "../../../vectorNetwork";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -320,14 +321,16 @@ export const newLineSelectedState = defineIntransientState(() => {
               const splitPatch = getShapePatchInfoBySplitingLineAt(lineShape, index, p, 10 * ctx.getScale());
               if (!splitPatch) return;
 
+              const sc = ctx.getShapeComposite();
               const vnnodeId = ctx.generateUuid();
               const newLine = createShape<LineShape>(ctx.getShapeStruct, "line", {
                 ...splitPatch[0],
                 id: ctx.generateUuid(),
-                findex: generateFindexAfter(ctx.getShapeComposite(), lineShape.id),
+                findex: generateFindexAfter(sc, lineShape.id),
                 pConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
               });
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                ...seekNearbyVnNode(sc, [lineShape.id]),
                 id: vnnodeId,
                 findex: generateKeyBetween(newLine.findex, null),
                 p: newLine.p,
