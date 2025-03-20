@@ -27,6 +27,11 @@ export interface Shape extends Entity {
   gcV?: GroupConstraint;
   gcH?: GroupConstraint;
   locked?: boolean;
+  /**
+   * Determines if the shape should not be printed out in PNG, SVG, or PDF.
+   * When it's set true, the shape is also excluded for calculating target area.
+   */
+  noExport?: boolean;
   clipping?: boolean; // When this is set true, it's prioritized over all child shapes.
   cropClipBorder?: boolean; // This is prioritized over all child shapes.
   alpha?: number; // "undefined" should mean 1.

@@ -18,6 +18,7 @@ import { AttachmentInspector } from "./AttachmentInspector";
 import { patchByPartialProperties } from "../../utils/entities";
 import { SheetInspectorPanel } from "./SheetInspectorPanel";
 import { ShapeSelectionPanel } from "./ShapeSelectionPanel";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -183,7 +184,19 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShapes, getShapeComposite, patchShapes, setTmpShapeMap],
   );
 
+  const handleNoExportChange = useCallback(
+    (checked: boolean) => {
+      updateTargetShapesBySamePatch({ noExport: checked });
+    },
+    [updateTargetShapesBySamePatch],
+  );
+
   const alphaField = <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />;
+  const noExportField = (
+    <InlineField label="No export">
+      <ToggleInput value={targetTmpShape.noExport ?? false} onChange={handleNoExportChange} />
+    </InlineField>
+  );
 
   const groupConstraintField = canShapeGrouped(getShapeComposite().getShapeStruct, targetShape) ? (
     <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
@@ -194,6 +207,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       {targetShapes.length >= 2 ? (
         <>
           {alphaField}
+          {noExportField}
           <MultipleShapesInspector
             targetShapes={targetShapes}
             targetTmpShapes={targetTmpShapes}
@@ -206,6 +220,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
         <>
           <ShapeTypeBlock type={targetShape.type} />
           {alphaField}
+          {noExportField}
           {isLineShape(targetShape) ? (
             <LineShapeInspector
               targetShape={targetShape}
