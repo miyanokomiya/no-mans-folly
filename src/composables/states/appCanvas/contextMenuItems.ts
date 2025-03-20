@@ -17,6 +17,7 @@ import { i18n } from "../../../i18n";
 import { saveFileInWeb, getExportParamsForSelectedShapes, getExportParamsForSelectedRange } from "../../shapeExport";
 import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import iconRefinement from "../../../assets/icons/refinement.svg";
+import iconVnNode from "../../../assets/icons/vnnode.svg";
 import iconDustbinRed from "../../../assets/icons/dustbin_red.svg";
 import { RectPolygonShape } from "../../../shapes/rectPolygon";
 import { expandRect } from "../../../utils/geometry";
@@ -162,12 +163,14 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.vertex.vnnode.create"),
       key: "CREATE_VN_NODE",
+      icon: iconVnNode,
     };
   },
   get INSERT_VN_NODE() {
     return {
       label: i18n.t("contextmenu.vertex.vnnode.insert"),
       key: "INSERT_VN_NODE",
+      icon: iconVnNode,
     };
   },
 

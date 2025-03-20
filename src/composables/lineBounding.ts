@@ -659,3 +659,12 @@ export function renderVertexAnchorHighlight(ctx: CanvasCTX, style: StyleScheme, 
   ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
   ctx.fill();
 }
+
+export function isSegmentRelatedHitResult(hitResult: LineHitResult): hitResult is LineHitResult & { index: number } {
+  return (
+    hitResult.type === "segment" ||
+    hitResult.type === "arc-anchor" ||
+    hitResult.type === "new-bezier-anchor" ||
+    hitResult.type === "new-vertex-anchor"
+  );
+}

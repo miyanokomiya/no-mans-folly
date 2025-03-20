@@ -14,7 +14,7 @@ import {
   patchBodyVertex,
   patchConnection,
 } from "../../../../shapes/line";
-import { LineBounding, newLineBounding } from "../../../lineBounding";
+import { isSegmentRelatedHitResult, LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
 import { newMovingNewVertexState } from "./movingNewVertexState";
 import { newDuplicatingShapesState } from "../duplicatingShapesState";
@@ -246,21 +246,18 @@ export const newLineSelectedState = defineIntransientState(() => {
               },
               CONTEXT_MENU_ITEM_SRC.SEPARATOR,
             );
-          } else if (hitResult) {
+          } else if (hitResult && isSegmentRelatedHitResult(hitResult)) {
             const segs = getSegments(getLinePath(lineShape));
             if (0 <= hitResult.index && hitResult.index < segs.length) {
               const seg = segs[hitResult.index];
               const originIndex =
                 getDistanceSq(seg[0], event.data.point) <= getDistanceSq(seg[1], event.data.point) ? 1 : 0;
 
-              if (hitResult.type === "segment") {
-                items.push({
+              items.push(
+                {
                   ...CONTEXT_MENU_ITEM_SRC.INSERT_VN_NODE,
                   meta: { index: hitResult.index, p: event.data.point } as SegmentAtMetaForContextMenu,
-                });
-              }
-
-              items.push(
+                },
                 {
                   ...CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT,
                   meta: { index: hitResult.index, originIndex } as SegmentMetaForContextMenu,
@@ -301,8 +298,10 @@ export const newLineSelectedState = defineIntransientState(() => {
             }
             case CONTEXT_MENU_ITEM_SRC.CREATE_VN_NODE.key: {
               const index = (event.data.meta as VertexMetaForContextMenu).index;
+              const sc = ctx.getShapeComposite();
               const p = getLinePath(lineShape)[index];
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                ...seekNearbyVnNode(sc, [lineShape.id]),
                 id: ctx.generateUuid(),
                 findex: ctx.createLastIndex(),
                 p,
