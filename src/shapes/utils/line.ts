@@ -99,6 +99,15 @@ export function getIntersectionsBetweenLineShapeAndLine(shape: LineShape, line: 
   return getIntersectionsBetweenLineAndPolyline(line, getEdges(shape), shape.curves);
 }
 
+export function getSegmentIndexCloseAt(line: LineShape, p: IVec2, threshold: number): number {
+  const edges = getEdges(line);
+  const curves = line.curves;
+  return edges.findIndex((edge, i) => {
+    const edgeInfo = getPolylineEdgeInfo([edge], [curves?.[i]]);
+    return !!getClosestPointOnPolyline(edgeInfo, p, threshold);
+  });
+}
+
 export function getShapePatchInfoBySplitingLineAt(
   line: LineShape,
   index: number,
@@ -160,11 +169,13 @@ export function getShapePatchInfoBySplitingLineAt(
 
   const currentLinePatch: Partial<LineShape> = {
     q: splitResult[0].edge[1],
+    qConnection: undefined,
     body: cleanArray(line.body?.slice(0, index)),
     curves: cleanArray([...filledCurves.slice(0, index), splitResult[0].curve]),
   };
   const newLineSrc: Partial<LineShape> = {
     p: splitResult[1].edge[0],
+    pConnection: undefined,
     q: line.q,
     qConnection: line.qConnection,
     body: cleanArray(line.body?.slice(index)),

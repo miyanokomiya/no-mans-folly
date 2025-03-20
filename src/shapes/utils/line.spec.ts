@@ -8,6 +8,7 @@ import {
   patchByFliplineH,
   patchByFliplineV,
   getShapePatchInfoBySplitingLineAt,
+  getSegmentIndexCloseAt,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
@@ -141,6 +142,21 @@ describe("isConnectedToCenter", () => {
   });
 });
 
+describe("getSegmentIndexCloseAt", () => {
+  test("should return the index of the closest segment", () => {
+    const line0 = lineStruct.create({
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 100, y: 0 } }],
+      q: { x: 100, y: 100 },
+    });
+    expect(getSegmentIndexCloseAt(line0, { x: -10, y: 1 }, 2)).toBe(-1);
+    expect(getSegmentIndexCloseAt(line0, { x: 10, y: 1 }, 2)).toBe(0);
+    expect(getSegmentIndexCloseAt(line0, { x: 101, y: 10 }, 2)).toBe(1);
+    expect(getSegmentIndexCloseAt(line0, { x: 101, y: 110 }, 2)).toBe(-1);
+    expect(getSegmentIndexCloseAt(line0, { x: 50, y: 50 }, 2)).toBe(-1);
+  });
+});
+
 describe("getIntersectionsBetweenLineShapeAndLine", () => {
   test("should return intersections between line shape and a line", () => {
     const shape = lineStruct.create({
@@ -221,7 +237,9 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
     expect(currentLinePatch).not.toHaveProperty("pConnection");
     expect(currentLinePatch.body).toEqual(undefined);
-    expect(currentLinePatch).not.toHaveProperty("qConnection");
+    expect(currentLinePatch).toHaveProperty("qConnection");
+    expect(currentLinePatch.qConnection).toEqual(undefined);
+    expect(newLineSrc).toHaveProperty("pConnection");
     expect(newLineSrc.pConnection).toEqual(undefined);
     expect(newLineSrc.body?.[0].c).toEqual(cb);
     expect(newLineSrc.qConnection).toEqual(cc);
