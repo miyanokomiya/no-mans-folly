@@ -5,7 +5,7 @@ import { ConnectionResult, isLineSnappableShape, newLineSnapping, renderConnecti
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newShapeSnapping } from "../../../shapeSnapping";
-import { isSame } from "okageo";
+import { isSame, IVec2 } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { newShapeComposite } from "../../../shapeComposite";
 import { handleCommonWheel } from "../../commons";
@@ -16,6 +16,7 @@ import { isVNNodeShape, VnNodeShape } from "../../../../shapes/vectorNetworks/vn
 import { createShape } from "../../../../shapes";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
+import { findBackward } from "../../../../utils/commons";
 
 interface Option {
   // This state creates a stright edge, so that the "body" value of this shape does nothing.
@@ -45,15 +46,33 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
       settings: ctx.getUserSetting(),
     });
     const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
-    return newLineSnapping({
-      snappableShapes,
-      shapeSnapping,
-      getShapeStruct: shapeComposite.getShapeStruct,
-      movingLine: srcShape,
-      movingIndex,
-      ignoreCurrentLine: true,
-    });
+    return {
+      withGuideline: newLineSnapping({
+        snappableShapes,
+        shapeSnapping,
+        getShapeStruct: ctx.getShapeStruct,
+        movingLine: srcShape,
+        movingIndex,
+        ignoreCurrentLine: true,
+      }),
+      withoutGuideline: newLineSnapping({
+        snappableShapes,
+        getShapeStruct: ctx.getShapeStruct,
+        movingLine: srcShape,
+        movingIndex,
+        ignoreCurrentLine: true,
+      }),
+    };
   });
+
+  const getConnectionResult = (
+    point: IVec2,
+    ctrl: boolean | undefined,
+    ctx: AppCanvasStateContext,
+  ): ConnectionResult | undefined => {
+    const snapping = lineSnappingCache.getValue(ctx);
+    return (ctrl ? snapping.withoutGuideline : snapping.withGuideline).testConnection(point, ctx.getScale());
+  };
 
   const createMovingVnNode = (ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
@@ -82,9 +101,7 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
           const point = event.data.current;
-          connectionResult = event.data.ctrl
-            ? undefined
-            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
+          connectionResult = getConnectionResult(point, event.data.ctrl, ctx);
 
           if (connectionResult?.connection) {
             const connected = shapeComposite.shapeMap[connectionResult.connection.id];
@@ -97,25 +114,28 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
           vertex = connectionResult?.p ?? point;
           coordinateRenderer.saveCoord(vertex);
 
-          if (!connectionResult?.connection) {
-            vnNode = vnNode ? { ...vnNode, p: vertex } : createMovingVnNode(ctx);
-          } else {
+          // Check if there's a VN node at the point.
+          // This is less performant but simpler and accurate.
+          const nodeAtPoint = findBackward(shapeComposite.shapes, (s) => isVNNodeShape(s) && isSame(s.p, vertex));
+          if (nodeAtPoint) {
             vnNode = undefined;
+          } else {
+            vnNode = vnNode ? { ...vnNode, p: vertex } : createMovingVnNode(ctx);
           }
+          const connectedNode = nodeAtPoint ?? vnNode;
 
           const patch = patchVertex(
             srcShape,
             movingIndex,
             vertex,
-            vnNode ? { id: vnNode.id, rate: { x: 0.5, y: 0.5 } } : connectionResult?.connection,
+            connectedNode ? { id: connectedNode.id, rate: { x: 0.5, y: 0.5 } } : undefined,
           );
 
           let findex = srcShape.findex;
-          if (connectionResult?.connection) {
+          if (connectedNode) {
             // Bring the line to the back of the currently connected VN node.
-            const vnnode = shapeComposite.shapeMap[connectionResult.connection.id];
-            if (vnnode.findex < findex) {
-              findex = generateFindexBefore(shapeComposite, connectionResult.connection.id);
+            if (connectedNode.findex < findex) {
+              findex = generateFindexBefore(shapeComposite, connectedNode.id);
             }
           }
 
