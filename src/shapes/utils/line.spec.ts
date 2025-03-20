@@ -245,6 +245,31 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.qConnection).toEqual(cc);
   });
 
+  test("should distribute arrow heads", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 50, y: 50 },
+      pHead: createLineHead("open"),
+      qHead: createLineHead("dot_blank"),
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
+    expect(currentLinePatch).not.toHaveProperty("pHead");
+    expect(currentLinePatch).toHaveProperty("qHead");
+    expect(currentLinePatch.qHead).toEqual(undefined);
+    expect(newLineSrc).toHaveProperty("pHead");
+    expect(newLineSrc.pHead).toEqual(undefined);
+    expect(newLineSrc.qHead).toEqual(createLineHead("dot_blank"));
+
+    const [newLineSrc2, currentLinePatch2] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
+    expect(currentLinePatch2).not.toHaveProperty("pHead");
+    expect(currentLinePatch2).toHaveProperty("qHead");
+    expect(currentLinePatch2.qHead).toEqual(undefined);
+    expect(newLineSrc2).toHaveProperty("pHead");
+    expect(newLineSrc2.pHead).toEqual(undefined);
+    expect(newLineSrc.qHead).toEqual(createLineHead("dot_blank"));
+  });
+
   test("should handle split at the vertex", () => {
     const cb = { id: "b", rate: { x: 0.5, y: 0.5 } };
     const line = createShape<LineShape>(getCommonStruct, "line", {

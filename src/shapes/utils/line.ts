@@ -133,6 +133,7 @@ export function getShapePatchInfoBySplitingLineAt(
       qConnection: connection,
       body: cleanArray(line.body?.slice(0, sameVertexIndex - 1)),
       curves: cleanArray(line.curves?.slice(0, sameVertexIndex)),
+      qHead: undefined,
     };
     const newLineSrc: Partial<LineShape> = {
       p: vertices[sameVertexIndex],
@@ -141,6 +142,8 @@ export function getShapePatchInfoBySplitingLineAt(
       qConnection: line.qConnection,
       body: cleanArray(line.body?.slice(sameVertexIndex)),
       curves: cleanArray(line.curves?.slice(sameVertexIndex)),
+      pHead: undefined,
+      qHead: line.qHead,
     };
     return [newLineSrc, currentLinePatch];
   }
@@ -172,6 +175,7 @@ export function getShapePatchInfoBySplitingLineAt(
     qConnection: undefined,
     body: cleanArray(line.body?.slice(0, index)),
     curves: cleanArray([...filledCurves.slice(0, index), splitResult[0].curve]),
+    qHead: undefined,
   };
   const newLineSrc: Partial<LineShape> = {
     p: splitResult[1].edge[0],
@@ -180,6 +184,8 @@ export function getShapePatchInfoBySplitingLineAt(
     qConnection: line.qConnection,
     body: cleanArray(line.body?.slice(index)),
     curves: cleanArray([splitResult[1].curve, ...(line.curves?.slice(index + 1) ?? [])]),
+    pHead: undefined,
+    qHead: line.qHead,
   };
   return [newLineSrc, currentLinePatch];
 }
