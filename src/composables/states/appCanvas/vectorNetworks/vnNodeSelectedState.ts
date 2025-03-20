@@ -25,7 +25,7 @@ function getState(): AppCanvasState {
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
     const style = ctx.getStyleScheme();
     const scale = ctx.getScale();
-    applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 3 * scale });
+    applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
     renderCtx.beginPath();
     renderCtx.arc(shape.p.x, shape.p.y, shape.r, 0, TAU);
     renderCtx.stroke();
@@ -52,6 +52,7 @@ function getState(): AppCanvasState {
               const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
               switch (hitResult?.type) {
                 case "move":
+                case "area":
                   return ctx.states.newMovingHubState;
                 case "new-edge": {
                   const sc = ctx.getShapeComposite();

@@ -17,7 +17,7 @@ const MOVE_ANCHOR_SIZE = 5;
 type HitAnchor = [type: "move" | "new-edge", IVec2];
 
 interface HitResult {
-  type: HitAnchor[0];
+  type: HitAnchor[0] | "area";
 }
 
 interface Option {
@@ -52,6 +52,8 @@ export const newVnNodeHandler = defineShapeHandler<HitResult, Option>((option) =
     const newEdgeAnchor = getNewEdgeAnchor(scale);
     if (newCircleHitTest(newEdgeAnchor.c, newEdgeAnchor.r).test(p)) return { type: "new-edge" };
 
+    if (newCircleHitTest(center, shape.r).test(p)) return { type: "area" };
+
     return;
   }
 
@@ -75,6 +77,13 @@ export const newVnNodeHandler = defineShapeHandler<HitResult, Option>((option) =
       renderOutlinedCircle(ctx, newEdgeAnchor.c, newEdgeAnchor.r, color);
       applyStrokeStyle(ctx, { color: COLORS.WHITE, width: style.selectionLineWidth * scale });
       renderPlusIcon(ctx, newEdgeAnchor.c, newEdgeAnchor.r * 2 - 4 * scale);
+    }
+
+    if (hitResult?.type === "area") {
+      applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, shape.r, 0, TAU);
+      ctx.stroke();
     }
   }
 

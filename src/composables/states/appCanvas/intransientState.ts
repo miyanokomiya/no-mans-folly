@@ -72,14 +72,15 @@ export function defineIntransientState<A extends any[]>(
         // Avoid highlighting selected shape.
         // => It should have certain selected appearance provided by other state.
         if (hoveredShape && !ctx.getSelectedShapeIdMap()[hoveredShape.id]) {
+          const style = ctx.getStyleScheme();
+          const scale = ctx.getScale();
           renderCtx.beginPath();
-
           (
             getHighlightPaths(ctx.getShapeStruct, hoveredShape) ?? getOutlinePaths(ctx.getShapeStruct, hoveredShape)
           )?.forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
           applyStrokeStyle(renderCtx, {
-            color: ctx.getStyleScheme().selectionSecondaly,
-            width: 3 * ctx.getScale(),
+            color: style.selectionSecondaly,
+            width: style.selectionLineWidth * scale,
             dash: "short",
           });
           renderCtx.stroke();
