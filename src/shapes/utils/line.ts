@@ -1,4 +1,4 @@
-import { getRectCenter, getSymmetry, isSame, IVec2, MINVALUE } from "okageo";
+import { getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
 import { getEdges, LineShape, struct } from "../line";
 import {
   getClosestPointOnPolyline,
@@ -102,10 +102,11 @@ export function getShapePatchInfoBySplitingLineAt(
   line: LineShape,
   index: number,
   p: IVec2,
+  threshold: number,
 ): [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>] | undefined {
   const edge = getEdges(line)[index];
   const curve = line.curves?.[index];
-  const closestInfo = getClosestPointOnPolyline(getPolylineEdgeInfo([edge], [curve]), p, MINVALUE);
+  const closestInfo = getClosestPointOnPolyline(getPolylineEdgeInfo([edge], [curve]), p, threshold);
   if (!closestInfo) return;
 
   const rate = closestInfo[1];
@@ -125,7 +126,7 @@ export function getShapePatchInfoBySplitingLineAt(
   const currentLinePatch: Partial<LineShape> = {
     q: splitResult[0].edge[1],
     body: cleanArray(line.body?.slice(0, index)),
-    curves: cleanArray([...filledCurves.slice(0, index), splitResult[1].curve]),
+    curves: cleanArray([...filledCurves.slice(0, index), splitResult[0].curve]),
   };
   const newLineSrc: Partial<LineShape> = {
     p: splitResult[1].edge[0],

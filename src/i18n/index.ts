@@ -90,6 +90,7 @@ const en = {
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
       "vertex.vnnode.create": "Create VNNode",
+      "vertex.vnnode.insert": "Insert VNNode",
       "segment.refine": "Refine segment",
     },
 
@@ -187,6 +188,7 @@ const ja: TranslationResource = {
       "vertex.attach": "[[ATTACH_LINE_VERTEX]]",
       "vertex.attach.all": "[[ATTACH_LINE_VERTICES]]",
       "vertex.vnnode.create": "VNノード作成",
+      "vertex.vnnode.insert": "VNノード挿入",
       "segment.refine": "辺精密編集",
     },
 

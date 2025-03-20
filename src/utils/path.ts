@@ -23,7 +23,6 @@ import {
   lerpPoint,
   multi,
   multiAffines,
-  rotate,
   sub,
 } from "okageo";
 import { ArcCurveControl, BezierCurveControl, CurveControl } from "../models";
@@ -608,19 +607,12 @@ export function splitPathAtRate(path: SinglePath, rate: number): [SinglePath, Si
     return getSegmentResult();
   }
 
-  const p = add(
-    arcParams.c,
-    rotate(
-      { x: arcParams.radius, y: 0 },
-      ((arcParams.from + arcParams.to) / 2) * (arcParams.counterclockwise ? -1 : 1),
-    ),
-  );
-
+  const p = getArcLerpFn(arcParams)(rate);
   const seg0: ISegment = [path.edge[0], p];
   const seg1: ISegment = [p, path.edge[1]];
   const srcD = path.curve.d;
   const getDY = (seg: ISegment) => {
-    return (Math.abs(srcD.y) - getDistance(getCenter(seg[0], seg[1]), arcParams.c)) * Math.sign(srcD.y);
+    return (arcParams.radius - getDistance(getCenter(seg[0], seg[1]), arcParams.c)) * Math.sign(srcD.y);
   };
   return [
     {

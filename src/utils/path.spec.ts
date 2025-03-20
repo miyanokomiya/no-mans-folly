@@ -813,6 +813,24 @@ describe("splitPathAtRate", () => {
     expect((seg1.curve as ArcCurveControl).d.y).toBeCloseTo(1.46446);
   });
 
+  test("should split an arc at the given rate: arbitrary rate", () => {
+    const path = {
+      edge: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ] as ISegment,
+      curve: { d: { x: 0, y: 5 } },
+    };
+    const [seg0, seg1] = splitPathAtRate(path, 0.3);
+    expect(seg0.edge[0]).toEqualPoint({ x: 0, y: 0 });
+    expect(seg0.edge[1]).toEqualPoint({ x: 2.0610737, y: 4.0450849 });
+    expect((seg0.curve as ArcCurveControl).d.y).toBeCloseTo(0.544967);
+
+    expect(seg1.edge[0]).toEqualPoint({ x: 2.0610737, y: 4.0450849 });
+    expect(seg1.edge[1]).toEqualPoint({ x: 10, y: 0 });
+    expect((seg1.curve as ArcCurveControl).d.y).toBeCloseTo(2.7300475);
+  });
+
   test("should split an arc at the given rate: negative control value", () => {
     const path = {
       edge: [

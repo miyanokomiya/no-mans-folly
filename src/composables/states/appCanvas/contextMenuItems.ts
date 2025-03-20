@@ -164,6 +164,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "CREATE_VN_NODE",
     };
   },
+  get INSERT_VN_NODE() {
+    return {
+      label: i18n.t("contextmenu.vertex.vnnode.insert"),
+      key: "INSERT_VN_NODE",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

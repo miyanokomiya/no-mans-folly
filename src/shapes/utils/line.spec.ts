@@ -164,7 +164,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       curves: [undefined, { d: { x: 0.5, y: 25 } }],
       q: { x: 100, y: 0 },
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 })!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
     expect(newLineSrc.p).toEqualPoint({ x: 20, y: 0 });
     expect(newLineSrc.body).toHaveLength(1);
     expect(newLineSrc.body?.[0].p).toEqualPoint({ x: 50, y: 0 });
@@ -182,7 +182,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       curves: [undefined, { d: { x: 0.5, y: 25 } }],
       q: { x: 100, y: 0 },
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 1, { x: 75, y: 25 })!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 1, { x: 75, y: 25 }, 1)!;
     expect(newLineSrc.p).toEqualPoint({ x: 75, y: 25 });
     expect(newLineSrc.body).toBe(undefined);
     expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: expect.anything() } }]);
@@ -201,7 +201,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       curves: [{ c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }],
       q: { x: 100, y: 0 },
     });
-    const result = getShapePatchInfoBySplitingLineAt(line, 0, { x: 200, y: 200 });
+    const result = getShapePatchInfoBySplitingLineAt(line, 0, { x: 200, y: 200 }, 1);
     expect(result).toBeUndefined();
   });
 });

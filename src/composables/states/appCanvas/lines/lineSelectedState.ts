@@ -35,17 +35,19 @@ import { newMovingLineBezierState } from "./movingLineBezierState";
 import { isObjectEmpty } from "../../../../utils/commons";
 import { newRotatingState } from "../rotatingState";
 import { newBoundingBox } from "../../../boundingBox";
-import { patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/line";
+import { getShapePatchInfoBySplitingLineAt, patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/line";
 import { getSegments } from "../../../../utils/geometry";
-import { getDistanceSq } from "okageo";
+import { getDistanceSq, IVec2 } from "okageo";
 import { ContextMenuItem } from "../../types";
 import { AppCanvasState } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
+import { generateKeyBetween } from "../../../../utils/findex";
 
 type VertexMetaForContextMenu = {
   index: number;
 };
 type SegmentMetaForContextMenu = VertexMetaForContextMenu & { originIndex: 0 | 1 };
+type SegmentAtMetaForContextMenu = VertexMetaForContextMenu & { p: IVec2 };
 
 export const newLineSelectedState = defineIntransientState(() => {
   let lineShape: LineShape;
@@ -248,6 +250,14 @@ export const newLineSelectedState = defineIntransientState(() => {
               const seg = segs[hitResult.index];
               const originIndex =
                 getDistanceSq(seg[0], event.data.point) <= getDistanceSq(seg[1], event.data.point) ? 1 : 0;
+
+              if (hitResult.type === "segment") {
+                items.push({
+                  ...CONTEXT_MENU_ITEM_SRC.INSERT_VN_NODE,
+                  meta: { index: hitResult.index, p: event.data.point } as SegmentAtMetaForContextMenu,
+                });
+              }
+
               items.push(
                 {
                   ...CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT,
@@ -299,6 +309,36 @@ export const newLineSelectedState = defineIntransientState(() => {
                 add: [vnnode],
                 update: {
                   [lineShape.id]: patchConnection(lineShape, index, { id: vnnode.id, rate: { x: 0.5, y: 0.5 } }),
+                },
+              });
+              ctx.selectShape(vnnode.id);
+              return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.INSERT_VN_NODE.key: {
+              const { index, p } = event.data.meta as SegmentAtMetaForContextMenu;
+              const splitPatch = getShapePatchInfoBySplitingLineAt(lineShape, index, p, 10 * ctx.getScale());
+              if (!splitPatch) return;
+
+              const vnnodeId = ctx.generateUuid();
+              const newLine = createShape<LineShape>(ctx.getShapeStruct, "line", {
+                ...splitPatch[0],
+                id: ctx.generateUuid(),
+                findex: ctx.createLastIndex(),
+                pConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
+              });
+              const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                id: vnnodeId,
+                findex: generateKeyBetween(newLine.findex, null),
+                p: newLine.p,
+              });
+
+              ctx.updateShapes({
+                add: [newLine, vnnode],
+                update: {
+                  [lineShape.id]: {
+                    ...splitPatch[1],
+                    qConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
+                  } as Partial<LineShape>,
                 },
               });
               ctx.selectShape(vnnode.id);
