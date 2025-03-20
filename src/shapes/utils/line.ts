@@ -131,6 +131,7 @@ export function getShapePatchInfoBySplitingLineAt(
   const newLineSrc: Partial<LineShape> = {
     p: splitResult[1].edge[0],
     q: line.q,
+    qConnection: line.qConnection,
     body: cleanArray(line.body?.slice(index)),
     curves: cleanArray([splitResult[1].curve, ...(line.curves?.slice(index + 1) ?? [])]),
   };

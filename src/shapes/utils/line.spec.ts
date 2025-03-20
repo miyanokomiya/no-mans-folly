@@ -171,7 +171,9 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.curves).toEqual([undefined, { d: { x: 0.5, y: 25 } }]);
     expect(newLineSrc.q).toEqualPoint({ x: 100, y: 0 });
     expect(currentLinePatch.q).toEqualPoint({ x: 20, y: 0 });
+    expect(currentLinePatch).toHaveProperty("body");
     expect(currentLinePatch.body).toBe(undefined);
+    expect(currentLinePatch).toHaveProperty("curves");
     expect(currentLinePatch.curves).toBe(undefined);
   });
 
@@ -203,5 +205,25 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     });
     const result = getShapePatchInfoBySplitingLineAt(line, 0, { x: 200, y: 200 }, 1);
     expect(result).toBeUndefined();
+  });
+
+  test("should preserve current connections", () => {
+    const ca = { id: "a", rate: { x: 0.5, y: 0.5 } };
+    const cb = { id: "b", rate: { x: 0.5, y: 0.5 } };
+    const cc = { id: "c", rate: { x: 0.5, y: 0.5 } };
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      q: { x: 50, y: 50 },
+      pConnection: ca,
+      body: [{ p: { x: 50, y: 0 }, c: cb }],
+      qConnection: cc,
+    });
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
+    expect(currentLinePatch).not.toHaveProperty("pConnection");
+    expect(currentLinePatch.body).toEqual(undefined);
+    expect(currentLinePatch).not.toHaveProperty("qConnection");
+    expect(newLineSrc.pConnection).toEqual(undefined);
+    expect(newLineSrc.body?.[0].c).toEqual(cb);
+    expect(newLineSrc.qConnection).toEqual(cc);
   });
 });
