@@ -1,4 +1,4 @@
-import { getRectCenter, getSymmetry, isSame, IVec2 } from "okageo";
+import { add, getCrossSegAndBezier3WithT, getRectCenter, getSymmetry, isSame, IVec2, rotate, sub } from "okageo";
 import { getConnection, getEdges, getLinePath, LineShape, struct } from "../line";
 import {
   getClosestPointOnPolyline,
@@ -8,8 +8,9 @@ import {
   PolylineEdgeInfo,
   splitPathAtRate,
 } from "../../utils/path";
-import { ISegment } from "../../utils/geometry";
+import { getD2, getPointLerpSlope, ISegment } from "../../utils/geometry";
 import { ConnectionPoint } from "../../models";
+import { pickMinItemWithValue } from "../../utils/commons";
 
 /**
  * Returns the line with minimum styles.
@@ -106,7 +107,8 @@ export function getShapePatchInfoBySplitingLineAt(
 ): [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>] | undefined {
   const edge = getEdges(line)[index];
   const curve = line.curves?.[index];
-  const closestInfo = getClosestPointOnPolyline(getPolylineEdgeInfo([edge], [curve]), p, threshold);
+  const edgeInfo = getPolylineEdgeInfo([edge], [curve]);
+  const closestInfo = getClosestPointOnPolyline(edgeInfo, p, threshold);
   if (!closestInfo) return;
 
   const vertices = getLinePath(line);
@@ -134,7 +136,19 @@ export function getShapePatchInfoBySplitingLineAt(
     return [newLineSrc, currentLinePatch];
   }
 
-  const rate = closestInfo[1];
+  let rate = closestInfo[1];
+  // Convert the rate to bezier control value t when the curve is a bezier.
+  // The rate is based on the distance of the curve, so it's not same as bezier control value t.
+  if (isBezieirControl(curve)) {
+    const slopeR = getPointLerpSlope(edgeInfo.lerpFn, rate);
+    const normalV = rotate({ x: 1, y: 0 }, slopeR + Math.PI / 2);
+    const normalSeg: ISegment = [sub(p, normalV), add(p, normalV)];
+    const intersections = getCrossSegAndBezier3WithT(normalSeg, [edge[0], curve.c1, curve.c2, edge[1]]);
+    const minItem = pickMinItemWithValue(intersections, (v) => getD2(sub(p, v[0])));
+    if (minItem && minItem[1] < threshold ** 2) {
+      rate = minItem[0][1];
+    }
+  }
   const splitResult = splitPathAtRate({ edge, curve }, rate);
 
   const filledCurves: LineShape["curves"] = line.curves?.concat() ?? [];
