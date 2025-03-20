@@ -1,7 +1,7 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
 import { ConnectionResult, isLineSnappableShape, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
-import { IVec2 } from "okageo";
+import { isSame, IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newShapeSnapping } from "../../../shapeSnapping";
@@ -88,6 +88,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
               // This threshold isn't so important since targets are already chosen for the point.
               const threshold = 10 * ctx.getScale();
 
+              const connection = { id: vnnodeId, rate: { x: 0.5, y: 0.5 } };
               const newShapes: Shape[] = [vnnode];
               const patch: { [id: string]: Partial<Shape> } = {};
               targetIds.forEach((id) => {
@@ -98,19 +99,32 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
                 if (index === -1) return;
 
                 const splitPatch = getShapePatchInfoBySplitingLineAt(shape, index, p, threshold);
-                if (!splitPatch) return;
+                if (!splitPatch) {
+                  // Check if the point is at the first or last vertex.
+                  // If so, connect the point to the vertex.
+                  if (isSame(p, shape.p)) {
+                    patch[shape.id] = {
+                      pConnection: connection,
+                    } as Partial<LineShape>;
+                  } else if (isSame(p, shape.q)) {
+                    patch[shape.id] = {
+                      qConnection: connection,
+                    } as Partial<LineShape>;
+                  }
+                  return;
+                }
 
                 const newLine = createShape<LineShape>(ctx.getShapeStruct, "line", {
                   ...shape,
                   ...splitPatch[0],
                   id: ctx.generateUuid(),
                   findex: generateFindexAfter(ctx.getShapeComposite(), shape.id),
-                  pConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
+                  pConnection: connection,
                 });
                 newShapes.push(newLine);
                 patch[shape.id] = {
                   ...splitPatch[1],
-                  qConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
+                  qConnection: connection,
                 } as Partial<LineShape>;
               });
 
@@ -128,10 +142,13 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
           connectionResult = getConnectionResult(point, event.data.ctrl, ctx);
           vertex = connectionResult?.p ?? point;
 
+          const shapeComposite = ctx.getShapeComposite();
           // Regard up to two lines.
           // TODO: It's possible to regard more than two line.
           // => There's no good way to seek lines exactly running through the point.
-          targetIds = [connectionResult?.outlineSrc, connectionResult?.outlineSubSrc].filter((s): s is string => !!s);
+          targetIds = [connectionResult?.outlineSrc, connectionResult?.outlineSubSrc].filter(
+            (s): s is string => !!s && isLineShape(shapeComposite.shapeMap[s]),
+          );
           vnnode =
             targetIds.length > 0
               ? vnnode
