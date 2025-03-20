@@ -34,8 +34,9 @@ export const newVnNodeHandler = defineShapeHandler<HitResult, Option>((option) =
     if (shape.locked) return;
 
     const moveAnchorSize = MOVE_ANCHOR_SIZE * scale;
+    const radius = Math.max(shape.r, NEW_EDGE_ANCHOR_SIZE * 2 * scale);
     return {
-      c: add(add(center, { x: -shape.r, y: -shape.r }), multi({ x: -MOVE_ANCHOR_SIZE, y: -MOVE_ANCHOR_SIZE }, scale)),
+      c: add(add(center, { x: -radius, y: -radius }), multi({ x: -MOVE_ANCHOR_SIZE, y: -MOVE_ANCHOR_SIZE }, scale)),
       r: moveAnchorSize * 2,
     };
   }
@@ -76,7 +77,7 @@ export const newVnNodeHandler = defineShapeHandler<HitResult, Option>((option) =
       const color = hitResult?.type === "new-edge" ? style.selectionSecondaly : style.selectionPrimary;
       renderOutlinedCircle(ctx, newEdgeAnchor.c, newEdgeAnchor.r, color);
       applyStrokeStyle(ctx, { color: COLORS.WHITE, width: style.selectionLineWidth * scale });
-      renderPlusIcon(ctx, newEdgeAnchor.c, newEdgeAnchor.r * 2 - 4 * scale);
+      renderPlusIcon(ctx, newEdgeAnchor.c, newEdgeAnchor.r * 2 - 6 * scale);
     }
 
     if (hitResult?.type === "area") {
