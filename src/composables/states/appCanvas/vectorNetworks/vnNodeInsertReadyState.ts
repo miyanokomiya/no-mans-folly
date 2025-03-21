@@ -9,14 +9,18 @@ import { TAU } from "../../../../utils/geometry";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { handleCommonWheel } from "../../commons";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
-import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
+import { getLinePath, isLineShape, LineShape, patchConnection } from "../../../../shapes/line";
 import { createShape } from "../../../../shapes";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { newShapeComposite } from "../../../shapeComposite";
 import { newShapeRenderer } from "../../../shapeRenderer";
-import { getSegmentIndexCloseAt, getShapePatchInfoBySplitingLineAt } from "../../../../shapes/utils/line";
+import {
+  getSegmentIndexCloseAt,
+  getShapePatchInfoByInsertingVertexAt,
+  getShapePatchInfoBySplitingLineAt,
+} from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
 import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
@@ -66,7 +70,11 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
     getLabel: () => "VnNodeInsertReady",
     onStart: (ctx) => {
       ctx.setCursor();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([
+        COMMAND_EXAM_SRC.VN_SPLIT_SEGMENTS,
+        COMMAND_EXAM_SRC.VN_INSERT_VERTEX,
+        COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP,
+      ]);
       vertex = ctx.getCursorPoint();
       coordinateRenderer.saveCoord(vertex);
       vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
@@ -83,7 +91,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
-        case "pointerdown":
+        case "pointerdown": {
           switch (event.data.options.button) {
             case 0: {
               if (!connectionResult?.outlineSrc) {
@@ -94,55 +102,24 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
 
               const vnnodeId = vnnode.id;
               const p = connectionResult.p;
-              const shapeComposite = ctx.getShapeComposite();
               // This threshold isn't so important since targets are already chosen for the point.
               const threshold = 1 * ctx.getScale();
-
               const connection = { id: vnnodeId, rate: { x: 0.5, y: 0.5 } };
+
               const newShapes: Shape[] = [vnnode];
               const patch: { [id: string]: Partial<Shape> } = {};
-              targetIds.forEach((id) => {
-                const shape = shapeComposite.mergedShapeMap[id];
-                if (!shape || !isLineShape(shape)) return;
-
-                const index = getSegmentIndexCloseAt(shape, p, threshold);
-                if (index === -1) return;
-
-                const splitPatch = getShapePatchInfoBySplitingLineAt(shape, index, p, threshold);
-                if (!splitPatch) {
-                  // Check if the point is at the first or last vertex.
-                  // If so, connect the point to the vertex.
-                  if (isSame(p, shape.p)) {
-                    patch[shape.id] = {
-                      pConnection: connection,
-                    } as Partial<LineShape>;
-                  } else if (isSame(p, shape.q)) {
-                    patch[shape.id] = {
-                      qConnection: connection,
-                    } as Partial<LineShape>;
-                  }
-                  return;
-                }
-
-                const newLine = createShape<LineShape>(ctx.getShapeStruct, "line", {
-                  ...shape,
-                  ...splitPatch[0],
-                  id: ctx.generateUuid(),
-                  findex: generateFindexBefore(shapeComposite, shape.id),
-                  pConnection: connection,
-                });
-                newShapes.push(newLine);
-                patch[shape.id] = {
-                  ...splitPatch[1],
-                  qConnection: connection,
-                } as Partial<LineShape>;
-
-                // Adjust attached shapes.
-                const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, newLine.id, splitPatch[2]);
-                Object.entries(attachingPatch).forEach(([id, p]) => {
+              if (event.data.options.shift) {
+                const info = handleSplitTargetLines(ctx, targetIds, p, connection, threshold);
+                info[0].forEach((s) => newShapes.push(s));
+                Object.entries(info[1]).forEach(([id, p]) => {
                   patch[id] = p;
                 });
-              });
+              } else {
+                const info = handleInsertVertexToTargetLines(ctx, targetIds, p, connection, threshold);
+                Object.entries(info).forEach(([id, p]) => {
+                  patch[id] = p;
+                });
+              }
 
               ctx.updateShapes({ add: newShapes, update: patch });
               ctx.selectShape(vnnode.id);
@@ -153,6 +130,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
             default:
               return ctx.states.newSelectionHubState;
           }
+        }
         case "pointerhover": {
           const point = event.data.current;
           connectionResult = getConnectionResult(point, event.data.ctrl, ctx);
@@ -249,4 +227,97 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
       }
     },
   };
+}
+
+function handleSplitTargetLines(
+  ctx: AppCanvasStateContext,
+  targetIds: string[],
+  p: IVec2,
+  connection: { id: string; rate: { x: number; y: number } },
+  threshold: number,
+): [newShapes: Shape[], patch: { [id: string]: Partial<Shape> }] {
+  const shapeComposite = ctx.getShapeComposite();
+  const newShapes: Shape[] = [];
+  const patch: { [id: string]: Partial<Shape> } = {};
+  targetIds.forEach((id) => {
+    const shape = shapeComposite.mergedShapeMap[id];
+    if (!shape || !isLineShape(shape)) return;
+
+    const index = getSegmentIndexCloseAt(shape, p, threshold);
+    if (index === -1) return;
+
+    const splitPatch = getShapePatchInfoBySplitingLineAt(shape, index, p, threshold);
+    if (!splitPatch) {
+      // Check if the point is at the first or last vertex.
+      // If so, connect the point to the vertex.
+      if (isSame(p, shape.p)) {
+        patch[shape.id] = {
+          pConnection: connection,
+        } as Partial<LineShape>;
+      } else if (isSame(p, shape.q)) {
+        patch[shape.id] = {
+          qConnection: connection,
+        } as Partial<LineShape>;
+      }
+      return;
+    }
+
+    const newLine = createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
+      ...shape,
+      ...splitPatch[0],
+      id: ctx.generateUuid(),
+      findex: generateFindexBefore(shapeComposite, shape.id),
+      pConnection: connection,
+    });
+    newShapes.push(newLine);
+    patch[shape.id] = {
+      ...splitPatch[1],
+      qConnection: connection,
+    } as Partial<LineShape>;
+
+    // Adjust attached shapes.
+    const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, newLine.id, splitPatch[2]);
+    Object.entries(attachingPatch).forEach(([id, p]) => {
+      patch[id] = p;
+    });
+  });
+  return [newShapes, patch];
+}
+
+function handleInsertVertexToTargetLines(
+  ctx: AppCanvasStateContext,
+  targetIds: string[],
+  p: IVec2,
+  connection: { id: string; rate: { x: number; y: number } },
+  threshold: number,
+): { [id: string]: Partial<Shape> } {
+  const shapeComposite = ctx.getShapeComposite();
+  const patch: { [id: string]: Partial<Shape> } = {};
+  targetIds.forEach((id) => {
+    const shape = shapeComposite.mergedShapeMap[id];
+    if (!shape || !isLineShape(shape)) return;
+
+    const index = getSegmentIndexCloseAt(shape, p, threshold);
+    if (index === -1) return;
+
+    const insertPatch = getShapePatchInfoByInsertingVertexAt(shape, index, p, threshold);
+    if (insertPatch) {
+      patch[shape.id] = {
+        ...insertPatch[0],
+        body: insertPatch[0].body?.map((b, i) => {
+          if (i !== index) return b;
+          return { ...b, c: connection };
+        }),
+      } as Partial<LineShape>;
+    } else {
+      // Check if the point is at a vertex.
+      // If so, connect the point to the vertex.
+      const vertices = getLinePath(shape);
+      const vertexIndex = vertices.findIndex((v) => isSame(v, p));
+      if (vertexIndex !== -1) {
+        patch[shape.id] = patchConnection(shape, vertexIndex, connection);
+      }
+    }
+  });
+  return patch;
 }

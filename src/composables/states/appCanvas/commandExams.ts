@@ -17,6 +17,8 @@ export const COMMAND_EXAM_SRC = {
   SMART_BRANCH_SETTING: { command: "Right click", title: "Smart branch setting" },
 
   ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
+  VN_INSERT_VERTEX: { command: "Click", title: "Insert vertex" },
+  VN_SPLIT_SEGMENTS: { command: "Shift + Click", title: "Split segment" },
 
   LABEL_ALIGN: { command: "Shift", title: "Adjust label align" },
   LABEL_ALIGN_ACTIVATE: { command: "Shift + Drag", title: "Adjust label align" },

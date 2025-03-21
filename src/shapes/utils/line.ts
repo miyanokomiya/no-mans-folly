@@ -9,7 +9,7 @@ import {
   splitPathAtRate,
 } from "../../utils/path";
 import { getD2, getPointLerpSlope, ISegment } from "../../utils/geometry";
-import { ConnectionPoint } from "../../models";
+import { ConnectionPoint, CurveControl } from "../../models";
 import { pickMinItemWithValue } from "../../utils/commons";
 
 /**
@@ -148,19 +148,7 @@ export function getShapePatchInfoBySplitingLineAt(
     return [newLineSrc, currentLinePatch, closestInfo[1]];
   }
 
-  let controlRate = closestInfo[1];
-  // Convert the rate to bezier control value t when the curve is a bezier.
-  // The rate is based on the distance of the curve, so it's not same as bezier control value t.
-  if (isBezieirControl(curve)) {
-    const slopeR = getPointLerpSlope(edgeInfo.lerpFn, controlRate);
-    const normalV = rotate({ x: 1, y: 0 }, slopeR + Math.PI / 2);
-    const normalSeg: ISegment = [sub(p, normalV), add(p, normalV)];
-    const intersections = getCrossSegAndBezier3WithT(normalSeg, [edge[0], curve.c1, curve.c2, edge[1]]);
-    const minItem = pickMinItemWithValue(intersections, (v) => getD2(sub(p, v[0])));
-    if (minItem && minItem[1] < threshold ** 2) {
-      controlRate = minItem[0][1];
-    }
-  }
+  const controlRate = convertToControlRate(curve, edgeInfo, closestInfo[1], p, threshold);
   const splitResult = splitPathAtRate({ edge, curve }, controlRate);
 
   const filledCurves: LineShape["curves"] = line.curves?.concat() ?? [];
@@ -188,6 +176,64 @@ export function getShapePatchInfoBySplitingLineAt(
     qHead: line.qHead,
   };
   return [newLineSrc, currentLinePatch, closestInfo[1]];
+}
+
+export function getShapePatchInfoByInsertingVertexAt(
+  line: LineShape,
+  index: number,
+  p: IVec2,
+  threshold: number,
+): [currentLinePatch: Partial<LineShape>, rate: number] | undefined {
+  const edge = getEdges(line)[index];
+  const curve = line.curves?.[index];
+  const edgeInfo = getPolylineEdgeInfo([edge], [curve]);
+  const closestInfo = getClosestPointOnPolyline(edgeInfo, p, threshold);
+  if (!closestInfo) return;
+
+  const vertices = getLinePath(line);
+
+  // Check if the closest point is a vertex.
+  const sameVertexIndex = vertices.findIndex((v) => isSame(v, closestInfo[0]));
+  if (sameVertexIndex !== -1) return;
+
+  const controlRate = convertToControlRate(curve, edgeInfo, closestInfo[1], p, threshold);
+  const splitResult = splitPathAtRate({ edge, curve }, controlRate);
+
+  const body = line.body?.concat() ?? [];
+  body.splice(index, 0, { p: splitResult[0].edge[1] });
+  const curves = line.curves?.concat() ?? [];
+  curves.splice(index, 1, splitResult[0].curve, splitResult[1].curve);
+
+  const currentLinePatch: Partial<LineShape> = {
+    body,
+    curves: cleanArray(curves),
+  };
+  return [currentLinePatch, closestInfo[1]];
+}
+
+/**
+ * Convert distance rate to bezier control value t when the curve is a bezier.
+ * The rate is based on the distance of the curve, so it's not same as bezier control value t.
+ */
+function convertToControlRate(
+  curve: CurveControl | undefined,
+  edgeInfo: PolylineEdgeInfo,
+  distanceRate: number,
+  p: IVec2,
+  threshold: number,
+): number {
+  if (isBezieirControl(curve)) {
+    const slopeR = getPointLerpSlope(edgeInfo.lerpFn, distanceRate);
+    const normalV = rotate({ x: 1, y: 0 }, slopeR + Math.PI / 2);
+    const normalSeg: ISegment = [sub(p, normalV), add(p, normalV)];
+    const edge = [edgeInfo.lerpFn(0), edgeInfo.lerpFn(1)];
+    const intersections = getCrossSegAndBezier3WithT(normalSeg, [edge[0], curve.c1, curve.c2, edge[1]]);
+    const minItem = pickMinItemWithValue(intersections, (v) => getD2(sub(p, v[0])));
+    if (minItem && minItem[1] < threshold ** 2) {
+      return minItem[0][1];
+    }
+  }
+  return distanceRate;
 }
 
 function cleanArray(arr?: any[]) {

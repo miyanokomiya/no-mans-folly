@@ -10,6 +10,7 @@ import {
   getShapePatchInfoBySplitingLineAt,
   getSegmentIndexCloseAt,
   getNewRateAfterSplit,
+  getShapePatchInfoByInsertingVertexAt,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
@@ -377,5 +378,45 @@ describe("getNewRateAfterSplit", () => {
     expect(getNewRateAfterSplit(1, 0.5)).toEqual([undefined, 1]);
     expect(getNewRateAfterSplit(0.5, 0)).toEqual([undefined, 0.5]);
     expect(getNewRateAfterSplit(0.5, 1)).toEqual([0.5, undefined]);
+  });
+});
+
+describe("getShapePatchInfoByInsertingVertexAt", () => {
+  test("should return line patch when splitting at a point: straight segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      curves: [undefined, { d: { x: 0.5, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    const result0 = getShapePatchInfoByInsertingVertexAt(line, 0, { x: 20, y: 0 }, 1)!;
+    expect(result0[0].body).toEqual([{ p: { x: 20, y: 0 } }, { p: { x: 50, y: 0 } }]);
+    expect(result0[0].curves).toEqual([undefined, undefined, { d: { x: 0.5, y: 25 } }]);
+  });
+
+  test("should return line patch when splitting at a point: curve segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      curves: [undefined, { d: { x: 0.5, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    const result0 = getShapePatchInfoByInsertingVertexAt(line, 1, { x: 75, y: 25 }, 1)!;
+    expect(result0[0].body).toEqual([{ p: { x: 50, y: 0 } }, { p: { x: 75, y: 25 } }]);
+    expect(result0[0].curves).toHaveLength(3);
+    expect(result0[0].curves?.[0]).toBeUndefined();
+    expect((result0[0].curves?.[1] as any).d.y).toBeCloseTo(7.32233);
+    expect((result0[0].curves?.[2] as any).d.y).toBeCloseTo(7.32233);
+  });
+
+  test("should return undefined when the point is at a vertex", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      curves: [undefined, { d: { x: 0.5, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    expect(getShapePatchInfoByInsertingVertexAt(line, 0, { x: 50, y: 0 }, 1)).toBeUndefined();
+    expect(getShapePatchInfoByInsertingVertexAt(line, 1, { x: 50, y: 0 }, 1)).toBeUndefined();
   });
 });
