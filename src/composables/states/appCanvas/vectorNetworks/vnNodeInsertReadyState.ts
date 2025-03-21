@@ -25,7 +25,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
   let connectionResult: ConnectionResult | undefined;
   let targetIds: string[] = [];
-  let vnnode: VnNodeShape | undefined;
+  let vnnode: VnNodeShape;
   const coordinateRenderer = newCoordinateRenderer();
 
   const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
@@ -69,6 +69,11 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
       vertex = ctx.getCursorPoint();
       coordinateRenderer.saveCoord(vertex);
+      vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+        id: ctx.generateUuid(),
+        findex: ctx.createLastIndex(),
+        p: vertex,
+      });
     },
     onResume: () => {
       lineSnappingCache.update();
@@ -81,7 +86,11 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
-              if (!connectionResult?.outlineSrc || !vnnode) return ctx.states.newSelectionHubState;
+              if (!connectionResult?.outlineSrc) {
+                ctx.addShapes([vnnode]);
+                ctx.selectShape(vnnode.id);
+                return ctx.states.newSelectionHubState;
+              }
 
               const vnnodeId = vnnode.id;
               const p = connectionResult.p;
@@ -157,30 +166,21 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
           // TODO: It's possible to regard more than two line.
           // => There's no good way to seek lines exactly running through the point.
           targetIds = targetShapes.map((s) => s.id);
+
           // Inherit parent when all target share the same parent.
           const parentId = targetShapes.every((s) => s.parentId === targetShapes.at(0)?.parentId)
             ? targetShapes.at(0)?.parentId
             : undefined;
-          vnnode =
-            targetIds.length > 0
-              ? vnnode
-                ? {
-                    ...vnnode,
-                    // Inherit the latest nearby node properties.
-                    ...getInheritableVnNodeProperties(seekNearbyVnNode(shapeComposite, targetIds)),
-                    id: vnnode.id,
-                    findex: vnnode.findex,
-                    p: vertex,
-                    parentId,
-                  }
-                : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
-                    ...getInheritableVnNodeProperties(seekNearbyVnNode(shapeComposite, targetIds)),
-                    id: ctx.generateUuid(),
-                    findex: generateFindexAfter(shapeComposite, targetIds[0]),
-                    p: vertex,
-                    parentId,
-                  })
-              : undefined;
+          const findex = targetIds.length > 0 ? generateFindexAfter(shapeComposite, targetIds[0]) : vnnode.findex;
+          const nearbyNode = seekNearbyVnNode(shapeComposite, targetIds);
+          vnnode = {
+            ...vnnode,
+            // Inherit the latest nearby node properties.
+            ...getInheritableVnNodeProperties(nearbyNode),
+            findex,
+            p: vertex,
+            parentId,
+          };
 
           coordinateRenderer.saveCoord(vertex);
           ctx.redraw();
@@ -224,12 +224,10 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
         renderCtx.stroke();
       });
 
-      if (vnnode) {
-        newShapeRenderer({
-          shapeComposite: newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: [{ ...vnnode, alpha: 0.5 }] }),
-          scale,
-        }).render(renderCtx);
-      }
+      newShapeRenderer({
+        shapeComposite: newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: [{ ...vnnode, alpha: 0.5 }] }),
+        scale,
+      }).render(renderCtx);
 
       if (vertex) {
         coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
