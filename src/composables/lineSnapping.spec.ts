@@ -93,14 +93,14 @@ describe("newLineSnapping", () => {
       });
 
       // Self snapped & Outline snapped
-      expect(target.testConnection({ x: 155, y: -5 }, 1)).toEqual({
-        connection: { id: "b", rate: { x: 0, y: 0 } },
+      expect(target.testConnection({ x: 165, y: -5 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0.15, y: 0 } },
         outlineSrc: "b",
-        p: { x: 150, y: 0 },
+        p: { x: 165, y: 0 },
         guidLines: [
           [
             { x: 0, y: 0 },
-            { x: 155, y: 0 },
+            { x: 165, y: 0 },
           ],
         ],
       });
@@ -176,7 +176,7 @@ describe("newLineSnapping", () => {
       });
     });
 
-    test("should inherit the connection from the snapped vertex", () => {
+    test("should connect to the snapped shape: snapped to a line and other shape type", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", {
         id: "line",
         p: { x: 200, y: -100 },
@@ -186,8 +186,6 @@ describe("newLineSnapping", () => {
         id: "otherline",
         p: { x: 0, y: -100 },
         q: { x: 220, y: 0 },
-        // Note: Set wrong connection to check if the result inherits it.
-        qConnection: { id: "z", rate: { x: 0.1, y: 0 } },
       });
       const snappableShapes2 = [...snappableShapes, otherline];
       const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes2 });
@@ -202,10 +200,48 @@ describe("newLineSnapping", () => {
         movingIndex: 1,
       });
       expect(target.testConnection({ x: 220, y: 1 }, 1)).toEqual({
+        connection: { id: "b", rate: { x: 0.7, y: 0 } },
+        outlineSrc: "b",
+        outlineSubSrc: "otherline",
+        p: { x: 220, y: 0 },
+      });
+    });
+
+    test("should inherit the connection from the snapped vertex: snapped to other two lines", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 200, y: -100 },
+        q: { x: 100, y: -50 },
+      });
+      const otherline = createShape<LineShape>(getCommonStruct, "line", {
+        id: "otherline",
+        p: { x: 0, y: -100 },
+        q: { x: 220, y: 0 },
+        // Note: Set wrong connection to check if the result inherits it.
+        qConnection: { id: "z", rate: { x: 0.1, y: 0 } },
+      });
+      const otherline2 = createShape<LineShape>(getCommonStruct, "line", {
+        ...otherline,
+        id: "otherline2",
+        p: { x: -100, y: -100 },
+      });
+      const snappableShapes2 = [...snappableShapes, otherline, otherline2];
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes2 });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: snappableShapes2.map((s) => [s.id, sc.getSnappingLines(s)]),
+      });
+      const target = newLineSnapping({
+        snappableShapes: snappableShapes2,
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target.testConnection({ x: 220, y: 1 }, 1)).toEqual({
         connection: { id: "z", rate: { x: 0.1, y: 0 } },
         outlineSrc: "z",
+        outlineSubSrc: "otherline",
         p: { x: 220, y: 0 },
-        shapeSnappingResult: expect.anything(),
       });
     });
 
@@ -392,26 +428,8 @@ describe("newLineSnapping", () => {
       expect(target1.testConnection({ x: 18, y: 1 }, 1)).toEqual({
         connection: { id: "a", rate: { x: 0.2, y: 0 } },
         outlineSrc: "a",
+        outlineSubSrc: "line",
         p: { x: 20, y: 0 },
-        guidLines: [
-          [
-            { x: 20, y: -50 },
-            { x: 20, y: 50 },
-          ],
-        ],
-        shapeSnappingResult: {
-          diff: { x: 2, y: 0 },
-          intervalTargets: [],
-          targets: [
-            {
-              id: "line",
-              line: [
-                { x: 20, y: -50 },
-                { x: 20, y: 50 },
-              ],
-            },
-          ],
-        },
       });
 
       const target2 = newLineSnapping({
@@ -469,25 +487,6 @@ describe("newLineSnapping", () => {
         outlineSrc: "a",
         outlineSubSrc: "line",
         p: { x: 20, y: 0 },
-        guidLines: [
-          [
-            { x: 0, y: 0 },
-            { x: 100, y: 0 },
-          ],
-        ],
-        shapeSnappingResult: {
-          diff: { x: 0, y: -1 },
-          intervalTargets: [],
-          targets: [
-            {
-              id: "a",
-              line: [
-                { x: 0, y: 0 },
-                { x: 100, y: 0 },
-              ],
-            },
-          ],
-        },
       });
 
       const target2 = newLineSnapping({
@@ -502,25 +501,6 @@ describe("newLineSnapping", () => {
         outlineSrc: "a",
         outlineSubSrc: "line",
         p: { x: 20, y: 0 },
-        guidLines: [
-          [
-            { x: 0, y: 0 },
-            { x: 100, y: 0 },
-          ],
-        ],
-        shapeSnappingResult: {
-          diff: { x: 0, y: -1 },
-          intervalTargets: [],
-          targets: [
-            {
-              id: "a",
-              line: [
-                { x: 0, y: 0 },
-                { x: 100, y: 0 },
-              ],
-            },
-          ],
-        },
       });
     });
 
@@ -574,27 +554,8 @@ describe("newLineSnapping", () => {
       expect(target1.testConnection({ x: 18, y: 1 }, 1)).toEqual({
         connection: { id: "a", rate: { x: 0.2, y: 0 } },
         outlineSrc: "a",
+        outlineSubSrc: "line",
         p: { x: 20, y: 0 },
-        shapeSnappingResult: {
-          diff: { x: 2, y: -1 },
-          intervalTargets: [],
-          targets: [
-            {
-              id: "line",
-              line: [
-                { x: 20, y: -50 },
-                { x: 20, y: 50 },
-              ],
-            },
-            {
-              id: "a",
-              line: [
-                { x: 0, y: 0 },
-                { x: 100, y: 0 },
-              ],
-            },
-          ],
-        },
       });
     });
 
@@ -734,12 +695,6 @@ describe("newLineSnapping", () => {
         connection: { id: "a", rate: { x: 0, y: 0 } },
         outlineSrc: "a",
         p: { x: 0, y: 0 },
-        guidLines: [
-          [
-            { x: -200, y: 0 },
-            { x: 2, y: 0 },
-          ],
-        ],
       });
     });
 

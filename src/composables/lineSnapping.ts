@@ -280,6 +280,10 @@ export function newLineSnapping(option: Option) {
         ? Math.min(getDistance(lineConstrain.p, point) / (outline ? 2 : 1), intersectionThreshold) // Prioritize the intersection a bit if exists.
         : intersectionThreshold;
 
+      // Keep the shape that has the closest outline for seeking outline intersection.
+      let outlineForIntersection: typeof outline;
+      let outlineThresholdForIntersection = threshold;
+
       if (outlineThreshold > 0) {
         const closeShapes: Shape[] = [];
         reversedSnappableShapes.forEach((shape) => {
@@ -308,11 +312,21 @@ export function newLineSnapping(option: Option) {
           if (d < threshold) {
             closeShapes.push(shape);
           }
+          if (d < outlineThresholdForIntersection) {
+            outlineForIntersection = { p, shape };
+            outlineThresholdForIntersection = d;
+          }
         });
 
-        if (outline && closeShapes.length === 1 && outline.shape.id === closeShapes[0].id) {
-          const outlineP = outline.p;
-          const outlinePaths = getOutlinePaths(option.getShapeStruct, outline.shape);
+        // Increase a bit to prioritize the outline intersection.
+        const outlineIntersectionThreshold = intersectionThreshold + MINVALUE;
+        if (
+          outlineForIntersection &&
+          closeShapes.length === 1 &&
+          outlineForIntersection.shape.id === closeShapes[0].id
+        ) {
+          const outlineP = outlineForIntersection.p;
+          const outlinePaths = getOutlinePaths(option.getShapeStruct, outlineForIntersection.shape);
           const candidates: IVec2[] = [];
           outlinePaths?.forEach((outlinePath) => {
             const srcBeziers = getBezierSegmentList([outlinePath]);
@@ -331,7 +345,8 @@ export function newLineSnapping(option: Option) {
                 }
 
                 const closestCandidate = pickMinItem(intersections, (p) => getD2(sub(p, point)));
-                if (closestCandidate && getDistance(closestCandidate, point) < intersectionThreshold) {
+                // Include the threshold to prioritize the outline.
+                if (closestCandidate && getDistance(closestCandidate, point) < outlineIntersectionThreshold) {
                   candidates.push(closestCandidate);
                 }
               }
@@ -340,26 +355,27 @@ export function newLineSnapping(option: Option) {
 
           const closestCandidate = pickMinItem(candidates ?? [], (p) => getD2(sub(p, outlineP)));
           if (closestCandidate) {
-            outline = { p: closestCandidate, shape: outline.shape };
+            outline = { p: closestCandidate, shape: outlineForIntersection.shape };
             lineConstrain = undefined;
             extendedGuideLine = undefined;
           }
-        } else if (outline && closeShapes.length > 0) {
-          const outlineP = outline.p;
-          const srcOutlinePaths = getOutlinePaths(option.getShapeStruct, outline.shape);
+        } else if (outlineForIntersection && closeShapes.length > 0) {
+          const outlineP = outlineForIntersection.p;
+          const srcOutlinePaths = getOutlinePaths(option.getShapeStruct, outlineForIntersection.shape);
           if (srcOutlinePaths && srcOutlinePaths.length > 0) {
             const srcBeziers = getBezierSegmentList(srcOutlinePaths);
-            const candidates: (typeof outline)[] = [];
+            const candidates: Exclude<typeof outline, undefined>[] = [];
 
             closeShapes.forEach((shape) => {
-              if (outline?.shape.id === shape.id) return;
+              if (outlineForIntersection?.shape.id === shape.id) return;
 
               const outlinePaths = getOutlinePaths(option.getShapeStruct, shape);
               if (!outlinePaths) return;
 
               const intersections = getBezierIntersections(getBezierSegmentList(outlinePaths), srcBeziers);
               const closestCandidate = pickMinItem(intersections, (p) => getD2(sub(p, point)));
-              if (closestCandidate && getDistance(closestCandidate, point) < intersectionThreshold) {
+              // Include the threshold to prioritize the outline.
+              if (closestCandidate && getDistance(closestCandidate, point) < outlineIntersectionThreshold) {
                 candidates.push({ p: closestCandidate, shape });
               }
             });
@@ -368,10 +384,18 @@ export function newLineSnapping(option: Option) {
             if (closestCandidate) {
               // Pick foward one as main shape.
               // Although this comparison doesn't regard the hierarchy of shapes, it's enough for most cases and efficient.
-              if (outline.shape.findex < closestCandidate.shape.findex) {
-                outline = { p: closestCandidate.p, shape: closestCandidate.shape, subshape: outline.shape };
+              if (outlineForIntersection.shape.findex < closestCandidate.shape.findex) {
+                outline = {
+                  p: closestCandidate.p,
+                  shape: closestCandidate.shape,
+                  subshape: outlineForIntersection.shape,
+                };
               } else {
-                outline = { p: closestCandidate.p, shape: outline.shape, subshape: closestCandidate.shape };
+                outline = {
+                  p: closestCandidate.p,
+                  shape: outlineForIntersection.shape,
+                  subshape: closestCandidate.shape,
+                };
               }
               lineConstrain = undefined;
               extendedGuideLine = undefined;
@@ -381,7 +405,8 @@ export function newLineSnapping(option: Option) {
       }
     }
 
-    if (outline && !outline.guideLine && guidelineDetermined) return guidelineDetermined;
+    // When the outline is the only source of snapping, prioritize guideline-determined result.
+    if (outline && !outline.subshape && !outline.guideLine && guidelineDetermined) return guidelineDetermined;
 
     if (outline) {
       const connectionTarget = getConnectedPrimeShape(outline.shape, outline.subshape);
@@ -392,19 +417,16 @@ export function newLineSnapping(option: Option) {
           }
         : undefined;
 
+      // Check if snapped lines have the connection at the point.
+      // => If found, inherit it.
+      if (!connection && outline.shape && isLineShape(outline.shape)) {
+        connection = seekLineConnectionAt(outline.shape, outline.p);
+      }
+      if (!connection && outline.subshape && isLineShape(outline.subshape)) {
+        connection = seekLineConnectionAt(outline.subshape, outline.p);
+      }
+
       if (lineConstrain) {
-        if (!connection) {
-          const connected = lineConstrain.shapeSnappingResult?.targets.find((t) => {
-            const s = shapeComposite.shapeMap[t.id];
-            return outline && s && !isLineShape(s) && shapeComposite.isPointOnOutline(s, outline.p);
-          });
-          if (connected) {
-            connection = {
-              rate: shapeComposite.getLocationRateOnShape(shapeComposite.shapeMap[connected.id], outline.p),
-              id: connected.id,
-            };
-          }
-        }
         const outlineSrc = connection?.id ?? outline.shape.id;
         return {
           connection,
@@ -899,4 +921,11 @@ function getBezierSegmentList(beziers: BezierPath[]): ([IVec2, IVec2, IVec2, IVe
     });
   });
   return ret;
+}
+
+function seekLineConnectionAt(line: LineShape, p: IVec2): ConnectionPoint | undefined {
+  const points = getLinePath(line);
+  const index = points.findIndex((v) => isSame(v, p));
+  if (index === -1) return;
+  return getConnection(line, index);
 }
