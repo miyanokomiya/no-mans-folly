@@ -26,12 +26,13 @@ function getState(): AppCanvasState {
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
     const style = ctx.getStyleScheme();
     const scale = ctx.getScale();
+    const latestShape = ctx.getShapeComposite().mergedShapeMap[shape.id] as VnNodeShape;
     applyStrokeStyle(renderCtx, {
-      color: getShapeStatusColor(style, shape) ?? style.selectionPrimary,
+      color: getShapeStatusColor(style, latestShape) ?? style.selectionPrimary,
       width: style.selectionLineWidth * scale,
     });
     renderCtx.beginPath();
-    renderCtx.arc(shape.p.x, shape.p.y, shape.r, 0, TAU);
+    renderCtx.arc(latestShape.p.x, latestShape.p.y, latestShape.r, 0, TAU);
     renderCtx.stroke();
     shapeHandler.render(renderCtx, style, scale);
   };
