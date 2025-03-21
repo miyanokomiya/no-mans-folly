@@ -1,4 +1,7 @@
+import { Shape } from "../models";
 import { getConnections, isLineShape } from "../shapes/line";
+import { isTextShape, TextShape } from "../shapes/text";
+import { getNewRateAfterSplit } from "../shapes/utils/line";
 import { isVNNodeShape, VnNodeShape } from "../shapes/vectorNetworks/vnNode";
 import { ShapeComposite } from "./shapeComposite";
 import { getLineRelatedDependantMap } from "./shapeRelation";
@@ -50,4 +53,32 @@ export function seekNearbyVnNode(shapeComposite: ShapeComposite, srcIds: string[
       }
     }
   }
+}
+
+export function patchBySplitAttachingLine(
+  shapeComposite: ShapeComposite,
+  srcLineId: string,
+  splitLineId: string,
+  splitRate: number,
+): { [id: string]: Partial<Shape> } {
+  const ret: { [id: string]: Partial<Shape> } = {};
+  shapeComposite.shapes.forEach((s) => {
+    if (s.attachment?.id === srcLineId) {
+      const splitRates = getNewRateAfterSplit(s.attachment.to.x, splitRate);
+      ret[s.id] = {
+        attachment: {
+          ...s.attachment,
+          id: splitRates[0] !== undefined ? srcLineId : splitLineId,
+          to: { x: splitRates[0] ?? splitRates[1], y: s.attachment.to.y },
+        },
+      };
+    } else if (isTextShape(s) && s.parentId === srcLineId) {
+      const splitRates = getNewRateAfterSplit(s.lineAttached ?? 0, splitRate);
+      ret[s.id] = {
+        parentId: splitRates[0] !== undefined ? srcLineId : splitLineId,
+        lineAttached: splitRates[0] ?? splitRates[1],
+      } as Partial<TextShape>;
+    }
+  });
+  return ret;
 }

@@ -113,7 +113,7 @@ export function getShapePatchInfoBySplitingLineAt(
   index: number,
   p: IVec2,
   threshold: number,
-): [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>] | undefined {
+): [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>, rate: number] | undefined {
   const edge = getEdges(line)[index];
   const curve = line.curves?.[index];
   const edgeInfo = getPolylineEdgeInfo([edge], [curve]);
@@ -145,23 +145,23 @@ export function getShapePatchInfoBySplitingLineAt(
       pHead: undefined,
       qHead: line.qHead,
     };
-    return [newLineSrc, currentLinePatch];
+    return [newLineSrc, currentLinePatch, closestInfo[1]];
   }
 
-  let rate = closestInfo[1];
+  let controlRate = closestInfo[1];
   // Convert the rate to bezier control value t when the curve is a bezier.
   // The rate is based on the distance of the curve, so it's not same as bezier control value t.
   if (isBezieirControl(curve)) {
-    const slopeR = getPointLerpSlope(edgeInfo.lerpFn, rate);
+    const slopeR = getPointLerpSlope(edgeInfo.lerpFn, controlRate);
     const normalV = rotate({ x: 1, y: 0 }, slopeR + Math.PI / 2);
     const normalSeg: ISegment = [sub(p, normalV), add(p, normalV)];
     const intersections = getCrossSegAndBezier3WithT(normalSeg, [edge[0], curve.c1, curve.c2, edge[1]]);
     const minItem = pickMinItemWithValue(intersections, (v) => getD2(sub(p, v[0])));
     if (minItem && minItem[1] < threshold ** 2) {
-      rate = minItem[0][1];
+      controlRate = minItem[0][1];
     }
   }
-  const splitResult = splitPathAtRate({ edge, curve }, rate);
+  const splitResult = splitPathAtRate({ edge, curve }, controlRate);
 
   const filledCurves: LineShape["curves"] = line.curves?.concat() ?? [];
   for (let i = 0; i < edge.length; i++) {
@@ -187,9 +187,23 @@ export function getShapePatchInfoBySplitingLineAt(
     pHead: undefined,
     qHead: line.qHead,
   };
-  return [newLineSrc, currentLinePatch];
+  return [newLineSrc, currentLinePatch, closestInfo[1]];
 }
 
 function cleanArray(arr?: any[]) {
   return arr?.every((v) => v === undefined) ? undefined : arr;
+}
+
+/**
+ * Calculates the new rate for a point at rate `s` on a line split at rate `t`.
+ * @param rate - The original rate of the point on the line.
+ * @param splitRate - The rate at which the line is split.
+ * @returns The new rate on the each split line.
+ */
+export function getNewRateAfterSplit(rate: number, splitRate: number): [number, undefined] | [undefined, number] {
+  if (rate <= splitRate) {
+    return [rate / splitRate, undefined];
+  } else {
+    return [undefined, (rate - splitRate) / (1 - splitRate)];
+  }
 }

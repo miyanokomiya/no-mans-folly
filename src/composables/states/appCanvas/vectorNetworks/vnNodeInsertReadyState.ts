@@ -18,7 +18,7 @@ import { newShapeComposite } from "../../../shapeComposite";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { getSegmentIndexCloseAt, getShapePatchInfoBySplitingLineAt } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
-import { seekNearbyVnNode } from "../../../vectorNetwork";
+import { patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 import { generateFindexBefore } from "../../../shapeRelation";
 
 export function newVnNodeInsertReadyState(): AppCanvasState {
@@ -127,6 +127,12 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
                   ...splitPatch[1],
                   qConnection: connection,
                 } as Partial<LineShape>;
+
+                // Adjust attached shapes.
+                const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, newLine.id, splitPatch[2]);
+                Object.entries(attachingPatch).forEach(([id, p]) => {
+                  patch[id] = p;
+                });
               });
 
               ctx.updateShapes({ add: newShapes, update: patch });

@@ -9,6 +9,7 @@ import {
   patchByFliplineV,
   getShapePatchInfoBySplitingLineAt,
   getSegmentIndexCloseAt,
+  getNewRateAfterSplit,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
@@ -289,8 +290,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
     expect(newLineSrc.pConnection).toEqual(cb);
 
-    expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)).toEqual(
-      getShapePatchInfoBySplitingLineAt(line, 2, { x: 50, y: 0 }, 1),
+    expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
+      getShapePatchInfoBySplitingLineAt(line, 2, { x: 50, y: 0 }, 1)?.slice(0, 2),
     );
   });
 
@@ -311,8 +312,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.body).toEqual(undefined);
     expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
 
-    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)).toEqual(
-      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1),
+    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
+      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2),
     );
   });
 
@@ -332,8 +333,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.body).toEqual(undefined);
     expect(newLineSrc.curves).toEqual(undefined);
 
-    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)).toEqual(
-      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1),
+    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
+      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2),
     );
   });
 
@@ -346,5 +347,35 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     });
     expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 0, y: 0 }, 1)).toBeUndefined();
     expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 50 }, 1)).toBeUndefined();
+  });
+});
+
+describe("getNewRateAfterSplit", () => {
+  test("should return the correct new rate when the point is on the first part of the split line", () => {
+    const s = 0.3;
+    const t = 0.5;
+    const result = getNewRateAfterSplit(s, t);
+    expect(result[0]).toBeCloseTo(0.6);
+  });
+
+  test("should return the correct new rate when the point is on the second part of the split line", () => {
+    const s = 0.7;
+    const t = 0.5;
+    const result = getNewRateAfterSplit(s, t);
+    expect(result[1]).toBeCloseTo(0.4);
+  });
+
+  test("should return [1, undefined] when the point is at the split point", () => {
+    const s = 0.5;
+    const t = 0.5;
+    const result = getNewRateAfterSplit(s, t);
+    expect(result).toEqual([1, undefined]);
+  });
+
+  test("should handle edge cases where s or t is 0 or 1", () => {
+    expect(getNewRateAfterSplit(0, 0.5)).toEqual([0, undefined]);
+    expect(getNewRateAfterSplit(1, 0.5)).toEqual([undefined, 1]);
+    expect(getNewRateAfterSplit(0.5, 0)).toEqual([undefined, 0.5]);
+    expect(getNewRateAfterSplit(0.5, 1)).toEqual([0.5, undefined]);
   });
 });

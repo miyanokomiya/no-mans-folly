@@ -43,7 +43,7 @@ import { AppCanvasState } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { generateKeyBetween } from "../../../../utils/findex";
 import { generateFindexBefore } from "../../../shapeRelation";
-import { seekNearbyVnNode } from "../../../vectorNetwork";
+import { patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -335,11 +335,18 @@ export const newLineSelectedState = defineIntransientState(() => {
                 p: newLine.p,
               });
 
-              // TODO: Attached shapes need to be updated as well.
+              // Adjust attached shapes.
+              const attachingPatch = patchBySplitAttachingLine(
+                ctx.getShapeComposite(),
+                lineShape.id,
+                newLine.id,
+                splitPatch[2],
+              );
 
               ctx.updateShapes({
                 add: [newLine, vnnode],
                 update: {
+                  ...attachingPatch,
                   [lineShape.id]: {
                     ...splitPatch[1],
                     qConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },

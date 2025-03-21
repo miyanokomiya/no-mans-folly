@@ -1,9 +1,15 @@
 import { describe, test, expect } from "vitest";
-import { getAnyConnectedLineInfoAtNode, getConnectedLineInfoListAtNode, seekNearbyVnNode } from "./vectorNetwork";
+import {
+  getAnyConnectedLineInfoAtNode,
+  getConnectedLineInfoListAtNode,
+  seekNearbyVnNode,
+  patchBySplitAttachingLine,
+} from "./vectorNetwork";
 import { newShapeComposite, ShapeComposite } from "./shapeComposite";
 import { LineShape } from "../shapes/line";
 import { createShape, getCommonStruct } from "../shapes";
 import { VnNodeShape } from "../shapes/vectorNetworks/vnNode";
+import { TextShape } from "../shapes/text";
 
 describe("getConnectedLineInfoListAtNode", () => {
   test("should return connected line info list at a given node", () => {
@@ -87,5 +93,61 @@ describe("seekNearbyVnNode", () => {
     expect(seekNearbyVnNode(shapeComposite, ["line1"])?.id).toBe("node1");
     expect(seekNearbyVnNode(shapeComposite, ["line2"])?.id).toBe("node1");
     expect(seekNearbyVnNode(shapeComposite, ["line3"])?.id).toBe(undefined);
+  });
+});
+
+describe("patchBySplitAttachingLine", () => {
+  test("should return shape patch to reattach shapes to split lines", () => {
+    const shapeComposite: ShapeComposite = newShapeComposite({
+      getStruct: getCommonStruct,
+      shapes: [
+        createShape<LineShape>(getCommonStruct, "line", {
+          id: "line1",
+        }),
+        createShape<LineShape>(getCommonStruct, "line", {
+          id: "line2",
+        }),
+        createShape<TextShape>(getCommonStruct, "text", {
+          id: "text1",
+          parentId: "line1",
+          lineAttached: 0.3,
+        }),
+        createShape<TextShape>(getCommonStruct, "text", {
+          id: "text2",
+          parentId: "line1",
+          lineAttached: 0.7,
+        }),
+        createShape(getCommonStruct, "text", {
+          id: "text3",
+          attachment: {
+            id: "line1",
+            anchor: { x: 0.1, y: 0.2 },
+            rotation: 0,
+            rotationType: "absolute",
+            to: { x: 0.2, y: 0 },
+          },
+        }),
+        createShape(getCommonStruct, "text", {
+          id: "text4",
+          attachment: {
+            id: "line1",
+            anchor: { x: 0.1, y: 0.2 },
+            rotation: 0,
+            rotationType: "absolute",
+            to: { x: 0.9, y: 0 },
+          },
+        }),
+      ],
+    });
+
+    const result = patchBySplitAttachingLine(shapeComposite, "line1", "line2", 0.5);
+    expect(result["text1"].parentId).toBe("line1");
+    expect((result["text1"] as any).lineAttached).toBeCloseTo(0.6);
+    expect(result["text2"].parentId).toBe("line2");
+    expect((result["text2"] as any).lineAttached).toBeCloseTo(0.4);
+    expect(result["text3"].attachment?.id).toBe("line1");
+    expect(result["text3"].attachment?.to.x).toBeCloseTo(0.4);
+    expect(result["text4"].attachment?.id).toBe("line2");
+    expect(result["text4"].attachment?.to.x).toBeCloseTo(0.8);
   });
 });
