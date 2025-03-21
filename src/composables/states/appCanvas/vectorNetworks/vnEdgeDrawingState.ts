@@ -16,7 +16,6 @@ import { isVNNodeShape, VnNodeShape } from "../../../../shapes/vectorNetworks/vn
 import { createShape } from "../../../../shapes";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
-import { findBackward } from "../../../../utils/commons";
 import { getInheritableVnNodeProperties } from "../../../vectorNetwork";
 
 interface Option {
@@ -104,27 +103,29 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
           const point = event.data.current;
-          connectionResult = getConnectionResult(point, event.data.ctrl, ctx);
-
-          if (connectionResult?.connection) {
-            const connected = shapeComposite.shapeMap[connectionResult.connection.id];
-            // Dismiss the connection if the connected shape is not a VN node.
-            if (!connected || !isVNNodeShape(connected)) {
-              connectionResult = { ...connectionResult, connection: undefined };
-            }
-          }
-
-          vertex = connectionResult?.p ?? point;
-          coordinateRenderer.saveCoord(vertex);
 
           // Check if there's a VN node at the point.
-          // This is less performant but simpler and accurate.
-          const nodeAtPoint = findBackward(shapeComposite.shapes, (s) => isVNNodeShape(s) && isSame(s.p, vertex));
+          // If there is, prioritize it over any snapping result.
+          const shapeAtPoint = shapeComposite.findShapeAt(point, undefined, undefined, undefined, ctx.getScale());
+          const nodeAtPoint = shapeAtPoint && isVNNodeShape(shapeAtPoint) ? shapeAtPoint : undefined;
           if (nodeAtPoint) {
             vnNode = undefined;
+            connectionResult = undefined;
+            vertex = nodeAtPoint.p;
           } else {
             vnNode = vnNode ? { ...vnNode, p: vertex } : createMovingVnNode(ctx);
+            connectionResult = getConnectionResult(point, event.data.ctrl, ctx);
+            if (connectionResult?.connection) {
+              const connected = shapeComposite.shapeMap[connectionResult.connection.id];
+              // Dismiss the connection if the connected shape is not a VN node.
+              if (!connected || !isVNNodeShape(connected)) {
+                connectionResult = { ...connectionResult, connection: undefined };
+              }
+            }
+            vertex = connectionResult?.p ?? point;
           }
+
+          coordinateRenderer.saveCoord(vertex);
           const connectedNode = nodeAtPoint ?? vnNode;
 
           const patch = patchVertex(
