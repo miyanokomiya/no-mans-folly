@@ -41,8 +41,7 @@ import { getDistanceSq, IVec2 } from "okageo";
 import { ContextMenuItem } from "../../types";
 import { AppCanvasState } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
-import { generateKeyBetween } from "../../../../utils/findex";
-import { generateFindexBefore } from "../../../shapeRelation";
+import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 import { patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 
 type VertexMetaForContextMenu = {
@@ -331,17 +330,12 @@ export const newLineSelectedState = defineIntransientState(() => {
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
                 ...seekNearbyVnNode(sc, [lineShape.id]),
                 id: vnnodeId,
-                findex: generateKeyBetween(newLine.findex, null),
+                findex: generateFindexAfter(sc, lineShape.id),
                 p: newLine.p,
               });
 
               // Adjust attached shapes.
-              const attachingPatch = patchBySplitAttachingLine(
-                ctx.getShapeComposite(),
-                lineShape.id,
-                newLine.id,
-                splitPatch[2],
-              );
+              const attachingPatch = patchBySplitAttachingLine(sc, lineShape.id, newLine.id, splitPatch[2]);
 
               ctx.updateShapes({
                 add: [newLine, vnnode],
