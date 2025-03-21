@@ -393,8 +393,11 @@ describe("canJoinAlignBox", () => {
     const frameAlignGroup = createShape(getCommonStruct, "frame_align_group", {
       id: "frameAlignGroup",
     });
+    const vnnode = createShape(getCommonStruct, "vn_node", {
+      id: "vnnode",
+    });
     const shapeComposite = newShapeComposite({
-      shapes: [rect0, line0, label0, group0, child0, child1, align, align_child, frame, frameAlignGroup],
+      shapes: [rect0, line0, label0, group0, child0, child1, align, align_child, frame, frameAlignGroup, vnnode],
       getStruct: getCommonStruct,
     });
     expect(canJoinAlignBox(shapeComposite, rect0)).toBe(true);
@@ -406,5 +409,6 @@ describe("canJoinAlignBox", () => {
     expect(canJoinAlignBox(shapeComposite, align_child), "child of align box shape").toBe(true);
     expect(canJoinAlignBox(shapeComposite, frame)).toBe(false);
     expect(canJoinAlignBox(shapeComposite, frameAlignGroup)).toBe(false);
+    expect(canJoinAlignBox(shapeComposite, vnnode)).toBe(false);
   });
 });

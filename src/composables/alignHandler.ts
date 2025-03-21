@@ -42,6 +42,7 @@ import { isObjectEmpty, toMap } from "../utils/commons";
 import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
+import { isVNNodeShape } from "../shapes/vectorNetworks/vnNode";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -1025,7 +1026,9 @@ export function getModifiedAlignRootIds(
 
 export function canJoinAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (hasSpecialOrderPriority(shapeComposite.getShapeStruct, shape)) return false;
-  if (isLineShape(shape)) return false;
+  // It may be better to let shape structs decide whether the shape can be joined or not.
+  // But for now, there's not so many shape types that should be excluded.
+  if (isLineShape(shape) || isVNNodeShape(shape)) return false;
   if (!shape.parentId) return true;
 
   const parent = shapeComposite.shapeMap[shape.parentId];
