@@ -18,7 +18,7 @@ import { newShapeComposite } from "../../../shapeComposite";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { getSegmentIndexCloseAt, getShapePatchInfoBySplitingLineAt } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
-import { patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
+import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 
 export function newVnNodeInsertReadyState(): AppCanvasState {
@@ -167,14 +167,14 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
                 ? {
                     ...vnnode,
                     // Inherit the latest nearby node properties.
-                    ...seekNearbyVnNode(shapeComposite, targetIds),
+                    ...getInheritableVnNodeProperties(seekNearbyVnNode(shapeComposite, targetIds)),
                     id: vnnode.id,
                     findex: vnnode.findex,
                     p: vertex,
                     parentId,
                   }
                 : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
-                    ...seekNearbyVnNode(shapeComposite, targetIds),
+                    ...getInheritableVnNodeProperties(seekNearbyVnNode(shapeComposite, targetIds)),
                     id: ctx.generateUuid(),
                     findex: generateFindexAfter(shapeComposite, targetIds[0]),
                     p: vertex,

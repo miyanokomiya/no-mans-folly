@@ -4,12 +4,16 @@ import {
   getConnectedLineInfoListAtNode,
   seekNearbyVnNode,
   patchBySplitAttachingLine,
+  getInheritableVnNodeProperties,
 } from "./vectorNetwork";
 import { newShapeComposite, ShapeComposite } from "./shapeComposite";
 import { LineShape } from "../shapes/line";
 import { createShape, getCommonStruct } from "../shapes";
 import { VnNodeShape } from "../shapes/vectorNetworks/vnNode";
 import { TextShape } from "../shapes/text";
+import { createFillStyle } from "../utils/fillStyle";
+import { COLORS } from "../utils/color";
+import { createStrokeStyle } from "../utils/strokeStyle";
 
 describe("getConnectedLineInfoListAtNode", () => {
   test("should return connected line info list at a given node", () => {
@@ -149,5 +153,38 @@ describe("patchBySplitAttachingLine", () => {
     expect(result["text3"].attachment?.to.x).toBeCloseTo(0.4);
     expect(result["text4"].attachment?.id).toBe("line2");
     expect(result["text4"].attachment?.to.x).toBeCloseTo(0.8);
+  });
+});
+
+describe("getInheritableVnNodeProperties", () => {
+  test("should inherit specific properties from a VN node shape", () => {
+    const vnNode: VnNodeShape = createShape<VnNodeShape>(getCommonStruct, "vn_node", {
+      id: "node1",
+      parentId: "parent1",
+      alpha: 0.5,
+      noExport: true,
+      fill: createFillStyle({ color: COLORS.GRAY_1 }),
+      stroke: createStrokeStyle({ color: COLORS.YELLOW }),
+      r: 10,
+      attachment: { id: "aaa", anchor: { x: 0, y: 0 }, rotation: 0, rotationType: "absolute", to: { x: 0, y: 0 } },
+      locked: true,
+      clipping: true,
+      cropClipBorder: true,
+    });
+
+    const inheritedStyle = getInheritableVnNodeProperties(vnNode);
+    expect(inheritedStyle).toEqual({
+      parentId: "parent1",
+      alpha: 0.5,
+      noExport: true,
+      fill: createFillStyle({ color: COLORS.GRAY_1 }),
+      stroke: createStrokeStyle({ color: COLORS.YELLOW }),
+      r: 10,
+    });
+  });
+
+  test("should return undefined if no VN node shape is provided", () => {
+    const inheritedStyle = getInheritableVnNodeProperties(undefined);
+    expect(inheritedStyle).toBeUndefined();
   });
 });

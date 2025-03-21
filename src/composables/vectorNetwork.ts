@@ -55,6 +55,22 @@ export function seekNearbyVnNode(shapeComposite: ShapeComposite, srcIds: string[
   }
 }
 
+/**
+ * Some properties, such as `attachment`, shouldn't be inherited.
+ */
+export function getInheritableVnNodeProperties(shape?: VnNodeShape): Partial<VnNodeShape> | undefined {
+  return shape
+    ? {
+        parentId: shape.parentId,
+        alpha: shape.alpha,
+        noExport: shape.noExport,
+        fill: shape.fill,
+        stroke: shape.stroke,
+        r: shape.r,
+      }
+    : undefined;
+}
+
 export function patchBySplitAttachingLine(
   shapeComposite: ShapeComposite,
   srcLineId: string,

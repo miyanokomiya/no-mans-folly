@@ -42,7 +42,7 @@ import { ContextMenuItem } from "../../types";
 import { AppCanvasState } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
-import { patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
+import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 
 type VertexMetaForContextMenu = {
   index: number;
@@ -300,7 +300,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               const sc = ctx.getShapeComposite();
               const p = getLinePath(lineShape)[index];
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
-                ...seekNearbyVnNode(sc, [lineShape.id]),
+                ...getInheritableVnNodeProperties(seekNearbyVnNode(sc, [lineShape.id])),
                 id: ctx.generateUuid(),
                 findex: ctx.createLastIndex(),
                 p,
@@ -328,7 +328,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                 pConnection: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } },
               });
               const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
-                ...seekNearbyVnNode(sc, [lineShape.id]),
+                ...getInheritableVnNodeProperties(seekNearbyVnNode(sc, [lineShape.id])),
                 id: vnnodeId,
                 findex: generateFindexAfter(sc, lineShape.id),
                 p: newLine.p,
