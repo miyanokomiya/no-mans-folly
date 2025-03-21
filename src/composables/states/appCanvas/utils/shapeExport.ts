@@ -108,7 +108,7 @@ export async function exportFrameAsSVG(
     const frame = frames[i];
     if (!frameIdSet.has(frame.id)) continue;
 
-    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet);
+    const info = getExportParamsForSelectedRange(shapeComposite, [frame.id], excludeIdSet, withMeta);
     const renderer = newShapeSVGRenderer({
       shapeComposite: info.targetShapeComposite,
       getDocumentMap: ctx.getDocumentMap,

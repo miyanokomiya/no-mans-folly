@@ -19,7 +19,11 @@ export function saveFileInWeb(file: string, filename: string) {
   a.click();
 }
 
-export function getExportParamsForSelectedShapes(shapeComposite: ShapeComposite, targetIds: string[]) {
+export function getExportParamsForSelectedShapes(
+  shapeComposite: ShapeComposite,
+  targetIds: string[],
+  withMeta = false,
+) {
   // Get source shapes regarding frame shapes.
   // Shapes sticking out frames can be cut off since the range is based on directly selected shapes.
   const sourceIdSet = new Set(targetIds);
@@ -31,10 +35,17 @@ export function getExportParamsForSelectedShapes(shapeComposite: ShapeComposite,
       getRootShapeIdsByFrameGroup(shapeComposite, s).forEach((idInFrameGroup) => sourceIdSet.add(idInFrameGroup));
     }
   });
-  const targetShapeComposite = shapeComposite.getSubShapeComposite(
+
+  // Get target shapes regarding "noExport" property for deriving the range.
+  const targetShapeCompositeRegardNoExport = shapeComposite.getSubShapeComposite(
     omitNoExportShapeIds(shapeComposite, Array.from(sourceIdSet)),
   );
-  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(targetShapeComposite, true));
+  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(targetShapeCompositeRegardNoExport, true));
+
+  // Ignore "noExport" property when meta info is required.
+  const targetShapeComposite = withMeta
+    ? shapeComposite.getSubShapeComposite(Array.from(sourceIdSet))
+    : targetShapeCompositeRegardNoExport;
   return { targetShapeComposite, range };
 }
 
@@ -42,6 +53,7 @@ export function getExportParamsForSelectedRange(
   shapeComposite: ShapeComposite,
   targetIds: string[],
   excludeIdSet?: Set<string>,
+  withMeta = false,
 ) {
   const srcShapes = shapeComposite.getAllBranchMergedShapes(targetIds);
   // Get currently selected range.
@@ -52,10 +64,12 @@ export function getExportParamsForSelectedRange(
     .getShapesOverlappingRect(shapeComposite.shapes, range)
     .filter((s) => !excludeIdSet?.has(s.id));
   const targetShapeComposite = shapeComposite.getSubShapeComposite(
-    omitNoExportShapeIds(
-      shapeComposite,
-      targetShapes.map((s) => s.id),
-    ),
+    withMeta
+      ? targetShapes.map((s) => s.id)
+      : omitNoExportShapeIds(
+          shapeComposite,
+          targetShapes.map((s) => s.id),
+        ),
   );
   return { targetShapeComposite, range };
 }

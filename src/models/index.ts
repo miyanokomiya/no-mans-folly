@@ -30,6 +30,7 @@ export interface Shape extends Entity {
   /**
    * Determines if the shape should not be printed out in PNG, SVG, or PDF.
    * When it's set true, the shape is also excluded for calculating target area.
+   * Even if it's set true, the shape still should be exported as meta info in "folly.svg".
    */
   noExport?: boolean;
   clipping?: boolean; // When this is set true, it's prioritized over all child shapes.

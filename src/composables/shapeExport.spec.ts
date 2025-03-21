@@ -28,6 +28,15 @@ describe("getExportParamsForSelectedShapes", () => {
       targetShapeComposite.shapeMap,
       "all children in no-export parents should be ignored regardless of their own property",
     ).not.toHaveProperty("shape4");
+
+    // When withMeta is true, ignore noExport property.
+    const { targetShapeComposite: targetShapeComposite2 } = getExportParamsForSelectedShapes(
+      shapeComposite,
+      shapeComposite.shapes.map((s) => s.id),
+      true,
+    );
+    expect(targetShapeComposite2.shapeMap).toHaveProperty("shape2");
+    expect(targetShapeComposite2.shapeMap).toHaveProperty("shape4");
   });
 
   test("should exclude shapes with noExport property for calculating the target area", () => {
@@ -83,6 +92,16 @@ describe("getExportParamsForSelectedRange", () => {
       targetShapeComposite.shapeMap,
       "all children in no-export parents should be ignored regardless of their own property",
     ).not.toHaveProperty("shape4");
+
+    // When withMeta is true, ignore noExport property.
+    const { targetShapeComposite: targetShapeComposite2 } = getExportParamsForSelectedRange(
+      shapeComposite,
+      shapeComposite.shapes.map((s) => s.id),
+      undefined,
+      true,
+    );
+    expect(targetShapeComposite2.shapeMap).toHaveProperty("shape2");
+    expect(targetShapeComposite2.shapeMap).toHaveProperty("shape4");
   });
 
   test("should not exclude shapes with noExport property for calculating the target area", () => {

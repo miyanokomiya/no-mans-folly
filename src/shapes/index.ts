@@ -64,6 +64,7 @@ export function createSVGElementInfo<T extends Shape>(
   shapeContext: ShapeContext,
   imageStore?: ImageStore,
 ): SVGElementInfo | undefined {
+  if (shape.noExport) return;
   const struct = getStruct(shape.type);
   return struct.createSVGElementInfo?.(shape, shapeContext, imageStore);
 }

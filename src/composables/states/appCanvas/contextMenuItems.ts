@@ -350,12 +350,21 @@ function getImageBuilderForSelectedRange(ctx: AppCanvasStateContext) {
 }
 
 function getSVGBuilderForShapes(ctx: AppCanvasStateContext, withMeta = false) {
-  const info = getExportParamsForSelectedShapes(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap()));
+  const info = getExportParamsForSelectedShapes(
+    ctx.getShapeComposite(),
+    Object.keys(ctx.getSelectedShapeIdMap()),
+    withMeta,
+  );
   return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
 }
 
 function getSVGBuilderForRange(ctx: AppCanvasStateContext, withMeta = false) {
-  const info = getExportParamsForSelectedRange(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap()));
+  const info = getExportParamsForSelectedRange(
+    ctx.getShapeComposite(),
+    Object.keys(ctx.getSelectedShapeIdMap()),
+    undefined,
+    withMeta,
+  );
   return getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range, withMeta);
 }
 
