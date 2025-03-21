@@ -16,12 +16,15 @@ import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
-import { getNextShapeComposite } from "../../../shapeComposite";
+import { getNextShapeComposite, ShapeComposite } from "../../../shapeComposite";
 import { newShapeSnapping, renderSnappingResult, SnappingResult } from "../../../shapeSnapping";
 import { getSnappableCandidates } from "../commons";
 import { getClosestPointOnPolyline, PolylineEdgeInfo } from "../../../../utils/path";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
+
+// Prepare enough size for small shapes.
+const MIN_THRESHOLD = 80;
 
 type Option = {
   lineId: string;
@@ -109,8 +112,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
           if (!event.data.shift) {
             const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
-            const [localBounds] = shapeComposite.getLocalSpace(latestShape);
-            if (getDistance(event.data.current, latestAnchorP) > getDiagonalLengthOfRect(localBounds)) {
+            const threshold = getMovingThreshold(shapeComposite, latestShape, ctx.getScale());
+            if (getDistance(event.data.current, latestAnchorP) > threshold) {
               keepMoving = true;
               return { type: "break" };
             }
@@ -271,10 +274,10 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
         if (!evenlyAligned) {
           const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
           const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
-          const [localBounds] = shapeComposite.getLocalSpace(latestShape);
+          const threshold = getMovingThreshold(shapeComposite, latestShape, scale);
           applyStrokeStyle(renderCtx, { color: style.selectionSecondaly, width: 2 * scale, dash: "long" });
           renderCtx.beginPath();
-          renderCtx.arc(latestAnchorP.x, latestAnchorP.y, getDiagonalLengthOfRect(localBounds), 0, TAU);
+          renderCtx.arc(latestAnchorP.x, latestAnchorP.y, threshold, 0, TAU);
           renderCtx.stroke();
         }
 
@@ -296,3 +299,13 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
     },
   };
 }
+
+const getMovingThreshold = (shapeComposite: ShapeComposite, shape: Shape, scale: number) => {
+  const [localBounds] = shapeComposite.getLocalSpace(shape);
+  if (localBounds.width === 0 && localBounds.height === 0) {
+    // Use wrapper rect if the shape don't have any size.
+    const size = getDiagonalLengthOfRect(shapeComposite.getWrapperRect(shape, true));
+    return Math.max(size / 2, MIN_THRESHOLD * scale);
+  }
+  return Math.max(getDiagonalLengthOfRect(localBounds), MIN_THRESHOLD * scale);
+};
