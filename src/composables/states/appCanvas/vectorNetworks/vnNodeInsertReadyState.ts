@@ -175,7 +175,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
                   }
                 : createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
                     ...seekNearbyVnNode(shapeComposite, targetIds),
-                    id: ctx.createLastIndex(),
+                    id: ctx.generateUuid(),
                     findex: generateFindexAfter(shapeComposite, targetIds[0]),
                     p: vertex,
                     parentId,
