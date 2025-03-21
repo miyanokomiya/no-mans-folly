@@ -173,6 +173,13 @@ export const CONTEXT_MENU_ITEM_SRC = {
       icon: iconVnNode,
     };
   },
+  get SPLIT_BY_VN_NODE() {
+    return {
+      label: i18n.t("contextmenu.vertex.vnnode.split"),
+      key: "SPLIT_BY_VN_NODE",
+      icon: iconVnNode,
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

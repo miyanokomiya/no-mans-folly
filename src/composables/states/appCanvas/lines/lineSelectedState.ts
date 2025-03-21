@@ -35,7 +35,12 @@ import { newMovingLineBezierState } from "./movingLineBezierState";
 import { isObjectEmpty } from "../../../../utils/commons";
 import { newRotatingState } from "../rotatingState";
 import { newBoundingBox } from "../../../boundingBox";
-import { getShapePatchInfoBySplitingLineAt, patchByFliplineH, patchByFliplineV } from "../../../../shapes/utils/line";
+import {
+  getShapePatchInfoByInsertingVertexAt,
+  getShapePatchInfoBySplitingLineAt,
+  patchByFliplineH,
+  patchByFliplineV,
+} from "../../../../shapes/utils/line";
 import { getSegments } from "../../../../utils/geometry";
 import { getDistanceSq, IVec2 } from "okageo";
 import { ContextMenuItem } from "../../types";
@@ -258,6 +263,11 @@ export const newLineSelectedState = defineIntransientState(() => {
                   meta: { index: hitResult.index, p: event.data.point } as SegmentAtMetaForContextMenu,
                 },
                 {
+                  ...CONTEXT_MENU_ITEM_SRC.SPLIT_BY_VN_NODE,
+                  meta: { index: hitResult.index, p: event.data.point } as SegmentAtMetaForContextMenu,
+                },
+                CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                {
                   ...CONTEXT_MENU_ITEM_SRC.REFINE_SEGMENT,
                   meta: { index: hitResult.index, originIndex } as SegmentMetaForContextMenu,
                 },
@@ -315,6 +325,35 @@ export const newLineSelectedState = defineIntransientState(() => {
               return ctx.states.newSelectionHubState;
             }
             case CONTEXT_MENU_ITEM_SRC.INSERT_VN_NODE.key: {
+              const { index, p } = event.data.meta as SegmentAtMetaForContextMenu;
+              const insertPatch = getShapePatchInfoByInsertingVertexAt(lineShape, index, p, 10 * ctx.getScale());
+              if (!insertPatch) return;
+
+              const sc = ctx.getShapeComposite();
+              const vnnodeId = ctx.generateUuid();
+              const vnnode = createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
+                ...getInheritableVnNodeProperties(seekNearbyVnNode(sc, [lineShape.id])),
+                id: vnnodeId,
+                findex: generateFindexAfter(sc, lineShape.id),
+                p: insertPatch[0].body?.[index].p,
+              });
+
+              ctx.updateShapes({
+                add: [vnnode],
+                update: {
+                  [lineShape.id]: {
+                    ...insertPatch[0],
+                    body: insertPatch[0].body?.map((b, i) => {
+                      if (i !== index) return b;
+                      return { ...b, c: { id: vnnodeId, rate: { x: 0.5, y: 0.5 } } };
+                    }),
+                  } as Partial<LineShape>,
+                },
+              });
+              ctx.selectShape(vnnode.id);
+              return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.SPLIT_BY_VN_NODE.key: {
               const { index, p } = event.data.meta as SegmentAtMetaForContextMenu;
               const splitPatch = getShapePatchInfoBySplitingLineAt(lineShape, index, p, 10 * ctx.getScale());
               if (!splitPatch) return;
