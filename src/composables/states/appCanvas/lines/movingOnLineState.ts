@@ -17,9 +17,11 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getNextShapeComposite } from "../../../shapeComposite";
-import { newShapeSnapping, renderSnappingResult, ShapeSnapping, SnappingResult } from "../../../shapeSnapping";
+import { newShapeSnapping, renderSnappingResult, SnappingResult } from "../../../shapeSnapping";
 import { getSnappableCandidates } from "../commons";
 import { getClosestPointOnPolyline, PolylineEdgeInfo } from "../../../../utils/path";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { handleCommonWheel } from "../../commons";
 
 type Option = {
   lineId: string;
@@ -41,7 +43,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
   // Shape snapping doesn't work well when the index shape rotates along the line.
   // => It's still convenient most of time.
-  let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
   let movingRectAtStart: IRectangle;
 
@@ -53,6 +54,21 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
     anchorPointAtStart = getAttachmentAnchorPoint(nextShapeComposite, nextShapeComposite.shapeMap[option.shapeId]);
     movingRectAtStart = nextShapeComposite.getWrapperRect(nextShapeComposite.shapeMap[option.shapeId]);
   }
+
+  const snappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+    const snappableCandidates = getSnappableCandidates(ctx, selectedIds);
+    const snappableShapes = shapeComposite.getShapesOverlappingRect(
+      snappableCandidates.filter((s) => !isLineShape(s)),
+      ctx.getViewRect(),
+    );
+    return newShapeSnapping({
+      shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping: ctx.getGrid().getSnappingLines(),
+      settings: ctx.getUserSetting(),
+    });
+  });
 
   return {
     getLabel: () => "MovingOnLine",
@@ -67,19 +83,6 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
       }
 
       edgeInfo = getLineEdgeInfo(line);
-
-      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
-      const snappableCandidates = getSnappableCandidates(ctx, selectedIds);
-      const snappableShapes = shapeComposite.getShapesOverlappingRect(
-        snappableCandidates.filter((s) => !isLineShape(s)),
-        ctx.getViewRect(),
-      );
-      shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
-
       ctx.setCommandExams([
         COMMAND_EXAM_SRC.DISABLE_SNAP,
         COMMAND_EXAM_SRC.ATTACH_TO_LINE_OFF,
@@ -145,7 +148,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
             const scale = ctx.getScale();
             const movingRect = moveRect(movingRectAtStart, sub(lineAnchor, anchorPointAtStart));
-            const shapeSnappingResult = shapeSnapping.test(movingRect, undefined, scale);
+            const shapeSnappingResult = snappingCache.getValue(ctx).test(movingRect, undefined, scale);
             snappingResult = undefined;
             if (!event.data.ctrl && shapeSnappingResult) {
               const result = snapRectWithLineAttachment({
@@ -236,9 +239,20 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               keepMoving = true;
               return { type: "break" };
             }
+            case "Escape":
+              return ctx.states.newSelectionHubState;
+            case "g":
+              if (event.data.shift) return;
+              ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
+              snappingCache.update();
+              return;
           }
           return;
         }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          snappingCache.update();
+          return;
         default:
           return;
       }
