@@ -108,7 +108,7 @@ export function getSegmentIndexCloseAt(line: LineShape, p: IVec2, threshold: num
   });
 }
 
-export function getShapePatchInfoBySplitingLineAt(
+export function getShapePatchInfoBySplittingLineAt(
   line: LineShape,
   index: number,
   p: IVec2,

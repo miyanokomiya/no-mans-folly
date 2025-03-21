@@ -7,7 +7,7 @@ import {
   isConnectedToCenter,
   patchByFliplineH,
   patchByFliplineV,
-  getShapePatchInfoBySplitingLineAt,
+  getShapePatchInfoBySplittingLineAt,
   getSegmentIndexCloseAt,
   getNewRateAfterSplit,
   getShapePatchInfoByInsertingVertexAt,
@@ -174,7 +174,7 @@ describe("getIntersectionsBetweenLineShapeAndLine", () => {
   });
 });
 
-describe("getShapePatchInfoBySplitingLineAt", () => {
+describe("getShapePatchInfoBySplittingLineAt", () => {
   test("should return new line source and current line patch when splitting at a point: straight segment", () => {
     const line = createShape<LineShape>(getCommonStruct, "line", {
       p: { x: 0, y: 0 },
@@ -182,7 +182,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       curves: [undefined, { d: { x: 0.5, y: 25 } }],
       q: { x: 100, y: 0 },
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
     expect(newLineSrc.p).toEqualPoint({ x: 20, y: 0 });
     expect(newLineSrc.body).toHaveLength(1);
     expect(newLineSrc.body?.[0].p).toEqualPoint({ x: 50, y: 0 });
@@ -202,7 +202,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       curves: [undefined, { d: { x: 0.5, y: 25 } }],
       q: { x: 100, y: 0 },
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 1, { x: 75, y: 25 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 1, { x: 75, y: 25 }, 1)!;
     expect(newLineSrc.p).toEqualPoint({ x: 75, y: 25 });
     expect(newLineSrc.body).toBe(undefined);
     expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: expect.anything() } }]);
@@ -221,7 +221,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       curves: [{ c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }],
       q: { x: 100, y: 0 },
     });
-    const result = getShapePatchInfoBySplitingLineAt(line, 0, { x: 200, y: 200 }, 1);
+    const result = getShapePatchInfoBySplittingLineAt(line, 0, { x: 200, y: 200 }, 1);
     expect(result).toBeUndefined();
   });
 
@@ -236,7 +236,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       body: [{ p: { x: 50, y: 0 }, c: cb }],
       qConnection: cc,
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
     expect(currentLinePatch).not.toHaveProperty("pConnection");
     expect(currentLinePatch.body).toEqual(undefined);
     expect(currentLinePatch).toHaveProperty("qConnection");
@@ -255,7 +255,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       pHead: createLineHead("open"),
       qHead: createLineHead("dot_blank"),
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
     expect(currentLinePatch).not.toHaveProperty("pHead");
     expect(currentLinePatch).toHaveProperty("qHead");
     expect(currentLinePatch.qHead).toEqual(undefined);
@@ -263,7 +263,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.pHead).toEqual(undefined);
     expect(newLineSrc.qHead).toEqual(createLineHead("dot_blank"));
 
-    const [newLineSrc2, currentLinePatch2] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
+    const [newLineSrc2, currentLinePatch2] = getShapePatchInfoBySplittingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
     expect(currentLinePatch2).not.toHaveProperty("pHead");
     expect(currentLinePatch2).toHaveProperty("qHead");
     expect(currentLinePatch2.qHead).toEqual(undefined);
@@ -280,7 +280,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       q: { x: 100, y: 50 },
       curves: [undefined, undefined, { d: { x: 0.5, y: 25 } }],
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 1, { x: 50, y: 0 }, 1)!;
     expect(currentLinePatch.body).toEqual([{ p: { x: 25, y: 0 } }]);
     expect(currentLinePatch).toHaveProperty("curves");
     expect(currentLinePatch.curves).toEqual(undefined);
@@ -291,8 +291,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
     expect(newLineSrc.pConnection).toEqual(cb);
 
-    expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
-      getShapePatchInfoBySplitingLineAt(line, 2, { x: 50, y: 0 }, 1)?.slice(0, 2),
+    expect(getShapePatchInfoBySplittingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
+      getShapePatchInfoBySplittingLineAt(line, 2, { x: 50, y: 0 }, 1)?.slice(0, 2),
     );
   });
 
@@ -303,7 +303,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       q: { x: 50, y: 50 },
       curves: [undefined, { d: { x: 0.5, y: 25 } }],
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
     expect(currentLinePatch).toHaveProperty("body");
     expect(currentLinePatch.body).toEqual(undefined);
     expect(currentLinePatch).toHaveProperty("curves");
@@ -313,8 +313,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.body).toEqual(undefined);
     expect(newLineSrc.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
 
-    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
-      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2),
+    expect(getShapePatchInfoBySplittingLineAt(line, 0, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
+      getShapePatchInfoBySplittingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2),
     );
   });
 
@@ -325,7 +325,7 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       q: { x: 50, y: 50 },
       curves: [{ d: { x: 0.5, y: 25 } }],
     });
-    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
+    const [newLineSrc, currentLinePatch] = getShapePatchInfoBySplittingLineAt(line, 0, { x: 50, y: 0 }, 1)!;
     expect(currentLinePatch).toHaveProperty("body");
     expect(currentLinePatch.body).toEqual(undefined);
     expect(currentLinePatch.curves).toEqual([{ d: { x: 0.5, y: 25 } }]);
@@ -334,8 +334,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
     expect(newLineSrc.body).toEqual(undefined);
     expect(newLineSrc.curves).toEqual(undefined);
 
-    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
-      getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2),
+    expect(getShapePatchInfoBySplittingLineAt(line, 0, { x: 50, y: 0 }, 1)?.slice(0, 2)).toEqual(
+      getShapePatchInfoBySplittingLineAt(line, 1, { x: 50, y: 0 }, 1)?.slice(0, 2),
     );
   });
 
@@ -346,8 +346,8 @@ describe("getShapePatchInfoBySplitingLineAt", () => {
       q: { x: 50, y: 50 },
       body: [{ p: { x: 50, y: 0 }, c: cb }],
     });
-    expect(getShapePatchInfoBySplitingLineAt(line, 0, { x: 0, y: 0 }, 1)).toBeUndefined();
-    expect(getShapePatchInfoBySplitingLineAt(line, 1, { x: 50, y: 50 }, 1)).toBeUndefined();
+    expect(getShapePatchInfoBySplittingLineAt(line, 0, { x: 0, y: 0 }, 1)).toBeUndefined();
+    expect(getShapePatchInfoBySplittingLineAt(line, 1, { x: 50, y: 50 }, 1)).toBeUndefined();
   });
 });
 

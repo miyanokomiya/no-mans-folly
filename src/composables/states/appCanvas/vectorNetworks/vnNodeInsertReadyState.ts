@@ -19,7 +19,7 @@ import { newShapeRenderer } from "../../../shapeRenderer";
 import {
   getSegmentIndexCloseAt,
   getShapePatchInfoByInsertingVertexAt,
-  getShapePatchInfoBySplitingLineAt,
+  getShapePatchInfoBySplittingLineAt,
 } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
 import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
@@ -246,7 +246,7 @@ function handleSplitTargetLines(
     const index = getSegmentIndexCloseAt(shape, p, threshold);
     if (index === -1) return;
 
-    const splitPatch = getShapePatchInfoBySplitingLineAt(shape, index, p, threshold);
+    const splitPatch = getShapePatchInfoBySplittingLineAt(shape, index, p, threshold);
     if (!splitPatch) {
       // Check if the point is at the first or last vertex.
       // If so, connect the point to the vertex.

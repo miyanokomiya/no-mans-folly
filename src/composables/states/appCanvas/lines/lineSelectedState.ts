@@ -37,7 +37,7 @@ import { newRotatingState } from "../rotatingState";
 import { newBoundingBox } from "../../../boundingBox";
 import {
   getShapePatchInfoByInsertingVertexAt,
-  getShapePatchInfoBySplitingLineAt,
+  getShapePatchInfoBySplittingLineAt,
   patchByFliplineH,
   patchByFliplineV,
 } from "../../../../shapes/utils/line";
@@ -355,7 +355,7 @@ export const newLineSelectedState = defineIntransientState(() => {
             }
             case CONTEXT_MENU_ITEM_SRC.SPLIT_BY_VN_NODE.key: {
               const { index, p } = event.data.meta as SegmentAtMetaForContextMenu;
-              const splitPatch = getShapePatchInfoBySplitingLineAt(lineShape, index, p, 10 * ctx.getScale());
+              const splitPatch = getShapePatchInfoBySplittingLineAt(lineShape, index, p, 10 * ctx.getScale());
               if (!splitPatch) return;
 
               const sc = ctx.getShapeComposite();
