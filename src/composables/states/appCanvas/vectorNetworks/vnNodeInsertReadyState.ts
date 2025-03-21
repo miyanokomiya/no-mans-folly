@@ -71,8 +71,8 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
     onStart: (ctx) => {
       ctx.setCursor();
       ctx.setCommandExams([
-        COMMAND_EXAM_SRC.VN_SPLIT_SEGMENTS,
         COMMAND_EXAM_SRC.VN_INSERT_VERTEX,
+        COMMAND_EXAM_SRC.VN_SPLIT_SEGMENTS,
         COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP,
       ]);
       vertex = ctx.getCursorPoint();
