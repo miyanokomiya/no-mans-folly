@@ -276,9 +276,12 @@ export function newLineSnapping(option: Option) {
         });
       }
 
-      let outlineThreshold = lineConstrain
-        ? Math.min(getDistance(lineConstrain.p, point) / (outline ? 2 : 1), intersectionThreshold) // Prioritize the intersection a bit if exists.
-        : intersectionThreshold;
+      // Prioritize the intersection a bit if exists.
+      // Otherwise, prioritize outline a little bit in case they're parallel.
+      let outlineThreshold =
+        lineConstrain && outline
+          ? Math.min(getDistance(lineConstrain.p, point) / 2, intersectionThreshold + MINVALUE)
+          : intersectionThreshold + MINVALUE;
 
       // Keep the shape that has the closest outline for seeking outline intersection.
       let outlineForIntersection: typeof outline;

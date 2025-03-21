@@ -106,6 +106,34 @@ describe("newLineSnapping", () => {
       });
     });
 
+    test("should prioritize line outline than guideline when they're parallel", () => {
+      const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 100 } });
+      const otherline = createShape<LineShape>(getCommonStruct, "line", {
+        id: "otherline",
+        body: [{ p: { x: 0, y: 100 } }],
+        q: { x: 100, y: 100 },
+      });
+      const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: [otherline] });
+      const shapeSnapping = newShapeSnapping({
+        shapeSnappingList: [[otherline.id, sc.getSnappingLines(otherline)]],
+      });
+      const target = newLineSnapping({
+        snappableShapes: [otherline],
+        shapeSnapping,
+        getShapeStruct: getCommonStruct,
+        movingLine,
+        movingIndex: 1,
+      });
+      expect(target.testConnection({ x: 30, y: 102 }, 1)).toEqual({
+        outlineSrc: "otherline",
+        p: { x: 30, y: 100 },
+      });
+      expect(target.testConnection({ x: 80, y: 98 }, 1)).toEqual({
+        outlineSrc: "otherline",
+        p: { x: 80, y: 100 },
+      });
+    });
+
     test("should snap to the center of a shape while snapping to two grid lines", () => {
       const movingLine = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 100 } });
       const sc = newShapeComposite({ getStruct: getCommonStruct, shapes: snappableShapes });
