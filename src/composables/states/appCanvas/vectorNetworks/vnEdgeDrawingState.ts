@@ -17,6 +17,7 @@ import { createShape } from "../../../../shapes";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 import { findBackward } from "../../../../utils/commons";
+import { getInheritableVnNodeProperties } from "../../../vectorNetwork";
 
 interface Option {
   // This state creates a stright edge, so that the "body" value of this shape does nothing.
@@ -76,9 +77,11 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
 
   const createMovingVnNode = (ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
-    const srcConnectedNode = srcShape.pConnection ? shapeComposite.shapeMap[srcShape.pConnection.id] : undefined;
+    const srcConnectedNode = srcShape.pConnection
+      ? (shapeComposite.shapeMap[srcShape.pConnection.id] as VnNodeShape)
+      : undefined;
     return createShape<VnNodeShape>(ctx.getShapeStruct, "vn_node", {
-      ...srcConnectedNode,
+      ...getInheritableVnNodeProperties(srcConnectedNode),
       id: ctx.generateUuid(),
       findex: generateFindexAfter(shapeComposite, srcShape.id),
       p: vertex,
