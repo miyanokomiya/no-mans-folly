@@ -1,6 +1,6 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { LineShape, getEdges, getLinePath, patchVertices } from "../../../../shapes/line";
-import { add, getOuterRectangle, getRadian, moveRect, rotate, sub } from "okageo";
+import { add, getOuterRectangle, getRadian, IVec2, moveRect, rotate, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { optimizeLinePath } from "../../../lineSnapping";
 import { SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
@@ -19,6 +19,9 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 interface Option {
   lineShape: LineShape;
   index: number;
+  // The absolute position of the cursor when the dragging starts.
+  // => It's used for seamless state transition while dragging.
+  startAbs?: IVec2;
 }
 
 export function newMovingLineSegmentState(option: Option): AppCanvasState {
@@ -28,6 +31,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
   let snappingResult: SnappingResult | undefined;
   let vectorSnappingResult: VectorSnappingsResult | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
+  let startAbs: IVec2 | undefined;
 
   function getLatestSegment(ctx: AppCanvasStateContext) {
     const shape = { ...option.lineShape, ...ctx.getTmpShapeMap()[option.lineShape.id] } as LineShape;
@@ -62,6 +66,15 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
     return { vectorSnapping, shapeSnapping };
   });
 
+  function getLinePatch(ctx: AppCanvasStateContext, translate: IVec2) {
+    const patch = patchVertices(option.lineShape, [
+      [option.index, add(targetSegment[0], translate), undefined],
+      [option.index + 1, add(targetSegment[1], translate), undefined],
+    ]);
+    const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
+    return optimized ? { ...patch, ...optimized } : patch;
+  }
+
   return {
     getLabel: () => "MovingLineSegment",
     onStart: (ctx) => {
@@ -70,9 +83,21 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
       if (preserveAttachmentHandler.hasAttachment) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+        ctx.setCommandExams([
+          COMMAND_EXAM_SRC.EXTRUDE_LINE_SEGMENT,
+          COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT,
+          COMMAND_EXAM_SRC.DISABLE_SNAP,
+        ]);
       } else {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+        ctx.setCommandExams([COMMAND_EXAM_SRC.EXTRUDE_LINE_SEGMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      }
+
+      if (option.startAbs) {
+        startAbs = option.startAbs;
+        const d = sub(ctx.getCursorPoint(), startAbs);
+        const patch = getLinePatch(ctx, d);
+        const update = { [option.lineShape.id]: patch };
+        ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
       }
     },
     onEnd: (ctx) => {
@@ -83,7 +108,8 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
-          const d = sub(event.data.current, event.data.startAbs);
+          startAbs = startAbs ?? event.data.startAbs;
+          const d = sub(event.data.current, startAbs);
           snappingResult = undefined;
           vectorSnappingResult = undefined;
           if (!event.data.ctrl) {
@@ -100,13 +126,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           }
 
           const translate = add(d, snappingResult?.diff ?? vectorSnappingResult?.v ?? { x: 0, y: 0 });
-          let patch = patchVertices(option.lineShape, [
-            [option.index, add(targetSegment[0], translate), undefined],
-            [option.index + 1, add(targetSegment[1], translate), undefined],
-          ]);
-
-          const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
-          patch = optimized ? { ...patch, ...optimized } : patch;
+          const patch = getLinePatch(ctx, translate);
 
           preserveAttachmentHandler.setActive(!!event.data.alt);
           const update = {
@@ -136,6 +156,13 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
               ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
               snappingCache.update();
               return;
+            case "e":
+              return () =>
+                ctx.states.newExtrudingLineSegmentState({
+                  lineShape: option.lineShape,
+                  index: option.index,
+                  startAbs,
+                });
             default:
               return;
           }

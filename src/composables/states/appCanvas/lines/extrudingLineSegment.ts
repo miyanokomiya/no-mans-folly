@@ -1,6 +1,6 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { LineShape, getEdges } from "../../../../shapes/line";
-import { add, getRadian, rotate, sub } from "okageo";
+import { add, getRadian, IVec2, rotate, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
@@ -17,12 +17,16 @@ import { getSnappableCandidates } from "../commons";
 interface Option {
   lineShape: LineShape;
   index: number;
+  // The absolute position of the cursor when the dragging starts.
+  // => It's used for seamless state transition while dragging.
+  startAbs?: IVec2;
 }
 
 export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
   let snappingResult: VectorSnappingsResult | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
   let editing = false;
+  let startAbs: IVec2 | undefined;
 
   function getMovingSegment(ctx: AppCanvasStateContext) {
     const shapeComposite = ctx.getShapeComposite();
@@ -56,9 +60,21 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
       if (preserveAttachmentHandler.hasAttachment) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+        ctx.setCommandExams([
+          COMMAND_EXAM_SRC.SLIDE_LINE_SEGMENT,
+          COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT,
+          COMMAND_EXAM_SRC.DISABLE_SNAP,
+        ]);
       } else {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP]);
+        ctx.setCommandExams([COMMAND_EXAM_SRC.SLIDE_LINE_SEGMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
+      }
+
+      if (option.startAbs) {
+        startAbs = option.startAbs;
+        const d = sub(ctx.getCursorPoint(), startAbs);
+        const patch = getPatchByExtrudeLineSegment(option.lineShape, option.index, d);
+        const update = { [option.lineShape.id]: patch };
+        ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
       }
     },
     onEnd: (ctx) => {
@@ -71,7 +87,8 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
         case "pointermove": {
           const targetSegment = getEdges(option.lineShape)[option.index];
           const p = event.data.current;
-          const d = sub(p, event.data.startAbs);
+          startAbs = startAbs ?? event.data.startAbs;
+          const d = sub(p, startAbs);
           let translate = d;
           snappingResult = undefined;
           if (!event.data.ctrl) {
@@ -110,6 +127,13 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
               ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
               snappingCache.update();
               return;
+            case "e":
+              return () =>
+                ctx.states.newMovingLineSegmentState({
+                  lineShape: option.lineShape,
+                  index: option.index,
+                  startAbs,
+                });
             default:
               return;
           }

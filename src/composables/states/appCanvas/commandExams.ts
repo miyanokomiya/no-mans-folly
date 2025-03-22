@@ -15,6 +15,8 @@ export const COMMAND_EXAM_SRC = {
   PRESERVE_ATTACHMENT: { command: getAltOrOptionStr(), title: "Preserve attachment" },
   MOVE_ONLY_FRAME: { command: "Shift + Drag", title: "Move only frame" },
   SMART_BRANCH_SETTING: { command: "Right click", title: "Smart branch setting" },
+  EXTRUDE_LINE_SEGMENT: { command: "e", title: "Extrude segment" },
+  SLIDE_LINE_SEGMENT: { command: "e", title: "Slide segment" },
 
   ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
   VN_INSERT_VERTEX: { command: "Click", title: "Insert vertex" },
