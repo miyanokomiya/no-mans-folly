@@ -1,16 +1,20 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { LineShape, getEdges, patchVertices } from "../../../../shapes/line";
-import { add, getOuterRectangle, moveRect, sub } from "okageo";
+import { LineShape, getEdges, getLinePath, patchVertices } from "../../../../shapes/line";
+import { add, getOuterRectangle, getRadian, moveRect, rotate, sub } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import { optimizeLinePath } from "../../../lineSnapping";
-import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
-import { scaleGlobalAlpha } from "../../../../utils/renderer";
+import { SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
+import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { TAU } from "../../../../utils/geometry";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { renderBezierControls } from "../../../lineBounding";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { newVectorsSnapping, renderVectorSnappingResult, VectorSnappingsResult } from "../../../vectorSnapping";
+import { handleCommonWheel } from "../../commons";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 interface Option {
   lineShape: LineShape;
@@ -21,8 +25,8 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
   const targetSegment = getEdges(option.lineShape)[option.index];
   const movingRect = getOuterRectangle([targetSegment]);
 
-  let shapeSnapping: ShapeSnapping;
   let snappingResult: SnappingResult | undefined;
+  let vectorSnappingResult: VectorSnappingsResult | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
 
   function getLatestSegment(ctx: AppCanvasStateContext) {
@@ -31,23 +35,39 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
     return edges[option.index];
   }
 
+  const snappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    // Allow to snap to the line itself.
+    const snappableShapes = getSnappableCandidates(ctx, [option.lineShape.id]).concat([option.lineShape]);
+    const vertices = getLinePath(option.lineShape);
+    const vector = rotate({ x: 1, y: 0 }, getRadian(vertices[option.index + 1], vertices[option.index]) + Math.PI / 2);
+    const origins = [
+      vertices[Math.max(0, option.index - 1)],
+      vertices[Math.min(vertices.length - 1, option.index + 2)],
+    ];
+    const gridSnapping = ctx.getGrid().getSnappingLines();
+    const vectorSnapping = newVectorsSnapping({
+      origins,
+      vector,
+      snappableShapes,
+      gridSnapping,
+      getShapeStruct: shapeComposite.getShapeStruct,
+      snappableOrigin: true,
+    });
+    const shapeSnapping = newShapeSnapping({
+      shapeSnappingList: snappableShapes.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
+      gridSnapping,
+      settings: ctx.getUserSetting(),
+    });
+    return { vectorSnapping, shapeSnapping };
+  });
+
   return {
     getLabel: () => "MovingLineSegment",
     onStart: (ctx) => {
       ctx.startDragging();
 
       const shapeComposite = ctx.getShapeComposite();
-      const branchIdSet = new Set(shapeComposite.getAllBranchMergedShapes([option.lineShape.id]).map((s) => s.id));
-      // Allow to snap itself, but excluce its children.
-      const snappableCandidates = getSnappableCandidates(ctx, []).filter(
-        (s) => s.id === option.lineShape.id || !branchIdSet.has(s.id),
-      );
-      shapeSnapping = newShapeSnapping({
-        shapeSnappingList: snappableCandidates.map((s) => [s.id, shapeComposite.getSnappingLines(s)]),
-        gridSnapping: ctx.getGrid().getSnappingLines(),
-        settings: ctx.getUserSetting(),
-      });
-
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
       if (preserveAttachmentHandler.hasAttachment) {
         ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_SNAP]);
@@ -64,11 +84,22 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const d = sub(event.data.current, event.data.startAbs);
-          snappingResult = event.data.ctrl
-            ? undefined
-            : shapeSnapping.test(moveRect(movingRect, d), undefined, ctx.getScale());
-          const translate = snappingResult ? add(d, snappingResult.diff) : d;
+          snappingResult = undefined;
+          vectorSnappingResult = undefined;
+          if (!event.data.ctrl) {
+            const result1 = snappingCache
+              .getValue(ctx)
+              .shapeSnapping.test(moveRect(movingRect, d), undefined, ctx.getScale());
+            const movingSegment = targetSegment.map((t) => add(t, d));
+            const result2 = snappingCache.getValue(ctx).vectorSnapping.hitTest(movingSegment, ctx.getScale());
+            if (result2) {
+              vectorSnappingResult = result2;
+            } else {
+              snappingResult = result1;
+            }
+          }
 
+          const translate = add(d, snappingResult?.diff ?? vectorSnappingResult?.v ?? { x: 0, y: 0 });
           let patch = patchVertices(option.lineShape, [
             [option.index, add(targetSegment[0], translate), undefined],
             [option.index + 1, add(targetSegment[1], translate), undefined],
@@ -96,6 +127,23 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
+        case "keydown": {
+          switch (event.data.key) {
+            case "Escape":
+              return ctx.states.newSelectionHubState;
+            case "g":
+              if (event.data.shift) return;
+              ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
+              snappingCache.update();
+              return;
+            default:
+              return;
+          }
+        }
+        case "wheel":
+          handleCommonWheel(ctx, event);
+          snappingCache.update();
+          return;
         default:
           return;
       }
@@ -119,6 +167,11 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
       const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
       renderBezierControls(renderCtx, style, scale, line);
 
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
+      renderCtx.beginPath();
+      applyPath(renderCtx, targetSegment);
+      renderCtx.stroke();
+
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
       renderCtx.beginPath();
       renderCtx.arc(segment[0].x, segment[0].y, vertexSize, 0, TAU);
@@ -139,6 +192,9 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
               : undefined,
         });
       }
+      vectorSnappingResult?.results.forEach((result) => {
+        renderVectorSnappingResult(renderCtx, { style, scale, result });
+      });
 
       preserveAttachmentHandler.render(renderCtx, style, scale, ctx.getTmpShapeMap());
     },

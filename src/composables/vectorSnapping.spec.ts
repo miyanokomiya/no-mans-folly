@@ -38,7 +38,17 @@ describe("newVectorSnapping", () => {
         getShapeStruct: shapeComposite.getShapeStruct,
         gridSnapping,
       });
-      expect(target.hitTest({ x: 21, y: 1 }, 1)).toEqual({ p: { x: 20, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape" });
+      expect(target.hitTest({ x: 21, y: 1 }, 1)).toEqual({
+        p: { x: 20, y: 0 },
+        v: { x: -1, y: -1 },
+        snapped: "shape",
+        guidLines: [
+          [
+            { x: 20, y: -50 },
+            { x: 20, y: 0 },
+          ],
+        ],
+      });
     });
 
     test("should snap to grid lines when there's no snappable shape near by", () => {
@@ -53,7 +63,13 @@ describe("newVectorSnapping", () => {
         p: { x: 20, y: 0 },
         v: { x: -1, y: -1 },
         snapped: "grid",
-        guidLines: [gridSnapping.h[0]],
+        guidLines: [
+          gridSnapping.h[0],
+          [
+            { x: 20, y: -50 },
+            { x: 20, y: 0 },
+          ],
+        ],
       });
     });
 
@@ -82,7 +98,16 @@ describe("newVectorSnapping", () => {
         gridSnapping,
         snappableOrigin: true,
       });
-      expect(target.hitTest({ x: 21, y: 50 }, 1)).toEqual({ p: { x: 20, y: 50 }, v: { x: -1, y: 0 } });
+      expect(target.hitTest({ x: 21, y: 50 }, 1)).toEqual({
+        p: { x: 20, y: 50 },
+        v: { x: -1, y: 0 },
+        guidLines: [
+          [
+            { x: 20, y: -50 },
+            { x: 20, y: 50 },
+          ],
+        ],
+      });
     });
   });
 });
@@ -135,7 +160,7 @@ describe("newVectorsSnapping", () => {
         "single close result",
       ).toEqual({
         v: { x: -1, y: -1 },
-        results: [{ p: { x: 20, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape" }],
+        results: [{ p: { x: 20, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape", guidLines: expect.anything() }],
       });
 
       expect(
@@ -150,8 +175,8 @@ describe("newVectorsSnapping", () => {
       ).toEqual({
         v: { x: -1, y: -1 },
         results: [
-          { p: { x: 20, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape" },
-          { p: { x: 30, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape" },
+          { p: { x: 20, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape", guidLines: expect.anything() },
+          { p: { x: 30, y: 0 }, v: { x: -1, y: -1 }, snapped: "shape", guidLines: expect.anything() },
         ],
       });
     });

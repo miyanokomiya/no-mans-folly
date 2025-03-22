@@ -12,6 +12,7 @@ import { newVectorsSnapping, renderVectorSnappingResult, VectorSnappingsResult }
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchByExtrudeLineSegment } from "../../../../shapes/utils/line";
 import { handleCommonWheel } from "../../commons";
+import { getSnappableCandidates } from "../commons";
 
 interface Option {
   lineShape: LineShape;
@@ -32,8 +33,8 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
 
   const snappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
-    const shapeMap = shapeComposite.shapeMap;
-    const snappableShapes = shapeComposite.getShapesOverlappingRect(Object.values(shapeMap), ctx.getViewRect());
+    // Allow to snap to the line itself.
+    const snappableShapes = getSnappableCandidates(ctx, [option.lineShape.id]).concat([option.lineShape]);
     const targetSegment = getEdges(option.lineShape)[option.index];
     const vector = rotate({ x: 1, y: 0 }, getRadian(targetSegment[1], targetSegment[0]) + Math.PI / 2);
     const gridSnapping = ctx.getGrid().getSnappingLines();
@@ -76,7 +77,7 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
           if (!event.data.ctrl) {
             const movingSegment = targetSegment.map((t) => add(t, d));
             snappingResult = snappingCache.getValue(ctx).hitTest(movingSegment, ctx.getScale());
-            translate = add(d, snappingResult.v);
+            translate = snappingResult ? add(d, snappingResult.v) : d;
           }
 
           const patch = getPatchByExtrudeLineSegment(option.lineShape, option.index, translate);

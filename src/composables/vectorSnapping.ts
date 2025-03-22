@@ -1,4 +1,4 @@
-import { add, getDistance, getNorm, getPedal, isSame, IVec2, MINVALUE, sub } from "okageo";
+import { add, getDistance, getNorm, getPedal, isOnLine, isSame, IVec2, MINVALUE, sub } from "okageo";
 import { Shape, StyleScheme } from "../models";
 import { getIntersectedOutlines, GetShapeStruct } from "../shapes";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -60,20 +60,26 @@ export function newVectorSnapping(option: Option) {
           return true;
         }
       });
-      if (outline) return { p: outline.p, v: sub(outline.p, point), snapped: "shape" };
+      if (outline)
+        return { p: outline.p, v: sub(outline.p, point), snapped: "shape", guidLines: [[option.origin, outline.p]] };
     }
 
     if (option.gridSnapping) {
       const gridResult = snapVectorToGrid(option.gridSnapping, rawSegment[0], rawSegment[1], threshold);
       if (gridResult) {
-        return { p: gridResult.p, v: sub(gridResult.p, point), guidLines: gridResult.lines, snapped: "grid" };
+        return {
+          p: gridResult.p,
+          v: sub(gridResult.p, point),
+          guidLines: [...gridResult.lines, [option.origin, gridResult.p]],
+          snapped: "grid",
+        };
       }
     }
 
-    return { p: pedal, v: sub(pedal, point) };
+    return { p: pedal, v: sub(pedal, point), guidLines: [[option.origin, pedal]] };
   }
 
-  return { hitTest };
+  return { hitTest, segment };
 }
 export type VectorSnapping = ReturnType<typeof newVectorSnapping>;
 
@@ -117,18 +123,45 @@ export function newVectorsSnapping(option: VectorsSnappingOption) {
     }),
   );
 
-  function hitTest(points: IVec2[], scale: number): VectorSnappingsResult {
-    const results = points.map((point, i) => snappings[i].hitTest(point, scale));
-    const snappedResults = results.filter((r) => r.snapped);
-    const snappedResultWithValue = snappedResults.map<[VectorSnappingResult, number]>((r, i) => [
-      r,
-      getD2(sub(r.p, points[i])),
+  function hitTest(points: IVec2[], scale: number): VectorSnappingsResult | undefined {
+    const threshold = SNAP_THRESHOLD * scale;
+    const allResults = points.map<[VectorSnappingResult, IVec2]>((point, i) => [
+      snappings[i].hitTest(point, scale),
+      point,
     ]);
-    const closestResult = pickMinItem(snappedResultWithValue, ([, d]) => d);
-    if (!closestResult) return { v: results[0].v, results: [results[0]] };
+    const allSnappedResultWithValue = allResults.map<[VectorSnappingResult, number]>(([r, p]) => [
+      r,
+      getD2(sub(r.p, p)),
+    ]);
+    // Prioritize the snapped results if any exists.
+    let candidates = allSnappedResultWithValue.filter(([r]) => r.snapped);
+    if (candidates.length === 0) {
+      candidates = allSnappedResultWithValue;
+    }
+
+    const closestResult = pickMinItem(candidates, ([, d]) => d);
+    if (!closestResult || closestResult[1] > threshold ** 2) return undefined;
 
     // Collect all the results that have the same snapping vector as the closest one.
-    const closeResults = snappedResultWithValue.filter(([r]) => isSame(r.v, closestResult[0].v)).map(([r]) => r);
+    const closeResults: VectorSnappingResult[] = [];
+    allSnappedResultWithValue.forEach(([r], i) => {
+      // When the result has the same translation as the closest one, this snap is valid.
+      if (isSame(r.v, closestResult[0].v)) {
+        closeResults.push(r);
+        return;
+      }
+
+      // When the snapped moving point is on the source guideline, the guideline is valid.
+      const snapping = snappings[i];
+      const p = points[i];
+      const origin = option.origins[i];
+      const snappedP = add(p, closestResult[0].v);
+      if (isOnLine(snappedP, snapping.segment)) {
+        closeResults.push({ p: snappedP, v: closestResult[0].v, guidLines: [[origin, snappedP]] });
+        return;
+      }
+    });
+
     return { v: closestResult[0].v, results: closeResults };
   }
 
