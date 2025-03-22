@@ -11,6 +11,7 @@ import {
   getSegmentIndexCloseAt,
   getNewRateAfterSplit,
   getShapePatchInfoByInsertingVertexAt,
+  getPatchByExtrudeLineSegment,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
@@ -418,5 +419,62 @@ describe("getShapePatchInfoByInsertingVertexAt", () => {
     });
     expect(getShapePatchInfoByInsertingVertexAt(line, 0, { x: 50, y: 0 }, 1)).toBeUndefined();
     expect(getShapePatchInfoByInsertingVertexAt(line, 1, { x: 50, y: 0 }, 1)).toBeUndefined();
+  });
+});
+
+describe("getPatchByExtrudeLineSegment", () => {
+  test("should extrude a line segment at an inner segment", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }, { p: { x: 50, y: 50 } }],
+      q: { x: 100, y: 50 },
+    });
+    const translate = { x: 10, y: 10 };
+    const result = getPatchByExtrudeLineSegment(line, 1, translate);
+    expect(result.body).toEqual([
+      { p: { x: 50, y: 0 } },
+      { p: { x: 60, y: 10 } },
+      { p: { x: 60, y: 60 } },
+      { p: { x: 50, y: 50 } },
+    ]);
+    expect(result.curves).toEqual(undefined);
+  });
+
+  test("should handle extrusion at the start of the line", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 100, y: 0 },
+    });
+    const translate = { x: 10, y: 10 };
+    const result = getPatchByExtrudeLineSegment(line, 0, translate);
+    expect(result.body).toEqual([{ p: { x: 10, y: 10 } }, { p: { x: 60, y: 10 } }, { p: { x: 50, y: 0 } }]);
+  });
+
+  test("should handle extrusion at the end of the line", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 100, y: 0 },
+    });
+    const translate = { x: 10, y: 10 };
+    const result = getPatchByExtrudeLineSegment(line, 1, translate);
+    expect(result.body).toEqual([{ p: { x: 50, y: 0 } }, { p: { x: 60, y: 10 } }, { p: { x: 110, y: 10 } }]);
+  });
+
+  test("should handle extrusion with curves", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }, { p: { x: 50, y: 50 } }],
+      curves: [undefined, { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }],
+      q: { x: 100, y: 0 },
+    });
+    const translate = { x: 10, y: 10 };
+    const result1 = getPatchByExtrudeLineSegment(line, 0, translate);
+    expect(result1.curves).toEqual([undefined, undefined, undefined, { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }]);
+    const result2 = getPatchByExtrudeLineSegment(line, 1, translate);
+    expect(result2.curves).toEqual([undefined, undefined, { c1: { x: 35, y: 35 }, c2: { x: 85, y: 35 } }]);
+    const result3 = getPatchByExtrudeLineSegment(line, 2, translate);
+    expect(result3.curves).toEqual([undefined, { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }]);
   });
 });

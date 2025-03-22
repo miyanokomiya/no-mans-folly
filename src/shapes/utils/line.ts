@@ -1,5 +1,5 @@
 import { add, getCrossSegAndBezier3WithT, getRectCenter, getSymmetry, isSame, IVec2, rotate, sub } from "okageo";
-import { getConnection, getEdges, getLinePath, LineShape, struct } from "../line";
+import { getConnection, getConnections, getEdges, getLinePath, LineShape, patchVertices, struct } from "../line";
 import {
   getClosestPointOnPolyline,
   getIntersectionsBetweenLineAndPolyline,
@@ -252,4 +252,52 @@ export function getNewRateAfterSplit(rate: number, splitRate: number): [number, 
   } else {
     return [undefined, (rate - splitRate) / (1 - splitRate)];
   }
+}
+
+export function getPatchByExtrudeLineSegment(
+  line: LineShape,
+  segmentIndex: number,
+  translate: IVec2,
+): Partial<LineShape> {
+  const srcVertices = getLinePath(line);
+  const srcConnections = getConnections(line);
+  const srcCurves = line.curves;
+
+  const translatePatch = patchVertices(line, [
+    [segmentIndex, add(srcVertices[segmentIndex], translate), undefined],
+    [segmentIndex + 1, add(srcVertices[segmentIndex + 1], translate), undefined],
+  ]);
+
+  const body = translatePatch?.body?.concat() ?? [];
+  if (segmentIndex === 0) {
+    if (translatePatch.p) {
+      body.splice(0, 0, { p: translatePatch.p });
+    }
+  } else {
+    body.splice(segmentIndex - 1, 0, { p: srcVertices[segmentIndex], c: srcConnections[segmentIndex] });
+  }
+  if (segmentIndex === srcVertices.length - 2) {
+    if (translatePatch.q) {
+      body.splice(srcVertices.length, 0, { p: translatePatch.q });
+    }
+  } else {
+    body.splice(segmentIndex + 2, 0, { p: srcVertices[segmentIndex + 1], c: srcConnections[segmentIndex + 1] });
+  }
+
+  const curves = srcCurves?.concat() ?? [];
+  if (srcCurves?.slice(segmentIndex).some((c) => !!c)) {
+    curves.splice(segmentIndex, 0, undefined);
+  }
+  if (srcCurves?.slice(segmentIndex + 1).some((c) => !!c)) {
+    curves.splice(segmentIndex + 2, 0, undefined);
+  }
+  if (srcCurves?.[segmentIndex]) {
+    curves[segmentIndex + 1] = translatePatch.curves?.[segmentIndex];
+  }
+
+  const patch = { body } as Partial<LineShape>;
+  if (curves.length > 0) {
+    patch.curves = curves;
+  }
+  return patch;
 }
