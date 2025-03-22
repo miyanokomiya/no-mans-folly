@@ -1,9 +1,11 @@
+import { newExtrudingLineSegmentState } from "./lines/extrudingLineSegment";
 import { newLineDrawingState } from "./lines/lineDrawingState";
 import { newLineNormalReadyState } from "./lines/lineNormalReadyState";
 import { newLineReadyState } from "./lines/lineReadyState";
 import { newLineSegmentEditingState } from "./lines/lineSegmentEditingState";
 import { newLineTangentReadyState } from "./lines/lineTangentReadyState";
 import { newMovingAnchorOnLineState } from "./lines/movingAnchorOnLineState";
+import { newMovingLineSegmentState } from "./lines/movingLineSegmentState";
 import { newMovingOnLineState } from "./lines/movingOnLineState";
 import { newVertexAttachingState } from "./lines/vertexAttachingState";
 import { newMovingHubState } from "./movingHubState";
@@ -31,6 +33,8 @@ export const stateGenerators = {
   newLineTangentReadyState,
   newLineNormalReadyState,
   newVertexAttachingState,
+  newMovingLineSegmentState,
+  newExtrudingLineSegmentState,
   newLineSegmentEditingState,
   newPointerDownEmptyState,
   newPanToShapeState,

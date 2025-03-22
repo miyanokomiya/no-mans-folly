@@ -24,7 +24,6 @@ import { newTextEditingState } from "../text/textEditingState";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { getPatchAfterLayouts, getPatchByLayouts } from "../../../shapeLayoutHandler";
-import { newMovingLineSegmentState } from "./movingLineSegmentState";
 import { newMovingLineArcState } from "./movingLineArcState";
 import { defineIntransientState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
@@ -132,7 +131,10 @@ export const newLineSelectedState = defineIntransientState(() => {
                       return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                     }
                   case "segment":
-                    return () => newMovingLineSegmentState({ lineShape, index: hitResult.index });
+                    if (event.data.options.shift) {
+                      return () => ctx.states.newExtrudingLineSegmentState({ lineShape, index: hitResult.index });
+                    }
+                    return () => ctx.states.newMovingLineSegmentState({ lineShape, index: hitResult.index });
                   case "elbow-edge":
                     return () => newMovingElbowSegmentState({ lineShape, index: hitResult.index });
                   case "new-vertex-anchor":
