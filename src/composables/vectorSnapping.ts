@@ -2,12 +2,13 @@ import { add, getDistance, getNorm, getPedal, isSame, IVec2, MINVALUE, sub } fro
 import { Shape, StyleScheme } from "../models";
 import { getIntersectedOutlines, GetShapeStruct } from "../shapes";
 import { ShapeSnappingLines } from "../shapes/core";
-import { extendSegment, ISegment, TAU } from "../utils/geometry";
+import { extendSegment, getD2, ISegment, TAU } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyPath } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 import { snapVectorToGrid } from "./grid";
 import { CanvasCTX } from "../utils/types";
+import { pickMinItem } from "../utils/commons";
 
 const SNAP_THRESHOLD = 10;
 
@@ -21,7 +22,7 @@ interface Option {
 }
 
 type snappedTarget = "shape" | "grid" | "origin";
-export type VectorSnappingResult = { p: IVec2; guidLines?: ISegment[]; snapped?: snappedTarget };
+export type VectorSnappingResult = { p: IVec2; v: IVec2; guidLines?: ISegment[]; snapped?: snappedTarget };
 
 export function newVectorSnapping(option: Option) {
   const isZeroVector = isSame(option.vector, { x: 0, y: 0 });
@@ -29,16 +30,16 @@ export function newVectorSnapping(option: Option) {
   const reversedSnappableShapes = option.snappableShapes.concat().reverse();
 
   function hitTest(point: IVec2, scale: number): VectorSnappingResult {
-    if (isZeroVector) return { p: option.origin };
+    if (isZeroVector) return { p: option.origin, v: sub(option.origin, point) };
 
     const threshold = SNAP_THRESHOLD * scale;
     const pedal = getPedal(point, segment);
     if (option.snappableOrigin && getDistance(option.origin, pedal) < threshold)
-      return { p: option.origin, snapped: "origin" };
+      return { p: option.origin, v: sub(option.origin, point), snapped: "origin" };
 
     const rawSegment: ISegment = [segment[0], pedal];
     const norm = getNorm(sub(rawSegment[0], rawSegment[1]));
-    if (norm < MINVALUE) return { p: pedal };
+    if (norm < MINVALUE) return { p: pedal, v: sub(pedal, point) };
 
     const extendedGuideLine = extendSegment(rawSegment, 1 + threshold / norm);
 
@@ -59,17 +60,17 @@ export function newVectorSnapping(option: Option) {
           return true;
         }
       });
-      if (outline) return { p: outline.p, snapped: "shape" };
+      if (outline) return { p: outline.p, v: sub(outline.p, point), snapped: "shape" };
     }
 
     if (option.gridSnapping) {
       const gridResult = snapVectorToGrid(option.gridSnapping, rawSegment[0], rawSegment[1], threshold);
       if (gridResult) {
-        return { p: gridResult.p, guidLines: gridResult.lines, snapped: "grid" };
+        return { p: gridResult.p, v: sub(gridResult.p, point), guidLines: gridResult.lines, snapped: "grid" };
       }
     }
 
-    return { p: pedal };
+    return { p: pedal, v: sub(pedal, point) };
   }
 
   return { hitTest };
@@ -96,4 +97,40 @@ export function renderVectorSnappingResult(
     ctx.arc(option.result.p.x, option.result.p.y, size, 0, TAU);
     ctx.fill();
   }
+}
+
+interface VectorsSnappingOption {
+  origins: IVec2[];
+  vector: IVec2;
+  snappableShapes: Shape[];
+  gridSnapping?: ShapeSnappingLines;
+  getShapeStruct: GetShapeStruct;
+  snappableOrigin?: boolean;
+}
+export type VectorSnappingsResult = { v: IVec2; results: VectorSnappingResult[] };
+
+export function newVectorsSnapping(option: VectorsSnappingOption) {
+  const snappings = option.origins.map((origin) =>
+    newVectorSnapping({
+      ...option,
+      origin,
+    }),
+  );
+
+  function hitTest(points: IVec2[], scale: number): VectorSnappingsResult {
+    const results = points.map((point, i) => snappings[i].hitTest(point, scale));
+    const snappedResults = results.filter((r) => r.snapped);
+    const snappedResultWithValue = snappedResults.map<[VectorSnappingResult, number]>((r, i) => [
+      r,
+      getD2(sub(r.p, points[i])),
+    ]);
+    const closestResult = pickMinItem(snappedResultWithValue, ([, d]) => d);
+    if (!closestResult) return { v: results[0].v, results: [results[0]] };
+
+    // Collect all the results that have the same snapping vector as the closest one.
+    const closeResults = snappedResultWithValue.filter(([r]) => isSame(r.v, closestResult[0].v)).map(([r]) => r);
+    return { v: closestResult[0].v, results: closeResults };
+  }
+
+  return { hitTest };
 }
