@@ -34,7 +34,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
 
   const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
-    const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]);
+    const snappableCandidates = getSnappableCandidates(ctx, [option.lineShape.id]).concat([option.lineShape]);
     const snappableShapes = snappableCandidates.filter((s) => isLineSnappableShape(shapeComposite, s));
     const mockMovingLine = { ...option.lineShape, ...addNewVertex(option.lineShape, option.index, { x: 0, y: 0 }) };
     const shapeSnapping = newShapeSnapping({
