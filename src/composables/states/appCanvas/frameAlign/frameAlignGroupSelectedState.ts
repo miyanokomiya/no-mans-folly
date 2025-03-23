@@ -53,6 +53,7 @@ export const newFrameAlignGroupSelectedState = defineIntransientState(() => {
       initHandler(ctx);
     },
     onEnd: (ctx) => {
+      ctx.setTmpShapeMap({});
       ctx.hideFloatMenu();
       ctx.setCommandExams();
       ctx.setContextMenuList();
