@@ -9,7 +9,6 @@ import {
   isSame,
   IVec2,
   lerpPoint,
-  MINVALUE,
   rotate,
   sub,
 } from "okageo";
@@ -369,23 +368,34 @@ export function newPreserveAttachmentHandler({
   function getPatch(linePatch: Partial<LineShape>): { [id: string]: Partial<Shape> } | undefined {
     if (!active) return;
     const srcLine = shapeComposite.shapeMap[lineId];
-    if (!srcLine) return;
+    if (!srcLine || !isLineShape(srcLine)) return;
+
+    const srcEdgeInfo = getLineEdgeInfo(srcLine);
+    if (srcEdgeInfo.totalLength === 0) return;
 
     const curvePatch = getCurveLinePatch(shapeComposite, { update: { [lineId]: linePatch } })[lineId];
     const latestLine = { ...srcLine, ...linePatch, ...curvePatch } as LineShape;
-    const edgeInfo = getLineEdgeInfo(latestLine);
+    const latestEdgeInfo = getLineEdgeInfo(latestLine);
+    const lengthScale = latestEdgeInfo.totalLength / srcEdgeInfo.totalLength;
     const updateByAlt: { [id: string]: Partial<Shape> } = {};
     let changed = false;
     anchorMap.forEach((anchorP, id) => {
       const s = shapeComposite.shapeMap[id];
       if (!s?.attachment) return;
 
-      changed = true;
-      const closestInfo = getClosestPointOnPolyline(edgeInfo, anchorP, MINVALUE);
-      if (closestInfo) {
-        updateByAlt[id] = { attachment: { ...s.attachment, to: { x: closestInfo[1], y: 0 } } };
-      } else {
-        updateByAlt[id] = { attachment: undefined };
+      // Check both sides and pick the closer one.
+      // This logic may becomes unstable when the line no longer runs through the anchor point.
+      // => Preserving the attachment is almost meaningless anyway in such case.
+      const rate = s.attachment.to.x;
+      const rateForward = rate / lengthScale;
+      const rateBackward = 1 - (1 - rate) / lengthScale;
+      const rateForwardP = latestEdgeInfo.lerpFn(rateForward);
+      const rateBackwardP = latestEdgeInfo.lerpFn(rateBackward);
+      const newRate =
+        getDistance(rateForwardP, anchorP) < getDistance(rateBackwardP, anchorP) ? rateForward : rateBackward;
+      if (rate !== newRate) {
+        changed = true;
+        updateByAlt[id] = { attachment: { ...s.attachment, to: { x: newRate, y: 0 } } };
       }
     });
 

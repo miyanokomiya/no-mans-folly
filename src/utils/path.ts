@@ -388,6 +388,10 @@ export function getPolylineEdgeInfo(edges: ISegment[], curves?: (CurveControl | 
   };
 }
 
+/**
+ * Note: The result isn't always convergent.
+ * i.e. If recall this function with the result, the result may be different.
+ */
 export function getClosestPointOnPolyline(
   edgeInfo: PolylineEdgeInfo,
   p: IVec2,

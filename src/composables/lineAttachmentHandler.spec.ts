@@ -529,9 +529,11 @@ describe("getEvenlySpacedLineAttachment", () => {
 
 describe("newPreserveAttachmentHandler", () => {
   const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
-  const shapeA = createShape(getCommonStruct, "rectangle", {
+  const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", {
     id: "a",
-    p: { x: 25, y: -50 },
+    p: { x: 25, y: -25 },
+    width: 50,
+    height: 50,
     attachment: {
       id: line.id,
       to: { x: 0.5, y: 0 },
@@ -542,7 +544,7 @@ describe("newPreserveAttachmentHandler", () => {
   });
 
   describe("getPatch", () => {
-    test("should leave attached shape where it was when its anchor is still on the line", () => {
+    test("should leave attached shape where it was when the line still runs through there", () => {
       const shapeComposite = newShapeComposite({
         shapes: [line, shapeA],
         getStruct: getCommonStruct,
@@ -551,20 +553,11 @@ describe("newPreserveAttachmentHandler", () => {
       target.setActive(true);
       const result0 = target.getPatch({ q: { x: 200, y: 0 } });
       expect(result0).toEqual({
-        [shapeA.id]: { attachment: { ...shapeA.attachment, to: { x: 0.375, y: 0 } } },
+        [shapeA.id]: { attachment: { ...shapeA.attachment, to: { x: 0.25, y: 0 } } },
       });
-    });
-
-    test("should detach the shape when its anchor is no longer on the line", () => {
-      const shapeComposite = newShapeComposite({
-        shapes: [line, shapeA],
-        getStruct: getCommonStruct,
-      });
-      const target = newPreserveAttachmentHandler({ shapeComposite, lineId: line.id });
-      target.setActive(true);
-      const result0 = target.getPatch({ q: { x: 0, y: 100 } });
-      expect(result0).toStrictEqual({
-        [shapeA.id]: { attachment: undefined },
+      const result1 = target.getPatch({ p: { x: -100, y: 0 } });
+      expect(result1).toEqual({
+        [shapeA.id]: { attachment: { ...shapeA.attachment, to: { x: 0.75, y: 0 } } },
       });
     });
 

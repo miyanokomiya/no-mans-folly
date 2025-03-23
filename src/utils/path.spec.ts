@@ -501,6 +501,9 @@ describe("getClosestPointOnPolyline", () => {
     const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 9 }, 10);
     expect(result0?.[0]).toEqualPoint({ x: 39.605923717159484, y: 14.545262945220578 });
     expect(result0?.[1]).toBeCloseTo(0.4);
+    // FIXME
+    // const result1 = getClosestPointOnPolyline(edgeInfo, result0![0], MINVALUE);
+    // expect(result1?.[0], "should be consist").toEqualPoint(result0![0]);
   });
 
   test("should regard arc segment", () => {
@@ -514,6 +517,9 @@ describe("getClosestPointOnPolyline", () => {
     const result0 = getClosestPointOnPolyline(edgeInfo, { x: 40, y: 18 }, 10);
     expect(result0?.[0]).toEqualPoint({ x: 39.816488, y: 19.2812392 });
     expect(result0?.[1]).toBeCloseTo(0.4081723);
+    // FIXME
+    // const result1 = getClosestPointOnPolyline(edgeInfo, result0![0], MINVALUE);
+    // expect(result1?.[0], "should be consist").toEqualPoint(result0![0]);
   });
 });
 
