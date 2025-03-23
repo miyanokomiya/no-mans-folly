@@ -27,6 +27,14 @@ interface Option {
 export function newMovingLineSegmentState(option: Option): AppCanvasState {
   const targetSegment = getEdges(option.lineShape)[option.index];
   const movingRect = getOuterRectangle([targetSegment]);
+  const vertices = getLinePath(option.lineShape);
+  const vector = rotate({ x: 1, y: 0 }, getRadian(vertices[option.index + 1], vertices[option.index]) + Math.PI / 2);
+  const snappingOrigins = [
+    vertices[option.index],
+    vertices[option.index + 1],
+    ...(option.index > 0 ? [vertices[option.index - 1]] : []),
+    ...(option.index < vertices.length - 2 ? [vertices[option.index + 2]] : []),
+  ];
 
   let snappingResult: SnappingResult | undefined;
   let vectorSnappingResult: VectorSnappingsResult | undefined;
@@ -43,15 +51,9 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
     const shapeComposite = ctx.getShapeComposite();
     // Allow to snap to the line itself.
     const snappableShapes = getSnappableCandidates(ctx, [option.lineShape.id]).concat([option.lineShape]);
-    const vertices = getLinePath(option.lineShape);
-    const vector = rotate({ x: 1, y: 0 }, getRadian(vertices[option.index + 1], vertices[option.index]) + Math.PI / 2);
-    const origins = [
-      vertices[Math.max(0, option.index - 1)],
-      vertices[Math.min(vertices.length - 1, option.index + 2)],
-    ];
     const gridSnapping = ctx.getGrid().getSnappingLines();
     const vectorSnapping = newVectorsSnapping({
-      origins,
+      origins: snappingOrigins,
       vector,
       snappableShapes,
       gridSnapping,
@@ -116,7 +118,10 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
             const result1 = snappingCache
               .getValue(ctx)
               .shapeSnapping.test(moveRect(movingRect, d), undefined, ctx.getScale());
-            const movingSegment = targetSegment.map((t) => add(t, d));
+            let movingSegment = targetSegment.map((t) => add(t, d));
+            if (snappingOrigins.length === 4) {
+              movingSegment = movingSegment.concat(movingSegment);
+            }
             const result2 = snappingCache.getValue(ctx).vectorSnapping.hitTest(movingSegment, ctx.getScale());
             if (result2) {
               vectorSnappingResult = result2;
