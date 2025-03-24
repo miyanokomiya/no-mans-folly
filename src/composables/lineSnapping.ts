@@ -3,8 +3,6 @@ import {
   IVec2,
   MINVALUE,
   add,
-  getCrossBezier3AndBezier3,
-  getCrossSegAndBezier3,
   getDistance,
   getNorm,
   getPedal,
@@ -29,7 +27,6 @@ import {
   TAU,
   extendSegment,
   getClosestPointTo,
-  getCrossSegAndSeg,
   getD2,
   getLocationFromRateOnRectPath,
   isRectOverlappedH,
@@ -54,7 +51,7 @@ import {
   SnappingResult,
 } from "./shapeSnapping";
 import { CanvasCTX } from "../utils/types";
-import { BezierPath } from "../utils/path";
+import { getBezierIntersections, getBezierSegmentList } from "../utils/path";
 
 const SNAP_THRESHOLD = 10;
 
@@ -537,39 +534,6 @@ function getConnectedPrimeShape(main?: Shape, sub?: Shape): Shape | undefined {
   return connectionTarget1 ?? connectionTarget2;
 }
 
-function getBezierIntersections(
-  beziers: ([IVec2, IVec2] | [IVec2, IVec2, IVec2, IVec2])[],
-  srcBeziers: ([IVec2, IVec2] | [IVec2, IVec2, IVec2, IVec2])[],
-): IVec2[] {
-  const intersections: IVec2[] = [];
-  for (let i = 0; i < beziers.length; i++) {
-    const path = beziers[i];
-    for (let j = 0; j < srcBeziers.length; j++) {
-      const srcPath = srcBeziers[j];
-      if (path.length === 4 && srcPath.length === 4) {
-        // Ignore when two cubic bezier curves are the same.
-        // TODO: This may ought to be done in the library.
-        if (path.some((p, k) => !isSame(p, srcPath[k]))) {
-          // Note: 50 is too much since it often freezes the browser when two curves are similar.
-          intersections.push(...getCrossBezier3AndBezier3(srcPath, path, MINVALUE, 30));
-        }
-      } else if (path.length === 2 && srcPath.length === 4) {
-        intersections.push(...getCrossSegAndBezier3(path, srcPath));
-      } else if (path.length === 4 && srcPath.length === 2) {
-        intersections.push(...getCrossSegAndBezier3(srcPath, path));
-      } else if (path.length === 2 && srcPath.length === 2) {
-        const intersection = getCrossSegAndSeg(srcPath, path);
-        if (intersection) intersections.push(intersection);
-      }
-
-      // Limit the number of intersections.
-      // 9 is the maximum number of intersections between cubic bezier curves.
-      if (intersections.length > 9) return intersections;
-    }
-  }
-  return intersections;
-}
-
 export function renderConnectionResult(
   ctx: CanvasCTX,
   option: {
@@ -912,18 +876,6 @@ function getClosestEndPoint(getShapeStruct: GetShapeStruct, shape: Shape, seg: I
     originalEndPoint,
     getIntersectedOutlines(getShapeStruct, shape, extendedSeg[0], extendedSeg[1]) ?? [],
   );
-}
-
-function getBezierSegmentList(beziers: BezierPath[]): ([IVec2, IVec2, IVec2, IVec2] | [IVec2, IVec2])[] {
-  const ret: ([IVec2, IVec2, IVec2, IVec2] | [IVec2, IVec2])[] = [];
-  beziers.forEach((path) => {
-    path.path.forEach((p, i) => {
-      if (i === path.path.length - 1) return;
-      const c = path.curves[i];
-      ret.push(c ? [p, c.c1, c.c2, path.path[i + 1]] : [p, path.path[i + 1]]);
-    });
-  });
-  return ret;
 }
 
 function seekLineConnectionAt(line: LineShape, p: IVec2): ConnectionPoint | undefined {
