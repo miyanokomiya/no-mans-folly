@@ -57,16 +57,14 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
 
   function dfs(node: RawVnNode, nodePath: RawVnNode[], edgePath: RawVnEdge[], startNode: RawVnNode): void {
     if (visited.has(node.id)) {
-      if (nodePath.length < 3) return;
-      if (node === startNode) {
+      if (node === startNode && nodePath.length >= 3) {
         const loopNodeIds = nodePath
           .map((n) => n.id)
           .sort()
           .join(",");
         if (!uniqueLoops.has(loopNodeIds)) {
-          const loopNodes = [...nodePath, node];
           uniqueLoops.add(loopNodeIds);
-          loops.push({ nodes: loopNodes, edges: edgePath.concat() });
+          loops.push({ nodes: [...nodePath, node], edges: edgePath.concat() });
         }
       }
       return;
