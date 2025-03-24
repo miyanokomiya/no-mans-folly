@@ -7,7 +7,7 @@ export interface RawVnNode {
   position: IVec2;
 }
 
-export interface RawFnEdge {
+export interface RawVnEdge {
   id: string;
   nodes: [RawVnNode, RawVnNode];
   curve?: CurveControl;
@@ -18,12 +18,12 @@ export interface RawFnEdge {
  */
 export interface RawVnLoop {
   nodes: RawVnNode[];
-  edges: RawFnEdge[];
+  edges: RawVnEdge[];
 }
 
 type VectorNetworkOption = {
   nodes: Map<string, RawVnNode>;
-  edges: Map<string, RawFnEdge>;
+  edges: Map<string, RawVnEdge>;
 };
 
 export function newRawVectorNetwork(option: VectorNetworkOption) {
@@ -36,27 +36,37 @@ export function newRawVectorNetwork(option: VectorNetworkOption) {
     getNode(id: string): RawVnNode | undefined {
       return nodes.get(id);
     },
-    getEdge(id: string): RawFnEdge | undefined {
+    getEdge(id: string): RawVnEdge | undefined {
       return edges.get(id);
     },
-    getEdgesForNode(node: RawVnNode): RawFnEdge[] {
+    getEdgesForNode(node: RawVnNode): RawVnEdge[] {
       return Array.from(edges.values()).filter((edge) => edge.nodes.includes(node));
     },
-    getEdgeForNodes(node1: RawVnNode, node2: RawVnNode): RawFnEdge | undefined {
+    getEdgeForNodes(node1: RawVnNode, node2: RawVnNode): RawVnEdge | undefined {
       return Array.from(edges.values()).find((edge) => edge.nodes.includes(node1) && edge.nodes.includes(node2));
     },
   };
 }
 export type RawVectorNetwork = ReturnType<typeof newRawVectorNetwork>;
 
-function findClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
+export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
   const visited = new Set<string>();
   const loops: RawVnLoop[] = [];
+  const uniqueLoops = new Set<string>();
 
-  function dfs(node: RawVnNode, nodePath: RawVnNode[], edgePath: RawFnEdge[], startNode: RawVnNode): void {
+  function dfs(node: RawVnNode, nodePath: RawVnNode[], edgePath: RawVnEdge[], startNode: RawVnNode): void {
     if (visited.has(node.id)) {
+      if (nodePath.length < 3) return;
       if (node === startNode) {
-        loops.push({ nodes: [...nodePath, node], edges: edgePath.concat() });
+        const loopNodeIds = nodePath
+          .map((n) => n.id)
+          .sort()
+          .join(",");
+        if (!uniqueLoops.has(loopNodeIds)) {
+          const loopNodes = [...nodePath, node];
+          uniqueLoops.add(loopNodeIds);
+          loops.push({ nodes: loopNodes, edges: edgePath.concat() });
+        }
       }
       return;
     }
@@ -84,7 +94,7 @@ function findClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
 }
 
 export function findClosedVnAreaCoveringPoint(network: RawVectorNetwork, point: IVec2): RawVnLoop | undefined {
-  const loops = findClosedLoops(network);
+  const loops = findVnClosedLoops(network);
   for (const loop of loops) {
     const points = getApproxCurvePoints(
       loop.nodes.map((node) => node.position),
