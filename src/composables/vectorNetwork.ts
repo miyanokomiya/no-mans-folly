@@ -1,8 +1,10 @@
 import { Shape } from "../models";
-import { getConnections, isLineShape } from "../shapes/line";
+import { getConnections, getLinePath, isLineShape, LineShape } from "../shapes/line";
 import { isTextShape, TextShape } from "../shapes/text";
 import { getNewRateAfterSplit } from "../shapes/utils/line";
 import { isVNNodeShape, VnNodeShape } from "../shapes/vectorNetworks/vnNode";
+import { getSegments } from "../utils/geometry";
+import { newRawVectorNetwork, RawVnEdge, RawVnNode } from "../utils/vectorNetwork";
 import { ShapeComposite } from "./shapeComposite";
 import { getLineRelatedDependantMap } from "./shapeRelation";
 
@@ -97,4 +99,56 @@ export function patchBySplitAttachingLine(
     }
   });
   return ret;
+}
+
+type VectorNetworkOption = {
+  shapeComposite: ShapeComposite;
+  ids: string[];
+};
+
+export function newVectorNetwork(option: VectorNetworkOption) {
+  const sc = option.shapeComposite;
+  const lineMap = new Map<string, LineShape>();
+  const rawNodeMap = new Map<string, RawVnNode>();
+  const rawEdgeMap = new Map<string, RawVnEdge>();
+
+  option.ids
+    .map((id) => sc.shapeMap[id])
+    .forEach((s) => {
+      if (isLineShape(s)) {
+        lineMap.set(s.id, s);
+      } else if (isVNNodeShape(s)) {
+        rawNodeMap.set(s.id, { id: s.id, position: s.p });
+      }
+    });
+
+  lineMap.forEach((line) => {
+    const segs = getSegments(getLinePath(line));
+    const connections = getConnections(line);
+    segs.forEach((seg, i) => {
+      const id = `${line.id}_${i}`;
+      const c0 = connections[i];
+      const c1 = connections[i + 1];
+
+      let node0 = rawNodeMap.get(c0?.id ?? `${line.id}_${i - 1}_1}`);
+      if (!node0) {
+        node0 = { id: `${line.id}_${i}_0}`, position: seg[0] };
+        rawNodeMap.set(node0.id, node0);
+      }
+
+      let node1 = rawNodeMap.get(c1?.id ?? "");
+      if (!node1) {
+        node1 = { id: `${line.id}_${i}_1}`, position: seg[1] };
+        rawNodeMap.set(node1.id, node1);
+      }
+
+      rawEdgeMap.set(id, {
+        id,
+        curve: line.curves?.[i],
+        nodes: [node0, node1],
+      });
+    });
+  });
+
+  return newRawVectorNetwork({ nodes: rawNodeMap, edges: rawEdgeMap });
 }

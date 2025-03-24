@@ -17,6 +17,7 @@ import { newSmartBranchChildMarginState } from "./smartBranch/smartBranchChildMa
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";
 import { newSmartBranchSiblingMarginState } from "./smartBranch/smartBranchSiblingMarginState";
+import { newVnCreatePolygonState } from "./vectorNetworks/vnCreatePolygonState";
 import { newVnEdgeDrawingState } from "./vectorNetworks/vnEdgeDrawingState";
 import { newVnNodeInsertReadyState } from "./vectorNetworks/vnNodeInsertReadyState";
 import { newVNNodeSelectedState } from "./vectorNetworks/vnNodeSelectedState";
@@ -45,5 +46,6 @@ export const stateGenerators = {
   newVNNodeSelectedState,
   newVnEdgeDrawingState,
   newVnNodeInsertReadyState,
+  newVnCreatePolygonState,
 };
 export type StateGenerators = typeof stateGenerators;

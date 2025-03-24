@@ -32,6 +32,7 @@ const lineButtonTypeList = lineTypeList.concat([
   { type: "tangent", icon: iconLineTangent },
   { type: "normal", icon: iconLineNormal },
   { type: "vn_node_insert", icon: iconVnNode },
+  { type: "vn_create_polygon", icon: iconVnNode },
 ]);
 
 export const AppToolbar: React.FC = () => {
@@ -139,6 +140,12 @@ export const AppToolbar: React.FC = () => {
           sm.handleEvent({
             type: "state",
             data: { name: "VnNodeInsertReady" },
+          });
+          break;
+        case "vn_create_polygon":
+          sm.handleEvent({
+            type: "state",
+            data: { name: "VnCreatePolygon" },
           });
           break;
         default:

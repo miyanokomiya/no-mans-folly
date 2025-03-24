@@ -18,6 +18,7 @@ export interface RawVnEdge {
  * The path is always manually closed: i.e. nodes.at(0) === nodes.at(-1)
  */
 export interface RawVnLoop {
+  id: string;
   nodes: RawVnNode[];
   edges: RawVnEdge[];
 }
@@ -64,7 +65,7 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
           .join(",");
         if (!uniqueLoops.has(loopNodeIds)) {
           uniqueLoops.add(loopNodeIds);
-          loops.push({ nodes: [...nodePath, node], edges: edgePath.concat() });
+          loops.push({ id: loopNodeIds, nodes: [...nodePath, node], edges: edgePath.concat() });
         }
       }
       return;
