@@ -1,6 +1,7 @@
 import { isOnPolygon, IVec2 } from "okageo";
 import { CurveControl } from "../models";
 import { getApproxCurvePoints } from "./geometry";
+import { reverseCurveControl } from "./path";
 
 export interface RawVnNode {
   id: string;
@@ -76,9 +77,13 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
 
     const edges = network.getEdgesForNode(node);
     for (const edge of edges) {
-      const nextNode = edge.nodes[0] === node ? edge.nodes[1] : edge.nodes[0];
-      edgePath.push(edge);
-      dfs(nextNode, nodePath, edgePath, startNode);
+      if (edge.nodes[0] === node) {
+        edgePath.push(edge);
+        dfs(edge.nodes[1], nodePath, edgePath, startNode);
+      } else {
+        edgePath.push({ id: edge.id, nodes: [edge.nodes[1], edge.nodes[0]], curve: reverseCurveControl(edge.curve) });
+        dfs(edge.nodes[0], nodePath, edgePath, startNode);
+      }
       edgePath.pop();
     }
 

@@ -18,6 +18,7 @@ import {
   isArcControl,
   isBezieirControl,
   reverseBezierPath,
+  reverseCurveControl,
   shiftBezierCurveControl,
   splitPathAtRate,
   transformBezierCurveControl,
@@ -622,6 +623,25 @@ describe("reverseBezierPath", () => {
       ],
       curves: [{ c1: { x: 120, y: 80 }, c2: { x: 120, y: 20 } }, undefined],
     });
+  });
+});
+
+describe("reverseCurveControl", () => {
+  test("should reverse bezier curve control", () => {
+    const bezierControl = { c1: { x: 10, y: 20 }, c2: { x: 30, y: 40 } };
+    const reversedControl = reverseCurveControl(bezierControl);
+    expect(reversedControl).toEqual({ c1: { x: 30, y: 40 }, c2: { x: 10, y: 20 } });
+  });
+
+  test("should reverse arc curve control", () => {
+    const arcControl = { d: { x: 0, y: 10 } };
+    const reversedControl = reverseCurveControl(arcControl);
+    expect(reversedControl).toEqual({ d: { x: 0, y: -10 } });
+  });
+
+  test("should return undefined for undefined input", () => {
+    const reversedControl = reverseCurveControl(undefined);
+    expect(reversedControl).toBeUndefined();
   });
 });
 

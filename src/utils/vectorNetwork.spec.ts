@@ -30,6 +30,22 @@ describe("findVnClosedLoops", () => {
     const network = newRawVectorNetwork({ nodes, edges });
     expect(findVnClosedLoops(network)).toHaveLength(2);
   });
+
+  test("should reverse each edge when it's used reversely", () => {
+    const edges = new Map<string, RawVnEdge>([
+      ["1-3", { id: "1-3", nodes: [nodes.get("1")!, nodes.get("3")!] }],
+      ["1-2", { id: "1-2", nodes: [nodes.get("1")!, nodes.get("2")!] }],
+      [
+        "2-3",
+        { id: "2-3", nodes: [nodes.get("2")!, nodes.get("3")!], curve: { c1: { x: 1, y: 2 }, c2: { x: 3, y: 4 } } },
+      ],
+    ]);
+    const network = newRawVectorNetwork({ nodes, edges });
+    const result0 = findVnClosedLoops(network);
+    const target = result0[0].edges.find(({ id }) => id === "2-3")!;
+    expect(target.nodes).toEqual([nodes.get("3"), nodes.get("2")]);
+    expect(target.curve).toEqual({ c1: { x: 3, y: 4 }, c2: { x: 1, y: 2 } });
+  });
 });
 
 describe("findClosedVnAreaCoveringPoint", () => {

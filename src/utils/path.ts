@@ -478,6 +478,14 @@ export function reverseBezierPath(path: BezierPath): BezierPath {
   };
 }
 
+export function reverseCurveControl(curve?: CurveControl): CurveControl | undefined {
+  if (isBezieirControl(curve)) {
+    return { c1: curve.c2, c2: curve.c1 };
+  } else if (isArcControl(curve)) {
+    return { d: { x: curve.d.x, y: -curve.d.y } };
+  }
+}
+
 export function flipBezierPathV(path: BezierPath, originY: number): BezierPath {
   const t = 2 * originY;
   return {
