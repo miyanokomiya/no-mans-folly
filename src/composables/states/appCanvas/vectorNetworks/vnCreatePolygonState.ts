@@ -14,16 +14,18 @@ import {
 import { createShape } from "../../../../shapes";
 import { patchLinePolygonFromLine } from "../../../../shapes/utils/linePolygon";
 import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
-import { applyCurvePath } from "../../../../utils/renderer";
+import { applyCurvePath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { IVec2 } from "okageo";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { newCanvasBank } from "../../../canvasBank";
 
 export function newVnCreatePolygonState(): AppCanvasState {
   let rawVnLoop: RawVnLoop | undefined;
   let rawVnLoopPreview: RawVnLoop | undefined;
   let rawVnLoopLargestCandidate: RawVnLoop | undefined;
   let targetPoints: IVec2[] = [];
+  const canvasBank = newCanvasBank();
 
   const rawVnLoopsCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
@@ -157,38 +159,63 @@ export function newVnCreatePolygonState(): AppCanvasState {
     render(ctx, renderCtx) {
       const style = ctx.getStyleScheme();
 
-      applyFillStyle(renderCtx, { color: { ...style.selectionPrimary, a: 0.5 } });
-      renderCtx.beginPath();
-      (rawVnLoopLargestCandidate ? [rawVnLoopLargestCandidate] : rawVnLoopsCache.getValue(ctx)).forEach((loop) => {
-        applyCurvePath(
-          renderCtx,
-          loop.nodes.map((n) => n.position),
-          loop.edges.map((e) => e.curve),
-        );
+      canvasBank.beginCanvas((subCanvas) => {
+        subCanvas.width = renderCtx.canvas.width;
+        subCanvas.height = renderCtx.canvas.height;
+        const subCtx = subCanvas.getContext("2d")!;
+        if (!subCtx) return;
+
+        subCtx.clearRect(0, 0, subCtx.canvas.width, subCtx.canvas.height);
+        subCtx.reset();
+        subCtx.setTransform(renderCtx.getTransform());
+        applyFillStyle(subCtx, { color: style.selectionPrimary });
+        (rawVnLoopLargestCandidate ? [rawVnLoopLargestCandidate] : rawVnLoopsCache.getValue(ctx)).forEach((loop) => {
+          subCtx.beginPath();
+          applyCurvePath(
+            subCtx,
+            loop.nodes.map((n) => n.position),
+            loop.edges.map((e) => e.curve),
+          );
+          subCtx.fill();
+        });
+
+        if (rawVnLoop) {
+          subCtx.beginPath();
+          applyFillStyle(subCtx, { color: style.transformAnchor });
+          applyCurvePath(
+            subCtx,
+            rawVnLoop.nodes.map((n) => n.position),
+            rawVnLoop.edges.map((e) => e.curve),
+          );
+          subCtx.fill();
+        }
+
+        if (rawVnLoopPreview) {
+          subCtx.beginPath();
+          applyFillStyle(subCtx, { color: style.selectionSecondaly });
+          applyCurvePath(
+            subCtx,
+            rawVnLoopPreview.nodes.map((n) => n.position),
+            rawVnLoopPreview.edges.map((e) => e.curve),
+          );
+          subCtx.fill();
+        }
+
+        const viewRect = ctx.getViewRect();
+        scaleGlobalAlpha(renderCtx, 0.5, () => {
+          renderCtx.drawImage(
+            subCanvas,
+            0,
+            0,
+            subCanvas.width,
+            subCanvas.height,
+            viewRect.x,
+            viewRect.y,
+            viewRect.width,
+            viewRect.height,
+          );
+        });
       });
-      renderCtx.fill();
-
-      if (rawVnLoop) {
-        renderCtx.beginPath();
-        applyFillStyle(renderCtx, { color: { ...style.transformAnchor, a: 0.5 } });
-        applyCurvePath(
-          renderCtx,
-          rawVnLoop.nodes.map((n) => n.position),
-          rawVnLoop.edges.map((e) => e.curve),
-        );
-        renderCtx.fill();
-      }
-
-      if (rawVnLoopPreview) {
-        renderCtx.beginPath();
-        applyFillStyle(renderCtx, { color: { ...style.selectionSecondaly, a: 0.5 } });
-        applyCurvePath(
-          renderCtx,
-          rawVnLoopPreview.nodes.map((n) => n.position),
-          rawVnLoopPreview.edges.map((e) => e.curve),
-        );
-        renderCtx.fill();
-      }
     },
   };
 }
