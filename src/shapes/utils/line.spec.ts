@@ -411,6 +411,33 @@ describe("getShapePatchInfoBySplittingLineThrough", () => {
       },
     ]);
   });
+
+  test("should regard multiple insertions: at a vertex", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }, { p: { x: 100, y: 0 } }, { p: { x: 100, y: 50 } }, { p: { x: 50, y: 50 } }],
+      q: { x: 50, y: -50 },
+    });
+    const result0 = getShapePatchInfoBySplittingLineThrough(line, { x: 50, y: 0 }, 1)!;
+    expect(result0.patch).toEqual({
+      body: undefined,
+      q: { x: 50, y: 0 },
+    });
+    expect(result0.patch).toHaveProperty("body");
+    expect(result0.newSrcList).toEqual([
+      {
+        p: { x: 50, y: 0 },
+        body: [{ p: { x: 100, y: 0 } }, { p: { x: 100, y: 50 } }, { p: { x: 50, y: 50 } }],
+        q: { x: 50, y: 0 },
+      },
+      {
+        p: { x: 50, y: 0 },
+        q: { x: 50, y: -50 },
+      },
+    ]);
+    expect(result0.rateList[0]).toBeCloseTo(50 / 300);
+    expect(result0.rateList[1]).toBeCloseTo(250 / 300);
+  });
 });
 
 describe("getNewRateAfterSplit", () => {

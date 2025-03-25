@@ -204,6 +204,8 @@ export function getShapePatchInfoBySplittingLineThrough(
       rateList: number[];
     }
   | undefined {
+  const originalVertices = getLinePath(line);
+  const originalSize = originalVertices.length;
   const edgeInfo = getLineEdgeInfo(line);
   let rateList: number[] = [];
   const newSrcList: Partial<LineShape>[] = [];
@@ -224,7 +226,12 @@ export function getShapePatchInfoBySplittingLineThrough(
     newSrcList.push(result[0]);
     latestLine = { ...latestLine, ...result[0] };
 
-    originalIndex = originalIndex + index;
+    originalIndex = originalSize - getLinePath(latestLine).length;
+    // Need to adjust the original index if the split point is at the end of the edge.
+    if (isSame(originalVertices[originalIndex], latestLine.p)) {
+      originalIndex -= 1;
+    }
+
     const rateAtVertex =
       edgeInfo.edgeLengths.slice(0, originalIndex).reduce((acc, v) => acc + v, 0) / edgeInfo.totalLength;
     const rateInEdge = result[2] * (edgeInfo.edgeLengths[originalIndex] / edgeInfo.totalLength);
