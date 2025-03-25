@@ -77,26 +77,45 @@ export function getInheritableVnNodeProperties(shape?: VnNodeShape): Partial<VnN
 export function patchBySplitAttachingLine(
   shapeComposite: ShapeComposite,
   srcLineId: string,
-  splitLineId: string,
-  splitRate: number,
+  splits: [splitLineId: string, rate: number][],
 ): { [id: string]: Partial<Shape> } {
   const ret: { [id: string]: Partial<Shape> } = {};
+
+  const getConnection = (rate: number): [id: string, rate: number] => {
+    const splitIndexAfter = splits.findIndex(([, r]) => rate < r);
+
+    // Attach to the first split line.
+    if (splitIndexAfter === 0) {
+      const [nextRate] = getNewRateAfterSplit(rate, splits[0][1]) as [number, undefined];
+      return [srcLineId, nextRate];
+    }
+
+    // Attach to the last split line.
+    if (splitIndexAfter === -1) {
+      const splitFrom = splits[splits.length - 1];
+      const [, nextRate] = getNewRateAfterSplit(rate, splitFrom[1]) as [undefined, number];
+      return [splitFrom[0], nextRate];
+    }
+
+    // Attach to the middle split line.
+    const splitFrom = splits[splitIndexAfter - 1];
+    const splitTo = splits[splitIndexAfter];
+    const [, nextRateSrc] = getNewRateAfterSplit(rate, splitFrom[1]) as [undefined, number];
+    const [, actualSplitToRate] = getNewRateAfterSplit(splitTo[1], splitFrom[1]) as [undefined, number];
+    const [nextRate] = getNewRateAfterSplit(nextRateSrc, actualSplitToRate) as [number, undefined];
+    return [splitFrom[0], nextRate];
+  };
+
   shapeComposite.shapes.forEach((s) => {
     if (s.attachment?.id === srcLineId) {
-      const splitRates = getNewRateAfterSplit(s.attachment.to.x, splitRate);
+      const rate = s.attachment.to.x;
+      const [nextId, nextRate] = getConnection(rate);
       ret[s.id] = {
-        attachment: {
-          ...s.attachment,
-          id: splitRates[0] !== undefined ? srcLineId : splitLineId,
-          to: { x: splitRates[0] ?? splitRates[1], y: s.attachment.to.y },
-        },
+        attachment: { ...s.attachment, id: nextId, to: { x: nextRate, y: s.attachment.to.y } },
       };
     } else if (isTextShape(s) && s.parentId === srcLineId) {
-      const splitRates = getNewRateAfterSplit(s.lineAttached ?? 0, splitRate);
-      ret[s.id] = {
-        parentId: splitRates[0] !== undefined ? srcLineId : splitLineId,
-        lineAttached: splitRates[0] ?? splitRates[1],
-      } as Partial<TextShape>;
+      const [nextId, nextRate] = getConnection(s.lineAttached ?? 0);
+      ret[s.id] = { parentId: nextId, lineAttached: nextRate } as Partial<TextShape>;
     }
   });
   return ret;

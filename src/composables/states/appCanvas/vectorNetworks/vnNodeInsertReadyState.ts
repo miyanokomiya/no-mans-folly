@@ -21,7 +21,7 @@ import {
   getShapePatchInfoBySplittingLineThrough,
 } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
-import { getInheritableVnNodeProperties, seekNearbyVnNode } from "../../../vectorNetwork";
+import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 
@@ -243,9 +243,6 @@ function handleSplitTargetLines(
     const shape = shapeComposite.mergedShapeMap[id];
     if (!shape || !isLineShape(shape)) return;
 
-    // const index = getSegmentIndexCloseAt(shape, p, threshold);
-    // if (index === -1) return;
-
     const splitPatch = getShapePatchInfoBySplittingLineThrough(shape, p, threshold);
     if (!splitPatch) {
       // Check if the point is at the first or last vertex.
@@ -279,17 +276,11 @@ function handleSplitTargetLines(
       qConnection: connection,
     } as Partial<LineShape>;
 
-    // TODO
-    // Adjust attached shapes.
-    // splitPatch.rateList.forEach((rate, i) => {
-    //   const newId = newLines[i]?.id;
-    //   if (!newId) return;
-
-    //   const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, newId, rate);
-    //   Object.entries(attachingPatch).forEach(([id, p]) => {
-    //     patch[id] = p;
-    //   });
-    // });
+    const splitRates = splitPatch.rateList.map<[string, number]>((rate, i) => [newShapes[i].id, rate]);
+    const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, splitRates);
+    Object.entries(attachingPatch).forEach(([id, p]) => {
+      patch[id] = p;
+    });
   });
   return [newShapes, patch];
 }
