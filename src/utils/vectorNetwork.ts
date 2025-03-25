@@ -112,9 +112,13 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
   return loops;
 }
 
-export function findClosedVnAreaCoveringPoints(network: RawVectorNetwork, points: IVec2[]): RawVnLoop | undefined {
+export function findClosedVnAreaCoveringPoints(
+  network: RawVectorNetwork,
+  points: IVec2[],
+  largest = false,
+): RawVnLoop | undefined {
   const loops = findVnClosedLoops(network);
-  return findSmallestLoopCoveringPoints(loops, points);
+  return (largest ? findLargestLoopCoveringPoints : findSmallestLoopCoveringPoints)(loops, points);
 }
 
 export function findSmallestLoopCoveringPoints(loops: RawVnLoop[], points: IVec2[]): RawVnLoop | undefined {

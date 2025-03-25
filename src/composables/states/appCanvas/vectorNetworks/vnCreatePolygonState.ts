@@ -38,12 +38,42 @@ export function newVnCreatePolygonState(): AppCanvasState {
     return findVnClosedLoops(vn);
   });
 
+  // Multiple area mode: Keep current candidate and continue.
+  function procMultipleArea(ctx: AppCanvasStateContext, point: IVec2, selectOnly = false) {
+    const points = targetPoints.concat(point);
+    const result = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), points);
+    const loop = result && result.nodes.length >= 3 ? result : undefined;
+    if (!loop) return;
+
+    // When stored points are in the smallest loop for the new point, remove them.
+    const smallest = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [point]);
+    if (!smallest) return;
+
+    const pointInSameLoop = targetPoints.find(
+      (p) => findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [p]) === smallest,
+    );
+    if (pointInSameLoop) {
+      if (!selectOnly) {
+        targetPoints = targetPoints.filter((p) => p !== pointInSameLoop);
+        rawVnLoop = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), targetPoints);
+      }
+    } else {
+      targetPoints = points;
+      rawVnLoop = loop;
+    }
+
+    rawVnLoopLargestCandidate = findLargestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), targetPoints);
+    ctx.redraw();
+    return;
+  }
+
   return {
     getLabel: () => "VnCreatePolygon",
     onStart: (ctx) => {
       ctx.setCommandExams([
         COMMAND_EXAM_SRC.VN_POLYGON_COMPLETE,
         COMMAND_EXAM_SRC.VN_POLYGON_MULTIPLE_AREAS,
+        COMMAND_EXAM_SRC.VN_POLYGON_SELECT_AREAS,
         COMMAND_EXAM_SRC.CANCEL,
       ]);
     },
@@ -58,34 +88,15 @@ export function newVnCreatePolygonState(): AppCanvasState {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
+              if (event.data.options.shift) {
+                procMultipleArea(ctx, event.data.point);
+                return;
+              }
+
               const shapeComposite = ctx.getShapeComposite();
               const points = targetPoints.concat(event.data.point);
               const result = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), points);
               const loop = result && result.nodes.length >= 3 ? result : undefined;
-
-              // Shift key mode: Keep current candidate and continue.
-              if (event.data.options.shift) {
-                if (!loop) return;
-
-                // When stored points are in the smallest loop for the new point, remove them.
-                const smallest = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [event.data.point]);
-                if (!smallest) return;
-
-                const pointInSameLoop = targetPoints.find(
-                  (p) => findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [p]) === smallest,
-                );
-                if (pointInSameLoop) {
-                  targetPoints = targetPoints.filter((p) => p !== pointInSameLoop);
-                  rawVnLoop = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), targetPoints);
-                } else {
-                  targetPoints = points;
-                  rawVnLoop = loop;
-                }
-
-                rawVnLoopLargestCandidate = findLargestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), targetPoints);
-                ctx.redraw();
-                return;
-              }
 
               // Create a new polygon when the loop has been stored.
               const targetLoop = loop ?? rawVnLoop;
@@ -113,6 +124,10 @@ export function newVnCreatePolygonState(): AppCanvasState {
               return ctx.states.newSelectionHubState;
           }
         case "pointerhover": {
+          if (event.data.ctrl) {
+            procMultipleArea(ctx, event.data.current, true);
+          }
+
           const loop = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [event.data.current]);
           if (rawVnLoopPreview?.id !== loop?.id) {
             ctx.redraw();

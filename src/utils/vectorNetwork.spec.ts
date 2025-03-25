@@ -143,6 +143,9 @@ describe("findClosedVnAreaCoveringPoint", () => {
     expect(result2?.id).toBe("1,2,3,4,5,6");
     const result3 = findClosedVnAreaCoveringPoints(network, []);
     expect(result3?.id).toBe(undefined);
+
+    const result4 = findClosedVnAreaCoveringPoints(network, [{ x: 0.5, y: 0.5 }], true);
+    expect(result4?.id, "with largest flag").toBe("1,2,3,4,5,6");
   });
 
   test("should accept area consists of two nodes when any edge is curved", () => {

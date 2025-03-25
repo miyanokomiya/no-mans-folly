@@ -23,6 +23,7 @@ export const COMMAND_EXAM_SRC = {
   VN_SPLIT_SEGMENTS: { command: "Shift + Click", title: "Split segment" },
   VN_POLYGON_COMPLETE: { command: "Click", title: "Complete" },
   VN_POLYGON_MULTIPLE_AREAS: { command: "Shift + Click", title: "Multiple areas" },
+  VN_POLYGON_SELECT_AREAS: { command: `${getCtrlOrMetaStr()} + Hover`, title: "Select areas" },
 
   LABEL_ALIGN: { command: "Shift", title: "Adjust label align" },
   LABEL_ALIGN_ACTIVATE: { command: "Shift + Drag", title: "Adjust label align" },
