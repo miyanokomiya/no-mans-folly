@@ -136,25 +136,26 @@ export function getShapePatchInfoBySplittingLineAt(
   const vertices = getLinePath(line);
 
   // Check if the closest point is a vertex.
-  const sameVertexIndex = vertices.findIndex((v) => isSame(v, closestInfo[0]));
+  const sameVertexIndex = edge.findIndex((v) => isSame(v, closestInfo[0]));
   if (sameVertexIndex !== -1) {
-    if (sameVertexIndex === 0 || sameVertexIndex === vertices.length - 1) return;
+    const splitVertexIndex = index + sameVertexIndex;
+    if (splitVertexIndex === 0 || splitVertexIndex === vertices.length - 1) return;
 
-    const connection = getConnection(line, sameVertexIndex);
+    const connection = getConnection(line, splitVertexIndex);
     const currentLinePatch: Partial<LineShape> = {
-      q: vertices[sameVertexIndex],
+      q: vertices[splitVertexIndex],
       qConnection: connection,
-      body: cleanArray(line.body?.slice(0, sameVertexIndex - 1)),
-      curves: cleanArray(line.curves?.slice(0, sameVertexIndex)),
+      body: cleanArray(line.body?.slice(0, splitVertexIndex - 1)),
+      curves: cleanArray(line.curves?.slice(0, splitVertexIndex)),
       qHead: undefined,
     };
     const newLineSrc: Partial<LineShape> = {
-      p: vertices[sameVertexIndex],
+      p: vertices[splitVertexIndex],
       pConnection: connection,
       q: line.q,
       qConnection: line.qConnection,
-      body: cleanArray(line.body?.slice(sameVertexIndex)),
-      curves: cleanArray(line.curves?.slice(sameVertexIndex)),
+      body: cleanArray(line.body?.slice(splitVertexIndex)),
+      curves: cleanArray(line.curves?.slice(splitVertexIndex)),
       pHead: undefined,
       qHead: line.qHead,
     };
@@ -189,6 +190,52 @@ export function getShapePatchInfoBySplittingLineAt(
     qHead: line.qHead,
   };
   return [newLineSrc, currentLinePatch, closestInfo[1]];
+}
+
+export function getShapePatchInfoBySplittingLineThrough(
+  line: LineShape,
+  p: IVec2,
+  threshold: number,
+):
+  | {
+      newSrcList: Partial<LineShape>[];
+      patch: Partial<LineShape>;
+      // The rate of the split vertex based on the original line.
+      rateList: number[];
+    }
+  | undefined {
+  const edgeInfo = getLineEdgeInfo(line);
+  let rateList: number[] = [];
+  const newSrcList: Partial<LineShape>[] = [];
+  let patch: Partial<LineShape> | undefined;
+  let latestLine = line;
+  let originalIndex = 0;
+
+  let index = getSegmentIndexCloseAt(line, p, threshold);
+  while (index !== -1) {
+    const result = getShapePatchInfoBySplittingLineAt(latestLine, index, p, threshold);
+    if (!result) break;
+
+    if (!patch && newSrcList.length === 0) {
+      patch = result[1];
+    } else {
+      newSrcList[newSrcList.length - 1] = { ...newSrcList[newSrcList.length - 1], ...result[1] };
+    }
+    newSrcList.push(result[0]);
+    latestLine = { ...latestLine, ...result[0] };
+
+    originalIndex = originalIndex + index;
+    const rateAtVertex =
+      edgeInfo.edgeLengths.slice(0, originalIndex).reduce((acc, v) => acc + v, 0) / edgeInfo.totalLength;
+    const rateInEdge = result[2] * (edgeInfo.edgeLengths[originalIndex] / edgeInfo.totalLength);
+    const rate = rateInEdge + rateAtVertex;
+
+    rateList = [...rateList, rate];
+    const indices = getSegmentIndicesCloseAt(latestLine, p, threshold).filter((i) => 0 < i);
+    index = indices.at(0) ?? -1;
+  }
+
+  return patch ? { newSrcList, patch, rateList } : undefined;
 }
 
 export function getShapePatchInfoByInsertingVertexAt(

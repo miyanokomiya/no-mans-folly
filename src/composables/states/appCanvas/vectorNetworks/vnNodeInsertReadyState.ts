@@ -17,13 +17,13 @@ import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { newShapeComposite } from "../../../shapeComposite";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import {
-  getSegmentIndexCloseAt,
   getShapePatchInfoByInsertingVertexThrough,
-  getShapePatchInfoBySplittingLineAt,
+  getShapePatchInfoBySplittingLineThrough,
 } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
-import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
+import { getInheritableVnNodeProperties, seekNearbyVnNode } from "../../../vectorNetwork";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
+import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 
 export function newVnNodeInsertReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -243,10 +243,10 @@ function handleSplitTargetLines(
     const shape = shapeComposite.mergedShapeMap[id];
     if (!shape || !isLineShape(shape)) return;
 
-    const index = getSegmentIndexCloseAt(shape, p, threshold);
-    if (index === -1) return;
+    // const index = getSegmentIndexCloseAt(shape, p, threshold);
+    // if (index === -1) return;
 
-    const splitPatch = getShapePatchInfoBySplittingLineAt(shape, index, p, threshold);
+    const splitPatch = getShapePatchInfoBySplittingLineThrough(shape, p, threshold);
     if (!splitPatch) {
       // Check if the point is at the first or last vertex.
       // If so, connect the point to the vertex.
@@ -262,24 +262,34 @@ function handleSplitTargetLines(
       return;
     }
 
-    const newLine = createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
-      ...shape,
-      ...splitPatch[0],
-      id: ctx.generateUuid(),
-      findex: generateFindexBefore(shapeComposite, shape.id),
-      pConnection: connection,
+    const firstFindex = generateFindexBefore(shapeComposite, shape.id);
+    const newLines = splitPatch.newSrcList.map((src, i) => {
+      return createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
+        ...shape,
+        ...src,
+        id: ctx.generateUuid(),
+        findex: generateKeyBetweenAllowSame(firstFindex, shape.findex),
+        pConnection: connection,
+        qConnection: i < splitPatch.newSrcList.length - 1 ? connection : shape.qConnection,
+      });
     });
-    newShapes.push(newLine);
+    newShapes.push(...newLines);
     patch[shape.id] = {
-      ...splitPatch[1],
+      ...splitPatch.patch,
       qConnection: connection,
     } as Partial<LineShape>;
 
+    // TODO
     // Adjust attached shapes.
-    const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, newLine.id, splitPatch[2]);
-    Object.entries(attachingPatch).forEach(([id, p]) => {
-      patch[id] = p;
-    });
+    // splitPatch.rateList.forEach((rate, i) => {
+    //   const newId = newLines[i]?.id;
+    //   if (!newId) return;
+
+    //   const attachingPatch = patchBySplitAttachingLine(shapeComposite, shape.id, newId, rate);
+    //   Object.entries(attachingPatch).forEach(([id, p]) => {
+    //     patch[id] = p;
+    //   });
+    // });
   });
   return [newShapes, patch];
 }
