@@ -108,6 +108,19 @@ export function getSegmentIndexCloseAt(line: LineShape, p: IVec2, threshold: num
   });
 }
 
+function getSegmentIndicesCloseAt(line: LineShape, p: IVec2, threshold: number): number[] {
+  const edges = getEdges(line);
+  const curves = line.curves;
+  const ret: number[] = [];
+  edges.findIndex((edge, i) => {
+    const edgeInfo = getPolylineEdgeInfo([edge], [curves?.[i]]);
+    if (getClosestPointOnPolyline(edgeInfo, p, threshold)) {
+      ret.push(i);
+    }
+  });
+  return ret;
+}
+
 export function getShapePatchInfoBySplittingLineAt(
   line: LineShape,
   index: number,
@@ -190,11 +203,8 @@ export function getShapePatchInfoByInsertingVertexAt(
   const closestInfo = getClosestPointOnPolyline(edgeInfo, p, threshold);
   if (!closestInfo) return;
 
-  const vertices = getLinePath(line);
-
-  // Check if the closest point is a vertex.
-  const sameVertexIndex = vertices.findIndex((v) => isSame(v, closestInfo[0]));
-  if (sameVertexIndex !== -1) return;
+  // Check if the closest point is a vertex of the edge.
+  if (edge.find((v) => isSame(v, closestInfo[0]))) return;
 
   const controlRate = convertToControlRate(curve, edgeInfo, closestInfo[1], p, threshold);
   const splitResult = splitPathAtRate({ edge, curve }, controlRate);
@@ -209,6 +219,48 @@ export function getShapePatchInfoByInsertingVertexAt(
     curves: cleanArray(curves),
   };
   return [currentLinePatch, closestInfo[1]];
+}
+
+/**
+ * This function tries to insert a vertex to the line by punctuating the line multiple times.
+ */
+export function getShapePatchInfoByInsertingVertexThrough(
+  line: LineShape,
+  p: IVec2,
+  threshold: number,
+):
+  | {
+      patch: Partial<LineShape>;
+      // index: The index of the inserted vertex.
+      // rate: The rate of the inserted vertex.
+      insertions: [index: number, rate: number][];
+    }
+  | undefined {
+  const edgeInfo = getLineEdgeInfo(line);
+  let rateList: [number, number][] = [];
+  let latestPatch = {};
+  let latestLine = line;
+
+  let index = getSegmentIndexCloseAt(line, p, threshold);
+  while (index !== -1) {
+    const result = getShapePatchInfoByInsertingVertexAt(latestLine, index, p, threshold);
+    if (!result) break;
+
+    latestLine = { ...latestLine, ...result[0] };
+    latestPatch = { ...latestPatch, ...result[0] };
+
+    const originalIndex = index - rateList.length;
+    const rateAtVertex =
+      edgeInfo.edgeLengths.slice(0, originalIndex).reduce((acc, v) => acc + v, 0) / edgeInfo.totalLength;
+    const rateInEdge = result[1] * (edgeInfo.edgeLengths[originalIndex] / edgeInfo.totalLength);
+    const rate = rateInEdge + rateAtVertex;
+
+    rateList = [...rateList, [index + 1, rate]];
+    const indices = getSegmentIndicesCloseAt(latestLine, p, threshold).filter((i) => index + 1 < i);
+    index = indices.at(0) ?? -1;
+  }
+
+  return rateList.length > 0 ? { patch: latestPatch, insertions: rateList } : undefined;
 }
 
 /**

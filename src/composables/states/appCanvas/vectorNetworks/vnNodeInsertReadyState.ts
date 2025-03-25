@@ -18,7 +18,7 @@ import { newShapeComposite } from "../../../shapeComposite";
 import { newShapeRenderer } from "../../../shapeRenderer";
 import {
   getSegmentIndexCloseAt,
-  getShapePatchInfoByInsertingVertexAt,
+  getShapePatchInfoByInsertingVertexThrough,
   getShapePatchInfoBySplittingLineAt,
 } from "../../../../shapes/utils/line";
 import { Shape } from "../../../../models";
@@ -297,16 +297,13 @@ function handleInsertVertexToTargetLines(
     const shape = shapeComposite.mergedShapeMap[id];
     if (!shape || !isLineShape(shape)) return;
 
-    const index = getSegmentIndexCloseAt(shape, p, threshold);
-    if (index === -1) return;
-
-    const insertPatch = getShapePatchInfoByInsertingVertexAt(shape, index, p, threshold);
-    if (insertPatch) {
+    const insertResult = getShapePatchInfoByInsertingVertexThrough(shape, p, threshold);
+    if (insertResult) {
       patch[shape.id] = {
-        ...insertPatch[0],
-        body: insertPatch[0].body?.map((b, i) => {
-          if (i !== index) return b;
-          return { ...b, c: connection };
+        ...insertResult.patch,
+        body: insertResult.patch.body?.map((b, i) => {
+          if (insertResult.insertions.some((rate) => rate[0] === i + 1)) return { ...b, c: connection };
+          return b;
         }),
       } as Partial<LineShape>;
     } else {

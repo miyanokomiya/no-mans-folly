@@ -12,6 +12,7 @@ import {
   getNewRateAfterSplit,
   getShapePatchInfoByInsertingVertexAt,
   getPatchByExtrudeLineSegment,
+  getShapePatchInfoByInsertingVertexThrough,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { LineShape } from "../line";
@@ -383,7 +384,7 @@ describe("getNewRateAfterSplit", () => {
 });
 
 describe("getShapePatchInfoByInsertingVertexAt", () => {
-  test("should return line patch when splitting at a point: straight segment", () => {
+  test("should return line patch when inserting at a point: straight segment", () => {
     const line = createShape<LineShape>(getCommonStruct, "line", {
       p: { x: 0, y: 0 },
       body: [{ p: { x: 50, y: 0 } }],
@@ -395,7 +396,7 @@ describe("getShapePatchInfoByInsertingVertexAt", () => {
     expect(result0[0].curves).toEqual([undefined, undefined, { d: { x: 0.5, y: 25 } }]);
   });
 
-  test("should return line patch when splitting at a point: curve segment", () => {
+  test("should return line patch when inserting at a point: curve segment", () => {
     const line = createShape<LineShape>(getCommonStruct, "line", {
       p: { x: 0, y: 0 },
       body: [{ p: { x: 50, y: 0 } }],
@@ -419,6 +420,51 @@ describe("getShapePatchInfoByInsertingVertexAt", () => {
     });
     expect(getShapePatchInfoByInsertingVertexAt(line, 0, { x: 50, y: 0 }, 1)).toBeUndefined();
     expect(getShapePatchInfoByInsertingVertexAt(line, 1, { x: 50, y: 0 }, 1)).toBeUndefined();
+  });
+});
+
+describe("getShapePatchInfoByInsertingVertexThrough", () => {
+  test("should regard multiple insertions", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 100, y: 0 } }, { p: { x: 100, y: 50 } }, { p: { x: 50, y: 50 } }],
+      q: { x: 50, y: -50 },
+    });
+    const result0 = getShapePatchInfoByInsertingVertexThrough(line, { x: 50, y: 0 }, 1)!;
+    expect(result0.patch.body).toEqual([
+      { p: { x: 50, y: 0 } },
+      { p: { x: 100, y: 0 } },
+      { p: { x: 100, y: 50 } },
+      { p: { x: 50, y: 50 } },
+      { p: { x: 50, y: 0 } },
+    ]);
+    expect(result0.insertions[0][0]).toBe(1);
+    expect(result0.insertions[0][1]).toBeCloseTo(50 / 300);
+    expect(result0.insertions[1][0]).toBe(5);
+    expect(result0.insertions[1][1]).toBeCloseTo(250 / 300);
+  });
+
+  test("should regard multiple insertions", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 100, y: 0 } }, { p: { x: 50, y: 50 } }, { p: { x: 50, y: -50 } }, { p: { x: 0, y: -50 } }],
+      q: { x: 100, y: 50 },
+    });
+    const result0 = getShapePatchInfoByInsertingVertexThrough(line, { x: 50, y: 0 }, 1)!;
+    expect(result0.patch.body).toEqual([
+      { p: { x: 50, y: 0 } },
+      { p: { x: 100, y: 0 } },
+      { p: { x: 50, y: 50 } },
+      { p: { x: 50, y: 0 } },
+      { p: { x: 50, y: -50 } },
+      { p: { x: 0, y: -50 } },
+      { p: { x: 50, y: 0 } },
+    ]);
+    expect(result0.insertions).toEqual([
+      [1, expect.anything()],
+      [4, expect.anything()],
+      [7, expect.anything()],
+    ]);
   });
 });
 
