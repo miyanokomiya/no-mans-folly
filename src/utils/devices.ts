@@ -54,11 +54,11 @@ export function isAltOrOpt(e: ModifiedEvent): boolean {
 }
 
 export function getCtrlOrMetaStr(): string {
-  return isMac() ? "Command" : "Ctrl";
+  return isMac() ? "⌘" : "Ctrl";
 }
 
 export function getAltOrOptionStr(): string {
-  return isMac() ? "Option" : "Alt";
+  return isMac() ? "⌥" : "Alt";
 }
 
 export function switchClick(
