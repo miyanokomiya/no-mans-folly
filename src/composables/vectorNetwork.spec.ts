@@ -5,6 +5,7 @@ import {
   seekNearbyVnNode,
   patchBySplitAttachingLine,
   getInheritableVnNodeProperties,
+  newVectorNetwork,
 } from "./vectorNetwork";
 import { newShapeComposite, ShapeComposite } from "./shapeComposite";
 import { LineShape } from "../shapes/line";
@@ -186,5 +187,74 @@ describe("getInheritableVnNodeProperties", () => {
   test("should return undefined if no VN node shape is provided", () => {
     const inheritedStyle = getInheritableVnNodeProperties(undefined);
     expect(inheritedStyle).toBeUndefined();
+  });
+});
+
+describe("newVectorNetwork", () => {
+  test("should create a new vector network with given nodes and lines", () => {
+    const nodes = [
+      createShape<VnNodeShape>(getCommonStruct, "vn_node", { id: "node1" }),
+      createShape<VnNodeShape>(getCommonStruct, "vn_node", { id: "node2" }),
+    ];
+    const lines = [
+      createShape<LineShape>(getCommonStruct, "line", {
+        id: "line1",
+        pConnection: { id: "node1", rate: { x: 0.5, y: 0.5 } },
+        qConnection: { id: "node2", rate: { x: 0.5, y: 0.5 } },
+      }),
+    ];
+
+    const vectorNetwork = newVectorNetwork({
+      shapeComposite: newShapeComposite({ getStruct: getCommonStruct, shapes: [...nodes, ...lines] }),
+      ids: ["node1", "node2", "line1"],
+    });
+
+    expect(Array.from(vectorNetwork.nodes.values()).map((n) => n.id)).toEqual([nodes[0].id, nodes[1].id]);
+    expect(Array.from(vectorNetwork.edges.values()).map((e) => e.id)).toEqual(["line1_0"]);
+  });
+
+  test("should complete nodes for unconnected vertices", () => {
+    const lines = [
+      createShape<LineShape>(getCommonStruct, "line", {
+        id: "line1",
+        q: { x: 100, y: 0 },
+      }),
+    ];
+
+    const vectorNetwork = newVectorNetwork({
+      shapeComposite: newShapeComposite({ getStruct: getCommonStruct, shapes: lines }),
+      ids: ["line1"],
+    });
+
+    expect(Array.from(vectorNetwork.nodes.values()).map((n) => n.id)).toEqual(["line1_0_0", "line1_0_1"]);
+    expect(Array.from(vectorNetwork.edges.values()).map((e) => e.id)).toEqual(["line1_0"]);
+  });
+
+  test("should complete nodes to connect the head and the tail of a line when they are unnconnected but at the same position", () => {
+    const lines = [
+      createShape<LineShape>(getCommonStruct, "line", {
+        id: "line1",
+        p: { x: 0, y: 0 },
+        body: [{ p: { x: 100, y: 0 } }],
+        q: { x: 0, y: 0 },
+      }),
+    ];
+
+    const vectorNetwork = newVectorNetwork({
+      shapeComposite: newShapeComposite({ getStruct: getCommonStruct, shapes: lines }),
+      ids: ["line1"],
+    });
+
+    expect(Array.from(vectorNetwork.nodes.values()).map((n) => n.id)).toEqual(["line1_0_0", "line1_0_1"]);
+    expect(vectorNetwork.edges.get("line1_1")?.nodes[1]).toEqual(vectorNetwork.edges.get("line1_0")?.nodes[0]);
+  });
+
+  test("should create an empty vector network if no nodes and lines are provided", () => {
+    const vectorNetwork = newVectorNetwork({
+      shapeComposite: newShapeComposite({ getStruct: getCommonStruct, shapes: [] }),
+      ids: [],
+    });
+    expect(vectorNetwork.nodes).toEqual(new Map());
+    expect(vectorNetwork.edges).toEqual(new Map());
   });
 });

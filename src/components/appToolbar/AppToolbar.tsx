@@ -10,6 +10,7 @@ import iconSelectArea from "../../assets/icons/select_area.svg";
 import iconLineTangent from "../../assets/icons/line_tangent.svg";
 import iconLineNormal from "../../assets/icons/line_normal.svg";
 import iconVnNode from "../../assets/icons/vnnode.svg";
+import iconVnPolygon from "../../assets/icons/vn_polygon.svg";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { Shape } from "../../models";
 import { generateBoardTemplate } from "../../composables/boardHandler";
@@ -32,7 +33,7 @@ const lineButtonTypeList = lineTypeList.concat([
   { type: "tangent", icon: iconLineTangent },
   { type: "normal", icon: iconLineNormal },
   { type: "vn_node_insert", icon: iconVnNode },
-  { type: "vn_create_polygon", icon: iconVnNode },
+  { type: "vn_create_polygon", icon: iconVnPolygon },
 ]);
 
 export const AppToolbar: React.FC = () => {

@@ -112,16 +112,20 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
   return loops;
 }
 
-export function findClosedVnAreaCoveringPoint(network: RawVectorNetwork, point: IVec2): RawVnLoop | undefined {
+export function findClosedVnAreaCoveringPoints(network: RawVectorNetwork, points: IVec2[]): RawVnLoop | undefined {
   const loops = findVnClosedLoops(network);
+  return findSmallestLoopCoveringPoints(loops, points);
+}
+
+export function findSmallestLoopCoveringPoints(loops: RawVnLoop[], points: IVec2[]): RawVnLoop | undefined {
   const candidates: [RawVnLoop, area: number][] = [];
   for (const loop of loops) {
-    const points = getApproxCurvePoints(
+    const polygon = getApproxCurvePoints(
       loop.nodes.map((node) => node.position),
       loop.edges.map((edge) => edge.curve),
     );
-    if (isOnPolygon(point, points)) {
-      const area = getArea(points);
+    if (points.every((point) => isOnPolygon(point, polygon))) {
+      const area = getArea(polygon);
       if (area > 0) {
         candidates.push([loop, area]);
       }

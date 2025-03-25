@@ -1,3 +1,4 @@
+import { isSame } from "okageo";
 import { Shape } from "../models";
 import { getConnections, getLinePath, isLineShape, LineShape } from "../shapes/line";
 import { isTextShape, TextShape } from "../shapes/text";
@@ -130,15 +131,23 @@ export function newVectorNetwork(option: VectorNetworkOption) {
       const c0 = connections[i];
       const c1 = connections[i + 1];
 
-      let node0 = rawNodeMap.get(c0?.id ?? `${line.id}_${i - 1}_1}`);
+      let node0 = rawNodeMap.get(c0?.id ?? `${line.id}_${i - 1}_1`);
       if (!node0) {
-        node0 = { id: `${line.id}_${i}_0}`, position: seg[0] };
+        node0 = { id: `${line.id}_${i}_0`, position: seg[0] };
         rawNodeMap.set(node0.id, node0);
       }
 
       let node1 = rawNodeMap.get(c1?.id ?? "");
+      if (i === segs.length - 1 && !node1) {
+        const head = segs[0][0];
+        const tail = seg[1];
+        if (isSame(head, tail)) {
+          const headNode = rawEdgeMap.get(`${line.id}_0`)?.nodes[0];
+          node1 = headNode;
+        }
+      }
       if (!node1) {
-        node1 = { id: `${line.id}_${i}_1}`, position: seg[1] };
+        node1 = { id: `${line.id}_${i}_1`, position: seg[1] };
         rawNodeMap.set(node1.id, node1);
       }
 
