@@ -1,7 +1,8 @@
-import { isOnPolygon, IVec2 } from "okageo";
+import { getArea, isOnPolygon, IVec2 } from "okageo";
 import { CurveControl } from "../models";
 import { getApproxCurvePoints } from "./geometry";
 import { reverseCurveControl } from "./path";
+import { pickMinItem } from "./commons";
 
 export interface RawVnNode {
   id: string;
@@ -56,18 +57,29 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
   const loops: RawVnLoop[] = [];
   const uniqueLoops = new Set<string>();
 
-  function dfs(node: RawVnNode, nodePath: RawVnNode[], edgePath: RawVnEdge[], startNode: RawVnNode): void {
+  function dfs(
+    node: RawVnNode,
+    nodePath: RawVnNode[],
+    // Edges in this array arean't always the same instances as the original ones.
+    // When the edge is used reversely, new instance is created to present the reversed edge.
+    edgePath: RawVnEdge[],
+    // Original instance of the previous edge.
+    prevEdgeSrc: RawVnEdge | undefined,
+    startNode: RawVnNode,
+  ): void {
     if (visited.has(node.id)) {
-      if (node === startNode && nodePath.length >= 3) {
-        const loopNodeIds = nodePath
-          .map((n) => n.id)
-          .sort()
-          .join(",");
-        if (!uniqueLoops.has(loopNodeIds)) {
-          uniqueLoops.add(loopNodeIds);
-          loops.push({ id: loopNodeIds, nodes: [...nodePath, node], edges: edgePath.concat() });
-        }
-      }
+      if (node !== startNode) return;
+      // When there's a curve, the number of nodes in the loop can be less than 3.
+      if (nodePath.length < 3 && !edgePath.some((edge) => edge.curve)) return;
+
+      const loopNodeIds = nodePath
+        .map((n) => n.id)
+        .sort()
+        .join(",");
+      if (uniqueLoops.has(loopNodeIds)) return;
+
+      uniqueLoops.add(loopNodeIds);
+      loops.push({ id: loopNodeIds, nodes: [...nodePath, node], edges: edgePath.concat() });
       return;
     }
 
@@ -76,13 +88,16 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
 
     const edges = network.getEdgesForNode(node);
     for (const edge of edges) {
-      if (edge.nodes[0] === node) {
-        edgePath.push(edge);
-        dfs(edge.nodes[1], nodePath, edgePath, startNode);
-      } else {
-        edgePath.push({ id: edge.id, nodes: [edge.nodes[1], edge.nodes[0]], curve: reverseCurveControl(edge.curve) });
-        dfs(edge.nodes[0], nodePath, edgePath, startNode);
-      }
+      // Avoid returning to the previous edge
+      if (edge === prevEdgeSrc) continue;
+
+      const nextNode = edge.nodes[0] === node ? edge.nodes[1] : edge.nodes[0];
+      const nextEdge =
+        edge.nodes[0] === node
+          ? edge
+          : ({ id: edge.id, nodes: edge.nodes.toReversed(), curve: reverseCurveControl(edge.curve) } as RawVnEdge);
+      edgePath.push(nextEdge);
+      dfs(nextNode, nodePath, edgePath, edge, startNode);
       edgePath.pop();
     }
 
@@ -91,7 +106,7 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
   }
 
   for (const node of network.nodes.values()) {
-    dfs(node, [], [], node);
+    dfs(node, [], [], undefined, node);
   }
 
   return loops;
@@ -99,14 +114,18 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
 
 export function findClosedVnAreaCoveringPoint(network: RawVectorNetwork, point: IVec2): RawVnLoop | undefined {
   const loops = findVnClosedLoops(network);
+  const candidates: [RawVnLoop, area: number][] = [];
   for (const loop of loops) {
     const points = getApproxCurvePoints(
       loop.nodes.map((node) => node.position),
       loop.edges.map((edge) => edge.curve),
     );
     if (isOnPolygon(point, points)) {
-      return loop;
+      const area = getArea(points);
+      if (area > 0) {
+        candidates.push([loop, area]);
+      }
     }
   }
-  return undefined;
+  return pickMinItem(candidates, ([, area]) => area)?.[0];
 }
