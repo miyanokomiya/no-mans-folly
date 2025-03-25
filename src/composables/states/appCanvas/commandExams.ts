@@ -21,6 +21,8 @@ export const COMMAND_EXAM_SRC = {
   ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
   VN_INSERT_VERTEX: { command: "Click", title: "Insert vertex" },
   VN_SPLIT_SEGMENTS: { command: "Shift + Click", title: "Split segment" },
+  VN_POLYGON_COMPLETE: { command: "Click", title: "Complete" },
+  VN_POLYGON_MULTIPLE_AREAS: { command: "Shift + Click", title: "Multiple areas" },
 
   LABEL_ALIGN: { command: "Shift", title: "Adjust label align" },
   LABEL_ALIGN_ACTIVATE: { command: "Shift + Drag", title: "Adjust label align" },

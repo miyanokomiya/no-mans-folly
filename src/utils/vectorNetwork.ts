@@ -118,6 +118,16 @@ export function findClosedVnAreaCoveringPoints(network: RawVectorNetwork, points
 }
 
 export function findSmallestLoopCoveringPoints(loops: RawVnLoop[], points: IVec2[]): RawVnLoop | undefined {
+  return pickMinItem(findLoopsCoveringPoints(loops, points), ([, area]) => area)?.[0];
+}
+
+export function findLargestLoopCoveringPoints(loops: RawVnLoop[], points: IVec2[]): RawVnLoop | undefined {
+  return pickMinItem(findLoopsCoveringPoints(loops, points), ([, area]) => -area)?.[0];
+}
+
+function findLoopsCoveringPoints(loops: RawVnLoop[], points: IVec2[]): [RawVnLoop, area: number][] {
+  if (loops.length === 0 || points.length === 0) return [];
+
   const candidates: [RawVnLoop, area: number][] = [];
   for (const loop of loops) {
     const polygon = getApproxCurvePoints(
@@ -131,5 +141,5 @@ export function findSmallestLoopCoveringPoints(loops: RawVnLoop[], points: IVec2
       }
     }
   }
-  return pickMinItem(candidates, ([, area]) => area)?.[0];
+  return candidates;
 }

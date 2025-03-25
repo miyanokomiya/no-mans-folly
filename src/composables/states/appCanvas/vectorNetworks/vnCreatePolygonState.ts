@@ -5,15 +5,25 @@ import { newVectorNetwork } from "../../../vectorNetwork";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { isLineShape, LineShape } from "../../../../shapes/line";
 import { isVNNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
-import { findSmallestLoopCoveringPoints, findVnClosedLoops, RawVnLoop } from "../../../../utils/vectorNetwork";
+import {
+  findLargestLoopCoveringPoints,
+  findSmallestLoopCoveringPoints,
+  findVnClosedLoops,
+  RawVnLoop,
+} from "../../../../utils/vectorNetwork";
 import { createShape } from "../../../../shapes";
 import { patchLinePolygonFromLine } from "../../../../shapes/utils/linePolygon";
 import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { createStrokeStyle } from "../../../../utils/strokeStyle";
+import { IVec2 } from "okageo";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 export function newVnCreatePolygonState(): AppCanvasState {
   let rawVnLoop: RawVnLoop | undefined;
+  let rawVnLoopPreview: RawVnLoop | undefined;
+  let rawVnLoopLargestCandidate: RawVnLoop | undefined;
+  let targetPoints: IVec2[] = [];
 
   const rawVnLoopsCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
@@ -31,7 +41,11 @@ export function newVnCreatePolygonState(): AppCanvasState {
   return {
     getLabel: () => "VnCreatePolygon",
     onStart: (ctx) => {
-      ctx.setCommandExams([]);
+      ctx.setCommandExams([
+        COMMAND_EXAM_SRC.VN_POLYGON_COMPLETE,
+        COMMAND_EXAM_SRC.VN_POLYGON_MULTIPLE_AREAS,
+        COMMAND_EXAM_SRC.CANCEL,
+      ]);
     },
     onResume: () => {
       rawVnLoopsCache.update();
@@ -45,23 +59,52 @@ export function newVnCreatePolygonState(): AppCanvasState {
           switch (event.data.options.button) {
             case 0: {
               const shapeComposite = ctx.getShapeComposite();
-              const loop = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [event.data.point]);
-              if (loop && loop.nodes.length >= 3) {
-                const line = createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
-                  id: ctx.generateUuid(),
-                  findex: ctx.createLastIndex(),
-                  p: loop.nodes[0].position,
-                  body: loop.nodes.slice(1, -1).map((node) => ({ p: node.position })),
-                  q: loop.nodes.at(-1)!.position,
-                  curves: loop.edges.map((edge) => edge.curve),
-                  fill: createFillStyle({ color: { r: 255, g: 255, b: 255, a: 1 } }),
-                  stroke: createStrokeStyle({ disabled: true }),
-                });
-                const patch = patchLinePolygonFromLine(shapeComposite.getShapeStruct, line);
-                const linePolygon = { ...line, ...patch };
-                ctx.addShapes([linePolygon]);
-                ctx.selectShape(linePolygon.id);
+              const points = targetPoints.concat(event.data.point);
+              const result = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), points);
+              const loop = result && result.nodes.length >= 3 ? result : undefined;
+
+              // Shift key mode: Keep current candidate and continue.
+              if (event.data.options.shift) {
+                if (!loop) return;
+
+                // When stored points are in the smallest loop for the new point, remove them.
+                const smallest = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [event.data.point]);
+                if (!smallest) return;
+
+                const pointInSameLoop = targetPoints.find(
+                  (p) => findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [p]) === smallest,
+                );
+                if (pointInSameLoop) {
+                  targetPoints = targetPoints.filter((p) => p !== pointInSameLoop);
+                  rawVnLoop = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), targetPoints);
+                } else {
+                  targetPoints = points;
+                  rawVnLoop = loop;
+                }
+
+                rawVnLoopLargestCandidate = findLargestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), targetPoints);
+                ctx.redraw();
+                return;
               }
+
+              // Create a new polygon when the loop has been stored.
+              const targetLoop = loop ?? rawVnLoop;
+              if (!targetLoop) return ctx.states.newSelectionHubState;
+
+              const line = createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
+                id: ctx.generateUuid(),
+                findex: ctx.createLastIndex(),
+                p: targetLoop.nodes[0].position,
+                body: targetLoop.nodes.slice(1, -1).map((node) => ({ p: node.position })),
+                q: targetLoop.nodes.at(-1)!.position,
+                curves: targetLoop.edges.map((edge) => edge.curve),
+                fill: createFillStyle({ color: { r: 255, g: 255, b: 255, a: 1 } }),
+                stroke: createStrokeStyle({ disabled: true }),
+              });
+              const patch = patchLinePolygonFromLine(shapeComposite.getShapeStruct, line);
+              const linePolygon = { ...line, ...patch };
+              ctx.addShapes([linePolygon]);
+              ctx.selectShape(linePolygon.id);
               return ctx.states.newSelectionHubState;
             }
             case 1:
@@ -71,10 +114,10 @@ export function newVnCreatePolygonState(): AppCanvasState {
           }
         case "pointerhover": {
           const loop = findSmallestLoopCoveringPoints(rawVnLoopsCache.getValue(ctx), [event.data.current]);
-          if (rawVnLoop?.id !== loop?.id) {
+          if (rawVnLoopPreview?.id !== loop?.id) {
             ctx.redraw();
           }
-          rawVnLoop = loop;
+          rawVnLoopPreview = loop;
           return;
         }
         case "keydown":
@@ -101,7 +144,7 @@ export function newVnCreatePolygonState(): AppCanvasState {
 
       applyFillStyle(renderCtx, { color: { ...style.selectionPrimary, a: 0.5 } });
       renderCtx.beginPath();
-      rawVnLoopsCache.getValue(ctx).forEach((loop) => {
+      (rawVnLoopLargestCandidate ? [rawVnLoopLargestCandidate] : rawVnLoopsCache.getValue(ctx)).forEach((loop) => {
         applyCurvePath(
           renderCtx,
           loop.nodes.map((n) => n.position),
@@ -112,11 +155,22 @@ export function newVnCreatePolygonState(): AppCanvasState {
 
       if (rawVnLoop) {
         renderCtx.beginPath();
-        applyFillStyle(renderCtx, { color: { ...style.selectionSecondaly, a: 0.5 } });
+        applyFillStyle(renderCtx, { color: { ...style.transformAnchor, a: 0.5 } });
         applyCurvePath(
           renderCtx,
           rawVnLoop.nodes.map((n) => n.position),
           rawVnLoop.edges.map((e) => e.curve),
+        );
+        renderCtx.fill();
+      }
+
+      if (rawVnLoopPreview) {
+        renderCtx.beginPath();
+        applyFillStyle(renderCtx, { color: { ...style.selectionSecondaly, a: 0.5 } });
+        applyCurvePath(
+          renderCtx,
+          rawVnLoopPreview.nodes.map((n) => n.position),
+          rawVnLoopPreview.edges.map((e) => e.curve),
         );
         renderCtx.fill();
       }
