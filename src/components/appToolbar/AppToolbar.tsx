@@ -278,6 +278,8 @@ export const AppToolbar: React.FC = () => {
     }
   }
 
+  const lineIcon = lineButtonTypeList.find((shape) => shape.type === lineType)?.icon ?? iconLineStraight;
+
   return userSetting.displayMode === "no-hud" ? undefined : (
     <OutsideObserver onClick={handleClosePopup}>
       <div className="bg-white relative border border-1 p-1 rounded-xs shadow-xs flex flex-col">
@@ -292,7 +294,7 @@ export const AppToolbar: React.FC = () => {
           <img src={iconShapeSet} alt="shapes" />
         </button>
         <button type="button" className={getButtonClass(popup === "lines")} onClick={onClickLineButton}>
-          <img src={iconLineStraight} alt="lines" />
+          <img src={lineIcon} alt="lines" />
         </button>
         <button type="button" className={getButtonClass(stateLabel === "TextReady")} onClick={onClickTextButton}>
           <img src={iconText} alt="text" />
