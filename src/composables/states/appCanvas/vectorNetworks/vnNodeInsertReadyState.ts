@@ -9,7 +9,7 @@ import { TAU } from "../../../../utils/geometry";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { handleCommonWheel } from "../../commons";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
-import { getLinePath, isLineShape, LineShape, patchConnection } from "../../../../shapes/line";
+import { getLinePath, isLineShape, LineShape, patchVertices } from "../../../../shapes/line";
 import { createShape } from "../../../../shapes";
 import { applyCurvePath } from "../../../../utils/renderer";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
@@ -20,10 +20,11 @@ import {
   getShapePatchInfoByInsertingVertexThrough,
   getShapePatchInfoBySplittingLineThrough,
 } from "../../../../shapes/utils/line";
-import { Shape } from "../../../../models";
+import { ConnectionPoint, Shape } from "../../../../models";
 import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
+import { isObjectEmpty } from "../../../../utils/commons";
 
 export function newVnNodeInsertReadyState(): AppCanvasState {
   let vertex: IVec2 | undefined;
@@ -300,21 +301,24 @@ function handleInsertVertexToTargetLines(
 
     const insertResult = getShapePatchInfoByInsertingVertexThrough(shape, p, threshold);
     if (insertResult) {
-      patch[shape.id] = {
-        ...insertResult.patch,
-        body: insertResult.patch.body?.map((b, i) => {
-          if (insertResult.insertions.some((rate) => rate[0] === i + 1)) return { ...b, c: connection };
-          return b;
-        }),
-      } as Partial<LineShape>;
-    } else {
-      // Check if the point is at a vertex.
-      // If so, connect the point to the vertex.
-      const vertices = getLinePath(shape);
-      const vertexIndex = vertices.findIndex((v) => isSame(v, p));
-      if (vertexIndex !== -1) {
-        patch[shape.id] = patchConnection(shape, vertexIndex, connection);
+      patch[shape.id] = insertResult?.patch;
+    }
+
+    // Update the connections of new vertices.
+    // - Inserted vertices are always connected to the point.
+    // - Existing vertices at the inserted point should be connected to the point as well.
+    const nextShape = patch[shape.id] ? { ...shape, ...patch[shape.id] } : shape;
+    const nextVertices = getLinePath(nextShape);
+    const vertexPatchData: [number, IVec2, ConnectionPoint][] = [];
+    const insertedSet = new Set(insertResult?.insertions.map(([index]) => index) ?? []);
+    nextVertices.forEach((v, i) => {
+      if (insertedSet.has(i) || isSame(v, p)) {
+        vertexPatchData.push([i, v, connection]);
       }
+    });
+    const connectionPatch = patchVertices(nextShape, vertexPatchData);
+    if (!isObjectEmpty(connectionPatch)) {
+      patch[shape.id] = { ...patch[shape.id], ...connectionPatch };
     }
   });
   return patch;

@@ -376,7 +376,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               });
 
               // Adjust attached shapes.
-              const attachingPatch = patchBySplitAttachingLine(sc, lineShape.id, newLine.id, splitPatch[2]);
+              const attachingPatch = patchBySplitAttachingLine(sc, lineShape.id, [[newLine.id, splitPatch[2]]]);
 
               ctx.updateShapes({
                 add: [newLine, vnnode],

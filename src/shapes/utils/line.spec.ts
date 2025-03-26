@@ -178,6 +178,20 @@ describe("getIntersectionsBetweenLineShapeAndLine", () => {
 });
 
 describe("getShapePatchInfoBySplittingLineAt", () => {
+  test("should return rate of the split point and rate of the split point in the target edge", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 100, y: 0 },
+    });
+    const result0 = getShapePatchInfoBySplittingLineAt(line, 0, { x: 20, y: 0 }, 1)!;
+    expect(result0[2]).toBeCloseTo(0.2);
+    expect(result0[3]).toBeCloseTo(0.4);
+    const result1 = getShapePatchInfoBySplittingLineAt(line, 1, { x: 60, y: 0 }, 1)!;
+    expect(result1[2]).toBeCloseTo(0.6);
+    expect(result1[3]).toBeCloseTo(0.2);
+  });
+
   test("should return new line source and current line patch when splitting at a point: straight segment", () => {
     const line = createShape<LineShape>(getCommonStruct, "line", {
       p: { x: 0, y: 0 },
@@ -552,6 +566,24 @@ describe("getShapePatchInfoByInsertingVertexThrough", () => {
       [4, expect.anything()],
       [7, expect.anything()],
     ]);
+  });
+
+  test("should regard multiple insertions: at a vertex", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }, { p: { x: 100, y: 0 } }, { p: { x: 100, y: 50 } }, { p: { x: 50, y: 50 } }],
+      q: { x: 50, y: -50 },
+    });
+    const result0 = getShapePatchInfoByInsertingVertexThrough(line, { x: 50, y: 0 }, 1)!;
+    expect(result0.patch.body).toEqual([
+      { p: { x: 50, y: 0 } },
+      { p: { x: 100, y: 0 } },
+      { p: { x: 100, y: 50 } },
+      { p: { x: 50, y: 50 } },
+      { p: { x: 50, y: 0 } },
+    ]);
+    expect(result0.insertions).toEqual([[5, expect.anything()]]);
+    expect(result0.insertions[0][1]).toBeCloseTo(250 / 300);
   });
 });
 

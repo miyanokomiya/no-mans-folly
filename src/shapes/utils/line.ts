@@ -126,14 +126,23 @@ export function getShapePatchInfoBySplittingLineAt(
   index: number,
   p: IVec2,
   threshold: number,
-): [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>, rate: number] | undefined {
-  const edge = getEdges(line)[index];
+):
+  | [newLineSrc: Partial<LineShape>, currentLinePatch: Partial<LineShape>, rate: number, rateInEdge: number]
+  | undefined {
+  const edges = getEdges(line);
+  const edge = edges[index];
   const curve = line.curves?.[index];
+  const originalEdgeInfo = getPolylineEdgeInfo(edges, line.curves);
   const edgeInfo = getPolylineEdgeInfo([edge], [curve]);
   const closestInfo = getClosestPointOnPolyline(edgeInfo, p, threshold);
   if (!closestInfo) return;
 
   const vertices = getLinePath(line);
+
+  const rateAtVertex =
+    originalEdgeInfo.edgeLengths.slice(0, index).reduce((acc, v) => acc + v, 0) / originalEdgeInfo.totalLength;
+  const rateInEdge = closestInfo[1] * (originalEdgeInfo.edgeLengths[index] / originalEdgeInfo.totalLength);
+  const rate = rateInEdge + rateAtVertex;
 
   // Check if the closest point is a vertex.
   const sameVertexIndex = edge.findIndex((v) => isSame(v, closestInfo[0]));
@@ -159,7 +168,7 @@ export function getShapePatchInfoBySplittingLineAt(
       pHead: undefined,
       qHead: line.qHead,
     };
-    return [newLineSrc, currentLinePatch, closestInfo[1]];
+    return [newLineSrc, currentLinePatch, rate, closestInfo[1]];
   }
 
   const controlRate = convertToControlRate(curve, edgeInfo, closestInfo[1], p, threshold);
@@ -189,7 +198,7 @@ export function getShapePatchInfoBySplittingLineAt(
     pHead: undefined,
     qHead: line.qHead,
   };
-  return [newLineSrc, currentLinePatch, closestInfo[1]];
+  return [newLineSrc, currentLinePatch, rate, closestInfo[1]];
 }
 
 export function getShapePatchInfoBySplittingLineThrough(
@@ -234,7 +243,7 @@ export function getShapePatchInfoBySplittingLineThrough(
 
     const rateAtVertex =
       edgeInfo.edgeLengths.slice(0, originalIndex).reduce((acc, v) => acc + v, 0) / edgeInfo.totalLength;
-    const rateInEdge = result[2] * (edgeInfo.edgeLengths[originalIndex] / edgeInfo.totalLength);
+    const rateInEdge = result[3] * (edgeInfo.edgeLengths[originalIndex] / edgeInfo.totalLength);
     const rate = rateInEdge + rateAtVertex;
 
     rateList = [...rateList, rate];
@@ -294,14 +303,19 @@ export function getShapePatchInfoByInsertingVertexThrough(
   let rateList: [number, number][] = [];
   let latestPatch = {};
   let latestLine = line;
+  let latestEdgeSize = getEdges(latestLine).length;
 
   let index = getSegmentIndexCloseAt(line, p, threshold);
-  while (index !== -1) {
+  while (0 <= index && index < latestEdgeSize) {
     const result = getShapePatchInfoByInsertingVertexAt(latestLine, index, p, threshold);
-    if (!result) break;
+    if (!result) {
+      index += 1;
+      continue;
+    }
 
     latestLine = { ...latestLine, ...result[0] };
     latestPatch = { ...latestPatch, ...result[0] };
+    latestEdgeSize += 1;
 
     const originalIndex = index - rateList.length;
     const rateAtVertex =
