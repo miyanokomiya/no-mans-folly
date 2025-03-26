@@ -260,13 +260,15 @@ function handleSplitTargetLines(
       return;
     }
 
-    const firstFindex = generateFindexBefore(shapeComposite, shape.id);
+    let findexFrom = generateFindexBefore(shapeComposite, shape.id);
     const newLines = splitPatch.newSrcList.map((src, i) => {
+      const findex = generateKeyBetweenAllowSame(findexFrom, shape.findex);
+      findexFrom = findex;
       return createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
         ...shape,
         ...src,
         id: ctx.generateUuid(),
-        findex: generateKeyBetweenAllowSame(firstFindex, shape.findex),
+        findex,
         pConnection: connection,
         qConnection: i < splitPatch.newSrcList.length - 1 ? connection : shape.qConnection,
       });
