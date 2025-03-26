@@ -1,5 +1,5 @@
 import { Shape } from "../../../models";
-import { createShape } from "../../../shapes";
+import { createShape, getOutlinePaths } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
@@ -21,6 +21,8 @@ import iconVnNode from "../../../assets/icons/vnnode.svg";
 import iconDustbinRed from "../../../assets/icons/dustbin_red.svg";
 import { RectPolygonShape } from "../../../shapes/rectPolygon";
 import { expandRect } from "../../../utils/geometry";
+import { LineShape } from "../../../shapes/line";
+import { generateKeyBetweenAllowSame } from "../../../utils/findex";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -40,6 +42,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.duplicate.withingroup"),
       key: "DUPLICATE_SHAPE_WITHIN_GROUP",
+    };
+  },
+  get DUPLICATE_AS_PATH() {
+    return {
+      label: i18n.t("contextmenu.duplicate_as_path"),
+      key: "DUPLICATE_AS_PATH",
     };
   },
   get GROUP() {
@@ -222,6 +230,7 @@ export function getMenuItemsForSelectedShapes(
     ...lockItems,
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
     ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
+    CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH,
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
     CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
     CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_SHAPES,
@@ -250,6 +259,10 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP.key: {
       duplicateSelectedShapes(ctx, true);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH.key: {
+      duplicateSelectedShapesAsPaths(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.GROUP.key: {
@@ -553,4 +566,35 @@ function duplicateSelectedShapes(ctx: AppCanvasStateContext, withinGroup = false
 
   ctx.addShapes(entityPatch.add ?? [], duplicated.docMap, entityPatch.update);
   ctx.multiSelectShapes(duplicated.shapes.map((s) => s.id));
+}
+
+function duplicateSelectedShapesAsPaths(ctx: AppCanvasStateContext) {
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  if (ids.length === 0) return;
+
+  const shapeComposite = ctx.getShapeComposite();
+  const srcShapes = shapeComposite.getAllBranchMergedShapes(ids);
+
+  const shapes: Shape[] = [];
+  let findexFrom = ctx.createLastIndex();
+  srcShapes.forEach((s) => {
+    getOutlinePaths(shapeComposite.getShapeStruct, s)?.forEach((path) => {
+      if (path.path.length < 2) return;
+
+      const findex = generateKeyBetweenAllowSame(findexFrom, null);
+      findexFrom = findex;
+      const line = createShape<LineShape>(shapeComposite.getShapeStruct, "line", {
+        id: ctx.generateUuid(),
+        findex,
+        p: path.path[0],
+        body: path.path.length > 2 ? path.path.slice(1, -1).map((p) => ({ p })) : undefined,
+        q: path.path[path.path.length - 1],
+        curves: path.curves.length > 0 ? path.curves : undefined,
+      });
+      shapes.push(line);
+    });
+  });
+
+  ctx.addShapes(shapes);
+  ctx.multiSelectShapes(shapes.map((s) => s.id));
 }
