@@ -41,21 +41,30 @@ describe("useToastMessages", () => {
     ]);
   });
 
-  test("should close automatically when an item type is info", () => {
+  test("should close automatically when an item type is info or has timeout value", () => {
     const rendered = renderHook(() => useToastMessages({ timeout: 5 }));
     act(() => {
       rendered.result.current.pushToastMessage({ text: "a", type: "info" });
       rendered.result.current.pushToastMessage({ text: "b", type: "error" });
       rendered.result.current.pushToastMessage({ text: "c", type: "warn" });
       rendered.result.current.pushToastMessage({ text: "d", type: "info" });
+      rendered.result.current.pushToastMessage({ text: "e", type: "warn", timeout: 20 });
     });
     expect(rendered.result.current.toastMessages).toEqual([
       { text: "a", type: "info" },
       { text: "b", type: "error" },
       { text: "c", type: "warn" },
       { text: "d", type: "info" },
+      { text: "e", type: "warn", timeout: 20 },
     ]);
 
+    vi.advanceTimersByTime(15);
+    rendered.rerender();
+    expect(rendered.result.current.toastMessages).toEqual([
+      { text: "b", type: "error" },
+      { text: "c", type: "warn" },
+      { text: "e", type: "warn", timeout: 20 },
+    ]);
     vi.advanceTimersByTime(15);
     rendered.rerender();
     expect(rendered.result.current.toastMessages).toEqual([

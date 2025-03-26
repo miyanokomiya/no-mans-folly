@@ -36,6 +36,7 @@ export type CommandExam = { command?: string; title: string };
 export type ToastMessage = {
   text: string;
   type: "info" | "warn" | "error";
+  timeout?: number;
 };
 
 export type LinkInfo = {

@@ -300,7 +300,6 @@ describe("generateFindexBefore, generateFindexNext", () => {
 
   test("should generate findex after the target shape", () => {
     const result0 = generateFindexAfter(shapeComposite, rect0.id);
-    console.log(rect0.findex, result0);
     expect(rect0.findex < result0).toBe(true);
 
     const result1 = generateFindexAfter(shapeComposite, rect1.id);

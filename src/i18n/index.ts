@@ -98,6 +98,12 @@ const en = {
     floatmenu: {
       grow_direction: "Grow direction",
     },
+
+    states: {
+      vn_create_polygon: {
+        no_available_area: "No available area in the viewport.",
+      },
+    },
   },
 };
 type TranslationResource = typeof en;
@@ -196,6 +202,12 @@ const ja: TranslationResource = {
 
     floatmenu: {
       grow_direction: "拡大方向",
+    },
+
+    states: {
+      vn_create_polygon: {
+        no_available_area: "ビューポート内に利用可能なエリアがありません。",
+      },
     },
   },
 };

@@ -19,6 +19,7 @@ import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { IVec2 } from "okageo";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newCanvasBank } from "../../../canvasBank";
+import { i18n } from "../../../../i18n";
 
 export function newVnCreatePolygonState(): AppCanvasState {
   let rawVnLoop: RawVnLoop | undefined;
@@ -78,6 +79,13 @@ export function newVnCreatePolygonState(): AppCanvasState {
         COMMAND_EXAM_SRC.VN_POLYGON_SELECT_AREAS,
         COMMAND_EXAM_SRC.CANCEL,
       ]);
+      if (rawVnLoopsCache.getValue(ctx).length === 0) {
+        ctx.showToastMessage({
+          text: i18n.t("states.vn_create_polygon.no_available_area"),
+          type: "warn",
+          timeout: 5000,
+        });
+      }
     },
     onResume: () => {
       rawVnLoopsCache.update();

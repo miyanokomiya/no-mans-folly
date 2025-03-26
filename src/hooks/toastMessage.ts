@@ -16,8 +16,8 @@ export function useToastMessages(option?: Option) {
         return [...current.filter((c) => c.text !== val.text), val];
       });
 
-      if (val.type === "info") {
-        timers.current.set(val.text, Date.now() + (option?.timeout ?? 3000));
+      if (val.type === "info" || val.timeout) {
+        timers.current.set(val.text, Date.now() + (val.timeout ?? option?.timeout ?? 3000));
       }
     },
     [option?.timeout],
