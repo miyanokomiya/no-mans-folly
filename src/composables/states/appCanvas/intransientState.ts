@@ -5,7 +5,7 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
 import { LinkInfo } from "../types";
-import { getHighlightPaths, getShapeTextBounds } from "../../../shapes";
+import { getShapeTextBounds } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 import { isShapeInteratctiveWithinViewport } from "./commons";
@@ -74,10 +74,9 @@ export function defineIntransientState<A extends any[]>(
         if (hoveredShape && !ctx.getSelectedShapeIdMap()[hoveredShape.id]) {
           const style = ctx.getStyleScheme();
           const scale = ctx.getScale();
+          const sc = ctx.getShapeComposite();
           renderCtx.beginPath();
-          getHighlightPaths(ctx.getShapeStruct, hoveredShape, true)?.forEach((path) =>
-            applyCurvePath(renderCtx, path.path, path.curves),
-          );
+          sc.getHighlightPaths(hoveredShape).forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
           applyStrokeStyle(renderCtx, {
             color: style.selectionSecondaly,
             width: style.selectionLineWidth * scale,

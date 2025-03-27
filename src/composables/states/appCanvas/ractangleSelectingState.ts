@@ -3,7 +3,7 @@ import type { AppCanvasState } from "./core";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyCurvePath, scaleGlobalAlpha } from "../../../utils/renderer";
-import { getHighlightPaths, isTransparentSelection } from "../../../shapes";
+import { isTransparentSelection } from "../../../shapes";
 import { isStrictRootScope, ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
@@ -158,9 +158,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           width: 2 * scale,
         });
         renderCtx.beginPath();
-        getHighlightPaths(ctx.getShapeStruct, s, true)?.forEach((path) =>
-          applyCurvePath(renderCtx, path.path, path.curves),
-        );
+        composite.getHighlightPaths(s)?.forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
         renderCtx.stroke();
       });
 

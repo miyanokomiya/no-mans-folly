@@ -34,6 +34,7 @@ import { getLineJumpMap } from "../shapes/utils/lineJump";
 import { isLineShape } from "../shapes/line";
 import { shouldEntityOrderUpdate, shouldEntityTreeUpdate } from "../utils/entities";
 import { CanvasCTX } from "../utils/types";
+import { BezierPath } from "../utils/path";
 
 interface Option {
   shapes: Shape[];
@@ -59,6 +60,7 @@ export function newShapeComposite(option: Option) {
       wrapperRect: IRectangle;
       "wrapperRect:bounds": IRectangle;
       localRectPolygon: IVec2[];
+      highlightPaths: BezierPath[] | undefined;
     }
   >();
 
@@ -209,6 +211,15 @@ export function newShapeComposite(option: Option) {
       getLocalRectPolygon(s).map((p) => applyAffine(t, p)),
     );
     return getOuterRectangle(points);
+  }
+
+  function getHighlightPaths(shape: Shape): BezierPath[] {
+    const paths = cacheMap.getValue(shape, "highlightPaths", () => {
+      return shapeModule.getHighlightPaths(getStruct, shape, true);
+    });
+    if (paths) return paths;
+    const localRect = getLocalRectPolygon(shape);
+    return [{ path: [...localRect, localRect[0]], curves: [] }];
   }
 
   function rotateShapeTree(targetId: string, nextRotation: number): { [id: string]: Partial<Shape> } {
@@ -411,6 +422,7 @@ export function newShapeComposite(option: Option) {
     getLocalSpace,
     getLocationRateOnShape,
     getShapeTreeLocalRect,
+    getHighlightPaths,
     rotateShapeTree,
     getShapesOverlappingRect,
     getSnappingLines,

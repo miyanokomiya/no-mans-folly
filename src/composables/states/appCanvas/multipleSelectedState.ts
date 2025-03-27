@@ -16,7 +16,6 @@ import { isGroupShape } from "../../../shapes/group";
 import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { getShapeStatusColor } from "./utils/style";
-import { getHighlightPaths } from "../../../shapes";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -57,9 +56,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
         width: 2 * scale,
       });
       renderCtx.beginPath();
-      getHighlightPaths(ctx.getShapeStruct, s, true)?.forEach((path) =>
-        applyCurvePath(renderCtx, path.path, path.curves),
-      );
+      shapeComposite.getHighlightPaths(s).forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
       renderCtx.stroke();
     });
 
