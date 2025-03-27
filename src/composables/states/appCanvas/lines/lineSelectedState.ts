@@ -229,16 +229,24 @@ export const newLineSelectedState = defineIntransientState(() => {
           const items: ContextMenuItem[] = [];
           if (hitResult?.type === "vertex") {
             const connection = getConnection(lineShape, hitResult.index);
-            items.push(
-              {
-                ...CONTEXT_MENU_ITEM_SRC.CREATE_VN_NODE,
-                meta: { index: hitResult.index } as VertexMetaForContextMenu,
-              },
-              {
-                ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
-                meta: { index: hitResult.index } as VertexMetaForContextMenu,
-              },
-            );
+            items.push({
+              ...CONTEXT_MENU_ITEM_SRC.CREATE_VN_NODE,
+              meta: { index: hitResult.index } as VertexMetaForContextMenu,
+            });
+
+            const vertices = getLinePath(lineShape);
+            if (0 < hitResult.index && hitResult.index < vertices.length - 1) {
+              items.push({
+                ...CONTEXT_MENU_ITEM_SRC.SPLIT_BY_VN_NODE,
+                meta: { index: hitResult.index, p: vertices[hitResult.index] } as SegmentAtMetaForContextMenu,
+              });
+            }
+
+            items.push({
+              ...CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX,
+              meta: { index: hitResult.index } as VertexMetaForContextMenu,
+            });
+
             if (connection) {
               items.push({
                 ...CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTEX,
