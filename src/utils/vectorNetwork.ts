@@ -53,6 +53,7 @@ export function newRawVectorNetwork(option: VectorNetworkOption) {
 export type RawVectorNetwork = ReturnType<typeof newRawVectorNetwork>;
 
 export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
+  const exhausted = new Set<string>();
   const visited = new Set<string>();
   const loops: RawVnLoop[] = [];
   const uniqueLoops = new Set<string>();
@@ -76,6 +77,7 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
         .map((n) => n.id)
         .sort()
         .join(",");
+      // This check is essential to omit the same loop with different direction.
       if (uniqueLoops.has(loopId)) return;
 
       uniqueLoops.add(loopId);
@@ -92,6 +94,8 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
       if (edge === prevEdgeSrc) continue;
 
       const nextNode = edge.nodes[0] === node ? edge.nodes[1] : edge.nodes[0];
+      if (exhausted.has(nextNode.id)) continue;
+
       const nextEdge =
         edge.nodes[0] === node
           ? edge
@@ -107,6 +111,7 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
 
   for (const node of network.nodes.values()) {
     dfs(node, [], [], undefined, node);
+    exhausted.add(node.id);
   }
 
   return loops;
