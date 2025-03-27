@@ -72,14 +72,14 @@ export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
       // When there's a curve, the number of nodes in the loop can be less than 3.
       if (nodePath.length < 3 && !edgePath.some((edge) => edge.curve)) return;
 
-      const loopNodeIds = nodePath
+      const loopId = edgePath
         .map((n) => n.id)
         .sort()
         .join(",");
-      if (uniqueLoops.has(loopNodeIds)) return;
+      if (uniqueLoops.has(loopId)) return;
 
-      uniqueLoops.add(loopNodeIds);
-      loops.push({ id: loopNodeIds, nodes: [...nodePath, node], edges: edgePath.concat() });
+      uniqueLoops.add(loopId);
+      loops.push({ id: loopId, nodes: [...nodePath, node], edges: edgePath.concat() });
       return;
     }
 

@@ -112,7 +112,7 @@ describe("findClosedVnAreaCoveringPoint", () => {
 
     const network = newRawVectorNetwork({ nodes, edges });
     const result1 = findClosedVnAreaCoveringPoints(network, [{ x: 0.5, y: 0.5 }]);
-    expect(result1?.id).toBe("1,2,3,4");
+    expect(result1?.id).toBe("1-2,2-3,3-4,4-1");
   });
 
   test("should return the smallest one convering all points", () => {
@@ -135,17 +135,17 @@ describe("findClosedVnAreaCoveringPoint", () => {
     ]);
     const network = newRawVectorNetwork({ nodes, edges });
     const result1 = findClosedVnAreaCoveringPoints(network, [{ x: 0.5, y: 0.5 }]);
-    expect(result1?.id).toBe("1,2,3,4");
+    expect(result1?.id).toBe("1-2,2-3,3-4,4-1");
     const result2 = findClosedVnAreaCoveringPoints(network, [
       { x: 0.5, y: 0.5 },
       { x: 1.5, y: 0.5 },
     ]);
-    expect(result2?.id).toBe("1,2,3,4,5,6");
+    expect(result2?.id).toBe("1-2,3-4,3-5,4-1,5-6,6-2");
     const result3 = findClosedVnAreaCoveringPoints(network, []);
     expect(result3?.id).toBe(undefined);
 
     const result4 = findClosedVnAreaCoveringPoints(network, [{ x: 0.5, y: 0.5 }], true);
-    expect(result4?.id, "with largest flag").toBe("1,2,3,4,5,6");
+    expect(result4?.id, "with largest flag").toBe("1-2,3-4,3-5,4-1,5-6,6-2");
   });
 
   test("should accept area consists of two nodes when any edge is curved", () => {
@@ -165,6 +165,6 @@ describe("findClosedVnAreaCoveringPoint", () => {
     const result1 = findClosedVnAreaCoveringPoints(network, [{ x: 0.5, y: 0 }]);
     expect(result1).toBe(undefined);
     const result2 = findClosedVnAreaCoveringPoints(network, [{ x: -0.1, y: 0.5 }]);
-    expect(result2?.id).toBe("1,3");
+    expect(result2?.id).toBe("1-3,3-1");
   });
 });
