@@ -31,15 +31,26 @@ export function closeApp(): ToolStruct {
   };
 }
 
-const addShapeParam = { point: z.object({ x: z.number(), y: z.number() }) };
+const addShapeParam = {
+  point: z.object({ x: z.number().default(0), y: z.number().default(0) }).describe("Point to add shape"),
+  shape_type: z
+    .union([
+      z.literal("rectangle").describe("Rectangle shape"),
+      z.literal("ellipse").describe("Ellipse shape"),
+      z.literal("star").describe("Star (pentagram) shape that can turn into a variety of regular polygons"),
+      z.literal("chevron").describe("Chevron shape heading toward right by default"),
+    ])
+    .default("rectangle")
+    .describe("Type of shape to add"),
+};
 export function addShape(): ToolStruct<typeof addShapeParam> {
   return {
     name: "add_shape",
     description: "Add new shape",
     paramsSchema: addShapeParam,
-    cb: async (ctx, { point }) => {
+    cb: async (ctx, { point, shape_type }) => {
       const page = ctx.existingPage();
-      const id = await page.evaluate(appAddShape, { point });
+      const id = await page.evaluate(appAddShape, { point, shape_type });
 
       return {
         content: [{ type: "text", text: id ? `Create shape id is "${id}"` : "No shape was added" }],
@@ -48,12 +59,12 @@ export function addShape(): ToolStruct<typeof addShapeParam> {
   };
 }
 
-async function appAddShape(props: { point: { x: number; y: number } }): Promise<string> {
+async function appAddShape(props: { point: { x: number; y: number }; shape_type: string }): Promise<string> {
   const app = (window as any).no_mans_folly;
   if (!app) return "";
 
   const accxt = app.getStateContext();
-  const shape = app.createShape(accxt.getShapeStruct, "rectangle", {
+  const shape = app.createShape(accxt.getShapeStruct, props.shape_type, {
     id: accxt.generateUuid(),
     findex: accxt.createLastIndex(),
     p: props.point,
