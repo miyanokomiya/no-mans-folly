@@ -7,6 +7,7 @@ import { AssetAPI } from "../hooks/persistence";
 import { ToastMessage } from "../composables/states/types";
 import { ToastMessageContext } from "./ToastMessageContext";
 import { AppStateContext, AppStateMachineContext, GetAppStateContext, SetAppStateContext } from "./AppContext";
+import { createShape } from "../shapes";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;
@@ -76,6 +77,12 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
   const getStateContext = useCallback(() => {
     return stateContextRef.current;
   }, []);
+
+  (window as any).no_mans_folly = {
+    getAppCanvasContext: () => acctx,
+    getStateContext: () => stateContextRef.current,
+    createShape,
+  };
 
   return (
     <AppCanvasContext.Provider value={acctx}>
