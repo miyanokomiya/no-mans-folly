@@ -1,0 +1,8 @@
+{
+  "name": "mcp",
+  "type": "module",
+  "packageManager": "yarn@4.0.2",
+  "dependencies": {
+    "playwright": "^1.51.1"
+  }
+}
