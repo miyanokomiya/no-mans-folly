@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { Context } from "./context";
-import * as tools from "./tools/index";
+import { Context } from "./context.js";
+import * as tools from "./tools/index.js";
 
 (async () => {
   const context = new Context();
@@ -21,7 +21,7 @@ import * as tools from "./tools/index";
     content: [{ type: "text", text: String(a + b) }],
   }));
 
-  const toolItems = [tools.openApp(), tools.closeApp()];
+  const toolItems = [tools.openApp(), tools.closeApp(), tools.addShape()];
 
   toolItems.forEach((tool) => {
     server.tool(tool.name, tool.description, tool.paramsSchema ?? {}, (args) => {

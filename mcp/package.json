@@ -1,6 +1,7 @@
 {
   "name": "mcp",
   "type": "module",
+  "main": "dist/server.js",
   "packageManager": "yarn@4.0.2",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",

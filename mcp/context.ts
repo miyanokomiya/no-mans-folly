@@ -11,13 +11,13 @@ export class Context {
     if (this._createPagePromise) return this._createPagePromise;
     this._createPagePromise = (async () => {
       const { browser, page } = await this._createPage();
-      page.on("console", (event) => this._console.push(event));
-      page.on("framenavigated", (frame) => {
-        if (!frame.parentFrame()) this._console.length = 0;
-      });
+      // page.on("console", (event) => this._console.push(event));
+      // page.on("framenavigated", (frame) => {
+      //   if (!frame.parentFrame()) this._console.length = 0;
+      // });
       page.on("close", () => this._onPageClose());
-      page.setDefaultNavigationTimeout(60000);
-      page.setDefaultTimeout(5000);
+      // page.setDefaultNavigationTimeout(60000);
+      // page.setDefaultTimeout(5000);
       this._page = page;
       this._browser = browser;
       return page;
@@ -53,13 +53,15 @@ export class Context {
     await this._page?.close();
   }
 
-  private async _createPage(): Promise<{ browser?: playwright.Browser; page: playwright.Page }> {
+  private async _createPage(): Promise<{ browser: playwright.Browser; page: playwright.Page }> {
     const browser = await playwright.chromium.launch({ headless: false, devtools: false });
     const context = await browser.newContext({
       baseURL: "http://localhost:5173",
       screen: { width: 500, height: 500 },
     });
-    const [page] = context.pages();
-    return { page };
+    const page = await context.newPage();
+    await page.goto("/");
+    await page.click("text='Start with no workspace'");
+    return { browser, page };
   }
 }

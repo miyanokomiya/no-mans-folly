@@ -1,22 +1,12 @@
 {
   "extends": "../tsconfig.json",
+  "include": ["./server.ts"],
   "compilerOptions": {
     "outDir": "dist",
     "target": "ES2022",
-    "useDefineForClassFields": true,
-    "lib": ["esnext"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    "moduleResolution": "bundler",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "allowImportingTsExtensions": false,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": false,
-
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noEmit": false
   }
 }
