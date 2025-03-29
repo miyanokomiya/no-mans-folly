@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Context } from "./context";
-import * as tools from "./tools/index";
-import * as resources from "./resources/index";
+import { getTools } from "./tools/index";
+import { getResources } from "./resources/index";
 
 (async () => {
   const context = new Context();
@@ -16,15 +16,13 @@ import * as resources from "./resources/index";
     await context.close();
   };
 
-  const toolItems = [tools.openApp(), tools.closeApp(), tools.addShape(), tools.addShapes(), tools.deleteShapes()];
-  toolItems.forEach((tool) => {
+  getTools().forEach((tool) => {
     server.tool(tool.name, tool.description, tool.paramsSchema ?? {}, (args) => {
       return tool.cb(context, args as any);
     });
   });
 
-  const resourceItems = [resources.getShapes(), resources.getShapeById()];
-  resourceItems.forEach((resource) => {
+  getResources().forEach((resource) => {
     if ("template" in resource.schema) {
       server.resource(resource.schema.name, resource.schema.template, resource.schema, (url, extra) => {
         return resource.read(context, url.href, extra);
