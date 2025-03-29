@@ -1,5 +1,6 @@
 import type { AppMcpContext } from "../../src/contexts/AppMcpContext";
 import type { Shape } from "../../src/models";
+import type { DocumentListType } from "../tools/documentSchema";
 
 // In this file, each function must be standalone and not depend on other ones.
 // This is because the functions are used in the web context and are not bundled together.
@@ -65,4 +66,12 @@ export function getShapeById(id: string): Shape | undefined {
 
   const accxt = app.getStateContext();
   return accxt.getShapeComposite().shapeMap[id];
+}
+
+export function updateShapeTexts(args: DocumentListType): void {
+  const app = (window as any).no_mans_folly as AppMcpContext | undefined;
+  if (!app) return;
+
+  const accxt = app.getStateContext();
+  accxt.patchDocuments(args);
 }

@@ -2,8 +2,9 @@ import { z } from "zod";
 import type { ToolStruct } from "../types";
 import * as web from "../web/shapes";
 import { ShapeParamSchema } from "./shapeSchema";
+import { DocumentListSchema } from "./documentSchema";
 
-export const getTools = () => [openApp(), closeApp(), addShape(), addShapes(), deleteShapes()];
+export const getTools = () => [openApp(), closeApp(), addShape(), addShapes(), deleteShapes(), updateShapeTexts()];
 
 function openApp(): ToolStruct {
   return {
@@ -77,6 +78,24 @@ function deleteShapes(): ToolStruct<typeof DeleteShapesTypeParam> {
       const ids = await page.evaluate(web.deleteShapes, data);
       return {
         content: [{ type: "text", text: JSON.stringify(ids), mimeType: "application/json" }],
+      };
+    },
+  };
+}
+
+const AddTextToShapesTypeParam = {
+  data: DocumentListSchema,
+};
+function updateShapeTexts(): ToolStruct<typeof AddTextToShapesTypeParam> {
+  return {
+    name: "update_shape_texts",
+    description: "Update shape texts with Quil delta format. Each text is displayed inside its owner shape.",
+    paramsSchema: AddTextToShapesTypeParam,
+    cb: async (ctx, { data }) => {
+      const page = ctx.existingPage();
+      await page.evaluate(web.updateShapeTexts, data);
+      return {
+        content: [{ type: "text", text: "Success" }],
       };
     },
   };
