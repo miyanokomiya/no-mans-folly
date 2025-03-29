@@ -62,12 +62,15 @@ const DocDeltaRetainSchema = z
 
 const DocDeltaOpSchema = z.union([DocDeltaInsertSchema, DocDeltaDeleteSchema, DocDeltaRetainSchema]);
 
-const DocOutputSchema = z
+export const DocumentSchema = z
   .array(DocDeltaOpSchema)
-  .describe("Array of operations representing the Quil delta format for text content.");
+  .describe(
+    "Array of operations representing the Quil delta format for text content. Document must end with line-break.",
+  );
+export type DocumentType = z.infer<typeof DocumentSchema>;
 
 export const DocumentListSchema = z
-  .record(z.string().describe("ID of the owner shape"), DocOutputSchema)
+  .record(z.string().describe("ID of the owner shape"), DocumentSchema)
   .describe("Record of owner shape IDs to their corresponding document operations.");
 
 export type DocumentListType = z.infer<typeof DocumentListSchema>;
