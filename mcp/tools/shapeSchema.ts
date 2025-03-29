@@ -130,10 +130,30 @@ const ShapeParamLine = {
 
 export const ShapeParamSchema = z
   .union([
-    z.object({ type: z.literal("rectangle"), ...ShapeParamRectangle }),
-    z.object({ type: z.literal("ellipse"), ...ShapeParamEllipse }),
-    z.object({ type: z.literal("star"), ...ShapeParamRectangle }),
-    z.object({ type: z.literal("chevron"), ...ShapeParamRectangle }),
-    z.object({ type: z.literal("line"), ...ShapeParamLine }),
+    z.object({ type: z.literal("rectangle"), ...ShapeParamRectangle }).describe("Rectangle shape."),
+    z.object({ type: z.literal("rounded_rectangle"), ...ShapeParamRectangle }).describe("Rounded rectangle shape."),
+    z.object({ type: z.literal("ellipse"), ...ShapeParamEllipse }).describe("Ellipse shape."),
+    z.object({ type: z.literal("triangle"), ...ShapeParamRectangle }).describe("Triangle shape."),
+    z.object({ type: z.literal("trapezoid"), ...ShapeParamRectangle }).describe("Trapezoid shape."),
+    z.object({ type: z.literal("parallelogram"), ...ShapeParamRectangle }).describe("Parallelogram shape."),
+    z.object({ type: z.literal("rhombus"), ...ShapeParamRectangle }).describe("Rhombus shape."),
+    z.object({ type: z.literal("hexagon"), ...ShapeParamRectangle }).describe("Hexagon shape."),
+    z.object({ type: z.literal("chevron"), ...ShapeParamRectangle }).describe("Chevron shape, pointing to the right."),
+    z
+      .object({ type: z.literal("ribbon"), ...ShapeParamRectangle })
+      .describe("Ribbon shape with concave parts on both sides."),
+    z.object({ type: z.literal("capsule"), ...ShapeParamRectangle }).describe("Capsule shape, pointing to the right."),
+    z.object({ type: z.literal("cylinder"), ...ShapeParamRectangle }).describe("Cylinder shape, oriented vertically ."),
+    z.object({ type: z.literal("document"), ...ShapeParamRectangle }).describe("Document shape."),
+    z.object({ type: z.literal("star"), ...ShapeParamRectangle }).describe("Star shape."),
+    z.object({ type: z.literal("spiky_rectangle"), ...ShapeParamRectangle }).describe("Spiky rectangle shape."),
+    z.object({ type: z.literal("bubble"), ...ShapeParamRectangle }).describe("Bubble shape."),
+    z
+      .object({ type: z.literal("one_sided_arrow"), ...ShapeParamRectangle })
+      .describe("One-sided arrow shape, pointing to the right."),
+    z
+      .object({ type: z.literal("two_sided_arrow"), ...ShapeParamRectangle })
+      .describe("Two-sided arrow shape, pointing left and right."),
+    z.object({ type: z.literal("line"), ...ShapeParamLine }).describe("Line shape, cannot contain text content."),
   ])
-  .describe("Shape data");
+  .describe("Schema for defining various shape types and their parameters.");
