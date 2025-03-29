@@ -14,6 +14,7 @@ const _generateNKeysBetween = process.env.VITEST
 export function generateKeyBetweenAllowSame(a: string | null | undefined, b: string | null | undefined): string {
   return a && b && a === b ? a : _generateKeyBetween(a ?? null, b ?? null);
 }
+export type GenerateKeyBetweenAllowSame = typeof generateKeyBetweenAllowSame;
 
 export function generateKeyBetween(a: string | null | undefined, b: string | null | undefined) {
   return _generateKeyBetween(a ?? null, b ?? null);

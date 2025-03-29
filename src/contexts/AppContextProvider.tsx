@@ -8,6 +8,8 @@ import { ToastMessage } from "../composables/states/types";
 import { ToastMessageContext } from "./ToastMessageContext";
 import { AppStateContext, AppStateMachineContext, GetAppStateContext, SetAppStateContext } from "./AppContext";
 import { createShape } from "../shapes";
+import { AppMcpContext } from "./AppMcpContext";
+import { generateKeyBetweenAllowSame } from "../utils/findex";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;
@@ -78,11 +80,13 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
     return stateContextRef.current;
   }, []);
 
-  (window as any).no_mans_folly = {
+  const mcpCtx: AppMcpContext = {
     getAppCanvasContext: () => acctx,
     getStateContext: () => stateContextRef.current,
     createShape,
+    generateKeyBetweenAllowSame,
   };
+  (window as any).no_mans_folly = mcpCtx;
 
   return (
     <AppCanvasContext.Provider value={acctx}>

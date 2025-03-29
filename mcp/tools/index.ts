@@ -1,13 +1,6 @@
-import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z, ZodRawShape } from "zod";
-import type { Context } from "../context.js";
-
-type ToolStruct<Args extends ZodRawShape | undefined = undefined> = {
-  name: string;
-  description: string;
-  paramsSchema?: Args;
-  cb: (ctx: Context, args: Parameters<ToolCallback<Args>>[0]) => ReturnType<ToolCallback<Args>>;
-};
+import { z } from "zod";
+import type { ToolStruct } from "../types";
+import * as web from "../web/shapes";
 
 export function openApp(): ToolStruct {
   return {
@@ -31,46 +24,66 @@ export function closeApp(): ToolStruct {
   };
 }
 
-const addShapeParam = {
-  point: z.object({ x: z.number().default(0), y: z.number().default(0) }).describe("Point to add shape"),
-  shape_type: z
-    .union([
-      z.literal("rectangle").describe("Rectangle shape"),
-      z.literal("ellipse").describe("Ellipse shape"),
-      z.literal("star").describe("Star (pentagram) shape that can turn into a variety of regular polygons"),
-      z.literal("chevron").describe("Chevron shape heading toward right by default"),
-    ])
-    .default("rectangle")
-    .describe("Type of shape to add"),
+const ShapeParamBase = {
+  p: z
+    .object({ x: z.number(), y: z.number() })
+    .default({ x: 0, y: 0 })
+    .describe("Coordinates of the shape's position that refers to the top-left corner of the shape's bounding box."),
+  rotation: z.number().optional().describe("Rotation of the shape in radians, applied around its center."),
 };
-export function addShape(): ToolStruct<typeof addShapeParam> {
+const ShapeParamRectangle = {
+  ...ShapeParamBase,
+  width: z.number().describe("Width of the shape's bound"),
+  height: z.number().describe("Height of the shape's bound"),
+};
+const ShapeParamEllipse = {
+  ...ShapeParamBase,
+  rx: z.number().describe("X-axis radius of the ellipse. It's half of the width of the shape's bound."),
+  ry: z.number().describe("Y-axis radius of the ellipse. It's half of the height of the shape's bound."),
+};
+
+const ShapeTypeParam = {
+  data: z
+    .union([
+      z.object({ type: z.literal("rectangle"), ...ShapeParamRectangle }),
+      z.object({ type: z.literal("ellipse"), ...ShapeParamEllipse }),
+      z.object({ type: z.literal("star"), ...ShapeParamRectangle }),
+      z.object({ type: z.literal("chevron"), ...ShapeParamRectangle }),
+    ])
+    .describe("Shape data"),
+};
+
+export function addShape(): ToolStruct<typeof ShapeTypeParam> {
   return {
     name: "add_shape",
     description: "Add new shape",
-    paramsSchema: addShapeParam,
-    cb: async (ctx, { point, shape_type }) => {
+    paramsSchema: ShapeTypeParam,
+    cb: async (ctx, { data }) => {
       const page = ctx.existingPage();
-      const id = await page.evaluate(appAddShape, { point, shape_type });
-
+      const id = await page.evaluate(web.addShape, data);
       return {
-        content: [{ type: "text", text: id ? `Create shape id is "${id}"` : "No shape was added" }],
+        content: [{ type: "text", text: id ? `Created shape id is "${id}"` : "No shape was added" }],
       };
     },
   };
 }
 
-async function appAddShape(props: { point: { x: number; y: number }; shape_type: string }): Promise<string> {
-  const app = (window as any).no_mans_folly;
-  if (!app) return "";
-
-  const accxt = app.getStateContext();
-  const shape = app.createShape(accxt.getShapeStruct, props.shape_type, {
-    id: accxt.generateUuid(),
-    findex: accxt.createLastIndex(),
-    p: props.point,
-  });
-  accxt.addShapes([shape]);
-  accxt.selectShape(shape.id);
-  accxt.toView(shape.p);
-  return shape.id;
+const ShapesTypeParam = {
+  data: z.array(ShapeTypeParam.data),
+};
+export function addShapes(): ToolStruct<typeof ShapesTypeParam> {
+  return {
+    name: "add_shapes",
+    description: "Add new shapes",
+    paramsSchema: ShapesTypeParam,
+    cb: async (ctx, { data }) => {
+      const page = ctx.existingPage();
+      const ids = await page.evaluate(web.addShapes, data);
+      return {
+        content: [
+          { type: "text", text: ids.length > 0 ? `Created shape ids are "${ids.join(" ")}"` : "No shape was added" },
+        ],
+      };
+    },
+  };
 }

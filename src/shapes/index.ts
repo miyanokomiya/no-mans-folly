@@ -31,6 +31,7 @@ export function createShape<T extends Shape>(getStruct: GetShapeStruct, type: st
   const struct = getStruct(type);
   return struct.create(arg);
 }
+export type CreateShape = typeof createShape;
 
 export function renderShape<T extends Shape>(
   getStruct: GetShapeStruct,
