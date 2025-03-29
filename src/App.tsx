@@ -35,7 +35,7 @@ const USER_SETTING_KEY = "userSetting";
 
 function App() {
   const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
-  const { indexedDBMode } = newFeatureFlags();
+  const { indexedDBMode, skipEntrance } = newFeatureFlags();
   const canPersist = fileAccess.hasHnadle() || indexedDBMode;
 
   const {
@@ -166,7 +166,7 @@ function App() {
   const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save" | "export">();
   const [openDialog, setOpenDialog] = useState<undefined | "entrance" | "workspace">(
-    !indexedDBMode ? "entrance" : undefined,
+    !indexedDBMode && !skipEntrance ? "entrance" : undefined,
   );
 
   const closeDialog = useCallback(() => {

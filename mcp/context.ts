@@ -11,13 +11,7 @@ export class Context {
     if (this._createPagePromise) return this._createPagePromise;
     this._createPagePromise = (async () => {
       const { browser, page } = await this._createPage();
-      // page.on("console", (event) => this._console.push(event));
-      // page.on("framenavigated", (frame) => {
-      //   if (!frame.parentFrame()) this._console.length = 0;
-      // });
       page.on("close", () => this._onPageClose());
-      // page.setDefaultNavigationTimeout(60000);
-      // page.setDefaultTimeout(5000);
       this._page = page;
       this._browser = browser;
       return page;
@@ -41,7 +35,7 @@ export class Context {
   }
 
   existingPage(): playwright.Page {
-    if (!this._page) throw new Error("Navigate to a location to create a page");
+    if (!this._page) throw new Error("Application is not open");
     return this._page;
   }
 
@@ -60,8 +54,7 @@ export class Context {
       screen: { width: 500, height: 500 },
     });
     const page = await context.newPage();
-    await page.goto("/");
-    await page.click("text='Start with no workspace'");
+    await page.goto("/?skip_entrance=1");
     return { browser, page };
   }
 }
