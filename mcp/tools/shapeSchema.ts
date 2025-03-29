@@ -145,7 +145,13 @@ export const ShapeParamSchema = z
     z.object({ type: z.literal("capsule"), ...ShapeParamRectangle }).describe("Capsule shape, pointing to the right."),
     z.object({ type: z.literal("cylinder"), ...ShapeParamRectangle }).describe("Cylinder shape, oriented vertically ."),
     z.object({ type: z.literal("document"), ...ShapeParamRectangle }).describe("Document shape."),
-    z.object({ type: z.literal("star"), ...ShapeParamRectangle }).describe("Star shape."),
+    z
+      .object({
+        type: z.literal("star"),
+        ...ShapeParamRectangle,
+        size: z.number().positive().optional().describe("The number of start tips. Defaults to 5."),
+      })
+      .describe("Star shape, having flexible number of tips."),
     z.object({ type: z.literal("spiky_rectangle"), ...ShapeParamRectangle }).describe("Spiky rectangle shape."),
     z.object({ type: z.literal("bubble"), ...ShapeParamRectangle }).describe("Bubble shape."),
     z
