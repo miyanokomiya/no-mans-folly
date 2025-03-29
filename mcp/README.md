@@ -1,4 +1,10 @@
-# mcp
+# MCP server for No-man's folly
+
+The server depends on `chromium` to operate the application.
+
+```sh
+npx playwright install chromium
+```
 
 ## Develop
 
@@ -8,8 +14,10 @@
 yarn build
 ```
 
-### Start MCP inspector
+### Debug
+
+Build MCP server and start the inspector.
 
 ```sh
-CLIENT_PORT=5174 npx @modelcontextprotocol/inspector node dist/server.js
+yarn build && CLIENT_PORT=5174 npx @modelcontextprotocol/inspector node dist/server.js
 ```

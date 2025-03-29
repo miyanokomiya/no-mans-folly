@@ -17,7 +17,7 @@ export const getTools = () => [
 function openApp(): ToolStruct {
   return {
     name: "open_app",
-    description: "Open No-man's folly application",
+    description: "Open No-man's folly application. This must be called to prepare the app before any other operations.",
     cb: async (ctx) => {
       await ctx.createPage();
       return { content: [{ type: "text", text: "Opened" }] };
