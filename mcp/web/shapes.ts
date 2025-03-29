@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { AppMcpContext } from "../../src/contexts/AppMcpContext";
 import type { Shape } from "../../src/models";
-import type { DocumentListType } from "../tools/documentSchema";
+import type { DocumentListType, DocumentType } from "../tools/documentSchema";
 import { UpdateShapesSchema } from "../tools/shapeSchema";
 
 // In this file, each function must be standalone and not depend on other ones.
@@ -84,4 +84,20 @@ export function updateShapeTexts(args: DocumentListType): void {
 
   const accxt = app.getStateContext();
   accxt.patchDocuments(args);
+}
+
+export function getShapeTexts(): DocumentListType {
+  const app = (window as any).no_mans_folly as AppMcpContext | undefined;
+  if (!app) return {};
+
+  const accxt = app.getStateContext();
+  return accxt.getDocumentMap();
+}
+
+export function getShapeTextById(id: string): DocumentType | undefined {
+  const app = (window as any).no_mans_folly as AppMcpContext | undefined;
+  if (!app) return;
+
+  const accxt = app.getStateContext();
+  return accxt.getDocumentMap()[id];
 }
