@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { Context } from "./context.js";
-import * as tools from "./tools/index.js";
+import { Context } from "./context";
+import * as tools from "./tools/index";
+import * as resources from "./resources/index";
 
 (async () => {
   const context = new Context();
@@ -16,17 +16,25 @@ import * as tools from "./tools/index.js";
     await context.close();
   };
 
-  // Add an addition tool
-  server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
-    content: [{ type: "text", text: String(a + b) }],
-  }));
-
-  const toolItems = [tools.openApp(), tools.closeApp(), tools.addShape()];
-
+  const toolItems = [tools.openApp(), tools.closeApp(), tools.addShape(), tools.addShapes()];
   toolItems.forEach((tool) => {
     server.tool(tool.name, tool.description, tool.paramsSchema ?? {}, (args) => {
       return tool.cb(context, args as any);
     });
+  });
+
+  const resourceItems = [resources.getShapes(), resources.getShapeById()];
+  resourceItems.forEach((resource) => {
+    if ("template" in resource.schema) {
+      server.resource(resource.schema.name, resource.schema.template, resource.schema, (url, extra) => {
+        return resource.read(context, url.href, extra);
+      });
+    } else {
+      const { uri, ...meta } = resource.schema;
+      server.resource(resource.schema.name, uri, meta, (url, extra: any) => {
+        return resource.read(context, url.href, extra);
+      });
+    }
   });
 
   // Start receiving messages on stdin and sending messages on stdout

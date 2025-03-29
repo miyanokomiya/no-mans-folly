@@ -4,8 +4,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "target": "ES2022",
-    "module": "Node16",
-    "moduleResolution": "node16",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
     "noEmit": false
   }
