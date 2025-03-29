@@ -2,7 +2,9 @@ import { z } from "zod";
 import type { ToolStruct } from "../types";
 import * as web from "../web/shapes";
 
-export function openApp(): ToolStruct {
+export const getTools = () => [openApp(), closeApp(), addShape(), addShapes(), deleteShapes()];
+
+function openApp(): ToolStruct {
   return {
     name: "open_app",
     description: "Open No-man's folly application",
@@ -13,7 +15,7 @@ export function openApp(): ToolStruct {
   };
 }
 
-export function closeApp(): ToolStruct {
+function closeApp(): ToolStruct {
   return {
     name: "close_app",
     description: "Close No-man's folly application",
@@ -53,7 +55,7 @@ const ShapeTypeParam = {
     .describe("Shape data"),
 };
 
-export function addShape(): ToolStruct<typeof ShapeTypeParam> {
+function addShape(): ToolStruct<typeof ShapeTypeParam> {
   return {
     name: "add_shape",
     description: "Add new shape",
@@ -71,7 +73,7 @@ export function addShape(): ToolStruct<typeof ShapeTypeParam> {
 const ShapesTypeParam = {
   data: z.array(ShapeTypeParam.data),
 };
-export function addShapes(): ToolStruct<typeof ShapesTypeParam> {
+function addShapes(): ToolStruct<typeof ShapesTypeParam> {
   return {
     name: "add_shapes",
     description: "Add new shapes",
@@ -91,7 +93,7 @@ export function addShapes(): ToolStruct<typeof ShapesTypeParam> {
 const DeleteShapesTypeParam = {
   data: z.array(z.string()).describe("Shape ids to delete"),
 };
-export function deleteShapes(): ToolStruct<typeof DeleteShapesTypeParam> {
+function deleteShapes(): ToolStruct<typeof DeleteShapesTypeParam> {
   return {
     name: "delete_shapes",
     description: "Delete shapes. All child shapes of the targets will be deleted as well.",

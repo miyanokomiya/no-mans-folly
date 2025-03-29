@@ -2,7 +2,9 @@ import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceStruct } from "../types";
 import * as web from "../web/shapes";
 
-export function getShapes(): ResourceStruct {
+export const getResources = () => [getShapes(), getShapeById()];
+
+function getShapes(): ResourceStruct {
   return {
     schema: {
       uri: "app://shapes/all",
@@ -24,7 +26,7 @@ export function getShapes(): ResourceStruct {
   };
 }
 
-export function getShapeById(): ResourceStruct {
+function getShapeById(): ResourceStruct {
   return {
     schema: {
       template: new ResourceTemplate("app://shape/{shapeId}", { list: undefined }),
