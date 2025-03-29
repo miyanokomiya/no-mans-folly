@@ -40,6 +40,19 @@ export async function addShapes(args: ShapeArgs[]): Promise<string[]> {
   return shapes.map((shape) => shape.id);
 }
 
+export function deleteShapes(ids: string[]): string[] {
+  const app = (window as any).no_mans_folly as AppMcpContext | undefined;
+  if (!app) return [];
+
+  const accxt = app.getStateContext();
+  const deletedIds = accxt
+    .getShapeComposite()
+    .getAllBranchMergedShapes(ids)
+    .map((s) => s.id);
+  accxt.deleteShapes(ids);
+  return deletedIds;
+}
+
 export function getShapes(): Shape[] {
   const app = (window as any).no_mans_folly as AppMcpContext | undefined;
   if (!app) return [];
