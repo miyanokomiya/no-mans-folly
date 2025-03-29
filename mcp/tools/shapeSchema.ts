@@ -163,3 +163,7 @@ export const ShapeParamSchema = z
     z.object({ type: z.literal("line"), ...ShapeParamLine }).describe("Line shape, cannot contain text content."),
   ])
   .describe("Schema for defining various shape types and their parameters.");
+
+export const UpdateShapesSchema = z
+  .record(z.string().describe("ID of the shape"), ShapeParamSchema)
+  .describe("Record of shape IDs to their updates. The shape types must be the same as the original ones.");
