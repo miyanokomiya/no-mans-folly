@@ -4,7 +4,15 @@ import * as web from "../web/shapes";
 import { ShapeParamSchema } from "./shapeSchema";
 import { DocumentListSchema } from "./documentSchema";
 
-export const getTools = () => [openApp(), closeApp(), addShape(), addShapes(), deleteShapes(), updateShapeTexts()];
+export const getTools = () => [
+  openApp(),
+  closeApp(),
+  addShape(),
+  addShapes(),
+  deleteShapes(),
+  updateShapes(),
+  updateShapeTexts(),
+];
 
 function openApp(): ToolStruct {
   return {
@@ -78,6 +86,26 @@ function deleteShapes(): ToolStruct<typeof DeleteShapesTypeParam> {
       const ids = await page.evaluate(web.deleteShapes, data);
       return {
         content: [{ type: "text", text: JSON.stringify(ids), mimeType: "application/json" }],
+      };
+    },
+  };
+}
+
+const UpdateShapesTypeParam = {
+  data: z
+    .record(z.string().describe("ID of the shape"), ShapeParamSchema)
+    .describe("Record of shape IDs to their updates."),
+};
+function updateShapes(): ToolStruct<typeof UpdateShapesTypeParam> {
+  return {
+    name: "update_shapes",
+    description: "Update shapes in batch.",
+    paramsSchema: UpdateShapesTypeParam,
+    cb: async (ctx, { data }) => {
+      const page = ctx.existingPage();
+      await page.evaluate(web.updateShapes, data);
+      return {
+        content: [{ type: "text", text: "Success" }],
       };
     },
   };

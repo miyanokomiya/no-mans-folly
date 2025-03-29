@@ -1,13 +1,15 @@
+import { z } from "zod";
 import type { AppMcpContext } from "../../src/contexts/AppMcpContext";
 import type { Shape } from "../../src/models";
 import type { DocumentListType } from "../tools/documentSchema";
+import { UpdateShapesSchema } from "../tools/shapeSchema";
 
 // In this file, each function must be standalone and not depend on other ones.
 // This is because the functions are used in the web context and are not bundled together.
 
 type ShapeArgs = { type: string };
 
-export async function addShape(args: ShapeArgs): Promise<string> {
+export function addShape(args: ShapeArgs): string {
   const app = (window as any).no_mans_folly as AppMcpContext | undefined;
   if (!app) return "";
 
@@ -21,7 +23,7 @@ export async function addShape(args: ShapeArgs): Promise<string> {
   return shape.id;
 }
 
-export async function addShapes(args: ShapeArgs[]): Promise<string[]> {
+export function addShapes(args: ShapeArgs[]): string[] {
   const app = (window as any).no_mans_folly as AppMcpContext | undefined;
   if (!app) return [];
 
@@ -50,6 +52,14 @@ export function deleteShapes(ids: string[]): string[] {
     .map((s) => s.id);
   accxt.updateShapes({ delete: ids });
   return deletedIds;
+}
+
+export function updateShapes(args: z.infer<typeof UpdateShapesSchema>): void {
+  const app = (window as any).no_mans_folly as AppMcpContext | undefined;
+  if (!app) return;
+
+  const accxt = app.getStateContext();
+  accxt.updateShapes({ update: args });
 }
 
 export function getShapes(): Shape[] {
