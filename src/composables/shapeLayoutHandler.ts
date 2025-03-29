@@ -46,6 +46,8 @@ export function getEntityPatchByDelete(
 /**
  * Genaral purpose patch function to recalculate all layouts and automatic adjustments.
  * Returned patch includes src patch supplied as an argument.
+ * This function can't affect newly added shapes since returned value is patch data for existing shapes.
+ * => "getPatchInfoByLayouts" is more thorough.
  */
 export function getPatchByLayouts(
   shapeComposite: ShapeComposite,
@@ -81,7 +83,7 @@ export function getPatchByLayouts(
 
 /**
  * Delete shapes that can no longer exist under the updated environment.
- * Other than that, same as "getPatchByLayouts"
+ * Unlike "getPatchByLayouts", newly added shapes will be updated by layouts.
  */
 export function getPatchInfoByLayouts(
   shapeComposite: ShapeComposite,
@@ -111,7 +113,15 @@ export function getPatchInfoByLayouts(
 
   const patchResult = patchPipe(
     [
-      () => adjustedPatchInfo.update ?? {},
+      () => {
+        if (!adjustedPatchInfo.add) return adjustedPatchInfo.update ?? {};
+        // Mix added shapes into the patch to proc layout logics.
+        const ret = { ...adjustedPatchInfo.update };
+        adjustedPatchInfo.add.forEach((s) => {
+          ret[s.id] = { ...s };
+        });
+        return ret;
+      },
       () => getFrameAlignLayoutPatch(shapeComposite, adjustedPatchInfo),
       ...getTreeLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
@@ -131,9 +141,19 @@ export function getPatchInfoByLayouts(
     shapeComposite.shapeMap,
   );
 
+  // Hoist new shapes from the patch to "add" list.
+  const add = (adjustedPatchInfo.add ?? []).map((s) => {
+    const patch = patchResult.patch[s.id];
+    return patch ? { ...s, ...patch } : s;
+  });
+  const update = { ...patchResult.patch };
+  add.forEach((s) => {
+    delete update[s.id];
+  });
+
   return {
-    add: adjustedPatchInfo.add,
-    update: patchResult.patch,
+    add,
+    update,
     delete: adjustedPatchInfo.delete,
   };
 }

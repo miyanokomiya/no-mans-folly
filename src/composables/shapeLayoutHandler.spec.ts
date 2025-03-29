@@ -153,6 +153,23 @@ describe("getPatchInfoByLayouts", () => {
     expect(result0.delete).toEqual([card0.id, lane0.id]);
     expect(result0.update).not.toHaveProperty(card0.id);
   });
+
+  test("should apply layout to newly added shapes", () => {
+    const rect1 = createShape(getCommonStruct, "rectangle", {
+      id: "rect1",
+    });
+    const line1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line1",
+      qConnection: { id: rect1.id, rate: { x: 0.5, y: 0.5 } },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect1],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getPatchInfoByLayouts(shapeComposite, { add: [line1] });
+    expect(result0.add).toEqual([{ ...line1, q: { x: 50, y: 50 } }]);
+  });
 });
 
 describe("getPatchAfterLayouts", () => {
