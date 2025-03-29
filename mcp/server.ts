@@ -16,7 +16,7 @@ import * as resources from "./resources/index";
     await context.close();
   };
 
-  const toolItems = [tools.openApp(), tools.closeApp(), tools.addShape(), tools.addShapes()];
+  const toolItems = [tools.openApp(), tools.closeApp(), tools.addShape(), tools.addShapes(), tools.deleteShapes()];
   toolItems.forEach((tool) => {
     server.tool(tool.name, tool.description, tool.paramsSchema ?? {}, (args) => {
       return tool.cb(context, args as any);

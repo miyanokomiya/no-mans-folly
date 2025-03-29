@@ -87,3 +87,23 @@ export function addShapes(): ToolStruct<typeof ShapesTypeParam> {
     },
   };
 }
+
+const DeleteShapesTypeParam = {
+  data: z.array(z.string()).describe("Shape ids to delete"),
+};
+export function deleteShapes(): ToolStruct<typeof DeleteShapesTypeParam> {
+  return {
+    name: "delete_shapes",
+    description: "Delete shapes. All child shapes of the targets will be deleted as well.",
+    paramsSchema: DeleteShapesTypeParam,
+    cb: async (ctx, { data }) => {
+      const page = ctx.existingPage();
+      const ids = await page.evaluate(web.deleteShapes, data);
+      return {
+        content: [
+          { type: "text", text: ids.length > 0 ? `Deleted shape ids are "${ids.join(" ")}"` : "No shape was deleted" },
+        ],
+      };
+    },
+  };
+}
