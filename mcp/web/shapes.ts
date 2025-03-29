@@ -16,9 +16,7 @@ export async function addShape(args: ShapeArgs): Promise<string> {
     findex: accxt.createLastIndex(),
     ...args,
   });
-  accxt.addShapes([shape]);
-  accxt.selectShape(shape.id);
-  accxt.toView(shape.p);
+  accxt.updateShapes({ add: [shape] });
   return shape.id;
 }
 
@@ -36,7 +34,7 @@ export async function addShapes(args: ShapeArgs[]): Promise<string[]> {
       ...data,
     });
   });
-  accxt.addShapes(shapes);
+  accxt.updateShapes({ add: shapes });
   return shapes.map((shape) => shape.id);
 }
 
@@ -49,7 +47,7 @@ export function deleteShapes(ids: string[]): string[] {
     .getShapeComposite()
     .getAllBranchMergedShapes(ids)
     .map((s) => s.id);
-  accxt.deleteShapes(ids);
+  accxt.updateShapes({ delete: ids });
   return deletedIds;
 }
 
