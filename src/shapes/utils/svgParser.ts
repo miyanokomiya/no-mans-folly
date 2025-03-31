@@ -18,6 +18,7 @@ import { SimplePath } from "../simplePolygon";
 import { shiftBezierCurveControl } from "../../utils/path";
 import { getCurveSplineBounds } from "../../utils/geometry";
 import { hexToColor, parseRGBA } from "../../utils/color";
+import { arcToCubicCurves } from "../../utils/arc"; // Import utility for arc conversion
 
 /**
  * Parse SVG file and convert to shape data
@@ -605,7 +606,6 @@ export function parseSegmentRawPathsAsSimplePaths(pathSegments: PathSegmentRaw[]
 
     const prevP = simplePath.path.at(-1) ?? firstP;
 
-    // TODO: Regard remained commands: "a"
     if (["m", "l"].includes(lowerCommand)) {
       const p = { x: args[0] as number, y: args[1] as number };
       simplePath.path.push(lower ? add(p, prevP) : p);
@@ -658,6 +658,23 @@ export function parseSegmentRawPathsAsSimplePaths(pathSegments: PathSegmentRaw[]
       const qc1 = getSymmetry(prevC.c2, prevP);
       const ac = add(multi(sub(qc1, prevP), 3 / 2), prevP);
       simplePath.curves.push({ c1: qc1, c2: add(ap, multi(sub(ac, ap), 2 / 3)) });
+    } else if (["a"].includes(lowerCommand)) {
+      const [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y] = args as [
+        number,
+        number,
+        number,
+        boolean,
+        boolean,
+        number,
+        number,
+      ];
+      const endP = lower ? add({ x, y }, prevP) : { x, y };
+      const curves = arcToCubicCurves(prevP, endP, rx, ry, xAxisRotation, largeArcFlag, sweepFlag);
+
+      curves.forEach((curve) => {
+        simplePath.path.push(curve.p);
+        simplePath.curves.push(curve.c);
+      });
     } else if (["z"].includes(lowerCommand)) {
       simplePath.path.push(firstP);
       break;
