@@ -1,25 +1,10 @@
-import { describe, test, expect, beforeEach } from "vitest";
-import { parseSvgElement, applyTransformToShape } from "./svgParser";
+import { describe, test, expect } from "vitest";
+import { parseSvgElement, applyTransformToShape, parseSegmentRawPathsAsSimplePaths } from "./svgParser";
 import { Shape } from "../../models";
 import { RectangleShape } from "../rectangle";
 import { LinePolygonShape } from "../polygons/linePolygon";
+import { parsePathSegmentRaws } from "okageo";
 
-// Mock DOMParser for testing
-class MockDOMParser {
-  parseFromString(_text: string, _type: string) {
-    const mockDoc = {
-      documentElement: {
-        tagName: "svg",
-        getAttribute: () => null,
-        children: [],
-        querySelector: () => null,
-      } as unknown as SVGElement,
-    };
-    return mockDoc;
-  }
-}
-
-// Mock SVG elements for testing
 const createMockSVGElement = (
   tagName: string,
   attributes: Record<string, string> = {},
@@ -29,14 +14,8 @@ const createMockSVGElement = (
     tagName,
     getAttribute: (name: string) => attributes[name] || null,
     children,
-    querySelector: () => null,
   } as unknown as SVGElement;
 };
-
-// Setup global mocks
-beforeEach(() => {
-  global.DOMParser = MockDOMParser as any;
-});
 
 describe("parseSvgElement", () => {
   test("should parse SVG element with rectangle", () => {
@@ -134,11 +113,11 @@ describe("parseSvgElement", () => {
     expect(shape.type).toBe("line_polygon");
     expect(shape.path).toEqual({
       path: [
-        { x: 10, y: 20 },
-        { x: 100, y: 20 },
-        { x: 100, y: 80 },
-        { x: 10, y: 80 },
-        { x: 10, y: 20 },
+        { x: 0, y: 0 },
+        { x: 90, y: 0 },
+        { x: 90, y: 60 },
+        { x: 0, y: 60 },
+        { x: 0, y: 0 },
       ],
     });
   });
@@ -221,5 +200,127 @@ describe("applyTransformToShape", () => {
     const scale = Math.sqrt(cos * cos + sin * sin);
     expect((shape as any).width).toBeCloseTo(100 * scale);
     expect((shape as any).height).toBeCloseTo(80 * scale);
+  });
+});
+
+describe("parseSegmentRawPathsAsSimplePaths", () => {
+  test("should parse a simple path with straight lines", () => {
+    const rawPath = parsePathSegmentRaws("M10,20 L30,40 L50,60 Z");
+    const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
+
+    expect(simplePath).toEqual({
+      path: [
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+        { x: 50, y: 60 },
+        { x: 10, y: 20 },
+      ],
+    });
+    expect(simplePath, "should regard lower command").toEqual(
+      parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,20 l20,20 l20,20 z")),
+    );
+  });
+
+  test("should parse a simple path with directional lines", () => {
+    const rawPath = parsePathSegmentRaws("M10,20 H30 V50 Z");
+    const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
+
+    expect(simplePath).toEqual({
+      path: [
+        { x: 10, y: 20 },
+        { x: 30, y: 20 },
+        { x: 30, y: 50 },
+        { x: 10, y: 20 },
+      ],
+    });
+    expect(simplePath, "should regard lower command").toEqual(
+      parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,20 h20 v30 z")),
+    );
+  });
+
+  test("should parse a path with cubic Bezier curves", () => {
+    const rawPath = parsePathSegmentRaws("M10,20 C15,25 25,35 30,40");
+    const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
+
+    expect(simplePath).toEqual({
+      path: [
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+      ],
+      curves: [
+        {
+          c1: { x: 15, y: 25 },
+          c2: { x: 25, y: 35 },
+        },
+      ],
+    });
+
+    expect(simplePath, "should regard lower command").toEqual(
+      parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,20 c5,5 15,15 20,20")),
+    );
+  });
+
+  test("should parse a path with short cubic Bezier curves", () => {
+    const expected = parseSegmentRawPathsAsSimplePaths(
+      parsePathSegmentRaws("M10,10 C15,5 25,15 30,10 C35,5 50,15 60,40"),
+    );
+    expect(parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,10 C15,5 25,15 30,10 S50,15 60,40"))).toEqual(
+      expected,
+    );
+    expect(
+      parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,10 C15,5 25,15 30,10 s20,5 30,30")),
+      "should regard lowser command",
+    ).toEqual(expected);
+  });
+
+  test("should parse a path with quadratic Bezier curves", () => {
+    const rawPath = parsePathSegmentRaws("M10,20 Q15,25 30,40");
+    const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
+
+    expect(simplePath).toEqual({
+      path: [
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+      ],
+      curves: [expect.anything()],
+    });
+    expect(simplePath.curves![0]!.c1).toEqualPoint({ x: 10 + (5 * 2) / 3, y: 20 + (5 * 2) / 3 });
+    expect(simplePath.curves![0]!.c2).toEqualPoint({ x: 30 + (-15 * 2) / 3, y: 40 + (-15 * 2) / 3 });
+
+    expect(simplePath, "should regard lower command").toEqual(
+      parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,20 q5,5 20,20")),
+    );
+  });
+
+  test("should parse a path with short quadratic Bezier curves", () => {
+    const expected = parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,10 Q25,15 30,10 Q35,5 60,40"));
+    const result0 = parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,10 Q25,15 30,10 T60,40"));
+    expect(result0.path).toEqualPoints(expected.path);
+    expect(result0.curves![1]!.c1).toEqualPoint(expected.curves![1]!.c1);
+    expect(result0.curves![1]!.c2).toEqualPoint(expected.curves![1]!.c2);
+
+    const result1 = parseSegmentRawPathsAsSimplePaths(parsePathSegmentRaws("M10,10 Q25,15 30,10 t30,30"));
+    expect(result1.path).toEqualPoints(expected.path);
+    expect(result1.curves![1]!.c1).toEqualPoint(expected.curves![1]!.c1);
+    expect(result1.curves![1]!.c2).toEqualPoint(expected.curves![1]!.c2);
+  });
+
+  test.skip("should parse a path with arcs", () => {
+    const rawPath = parsePathSegmentRaws("M10,20 A10,10 0 0,1 30,40");
+    const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
+
+    expect(simplePath).toEqual({
+      path: [
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+      ],
+    });
+  });
+
+  test("should handle an empty path", () => {
+    const rawPath = parsePathSegmentRaws("");
+    const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
+
+    expect(simplePath).toEqual({ path: [] });
   });
 });

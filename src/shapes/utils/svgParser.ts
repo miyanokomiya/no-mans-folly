@@ -29,11 +29,6 @@ export async function parseSvgFile(file: File | Blob): Promise<Shape[]> {
     const text = await readFileAsText(file);
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(text, "image/svg+xml");
-    const parserError = svgDoc.querySelector("parsererror");
-    if (parserError) {
-      throw new Error("Invalid SVG file");
-    }
-
     const svgElement = svgDoc.documentElement as unknown as SVGElement;
     return parseSvgElement(svgElement);
   } catch (err) {
@@ -443,18 +438,26 @@ function convertPathElement(element: SVGPathElement): Shape | null {
   if (!dAttr) return null;
 
   const pathSegments = parsePathSegmentRaws(dAttr);
-  const path = parsePathAsSimplePaths(pathSegments);
+  const path = parseSegmentRawPathsAsSimplePaths(pathSegments);
   const bounds = getCurveSplineBounds(path.path, path.curves);
+  const p = { x: bounds.x, y: bounds.y };
+  const d = multi(p, -1);
+  // Normalize the path based on the bounds.
+  const normalizedPath = {
+    path: path.path.map((v) => add(v, d)),
+    curves: path.curves?.map((c) => (c ? shiftBezierCurveControl(c, d) : undefined)),
+  };
+
   const shape: LinePolygonShape = {
     id: generateId(),
     findex: "",
     type: "line_polygon",
-    p: { x: bounds.x, y: bounds.y },
+    p,
     width: bounds.width,
     height: bounds.height,
     rotation: 0,
     polygonType: pathSegments.at(-1)?.[0].toLocaleLowerCase() === "z" ? undefined : 1,
-    path,
+    path: normalizedPath,
     ...getCommonStyle(parseSvgElementStyle(element)),
   };
 
@@ -584,13 +587,14 @@ function parseSvgElementStyle(element: SVGElement): ISvgStyle {
   return style;
 }
 
-function parsePathAsSimplePaths(pathSegments: PathSegmentRaw[]): SimplePath {
+export function parseSegmentRawPathsAsSimplePaths(pathSegments: PathSegmentRaw[]): SimplePath {
   const simplePath: Required<SimplePath> = { path: [], curves: [] };
 
   let firstP = { x: 0, y: 0 };
   for (const segment of pathSegments) {
     const [command, ...args] = segment;
-    const lower = command === command.toLocaleLowerCase();
+    const lowerCommand = command.toLocaleLowerCase();
+    const lower = command === lowerCommand;
 
     if (simplePath.path.length === 0) {
       const p = { x: args[0] as number, y: args[1] as number };
@@ -602,19 +606,19 @@ function parsePathAsSimplePaths(pathSegments: PathSegmentRaw[]): SimplePath {
     const prevP = simplePath.path.at(-1) ?? firstP;
 
     // TODO: Regard remained commands: "a"
-    if (["m", "l"].includes(command.toLocaleLowerCase())) {
+    if (["m", "l"].includes(lowerCommand)) {
       const p = { x: args[0] as number, y: args[1] as number };
       simplePath.path.push(lower ? add(p, prevP) : p);
       simplePath.curves.push(undefined);
-    } else if (["h"].includes(command.toLocaleLowerCase())) {
+    } else if (["h"].includes(lowerCommand)) {
       const v = args[0] as number;
       simplePath.path.push({ x: lower ? v + prevP.x : v, y: prevP.y });
       simplePath.curves.push(undefined);
-    } else if (["v"].includes(command.toLocaleLowerCase())) {
+    } else if (["v"].includes(lowerCommand)) {
       const v = args[0] as number;
       simplePath.path.push({ x: prevP.x, y: lower ? v + prevP.y : v });
       simplePath.curves.push(undefined);
-    } else if (["c"].includes(command.toLocaleLowerCase())) {
+    } else if (["c"].includes(lowerCommand)) {
       const p = { x: args[4] as number, y: args[5] as number };
       simplePath.path.push(lower ? add(p, prevP) : p);
       const c = {
@@ -622,13 +626,15 @@ function parsePathAsSimplePaths(pathSegments: PathSegmentRaw[]): SimplePath {
         c2: { x: args[2] as number, y: args[3] as number },
       };
       simplePath.curves.push(lower ? shiftBezierCurveControl(c, prevP) : c);
-    } else if (["s"].includes(command.toLocaleLowerCase())) {
+    } else if (["s"].includes(lowerCommand)) {
       const prevC = simplePath.curves.at(-1);
       const p = { x: args[2] as number, y: args[3] as number };
       const qc2 = { x: args[0] as number, y: args[1] as number };
       simplePath.path.push(lower ? add(p, prevP) : p);
-      simplePath.curves.push(prevC ? { c1: getSymmetry(prevC.c2, prevP), c2: qc2 } : undefined);
-    } else if (["q"].includes(command.toLocaleLowerCase())) {
+      simplePath.curves.push(
+        prevC ? { c1: getSymmetry(prevC.c2, prevP), c2: lower ? add(qc2, prevP) : qc2 } : undefined,
+      );
+    } else if (["q"].includes(lowerCommand)) {
       const p = { x: args[2] as number, y: args[3] as number };
       const qc1 = { x: args[0] as number, y: args[1] as number };
       const ap = lower ? add(p, prevP) : p;
@@ -638,8 +644,8 @@ function parsePathAsSimplePaths(pathSegments: PathSegmentRaw[]): SimplePath {
         c1: add(prevP, multi(sub(aqc1, prevP), 2 / 3)),
         c2: add(ap, multi(sub(aqc1, ap), 2 / 3)),
       });
-    } else if (["t"].includes(command.toLocaleLowerCase())) {
-      const p = { x: args[2] as number, y: args[3] as number };
+    } else if (["t"].includes(lowerCommand)) {
+      const p = { x: args[0] as number, y: args[1] as number };
       const ap = lower ? add(p, prevP) : p;
       simplePath.path.push(ap);
 
@@ -652,7 +658,7 @@ function parsePathAsSimplePaths(pathSegments: PathSegmentRaw[]): SimplePath {
       const qc1 = getSymmetry(prevC.c2, prevP);
       const ac = add(multi(sub(qc1, prevP), 3 / 2), prevP);
       simplePath.curves.push({ c1: qc1, c2: add(ap, multi(sub(ac, ap), 2 / 3)) });
-    } else if (["z"].includes(command.toLocaleLowerCase())) {
+    } else if (["z"].includes(lowerCommand)) {
       simplePath.path.push(firstP);
       break;
     }
