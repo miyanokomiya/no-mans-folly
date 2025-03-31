@@ -43,11 +43,11 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [rectElement]);
 
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
 
     expect(shapes).toHaveLength(1);
     const shape = shapes[0] as RectangleShape;
-    expect(shape.type).toBe("rectangle");
+    expect(shape.type).toBe("rounded_rectangle");
     expect(shape.width).toBe(100);
     expect(shape.height).toBe(80);
     expect(shape.fill.color).toBeDefined();
@@ -63,7 +63,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [circleElement]);
 
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
 
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("ellipse");
@@ -83,7 +83,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [ellipseElement]);
 
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
 
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("ellipse");
@@ -104,7 +104,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [lineElement]);
 
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
 
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("line");
@@ -121,7 +121,7 @@ describe("parseSvgElement", () => {
     });
 
     const svgElement = createMockSVGElement("svg", {}, [pathElement]);
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
     expect(shapes).toHaveLength(1);
     const shape = shapes[0] as LinePolygonShape;
     expect(shape.type).toBe("line_polygon");
@@ -155,7 +155,7 @@ describe("parseSvgElement", () => {
     const groupElement = createMockSVGElement("g", {}, [rectElement, circleElement]);
     const svgElement = createMockSVGElement("svg", {}, [groupElement]);
 
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
 
     // Should have 3 shapes: 1 group + 2 children
     expect(shapes.length).toBeGreaterThan(1);
@@ -174,9 +174,9 @@ describe("parseSvgElement", () => {
 
     const groupElement = createMockSVGElement("g", {}, [rectElement]);
     const svgElement = createMockSVGElement("svg", {}, [groupElement]);
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
     expect(shapes).toHaveLength(1);
-    expect(shapes[0].type).toBe("rectangle");
+    expect(shapes[0].type).toBe("rounded_rectangle");
   });
 
   test("should dissolve group with single child: multiple hierarchy", () => {
@@ -191,15 +191,35 @@ describe("parseSvgElement", () => {
     const groupElement1 = createMockSVGElement("g", {}, [rectElement]);
     const groupElement2 = createMockSVGElement("g", {}, [groupElement1]);
     const svgElement = createMockSVGElement("svg", {}, [groupElement2]);
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
     expect(shapes).toHaveLength(1);
-    expect(shapes[0].type).toBe("rectangle");
+    expect(shapes[0].type).toBe("rounded_rectangle");
+  });
+
+  test("should dissolve group with single child: dissolve child group", () => {
+    const rectElement1 = createMockSVGElement("rect", {
+      x: "10",
+      y: "20",
+      width: "100",
+      height: "80",
+      fill: "blue",
+    });
+    const rectElement2 = { ...rectElement1, x: "40" };
+
+    const groupElement1 = createMockSVGElement("g", {}, [rectElement1]);
+    const groupElement2 = createMockSVGElement("g", {}, [groupElement1, rectElement2]);
+    const svgElement = createMockSVGElement("svg", {}, [groupElement2]);
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
+    expect(shapes).toHaveLength(3);
+    expect(shapes[0].type).toBe("group");
+    expect(shapes[1].parentId).toBe(shapes[0].id);
+    expect(shapes[2].parentId).toBe(shapes[0].id);
   });
 
   test("should dissolve group with single child: empty group", () => {
     const groupElement = createMockSVGElement("g", {}, []);
     const svgElement = createMockSVGElement("svg", {}, [groupElement]);
-    const shapes = parseSvgElement(svgElement, getElementContext());
+    const shapes = parseSvgElement(svgElement, getElementContext(), () => {});
     expect(shapes).toHaveLength(0);
   });
 });

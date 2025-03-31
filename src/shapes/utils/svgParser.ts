@@ -21,36 +21,45 @@ import { getCurveSplineBounds } from "../../utils/geometry";
 import { hexToColor, parseRGBA } from "../../utils/color";
 import { arcToCubicCurves } from "../../utils/arc"; // Import utility for arc conversion
 import { getCommonStruct, resizeShape } from "..";
+import { RoundedRectangleShape } from "../polygons/roundedRectangle";
+import { TextShape } from "../text";
 
 /**
  * Parse SVG file and convert to shape data
  * @param file SVG file
  * @returns Promise that resolves with an array of shape data objects
  */
-export async function parseSvgFile(file: File | Blob): Promise<Shape[]> {
+export async function parseSvgFile(file: File | Blob): Promise<[Shape[], Map<string, string>]> {
   try {
     const text = await readFileAsText(file);
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(text, "image/svg+xml");
     const svgElement = svgDoc.documentElement as unknown as SVGElement;
-    return parseSvgElement(
-      svgElement,
-      getElementContext(svgElement, undefined, {
-        // Set default style of SVG elements
-        style: {
-          fill: true,
-          fillGlobalAlpha: 1,
-          fillStyle: "rgb(0, 0, 0)",
-          lineCap: "butt",
-          lineDash: [],
-          lineJoin: "bevel",
-          lineWidth: 1,
-          stroke: true,
-          strokeGlobalAlpha: 1,
-          strokeStyle: "rgb(0, 0, 0)",
+    const textContentMap = new Map<string, string>();
+    return [
+      parseSvgElement(
+        svgElement,
+        getElementContext(svgElement, undefined, {
+          // Set default style of SVG elements
+          style: {
+            fill: true,
+            fillGlobalAlpha: 1,
+            fillStyle: "rgb(0, 0, 0)",
+            lineCap: "butt",
+            lineDash: [],
+            lineJoin: "bevel",
+            lineWidth: 1,
+            stroke: true,
+            strokeGlobalAlpha: 1,
+            strokeStyle: "rgb(0, 0, 0)",
+          },
+        }),
+        (id: string, val: string) => {
+          textContentMap.set(id, val);
         },
-      }),
-    );
+      ),
+      textContentMap,
+    ];
   } catch (err) {
     console.error("SVG import error:", err);
     throw err;
@@ -195,21 +204,25 @@ function getElementContext(element: SVGElement, id: string | undefined, srcConte
  * @param context Element context
  * @returns Array of shape data objects
  */
-export function parseSvgElement(element: SVGElement, context: ElementContext): Shape[] {
+export function parseSvgElement(
+  element: SVGElement,
+  context: ElementContext,
+  setTextContent: (id: string, val: string) => void,
+): Shape[] {
   if (element.tagName.toLowerCase() === "svg") {
     // Process SVG root element
     const shapes: Shape[] = [];
     Array.from(element.children).forEach((child) => {
-      const childShapes = parseSvgElement(child as SVGElement, context);
+      const childShapes = parseSvgElement(child as SVGElement, context, setTextContent);
       shapes.push(...childShapes);
     });
     return shapes;
   } else if (element.tagName.toLowerCase() === "g") {
     // Process group element
-    return handleGroupElement(element as SVGGElement, context);
+    return handleGroupElement(element as SVGGElement, context, setTextContent);
   } else {
     // Process regular shape element
-    const shape = convertElementToShape(element, context);
+    const shape = convertElementToShape(element, context, setTextContent);
     return shape ? [shape] : [];
   }
 }
@@ -220,14 +233,19 @@ export function parseSvgElement(element: SVGElement, context: ElementContext): S
  * @param context Element context
  * @returns Array of shape data objects. The first element is the target shape, followed by its children.
  */
-function handleGroupElement(groupElement: SVGGElement, context: ElementContext): Shape[] {
-  const groupContext = getElementContext(groupElement, undefined, context);
+function handleGroupElement(
+  groupElement: SVGGElement,
+  context: ElementContext,
+  setTextContent: (id: string, val: string) => void,
+): Shape[] {
+  const groupId = generateId();
+  const groupContext = getElementContext(groupElement, groupId, context);
 
   // Parse all child elements first
   const childShapes: Shape[] = [];
   let directChildCount = 0;
   Array.from(groupElement.children).forEach((child) => {
-    const shapes = parseSvgElement(child as SVGElement, groupContext);
+    const shapes = parseSvgElement(child as SVGElement, groupContext, setTextContent);
     if (shapes.length > 0) directChildCount++;
     childShapes.push(...shapes);
   });
@@ -235,13 +253,13 @@ function handleGroupElement(groupElement: SVGGElement, context: ElementContext):
 
   // If there's only one direct child shape, dissolve the group
   if (directChildCount === 1) {
-    delete childShapes[0].parentId;
+    childShapes[0].parentId = context.parentId;
     return childShapes;
   }
 
   // Otherwise, create a group with multiple children
   let groupShape: Shape = {
-    id: generateId(),
+    id: groupId,
     findex: "",
     type: "group",
     p: { x: 0, y: 0 },
@@ -263,7 +281,11 @@ function handleGroupElement(groupElement: SVGGElement, context: ElementContext):
  * @param context Element context
  * @returns Shape data object or null if conversion fails
  */
-function convertElementToShape(element: SVGElement, context: ElementContext): Shape | undefined {
+function convertElementToShape(
+  element: SVGElement,
+  context: ElementContext,
+  setTextContent: (id: string, val: string) => void,
+): Shape | undefined {
   let shape: Shape | undefined;
 
   switch (element.tagName.toLowerCase()) {
@@ -282,7 +304,12 @@ function convertElementToShape(element: SVGElement, context: ElementContext): Sh
     case "path":
       shape = convertPathElement(element as SVGPathElement);
       break;
-    // Add more element types as needed
+    case "text": {
+      const [textShape, textContent] = convertTextElement(element);
+      setTextContent(textShape.id, textContent);
+      shape = textShape;
+      break;
+    }
   }
 
   if (shape) {
@@ -309,14 +336,16 @@ function convertRectElement(element: SVGRectElement): Shape {
   const ry = parseFloat(element.getAttribute("ry") || `${rx}`);
 
   // Create shape data
-  const shape: any = {
+  const shape: Omit<RoundedRectangleShape, "fill" | "stroke"> = {
     id: generateId(),
     findex: "",
-    type: rx > 0 || ry > 0 ? "rounded_rectangle" : "rectangle",
+    type: "rounded_rectangle",
     p: { x, y },
     rotation: 0,
     width,
     height,
+    rx: rx ?? 0,
+    ry: ry ?? 0,
   };
 
   return shape;
@@ -437,6 +466,10 @@ function convertPathElement(element: SVGPathElement): Shape | undefined {
  */
 function parseSvgElementStyle(element: SVGElement, parentStyle: ISvgStyle): ISvgStyle {
   const style: ISvgStyle = { ...parentStyle };
+
+  if (element.tagName.toLowerCase() === "text") {
+    return { ...style, fill: false, stroke: false };
+  }
 
   // Parse style attribute
   const styleAttr = element.getAttribute("style");
@@ -639,4 +672,29 @@ export function parseSegmentRawPathsAsSimplePaths(pathSegments: PathSegmentRaw[]
     return { path: simplePath.path };
   }
   return simplePath;
+}
+
+function convertTextElement(element: SVGElement): [Shape, string] {
+  const x = parseFloat(element.getAttribute("x") || "0");
+  const y = parseFloat(element.getAttribute("y") || "0");
+
+  // Extract text content
+  const textContent = element.textContent?.trim() || "";
+
+  // Create shape data
+  const shape: Omit<TextShape, "fill" | "stroke"> = {
+    id: generateId(),
+    findex: "",
+    type: "text",
+    p: { x, y },
+    rotation: 0,
+    // Calculating accurate size from the element is impossible.
+    width: 100,
+    height: 100,
+    maxWidth: 600,
+    vAlign: "top",
+    hAlign: "left",
+  };
+
+  return [shape, textContent];
 }
