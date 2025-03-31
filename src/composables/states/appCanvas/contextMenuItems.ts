@@ -1,17 +1,17 @@
 import { Shape } from "../../../models";
-import { createShape, getOutlinePaths } from "../../../shapes";
+import { createShape, getOutlinePaths, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
 import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
 import { FOLLY_SVG_PREFIX } from "../../../shapes/utils/shapeTemplateUtil";
 import { ImageBuilder, newImageBuilder, newSVGImageBuilder, SVGImageBuilder } from "../../imageBuilder";
-import { canGroupShapes, ShapeComposite } from "../../shapeComposite";
+import { canGroupShapes, newShapeComposite, ShapeComposite } from "../../shapeComposite";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { newShapeRenderer } from "../../shapeRenderer";
 import { TransitionValue } from "../core";
 import { ContextMenuItem, ContextMenuSeparatorItem } from "../types";
 import { AppCanvasStateContext, ContextMenuItemEvent } from "./core";
-import { IRectangle } from "okageo";
+import { AffineMatrix, IRectangle } from "okageo";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { i18n } from "../../../i18n";
 import { saveFileInWeb, getExportParamsForSelectedShapes, getExportParamsForSelectedRange } from "../../shapeExport";
@@ -23,6 +23,10 @@ import { RectPolygonShape } from "../../../shapes/rectPolygon";
 import { expandRect } from "../../../utils/geometry";
 import { LineShape } from "../../../shapes/line";
 import { generateKeyBetweenAllowSame } from "../../../utils/findex";
+import { ImageShape, isImageShape } from "../../../shapes/image";
+import { parseSvgFile } from "../../../shapes/utils/svgParser";
+import { DocOutput } from "../../../models/document";
+import { calcOriginalDocSize, getInitialOutput } from "../../../utils/textEditor";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -121,6 +125,13 @@ export const CONTEXT_MENU_ITEM_SRC = {
           key: "EXPORT_RANGE_AS_SVG",
         },
       ],
+    };
+  },
+
+  get PARSE_SVG() {
+    return {
+      label: i18n.t("contextmenu.import.parsesvg"),
+      key: "PARSE_SVG",
     };
   },
 
@@ -232,6 +243,7 @@ export function getMenuItemsForSelectedShapes(
     ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH,
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+    ...(shapes.some((s) => isSvgImageShape(s)) ? [CONTEXT_MENU_ITEM_SRC.PARSE_SVG] : []),
     CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
     CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_SHAPES,
     CONTEXT_MENU_ITEM_SRC.EXPORT_SELECTED_RANGE,
@@ -283,6 +295,10 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.UNLOCK.key: {
       unlockShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.PARSE_SVG.key: {
+      parseSvgFileFromShapes(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG.key:
@@ -597,4 +613,55 @@ function duplicateSelectedShapesAsPaths(ctx: AppCanvasStateContext) {
 
   ctx.addShapes(shapes);
   ctx.multiSelectShapes(shapes.map((s) => s.id));
+}
+
+function isSvgImageShape(shape: Shape): shape is ImageShape & { assetId: string } {
+  return isImageShape(shape) && !!shape.assetId?.toLowerCase().endsWith(".svg");
+}
+
+async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void> {
+  const assetAPI = ctx.assetAPI;
+  if (!assetAPI.enabled) return;
+  const ids = Object.keys(ctx.getSelectedShapeIdMap());
+  if (ids.length === 0) return;
+
+  const newShapes: Shape[] = [];
+  const newDocMap: Record<string, DocOutput> = {};
+  const shapeComposite = ctx.getShapeComposite();
+  const imageShapes = ids.map((id) => shapeComposite.shapeMap[id]).filter((s) => s && isSvgImageShape(s));
+  let findexFrom = ctx.createLastIndex();
+  for (const s of imageShapes) {
+    const data = await assetAPI.loadAsset(s.assetId);
+    if (!data) return;
+    const [shapes, textMap] = await parseSvgFile(data);
+    shapes.forEach((shape) => {
+      const text = textMap.get(shape.id);
+      let patchForDoc: Partial<Shape> | undefined;
+      if (text) {
+        const doc = [{ insert: text }, ...getInitialOutput({ direction: "top", align: "left" })];
+        newDocMap[shape.id] = doc;
+        // Adjust shape size based on text size.
+        // This cannot reproduce the original size, but it's better than nothing.
+        const renderCtx = ctx.getRenderCtx();
+        const resizeOnTextEditInfo = shouldResizeOnTextEdit(shapeComposite.getShapeStruct, shape);
+        if (renderCtx && resizeOnTextEditInfo?.maxWidth) {
+          const size = calcOriginalDocSize(doc, renderCtx, resizeOnTextEditInfo.maxWidth);
+          patchForDoc = resizeOnTextEdit(shapeComposite.getShapeStruct, shape, size);
+        }
+      }
+
+      const findex = generateKeyBetweenAllowSame(findexFrom, null);
+      newShapes.push({ ...shape, ...patchForDoc, findex });
+      findexFrom = findex;
+    });
+  }
+  if (newShapes.length === 0) return;
+
+  const targetRect = shapeComposite.getWrapperRectForShapes(imageShapes);
+  const sc = newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: newShapes });
+  const newRect = sc.getWrapperRectForShapes(newShapes);
+  const affine: AffineMatrix = [1, 0, 0, 1, targetRect.x - newRect.x + 20, targetRect.y - newRect.y + 20];
+  const adjusted = newShapes.map((s) => ({ ...s, ...sc.transformShape(s, affine) }));
+  ctx.addShapes(adjusted, newDocMap);
+  ctx.clearAllSelected();
 }
