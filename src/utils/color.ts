@@ -46,14 +46,14 @@ export function parseHSVA(str: string): HSVA | undefined {
   };
 }
 
-export function parseRGBA(str: string): RGBA | undefined {
-  const splited = str.replace(/ /g, "").match(/rgba\((.+),(.+),(.+),(.+)\)/);
-  if (!splited || splited.length < 5) return;
+export function parseRGBA(str: string, defaultAlpha = 1): RGBA | undefined {
+  const splited = str.replace(/ /g, "").match(/rgba?\((.+),(.+),(.+),(.+)\)/);
+  if (!splited || splited.length < 4) return;
   return {
     r: clamp(0, 255, parseFloat(splited[1])),
     g: clamp(0, 255, parseFloat(splited[2])),
     b: clamp(0, 255, parseFloat(splited[3])),
-    a: clamp(0, 1, parseFloat(splited[4])),
+    a: splited[4] ? clamp(0, 1, parseFloat(splited[4])) : defaultAlpha,
   };
 }
 
@@ -147,16 +147,16 @@ export function colorToHex(color: Color): string {
   return "#" + componentToHex(color.r) + componentToHex(color.g) + componentToHex(color.b);
 }
 
-export function hexToColor(hex: string): Color {
+export function hexToColor(hex: string, alpha = 1): Color {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
         r: parseInt(result[1], 16),
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16),
-        a: 1,
+        a: alpha,
       }
-    : { r: 0, g: 0, b: 0, a: 1 };
+    : { r: 0, g: 0, b: 0, a: alpha };
 }
 
 /**
