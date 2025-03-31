@@ -231,6 +231,7 @@ function handleGroupElement(groupElement: SVGGElement, context: ElementContext):
     if (shapes.length > 0) directChildCount++;
     childShapes.push(...shapes);
   });
+  if (directChildCount === 0) return [];
 
   // If there's only one direct child shape, dissolve the group
   if (directChildCount === 1) {

@@ -174,12 +174,33 @@ describe("parseSvgElement", () => {
 
     const groupElement = createMockSVGElement("g", {}, [rectElement]);
     const svgElement = createMockSVGElement("svg", {}, [groupElement]);
-
     const shapes = parseSvgElement(svgElement, getElementContext());
-
-    // Should have 1 shape (the rect) since the group is dissolved
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("rectangle");
+  });
+
+  test("should dissolve group with single child: multiple hierarchy", () => {
+    const rectElement = createMockSVGElement("rect", {
+      x: "10",
+      y: "20",
+      width: "100",
+      height: "80",
+      fill: "blue",
+    });
+
+    const groupElement1 = createMockSVGElement("g", {}, [rectElement]);
+    const groupElement2 = createMockSVGElement("g", {}, [groupElement1]);
+    const svgElement = createMockSVGElement("svg", {}, [groupElement2]);
+    const shapes = parseSvgElement(svgElement, getElementContext());
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].type).toBe("rectangle");
+  });
+
+  test("should dissolve group with single child: empty group", () => {
+    const groupElement = createMockSVGElement("g", {}, []);
+    const svgElement = createMockSVGElement("svg", {}, [groupElement]);
+    const shapes = parseSvgElement(svgElement, getElementContext());
+    expect(shapes).toHaveLength(0);
   });
 });
 
