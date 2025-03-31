@@ -8,8 +8,9 @@ import {
   multi,
   sub,
   getSymmetry,
+  multiAffine,
 } from "okageo";
-import { Shape, Color, CommonStyle, StrokeStyle, FillStyle } from "../../models";
+import { Shape, Color, CommonStyle } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
 import { createStrokeStyle } from "../../utils/strokeStyle";
 import { generateUuid } from "../../utils/random";
@@ -19,6 +20,7 @@ import { shiftBezierCurveControl } from "../../utils/path";
 import { getCurveSplineBounds } from "../../utils/geometry";
 import { hexToColor, parseRGBA } from "../../utils/color";
 import { arcToCubicCurves } from "../../utils/arc"; // Import utility for arc conversion
+import { getCommonStruct, resizeShape } from "..";
 
 /**
  * Parse SVG file and convert to shape data
@@ -31,7 +33,24 @@ export async function parseSvgFile(file: File | Blob): Promise<Shape[]> {
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(text, "image/svg+xml");
     const svgElement = svgDoc.documentElement as unknown as SVGElement;
-    return parseSvgElement(svgElement);
+    return parseSvgElement(
+      svgElement,
+      getElementContext(svgElement, undefined, {
+        // Set default style of SVG elements
+        style: {
+          fill: true,
+          fillGlobalAlpha: 1,
+          fillStyle: "rgb(0, 0, 0)",
+          lineCap: "butt",
+          lineDash: [],
+          lineJoin: "bevel",
+          lineWidth: 1,
+          stroke: true,
+          strokeGlobalAlpha: 1,
+          strokeStyle: "rgb(0, 0, 0)",
+        },
+      }),
+    );
   } catch (err) {
     console.error("SVG import error:", err);
     throw err;
@@ -61,32 +80,19 @@ function generateId(): string {
 }
 
 function getCommonStyle(style: ISvgStyle): CommonStyle {
-  let fill: FillStyle;
-  let stroke: StrokeStyle;
+  const fill = createFillStyle({
+    disabled: !style.fill,
+    color: convertSvgColorToShapeColor(style.fillStyle, style.fillGlobalAlpha),
+  });
 
-  // Apply fill style
-  if (style.fill) {
-    fill = {
-      disabled: !style.fill,
-      color: convertSvgColorToShapeColor(style.fillStyle, style.fillGlobalAlpha),
-    };
-  } else {
-    fill = createFillStyle();
-  }
-
-  // Apply stroke style
-  if (style.stroke) {
-    stroke = {
-      disabled: !style.stroke,
-      color: convertSvgColorToShapeColor(style.strokeStyle, style.strokeGlobalAlpha),
-      width: style.lineWidth,
-      dash: convertSvgLineDashToShapeDash(style.lineDash),
-      lineCap: style.lineCap as CanvasLineCap,
-      lineJoin: style.lineJoin as CanvasLineJoin,
-    };
-  } else {
-    stroke = createStrokeStyle();
-  }
+  const stroke = createStrokeStyle({
+    disabled: !style.stroke,
+    color: convertSvgColorToShapeColor(style.strokeStyle, style.strokeGlobalAlpha),
+    width: style.lineWidth,
+    dash: convertSvgLineDashToShapeDash(style.lineDash),
+    lineCap: style.lineCap as CanvasLineCap,
+    lineJoin: style.lineJoin as CanvasLineJoin,
+  });
 
   return { fill, stroke };
 }
@@ -163,59 +169,47 @@ function convertSvgLineDashToShapeDash(lineDash: number[]): "solid" | "dot" | "s
   return "long";
 }
 
-/**
- * Apply an affine transform to a shape
- * TODO: Should proc "resize" method of the shape's struct
- * @param shape Shape data object
- * @param affine Affine matrix
- */
-export function applyTransformToShape(shape: Shape, affine: AffineMatrix): void {
-  // Extract translation, rotation, and scale from the affine matrix
-  const translation = { x: affine[4], y: affine[5] };
-  const rotation = Math.atan2(affine[1], affine[0]);
+type ElementContext = {
+  transform?: AffineMatrix;
+  style: ISvgStyle;
+  parentId?: string;
+};
 
-  // Apply translation to position
-  shape.p = {
-    x: shape.p.x + translation.x,
-    y: shape.p.y + translation.y,
+function getElementContext(element: SVGElement, id: string | undefined, srcContext: ElementContext): ElementContext {
+  const t = element.getAttribute("transform");
+  const transform = t ? parseTransform(t) : undefined;
+
+  return {
+    transform:
+      transform && srcContext.transform
+        ? multiAffine(srcContext.transform, transform)
+        : (transform ?? srcContext.transform),
+    style: parseSvgElementStyle(element, srcContext.style),
+    parentId: id,
   };
-
-  // Apply rotation (combine with existing rotation)
-  shape.rotation = (shape.rotation || 0) + rotation;
-
-  // Handle scaling for specific shape types
-  if ("width" in shape && "height" in shape) {
-    // Calculate scale factors from the affine matrix
-    const scaleX = Math.sqrt(affine[0] * affine[0] + affine[1] * affine[1]);
-    const scaleY = Math.sqrt(affine[2] * affine[2] + affine[3] * affine[3]);
-
-    // Apply scaling
-    (shape as any).width *= scaleX;
-    (shape as any).height *= scaleY;
-  }
 }
 
 /**
  * Parse SVG element and convert to shape data
  * @param element SVG element
- * @param parentId Parent shape ID
+ * @param context Element context
  * @returns Array of shape data objects
  */
-export function parseSvgElement(element: SVGElement, parentId?: string): Shape[] {
+export function parseSvgElement(element: SVGElement, context: ElementContext): Shape[] {
   if (element.tagName.toLowerCase() === "svg") {
     // Process SVG root element
     const shapes: Shape[] = [];
     Array.from(element.children).forEach((child) => {
-      const childShapes = parseSvgElement(child as SVGElement, parentId);
+      const childShapes = parseSvgElement(child as SVGElement, context);
       shapes.push(...childShapes);
     });
     return shapes;
   } else if (element.tagName.toLowerCase() === "g") {
     // Process group element
-    return handleGroupElement(element as SVGGElement, parentId);
+    return handleGroupElement(element as SVGGElement, context);
   } else {
     // Process regular shape element
-    const shape = convertElementToShape(element, parentId);
+    const shape = convertElementToShape(element, context);
     return shape ? [shape] : [];
   }
 }
@@ -223,74 +217,53 @@ export function parseSvgElement(element: SVGElement, parentId?: string): Shape[]
 /**
  * Handle SVG group element
  * @param groupElement SVG group element
- * @param parentId Parent shape ID
- * @returns Array of shape data objects
+ * @param context Element context
+ * @returns Array of shape data objects. The first element is the target shape, followed by its children.
  */
-function handleGroupElement(groupElement: SVGGElement, parentId?: string): Shape[] {
+function handleGroupElement(groupElement: SVGGElement, context: ElementContext): Shape[] {
+  const groupContext = getElementContext(groupElement, undefined, context);
+
   // Parse all child elements first
   const childShapes: Shape[] = [];
+  let directChildCount = 0;
   Array.from(groupElement.children).forEach((child) => {
-    const shapes = parseSvgElement(child as SVGElement);
+    const shapes = parseSvgElement(child as SVGElement, groupContext);
+    if (shapes.length > 0) directChildCount++;
     childShapes.push(...shapes);
   });
 
-  // If there's only one child shape, dissolve the group
-  if (childShapes.length === 1) {
-    const singleChild = childShapes[0];
-
-    // Apply group transform to the child if present
-    const transform = groupElement.getAttribute("transform");
-    if (transform) {
-      const affine = parseTransform(transform);
-      // Apply the transform to the child shape
-      // TODO: Have to regard multiple nests of transform
-      applyTransformToShape(singleChild, affine);
-    }
-
-    // TODO: Have to apply styles to children
-
-    // Set parent ID
-    singleChild.parentId = parentId;
-
-    // Return just the child shape with the group's attributes applied
-    return [singleChild];
+  // If there's only one direct child shape, dissolve the group
+  if (directChildCount === 1) {
+    delete childShapes[0].parentId;
+    return childShapes;
   }
 
   // Otherwise, create a group with multiple children
-  const groupShape: Shape = {
+  let groupShape: Shape = {
     id: generateId(),
     findex: "",
     type: "group",
     p: { x: 0, y: 0 },
     rotation: 0,
-    parentId,
+    parentId: context.parentId,
   };
 
-  // Apply group transform if present
-  const transform = groupElement.getAttribute("transform");
-  if (transform) {
-    const affine = parseTransform(transform);
-    // Extract rotation for the group
-    groupShape.rotation = Math.atan2(affine[1], affine[0]);
+  if (groupContext.transform) {
+    const patch = resizeShape(getCommonStruct, groupShape, groupContext.transform);
+    groupShape = { ...groupShape, ...patch };
   }
 
-  // Set parent ID for all child shapes
-  childShapes.forEach((shape) => {
-    shape.parentId = groupShape.id;
-  });
-
-  // Return the group shape followed by all its children
   return [groupShape, ...childShapes];
 }
 
 /**
  * Convert SVG element to shape data
  * @param element SVG element
- * @param parentId Parent shape ID
+ * @param context Element context
  * @returns Shape data object or null if conversion fails
  */
-function convertElementToShape(element: SVGElement, parentId?: string): Shape | null {
-  let shape: Shape | null = null;
+function convertElementToShape(element: SVGElement, context: ElementContext): Shape | undefined {
+  let shape: Shape | undefined;
 
   switch (element.tagName.toLowerCase()) {
     case "rect":
@@ -312,14 +285,10 @@ function convertElementToShape(element: SVGElement, parentId?: string): Shape | 
   }
 
   if (shape) {
-    shape.parentId = parentId;
-
-    // Apply transform if present
-    const transform = element.getAttribute("transform");
-    if (transform) {
-      const affine = parseTransform(transform);
-      applyTransformToShape(shape, affine);
-    }
+    const shapeContext = getElementContext(element, undefined, context);
+    const style = getCommonStyle(shapeContext.style);
+    const patch = shapeContext.transform ? resizeShape(getCommonStruct, shape, shapeContext.transform) : undefined;
+    shape = { ...shape, ...style, ...patch, parentId: context.parentId };
   }
 
   return shape;
@@ -347,7 +316,6 @@ function convertRectElement(element: SVGRectElement): Shape {
     rotation: 0,
     width,
     height,
-    ...getCommonStyle(parseSvgElementStyle(element)),
   };
 
   return shape;
@@ -372,7 +340,6 @@ function convertCircleElement(element: SVGCircleElement): Shape {
     rotation: 0,
     rx: r,
     ry: r,
-    ...getCommonStyle(parseSvgElementStyle(element)),
   };
 
   return shape;
@@ -398,7 +365,6 @@ function convertEllipseElement(element: SVGEllipseElement): Shape {
     rotation: 0,
     rx,
     ry,
-    ...getCommonStyle(parseSvgElementStyle(element)),
   };
 
   return shape;
@@ -423,7 +389,6 @@ function convertLineElement(element: SVGLineElement): Shape {
     p: { x: x1, y: y1 },
     q: { x: x2, y: y2 },
     rotation: 0,
-    ...getCommonStyle(parseSvgElementStyle(element)),
   };
 
   return shape;
@@ -434,9 +399,9 @@ function convertLineElement(element: SVGLineElement): Shape {
  * @param element SVG path element
  * @returns Shape data object or null if conversion fails
  */
-function convertPathElement(element: SVGPathElement): Shape | null {
+function convertPathElement(element: SVGPathElement): Shape | undefined {
   const dAttr = element.getAttribute("d");
-  if (!dAttr) return null;
+  if (!dAttr) return;
 
   const pathSegments = parsePathSegmentRaws(dAttr);
   const path = parseSegmentRawPathsAsSimplePaths(pathSegments);
@@ -449,7 +414,7 @@ function convertPathElement(element: SVGPathElement): Shape | null {
     curves: path.curves?.map((c) => (c ? shiftBezierCurveControl(c, d) : undefined)),
   };
 
-  const shape: LinePolygonShape = {
+  const shape: Omit<LinePolygonShape, "fill" | "stroke"> = {
     id: generateId(),
     findex: "",
     type: "line_polygon",
@@ -459,7 +424,6 @@ function convertPathElement(element: SVGPathElement): Shape | null {
     rotation: 0,
     polygonType: pathSegments.at(-1)?.[0].toLocaleLowerCase() === "z" ? undefined : 1,
     path: normalizedPath,
-    ...getCommonStyle(parseSvgElementStyle(element)),
   };
 
   return shape;
@@ -470,19 +434,8 @@ function convertPathElement(element: SVGPathElement): Shape | null {
  * @param element SVG element
  * @returns SVG style information
  */
-function parseSvgElementStyle(element: SVGElement): ISvgStyle {
-  const style: ISvgStyle = {
-    fill: false,
-    fillGlobalAlpha: 1,
-    fillStyle: "",
-    lineCap: "butt",
-    lineDash: [],
-    lineJoin: "bevel",
-    lineWidth: 1,
-    stroke: false,
-    strokeGlobalAlpha: 1,
-    strokeStyle: "",
-  };
+function parseSvgElementStyle(element: SVGElement, parentStyle: ISvgStyle): ISvgStyle {
+  const style: ISvgStyle = { ...parentStyle };
 
   // Parse style attribute
   const styleAttr = element.getAttribute("style");

@@ -1,6 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { parseSvgElement, applyTransformToShape, parseSegmentRawPathsAsSimplePaths } from "./svgParser";
-import { Shape } from "../../models";
+import { parseSvgElement, parseSegmentRawPathsAsSimplePaths } from "./svgParser";
 import { RectangleShape } from "../rectangle";
 import { LinePolygonShape } from "../polygons/linePolygon";
 import { parsePathSegmentRaws } from "okageo";
@@ -17,6 +16,21 @@ const createMockSVGElement = (
   } as unknown as SVGElement;
 };
 
+const getElementContext = () => ({
+  style: {
+    fill: false,
+    fillGlobalAlpha: 1,
+    fillStyle: "",
+    lineCap: "butt",
+    lineDash: [],
+    lineJoin: "bevel",
+    lineWidth: 1,
+    stroke: false,
+    strokeGlobalAlpha: 1,
+    strokeStyle: "",
+  },
+});
+
 describe("parseSvgElement", () => {
   test("should parse SVG element with rectangle", () => {
     const rectElement = createMockSVGElement("rect", {
@@ -29,7 +43,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [rectElement]);
 
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
 
     expect(shapes).toHaveLength(1);
     const shape = shapes[0] as RectangleShape;
@@ -49,7 +63,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [circleElement]);
 
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
 
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("ellipse");
@@ -69,7 +83,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [ellipseElement]);
 
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
 
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("ellipse");
@@ -90,7 +104,7 @@ describe("parseSvgElement", () => {
 
     const svgElement = createMockSVGElement("svg", {}, [lineElement]);
 
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
 
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("line");
@@ -107,7 +121,7 @@ describe("parseSvgElement", () => {
     });
 
     const svgElement = createMockSVGElement("svg", {}, [pathElement]);
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
     expect(shapes).toHaveLength(1);
     const shape = shapes[0] as LinePolygonShape;
     expect(shape.type).toBe("line_polygon");
@@ -141,7 +155,7 @@ describe("parseSvgElement", () => {
     const groupElement = createMockSVGElement("g", {}, [rectElement, circleElement]);
     const svgElement = createMockSVGElement("svg", {}, [groupElement]);
 
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
 
     // Should have 3 shapes: 1 group + 2 children
     expect(shapes.length).toBeGreaterThan(1);
@@ -161,45 +175,11 @@ describe("parseSvgElement", () => {
     const groupElement = createMockSVGElement("g", {}, [rectElement]);
     const svgElement = createMockSVGElement("svg", {}, [groupElement]);
 
-    const shapes = parseSvgElement(svgElement);
+    const shapes = parseSvgElement(svgElement, getElementContext());
 
     // Should have 1 shape (the rect) since the group is dissolved
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("rectangle");
-  });
-});
-
-describe("applyTransformToShape", () => {
-  test("should apply transform to shape", () => {
-    const shape: Shape = {
-      id: "test",
-      findex: "",
-      type: "rectangle",
-      p: { x: 10, y: 20 },
-      rotation: 0,
-    };
-
-    // Add width and height properties
-    (shape as any).width = 100;
-    (shape as any).height = 80;
-
-    // Create an affine matrix for translation (50, 30) and rotation (45 degrees)
-    const angle = Math.PI / 4; // 45 degrees
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const affine: [number, number, number, number, number, number] = [cos, sin, -sin, cos, 50, 30];
-
-    applyTransformToShape(shape, affine);
-
-    // Check that the transform was applied
-    expect(shape.p.x).toBeCloseTo(10 + 50);
-    expect(shape.p.y).toBeCloseTo(20 + 30);
-    expect(shape.rotation).toBeCloseTo(angle);
-
-    // Check that scaling was applied
-    const scale = Math.sqrt(cos * cos + sin * sin);
-    expect((shape as any).width).toBeCloseTo(100 * scale);
-    expect((shape as any).height).toBeCloseTo(80 * scale);
   });
 });
 
@@ -305,16 +285,11 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
     expect(result1.curves![1]!.c2).toEqualPoint(expected.curves![1]!.c2);
   });
 
-  test.skip("should parse a path with arcs", () => {
-    const rawPath = parsePathSegmentRaws("M10,20 A10,10 0 0,1 30,40");
+  test("should parse a path with arcs", () => {
+    const rawPath = parsePathSegmentRaws("M10,20 A40,40 0 0,1 30,40");
     const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
-
-    expect(simplePath).toEqual({
-      path: [
-        { x: 10, y: 20 },
-        { x: 30, y: 40 },
-      ],
-    });
+    expect(simplePath.path[0]).toEqualPoint({ x: 10, y: 20 });
+    expect(simplePath.path.at(-1)!).toEqualPoint({ x: 30, y: 40 });
   });
 
   test("should handle an empty path", () => {
