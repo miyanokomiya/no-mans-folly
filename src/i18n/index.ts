@@ -68,7 +68,7 @@ const en = {
       "attach_vertices.desc": "Remotely attach all vertices to a shape.",
       parse_svg: "Parse SVG",
       "parse_svg.desc":
-        "Parse SVG and create shapes from it. Created shapes, especially text shapes, don't always match the original SVG.",
+        "Parse SVG and create shapes from it. Created shapes, especially texts, don't always match the original SVG.",
     },
 
     contextmenu: {

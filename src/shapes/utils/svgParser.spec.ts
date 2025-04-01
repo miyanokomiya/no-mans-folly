@@ -149,6 +149,25 @@ describe("parseSvgElement", () => {
     });
   });
 
+  test("should parse SVG element with path: begins without M command", () => {
+    const pathElement = createMockSVGElement("path", {
+      d: "L10,20 L100,20 L100,80",
+    });
+
+    const svgElement = createMockSVGElement("svg", {}, [pathElement]);
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+    expect(shapes).toHaveLength(1);
+    const shape = shapes[0] as LinePolygonShape;
+    expect(shape.type).toBe("line_polygon");
+    expect(shape.path).toEqual({
+      path: [
+        { x: 0, y: 0 },
+        { x: 90, y: 0 },
+        { x: 90, y: 60 },
+      ],
+    });
+  });
+
   test("should parse SVG element with path: multiple paths", () => {
     const pathElement = createMockSVGElement("path", {
       d: "M10,20 l10,0 l0,10Z M110,20 l20,0 l0,20Z",
