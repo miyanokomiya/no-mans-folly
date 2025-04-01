@@ -35,6 +35,8 @@ export type ParserContext = {
   generateId: () => string;
   getRenderingColor: (str: string) => Color | undefined;
   setTextContent: (id: string, val: string) => void;
+  getElementById: (id: string) => SVGElement | undefined;
+  useRouteSet: Set<string>;
 };
 
 /**
@@ -51,38 +53,61 @@ export async function parseSvgFile(
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(text, "image/svg+xml");
     const svgElement = svgDoc.documentElement as unknown as SVGElement;
-    const textContentMap = new Map<string, string>();
-    return [
-      parseSvgElement(
-        svgElement,
-        getElementContext(svgElement, undefined, {
-          // Set default style of SVG elements
-          style: {
-            fill: true,
-            fillGlobalAlpha: 1,
-            fillStyle: "rgb(0, 0, 0)",
-            lineCap: "butt",
-            lineDash: [],
-            lineJoin: "bevel",
-            lineWidth: 1,
-            stroke: false,
-            strokeGlobalAlpha: 1,
-            strokeStyle: "rgb(0, 0, 0)",
-          },
-        }),
-        {
-          ...parserContextPartial,
-          setTextContent: (id: string, val: string) => {
-            textContentMap.set(id, val);
-          },
-        },
-      ),
-      textContentMap,
-    ];
+    return parseSvgElementTree(svgElement, parserContextPartial);
   } catch (err) {
     console.error("SVG import error:", err);
     throw err;
   }
+}
+
+export function parseSvgElementTree(
+  svgElement: SVGElement,
+  parserContextPartial: Pick<ParserContext, "generateId" | "getRenderingColor">,
+): [Shape[], Map<string, string>] {
+  const textContentMap = new Map<string, string>();
+  const elementByIdMap = new Map<string, SVGElement>();
+  function step(elm: Element) {
+    const id = elm.getAttribute("id");
+    if (id) {
+      elementByIdMap.set(id, elm as SVGElement);
+    }
+    Array.from(elm.children).forEach((child) => {
+      step(child);
+    });
+  }
+  step(svgElement);
+
+  return [
+    parseSvgElement(
+      svgElement,
+      getElementContext(svgElement, undefined, {
+        // Set default style of SVG elements
+        style: {
+          fill: true,
+          fillGlobalAlpha: 1,
+          fillStyle: "rgb(0, 0, 0)",
+          lineCap: "butt",
+          lineDash: [],
+          lineJoin: "bevel",
+          lineWidth: 1,
+          stroke: false,
+          strokeGlobalAlpha: 1,
+          strokeStyle: "rgb(0, 0, 0)",
+        },
+      }),
+      {
+        ...parserContextPartial,
+        setTextContent: (id: string, val: string) => {
+          textContentMap.set(id, val);
+        },
+        getElementById: (id: string) => {
+          return elementByIdMap.get(id);
+        },
+        useRouteSet: new Set(),
+      },
+    ),
+    textContentMap,
+  ];
 }
 
 function getCommonStyle(style: ISvgStyle, getRenderingColor: ParserContext["getRenderingColor"]): CommonStyle {
@@ -174,10 +199,36 @@ export function parseSvgElement(element: SVGElement, context: ElementContext, pa
   } else if (element.tagName.toLowerCase() === "g") {
     // Process group element
     return handleGroupElement(element as SVGGElement, context, parserContext);
+  } else if (element.tagName.toLowerCase() === "use") {
+    // Process use element
+    return handleUseElement(element as SVGUseElement, context, parserContext);
   } else {
     // Process regular shape element
     return convertElementToShape(element, context, parserContext);
   }
+}
+
+function handleUseElement(element: SVGUseElement, context: ElementContext, parserContext: ParserContext): Shape[] {
+  const href = element.getAttribute("href");
+  if (!href) return [];
+
+  const targetId = href.slice(1);
+  // Check if the target element is already processed to avoid infinite loop
+  if (parserContext.useRouteSet.has(targetId)) return [];
+
+  const targetElm = parserContext.getElementById(targetId);
+  // If the target element is not found or the target element is a <use> element, no shapes are created
+  if (!targetElm || targetElm.tagName.toLowerCase() === "use") return [];
+
+  const cloned = targetElm.cloneNode(true) as SVGElement;
+  // Copy attributes from <use> element to the cloned element
+  for (const attr of element.attributes) {
+    cloned.setAttribute(attr.name, attr.value);
+  }
+  parserContext.useRouteSet.add(element.id);
+  const shapes = parseSvgElement(cloned, context, parserContext);
+  parserContext.useRouteSet.delete(element.id);
+  return shapes;
 }
 
 /**

@@ -1,21 +1,10 @@
 import { describe, test, expect } from "vitest";
-import { parseSvgElement, parseSegmentRawPathsAsSimplePaths, ParserContext } from "./svgParser";
+import { parseSvgElement, parseSegmentRawPathsAsSimplePaths, ParserContext, parseSvgElementTree } from "./svgParser";
 import { RectangleShape } from "../rectangle";
 import { LinePolygonShape } from "../polygons/linePolygon";
 import { parsePathSegmentRaws } from "okageo";
 import { parseRGBA } from "../../utils/color";
-
-const createMockSVGElement = (
-  tagName: string,
-  attributes: Record<string, string> = {},
-  children: SVGElement[] = [],
-): SVGElement => {
-  return {
-    tagName,
-    getAttribute: (name: string) => attributes[name] || null,
-    children,
-  } as unknown as SVGElement;
-};
+import { createSVGElement } from "../../utils/svgElements";
 
 const getElementContext = () => ({
   style: {
@@ -41,20 +30,25 @@ const getParserContext = (): ParserContext => {
     setTextContent: (id: string, val: string) => {
       textContentMap.set(id, val);
     },
+    getElementById: () => undefined,
+    useRouteSet: new Set(),
   };
 };
 
 describe("parseSvgElement", () => {
   test("should parse SVG element with rectangle", () => {
-    const rectElement = createMockSVGElement("rect", {
-      x: "10",
-      y: "20",
-      width: "100",
-      height: "80",
-      fill: "blue",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [rectElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "rect",
+        attributes: {
+          x: "10",
+          y: "20",
+          width: "100",
+          height: "80",
+          fill: "blue",
+        },
+      },
+    ]);
 
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
 
@@ -67,14 +61,17 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with circle", () => {
-    const circleElement = createMockSVGElement("circle", {
-      cx: "100",
-      cy: "100",
-      r: "50",
-      fill: "red",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [circleElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "circle",
+        attributes: {
+          cx: "100",
+          cy: "100",
+          r: "50",
+          fill: "red",
+        },
+      },
+    ]);
 
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
 
@@ -86,15 +83,18 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with ellipse", () => {
-    const ellipseElement = createMockSVGElement("ellipse", {
-      cx: "100",
-      cy: "100",
-      rx: "70",
-      ry: "50",
-      fill: "green",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [ellipseElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "ellipse",
+        attributes: {
+          cx: "100",
+          cy: "100",
+          rx: "70",
+          ry: "50",
+          fill: "green",
+        },
+      },
+    ]);
 
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
 
@@ -106,16 +106,19 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with line", () => {
-    const lineElement = createMockSVGElement("line", {
-      x1: "10",
-      y1: "20",
-      x2: "100",
-      y2: "80",
-      stroke: "black",
-      "stroke-width": "2",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [lineElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "line",
+        attributes: {
+          x1: "10",
+          y1: "20",
+          x2: "100",
+          y2: "80",
+          stroke: "black",
+          "stroke-width": "2",
+        },
+      },
+    ]);
 
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
 
@@ -128,12 +131,15 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with path", () => {
-    const pathElement = createMockSVGElement("path", {
-      d: "M10,20 L100,20 L100,80 L10,80 Z",
-      fill: "yellow",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [pathElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "path",
+        attributes: {
+          d: "M10,20 L100,20 L100,80 L10,80 Z",
+          fill: "yellow",
+        },
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(1);
     const shape = shapes[0] as LinePolygonShape;
@@ -150,11 +156,12 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with path: begins without M command", () => {
-    const pathElement = createMockSVGElement("path", {
-      d: "L10,20 L100,20 L100,80",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [pathElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "path",
+        attributes: { d: "L10,20 L100,20 L100,80" },
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(1);
     const shape = shapes[0] as LinePolygonShape;
@@ -169,11 +176,12 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with path: multiple paths", () => {
-    const pathElement = createMockSVGElement("path", {
-      d: "M10,20 l10,0 l0,10Z M110,20 l20,0 l0,20Z",
-    });
-
-    const svgElement = createMockSVGElement("svg", {}, [pathElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "path",
+        attributes: { d: "M10,20 l10,0 l0,10Z M110,20 l20,0 l0,20Z" },
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(2);
     const shape0 = shapes[0] as LinePolygonShape;
@@ -201,23 +209,33 @@ describe("parseSvgElement", () => {
   });
 
   test("should parse SVG element with group", () => {
-    const rectElement = createMockSVGElement("rect", {
-      x: "10",
-      y: "20",
-      width: "100",
-      height: "80",
-      fill: "blue",
-    });
-
-    const circleElement = createMockSVGElement("circle", {
-      cx: "150",
-      cy: "50",
-      r: "30",
-      fill: "red",
-    });
-
-    const groupElement = createMockSVGElement("g", {}, [rectElement, circleElement]);
-    const svgElement = createMockSVGElement("svg", {}, [groupElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "g",
+        attributes: {},
+        children: [
+          {
+            tag: "rect",
+            attributes: {
+              x: "10",
+              y: "20",
+              width: "100",
+              height: "80",
+              fill: "blue",
+            },
+          },
+          {
+            tag: "circle",
+            attributes: {
+              cx: "150",
+              cy: "50",
+              r: "30",
+              fill: "red",
+            },
+          },
+        ],
+      },
+    ]);
 
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
 
@@ -228,51 +246,94 @@ describe("parseSvgElement", () => {
   });
 
   test("should dissolve group with single child", () => {
-    const rectElement = createMockSVGElement("rect", {
-      x: "10",
-      y: "20",
-      width: "100",
-      height: "80",
-      fill: "blue",
-    });
-
-    const groupElement = createMockSVGElement("g", {}, [rectElement]);
-    const svgElement = createMockSVGElement("svg", {}, [groupElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "g",
+        attributes: {},
+        children: [
+          {
+            tag: "rect",
+            attributes: {
+              x: "10",
+              y: "20",
+              width: "100",
+              height: "80",
+              fill: "blue",
+            },
+          },
+        ],
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("rounded_rectangle");
   });
 
   test("should dissolve group with single child: multiple hierarchy", () => {
-    const rectElement = createMockSVGElement("rect", {
-      x: "10",
-      y: "20",
-      width: "100",
-      height: "80",
-      fill: "blue",
-    });
-
-    const groupElement1 = createMockSVGElement("g", {}, [rectElement]);
-    const groupElement2 = createMockSVGElement("g", {}, [groupElement1]);
-    const svgElement = createMockSVGElement("svg", {}, [groupElement2]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "g",
+        attributes: {},
+        children: [
+          {
+            tag: "g",
+            attributes: {},
+            children: [
+              {
+                tag: "rect",
+                attributes: {
+                  x: "10",
+                  y: "20",
+                  width: "100",
+                  height: "80",
+                  fill: "blue",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(1);
     expect(shapes[0].type).toBe("rounded_rectangle");
   });
 
   test("should dissolve group with single child: dissolve child group", () => {
-    const rectElement1 = createMockSVGElement("rect", {
-      x: "10",
-      y: "20",
-      width: "100",
-      height: "80",
-      fill: "blue",
-    });
-    const rectElement2 = { ...rectElement1, x: "40" };
-
-    const groupElement1 = createMockSVGElement("g", {}, [rectElement1]);
-    const groupElement2 = createMockSVGElement("g", {}, [groupElement1, rectElement2]);
-    const svgElement = createMockSVGElement("svg", {}, [groupElement2]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "g",
+        attributes: {},
+        children: [
+          {
+            tag: "g",
+            attributes: {},
+            children: [
+              {
+                tag: "rect",
+                attributes: {
+                  x: "10",
+                  y: "20",
+                  width: "100",
+                  height: "80",
+                  fill: "blue",
+                },
+              },
+            ],
+          },
+          {
+            tag: "rect",
+            attributes: {
+              x: "40",
+              y: "20",
+              width: "100",
+              height: "80",
+              fill: "blue",
+            },
+          },
+        ],
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(3);
     expect(shapes[0].type).toBe("group");
@@ -281,8 +342,13 @@ describe("parseSvgElement", () => {
   });
 
   test("should dissolve group with single child: empty group", () => {
-    const groupElement = createMockSVGElement("g", {}, []);
-    const svgElement = createMockSVGElement("svg", {}, [groupElement]);
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "g",
+        attributes: {},
+        children: [],
+      },
+    ]);
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(0);
   });
@@ -402,5 +468,78 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
     const simplePath = parseSegmentRawPathsAsSimplePaths(rawPath);
 
     expect(simplePath).toEqual({ path: [] });
+  });
+
+  test("should regard <use> element", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "defs",
+        attributes: {},
+        children: [
+          {
+            tag: "rect",
+            attributes: { id: "rect_0", x: "10", y: "20", width: "100", height: "80" },
+          },
+        ],
+      },
+      {
+        tag: "use",
+        attributes: { id: "use_0", href: "#rect_0", x: "100", y: "200" },
+      },
+      {
+        tag: "g",
+        attributes: {},
+        children: [
+          {
+            tag: "rect",
+            attributes: { id: "rect_1", x: "20", y: "30", width: "100", height: "80" },
+          },
+          {
+            tag: "use",
+            attributes: { id: "use_1", href: "#rect_0", width: "300" },
+          },
+        ],
+      },
+    ]);
+    const [shapes] = parseSvgElementTree(svgElement, getParserContext());
+    expect(shapes).toHaveLength(4);
+    expect(shapes[0].p).toEqualPoint({ x: 100, y: 200 });
+    expect((shapes[0] as RectangleShape).width).toEqual(100);
+    expect((shapes[0] as RectangleShape).height).toEqual(80);
+    expect(shapes[3].p).toEqualPoint({ x: 10, y: 20 });
+    expect((shapes[3] as RectangleShape).width).toEqual(300);
+    expect((shapes[3] as RectangleShape).height).toEqual(80);
+  });
+
+  test("should avoid circular dependencies of <use> elements", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "defs",
+        attributes: {},
+        children: [
+          {
+            tag: "g",
+            attributes: { id: "group" },
+            children: [
+              {
+                tag: "rect",
+                attributes: { id: "rect_1", x: "20", y: "30", width: "100", height: "80" },
+              },
+              {
+                tag: "use",
+                attributes: { id: "use_1", href: "#use_0", width: "300" },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        tag: "use",
+        attributes: { id: "use_0", href: "#group", x: "100", y: "200" },
+      },
+    ]);
+    const [shapes] = parseSvgElementTree(svgElement, getParserContext());
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].type).toBe("rounded_rectangle");
   });
 });
