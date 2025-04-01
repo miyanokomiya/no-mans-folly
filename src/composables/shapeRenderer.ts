@@ -228,7 +228,7 @@ function clipWithinGroup(
       const combinedPath = new Path2D();
       combinedPath.addPath(subRegion);
       combinedPath.addPath(wrapperRegion);
-      ctx.clip(combinedPath);
+      ctx.clip(combinedPath, "evenodd");
     });
   };
 

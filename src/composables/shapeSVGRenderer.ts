@@ -241,7 +241,7 @@ function clipWithinGroup(
 
       const clipPathId = `clip-${groupShape.id}-${id}`;
       const clipPath = createSVGElement("clipPath", { id: clipPathId });
-      const pathElm = createSVGElement("path", { d: `${pathStr} ${wrapperPathStr}` });
+      const pathElm = createSVGElement("path", { d: `${pathStr} ${wrapperPathStr}`, "clip-rule": "evenodd" });
       clipPath.appendChild(pathElm);
       if (lastClipPath) {
         clipPath.setAttribute("clip-path", `url(#${lastClipPath.id})`);
