@@ -486,6 +486,7 @@ async function handleFileImport(ctx: AppCanvasStateContext, files: FileList | Fi
     });
   });
   ctx.addShapes(shapes);
+  ctx.multiSelectShapes(shapes.map((s) => s.id));
 }
 
 async function loadFollySvgFiles(ctx: AppCanvasStateContext, follySvgFiles: File[], point: IVec2) {
