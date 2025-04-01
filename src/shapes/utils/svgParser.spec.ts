@@ -484,7 +484,7 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
       },
       {
         tag: "use",
-        attributes: { id: "use_0", href: "#rect_0", x: "100", y: "200" },
+        attributes: { id: "use_0", href: "#rect_0", x: "100", y: "200", fill: "none" },
       },
       {
         tag: "g",
@@ -503,11 +503,13 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
     ]);
     const [shapes] = parseSvgElementTree(svgElement, getParserContext());
     expect(shapes).toHaveLength(4);
-    expect(shapes[0].p).toEqualPoint({ x: 100, y: 200 });
+    expect(shapes[0].p).toEqualPoint({ x: 110, y: 220 });
+    expect((shapes[0] as RectangleShape).fill.disabled).toEqual(true);
     expect((shapes[0] as RectangleShape).width).toEqual(100);
     expect((shapes[0] as RectangleShape).height).toEqual(80);
     expect(shapes[3].p).toEqualPoint({ x: 10, y: 20 });
-    expect((shapes[3] as RectangleShape).width).toEqual(300);
+    expect((shapes[3] as RectangleShape).fill.disabled).toEqual(false);
+    expect((shapes[3] as RectangleShape).width).toEqual(100);
     expect((shapes[3] as RectangleShape).height).toEqual(80);
   });
 

@@ -221,12 +221,36 @@ function handleUseElement(element: SVGUseElement, context: ElementContext, parse
   if (!targetElm || targetElm.tagName.toLowerCase() === "use") return [];
 
   const cloned = targetElm.cloneNode(true) as SVGElement;
-  // Copy attributes from <use> element to the cloned element
+  // Inherit x, y, width, height from <use> element.
+  // Inherit other attributes only if they are not already set.
+  // ref: https://www.w3.org/TR/SVG/struct.html#UseElement
   for (const attr of element.attributes) {
-    cloned.setAttribute(attr.name, attr.value);
+    if (!["x", "y", "width", "height"].includes(attr.name) && !cloned.hasAttribute(attr.name)) {
+      cloned.setAttribute(attr.name, attr.value);
+    }
   }
+
+  // Apply the transform attribute of the <use> element to the cloned element
+  // Ignore width and height that only affect a viewport of certain elements such as <svg> and <symbol>.
+  // => Since all elements are converted to shapes, viewports don't matter much.
+  let nextContext = context;
+  if (element.hasAttribute("x") || element.hasAttribute("y")) {
+    const t: AffineMatrix = [
+      1,
+      0,
+      0,
+      1,
+      parseFloat(element.getAttribute("x") ?? "0"),
+      parseFloat(element.getAttribute("y") ?? "0"),
+    ];
+    nextContext = {
+      ...nextContext,
+      transform: nextContext.transform ? multiAffine(nextContext.transform, t) : t,
+    };
+  }
+
   parserContext.useRouteSet.add(element.id);
-  const shapes = parseSvgElement(cloned, context, parserContext);
+  const shapes = parseSvgElement(cloned, nextContext, parserContext);
   parserContext.useRouteSet.delete(element.id);
   return shapes;
 }
