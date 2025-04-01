@@ -176,8 +176,7 @@ export function parseSvgElement(element: SVGElement, context: ElementContext, pa
     return handleGroupElement(element as SVGGElement, context, parserContext);
   } else {
     // Process regular shape element
-    const shape = convertElementToShape(element, context, parserContext);
-    return shape ? [shape] : [];
+    return convertElementToShape(element, context, parserContext);
   }
 }
 
@@ -229,47 +228,51 @@ function handleGroupElement(groupElement: SVGGElement, context: ElementContext, 
  * Convert SVG element to shape data
  * @param element SVG element
  * @param context Element context
- * @returns Shape data object or null if conversion fails
+ * @returns Array of shape data objects
  */
-function convertElementToShape(
-  element: SVGElement,
-  context: ElementContext,
-  parserContext: ParserContext,
-): Shape | undefined {
-  let shape: Shape | undefined;
+function convertElementToShape(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
+  let shapes: Shape[] = [];
 
   switch (element.tagName.toLowerCase()) {
     case "rect":
-      shape = convertRectElement(element, parserContext);
+      shapes = [convertRectElement(element, parserContext)];
       break;
     case "circle":
-      shape = convertCircleElement(element, parserContext);
+      shapes = [convertCircleElement(element, parserContext)];
       break;
     case "ellipse":
-      shape = convertEllipseElement(element, parserContext);
+      shapes = [convertEllipseElement(element, parserContext)];
       break;
     case "line":
-      shape = convertLineElement(element, parserContext);
+      shapes = [convertLineElement(element, parserContext)];
       break;
-    case "path":
-      shape = convertPathElement(element, parserContext);
+    case "path": {
+      shapes = convertPathElement(element, parserContext);
       break;
+    }
     case "text": {
       const [textShape, textContent] = convertTextElement(element, parserContext);
       parserContext.setTextContent(textShape.id, textContent);
-      shape = textShape;
+      shapes = [textShape];
       break;
     }
   }
 
-  if (shape) {
+  if (shapes.length > 0) {
     const shapeContext = getElementContext(element, undefined, context);
     const style = getCommonStyle(shapeContext.style, parserContext.getRenderingColor);
-    const patch = shapeContext.transform ? resizeShape(getCommonStruct, shape, shapeContext.transform) : undefined;
-    shape = { ...shape, ...style, ...patch, parentId: context.parentId };
+    const transform = shapeContext.transform;
+    const patch = transform ? shapes.map((shape) => resizeShape(getCommonStruct, shape, transform)) : shapes;
+
+    shapes = shapes.map((shape, index) => ({
+      ...shape,
+      ...style,
+      ...(patch[index] || {}),
+      parentId: context.parentId,
+    }));
   }
 
-  return shape;
+  return shapes;
 }
 
 /**
@@ -366,32 +369,47 @@ function convertLineElement(element: SVGElement, parserContext: ParserContext): 
  * @param element SVG path element
  * @returns Shape data object or null if conversion fails
  */
-function convertPathElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
+function convertPathElement(element: SVGElement, parserContext: ParserContext): Shape[] {
   const dAttr = element.getAttribute("d");
-  if (!dAttr) return;
+  if (!dAttr) return [];
 
   const pathSegments = parsePathSegmentRaws(dAttr);
-  const path = parseSegmentRawPathsAsSimplePaths(pathSegments);
-  const bounds = getCurveSplineBounds(path.path, path.curves);
-  const p = { x: bounds.x, y: bounds.y };
-  const d = multi(p, -1);
-  // Normalize the path based on the bounds.
-  const normalizedPath = {
-    path: path.path.map((v) => add(v, d)),
-    curves: path.curves?.map((c) => (c ? shiftBezierCurveControl(c, d) : undefined)),
-  };
+  const subPaths: PathSegmentRaw[][] = [];
+  let currentSubPath: PathSegmentRaw[] = [];
 
-  return {
-    id: parserContext.generateId(),
-    findex: "",
-    type: "line_polygon",
-    p,
-    width: bounds.width,
-    height: bounds.height,
-    rotation: 0,
-    polygonType: pathSegments.at(-1)?.[0].toLocaleLowerCase() === "z" ? undefined : 1,
-    path: normalizedPath,
-  } as Omit<LinePolygonShape, "fill" | "stroke">;
+  for (const segment of pathSegments) {
+    if (segment[0].toLocaleLowerCase() === "m" && currentSubPath.length > 0) {
+      subPaths.push(currentSubPath);
+      currentSubPath = [];
+    }
+    currentSubPath.push(segment);
+  }
+  if (currentSubPath.length > 0) {
+    subPaths.push(currentSubPath);
+  }
+
+  return subPaths.map((rawPath) => {
+    const path = parseSegmentRawPathsAsSimplePaths(rawPath);
+    const bounds = getCurveSplineBounds(path.path, path.curves);
+    const p = { x: bounds.x, y: bounds.y };
+    const d = multi(p, -1);
+    // Normalize the path based on the bounds.
+    const normalizedPath = {
+      path: path.path.map((v) => add(v, d)),
+      curves: path.curves?.map((c) => (c ? shiftBezierCurveControl(c, d) : undefined)),
+    };
+    return {
+      id: parserContext.generateId(),
+      findex: "",
+      type: "line_polygon",
+      p,
+      width: bounds.width,
+      height: bounds.height,
+      rotation: 0,
+      polygonType: rawPath.at(-1)?.[0].toLocaleLowerCase() === "z" ? undefined : 1,
+      path: normalizedPath,
+    } as Omit<LinePolygonShape, "fill" | "stroke">;
+  });
 }
 
 /**

@@ -149,6 +149,38 @@ describe("parseSvgElement", () => {
     });
   });
 
+  test("should parse SVG element with path: multiple paths", () => {
+    const pathElement = createMockSVGElement("path", {
+      d: "M10,20 l10,0 l0,10Z M110,20 l20,0 l0,20Z",
+    });
+
+    const svgElement = createMockSVGElement("svg", {}, [pathElement]);
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+    expect(shapes).toHaveLength(2);
+    const shape0 = shapes[0] as LinePolygonShape;
+    expect(shape0.type).toBe("line_polygon");
+    expect(shape0.p).toEqualPoint({ x: 10, y: 20 });
+    expect(shape0.path).toEqual({
+      path: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+        { x: 0, y: 0 },
+      ],
+    });
+    const shape1 = shapes[1] as LinePolygonShape;
+    expect(shape1.type).toBe("line_polygon");
+    expect(shape1.p).toEqualPoint({ x: 110, y: 20 });
+    expect(shape1.path).toEqual({
+      path: [
+        { x: 0, y: 0 },
+        { x: 20, y: 0 },
+        { x: 20, y: 20 },
+        { x: 0, y: 0 },
+      ],
+    });
+  });
+
   test("should parse SVG element with group", () => {
     const rectElement = createMockSVGElement("rect", {
       x: "10",
