@@ -66,6 +66,9 @@ const en = {
       "attach_vertex.desc": "Remotely attach the vertex to a shape.",
       attach_vertices: "Attach all vertices",
       "attach_vertices.desc": "Remotely attach all vertices to a shape.",
+      parse_svg: "Parse SVG",
+      "parse_svg.desc":
+        "Parse SVG and create shapes from it. Created shapes, especially text shapes, don't always match the original SVG.",
     },
 
     contextmenu: {
@@ -84,7 +87,8 @@ const en = {
       "export.png": "PNG",
       "export.svg": "SVG",
       "export.follysvg": "[[FOLLY_SVG]]",
-      "import.parsesvg": "Parse SVG",
+      "import.parsesvg": "[[PARSE_SVG]]",
+      "import.parsesvg.noshape": "No available shape found in the SVG.",
       "flip.h": "Flip horizontally",
       "flip.v": "Flip vertically",
       "vertex.delete": "Delete vertex",
@@ -173,6 +177,8 @@ const ja: TranslationResource = {
       "attach_vertex.desc": "頂点を遠隔でシェイプに接続します。",
       attach_vertices: "全頂点接続",
       "attach_vertices.desc": "全頂点を遠隔でシェイプに接続します。",
+      parse_svg: "SVG取り込み",
+      "parse_svg.desc": "SVGを取り込み、シェイプを生成します。生成されたシェイプは元のSVGと一致しない場合があります。",
     },
 
     contextmenu: {
@@ -191,7 +197,8 @@ const ja: TranslationResource = {
       "export.png": "PNG",
       "export.svg": "SVG",
       "export.follysvg": "[[FOLLY_SVG]]",
-      "import.parsesvg": "SVG取り込み",
+      "import.parsesvg": "[[PARSE_SVG]]",
+      "import.parsesvg.noshape": "取り込み可能なシェイプがSVGにありません。",
       "flip.h": "水平反転",
       "flip.v": "垂直反転",
       "vertex.delete": "頂点削除",

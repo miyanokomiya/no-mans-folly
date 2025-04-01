@@ -623,7 +623,8 @@ function isSvgImageShape(shape: Shape): shape is ImageShape & { assetId: string 
 async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void> {
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
   const assetAPI = ctx.assetAPI;
-  if (!assetAPI.enabled || ids.length === 0) return;
+  if (!assetAPI.enabled || ids.length === 0)
+    return ctx.showToastMessage({ text: i18n.t("contextmenu.parsesvg.noshape"), type: "warn" });
 
   const shapeComposite = ctx.getShapeComposite();
   const imageShapes = ids.map((id) => shapeComposite.shapeMap[id]).filter((s) => s && isSvgImageShape(s));
@@ -672,7 +673,8 @@ async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void>
       newShapes.push({ ...s, ...scForNewShapes.transformShape(s, affine) });
     });
   }
-  if (newShapes.length === 0) return;
+  if (newShapes.length === 0)
+    return ctx.showToastMessage({ text: i18n.t("contextmenu.import.parsesvg.noshape"), type: "warn" });
 
   ctx.addShapes(newShapes, newDocMap);
   // Select root shapes of new shapes.

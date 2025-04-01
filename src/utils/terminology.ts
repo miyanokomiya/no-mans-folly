@@ -48,6 +48,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.attach_vertices.desc"),
     };
   },
+  get PARSE_SVG() {
+    return {
+      text: i18n.t("term.parse_svg"),
+      description: i18n.t("term.parse_svg.desc"),
+    };
+  },
 };
 
 export function parseTerminologies(src: string): TerminologyItem[] {
