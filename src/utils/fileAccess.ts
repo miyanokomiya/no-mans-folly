@@ -65,3 +65,12 @@ export function getBase64Type(base64: string): string {
   const data = base64.match(/^data:(.+);/);
   return data && data[1] ? data[1] : "application/octet-stream";
 }
+
+export function blobToText(file: File | Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}

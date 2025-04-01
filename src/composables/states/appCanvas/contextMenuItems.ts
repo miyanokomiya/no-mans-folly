@@ -633,7 +633,7 @@ async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void>
   for (const s of imageShapes) {
     const data = await assetAPI.loadAsset(s.assetId);
     if (!data) return;
-    const [shapes, textMap] = await parseSvgFile(data);
+    const [shapes, textMap] = await parseSvgFile(data, { generateId: ctx.generateUuid });
     shapes.forEach((shape) => {
       const text = textMap.get(shape.id);
       let patchForDoc: Partial<Shape> | undefined;
