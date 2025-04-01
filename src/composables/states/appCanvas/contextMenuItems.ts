@@ -27,6 +27,7 @@ import { ImageShape, isImageShape } from "../../../shapes/image";
 import { parseSvgFile } from "../../../shapes/utils/svgParser";
 import { DocOutput } from "../../../models/document";
 import { calcOriginalDocSize, getInitialOutput } from "../../../utils/textEditor";
+import { newColorParser } from "../../colorParser";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -620,20 +621,27 @@ function isSvgImageShape(shape: Shape): shape is ImageShape & { assetId: string 
 }
 
 async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void> {
-  const assetAPI = ctx.assetAPI;
-  if (!assetAPI.enabled) return;
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
-  if (ids.length === 0) return;
+  const assetAPI = ctx.assetAPI;
+  if (!assetAPI.enabled || ids.length === 0) return;
 
-  const newShapes: Shape[] = [];
-  const newDocMap: Record<string, DocOutput> = {};
   const shapeComposite = ctx.getShapeComposite();
   const imageShapes = ids.map((id) => shapeComposite.shapeMap[id]).filter((s) => s && isSvgImageShape(s));
+  const colorParser = newColorParser();
+  const newShapes: Shape[] = [];
+  const newDocMap: Record<string, DocOutput> = {};
+
   let findexFrom = ctx.createLastIndex();
-  for (const s of imageShapes) {
-    const data = await assetAPI.loadAsset(s.assetId);
-    if (!data) return;
-    const [shapes, textMap] = await parseSvgFile(data, { generateId: ctx.generateUuid });
+  for (const imageShape of imageShapes) {
+    const data = await assetAPI.loadAsset(imageShape.assetId);
+    if (!data) continue;
+
+    const [shapes, textMap] = await parseSvgFile(data, {
+      generateId: ctx.generateUuid,
+      getRenderingColor: colorParser.parseColor,
+    });
+
+    const newShapesByImage: Shape[] = [];
     shapes.forEach((shape) => {
       const text = textMap.get(shape.id);
       let patchForDoc: Partial<Shape> | undefined;
@@ -651,17 +659,23 @@ async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void>
       }
 
       const findex = generateKeyBetweenAllowSame(findexFrom, null);
-      newShapes.push({ ...shape, ...patchForDoc, findex });
+      newShapesByImage.push({ ...shape, ...patchForDoc, findex });
       findexFrom = findex;
+    });
+
+    // Adjust position of new shapes to be below each original image.
+    const imageRect = shapeComposite.getWrapperRect(imageShape);
+    const scForNewShapes = newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: newShapesByImage });
+    const newRect = scForNewShapes.getWrapperRectForShapes(newShapesByImage);
+    const affine: AffineMatrix = [1, 0, 0, 1, imageRect.x - newRect.x, imageRect.y - newRect.y + imageRect.height + 20];
+    newShapesByImage.forEach((s) => {
+      newShapes.push({ ...s, ...scForNewShapes.transformShape(s, affine) });
     });
   }
   if (newShapes.length === 0) return;
 
-  const targetRect = shapeComposite.getWrapperRectForShapes(imageShapes);
-  const sc = newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: newShapes });
-  const newRect = sc.getWrapperRectForShapes(newShapes);
-  const affine: AffineMatrix = [1, 0, 0, 1, targetRect.x - newRect.x + 20, targetRect.y - newRect.y + 20];
-  const adjusted = newShapes.map((s) => ({ ...s, ...sc.transformShape(s, affine) }));
-  ctx.addShapes(adjusted, newDocMap);
-  ctx.clearAllSelected();
+  ctx.addShapes(newShapes, newDocMap);
+  // Select root shapes of new shapes.
+  const scForNewShapes = newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: newShapes });
+  ctx.multiSelectShapes(scForNewShapes.mergedShapeTree.map((t) => t.id));
 }

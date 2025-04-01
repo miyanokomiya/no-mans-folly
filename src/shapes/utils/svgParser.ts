@@ -17,7 +17,6 @@ import { LinePolygonShape } from "../polygons/linePolygon";
 import { SimplePath } from "../simplePolygon";
 import { shiftBezierCurveControl } from "../../utils/path";
 import { getCurveSplineBounds } from "../../utils/geometry";
-import { hexToColor, parseRGBA } from "../../utils/color";
 import { arcToCubicCurves } from "../../utils/arc";
 import { getCommonStruct, resizeShape } from "..";
 import { RoundedRectangleShape } from "../polygons/roundedRectangle";
@@ -34,6 +33,7 @@ type ElementContext = {
 
 export type ParserContext = {
   generateId: () => string;
+  getRenderingColor: (str: string) => Color | undefined;
   setTextContent: (id: string, val: string) => void;
 };
 
@@ -44,7 +44,7 @@ export type ParserContext = {
  */
 export async function parseSvgFile(
   file: File | Blob,
-  parserContextPartial: Pick<ParserContext, "generateId">,
+  parserContextPartial: Pick<ParserContext, "generateId" | "getRenderingColor">,
 ): Promise<[Shape[], Map<string, string>]> {
   try {
     const text = await blobToText(file);
@@ -65,7 +65,7 @@ export async function parseSvgFile(
             lineDash: [],
             lineJoin: "bevel",
             lineWidth: 1,
-            stroke: true,
+            stroke: false,
             strokeGlobalAlpha: 1,
             strokeStyle: "rgb(0, 0, 0)",
           },
@@ -85,15 +85,15 @@ export async function parseSvgFile(
   }
 }
 
-function getCommonStyle(style: ISvgStyle): CommonStyle {
+function getCommonStyle(style: ISvgStyle, getRenderingColor: ParserContext["getRenderingColor"]): CommonStyle {
   const fill = createFillStyle({
     disabled: !style.fill,
-    color: convertSvgColorToShapeColor(style.fillStyle, style.fillGlobalAlpha),
+    color: convertSvgColorToShapeColor(style.fillStyle, style.fillGlobalAlpha, getRenderingColor),
   });
 
   const stroke = createStrokeStyle({
     disabled: !style.stroke,
-    color: convertSvgColorToShapeColor(style.strokeStyle, style.strokeGlobalAlpha),
+    color: convertSvgColorToShapeColor(style.strokeStyle, style.strokeGlobalAlpha, getRenderingColor),
     width: style.lineWidth,
     dash: convertSvgLineDashToShapeDash(style.lineDash),
     lineCap: style.lineCap as CanvasLineCap,
@@ -109,51 +109,18 @@ function getCommonStyle(style: ISvgStyle): CommonStyle {
  * @param alpha Alpha value
  * @returns Shape color object
  */
-function convertSvgColorToShapeColor(colorStr: string, alpha: number = 1): Color {
-  // Default color (black)
-  const defaultColor: Color = { r: 0, g: 0, b: 0, a: alpha };
+function convertSvgColorToShapeColor(
+  colorStr: string,
+  alpha: number,
+  getRenderingColor: ParserContext["getRenderingColor"],
+): Color {
+  // Defaults to black
+  if (!colorStr) return { r: 0, g: 0, b: 0, a: alpha };
 
-  if (!colorStr) {
-    return defaultColor;
-  }
+  const color = getRenderingColor(colorStr);
+  if (!color) return { r: 0, g: 0, b: 0, a: alpha };
 
-  // Handle hex color
-  if (colorStr.startsWith("#")) {
-    return hexToColor(colorStr, alpha);
-  }
-
-  // Handle rgb/rgba color
-  if (colorStr.startsWith("rgb")) {
-    return rgbToColor(colorStr, alpha);
-  }
-
-  // Handle named colors (simplified)
-  switch (colorStr.toLowerCase()) {
-    case "black":
-      return { r: 0, g: 0, b: 0, a: alpha };
-    case "white":
-      return { r: 255, g: 255, b: 255, a: alpha };
-    case "red":
-      return { r: 255, g: 0, b: 0, a: alpha };
-    case "green":
-      return { r: 0, g: 128, b: 0, a: alpha };
-    case "blue":
-      return { r: 0, g: 0, b: 255, a: alpha };
-    case "yellow":
-      return { r: 255, g: 255, b: 0, a: alpha };
-    default:
-      return defaultColor;
-  }
-}
-
-/**
- * Convert rgb/rgba color string to color object
- * @param rgb RGB/RGBA color string
- * @param defaultAlpha Default alpha value
- * @returns Color object
- */
-function rgbToColor(rgb: string, defaultAlpha: number = 1): Color {
-  return parseRGBA(rgb, defaultAlpha) ?? { r: 0, g: 0, b: 0, a: defaultAlpha };
+  return { ...color, a: alpha };
 }
 
 /**
@@ -297,9 +264,9 @@ function convertElementToShape(
 
   if (shape) {
     const shapeContext = getElementContext(element, undefined, context);
-    const style = getCommonStyle(shapeContext.style);
+    const style = getCommonStyle(shapeContext.style, parserContext.getRenderingColor);
     const patch = shapeContext.transform ? resizeShape(getCommonStruct, shape, shapeContext.transform) : undefined;
-    shape = { ...shape, ...style, ...patch, id: parserContext.generateId(), parentId: context.parentId };
+    shape = { ...shape, ...style, ...patch, parentId: context.parentId };
   }
 
   return shape;

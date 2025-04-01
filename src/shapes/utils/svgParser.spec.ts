@@ -3,6 +3,7 @@ import { parseSvgElement, parseSegmentRawPathsAsSimplePaths, ParserContext } fro
 import { RectangleShape } from "../rectangle";
 import { LinePolygonShape } from "../polygons/linePolygon";
 import { parsePathSegmentRaws } from "okageo";
+import { parseRGBA } from "../../utils/color";
 
 const createMockSVGElement = (
   tagName: string,
@@ -36,6 +37,7 @@ const getParserContext = (): ParserContext => {
   const textContentMap = new Map<string, string>();
   return {
     generateId: () => `id_${count++}`,
+    getRenderingColor: (str) => parseRGBA(str),
     setTextContent: (id: string, val: string) => {
       textContentMap.set(id, val);
     },
