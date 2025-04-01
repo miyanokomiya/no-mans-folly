@@ -234,15 +234,21 @@ function convertElementToShape(element: SVGElement, context: ElementContext, par
   let shapes: Shape[] = [];
 
   switch (element.tagName.toLowerCase()) {
-    case "rect":
-      shapes = [convertRectElement(element, parserContext)];
+    case "rect": {
+      const shape = convertRectElement(element, parserContext);
+      if (shape) shapes = [shape];
       break;
-    case "circle":
-      shapes = [convertCircleElement(element, parserContext)];
+    }
+    case "circle": {
+      const shape = convertCircleElement(element, parserContext);
+      if (shape) shapes = [shape];
       break;
-    case "ellipse":
-      shapes = [convertEllipseElement(element, parserContext)];
+    }
+    case "ellipse": {
+      const shape = convertEllipseElement(element, parserContext);
+      if (shape) shapes = [shape];
       break;
+    }
     case "line":
       shapes = [convertLineElement(element, parserContext)];
       break;
@@ -250,10 +256,14 @@ function convertElementToShape(element: SVGElement, context: ElementContext, par
       shapes = convertPathElement(element, parserContext);
       break;
     }
-    case "text": {
-      const [textShape, textContent] = convertTextElement(element, parserContext);
-      parserContext.setTextContent(textShape.id, textContent);
-      shapes = [textShape];
+    case "text":
+    case "foreignobject": {
+      const result = convertTextElement(element, parserContext);
+      if (result) {
+        const [textShape, textContent] = result;
+        parserContext.setTextContent(textShape.id, textContent);
+        shapes = [textShape];
+      }
       break;
     }
   }
@@ -280,13 +290,14 @@ function convertElementToShape(element: SVGElement, context: ElementContext, par
  * @param element SVG rect element
  * @returns Shape data object
  */
-function convertRectElement(element: SVGElement, parserContext: ParserContext): Shape {
+function convertRectElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
   const x = parseFloat(element.getAttribute("x") || "0");
   const y = parseFloat(element.getAttribute("y") || "0");
   const width = parseFloat(element.getAttribute("width") || "0");
   const height = parseFloat(element.getAttribute("height") || "0");
   const rx = parseFloat(element.getAttribute("rx") || "0");
   const ry = parseFloat(element.getAttribute("ry") || `${rx}`);
+  if (width === 0 || height === 0) return;
 
   return {
     id: parserContext.generateId(),
@@ -306,10 +317,12 @@ function convertRectElement(element: SVGElement, parserContext: ParserContext): 
  * @param element SVG circle element
  * @returns Shape data object
  */
-function convertCircleElement(element: SVGElement, parserContext: ParserContext): Shape {
+function convertCircleElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
   const cx = parseFloat(element.getAttribute("cx") || "0");
   const cy = parseFloat(element.getAttribute("cy") || "0");
   const r = parseFloat(element.getAttribute("r") || "0");
+  if (r === 0) return;
+
   return {
     id: parserContext.generateId(),
     findex: "",
@@ -326,11 +339,12 @@ function convertCircleElement(element: SVGElement, parserContext: ParserContext)
  * @param element SVG ellipse element
  * @returns Shape data object
  */
-function convertEllipseElement(element: SVGElement, parserContext: ParserContext): Shape {
+function convertEllipseElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
   const cx = parseFloat(element.getAttribute("cx") || "0");
   const cy = parseFloat(element.getAttribute("cy") || "0");
   const rx = parseFloat(element.getAttribute("rx") || "0");
   const ry = parseFloat(element.getAttribute("ry") || "0");
+  if (rx === 0 || ry === 0) return;
 
   return {
     id: parserContext.generateId(),
@@ -388,28 +402,30 @@ function convertPathElement(element: SVGElement, parserContext: ParserContext): 
     subPaths.push(currentSubPath);
   }
 
-  return subPaths.map((rawPath) => {
-    const path = parseSegmentRawPathsAsSimplePaths(rawPath);
-    const bounds = getCurveSplineBounds(path.path, path.curves);
-    const p = { x: bounds.x, y: bounds.y };
-    const d = multi(p, -1);
-    // Normalize the path based on the bounds.
-    const normalizedPath = {
-      path: path.path.map((v) => add(v, d)),
-      curves: path.curves?.map((c) => (c ? shiftBezierCurveControl(c, d) : undefined)),
-    };
-    return {
-      id: parserContext.generateId(),
-      findex: "",
-      type: "line_polygon",
-      p,
-      width: bounds.width,
-      height: bounds.height,
-      rotation: 0,
-      polygonType: rawPath.at(-1)?.[0].toLocaleLowerCase() === "z" ? undefined : 1,
-      path: normalizedPath,
-    } as Omit<LinePolygonShape, "fill" | "stroke">;
-  });
+  return subPaths
+    .filter((rawPath) => rawPath.length > 1)
+    .map((rawPath) => {
+      const path = parseSegmentRawPathsAsSimplePaths(rawPath);
+      const bounds = getCurveSplineBounds(path.path, path.curves);
+      const p = { x: bounds.x, y: bounds.y };
+      const d = multi(p, -1);
+      // Normalize the path based on the bounds.
+      const normalizedPath = {
+        path: path.path.map((v) => add(v, d)),
+        curves: path.curves?.map((c) => (c ? shiftBezierCurveControl(c, d) : undefined)),
+      };
+      return {
+        id: parserContext.generateId(),
+        findex: "",
+        type: "line_polygon",
+        p,
+        width: bounds.width,
+        height: bounds.height,
+        rotation: 0,
+        polygonType: rawPath.at(-1)?.[0].toLocaleLowerCase() === "z" ? undefined : 1,
+        path: normalizedPath,
+      } as Omit<LinePolygonShape, "fill" | "stroke">;
+    });
 }
 
 /**
@@ -420,7 +436,7 @@ function convertPathElement(element: SVGElement, parserContext: ParserContext): 
 function parseSvgElementStyle(element: SVGElement, parentStyle: ISvgStyle): ISvgStyle {
   const style: ISvgStyle = { ...parentStyle };
 
-  if (element.tagName.toLowerCase() === "text") {
+  if (["text", "foreignobject"].includes(element.tagName.toLowerCase())) {
     return { ...style, fill: false, stroke: false };
   }
 
@@ -627,11 +643,13 @@ export function parseSegmentRawPathsAsSimplePaths(pathSegments: PathSegmentRaw[]
   return simplePath;
 }
 
-function convertTextElement(element: SVGElement, parserContext: ParserContext): [Shape, string] {
+function convertTextElement(element: SVGElement, parserContext: ParserContext): [Shape, string] | undefined {
   const x = parseFloat(element.getAttribute("x") || "0");
   const y = parseFloat(element.getAttribute("y") || "0");
 
   const textContent = element.textContent?.trim() || "";
+  if (!textContent) return;
+
   const shape: Omit<TextShape, "fill" | "stroke"> = {
     id: parserContext.generateId(),
     findex: "",
@@ -639,7 +657,7 @@ function convertTextElement(element: SVGElement, parserContext: ParserContext): 
     p: { x, y },
     rotation: 0,
     // Calculating accurate size from the element is impossible.
-    width: 100,
+    width: 600,
     height: 100,
     maxWidth: 600,
     vAlign: "top",
