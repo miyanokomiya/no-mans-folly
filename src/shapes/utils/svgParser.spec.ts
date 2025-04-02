@@ -634,7 +634,7 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
           },
           {
             tag: "use",
-            attributes: { id: "use_1", href: "#rect_0", width: "300" },
+            attributes: { id: "use_1", "xlink:href": "#rect_0", width: "300" },
           },
         ],
       },

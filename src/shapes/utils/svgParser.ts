@@ -217,7 +217,7 @@ function handleSwitchElement(element: SVGElement, context: ElementContext, parse
 }
 
 function handleUseElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
-  const href = element.getAttribute("href");
+  const href = element.getAttribute("href") || element.getAttribute("xlink:href");
   if (!href) return [];
 
   const targetId = href.slice(1);
