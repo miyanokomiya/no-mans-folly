@@ -429,6 +429,30 @@ describe("parseSvgElement", () => {
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
     expect(shapes).toHaveLength(0);
   });
+
+  test("should regard svg namespace", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "svg:rect",
+        attributes: {
+          x: "10",
+          y: "20",
+          width: "100",
+          height: "80",
+          fill: "blue",
+        },
+      },
+    ]);
+
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+
+    expect(shapes).toHaveLength(1);
+    const shape = shapes[0] as RectangleShape;
+    expect(shape.type).toBe("rounded_rectangle");
+    expect(shape.width).toBe(100);
+    expect(shape.height).toBe(80);
+    expect(shape.fill.color).toBeDefined();
+  });
 });
 
 describe("parseSegmentRawPathsAsSimplePaths", () => {

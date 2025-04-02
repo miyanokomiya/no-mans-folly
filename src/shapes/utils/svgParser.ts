@@ -190,13 +190,14 @@ function getElementContext(element: SVGElement, id: string | undefined, srcConte
  * @returns Array of shape data objects
  */
 export function parseSvgElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
-  if (element.tagName.toLowerCase() === "svg") {
+  const tagName = getTagName(element);
+  if (tagName === "svg") {
     // Process SVG root element
     return handleSvgElement(element, context, parserContext);
-  } else if (element.tagName.toLowerCase() === "g") {
+  } else if (tagName === "g") {
     // Process group element
     return handleGroupElement(element, context, parserContext);
-  } else if (element.tagName.toLowerCase() === "use") {
+  } else if (tagName === "use") {
     // Process use element
     return handleUseElement(element, context, parserContext);
   } else {
@@ -215,7 +216,7 @@ function handleUseElement(element: SVGElement, context: ElementContext, parserCo
 
   const targetElm = parserContext.getElementById(targetId);
   // If the target element is not found or the target element is a <use> element, no shapes are created
-  if (!targetElm || targetElm.tagName.toLowerCase() === "use") return [];
+  if (!targetElm || getTagName(targetElm) === "use") return [];
 
   const cloned = targetElm.cloneNode(true) as SVGElement;
   // Inherit x, y, width, height from <use> element.
@@ -334,7 +335,7 @@ function handleGroupElement(element: SVGElement, context: ElementContext, parser
 function convertElementToShape(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
   let shapes: Shape[] = [];
 
-  switch (element.tagName.toLowerCase()) {
+  switch (getTagName(element)) {
     case "rect": {
       const shape = convertRectElement(element, parserContext);
       if (shape) shapes = [shape];
@@ -575,7 +576,7 @@ function convertPolygonElement(element: SVGElement, parserContext: ParserContext
 function parseSvgElementStyle(element: SVGElement, parentStyle: ISvgStyle): ISvgStyle {
   const style: ISvgStyle = { ...parentStyle };
 
-  if (["text", "foreignobject"].includes(element.tagName.toLowerCase())) {
+  if (["text", "foreignobject"].includes(getTagName(element))) {
     return { ...style, fill: false, stroke: false };
   }
 
@@ -848,4 +849,8 @@ function parseSvgPoints(pointsAttr: string): IVec2[] | undefined {
       if (idx % 2 === 0) acc.push({ x: val, y: arr[idx + 1] });
       return acc;
     }, [] as IVec2[]);
+}
+
+function getTagName(element: SVGElement): string {
+  return element.tagName.toLowerCase().replace(/svg:/, "");
 }
