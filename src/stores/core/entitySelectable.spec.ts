@@ -36,6 +36,24 @@ describe("newEntitySelectable", () => {
     expect(target.getSelected()).toBe(target.getSelected());
   });
 
+  test("should return the same instance whenever nothing is selected", () => {
+    const entityMap: any = { a: {}, b: {}, c: {} };
+    const target = newEntitySelectable({
+      getEntityMap: () => entityMap,
+      watchEntities: () => {
+        return () => {};
+      },
+    });
+    const cache = target.getSelected();
+    target.multiSelect(["a", "b", "c"]);
+    expect(target.getSelected()).not.toBe(cache);
+    target.clearAllSelected();
+    target.multiSelect(["a"]);
+    expect(target.getSelected()).not.toBe(cache);
+    target.multiSelect(["a"], true);
+    expect(target.getSelected()).toBe(cache);
+  });
+
   describe("dispose", () => {
     test("should clean up callbacks", () => {
       const clear = vi.fn();

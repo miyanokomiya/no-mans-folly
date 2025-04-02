@@ -1,5 +1,6 @@
 import * as okaselect from "okaselect";
 import { newCallback } from "../../utils/stateful/reactives";
+import { isObjectEmpty } from "../../utils/commons";
 
 type Option<T> = {
   getEntityMap: () => { [id: string]: T };
@@ -7,7 +8,9 @@ type Option<T> = {
 };
 
 export function newEntitySelectable<T>(option: Option<T>) {
-  let selectedMap: { [id: string]: true } = {};
+  // Prepare empty map to preserve reference.
+  const EMPTY_MAP: { [id: string]: true } = {};
+  let selectedMap: { [id: string]: true } = EMPTY_MAP;
   let lastSelected: string | undefined = undefined;
 
   const unwatch = option.watchEntities(() => {
@@ -24,7 +27,8 @@ export function newEntitySelectable<T>(option: Option<T>) {
   const selectedCallback = newCallback();
   const selectable = okaselect.useItemSelectable(option.getEntityMap, {
     onUpdated: () => {
-      selectedMap = selectable.getSelected();
+      const val = selectable.getSelected();
+      selectedMap = isObjectEmpty(val) ? EMPTY_MAP : val;
       lastSelected = selectable.getLastSelected();
       selectedCallback.dispatch();
     },
