@@ -261,8 +261,8 @@ function handleSvgElement(element: SVGElement, context: ElementContext, parserCo
   // x and y attributes of SVG element can affect coordinates of inner elements.
   // Ignore width and height attributes and respect original scale of inner elements.
   // => Resizing all kinds of attributes is unrealistic.
-  const x = parseFloat(element.getAttribute("x") || "0");
-  const y = parseFloat(element.getAttribute("y") || "0");
+  const x = parseSvgAttributeAsFloat(element, "x") || 0;
+  const y = parseSvgAttributeAsFloat(element, "y") || 0;
   // Regard viewBox likewise.
   const viewBox = parseViewBox(element.getAttribute("viewBox"));
   const dx = x - (viewBox?.x ?? 0);
@@ -391,12 +391,12 @@ function convertElementToShape(element: SVGElement, context: ElementContext, par
  * @returns Shape data object
  */
 function convertRectElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
-  const x = parseFloat(element.getAttribute("x") || "0");
-  const y = parseFloat(element.getAttribute("y") || "0");
-  const width = parseFloat(element.getAttribute("width") || "0");
-  const height = parseFloat(element.getAttribute("height") || "0");
-  const rx = parseFloat(element.getAttribute("rx") || "0");
-  const ry = parseFloat(element.getAttribute("ry") || `${rx}`);
+  const x = parseSvgAttributeAsFloat(element, "x") || 0;
+  const y = parseSvgAttributeAsFloat(element, "y") || 0;
+  const width = parseSvgAttributeAsFloat(element, "width") || 0;
+  const height = parseSvgAttributeAsFloat(element, "height") || 0;
+  const rx = parseSvgAttributeAsFloat(element, "rx") || 0;
+  const ry = parseSvgAttributeAsFloat(element, "ry") || rx;
   if (width === 0 || height === 0) return;
 
   return {
@@ -407,8 +407,8 @@ function convertRectElement(element: SVGElement, parserContext: ParserContext): 
     rotation: 0,
     width,
     height,
-    rx: rx ?? 0,
-    ry: ry ?? 0,
+    rx,
+    ry,
   } as Omit<RoundedRectangleShape, "fill" | "stroke">;
 }
 
@@ -418,9 +418,9 @@ function convertRectElement(element: SVGElement, parserContext: ParserContext): 
  * @returns Shape data object
  */
 function convertCircleElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
-  const cx = parseFloat(element.getAttribute("cx") || "0");
-  const cy = parseFloat(element.getAttribute("cy") || "0");
-  const r = parseFloat(element.getAttribute("r") || "0");
+  const cx = parseSvgAttributeAsFloat(element, "cx") || 0;
+  const cy = parseSvgAttributeAsFloat(element, "cy") || 0;
+  const r = parseSvgAttributeAsFloat(element, "r") || 0;
   if (r === 0) return;
 
   return {
@@ -440,10 +440,10 @@ function convertCircleElement(element: SVGElement, parserContext: ParserContext)
  * @returns Shape data object
  */
 function convertEllipseElement(element: SVGElement, parserContext: ParserContext): Shape | undefined {
-  const cx = parseFloat(element.getAttribute("cx") || "0");
-  const cy = parseFloat(element.getAttribute("cy") || "0");
-  const rx = parseFloat(element.getAttribute("rx") || "0");
-  const ry = parseFloat(element.getAttribute("ry") || "0");
+  const cx = parseSvgAttributeAsFloat(element, "cx") || 0;
+  const cy = parseSvgAttributeAsFloat(element, "cy") || 0;
+  const rx = parseSvgAttributeAsFloat(element, "rx") || 0;
+  const ry = parseSvgAttributeAsFloat(element, "ry") || 0;
   if (rx === 0 || ry === 0) return;
 
   return {
@@ -463,10 +463,10 @@ function convertEllipseElement(element: SVGElement, parserContext: ParserContext
  * @returns Shape data object
  */
 function convertLineElement(element: SVGElement, parserContext: ParserContext): Shape {
-  const x1 = parseFloat(element.getAttribute("x1") || "0");
-  const y1 = parseFloat(element.getAttribute("y1") || "0");
-  const x2 = parseFloat(element.getAttribute("x2") || "0");
-  const y2 = parseFloat(element.getAttribute("y2") || "0");
+  const x1 = parseSvgAttributeAsFloat(element, "x1") || 0;
+  const y1 = parseSvgAttributeAsFloat(element, "y1") || 0;
+  const x2 = parseSvgAttributeAsFloat(element, "x2") || 0;
+  const y2 = parseSvgAttributeAsFloat(element, "y2") || 0;
 
   return {
     id: parserContext.generateId(),
@@ -744,8 +744,8 @@ export function parseSegmentRawPathsAsSimplePaths(pathSegments: PathSegmentRaw[]
 }
 
 function convertTextElement(element: SVGElement, parserContext: ParserContext): [Shape, string] | undefined {
-  const x = parseFloat(element.getAttribute("x") || "0");
-  const y = parseFloat(element.getAttribute("y") || "0");
+  const x = parseSvgAttributeAsFloat(element, "x") || 0;
+  const y = parseSvgAttributeAsFloat(element, "y") || 0;
 
   const textContent = element.textContent?.trim() || "";
   if (!textContent) return;
@@ -780,4 +780,15 @@ function parseViewBox(viewBoxStr?: string | null): IRectangle | undefined {
 
   const [x, y, width, height] = values;
   return { x, y, width, height };
+}
+
+/**
+ * Parse an SVG attribute as a float value
+ * @param element SVG element
+ * @param attributeName Attribute name
+ * @returns Parsed float value or undefined if the attribute does not exist
+ */
+function parseSvgAttributeAsFloat(element: SVGElement, attributeName: string): number | undefined {
+  const value = element.getAttribute(attributeName);
+  return value !== null ? parseFloat(value) : undefined;
 }
