@@ -130,6 +130,46 @@ describe("parseSvgElement", () => {
     expect((shapes[0] as any).stroke.width).toBe(2);
   });
 
+  test("should parse SVG element with polygon", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "polygon",
+        attributes: { points: "10,20 20,5 50,60" },
+      },
+    ]);
+
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].type).toBe("line_polygon");
+    expect((shapes[0] as LinePolygonShape).p).toEqual({ x: 10, y: 5 });
+    expect((shapes[0] as LinePolygonShape).path.path).toEqualPoints([
+      { x: 0, y: 15 },
+      { x: 10, y: 0 },
+      { x: 40, y: 55 },
+    ]);
+    expect((shapes[0] as LinePolygonShape).polygonType).toBe(undefined);
+  });
+
+  test("should parse SVG element with polyline", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "polyline",
+        attributes: { points: "10,20 20,5 50,60" },
+      },
+    ]);
+
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].type).toBe("line_polygon");
+    expect((shapes[0] as LinePolygonShape).p).toEqual({ x: 10, y: 5 });
+    expect((shapes[0] as LinePolygonShape).path.path).toEqualPoints([
+      { x: 0, y: 15 },
+      { x: 10, y: 0 },
+      { x: 40, y: 55 },
+    ]);
+    expect((shapes[0] as LinePolygonShape).polygonType).toBe(1);
+  });
+
   test("should parse SVG element with path", () => {
     const svgElement = createSVGElement("svg", {}, [
       {

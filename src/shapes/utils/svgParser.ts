@@ -10,6 +10,7 @@ import {
   getSymmetry,
   multiAffine,
   IRectangle,
+  IVec2,
 } from "okageo";
 import { Shape, Color, CommonStyle } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
@@ -356,6 +357,16 @@ function convertElementToShape(element: SVGElement, context: ElementContext, par
       shapes = convertPathElement(element, parserContext);
       break;
     }
+    case "polygon": {
+      const shape = convertPolygonElement(element, parserContext);
+      if (shape) shapes = [shape];
+      break;
+    }
+    case "polyline": {
+      const shape = convertPolygonElement(element, parserContext, true);
+      if (shape) shapes = [shape];
+      break;
+    }
     case "text":
     case "foreignobject": {
       const result = convertTextElement(element, parserContext);
@@ -526,6 +537,34 @@ function convertPathElement(element: SVGElement, parserContext: ParserContext): 
         path: normalizedPath,
       } as Omit<LinePolygonShape, "fill" | "stroke">;
     });
+}
+
+/**
+ * Convert SVG polygon or polyline element to shape data
+ * @param element SVG polygon or polyline element
+ * @param polyline Whether the element is a polyline
+ * @returns Shape data object
+ */
+function convertPolygonElement(element: SVGElement, parserContext: ParserContext, polyline = false): Shape | undefined {
+  const pointsAttr = element.getAttribute("points");
+  const points = pointsAttr ? parseSvgPoints(pointsAttr) : undefined;
+  if (!points || points.length < 2) return;
+
+  const bounds = getCurveSplineBounds(points, undefined);
+  const p = { x: bounds.x, y: bounds.y };
+  const d = multi(p, -1);
+
+  return {
+    id: parserContext.generateId(),
+    findex: "",
+    type: "line_polygon",
+    p,
+    width: bounds.width,
+    height: bounds.height,
+    rotation: 0,
+    polygonType: polyline ? 1 : undefined,
+    path: { path: points.map((v) => add(v, d)) },
+  } as Omit<LinePolygonShape, "fill" | "stroke">;
 }
 
 /**
@@ -791,4 +830,22 @@ function parseViewBox(viewBoxStr?: string | null): IRectangle | undefined {
 function parseSvgAttributeAsFloat(element: SVGElement, attributeName: string): number | undefined {
   const value = element.getAttribute(attributeName);
   return value !== null ? parseFloat(value) : undefined;
+}
+
+/**
+ * Parse SVG points attribute
+ * @param pointsAttr Points attribute string
+ * @returns Array of points or undefined if invalid
+ */
+function parseSvgPoints(pointsAttr: string): IVec2[] | undefined {
+  if (!pointsAttr) return;
+
+  return pointsAttr
+    .trim()
+    .split(/\s+|,/)
+    .map(parseFloat)
+    .reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0) acc.push({ x: val, y: arr[idx + 1] });
+      return acc;
+    }, [] as IVec2[]);
 }
