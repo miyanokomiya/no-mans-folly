@@ -200,10 +200,20 @@ export function parseSvgElement(element: SVGElement, context: ElementContext, pa
   } else if (tagName === "use") {
     // Process use element
     return handleUseElement(element, context, parserContext);
+  } else if (tagName === "switch") {
+    // Process switch element
+    return handleSwitchElement(element, context, parserContext);
   } else {
     // Process regular shape element
     return convertElementToShape(element, context, parserContext);
   }
+}
+
+function handleSwitchElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
+  // The <switch> element is used to select one of its child elements to be rendered.
+  // It is not a shape element itself, so just picking the first child as a target element.
+  const firstChild = element.children[0];
+  return firstChild ? parseSvgElement(firstChild as SVGElement, context, parserContext) : [];
 }
 
 function handleUseElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {

@@ -453,6 +453,43 @@ describe("parseSvgElement", () => {
     expect(shape.height).toBe(80);
     expect(shape.fill.color).toBeDefined();
   });
+
+  test("should regard switch element: pick the first element", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "switch",
+        attributes: {},
+        children: [
+          {
+            tag: "rect",
+            attributes: {
+              x: "10",
+              y: "20",
+              width: "100",
+              height: "80",
+            },
+          },
+          {
+            tag: "rect",
+            attributes: {
+              x: "0",
+              y: "0",
+              width: "200",
+              height: "300",
+            },
+          },
+        ],
+      },
+    ]);
+
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+    expect(shapes).toHaveLength(1);
+    const shape = shapes[0] as RectangleShape;
+    expect(shape.type).toBe("rounded_rectangle");
+    expect(shape.width).toBe(100);
+    expect(shape.height).toBe(80);
+    expect(shape.fill.color).toBeDefined();
+  });
 });
 
 describe("parseSegmentRawPathsAsSimplePaths", () => {
