@@ -651,6 +651,28 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
     expect((shapes[4] as RectangleShape).height).toEqual(80);
   });
 
+  test("should regard <use> element: should apply transfrom of <use> element", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "defs",
+        attributes: {},
+        children: [
+          {
+            tag: "rect",
+            attributes: { id: "rect_0", x: "10", y: "20", width: "100", height: "80", transform: "translate(10, 20)" },
+          },
+        ],
+      },
+      {
+        tag: "use",
+        attributes: { id: "use_0", href: "#rect_0", transform: "translate(100, 200)" },
+      },
+    ]);
+    const [shapes] = parseSvgElementTree(svgElement, getParserContext());
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].p).toEqualPoint({ x: 120, y: 240 });
+  });
+
   test("should avoid circular dependencies of <use> elements", () => {
     const svgElement = createSVGElement("svg", {}, [
       {
