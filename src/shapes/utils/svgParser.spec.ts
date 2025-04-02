@@ -208,6 +208,43 @@ describe("parseSvgElement", () => {
     });
   });
 
+  test("should parse SVG element with svg like group", () => {
+    const svgElement = createSVGElement("svg", {}, [
+      {
+        tag: "svg",
+        attributes: { x: 100, y: 200, viewBox: "3 4 100 100" },
+        children: [
+          {
+            tag: "rect",
+            attributes: {
+              x: "10",
+              y: "20",
+              width: "100",
+              height: "80",
+              fill: "blue",
+            },
+          },
+          {
+            tag: "circle",
+            attributes: {
+              cx: "150",
+              cy: "50",
+              r: "30",
+              fill: "red",
+            },
+          },
+        ],
+      },
+    ]);
+
+    const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
+    expect(shapes).toHaveLength(3);
+    expect(shapes[0].type).toBe("group");
+    expect(shapes[1].p, "svg element's x, y and viewBox attributes affect coordinates of inside elements").toEqualPoint(
+      { x: 107, y: 216 },
+    );
+  });
+
   test("should parse SVG element with group", () => {
     const svgElement = createSVGElement("svg", {}, [
       {
@@ -240,7 +277,7 @@ describe("parseSvgElement", () => {
     const shapes = parseSvgElement(svgElement, getElementContext(), getParserContext());
 
     // Should have 3 shapes: 1 group + 2 children
-    expect(shapes.length).toBeGreaterThan(1);
+    expect(shapes).toHaveLength(3);
     // First shape should be a group
     expect(shapes[0].type).toBe("group");
   });
@@ -502,15 +539,15 @@ describe("parseSegmentRawPathsAsSimplePaths", () => {
       },
     ]);
     const [shapes] = parseSvgElementTree(svgElement, getParserContext());
-    expect(shapes).toHaveLength(4);
-    expect(shapes[0].p).toEqualPoint({ x: 110, y: 220 });
-    expect((shapes[0] as RectangleShape).fill.disabled).toEqual(true);
-    expect((shapes[0] as RectangleShape).width).toEqual(100);
-    expect((shapes[0] as RectangleShape).height).toEqual(80);
-    expect(shapes[3].p).toEqualPoint({ x: 10, y: 20 });
-    expect((shapes[3] as RectangleShape).fill.disabled).toEqual(false);
-    expect((shapes[3] as RectangleShape).width).toEqual(100);
-    expect((shapes[3] as RectangleShape).height).toEqual(80);
+    expect(shapes).toHaveLength(5);
+    expect(shapes[1].p).toEqualPoint({ x: 110, y: 220 });
+    expect((shapes[1] as RectangleShape).fill.disabled).toEqual(true);
+    expect((shapes[1] as RectangleShape).width).toEqual(100);
+    expect((shapes[1] as RectangleShape).height).toEqual(80);
+    expect(shapes[4].p).toEqualPoint({ x: 10, y: 20 });
+    expect((shapes[4] as RectangleShape).fill.disabled).toEqual(false);
+    expect((shapes[4] as RectangleShape).width).toEqual(100);
+    expect((shapes[4] as RectangleShape).height).toEqual(80);
   });
 
   test("should avoid circular dependencies of <use> elements", () => {

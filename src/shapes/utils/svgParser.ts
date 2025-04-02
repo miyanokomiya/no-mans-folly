@@ -9,6 +9,7 @@ import {
   sub,
   getSymmetry,
   multiAffine,
+  IRectangle,
 } from "okageo";
 import { Shape, Color, CommonStyle } from "../../models";
 import { createFillStyle } from "../../utils/fillStyle";
@@ -190,25 +191,20 @@ function getElementContext(element: SVGElement, id: string | undefined, srcConte
 export function parseSvgElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
   if (element.tagName.toLowerCase() === "svg") {
     // Process SVG root element
-    const shapes: Shape[] = [];
-    Array.from(element.children).forEach((child) => {
-      const childShapes = parseSvgElement(child as SVGElement, context, parserContext);
-      shapes.push(...childShapes);
-    });
-    return shapes;
+    return handleSvgElement(element, context, parserContext);
   } else if (element.tagName.toLowerCase() === "g") {
     // Process group element
-    return handleGroupElement(element as SVGGElement, context, parserContext);
+    return handleGroupElement(element, context, parserContext);
   } else if (element.tagName.toLowerCase() === "use") {
     // Process use element
-    return handleUseElement(element as SVGUseElement, context, parserContext);
+    return handleUseElement(element, context, parserContext);
   } else {
     // Process regular shape element
     return convertElementToShape(element, context, parserContext);
   }
 }
 
-function handleUseElement(element: SVGUseElement, context: ElementContext, parserContext: ParserContext): Shape[] {
+function handleUseElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
   const href = element.getAttribute("href");
   if (!href) return [];
 
@@ -256,19 +252,48 @@ function handleUseElement(element: SVGUseElement, context: ElementContext, parse
 }
 
 /**
- * Handle SVG group element
- * @param groupElement SVG group element
+ * Handle SVG svg element
+ * @param element SVG svg element
  * @param context Element context
  * @returns Array of shape data objects. The first element is the target shape, followed by its children.
  */
-function handleGroupElement(groupElement: SVGGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
+function handleSvgElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
+  // x and y attributes of SVG element can affect coordinates of inner elements.
+  // Ignore width and height attributes and respect original scale of inner elements.
+  // => Resizing all kinds of attributes is unrealistic.
+  const x = parseFloat(element.getAttribute("x") || "0");
+  const y = parseFloat(element.getAttribute("y") || "0");
+  // Regard viewBox likewise.
+  const viewBox = parseViewBox(element.getAttribute("viewBox"));
+  const dx = x - (viewBox?.x ?? 0);
+  const dy = y - (viewBox?.y ?? 0);
+  if (dx === 0 && dy === 0) return handleGroupElement(element, context, parserContext);
+
+  const t: AffineMatrix = [1, 0, 0, 1, dx, dy];
+  return handleGroupElement(
+    element,
+    {
+      ...context,
+      transform: context.transform ? multiAffine(context.transform, t) : t,
+    },
+    parserContext,
+  );
+}
+
+/**
+ * Handle SVG group element
+ * @param element SVG group element
+ * @param context Element context
+ * @returns Array of shape data objects. The first element is the target shape, followed by its children.
+ */
+function handleGroupElement(element: SVGElement, context: ElementContext, parserContext: ParserContext): Shape[] {
   const groupId = parserContext.generateId();
-  const groupContext = getElementContext(groupElement, groupId, context);
+  const groupContext = getElementContext(element, groupId, context);
 
   // Parse all child elements first
   const childShapes: Shape[] = [];
   let directChildCount = 0;
-  Array.from(groupElement.children).forEach((child) => {
+  Array.from(element.children).forEach((child) => {
     const shapes = parseSvgElement(child as SVGElement, groupContext, parserContext);
     if (shapes.length > 0) directChildCount++;
     childShapes.push(...shapes);
@@ -740,4 +765,19 @@ function convertTextElement(element: SVGElement, parserContext: ParserContext): 
   };
 
   return [shape, textContent];
+}
+
+/**
+ * Parse the viewBox attribute of an SVG element
+ * @param viewBoxStr The viewBox attribute string
+ * @returns An object containing x, y, width, and height of the viewBox, or null if invalid
+ */
+function parseViewBox(viewBoxStr?: string | null): IRectangle | undefined {
+  if (!viewBoxStr) return;
+
+  const values = viewBoxStr.split(/\s+|,/).map(parseFloat);
+  if (values.length !== 4 || values.some(isNaN)) return;
+
+  const [x, y, width, height] = values;
+  return { x, y, width, height };
 }
