@@ -1,7 +1,7 @@
 import { Shape } from "../../../models";
 import { createShape, getOutlinePaths, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
-import { mapFilter, mapReduce, splitList } from "../../../utils/commons";
+import { groupBy, mapReduce, splitList } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
 import { FOLLY_SVG_PREFIX } from "../../../shapes/utils/shapeTemplateUtil";
 import { ImageBuilder, newImageBuilder, newSVGImageBuilder, SVGImageBuilder } from "../../imageBuilder";
@@ -28,6 +28,7 @@ import { parseSvgFile } from "../../../shapes/utils/svgParser";
 import { DocOutput } from "../../../models/document";
 import { calcOriginalDocSize, getInitialOutput } from "../../../utils/textEditor";
 import { newColorParser } from "../../colorParser";
+import { generateFindexAfter } from "../../shapeRelation";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -477,7 +478,15 @@ export function groupShapes(ctx: AppCanvasStateContext): boolean {
   const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
   if (targetIds.length === 0 || !canGroupShapes(shapeComposite, targetIds)) return false;
 
-  const group = createShape(shapeComposite.getShapeStruct, "group", { id: ctx.generateUuid() });
+  const targets = targetIds.map((id) => shapeComposite.shapeMap[id]).filter((s) => !!s);
+  const indexParentId = targets[0].parentId;
+  const lastTarget = targets.reduce((a, b) => (a.findex < b.findex ? b : a), targets[0]);
+  const group = createShape(shapeComposite.getShapeStruct, "group", {
+    id: ctx.generateUuid(),
+    parentId: indexParentId,
+    // Set findex equivalent to the last target.
+    findex: generateFindexAfter(shapeComposite, lastTarget.id),
+  });
   ctx.addShapes(
     [group],
     undefined,
@@ -489,17 +498,30 @@ export function groupShapes(ctx: AppCanvasStateContext): boolean {
 
 export function ungroupShapes(ctx: AppCanvasStateContext): boolean {
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
-  const shapeMap = ctx.getShapeComposite().shapeMap;
-  const groups = ids.map((id) => shapeMap[id]).filter(isGroupShape);
+  const shapeComposite = ctx.getShapeComposite();
+  const shapeMap = shapeComposite.shapeMap;
+  const groups = ids.map((id) => shapeMap[id]).filter((s) => s && isGroupShape(s));
   if (groups.length === 0) return false;
 
-  const groupIdSet = new Set(groups.map((s) => s.id));
-  const patch = mapReduce(
-    mapFilter(shapeMap, (s) => !!s.parentId && groupIdSet.has(s.parentId)),
-    () => ({ parentId: undefined }),
-  );
+  // Ungrouped shapes should inherit the parentId of the group if it has.
+  const groupIdToParentIdMap = new Map(groups.map((s) => [s.id, s.parentId]));
+  const childShapes = shapeComposite.shapes.filter((s) => s.parentId && groupIdToParentIdMap.has(s.parentId));
+  const groupedByParentId = groupBy(childShapes, (s) => s.parentId!);
 
-  ctx.deleteShapes(Array.from(groupIdSet), patch);
+  const patch: Record<string, Partial<Shape>> = {};
+  for (const [parentId, shapes] of Object.entries(groupedByParentId)) {
+    const parent = shapeMap[parentId];
+    const afterFindex = generateFindexAfter(shapeComposite, parentId);
+    let findexFrom = parent.findex;
+    shapes?.forEach((s) => {
+      // Set findex equivalent to the parent.
+      const findex = generateKeyBetweenAllowSame(findexFrom, afterFindex);
+      patch[s.id] = { findex, parentId: groupIdToParentIdMap.get(parentId) };
+      findexFrom = findex;
+    });
+  }
+
+  ctx.deleteShapes(Array.from(groupIdToParentIdMap.keys()), patch);
   ctx.multiSelectShapes(Object.keys(patch));
   return true;
 }

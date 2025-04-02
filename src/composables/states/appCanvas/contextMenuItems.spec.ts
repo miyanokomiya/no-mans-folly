@@ -14,6 +14,7 @@ import {
   ungroupShapes,
 } from "./contextMenuItems";
 import { RectPolygonShape } from "../../../shapes/rectPolygon";
+import { generateNKeysBetween } from "../../../utils/findex";
 
 function getMockCtx() {
   return {
@@ -118,12 +119,13 @@ describe("handleContextItemEvent", () => {
 describe("groupShapes", () => {
   test("should group shapes", () => {
     const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 2);
     ctx.getShapeComposite = () =>
       newShapeComposite({
         shapes: [
           createShape(getCommonStruct, "rectangle", { id: "a" }),
           createShape(getCommonStruct, "rectangle", { id: "b" }),
-        ],
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
         getStruct: getCommonStruct,
       });
 
@@ -136,22 +138,27 @@ describe("groupShapes", () => {
     ctx.generateUuid = () => "group";
     const res1 = groupShapes(ctx);
     expect(res1).toBe(true);
-    expect(ctx.addShapes).toHaveBeenCalledWith([createShape(getCommonStruct, "group", { id: "group" })], undefined, {
-      a: { parentId: "group" },
-      b: { parentId: "group" },
-    });
+    expect(ctx.addShapes).toHaveBeenCalledWith(
+      [createShape(getCommonStruct, "group", { id: "group", findex: "a2" })],
+      undefined,
+      {
+        a: { parentId: "group" },
+        b: { parentId: "group" },
+      },
+    );
     expect(ctx.selectShape).toHaveBeenCalledWith("group");
   });
 
   test("should not make a group when a frame shape exists in the targets", () => {
     const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 3);
     ctx.getShapeComposite = () =>
       newShapeComposite({
         shapes: [
           createShape(getCommonStruct, "rectangle", { id: "a" }),
           createShape(getCommonStruct, "rectangle", { id: "b" }),
           createShape(getCommonStruct, "frame", { id: "frame" }),
-        ],
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
         getStruct: getCommonStruct,
       });
 
@@ -165,18 +172,48 @@ describe("groupShapes", () => {
     const res1 = groupShapes(ctx);
     expect(res1).toBe(false);
   });
+
+  test("should group shapes within a group", () => {
+    const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 4);
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape(getCommonStruct, "group", { id: "root_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "a", parentId: "root_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "b", parentId: "root_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "c", parentId: "root_group" }),
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
+        getStruct: getCommonStruct,
+      });
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
+    ctx.generateUuid = () => "new_group";
+    const res1 = groupShapes(ctx);
+    expect(res1).toBe(true);
+    expect(ctx.addShapes).toHaveBeenCalledWith(
+      [createShape(getCommonStruct, "group", { id: "new_group", parentId: "root_group", findex: "a2V" })],
+      undefined,
+      {
+        a: { parentId: "new_group" },
+        b: { parentId: "new_group" },
+      },
+    );
+    expect(ctx.selectShape).toHaveBeenCalledWith("new_group");
+  });
 });
 
 describe("ungroupShapes", () => {
   test("should ungroup shapes", () => {
     const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 3);
     ctx.getShapeComposite = () =>
       newShapeComposite({
         shapes: [
           createShape(getCommonStruct, "group", { id: "group" }),
           createShape(getCommonStruct, "rectangle", { id: "a", parentId: "group" }),
           createShape(getCommonStruct, "rectangle", { id: "b", parentId: "group" }),
-        ],
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
         getStruct: getCommonStruct,
       });
 
@@ -189,10 +226,35 @@ describe("ungroupShapes", () => {
     const res1 = ungroupShapes(ctx);
     expect(res1).toBe(true);
     expect(ctx.deleteShapes).toHaveBeenCalledWith(["group"], {
-      a: { parentId: undefined },
-      b: { parentId: undefined },
+      a: { parentId: undefined, findex: "a0V" },
+      b: { parentId: undefined, findex: "a0k" },
     });
     expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["a", "b"]);
+  });
+
+  test("should ungroup child agroup within a group", () => {
+    const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 5);
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape(getCommonStruct, "group", { id: "parent_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "a", parentId: "parent_group" }),
+          createShape(getCommonStruct, "group", { id: "child_group", parentId: "parent_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "b", parentId: "child_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "c", parentId: "child_group" }),
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
+        getStruct: getCommonStruct,
+      });
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ child_group: true });
+    const res1 = ungroupShapes(ctx);
+    expect(res1).toBe(true);
+    expect(ctx.deleteShapes).toHaveBeenCalledWith(["child_group"], {
+      b: { parentId: "parent_group", findex: "a2V" },
+      c: { parentId: "parent_group", findex: "a2k" },
+    });
+    expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["b", "c"]);
   });
 });
 

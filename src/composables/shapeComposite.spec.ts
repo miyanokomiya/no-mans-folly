@@ -892,12 +892,8 @@ describe("getDeleteTargetIds", () => {
 describe("canGroupShapes", () => {
   test("should return true when shapes can be grouped", () => {
     const shape0 = createShape(getCommonStruct, "text", { id: "shape0" });
-    const shape1 = createShape(getCommonStruct, "text", {
-      id: "shape1",
-    });
-    const shape2 = createShape(getCommonStruct, "text", {
-      id: "shape2",
-    });
+    const shape1 = createShape(getCommonStruct, "text", { id: "shape1" });
+    const shape2 = createShape(getCommonStruct, "text", { id: "shape2" });
     const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "child0",
@@ -907,8 +903,13 @@ describe("canGroupShapes", () => {
       id: "child1",
       parentId: group0.id,
     });
+    const group1 = createShape(getCommonStruct, "group", { id: "group1" });
+    const child2 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child2",
+      parentId: group1.id,
+    });
 
-    const shapes = [shape0, shape1, shape2, group0, child0, child1];
+    const shapes = [shape0, shape1, shape2, group0, child0, child1, group1, child2];
     const target = newShapeComposite({
       shapes,
       getStruct: getCommonStruct,
@@ -918,8 +919,27 @@ describe("canGroupShapes", () => {
     expect(canGroupShapes(target, ["shape0", "shape1"])).toBe(true);
     expect(canGroupShapes(target, ["shape0", "shape1", "shape2"])).toBe(true);
     expect(canGroupShapes(target, ["group0", "child0"])).toBe(false);
-    expect(canGroupShapes(target, ["child0", "child1"])).toBe(false);
+    expect(canGroupShapes(target, ["child0", "child1"]), "within the same group").toBe(true);
+    expect(canGroupShapes(target, ["child0", "child2"]), "within the different group").toBe(false);
     expect(canGroupShapes(target, ["shape0", "child0"])).toBe(false);
+  });
+
+  test("should return false when shapes have the same parent but it's not a group shape", () => {
+    const parent = createShape(getCommonStruct, "align_box", { id: "parent" });
+    const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: parent.id,
+    });
+    const child1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "child1",
+      parentId: parent.id,
+    });
+    const shapes = [parent, child0, child1];
+    const target = newShapeComposite({
+      shapes,
+      getStruct: getCommonStruct,
+    });
+    expect(canGroupShapes(target, ["child0", "child1"])).toBe(false);
   });
 });
 

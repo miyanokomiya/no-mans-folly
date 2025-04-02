@@ -517,14 +517,24 @@ export function getDeleteTargetIds(shapeComposite: ShapeComposite, deleteSrc: st
 /**
  * Shapes can be grouped when
  * - Multiple shapes exist as the targets.
- * - No shape in the targets has parent.
+ * - No shape in the targets has parents other than the same group shape.
  * - All targets can be grouped.
  */
 export function canGroupShapes(shapeComposite: ShapeComposite, targetIds: string[]): boolean {
   if (targetIds.length < 2) return false;
+
+  // Check if all targets have the same group shape as the parent.
+  let indexParentId = shapeComposite.shapeMap[targetIds[0]]?.parentId;
+  const indexParent = indexParentId ? shapeComposite.shapeMap[indexParentId] : undefined;
+  if (!indexParent || !isGroupShape(indexParent)) {
+    indexParentId = undefined;
+  }
+
   return !targetIds.some((id) => {
     const s = shapeComposite.shapeMap[id];
-    return shapeComposite.hasParent(s) || !shapeModule.canShapeGrouped(shapeComposite.getShapeStruct, s);
+    if (!shapeModule.canShapeGrouped(shapeComposite.getShapeStruct, s)) return true;
+    if (!shapeComposite.hasParent(s)) return false;
+    return s.parentId !== indexParentId;
   });
 }
 
