@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
 import {
   useDocumentMapWithoutTmpInfo,
@@ -40,22 +40,23 @@ export const ShapeTreePanel: React.FC = () => {
     return s ? shapeComposite.getSelectionScope(s) : undefined;
   }, [shapeComposite, selectedLastId]);
 
-  const shapeRenderer = useMemo(() => {
-    return newShapeRenderer({
+  const renderShape = useMemo(() => {
+    const renderer = newShapeRenderer({
       shapeComposite,
       getDocumentMap: () => documentMap,
       imageStore,
       scale: 1,
     });
+    return getRenderShapeFn(shapeComposite, renderer);
   }, [imageStore, shapeComposite, documentMap]);
 
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree
       .filter((n) => !hasSpecialOrderPriority(shapeComposite.getShapeStruct, shapeComposite.mergedShapeMap[n.id]))
       .map((n) =>
-        getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor, shapeRenderer),
+        getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor, renderShape),
       );
-  }, [shapeComposite, shapeRenderer, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
+  }, [shapeComposite, renderShape, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
 
@@ -104,7 +105,14 @@ export const ShapeTreePanel: React.FC = () => {
   );
 
   const [draggingTarget, setDraggingTarget] = useState<[Element, id: string, IVec2]>();
-  const [dropTo, setDropTo] = useState<[id: string, operation: DropOperation]>();
+  const [dropTo, setDropToRaw] = useState<[id: string, operation: DropOperation]>();
+
+  const setDropTo = useCallback((val: [id: string, operation: DropOperation] | undefined) => {
+    setDropToRaw((current) => {
+      if (current?.[0] === val?.[0] && current?.[1] === val?.[1]) return current;
+      return val;
+    });
+  }, []);
 
   const { startDragging } = useGlobalDrag(
     useCallback((e: PointerEvent) => {
@@ -120,7 +128,7 @@ export const ShapeTreePanel: React.FC = () => {
 
       setDraggingTarget(undefined);
       setDropTo(undefined);
-    }, [draggingTarget, dropTo, handleDrop]),
+    }, [draggingTarget, dropTo, setDropTo, handleDrop]),
   );
 
   const handleStartDragging = useCallback(
@@ -191,22 +199,26 @@ export const ShapeTreePanel: React.FC = () => {
       // Note: "offsetRate" can be greater than 1. The destination should be below the target in that case.
       setDropTo([id, "below"]);
     }
-  }, [draggingTarget, shapeComposite]);
+  }, [setDropTo, draggingTarget, shapeComposite]);
+
+  const rootNodeElms = useMemo(() => {
+    return rootNodeProps.map((n) => (
+      <li key={n.id} className="w-full">
+        <UITreeNode
+          {...n}
+          dropTo={dropTo}
+          onHover={handleNodeHover}
+          onSelect={handleNodeSelect}
+          onDragStart={handleStartDragging}
+        />
+      </li>
+    ));
+  }, [dropTo, handleNodeHover, handleNodeSelect, handleStartDragging, rootNodeProps]);
 
   return (
     <div ref={rootRef} className="h-full p-2 overflow-auto">
       <ul className="relative flex flex-col items-start" style={{ gap: 1 }}>
-        {rootNodeProps.map((n) => (
-          <li key={n.id} className="w-full">
-            <UITreeNode
-              {...n}
-              dropTo={dropTo}
-              onHover={handleNodeHover}
-              onSelect={handleNodeSelect}
-              onDragStart={handleStartDragging}
-            />
-          </li>
-        ))}
+        {rootNodeElms}
         {draggingTarget ? (
           <div
             className="fixed left-6 px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
@@ -230,12 +242,90 @@ interface UITreeNodeProps {
   primeSibling: boolean;
   draggable: boolean;
   dropTo?: [string, DropOperation];
+  sheetColor: string;
+  renderShape: (id: string, canvas: HTMLCanvasElement | null) => void;
   onHover?: (id: string) => void;
   onSelect?: (id: string, multi?: boolean, range?: boolean) => void;
   onDragStart?: (e: React.PointerEvent, id: string) => void;
-  renderShape: (id: string, canvas: HTMLCanvasElement | null) => void;
-  sheetColor: string;
 }
+
+const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: React.ReactNode }> = memo(
+  ({
+    id,
+    name,
+    selected,
+    prime,
+    primeSibling,
+    draggable,
+    sheetColor,
+    renderShape,
+    onHover,
+    onSelect,
+    onDragStart,
+    dropElm,
+  }) => {
+    const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    useEffect(() => {
+      renderShape(id, canvasRef.current);
+    }, [id, renderShape]);
+
+    const handleNodeDown = useCallback(
+      (e: React.PointerEvent) => {
+        e.preventDefault();
+
+        if (isCtrlOrMeta(e) && primeSibling) {
+          onSelect?.(id, true);
+          return;
+        }
+        if (e.shiftKey && primeSibling) {
+          onSelect?.(id, false, true);
+          return;
+        }
+
+        onSelect?.(id);
+
+        if (draggable) {
+          onDragStart?.(e, id);
+        }
+      },
+      [id, onSelect, draggable, onDragStart, primeSibling],
+    );
+
+    const handleNodeSelectDown = useCallback(() => {
+      onSelect?.(id, true);
+    }, [id, onSelect]);
+
+    const handleNodePointerEnter = useCallback(() => {
+      onHover?.(id);
+    }, [id, onHover]);
+
+    return (
+      <div data-anchor-root className="flex items-center relative">
+        <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
+        <button
+          type="button"
+          className={
+            "px-1 rounded-xs w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
+          }
+          onPointerDown={handleNodeDown}
+          onPointerEnter={handleNodePointerEnter}
+        >
+          <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
+            <canvas ref={canvasRef} width="24" height="24" />
+          </div>
+          {name}
+        </button>
+        {/* Absence of this element causes layout shift for some reason. */}
+        <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
+          <ToggleInput value={selected} onChange={handleNodeSelectDown} />
+        </div>
+        {dropElm}
+      </div>
+    );
+  },
+);
 
 const UITreeNode: React.FC<UITreeNodeProps> = ({
   id,
@@ -249,45 +339,10 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   onHover,
   onSelect,
   onDragStart,
-  renderShape,
   sheetColor,
+  renderShape,
 }) => {
-  const handleNodeDown = useCallback(
-    (e: React.PointerEvent) => {
-      e.preventDefault();
-
-      if (isCtrlOrMeta(e) && primeSibling) {
-        onSelect?.(id, true);
-        return;
-      }
-      if (e.shiftKey && primeSibling) {
-        onSelect?.(id, false, true);
-        return;
-      }
-
-      onSelect?.(id);
-
-      if (draggable) {
-        onDragStart?.(e, id);
-      }
-    },
-    [id, onSelect, draggable, onDragStart, primeSibling],
-  );
-
-  const handleNodeSelectDown = useCallback(() => {
-    onSelect?.(id, true);
-  }, [id, onSelect]);
-
-  const handleNodePointerEnter = useCallback(() => {
-    onHover?.(id);
-  }, [id, onHover]);
-
   const rootRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    renderShape(id, canvasRef.current);
-  }, [id, renderShape]);
 
   useEffect(() => {
     if (!prime || !rootRef.current) return;
@@ -314,32 +369,23 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     ) : undefined;
 
   const hasChildren = childNode.length > 0;
-  const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
   return (
     <div ref={rootRef} data-id={id} data-draggable={draggable || undefined} className="relative">
-      <div data-anchor-root className="flex items-center relative">
-        <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
-        <button
-          type="button"
-          className={
-            "px-1 rounded-xs w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
-          }
-          onPointerDown={handleNodeDown}
-          onPointerEnter={handleNodePointerEnter}
-        >
-          <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
-            <canvas ref={canvasRef} width="24" height="24" />
-          </div>
-          {name}
-        </button>
-        {/* Absence of this element causes layout shift for some reason. */}
-        <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
-          <ToggleInput value={selected} onChange={handleNodeSelectDown} />
-        </div>
-        {dropGroupElm}
-        {dropAboveElm}
-      </div>
+      <NodeHeader
+        id={id}
+        name={name}
+        selected={selected}
+        prime={prime}
+        primeSibling={primeSibling}
+        draggable={draggable}
+        sheetColor={sheetColor}
+        renderShape={renderShape}
+        onHover={onHover}
+        onSelect={onSelect}
+        onDragStart={onDragStart}
+        dropElm={dropGroupElm ?? dropAboveElm}
+      />
       {hasChildren ? (
         <ul
           className="ml-2 relative border-l-2 border-gray-400 flex flex-col items-start"
@@ -365,14 +411,40 @@ function getUITreeNodeProps(
   selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
   sheetColor: string,
-  shapeRenderer: ShapeRenderer,
+  renderShape: (id: string, canvas: HTMLCanvasElement | null) => void,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = getLabel(shapeComposite.getShapeStruct, shape);
   const primeSibling = isSameShapeSelectionScope(selectedScope, shapeComposite.getSelectionScope(shape));
   const draggable = isDraggableShape(shapeComposite, shape.id);
 
-  const renderShape = (id: string, canvas: HTMLCanvasElement | null) => {
+  return {
+    id: shapeNode.id,
+    name: label,
+    selected: !!selectedIdMap[shapeNode.id],
+    prime: lastSelectedId === shapeNode.id,
+    primeSibling: primeSibling,
+    draggable,
+    childNode: shapeNode.children.map((c) =>
+      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, sheetColor, renderShape),
+    ),
+    renderShape,
+    sheetColor,
+  };
+}
+
+/**
+ * Only shapes that are children of a container shape that acceps any shape types or have no parent are draggable.
+ * This ristriction can be loosen, but things will become more complicated for sure.
+ */
+function isDraggableShape(shapeComposite: ShapeComposite, id: string): boolean {
+  const shape = shapeComposite.shapeMap[id];
+  const parent = shape.parentId ? shapeComposite.shapeMap[shape.parentId] : undefined;
+  return !parent || isGroupShape(parent) || isAlignBoxShape(parent);
+}
+
+function getRenderShapeFn(shapeComposite: ShapeComposite, shapeRenderer: ShapeRenderer) {
+  return (id: string, canvas: HTMLCanvasElement | null) => {
     const ctx = canvas?.getContext("2d");
     const s = shapeComposite.shapeMap[id];
     if (!canvas || !ctx || !s) return;
@@ -390,28 +462,4 @@ function getUITreeNodeProps(
     shapeRenderer.renderShape(ctx, id);
     ctx.restore();
   };
-
-  return {
-    id: shapeNode.id,
-    name: label,
-    selected: !!selectedIdMap[shapeNode.id],
-    prime: lastSelectedId === shapeNode.id,
-    primeSibling: primeSibling,
-    draggable,
-    childNode: shapeNode.children.map((c) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, sheetColor, shapeRenderer),
-    ),
-    renderShape,
-    sheetColor,
-  };
-}
-
-/**
- * Only shapes that are children of a container shape that acceps any shape types or have no parent are draggable.
- * This ristriction can be loosen, but things will become more complicated for sure.
- */
-function isDraggableShape(shapeComposite: ShapeComposite, id: string): boolean {
-  const shape = shapeComposite.shapeMap[id];
-  const parent = shape.parentId ? shapeComposite.shapeMap[shape.parentId] : undefined;
-  return !parent || isGroupShape(parent) || isAlignBoxShape(parent);
 }
