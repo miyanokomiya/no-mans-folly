@@ -6,6 +6,7 @@ import * as Y from "yjs";
 const DOC_FILE_NAME_SUFFIX = ".folly";
 export const DIAGRAM_FILE_NAME = `diagram${DOC_FILE_NAME_SUFFIX}`;
 export const ASSET_DIRECTORY_NAME = "assets";
+export const SHEET_THUMBNAIL_PREFIX = "sheet_";
 export function getSheetFileName(sheetId: string): string {
   return `${sheetId}${DOC_FILE_NAME_SUFFIX}`;
 }

@@ -7,6 +7,7 @@ import { newShapeRenderer } from "../../../shapeRenderer";
 import { newShapeSVGRenderer } from "../../../shapeSVGRenderer";
 import { AppCanvasStateContext } from "../core";
 import { TreeNode } from "../../../../utils/tree";
+import { SHEET_THUMBNAIL_PREFIX } from "../../../../utils/fileAccess";
 
 type ZipItem = [name: string, ext: string, Uint8Array];
 
@@ -227,4 +228,33 @@ function getFrameIndexTextMap(frameTree: TreeNode[]): Map<string, string> {
     });
   });
   return ret;
+}
+
+export async function saveSheetThumbnailAsSvg(sheetId: string, ctx: AppCanvasStateContext) {
+  const assetAPI = ctx.assetAPI;
+  console.log(sheetId, assetAPI.enabled);
+  if (!assetAPI.enabled || assetAPI.name === "memory") return;
+
+  const shapeComposite = ctx.getShapeComposite();
+  const range = shapeComposite.getWrapperRectForShapes(shapeComposite.shapes, true);
+  const renderer = newShapeSVGRenderer({
+    shapeComposite: shapeComposite,
+    getDocumentMap: ctx.getDocumentMap,
+    imageStore: ctx.getImageStore(),
+    assetAPI,
+  });
+  const builder = newSVGImageBuilder({
+    render: renderer.renderWithMeta,
+    range,
+  });
+  try {
+    const blob = await builder.toBlob();
+    await assetAPI.saveAsset(`${SHEET_THUMBNAIL_PREFIX}${sheetId}.svg`, blob);
+  } catch (e: any) {
+    ctx.showToastMessage({
+      text: `Failed to save sheet thumbnail. ${e.message}`,
+      type: "error",
+    });
+    console.error(e);
+  }
 }

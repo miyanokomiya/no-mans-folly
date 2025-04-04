@@ -19,6 +19,7 @@ const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
 
 export type AssetAPIEnabled = {
   enabled: true;
+  name: string;
   saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
   loadAsset: (assetId: string) => Promise<Blob | File | undefined>;
 };

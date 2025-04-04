@@ -4,6 +4,7 @@ import { FileAccess } from "../utils/fileAccess";
 export function newFileAssetAPI(fileAccess: FileAccess): AssetAPI {
   return {
     enabled: fileAccess.hasHnadle(),
+    name: "file",
     saveAsset: fileAccess.saveAsset,
     loadAsset: fileAccess.loadAsset,
   };
@@ -19,6 +20,7 @@ export function newMemoryAssetAPI(): MemoryAssetAPI {
 
   return {
     enabled: true,
+    name: "memory",
     saveAsset: (assetId, blob) => {
       fileMap.set(assetId, blob);
       return Promise.resolve();

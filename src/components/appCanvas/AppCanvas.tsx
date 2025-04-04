@@ -43,6 +43,8 @@ import { useImageStore, useLoadShapeAssets } from "./hooks";
 import { CommandExamFloatPanel } from "./CommandExamFloatPanel";
 import { renderFrameNames } from "../../composables/frame";
 import { FloatMenuOption } from "../../composables/states/commons";
+import { newDebounce } from "../../utils/stateful/debounce";
+import { saveSheetThumbnailAsSvg } from "../../composables/states/appCanvas/utils/shapeExport";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -76,6 +78,17 @@ export const AppCanvas: React.FC = () => {
   const imageStore = useImageStore(shapeStore);
   const loadShapeAssets = useLoadShapeAssets(imageStore, smctx.assetAPI, getSmctx);
 
+  const saveSheetThumbnailDebounce = useMemo(() => {
+    return newDebounce(saveSheetThumbnailAsSvg, 5000);
+  }, []);
+
+  const processSheetThumbnail = useCallback(() => {
+    const sheetId = sheetStore.getSelectedSheet()?.id;
+    if (sheetId) {
+      saveSheetThumbnailDebounce(sheetId, getSmctx());
+    }
+  }, [sheetStore, getSmctx, saveSheetThumbnailDebounce]);
+
   useEffect(() => {
     loadShapeAssets(shapeStore.shapeComposite.shapes);
   }, [loadShapeAssets, shapeStore]);
@@ -94,14 +107,20 @@ export const AppCanvas: React.FC = () => {
   }, [sheetStore, sm, imageStore, loadShapeAssets]);
 
   useEffect(() => {
+    // Flush the thumbnail save when the shape store changes.
+    return saveSheetThumbnailDebounce.flush;
+  }, [shapeStore, saveSheetThumbnailDebounce]);
+
+  useEffect(() => {
     return shapeStore.watch((keys) => {
       sm.handleEvent({
         type: "shape-updated",
         data: { keys },
       });
       setCanvasState({});
+      processSheetThumbnail();
     });
-  }, [shapeStore, sm]);
+  }, [shapeStore, sm, processSheetThumbnail]);
 
   useEffect(() => {
     return shapeStore.watchTmpShapeMap((keys) => {
@@ -126,8 +145,9 @@ export const AppCanvas: React.FC = () => {
         data: { keys, text: true },
       });
       setCanvasState({});
+      processSheetThumbnail();
     });
-  }, [documentStore, sm]);
+  }, [documentStore, sm, processSheetThumbnail]);
 
   useEffect(() => {
     return documentStore.watchTmpDocMap((keys) => {
@@ -430,6 +450,7 @@ export const AppCanvas: React.FC = () => {
     userSettingStore,
     imageStore,
     setSmctx,
+    sheetStore,
     shapeStore,
     showEmojiPicker,
     undoManager,
@@ -558,6 +579,7 @@ export const AppCanvas: React.FC = () => {
     (e: PointerEvent) => {
       if (!isValidPointer(e)) return;
 
+      saveSheetThumbnailDebounce.delay();
       const p = removeRootPosition({ x: e.pageX, y: e.pageY });
       setMousePoint(p);
       if (!editStartPoint || !editStartCanvasPoint) return;
@@ -574,6 +596,7 @@ export const AppCanvas: React.FC = () => {
       });
     },
     [
+      saveSheetThumbnailDebounce,
       editStartPoint,
       editStartCanvasPoint,
       removeRootPosition,
