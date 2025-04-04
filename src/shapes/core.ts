@@ -67,6 +67,13 @@ export interface ShapeStruct<T extends Shape> {
    */
   resizeOnTextEdit?: (shape: T, textBoxSize: Size) => Partial<T> | undefined;
   /**
+   * Scale each property of the shape. This is intended for adjusting default size of the shape rather than modifying it.
+   * => "resize" should be used for modifying the shape.
+   * All control properties, such as rx, ry and control points having absolute value, should be scaled.
+   * Exclude line width and text related properties.
+   */
+  applyScale?: (shape: T, scaleValue: IVec2) => Partial<T> | undefined;
+  /**
    * Lines should be sorted top-left to bottom-right in each direction.
    * Each line should have non-zero length at least.
    */

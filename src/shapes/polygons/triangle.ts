@@ -18,8 +18,10 @@ export type TriangleShape = SimplePolygonShape & {
   c0?: IVec2; // { x: 0.5, y: 0 } by default
 };
 
+const baseStruct = getStructForSimplePolygon<TriangleShape>(getPath);
+
 export const struct: ShapeStruct<TriangleShape> = {
-  ...getStructForSimplePolygon<TriangleShape>(getPath),
+  ...baseStruct,
   label: "Triangle",
   create(arg = {}) {
     return {
@@ -33,6 +35,12 @@ export const struct: ShapeStruct<TriangleShape> = {
       direction: arg.direction,
       cr: arg.cr,
       c0: arg.c0 ?? { x: 0.5, y: 0 },
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      cr: shape.cr ? Math.max(0, shape.cr * Math.min(scaleValue.x, scaleValue.y)) : undefined,
     };
   },
   getTextRangeRect(shape) {

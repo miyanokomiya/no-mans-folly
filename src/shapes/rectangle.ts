@@ -132,6 +132,12 @@ export const struct: ShapeStruct<RectangleShape> = {
 
     return ret;
   },
+  applyScale(shape, scaleValue) {
+    return {
+      width: Math.max(0, shape.width * scaleValue.x),
+      height: Math.max(0, shape.height * scaleValue.y),
+    };
+  },
   getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const center = getRectCenter(rect);

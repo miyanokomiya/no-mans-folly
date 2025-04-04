@@ -9,8 +9,10 @@ export type BracketShape = SimplePolygonShape & {
   r: number;
 };
 
+const baseStruct = getStructForSimplePolygon<BracketShape>(getPath);
+
 export const struct: ShapeStruct<BracketShape> = {
-  ...getStructForSimplePolygon<BracketShape>(getPath),
+  ...baseStruct,
   label: "Bracket",
   create(arg = {}) {
     return {
@@ -22,6 +24,13 @@ export const struct: ShapeStruct<BracketShape> = {
       height: arg.height ?? 100,
       thickness: 10,
       r: 0,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      thickness: Math.max(0, shape.thickness * scaleValue.y),
+      r: Math.max(0, shape.r * scaleValue.y),
     };
   },
   getTextRangeRect: undefined,

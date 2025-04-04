@@ -10,8 +10,10 @@ export type WaveShape = SimplePolygonShape & {
   waveDepth: number; // represents the depth of wave
 };
 
+const baseStruct = getStructForSimplePolygon<WaveShape>(getPath);
+
 export const struct: ShapeStruct<WaveShape> = {
-  ...getStructForSimplePolygon<WaveShape>(getPath),
+  ...baseStruct,
   label: "Wave",
   create(arg = {}) {
     return {
@@ -23,6 +25,13 @@ export const struct: ShapeStruct<WaveShape> = {
       height: arg.height ?? 40,
       waveSize: arg.waveSize ?? 100,
       waveDepth: arg.waveDepth ?? 20,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      waveSize: Math.max(0, shape.waveSize * scaleValue.x),
+      waveDepth: Math.max(0, shape.waveDepth * scaleValue.y),
     };
   },
   getTextRangeRect: undefined,

@@ -9,8 +9,10 @@ export type CurlyBracketShape = SimplePolygonShape & {
   thickness: number;
 };
 
+const baseStruct = getStructForSimplePolygon<CurlyBracketShape>(getPath);
+
 export const struct: ShapeStruct<CurlyBracketShape> = {
-  ...getStructForSimplePolygon<CurlyBracketShape>(getPath),
+  ...baseStruct,
   label: "CurlyBracket",
   create(arg = {}) {
     return {
@@ -21,6 +23,12 @@ export const struct: ShapeStruct<CurlyBracketShape> = {
       width: arg.width ?? 50,
       height: arg.height ?? 100,
       thickness: 10,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      thickness: Math.max(0, shape.thickness * scaleValue.y),
     };
   },
   getTextRangeRect: undefined,

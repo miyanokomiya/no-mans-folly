@@ -7,8 +7,10 @@ export type AngleBracketShape = SimplePolygonShape & {
   thickness: number;
 };
 
+const baseStruct = getStructForSimplePolygon<AngleBracketShape>(getPath);
+
 export const struct: ShapeStruct<AngleBracketShape> = {
-  ...getStructForSimplePolygon<AngleBracketShape>(getPath),
+  ...baseStruct,
   label: "AngleBracket",
   create(arg = {}) {
     return {
@@ -19,7 +21,12 @@ export const struct: ShapeStruct<AngleBracketShape> = {
       width: arg.width ?? 50,
       height: arg.height ?? 100,
       thickness: 10,
-      r: 50,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      thickness: Math.max(0, shape.thickness * scaleValue.y),
     };
   },
   getTextRangeRect: undefined,

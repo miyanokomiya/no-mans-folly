@@ -11,8 +11,10 @@ export type RoundedRectangleShape = SimplePolygonShape & {
   ry: number;
 };
 
+const baseStruct = getStructForSimplePolygon(getPath, { outlineSnap: "trbl" });
+
 export const struct: ShapeStruct<RoundedRectangleShape> = {
-  ...getStructForSimplePolygon(getPath, { outlineSnap: "trbl" }),
+  ...baseStruct,
   label: "RoundedRectangle",
   create(arg = {}) {
     return {
@@ -40,6 +42,13 @@ export const struct: ShapeStruct<RoundedRectangleShape> = {
       radius.y,
     );
     return shape.textPadding ? getPaddingRect(shape.textPadding, rect) : rect;
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      rx: Math.max(0, shape.rx * scaleValue.x),
+      ry: Math.max(0, shape.ry * scaleValue.y),
+    };
   },
   canAttachSmartBranch: true,
 };

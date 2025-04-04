@@ -7,8 +7,10 @@ export type CrossShape = SimplePolygonShape & {
   crossSize: number;
 };
 
+const baseStruct = getStructForSimplePolygon<CrossShape>(getPath);
+
 export const struct: ShapeStruct<CrossShape> = {
-  ...getStructForSimplePolygon<CrossShape>(getPath),
+  ...baseStruct,
   label: "Cross",
   create(arg = {}) {
     return {
@@ -19,6 +21,12 @@ export const struct: ShapeStruct<CrossShape> = {
       width: arg.width ?? 100,
       height: arg.height ?? 100,
       crossSize: arg.crossSize ?? 20,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      crossSize: Math.max(0, shape.crossSize * Math.min(scaleValue.x, scaleValue.y)),
     };
   },
   getTextRangeRect: undefined,

@@ -97,6 +97,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "getOutlinePaths"
   | "getTangentAt"
   | "resize"
+  | "applyScale"
   | "getIntersectedOutlines"
   | "getCommonStyle"
   | "updateCommonStyle"
@@ -213,6 +214,12 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       if (!isSameValue(rotation, shape.rotation)) ret.rotation = rotation;
 
       return ret;
+    },
+    applyScale(shape, scaleValue) {
+      return {
+        width: Math.max(0, shape.width * scaleValue.x),
+        height: Math.max(0, shape.height * scaleValue.y),
+      } as Partial<T>;
     },
     getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
       const { path, curves } = getPath(shape);

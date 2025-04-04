@@ -17,8 +17,10 @@ export type ParallelogramShape = SimplePolygonShape & {
   cr?: number; // 0 by default
 };
 
+const baseStruct = getStructForSimplePolygon<ParallelogramShape>(getPath);
+
 export const struct: ShapeStruct<ParallelogramShape> = {
-  ...getStructForSimplePolygon<ParallelogramShape>(getPath),
+  ...baseStruct,
   label: "Parallelogram",
   create(arg = {}) {
     return {
@@ -32,6 +34,12 @@ export const struct: ShapeStruct<ParallelogramShape> = {
       c0: arg.c0 ?? { x: 0.7, y: 0 },
       cr: arg.cr,
       direction: arg.direction,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      cr: shape.cr ? Math.max(0, shape.cr * Math.min(scaleValue.x, scaleValue.y)) : undefined,
     };
   },
   getTextRangeRect(shape) {

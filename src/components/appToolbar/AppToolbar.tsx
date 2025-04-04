@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
-import { createShape } from "../../shapes";
+import { applyScaleToShape, createShape } from "../../shapes";
 import iconShapeSet from "../../assets/icons/shape_set.svg";
 import iconLineStraight from "../../assets/icons/shape_line_straight.svg";
 import iconText from "../../assets/icons/text.svg";
@@ -79,8 +79,7 @@ export const AppToolbar: React.FC = () => {
         if (size !== shapeMaxSize) {
           // Adjust the shape size to fit the viewport.
           const scale = size / shapeMaxSize;
-          const affine: AffineMatrix = [scale, 0, 0, scale, 0, 0];
-          const patch = minShapeComposite.transformShape(shape, affine);
+          const patch = applyScaleToShape(minShapeComposite.getShapeStruct, shape, { x: scale, y: scale });
           template = { shapes: [{ ...shape, ...patch }] };
         } else {
           template = { shapes: [shape] };
@@ -335,7 +334,6 @@ function getLineOptions(type: string): { type?: LineType; curveType?: CurveType 
 
 function getBetterShapeSizeForViewport(viewRect: IRectangle): number {
   // 25 would be the minimum size for most of shapes without breaking their default appearances.
-  // TODO: Create new shape adjusting its inner properties to suit given default size.
   const sizeList = [100, 50, 25];
   const minViewSize = Math.min(viewRect.width, viewRect.height);
   return sizeList.find((s) => s < minViewSize / 2) ?? 100;

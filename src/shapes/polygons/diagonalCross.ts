@@ -7,8 +7,10 @@ import { CrossShape } from "./cross";
 
 export type DiagonalCrossShape = CrossShape;
 
+const baseStruct = getStructForSimplePolygon<DiagonalCrossShape>(getDiagonalCrossPath);
+
 export const struct: ShapeStruct<DiagonalCrossShape> = {
-  ...getStructForSimplePolygon<DiagonalCrossShape>(getDiagonalCrossPath),
+  ...baseStruct,
   label: "DiagonalCross",
   create(arg = {}) {
     return {
@@ -19,6 +21,12 @@ export const struct: ShapeStruct<DiagonalCrossShape> = {
       width: arg.width ?? 100,
       height: arg.height ?? 100,
       crossSize: arg.crossSize ?? 20,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      crossSize: Math.max(0, shape.crossSize * Math.min(scaleValue.x, scaleValue.y)),
     };
   },
   getTextRangeRect: undefined,

@@ -157,6 +157,16 @@ export function resizeShape<T extends Shape>(
   return struct.resize(shape, resizingAffine, shapeContext);
 }
 
+export function applyScaleToShape<T extends Shape>(
+  getStruct: GetShapeStruct,
+  shape: T,
+  scaleValue: IVec2,
+): Partial<T> | undefined {
+  if (scaleValue.x === 1 && scaleValue.y === 1) return;
+  const struct = getStruct(shape.type);
+  return struct.applyScale?.(shape, scaleValue);
+}
+
 export function resizeOnTextEdit(
   getStruct: GetShapeStruct,
   shape: Shape,
@@ -421,14 +431,10 @@ export function switchShapeType(getStruct: GetShapeStruct, src: Shape, type: str
   const defaultDistRect = getWrapperRect(getStruct, defaultDist);
   const srcRect = getWrapperRect(getStruct, { ...src, rotation: 0 });
 
-  const resizePatch = resizeShape(getStruct, defaultDist, [
-    srcRect.width / defaultDistRect.width,
-    0,
-    0,
-    srcRect.height / defaultDistRect.height,
-    srcRect.x,
-    srcRect.y,
-  ]);
+  const resizePatch = applyScaleToShape(getStruct, defaultDist, {
+    x: geometry.divideSafely(srcRect.width, defaultDistRect.width, 1),
+    y: geometry.divideSafely(srcRect.height, defaultDistRect.height, 1),
+  });
 
   const fill = hasFillStyle(src) ? { fill: src.fill } : {};
   const stroke = hasStrokeStyle(src) ? { stroke: src.stroke } : {};

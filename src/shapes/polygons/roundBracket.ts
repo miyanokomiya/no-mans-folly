@@ -6,8 +6,10 @@ import { getBracketThickness, getBracketRadius, getBracketPath, BracketShape } f
 
 export type RoundBracketShape = BracketShape;
 
+const baseStruct = getStructForSimplePolygon<RoundBracketShape>(getPath);
+
 export const struct: ShapeStruct<RoundBracketShape> = {
-  ...getStructForSimplePolygon<RoundBracketShape>(getPath),
+  ...baseStruct,
   label: "RoundBracket",
   create(arg = {}) {
     return {
@@ -19,6 +21,13 @@ export const struct: ShapeStruct<RoundBracketShape> = {
       height: arg.height ?? 100,
       thickness: 10,
       r: 50,
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      thickness: Math.max(0, shape.thickness * scaleValue.y),
+      r: Math.max(0, shape.r * scaleValue.y),
     };
   },
   getTextRangeRect: undefined,

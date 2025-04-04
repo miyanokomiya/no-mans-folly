@@ -12,8 +12,10 @@ export type SpikyRectangleShape = RoundedRectangleShape & {
   spikeSize: Size;
 };
 
+const baseStruct = getStructForSimplePolygon(getPath, { outlineSnap: "trbl" });
+
 export const struct: ShapeStruct<SpikyRectangleShape> = {
-  ...getStructForSimplePolygon(getPath, { outlineSnap: "trbl" }),
+  ...baseStruct,
   label: "SpikyRectangle",
   create(arg = {}) {
     return {
@@ -27,6 +29,17 @@ export const struct: ShapeStruct<SpikyRectangleShape> = {
       rx: arg.rx ?? 10,
       ry: arg.ry ?? 10,
       spikeSize: arg.spikeSize ?? { width: 20 / Math.sqrt(3), height: 10 },
+    };
+  },
+  applyScale(shape, scaleValue) {
+    return {
+      ...baseStruct.applyScale?.(shape, scaleValue),
+      rx: Math.max(0, shape.rx * scaleValue.x),
+      ry: Math.max(0, shape.ry * scaleValue.y),
+      spikeSize: {
+        width: Math.max(0, shape.spikeSize.width * scaleValue.x),
+        height: Math.max(0, shape.spikeSize.height * scaleValue.y),
+      },
     };
   },
   getTextRangeRect(shape) {

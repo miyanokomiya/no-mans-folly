@@ -158,6 +158,12 @@ export const struct: ShapeStruct<EllipseShape> = {
 
     return ret;
   },
+  applyScale(shape, scaleValue) {
+    return {
+      rx: Math.max(0, shape.rx * scaleValue.x),
+      ry: Math.max(0, shape.ry * scaleValue.y),
+    };
+  },
   getClosestOutline,
   getIntersectedOutlines(shape, from, to) {
     const center = add(shape.p, { x: shape.rx, y: shape.ry });
