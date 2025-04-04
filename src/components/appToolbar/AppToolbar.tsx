@@ -20,7 +20,7 @@ import { CurveType, LineType } from "../../shapes/line";
 import { lineTypeList } from "../../composables/shapeTypes";
 import { LayoutShapeListPanel, ShapeListPanel } from "./ShapeListPanel";
 import { newShapeComposite } from "../../composables/shapeComposite";
-import { AffineMatrix, getRectCenter } from "okageo";
+import { AffineMatrix, getRectCenter, IRectangle } from "okageo";
 import { useUserSetting } from "../../hooks/storeHooks";
 
 type PopupKey = "" | "shapes" | "lines" | "layouts";
@@ -65,14 +65,26 @@ export const AppToolbar: React.FC = () => {
       } else if (type === "align_box") {
         template = generateAlignTemplate(ctx);
       } else {
-        template = {
-          shapes: [
-            createShape(ctx.getShapeStruct, type, {
-              id: ctx.generateUuid(),
-              findex: acctx.shapeStore.createLastIndex(),
-            }),
-          ],
-        };
+        const shape = createShape(ctx.getShapeStruct, type, {
+          id: ctx.generateUuid(),
+          findex: acctx.shapeStore.createLastIndex(),
+        });
+        const minShapeComposite = newShapeComposite({
+          getStruct: ctx.getShapeStruct,
+          shapes: [shape],
+        });
+        const size = getBetterShapeSizeForViewport(ctx.getViewRect());
+        const shapeRect = minShapeComposite.getWrapperRect(shape);
+        const shapeMaxSize = Math.max(shapeRect.width, shapeRect.height);
+        if (size !== shapeMaxSize) {
+          // Adjust the shape size to fit the viewport.
+          const scale = size / shapeMaxSize;
+          const affine: AffineMatrix = [scale, 0, 0, scale, 0, 0];
+          const patch = minShapeComposite.transformShape(shape, affine);
+          template = { shapes: [{ ...shape, ...patch }] };
+        } else {
+          template = { shapes: [shape] };
+        }
       }
 
       return template;
@@ -319,4 +331,12 @@ function getLineOptions(type: string): { type?: LineType; curveType?: CurveType 
     default:
       return {};
   }
+}
+
+function getBetterShapeSizeForViewport(viewRect: IRectangle): number {
+  // 25 would be the minimum size for most of shapes without breaking their default appearances.
+  // TODO: Create new shape adjusting its inner properties to suit given default size.
+  const sizeList = [100, 50, 25];
+  const minViewSize = Math.min(viewRect.width, viewRect.height);
+  return sizeList.find((s) => s < minViewSize / 2) ?? 100;
 }
