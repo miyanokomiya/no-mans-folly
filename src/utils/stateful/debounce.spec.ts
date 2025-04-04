@@ -1,9 +1,16 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { newDebounce } from "./debounce";
-import { sleep } from "../../testUtils";
 
 describe("newDebounce", () => {
-  test("should debounce the operation", async () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should debounce the operation", () => {
     let count = 0;
     const target = newDebounce((v: number) => {
       count += v;
@@ -11,16 +18,16 @@ describe("newDebounce", () => {
 
     target(1);
     expect(count).toBe(0);
-    await sleep(12);
+    vi.advanceTimersByTime(12);
     expect(count).toBe(1);
 
     target(1);
-    await sleep(5);
+    vi.advanceTimersByTime(5);
     target(10);
-    await sleep(5);
+    vi.advanceTimersByTime(5);
     target(100);
     expect(count).toBe(1);
-    await sleep(12);
+    vi.advanceTimersByTime(12);
     expect(count).toBe(101);
 
     target(100);
@@ -31,5 +38,21 @@ describe("newDebounce", () => {
     target.clear();
     target.flush();
     expect(count).toBe(201);
+  });
+
+  test("should delay the operation by calling delay method", () => {
+    let count = 0;
+    const target = newDebounce((v: number) => {
+      count += v;
+    }, 10);
+
+    target(1);
+    expect(count).toBe(0);
+    vi.advanceTimersByTime(6);
+    target.delay();
+    vi.advanceTimersByTime(6);
+    expect(count).toBe(0);
+    vi.advanceTimersByTime(10);
+    expect(count).toBe(1);
   });
 });

@@ -20,6 +20,12 @@ export function newDebounce<T extends (...args: any[]) => void>(fn: T, interval:
     }, interval) as any;
   }
 
+  debounce.delay = function () {
+    if (timer) {
+      debounce(...currentArgs);
+    }
+  };
+
   debounce.flush = function () {
     if (timer) {
       clearTimeout(timer);
