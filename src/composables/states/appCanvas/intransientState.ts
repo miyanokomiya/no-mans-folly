@@ -22,7 +22,7 @@ export function defineIntransientState<A extends any[]>(
 ): (...o: A) => AppCanvasState {
   return (...o: A) => {
     const src = createFn(...o);
-    let hoveredShape: Shape | undefined;
+    let hoveredShapeId: string | undefined;
 
     return {
       ...src,
@@ -42,8 +42,8 @@ export function defineIntransientState<A extends any[]>(
               ? getInlineLinkInfoAt(shapeComposite, interactiveShape, event.data.current)
               : undefined;
 
-            if (hoveredShape?.id !== interactiveShape?.id) {
-              hoveredShape = interactiveShape;
+            if (hoveredShapeId !== interactiveShape?.id) {
+              hoveredShapeId = interactiveShape?.id;
               ctx.redraw();
             }
 
@@ -57,8 +57,7 @@ export function defineIntransientState<A extends any[]>(
           case "shape-highlight": {
             switch (event.data.meta.type) {
               case "outline": {
-                const shapeComposite = ctx.getShapeComposite();
-                hoveredShape = shapeComposite.shapeMap[event.data.id];
+                hoveredShapeId = event.data.id;
                 ctx.redraw();
                 break;
               }
@@ -71,18 +70,21 @@ export function defineIntransientState<A extends any[]>(
       render: (ctx, renderCtx) => {
         // Avoid highlighting selected shape.
         // => It should have certain selected appearance provided by other state.
-        if (hoveredShape && !ctx.getSelectedShapeIdMap()[hoveredShape.id]) {
-          const style = ctx.getStyleScheme();
-          const scale = ctx.getScale();
+        if (hoveredShapeId && !ctx.getSelectedShapeIdMap()[hoveredShapeId]) {
           const sc = ctx.getShapeComposite();
-          renderCtx.beginPath();
-          sc.getHighlightPaths(hoveredShape).forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
-          applyStrokeStyle(renderCtx, {
-            color: style.selectionSecondaly,
-            width: style.selectionLineWidth * scale,
-            dash: "short",
-          });
-          renderCtx.stroke();
+          const shape = sc.mergedShapeMap[hoveredShapeId];
+          if (shape) {
+            const style = ctx.getStyleScheme();
+            const scale = ctx.getScale();
+            renderCtx.beginPath();
+            sc.getHighlightPaths(shape).forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
+            applyStrokeStyle(renderCtx, {
+              color: style.selectionSecondaly,
+              width: style.selectionLineWidth * scale,
+              dash: "short",
+            });
+            renderCtx.stroke();
+          }
         }
 
         src.render?.(ctx, renderCtx);
