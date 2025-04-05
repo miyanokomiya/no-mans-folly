@@ -69,6 +69,8 @@ const en = {
       parse_svg: "Parse SVG",
       "parse_svg.desc":
         "Parse SVG and create shapes from it. Created shapes, especially texts, don't always match the original SVG.",
+      sheet_to_shape: "Create shape",
+      "sheet_to_shape.desc": "Create a shape that displays the thumbnail of the sheet.",
     },
 
     contextmenu: {
@@ -179,6 +181,8 @@ const ja: TranslationResource = {
       "attach_vertices.desc": "全頂点を遠隔でシェイプに接続します。",
       parse_svg: "SVG取り込み",
       "parse_svg.desc": "SVGを取り込み、シェイプを生成します。生成されたシェイプは元のSVGと一致しない場合があります。",
+      sheet_to_shape: "シェイプ作成",
+      "sheet_to_shape.desc": "シートのサムネイルを表示するシェイプを作成します。",
     },
 
     contextmenu: {

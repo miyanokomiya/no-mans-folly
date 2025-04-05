@@ -96,15 +96,15 @@ const TerminologyPopup = ({ item, p, portal, onClose }: TerminologyPopupProps): 
 
   const elm = (
     <div
-      className="p-2 border rounded-xs bg-white shadow-xs fixed max-w-60 select-none touch-none"
+      className="z-100 p-2 border rounded-xs bg-white shadow-xs fixed max-w-60 select-none touch-none"
       style={{ left: p.x, top: p.y }}
       onClick={handleClick}
     >
       <h3 className="font-bold text-lg">{item.text}</h3>
       <p className="mt-2">{item.description}</p>
-      <button type="button" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={onClose}>
+      <a href="#" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={onClose}>
         <img src={iconDelete} alt="Close" />
-      </button>
+      </a>
     </div>
   );
 

@@ -54,6 +54,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.parse_svg.desc"),
     };
   },
+  get SHEET_TO_SHAPE() {
+    return {
+      text: i18n.t("term.sheet_to_shape"),
+      description: i18n.t("term.sheet_to_shape.desc"),
+    };
+  },
 };
 
 export function parseTerminologies(src: string): TerminologyItem[] {

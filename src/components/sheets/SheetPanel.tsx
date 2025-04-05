@@ -9,6 +9,7 @@ import { OutsideObserver } from "../atoms/OutsideObserver";
 import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
 import { rednerRGBA } from "../../utils/color";
 import { renderImageAtCenter } from "../../utils/renderer";
+import { AppText } from "../molecules/AppText";
 
 interface Props {
   sheet: Sheet;
@@ -98,7 +99,9 @@ export const SheetPanel: React.FC<Props> = ({
   const popupMenu = (
     <div className="flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
-      <ListButton onClick={handleAddSheetImage}>Sheet image</ListButton>
+      <ListButton onClick={handleAddSheetImage}>
+        <AppText portal> [[SHEET_TO_SHAPE]]</AppText>
+      </ListButton>
       <ListSpacer />
       <ListIconButton icon={iconDustbinRed} onClick={handleDeleteClick} disabled={!canDeleteSheet}>
         <span className="text-red-500 font-semibold">Delete</span>
