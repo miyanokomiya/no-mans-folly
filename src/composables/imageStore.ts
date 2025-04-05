@@ -56,7 +56,11 @@ export function newImageStore(option?: Option) {
   /**
    * Returns error id list when there is any.
    */
-  async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<string[] | undefined> {
+  async function batchLoad(
+    assetIds: (string | undefined)[],
+    assetAPI: AssetAPI,
+    ignoreError = false,
+  ): Promise<string[] | undefined> {
     if (!assetAPI.enabled) return;
 
     const errors: string[] = [];
@@ -70,8 +74,10 @@ export function newImageStore(option?: Option) {
             await loadFromFile(assetId, file);
           }
         } catch (e) {
-          console.error(e);
-          errors.push(assetId);
+          if (!ignoreError) {
+            console.error(e);
+            errors.push(assetId);
+          }
         }
       }
     }

@@ -44,14 +44,18 @@ export function useLoadShapeAssets(
   return useCallback(
     async (shapes: Shape[]) => {
       const errors = await imageStore.batchLoad(
-        sheets
-          .map<string | undefined>((sheet) => getSheetThumbnailFileName(sheet.id))
-          .concat(shapes.filter(isImageShape).map((s) => s.assetId)),
+        shapes.filter(isImageShape).map((s) => s.assetId),
         assetAPI,
       );
       if (errors && errors.length > 0) {
         getSmctx().showToastMessage({ text: `Failed to load ${errors.length} asset file(s).`, type: "warn" });
       }
+      // Load sheet thumbnails. These don't always exist, so we ignore errors.
+      await imageStore.batchLoad(
+        sheets.map<string | undefined>((sheet) => getSheetThumbnailFileName(sheet.id)),
+        assetAPI,
+        true,
+      );
     },
     [getSmctx, assetAPI, imageStore, sheets],
   );
