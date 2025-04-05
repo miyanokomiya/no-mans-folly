@@ -81,7 +81,10 @@ export function createInitialAppCanvasStateContext(arg: {
     redo() {},
     setCaptureTimeout() {},
 
+    getSheets: () => [],
+    getSelectedSheet: () => undefined,
     selectSheet: () => {},
+
     getShapeComposite: () => newShapeComposite({ shapes: [], getStruct: getCommonStruct }),
     getShapes: () => [],
     getSelectedShapeIdMap: () => ({}),

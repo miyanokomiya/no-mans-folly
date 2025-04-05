@@ -39,5 +39,7 @@ export const newSheetImageSelectedState = defineSingleSelectedHandlerState<Sheet
     newSheetImageHandler({
       getShapeComposite: ctx.getShapeComposite,
       targetId: target.id,
+      sheets: ctx.getSheets(),
+      selectedSheetId: ctx.getSelectedSheet()?.id,
     }),
 );
