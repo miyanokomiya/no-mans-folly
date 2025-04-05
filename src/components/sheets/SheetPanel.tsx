@@ -98,14 +98,10 @@ export const SheetPanel: React.FC<Props> = ({
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const canvas = <canvas ref={canvasRef} className="w-full h-full" />;
   useEffect(() => {
     const canvasElm = canvasRef.current;
     if (!canvasElm || !thumbnail) return;
 
-    const bounds = canvasElm.getBoundingClientRect();
-    canvasElm.width = Math.floor(bounds.width);
-    canvasElm.height = Math.floor(bounds.height);
     const ctx = canvasElm.getContext("2d");
     if (!ctx) return;
 
@@ -148,7 +144,7 @@ export const SheetPanel: React.FC<Props> = ({
         </OutsideObserver>
       </div>
       <div className="w-full h-20 border cursor-grab flex items-center justify-center" data-anchor>
-        {thumbnail ? canvas : <div>No thumbnail</div>}
+        {thumbnail ? <canvas ref={canvasRef} width="144" height="78" /> : <div>No thumbnail</div>}
       </div>
     </div>
   );
