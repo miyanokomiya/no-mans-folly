@@ -7,6 +7,7 @@ import { struct as moon } from "./moon";
 import { struct as text } from "./text";
 import { struct as line } from "./line";
 import { struct as image } from "./image";
+import { struct as sheet_image } from "./sheetImage";
 import { struct as emoji } from "./emoji";
 import { struct as group } from "./group";
 
@@ -55,6 +56,7 @@ export const SHAPE_COMMON_STRUCTS: {
   text,
   line,
   image,
+  sheet_image,
   emoji,
 
   rectangle,

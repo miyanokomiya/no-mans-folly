@@ -3,6 +3,7 @@ import { DocOutput } from "../../models/document";
 import { isImageShape } from "../image";
 import { base64ToBlob, getBase64Type } from "../../utils/fileAccess";
 import { createSVGElement } from "../../utils/svgElements";
+import { isSheetImageShape } from "../sheetImage";
 
 export const FOLLY_SVG_PREFIX = ".folly.svg";
 const FOLLY_SVG_META_ATTRIBUTE = "data-folly-template";
@@ -29,7 +30,7 @@ export function parseTemplateShapesFromSVG(svg: SVGSVGElement): ShapeTemplateInf
   if (data.shapes.length === 0) return;
 
   // Gather new asset data from the SVG.
-  const imageShapes = data.shapes.filter(isImageShape);
+  const imageShapes = data.shapes.filter((s) => isImageShape(s) || isSheetImageShape(s));
   const assetMap = new Map<string, Blob>();
   for (const imageShape of imageShapes) {
     const assetId = imageShape.assetId;

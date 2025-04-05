@@ -10,8 +10,10 @@ import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { useUserSetting } from "../../hooks/storeHooks";
-import { AppStateContext } from "../../contexts/AppContext";
+import { AppStateContext, GetAppStateContext } from "../../contexts/AppContext";
 import { getSheetThumbnailFileName } from "../../utils/fileAccess";
+import { createShape } from "../../shapes";
+import { SheetImageShape } from "../../shapes/sheetImage";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -20,8 +22,8 @@ export const SheetList: React.FC = () => {
   const [userSetting] = useUserSetting();
   const [deleteTargetId, setDeleteTargetId] = useState<string>();
   const canDeleteSheet = useMemo(() => sheets.length > 1, [sheets]);
-  const smctx = useContext(AppStateContext);
-  const imageStore = smctx.getImageStore();
+  const imageStore = useContext(AppStateContext).getImageStore();
+  const getSmctx = useContext(GetAppStateContext);
 
   const [thumbnails, setThumbnails] = useState<Record<string, HTMLImageElement>>({});
   useEffect(() => {
@@ -93,6 +95,25 @@ export const SheetList: React.FC = () => {
     [acctx.sheetStore],
   );
 
+  const handleAddSheetImage = useCallback(
+    (sheetId: string) => {
+      const smctx = getSmctx();
+      const size = 200;
+      const viewRect = smctx.getViewRect();
+      const shape = createShape<SheetImageShape>(smctx.getShapeStruct, "sheet_image", {
+        id: smctx.generateUuid(),
+        findex: smctx.createLastIndex(),
+        assetId: getSheetThumbnailFileName(sheetId),
+        p: { x: viewRect.x + viewRect.width / 2 - size / 2, y: viewRect.y + viewRect.height / 2 - size / 2 },
+        width: size,
+        height: size,
+      });
+      smctx.addShapes([shape]);
+      smctx.selectShape(shape.id);
+    },
+    [getSmctx],
+  );
+
   const sheetItems = useMemo<[string, React.ReactNode][]>(() => {
     return sheets.map((s, i) => {
       return [
@@ -106,6 +127,7 @@ export const SheetList: React.FC = () => {
             thumbnail={thumbnails[s.id]}
             onChangeName={handleNameChange}
             onDelete={handleSheetDeleteConfirm}
+            onAddSheetImage={handleAddSheetImage}
             onClickSheet={handleSheetSelect}
           />
         </div>,

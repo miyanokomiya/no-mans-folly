@@ -1,9 +1,9 @@
 import { IRectangle, IVec2, PathSegmentRaw, add, getRadian, getUnit, isSame, multi, rotate, sub } from "okageo";
-import { ISegment, TAU, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
+import { ISegment, TAU, divideSafely, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
-import { Color, CurveControl } from "../models";
+import { Color, CurveControl, Size } from "../models";
 import { DEFAULT_FONT_SIZE } from "./textEditor";
 import { CanvasCTX } from "./types";
 
@@ -389,4 +389,19 @@ export function renderOverlay(ctx: CanvasCTX, rect: IRectangle) {
     ctx.rect(rect.x, rect.y, rect.width, rect.height);
     ctx.fill();
   });
+}
+
+export function getImageAtCenterParams(img: Size, size: Size): IRectangle {
+  const [scaleW, scaleH] = [divideSafely(size.width, img.width, 1), divideSafely(size.height, img.height, 1)];
+  const scale = Math.min(scaleW, scaleH);
+  const scaledWidth = img.width * scale;
+  const scaledHeight = img.height * scale;
+  const dx = (size.width - scaledWidth) / 2;
+  const dy = (size.height - scaledHeight) / 2;
+  return { x: dx, y: dy, width: scaledWidth, height: scaledHeight };
+}
+
+export function renderImageAtCenter(ctx: CanvasCTX, img: HTMLImageElement, size: Size) {
+  const rect = getImageAtCenterParams(img, size);
+  ctx.drawImage(img, 0, 0, img.width, img.height, rect.x, rect.y, rect.width, rect.height);
 }

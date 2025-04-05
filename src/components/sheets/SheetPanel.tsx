@@ -8,6 +8,7 @@ import { getSheetURL } from "../../utils/route";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
 import { rednerRGBA } from "../../utils/color";
+import { renderImageAtCenter } from "../../utils/renderer";
 
 interface Props {
   sheet: Sheet;
@@ -18,6 +19,7 @@ interface Props {
   onClickSheet?: (id: string) => void;
   onChangeName?: (id: string, name: string) => void;
   onDelete?: (id: string) => void;
+  onAddSheetImage?: (id: string) => void;
 }
 
 export const SheetPanel: React.FC<Props> = ({
@@ -28,6 +30,7 @@ export const SheetPanel: React.FC<Props> = ({
   thumbnail,
   onChangeName,
   onDelete,
+  onAddSheetImage,
   canDeleteSheet,
 }) => {
   const [popupOpen, setPopupOpen] = useState(false);
@@ -70,6 +73,11 @@ export const SheetPanel: React.FC<Props> = ({
     [sheet, onClickSheet, handleRenameClick],
   );
 
+  const handleAddSheetImage = useCallback(() => {
+    setPopupOpen(false);
+    onAddSheetImage?.(sheet.id);
+  }, [sheet.id, onAddSheetImage]);
+
   const finishRename = useCallback(() => {
     onChangeName?.(sheet.id, draftName);
     setRenaming(false);
@@ -90,6 +98,7 @@ export const SheetPanel: React.FC<Props> = ({
   const popupMenu = (
     <div className="flex flex-col bg-white">
       <ListButton onClick={handleRenameClick}>Rename</ListButton>
+      <ListButton onClick={handleAddSheetImage}>Sheet image</ListButton>
       <ListSpacer />
       <ListIconButton icon={iconDustbinRed} onClick={handleDeleteClick} disabled={!canDeleteSheet}>
         <span className="text-red-500 font-semibold">Delete</span>
@@ -108,13 +117,7 @@ export const SheetPanel: React.FC<Props> = ({
     ctx.clearRect(0, 0, canvasElm.width, canvasElm.height);
     ctx.fillStyle = sheet.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
     ctx.fillRect(0, 0, canvasElm.width, canvasElm.height);
-    const [scaleW, scaleH] = [canvasElm.width / thumbnail.width, canvasElm.height / thumbnail.height];
-    const scale = Math.min(scaleW, scaleH);
-    const scaledWidth = thumbnail.width * scale;
-    const scaledHeight = thumbnail.height * scale;
-    const dx = (canvasElm.width - scaledWidth) / 2;
-    const dy = (canvasElm.height - scaledHeight) / 2;
-    ctx.drawImage(thumbnail, 0, 0, thumbnail.width, thumbnail.height, dx, dy, scaledWidth, scaledHeight);
+    renderImageAtCenter(ctx, thumbnail, { width: canvasElm.width, height: canvasElm.height });
   }, [thumbnail, sheet]);
 
   const nameContent = renaming ? (

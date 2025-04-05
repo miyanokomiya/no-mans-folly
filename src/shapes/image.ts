@@ -1,11 +1,12 @@
 import { Shape } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
-import { getRotatedRectAffine } from "../utils/geometry";
+import { divideSafely, getRotatedRectAffine } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { mapReduce } from "../utils/commons";
-import { renderTransform } from "../utils/svgElements";
+import { renderTransform, SVGElementInfo } from "../utils/svgElements";
+import { getImageAtCenterParams, renderImageAtCenter } from "../utils/renderer";
 
 export type ImageShape = RectangleShape & {
   assetId?: string;
@@ -42,7 +43,7 @@ export const struct: ShapeStruct<ImageShape> = {
 
     const img = imageStore?.getImage(shape.assetId ?? "");
     if (img && img.width * img.height > 0 && shape.width * shape.height > 0) {
-      ctx.drawImage(img, 0, 0, shape.width, shape.height);
+      renderImageAtCenter(ctx, img, shape);
     } else {
       ctx.fillStyle = "#aaa";
       ctx.fillRect(0, 0, shape.width, shape.height);
@@ -60,23 +61,25 @@ export const struct: ShapeStruct<ImageShape> = {
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
     const imageData = shape.assetId ? imageStore?.getImageData(shape.assetId) : undefined;
-    const imgElm = imageData
-      ? {
-          tag: "use",
-          attributes: {
-            href: `#${shape.assetId}`,
-            // Apply transfrom instead of "width" and "height" that don't work with "<use>" element.
-            transform: renderTransform([
-              shape.width / imageData.img.width,
-              0,
-              0,
-              shape.height / imageData.img.height,
-              0,
-              0,
-            ]),
-          },
-        }
-      : undefined;
+    let imgElm: SVGElementInfo | undefined;
+    if (imageData) {
+      const params = getImageAtCenterParams(imageData.img, shape);
+      imgElm = {
+        tag: "use",
+        attributes: {
+          href: `#${shape.assetId}`,
+          // Apply transfrom instead of "width" and "height" that don't work with "<use>" element.
+          transform: renderTransform([
+            divideSafely(params.width, imageData.img.width, 1),
+            0,
+            0,
+            divideSafely(params.height, imageData.img.height, 1),
+            params.x,
+            params.y,
+          ]),
+        },
+      };
+    }
 
     return {
       tag: "g",
