@@ -11,7 +11,7 @@ import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { useUserSetting } from "../../hooks/storeHooks";
 import { AppStateContext } from "../../contexts/AppContext";
-import { SHEET_THUMBNAIL_PREFIX } from "../../utils/fileAccess";
+import { getSheetThumbnailFileName } from "../../utils/fileAccess";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -25,7 +25,7 @@ export const SheetList: React.FC = () => {
 
   const [thumbnails, setThumbnails] = useState<Record<string, HTMLImageElement>>({});
   useEffect(() => {
-    const imageIdToSheetIdMap = new Map(sheets.map((s) => [`${SHEET_THUMBNAIL_PREFIX}${s.id}.svg`, s.id]));
+    const imageIdToSheetIdMap = new Map(sheets.map((s) => [getSheetThumbnailFileName(s.id), s.id]));
     setThumbnails(
       imageIdToSheetIdMap.entries().reduce<Record<string, HTMLImageElement>>((acc, [imageId, sheetId]) => {
         const image = imageStore.getImage(imageId);

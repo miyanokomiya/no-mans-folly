@@ -7,7 +7,7 @@ import { newShapeRenderer } from "../../../shapeRenderer";
 import { newShapeSVGRenderer } from "../../../shapeSVGRenderer";
 import { AppCanvasStateContext } from "../core";
 import { TreeNode } from "../../../../utils/tree";
-import { SHEET_THUMBNAIL_PREFIX } from "../../../../utils/fileAccess";
+import { getSheetThumbnailFileName } from "../../../../utils/fileAccess";
 
 type ZipItem = [name: string, ext: string, Uint8Array];
 
@@ -249,7 +249,7 @@ export async function saveSheetThumbnailAsSvg(sheetId: string, ctx: AppCanvasSta
   });
   try {
     const blob = await builder.toBlob();
-    const assetId = `${SHEET_THUMBNAIL_PREFIX}${sheetId}.svg`;
+    const assetId = getSheetThumbnailFileName(sheetId);
     await assetAPI.saveAsset(assetId, blob);
     await imageStore.loadFromFile(assetId, blob);
   } catch (e: any) {

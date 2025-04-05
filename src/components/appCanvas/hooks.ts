@@ -5,7 +5,7 @@ import { ShapeStore } from "../../stores/shapes";
 import { AssetAPI } from "../../hooks/persistence";
 import { Shape, Sheet } from "../../models";
 import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
-import { SHEET_THUMBNAIL_PREFIX } from "../../utils/fileAccess";
+import { getSheetThumbnailFileName } from "../../utils/fileAccess";
 
 export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
   const imageStoreRef = useRef<ImageStore>(undefined);
@@ -23,7 +23,7 @@ export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
     });
     // Conserve sheet thumbnails.
     sheets.forEach((sheet) => {
-      const assetId = `${SHEET_THUMBNAIL_PREFIX}${sheet.id}.svg`;
+      const assetId = getSheetThumbnailFileName(sheet.id);
       const imageData = prev.getImageData(assetId);
       if (!imageData) return;
       imageDataList.push([assetId, imageData]);
@@ -45,7 +45,7 @@ export function useLoadShapeAssets(
     async (shapes: Shape[]) => {
       const errors = await imageStore.batchLoad(
         sheets
-          .map<string | undefined>((sheet) => `${SHEET_THUMBNAIL_PREFIX}${sheet.id}.svg`)
+          .map<string | undefined>((sheet) => getSheetThumbnailFileName(sheet.id))
           .concat(shapes.filter(isImageShape).map((s) => s.assetId)),
         assetAPI,
       );
