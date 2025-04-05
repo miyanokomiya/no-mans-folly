@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { SheetPanel } from "./SheetPanel";
 import { generateUuid } from "../../utils/random";
@@ -10,6 +10,8 @@ import { Dialog, DialogButtonAlert, DialogButtonPlain } from "../atoms/Dialog";
 import { generateKeyBetweenAllowSame } from "../../utils/findex";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { useUserSetting } from "../../hooks/storeHooks";
+import { AppStateContext } from "../../contexts/AppContext";
+import { SHEET_THUMBNAIL_PREFIX } from "../../utils/fileAccess";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -18,6 +20,26 @@ export const SheetList: React.FC = () => {
   const [userSetting] = useUserSetting();
   const [deleteTargetId, setDeleteTargetId] = useState<string>();
   const canDeleteSheet = useMemo(() => sheets.length > 1, [sheets]);
+  const smctx = useContext(AppStateContext);
+  const imageStore = smctx.getImageStore();
+
+  const [thumbnails, setThumbnails] = useState<Record<string, HTMLImageElement>>({});
+  useEffect(() => {
+    const imageIdToSheetIdMap = new Map(sheets.map((s) => [`${SHEET_THUMBNAIL_PREFIX}${s.id}.svg`, s.id]));
+    setThumbnails(
+      imageIdToSheetIdMap.entries().reduce<Record<string, HTMLImageElement>>((acc, [imageId, sheetId]) => {
+        const image = imageStore.getImage(imageId);
+        if (image) acc[sheetId] = image;
+        return acc;
+      }, {}),
+    );
+    return imageStore.watch(([id, image]) => {
+      const sheetId = imageIdToSheetIdMap.get(id);
+      if (sheetId) {
+        setThumbnails((val) => ({ ...val, [sheetId]: image }));
+      }
+    });
+  }, [imageStore, sheets]);
 
   const handleSheetSelect = useCallback(
     (id: string) => {
@@ -81,6 +103,7 @@ export const SheetList: React.FC = () => {
             selected={s.id === selectedSheet?.id}
             index={i + 1}
             canDeleteSheet={canDeleteSheet}
+            thumbnail={thumbnails[s.id]}
             onChangeName={handleNameChange}
             onDelete={handleSheetDeleteConfirm}
             onClickSheet={handleSheetSelect}
@@ -88,7 +111,15 @@ export const SheetList: React.FC = () => {
         </div>,
       ];
     });
-  }, [selectedSheet, sheets, canDeleteSheet, handleNameChange, handleSheetDeleteConfirm, handleSheetSelect]);
+  }, [
+    selectedSheet,
+    sheets,
+    canDeleteSheet,
+    thumbnails,
+    handleNameChange,
+    handleSheetDeleteConfirm,
+    handleSheetSelect,
+  ]);
 
   const handleOrderChange = useCallback(
     ([from, to]: [number, number]) => {

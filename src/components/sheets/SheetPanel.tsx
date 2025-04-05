@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sheet } from "../../models";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import iconDots from "../../assets/icons/three_dots_v.svg";
@@ -7,12 +7,14 @@ import { TextInput } from "../atoms/inputs/TextInput";
 import { getSheetURL } from "../../utils/route";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
+import { rednerRGBA } from "../../utils/color";
 
 interface Props {
   sheet: Sheet;
   selected?: boolean;
   index: number;
   canDeleteSheet?: boolean;
+  thumbnail?: HTMLImageElement;
   onClickSheet?: (id: string) => void;
   onChangeName?: (id: string, name: string) => void;
   onDelete?: (id: string) => void;
@@ -23,6 +25,7 @@ export const SheetPanel: React.FC<Props> = ({
   onClickSheet,
   selected,
   index,
+  thumbnail,
   onChangeName,
   onDelete,
   canDeleteSheet,
@@ -94,22 +97,44 @@ export const SheetPanel: React.FC<Props> = ({
     </div>
   );
 
-  const content = renaming ? (
-    <form className="w-full h-full flex items-center" onSubmit={handleNameSubmit}>
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvas = <canvas ref={canvasRef} className="w-full h-full" />;
+  useEffect(() => {
+    const canvasElm = canvasRef.current;
+    if (!canvasElm || !thumbnail) return;
+
+    const bounds = canvasElm.getBoundingClientRect();
+    canvasElm.width = Math.floor(bounds.width);
+    canvasElm.height = Math.floor(bounds.height);
+    const ctx = canvasElm.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvasElm.width, canvasElm.height);
+    ctx.fillStyle = sheet.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+    ctx.fillRect(0, 0, canvasElm.width, canvasElm.height);
+    const [scaleW, scaleH] = [canvasElm.width / thumbnail.width, canvasElm.height / thumbnail.height];
+    const scale = Math.min(scaleW, scaleH);
+    const scaledWidth = thumbnail.width * scale;
+    const scaledHeight = thumbnail.height * scale;
+    const dx = (canvasElm.width - scaledWidth) / 2;
+    const dy = (canvasElm.height - scaledHeight) / 2;
+    ctx.drawImage(thumbnail, 0, 0, thumbnail.width, thumbnail.height, dx, dy, scaledWidth, scaledHeight);
+  }, [thumbnail, sheet]);
+
+  const nameContent = renaming ? (
+    <form className="flex items-center" onSubmit={handleNameSubmit}>
       <TextInput value={draftName} onChange={handleNameChange} onBlur={finishRename} autofocus keepFocus />
     </form>
   ) : (
-    <a href={getSheetURL(sheet.id)} onClick={handleSheetClick} className="w-full h-full flex items-center">
-      <div className="text-ellipsis overflow-hidden">{sheet.name}</div>
+    <a href={getSheetURL(sheet.id)} onClick={handleSheetClick}>
+      {index}. {sheet.name}
     </a>
   );
 
   return (
     <div className={rootClass}>
-      <div className="flex justify-between">
-        <div className="rounded-xs px-2 bg-white border flex items-center flex-1 mr-1 cursor-grab" data-anchor>
-          {index}
-        </div>
+      <div className="flex items-center justify-between gap-1">
+        <div className="w-28 truncate text-sm">{nameContent}</div>
         <OutsideObserver onClick={closePopup}>
           <FixedPopupButton
             name="sheet"
@@ -122,7 +147,9 @@ export const SheetPanel: React.FC<Props> = ({
           </FixedPopupButton>
         </OutsideObserver>
       </div>
-      <div className="w-24 h-6 text-sm whitespace-nowrap">{content}</div>
+      <div className="w-full h-20 border cursor-grab flex items-center justify-center" data-anchor>
+        {thumbnail ? canvas : <div>No thumbnail</div>}
+      </div>
     </div>
   );
 };

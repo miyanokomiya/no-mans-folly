@@ -232,15 +232,15 @@ function getFrameIndexTextMap(frameTree: TreeNode[]): Map<string, string> {
 
 export async function saveSheetThumbnailAsSvg(sheetId: string, ctx: AppCanvasStateContext) {
   const assetAPI = ctx.assetAPI;
-  console.log(sheetId, assetAPI.enabled);
-  if (!assetAPI.enabled || assetAPI.name === "memory") return;
+  if (!assetAPI.enabled) return;
 
+  const imageStore = ctx.getImageStore();
   const shapeComposite = ctx.getShapeComposite();
   const range = shapeComposite.getWrapperRectForShapes(shapeComposite.shapes, true);
   const renderer = newShapeSVGRenderer({
     shapeComposite: shapeComposite,
     getDocumentMap: ctx.getDocumentMap,
-    imageStore: ctx.getImageStore(),
+    imageStore,
     assetAPI,
   });
   const builder = newSVGImageBuilder({
@@ -249,7 +249,9 @@ export async function saveSheetThumbnailAsSvg(sheetId: string, ctx: AppCanvasSta
   });
   try {
     const blob = await builder.toBlob();
-    await assetAPI.saveAsset(`${SHEET_THUMBNAIL_PREFIX}${sheetId}.svg`, blob);
+    const assetId = `${SHEET_THUMBNAIL_PREFIX}${sheetId}.svg`;
+    await assetAPI.saveAsset(assetId, blob);
+    await imageStore.loadFromFile(assetId, blob);
   } catch (e: any) {
     ctx.showToastMessage({
       text: `Failed to save sheet thumbnail. ${e.message}`,

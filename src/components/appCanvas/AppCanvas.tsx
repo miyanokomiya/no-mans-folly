@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import {
   AppStateContext,
@@ -75,11 +75,12 @@ export const AppCanvas: React.FC = () => {
     return newCanvasBank();
   }, [shapeStore]);
 
-  const imageStore = useImageStore(shapeStore);
-  const loadShapeAssets = useLoadShapeAssets(imageStore, smctx.assetAPI, getSmctx);
+  const sheets = useSyncExternalStore(sheetStore.watch, () => sheetStore.getEntities());
+  const imageStore = useImageStore(shapeStore, sheets);
+  const loadShapeAssets = useLoadShapeAssets(imageStore, smctx.assetAPI, getSmctx, sheets);
 
   const saveSheetThumbnailDebounce = useMemo(() => {
-    return newDebounce(saveSheetThumbnailAsSvg, 5000);
+    return newDebounce(saveSheetThumbnailAsSvg, 3000);
   }, []);
 
   const processSheetThumbnail = useCallback(() => {
