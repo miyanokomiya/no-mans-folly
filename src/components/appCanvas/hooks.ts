@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ImageStore, ImageData, newImageStore } from "../../composables/imageStore";
 import { isImageShape } from "../../shapes/image";
 import { ShapeStore } from "../../stores/shapes";
@@ -8,29 +8,28 @@ import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
 import { getSheetThumbnailFileName } from "../../utils/fileAccess";
 
 export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
-  const imageStoreRef = useRef<ImageStore>(undefined);
-  const imageStore = useMemo(() => {
-    const prev = imageStoreRef.current;
-    if (!prev) return newImageStore();
+  // Use the same store for all sheets to handle asyncronous processes properly.
+  // => If we use different stores, old image data can remain in the new one if sheet switching happens while loading new data.
+  const [imageStore] = useState(() => newImageStore());
 
+  useEffect(() => {
     const imageDataList: [string, ImageData][] = [];
     // Conserve images that are already loaded.
     shapeStore.shapeComposite.shapes.filter(isImageShape).forEach((s) => {
       if (!s.assetId) return;
-      const imageData = prev.getImageData(s.assetId);
+      const imageData = imageStore.getImageData(s.assetId);
       if (!imageData) return;
       imageDataList.push([s.assetId, imageData]);
     });
     // Conserve sheet thumbnails.
     sheets.forEach((sheet) => {
       const assetId = getSheetThumbnailFileName(sheet.id);
-      const imageData = prev.getImageData(assetId);
+      const imageData = imageStore.getImageData(assetId);
       if (!imageData) return;
       imageDataList.push([assetId, imageData]);
     });
-    return newImageStore({ imageDataList });
-  }, [shapeStore, sheets]);
-  imageStoreRef.current = imageStore;
+    imageStore.replaceImageData(imageDataList);
+  }, [shapeStore, sheets, imageStore]);
 
   return imageStore;
 }

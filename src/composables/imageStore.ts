@@ -19,6 +19,17 @@ export function newImageStore(option?: Option) {
     imageMap.clear();
   }
 
+  function replaceImageData(imageDataList: [string, ImageData][]) {
+    clear();
+    imageDataList.forEach(([assetId, imageData]) => {
+      imageMap.set(assetId, imageData);
+    });
+  }
+
+  function getImageStoreCache(): ImageStore {
+    return newImageStore({ imageDataList: Array.from(imageMap.entries()) });
+  }
+
   /**
    * When SVG doesn't have "xmlns:xlink" attribute, it can't be drawn by Canvas API's "drawImage".
    * Doing "document.body.appendChild(img)" can be a workaround though, not sure if it's worth doing.
@@ -78,6 +89,8 @@ export function newImageStore(option?: Option) {
             console.error(e);
             errors.push(assetId);
           }
+        } finally {
+          processing.delete(assetId);
         }
       }
     }
@@ -105,6 +118,8 @@ export function newImageStore(option?: Option) {
     getImageData,
     removeImage,
     clear,
+    replaceImageData,
+    getImageStoreCache,
     watch: callback.bind,
   };
 }

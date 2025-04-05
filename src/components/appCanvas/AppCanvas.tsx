@@ -86,9 +86,15 @@ export const AppCanvas: React.FC = () => {
   const processSheetThumbnail = useCallback(() => {
     const sheetId = sheetStore.getSelectedSheet()?.id;
     if (sheetId) {
-      saveSheetThumbnailDebounce(sheetId, getSmctx());
+      // Prepare cached image store in case selected sheet is changed.
+      // => When it changes, the image store no longer have iamges for the target sheet.
+      const imageStoreCache = imageStore.getImageStoreCache();
+      saveSheetThumbnailDebounce(sheetId, { ...getSmctx(), getImageStore: () => imageStoreCache }, (assetId, blob) => {
+        // Load the thumbnail image to the latest image store.
+        imageStore.loadFromFile(assetId, blob);
+      });
     }
-  }, [sheetStore, getSmctx, saveSheetThumbnailDebounce]);
+  }, [sheetStore, getSmctx, saveSheetThumbnailDebounce, imageStore]);
 
   useEffect(() => {
     loadShapeAssets(shapeStore.shapeComposite.shapes);

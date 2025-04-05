@@ -230,7 +230,11 @@ function getFrameIndexTextMap(frameTree: TreeNode[]): Map<string, string> {
   return ret;
 }
 
-export async function saveSheetThumbnailAsSvg(sheetId: string, ctx: AppCanvasStateContext) {
+export async function saveSheetThumbnailAsSvg(
+  sheetId: string,
+  ctx: AppCanvasStateContext,
+  onSaved?: (assetId: string, blob: Blob) => void,
+) {
   const assetAPI = ctx.assetAPI;
   if (!assetAPI.enabled) return;
 
@@ -251,7 +255,7 @@ export async function saveSheetThumbnailAsSvg(sheetId: string, ctx: AppCanvasSta
     const blob = await builder.toBlob();
     const assetId = getSheetThumbnailFileName(sheetId);
     await assetAPI.saveAsset(assetId, blob);
-    await imageStore.loadFromFile(assetId, blob);
+    onSaved?.(assetId, blob);
   } catch (e: any) {
     ctx.showToastMessage({
       text: `Failed to save sheet thumbnail. ${e.message}`,
