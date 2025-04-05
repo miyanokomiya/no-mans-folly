@@ -69,6 +69,7 @@ import { newFrameAlignGroupSelectedState } from "./states/appCanvas/frameAlign/f
 import { newChevronSelectedState } from "./states/appCanvas/chevron/chevronSelectedState";
 import { newRibbonSelectedState } from "./states/appCanvas/ribbon/ribbonSelectedState";
 import { newVNNodeSelectedState } from "./states/appCanvas/vectorNetworks/vnNodeSelectedState";
+import { newSheetImageSelectedState } from "./states/appCanvas/sheetImage/sheetImageSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -173,6 +174,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newCylinderSelectedState;
     case "bubble":
       return newBubbleSelectedState;
+    case "sheet_image":
+      return newSheetImageSelectedState;
     case "tree_root":
       return newTreeRootSelectedState;
     case "tree_node":

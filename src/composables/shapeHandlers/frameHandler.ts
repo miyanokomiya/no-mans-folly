@@ -10,9 +10,7 @@ import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 import { CanvasCTX } from "../../utils/types";
 
-export const ANCHOR_SIZE = 6;
-export const ANCHOR_SIZE_JUMP = 10;
-export const ANCHOR_MARGIN = 16;
+const ANCHOR_SIZE_JUMP = 10;
 
 type HitAnchor = [type: "jump-back" | "jump-next", IVec2];
 

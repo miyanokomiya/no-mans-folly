@@ -13,6 +13,7 @@ import { ImageStore } from "../../imageStore";
 import { LinkInfo } from "../types";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
+  selectSheet: (id: string) => void;
   getShapeComposite: () => ShapeComposite;
   getShapes: () => Shape[];
   getSelectedShapeIdMap: () => { [id: string]: true };

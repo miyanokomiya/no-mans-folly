@@ -263,6 +263,7 @@ export const AppCanvas: React.FC = () => {
       redo: undoManager.redo,
       setCaptureTimeout: undoManager.setCaptureTimeout,
 
+      selectSheet: sheetStore.selectSheet,
       getShapeComposite: () => shapeStore.shapeComposite,
       getShapes: () => shapeStore.shapeComposite.shapes,
 

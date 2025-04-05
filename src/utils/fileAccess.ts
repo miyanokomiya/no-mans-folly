@@ -13,6 +13,12 @@ export function getSheetFileName(sheetId: string): string {
 export function getSheetThumbnailFileName(sheetId: string): string {
   return `${SHEET_THUMBNAIL_PREFIX}${sheetId}.svg`;
 }
+export function getSheetIdFromThumbnailFileName(fileName: string): string | undefined {
+  if (!fileName.startsWith(SHEET_THUMBNAIL_PREFIX) || !fileName.endsWith(".svg")) {
+    return;
+  }
+  return fileName.slice(SHEET_THUMBNAIL_PREFIX.length, -4);
+}
 
 export interface FileAccess {
   hasHnadle: () => boolean;
