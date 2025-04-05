@@ -141,6 +141,7 @@ export const SheetList: React.FC = () => {
     handleNameChange,
     handleSheetDeleteConfirm,
     handleSheetSelect,
+    handleAddSheetImage,
   ]);
 
   const handleOrderChange = useCallback(

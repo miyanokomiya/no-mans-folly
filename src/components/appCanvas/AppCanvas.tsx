@@ -8,9 +8,10 @@ import {
 } from "../../contexts/AppContext";
 import { canHaveText, getCommonStruct } from "../../shapes";
 import { useCanvas } from "../../hooks/canvas";
-import { getKeyOptions, getMouseOptions, ModifierOptions } from "../../utils/devices";
+import { getKeyOptions, getMouseOptions, isCtrlOrMeta, ModifierOptions } from "../../utils/devices";
 import {
   useGlobalCopyEffect,
+  useGlobalKeydownEffect,
   useGlobalMousemoveEffect,
   useGlobalMouseupEffect,
   useGlobalPasteEffect,
@@ -117,6 +118,18 @@ export const AppCanvas: React.FC = () => {
     // Flush the thumbnail save when the shape store changes.
     return saveSheetThumbnailDebounce.flush;
   }, [shapeStore, saveSheetThumbnailDebounce]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "s" && isCtrlOrMeta(e)) {
+        e.preventDefault();
+        processSheetThumbnail();
+        saveSheetThumbnailDebounce.flush();
+      }
+    },
+    [processSheetThumbnail, saveSheetThumbnailDebounce],
+  );
+  useGlobalKeydownEffect(handleKeyDown);
 
   useEffect(() => {
     return shapeStore.watch((keys) => {
