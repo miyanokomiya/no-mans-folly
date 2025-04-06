@@ -14,6 +14,7 @@ import { AppStateContext, GetAppStateContext } from "../../contexts/AppContext";
 import { getSheetThumbnailFileName } from "../../utils/fileAccess";
 import { createShape } from "../../shapes";
 import { SheetImageShape } from "../../shapes/sheetImage";
+import { Tooltip } from "../atoms/Tooltip";
 
 export const SheetList: React.FC = () => {
   const acctx = useContext(AppCanvasContext);
@@ -118,19 +119,17 @@ export const SheetList: React.FC = () => {
     return sheets.map((s, i) => {
       return [
         s.id,
-        <div>
-          <SheetPanel
-            sheet={s}
-            selected={s.id === selectedSheet?.id}
-            index={i + 1}
-            canDeleteSheet={canDeleteSheet}
-            thumbnail={thumbnails[s.id]}
-            onChangeName={handleNameChange}
-            onDelete={handleSheetDeleteConfirm}
-            onAddSheetImage={handleAddSheetImage}
-            onClickSheet={handleSheetSelect}
-          />
-        </div>,
+        <SheetPanel
+          sheet={s}
+          selected={s.id === selectedSheet?.id}
+          index={i + 1}
+          canDeleteSheet={canDeleteSheet}
+          thumbnail={thumbnails[s.id]}
+          onChangeName={handleNameChange}
+          onDelete={handleSheetDeleteConfirm}
+          onAddSheetImage={handleAddSheetImage}
+          onClickSheet={handleSheetSelect}
+        />,
       ];
     });
   }, [
@@ -180,13 +179,15 @@ export const SheetList: React.FC = () => {
           <div className="-rotate-90">{toggleButton}</div>
           <div className="overflow-auto flex flex-col" style={{ maxHeight: "calc(100vh - 100px)" }}>
             {sheets.map((sheet, i) => (
-              <MinSheetButton
-                key={sheet.id}
-                id={sheet.id}
-                index={i}
-                highlight={sheet.id === selectedSheet?.id}
-                onClick={handleSheetSelect}
-              />
+              <Tooltip content={sheetItems[i][1]} direction="right" key={sheet.id}>
+                <MinSheetButton
+                  key={sheet.id}
+                  id={sheet.id}
+                  index={i}
+                  highlight={sheet.id === selectedSheet?.id}
+                  onClick={handleSheetSelect}
+                />
+              </Tooltip>
             ))}
           </div>
         </>

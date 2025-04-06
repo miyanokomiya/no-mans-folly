@@ -128,7 +128,7 @@ export const SheetPanel: React.FC<Props> = ({
       <TextInput value={draftName} onChange={handleNameChange} onBlur={finishRename} autofocus keepFocus />
     </form>
   ) : (
-    <a href={getSheetURL(sheet.id)} onClick={handleSheetClick}>
+    <a className="hover:bg-gray-200" href={getSheetURL(sheet.id)} onClick={handleSheetClick}>
       {index}. {sheet.name}
     </a>
   );
@@ -149,8 +149,12 @@ export const SheetPanel: React.FC<Props> = ({
           </FixedPopupButton>
         </OutsideObserver>
       </div>
-      <div className="w-full h-20 border cursor-grab flex items-center justify-center" data-anchor>
-        {thumbnail ? <canvas ref={canvasRef} width="144" height="78" /> : <div>No thumbnail</div>}
+      <div className="w-full h-20 border flex items-center justify-center" data-anchor>
+        {thumbnail ? (
+          <canvas ref={canvasRef} width="144" height="78" />
+        ) : (
+          <div className="select-none touch-none">No thumbnail</div>
+        )}
       </div>
     </div>
   );
