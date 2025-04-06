@@ -17,7 +17,7 @@ import { SheetImageShape } from "../../shapes/sheetImage";
 import { Tooltip } from "../atoms/Tooltip";
 
 export const SheetList: React.FC = () => {
-  const acctx = useContext(AppCanvasContext);
+  const { sheetStore } = useContext(AppCanvasContext);
   const selectedSheet = useSelectedSheet();
   const sheets = useSheets();
   const [userSetting] = useUserSetting();
@@ -46,26 +46,26 @@ export const SheetList: React.FC = () => {
 
   const handleSheetSelect = useCallback(
     (id: string) => {
-      acctx.sheetStore.selectSheet(id);
+      sheetStore.selectSheet(id);
     },
-    [acctx.sheetStore],
+    [sheetStore],
   );
 
   const handleSheetAdd = useCallback(() => {
-    const currentSheets = acctx.sheetStore.getEntities();
+    const currentSheets = sheetStore.getEntities();
     const selectedIndex = currentSheets.findIndex((s) => s.id === selectedSheet?.id);
     const beforeFindex = selectedSheet?.findex ?? null;
     const afterFindex = currentSheets[selectedIndex + 1]?.findex ?? null;
 
     const id = generateUuid();
-    acctx.sheetStore.addEntity({
+    sheetStore.addEntity({
       id,
       findex: generateKeyBetweenAllowSame(beforeFindex, afterFindex),
       name: "New Sheet",
       bgcolor: selectedSheet?.bgcolor,
     });
-    acctx.sheetStore.selectSheet(id);
-  }, [acctx.sheetStore, selectedSheet]);
+    sheetStore.selectSheet(id);
+  }, [sheetStore, selectedSheet]);
 
   const handleSheetDeleteConfirm = useCallback((id: string) => {
     setDeleteTargetId(id);
@@ -76,14 +76,14 @@ export const SheetList: React.FC = () => {
     setDeleteTargetId(undefined);
 
     if (selectedSheet?.id === deleteTargetId) {
-      const currentSheets = acctx.sheetStore.getEntities();
+      const currentSheets = sheetStore.getEntities();
       const selectedIndex = currentSheets.findIndex((s) => s.id === selectedSheet?.id);
       const nextSelected = currentSheets[Math.max(selectedIndex - 1, 0)].id;
-      acctx.sheetStore.selectSheet(nextSelected);
+      sheetStore.selectSheet(nextSelected);
     }
 
-    acctx.sheetStore.deleteEntities([deleteTargetId]);
-  }, [acctx.sheetStore, selectedSheet, deleteTargetId]);
+    sheetStore.deleteEntities([deleteTargetId]);
+  }, [sheetStore, selectedSheet, deleteTargetId]);
 
   const handleSheetDeleteCancel = useCallback(() => {
     setDeleteTargetId(undefined);
@@ -91,9 +91,9 @@ export const SheetList: React.FC = () => {
 
   const handleNameChange = useCallback(
     (id: string, name: string) => {
-      acctx.sheetStore.patchEntity(id, { name });
+      sheetStore.patchEntity(id, { name });
     },
-    [acctx.sheetStore],
+    [sheetStore],
   );
 
   const handleAddSheetImage = useCallback(
@@ -149,11 +149,11 @@ export const SheetList: React.FC = () => {
       const beforeFindex = sheets[to - 1]?.findex ?? null;
       const nextFindex = sheets[to]?.findex ?? null;
 
-      acctx.sheetStore.patchEntity(target.id, {
+      sheetStore.patchEntity(target.id, {
         findex: generateKeyBetweenAllowSame(beforeFindex, nextFindex),
       });
     },
-    [sheets, acctx.sheetStore],
+    [sheets, sheetStore],
   );
 
   const [hidePanel, setHidePanel] = useLocalStorageAdopter({
