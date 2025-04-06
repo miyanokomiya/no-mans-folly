@@ -112,7 +112,7 @@ export const AppCanvas: React.FC = () => {
       sm.reset();
       setCanvasState({});
     });
-  }, [sheetStore, sm, imageStore, loadShapeAssets]);
+  }, [sheetStore, sm]);
 
   useEffect(() => {
     // Flush the thumbnail save when the shape store changes.
