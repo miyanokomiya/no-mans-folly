@@ -8,6 +8,7 @@ import {
   CONTEXT_MENU_ITEM_SRC,
   createFrameForShapes,
   getMenuItemsForSelectedShapes,
+  getPatchByDissolveShapes,
   groupShapes,
   handleContextItemEvent,
   isSameContextItem,
@@ -255,6 +256,35 @@ describe("ungroupShapes", () => {
       c: { parentId: "parent_group", findex: "a2k" },
     });
     expect(ctx.multiSelectShapes).toHaveBeenCalledWith(["b", "c"]);
+  });
+});
+
+describe("getPatchByDissolveShapes", () => {
+  test("should return patch by dissolving shapes", () => {
+    const findexList = generateNKeysBetween(undefined, undefined, 3);
+    const group = createShape(getCommonStruct, "group", { id: "group" });
+    const sc = newShapeComposite({
+      shapes: [
+        group,
+        createShape(getCommonStruct, "rectangle", { id: "a", parentId: "group" }),
+        createShape(getCommonStruct, "rectangle", { id: "b", parentId: "group" }),
+      ].map((s, i) => ({ ...s, findex: findexList[i] })),
+      getStruct: getCommonStruct,
+    });
+
+    const res0 = getPatchByDissolveShapes(sc, [group]);
+    expect(res0).toEqual({
+      a: {
+        findex: "a0V",
+        parentId: undefined,
+      },
+      b: {
+        findex: "a0k",
+        parentId: undefined,
+      },
+    });
+    expect(res0.a).toHaveProperty("parentId");
+    expect(res0.b).toHaveProperty("parentId");
   });
 });
 

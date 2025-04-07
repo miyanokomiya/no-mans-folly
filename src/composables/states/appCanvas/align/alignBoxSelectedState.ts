@@ -5,7 +5,7 @@ import {
   handleCommonPointerDownRightOnSingleSelection,
   handleIntransientEvent,
 } from "../commons";
-import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes, getPatchByDissolveShapes } from "../contextMenuItems";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { AlignBoxShape } from "../../../../shapes/align/alignBox";
@@ -133,10 +133,28 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
         }
         case "contextmenu":
           ctx.setContextMenuList({
-            items: getMenuItemsForSelectedShapes(ctx),
+            items: [
+              CONTEXT_MENU_ITEM_SRC.DISSOLVE_LAYOUT,
+              CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+              ...getMenuItemsForSelectedShapes(ctx),
+            ],
             point: event.data.point,
           });
           return;
+        case "contextmenu-item": {
+          switch (event.data.key) {
+            case CONTEXT_MENU_ITEM_SRC.DISSOLVE_LAYOUT.key: {
+              const sc = ctx.getShapeComposite();
+              const target = sc.shapeMap[targetId];
+              const patch = getPatchByDissolveShapes(ctx.getShapeComposite(), [target]);
+              ctx.deleteShapes([target.id], patch);
+              ctx.multiSelectShapes(Object.keys(patch));
+              return ctx.states.newSelectionHubState;
+            }
+            default:
+              return handleIntransientEvent(ctx, event);
+          }
+        }
         default:
           return handleIntransientEvent(ctx, event);
       }

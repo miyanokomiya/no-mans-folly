@@ -68,6 +68,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "UNGROUP",
     };
   },
+  get DISSOLVE_LAYOUT() {
+    return {
+      label: i18n.t("contextmenu.dissolve_layout"),
+      key: "DISSOLVE_LAYOUT",
+    };
+  },
   get CREATE_FRAME() {
     return {
       label: i18n.t("contextmenu.create_frame"),
@@ -503,11 +509,28 @@ export function ungroupShapes(ctx: AppCanvasStateContext): boolean {
   const groups = ids.map((id) => shapeMap[id]).filter((s) => s && isGroupShape(s));
   if (groups.length === 0) return false;
 
-  // Ungrouped shapes should inherit the parentId of the group if it has.
-  const groupIdToParentIdMap = new Map(groups.map((s) => [s.id, s.parentId]));
+  const patch = getPatchByDissolveShapes(shapeComposite, groups);
+  ctx.deleteShapes(
+    groups.map((s) => s.id),
+    patch,
+  );
+  ctx.multiSelectShapes(Object.keys(patch));
+  return true;
+}
+
+/**
+ * Make sure if the targets can be dissolved before calling this.
+ */
+export function getPatchByDissolveShapes(
+  shapeComposite: ShapeComposite,
+  targets: Shape[],
+): Record<string, Partial<Shape>> {
+  // Child shapes should inherit the parentId of their parents if they have.
+  const groupIdToParentIdMap = new Map(targets.map((s) => [s.id, s.parentId]));
   const childShapes = shapeComposite.shapes.filter((s) => s.parentId && groupIdToParentIdMap.has(s.parentId));
   const groupedByParentId = groupBy(childShapes, (s) => s.parentId!);
 
+  const shapeMap = shapeComposite.shapeMap;
   const patch: Record<string, Partial<Shape>> = {};
   for (const [parentId, shapes] of Object.entries(groupedByParentId)) {
     const parent = shapeMap[parentId];
@@ -520,10 +543,7 @@ export function ungroupShapes(ctx: AppCanvasStateContext): boolean {
       findexFrom = findex;
     });
   }
-
-  ctx.deleteShapes(Array.from(groupIdToParentIdMap.keys()), patch);
-  ctx.multiSelectShapes(Object.keys(patch));
-  return true;
+  return patch;
 }
 
 /**
