@@ -2,7 +2,7 @@ import { IVec2, applyAffine, getOuterRectangle } from "okageo";
 import { Shape } from "../../../models";
 import { applyCurvePath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
-import { ShapeComposite } from "../../shapeComposite";
+import { findBetterShapeAt, ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
 import { LinkInfo } from "../types";
 import { getShapeTextBounds } from "../../../shapes";
@@ -30,23 +30,25 @@ export function defineIntransientState<A extends any[]>(
         switch (event.type) {
           case "pointerhover": {
             const shapeComposite = ctx.getShapeComposite();
-            const shape = shapeComposite.findShapeAt(
+            const selectedId = ctx.getLastSelectedShapeId();
+            const selectedShape = selectedId ? shapeComposite.shapeMap[selectedId] : undefined;
+            const selectionScope = selectedShape ? shapeComposite.getSelectionScope(selectedShape) : undefined;
+
+            let shape = findBetterShapeAt(
+              shapeComposite,
               event.data.current,
-              undefined,
-              undefined,
+              selectionScope,
               undefined,
               ctx.getScale(),
             );
-            const interactiveShape = shape && isShapeInteratctiveWithinViewport(ctx, shape) ? shape : undefined;
-            const linkInfo = interactiveShape
-              ? getInlineLinkInfoAt(shapeComposite, interactiveShape, event.data.current)
-              : undefined;
+            shape = shape && isShapeInteratctiveWithinViewport(ctx, shape) ? shape : undefined;
 
-            if (hoveredShapeId !== interactiveShape?.id) {
-              hoveredShapeId = interactiveShape?.id;
+            if (hoveredShapeId !== shape?.id) {
+              hoveredShapeId = shape?.id;
               ctx.redraw();
             }
 
+            const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
             const prev = ctx.getLinkInfo();
             if (prev?.key !== linkInfo?.key) {
               ctx.setCursor(linkInfo ? "pointer" : undefined);
