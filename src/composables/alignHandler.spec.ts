@@ -1,5 +1,11 @@
 import { describe, test, expect } from "vitest";
-import { canJoinAlignBox, getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
+import {
+  canJoinAlignBox,
+  canShapesJoinAlignBox,
+  getModifiedAlignRootIds,
+  getNextAlignLayout,
+  newAlignBoxHandler,
+} from "./alignHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { AlignBoxShape } from "../shapes/align/alignBox";
 import { RectangleShape } from "../shapes/rectangle";
@@ -356,59 +362,93 @@ describe("getModifiedAlignRootIds", () => {
   });
 });
 
-describe("canJoinAlignBox", () => {
-  test("should return true when a shape can attend to align box", () => {
-    const rect0 = createShape(getCommonStruct, "rectangle", {
-      id: "rect0",
-    });
-    const line0 = createShape(getCommonStruct, "line", {
-      id: "line0",
-    });
-    const label0 = createShape<TextShape>(getCommonStruct, "text", {
-      id: "label0",
-      parentId: line0.id,
-      lineAttached: 0.5,
-    });
-    const group0 = createShape(getCommonStruct, "group", {
-      id: "group0",
-    });
-    const child0 = createShape(getCommonStruct, "rectangle", {
-      id: "child0",
-      parentId: group0.id,
-    });
-    const child1 = createShape(getCommonStruct, "rectangle", {
-      id: "child1",
-      parentId: "unknown",
-    });
-    const align = createShape(getCommonStruct, "align_box", {
-      id: "align",
-    });
-    const align_child = createShape(getCommonStruct, "rectangle", {
-      id: "align_child",
-      parentId: align.id,
-    });
-    const frame = createShape(getCommonStruct, "frame", {
-      id: "frame",
-    });
-    const frameAlignGroup = createShape(getCommonStruct, "frame_align_group", {
-      id: "frameAlignGroup",
-    });
-    const vnnode = createShape(getCommonStruct, "vn_node", {
-      id: "vnnode",
-    });
-    const shapeComposite = newShapeComposite({
-      shapes: [rect0, line0, label0, group0, child0, child1, align, align_child, frame, frameAlignGroup, vnnode],
-      getStruct: getCommonStruct,
-    });
+describe("canJoinAlignBox / canShapesJoinAlignBox", () => {
+  const rect0 = createShape(getCommonStruct, "rectangle", {
+    id: "rect0",
+  });
+  const line0 = createShape(getCommonStruct, "line", {
+    id: "line0",
+  });
+  const label0 = createShape<TextShape>(getCommonStruct, "text", {
+    id: "label0",
+    parentId: line0.id,
+    lineAttached: 0.5,
+  });
+  const group0 = createShape(getCommonStruct, "group", {
+    id: "group0",
+  });
+  const child0 = createShape(getCommonStruct, "rectangle", {
+    id: "child0",
+    parentId: group0.id,
+  });
+  const child1 = createShape(getCommonStruct, "rectangle", {
+    id: "child1",
+    parentId: "unknown",
+  });
+  const align = createShape(getCommonStruct, "align_box", {
+    id: "align",
+  });
+  const align_child = createShape(getCommonStruct, "rectangle", {
+    id: "align_child",
+    parentId: align.id,
+  });
+  const treeRoot = createShape(getCommonStruct, "tree_root", {
+    id: "treeRoot",
+  });
+  const treeNode = createShape(getCommonStruct, "tree_node", {
+    id: "treeNode",
+    parentId: treeRoot.id,
+  });
+  const frame = createShape(getCommonStruct, "frame", {
+    id: "frame",
+  });
+  const frameAlignGroup = createShape(getCommonStruct, "frame_align_group", {
+    id: "frameAlignGroup",
+  });
+  const vnnode = createShape(getCommonStruct, "vn_node", {
+    id: "vnnode",
+  });
+  const shapeComposite = newShapeComposite({
+    shapes: [
+      rect0,
+      line0,
+      label0,
+      group0,
+      child0,
+      child1,
+      align,
+      align_child,
+      treeRoot,
+      treeNode,
+      frame,
+      frameAlignGroup,
+      vnnode,
+    ],
+    getStruct: getCommonStruct,
+  });
+
+  test("canJoinAlignBox: should return true when a shape can attend to align box", () => {
     expect(canJoinAlignBox(shapeComposite, rect0)).toBe(true);
     expect(canJoinAlignBox(shapeComposite, line0)).toBe(false);
     expect(canJoinAlignBox(shapeComposite, label0)).toBe(false);
     expect(canJoinAlignBox(shapeComposite, group0)).toBe(true);
-    expect(canJoinAlignBox(shapeComposite, child0), "child of group shape").toBe(false);
+    expect(canJoinAlignBox(shapeComposite, child0), "child of group shape").toBe(true);
     expect(canJoinAlignBox(shapeComposite, child1), "child of missing shape").toBe(true);
     expect(canJoinAlignBox(shapeComposite, align_child), "child of align box shape").toBe(true);
+    expect(canJoinAlignBox(shapeComposite, treeRoot)).toBe(true);
+    expect(canJoinAlignBox(shapeComposite, treeNode), "child of tree root shape").toBe(false);
     expect(canJoinAlignBox(shapeComposite, frame)).toBe(false);
     expect(canJoinAlignBox(shapeComposite, frameAlignGroup)).toBe(false);
     expect(canJoinAlignBox(shapeComposite, vnnode)).toBe(false);
+  });
+
+  test("canShapesJoinAlignBox: should return true when all shapes can attend to align box", () => {
+    expect(canShapesJoinAlignBox(shapeComposite, [rect0, line0]), "invalid shape type").toBe(false);
+    expect(canShapesJoinAlignBox(shapeComposite, [rect0, label0]), "different parents").toBe(false);
+    expect(canShapesJoinAlignBox(shapeComposite, [rect0, group0])).toBe(true);
+    expect(canShapesJoinAlignBox(shapeComposite, [rect0, child0]), "different parents").toBe(false);
+    expect(canShapesJoinAlignBox(shapeComposite, [rect0, child1])).toBe(true);
+    expect(canShapesJoinAlignBox(shapeComposite, [child0, align_child]), "different parents").toBe(false);
+    expect(canShapesJoinAlignBox(shapeComposite, [align_child])).toBe(true);
   });
 });

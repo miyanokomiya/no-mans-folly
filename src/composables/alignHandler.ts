@@ -43,6 +43,7 @@ import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygo
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
 import { isVNNodeShape } from "../shapes/vectorNetworks/vnNode";
+import { isGroupShape } from "../shapes/group";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -1034,7 +1035,24 @@ export function canJoinAlignBox(shapeComposite: ShapeComposite, shape: Shape): b
   const parent = shapeComposite.shapeMap[shape.parentId];
   if (!parent) return true;
 
-  return isAlignBoxShape(parent);
+  return isAlignBoxShape(parent) || isGroupShape(parent);
+}
+
+/**
+ * Check if all shapes can be joined to the same align box.
+ */
+export function canShapesJoinAlignBox(shapeComposite: ShapeComposite, shapes: Shape[]): boolean {
+  if (shapes.length === 0) return false;
+  // Check individual shapes.
+  if (shapes.some((shape) => !canJoinAlignBox(shapeComposite, shape))) return false;
+
+  // Check if all shapes have no parent or the same parent.
+  const indexParentId = shapeComposite.hasParent(shapes[0]) ? shapes[0].parentId : undefined;
+  if (indexParentId) {
+    return shapes.every((shape) => shape.parentId === indexParentId);
+  } else {
+    return shapes.every((shape) => !shapeComposite.hasParent(shape));
+  }
 }
 
 export function generateAlignTemplate(

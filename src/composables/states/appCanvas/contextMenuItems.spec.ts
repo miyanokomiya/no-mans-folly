@@ -6,6 +6,7 @@ import { createStyleScheme } from "../../../models/factories";
 import { newShapeComposite } from "../../shapeComposite";
 import {
   CONTEXT_MENU_ITEM_SRC,
+  createAlignBox,
   createFrameForShapes,
   getMenuItemsForSelectedShapes,
   getPatchByDissolveShapes,
@@ -16,6 +17,7 @@ import {
 } from "./contextMenuItems";
 import { RectPolygonShape } from "../../../shapes/rectPolygon";
 import { generateNKeysBetween } from "../../../utils/findex";
+import { AlignBoxShape } from "../../../shapes/align/alignBox";
 
 function getMockCtx() {
   return {
@@ -34,6 +36,7 @@ function getMockCtx() {
         getStruct: getCommonStruct,
       }),
     getDocumentMap: () => ({ a: [{ insert: "text" }] }),
+    updateShapes: vi.fn(),
     addShapes: vi.fn(),
     deleteShapes: vi.fn(),
     multiSelectShapes: vi.fn(),
@@ -285,6 +288,82 @@ describe("getPatchByDissolveShapes", () => {
     });
     expect(res0.a).toHaveProperty("parentId");
     expect(res0.b).toHaveProperty("parentId");
+  });
+});
+
+describe("createAlignBox", () => {
+  test("should create align box shape as a parent of shapes", () => {
+    const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 2);
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape(getCommonStruct, "rectangle", { id: "a" }),
+          createShape(getCommonStruct, "rectangle", { id: "b" }),
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
+        getStruct: getCommonStruct,
+      });
+
+    const res0 = createAlignBox(ctx);
+    expect(res0).toBe(false);
+    expect(ctx.addShapes).not.toHaveBeenCalled();
+    expect(ctx.selectShape).not.toHaveBeenCalled();
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
+    ctx.generateUuid = () => "align";
+    const res1 = createAlignBox(ctx);
+    expect(res1).toBe(true);
+    expect(ctx.updateShapes).toHaveBeenCalledWith({
+      add: [
+        createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+          id: "align",
+          findex: "a2",
+          baseWidth: undefined,
+          baseHeight: undefined,
+        }),
+      ],
+      update: {
+        a: { parentId: "align" },
+        b: { parentId: "align" },
+      },
+    });
+    expect(ctx.selectShape).toHaveBeenCalledWith("align");
+  });
+
+  test("should create align box shape as a parent of shapes within a group", () => {
+    const ctx = getMockCtx();
+    const findexList = generateNKeysBetween(undefined, undefined, 4);
+    ctx.getShapeComposite = () =>
+      newShapeComposite({
+        shapes: [
+          createShape(getCommonStruct, "group", { id: "root_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "a", parentId: "root_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "b", parentId: "root_group" }),
+          createShape(getCommonStruct, "rectangle", { id: "c", parentId: "root_group" }),
+        ].map((s, i) => ({ ...s, findex: findexList[i] })),
+        getStruct: getCommonStruct,
+      });
+
+    ctx.getSelectedShapeIdMap.mockReturnValue({ a: true, b: true });
+    ctx.generateUuid = () => "new_align";
+    const res1 = createAlignBox(ctx);
+    expect(res1).toBe(true);
+    expect(ctx.updateShapes).toHaveBeenCalledWith({
+      add: [
+        createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+          id: "new_align",
+          parentId: "root_group",
+          findex: "a2V",
+          baseWidth: undefined,
+          baseHeight: undefined,
+        }),
+      ],
+      update: {
+        a: { parentId: "new_align" },
+        b: { parentId: "new_align" },
+      },
+    });
+    expect(ctx.selectShape).toHaveBeenCalledWith("new_align");
   });
 });
 

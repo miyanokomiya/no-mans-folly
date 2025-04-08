@@ -16,6 +16,7 @@ import { isGroupShape } from "../../../shapes/group";
 import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { getShapeStatusColor } from "./utils/style";
+import { canShapesJoinAlignBox } from "../../alignHandler";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -212,6 +213,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
           const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+          const targetShapes = targetIds.map((id) => shapeMap[id]).filter((s) => s);
           const items: ContextMenuItem[] = [];
 
           const canGroup = canGroupShapes(shapeComposite, targetIds);
@@ -219,9 +221,13 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
             items.push(CONTEXT_MENU_ITEM_SRC.GROUP);
           }
 
-          const groups = targetIds.map((id) => shapeMap[id]).filter(isGroupShape);
+          const groups = targetShapes.filter(isGroupShape);
           if (groups.length > 0) {
             items.push(CONTEXT_MENU_ITEM_SRC.UNGROUP);
+          }
+
+          if (canShapesJoinAlignBox(shapeComposite, targetShapes)) {
+            items.push(CONTEXT_MENU_ITEM_SRC.ALIGN_LAYOUT);
           }
 
           if (canGroup) {

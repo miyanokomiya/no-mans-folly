@@ -29,6 +29,8 @@ import { DocOutput } from "../../../models/document";
 import { calcOriginalDocSize, getInitialOutput } from "../../../utils/textEditor";
 import { newColorParser } from "../../colorParser";
 import { generateFindexAfter } from "../../shapeRelation";
+import { canJoinAlignBox } from "../../alignHandler";
+import { AlignBoxShape } from "../../../shapes/align/alignBox";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get DELETE_SHAPE() {
@@ -66,6 +68,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.ungroup"),
       key: "UNGROUP",
+    };
+  },
+  get ALIGN_LAYOUT() {
+    return {
+      label: i18n.t("contextmenu.align_layout"),
+      key: "ALIGN_LAYOUT",
     };
   },
   get DISSOLVE_LAYOUT() {
@@ -291,6 +299,10 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.UNGROUP.key: {
       ungroupShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.ALIGN_LAYOUT.key: {
+      createAlignBox(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.CREATE_FRAME.key: {
@@ -544,6 +556,34 @@ export function getPatchByDissolveShapes(
     });
   }
   return patch;
+}
+
+export function createAlignBox(ctx: AppCanvasStateContext): boolean {
+  const shapeComposite = ctx.getShapeComposite();
+  const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  const targets = targetIds
+    .map((id) => shapeComposite.shapeMap[id])
+    .filter((s) => s && canJoinAlignBox(shapeComposite, s));
+  if (targets.length < 2) return false;
+
+  const rect = shapeComposite.getWrapperRectForShapes(targets);
+  const indexParentId = targets[0].parentId;
+  const lastTarget = targets.reduce((a, b) => (a.findex < b.findex ? b : a), targets[0]);
+  const layoutShape = createShape<AlignBoxShape>(shapeComposite.getShapeStruct, "align_box", {
+    id: ctx.generateUuid(),
+    parentId: indexParentId,
+    // Set findex equivalent to the last target.
+    findex: generateFindexAfter(shapeComposite, lastTarget.id),
+    p: { x: rect.x, y: rect.y },
+    baseWidth: undefined,
+    baseHeight: undefined,
+  });
+  ctx.updateShapes({
+    add: [layoutShape],
+    update: mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: layoutShape.id })),
+  });
+  ctx.selectShape(layoutShape.id);
+  return true;
 }
 
 /**
