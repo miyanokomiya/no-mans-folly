@@ -40,7 +40,7 @@ import { groupShapes, handleContextItemEvent, ungroupShapes } from "./contextMen
 import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
-import { newRactangleSelectingReadyState } from "./ractangleSelectingReadyState";
+import { newRectangleSelectingReadyState } from "./rectangleSelectingReadyState";
 import { FOLLY_SVG_PREFIX, ShapeTemplateInfo, parseTemplateShapes } from "../../../shapes/utils/shapeTemplateUtil";
 import { Shape } from "../../../models";
 import { newPanToShapeState } from "./panToShapeState";
@@ -109,7 +109,7 @@ export function handleStateEvent(
     case "TextReady":
       return () => newTextReadyState();
     case "RectSelectReady":
-      return () => newRactangleSelectingReadyState();
+      return () => newRectangleSelectingReadyState();
     case "ShapeInspection":
       return () => newShapeInspectionState();
     case "PanToShape":

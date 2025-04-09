@@ -1,7 +1,7 @@
 import { BoundingBox } from "../../boundingBox";
 import { newPanningState } from "../panningState";
 import type { AppCanvasState } from "./core";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newRectangleSelectingState } from "./rectangleSelectingState";
 
 interface Option {
   ctrl?: boolean; // when true, pass "keepSelection: true" to "RectangleSelectingState"

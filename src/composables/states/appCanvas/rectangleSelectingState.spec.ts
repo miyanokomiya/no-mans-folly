@@ -1,5 +1,5 @@
 import { expect, test, describe, vi } from "vitest";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newRectangleSelectingState } from "./rectangleSelectingState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newShapeComposite } from "../../shapeComposite";

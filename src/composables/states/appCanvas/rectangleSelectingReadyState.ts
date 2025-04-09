@@ -1,12 +1,12 @@
 import type { AppCanvasState } from "./core";
 import { getCommonAcceptableEvents, handleStateEvent } from "./commons";
 import { handleCommonWheel } from "../commons";
-import { newRectangleSelectingState } from "./ractangleSelectingState";
+import { newRectangleSelectingState } from "./rectangleSelectingState";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyPath } from "../../../utils/renderer";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 
-export function newRactangleSelectingReadyState(): AppCanvasState {
+export function newRectangleSelectingReadyState(): AppCanvasState {
   return {
     getLabel: () => "RectangleSelectingReady",
     onStart: (ctx) => {
