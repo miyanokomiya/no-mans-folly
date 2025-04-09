@@ -60,6 +60,7 @@ export function newShapeComposite(option: Option) {
       wrapperRect: IRectangle;
       "wrapperRect:bounds": IRectangle;
       localRectPolygon: IVec2[];
+      outlineWrapperRect: IRectangle[];
       highlightPaths: BezierPath[] | undefined;
     }
   >();
@@ -171,15 +172,34 @@ export function newShapeComposite(option: Option) {
     return shapeModule.resizeShape(getStruct, shape, resizingAffine, mergedShapeContext);
   }
 
+  /**
+   * Derive wrapper rect of the shape based on its bounding box.
+   */
   function getWrapperRect(shape: Shape, includeBounds?: boolean): IRectangle {
     return cacheMap.getValue(shape, includeBounds ? "wrapperRect:bounds" : "wrapperRect", () => {
       return shapeModule.getWrapperRect(getStruct, shape, mergedShapeContext, includeBounds);
     });
   }
 
+  /**
+   * Derive wrapper rect of the shape based on its bounding box.
+   */
   function getWrapperRectForShapes(shapes: Shape[], includeBounds?: boolean): IRectangle {
     const shapeRects = shapes.map((s) => getWrapperRect(s, includeBounds));
     return geometry.getWrapperRect(shapeRects);
+  }
+
+  /**
+   * Derive wrapper rect of the shape based on its outline.
+   */
+  function getOutlineWrapperRect(shape: Shape): IRectangle {
+    return cacheMap.getValue(shape, "outlineWrapperRect", () => {
+      const outlines = shapeModule.getOutlinePaths(getStruct, shape);
+      if (!outlines || outlines.length === 0) return getWrapperRect(shape);
+
+      const rects = outlines.map((path) => geometry.getCurveSplineBounds(path.path, path.curves));
+      return geometry.getWrapperRect(rects);
+    });
   }
 
   function getLocalRectPolygon(shape: Shape): IVec2[] {
@@ -418,6 +438,7 @@ export function newShapeComposite(option: Option) {
     transformShape,
     getWrapperRect,
     getWrapperRectForShapes,
+    getOutlineWrapperRect,
     getLocalRectPolygon,
     getLocalSpace,
     getLocationRateOnShape,

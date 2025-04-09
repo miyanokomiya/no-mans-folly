@@ -58,7 +58,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           if (currentScope?.parentId) {
             // Prioritize the parent scope when the parent of the current scope is covered by the range.
             const scopeParent = composite.shapeMap[currentScope.parentId];
-            if (hitTest.test(composite.getWrapperRect(scopeParent))) {
+            if (hitTest.test(composite.getOutlineWrapperRect(scopeParent))) {
               if (!hasInitialSelectionScope) {
                 selectionScope = composite.getSelectionScope(scopeParent);
                 currentScope = selectionScope;
@@ -79,7 +79,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
 
           targetIdSet = new Set(
             candidateIds
-              .map<[string, IRectangle]>((id) => [id, composite.getWrapperRect(shapeMap[id])])
+              .map<[string, IRectangle]>((id) => [id, composite.getOutlineWrapperRect(shapeMap[id])])
               .filter(([, rect]) => hitTest.test(rect))
               .map(([id]) => id),
           );

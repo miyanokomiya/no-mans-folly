@@ -24,6 +24,7 @@ import { getNextTreeLayout } from "./shapeHandlers/treeHandler";
 import { patchPipe, toList, toMap } from "../utils/commons";
 import { generateKeyBetween } from "../utils/findex";
 import { Shape } from "../models";
+import { EllipseShape } from "../shapes/ellipse";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -145,6 +146,29 @@ describe("newShapeComposite", () => {
       expect(result0.y).toBeCloseTo(0);
       expect(result0.width).toBeCloseTo(20);
       expect(result0.height).toBeCloseTo(40);
+    });
+  });
+
+  describe("getOutlineWrapperRect", () => {
+    test("should return wrapper rectangle based the outline", () => {
+      const shape0 = createShape<EllipseShape>(getCommonStruct, "ellipse", {
+        id: "test0",
+        rx: 40,
+        ry: 40,
+        rotation: Math.PI / 4,
+      });
+
+      const shapes = [shape0];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getOutlineWrapperRect(shape0)).toEqualRect({
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 80,
+      });
     });
   });
 
