@@ -11,6 +11,7 @@ import iconRibbon from "../assets/icons/shape_ribbon.svg";
 import iconCylinder from "../assets/icons/shape_cylinder.svg";
 import iconDocumentSymbol from "../assets/icons/shape_document_symbol.svg";
 import iconStar from "../assets/icons/shape_star.svg";
+import iconGear from "../assets/icons/shape_gear.svg";
 import iconSpikyRectangle from "../assets/icons/shape_spiky_rectangle.svg";
 import iconBubble from "../assets/icons/shape_bubble.svg";
 import iconOneSidedArrow from "../assets/icons/shape_one_sided_arrow.svg";
@@ -70,6 +71,7 @@ import { newChevronSelectedState } from "./states/appCanvas/chevron/chevronSelec
 import { newRibbonSelectedState } from "./states/appCanvas/ribbon/ribbonSelectedState";
 import { newVNNodeSelectedState } from "./states/appCanvas/vectorNetworks/vnNodeSelectedState";
 import { newSheetImageSelectedState } from "./states/appCanvas/sheetImage/sheetImageSelectedState";
+import { newGearSelectedState } from "./states/appCanvas/gear/gearSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -88,6 +90,7 @@ export const shapeTypeList: ShapeTypeItem[] = [
   { type: "cylinder", icon: iconCylinder },
   { type: "document_symbol", icon: iconDocumentSymbol },
   { type: "star", icon: iconStar },
+  { type: "gear", icon: iconGear },
   { type: "spiky_rectangle", icon: iconSpikyRectangle },
   { type: "bubble", icon: iconBubble },
   { type: "one_sided_arrow", icon: iconOneSidedArrow },
@@ -144,6 +147,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newHexagonSelectedState;
     case "star":
       return newStarSelectedState;
+    case "gear":
+      return newGearSelectedState;
     case "spiky_rectangle":
       return newSpikyRectangleSelectedState;
     case "document_symbol":

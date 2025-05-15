@@ -23,6 +23,7 @@ import { struct as ribbon } from "./polygons/ribbon";
 import { struct as cylinder } from "./polygons/cylinder";
 import { struct as document_symbol } from "./polygons/documentSymbol";
 import { struct as star } from "./polygons/star";
+import { struct as gear } from "./polygons/gear";
 import { struct as spiky_rectangle } from "./polygons/spikyRectangle";
 import { struct as bubble } from "./polygons/bubble";
 import { struct as one_sided_arrow } from "./oneSidedArrow";
@@ -74,6 +75,7 @@ export const SHAPE_COMMON_STRUCTS: {
   cylinder,
   document_symbol,
   star,
+  gear,
   spiky_rectangle,
   bubble,
   one_sided_arrow,
