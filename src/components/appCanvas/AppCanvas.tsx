@@ -1,12 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
-import {
-  AppStateContext,
-  AppStateMachineContext,
-  GetAppStateContext,
-  SetAppStateContext,
-} from "../../contexts/AppContext";
-import { canHaveText, getCommonStruct } from "../../shapes";
+import { AppStateContext, AppStateMachineContext, GetAppStateContext } from "../../contexts/AppContext";
 import { useCanvas } from "../../hooks/canvas";
 import { getKeyOptions, getMouseOptions, isCtrlOrMeta, ModifierOptions } from "../../utils/devices";
 import {
@@ -17,30 +11,24 @@ import {
   useGlobalPasteEffect,
 } from "../../hooks/window";
 import { TextEditor, TextEditorEmojiOnly } from "../textEditor/TextEditor";
-import { DocAttrInfo, DocOutput } from "../../models/document";
-import { getDocAttributes, getInitialOutput } from "../../utils/textEditor";
+import { DocAttrInfo } from "../../models/document";
+import { getDocAttributes } from "../../utils/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "../floatMenu/FloatMenu";
-import { generateUuid } from "../../utils/random";
 import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";
 import { rednerRGBA } from "../../utils/color";
 import { useDocumentMap, useSelectedTmpSheet } from "../../hooks/storeHooks";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
-import { getAllBranchIds, getTree } from "../../utils/tree";
 import { ContextMenu } from "../ContextMenu";
 import { getGridSize, newGrid } from "../../composables/grid";
 import { FileDropArea } from "../atoms/FileDropArea";
-import { patchPipe } from "../../utils/commons";
-import { getDeleteTargetIds } from "../../composables/shapeComposite";
-import { getEntityPatchByDelete, getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 import { GridBackground } from "../atoms/GridBackground";
 import { LinkMenu } from "../linkMenu/LinkMenu";
 import { useClickable } from "../../hooks/clickable";
 import { ModifierSupportPanel } from "../molecules/ModifierSupportPanel";
 import { newCanvasBank } from "../../composables/canvasBank";
 import { PreviewDialog } from "../PreviewDialog";
-import { duplicateShapes } from "../../shapes/utils/duplicator";
-import { useImageStore, useLoadShapeAssets } from "./hooks";
+import { useImageStore, useLoadShapeAssets, useSetupStateContext } from "./hooks";
 import { CommandExamFloatPanel } from "./CommandExamFloatPanel";
 import { renderFrameNames } from "../../composables/frame";
 import { FloatMenuOption } from "../../composables/states/commons";
@@ -54,7 +42,6 @@ export const AppCanvas: React.FC = () => {
   const { sheetStore, shapeStore, documentStore, undoManager, userSettingStore } = useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
-  const setSmctx = useContext(SetAppStateContext);
   const getSmctx = useContext(GetAppStateContext);
 
   const [canvasState, setCanvasState] = useState<any>({});
@@ -247,212 +234,9 @@ export const AppCanvas: React.FC = () => {
     setTextEditorFocusKey({});
   }, []);
 
-  useEffect(() => {
-    // TODO: Make each method via "useCallback" for consistency.
-    setSmctx({
-      redraw: () => setCanvasState({}),
-      getRenderCtx: () => canvasRef.current?.getContext("2d") ?? undefined,
-      setViewport,
-      zoomView,
-      setZoom,
-      getScale: () => scale,
-      getViewRect: () => viewCanvasRect,
-      panView,
-      scrollView,
-      startDragging: startDragging,
-      stopDragging: endMoving,
-      getCursorPoint: () => viewToCanvas(getMousePoint()),
-
-      toView: canvasToView,
-      showFloatMenu: (option) => setFloatMenuOption(option ?? {}),
-      hideFloatMenu: () => setFloatMenuOption(undefined),
-      setContextMenuList(val) {
-        if (val) {
-          setContextMenu({ items: val.items, point: canvasToView(val.point) });
-        } else {
-          setContextMenu(undefined);
-        }
-      },
-      setCommandExams: (val) => setCommandExams(val ?? []),
-      setCursor,
-      setLinkInfo,
-      getLinkInfo: () => linkInfo,
-
-      undo: undoManager.undo,
-      redo: undoManager.redo,
-      setCaptureTimeout: undoManager.setCaptureTimeout,
-
-      getSheets: sheetStore.getEntities,
-      getSelectedSheet: sheetStore.getSelectedSheet,
-      selectSheet: sheetStore.selectSheet,
-
-      getShapeComposite: () => shapeStore.shapeComposite,
-      getShapes: () => shapeStore.shapeComposite.shapes,
-
-      getTmpShapeMap: () => shapeStore.shapeComposite.tmpShapeMap,
-      setTmpShapeMap: shapeStore.setTmpShapeMap,
-
-      getSelectedShapeIdMap: shapeStore.getSelected,
-      getLastSelectedShapeId: shapeStore.getLastSelected,
-      selectShape: shapeStore.select,
-      multiSelectShapes: shapeStore.multiSelect,
-      clearAllSelected: shapeStore.clearAllSelected,
-      addShapes: (shapes, docMap, patch) => {
-        shapeStore.transact(() => {
-          shapeStore.addEntities(shapes);
-          if (patch) {
-            shapeStore.patchEntities(patch);
-          }
-          if (docMap) {
-            documentStore.patchDocs(docMap);
-          }
-
-          // Newly created shapes should have doc by default.
-          // => It useful to apply text style and to avoid conflict even it has no content.
-          const docSupplement = shapes
-            .filter((s) => canHaveText(getCommonStruct, s) && !docMap?.[s.id])
-            .reduce<{ [id: string]: DocOutput }>((p, s) => {
-              p[s.id] = getInitialOutput();
-              return p;
-            }, {});
-          documentStore.patchDocs(docSupplement);
-        });
-        loadShapeAssets(shapes);
-      },
-      deleteShapes: (ids: string[], patch) => {
-        const shapeComposite = shapeStore.shapeComposite;
-        const shapePatchInfo = getPatchInfoByLayouts(
-          shapeComposite,
-          getEntityPatchByDelete(shapeComposite, ids, patch),
-        );
-
-        shapeStore.transact(() => {
-          if (shapePatchInfo.update) {
-            shapeStore.patchEntities(shapePatchInfo.update);
-          }
-          if (shapePatchInfo.delete) {
-            shapeStore.deleteEntities(shapePatchInfo.delete);
-            documentStore.deleteDocs(shapePatchInfo.delete);
-          }
-        });
-      },
-      patchShapes: shapeStore.patchEntities,
-      updateShapes: (update, docMap) => {
-        // Apply patch before getting branch ids in case tree structure changes by the patch.
-        // => e.g. ungrouping
-        const updated = patchPipe([() => update.update ?? {}], shapeStore.shapeComposite.shapeMap);
-        const targetIds = update.delete
-          ? getDeleteTargetIds(
-              shapeStore.shapeComposite,
-              getAllBranchIds(getTree(Object.values(updated.result)), update.delete),
-            )
-          : [];
-
-        const shapePatchInfo = getPatchInfoByLayouts(shapeStore.shapeComposite, {
-          add: update.add,
-          update: update.update,
-          delete: targetIds,
-        });
-
-        shapeStore.transact(() => {
-          if (shapePatchInfo.add) {
-            shapeStore.addEntities(shapePatchInfo.add);
-          }
-          if (shapePatchInfo.update) {
-            shapeStore.patchEntities(shapePatchInfo.update);
-          }
-          if (docMap) {
-            documentStore.patchDocs(docMap);
-          }
-
-          if (shapePatchInfo.add) {
-            // Newly created shapes should have doc by default.
-            // => It useful to apply text style and to avoid conflict even it has no content.
-            const docSupplement = shapePatchInfo.add
-              .filter((s) => canHaveText(getCommonStruct, s) && !docMap?.[s.id])
-              .reduce<{ [id: string]: DocOutput }>((p, s) => {
-                p[s.id] = getInitialOutput();
-                return p;
-              }, {});
-            documentStore.patchDocs(docSupplement);
-          }
-
-          if (shapePatchInfo.delete) {
-            shapeStore.deleteEntities(shapePatchInfo.delete);
-            documentStore.deleteDocs(shapePatchInfo.delete);
-          }
-        });
-
-        if (update.add) {
-          loadShapeAssets(update.add);
-        }
-      },
-      pasteShapes: (shapes, docs, p) => {
-        const targetP = p ?? viewToCanvas(getMousePoint());
-        const availableIdSet = new Set(shapeStore.shapeComposite.shapes.map((s) => s.id));
-        const result = duplicateShapes(
-          getCommonStruct,
-          shapes,
-          docs,
-          generateUuid,
-          shapeStore.createLastIndex(),
-          availableIdSet,
-          targetP,
-        );
-
-        shapeStore.transact(() => {
-          shapeStore.addEntities(result.shapes);
-          documentStore.patchDocs(result.docMap);
-        });
-        shapeStore.multiSelect(result.shapes.map((s) => s.id));
-        loadShapeAssets(shapes);
-      },
-
-      createFirstIndex: shapeStore.createFirstIndex,
-      createLastIndex: shapeStore.createLastIndex,
-
-      getGrid: () => grid,
-
-      startTextEditing() {
-        setTextEditing(true);
-      },
-      stopTextEditing() {
-        setTextEditing(false);
-      },
-      getShowEmojiPicker: () => showEmojiPicker,
-      setShowEmojiPicker: (val, p) => {
-        if (p) {
-          setTextEditorPosition(canvasToView(p));
-        }
-        setShowEmojiPicker(val);
-        if (!val) {
-          focus();
-        }
-      },
-      setTextEditorPosition: (p) => {
-        setTextEditorPosition(canvasToView(p));
-        focusBackTextEditor();
-      },
-      getDocumentMap: documentStore.getDocMap,
-      getTmpDocMap: documentStore.getTmpDocMap,
-      setTmpDocMap: documentStore.setTmpDocMap,
-      patchDocuments: (val, shapePatch) => {
-        if (shapePatch) {
-          shapeStore.transact(() => {
-            shapeStore.patchEntities(shapePatch);
-            documentStore.patchDocs(val);
-          });
-        } else {
-          documentStore.patchDocs(val);
-        }
-      },
-      patchDocDryRun: documentStore.patchDocDryRun,
-      setCurrentDocAttrInfo,
-      createCursorPosition: documentStore.createCursorPosition,
-      retrieveCursorPosition: documentStore.retrieveCursorPosition,
-      getImageStore: () => imageStore,
-    });
-  }, [
+  useSetupStateContext({
+    redraw: useCallback(() => setCanvasState({}), []),
+    getRenderCtx: useCallback(() => canvasRef.current?.getContext("2d") ?? undefined, []),
     setViewport,
     zoomView,
     setZoom,
@@ -469,17 +253,24 @@ export const AppCanvas: React.FC = () => {
     loadShapeAssets,
     setShowEmojiPicker,
     linkInfo,
-    documentStore,
     focus,
     userSettingStore,
     imageStore,
-    setSmctx,
     sheetStore,
     shapeStore,
+    documentStore,
     showEmojiPicker,
     undoManager,
     focusBackTextEditor,
-  ]);
+    setTextEditing,
+    setTextEditorPosition,
+    setFloatMenuOption,
+    setContextMenu,
+    setCommandExams,
+    setCursor,
+    setCurrentDocAttrInfo,
+    setLinkInfo,
+  });
 
   useEffect(() => {
     return shapeStore.watchSelected(() => {
