@@ -39,6 +39,7 @@ import {
   getCrossSegAndSegWithT,
   getCurveLerpFn,
   getCurvePathStructs,
+  getRadianRangeOfArcCurveParams,
   getRotateFn,
   getSegments,
 } from "./geometry";
@@ -530,8 +531,10 @@ export function covertArcToBezier(seg: ISegment, c: ArcCurveControl): BezierPath
     return ret;
   }
 
-  // Split the arc into 4 partials since bezier approximation only works well with arc within 90 degrees.
-  const partials = [1, 2, 3, 4];
+  // Split the arc into partials since bezier approximation only works well with arc within 90 degrees.
+  const diffR = getRadianRangeOfArcCurveParams(arcParams);
+  const count = Math.max(1, Math.ceil(diffR / (Math.PI / 2)));
+  const partials = [...Array(count)].map((_, i) => i + 1);
   const arcLerpFn = getArcLerpFn(arcParams);
   const partialSegs = getSegments([seg[0], ...partials.map((n) => arcLerpFn(n / partials.length))]);
   const partialBeziers = partialSegs.map((partialSeg) => {

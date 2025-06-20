@@ -679,15 +679,8 @@ describe("convertLinePathToSimplePath", () => {
     ];
     const result = convertLinePathToSimplePath(vertices, [{ d: { x: 0, y: 50 } }]);
     const arcLerpFn = getArcLerpFn(50, 50, vertices[0], vertices[1], false, false, 0);
-    expect(result.path).toEqualPoints([
-      vertices[0],
-      arcLerpFn(1 / 4),
-      arcLerpFn(2 / 4),
-      arcLerpFn(3 / 4),
-      vertices[1],
-      vertices[2],
-    ]);
-    expect(result.curves).toHaveLength(5);
+    expect(result.path).toEqualPoints([vertices[0], arcLerpFn(1 / 2), vertices[1], vertices[2]]);
+    expect(result.curves).toHaveLength(3);
   });
 });
 
@@ -699,8 +692,24 @@ describe("covertArcToBezier", () => {
     ];
     const result = covertArcToBezier(seg, { d: { x: 0, y: 50 } });
     const arcLerpFn = getArcLerpFn(50, 50, seg[0], seg[1], false, false, 0);
-    expect(result.path).toEqualPoints([seg[0], arcLerpFn(1 / 4), arcLerpFn(2 / 4), arcLerpFn(3 / 4), seg[1]]);
-    expect(result.curves).toHaveLength(4);
+    expect(result.path).toEqualPoints([seg[0], arcLerpFn(1 / 2), seg[1]]);
+    expect(result.curves).toHaveLength(2);
+  });
+
+  test("should split arc per 90 degrees for interpolation", () => {
+    const seg: ISegment = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+    ];
+    expect(covertArcToBezier(seg, { d: { x: 0, y: -5 } }).curves).toHaveLength(1);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: -25 } }).curves).toHaveLength(2);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: -49 } }).curves).toHaveLength(2);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: -51 } }).curves).toHaveLength(3);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: 150 } }).curves).toHaveLength(4);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: 51 } }).curves).toHaveLength(3);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: 49 } }).curves).toHaveLength(2);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: 25 } }).curves).toHaveLength(2);
+    expect(covertArcToBezier(seg, { d: { x: 0, y: 5 } }).curves).toHaveLength(1);
   });
 });
 

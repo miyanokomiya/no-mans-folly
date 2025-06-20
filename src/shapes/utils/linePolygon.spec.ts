@@ -37,12 +37,10 @@ describe("patchLinePolygonFromLine", () => {
       curves: [{ d: { x: 0, y: 50 } }, { d: { x: 0, y: -50 } }],
     });
     const result = patchLinePolygonFromLine(getCommonStruct, line);
-    expect(result.path?.path).toHaveLength(9);
-    expect(result.path?.path[2]).toEqualPoint({ x: 50, y: 50 });
-    expect(result.path?.path[4]).toEqualPoint({ x: 100, y: 0 });
-    expect(result.path?.path[6]).toEqualPoint({ x: 150, y: 50 });
-    expect(result.path?.path[8]).toEqualPoint({ x: 100, y: 100 });
-    expect(result.path?.curves).toHaveLength(8);
+    expect(result.path?.path).toHaveLength(5);
+    expect(result.path?.path[2]).toEqualPoint({ x: 100, y: 0 });
+    expect(result.path?.path[4]).toEqualPoint({ x: 100, y: 100 });
+    expect(result.path?.curves).toHaveLength(4);
   });
 });
 

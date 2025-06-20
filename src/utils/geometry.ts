@@ -1067,6 +1067,16 @@ export function getArcCurveParamsByNormalizedControl(segment: ISegment, nQ: IVec
   };
 }
 
+export function getRadianRangeOfArcCurveParams(
+  params: Pick<ArcCurveParams, "to" | "from" | "counterclockwise">,
+): number {
+  const to = params.counterclockwise ? params.from : params.to;
+  const from = params.counterclockwise ? params.to : params.from;
+  const pto = to >= from ? to : to + TAU;
+  const nDiffR = pto - from;
+  return nDiffR >= 0 ? nDiffR : nDiffR + TAU;
+}
+
 export function normalizeSegment(segment: ISegment): ISegment {
   const rotation = getRadian(segment[1], segment[0]);
   return [{ x: 0, y: 0 }, rotate(sub(segment[1], segment[0]), -rotation)];

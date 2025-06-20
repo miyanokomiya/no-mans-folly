@@ -94,6 +94,7 @@ import {
   isRangeAccommodatingValue,
   doesRectAccommodateRect,
   isRectOverlapped,
+  getRadianRangeOfArcCurveParams,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -1549,6 +1550,23 @@ describe("getArcCurveParams", () => {
         { x: 50, y: 0 },
       ),
     ).toBe(undefined);
+  });
+});
+
+describe("getRadianRangeOfArcCurveParams", () => {
+  test("should return radian range of the arc curve params", () => {
+    expect(getRadianRangeOfArcCurveParams({ to: Math.PI / 2, from: 0, counterclockwise: false })).toBeCloseTo(
+      Math.PI / 2,
+    );
+    expect(getRadianRangeOfArcCurveParams({ to: Math.PI / 2, from: 0, counterclockwise: true })).toBeCloseTo(
+      (Math.PI / 2) * 3,
+    );
+    expect(getRadianRangeOfArcCurveParams({ to: -Math.PI / 2, from: 0, counterclockwise: false })).toBeCloseTo(
+      (Math.PI / 2) * 3,
+    );
+    expect(getRadianRangeOfArcCurveParams({ to: -Math.PI / 2, from: 0, counterclockwise: true })).toBeCloseTo(
+      Math.PI / 2,
+    );
   });
 });
 
