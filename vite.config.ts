@@ -8,7 +8,7 @@ const root = resolve(__dirname, "src", "pages");
 const outDir = resolve(__dirname, "dist");
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root,
   build: {
     outDir,
@@ -19,6 +19,14 @@ export default defineConfig({
         "privacy-policy": resolve(__dirname, "src", "pages", "terms", "privacy-policy", "index.html"),
       },
     },
+  },
+  resolve: {
+    alias:
+      mode === "production"
+        ? {
+            "y-indexeddb": resolve(__dirname, "src", "stubs", "y-indexeddb.ts"),
+          }
+        : {},
   },
   publicDir: resolve(__dirname, "public"),
   plugins: [
@@ -83,4 +91,4 @@ export default defineConfig({
       process.env.GOOGLE_API_KEY ?? "AIzaSyAAl4rKH1gNhAFcmW_KUqw2oGcgZgfAi34",
     ),
   },
-});
+}));

@@ -1,8 +1,7 @@
 const queryParameters = new URLSearchParams(window.location.search);
-const indexedDBMode = !!queryParameters.get("indexeddb");
 
 export function newFeatureFlags() {
   return {
-    indexedDBMode, // This flag is intended only for development porpuses.
+    indexedDBMode: import.meta.env.DEV && !!queryParameters.get("indexeddb"), // This flag is intended only for development porpuses.
   };
 }
