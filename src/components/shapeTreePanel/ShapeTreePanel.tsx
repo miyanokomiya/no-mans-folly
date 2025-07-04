@@ -20,6 +20,7 @@ import { selectShapesInRange } from "../../composables/states/appCanvas/commons"
 import { rednerRGBA } from "../../utils/color";
 import { getLabel, hasSpecialOrderPriority } from "../../shapes";
 import { newShapeRenderer, ShapeRenderer } from "../../composables/shapeRenderer";
+import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -271,26 +272,29 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
       renderShape(id, canvasRef.current);
     }, [id, renderShape]);
 
-    const handleNodeDown = useCallback(
+    const handleNodeClick = useCallback(
       (e: React.PointerEvent) => {
-        e.preventDefault();
-
         if (isCtrlOrMeta(e) && primeSibling) {
           onSelect?.(id, true);
-          return;
-        }
-        if (e.shiftKey && primeSibling) {
+        } else if (e.shiftKey && primeSibling) {
           onSelect?.(id, false, true);
-          return;
-        }
-
-        onSelect?.(id);
-
-        if (draggable) {
-          onDragStart?.(e, id);
+        } else {
+          onSelect?.(id);
         }
       },
-      [id, onSelect, draggable, onDragStart, primeSibling],
+      [id, onSelect, primeSibling],
+    );
+
+    const handleDragStart = useCallback(
+      (e: React.PointerEvent) => {
+        if (!draggable) return;
+
+        if (!selected) {
+          onSelect?.(id);
+        }
+        onDragStart?.(e, id);
+      },
+      [id, selected, onSelect, draggable, onDragStart],
     );
 
     const handleNodeSelectDown = useCallback(() => {
@@ -304,19 +308,20 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
     return (
       <div data-anchor-root className="flex items-center relative">
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
-        <button
-          type="button"
-          className={
-            "px-1 rounded-xs w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
-          }
-          onPointerDown={handleNodeDown}
-          onPointerEnter={handleNodePointerEnter}
-        >
-          <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
-            <canvas ref={canvasRef} width="24" height="24" />
-          </div>
-          {name}
-        </button>
+        <ClickOrDragHandler onClick={handleNodeClick} onDragStart={handleDragStart}>
+          <button
+            type="button"
+            className={
+              "px-1 rounded-xs w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
+            }
+            onPointerEnter={handleNodePointerEnter}
+          >
+            <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
+              <canvas ref={canvasRef} width="24" height="24" />
+            </div>
+            {name}
+          </button>
+        </ClickOrDragHandler>
         {/* Absence of this element causes layout shift for some reason. */}
         <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
           <ToggleInput value={selected} onChange={handleNodeSelectDown} />

@@ -2,7 +2,7 @@ import { IVec2, getDistance } from "okageo";
 import { useCallback, useRef } from "react";
 
 interface Props {
-  onClick?: () => void;
+  onClick?: (e: React.PointerEvent) => void;
   onDragStart?: (e: React.PointerEvent) => void;
   children: React.ReactNode;
   className?: string;
@@ -48,7 +48,7 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
     (e: React.PointerEvent) => {
       e.preventDefault();
       if (downRef.current) {
-        onClick?.();
+        onClick?.(e);
       }
       downRef.current = undefined;
     },
