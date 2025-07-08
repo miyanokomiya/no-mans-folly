@@ -672,8 +672,9 @@ export function swapShapeParent(
 ): EntityPatchInfo<Shape> {
   if (targetIds.length <= 0) return {};
 
-  const targets = targetIds.map((id) => shapeComposite.shapeMap[id]).sort(compareByFindex);
-  const target = targets[0];
+  const sortedTargets = targetIds.map((id) => shapeComposite.shapeMap[id]).sort(compareByFindex);
+  const sortedTargetIds = sortedTargets.map((s) => s.id);
+  const target = sortedTargets[0];
   const to = shapeComposite.shapeMap[toId];
   const toParent = to.parentId ? shapeComposite.shapeMap[to.parentId] : undefined;
   const ret: EntityPatchInfo<Shape> = {};
@@ -681,20 +682,12 @@ export function swapShapeParent(
   function makeLastChild() {
     const toTree = shapeComposite.mergedShapeTreeMap[toId];
     const lastSiblingTree = toTree.children.at(-1);
-    if (lastSiblingTree) {
-      const lastSibling = shapeComposite.shapeMap[lastSiblingTree.id];
-      const findexList = generateNKeysBetweenAllowSame(lastSibling.findex, null, targetIds.length);
-      ret.update = targetIds.reduce<typeof ret.update>((p, id, i) => {
-        p![id] = { parentId: to.id, findex: findexList[i] };
-        return p;
-      }, {});
-    } else {
-      const findexList = generateNKeysBetweenAllowSame(null, null, targetIds.length);
-      ret.update = targetIds.reduce<typeof ret.update>((p, id, i) => {
-        p![id] = { parentId: to.id, findex: findexList[i] };
-        return p;
-      }, {});
-    }
+    const lastSibling = lastSiblingTree ? shapeComposite.shapeMap[lastSiblingTree.id] : undefined;
+    const findexList = generateNKeysBetweenAllowSame(lastSibling?.findex, null, sortedTargetIds.length);
+    ret.update = sortedTargetIds.reduce<typeof ret.update>((p, id, i) => {
+      p![id] = { parentId: to.id, findex: findexList[i] };
+      return p;
+    }, {});
   }
 
   if (operation === "group") {
@@ -707,9 +700,9 @@ export function swapShapeParent(
         findex: to.findex,
       });
 
-      const findexList = generateNKeysBetweenAllowSame(null, null, targetIds.length + 1);
+      const findexList = generateNKeysBetweenAllowSame(null, null, sortedTargetIds.length + 1);
       ret.add = [group];
-      ret.update = targetIds.reduce<typeof ret.update>(
+      ret.update = sortedTargetIds.reduce<typeof ret.update>(
         (p, id, i) => {
           p![id] = { parentId: group.id, findex: findexList[i + 1] };
           return p;
@@ -721,62 +714,43 @@ export function swapShapeParent(
     }
   } else if (operation === "adopt") {
     makeLastChild();
-  } else if (toParent) {
-    const toParentTree = shapeComposite.mergedShapeTreeMap[toParent.id];
-
-    switch (operation) {
-      case "above": {
-        const aboveIndex = toParentTree.children.findIndex((c) => c.id === toId);
-        const aboveTree = aboveIndex >= 1 ? toParentTree.children[aboveIndex - 1] : undefined;
-        const above = aboveTree ? shapeComposite.shapeMap[aboveTree.id] : undefined;
-        const findexList = generateNKeysBetweenAllowSame(above?.findex ?? null, to.findex, targetIds.length);
-        ret.update = targetIds.reduce<typeof ret.update>((p, id, i) => {
-          p![id] = { parentId: to.parentId, findex: findexList[i] };
-          return p;
-        }, {});
-        break;
-      }
-      case "below": {
-        const belowIndex = toParentTree.children.findIndex((c) => c.id === toId);
-        const belowTree =
-          belowIndex < toParentTree.children.length - 1 ? toParentTree.children[belowIndex + 1] : undefined;
-        const below = belowTree ? shapeComposite.shapeMap[belowTree.id] : undefined;
-        const findexList = generateNKeysBetweenAllowSame(to.findex, below?.findex ?? null, targetIds.length);
-        ret.update = targetIds.reduce<typeof ret.update>((p, id, i) => {
-          p![id] = { parentId: to.parentId, findex: findexList[i] };
-          return p;
-        }, {});
-        break;
-      }
-    }
   } else {
-    const roots = shapeComposite.mergedShapeTree;
+    const siblings = toParent
+      ? shapeComposite.mergedShapeTreeMap[toParent.id].children
+      : shapeComposite.mergedShapeTree;
 
+    let findexList: string[];
     switch (operation) {
       case "above": {
-        const aboveIndex = roots.findIndex((c) => c.id === toId);
-        const aboveTree = aboveIndex >= 1 ? roots[aboveIndex - 1] : undefined;
+        const aboveIndex = siblings.findIndex((c) => c.id === toId);
+        const aboveTree = aboveIndex >= 1 ? siblings[aboveIndex - 1] : undefined;
         const above = aboveTree ? shapeComposite.shapeMap[aboveTree.id] : undefined;
-        const findexList = generateNKeysBetweenAllowSame(above?.findex ?? null, to.findex, targetIds.length);
-        ret.update = targetIds.reduce<typeof ret.update>((p, id, i) => {
-          p![id] = { parentId: to.parentId, findex: findexList[i] };
-          return p;
-        }, {});
+        findexList = generateNKeysBetweenAllowSame(above?.findex ?? null, to.findex, sortedTargetIds.length);
         break;
       }
-      case "below": {
-        const belowIndex = roots.findIndex((c) => c.id === toId);
-        const belowTree = belowIndex < roots.length - 1 ? roots[belowIndex + 1] : undefined;
+      default: {
+        const belowIndex = siblings.findIndex((c) => c.id === toId);
+        const belowTree = belowIndex < siblings.length - 1 ? siblings[belowIndex + 1] : undefined;
         const below = belowTree ? shapeComposite.shapeMap[belowTree.id] : undefined;
-        const findexList = generateNKeysBetweenAllowSame(to.findex, below?.findex ?? null, targetIds.length);
-        ret.update = targetIds.reduce<typeof ret.update>((p, id, i) => {
-          p![id] = { parentId: to.parentId, findex: findexList[i] };
-          return p;
-        }, {});
+        findexList = generateNKeysBetweenAllowSame(to.findex, below?.findex ?? null, sortedTargetIds.length);
         break;
       }
     }
+
+    ret.update = sortedTargetIds.reduce<typeof ret.update>((p, id, i) => {
+      p![id] = { parentId: to.parentId, findex: findexList[i] };
+      return p;
+    }, {});
   }
+
+  // Check if this operation changes the tree structure.
+  // If not, discard the update.
+  const nextSC = getNextShapeComposite(shapeComposite, ret);
+  const currentSiblings = toParent
+    ? shapeComposite.mergedShapeTreeMap[toParent.id].children
+    : shapeComposite.mergedShapeTree;
+  const nextSiblings = toParent ? nextSC.mergedShapeTreeMap[toParent.id].children : nextSC.mergedShapeTree;
+  if (currentSiblings.map((t) => t.id).join(",") === nextSiblings.map((t) => t.id).join(",")) return {};
 
   // Delete the target parent if it no longer has children.
   const targetParent = target.parentId ? shapeComposite.shapeMap[target.parentId] : undefined;
@@ -786,14 +760,6 @@ export function swapShapeParent(
       ret.delete = [targetParentTree.id];
     }
   }
-
-  // Check if this operation changes the tree structure.
-  const nextSC = getNextShapeComposite(shapeComposite, ret);
-  const currentSiblings = toParent
-    ? shapeComposite.mergedShapeTreeMap[toParent.id].children
-    : shapeComposite.mergedShapeTree;
-  const nextSiblings = toParent ? nextSC.mergedShapeTreeMap[toParent.id].children : nextSC.mergedShapeTree;
-  if (currentSiblings.map((t) => t.id).join(",") === nextSiblings.map((t) => t.id).join(",")) return {};
 
   return ret;
 }
