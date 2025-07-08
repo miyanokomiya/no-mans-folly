@@ -21,3 +21,10 @@ export function generateKeyBetween(a: string | null | undefined, b: string | nul
 export function generateNKeysBetween(a: string | null | undefined, b: string | null | undefined, n: number) {
   return _generateNKeysBetween(a ?? null, b ?? null, n);
 }
+export function generateNKeysBetweenAllowSame(a: string | null | undefined, b: string | null | undefined, n: number) {
+  return a && b && a === b ? [...Array(n)].map(() => a) : _generateNKeysBetween(a ?? null, b ?? null, n);
+}
+
+export function compareByFindex<T extends { findex: string }>(a: T, b: T): number {
+  return a.findex <= b.findex ? -1 : 1;
+}

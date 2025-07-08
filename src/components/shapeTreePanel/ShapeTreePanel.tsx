@@ -97,9 +97,9 @@ export const ShapeTreePanel: React.FC = () => {
   );
 
   const handleDrop = useCallback(
-    (targetId: string, toId: string, operation: DropOperation) => {
+    (targetIds: string[], toId: string, operation: DropOperation) => {
       const ctx = getCtx();
-      const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
+      const patchInfo = swapShapeParent(shapeComposite, targetIds, toId, operation, ctx.generateUuid);
       ctx.updateShapes(patchInfo);
     },
     [shapeComposite, getCtx],
@@ -123,13 +123,14 @@ export const ShapeTreePanel: React.FC = () => {
       setDraggingTarget((val) => (val ? [e.currentTarget as Element, val[1], { x: e.clientX, y: e.clientY }] : val));
     }, []),
     useCallback(() => {
-      if (draggingTarget && dropTo) {
-        handleDrop(draggingTarget[1], dropTo[0], dropTo[1]);
+      const ids = Object.keys(selectedIdMap);
+      if (ids.length > 0 && dropTo) {
+        handleDrop(ids, dropTo[0], dropTo[1]);
       }
 
       setDraggingTarget(undefined);
       setDropTo(undefined);
-    }, [draggingTarget, dropTo, setDropTo, handleDrop]),
+    }, [dropTo, setDropTo, handleDrop, selectedIdMap]),
   );
 
   const handleStartDragging = useCallback(
@@ -308,21 +309,18 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
     return (
       <div data-anchor-root className="flex items-center relative">
         <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
-        <ClickOrDragHandler onClick={handleNodeClick} onDragStart={handleDragStart}>
-          <button
-            type="button"
-            className={
-              "px-1 rounded-xs w-full flex items-center gap-2 select-none touch-none hover:bg-gray-200" + selectedClass
-            }
-            onPointerEnter={handleNodePointerEnter}
-          >
+        <ClickOrDragHandler
+          className={"px-1 rounded-xs w-full hover:bg-gray-200" + selectedClass}
+          onClick={handleNodeClick}
+          onDragStart={handleDragStart}
+        >
+          <button type="button" className="flex items-center gap-2" onPointerEnter={handleNodePointerEnter}>
             <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
               <canvas ref={canvasRef} width="24" height="24" />
             </div>
             {name}
           </button>
         </ClickOrDragHandler>
-        {/* Absence of this element causes layout shift for some reason. */}
         <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
           <ToggleInput value={selected} onChange={handleNodeSelectDown} />
         </div>

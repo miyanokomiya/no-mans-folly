@@ -114,7 +114,7 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
   const handleDrop = useCallback(
     (targetId: string, toId: string, operation: DropOperation) => {
       const ctx = getCtx();
-      const patchInfo = swapShapeParent(shapeComposite, targetId, toId, operation, ctx.generateUuid);
+      const patchInfo = swapShapeParent(shapeComposite, [targetId], toId, operation, ctx.generateUuid);
       // Prevent deleting shapes by this operation.
       delete patchInfo.delete;
 
