@@ -406,6 +406,8 @@ function justifyChildrenInLineV(
  * When isRow is true,  Assumes all rectangles are aligned at the top in each row.
  */
 function getLineIds(rectMap: Map<string, IRectangle>, treeNode: TreeNode, isRow: boolean): string[][] {
+  if (treeNode.children.length === 0) return [];
+
   const ret: string[][] = [[]];
   let primary = -Infinity;
   let secondary = -Infinity;
