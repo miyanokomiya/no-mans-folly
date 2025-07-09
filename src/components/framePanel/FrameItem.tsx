@@ -6,6 +6,7 @@ import { OutsideObserver } from "../atoms/OutsideObserver";
 import { FixedPopupButton } from "../atoms/PopupButton";
 import { TextInput } from "../atoms/inputs/TextInput";
 import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
+import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 
 interface Props {
   id: string;
@@ -14,8 +15,8 @@ interface Props {
   prime?: boolean;
   selected?: boolean;
   children?: React.ReactNode;
-  onDown?: (e: React.PointerEvent) => void;
   onSelect?: (e: React.MouseEvent) => void;
+  onDragStart?: (e: React.PointerEvent) => void;
   onNameChange?: (id: string, name: string) => void;
   onInsertBelow?: (id: string) => void;
   onDuplicate?: (id: string) => void;
@@ -31,8 +32,8 @@ export const FrameItem: React.FC<Props> = ({
   prime,
   selected,
   children,
-  onDown,
   onSelect,
+  onDragStart,
   onNameChange,
   onInsertBelow,
   onDuplicate,
@@ -53,11 +54,18 @@ export const FrameItem: React.FC<Props> = ({
     setPopupOpen(false);
   }, []);
 
-  const handleDown = useCallback(
+  const handleClick = useCallback(
     (e: React.PointerEvent) => {
-      onDown?.(e);
+      onSelect?.(e);
     },
-    [onDown],
+    [onSelect],
+  );
+
+  const handleDragStart = useCallback(
+    (e: React.PointerEvent) => {
+      onDragStart?.(e);
+    },
+    [onDragStart],
   );
 
   const handleRenameClick = useCallback(() => {
@@ -154,13 +162,13 @@ export const FrameItem: React.FC<Props> = ({
   return (
     <div className={rootClass}>
       <div className="w-full min-h-8 flex justify-between gap-1">
-        <button
-          type="button"
+        <ClickOrDragHandler
           className="flex-none min-w-8 h-8 rounded-xs px-2 bg-white border flex items-center justify-center cursor-grab"
-          onPointerDown={handleDown}
+          onClick={handleClick}
+          onDragStart={handleDragStart}
         >
           {index + 1}
-        </button>
+        </ClickOrDragHandler>
         <div className="flex-auto">{nameElm}</div>
         <div className="flex-none w-8 h-8 flex items-center justify-center">
           <OutsideObserver onClick={closePopup}>
@@ -178,7 +186,9 @@ export const FrameItem: React.FC<Props> = ({
       </div>
       {children ? (
         <div className="relative border whitespace-nowrap">
-          <div onPointerDown={handleDown}>{children}</div>
+          <ClickOrDragHandler onClick={handleClick} onDragStart={handleDragStart}>
+            {children}
+          </ClickOrDragHandler>
           <div className="absolute right-1 bottom-1 w-8 h-8 overflow-hidden">
             <div className="w-full h-full flex items-center justify-center rotate-45">
               <button

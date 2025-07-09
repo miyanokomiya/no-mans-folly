@@ -112,19 +112,21 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
   );
 
   const handleDrop = useCallback(
-    (targetId: string, toId: string, operation: DropOperation) => {
+    (targetIds: string[], toId: string, operation: DropOperation) => {
       const ctx = getCtx();
-      const patchInfo = swapShapeParent(shapeComposite, [targetId], toId, operation, ctx.generateUuid);
+      const patchInfo = swapShapeParent(shapeComposite, targetIds, toId, operation, ctx.generateUuid);
       // Prevent deleting shapes by this operation.
       delete patchInfo.delete;
 
-      const target = shapeComposite.shapeMap[targetId];
-      if (isParentDisconnected(shapeComposite, target, patchInfo.update?.[targetId])) {
-        const p = findBetterShapePositionsNearByShape(shapeComposite, target.parentId, [targetId])[0];
+      const target = shapeComposite.shapeMap[targetIds[0]];
+      if (isParentDisconnected(shapeComposite, target, patchInfo.update?.[target.id])) {
+        const positions = findBetterShapePositionsNearByShape(shapeComposite, target.parentId, targetIds);
         ctx.updateShapes(
-          mergeEntityPatchInfo(patchInfo, {
-            update: moveFrameWithContent(shapeComposite, targetId, p),
-          }),
+          targetIds.reduce((p, id, i) => {
+            return mergeEntityPatchInfo(p, {
+              update: moveFrameWithContent(shapeComposite, id, positions[i]),
+            });
+          }, patchInfo),
         );
       } else {
         ctx.updateShapes(patchInfo);
@@ -144,13 +146,14 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
       setDraggingTarget((val) => (val ? [val[0], { x: e.clientX, y: e.clientY }] : val));
     }, []),
     useCallback(() => {
-      if (draggingTarget && dropTo) {
-        handleDrop(draggingTarget[0], dropTo[0], dropTo[1]);
+      const ids = Object.keys(selectedIdMap);
+      if (ids.length > 0 && draggingTarget && dropTo) {
+        handleDrop(ids, dropTo[0], dropTo[1]);
       }
 
       setDraggingTarget(undefined);
       setDropTo(undefined);
-    }, [draggingTarget, dropTo, handleDrop]),
+    }, [draggingTarget, dropTo, handleDrop, selectedIdMap]),
   );
 
   const handleStartDragging = useCallback(
@@ -359,15 +362,16 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
     [id, onSelect, primeSibling, selected],
   );
 
-  const handleNodeDown = useCallback(
+  const handleDragStart = useCallback(
     (e: React.PointerEvent) => {
-      handleSelect(e);
+      if (!draggable) return;
 
-      if (draggable) {
-        onDragStart?.(e, id);
+      if (!selected) {
+        onSelect?.(id);
       }
+      onDragStart?.(e, id);
     },
-    [id, handleSelect, draggable, onDragStart],
+    [id, selected, onSelect, draggable, onDragStart],
   );
 
   const handleNodePointerEnter = useCallback(() => {
@@ -420,8 +424,8 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
             index={index}
             prime={prime}
             selected={selected}
-            onDown={handleNodeDown}
             onSelect={handleSelect}
+            onDragStart={handleDragStart}
             onNameChange={onNameChange}
             onInsertBelow={onInsertBelow}
             onDuplicate={onDuplicate}
