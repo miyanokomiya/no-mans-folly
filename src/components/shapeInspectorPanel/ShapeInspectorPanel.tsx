@@ -199,6 +199,13 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [updateTargetShapesBySamePatch],
   );
 
+  const handleNoBoundsChange = useCallback(
+    (checked: boolean) => {
+      updateTargetShapesBySamePatch({ noBounds: checked });
+    },
+    [updateTargetShapesBySamePatch],
+  );
+
   const statusField = (
     <BlockGroupField label="Status" accordionKey="inspector-status">
       <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />
@@ -207,6 +214,9 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       </InlineField>
       <InlineField label="No export">
         <ToggleInput value={targetTmpShape.noExport ?? false} onChange={handleNoExportChange} />
+      </InlineField>
+      <InlineField label="No bounds within group">
+        <ToggleInput value={targetTmpShape.noBounds ?? false} onChange={handleNoBoundsChange} />
       </InlineField>
     </BlockGroupField>
   );

@@ -10,6 +10,21 @@ export type GroupShape = Shape & {
 };
 
 /**
+ * Filters children based on noBounds property.
+ * When there are multiple children, excludes those with noBounds: true.
+ * When there's only one child, always includes it regardless of noBounds value.
+ */
+function filterChildrenForBounds<T extends { id: string }>(children: T[], shapeContext: ShapeContext): T[] {
+  const boundsContributingChildren = children.filter((c) => {
+    const s = shapeContext.shapeMap[c.id];
+    return s && !s.noBounds;
+  });
+
+  // Only use filtered list if there are children that contribute to bounds
+  return boundsContributingChildren.length > 0 ? boundsContributingChildren : children;
+}
+
+/**
  * This shape doesn't have own stable bounds.
  * Bounds should be derived from children.
  * "p" is always at the origin: { x: 0, y: 0 } or unstable.
@@ -42,6 +57,9 @@ export const struct: ShapeStruct<GroupShape> = {
       targetList = icList.length > 0 && others.length > 0 ? others : children;
     }
 
+    // Filter out children with noBounds property, unless there's only one child
+    targetList = filterChildrenForBounds(targetList, shapeContext);
+
     const rects = targetList.map((c) => {
       const s = shapeContext.shapeMap[c.id];
       return shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext, includeBounds);
@@ -54,8 +72,11 @@ export const struct: ShapeStruct<GroupShape> = {
     const tree = shapeContext.treeNodeMap[shape.id];
     if (tree.children.length === 0) return getRectPoints(struct.getWrapperRect(shape, shapeContext));
 
+    // Filter out children with noBounds property, unless there's only one child
+    const targetChildren = filterChildrenForBounds(tree.children, shapeContext);
+
     const innerPoints: IVec2[] = [];
-    tree.children.forEach((ct) => {
+    targetChildren.forEach((ct) => {
       const cn = shapeContext.shapeMap[ct.id];
       const points = shapeContext.getStruct(cn.type).getLocalRectPolygon(cn, shapeContext);
       innerPoints.push(...points);

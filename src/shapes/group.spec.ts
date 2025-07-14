@@ -47,6 +47,75 @@ describe("struct", () => {
         }).getWrapperRect(group),
       ).toEqual({ x: 0, y: 0, width: 0, height: 0 });
     });
+
+    test("should exclude children with noBounds when there are multiple children", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 10, y: 20 },
+        width: 30,
+        height: 40,
+        noBounds: true, // This should be excluded
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0, child1],
+          getStruct: getCommonStruct,
+        }).getWrapperRect(group),
+      ).toEqual({ x: 1, y: 2, width: 3, height: 4 }); // Only child0's bounds
+    });
+
+    test("should include single child with noBounds", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 5, y: 10 },
+        width: 15,
+        height: 20,
+        noBounds: true, // Should still be included when it's the only child
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0],
+          getStruct: getCommonStruct,
+        }).getWrapperRect(group),
+      ).toEqual({ x: 5, y: 10, width: 15, height: 20 });
+    });
+
+    test("should fallback to all children when all have noBounds", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+        noBounds: true,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+        noBounds: true,
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0, child1],
+          getStruct: getCommonStruct,
+        }).getWrapperRect(group),
+      ).toEqual({ x: 1, y: 2, width: 3, height: 4 }); // Uses all children as fallback
+    });
   });
 
   describe("getLocalRectPolygon", () => {
@@ -158,6 +227,90 @@ describe("struct", () => {
         { x: 0, y: 0 },
         { x: 0, y: 0 },
       ]);
+    });
+
+    test("should exclude children with noBounds when there are multiple children", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 100, y: 200 },
+        width: 30,
+        height: 40,
+        noBounds: true, // This should be excluded
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0, child1],
+          getStruct: getCommonStruct,
+        }).getLocalRectPolygon(group),
+      ).toEqual([
+        { x: 1, y: 2 },
+        { x: 4, y: 2 },
+        { x: 4, y: 6 },
+        { x: 1, y: 6 },
+      ]); // Only child0's bounds
+    });
+
+    test("should include single child with noBounds", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 5, y: 10 },
+        width: 15,
+        height: 20,
+        noBounds: true, // Should still be included when it's the only child
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0],
+          getStruct: getCommonStruct,
+        }).getLocalRectPolygon(group),
+      ).toEqual([
+        { x: 5, y: 10 },
+        { x: 20, y: 10 },
+        { x: 20, y: 30 },
+        { x: 5, y: 30 },
+      ]);
+    });
+
+    test("should fallback to all children when all have noBounds", () => {
+      const group = struct.create({ id: "group" });
+      const child0 = rectangleStruct.create({
+        id: "child0",
+        parentId: group.id,
+        p: { x: 1, y: 2 },
+        width: 3,
+        height: 4,
+        noBounds: true,
+      });
+      const child1 = rectangleStruct.create({
+        id: "child1",
+        parentId: group.id,
+        p: { x: 10, y: 20 },
+        width: 3,
+        height: 4,
+        noBounds: true,
+      });
+      expect(
+        newShapeComposite({
+          shapes: [group, child0, child1],
+          getStruct: getCommonStruct,
+        }).getLocalRectPolygon(group),
+      ).toEqual([
+        { x: 1, y: 2 },
+        { x: 13, y: 2 },
+        { x: 13, y: 24 },
+        { x: 1, y: 24 },
+      ]); // Uses all children as fallbac2
     });
   });
 

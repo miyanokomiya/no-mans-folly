@@ -35,6 +35,7 @@ export interface Shape extends Entity {
   noExport?: boolean;
   clipping?: boolean; // When this is set true, it's prioritized over all child shapes.
   cropClipBorder?: boolean; // This is prioritized over all child shapes.
+  noBounds?: boolean; // When this is set true, the shape doesn't affect the bounds of the parent shape.
   alpha?: number; // "undefined" should mean 1.
   attachment?: ShapeAttachment;
 }

@@ -181,6 +181,7 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     gcH: arg.gcH,
     locked: arg.locked,
     noExport: arg.noExport,
+    noBounds: arg.noBounds,
     clipping: arg.clipping,
     cropClipBorder: arg.cropClipBorder,
     alpha: arg.alpha,

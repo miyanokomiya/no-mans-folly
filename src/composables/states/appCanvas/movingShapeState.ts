@@ -88,20 +88,19 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       ctx.setCursor("move");
       ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
 
-      movingRect = geometry.getWrapperRect(targetIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
+      const targetRootIds = subShapeComposite.mergedShapeTree.map((t) => t.id);
+      movingRect = geometry.getWrapperRect(targetRootIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
 
       // When multiple shapes are selected, use the bounds of the index shape as snapping source.
-      if (targetIds.length > 1 && indexShapeId) {
+      if (targetRootIds.length > 1 && indexShapeId) {
         movingRectSub = shapeComposite.getWrapperRect(shapeMap[indexShapeId]);
       }
 
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
-        const shapeRects = targetIds.map((id) => shapeMap[id]).map((s) => shapeComposite.getWrapperRect(s));
-
         boundingBox = newBoundingBox({
-          path: geometry.getRectPoints(geometry.getWrapperRect(shapeRects)),
+          path: geometry.getRectPoints(movingRect),
         });
       }
 
