@@ -25,6 +25,7 @@ import { patchPipe, toList, toMap } from "../utils/commons";
 import { generateKeyBetween } from "../utils/findex";
 import { Shape } from "../models";
 import { EllipseShape } from "../shapes/ellipse";
+import { GroupShape } from "../shapes/group";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -1059,19 +1060,20 @@ describe("replaceTmpShapeMapOfShapeComposite", () => {
 });
 
 describe("getRotatedTargetBounds", () => {
+  const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "shape0",
+    p: { x: 0, y: 0 },
+    width: 10,
+    height: 10,
+  });
+  const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "shape1",
+    p: { x: 100, y: 50 },
+    width: 10,
+    height: 10,
+  });
+
   test("should return rotated wrapper rect path for the targets", () => {
-    const shape0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "shape0",
-      p: { x: 0, y: 0 },
-      width: 10,
-      height: 10,
-    });
-    const shape1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      id: "shape1",
-      p: { x: 100, y: 50 },
-      width: 10,
-      height: 10,
-    });
     const shapeComposite = newShapeComposite({ shapes: [shape0, shape1], getStruct: getCommonStruct });
 
     const result0 = getRotatedTargetBounds(shapeComposite, [shape0.id, shape1.id], 0);
@@ -1093,6 +1095,22 @@ describe("getRotatedTargetBounds", () => {
     expect(result1[2].y).toBeCloseTo(60);
     expect(result1[3].x).toBeCloseTo(0);
     expect(result1[3].y).toBeCloseTo(0);
+  });
+
+  test("should regard group shapes", () => {
+    const group = createShape<GroupShape>(getCommonStruct, "group", {
+      id: "group",
+      p: { x: 0, y: 0 },
+    });
+    const child0 = { ...shape0, id: "child0", parentId: group.id, p: { x: 300, y: 0 } };
+    const child1 = { ...shape1, id: "child1", parentId: group.id, p: { x: 400, y: 50 } };
+    const shapeComposite = newShapeComposite({ shapes: [shape0, group, child0, child1], getStruct: getCommonStruct });
+
+    const result0 = getRotatedTargetBounds(shapeComposite, [shape0.id, group.id], Math.PI / 2);
+    expect(result0[0]).toEqualPoint({ x: 410, y: 0 });
+    expect(result0[1]).toEqualPoint({ x: 410, y: 60 });
+    expect(result0[2]).toEqualPoint({ x: 0, y: 60 });
+    expect(result0[3]).toEqualPoint({ x: 0, y: 0 });
   });
 });
 

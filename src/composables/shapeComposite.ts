@@ -636,10 +636,8 @@ export function getRotatedTargetBounds(
     [cos, sin, -sin, cos, 0, 0],
     [1, 0, 0, 1, -c.x, -c.y],
   ]);
-  const rotatedWrapperRect = geometry.getWrapperRect(
-    shapes
-      .map((s) => ({ ...s, ...shapeComposite.transformShape(s, affine) }))
-      .map((s) => shapeComposite.getWrapperRect(s)),
+  const rotatedWrapperRect = getOuterRectangle(
+    shapes.map((s) => shapeComposite.getLocalRectPolygon(s)).map((points) => points.map((p) => applyAffine(affine, p))),
   );
   const rotateFn = geometry.getRotateFn(r, c);
   return geometry.getRectPoints(rotatedWrapperRect).map((p) => rotateFn(p));
