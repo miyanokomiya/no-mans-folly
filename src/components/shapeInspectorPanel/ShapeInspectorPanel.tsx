@@ -20,6 +20,7 @@ import { SheetInspectorPanel } from "./SheetInspectorPanel";
 import { ShapeSelectionPanel } from "./ShapeSelectionPanel";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { BlockGroupField } from "../atoms/BlockGroupField";
+import { AppText } from "../molecules/AppText";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -215,7 +216,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       <InlineField label="No export">
         <ToggleInput value={targetTmpShape.noExport ?? false} onChange={handleNoExportChange} />
       </InlineField>
-      <InlineField label="No bounds within group">
+      <InlineField label={<AppText portal>[[NOBOUNDS]]</AppText>}>
         <ToggleInput value={targetTmpShape.noBounds ?? false} onChange={handleNoBoundsChange} />
       </InlineField>
     </BlockGroupField>

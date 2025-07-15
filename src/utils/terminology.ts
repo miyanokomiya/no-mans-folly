@@ -60,6 +60,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.sheet_to_shape.desc"),
     };
   },
+  get NOBOUNDS() {
+    return {
+      text: i18n.t("term.nobounds"),
+      description: i18n.t("term.nobounds.desc"),
+    };
+  },
 };
 
 export function parseTerminologies(src: string): TerminologyItem[] {

@@ -71,6 +71,8 @@ const en = {
         "Parse SVG and create shapes from it. Created shapes, especially texts, don't always match the original SVG.",
       sheet_to_shape: "Create shape",
       "sheet_to_shape.desc": "Create a shape that displays the thumbnail of the sheet.",
+      nobounds: "No bounds within group",
+      "nobounds.desc": "This shape doesn't contribute to the bounds of the parent group shape.",
     },
 
     contextmenu: {
@@ -185,6 +187,8 @@ const ja: TranslationResource = {
       "parse_svg.desc": "SVGを取り込み、シェイプを生成します。生成されたシェイプは元のSVGと一致しない場合があります。",
       sheet_to_shape: "シェイプ作成",
       "sheet_to_shape.desc": "シートのサムネイルを表示するシェイプを作成します。",
+      nobounds: "グループ内サイズなし",
+      "nobounds.desc": "このシェイプは親グループシェイプのサイズに影響しません。",
     },
 
     contextmenu: {
