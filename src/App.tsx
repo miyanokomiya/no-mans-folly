@@ -29,7 +29,7 @@ import { ToastMessages } from "./components/ToastMessages";
 import { useLocalStorageAdopter } from "./hooks/localStorage";
 import "./i18n";
 import { createAppUndoManager } from "./hooks/undoManager";
-import { UserSetting } from "./models";
+import { newThrottle } from "./utils/stateful/throttle";
 
 const USER_SETTING_KEY = "userSetting";
 
@@ -74,35 +74,35 @@ function App() {
     });
   }, [initSheet, sheetStore, ready]);
 
-  const [userSetting, setUserSetting] = useLocalStorageAdopter<UserSetting>({
-    key: USER_SETTING_KEY,
-    duration: 100,
-    initialValue: () => {
-      return isTouchDevice()
-        ? {
-            leftDragAction: "pan",
-            wheelAction: "pan",
-            virtualKeyboard: "modifiers",
-          }
-        : {};
-    },
-  });
-  const userSettingStore = useMemo(() => {
+  const userSetting = useMemo(() => {
+    const userSettingStr = localStorage.getItem(USER_SETTING_KEY);
+    const touchDevice = isTouchDevice();
     return newUserSettingStore({
-      initialValue: userSetting,
+      initialValue: userSettingStr
+        ? JSON.parse(userSettingStr)
+        : {
+            leftDragAction: touchDevice ? "pan" : undefined,
+            wheelAction: touchDevice ? "pan" : undefined,
+            virtualKeyboard: touchDevice ? "modifiers" : undefined,
+          },
     });
-  }, [userSetting]);
+  }, []);
   useEffect(() => {
-    return userSettingStore.watch(() => {
-      setUserSetting(userSettingStore.getState());
-    });
-  }, [userSettingStore, setUserSetting]);
+    const saveFn = newThrottle(
+      () => {
+        localStorage.setItem(USER_SETTING_KEY, JSON.stringify(userSetting.getState()));
+      },
+      100,
+      true,
+    );
+    return userSetting.watch(saveFn);
+  }, [userSetting]);
 
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
 
   const acctx = useMemo<IAppCanvasContext>(() => {
     const context = {
-      userSettingStore,
+      userSettingStore: userSetting,
       diagramStore,
       sheetStore,
       layerStore,
@@ -112,7 +112,7 @@ function App() {
       undoManager: createAppUndoManager(undoManager),
     };
     return context;
-  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSettingStore]);
+  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
   const handleOpenWorkspace = useCallback(() => {
     setOpenDialog("workspace");
@@ -282,7 +282,7 @@ function App() {
   const hasShape = useHasShape(shapeStore);
   const hasTemporaryDiagram = !workspaceType && hasShape;
 
-  useUnloadWarning(!userSettingStore.getState().debug && (savePendingFlag || hasTemporaryDiagram));
+  useUnloadWarning(!userSetting.getState().debug && (savePendingFlag || hasTemporaryDiagram));
 
   const loading = !ready || revoking || exportProgress !== undefined;
 
