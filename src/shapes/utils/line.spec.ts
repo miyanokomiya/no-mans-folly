@@ -15,7 +15,7 @@ import {
   getShapePatchInfoByInsertingVertexThrough,
   getShapePatchInfoBySplittingLineThrough,
   getPatchByReverseLine,
-  getPatchByConcatLines,
+  getPatchByCombineLines,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { getConnections, getLinePath, LineShape } from "../line";
@@ -646,7 +646,7 @@ describe("getPatchByExtrudeLineSegment", () => {
   });
 });
 
-describe("getPatchByConcatLines", () => {
+describe("getPatchByCombineLines", () => {
   test("should concatLines two lines", () => {
     const lineA = createShape<LineShape>(getCommonStruct, "line", {
       id: "a",
@@ -667,15 +667,15 @@ describe("getPatchByConcatLines", () => {
       qConnection: { id: "bqq", rate: { x: 10, y: 20 } },
     });
 
-    const result0 = getPatchByConcatLines(lineA, lineB, 0);
+    const result0 = getPatchByCombineLines(lineA, lineB, 0);
     expect(result0.pConnection).toEqual(lineA.qConnection);
     expect(result0.qConnection).toEqual(lineB.qConnection);
 
-    const result1 = getPatchByConcatLines(lineA, lineB, 1);
+    const result1 = getPatchByCombineLines(lineA, lineB, 1);
     expect(result1.pConnection).toEqual(lineA.qConnection);
     expect(result1.qConnection).toEqual(lineB.pConnection);
 
-    const result2 = getPatchByConcatLines(lineA, lineB, 2);
+    const result2 = getPatchByCombineLines(lineA, lineB, 2);
     expect(result2.pConnection).toEqual(lineA.pConnection);
     expect(result2.qConnection).toEqual(lineB.qConnection);
     expect(getLinePath({ ...lineA, ...result2 })).toEqual([
@@ -693,7 +693,7 @@ describe("getPatchByConcatLines", () => {
       { c1: { x: 25, y: 125 }, c2: { x: 75, y: 125 } },
     ]);
 
-    const result3 = getPatchByConcatLines(lineA, lineB, 3);
+    const result3 = getPatchByCombineLines(lineA, lineB, 3);
     expect(result3.pConnection).toEqual(lineA.pConnection);
     expect(result3.qConnection).toEqual(lineB.pConnection);
   });

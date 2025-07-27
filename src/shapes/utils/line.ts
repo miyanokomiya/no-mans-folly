@@ -445,7 +445,7 @@ export function canConcatLines(a: LineShape, b: LineShape): boolean {
  * This doesn't recalculate line layout.
  * Returned patch is intended for "src".
  */
-export function getPatchByConcatLines(src: LineShape, b: LineShape, mode: 0 | 1 | 2 | 3): Partial<LineShape> {
+export function getPatchByCombineLines(src: LineShape, b: LineShape, mode: 0 | 1 | 2 | 3): Partial<LineShape> {
   const adjustedA = mode === 0 || mode === 1 ? { ...src, ...getPatchByReverseLine(src) } : src;
   const adjustedB = mode === 1 || mode === 3 ? { ...b, ...getPatchByReverseLine(b) } : b;
 
