@@ -357,6 +357,9 @@ function convertToControlRate(
   return distanceRate;
 }
 
+/**
+ * Returns undefined when every item in the array is undefined.
+ */
 function cleanArray(arr?: any[]) {
   return arr?.every((v) => v === undefined) ? undefined : arr;
 }
@@ -446,12 +449,23 @@ export function getPatchByConcatLines(src: LineShape, b: LineShape, mode: 0 | 1 
   const adjustedA = mode === 0 || mode === 1 ? { ...src, ...getPatchByReverseLine(src) } : src;
   const adjustedB = mode === 1 || mode === 3 ? { ...b, ...getPatchByReverseLine(b) } : b;
 
+  const curves: LineShape["curves"] = [...(adjustedA.curves ?? []), undefined];
+  const curvesB = cleanArray(adjustedB.curves);
+  if (curvesB) {
+    const verticesA = getLinePath(src);
+    // Make sure to fulfil curve items when the latter line has curves.
+    while (curves.length < verticesA.length) {
+      curves.push(undefined);
+    }
+    curves.push(...curvesB);
+  }
+
   const ret = {
     p: adjustedA.p,
     pConnection: adjustedA.pConnection,
     pHead: adjustedA.pHead,
     body: [...(adjustedA.body ?? []), { p: adjustedA.q }, { p: adjustedB.p }, ...(adjustedB.body ?? [])],
-    curves: [...(adjustedA.curves ?? []), undefined, ...(adjustedB.curves ?? [])],
+    curves,
     q: adjustedB.q,
     qConnection: adjustedB.qConnection,
     qHead: adjustedB.qHead,

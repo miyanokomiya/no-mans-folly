@@ -689,6 +689,7 @@ describe("getPatchByConcatLines", () => {
     expect(result2.curves).toEqual([
       { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } },
       undefined,
+      undefined,
       { c1: { x: 25, y: 125 }, c2: { x: 75, y: 125 } },
     ]);
 
