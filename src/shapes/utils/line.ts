@@ -6,6 +6,7 @@ import {
   getPolylineEdgeInfo,
   isBezieirControl,
   PolylineEdgeInfo,
+  reverseCurveControl,
   splitPathAtRate,
 } from "../../utils/path";
 import { getD2, getPointLerpSlope, ISegment } from "../../utils/geometry";
@@ -420,4 +421,51 @@ export function getPatchByExtrudeLineSegment(
     patch.curves = curves;
   }
   return patch;
+}
+
+export function canConcatLine(line: LineShape): boolean {
+  return line.lineType !== "elbow";
+}
+
+export function canConcatLines(a: LineShape, b: LineShape): boolean {
+  if (a === b || !canConcatLine(a)) return false;
+  return a.lineType === b.lineType && a.curveType === b.curveType;
+}
+
+/**
+ * Mode
+ * - 0: Head of A -> Head of B
+ * - 1: Head of A -> Tail of B
+ * - 2: Tail of A -> Head of B
+ * - 3: Tail of A -> Tail of B
+ *
+ * This doesn't recalculate line layout.
+ */
+export function concatLines(a: LineShape, b: LineShape, mode: 0 | 1 | 2 | 3): LineShape {
+  const adjustedA = mode === 0 || mode === 1 ? reverseLine(a) : a;
+  const adjustedB = mode === 1 || mode === 3 ? reverseLine(b) : b;
+
+  const ret = {
+    ...adjustedA,
+    body: [...(adjustedA.body ?? []), { p: adjustedA.q }, { p: adjustedB.p }, ...(adjustedB.body ?? [])],
+    curves: [...(adjustedA.curves ?? []), undefined, ...(adjustedB.curves ?? [])],
+    q: adjustedB.q,
+    qConnection: adjustedB.qConnection,
+    qHead: adjustedB.qHead,
+  } as LineShape;
+  return ret;
+}
+
+export function reverseLine(line: LineShape): LineShape {
+  return {
+    ...line,
+    p: line.q,
+    q: line.p,
+    pConnection: line.qConnection,
+    qConnection: line.pConnection,
+    pHead: line.qHead,
+    qHead: line.pHead,
+    body: line.body?.toReversed(),
+    curves: line.curves?.toReversed().map((c) => reverseCurveControl(c)),
+  };
 }

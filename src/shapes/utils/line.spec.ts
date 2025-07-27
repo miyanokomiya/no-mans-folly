@@ -14,9 +14,11 @@ import {
   getPatchByExtrudeLineSegment,
   getShapePatchInfoByInsertingVertexThrough,
   getShapePatchInfoBySplittingLineThrough,
+  reverseLine,
+  concatLines,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
-import { LineShape } from "../line";
+import { getConnections, getLinePath, LineShape } from "../line";
 import { createLineHead } from "../lineHeads";
 import { struct as lineStruct } from "../line";
 
@@ -641,5 +643,80 @@ describe("getPatchByExtrudeLineSegment", () => {
     expect(result2.curves).toEqual([undefined, undefined, { c1: { x: 35, y: 35 }, c2: { x: 85, y: 35 } }]);
     const result3 = getPatchByExtrudeLineSegment(line, 2, translate);
     expect(result3.curves).toEqual([undefined, { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }]);
+  });
+});
+
+describe("concatLines", () => {
+  test("should concatLines two lines", () => {
+    const lineA = createShape<LineShape>(getCommonStruct, "line", {
+      id: "a",
+      p: { x: 0, y: 0 },
+      pConnection: { id: "app", rate: { x: 1, y: 2 } },
+      body: [{ p: { x: 50, y: 50 }, c: { id: "abb", rate: { x: 3, y: 5 } } }],
+      curves: [{ c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }],
+      q: { x: 100, y: 0 },
+      qConnection: { id: "aqq", rate: { x: 10, y: 20 } },
+    });
+    const lineB = createShape<LineShape>(getCommonStruct, "line", {
+      id: "b",
+      p: { x: 0, y: 100 },
+      pConnection: { id: "bpp", rate: { x: 1, y: 2 } },
+      body: [{ p: { x: 50, y: 150 }, c: { id: "abb", rate: { x: 3, y: 5 } } }],
+      curves: [{ c1: { x: 25, y: 125 }, c2: { x: 75, y: 125 } }],
+      q: { x: 100, y: 100 },
+      qConnection: { id: "bqq", rate: { x: 10, y: 20 } },
+    });
+
+    const result0 = concatLines(lineA, lineB, 0);
+    expect(result0.id).toEqual(lineA.id);
+    expect(result0.pConnection).toEqual(lineA.qConnection);
+    expect(result0.qConnection).toEqual(lineB.qConnection);
+
+    const result1 = concatLines(lineA, lineB, 1);
+    expect(result1.id).toEqual(lineA.id);
+    expect(result1.pConnection).toEqual(lineA.qConnection);
+    expect(result1.qConnection).toEqual(lineB.pConnection);
+
+    const result2 = concatLines(lineA, lineB, 2);
+    expect(result2.id).toEqual(lineA.id);
+    expect(result2.pConnection).toEqual(lineA.pConnection);
+    expect(result2.qConnection).toEqual(lineB.qConnection);
+    expect(getLinePath(result2)).toEqual([
+      { x: 0, y: 0 },
+      { x: 50, y: 50 },
+      { x: 100, y: 0 },
+      { x: 0, y: 100 },
+      { x: 50, y: 150 },
+      { x: 100, y: 100 },
+    ]);
+    expect(result2.curves).toEqual([
+      { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } },
+      undefined,
+      { c1: { x: 25, y: 125 }, c2: { x: 75, y: 125 } },
+    ]);
+
+    const result3 = concatLines(lineA, lineB, 3);
+    expect(result3.id).toEqual(lineA.id);
+    expect(result3.pConnection).toEqual(lineA.pConnection);
+    expect(result3.qConnection).toEqual(lineB.pConnection);
+  });
+});
+
+describe("reverseLine", () => {
+  test("should reverse line properties", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      pConnection: { id: "pp", rate: { x: 1, y: 2 } },
+      body: [{ p: { x: 50, y: 0 } }, { p: { x: 50, y: 50 }, c: { id: "bb", rate: { x: 3, y: 5 } } }],
+      curves: [undefined, { c1: { x: 25, y: 25 }, c2: { x: 75, y: 25 } }],
+      q: { x: 100, y: 0 },
+      qConnection: { id: "qq", rate: { x: 10, y: 20 } },
+    });
+    const result = reverseLine(line);
+    expect(getLinePath(line).toReversed()).toEqual(getLinePath(result));
+    expect(result.curves).toEqual([{ c2: { x: 25, y: 25 }, c1: { x: 75, y: 25 } }, undefined]);
+    expect(getConnections(line).toReversed()).toEqual(getConnections(result));
+    expect(line.pHead).toEqual(result.qHead);
+    expect(line.qHead).toEqual(result.pHead);
   });
 });
