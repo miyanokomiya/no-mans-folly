@@ -440,13 +440,16 @@ export function canConcatLines(a: LineShape, b: LineShape): boolean {
  * - 3: Tail of A -> Tail of B
  *
  * This doesn't recalculate line layout.
+ * Returned patch is intended for "src".
  */
-export function concatLines(a: LineShape, b: LineShape, mode: 0 | 1 | 2 | 3): LineShape {
-  const adjustedA = mode === 0 || mode === 1 ? reverseLine(a) : a;
-  const adjustedB = mode === 1 || mode === 3 ? reverseLine(b) : b;
+export function getPatchByConcatLines(src: LineShape, b: LineShape, mode: 0 | 1 | 2 | 3): Partial<LineShape> {
+  const adjustedA = mode === 0 || mode === 1 ? { ...src, ...getPatchByReverseLine(src) } : src;
+  const adjustedB = mode === 1 || mode === 3 ? { ...b, ...getPatchByReverseLine(b) } : b;
 
   const ret = {
-    ...adjustedA,
+    p: adjustedA.p,
+    pConnection: adjustedA.pConnection,
+    pHead: adjustedA.pHead,
     body: [...(adjustedA.body ?? []), { p: adjustedA.q }, { p: adjustedB.p }, ...(adjustedB.body ?? [])],
     curves: [...(adjustedA.curves ?? []), undefined, ...(adjustedB.curves ?? [])],
     q: adjustedB.q,
@@ -456,9 +459,8 @@ export function concatLines(a: LineShape, b: LineShape, mode: 0 | 1 | 2 | 3): Li
   return ret;
 }
 
-export function reverseLine(line: LineShape): LineShape {
+export function getPatchByReverseLine(line: LineShape): Partial<LineShape> {
   return {
-    ...line,
     p: line.q,
     q: line.p,
     pConnection: line.qConnection,
