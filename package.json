@@ -55,9 +55,9 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5",
+    "vite": "^7.0.6",
     "vite-plugin-handlebars": "^2.0.0",
-    "vite-plugin-pwa": "^0.21.2",
+    "vite-plugin-pwa": "^1.0.2",
     "vitest": "^3.2.4",
     "y-indexeddb": "^9.0.12"
   }
