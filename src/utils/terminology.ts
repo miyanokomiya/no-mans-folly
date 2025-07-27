@@ -36,6 +36,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.makepolygon.desc"),
     };
   },
+  get COMBINE_LINES() {
+    return {
+      text: i18n.t("term.combine_lines"),
+      description: i18n.t("term.combine_lines.desc"),
+    };
+  },
   get ATTACH_LINE_VERTEX() {
     return {
       text: i18n.t("term.attach_vertex"),

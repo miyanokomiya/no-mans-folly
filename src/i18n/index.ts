@@ -62,6 +62,8 @@ const en = {
       "linejump.desc": "Jump over background lines. This works only between straight segments.",
       makepolygon: "Make polygon",
       "makepolygon.desc": "Convert a line into a polyline or a polygon. Elbow lines are not available.",
+      combine_lines: "Combine lines",
+      "combine_lines.desc": "Only lines have the same line type, excluding elbow, can be combined.",
       attach_vertex: "Attach vertex",
       "attach_vertex.desc": "Remotely attach the vertex to a shape.",
       attach_vertices: "Attach all vertices",
@@ -109,7 +111,7 @@ const en = {
       "vertex.vnnode.insert": "Insert VNNode",
       "vertex.vnnode.split": "Split by VNNode",
       "segment.refine": "Refine segment",
-      "line.combine": "Combine lines",
+      "line.combine": "[[COMBINE_LINES]]",
     },
 
     floatmenu: {
@@ -184,6 +186,8 @@ const ja: TranslationResource = {
       "linejump.desc": "背後のラインをジャンプします。直線同士でのみジャンプが発生します。",
       makepolygon: "ポリゴン化",
       "makepolygon.desc": "ラインをポリライン、またはポリゴンに変換します。エルボーラインは非対応です。",
+      combine_lines: "ライン結合",
+      "combine_lines.desc": "結合は同じラインタイプ（エルボーを除く）間でのみ可能です。",
       attach_vertex: "頂点接続",
       "attach_vertex.desc": "頂点を遠隔でシェイプに接続します。",
       attach_vertices: "全頂点接続",
@@ -230,7 +234,7 @@ const ja: TranslationResource = {
       "vertex.vnnode.insert": "VNノード挿入",
       "vertex.vnnode.split": "VNノードで分割",
       "segment.refine": "辺精密編集",
-      "line.combine": "ライン結合",
+      "line.combine": "[[COMBINE_LINES]]",
     },
 
     floatmenu: {
