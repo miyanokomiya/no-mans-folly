@@ -1,4 +1,5 @@
 import { newExtrudingLineSegmentState } from "./lines/extrudingLineSegment";
+import { newLineCombineState } from "./lines/lineCombineState";
 import { newLineDrawingState } from "./lines/lineDrawingState";
 import { newLineNormalReadyState } from "./lines/lineNormalReadyState";
 import { newLineReadyState } from "./lines/lineReadyState";
@@ -34,6 +35,7 @@ export const stateGenerators = {
   newLineTangentReadyState,
   newLineNormalReadyState,
   newVertexAttachingState,
+  newLineCombineState,
   newMovingLineSegmentState,
   newExtrudingLineSegmentState,
   newLineSegmentEditingState,

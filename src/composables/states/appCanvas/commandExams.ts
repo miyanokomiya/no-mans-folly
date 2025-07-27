@@ -19,6 +19,7 @@ export const COMMAND_EXAM_SRC = {
   SLIDE_LINE_SEGMENT: { command: "e", title: "Slide segment" },
 
   ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
+  COMBINE_LINES: { command: "Click", title: "Select vertex to combine" },
   VN_INSERT_VERTEX: { command: "Click", title: "Insert vertex" },
   VN_SPLIT_SEGMENTS: { command: "Shift + Click", title: "Split segment" },
   VN_POLYGON_COMPLETE: { command: "Click", title: "Complete" },

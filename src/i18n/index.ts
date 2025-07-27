@@ -109,6 +109,7 @@ const en = {
       "vertex.vnnode.insert": "Insert VNNode",
       "vertex.vnnode.split": "Split by VNNode",
       "segment.refine": "Refine segment",
+      "line.combine": "Combine lines",
     },
 
     floatmenu: {
@@ -229,6 +230,7 @@ const ja: TranslationResource = {
       "vertex.vnnode.insert": "VNノード挿入",
       "vertex.vnnode.split": "VNノードで分割",
       "segment.refine": "辺精密編集",
+      "line.combine": "ライン結合",
     },
 
     floatmenu: {

@@ -218,6 +218,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       icon: iconRefinement,
     };
   },
+  get COMBINE_LINES() {
+    return {
+      label: i18n.t("contextmenu.line.combine"),
+      key: "COMBINE_LINES",
+    };
+  },
   get CREATE_VN_NODE() {
     return {
       label: i18n.t("contextmenu.vertex.vnnode.create"),

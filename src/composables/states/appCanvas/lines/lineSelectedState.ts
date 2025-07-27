@@ -35,6 +35,7 @@ import { isObjectEmpty } from "../../../../utils/commons";
 import { newRotatingState } from "../rotatingState";
 import { newBoundingBox } from "../../../boundingBox";
 import {
+  canConcatLine,
   getShapePatchInfoByInsertingVertexAt,
   getShapePatchInfoBySplittingLineAt,
   patchByFliplineH,
@@ -240,6 +241,11 @@ export const newLineSelectedState = defineIntransientState(() => {
                 ...CONTEXT_MENU_ITEM_SRC.SPLIT_BY_VN_NODE,
                 meta: { index: hitResult.index, p: vertices[hitResult.index] } as SegmentAtMetaForContextMenu,
               });
+            } else if (canConcatLine(lineShape)) {
+              items.push({
+                ...CONTEXT_MENU_ITEM_SRC.COMBINE_LINES,
+                meta: { index: hitResult.index } as VertexMetaForContextMenu,
+              });
             }
 
             items.push({
@@ -398,6 +404,13 @@ export const newLineSelectedState = defineIntransientState(() => {
               });
               ctx.selectShape(vnnode.id);
               return ctx.states.newSelectionHubState;
+            }
+            case CONTEXT_MENU_ITEM_SRC.COMBINE_LINES.key: {
+              return () =>
+                ctx.states.newLineCombineState({
+                  lineShape,
+                  tail: (event.data.meta as VertexMetaForContextMenu).index !== 0,
+                });
             }
             case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTEX.key: {
               return () =>
