@@ -6,6 +6,7 @@ import { sleep } from "../testUtils";
 describe("useLocalStorageAdopter", () => {
   beforeEach(() => {
     cleanup();
+    localStorage.clear();
   });
 
   test("should work like usual state and save state to localStorage periodically", async () => {
