@@ -34,4 +34,25 @@ describe("useLocalStorageAdopter", () => {
     const rendered2 = renderHook(() => useLocalStorageAdopter(option));
     expect(rendered2.result.current[0]).toBe(3);
   });
+
+  test("should generate initial value by the received function", async () => {
+    let count = 0;
+    const option = {
+      key: "a",
+      version: "1",
+      initialValue: () => {
+        count++;
+        return 1;
+      },
+      duration: 10,
+    };
+    const rendered = renderHook(() => useLocalStorageAdopter(option));
+    expect(rendered.result.current[0]).toBe(1);
+    expect(count).toBe(1);
+    act(() => {
+      rendered.result.current[1](2);
+    });
+    expect(rendered.result.current[0]).toBe(2);
+    expect(count).toBe(1);
+  });
 });

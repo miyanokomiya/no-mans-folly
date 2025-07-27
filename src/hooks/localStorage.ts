@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { newDebounce } from "../utils/stateful/debounce";
 
 type StoredData<T> = {
-  version: string;
+  version?: string;
   value: T;
 };
 
@@ -13,18 +13,19 @@ export function useLocalStorageAdopter<T>({
   duration = 1000,
 }: {
   key?: string;
-  version: string;
-  initialValue: T;
+  version?: string;
+  initialValue: T | (() => T);
   duration?: number;
 }) {
   const initialRef = useRef<T>(undefined);
 
   // Restore the value at the first occation without delay.
   if (!initialRef.current) {
+    const value: T = typeof initialValue === "function" ? (initialValue as any)() : initialValue;
     if (key) {
-      initialRef.current = getFromLocalStorage<T>(key, version) ?? initialValue;
+      initialRef.current = getFromLocalStorage<T>(key, version) ?? value;
     } else {
-      initialRef.current = initialValue;
+      initialRef.current = value;
     }
   }
 
@@ -54,7 +55,7 @@ export function useLocalStorageAdopter<T>({
   return [state, setState] as const;
 }
 
-function getFromLocalStorage<T>(key: string, version: string): T | undefined {
+function getFromLocalStorage<T>(key: string, version?: string): T | undefined {
   const str = localStorage.getItem(key);
   if (str) {
     const data = JSON.parse(str) as StoredData<T>;
