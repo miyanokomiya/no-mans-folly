@@ -33,6 +33,18 @@ import { canJoinAlignBox } from "../../alignHandler";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
 
 export const CONTEXT_MENU_ITEM_SRC = {
+  get GRID_ON() {
+    return {
+      label: i18n.t("contextmenu.grid_on"),
+      key: "GRID_ON",
+    };
+  },
+  get GRID_OFF() {
+    return {
+      label: i18n.t("contextmenu.grid_off"),
+      key: "GRID_OFF",
+    };
+  },
   get DELETE_SHAPE() {
     return {
       label: i18n.t("contextmenu.delete"),
@@ -274,6 +286,14 @@ export function handleContextItemEvent(
 ): TransitionValue<AppCanvasStateContext> {
   ctx.setContextMenuList();
   switch (event.data.key) {
+    case CONTEXT_MENU_ITEM_SRC.GRID_ON.key: {
+      ctx.patchUserSetting({ grid: "on" });
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.GRID_OFF.key: {
+      ctx.patchUserSetting({ grid: "off" });
+      return;
+    }
     case CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE.key: {
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
       if (ids.length > 0) {

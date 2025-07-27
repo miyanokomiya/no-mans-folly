@@ -17,6 +17,7 @@ const state: AppCanvasState = {
   onEnd(ctx) {
     ctx.setCommandExams();
     ctx.setCursor();
+    ctx.setContextMenuList();
   },
   handleEvent: (ctx, event) => {
     switch (event.type) {

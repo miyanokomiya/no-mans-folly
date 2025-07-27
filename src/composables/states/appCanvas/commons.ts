@@ -36,7 +36,7 @@ import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnSt
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam } from "../types";
-import { groupShapes, handleContextItemEvent, ungroupShapes } from "./contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, groupShapes, handleContextItemEvent, ungroupShapes } from "./contextMenuItems";
 import { newAutoPanningState } from "../autoPanningState";
 import { newShapeInspectionState } from "./shapeInspectionState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
@@ -693,6 +693,14 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
         "ShapeInspection",
         "PanToShape",
       ]);
+    case "contextmenu": {
+      const isGrid = ctx.getUserSetting().grid === "on";
+      ctx.setContextMenuList({
+        items: [isGrid ? CONTEXT_MENU_ITEM_SRC.GRID_OFF : CONTEXT_MENU_ITEM_SRC.GRID_ON],
+        point: event.data.point,
+      });
+      return;
+    }
     case "contextmenu-item": {
       return handleContextItemEvent(ctx, event);
     }

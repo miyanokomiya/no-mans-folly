@@ -76,6 +76,8 @@ const en = {
     },
 
     contextmenu: {
+      grid_on: "Grid on",
+      grid_off: "Grid off",
       delete: "Delete",
       duplicate: "Duplicate",
       "duplicate.withingroup": "Duplicate within group",
@@ -192,6 +194,8 @@ const ja: TranslationResource = {
     },
 
     contextmenu: {
+      grid_on: "グリッド表示",
+      grid_off: "グリッド非表示",
       delete: "削除",
       duplicate: "複製",
       "duplicate.withingroup": "グループ内複製",
