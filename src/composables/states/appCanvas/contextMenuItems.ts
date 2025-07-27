@@ -45,6 +45,18 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "GRID_OFF",
     };
   },
+  get PREVIEW_ON() {
+    return {
+      label: i18n.t("contextmenu.preview_on"),
+      key: "PREVIEW_ON",
+    };
+  },
+  get PREVIEW_OFF() {
+    return {
+      label: i18n.t("contextmenu.preview_off"),
+      key: "PREVIEW_OFF",
+    };
+  },
   get DELETE_SHAPE() {
     return {
       label: i18n.t("contextmenu.delete"),
@@ -292,6 +304,14 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.GRID_OFF.key: {
       ctx.patchUserSetting({ grid: "off" });
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.PREVIEW_ON.key: {
+      ctx.patchUserSetting({ preview: "on" });
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.PREVIEW_OFF.key: {
+      ctx.patchUserSetting({ preview: "off" });
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.DELETE_SHAPE.key: {

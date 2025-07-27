@@ -694,9 +694,12 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
         "PanToShape",
       ]);
     case "contextmenu": {
-      const isGrid = ctx.getUserSetting().grid === "on";
+      const userSetting = ctx.getUserSetting();
       ctx.setContextMenuList({
-        items: [isGrid ? CONTEXT_MENU_ITEM_SRC.GRID_OFF : CONTEXT_MENU_ITEM_SRC.GRID_ON],
+        items: [
+          userSetting.grid === "on" ? CONTEXT_MENU_ITEM_SRC.GRID_OFF : CONTEXT_MENU_ITEM_SRC.GRID_ON,
+          userSetting.preview === "on" ? CONTEXT_MENU_ITEM_SRC.PREVIEW_OFF : CONTEXT_MENU_ITEM_SRC.PREVIEW_ON,
+        ],
         point: event.data.point,
       });
       return;
