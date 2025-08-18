@@ -5,19 +5,29 @@ import { CanvasCTX } from "../utils/types";
 // Ref: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/canvas#maximum_canvas_size
 const MAX_SIZE = 10000;
 
+export function avoidEmptyRange(range: IRectangle): IRectangle {
+  const isEmpty = range.width <= 0 || range.height <= 0;
+  const x = isEmpty ? 0 : range.x;
+  const y = isEmpty ? 0 : range.y;
+  const width = isEmpty ? 10 : range.width;
+  const height = isEmpty ? 10 : range.height;
+  return { x, y, width, height };
+}
+
 interface Option {
   render: (renderCtx: CanvasCTX) => void;
   range: IRectangle;
 }
 
 export function newImageBuilder({ render, range }: Option) {
+  const { x, y, width, height } = avoidEmptyRange(range);
   const canvas = createCanvas();
-  const rate = Math.min(1, MAX_SIZE / Math.max(range.width, range.height));
-  canvas.width = Math.ceil(range.width * rate);
-  canvas.height = Math.ceil(range.height * rate);
+  const rate = Math.min(1, MAX_SIZE / Math.max(width, height));
+  canvas.width = Math.ceil(width * rate);
+  canvas.height = Math.ceil(height * rate);
   const renderCtx = canvas.getContext("2d")!;
   renderCtx.scale(rate, rate);
-  renderCtx.translate(-Math.floor(range.x), -Math.floor(range.y));
+  renderCtx.translate(-Math.floor(x), -Math.floor(y));
   render(renderCtx);
 
   async function toBlob(): Promise<Blob> {
@@ -51,18 +61,19 @@ interface SVGOption {
 }
 
 export function newSVGImageBuilder({ render, range }: SVGOption) {
+  const { x, y, width, height } = avoidEmptyRange(range);
   const canvas = createCanvas();
-  const rate = Math.min(1, MAX_SIZE / Math.max(range.width, range.height));
-  canvas.width = Math.ceil(range.width * rate);
-  canvas.height = Math.ceil(range.height * rate);
+  const rate = Math.min(1, MAX_SIZE / Math.max(width, height));
+  canvas.width = Math.ceil(width * rate);
+  canvas.height = Math.ceil(height * rate);
   const renderCtx = canvas.getContext("2d")!;
 
   let elm: SVGSVGElement;
   async function procRender() {
     elm = await render(renderCtx);
-    elm.setAttribute("viewBox", `${range.x} ${range.y} ${range.width} ${range.height}`);
-    elm.setAttribute("width", `${range.width}`);
-    elm.setAttribute("height", `${range.height}`);
+    elm.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
+    elm.setAttribute("width", `${width}`);
+    elm.setAttribute("height", `${height}`);
   }
 
   async function toBlob() {
