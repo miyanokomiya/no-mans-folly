@@ -52,7 +52,13 @@ export function newRawVectorNetwork(option: VectorNetworkOption) {
 }
 export type RawVectorNetwork = ReturnType<typeof newRawVectorNetwork>;
 
+export const MAX_VN_EDGE_COUNT_FOR_CLOSED_AREA = 100;
+
 export function findVnClosedLoops(network: RawVectorNetwork): RawVnLoop[] {
+  if (network.edges.size > MAX_VN_EDGE_COUNT_FOR_CLOSED_AREA) {
+    throw new Error("states.vn_create_polygon.too_many_edges");
+  }
+
   const exhausted = new Set<string>();
   const visited = new Set<string>();
   const loops: RawVnLoop[] = [];
