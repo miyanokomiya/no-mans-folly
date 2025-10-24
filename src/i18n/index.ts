@@ -121,6 +121,7 @@ const en = {
     states: {
       vn_create_polygon: {
         no_available_area: "No available area in the viewport.",
+        too_many_edges: "Edge count limit exceeded in the viewport ({{edgeCount}} > {{maxCount}}).",
       },
     },
   },
@@ -244,6 +245,7 @@ const ja: TranslationResource = {
     states: {
       vn_create_polygon: {
         no_available_area: "ビューポート内に利用可能なエリアがありません。",
+        too_many_edges: "画面内にラインが多すぎます。 ({{edgeCount}} > {{maxCount}}).",
       },
     },
   },

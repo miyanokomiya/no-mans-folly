@@ -9,6 +9,7 @@ import {
   findLargestLoopCoveringPoints,
   findSmallestLoopCoveringPoints,
   findVnClosedLoops,
+  MAX_VN_EDGE_COUNT_FOR_CLOSED_AREA,
   RawVnLoop,
 } from "../../../../utils/vectorNetwork";
 import { createShape } from "../../../../shapes";
@@ -26,6 +27,7 @@ export function newVnCreatePolygonState(): AppCanvasState {
   let rawVnLoopPreview: RawVnLoop | undefined;
   let rawVnLoopLargestCandidate: RawVnLoop | undefined;
   let targetPoints: IVec2[] = [];
+  let errorMessage: string | undefined;
   const canvasBank = newCanvasBank();
 
   const rawVnLoopsCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
@@ -38,8 +40,37 @@ export function newVnCreatePolygonState(): AppCanvasState {
       shapeComposite: ctx.getShapeComposite(),
       ids: shapes.map((s) => s.id),
     });
-    return findVnClosedLoops(vn);
+
+    try {
+      const ret = findVnClosedLoops(vn);
+      errorMessage = ret.length === 0 ? i18n.t("states.vn_create_polygon.no_available_area") : undefined;
+      return ret;
+    } catch (e) {
+      errorMessage = i18n.t((e as Error).message, {
+        edgeCount: vn.edges.size,
+        maxCount: MAX_VN_EDGE_COUNT_FOR_CLOSED_AREA,
+      });
+      return [];
+    }
   });
+
+  function handleErrorMessage(ctx: AppCanvasStateContext) {
+    rawVnLoopsCache.getValue(ctx);
+    if (errorMessage) {
+      ctx.showToastMessage({
+        text: errorMessage,
+        type: "warn",
+        timeout: 5000,
+        key: "vn_create_polygon_failed",
+      });
+    } else {
+      ctx.showToastMessage({
+        text: "",
+        type: "warn",
+        key: "vn_create_polygon_failed",
+      });
+    }
+  }
 
   // Multiple area mode: Keep current candidate and continue.
   function procMultipleArea(ctx: AppCanvasStateContext, point: IVec2, selectOnly = false) {
@@ -79,13 +110,7 @@ export function newVnCreatePolygonState(): AppCanvasState {
         COMMAND_EXAM_SRC.VN_POLYGON_SELECT_AREAS,
         COMMAND_EXAM_SRC.CANCEL,
       ]);
-      if (rawVnLoopsCache.getValue(ctx).length === 0) {
-        ctx.showToastMessage({
-          text: i18n.t("states.vn_create_polygon.no_available_area"),
-          type: "warn",
-          timeout: 5000,
-        });
-      }
+      handleErrorMessage(ctx);
     },
     onResume: () => {
       rawVnLoopsCache.update();
@@ -98,6 +123,8 @@ export function newVnCreatePolygonState(): AppCanvasState {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
+              handleErrorMessage(ctx);
+
               if (event.data.options.shift) {
                 procMultipleArea(ctx, event.data.point);
                 return;
@@ -134,6 +161,8 @@ export function newVnCreatePolygonState(): AppCanvasState {
               return ctx.states.newSelectionHubState;
           }
         case "pointerhover": {
+          handleErrorMessage(ctx);
+
           if (event.data.ctrl) {
             procMultipleArea(ctx, event.data.current, true);
           }
