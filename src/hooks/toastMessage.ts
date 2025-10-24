@@ -12,6 +12,15 @@ export function useToastMessages(option?: Option) {
 
   const pushToastMessage = useCallback(
     (val: ToastMessage) => {
+      if (!val.text) {
+        if (val.key) {
+          setToastMessages((current) => {
+            return current.filter((c) => c.key !== val.key);
+          });
+        }
+        return;
+      }
+
       setToastMessages((current) => {
         return [...current.filter((c) => c.text !== val.text && (!c.key || c.key !== val.key)), val];
       });

@@ -34,10 +34,10 @@ export type ContextMenuSeparatorItem = { separator: true };
 export type CommandExam = { command?: string; title: string };
 
 export type ToastMessage = {
-  text: string;
+  text: string; // When set empty, all messages having the specified key will be removed.
   type: "info" | "warn" | "error";
   timeout?: number;
-  key?: string; // When defined, items having the same key should be the same regardless of their text.
+  key?: string; // When defined, items having the same key are treated as the same one regardless of their text.
 };
 
 export type LinkInfo = {
