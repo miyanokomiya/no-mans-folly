@@ -97,7 +97,7 @@ export function newFileAccess(): FileAccess {
     if (!handle) return;
 
     const update = encodeStateAsUpdateWithGC(doc);
-    await writeFileBySwap(handle, name, update);
+    await writeFileBySwap(handle, name, update as unknown as ArrayBuffer);
 
     return true;
   }

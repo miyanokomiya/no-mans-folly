@@ -2,18 +2,18 @@
   "name": "no-mans-folly",
   "version": "1.0.0",
   "type": "module",
-  "packageManager": "yarn@4.0.2",
+  "packageManager": "pnpm@10.19.0",
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "bench": "vitest bench",
-    "type": "yarn tsc --noEmit",
+    "type": "pnpm tsc --noEmit",
     "lint": "eslint --ext ts,tsx ./*.ts ./src",
     "lint-json": "prettier -c ./*.json",
     "lint-style": "prettier -c ./src/**/*.css ./src/**/*.html",
-    "lint:fix": "yarn lint --fix && yarn lint-json -w && yarn lint-style -w"
+    "lint:fix": "pnpm lint --fix && pnpm lint-json -w && pnpm lint-style -w"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",

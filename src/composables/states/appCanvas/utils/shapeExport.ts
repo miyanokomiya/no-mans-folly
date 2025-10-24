@@ -17,7 +17,7 @@ async function saveZipAsFile(name: string, items: ZipItem[]) {
     items.map(([, ext, data], i) => ({ path: `${names[i]}.${ext}`, data })),
     true,
   );
-  const blob = new Blob([zip], { type: "application/x-zip" });
+  const blob = new Blob([zip as unknown as ArrayBuffer], { type: "application/x-zip" });
   const url = URL.createObjectURL(blob);
   saveFileInWeb(url, name);
   URL.revokeObjectURL(url);
