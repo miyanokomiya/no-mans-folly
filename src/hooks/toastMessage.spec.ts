@@ -56,6 +56,17 @@ describe("useToastMessages", () => {
     ]);
   });
 
+  test("should remove items having the same key without text", () => {
+    const rendered = renderHook(() => useToastMessages());
+    act(() => {
+      rendered.result.current.pushToastMessage({ text: "a", type: "error", key: "aaa" });
+      rendered.result.current.pushToastMessage({ text: "b", type: "error" });
+      rendered.result.current.pushToastMessage({ text: "", type: "error", key: "aaa" });
+      rendered.result.current.pushToastMessage({ text: "", type: "error" });
+    });
+    expect(rendered.result.current.toastMessages).toEqual([{ text: "b", type: "error" }]);
+  });
+
   test("should close automatically when an item type is info or has timeout value", () => {
     const rendered = renderHook(() => useToastMessages({ timeout: 5 }));
     act(() => {
