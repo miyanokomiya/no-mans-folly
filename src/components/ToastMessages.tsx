@@ -9,7 +9,9 @@ interface Props {
 
 export const ToastMessages: React.FC<Props> = ({ messages, closeToastMessage }) => {
   const messageElm = useMemo(() => {
-    return messages.map((m) => <ToastItem key={m.text} {...m} closeToastMessage={closeToastMessage} />);
+    return messages.map((m) => (
+      <ToastItem key={m.text} text={m.text} type={m.type} timeout={m.timeout} closeToastMessage={closeToastMessage} />
+    ));
   }, [messages, closeToastMessage]);
   return (
     <div className="z-50 fixed top-2 left-1/2" style={{ transform: "translateX(-50%)" }}>

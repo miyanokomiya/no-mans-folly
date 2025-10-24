@@ -13,7 +13,7 @@ export function useToastMessages(option?: Option) {
   const pushToastMessage = useCallback(
     (val: ToastMessage) => {
       setToastMessages((current) => {
-        return [...current.filter((c) => c.text !== val.text), val];
+        return [...current.filter((c) => c.text !== val.text && (!c.key || c.key !== val.key)), val];
       });
 
       if (val.type === "info" || val.timeout) {

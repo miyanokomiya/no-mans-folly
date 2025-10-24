@@ -37,6 +37,7 @@ export type ToastMessage = {
   text: string;
   type: "info" | "warn" | "error";
   timeout?: number;
+  key?: string; // When defined, items having the same key should be the same regardless of their text.
 };
 
 export type LinkInfo = {
