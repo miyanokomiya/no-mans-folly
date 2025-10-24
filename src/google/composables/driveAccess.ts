@@ -164,7 +164,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
     const update = encodeStateAsUpdateWithGC(doc);
     const name = id;
-    const data = new Blob([update]);
+    const data = new Blob([update as unknown as ArrayBuffer]);
 
     const metadata = {
       name,
