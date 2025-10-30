@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.19.0",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build --emptyOutDir",
     "preview": "vite preview",
     "test": "vitest",
     "bench": "vitest bench",
