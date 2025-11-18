@@ -36,7 +36,7 @@ const USER_SETTING_KEY = "userSetting";
 function App() {
   const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
   const { indexedDBMode } = newFeatureFlags();
-  const canPersist = fileAccess.hasHnadle() || indexedDBMode;
+  const canPersist = fileAccess.hasHandle() || indexedDBMode;
 
   const {
     diagramStore,

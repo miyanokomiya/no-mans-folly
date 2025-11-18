@@ -9,7 +9,7 @@ export function newFileAccess(): FileAccess {
   let handle: FileSystemDirectoryHandle | undefined;
   let assetHandle: FileSystemDirectoryHandle | undefined;
 
-  function hasHnadle(): boolean {
+  function hasHandle(): boolean {
     return !!handle;
   }
 
@@ -91,15 +91,17 @@ export function newFileAccess(): FileAccess {
   }
 
   async function overwriteDoc(name: string, doc: Y.Doc): Promise<true | undefined> {
-    if (!handle) {
-      await openDirectory();
-    }
-    if (!handle) return;
+    return navigator.locks.request(`save-doc-${name}`, async () => {
+      if (!handle) {
+        await openDirectory();
+      }
+      if (!handle) return;
 
-    const update = encodeStateAsUpdateWithGC(doc);
-    await writeFileBySwap(handle, name, update as unknown as ArrayBuffer);
+      const update = encodeStateAsUpdateWithGC(doc);
+      await writeFileBySwap(handle, name, update as unknown as ArrayBuffer);
 
-    return true;
+      return true;
+    });
   }
 
   async function overwriteDiagramDoc(doc: Y.Doc): Promise<true | undefined> {
@@ -127,7 +129,9 @@ export function newFileAccess(): FileAccess {
     if (!assetHandle) return;
 
     const sheetFileHnadle = await assetHandle.getFileHandle(assetId, { create: true });
-    await writeFile(sheetFileHnadle, blob);
+    return navigator.locks.request(`save-asset-${assetId}`, async () => {
+      await writeFile(sheetFileHnadle, blob);
+    });
   }
 
   async function loadAsset(assetId: string): Promise<File | undefined> {
@@ -146,7 +150,7 @@ export function newFileAccess(): FileAccess {
   }
 
   return {
-    hasHnadle,
+    hasHandle,
     openDirectory,
     openDiagram,
     reopenDiagram,
