@@ -7,17 +7,17 @@ type Option = {
 };
 
 export function newDiagramStore(option: Option) {
-  const signleEntityStore = newSingleEntityStore<Diagram>({
+  const singleEntityStore = newSingleEntityStore<Diagram>({
     name: "diagram_store",
     ydoc: option.ydoc,
   });
 
   // Set ID to meta here for backward compatibility
   option.ydoc.meta ??= {};
-  option.ydoc.meta.diagramId = signleEntityStore.getEntity().id;
+  option.ydoc.meta.diagramId = singleEntityStore.getEntity().id;
 
   return {
-    ...signleEntityStore,
+    ...singleEntityStore,
   };
 }
 export type DiagramStore = ReturnType<typeof newDiagramStore>;

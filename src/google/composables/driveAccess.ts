@@ -102,13 +102,13 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function getAssetFileNameList(): Promise<string[] | undefined> {
-    if (!hasHnadle()) {
+    if (!hasHandle()) {
       await openDirectory();
     }
     return assetFiles?.map((f) => f.name);
   }
 
-  function hasHnadle(): boolean {
+  function hasHandle(): boolean {
     return !!files;
   }
 
@@ -118,7 +118,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function openDoc(id: string, doc: Y.Doc): Promise<true | undefined> {
-    if (!hasHnadle()) return;
+    if (!hasHandle()) return;
 
     const file = files?.find((f) => f.name === id);
     if (!file) return true;
@@ -134,7 +134,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
   async function openDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {
     await openDirectory();
-    if (!hasHnadle()) return;
+    if (!hasHandle()) return;
 
     const file = files?.find((f) => f.name === DIAGRAM_FILE_NAME);
     if (!file) {
@@ -145,7 +145,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function reopenDiagram(diagramDoc: Y.Doc): Promise<true | undefined> {
-    if (!hasHnadle()) return;
+    if (!hasHandle()) return;
 
     const file = files?.find((f) => f.name === DIAGRAM_FILE_NAME);
     if (!file) {
@@ -161,7 +161,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
   async function overwriteDoc(id: string, doc: Y.Doc): Promise<true | undefined> {
     return navigator.locks.request(`save-doc-${id}`, async () => {
-      if (!hasHnadle()) return;
+      if (!hasHandle()) return;
 
       const update = encodeStateAsUpdateWithGC(doc);
       const name = id;
@@ -203,7 +203,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function mergeDoc(name: string, doc: Y.Doc): Promise<void> {
-    if (!hasHnadle()) throw new Error(`No file handler: ${name}`);
+    if (!hasHandle()) throw new Error(`No file handler: ${name}`);
 
     const res0 = await openDoc(name, doc);
     if (!res0) throw new Error(`Failed to open file: ${name}`);
@@ -214,7 +214,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
 
   async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {
     return navigator.locks.request(`save-asset-${assetId}`, async () => {
-      if (!hasHnadle()) return;
+      if (!hasHandle()) return;
 
       const assetFolder = files?.find((f) => f.name === ASSET_DIRECTORY_NAME);
       if (!assetFolder) return;
@@ -254,7 +254,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   async function loadAsset(assetId: string): Promise<File | undefined> {
-    if (!hasHnadle()) return;
+    if (!hasHandle()) return;
 
     const file = assetFiles?.find((f) => f.name === assetId);
     if (!file) return;
@@ -289,7 +289,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   return {
-    hasHnadle,
+    hasHandle,
     openDirectory,
     openDiagram,
     reopenDiagram,

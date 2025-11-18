@@ -92,13 +92,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     async (sheetId: string) => {
       const nextSheetDoc = createSheetDoc(sheetId);
 
-      if (fileAccess.hasHnadle()) {
+      if (fileAccess.hasHandle()) {
         setReady(false);
         try {
           await fileAccess.openSheet(sheetId, nextSheetDoc);
           setSyncStatus("ok");
           await clearIndexeddbPersistence(sheetId);
-          setCanSyncWorkspace(fileAccess.hasHnadle());
+          setCanSyncWorkspace(fileAccess.hasHandle());
         } catch (e) {
           handleSyncError(e);
           console.error("Failed to load local sheet: ", sheetId, e);
@@ -135,7 +135,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       documentStore.addDoc(id, doc);
     });
 
-    if (fileAccess.hasHnadle()) {
+    if (fileAccess.hasHandle()) {
       try {
         await fileAccess.overwriteSheetDoc(sheetId, nextSheetDoc);
       } catch (e) {
@@ -180,7 +180,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     try {
       const result = await fileAccess.openDiagram(nextDiagramDoc);
       setSyncStatus("ok");
-      setCanSyncWorkspace(fileAccess.hasHnadle());
+      setCanSyncWorkspace(fileAccess.hasHandle());
       if (!result) {
         setReady(true);
         return false;
@@ -224,7 +224,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const clearDiagram = useCallback(async () => {
     await fileAccess.disconnect();
-    setCanSyncWorkspace(fileAccess.hasHnadle());
+    setCanSyncWorkspace(fileAccess.hasHandle());
     setReady(false);
     await clearIndexeddbPersistenceAll();
 
@@ -294,7 +294,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       console.error("Failed to sync diagram", e);
     }
 
-    setCanSyncWorkspace(fileAccess.hasHnadle());
+    setCanSyncWorkspace(fileAccess.hasHandle());
   }, [fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores, assetAPI]);
 
   const undoManager = useMemo(() => {
@@ -534,7 +534,7 @@ function getSheetId(sheetDoc: Y.Doc): string {
   return sheetDoc.meta.sheetId;
 }
 
-// When doc update is originalted by external sync process, it shouldn't trigger persistence.
+// When doc update is originated by external sync process, it shouldn't trigger persistence.
 function isExternalSyncOrigin(origin: string): boolean {
   return origin === BC_UPDATE_ORIGIN;
 }

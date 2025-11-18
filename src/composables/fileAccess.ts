@@ -9,7 +9,7 @@ export function newFileAccess(): FileAccess {
   let handle: FileSystemDirectoryHandle | undefined;
   let assetHandle: FileSystemDirectoryHandle | undefined;
 
-  function hasHnadle(): boolean {
+  function hasHandle(): boolean {
     return !!handle;
   }
 
@@ -150,7 +150,7 @@ export function newFileAccess(): FileAccess {
   }
 
   return {
-    hasHnadle,
+    hasHandle,
     openDirectory,
     openDiagram,
     reopenDiagram,
