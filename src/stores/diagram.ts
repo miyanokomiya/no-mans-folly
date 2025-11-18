@@ -12,6 +12,10 @@ export function newDiagramStore(option: Option) {
     ydoc: option.ydoc,
   });
 
+  // Set ID to meta here for backward compatibility
+  option.ydoc.meta ??= {};
+  option.ydoc.meta.diagramId = signleEntityStore.getEntity().id;
+
   return {
     ...signleEntityStore,
   };

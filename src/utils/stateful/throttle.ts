@@ -161,7 +161,7 @@ export function newLeveledThrottle<T extends (...args: any[]) => void>(fn: T, in
     wait = undefined;
   };
 
-  throttle.clear = function (): boolean {
+  throttle.clear = function (keepLevel = false): boolean {
     if (timer) {
       clearTimeout(timer);
     }
@@ -170,7 +170,9 @@ export function newLeveledThrottle<T extends (...args: any[]) => void>(fn: T, in
     }
     timer = 0;
     cooldowntimer = 0;
-    level = 0;
+    if (!keepLevel) {
+      level = 0;
+    }
 
     if (wait === "wait") {
       wait = undefined;
