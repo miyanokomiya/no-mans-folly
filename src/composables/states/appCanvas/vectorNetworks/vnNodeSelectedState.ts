@@ -26,7 +26,7 @@ function getState(): AppCanvasState {
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
     const style = ctx.getStyleScheme();
     const scale = ctx.getScale();
-    const latestShape = ctx.getShapeComposite().mergedShapeMap[shape.id] as VnNodeShape;
+    const latestShape = ctx.getShapeComposite().mergedShapeMap[shape.id] as VnNodeShape | undefined;
     if (!latestShape) return;
 
     applyStrokeStyle(renderCtx, {
