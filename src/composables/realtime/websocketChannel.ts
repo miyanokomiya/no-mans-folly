@@ -1,7 +1,7 @@
 // import * as Y from "yjs";
 import { RealtimeHandler, RTUpdateData } from "./core";
 
-const WS_ENDPOINT = "wss://example.com/ws";
+const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
 
 let client: WebSocket | undefined;
