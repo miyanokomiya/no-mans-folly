@@ -21,6 +21,7 @@ export function getSheetIdFromThumbnailFileName(fileName: string): string | unde
 }
 
 export interface FileAccess {
+  name: string;
   hasHandle: () => boolean;
   openDirectory: () => Promise<true | undefined>;
   openDiagram: (diagramDoc: Y.Doc) => Promise<true | undefined>;

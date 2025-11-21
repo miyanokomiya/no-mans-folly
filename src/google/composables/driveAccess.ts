@@ -289,6 +289,7 @@ export function newDriveAccess({ folderId, token }: Props): FileAccess {
   }
 
   return {
+    name: "goggle-drive",
     hasHandle,
     openDirectory,
     openDiagram,
