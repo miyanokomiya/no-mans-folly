@@ -150,6 +150,7 @@ export function newFileAccess(): FileAccess {
   }
 
   return {
+    name: "file-system",
     hasHandle,
     openDirectory,
     openDiagram,

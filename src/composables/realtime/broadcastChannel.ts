@@ -1,26 +1,23 @@
 import * as Y from "yjs";
+import { RealtimeHandler, RTUpdateData } from "./core";
 
 const BC_PREFIX = "no-mans-folly-bc";
 export const BC_UPDATE_ORIGIN = "bc-update";
 
-type UpdateData = {
-  type: "diagram" | "sheet" | "diagram-saved" | "sheet-saved";
-  id: string;
-  update?: Uint8Array;
-};
-
-const bc = new BroadcastChannel(BC_PREFIX);
-
-export function postBCMessage(data: UpdateData) {
-  bc.postMessage(data);
+let client: BroadcastChannel | undefined;
+function getClient(): BroadcastChannel {
+  if (!client) {
+    client = new BroadcastChannel(BC_PREFIX);
+  }
+  return client;
 }
 
-export function newBroadcastChannel(props: {
-  diagramDoc: Y.Doc;
-  sheetDoc: Y.Doc;
-  skipDiagramSave: () => void;
-  skipSheetSave: () => void;
-}) {
+export function postBCMessage(data: RTUpdateData) {
+  // Needless to initialize the client unless listening
+  client?.postMessage(data);
+}
+
+export const newBroadcastChannel: RealtimeHandler = (props) => {
   let closed = false;
 
   function onDiagramUpdate(update: Uint8Array, origin: string) {
@@ -30,7 +27,7 @@ export function newBroadcastChannel(props: {
       type: "diagram",
       id: props.diagramDoc.meta.diagramId,
       update,
-    } as UpdateData);
+    } as RTUpdateData);
   }
   function onSheetUpdate(update: Uint8Array, origin: string) {
     if (closed || origin === BC_UPDATE_ORIGIN) return;
@@ -39,7 +36,7 @@ export function newBroadcastChannel(props: {
       type: "sheet",
       id: props.sheetDoc.meta.sheetId,
       update,
-    } as UpdateData);
+    } as RTUpdateData);
   }
   props.diagramDoc.on("update", onDiagramUpdate);
   props.sheetDoc.on("update", onSheetUpdate);
@@ -47,7 +44,7 @@ export function newBroadcastChannel(props: {
   function onMessage(e: MessageEvent) {
     if (closed) return;
 
-    const data = e.data as UpdateData;
+    const data = e.data as RTUpdateData;
     switch (data.type) {
       case "diagram": {
         if (data.update && data.id === props.diagramDoc.meta.diagramId) {
@@ -75,7 +72,7 @@ export function newBroadcastChannel(props: {
       }
     }
   }
-  bc.addEventListener("message", onMessage);
+  getClient().addEventListener("message", onMessage);
 
   return {
     close() {
@@ -83,8 +80,8 @@ export function newBroadcastChannel(props: {
 
       props.diagramDoc.off("update", onDiagramUpdate);
       props.sheetDoc.off("update", onSheetUpdate);
-      bc.removeEventListener("message", onMessage);
+      getClient().removeEventListener("message", onMessage);
       closed = true;
     },
   };
-}
+};

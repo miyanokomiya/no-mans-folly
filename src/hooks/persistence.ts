@@ -13,7 +13,7 @@ import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
 import { generateKeyBetween } from "../utils/findex";
 import { isMemoryAssetAPI, newFileAssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
-import { BC_UPDATE_ORIGIN, newBroadcastChannel, postBCMessage } from "../composables/broadcastChannel";
+import { newWSChannel, postWSMessage, WS_UPDATE_ORIGIN } from "../composables/realtime/websocketChannel";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
@@ -328,7 +328,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
       setSavePending((val) => ({ ...val, diagram: pending }));
       if (!pending) {
-        postBCMessage({
+        postWSMessage({
           type: "diagram-saved",
           id: diagramDoc.meta.diagramId,
         });
@@ -344,7 +344,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     if (!canSyncWorkspace) return;
 
     const fn = (_: unknown, origin: string) => {
-      if (isExternalSyncOrigin(origin)) return;
+      if (isExternalSyncOrigin(origin) && fileAccess.name !== "file-system") return;
       saveDiagramUpdateThrottle();
     };
 
@@ -353,7 +353,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       diagramDoc.off("update", fn);
       saveDiagramUpdateThrottle.flush();
     };
-  }, [canSyncWorkspace, saveDiagramUpdateThrottle, diagramDoc]);
+  }, [canSyncWorkspace, saveDiagramUpdateThrottle, diagramDoc, fileAccess.name]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
     return newLeveledThrottle(async (sheetId: string) => {
@@ -376,7 +376,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
       setSavePending((val) => ({ ...val, sheet: pending }));
       if (!pending) {
-        postBCMessage({
+        postWSMessage({
           type: "sheet-saved",
           id: getSheetId(sheetDoc),
         });
@@ -392,7 +392,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     if (!canSyncWorkspace) return;
 
     const fn = (_: unknown, origin: string) => {
-      if (isExternalSyncOrigin(origin)) return;
+      if (isExternalSyncOrigin(origin) && fileAccess.name !== "file-system") return;
       saveSheetUpdateThrottle(getSheetId(sheetDoc));
     };
 
@@ -401,7 +401,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       sheetDoc.off("update", fn);
       saveSheetUpdateThrottle.flush();
     };
-  }, [canSyncWorkspace, saveSheetUpdateThrottle, sheetDoc]);
+  }, [canSyncWorkspace, saveSheetUpdateThrottle, sheetDoc, fileAccess.name]);
 
   useEffect(() => {
     return () => {
@@ -449,7 +449,8 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [sheetStores]);
 
   useEffect(() => {
-    const bc = newBroadcastChannel({
+    const bc = newWSChannel({
+      roomId: "test",
       diagramDoc,
       sheetDoc,
       skipDiagramSave: () => saveDiagramUpdateThrottle.clear(true),
@@ -536,5 +537,5 @@ function getSheetId(sheetDoc: Y.Doc): string {
 
 // When doc update is originated by external sync process, it shouldn't trigger persistence.
 function isExternalSyncOrigin(origin: string): boolean {
-  return origin === BC_UPDATE_ORIGIN;
+  return origin === WS_UPDATE_ORIGIN;
 }
