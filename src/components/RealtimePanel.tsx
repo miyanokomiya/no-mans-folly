@@ -4,8 +4,10 @@ import { closeWSClient, initWSClient } from "../composables/realtime/websocketCh
 import { InlineField } from "./atoms/InlineField";
 import { FormButton } from "./atoms/buttons/FormButton";
 import { GetAppStateContext } from "../contexts/AppContext";
+import { useTranslation } from "react-i18next";
 
 export const RealtimePanel: React.FC = () => {
+  const { t } = useTranslation();
   const [roomIdDraft, setRoomIdDraft] = useState("");
   const [status, setStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
 
@@ -42,23 +44,38 @@ export const RealtimePanel: React.FC = () => {
     setStatus("disconnected");
   }, []);
 
+  function getStatusLabel() {
+    switch (status) {
+      case "connected":
+        return t("realtime.connected");
+      case "connecting":
+        return t("realtime.connecting");
+      default:
+        return t("realtime.disconnected");
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-col gap-1">
-        {status ? (
-          <form onSubmit={handleConnect} className="flex flex-col gap-1">
-            <InlineField label="Room ID">
-              <TextInput value={roomIdDraft} onChange={setRoomIdDraft} placeholder="ROOM_ID" />
-            </InlineField>
+        <InlineField label="Status">
+          <span>{getStatusLabel()}</span>
+        </InlineField>
+        <form onSubmit={handleConnect} className="flex flex-col gap-1">
+          <InlineField label="Room ID" inert={status !== "disconnected"}>
+            <TextInput value={roomIdDraft} onChange={setRoomIdDraft} placeholder="ROOM_ID" />
+          </InlineField>
+          {status !== "connected" ? (
             <FormButton type="submit" variant="submit" disabled={!roomIdDraft || status !== "disconnected"}>
-              {status === "connecting" ? "Connecting" : "Connect"}
+              {t("realtime.connect")}
             </FormButton>
-          </form>
-        ) : (
-          <FormButton variant="delete" disabled={status !== "disconnected"} onClick={handleDisconnect}>
-            Disconnect
+          ) : undefined}
+        </form>
+        {status === "connected" ? (
+          <FormButton variant="delete" onClick={handleDisconnect}>
+            {t("realtime.disconnect")}
           </FormButton>
-        )}
+        ) : undefined}
       </div>
     </div>
   );

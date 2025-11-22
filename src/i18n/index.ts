@@ -41,6 +41,14 @@ const en = {
       },
     },
 
+    realtime: {
+      disconnected: "Disconnected",
+      connecting: "Connecting",
+      connected: "Connected",
+      disconnect: "Disconnect",
+      connect: "Connect",
+    },
+
     exconnection: {
       revoke: "Revoke connections",
       "revoke.description": "You can revoke external connections via below button.",
@@ -164,6 +172,14 @@ const ja: TranslationResource = {
       imagetypes: {
         print: "印刷",
       },
+    },
+
+    realtime: {
+      disconnected: "未接続",
+      connecting: "接続中",
+      connected: "接続済",
+      disconnect: "切断",
+      connect: "接続",
     },
 
     exconnection: {
