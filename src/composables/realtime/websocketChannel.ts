@@ -10,7 +10,7 @@ let client: WebSocket | undefined;
 export const websocketChannelCallback = newCallback<boolean>();
 const messageCallback = newCallback<MessageEvent>();
 
-export function iswebsocketChannelActive(): boolean {
+export function isWebsocketChannelActive(): boolean {
   return !!client;
 }
 
