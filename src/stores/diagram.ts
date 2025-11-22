@@ -19,6 +19,12 @@ export function newDiagramStore(option: Option) {
   return {
     ydoc: option.ydoc,
     ...singleEntityStore,
+    patchEntity(attrs: Partial<Diagram>) {
+      if (attrs.id) {
+        option.ydoc.meta.diagramId = attrs.id;
+      }
+      return singleEntityStore.patchEntity(attrs);
+    },
   };
 }
 export type DiagramStore = ReturnType<typeof newDiagramStore>;

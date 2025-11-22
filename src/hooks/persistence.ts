@@ -190,12 +190,17 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       }
 
       const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-      if (!diagramUpdate) {
+      const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+      await provider?.whenSynced;
+
+      if (!diagramStore.getEntity().id) {
         createInitialDiagram(diagramStore, generateUuid);
       }
 
-      const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-      await provider?.whenSynced;
+      if (!nextDiagramDoc.meta?.diagramId) {
+        nextDiagramDoc.meta ??= {};
+        nextDiagramDoc.meta.diagramId = diagramStore.getEntity().id;
+      }
 
       const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
       if (sheetStore.getEntities().length === 0) {
