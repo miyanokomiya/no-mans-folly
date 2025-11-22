@@ -7,6 +7,7 @@ import { GetAppStateContext } from "../contexts/AppContext";
 import { useTranslation } from "react-i18next";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { encodeStateAsUpdateWithGC } from "../utils/yjs";
+import { useWebsocketRoom } from "../hooks/realtimeHooks";
 
 export const RealtimePanel: React.FC = () => {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export const RealtimePanel: React.FC = () => {
 
   const { diagramStore } = useContext(AppCanvasContext);
   const getCtx = useContext(GetAppStateContext);
+  const room = useWebsocketRoom();
 
   const handleConnect = useCallback(
     async (e: React.FormEvent) => {
@@ -51,7 +53,7 @@ export const RealtimePanel: React.FC = () => {
   function getStatusLabel() {
     switch (status) {
       case "connected":
-        return t("realtime.connected");
+        return `${room.count} ${t("realtime.connected")}`;
       case "connecting":
         return t("realtime.connecting");
       default:
@@ -62,6 +64,7 @@ export const RealtimePanel: React.FC = () => {
   return (
     <div>
       <div className="flex flex-col gap-1">
+        <p className="text-xl font-bold text-red-500">!Experimental!</p>
         <InlineField label="Status">
           <span>{getStatusLabel()}</span>
         </InlineField>

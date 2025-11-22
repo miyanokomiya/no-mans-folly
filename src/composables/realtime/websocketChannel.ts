@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { RealtimeHandler, RTUpdateData } from "./core";
+import { RealtimeHandler, RTMessageData } from "./core";
 import { stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
 import { newCallback } from "../../utils/stateful/reactives";
 
@@ -9,6 +9,7 @@ export const WS_UPDATE_ORIGIN = "ws-update";
 let client: WebSocket | undefined;
 export const websocketChannelCallback = newCallback<boolean>();
 const messageCallback = newCallback<MessageEvent>();
+export const websocketRoomCallback = newCallback<{ count: number }>();
 
 export function isWebsocketChannelActive(): boolean {
   return !!client;
@@ -54,7 +55,7 @@ function removeMeesageHandler(h: (e: MessageEvent) => void) {
   messageCallback.unbind(h);
 }
 
-export function postWSMessage(data: RTUpdateData) {
+export function postWSMessage(data: RTMessageData) {
   // Needless to initialize the client unless listening
   client?.send(JSON.stringify(data));
 }
@@ -73,7 +74,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
       type: "diagram-update",
       id: props.diagramDoc.meta.diagramId,
       update: uint8ArrayToString(update),
-    } as RTUpdateData);
+    } as RTMessageData);
   }
   function onSheetUpdate(update: Uint8Array, origin: string) {
     if (closed || origin === WS_UPDATE_ORIGIN) return;
@@ -82,7 +83,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
       type: "sheet-update",
       id: props.sheetDoc.meta.sheetId,
       update: uint8ArrayToString(update),
-    } as RTUpdateData);
+    } as RTMessageData);
   }
   props.diagramDoc.on("update", onDiagramUpdate);
   props.sheetDoc.on("update", onSheetUpdate);
@@ -90,8 +91,12 @@ export const newWSChannel: RealtimeHandler = (props) => {
   async function onMessage(e: MessageEvent) {
     if (closed) return;
 
-    const data = JSON.parse(e.data) as RTUpdateData;
+    const data = JSON.parse(e.data) as RTMessageData;
     switch (data.type) {
+      case "room": {
+        websocketRoomCallback.dispatch(data);
+        return;
+      }
       case "diagram-sync-req": {
         if (!data.update) return;
 
@@ -103,14 +108,14 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "diagram-update",
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
-          } as RTUpdateData);
+          } as RTMessageData);
         } else {
           // Discard the requestee's diagram
           postWSMessage({
             type: "diagram-open",
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
-          } as RTUpdateData);
+          } as RTMessageData);
         }
         return;
       }
@@ -139,7 +144,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "sheet-update",
             id: data.id,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
-          } as RTUpdateData);
+          } as RTMessageData);
         } else {
           const sheet = await props.loadSheet(data.id);
           Y.applyUpdate(sheet, stringToUint8Array(data.update));
@@ -149,7 +154,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "sheet-update",
             id: data.id,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
-          } as RTUpdateData);
+          } as RTMessageData);
 
           sheet.destroy();
         }
