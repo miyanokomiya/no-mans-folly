@@ -31,7 +31,7 @@ export interface FileAccess {
   overwriteDiagramDoc: (doc: Y.Doc) => Promise<true | undefined>;
   overwriteSheetDoc: (sheetId: string, doc: Y.Doc) => Promise<true | undefined>;
 
-  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
+  saveAsset: (assetId: string, blob: Blob | File, ifPossible?: boolean) => Promise<void>;
   loadAsset: (assetId: string) => Promise<File | undefined>;
 
   openDoc: (name: string, doc: Y.Doc) => Promise<true | undefined>;

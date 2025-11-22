@@ -254,7 +254,9 @@ export async function saveSheetThumbnailAsSvg(
   try {
     const blob = await builder.toBlob();
     const assetId = getSheetThumbnailFileName(sheetId);
-    await assetAPI.saveAsset(assetId, blob);
+    // Give up saving when the API is no longer ready
+    // => This can happen when the workspace is disconnected
+    await assetAPI.saveAsset(assetId, blob, true);
     onSaved?.(assetId, blob);
   } catch (e: any) {
     ctx.showToastMessage({
