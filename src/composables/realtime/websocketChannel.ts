@@ -1,4 +1,4 @@
-// import * as Y from "yjs";
+import * as Y from "yjs";
 import { RealtimeHandler, RTUpdateData } from "./core";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
@@ -69,7 +69,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
     postWSMessage({
       type: "diagram",
       id: props.diagramDoc.meta.diagramId,
-      update,
+      update: uint8ArrayToString(update),
     } as RTUpdateData);
   }
   function onSheetUpdate(update: Uint8Array, origin: string) {
@@ -78,7 +78,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
     postWSMessage({
       type: "sheet",
       id: props.sheetDoc.meta.sheetId,
-      update,
+      update: uint8ArrayToString(update),
     } as RTUpdateData);
   }
   props.diagramDoc.on("update", onDiagramUpdate);
@@ -88,21 +88,20 @@ export const newWSChannel: RealtimeHandler = (props) => {
     if (closed) return;
 
     const data = JSON.parse(e.data) as RTUpdateData;
-    console.log(data);
-    // switch (data.type) {
-    //   case "diagram": {
-    //     if (data.update) {
-    //       Y.applyUpdate(props.diagramDoc, data.update, WS_UPDATE_ORIGIN);
-    //     }
-    //     break;
-    //   }
-    //   case "sheet": {
-    //     if (data.update && data.id === props.sheetDoc.meta.sheetId) {
-    //       Y.applyUpdate(props.sheetDoc, data.update, WS_UPDATE_ORIGIN);
-    //     }
-    //     break;
-    //   }
-    // }
+    switch (data.type) {
+      case "diagram": {
+        if (data.update) {
+          Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
+        }
+        break;
+      }
+      case "sheet": {
+        if (data.update && data.id === props.sheetDoc.meta.sheetId) {
+          Y.applyUpdate(props.sheetDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
+        }
+        break;
+      }
+    }
   }
   addMeesageHandler(onMessage);
 
@@ -117,3 +116,20 @@ export const newWSChannel: RealtimeHandler = (props) => {
     },
   };
 };
+
+function uint8ArrayToString(uint8Array: Uint8Array): string {
+  let binaryString = "";
+  for (let i = 0; i < uint8Array.length; i++) {
+    binaryString += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binaryString);
+}
+
+function stringToUint8Array(data: string): Uint8Array {
+  const binaryStringDecoded = atob(data);
+  const uint8ArrayDecoded = new Uint8Array(binaryStringDecoded.length);
+  for (let i = 0; i < binaryStringDecoded.length; i++) {
+    uint8ArrayDecoded[i] = binaryStringDecoded.charCodeAt(i);
+  }
+  return uint8ArrayDecoded;
+}

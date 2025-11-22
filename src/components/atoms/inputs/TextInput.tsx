@@ -9,6 +9,7 @@ interface Props {
   keepFocus?: boolean;
   placeholder?: string;
   clearable?: boolean;
+  readonly?: boolean;
 }
 
 export const TextInput: React.FC<Props> = ({
@@ -19,6 +20,7 @@ export const TextInput: React.FC<Props> = ({
   keepFocus,
   placeholder,
   clearable,
+  readonly,
 }) => {
   const ref = useRef<HTMLInputElement>(null);
 
@@ -50,6 +52,7 @@ export const TextInput: React.FC<Props> = ({
         onBlur={onBlur}
         className="border rounded-xs py-1 px-2 w-full"
         placeholder={placeholder}
+        readOnly={readonly}
       />
       {clearable && value ? (
         <button

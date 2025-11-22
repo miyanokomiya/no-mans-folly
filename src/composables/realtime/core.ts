@@ -3,7 +3,7 @@ import * as Y from "yjs";
 export type RTUpdateData = {
   type: "diagram" | "sheet" | "diagram-saved" | "sheet-saved";
   id: string; // ID of either the diagram or the sheet
-  update?: Uint8Array;
+  update?: string; // Encoded Uint8Array
 };
 
 export type RealtimeHandler = (props: {
