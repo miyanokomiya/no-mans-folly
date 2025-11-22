@@ -1,5 +1,6 @@
 import * as Y from "yjs";
 import { RealtimeHandler, RTUpdateData } from "./core";
+import { stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
@@ -67,7 +68,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
     if (closed || origin === WS_UPDATE_ORIGIN) return;
 
     postWSMessage({
-      type: "diagram",
+      type: "diagram-update",
       id: props.diagramDoc.meta.diagramId,
       update: uint8ArrayToString(update),
     } as RTUpdateData);
@@ -76,7 +77,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
     if (closed || origin === WS_UPDATE_ORIGIN) return;
 
     postWSMessage({
-      type: "sheet",
+      type: "sheet-update",
       id: props.sheetDoc.meta.sheetId,
       update: uint8ArrayToString(update),
     } as RTUpdateData);
@@ -84,22 +85,65 @@ export const newWSChannel: RealtimeHandler = (props) => {
   props.diagramDoc.on("update", onDiagramUpdate);
   props.sheetDoc.on("update", onSheetUpdate);
 
-  function onMessage(e: MessageEvent) {
+  async function onMessage(e: MessageEvent) {
     if (closed) return;
 
     const data = JSON.parse(e.data) as RTUpdateData;
     switch (data.type) {
-      case "diagram": {
+      case "diagram-sync-req": {
+        if (!data.update) return;
+
+        if (data.id === props.diagramDoc.meta.diagramId) {
+          // Merge the requestee's diagram
+          Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update));
+          // Broadcast as an usual diagram update
+          postWSMessage({
+            type: "diagram-update",
+            id: props.diagramDoc.meta.diagramId,
+            update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
+          } as RTUpdateData);
+        } else {
+          // Discard the requestee's diagram
+          postWSMessage({
+            type: "diagram-open",
+            id: props.diagramDoc.meta.diagramId,
+            update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
+          } as RTUpdateData);
+        }
+        return;
+      }
+      case "diagram-open": {
+        if (!data.update) return;
+
+        props.initDiagram(stringToUint8Array(data.update));
+        return;
+      }
+      case "diagram-update": {
         if (data.update) {
           Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
         }
-        break;
+        return;
       }
-      case "sheet": {
+      case "sheet-sync-req": {
+        if (!data.update) return;
+
+        // Merge the requestee's sheet
+        const sheet = props.sheetDoc.meta.sheetId === data.id ? props.sheetDoc : await props.loadSheet(data.id);
+        Y.applyUpdate(sheet, stringToUint8Array(data.update));
+
+        // Broadcast as an usual sheet update
+        postWSMessage({
+          type: "sheet-update",
+          id: data.id,
+          update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
+        } as RTUpdateData);
+        return;
+      }
+      case "sheet-update": {
         if (data.update && data.id === props.sheetDoc.meta.sheetId) {
           Y.applyUpdate(props.sheetDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
         }
-        break;
+        return;
       }
     }
   }
@@ -117,19 +161,19 @@ export const newWSChannel: RealtimeHandler = (props) => {
   };
 };
 
-function uint8ArrayToString(uint8Array: Uint8Array): string {
-  let binaryString = "";
-  for (let i = 0; i < uint8Array.length; i++) {
-    binaryString += String.fromCharCode(uint8Array[i]);
-  }
-  return btoa(binaryString);
+export function requestDiagramSync(id: string, update: Uint8Array) {
+  postWSMessage({
+    type: "diagram-sync-req",
+    id,
+    update: uint8ArrayToString(update),
+  });
 }
 
-function stringToUint8Array(data: string): Uint8Array {
-  const binaryStringDecoded = atob(data);
-  const uint8ArrayDecoded = new Uint8Array(binaryStringDecoded.length);
-  for (let i = 0; i < binaryStringDecoded.length; i++) {
-    uint8ArrayDecoded[i] = binaryStringDecoded.charCodeAt(i);
-  }
-  return uint8ArrayDecoded;
+export function requestSheetSync(id: string, update: Uint8Array) {
+  console.log("sheet-sync-req", id);
+  postWSMessage({
+    type: "sheet-sync-req",
+    id,
+    update: uint8ArrayToString(update),
+  });
 }

@@ -13,7 +13,12 @@ import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
 import { generateKeyBetween } from "../utils/findex";
 import { isMemoryAssetAPI, newFileAssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
-import { newWSChannel, postWSMessage, WS_UPDATE_ORIGIN } from "../composables/realtime/websocketChannel";
+import {
+  newWSChannel,
+  postWSMessage,
+  requestSheetSync,
+  WS_UPDATE_ORIGIN,
+} from "../composables/realtime/websocketChannel";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
@@ -109,6 +114,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
       await sheetProvider?.whenSynced;
 
+      requestSheetSync(sheetId, Y.encodeStateAsUpdate(nextSheetDoc));
       setDbProviderSheet(sheetProvider);
       setSheetDoc(nextSheetDoc);
       setSheetStores({
@@ -118,6 +124,27 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       });
     },
     [fileAccess, handleSyncError],
+  );
+
+  const loadIndependentSheet = useCallback(
+    async (sheetId: string) => {
+      const nextSheetDoc = createSheetDoc(sheetId);
+
+      if (fileAccess.hasHandle()) {
+        try {
+          await fileAccess.openSheet(sheetId, nextSheetDoc);
+          return nextSheetDoc;
+        } catch (e) {
+          console.error("Failed to load the sheet: ", sheetId, e);
+        }
+      }
+
+      const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
+      await sheetProvider?.whenSynced;
+      await sheetProvider?.destroy();
+      return nextSheetDoc;
+    },
+    [fileAccess],
   );
 
   const cleanCurrentSheet = useCallback(async () => {
@@ -151,28 +178,38 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setSheetStores({ layerStore, shapeStore, documentStore });
   }, [fileAccess, handleSyncError, sheetDoc, sheetStores]);
 
-  const initDiagram = useCallback(async () => {
-    setReady(false);
-    const nextDiagramDoc = new Y.Doc();
-    const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-    createInitialDiagram(diagramStore, generateUuid);
-    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider?.whenSynced;
+  const initDiagram = useCallback(
+    async (diagramUpdate?: Uint8Array) => {
+      setReady(false);
+      const nextDiagramDoc = new Y.Doc();
+      if (diagramUpdate) {
+        Y.applyUpdate(nextDiagramDoc, diagramUpdate);
+      }
 
-    const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
-    if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore, generateUuid);
-    }
+      const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
+      if (!diagramUpdate) {
+        createInitialDiagram(diagramStore, generateUuid);
+      }
 
-    sheetStore.selectSheet(getSheetIdFromQuery());
-    const sheet = sheetStore.getSelectedSheet()!;
-    await initSheet(sheet.id);
+      const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+      await provider?.whenSynced;
 
-    setDbProviderDiagram(provider);
-    setDiagramDoc(nextDiagramDoc);
-    setDiagramStores({ diagramStore, sheetStore });
-    setReady(true);
-  }, [generateUuid, initSheet]);
+      const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
+      if (sheetStore.getEntities().length === 0) {
+        createInitialSheet(sheetStore, generateUuid);
+      }
+
+      sheetStore.selectSheet(getSheetIdFromQuery());
+      const sheet = sheetStore.getSelectedSheet()!;
+      await initSheet(sheet.id);
+
+      setDbProviderDiagram(provider);
+      setDiagramDoc(nextDiagramDoc);
+      setDiagramStores({ diagramStore, sheetStore });
+      setReady(true);
+    },
+    [generateUuid, initSheet],
+  );
 
   const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
     setReady(false);
@@ -455,11 +492,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       sheetDoc,
       skipDiagramSave: () => saveDiagramUpdateThrottle.clear(true),
       skipSheetSave: () => saveSheetUpdateThrottle.clear(true),
+      loadSheet: loadIndependentSheet,
+      initDiagram,
     });
     return () => {
       bc.close();
     };
-  }, [diagramDoc, sheetDoc, saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
+  }, [diagramDoc, sheetDoc, saveDiagramUpdateThrottle, saveSheetUpdateThrottle, loadIndependentSheet, initDiagram]);
 
   const flushSaveThrottles = useCallback(() => {
     saveDiagramUpdateThrottle.flush();
