@@ -2,14 +2,16 @@ import * as Y from "yjs";
 import { RealtimeHandler, RTMessageData } from "./core";
 import { stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
 import { newCallback } from "../../utils/stateful/reactives";
+import { generateUuid } from "../../utils/random";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
+const connectionId = generateUuid();
 
 let client: WebSocket | undefined;
 export const websocketChannelCallback = newCallback<boolean>();
-const messageCallback = newCallback<MessageEvent>();
 export const websocketRoomCallback = newCallback<{ count: number }>();
+const messageCallback = newCallback<MessageEvent>();
 
 export function isWebsocketChannelActive(): boolean {
   return !!client;
@@ -101,26 +103,29 @@ export const newWSChannel: RealtimeHandler = (props) => {
         if (!data.update) return;
 
         if (data.id === props.diagramDoc.meta.diagramId) {
-          // Merge the requestee's diagram
+          // Merge the requester's diagram
           Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update));
           // Broadcast as an usual diagram update
           postWSMessage({
             type: "diagram-update",
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
+            syncRequester: data.syncRequester,
           } as RTMessageData);
         } else {
-          // Discard the requestee's diagram
+          // Discard the requester's diagram
           postWSMessage({
             type: "diagram-open",
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
+            syncRequester: data.syncRequester,
           } as RTMessageData);
         }
         return;
       }
       case "diagram-open": {
         if (!data.update) return;
+        if (data.syncRequester !== connectionId) return;
 
         props.initDiagram(stringToUint8Array(data.update));
         return;
@@ -128,13 +133,18 @@ export const newWSChannel: RealtimeHandler = (props) => {
       case "diagram-update": {
         if (data.update) {
           Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
+
+          // Request to sync current sheet if this update comes for the diagram sync
+          if (data.syncRequester === connectionId) {
+            requestSheetSync(props.sheetDoc.meta.sheetId, Y.encodeStateAsUpdate(props.sheetDoc));
+          }
         }
         return;
       }
       case "sheet-sync-req": {
         if (!data.update) return;
 
-        // Merge the requestee's sheet
+        // Merge the requester's sheet
         if (props.sheetDoc.meta.sheetId === data.id) {
           const sheet = props.sheetDoc;
           Y.applyUpdate(sheet, stringToUint8Array(data.update));
@@ -144,6 +154,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "sheet-update",
             id: data.id,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
+            syncRequester: data.syncRequester,
           } as RTMessageData);
         } else {
           const sheet = await props.loadSheet(data.id);
@@ -154,6 +165,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "sheet-update",
             id: data.id,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
+            syncRequester: data.syncRequester,
           } as RTMessageData);
 
           sheet.destroy();
@@ -191,6 +203,7 @@ export function requestDiagramSync(id: string, update: Uint8Array) {
     type: "diagram-sync-req",
     id,
     update: uint8ArrayToString(update),
+    syncRequester: connectionId,
   });
 }
 
@@ -199,5 +212,6 @@ export function requestSheetSync(id: string, update: Uint8Array) {
     type: "sheet-sync-req",
     id,
     update: uint8ArrayToString(update),
+    syncRequester: connectionId,
   });
 }

@@ -11,6 +11,7 @@ type RTUpdateData = {
     | "sheet-saved";
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
+  syncRequester?: string;
 };
 
 type RTRoomData = {
@@ -19,7 +20,6 @@ type RTRoomData = {
 };
 
 export type RTMessageData = RTUpdateData | RTRoomData;
-
 
 export type RealtimeHandler = (props: {
   roomId: string;
