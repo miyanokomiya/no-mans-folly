@@ -17,6 +17,7 @@ export function newDiagramStore(option: Option) {
   option.ydoc.meta.diagramId = singleEntityStore.getEntity().id;
 
   return {
+    ydoc: option.ydoc,
     ...singleEntityStore,
   };
 }
