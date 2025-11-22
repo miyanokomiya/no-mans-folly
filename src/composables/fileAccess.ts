@@ -122,8 +122,10 @@ export function newFileAccess(): FileAccess {
     if (!res1) throw new Error(`Failed to save file: ${name}`);
   }
 
-  async function saveAsset(assetId: string, blob: Blob | File): Promise<void> {
+  async function saveAsset(assetId: string, blob: Blob | File, ifPossible?: boolean): Promise<void> {
     if (!assetHandle) {
+      if (ifPossible) return;
+
       await openAssetDirectory();
     }
     if (!assetHandle) return;

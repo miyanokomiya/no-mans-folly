@@ -14,6 +14,7 @@ import { getSheetIdFromQuery } from "../utils/route";
 import { generateKeyBetween } from "../utils/findex";
 import { isMemoryAssetAPI, newFileAssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
 import {
+  closeWSClient,
   newWSChannel,
   postWSMessage,
   requestSheetSync,
@@ -26,7 +27,7 @@ const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
 export type AssetAPIEnabled = {
   enabled: true;
   name: string;
-  saveAsset: (assetId: string, blob: Blob | File) => Promise<void>;
+  saveAsset: (assetId: string, blob: Blob | File, ifPossible?: boolean) => Promise<void>;
   loadAsset: (assetId: string) => Promise<Blob | File | undefined>;
 };
 
@@ -266,31 +267,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setReady(true);
     return true;
   }, [generateUuid, fileAccess, handleSyncError, initSheet]);
-
-  const clearDiagram = useCallback(async () => {
-    await fileAccess.disconnect();
-    setCanSyncWorkspace(fileAccess.hasHandle());
-    setReady(false);
-    await clearIndexeddbPersistenceAll();
-
-    const nextDiagramDoc = new Y.Doc();
-    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider?.whenSynced;
-    const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-
-    const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
-    if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore, generateUuid);
-    }
-
-    const sheet = sheetStore.getSelectedSheet()!;
-    await initSheet(sheet.id);
-
-    setDbProviderDiagram(provider);
-    setDiagramDoc(nextDiagramDoc);
-    setDiagramStores({ diagramStore, sheetStore });
-    setReady(true);
-  }, [generateUuid, fileAccess, initSheet]);
 
   /**
    * This method is intended for the case that the diagram has one sheet without workspace in the app.
@@ -561,10 +537,42 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     saveOtherSheetUpdateThrottle,
   ]);
 
-  const flushSaveThrottles = useCallback(() => {
-    saveDiagramUpdateThrottle.flush();
-    saveSheetUpdateThrottle.flush();
+  const flushSaveThrottles = useCallback(async () => {
+    await saveDiagramUpdateThrottle.flush();
+    await saveSheetUpdateThrottle.flush();
+    const currentMap = saveSheetUpdateThrottleMap.current;
+    saveSheetUpdateThrottleMap.current = new Map();
+    for (const [, fn] of currentMap) {
+      await fn.flush();
+    }
   }, [saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
+
+  const clearDiagram = useCallback(async () => {
+    await flushSaveThrottles();
+    closeWSClient();
+    await fileAccess.disconnect();
+    setCanSyncWorkspace(fileAccess.hasHandle());
+    setReady(false);
+    await clearIndexeddbPersistenceAll();
+
+    const nextDiagramDoc = new Y.Doc();
+    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider?.whenSynced;
+    const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
+
+    const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
+    if (sheetStore.getEntities().length === 0) {
+      createInitialSheet(sheetStore, generateUuid);
+    }
+
+    const sheet = sheetStore.getSelectedSheet()!;
+    await initSheet(sheet.id);
+
+    setDbProviderDiagram(provider);
+    setDiagramDoc(nextDiagramDoc);
+    setDiagramStores({ diagramStore, sheetStore });
+    setReady(true);
+  }, [generateUuid, fileAccess, initSheet, flushSaveThrottles]);
 
   return {
     initSheet,
