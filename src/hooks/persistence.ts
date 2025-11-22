@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DiagramStore, newDiagramStore } from "../stores/diagram";
 import { SheetStore, newSheetStore } from "../stores/sheets";
 import { LayerStore, newLayerStore } from "../stores/layers";
@@ -95,6 +95,9 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const initSheet = useCallback(
     async (sheetId: string) => {
+      // Ensure the target sheet is up-to-date
+      await saveSheetUpdateThrottleMap.current.get(sheetId)?.flush();
+
       const nextSheetDoc = createSheetDoc(sheetId);
 
       if (fileAccess.hasHandle()) {
@@ -409,6 +412,54 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     }, SYNC_THROTTLE_INTERVALS);
   }, [fileAccess, handleSyncError, canSyncWorkspace, sheetDoc]);
 
+  const saveSheetUpdateThrottleMap = useRef(new Map<string, ReturnType<typeof newLeveledThrottle>>());
+
+  const saveOtherSheetUpdateThrottle = useCallback(
+    (sheetId: string, update: Uint8Array) => {
+      let fn = saveSheetUpdateThrottleMap.current.get(sheetId);
+      if (!fn) {
+        fn = newLeveledThrottle(async () => {
+          if (!canSyncWorkspace) {
+            // Save to IndexedDB if it's active
+            if (indexedDBMode) {
+              const sheet = await loadIndependentSheet(sheetId);
+              Y.applyUpdate(sheet, update);
+              const sheetProvider = newIndexeddbPersistence(sheetId, sheet);
+              await sheetProvider?.whenSynced;
+              sheetProvider?.destroy();
+              sheet.destroy();
+            }
+            return;
+          }
+
+          try {
+            const sheet = await loadIndependentSheet(sheetId);
+            Y.applyUpdate(sheet, update);
+            await fileAccess.overwriteSheetDoc(sheetId, sheet);
+            const sheetProvider = newIndexeddbPersistence(sheetId, sheet);
+            await sheetProvider?.whenSynced;
+            sheetProvider?.destroy();
+            sheet.destroy();
+          } catch (e) {
+            console.error("Failed to merge sheet: ", sheetId, e);
+          }
+        }, SYNC_THROTTLE_INTERVALS);
+        saveSheetUpdateThrottleMap.current.set(sheetId, fn);
+      }
+
+      fn(sheetId, update);
+    },
+    [fileAccess, canSyncWorkspace, loadIndependentSheet],
+  );
+
+  useEffect(() => {
+    const currentMap = saveSheetUpdateThrottleMap.current;
+    saveSheetUpdateThrottleMap.current = new Map();
+    for (const [, fn] of currentMap) {
+      fn.flush();
+    }
+  }, [saveOtherSheetUpdateThrottle, sheetDoc]);
+
   useEffect(() => {
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
       setSavePending((val) => ({ ...val, sheet: pending }));
@@ -494,11 +545,20 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       skipSheetSave: () => saveSheetUpdateThrottle.clear(true),
       loadSheet: loadIndependentSheet,
       initDiagram,
+      saveSheet: saveOtherSheetUpdateThrottle,
     });
     return () => {
       bc.close();
     };
-  }, [diagramDoc, sheetDoc, saveDiagramUpdateThrottle, saveSheetUpdateThrottle, loadIndependentSheet, initDiagram]);
+  }, [
+    diagramDoc,
+    sheetDoc,
+    saveDiagramUpdateThrottle,
+    saveSheetUpdateThrottle,
+    loadIndependentSheet,
+    initDiagram,
+    saveOtherSheetUpdateThrottle,
+  ]);
 
   const flushSaveThrottles = useCallback(() => {
     saveDiagramUpdateThrottle.flush();

@@ -82,7 +82,7 @@ export function newThrottle<T extends (...args: any[]) => void>(fn: T, interval:
   return throttle;
 }
 
-export function newLeveledThrottle<T extends (...args: any[]) => void>(fn: T, intervals: number[]) {
+export function newLeveledThrottle<T extends (...args: any[]) => Promise<void>>(fn: T, intervals: number[]) {
   let wait: undefined | "wait" | "cooldown";
   let currentArgs: Parameters<T>;
   let timer = 0;
@@ -143,7 +143,7 @@ export function newLeveledThrottle<T extends (...args: any[]) => void>(fn: T, in
     }, getInterval()) as any;
   }
 
-  throttle.flush = function () {
+  throttle.flush = async function () {
     if (timer) {
       clearTimeout(timer);
     }
@@ -155,10 +155,12 @@ export function newLeveledThrottle<T extends (...args: any[]) => void>(fn: T, in
     level = 0;
 
     if (wait === "wait") {
-      fn(...currentArgs);
+      wait = undefined;
+      await fn(...currentArgs);
       callback.dispatch(false);
+    } else {
+      wait = undefined;
     }
-    wait = undefined;
   };
 
   throttle.clear = function (keepLevel = false): boolean {

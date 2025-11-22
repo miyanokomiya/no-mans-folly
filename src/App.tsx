@@ -30,13 +30,15 @@ import { useLocalStorageAdopter } from "./hooks/localStorage";
 import "./i18n";
 import { createAppUndoManager } from "./hooks/undoManager";
 import { newThrottle } from "./utils/stateful/throttle";
+import { useWebsocketChannelActive } from "./hooks/realtimeHooks";
 
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
   const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
   const { indexedDBMode } = newFeatureFlags();
-  const canPersist = fileAccess.hasHandle() || indexedDBMode;
+  const isWebsocketChannelActive = useWebsocketChannelActive();
+  const canPersist = fileAccess.hasHandle() || indexedDBMode || isWebsocketChannelActive;
 
   const {
     diagramStore,
