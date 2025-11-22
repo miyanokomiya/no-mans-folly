@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 
-export type RTUpdateData = {
+type RTUpdateData = {
   type:
     | "diagram-sync-req"
     | "diagram-open"
@@ -12,6 +12,14 @@ export type RTUpdateData = {
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
 };
+
+type RTRoomData = {
+  type: "room";
+  count: number;
+};
+
+export type RTMessageData = RTUpdateData | RTRoomData;
+
 
 export type RealtimeHandler = (props: {
   roomId: string;
