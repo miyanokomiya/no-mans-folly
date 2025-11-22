@@ -227,6 +227,27 @@ describe("newLeveledThrottle", () => {
       expect(mock).toHaveBeenCalledTimes(1);
       expect(t.getLevel()).toBe(0);
     });
+
+    test("should return promise object for flushing", async () => {
+      const mock = vi.fn();
+      const fn = (val1: number) => {
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            mock(val1);
+            resolve();
+          }, 10);
+        });
+      };
+      const t = newLeveledThrottle(fn, [10]);
+      t(10);
+      const promise = t.flush();
+      expect(mock).toHaveBeenCalledTimes(0);
+      promise.then(() => {
+        expect(mock).toHaveBeenCalledTimes(1);
+      });
+      vi.advanceTimersByTime(15);
+      expect.assertions(2);
+    });
   });
 
   describe("clear", () => {

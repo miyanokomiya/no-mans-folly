@@ -7,7 +7,12 @@ const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
 
 let client: WebSocket | undefined;
+export const websocketChannelCallback = newCallback<boolean>();
 const messageCallback = newCallback<MessageEvent>();
+
+export function iswebsocketChannelActive(): boolean {
+  return !!client;
+}
 
 export async function initWSClient(props: { roomId: string; onClose?: () => void }) {
   closeWSClient();
@@ -23,6 +28,7 @@ export async function initWSClient(props: { roomId: string; onClose?: () => void
       () => {
         preClient?.removeEventListener("error", reject);
         client = preClient;
+        websocketChannelCallback.dispatch(true);
         preClient.addEventListener("message", messageCallback.dispatch);
         resolve();
       },
@@ -37,6 +43,7 @@ export function closeWSClient() {
   client.removeEventListener("message", messageCallback.dispatch);
   client.close();
   client = undefined;
+  websocketChannelCallback.dispatch(false);
 }
 
 function addMeesageHandler(h: (e: MessageEvent) => void) {
@@ -123,20 +130,38 @@ export const newWSChannel: RealtimeHandler = (props) => {
         if (!data.update) return;
 
         // Merge the requestee's sheet
-        const sheet = props.sheetDoc.meta.sheetId === data.id ? props.sheetDoc : await props.loadSheet(data.id);
-        Y.applyUpdate(sheet, stringToUint8Array(data.update));
+        if (props.sheetDoc.meta.sheetId === data.id) {
+          const sheet = props.sheetDoc;
+          Y.applyUpdate(sheet, stringToUint8Array(data.update));
 
-        // Broadcast as an usual sheet update
-        postWSMessage({
-          type: "sheet-update",
-          id: data.id,
-          update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
-        } as RTUpdateData);
+          // Broadcast as an usual sheet update
+          postWSMessage({
+            type: "sheet-update",
+            id: data.id,
+            update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
+          } as RTUpdateData);
+        } else {
+          const sheet = await props.loadSheet(data.id);
+          Y.applyUpdate(sheet, stringToUint8Array(data.update));
+
+          // Broadcast as an usual sheet update
+          postWSMessage({
+            type: "sheet-update",
+            id: data.id,
+            update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
+          } as RTUpdateData);
+
+          sheet.destroy();
+        }
         return;
       }
       case "sheet-update": {
-        if (data.update && data.id === props.sheetDoc.meta.sheetId) {
+        if (!data.update) return;
+
+        if (data.id === props.sheetDoc.meta.sheetId) {
           Y.applyUpdate(props.sheetDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
+        } else {
+          props.saveSheet(data.id, stringToUint8Array(data.update));
         }
         return;
       }
@@ -165,7 +190,6 @@ export function requestDiagramSync(id: string, update: Uint8Array) {
 }
 
 export function requestSheetSync(id: string, update: Uint8Array) {
-  console.log("sheet-sync-req", id);
   postWSMessage({
     type: "sheet-sync-req",
     id,
