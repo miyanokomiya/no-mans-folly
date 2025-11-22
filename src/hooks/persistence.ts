@@ -424,9 +424,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
             if (indexedDBMode) {
               const sheet = await loadIndependentSheet(sheetId);
               Y.applyUpdate(sheet, update);
-              const sheetProvider = newIndexeddbPersistence(sheetId, sheet);
-              await sheetProvider?.whenSynced;
-              sheetProvider?.destroy();
+              await saveIndexeddbPersistence(sheetId, sheet);
               sheet.destroy();
             }
             return;
@@ -436,9 +434,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
             const sheet = await loadIndependentSheet(sheetId);
             Y.applyUpdate(sheet, update);
             await fileAccess.overwriteSheetDoc(sheetId, sheet);
-            const sheetProvider = newIndexeddbPersistence(sheetId, sheet);
-            await sheetProvider?.whenSynced;
-            sheetProvider?.destroy();
+            await saveIndexeddbPersistence(sheetId, sheet);
             sheet.destroy();
           } catch (e) {
             console.error("Failed to merge sheet: ", sheetId, e);
@@ -601,6 +597,12 @@ async function clearIndexeddbPersistenceAll() {
       indexedDB.deleteDatabase(db.name);
     }
   });
+}
+
+async function saveIndexeddbPersistence(sheetId: string, sheetDoc: Y.Doc) {
+  const sheetProvider = newIndexeddbPersistence(sheetId, sheetDoc);
+  await sheetProvider?.whenSynced;
+  sheetProvider?.destroy();
 }
 
 function createInitialDiagram(diagramStore: DiagramStore, generateUuid: () => string) {
