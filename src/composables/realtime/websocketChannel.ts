@@ -1,12 +1,13 @@
 import * as Y from "yjs";
 import { RealtimeHandler, RTUpdateData } from "./core";
 import { stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
+import { newCallback } from "../../utils/stateful/reactives";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
 
 let client: WebSocket | undefined;
-const messageHandlers = new Set<(e: MessageEvent) => void>();
+const messageCallback = newCallback<MessageEvent>();
 
 export async function initWSClient(props: { roomId: string; onClose?: () => void }) {
   closeWSClient();
@@ -22,9 +23,7 @@ export async function initWSClient(props: { roomId: string; onClose?: () => void
       () => {
         preClient?.removeEventListener("error", reject);
         client = preClient;
-        for (const h of messageHandlers) {
-          preClient.addEventListener("message", h);
-        }
+        preClient.addEventListener("message", messageCallback.dispatch);
         resolve();
       },
       { once: true },
@@ -35,21 +34,17 @@ export async function initWSClient(props: { roomId: string; onClose?: () => void
 export function closeWSClient() {
   if (!client) return;
 
-  for (const h of messageHandlers) {
-    client.removeEventListener("message", h);
-  }
+  client.removeEventListener("message", messageCallback.dispatch);
   client.close();
   client = undefined;
 }
 
 function addMeesageHandler(h: (e: MessageEvent) => void) {
-  messageHandlers.add(h);
-  client?.addEventListener("message", h);
+  messageCallback.bind(h);
 }
 
 function removeMeesageHandler(h: (e: MessageEvent) => void) {
-  messageHandlers.delete(h);
-  client?.removeEventListener("message", h);
+  messageCallback.unbind(h);
 }
 
 export function postWSMessage(data: RTUpdateData) {
