@@ -104,6 +104,7 @@ function App() {
 
   const acctx = useMemo<IAppCanvasContext>(() => {
     const context = {
+      canSyncWorkspace,
       userSettingStore: userSetting,
       diagramStore,
       sheetStore,
@@ -114,7 +115,7 @@ function App() {
       undoManager: createAppUndoManager(undoManager),
     };
     return context;
-  }, [diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
+  }, [canSyncWorkspace, diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
 
   const handleOpenWorkspace = useCallback(() => {
     setOpenDialog("workspace");
