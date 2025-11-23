@@ -17,9 +17,9 @@ export function isWebsocketChannelActive(): boolean {
   return !!client;
 }
 
-export async function initWSClient(props: { roomId: string; onClose?: () => void }) {
+export async function initWSClient(props: { canHost: boolean; roomId: string; onClose?: () => void }) {
   closeWSClient();
-  const preClient = new WebSocket(`${WS_ENDPOINT}/rooms/${props.roomId}`);
+  const preClient = new WebSocket(`${WS_ENDPOINT}/rooms/${props.roomId}?canHost=${props.canHost ? 1 : 0}`);
 
   return new Promise<void>((resolve, reject) => {
     preClient?.addEventListener("error", reject);
@@ -213,5 +213,12 @@ export function requestSheetSync(id: string, update: Uint8Array) {
     id,
     update: uint8ArrayToString(update),
     syncRequester: connectionId,
+  });
+}
+
+export function postConnectionInfo(canHost: boolean) {
+  postWSMessage({
+    type: "connection",
+    canHost,
   });
 }

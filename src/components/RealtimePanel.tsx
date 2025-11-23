@@ -14,7 +14,7 @@ export const RealtimePanel: React.FC = () => {
   const [roomIdDraft, setRoomIdDraft] = useState("");
   const [status, setStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
 
-  const { diagramStore } = useContext(AppCanvasContext);
+  const { canSyncWorkspace, diagramStore } = useContext(AppCanvasContext);
   const getCtx = useContext(GetAppStateContext);
   const room = useWebsocketRoom();
 
@@ -26,6 +26,7 @@ export const RealtimePanel: React.FC = () => {
       setStatus("connecting");
       try {
         await initWSClient({
+          canHost: canSyncWorkspace,
           roomId: roomIdDraft,
           onClose: () => {
             setStatus("disconnected");
@@ -42,7 +43,7 @@ export const RealtimePanel: React.FC = () => {
         setStatus("disconnected");
       }
     },
-    [roomIdDraft, status, getCtx, diagramStore],
+    [canSyncWorkspace, roomIdDraft, status, getCtx, diagramStore],
   );
 
   const handleDisconnect = useCallback(() => {

@@ -16,6 +16,7 @@ import { ToastMessage } from "../composables/states/types";
 import { stateGenerators } from "../composables/states/appCanvas";
 
 export interface IAppCanvasContext {
+  canSyncWorkspace: boolean;
   diagramStore: DiagramStore;
   sheetStore: SheetStore;
   layerStore: LayerStore;

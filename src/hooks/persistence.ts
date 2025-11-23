@@ -16,6 +16,7 @@ import { isMemoryAssetAPI, newFileAssetAPI, newMemoryAssetAPI } from "../composa
 import {
   closeWSClient,
   newWSChannel,
+  postConnectionInfo,
   postWSMessage,
   requestSheetSync,
   WS_UPDATE_ORIGIN,
@@ -536,6 +537,10 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     initDiagram,
     saveOtherSheetUpdateThrottle,
   ]);
+
+  useEffect(() => {
+    postConnectionInfo(canSyncWorkspace);
+  }, [canSyncWorkspace]);
 
   const flushSaveThrottles = useCallback(async () => {
     await saveDiagramUpdateThrottle.flush();

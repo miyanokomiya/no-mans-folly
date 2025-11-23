@@ -19,7 +19,12 @@ type RTRoomData = {
   count: number;
 };
 
-export type RTMessageData = RTUpdateData | RTRoomData;
+type RTConnectionData = {
+  type: "connection";
+  canHost: boolean;
+};
+
+export type RTMessageData = RTUpdateData | RTRoomData | RTConnectionData;
 
 export type RealtimeHandler = (props: {
   roomId: string;
