@@ -1,6 +1,6 @@
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { TextInput } from "./atoms/inputs/TextInput";
-import { closeWSClient, initWSClient } from "../composables/realtime/websocketChannel";
+import { closeWSClient, initWSClient, websocketCallback } from "../composables/realtime/websocketChannel";
 import { InlineField } from "./atoms/InlineField";
 import { FormButton } from "./atoms/buttons/FormButton";
 import { GetAppStateContext } from "../contexts/AppContext";
@@ -19,6 +19,12 @@ export const RealtimePanel: React.FC = () => {
   const { canSyncWorkspace } = useContext(AppCanvasContext);
   const getCtx = useContext(GetAppStateContext);
 
+  useEffect(() => {
+    return websocketCallback.bind(() => {
+      setStatus("disconnected");
+    });
+  }, []);
+
   const handleConnect = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -26,13 +32,7 @@ export const RealtimePanel: React.FC = () => {
 
       setStatus("connecting");
       try {
-        await initWSClient({
-          canHost: canSyncWorkspace,
-          roomId: roomIdDraft,
-          onClose: () => {
-            setStatus("disconnected");
-          },
-        });
+        await initWSClient({ canHost: canSyncWorkspace, roomId: roomIdDraft });
         setStatus("connected");
       } catch {
         const ctx = getCtx();

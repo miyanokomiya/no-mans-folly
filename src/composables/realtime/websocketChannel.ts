@@ -32,7 +32,9 @@ export async function initWSClient(props: { canHost: boolean; roomId: string; on
   return new Promise<void>((resolve, reject) => {
     preClient?.addEventListener("error", reject);
     if (props.onClose) {
-      preClient?.addEventListener("close", props.onClose);
+      preClient?.addEventListener("close", () => {
+        setClient(undefined);
+      });
     }
     preClient?.addEventListener(
       "open",
