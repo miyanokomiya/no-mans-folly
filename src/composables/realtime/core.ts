@@ -11,7 +11,13 @@ type RTUpdateData = {
     | "sheet-saved";
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
-  syncRequester?: string;
+  sender?: string; // Set by the server
+  author?: string; // Original sender who initiates the consequent messages
+};
+
+type RTInitialData = {
+  type: "initial";
+  id: string;
 };
 
 type RTRoomData = {
@@ -24,7 +30,7 @@ type RTConnectionData = {
   canHost: boolean;
 };
 
-export type RTMessageData = RTUpdateData | RTRoomData | RTConnectionData;
+export type RTMessageData = RTUpdateData | RTRoomData | RTConnectionData | RTInitialData;
 
 export type RealtimeHandler = (props: {
   roomId: string;

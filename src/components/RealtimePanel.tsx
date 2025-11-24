@@ -1,12 +1,11 @@
 import { useCallback, useContext, useState } from "react";
 import { TextInput } from "./atoms/inputs/TextInput";
-import { closeWSClient, initWSClient, requestDiagramSync } from "../composables/realtime/websocketChannel";
+import { closeWSClient, initWSClient } from "../composables/realtime/websocketChannel";
 import { InlineField } from "./atoms/InlineField";
 import { FormButton } from "./atoms/buttons/FormButton";
 import { GetAppStateContext } from "../contexts/AppContext";
 import { useTranslation } from "react-i18next";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { encodeStateAsUpdateWithGC } from "../utils/yjs";
 import { useWebsocketRoom } from "../hooks/realtimeHooks";
 
 export const RealtimePanel: React.FC = () => {
@@ -14,7 +13,7 @@ export const RealtimePanel: React.FC = () => {
   const [roomIdDraft, setRoomIdDraft] = useState("");
   const [status, setStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
 
-  const { canSyncWorkspace, diagramStore } = useContext(AppCanvasContext);
+  const { canSyncWorkspace } = useContext(AppCanvasContext);
   const getCtx = useContext(GetAppStateContext);
   const room = useWebsocketRoom();
 
@@ -32,7 +31,6 @@ export const RealtimePanel: React.FC = () => {
             setStatus("disconnected");
           },
         });
-        requestDiagramSync(diagramStore.getEntity().id, encodeStateAsUpdateWithGC(diagramStore.ydoc));
         setStatus("connected");
       } catch {
         const ctx = getCtx();
@@ -43,7 +41,7 @@ export const RealtimePanel: React.FC = () => {
         setStatus("disconnected");
       }
     },
-    [canSyncWorkspace, roomIdDraft, status, getCtx, diagramStore],
+    [canSyncWorkspace, roomIdDraft, status, getCtx],
   );
 
   const handleDisconnect = useCallback(() => {
