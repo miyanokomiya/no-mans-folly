@@ -28,7 +28,7 @@ export type AssetAPIEnabled = {
   enabled: true;
   name: string;
   saveAsset: (assetId: string, blob: Blob | File, ifPossible?: boolean) => Promise<void>;
-  loadAsset: (assetId: string) => Promise<Blob | File | undefined>;
+  loadAsset: (assetId: string, ifPossible?: boolean) => Promise<Blob | File | undefined>;
 };
 
 export type AssetAPI = AssetAPIEnabled | { enabled: false };
@@ -221,6 +221,8 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   );
 
   const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
+    await flushSaveThrottles();
+    closeWSClient();
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
     try {
@@ -501,36 +503,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     };
   }, [sheetStores]);
 
-  useEffect(() => {
-    const bc = newWSChannel({
-      roomId: "test",
-      diagramDoc,
-      sheetDoc,
-      skipDiagramSave: () => saveDiagramUpdateThrottle.clear(true),
-      skipSheetSave: () => saveSheetUpdateThrottle.clear(true),
-      loadSheet: loadIndependentSheet,
-      initDiagram,
-      saveSheet: saveOtherSheetUpdateThrottle,
-      assetAPI,
-    });
-    return () => {
-      bc.close();
-    };
-  }, [
-    diagramDoc,
-    sheetDoc,
-    saveDiagramUpdateThrottle,
-    saveSheetUpdateThrottle,
-    loadIndependentSheet,
-    initDiagram,
-    saveOtherSheetUpdateThrottle,
-    assetAPI,
-  ]);
-
-  useEffect(() => {
-    postConnectionInfo(canSyncWorkspace);
-  }, [canSyncWorkspace]);
-
   const flushSaveThrottles = useCallback(async () => {
     await saveDiagramUpdateThrottle.flush();
     await saveSheetUpdateThrottle.flush();
@@ -567,6 +539,46 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
   }, [generateUuid, fileAccess, initSheet, flushSaveThrottles]);
+
+  const openRemoteDiagram = useCallback(
+    async (diagramUpdate?: Uint8Array) => {
+      await flushSaveThrottles();
+      await fileAccess.disconnect();
+      setCanSyncWorkspace(false);
+      initDiagram(diagramUpdate);
+    },
+    [initDiagram, flushSaveThrottles, fileAccess],
+  );
+
+  useEffect(() => {
+    const bc = newWSChannel({
+      roomId: "test",
+      diagramDoc,
+      sheetDoc,
+      skipDiagramSave: () => saveDiagramUpdateThrottle.clear(true),
+      skipSheetSave: () => saveSheetUpdateThrottle.clear(true),
+      loadSheet: loadIndependentSheet,
+      openDiagram: openRemoteDiagram,
+      saveSheet: saveOtherSheetUpdateThrottle,
+      assetAPI,
+    });
+    return () => {
+      bc.close();
+    };
+  }, [
+    diagramDoc,
+    sheetDoc,
+    saveDiagramUpdateThrottle,
+    saveSheetUpdateThrottle,
+    loadIndependentSheet,
+    openRemoteDiagram,
+    saveOtherSheetUpdateThrottle,
+    assetAPI,
+  ]);
+
+  useEffect(() => {
+    postConnectionInfo(canSyncWorkspace);
+  }, [canSyncWorkspace]);
 
   return {
     initSheet,

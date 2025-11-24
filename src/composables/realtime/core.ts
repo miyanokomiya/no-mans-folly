@@ -43,7 +43,7 @@ export type RealtimeHandler = (props: {
   skipDiagramSave: () => void;
   skipSheetSave: () => void;
   loadSheet: (sheetId: string) => Promise<Y.Doc>;
-  initDiagram: (diagramUpdate: Uint8Array) => Promise<void>;
+  openDiagram: (diagramUpdate: Uint8Array) => Promise<void>;
   saveSheet: (sheetId: string, update: Uint8Array) => void;
   assetAPI: AssetAPI;
 }) => { close: () => void };

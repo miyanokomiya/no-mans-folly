@@ -22,8 +22,8 @@ export function newFileAccess(): FileAccess {
     }
   }
 
-  async function openAssetDirectory(): Promise<true | undefined> {
-    if (!handle) {
+  async function openAssetDirectory(ifPossible?: boolean): Promise<true | undefined> {
+    if (!handle && !ifPossible) {
       await openDirectory();
     }
     if (!handle) return;
@@ -136,9 +136,9 @@ export function newFileAccess(): FileAccess {
     });
   }
 
-  async function loadAsset(assetId: string): Promise<File | undefined> {
+  async function loadAsset(assetId: string, ifPossible?: boolean): Promise<File | undefined> {
     if (!assetHandle) {
-      await openAssetDirectory();
+      await openAssetDirectory(ifPossible);
     }
     if (!assetHandle) return;
 
