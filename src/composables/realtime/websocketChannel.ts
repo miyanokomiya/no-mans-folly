@@ -21,7 +21,8 @@ export function isWebsocketChannelActive(): boolean {
 
 export async function initWSClient(props: { canHost: boolean; roomId: string; onClose?: () => void }) {
   closeWSClient();
-  const preClient = new WebSocket(`${WS_ENDPOINT}/rooms/${props.roomId}?canHost=${props.canHost ? 1 : 0}`);
+  const encodedRoomId = encodeURI(props.roomId);
+  const preClient = new WebSocket(`${WS_ENDPOINT}/rooms/${encodedRoomId}?canHost=${props.canHost ? 1 : 0}`);
 
   return new Promise<void>((resolve, reject) => {
     preClient?.addEventListener("error", reject);
