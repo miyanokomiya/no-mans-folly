@@ -158,30 +158,18 @@ export const newWSChannel: RealtimeHandler = (props) => {
       case "sheet-sync-req": {
         if (!data.update) return;
 
-        // Merge the requester's sheet
-        if (props.sheetDoc.meta.sheetId === data.id) {
-          const sheet = props.sheetDoc;
-          Y.applyUpdate(sheet, stringToUint8Array(data.update));
+        const isCurrentSheet = props.sheetDoc.meta.sheetId === data.id;
+        const sheet = isCurrentSheet ? props.sheetDoc : await props.loadSheet(data.id);
 
-          // Broadcast as an usual sheet update
-          postWSMessage({
-            type: "sheet-update",
-            id: data.id,
-            update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
-            author: data.author,
-          } as RTMessageData);
-        } else {
-          const sheet = await props.loadSheet(data.id);
-          Y.applyUpdate(sheet, stringToUint8Array(data.update));
+        // Broadcast as an usual sheet update
+        postWSMessage({
+          type: "sheet-update",
+          id: data.id,
+          update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
+          author: data.author,
+        } as RTMessageData);
 
-          // Broadcast as an usual sheet update
-          postWSMessage({
-            type: "sheet-update",
-            id: data.id,
-            update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
-            author: data.author,
-          } as RTMessageData);
-
+        if (!isCurrentSheet) {
           sheet.destroy();
         }
         return;

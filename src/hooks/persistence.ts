@@ -17,7 +17,6 @@ import {
   closeWSClient,
   newWSChannel,
   postConnectionInfo,
-  postWSMessage,
   requestSheetSync,
   WS_UPDATE_ORIGIN,
 } from "../composables/realtime/websocketChannel";
