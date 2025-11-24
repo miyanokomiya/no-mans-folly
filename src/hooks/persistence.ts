@@ -464,8 +464,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
 
   const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
-    flushSaveThrottles();
-    closeWSClient();
+    await flushSaveThrottles();
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
     try {
@@ -483,6 +482,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       return false;
     }
 
+    closeWSClient();
     await clearIndexeddbPersistenceAll();
 
     const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
