@@ -511,6 +511,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       loadSheet: loadIndependentSheet,
       initDiagram,
       saveSheet: saveOtherSheetUpdateThrottle,
+      assetAPI,
     });
     return () => {
       bc.close();
@@ -523,6 +524,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     loadIndependentSheet,
     initDiagram,
     saveOtherSheetUpdateThrottle,
+    assetAPI,
   ]);
 
   useEffect(() => {

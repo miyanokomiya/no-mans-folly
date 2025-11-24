@@ -2,6 +2,7 @@ import * as Y from "yjs";
 import { RealtimeHandler, RTMessageData } from "./core";
 import { encodeStateAsUpdateWithGC, stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
 import { newCallback } from "../../utils/stateful/reactives";
+import { base64ToBlob, blobToBase64 } from "../../utils/fileAccess";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
@@ -11,6 +12,7 @@ let connectionId: string | undefined = undefined;
 let client: WebSocket | undefined;
 export const websocketChannelCallback = newCallback<boolean>();
 export const websocketRoomCallback = newCallback<{ count: number }>();
+export const websocketAssetCallback = newCallback<{ id: string; asset: Blob }>();
 const messageCallback = newCallback<MessageEvent>();
 
 export function isWebsocketChannelActive(): boolean {
@@ -184,6 +186,29 @@ export const newWSChannel: RealtimeHandler = (props) => {
         }
         return;
       }
+      case "asset-req": {
+        if (!props.assetAPI.enabled) return;
+
+        const file = await props.assetAPI.loadAsset(data.id);
+        if (!file) return;
+
+        const asset = await blobToBase64(file);
+        postWSMessage({
+          type: "asset-res",
+          id: data.id,
+          asset,
+          fileType: file.type,
+          author: data.author,
+        } as RTMessageData);
+        return;
+      }
+      case "asset-res": {
+        if (!props.assetAPI.enabled || !data.asset || !data.fileType) return;
+
+        const asset = base64ToBlob(data.asset, data.fileType);
+        await props.assetAPI.saveAsset(data.id, asset);
+        websocketAssetCallback.dispatch({ id: data.id, asset });
+      }
     }
   }
   addMeesageHandler(onMessage);
@@ -222,5 +247,13 @@ export function postConnectionInfo(canHost: boolean) {
   postWSMessage({
     type: "connection",
     canHost,
+  });
+}
+
+export function requestAssetSync(assetId: string) {
+  postWSMessage({
+    type: "asset-req",
+    id: assetId,
+    author: connectionId,
   });
 }

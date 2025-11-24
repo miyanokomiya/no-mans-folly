@@ -24,6 +24,11 @@ import { getAllBranchIds, getTree } from "../../utils/tree";
 import { getDeleteTargetIds } from "../../composables/shapeComposite";
 import { patchPipe } from "../../utils/commons";
 import { AppUndoManager } from "../../contexts/AppCanvasContext";
+import {
+  isWebsocketChannelActive,
+  requestAssetSync,
+  websocketAssetCallback,
+} from "../../composables/realtime/websocketChannel";
 
 export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
   // Use the same store for all sheets to handle asyncronous processes properly.
@@ -58,6 +63,16 @@ export function useLoadShapeAssets(
   getSmctx: () => AppCanvasStateContext,
   sheets: Sheet[],
 ) {
+  useEffect(() => {
+    return websocketAssetCallback.bind(async (data) => {
+      const ctx = getSmctx();
+      if (ctx.assetAPI.enabled) {
+        await ctx.assetAPI.saveAsset(data.id, data.asset);
+      }
+      await imageStore.loadFromFile(data.id, data.asset);
+    });
+  }, [imageStore, getSmctx]);
+
   return useCallback(
     async (shapes: Shape[]) => {
       const errors = await imageStore.batchLoad(
@@ -65,14 +80,24 @@ export function useLoadShapeAssets(
         assetAPI,
       );
       if (errors && errors.length > 0) {
-        getSmctx().showToastMessage({ text: `Failed to load ${errors.length} asset file(s).`, type: "warn" });
+        if (isWebsocketChannelActive()) {
+          errors.forEach((assetId) => {
+            requestAssetSync(assetId);
+          });
+        } else {
+          getSmctx().showToastMessage({ text: `Failed to load ${errors.length} asset file(s).`, type: "warn" });
+        }
       }
-      // Load sheet thumbnails. These don't always exist, so we ignore errors.
-      await imageStore.batchLoad(
+      // Load sheet thumbnails. These don't always exist, so we can ignore errors.
+      const thumbnailErrors = await imageStore.batchLoad(
         sheets.map<string | undefined>((sheet) => getSheetThumbnailFileName(sheet.id)),
         assetAPI,
-        true,
       );
+      if (thumbnailErrors && thumbnailErrors.length > 0 && isWebsocketChannelActive()) {
+        thumbnailErrors.forEach((assetId) => {
+          requestAssetSync(assetId);
+        });
+      }
     },
     [getSmctx, assetAPI, imageStore, sheets],
   );

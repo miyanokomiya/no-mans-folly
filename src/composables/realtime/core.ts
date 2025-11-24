@@ -1,11 +1,22 @@
 import * as Y from "yjs";
+import { AssetAPI } from "../../hooks/persistence";
 
-type RTUpdateData = {
+type RTData = {
+  sender?: string; // Set by the server
+  author?: string; // Original sender who initiates the consequent messages
+};
+
+type RTUpdateData = RTData & {
   type: "diagram-sync-req" | "diagram-open" | "diagram-update" | "sheet-sync-req" | "sheet-update";
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
-  sender?: string; // Set by the server
-  author?: string; // Original sender who initiates the consequent messages
+};
+
+type RTAssetData = RTData & {
+  type: "asset-req" | "asset-res";
+  id: string;
+  asset?: string;
+  fileType?: string;
 };
 
 type RTInitialData = {
@@ -23,7 +34,7 @@ type RTConnectionData = {
   canHost: boolean;
 };
 
-export type RTMessageData = RTUpdateData | RTRoomData | RTConnectionData | RTInitialData;
+export type RTMessageData = RTUpdateData | RTRoomData | RTConnectionData | RTInitialData | RTAssetData;
 
 export type RealtimeHandler = (props: {
   roomId: string;
@@ -34,4 +45,5 @@ export type RealtimeHandler = (props: {
   loadSheet: (sheetId: string) => Promise<Y.Doc>;
   initDiagram: (diagramUpdate: Uint8Array) => Promise<void>;
   saveSheet: (sheetId: string, update: Uint8Array) => void;
+  assetAPI: AssetAPI;
 }) => { close: () => void };

@@ -34,6 +34,7 @@ import { renderFrameNames } from "../../composables/frame";
 import { FloatMenuOption } from "../../composables/states/commons";
 import { newDebounce } from "../../utils/stateful/debounce";
 import { saveSheetThumbnailAsSvg } from "../../composables/states/appCanvas/utils/shapeExport";
+import { isImageShape } from "../../shapes/image";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -77,10 +78,21 @@ export const AppCanvas: React.FC = () => {
       // Prepare cached image store in case selected sheet is changed.
       // => When it changes, the image store no longer have iamges for the target sheet.
       const imageStoreCache = imageStore.getImageStoreCache();
-      saveSheetThumbnailDebounce(sheetId, { ...getSmctx(), getImageStore: () => imageStoreCache }, (assetId, blob) => {
-        // Load the thumbnail image to the latest image store.
-        imageStore.loadFromFile(assetId, blob);
-      });
+      saveSheetThumbnailDebounce(
+        sheetId,
+        {
+          ...getSmctx(),
+          getImageStore: () => {
+            // Use merged image store having both cached and the latest images.
+            // => This resolves invalid thumbnail issue after loading the sheet that comes from other clients.
+            return getSmctx().getImageStore().getMergedImageStores(imageStoreCache);
+          },
+        },
+        (assetId, blob) => {
+          // Load the thumbnail image to the latest image store.
+          imageStore.loadFromFile(assetId, blob);
+        },
+      );
     }
   }, [sheetStore, getSmctx, saveSheetThumbnailDebounce, imageStore]);
 
@@ -126,8 +138,15 @@ export const AppCanvas: React.FC = () => {
       });
       setCanvasState({});
       processSheetThumbnail();
+
+      // Proc image loading in case image shapes come from other clients
+      const ids = Array.from(keys);
+      const images = ids.map((id) => shapeStore.getEntity(id)).filter((s) => !!s && isImageShape(s));
+      if (images.length > 0) {
+        loadShapeAssets(images);
+      }
     });
-  }, [shapeStore, sm, processSheetThumbnail]);
+  }, [shapeStore, sm, processSheetThumbnail, loadShapeAssets]);
 
   useEffect(() => {
     return shapeStore.watchTmpShapeMap((keys) => {
