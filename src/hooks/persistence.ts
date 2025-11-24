@@ -220,56 +220,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     [generateUuid, initSheet],
   );
 
-  const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
-    await flushSaveThrottles();
-    closeWSClient();
-    setReady(false);
-    const nextDiagramDoc = new Y.Doc();
-    try {
-      const result = await fileAccess.openDiagram(nextDiagramDoc);
-      setSyncStatus("ok");
-      setCanSyncWorkspace(fileAccess.hasHandle());
-      if (!result) {
-        setReady(true);
-        return false;
-      }
-    } catch (e) {
-      handleSyncError(e);
-      console.error("Failed to open diagram", e);
-      setReady(true);
-      return false;
-    }
-
-    await clearIndexeddbPersistenceAll();
-
-    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-    await provider?.whenSynced;
-    const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-
-    const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
-    if (sheetStore.getEntities().length === 0) {
-      createInitialSheet(sheetStore, generateUuid);
-      try {
-        // Need to save the diagram having new sheet.
-        await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
-        setSyncStatus("ok");
-      } catch (e) {
-        handleSyncError(e);
-        console.error("Failed to sync diagram", e);
-      }
-    }
-
-    sheetStore.selectSheet(getSheetIdFromQuery());
-    const sheet = sheetStore.getSelectedSheet()!;
-    await initSheet(sheet.id);
-
-    setDbProviderDiagram(provider);
-    setDiagramDoc(nextDiagramDoc);
-    setDiagramStores({ diagramStore, sheetStore });
-    setReady(true);
-    return true;
-  }, [generateUuid, fileAccess, handleSyncError, initSheet]);
-
   /**
    * This method is intended for the case that the diagram has one sheet without workspace in the app.
    * => Not intended for duplicating the the diagram and the all sheets to other workspace.
@@ -512,6 +462,56 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       await fn.flush();
     }
   }, [saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
+
+  const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
+    flushSaveThrottles();
+    closeWSClient();
+    setReady(false);
+    const nextDiagramDoc = new Y.Doc();
+    try {
+      const result = await fileAccess.openDiagram(nextDiagramDoc);
+      setSyncStatus("ok");
+      setCanSyncWorkspace(fileAccess.hasHandle());
+      if (!result) {
+        setReady(true);
+        return false;
+      }
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to open diagram", e);
+      setReady(true);
+      return false;
+    }
+
+    await clearIndexeddbPersistenceAll();
+
+    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    await provider?.whenSynced;
+    const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
+
+    const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
+    if (sheetStore.getEntities().length === 0) {
+      createInitialSheet(sheetStore, generateUuid);
+      try {
+        // Need to save the diagram having new sheet.
+        await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
+        setSyncStatus("ok");
+      } catch (e) {
+        handleSyncError(e);
+        console.error("Failed to sync diagram", e);
+      }
+    }
+
+    sheetStore.selectSheet(getSheetIdFromQuery());
+    const sheet = sheetStore.getSelectedSheet()!;
+    await initSheet(sheet.id);
+
+    setDbProviderDiagram(provider);
+    setDiagramDoc(nextDiagramDoc);
+    setDiagramStores({ diagramStore, sheetStore });
+    setReady(true);
+    return true;
+  }, [generateUuid, fileAccess, handleSyncError, initSheet, flushSaveThrottles]);
 
   const clearDiagram = useCallback(async () => {
     await flushSaveThrottles();
