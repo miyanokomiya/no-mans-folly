@@ -168,6 +168,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
 
         const isCurrentSheet = props.sheetDoc.meta.sheetId === data.id;
         const sheet = isCurrentSheet ? props.sheetDoc : await props.loadSheet(data.id);
+        Y.applyUpdate(sheet, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
 
         // Broadcast as an usual sheet update
         postWSMessage({
