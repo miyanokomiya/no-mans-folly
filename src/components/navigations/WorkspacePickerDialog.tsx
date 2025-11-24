@@ -8,6 +8,7 @@ import googleDriveLogo from "../../assets/externals/google_drive_logo.png";
 import folderColoredIcon from "../../assets/icons/folder_colored.svg";
 import linkIcon from "../../assets/icons/link.svg";
 import googleSignInButton from "../../assets/externals/google_sign_in_light.svg";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -31,17 +32,18 @@ export const WorkspacePickerDialog: React.FC<Props> = ({
   const [googleToken, setGoogleToken] = useState<string>();
   const [googleMode, setGoogleMode] = useState<"" | "loading" | "ready" | "opening" | "opened">("");
   const [error, setError] = useState<"google_401" | "google_unknown">();
+  const { t } = useTranslation();
 
   const title = useMemo(() => {
     switch (actionType) {
       case "save":
-        return "Save and open [[(l)WORKSPACE]]";
+        return t("save_and_open_workspace");
       case "export":
-        return "Export [[(l)WORKSPACE]]";
+        return t("export_workspace");
       default:
-        return "Open [[(l)WORKSPACE]]";
+        return t("open_workspace");
     }
-  }, [actionType]);
+  }, [actionType, t]);
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder) => {
