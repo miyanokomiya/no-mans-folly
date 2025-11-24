@@ -1,14 +1,7 @@
 import * as Y from "yjs";
 
 type RTUpdateData = {
-  type:
-    | "diagram-sync-req"
-    | "diagram-open"
-    | "diagram-update"
-    | "sheet-sync-req"
-    | "sheet-update"
-    | "diagram-saved"
-    | "sheet-saved";
+  type: "diagram-sync-req" | "diagram-open" | "diagram-update" | "sheet-sync-req" | "sheet-update";
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
   sender?: string; // Set by the server

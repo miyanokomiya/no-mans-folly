@@ -349,12 +349,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   useEffect(() => {
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
       setSavePending((val) => ({ ...val, diagram: pending }));
-      if (!pending) {
-        postWSMessage({
-          type: "diagram-saved",
-          id: diagramDoc.meta.diagramId,
-        });
-      }
     });
     return () => {
       saveDiagramUpdateThrottle.flush();
@@ -441,12 +435,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   useEffect(() => {
     const unwatch = saveSheetUpdateThrottle.watch((pending) => {
       setSavePending((val) => ({ ...val, sheet: pending }));
-      if (!pending) {
-        postWSMessage({
-          type: "sheet-saved",
-          id: getSheetId(sheetDoc),
-        });
-      }
     });
     return () => {
       saveSheetUpdateThrottle.flush();
