@@ -30,6 +30,14 @@ export function newImageStore(option?: Option) {
     return newImageStore({ imageDataList: Array.from(imageMap.entries()) });
   }
 
+  function getImageDataList(): [string, ImageData][] {
+    return Array.from(imageMap.entries());
+  }
+
+  function getMergedImageStores(src: ImageStore): ImageStore {
+    return newImageStore({ imageDataList: getImageDataList().concat(src.getImageDataList()) });
+  }
+
   /**
    * When SVG doesn't have "xmlns:xlink" attribute, it can't be drawn by Canvas API's "drawImage".
    * Doing "document.body.appendChild(img)" can be a workaround though, not sure if it's worth doing.
@@ -67,11 +75,7 @@ export function newImageStore(option?: Option) {
   /**
    * Returns error id list when there is any.
    */
-  async function batchLoad(
-    assetIds: (string | undefined)[],
-    assetAPI: AssetAPI,
-    ignoreError = false,
-  ): Promise<string[] | undefined> {
+  async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<string[] | undefined> {
     if (!assetAPI.enabled) return;
 
     const errors: string[] = [];
@@ -83,12 +87,12 @@ export function newImageStore(option?: Option) {
           const file = await assetAPI.loadAsset(assetId);
           if (file) {
             await loadFromFile(assetId, file);
-          }
-        } catch (e) {
-          if (!ignoreError) {
-            console.error(e);
+          } else {
             errors.push(assetId);
           }
+        } catch (e) {
+          console.warn(e);
+          errors.push(assetId);
         } finally {
           processing.delete(assetId);
         }
@@ -121,6 +125,8 @@ export function newImageStore(option?: Option) {
     replaceImageData,
     getImageStoreCache,
     watch: callback.bind,
+    getImageDataList,
+    getMergedImageStores,
   };
 }
 export type ImageStore = ReturnType<typeof newImageStore>;
