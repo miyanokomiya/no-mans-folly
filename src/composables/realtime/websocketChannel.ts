@@ -9,14 +9,19 @@ export const WS_UPDATE_ORIGIN = "ws-update";
 // This is used to idenfity if the message is originated by this client
 let connectionId: string | undefined = undefined;
 
-let client: WebSocket | undefined;
-export const websocketChannelCallback = newCallback<boolean>();
-export const websocketRoomCallback = newCallback<{ count: number }>();
+export type WSClient = { client: WebSocket; id: string; count: number };
+let client: WSClient | undefined;
+export const websocketCallback = newCallback<WSClient | undefined>();
 export const websocketAssetCallback = newCallback<{ id: string; asset: Blob }>();
 const messageCallback = newCallback<MessageEvent>();
 
-export function isWebsocketChannelActive(): boolean {
-  return !!client;
+function setClient(val: WSClient | undefined) {
+  client = val;
+  websocketCallback.dispatch(client as any);
+}
+
+export function getWebsocketClient(): WSClient | undefined {
+  return client;
 }
 
 export async function initWSClient(props: { canHost: boolean; roomId: string; onClose?: () => void }) {
@@ -33,8 +38,9 @@ export async function initWSClient(props: { canHost: boolean; roomId: string; on
       "open",
       () => {
         preClient?.removeEventListener("error", reject);
-        client = preClient;
-        websocketChannelCallback.dispatch(true);
+        const nextClient = { client: preClient, id: props.roomId, count: 0 };
+        setClient(nextClient);
+        websocketCallback.dispatch(nextClient);
         preClient.addEventListener("message", messageCallback.dispatch);
         resolve();
       },
@@ -47,10 +53,9 @@ export function closeWSClient() {
   if (!client) return;
 
   connectionId = undefined;
-  client.removeEventListener("message", messageCallback.dispatch);
-  client.close();
-  client = undefined;
-  websocketChannelCallback.dispatch(false);
+  client.client.removeEventListener("message", messageCallback.dispatch);
+  client.client.close();
+  setClient(undefined);
 }
 
 function addMeesageHandler(h: (e: MessageEvent) => void) {
@@ -63,7 +68,7 @@ function removeMeesageHandler(h: (e: MessageEvent) => void) {
 
 export function postWSMessage(data: RTMessageData) {
   // Needless to initialize the client unless listening
-  client?.send(JSON.stringify(data));
+  client?.client.send(JSON.stringify(data));
 }
 
 /**
@@ -95,7 +100,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
   props.sheetDoc.on("update", onSheetUpdate);
 
   async function onMessage(e: MessageEvent) {
-    if (closed) return;
+    if (closed || !client) return;
 
     const data = JSON.parse(e.data) as RTMessageData;
 
@@ -107,7 +112,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
         return;
       }
       case "room": {
-        websocketRoomCallback.dispatch(data);
+        setClient({ ...client, count: data.count });
         return;
       }
     }
