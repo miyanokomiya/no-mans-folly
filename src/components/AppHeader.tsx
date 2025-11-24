@@ -8,6 +8,7 @@ import { GOOGLE_AUTH_RETIEVAL_URL } from "../google/utils/auth";
 import { CleanSheetDialog } from "./navigations/CleanSheetDialog";
 import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
 import { useUserSetting } from "../hooks/storeHooks";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   onClickOpen: () => void;
@@ -42,6 +43,7 @@ export const AppHeader: React.FC<Props> = ({
   const [ctrlS, setCtrlS] = useState(false);
   const [popupedKey, setPopupedKey] = useState("");
   const [userSetting] = useUserSetting();
+  const { t } = useTranslation();
 
   const onClickPopupButton = useCallback(
     (name: string) => {
@@ -174,14 +176,14 @@ export const AppHeader: React.FC<Props> = ({
       return (
         <div className="flex flex-col w-max">
           <ListButton disabled={!isWorkspaceStable} onClick={handleClickExport}>
-            Export workspace
+            {t("header.export_workspace")}
           </ListButton>
           <ListButton disabled={!isWorkspaceStable} onClick={handleClickClear}>
-            Disconnect workspace
+            {t("header.disconnect_workspace")}
           </ListButton>
           <ListSpacer />
           <ListButton disabled={!isWorkspaceStable} onClick={handleClickCleanSheet}>
-            Clean sheet
+            {t("header.clean_sheet")}
           </ListButton>
         </div>
       );
@@ -189,17 +191,18 @@ export const AppHeader: React.FC<Props> = ({
 
     return (
       <div className="flex flex-col w-max">
-        <ListButton onClick={handleClickOpen}>Open workspace</ListButton>
-        <ListButton onClick={handleClickSave}>Save & Open workspace</ListButton>
+        <ListButton onClick={handleClickOpen}>{t("header.open_workspace")}</ListButton>
+        <ListButton onClick={handleClickSave}>{t("header.save_and_open_workspace")}</ListButton>
         {hasTemporaryDiagram ? (
           <>
             <ListSpacer />
-            <ListButton onClick={handleClickClear}>Clear diagram</ListButton>
+            <ListButton onClick={handleClickClear}>{t("header.clear_workspace")}</ListButton>
           </>
         ) : undefined}
       </div>
     );
   }, [
+    t,
     handleClickOpen,
     handleClickSave,
     handleClickExport,
@@ -219,17 +222,17 @@ export const AppHeader: React.FC<Props> = ({
         onClick={onClickPopupButton}
         popupPosition="right"
       >
-        <div className="px-2">File</div>
+        <div className="px-2">{t("header.file")}</div>
       </PopupButton>
       <div className="ml-2 text-sm">{storageMessage}</div>
       <Dialog
         open={openClearConfirm}
         onClose={closeClearConfirm}
-        title={workspaceType ? "Disconnect workspace" : "Clear diagram"}
+        title={workspaceType ? t("header.disconnect_workspace") : t("header.clear_workspace")}
         actions={
           <>
-            <DialogButtonPlain onClick={closeClearConfirm}>Cancel</DialogButtonPlain>
-            <DialogButtonAlert onClick={clearDiagram}>Clear</DialogButtonAlert>
+            <DialogButtonPlain onClick={closeClearConfirm}>{t("cancel")}</DialogButtonPlain>
+            <DialogButtonAlert onClick={clearDiagram}>{t("clear")}</DialogButtonAlert>
           </>
         }
       >

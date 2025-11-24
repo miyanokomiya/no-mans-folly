@@ -82,6 +82,9 @@ export const RealtimePanel: React.FC = () => {
             {t("realtime.disconnect")}
           </FormButton>
         ) : undefined}
+        <h3 className="mt-2 text-lg font-bold">{t("realtime.about_workspace.title")}</h3>
+        <p>{t("realtime.about_workspace.open")}</p>
+        <p>{t("realtime.about_workspace.save_and_open")}</p>
       </div>
     </div>
   );

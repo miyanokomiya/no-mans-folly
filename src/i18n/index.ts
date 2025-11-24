@@ -9,6 +9,8 @@ const en = {
     "app.documentation": "Documentation",
     workspace: "Workspace",
     open_workspace: "Open [[(l)WORKSPACE]]",
+    save_and_open_workspace: "Save and open [[(l)WORKSPACE]]",
+    export_workspace: "Export [[(l)WORKSPACE]]",
     select_workspace:
       "Select <tag_folder>a folder</tag_folder> as a workspace, then all updates are automatically saved there.",
     local_folder: "Local folder",
@@ -20,6 +22,7 @@ const en = {
     update_sw: "New content available, click on reload button to update.",
     reload: "Reload",
     cancel: "Cancel",
+    clear: "Clear",
     options: "Options",
 
     export: {
@@ -47,6 +50,12 @@ const en = {
       connected: "Connected",
       disconnect: "Disconnect",
       connect: "Connect",
+      about_workspace: {
+        title: "Workspace operations",
+        open: '"Open workspace" discards the room connection and open chosen workspace.',
+        save_and_open:
+          '"Save & Open workspace" keeps the room connection and merge the current workspace and chosen one.',
+      },
     },
 
     exconnection: {
@@ -83,6 +92,16 @@ const en = {
       "sheet_to_shape.desc": "Create a shape that displays the thumbnail of the sheet.",
       nobounds: "No bounds within group",
       "nobounds.desc": "This shape doesn't contribute to the bounds of the parent group shape.",
+    },
+
+    header: {
+      file: "File",
+      open_workspace: "Open workspace",
+      save_and_open_workspace: "Save & Open workspace",
+      clear_workspace: "Clear workspace",
+      disconnect_workspace: "Disconnect workspace",
+      export_workspace: "Export workspace",
+      clean_sheet: "Clean sheet",
     },
 
     contextmenu: {
@@ -143,6 +162,8 @@ const ja: TranslationResource = {
     "app.documentation": "ドキュメンテーション",
     workspace: "ワークスペース",
     open_workspace: "[[WORKSPACE]]選択",
+    save_and_open_workspace: "[[(l)WORKSPACE]]保存&選択",
+    export_workspace: "[[(l)WORKSPACE]]エクスポート",
     select_workspace:
       "<tag_folder>フォルダ</tag_folder>をワークスペースとして選択します。全ての変更は自動的にワークスペースに保存されます。",
     local_folder: "ローカルフォルダ",
@@ -153,6 +174,7 @@ const ja: TranslationResource = {
     update_sw: "アプリケーションに更新があります。リロードボタン押下で更新します。",
     reload: "リロード",
     cancel: "キャンセル",
+    clear: "クリア",
     options: "設定",
 
     export: {
@@ -180,6 +202,12 @@ const ja: TranslationResource = {
       connected: "接続済",
       disconnect: "切断",
       connect: "接続",
+      about_workspace: {
+        title: "ワークスペース操作",
+        open: "「ワークスペース選択」はルームを切断し、選択したワークスペースを開きます。",
+        save_and_open:
+          "「ワークスペース保存&選択」はルームを維持し、現在のワークスペースと選択したワークスペースをマージします。",
+      },
     },
 
     exconnection: {
@@ -215,6 +243,16 @@ const ja: TranslationResource = {
       "sheet_to_shape.desc": "シートのサムネイルを表示するシェイプを作成します。",
       nobounds: "グループ内サイズなし",
       "nobounds.desc": "このシェイプは親グループシェイプのサイズに影響しません。",
+    },
+
+    header: {
+      file: "ファイル",
+      open_workspace: "ワークスペース選択",
+      save_and_open_workspace: "ワークスペース保存&選択",
+      clear_workspace: "ワークスペースクリア",
+      disconnect_workspace: "ワークスペース切断",
+      export_workspace: "ワークスペースエクスポート",
+      clean_sheet: "シートクリーン",
     },
 
     contextmenu: {
