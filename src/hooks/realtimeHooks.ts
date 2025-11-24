@@ -1,26 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  isWebsocketChannelActive,
-  websocketRoomCallback,
-  websocketChannelCallback,
-} from "../composables/realtime/websocketChannel";
+import { getWebsocketClient, websocketCallback, WSClient } from "../composables/realtime/websocketChannel";
 
-export function useWebsocketChannelActive(): boolean {
-  const [state, setState] = useState(() => isWebsocketChannelActive());
+export function useWebsocketClient(): WSClient | undefined {
+  const [state, setState] = useState(() => getWebsocketClient());
   useEffect(() => {
-    return websocketChannelCallback.bind((val) => {
-      setState(val);
-    });
-  }, []);
-
-  return state;
-}
-
-export function useWebsocketRoom(): { count: number } {
-  const [state, setState] = useState(() => ({ count: 0 }));
-  useEffect(() => {
-    return websocketRoomCallback.bind((val) => {
-      setState(val);
+    return websocketCallback.bind((...val) => {
+      setState(val[0]);
     });
   }, []);
 

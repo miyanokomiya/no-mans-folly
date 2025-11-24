@@ -23,6 +23,8 @@ interface Props {
   syncStatus: "ok" | "autherror" | "unknownerror";
   workspaceType?: "local" | "google";
   hasTemporaryDiagram?: boolean;
+  isWebsocketActive?: boolean;
+  onRealtimeClick?: () => void;
 }
 
 export const AppHeader: React.FC<Props> = ({
@@ -38,6 +40,8 @@ export const AppHeader: React.FC<Props> = ({
   syncStatus,
   workspaceType,
   hasTemporaryDiagram,
+  isWebsocketActive,
+  onRealtimeClick,
 }) => {
   // Used for pretending to save
   const [ctrlS, setCtrlS] = useState(false);
@@ -225,6 +229,13 @@ export const AppHeader: React.FC<Props> = ({
         <div className="px-2">{t("header.file")}</div>
       </PopupButton>
       <div className="ml-2 text-sm">{storageMessage}</div>
+      <div className="ml-1 flex items-center justify-center">
+        <button
+          type="button"
+          className={"rounded-full w-6 h-6 border-1 " + (isWebsocketActive ? "bg-green-500" : "bg-gray-300")}
+          onClick={onRealtimeClick}
+        ></button>
+      </div>
       <Dialog
         open={openClearConfirm}
         onClose={closeClearConfirm}

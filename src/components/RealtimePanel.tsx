@@ -6,16 +6,18 @@ import { FormButton } from "./atoms/buttons/FormButton";
 import { GetAppStateContext } from "../contexts/AppContext";
 import { useTranslation } from "react-i18next";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { useWebsocketRoom } from "../hooks/realtimeHooks";
+import { useWebsocketClient } from "../hooks/realtimeHooks";
 
 export const RealtimePanel: React.FC = () => {
   const { t } = useTranslation();
-  const [roomIdDraft, setRoomIdDraft] = useState("");
-  const [status, setStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
+  const client = useWebsocketClient();
+  const [roomIdDraft, setRoomIdDraft] = useState(client?.id ?? "");
+  const [status, setStatus] = useState<"disconnected" | "connecting" | "connected">(
+    client ? "connected" : "disconnected",
+  );
 
   const { canSyncWorkspace } = useContext(AppCanvasContext);
   const getCtx = useContext(GetAppStateContext);
-  const room = useWebsocketRoom();
 
   const handleConnect = useCallback(
     async (e: React.FormEvent) => {
@@ -52,7 +54,7 @@ export const RealtimePanel: React.FC = () => {
   function getStatusLabel() {
     switch (status) {
       case "connected":
-        return `${room.count} ${t("realtime.connected")}`;
+        return `${client?.count ?? 0} ${t("realtime.connected")}`;
       case "connecting":
         return t("realtime.connecting");
       default:

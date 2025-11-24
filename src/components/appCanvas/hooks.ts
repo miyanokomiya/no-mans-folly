@@ -25,7 +25,7 @@ import { getDeleteTargetIds } from "../../composables/shapeComposite";
 import { patchPipe } from "../../utils/commons";
 import { AppUndoManager } from "../../contexts/AppCanvasContext";
 import {
-  isWebsocketChannelActive,
+  getWebsocketClient,
   requestAssetSync,
   websocketAssetCallback,
 } from "../../composables/realtime/websocketChannel";
@@ -80,7 +80,7 @@ export function useLoadShapeAssets(
         assetAPI,
       );
       if (errors && errors.length > 0) {
-        if (isWebsocketChannelActive()) {
+        if (getWebsocketClient()) {
           errors.forEach((assetId) => {
             requestAssetSync(assetId);
           });
@@ -93,7 +93,7 @@ export function useLoadShapeAssets(
         sheets.map<string | undefined>((sheet) => getSheetThumbnailFileName(sheet.id)),
         assetAPI,
       );
-      if (thumbnailErrors && thumbnailErrors.length > 0 && isWebsocketChannelActive()) {
+      if (thumbnailErrors && thumbnailErrors.length > 0 && getWebsocketClient()) {
         thumbnailErrors.forEach((assetId) => {
           requestAssetSync(assetId);
         });

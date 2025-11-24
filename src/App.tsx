@@ -30,15 +30,15 @@ import { useLocalStorageAdopter } from "./hooks/localStorage";
 import "./i18n";
 import { createAppUndoManager } from "./hooks/undoManager";
 import { newThrottle } from "./utils/stateful/throttle";
-import { useWebsocketChannelActive } from "./hooks/realtimeHooks";
+import { useWebsocketClient } from "./hooks/realtimeHooks";
 
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
   const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
   const { indexedDBMode } = newFeatureFlags();
-  const isWebsocketChannelActive = useWebsocketChannelActive();
-  const canPersist = fileAccess.hasHandle() || indexedDBMode || isWebsocketChannelActive;
+  const isWebsocketActive = !!useWebsocketClient();
+  const canPersist = fileAccess.hasHandle() || indexedDBMode || isWebsocketActive;
 
   const {
     diagramStore,
@@ -171,6 +171,10 @@ function App() {
     },
     [setRightPanel],
   );
+
+  const handleRealtimeClick = useCallback(() => {
+    setRightPanel("Realtime");
+  }, [setRightPanel]);
 
   const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save" | "export">();
@@ -353,6 +357,8 @@ function App() {
           syncStatus={syncStatus}
           workspaceType={workspaceType}
           hasTemporaryDiagram={hasTemporaryDiagram}
+          isWebsocketActive={isWebsocketActive}
+          onRealtimeClick={handleRealtimeClick}
         />
       </div>
       <ToastMessages messages={toastMessages} closeToastMessage={closeToastMessage} />
