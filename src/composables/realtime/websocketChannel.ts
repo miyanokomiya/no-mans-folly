@@ -126,7 +126,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "diagram-update",
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
-            author: data.author,
+            author: data.sender,
           } as RTMessageData);
         } else {
           // Discard the requester's diagram
@@ -134,7 +134,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             type: "diagram-open",
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
-            author: data.author,
+            author: data.sender,
           } as RTMessageData);
         }
         return;
@@ -143,7 +143,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
         if (!data.update) return;
         if (data.author !== connectionId) return;
 
-        props.initDiagram(stringToUint8Array(data.update));
+        props.openDiagram(stringToUint8Array(data.update));
         return;
       }
       case "diagram-update": {
@@ -168,7 +168,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
           type: "sheet-update",
           id: data.id,
           update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
-          author: data.author,
+          author: data.sender,
         } as RTMessageData);
 
         if (!isCurrentSheet) {
@@ -198,7 +198,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
           id: data.id,
           asset,
           fileType: file.type,
-          author: data.author,
+          author: data.sender,
         } as RTMessageData);
         return;
       }
@@ -230,7 +230,6 @@ function requestDiagramSync(id: string, update: Uint8Array) {
     type: "diagram-sync-req",
     id,
     update: uint8ArrayToString(update),
-    author: connectionId,
   });
 }
 
@@ -239,7 +238,6 @@ export function requestSheetSync(id: string, update: Uint8Array) {
     type: "sheet-sync-req",
     id,
     update: uint8ArrayToString(update),
-    author: connectionId,
   });
 }
 
@@ -254,6 +252,5 @@ export function requestAssetSync(assetId: string) {
   postWSMessage({
     type: "asset-req",
     id: assetId,
-    author: connectionId,
   });
 }

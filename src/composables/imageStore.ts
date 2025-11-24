@@ -84,7 +84,7 @@ export function newImageStore(option?: Option) {
       if (assetId && !processing.has(assetId) && !imageMap.has(assetId)) {
         try {
           processing.add(assetId);
-          const file = await assetAPI.loadAsset(assetId);
+          const file = await assetAPI.loadAsset(assetId, true);
           if (file) {
             await loadFromFile(assetId, file);
           } else {

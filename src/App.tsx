@@ -100,6 +100,12 @@ function App() {
     return userSetting.watch(saveFn);
   }, [userSetting]);
 
+  useEffect(() => {
+    if (!canSyncWorkspace) {
+      setWorkspaceType(undefined);
+    }
+  }, [canSyncWorkspace]);
+
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
 
   const acctx = useMemo<IAppCanvasContext>(() => {
