@@ -34,7 +34,11 @@ type RTConnectionData = {
   canHost: boolean;
 };
 
-export type RTMessageData = RTUpdateData | RTRoomData | RTConnectionData | RTInitialData | RTAssetData;
+type RTPing = {
+  type: "ping";
+};
+
+export type RTMessageData = RTPing | RTUpdateData | RTRoomData | RTConnectionData | RTInitialData | RTAssetData;
 
 export type RealtimeHandler = (props: {
   roomId: string;

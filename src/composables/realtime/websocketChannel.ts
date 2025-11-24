@@ -14,14 +14,28 @@ let client: WSClient | undefined;
 export const websocketCallback = newCallback<WSClient | undefined>();
 export const websocketAssetCallback = newCallback<{ id: string; asset: Blob }>();
 const messageCallback = newCallback<MessageEvent>();
+let keepAliveTimer: number | undefined = undefined;
 
 function setClient(val: WSClient | undefined) {
   client = val;
   websocketCallback.dispatch(client as any);
+  resetKeepAliveTimer();
 }
 
 export function getWebsocketClient(): WSClient | undefined {
   return client;
+}
+
+function resetKeepAliveTimer() {
+  if (keepAliveTimer) {
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = undefined;
+  }
+  if (!client) return;
+
+  keepAliveTimer = setInterval(() => {
+    client?.client.send(JSON.stringify({ type: "ping" } as RTMessageData));
+  }, 1000 * 60) as any;
 }
 
 export async function initWSClient(props: { canHost: boolean; roomId: string; onClose?: () => void }) {
@@ -58,14 +72,6 @@ export function closeWSClient() {
   client.client.removeEventListener("message", messageCallback.dispatch);
   client.client.close();
   setClient(undefined);
-}
-
-function addMeesageHandler(h: (e: MessageEvent) => void) {
-  messageCallback.bind(h);
-}
-
-function removeMeesageHandler(h: (e: MessageEvent) => void) {
-  messageCallback.unbind(h);
 }
 
 export function postWSMessage(data: RTMessageData) {
@@ -105,6 +111,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
     if (closed || !client) return;
 
     const data = JSON.parse(e.data) as RTMessageData;
+    resetKeepAliveTimer();
 
     // Preparation events
     switch (data.type) {
@@ -220,7 +227,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
       }
     }
   }
-  addMeesageHandler(onMessage);
+  messageCallback.bind(onMessage);
 
   return {
     close() {
@@ -228,7 +235,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
 
       props.diagramDoc.off("update", onDiagramUpdate);
       props.sheetDoc.off("update", onSheetUpdate);
-      removeMeesageHandler(onMessage);
+      messageCallback.unbind(onMessage);
       closed = true;
     },
   };
