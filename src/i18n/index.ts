@@ -56,6 +56,12 @@ const en = {
         save_and_open:
           '"Save & Open workspace" keeps the room connection and merge the current workspace and chosen one.',
       },
+      about_dataflow: {
+        title: "Dataflow",
+        dataflow:
+          "The API server only manages WebSocket connections and data transfer across clients without storing workspace data.",
+        host: "Anyone in the room may become the host who distributes workspace data.",
+      },
     },
 
     exconnection: {
@@ -207,6 +213,12 @@ const ja: TranslationResource = {
         open: "「ワークスペース選択」はルームを切断し、選択したワークスペースを開きます。",
         save_and_open:
           "「ワークスペース保存&選択」はルームを維持し、現在のワークスペースと選択したワークスペースをマージします。",
+      },
+      about_dataflow: {
+        title: "データフロー",
+        dataflow:
+          "APIサーバーはWebSocket接続とクライアント間のデータ通信の管理のみを行い、ワークスペースのデータを保存しません。",
+        host: "ルーム内の誰もがワークスペースのデータ配信者となる可能性があります。",
       },
     },
 

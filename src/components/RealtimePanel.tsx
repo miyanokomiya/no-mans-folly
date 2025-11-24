@@ -87,6 +87,9 @@ export const RealtimePanel: React.FC = () => {
         <h3 className="mt-2 text-lg font-bold">{t("realtime.about_workspace.title")}</h3>
         <p>{t("realtime.about_workspace.open")}</p>
         <p>{t("realtime.about_workspace.save_and_open")}</p>
+        <h3 className="mt-2 text-lg font-bold">{t("realtime.about_dataflow.title")}</h3>
+        <p>{t("realtime.about_dataflow.dataflow")}</p>
+        <p>{t("realtime.about_dataflow.host")}</p>
       </div>
     </div>
   );
