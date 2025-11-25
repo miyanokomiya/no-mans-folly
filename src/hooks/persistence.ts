@@ -27,30 +27,18 @@ const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
 
 const { indexedDBMode } = newFeatureFlags();
 
-const defaultDiagramDoc = new Y.Doc();
-const defaultSheetDoc = new Y.Doc();
-const defaultDiagramStores = {
-  diagramStore: newDiagramStore({ ydoc: defaultDiagramDoc }),
-  sheetStore: newSheetStore({ ydoc: defaultDiagramDoc }),
-};
-const defaultSheetStores = {
-  layerStore: newLayerStore({ ydoc: defaultSheetDoc }),
-  shapeStore: newShapeStore({ ydoc: defaultSheetDoc }),
-  documentStore: newDocumentStore({ ydoc: defaultSheetDoc }),
-};
-
 interface PersistenceOption {
   generateUuid: () => string;
   fileAccess: FileAccess;
 }
 
 export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
-  // Empty refers to "file-in-memory"
+  // Empty refers to "file-in-memory" that is the default when no workspace opens
   const [workspaceType, setWorkspaceType] = useState("");
 
-  const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
+  const [diagramDoc, setDiagramDoc] = useState(() => new Y.Doc());
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
-  const [sheetDoc, setSheetDoc] = useState(defaultSheetDoc);
+  const [sheetDoc, setSheetDoc] = useState(() => new Y.Doc());
   const [dbProviderSheet, setDbProviderSheet] = useState<IndexeddbPersistence | undefined>();
   const [ready, setReady] = useState(false);
   const [savePending, setSavePending] = useState({ diagram: false, sheet: false });
@@ -61,21 +49,27 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const activeFileAccess = useMemo(() => {
     return workspaceType ? fileAccess : fileInMemoryAccess;
   }, [workspaceType, fileAccess, fileInMemoryAccess]);
-  const fileAssetAPI = useMemo<AssetAPI>(() => {
+  const assetAPI = useMemo<AssetAPI>(() => {
     return newFileAssetAPI(activeFileAccess);
   }, [activeFileAccess]);
-  const assetAPI = fileAssetAPI;
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
     sheetStore: SheetStore;
-  }>(defaultDiagramStores);
+  }>(() => ({
+    diagramStore: newDiagramStore({ ydoc: diagramDoc }),
+    sheetStore: newSheetStore({ ydoc: diagramDoc }),
+  }));
 
   const [sheetStores, setSheetStores] = useState<{
     layerStore: LayerStore;
     shapeStore: ShapeStore;
     documentStore: DocumentStore;
-  }>(defaultSheetStores);
+  }>(() => ({
+    layerStore: newLayerStore({ ydoc: sheetDoc }),
+    shapeStore: newShapeStore({ ydoc: sheetDoc }),
+    documentStore: newDocumentStore({ ydoc: sheetDoc }),
+  }));
 
   const handleSyncError = useCallback((e: any) => {
     if ("status" in e && e.status === 401) {
