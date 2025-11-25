@@ -18,7 +18,7 @@ let keepAliveTimer: number | undefined = undefined;
 
 function setClient(val: WSClient | undefined) {
   client = val;
-  websocketCallback.dispatch(client as any);
+  websocketCallback.dispatch(client);
   resetKeepAliveTimer();
 }
 

@@ -20,8 +20,8 @@ export const RealtimePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
 
   useEffect(() => {
-    return websocketCallback.bind(() => {
-      setStatus("disconnected");
+    return websocketCallback.bind((client) => {
+      setStatus(client ? "connected" : "disconnected");
     });
   }, []);
 
@@ -33,14 +33,12 @@ export const RealtimePanel: React.FC = () => {
       setStatus("connecting");
       try {
         await initWSClient({ canHost: canSyncWorkspace, roomId: roomIdDraft });
-        setStatus("connected");
       } catch {
         const ctx = getCtx();
         ctx.showToastMessage({
           type: "error",
           text: "Failed to connect to the room.",
         });
-        setStatus("disconnected");
       }
     },
     [canSyncWorkspace, roomIdDraft, status, getCtx],
@@ -48,7 +46,6 @@ export const RealtimePanel: React.FC = () => {
 
   const handleDisconnect = useCallback(() => {
     closeWSClient();
-    setStatus("disconnected");
   }, []);
 
   function getStatusLabel() {
