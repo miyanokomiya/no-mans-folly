@@ -434,7 +434,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const clearDiagram = useCallback(async () => {
     await flushSaveThrottles();
     closeWSClient();
-    await activeFileAccess.disconnect();
+    disconnectFileAccessGracefully(activeFileAccess);
     setReady(false);
     await clearIndexeddbPersistenceAll();
 
@@ -460,7 +460,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const openRemoteDiagram = useCallback(
     async (diagramUpdate?: Uint8Array) => {
       await flushSaveThrottles();
-      await activeFileAccess.disconnect();
+      disconnectFileAccessGracefully(activeFileAccess);
       initDiagram(diagramUpdate);
     },
     [initDiagram, flushSaveThrottles, activeFileAccess],
@@ -636,4 +636,13 @@ function getSheetId(sheetDoc: Y.Doc): string {
 // When doc update is originated by external sync process, it shouldn't trigger persistence.
 function isExternalSyncOrigin(origin: string): boolean {
   return origin === WS_UPDATE_ORIGIN;
+}
+
+// Delay certain seconds until disconnecting.
+// This would give enough time for remained file access such as sheet thumbnail creation.
+// Note: Disconnecting isn't essential for current workspace platforms: File System, Google Drive.
+function disconnectFileAccessGracefully(fileAccess: FileAccess) {
+  setTimeout(() => {
+    fileAccess.disconnect();
+  }, 1000 * 60);
 }
