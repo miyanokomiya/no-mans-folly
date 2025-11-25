@@ -34,7 +34,7 @@ function resetKeepAliveTimer() {
   if (!client) return;
 
   keepAliveTimer = setInterval(() => {
-    client?.client.send(JSON.stringify({ type: "ping" } as RTMessageData));
+    postWSMessage({ type: "ping" });
   }, 1000 * 60) as any;
 }
 
@@ -75,8 +75,15 @@ export function closeWSClient() {
 }
 
 export function postWSMessage(data: RTMessageData) {
-  // Needless to initialize the client unless listening
-  client?.client.send(JSON.stringify(data));
+  try {
+    // Needless to initialize the client unless listening
+    client?.client.send(JSON.stringify(data));
+  } catch (e: any) {
+    console.error(e);
+    if (e?.message?.includes("CLOSING or CLOSED")) {
+      closeWSClient();
+    }
+  }
 }
 
 /**
