@@ -1,6 +1,5 @@
 import type { ModeStateBase, ModeStateEventBase } from "../core";
 import type { CanvasStateContext, CanvasStateEvent } from "../commons";
-import type { AssetAPI } from "../../../hooks/persistence";
 import type { StateGenerators } from ".";
 import { EntityPatchInfo, Shape, Sheet } from "../../../models";
 import { IVec2 } from "okageo";
@@ -11,6 +10,7 @@ import { ShapeComposite } from "../../shapeComposite";
 import { Grid } from "../../grid";
 import { ImageStore } from "../../imageStore";
 import { LinkInfo } from "../types";
+import { AssetAPI } from "../../assetAPI";
 
 export interface AppCanvasStateContext extends CanvasStateContext {
   getSheets: () => Sheet[];

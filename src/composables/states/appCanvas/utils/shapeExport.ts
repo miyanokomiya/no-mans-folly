@@ -236,8 +236,6 @@ export async function saveSheetThumbnailAsSvg(
   onSaved?: (assetId: string, blob: Blob) => void,
 ) {
   const assetAPI = ctx.assetAPI;
-  if (!assetAPI.enabled) return;
-
   const imageStore = ctx.getImageStore();
   const shapeComposite = ctx.getShapeComposite();
   const range = shapeComposite.getWrapperRectForShapes(shapeComposite.shapes, true);

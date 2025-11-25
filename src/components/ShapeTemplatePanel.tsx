@@ -28,12 +28,6 @@ export const ShapeTemplatePanel: React.FC = () => {
     async (assets: [string, Blob][]) => {
       const smctx = getCtx();
       const assetAPI = smctx.assetAPI;
-
-      if (!assetAPI.enabled) {
-        smctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
-        return;
-      }
-
       const imageStore = smctx.getImageStore();
       const unstored = assets.filter(([id]) => imageStore.getImage(id));
       const saved: [string, Blob][] = [];

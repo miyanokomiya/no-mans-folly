@@ -12,7 +12,7 @@ import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
 import { generateKeyBetween } from "../utils/findex";
-import { newFileAssetAPI } from "../composables/assetAPI";
+import { AssetAPI, newFileAssetAPI } from "../composables/assetAPI";
 import {
   closeWSClient,
   newWSChannel,
@@ -24,17 +24,6 @@ import { newFileInMemoryAccess } from "../composables/fileInMemoryAccess";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
-
-export type AssetAPIEnabled = {
-  enabled: true;
-  name: string;
-  saveAsset: (assetId: string, blob: Blob | File, ifPossible?: boolean) => Promise<void>;
-  loadAsset: (assetId: string, ifPossible?: boolean) => Promise<Blob | File | undefined>;
-};
-
-// "enabled" is always true since in-memory file access was introduced
-// TODO: Remove the obsolete property
-export type AssetAPI = AssetAPIEnabled | { enabled: true };
 
 const { indexedDBMode } = newFeatureFlags();
 

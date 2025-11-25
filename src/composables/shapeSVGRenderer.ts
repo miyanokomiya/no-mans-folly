@@ -1,4 +1,3 @@
-import { AssetAPI } from "../hooks/persistence";
 import { Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
@@ -17,6 +16,7 @@ import { createSVGCurvePath } from "../utils/renderer";
 import { pathSegmentRawsToString } from "okageo";
 import { renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { CanvasCTX } from "../utils/types";
+import { AssetAPI } from "./assetAPI";
 
 type Option = {
   shapeComposite: ShapeComposite;
@@ -37,11 +37,6 @@ export function newShapeSVGRenderer(option: Option) {
     // Gather asset files used in the SVG.
     const assetDataMap = new Map<string, { width: number; height: number; base64: string }>();
     for (const elm of root.querySelectorAll("use[href]")) {
-      if (!option.assetAPI?.enabled) {
-        // TODO: Show warning message: "assetAPI" isn't available.
-        throw new Error(`Asset API is unavailable.`);
-      }
-
       const useElm = elm as SVGUseElement;
       const assetId = useElm.href.baseVal.slice(1);
       const assetData = option.imageStore?.getImageData(assetId);

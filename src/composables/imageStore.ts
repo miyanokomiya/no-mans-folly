@@ -1,5 +1,5 @@
-import { AssetAPI } from "../hooks/persistence";
 import { newCallback } from "../utils/stateful/reactives";
+import { AssetAPI } from "./assetAPI";
 
 export interface ImageData {
   img: HTMLImageElement;
@@ -76,8 +76,6 @@ export function newImageStore(option?: Option) {
    * Returns error id list when there is any.
    */
   async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<string[] | undefined> {
-    if (!assetAPI.enabled) return;
-
     const errors: string[] = [];
 
     for (const assetId of assetIds) {

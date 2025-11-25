@@ -1,16 +1,20 @@
-import { AssetAPI, AssetAPIEnabled } from "../hooks/persistence";
 import { FileAccess } from "../utils/fileAccess";
+
+export type AssetAPI = {
+  name: string;
+  saveAsset: (assetId: string, blob: Blob | File, ifPossible?: boolean) => Promise<void>;
+  loadAsset: (assetId: string, ifPossible?: boolean) => Promise<Blob | File | undefined>;
+};
 
 export function newFileAssetAPI(fileAccess: FileAccess): AssetAPI {
   return {
-    enabled: true,
     name: "file",
     saveAsset: fileAccess.saveAsset,
     loadAsset: fileAccess.loadAsset,
   };
 }
 
-export type MemoryAssetAPI = AssetAPIEnabled & {
+export type MemoryAssetAPI = AssetAPI & {
   getAssetList: () => [string, Blob | File][];
   clear: () => void;
 };
@@ -19,7 +23,6 @@ export function newMemoryAssetAPI(): MemoryAssetAPI {
   const fileMap = new Map<string, Blob | File>();
 
   return {
-    enabled: true,
     name: "memory",
     saveAsset: (assetId, blob) => {
       fileMap.set(assetId, blob);

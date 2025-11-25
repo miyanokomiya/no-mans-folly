@@ -3,10 +3,10 @@ import { AppCanvasContext, IAppCanvasContext, createInitialAppCanvasStateContext
 import { AppCanvasStateContext } from "../composables/states/appCanvas/core";
 import { generateUuid } from "../utils/random";
 import { newStateMachine } from "../composables/states/core";
-import { AssetAPI } from "../hooks/persistence";
 import { ToastMessage } from "../composables/states/types";
 import { ToastMessageContext } from "./ToastMessageContext";
 import { AppStateContext, AppStateMachineContext, GetAppStateContext, SetAppStateContext } from "./AppContext";
+import { AssetAPI } from "../composables/assetAPI";
 
 interface AppCanvasProviderProps {
   children: React.ReactNode;

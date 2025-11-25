@@ -203,8 +203,6 @@ export const newWSChannel: RealtimeHandler = (props) => {
         return;
       }
       case "asset-req": {
-        if (!props.assetAPI.enabled) return;
-
         const file = await props.assetAPI.loadAsset(data.id);
         if (!file) return;
 
@@ -219,7 +217,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
         return;
       }
       case "asset-res": {
-        if (!props.assetAPI.enabled || !data.asset || !data.fileType) return;
+        if (!data.asset || !data.fileType) return;
 
         const asset = base64ToBlob(data.asset, data.fileType);
         await props.assetAPI.saveAsset(data.id, asset);

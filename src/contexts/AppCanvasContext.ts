@@ -11,9 +11,9 @@ import { newShapeComposite } from "../composables/shapeComposite";
 import { newGrid } from "../composables/grid";
 import { newImageStore } from "../composables/imageStore";
 import { UserSettingStore } from "../stores/userSettingStore";
-import { AssetAPI } from "../hooks/persistence";
 import { ToastMessage } from "../composables/states/types";
 import { stateGenerators } from "../composables/states/appCanvas";
+import { AssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
 
 export interface IAppCanvasContext {
   workspaceType: string;
@@ -45,7 +45,7 @@ export function createInitialAppCanvasStateContext(arg: {
   getUserSetting?: () => UserSetting;
   patchUserSetting?: (patch: Partial<UserSetting>) => void;
   showToastMessage?: (val: ToastMessage) => void;
-  assetAPI: AssetAPI;
+  assetAPI?: AssetAPI;
 }): AppCanvasStateContext {
   return {
     getTimestamp: arg.getTimestamp,
@@ -54,7 +54,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getUserSetting: arg.getUserSetting ?? (() => ({})),
     patchUserSetting: arg.patchUserSetting ?? (() => ({})),
     showToastMessage: arg.showToastMessage ?? (() => ({})),
-    assetAPI: arg.assetAPI,
+    assetAPI: arg.assetAPI ?? newMemoryAssetAPI(),
 
     redraw() {},
     getRenderCtx: () => undefined,

@@ -38,56 +38,52 @@ export const ShapeLibraryPanel: React.FC = () => {
       const smctx = getCtx();
       const imageStore = smctx.getImageStore();
       const assetAPI = smctx.assetAPI;
-      if (assetAPI.enabled) {
-        const loadAsset = async () => {
-          const image = imageStore.getImage(id);
-          if (!image) {
-            // When the asset isn't yet stored, fetch and save it.
-            let blob: Blob;
-            try {
-              blob = await imageStore.lazyLoadFromFile(id, async () => {
-                const res = await fetch(url);
-                return res.blob();
-              });
-            } catch (e) {
-              console.error(e);
-              imageStore.removeImage(id);
-              smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
-              return;
-            }
-
-            try {
-              await assetAPI.saveAsset(id, blob);
-            } catch (e) {
-              console.error(e);
-              imageStore.removeImage(id);
-              smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
-            }
+      const loadAsset = async () => {
+        const image = imageStore.getImage(id);
+        if (!image) {
+          // When the asset isn't yet stored, fetch and save it.
+          let blob: Blob;
+          try {
+            blob = await imageStore.lazyLoadFromFile(id, async () => {
+              const res = await fetch(url);
+              return res.blob();
+            });
+          } catch (e) {
+            console.error(e);
+            imageStore.removeImage(id);
+            smctx.showToastMessage({ text: "Failed to load asset file.", type: "error" });
+            return;
           }
-        };
 
-        // Fetch, load and save the asset without waiting.
-        loadAsset();
+          try {
+            await assetAPI.saveAsset(id, blob);
+          } catch (e) {
+            console.error(e);
+            imageStore.removeImage(id);
+            smctx.showToastMessage({ text: "Failed to save asset file.", type: "error" });
+          }
+        }
+      };
 
-        // FIXME: Use original size of the icon rather than adjusting here.
-        // Proportional size is intended for AWS and GCP, unproportional size is intended for Cisco that has quite inconsistent sized icons.
-        const shapeSize = size.width === size.height ? { width: 50, height: 50 } : size;
+      // Fetch, load and save the asset without waiting.
+      loadAsset();
 
-        const template = {
-          shapes: [
-            createShape<ImageShape>(smctx.getShapeStruct, "image", {
-              id: smctx.generateUuid(),
-              findex: smctx.createLastIndex(),
-              width: shapeSize.width,
-              height: shapeSize.height,
-              assetId: id,
-            }),
-          ],
-        };
-        return template;
-      } else {
-        smctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
-      }
+      // FIXME: Use original size of the icon rather than adjusting here.
+      // Proportional size is intended for AWS and GCP, unproportional size is intended for Cisco that has quite inconsistent sized icons.
+      const shapeSize = size.width === size.height ? { width: 50, height: 50 } : size;
+
+      const template = {
+        shapes: [
+          createShape<ImageShape>(smctx.getShapeStruct, "image", {
+            id: smctx.generateUuid(),
+            findex: smctx.createLastIndex(),
+            width: shapeSize.width,
+            height: shapeSize.height,
+            assetId: id,
+          }),
+        ],
+      };
+      return template;
     },
     [getCtx],
   );

@@ -446,11 +446,6 @@ async function handleFileImport(ctx: AppCanvasStateContext, files: FileList | Fi
   }
 
   const assetAPI = ctx.assetAPI;
-  if (!assetAPI.enabled) {
-    ctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
-    return;
-  }
-
   const imageStore = ctx.getImageStore();
 
   const assetMap = new Map<string, HTMLImageElement>();
@@ -563,11 +558,6 @@ async function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates:
     });
   });
   if (assetMap.size === 0) return;
-
-  if (!ctx.assetAPI.enabled) {
-    ctx.showToastMessage({ text: "Sync workspace to enable asset files.", type: "error" });
-    return;
-  }
 
   const saved: [string, Blob][] = [];
   for (const [id, blob] of assetMap) {

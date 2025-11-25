@@ -2,7 +2,6 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { ImageStore, ImageData, newImageStore } from "../../composables/imageStore";
 import { isImageShape } from "../../shapes/image";
 import { ShapeStore } from "../../stores/shapes";
-import { AssetAPI } from "../../hooks/persistence";
 import { EntityPatchInfo, Shape, Sheet } from "../../models";
 import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
 import { getSheetThumbnailFileName } from "../../utils/fileAccess";
@@ -29,6 +28,7 @@ import {
   requestAssetSync,
   websocketAssetCallback,
 } from "../../composables/realtime/websocketChannel";
+import { AssetAPI } from "../../composables/assetAPI";
 
 export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
   // Use the same store for all sheets to handle asyncronous processes properly.
@@ -66,9 +66,7 @@ export function useLoadShapeAssets(
   useEffect(() => {
     return websocketAssetCallback.bind(async (data) => {
       const ctx = getSmctx();
-      if (ctx.assetAPI.enabled) {
-        await ctx.assetAPI.saveAsset(data.id, data.asset);
-      }
+      await ctx.assetAPI.saveAsset(data.id, data.asset);
       await imageStore.loadFromFile(data.id, data.asset);
     });
   }, [imageStore, getSmctx]);

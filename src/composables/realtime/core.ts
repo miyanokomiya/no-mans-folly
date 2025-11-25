@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { AssetAPI } from "../../hooks/persistence";
+import { AssetAPI } from "../assetAPI";
 
 type RTData = {
   sender?: string; // Set by the server
