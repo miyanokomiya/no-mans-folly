@@ -13,13 +13,19 @@ import { registerSW } from "virtual:pwa-register";
 
 interface Props {
   open: boolean;
-  onClose: () => void;
+  onNoWorkspaceClick: () => void;
   onOpenWorkspace: () => void;
   onGoogleFolderSelect?: (folder: GoogleDriveFolder, token: string) => void;
   onRevoke?: () => void;
 }
 
-export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace, onGoogleFolderSelect, onRevoke }) => {
+export const EntranceDialog: React.FC<Props> = ({
+  open,
+  onNoWorkspaceClick,
+  onOpenWorkspace,
+  onGoogleFolderSelect,
+  onRevoke,
+}) => {
   const { t } = useTranslation();
   const fileAccessAvailable = isFileAccessAvailable();
 
@@ -97,7 +103,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
   const buttonStyle = "w-60 py-2 px-4 rounded-xs flex items-center justify-center hover:opacity-70";
 
   return (
-    <Dialog open={open} onClose={onClose} title={t("open_workspace")} hideClose required>
+    <Dialog open={open} title={t("open_workspace")} hideClose required>
       <div className="w-96">
         {updateAvailable ? (
           <div className="mb-4 p-2 bg-green-100 border-2 rounded-xs">
@@ -154,7 +160,7 @@ export const EntranceDialog: React.FC<Props> = ({ open, onClose, onOpenWorkspace
           <button
             type="button"
             className={buttonStyle + " border border-gray-500 font-semibold gap-2"}
-            onClick={onClose}
+            onClick={onNoWorkspaceClick}
             disabled={loading}
           >
             {t("noworkspace.start")}

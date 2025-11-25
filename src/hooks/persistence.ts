@@ -12,7 +12,7 @@ import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
 import { generateKeyBetween } from "../utils/findex";
-import { isMemoryAssetAPI, newFileAssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
+import { newFileAssetAPI } from "../composables/assetAPI";
 import {
   closeWSClient,
   newWSChannel,
@@ -20,6 +20,7 @@ import {
   requestSheetSync,
   WS_UPDATE_ORIGIN,
 } from "../composables/realtime/websocketChannel";
+import { newFileInMemoryAccess } from "../composables/fileInMemoryAccess";
 
 const DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
@@ -31,7 +32,9 @@ export type AssetAPIEnabled = {
   loadAsset: (assetId: string, ifPossible?: boolean) => Promise<Blob | File | undefined>;
 };
 
-export type AssetAPI = AssetAPIEnabled | { enabled: false };
+// "enabled" is always true since in-memory file access was introduced
+// TODO: Remove the obsolete property
+export type AssetAPI = AssetAPIEnabled | { enabled: true };
 
 const { indexedDBMode } = newFeatureFlags();
 
@@ -53,7 +56,7 @@ interface PersistenceOption {
 }
 
 export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
-  const [canSyncWorkspace, setCanSyncWorkspace] = useState(false);
+  const [workspaceType, setWorkspaceType] = useState("");
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
   const [dbProviderDiagram, setDbProviderDiagram] = useState<IndexeddbPersistence | undefined>();
@@ -64,16 +67,14 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const [syncStatus, setSyncStatus] = useState<"ok" | "autherror" | "unknownerror">("ok");
   const [saving, setSaving] = useState({ diagram: false, sheet: false });
 
-  // "memoryAssetAPI" is used when no workspace is connected.
-  // The assets in it will be saved as "saveToWorkspace" called, then be cleared.
-  const memoryAssetAPI = useMemo(() => newMemoryAssetAPI(), []);
-  const fileAssetAPI = useMemo<AssetAPI | undefined>(() => {
-    return canSyncWorkspace ? newFileAssetAPI(fileAccess) : undefined;
-  }, [fileAccess, canSyncWorkspace]);
-  const assetAPI = fileAssetAPI ?? memoryAssetAPI;
-  useEffect(() => {
-    memoryAssetAPI.clear();
-  }, [memoryAssetAPI, canSyncWorkspace]);
+  const [fileInMemoryAccess, setFileInMemoryAccess] = useState(() => newFileInMemoryAccess());
+  const activeFileAccess = useMemo(() => {
+    return workspaceType ? fileAccess : fileInMemoryAccess;
+  }, [workspaceType, fileAccess, fileInMemoryAccess]);
+  const fileAssetAPI = useMemo<AssetAPI>(() => {
+    return newFileAssetAPI(activeFileAccess);
+  }, [activeFileAccess]);
+  const assetAPI = fileAssetAPI;
 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
@@ -94,49 +95,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     }
   }, []);
 
-  const initSheet = useCallback(
-    async (sheetId: string) => {
-      // Ensure the target sheet is up-to-date
-      await saveSheetUpdateThrottleMap.current.get(sheetId)?.flush();
-
-      const nextSheetDoc = createSheetDoc(sheetId);
-
-      if (fileAccess.hasHandle()) {
-        setReady(false);
-        try {
-          await fileAccess.openSheet(sheetId, nextSheetDoc);
-          setSyncStatus("ok");
-          await clearIndexeddbPersistence(sheetId);
-          setCanSyncWorkspace(fileAccess.hasHandle());
-        } catch (e) {
-          handleSyncError(e);
-          console.error("Failed to load local sheet: ", sheetId, e);
-        }
-        setReady(true);
-      }
-
-      const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
-      await sheetProvider?.whenSynced;
-
-      requestSheetSync(sheetId, Y.encodeStateAsUpdate(nextSheetDoc));
-      setDbProviderSheet(sheetProvider);
-      setSheetDoc(nextSheetDoc);
-      setSheetStores({
-        layerStore: newLayerStore({ ydoc: nextSheetDoc }),
-        shapeStore: newShapeStore({ ydoc: nextSheetDoc }),
-        documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
-      });
-    },
-    [fileAccess, handleSyncError],
-  );
-
   const loadIndependentSheet = useCallback(
     async (sheetId: string) => {
       const nextSheetDoc = createSheetDoc(sheetId);
 
-      if (fileAccess.hasHandle()) {
+      if (activeFileAccess.hasHandle()) {
         try {
-          await fileAccess.openSheet(sheetId, nextSheetDoc);
+          await activeFileAccess.openSheet(sheetId, nextSheetDoc);
           return nextSheetDoc;
         } catch (e) {
           console.error("Failed to load the sheet: ", sheetId, e);
@@ -148,7 +113,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       await sheetProvider?.destroy();
       return nextSheetDoc;
     },
-    [fileAccess],
+    [activeFileAccess],
   );
 
   const cleanCurrentSheet = useCallback(async () => {
@@ -166,9 +131,9 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       documentStore.addDoc(id, doc);
     });
 
-    if (fileAccess.hasHandle()) {
+    if (activeFileAccess.hasHandle()) {
       try {
-        await fileAccess.overwriteSheetDoc(sheetId, nextSheetDoc);
+        await activeFileAccess.overwriteSheetDoc(sheetId, nextSheetDoc);
       } catch (e) {
         handleSyncError(e);
       }
@@ -180,95 +145,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setDbProviderSheet(sheetProvider);
     setSheetDoc(nextSheetDoc);
     setSheetStores({ layerStore, shapeStore, documentStore });
-  }, [fileAccess, handleSyncError, sheetDoc, sheetStores]);
-
-  const initDiagram = useCallback(
-    async (diagramUpdate?: Uint8Array) => {
-      setReady(false);
-      const nextDiagramDoc = new Y.Doc();
-      if (diagramUpdate) {
-        Y.applyUpdate(nextDiagramDoc, diagramUpdate);
-      }
-
-      const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-      const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
-      await provider?.whenSynced;
-
-      if (!diagramStore.getEntity().id) {
-        createInitialDiagram(diagramStore, generateUuid);
-      }
-
-      if (!nextDiagramDoc.meta?.diagramId) {
-        nextDiagramDoc.meta ??= {};
-        nextDiagramDoc.meta.diagramId = diagramStore.getEntity().id;
-      }
-
-      const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
-      if (sheetStore.getEntities().length === 0) {
-        createInitialSheet(sheetStore, generateUuid);
-      }
-
-      sheetStore.selectSheet(getSheetIdFromQuery());
-      const sheet = sheetStore.getSelectedSheet()!;
-      await initSheet(sheet.id);
-
-      setDbProviderDiagram(provider);
-      setDiagramDoc(nextDiagramDoc);
-      setDiagramStores({ diagramStore, sheetStore });
-      setReady(true);
-    },
-    [generateUuid, initSheet],
-  );
-
-  /**
-   * This method is intended for the case that the diagram has one sheet without workspace in the app.
-   * => Not intended for duplicating the the diagram and the all sheets to other workspace.
-   *
-   * When the target workspace is empty, just save current diagram there.
-   * When the target workspace has data, merge current diagram to it and save merged diagram there.
-   */
-  const saveToWorkspace = useCallback(async () => {
-    if (!diagramStores) return;
-
-    try {
-      const result = await fileAccess.openDirectory();
-      setSyncStatus("ok");
-      if (!result) return;
-    } catch (e) {
-      handleSyncError(e);
-      console.error("Failed to open directory", e);
-      return;
-    }
-
-    const sheet = diagramStores.sheetStore.getSelectedSheet();
-    if (sheet) {
-      try {
-        await fileAccess.openSheet(sheet.id, sheetDoc);
-        await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
-
-        if (isMemoryAssetAPI(assetAPI)) {
-          for (const [id, blob] of assetAPI.getAssetList()) {
-            await fileAccess.saveAsset(id, blob);
-          }
-        }
-
-        setSyncStatus("ok");
-      } catch (e) {
-        handleSyncError(e);
-        console.error("Failed to sync sheet: ", sheet.id, e);
-      }
-    }
-    try {
-      await fileAccess.reopenDiagram(diagramDoc);
-      await fileAccess.overwriteDiagramDoc(diagramDoc);
-      setSyncStatus("ok");
-    } catch (e) {
-      handleSyncError(e);
-      console.error("Failed to sync diagram", e);
-    }
-
-    setCanSyncWorkspace(fileAccess.hasHandle());
-  }, [fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores, assetAPI]);
+  }, [activeFileAccess, handleSyncError, sheetDoc, sheetStores]);
 
   const undoManager = useMemo(() => {
     return new Y.UndoManager(
@@ -282,11 +159,9 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const saveDiagramUpdateThrottle = useMemo(() => {
     return newLeveledThrottle(async () => {
-      if (!canSyncWorkspace) return;
-
       setSaving((v) => ({ ...v, diagram: true }));
       try {
-        await fileAccess.overwriteDiagramDoc(diagramDoc);
+        await activeFileAccess.overwriteDiagramDoc(diagramDoc);
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
@@ -295,7 +170,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
         setSaving((v) => ({ ...v, diagram: false }));
       }
     }, SYNC_THROTTLE_INTERVALS);
-  }, [fileAccess, handleSyncError, canSyncWorkspace, diagramDoc]);
+  }, [activeFileAccess, handleSyncError, diagramDoc]);
 
   useEffect(() => {
     const unwatch = saveDiagramUpdateThrottle.watch((pending) => {
@@ -308,10 +183,8 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveDiagramUpdateThrottle, diagramDoc]);
 
   useEffect(() => {
-    if (!canSyncWorkspace) return;
-
     const fn = (_: unknown, origin: string) => {
-      if (isExternalSyncOrigin(origin) && fileAccess.name !== "file-system") return;
+      if (isExternalSyncOrigin(origin) && activeFileAccess.name !== "file-system") return;
       saveDiagramUpdateThrottle();
     };
 
@@ -320,15 +193,13 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       diagramDoc.off("update", fn);
       saveDiagramUpdateThrottle.flush();
     };
-  }, [canSyncWorkspace, saveDiagramUpdateThrottle, diagramDoc, fileAccess.name]);
+  }, [saveDiagramUpdateThrottle, diagramDoc, activeFileAccess.name]);
 
   const saveSheetUpdateThrottle = useMemo(() => {
     return newLeveledThrottle(async (sheetId: string) => {
-      if (!canSyncWorkspace) return;
-
       setSaving((v) => ({ ...v, sheet: true }));
       try {
-        await fileAccess.overwriteSheetDoc(sheetId, sheetDoc);
+        await activeFileAccess.overwriteSheetDoc(sheetId, sheetDoc);
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
@@ -337,7 +208,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
         setSaving((v) => ({ ...v, sheet: false }));
       }
     }, SYNC_THROTTLE_INTERVALS);
-  }, [fileAccess, handleSyncError, canSyncWorkspace, sheetDoc]);
+  }, [activeFileAccess, handleSyncError, sheetDoc]);
 
   const saveSheetUpdateThrottleMap = useRef(new Map<string, ReturnType<typeof newLeveledThrottle>>());
 
@@ -346,21 +217,18 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       let fn = saveSheetUpdateThrottleMap.current.get(sheetId);
       if (!fn) {
         fn = newLeveledThrottle(async () => {
-          if (!canSyncWorkspace) {
-            // Save to IndexedDB if it's active
-            if (indexedDBMode) {
-              const sheet = await loadIndependentSheet(sheetId);
-              Y.applyUpdate(sheet, update);
-              await saveIndexeddbPersistence(sheetId, sheet);
-              sheet.destroy();
-            }
-            return;
+          // Save to IndexedDB if it's active
+          if (indexedDBMode) {
+            const sheet = await loadIndependentSheet(sheetId);
+            Y.applyUpdate(sheet, update);
+            await saveIndexeddbPersistence(sheetId, sheet);
+            sheet.destroy();
           }
 
           try {
             const sheet = await loadIndependentSheet(sheetId);
             Y.applyUpdate(sheet, update);
-            await fileAccess.overwriteSheetDoc(sheetId, sheet);
+            await activeFileAccess.overwriteSheetDoc(sheetId, sheet);
             await saveIndexeddbPersistence(sheetId, sheet);
             sheet.destroy();
           } catch (e) {
@@ -372,7 +240,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
       fn(sheetId, update);
     },
-    [fileAccess, canSyncWorkspace, loadIndependentSheet],
+    [activeFileAccess, loadIndependentSheet],
   );
 
   useEffect(() => {
@@ -394,10 +262,8 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   }, [saveSheetUpdateThrottle, sheetDoc]);
 
   useEffect(() => {
-    if (!canSyncWorkspace) return;
-
     const fn = (_: unknown, origin: string) => {
-      if (isExternalSyncOrigin(origin) && fileAccess.name !== "file-system") return;
+      if (isExternalSyncOrigin(origin) && activeFileAccess.name !== "file-system") return;
       saveSheetUpdateThrottle(getSheetId(sheetDoc));
     };
 
@@ -406,7 +272,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       sheetDoc.off("update", fn);
       saveSheetUpdateThrottle.flush();
     };
-  }, [canSyncWorkspace, saveSheetUpdateThrottle, sheetDoc, fileAccess.name]);
+  }, [saveSheetUpdateThrottle, sheetDoc, activeFileAccess.name]);
 
   useEffect(() => {
     return () => {
@@ -461,16 +327,90 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     for (const [, fn] of currentMap) {
       await fn.flush();
     }
+    setSavePending({ diagram: false, sheet: false });
+    setSaving({ diagram: false, sheet: false });
   }, [saveDiagramUpdateThrottle, saveSheetUpdateThrottle]);
+
+  const initSheet = useCallback(
+    async (sheetId: string) => {
+      // Flush save throttles on new sheet opens
+      await flushSaveThrottles();
+
+      const nextSheetDoc = createSheetDoc(sheetId);
+
+      if (activeFileAccess.hasHandle()) {
+        setReady(false);
+        try {
+          await activeFileAccess.openSheet(sheetId, nextSheetDoc);
+          setSyncStatus("ok");
+          await clearIndexeddbPersistence(sheetId);
+        } catch (e) {
+          handleSyncError(e);
+          console.error("Failed to load local sheet: ", sheetId, e);
+        }
+        setReady(true);
+      }
+
+      const sheetProvider = newIndexeddbPersistence(sheetId, nextSheetDoc);
+      await sheetProvider?.whenSynced;
+
+      requestSheetSync(sheetId, Y.encodeStateAsUpdate(nextSheetDoc));
+      setDbProviderSheet(sheetProvider);
+      setSheetDoc(nextSheetDoc);
+      setSheetStores({
+        layerStore: newLayerStore({ ydoc: nextSheetDoc }),
+        shapeStore: newShapeStore({ ydoc: nextSheetDoc }),
+        documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
+      });
+    },
+    [activeFileAccess, handleSyncError, flushSaveThrottles],
+  );
+
+  const initDiagram = useCallback(
+    async (diagramUpdate?: Uint8Array) => {
+      setReady(false);
+      const nextDiagramDoc = new Y.Doc();
+      if (diagramUpdate) {
+        Y.applyUpdate(nextDiagramDoc, diagramUpdate);
+      }
+
+      const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
+      const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+      await provider?.whenSynced;
+
+      if (!diagramStore.getEntity().id) {
+        createInitialDiagram(diagramStore, generateUuid);
+      }
+
+      if (!nextDiagramDoc.meta?.diagramId) {
+        nextDiagramDoc.meta ??= {};
+        nextDiagramDoc.meta.diagramId = diagramStore.getEntity().id;
+      }
+
+      const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
+      if (sheetStore.getEntities().length === 0) {
+        createInitialSheet(sheetStore, generateUuid);
+      }
+
+      sheetStore.selectSheet(getSheetIdFromQuery());
+      const sheet = sheetStore.getSelectedSheet()!;
+      await initSheet(sheet.id);
+
+      setDbProviderDiagram(provider);
+      setDiagramDoc(nextDiagramDoc);
+      setDiagramStores({ diagramStore, sheetStore });
+      setReady(true);
+    },
+    [generateUuid, initSheet],
+  );
 
   const openDiagramFromWorkspace = useCallback(async (): Promise<boolean> => {
     await flushSaveThrottles();
     setReady(false);
     const nextDiagramDoc = new Y.Doc();
     try {
-      const result = await fileAccess.openDiagram(nextDiagramDoc);
+      const result = await activeFileAccess.openDiagram(nextDiagramDoc);
       setSyncStatus("ok");
-      setCanSyncWorkspace(fileAccess.hasHandle());
       if (!result) {
         setReady(true);
         return false;
@@ -494,7 +434,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       createInitialSheet(sheetStore, generateUuid);
       try {
         // Need to save the diagram having new sheet.
-        await fileAccess.overwriteDiagramDoc(nextDiagramDoc);
+        await activeFileAccess.overwriteDiagramDoc(nextDiagramDoc);
         setSyncStatus("ok");
       } catch (e) {
         handleSyncError(e);
@@ -511,13 +451,12 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
     return true;
-  }, [generateUuid, fileAccess, handleSyncError, initSheet, flushSaveThrottles]);
+  }, [generateUuid, activeFileAccess, handleSyncError, initSheet, flushSaveThrottles]);
 
   const clearDiagram = useCallback(async () => {
     await flushSaveThrottles();
     closeWSClient();
-    await fileAccess.disconnect();
-    setCanSyncWorkspace(fileAccess.hasHandle());
+    await activeFileAccess.disconnect();
     setReady(false);
     await clearIndexeddbPersistenceAll();
 
@@ -538,17 +477,77 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     setDiagramDoc(nextDiagramDoc);
     setDiagramStores({ diagramStore, sheetStore });
     setReady(true);
-  }, [generateUuid, fileAccess, initSheet, flushSaveThrottles]);
+  }, [generateUuid, activeFileAccess, initSheet, flushSaveThrottles]);
 
   const openRemoteDiagram = useCallback(
     async (diagramUpdate?: Uint8Array) => {
       await flushSaveThrottles();
-      await fileAccess.disconnect();
-      setCanSyncWorkspace(false);
+      await activeFileAccess.disconnect();
       initDiagram(diagramUpdate);
     },
-    [initDiagram, flushSaveThrottles, fileAccess],
+    [initDiagram, flushSaveThrottles, activeFileAccess],
   );
+
+  /**
+   * This method is intended for the case that no workspace opens yet.
+   * => Not intended for duplicating current workspace to other place.
+   *
+   * When the target workspace is empty, save current diagram there.
+   * When the target workspace has data, merge current diagram to it and save merged diagram there.
+   */
+  const saveToWorkspace = useCallback(async () => {
+    await flushSaveThrottles();
+
+    try {
+      const result = await fileAccess.openDirectory();
+      setSyncStatus("ok");
+      if (!result) return;
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to open directory", e);
+      return;
+    }
+
+    // Merge and save all sheets
+    try {
+      for (const sheet of diagramStores.sheetStore.getEntities()) {
+        if (sheet.id === diagramStores.sheetStore.getSelectedSheet()?.id) {
+          await fileAccess.overwriteSheetDoc(sheet.id, sheetDoc);
+        } else {
+          const doc = new Y.Doc();
+          await fileInMemoryAccess.openSheet(sheet.id, doc);
+          await fileAccess.overwriteSheetDoc(sheet.id, doc);
+          doc.destroy();
+        }
+      }
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to sync sheet", e);
+    }
+
+    // Merge and save all assets
+    try {
+      for (const [name, data] of fileInMemoryAccess.assetMap) {
+        await fileAccess.saveAsset(name, data);
+      }
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to sync asset", e);
+    }
+
+    fileInMemoryAccess.disconnect();
+    setFileInMemoryAccess(newFileInMemoryAccess());
+
+    // Merge and save the diagram
+    try {
+      await fileAccess.reopenDiagram(diagramDoc);
+      await fileAccess.overwriteDiagramDoc(diagramDoc);
+      setSyncStatus("ok");
+    } catch (e) {
+      handleSyncError(e);
+      console.error("Failed to sync diagram", e);
+    }
+  }, [flushSaveThrottles, fileInMemoryAccess, fileAccess, handleSyncError, diagramDoc, sheetDoc, diagramStores]);
 
   useEffect(() => {
     const bc = newWSChannel({
@@ -577,10 +576,12 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   ]);
 
   useEffect(() => {
-    postConnectionInfo(canSyncWorkspace);
-  }, [canSyncWorkspace]);
+    postConnectionInfo(!!workspaceType);
+  }, [workspaceType]);
 
   return {
+    workspaceType,
+    setWorkspaceType,
     initSheet,
     cleanCurrentSheet,
     initDiagram,
@@ -590,7 +591,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     ready,
     savePending,
     saveToWorkspace,
-    canSyncWorkspace,
     flushSaveThrottles,
     ...diagramStores,
     ...sheetStores,

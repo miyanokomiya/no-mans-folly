@@ -3,7 +3,7 @@ import { FileAccess } from "../utils/fileAccess";
 
 export function newFileAssetAPI(fileAccess: FileAccess): AssetAPI {
   return {
-    enabled: fileAccess.hasHandle(),
+    enabled: true,
     name: "file",
     saveAsset: fileAccess.saveAsset,
     loadAsset: fileAccess.loadAsset,

@@ -35,12 +35,13 @@ import { useWebsocketClient } from "./hooks/realtimeHooks";
 const USER_SETTING_KEY = "userSetting";
 
 function App() {
-  const [fileAccess, setFileAccess] = useState<FileAccess>(useMemo(() => newFileAccess(), []));
+  const [fileAccess, setFileAccess] = useState<FileAccess>(() => newFileAccess());
   const { indexedDBMode } = newFeatureFlags();
   const isWebsocketActive = !!useWebsocketClient();
-  const canPersist = fileAccess.hasHandle() || indexedDBMode || isWebsocketActive;
 
   const {
+    workspaceType,
+    setWorkspaceType,
     diagramStore,
     sheetStore,
     layerStore,
@@ -56,7 +57,6 @@ function App() {
     openDiagramFromWorkspace,
     clearDiagram,
     saveToWorkspace,
-    canSyncWorkspace,
     assetAPI,
     syncStatus,
     flushSaveThrottles,
@@ -100,17 +100,11 @@ function App() {
     return userSetting.watch(saveFn);
   }, [userSetting]);
 
-  useEffect(() => {
-    if (!canSyncWorkspace) {
-      setWorkspaceType(undefined);
-    }
-  }, [canSyncWorkspace]);
-
   const { toastMessages, closeToastMessage, pushToastMessage } = useToastMessages();
 
   const acctx = useMemo<IAppCanvasContext>(() => {
     const context = {
-      canSyncWorkspace,
+      workspaceType,
       userSettingStore: userSetting,
       diagramStore,
       sheetStore,
@@ -121,7 +115,12 @@ function App() {
       undoManager: createAppUndoManager(undoManager),
     };
     return context;
-  }, [canSyncWorkspace, diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
+  }, [workspaceType, diagramStore, sheetStore, layerStore, shapeStore, documentStore, undoManager, userSetting]);
+
+  const handleNoWorkspace = useCallback(() => {
+    setOpenDialog(undefined);
+    setWorkspaceType("");
+  }, [setWorkspaceType]);
 
   const handleOpenWorkspace = useCallback(() => {
     setOpenDialog("workspace");
@@ -141,8 +140,8 @@ function App() {
   const handleClearWorkspace = useCallback(async () => {
     await clearDiagram();
     setFileAccess(newFileAccess());
-    setWorkspaceType(undefined);
-  }, [clearDiagram]);
+    setWorkspaceType("");
+  }, [clearDiagram, setWorkspaceType]);
 
   const handleCleanSheet = useCallback(async () => {
     await cleanCurrentSheet();
@@ -176,7 +175,6 @@ function App() {
     setRightPanel("Realtime");
   }, [setRightPanel]);
 
-  const [workspaceType, setWorkspaceType] = useState<"local" | "google">();
   const [workspaceActionType, setWorkspaceActionType] = useState<"open" | "save" | "export">();
   const [openDialog, setOpenDialog] = useState<undefined | "entrance" | "workspace">(
     !indexedDBMode ? "entrance" : undefined,
@@ -228,7 +226,7 @@ function App() {
         if (result) {
           setOpenDialog(undefined);
         } else {
-          setWorkspaceType(undefined);
+          setWorkspaceType("");
         }
       } catch (e) {
         console.error(e);
@@ -245,7 +243,7 @@ function App() {
     }
 
     resetSelectFolderEffect();
-  }, [resetSelectFolderEffect, workspaceActionType]);
+  }, [resetSelectFolderEffect, workspaceActionType, setWorkspaceType]);
 
   const handleGoogleFolderSelect = useCallback(
     (folder: GoogleDriveFolder, token: string) => {
@@ -258,7 +256,7 @@ function App() {
 
       resetSelectFolderEffect();
     },
-    [resetSelectFolderEffect, workspaceActionType],
+    [resetSelectFolderEffect, workspaceActionType, setWorkspaceType],
   );
 
   const handleOpenWorkspaceOnEntrance = useCallback(() => {
@@ -309,7 +307,7 @@ function App() {
     >
       <EntranceDialog
         open={openDialog === "entrance"}
-        onClose={closeDialog}
+        onNoWorkspaceClick={handleNoWorkspace}
         onOpenWorkspace={handleOpenWorkspaceOnEntrance}
         onGoogleFolderSelect={handleGoogleFolderSelectOnEntrace}
         onRevoke={handleRevokeExternalConnections}
@@ -338,11 +336,9 @@ function App() {
       >
         <AppRightPanel selected={rightPanel} onSelect={handleRightPanel} />
       </div>
-      {canPersist ? (
-        <div className="fixed top-10 flex">
-          <SheetList />
-        </div>
-      ) : undefined}
+      <div className="fixed top-10 flex">
+        <SheetList />
+      </div>
       <div className="fixed left-0 top-0 flex">
         <AppHeader
           onClickOpen={handleOpenWorkspace}
@@ -351,11 +347,10 @@ function App() {
           onClickClear={handleClearWorkspace}
           onClickFlush={flushSaveThrottles}
           onClickCleanSheet={handleCleanSheet}
-          canSyncWorkspace={canSyncWorkspace}
           savePending={savePendingFlag}
           saving={savingFlag}
           syncStatus={syncStatus}
-          workspaceType={workspaceType}
+          workspaceType={workspaceType as any}
           hasTemporaryDiagram={hasTemporaryDiagram}
           isWebsocketActive={isWebsocketActive}
           onRealtimeClick={handleRealtimeClick}

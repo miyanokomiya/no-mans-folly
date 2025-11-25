@@ -16,7 +16,7 @@ import { ToastMessage } from "../composables/states/types";
 import { stateGenerators } from "../composables/states/appCanvas";
 
 export interface IAppCanvasContext {
-  canSyncWorkspace: boolean;
+  workspaceType: string;
   diagramStore: DiagramStore;
   sheetStore: SheetStore;
   layerStore: LayerStore;
@@ -45,7 +45,7 @@ export function createInitialAppCanvasStateContext(arg: {
   getUserSetting?: () => UserSetting;
   patchUserSetting?: (patch: Partial<UserSetting>) => void;
   showToastMessage?: (val: ToastMessage) => void;
-  assetAPI?: AssetAPI;
+  assetAPI: AssetAPI;
 }): AppCanvasStateContext {
   return {
     getTimestamp: arg.getTimestamp,
@@ -54,7 +54,7 @@ export function createInitialAppCanvasStateContext(arg: {
     getUserSetting: arg.getUserSetting ?? (() => ({})),
     patchUserSetting: arg.patchUserSetting ?? (() => ({})),
     showToastMessage: arg.showToastMessage ?? (() => ({})),
-    assetAPI: arg.assetAPI ?? disabledAssetAPI,
+    assetAPI: arg.assetAPI,
 
     redraw() {},
     getRenderCtx: () => undefined,
@@ -126,5 +126,3 @@ export function createInitialAppCanvasStateContext(arg: {
     states: stateGenerators,
   };
 }
-
-const disabledAssetAPI = { enabled: false, _time: Date.now() } as const;

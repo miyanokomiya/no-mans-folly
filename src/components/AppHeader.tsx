@@ -17,11 +17,10 @@ interface Props {
   onClickClear: () => void;
   onClickFlush: () => void;
   onClickCleanSheet: () => void;
-  canSyncWorkspace: boolean;
   savePending: boolean;
   saving: boolean;
   syncStatus: "ok" | "autherror" | "unknownerror";
-  workspaceType?: "local" | "google";
+  workspaceType?: "" | "local" | "google";
   hasTemporaryDiagram?: boolean;
   isWebsocketActive?: boolean;
   onRealtimeClick?: () => void;
@@ -34,7 +33,6 @@ export const AppHeader: React.FC<Props> = ({
   onClickClear,
   onClickFlush,
   onClickCleanSheet,
-  canSyncWorkspace,
   savePending,
   saving,
   syncStatus,
@@ -66,7 +64,7 @@ export const AppHeader: React.FC<Props> = ({
   const storageMessage = useMemo(() => {
     const baseClass = "rounded-xs h-7 px-2 flex items-center text-white select-none ";
 
-    if (!canSyncWorkspace) {
+    if (!workspaceType) {
       return (
         <button className={baseClass + "bg-red-500"} type="button" onClick={() => onClickPopupButton("file")}>
           No workspace
@@ -99,7 +97,7 @@ export const AppHeader: React.FC<Props> = ({
     }
 
     return <span className={baseClass + "bg-lime-500"}>Synched</span>;
-  }, [canSyncWorkspace, onClickPopupButton, savePending, saving, ctrlS, syncStatus, workspaceType, onClickFlush]);
+  }, [onClickPopupButton, savePending, saving, ctrlS, syncStatus, workspaceType, onClickFlush]);
 
   const handleClickOpen = useCallback(() => {
     setPopupedKey("");
@@ -153,14 +151,14 @@ export const AppHeader: React.FC<Props> = ({
 
         if (savePending) {
           onClickFlush?.();
-        } else if (canSyncWorkspace && syncStatus === "ok") {
+        } else if (syncStatus === "ok") {
           setCtrlS(true);
         } else {
           onClickPopupButton("file");
         }
       }
     },
-    [canSyncWorkspace, onClickPopupButton, onClickFlush, savePending, syncStatus],
+    [onClickPopupButton, onClickFlush, savePending, syncStatus],
   );
   useGlobalKeydownEffect(handleKeyDown);
 

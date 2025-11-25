@@ -16,7 +16,7 @@ export const RealtimePanel: React.FC = () => {
     client ? "connected" : "disconnected",
   );
 
-  const { canSyncWorkspace } = useContext(AppCanvasContext);
+  const { workspaceType } = useContext(AppCanvasContext);
   const getCtx = useContext(GetAppStateContext);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export const RealtimePanel: React.FC = () => {
 
       setStatus("connecting");
       try {
-        await initWSClient({ canHost: canSyncWorkspace, roomId: roomIdDraft });
+        await initWSClient({ canHost: !!workspaceType, roomId: roomIdDraft });
       } catch {
         const ctx = getCtx();
         ctx.showToastMessage({
@@ -41,7 +41,7 @@ export const RealtimePanel: React.FC = () => {
         });
       }
     },
-    [canSyncWorkspace, roomIdDraft, status, getCtx],
+    [workspaceType, roomIdDraft, status, getCtx],
   );
 
   const handleDisconnect = useCallback(() => {
